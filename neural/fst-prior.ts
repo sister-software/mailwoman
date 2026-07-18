@@ -67,6 +67,15 @@ export interface WordGroup {
 
 const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house_number", "I-house_number", "B-venue"]
 
+/**
+ * Match-length scaling mode for the importance bias (#1142). A single-token place match is weak evidence (a place name
+ * that is also a surname / street head / common word); a multi-token match is reliable. `both` scales the positive
+ * locality bias AND the street suppression by match length; `suppression` scales only the suppression (leaving the
+ * positive bias intact — safe for the bare-fragment regime where the positive gazetteer bias earns its keep); `off`
+ * disables it.
+ */
+export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
+
 export interface FSTPriorOpts {
 	biasScale?: number
 	/**
@@ -74,6 +83,8 @@ export interface FSTPriorOpts {
 	 */
 	maxBias?: number
 	suppressionScale?: number
+	/** See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller). */
+	importanceLengthScaleMode?: ImportanceLengthScaleMode
 }
 
 /**
@@ -94,6 +105,11 @@ export function buildFSTEmissionPriors(
 	const seenWOFIDs = new Set<number>()
 	const maxBias = opts.maxBias ?? 3.0
 	const suppressionScale = opts.suppressionScale ?? 1.5
+	// Default `suppression` (#1142, measured 2026-07-18): scaling ONLY the street-suppression term by
+	// match length is a broad win (US golden +35, admin-street-homonym fragments +50, bare-locality −2),
+	// and it leaves the positive locality bias untouched so the bare-fragment regime is safe. Scaling the
+	// positive term too (`both`) measured strictly worse (US +26, FR −9). See docs/…/the-meaning-of-zero.
+	const lengthMode: ImportanceLengthScaleMode = opts.importanceLengthScaleMode ?? "suppression"
 	const matrix: number[][] = []
 
 	for (let t = 0; t < T; t++) {
@@ -128,7 +144,8 @@ export function buildFSTEmissionPriors(
 				biasScale,
 				maxBias,
 				suppressionScale,
-				seenWOFIDs
+				seenWOFIDs,
+				lengthMode
 			)
 		}
 
@@ -153,7 +170,8 @@ export function buildFSTEmissionPriors(
 					biasScale,
 					maxBias,
 					suppressionScale,
-					seenWOFIDs
+					seenWOFIDs,
+					lengthMode
 				)
 			}
 
@@ -230,9 +248,22 @@ function applyBias(
 	biasScale: number,
 	maxBias: number,
 	suppressionScale: number,
-	seenWOFIDs: Set<number>
+	seenWOFIDs: Set<number>,
+	lengthMode: ImportanceLengthScaleMode
 ): void {
 	const seenTags = new Map<string, number>()
+
+	// Match-length scaling (#1142). A single-token place match ("Sweeney", "Tower", "Rome") is weak
+	// evidence — surnames, street heads, and everyday words are place names *somewhere*; a multi-token
+	// match ("New York", "Saint Louis") is far more reliable. Without this, real gazetteer importance
+	// pulls the leading token of a bare/comma-free street into locality ("Sweeney Ranch Road" → loc
+	// "Sweeney"; measured US golden −22, the no-anchor comma-free class). `suppression` scales only the
+	// street-suppression term (safe for the bare-fragment regime where the positive bias earns its keep);
+	// `both` also scales the positive locality bias; `off` disables. Locale-general — no word list.
+	const matchLen = groups.length
+	const lengthScale = matchLen >= 3 ? 1.0 : matchLen === 2 ? 0.7 : 0.25
+	const posScale = lengthMode === "both" ? lengthScale : 1.0
+	const supScale = lengthMode === "off" ? 1.0 : lengthScale
 
 	for (const entry of entries) {
 		if (seenWOFIDs.has(entry.wofID)) continue
@@ -240,7 +271,7 @@ function applyBias(
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 
 		if (!bioTag) continue
-		const impBias = entry.importance * biasScale * maxBias
+		const impBias = entry.importance * biasScale * maxBias * posScale
 		const existing = seenTags.get(bioTag) ?? 0
 
 		if (impBias > existing) {
@@ -272,12 +303,16 @@ function applyBias(
 	}
 
 	if (suppressionScale > 0) {
+		// Scale the street/house-number suppression by the same match length — a lone place-name token
+		// must not strongly suppress the street reading of the token it heads (#1142).
+		const scaledSuppression = suppressionScale * supScale
+
 		for (const pi of allPieceIndices) {
 			for (const label of SUPPRESS_WHEN_PLACE) {
 				const col = labelToCol.get(label)
 
 				if (col !== undefined) {
-					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -suppressionScale)
+					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -scaledSuppression)
 				}
 			}
 		}

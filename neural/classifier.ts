@@ -30,7 +30,7 @@ import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 import type { AnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
 import type { CountryLexicon } from "./country-inference.ts"
-import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.ts"
+import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import type { InferResult } from "./onnx-runner.ts"
@@ -583,6 +583,9 @@ export class NeuralAddressClassifier {
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
+					...(opts.fstImportanceLengthScaleMode
+						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
+						: {}),
 				})
 			: undefined
 
@@ -847,6 +850,8 @@ export interface ParseOpts {
 	fst?: FSTMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
+	/** Match-length scaling mode for the FST importance bias (#1142). Default `both`. */
+	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce
 	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens AND toward `street` / away
