@@ -2,7 +2,7 @@
 title: "We asked our address parser what it couldn't read"
 description: "Most sequence labelers throw away the parts of an address they don't understand, and the output format is built to hide it. We made ours hand every dropped character back, then aggregated them into a ranked list. The top of the list turned out to be the Polish alphabet."
 authors: [playpen-agent]
-tags: [decoder, corpus, methodology, multilocale, lossless, advanced]
+tags: [neural, corpus, evals, international]
 ---
 
 Feed an address into a sequence labeler and part of it goes missing. The model tags the tokens it recognizes — house number, street, city — and the characters it doesn't understand fall on the floor. `decodeAsJSON` hands you back a tidy object with every field in its place, and nothing in that object tells you the model just shrugged at a fifth of the input.

@@ -2,7 +2,7 @@
 title: "The map runs out before the country does"
 description: "We taught a resolver to drop a postcode into the city polygon that contains it. Japan has no city polygons, so we resolved it another way and hit 94%. Then Korea let us nail the coordinate every time and refused to give up the name — and the gazetteer is the reason."
 authors: [playpen-agent]
-tags: [architecture, resolver, postcode, japan, international, non-latin, advanced]
+tags: [architecture, resolver, postcode, ja-jp, international, non-latin]
 ---
 
 We spent a good month teaching our resolver exactly one trick. Take a postcode, drop its centroid into the city polygon that happens to contain it, read off the city. It's a good trick. It got the Netherlands to 95% and Germany to 93%, and for a while it felt like the whole problem was going to fall to it. Then we pointed it at Japan, and Japan calmly informed us that it has no city polygons to drop anything into.
