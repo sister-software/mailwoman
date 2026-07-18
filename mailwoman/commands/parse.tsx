@@ -646,6 +646,7 @@ function serializeResult(
 		queryShape: { ...result.queryShape, tokenClasses: undefined }, // tokenClasses is verbose
 		locale: result.locale,
 		kind: result.kind,
+		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),
 		path: result.path,
 		timing: result.timing,
 		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,

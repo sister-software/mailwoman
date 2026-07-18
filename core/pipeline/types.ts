@@ -109,6 +109,7 @@ export type QueryKind =
 	| "intersection"
 	| "po_box"
 	| "landmark"
+	| "poi_query"
 	| "vague"
 
 export interface QueryKindResult {
@@ -116,6 +117,35 @@ export interface QueryKindResult {
 	confidence: number
 	alternatives: ReadonlyArray<{ kind: QueryKind; confidence: number }>
 }
+
+/**
+ * The structured POI intent — the pluggable boundary between detection (kind classifier), the executors (Plan 3's
+ * poi.db SQL compiler), and the export formats (OverpassQL emitter). Category ids are `@mailwoman/poi-taxonomy` ids
+ * carried as plain strings — core stays lexicon-free; the branded type lives with the data package. Spec §3.2:
+ * docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
+ */
+export interface POIIntent {
+	subject:
+		| { kind: "category"; categoryID: string; matched: string }
+		| { kind: "brand"; name: string; wikidata?: string; matched: string }
+		| { kind: "name"; text: string }
+	/** Spatial anchor: the split-off remainder text and its parse, when the query carried one. */
+	anchor?: {
+		text?: string
+		tree?: AddressTree
+		/** Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved. */
+		biasPoint?: { latitude: number; longitude: number }
+		radiusM?: number
+	}
+	limit?: number
+}
+
+/**
+ * Outcome of the poi-intent stage. `abstain` = the query is POI-shaped but unanswerable as asked (e.g. no executor
+ * wired for a build-local-only category) — surfaces map it to their native empty-result envelope instead of a mangled
+ * parse.
+ */
+export type POIIntentOutcome = { type: "intent"; intent: POIIntent } | { type: "abstain"; reason: string }
 
 /**
  * Stage 2.7 phrase grouper output. Coarse phrase-shape hypothesis attached to a `Section` (sub-Span of the tokenized
@@ -247,6 +277,13 @@ export interface RuntimePipelineStages {
 		posterior?: Record<string, number>
 	}
 	/**
+	 * POI intent stage (spec §3.1). Runs ONLY when the kind classifier emitted `poi_query`. Returns the extracted intent,
+	 * an abstain, or `null` to fall through to the full pipeline (the mis-detection safety valve — a `poi_query` kind
+	 * with no extractable subject parses normally). Absent by default; wired by `createRuntimePipeline({ poiQueryKind:
+	 * true })`.
+	 */
+	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>
+	/**
 	 * Stage 2.7 phrase grouper. Emits coherent input-unit proposals consumed by Stage 3 (as conditioning) and Stage 5 (as
 	 * boundary candidates). Hard dep in v0.5.0; pre-v0.5.0 callers run with no grouper and the result `phraseProposals`
 	 * field is empty.
@@ -285,7 +322,9 @@ export interface PipelineResult {
 	 */
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
+	/** Present only when the poi-intent stage produced an outcome (path === "poi"). */
+	poiIntent?: POIIntentOutcome
 	timing: PipelineTiming
-	/** Which path the coordinator took. `"fast-path"` skipped stages 3-5. */
-	path: "fast-path" | "full"
+	/** Which path the coordinator took. `"fast-path"` skipped stages 3-5; `"poi"` took the intent branch. */
+	path: "fast-path" | "full" | "poi"
 }

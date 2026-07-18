@@ -13,6 +13,7 @@
  *   runner-ups.
  */
 
+import { createScorePOIQuery, type POIPhraseLookup } from "./poi.ts"
 import {
 	scoreIntersection,
 	scoreLandmark,
@@ -71,4 +72,49 @@ export async function classifyKind(
 	_locale?: LocaleHint
 ): Promise<QueryKindResult> {
 	return classifyKindSync(input, shape)
+}
+
+/** Options for {@link createKindClassifier}. */
+export interface KindClassifierOpts {
+	/**
+	 * POI phrase lexicon (spec §3.1). When present, a `poi_query` scorer joins the rule set — injected, never imported,
+	 * so this package stays dictionary-free. Absent → the returned classifier is behaviorally identical to
+	 * {@link classifyKind}.
+	 */
+	poiLexicon?: POIPhraseLookup
+}
+
+/**
+ * Build a kind classifier. Without opts this is exactly the default {@link classifyKind}; with a `poiLexicon` it
+ * additionally scores `poi_query` and merges it into the ranked result.
+ */
+export function createKindClassifier(
+	opts: KindClassifierOpts = {}
+): (input: NormalizedInputLite, shape: QueryShapeLike, locale?: LocaleHint) => Promise<QueryKindResult> {
+	const { poiLexicon } = opts
+
+	if (!poiLexicon) return classifyKind
+
+	return async (input, shape, locale): Promise<QueryKindResult> => {
+		const base = classifyKindSync(input, shape)
+		const poiConfidence = createScorePOIQuery(poiLexicon, locale?.locale)(input, shape)
+
+		if (poiConfidence <= 0) return base
+
+		if (poiConfidence > base.confidence) {
+			return {
+				kind: "poi_query",
+				confidence: poiConfidence,
+				alternatives: [{ kind: base.kind, confidence: base.confidence }, ...base.alternatives],
+			}
+		}
+
+		// The literal needs the contextual element type — a bare array literal widens `kind` to string.
+		const poiAlternative: { kind: QueryKind; confidence: number } = { kind: "poi_query", confidence: poiConfidence }
+
+		return {
+			...base,
+			alternatives: [...base.alternatives, poiAlternative].sort((a, b) => b.confidence - a.confidence),
+		}
+	}
 }

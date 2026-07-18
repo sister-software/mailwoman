@@ -20,7 +20,7 @@ import {
 	type PipelineResult,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
-import { classifyKind as defaultClassifyKind } from "@mailwoman/kind-classifier"
+import { classifyKind as defaultClassifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
@@ -31,6 +31,7 @@ import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
 import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
 import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
+import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
@@ -107,6 +108,14 @@ export interface CreateRuntimePipelineOpts {
 	 * - `false` → disabled (no rerank).
 	 */
 	streetEvidence?: StreetLocalityEvidence | false
+	/**
+	 * POI-query detection + intent extraction (spec §3.1, exotic-POI arc plan 2). Default-OFF — see the runtime-flag
+	 * register. When true: the kind classifier gains the poi-taxonomy lexicon (`poi_query` kind) and the poi-intent stage
+	 * is wired; the anchor remainder parses through this same pipeline with the poi stage OFF (recursion guard). When
+	 * unset/false the pipeline is byte-identical to pre-flag builds. An explicit `classifyKind` override wins over the
+	 * poi-aware default.
+	 */
+	poiQueryKind?: boolean
 }
 
 /**
@@ -150,7 +159,13 @@ export function createRuntimePipeline(
 		normalize,
 		computeQueryShape,
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
-		classifyKind: opts.classifyKind ?? defaultClassifyKind,
+		// POI arc (default-OFF). The poi-aware classifier only exists behind the flag; an explicit
+		// classifyKind override always wins. The anchor re-parse runs THIS pipeline minus the poi
+		// stage: same stages object, but runPipeline never takes the poi branch because
+		// anchorStages.poiIntent is absent and anchorStages.classifyKind is the default.
+		classifyKind:
+			opts.classifyKind ??
+			(opts.poiQueryKind ? createKindClassifier({ poiLexicon: poiTaxonomyLookup }) : defaultClassifyKind),
 		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper. Hard dep in v0.5.0 —
 		// not an opt-in shim. The plan doc framed Stage 2.7 as backward-compatible-opt-in for the
 		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
@@ -169,6 +184,18 @@ export function createRuntimePipeline(
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale: opts.detectLocale ?? defaultDetectLocale,
+	}
+
+	if (opts.poiQueryKind) {
+		stages.poiIntent = createPOIIntentStage({
+			lookup: poiTaxonomyLookup,
+			// Inline spread, evaluated at CALL time: the factory's lazy stages (placeCountry,
+			// streetEvidence) mutate `stages` on first run, and this form always sees the final
+			// wiring. classifyKind reverts to the default (no poi lexicon) and poiIntent is
+			// stripped — the recursion guard.
+			parseAnchor: (text, runOpts) =>
+				runPipeline(text, { ...stages, classifyKind: defaultClassifyKind, poiIntent: undefined }, runOpts),
+		})
 	}
 
 	// Default-on lazy wiring: when the caller neither supplied a placeCountry fn nor disabled it

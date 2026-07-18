@@ -342,6 +342,36 @@ export async function runPipeline(
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
 
+	// POI branch (spec §3.1). Only reachable when a poi-aware kind classifier was wired (the
+	// default classifier never emits `poi_query`), and only acts when the stage is present —
+	// both absent by default, so the flag-off pipeline is byte-identical by construction. A
+	// `null` outcome falls through to the full pipeline: a poi_query kind with no extractable
+	// subject is a mis-detection, and the address path is the safe interpretation.
+	if (kind.kind === "poi_query" && stages.poiIntent) {
+		throwIfAborted(opts)
+		const tPoi = performance.now()
+		const poiOutcome = await stages.poiIntent(normalized, locale, effectiveOpts)
+		timing["poi-intent"] = performance.now() - tPoi
+
+		if (poiOutcome) {
+			const emptyTree: AddressTree = { raw: normalized.normalized, roots: [] }
+			const tree = poiOutcome.type === "intent" ? (poiOutcome.intent.anchor?.tree ?? emptyTree) : emptyTree
+
+			return {
+				input: raw,
+				normalized,
+				queryShape,
+				locale,
+				kind,
+				phraseProposals: [],
+				tree,
+				poiIntent: poiOutcome,
+				timing,
+				path: "poi",
+			}
+		}
+	}
+
 	// Fast-path: trivial inputs short-circuit stages 3-5. The fast-path tree is built from
 	// QueryShape's format hits + kind alone — useful even without a wired resolver (a consumer
 	// who just wants the parsed structure for a bare postcode shouldn't be forced to pay for the

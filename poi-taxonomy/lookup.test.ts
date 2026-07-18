@@ -52,6 +52,19 @@ describe("taxonomy integrity", () => {
 			expect(getPOICategory(category.id)).toBeDefined()
 		}
 	})
+
+	it("every category carries a well-formed osmTag", () => {
+		for (const category of getAllCategories()) {
+			expect(category.osmTag, `osmTag missing on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
+		}
+	})
+})
+
+describe("lookup without a locale", () => {
+	it("hides locale-gated synonyms and keeps ungated ones", () => {
+		expect(lookupPOICategory("chemist")).toEqual([])
+		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1.0)
+	})
 })
 
 describe("taxonomy integrity — malformed table", () => {

@@ -4715,7 +4715,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/poi-taxonomy@workspace:poi-taxonomy":
+"@mailwoman/poi-taxonomy@workspace:*, @mailwoman/poi-taxonomy@workspace:poi-taxonomy":
   version: 0.0.0-use.local
   resolution: "@mailwoman/poi-taxonomy@workspace:poi-taxonomy"
   languageName: unknown
@@ -15628,6 +15628,7 @@ __metadata:
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/osm": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
+    "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
