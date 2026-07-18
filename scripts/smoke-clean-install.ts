@@ -39,6 +39,12 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/core": "core",
 	"@mailwoman/spatial": "spatial",
 	"@mailwoman/resolver": "resolver",
+	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
+	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module
+	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0 (2026-07-18
+	// — found while adding @mailwoman/mcp to this closure; ERR_PACKAGE_PATH_NOT_EXPORTED on './poi-lookup',
+	// reproduced with mcp absent too, so this gap predates Task 6 and was simply uncaught until now).
+	"@mailwoman/resolver-wof-sqlite": "resolver-wof-sqlite",
 	"@mailwoman/ban": "ban",
 	"@mailwoman/codex": "codex",
 	"@mailwoman/poi-taxonomy": "poi-taxonomy",
@@ -65,6 +71,7 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/libpostal": "libpostal",
 	"@mailwoman/photon": "photon",
 	"@mailwoman/nominatim": "nominatim",
+	"@mailwoman/mcp": "mcp",
 }
 
 // Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap).
@@ -78,6 +85,7 @@ const IMPORT_CHECK = [
 	"@mailwoman/libpostal",
 	"@mailwoman/photon",
 	"@mailwoman/nominatim",
+	"@mailwoman/mcp",
 ]
 
 // Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep

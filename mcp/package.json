@@ -1,0 +1,47 @@
+{
+	"name": "@mailwoman/mcp",
+	"version": "7.1.0",
+	"description": "MCP server — mailwoman's spatial toolset for agents (parse, geocode, poi_search, overpass_export, layer_manifest).",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "mcp"
+	},
+	"bin": {
+		"mailwoman-mcp": "./out/cli.js"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": {
+				"types": "./out/index.d.ts",
+				"default": "./out/index.js"
+			}
+		},
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/poi-taxonomy": "workspace:*",
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"mailwoman": "workspace:*",
+		"zod": "^4.4.3"
+	}
+}

@@ -82,6 +82,11 @@
 			"node": "./test-kit/index.ts",
 			"default": "./out/test-kit/index.js",
 			"types": "./out/test-kit/index.d.ts"
+		},
+		"./poi-overpass": {
+			"node": "./poi-overpass.ts",
+			"default": "./out/poi-overpass.js",
+			"types": "./out/poi-overpass.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -118,6 +123,10 @@
 			"./test-kit": {
 				"types": "./out/test-kit/index.d.ts",
 				"default": "./out/test-kit/index.js"
+			},
+			"./poi-overpass": {
+				"types": "./out/poi-overpass.d.ts",
+				"default": "./out/poi-overpass.js"
 			}
 		},
 		"access": "public"
