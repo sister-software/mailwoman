@@ -18,6 +18,8 @@ import {
 	runPipeline,
 	type PipelineOpts,
 	type PipelineResult,
+	type POIIntent,
+	type POIIntentOutcome,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
 import { classifyKind as defaultClassifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
@@ -25,12 +27,14 @@ import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
+import { getPOICategory, requiresBuildLocalLayer } from "@mailwoman/poi-taxonomy"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
 import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
 import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
+import { createPOIExecutor } from "./poi-executor.ts"
 import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
 
 export interface CreateRuntimePipelineOpts {
@@ -109,13 +113,19 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	streetEvidence?: StreetLocalityEvidence | false
 	/**
-	 * POI-query detection + intent extraction (spec §3.1, exotic-POI arc plan 2). Default-OFF — see the runtime-flag
-	 * register. When true: the kind classifier gains the poi-taxonomy lexicon (`poi_query` kind) and the poi-intent stage
-	 * is wired; the anchor remainder parses through this same pipeline with the poi stage OFF (recursion guard). When
+	 * POI-query detection + intent extraction (spec §3.1, exotic-POI arc plans 2 + 4). Default-OFF — see the runtime-flag
+	 * register. When set: the kind classifier gains the poi-taxonomy lexicon (`poi_query` kind), the poi-intent stage is
+	 * wired, and the anchor remainder parses through this same pipeline with the poi stage OFF (recursion guard). When
 	 * unset/false the pipeline is byte-identical to pre-flag builds. An explicit `classifyKind` override wins over the
 	 * poi-aware default.
+	 *
+	 * - `true` — intent-only mode: the stage extracts the intent but never executes it (today's Plan-2 behavior), EXCEPT
+	 *   the build-local abstain still fires (`requires_build_local_layer` needs no db — see `poi-executor.ts`).
+	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily on the first pipeline call
+	 *   (mirrors the {@link placeCountry} lazy-load pattern so this factory stays synchronous) and wired into the
+	 *   executor, so a matched intent comes back with `results` attached (or an `anchor_required` abstain).
 	 */
-	poiQueryKind?: boolean
+	poiQueryKind?: boolean | { poiDatabasePath?: string }
 }
 
 /**
@@ -186,6 +196,23 @@ export function createRuntimePipeline(
 		detectLocale: opts.detectLocale ?? defaultDetectLocale,
 	}
 
+	// Build-local abstain (`requires_build_local_layer`) needs no db, so the executor is wired in BOTH
+	// `poiQueryKind` modes — the poi-taxonomy touch (the one lexicon-aware bit) happens ONLY here in the
+	// wiring, never inside `poi-executor.ts` (it stays injectable/pure).
+	const requiresBuildLocal = (categoryID: string): boolean => {
+		const category = getPOICategory(categoryID)
+
+		return category ? requiresBuildLocalLayer(category) : false
+	}
+
+	// `poiQueryKind: true` → intent-only executor (lookup undefined, build-local abstain still fires).
+	// `poiQueryKind: { poiDatabasePath }` → upgraded below, on the first call, once the lookup resolves.
+	// Reassigned in place (not a fresh `createPOIIntentStage` deps object) so the stage — wired once,
+	// synchronously, right below — always dispatches through the latest executor.
+	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | undefined = opts.poiQueryKind
+		? createPOIExecutor({ lookup: undefined, requiresBuildLocal })
+		: undefined
+
 	if (opts.poiQueryKind) {
 		stages.poiIntent = createPOIIntentStage({
 			lookup: poiTaxonomyLookup,
@@ -195,6 +222,10 @@ export function createRuntimePipeline(
 			// stripped — the recursion guard.
 			parseAnchor: (text, runOpts) =>
 				runPipeline(text, { ...stages, classifyKind: defaultClassifyKind, poiIntent: undefined }, runOpts),
+			// Indirection for the same reason as `parseAnchor`'s spread above: `poiExecute` may be
+			// upgraded (undefined lookup → a real `POILookup`) on the first pipeline call, after this
+			// stage object is already built.
+			execute: (intent) => poiExecute!(intent),
 		})
 	}
 
@@ -210,6 +241,13 @@ export function createRuntimePipeline(
 	// wrapped the classifier above.
 	let streetEvidenceResolved = opts.streetEvidence !== undefined
 
+	// Object-form `poiQueryKind` additionally executes against a real `POILookup`. Resolved lazily
+	// (like placeCountry/streetEvidence above) so the factory stays synchronous — opening a sqlite
+	// handle is I/O. Boolean `true` (or an object with no `poiDatabasePath`) has nothing to resolve:
+	// `poiExecute` stays the no-lookup executor built above.
+	const poiDatabasePath = typeof opts.poiQueryKind === "object" ? opts.poiQueryKind.poiDatabasePath : undefined
+	let poiLookupResolved = !poiDatabasePath
+
 	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
 		if (!placeCountryResolved) {
 			placeCountryResolved = true
@@ -217,6 +255,19 @@ export function createRuntimePipeline(
 
 			if (fn) {
 				stages.placeCountry = fn
+			}
+		}
+
+		if (!poiLookupResolved && poiDatabasePath) {
+			poiLookupResolved = true
+
+			try {
+				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
+
+				poiExecute = createPOIExecutor({ lookup: new POILookup({ databasePath: poiDatabasePath }), requiresBuildLocal })
+			} catch {
+				// Missing/unreadable poi.db → degrade to the intent-only executor already wired above
+				// (build-local abstain still works; everything else falls back to bare intent).
 			}
 		}
 

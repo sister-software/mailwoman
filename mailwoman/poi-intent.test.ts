@@ -91,9 +91,14 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.kind.kind).not.toBe("poi_query")
 	})
 
+	// Task 4 (executor): swapped from "drinking fountain" to "hospital" — `drinking_water` is a
+	// build-local (`mailwoman-infra`-sourced) category, and now that the executor is wired for every
+	// `poiQueryKind` mode, an anchor with no resolvable center is orthogonal to the build-local abstain
+	// check (see the "bare build-local-only category" test below). `hospital` (`overture`-sourced) keeps
+	// this test's original purpose intact: intent-only passthrough, end-to-end, with a parsed anchor.
 	it("ON: a category phrase takes the poi path end-to-end", async () => {
 		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
-		const result = await pipeline("drinking fountain near Springfield")
+		const result = await pipeline("hospital near Springfield")
 
 		expect(result.path).toBe("poi")
 		expect(result.poiIntent?.type).toBe("intent")
@@ -102,8 +107,8 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		expect(result.poiIntent.intent.subject).toEqual({
 			kind: "category",
-			categoryID: "drinking_water",
-			matched: "drinking fountain",
+			categoryID: "hospital",
+			matched: "hospital",
 		})
 		expect(result.poiIntent.intent.anchor?.text).toBe("Springfield")
 	})
@@ -114,5 +119,17 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		expect(result.path).not.toBe("poi")
 		expect("poiIntent" in result).toBe(false)
+	})
+
+	// Task 4 (executor): a bare-infra category with no local layer wired abstains, even in
+	// intent-only mode (`poiQueryKind: true`, no db) — the build-local check needs no lookup.
+	// CHANGED from Plan 2: this used to be intent-only (a bare `{ type: "intent", intent }`, no
+	// abstain check at all); the executor now runs for every `poiQueryKind` mode.
+	it("ON: a bare build-local-only category (no local layer, no db) abstains", async () => {
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const result = await pipeline("fire hydrant")
+
+		expect(result.path).toBe("poi")
+		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 })

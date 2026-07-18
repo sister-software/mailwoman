@@ -26,7 +26,11 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
 export interface PipelineOpts {
 	locale?: LocaleTag
 	userLocation?: UserLocation
-	/** Disable fast-path shortcuts; always run the full pipeline. */
+	/**
+	 * Disable fast-path shortcuts; always run the full pipeline. Does NOT bypass the poi_query branch — that's a routing
+	 * decision (the kind classifier + `stages.poiIntent`), not a fast-path shortcut, so a `poi_query`-classified input
+	 * still takes the poi branch regardless of this flag.
+	 */
 	forceFullPipeline?: boolean
 	/**
 	 * The joint-reconcile path (Stage 5 beam search). Promoted to default by Route A Phase II (#427), then RETIRED AS
@@ -140,12 +144,26 @@ export interface POIIntent {
 	limit?: number
 }
 
+/** One executed POI search result (spec §3.4; produced by the executor, absent pre-execution). */
+export interface POIResult {
+	name: string | null
+	categoryID: string | null
+	brandWikidata: string | null
+	latitude: number
+	longitude: number
+	country: string
+	confidence: number
+	distanceM?: number
+}
+
 /**
  * Outcome of the poi-intent stage. `abstain` = the query is POI-shaped but unanswerable as asked (e.g. no executor
  * wired for a build-local-only category) — surfaces map it to their native empty-result envelope instead of a mangled
  * parse.
  */
-export type POIIntentOutcome = { type: "intent"; intent: POIIntent } | { type: "abstain"; reason: string }
+export type POIIntentOutcome =
+	| { type: "intent"; intent: POIIntent; results?: POIResult[] }
+	| { type: "abstain"; reason: string }
 
 /**
  * Stage 2.7 phrase grouper output. Coarse phrase-shape hypothesis attached to a `Section` (sub-Span of the tokenized
