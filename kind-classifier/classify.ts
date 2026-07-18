@@ -95,7 +95,7 @@ export function createKindClassifier(
 
 	if (!poiLexicon) return classifyKind
 
-	return async (input, shape, locale) => {
+	return async (input, shape, locale): Promise<QueryKindResult> => {
 		const base = classifyKindSync(input, shape)
 		const poiConfidence = createScorePOIQuery(poiLexicon, locale?.locale)(input, shape)
 
@@ -109,11 +109,12 @@ export function createKindClassifier(
 			}
 		}
 
+		// The literal needs the contextual element type — a bare array literal widens `kind` to string.
+		const poiAlternative: { kind: QueryKind; confidence: number } = { kind: "poi_query", confidence: poiConfidence }
+
 		return {
 			...base,
-			alternatives: [...base.alternatives, { kind: "poi_query", confidence: poiConfidence }].sort(
-				(a, b) => b.confidence - a.confidence
-			),
+			alternatives: [...base.alternatives, poiAlternative].sort((a, b) => b.confidence - a.confidence),
 		}
 	}
 }
