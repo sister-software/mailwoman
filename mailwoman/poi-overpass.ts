@@ -7,6 +7,10 @@
  *   Overpass is not a serving backend — this exists so users who live in Overpass-turbo can take
  *   a mailwoman intent there. The category→OSM-tag mapping is the caller's input (from
  *   `@mailwoman/poi-taxonomy`'s `osmTag`); the emitter is a pure string builder.
+ *
+ *   Two escaping contexts: the category branch and the `area["name"="…"]` anchor scope are string
+ *   EQUALITY, so `escapeQL` alone is correct. The brand/name branches interpolate into a `~"…"`
+ *   REGEX context, so they need `escapeQLRegex` to neutralize regex metacharacters first.
  */
 
 import type { POIIntent } from "@mailwoman/core/pipeline"
@@ -14,6 +18,11 @@ import type { POIIntent } from "@mailwoman/core/pipeline"
 /** Escape a value for an OverpassQL double-quoted string. */
 function escapeQL(value: string): string {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')
+}
+
+/** Escape regex metacharacters — the `~` operator's value is a regex, not a literal. */
+function escapeQLRegex(value: string): string {
+	return escapeQL(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 }
 
 export interface EmitOverpassOpts {
@@ -36,15 +45,19 @@ export function emitOverpassQL(intent: POIIntent, opts: EmitOverpassOpts = {}): 
 			if (!opts.osmTag) {
 				throw new Error(`emitOverpassQL: category subject ${intent.subject.categoryID} requires opts.osmTag`)
 			}
-			const [key, value] = opts.osmTag.split("=")
-			filter = `nwr["${escapeQL(key ?? "")}"="${escapeQL(value ?? "")}"]`
+			const parts = opts.osmTag.split("=")
+
+			if (parts.length !== 2 || !parts[0] || !parts[1]) {
+				throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(opts.osmTag)} — expected key=value`)
+			}
+			filter = `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`
 			break
 		}
 		case "brand":
-			filter = `nwr["name"~"${escapeQL(intent.subject.name)}",i]`
+			filter = `nwr["name"~"${escapeQLRegex(intent.subject.name)}",i]`
 			break
 		case "name":
-			filter = `nwr["name"~"${escapeQL(intent.subject.text)}",i]`
+			filter = `nwr["name"~"${escapeQLRegex(intent.subject.text)}",i]`
 			break
 	}
 

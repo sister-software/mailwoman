@@ -53,4 +53,16 @@ describe("emitOverpassQL", () => {
 	it("throws on a category subject with no osmTag provided", () => {
 		expect(() => emitOverpassQL(category())).toThrow(/osmTag/)
 	})
+
+	it("escapes regex metacharacters in name subjects for the ~ context", () => {
+		const ql = emitOverpassQL({ subject: { kind: "name", text: "St. Mary's Hospital (Main)" } })
+		expect(ql).toContain(String.raw`nwr["name"~"St\\. Mary's Hospital \\(Main\\)",i]`)
+	})
+
+	it("throws on a malformed osmTag", () => {
+		const intent: POIIntent = { subject: { kind: "category", categoryID: "x", matched: "x" } }
+		expect(() => emitOverpassQL(intent, { osmTag: "amenity" })).toThrow(/malformed osmTag/)
+		expect(() => emitOverpassQL(intent, { osmTag: "a=b=c" })).toThrow(/malformed osmTag/)
+		expect(() => emitOverpassQL(intent, { osmTag: "=value" })).toThrow(/malformed osmTag/)
+	})
 })
