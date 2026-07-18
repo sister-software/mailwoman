@@ -35,4 +35,9 @@ export const allowedOrphans: OrphanAllowance[] = [
 		reason:
 			"Deliberately un-navved conference proposal — shared by URL, kept out of every sidebar on purpose (named as such in sidebars.ts's startHere comment).",
 	},
+	{
+		id: "plan/migrate-v7-rules-excision",
+		reason:
+			"v7.0.0 rules-parser migration guide — reachable by URL (linked from the v7.0.0 releases row) and kept out of the sidebar on purpose: it's a point-in-time upgrade note for consumers pinned to @6.x, not evergreen navigation.",
+	},
 ]

@@ -92,6 +92,34 @@ describe("readTuples (OA CSV parse)", () => {
 		])
 	})
 
+	it("districtAsLocality (NZ) maps DISTRICT→locality, CITY→dependent_locality; falls back when DISTRICT empty", async () => {
+		const file = join(tmp(), "part.csv")
+		writeFileSync(
+			file,
+			[
+				OA_HEADER,
+				// NZ shape: CITY = suburb (Birkenhead), DISTRICT = city (Auckland). NZ OA carries no postcode.
+				"174.7,-36.8,31,Rawene Road,,Birkenhead,Auckland,,,id1,hash1",
+				// Empty DISTRICT (~18% of NZ rows) → CITY becomes the locality, no dependent_locality.
+				"174.4,-36.6,26A,Henley Road,,Kaukapakapa,,,,id2,hash2",
+			].join("\n") + "\n"
+		)
+
+		const tuples = await readTuples({ path: file, districtAsLocality: true }, () => 0)
+
+		expect(tuples).toEqual([
+			{
+				house_number: "31",
+				street: "Rawene Road",
+				locality: "Auckland",
+				dependent_locality: "Birkenhead",
+				region: "",
+				postcode: "",
+			},
+			{ house_number: "26A", street: "Henley Road", locality: "Kaukapakapa", region: "", postcode: "" },
+		])
+	})
+
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
 		const file = join(tmp(), "part.csv")
 		writeFileSync(

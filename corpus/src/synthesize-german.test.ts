@@ -129,6 +129,49 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 	})
 })
 
+describe("NZ dependent_locality (suburb below city)", () => {
+	// NZ envelopes carry BOTH a suburb and a city: "31 Rawene Road, Birkenhead, Auckland". The OA DISTRICT
+	// column holds the city (Auckland), CITY the suburb (Birkenhead) — see `readTuples` districtAsLocality.
+	const AUCKLAND: LocaleBaseTuple = {
+		house_number: "31",
+		street: "Rawene Road",
+		dependent_locality: "Birkenhead",
+		locality: "Auckland",
+	}
+
+	it("renders the suburb BEFORE the city, both present, and tags en-NZ", () => {
+		const row = synthesizeLocaleRow(AUCKLAND, "NZ", { random: keepAll })!
+		expect(row).not.toBeNull()
+		expect(row.locale).toBe("en-NZ")
+		expect(row.raw).toContain("Birkenhead, Auckland") // suburb, then city
+		expect(row.raw.indexOf("Birkenhead")).toBeLessThan(row.raw.indexOf("Auckland"))
+		expect(row.components.dependent_locality).toBe("Birkenhead")
+		expect(row.components.locality).toBe("Auckland")
+	})
+
+	it("aligns to BIO with dependent_locality between street and locality", () => {
+		const row = synthesizeLocaleRow(AUCKLAND, "NZ", { random: keepAll })!
+		const canonical = { ...row, country: "NZ", source: "synth-nz", source_id: "synth-nz:test" } as CanonicalRow
+		const aligned = alignRow(canonical)
+		expect(aligned.kind).toBe("labeled")
+		const labels = aligned.row!.labels
+		// Exact tag match after stripping the B-/I- prefix — "dependent_locality" contains "locality" as a
+		// substring, so a naive `.includes` would conflate the two.
+		const firstOf = (tag: string) => labels.findIndex((l) => l.replace(/^[BI]-/, "") === tag)
+		expect(firstOf("dependent_locality")).toBeGreaterThan(firstOf("street"))
+		expect(firstOf("locality")).toBeGreaterThan(firstOf("dependent_locality"))
+	})
+
+	it("omits dependent_locality when absent (the ~18% of NZ rows with no district)", () => {
+		const noSuburb: LocaleBaseTuple = { house_number: "26A", street: "Henley Road", locality: "Kaukapakapa" }
+		const row = synthesizeLocaleRow(noSuburb, "NZ", { random: keepAll })!
+		expect(row).not.toBeNull()
+		expect(row.components.dependent_locality).toBeUndefined()
+		expect(row.components.locality).toBe("Kaukapakapa")
+		expect(row.raw).toContain("Kaukapakapa")
+	})
+})
+
 describe("NL postcode normalization", () => {
 	const NL: LocaleBaseTuple = {
 		house_number: "105",

@@ -30,6 +30,12 @@ export interface LocaleBaseTuple {
 	house_number?: string
 	street: string
 	locality: string
+	/**
+	 * A sub-locality that sits BELOW the locality (a suburb / district). NZ is the case that needs it: the OA DISTRICT
+	 * column holds the city (`Auckland`) and CITY holds the suburb (`Birkenhead`), so the real envelope carries both (`31
+	 * Rawene Road, Birkenhead, Auckland`). Rendered between street and locality in both orders when present.
+	 */
+	dependent_locality?: string
 	region?: string
 	postcode?: string
 }
@@ -86,6 +92,7 @@ const LOCALE_TAG: Record<string, string> = {
 	GB: "en-GB",
 	FR: "fr-FR",
 	US: "en-US",
+	NZ: "en-NZ",
 }
 
 /**
@@ -143,6 +150,13 @@ export function synthesizeLocaleRow(
 	if (!base.street || !base.locality) return null
 
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
+
+	// Sub-locality (suburb / district) sits between street and locality and renders in BOTH orders — it's part
+	// of the address body, not the admin-region tail that native order drops. NZ needs it (suburb + city both on
+	// the envelope). The tokenPresent gate below drops the row if the template didn't surface it verbatim.
+	if (base.dependent_locality) {
+		components.dependent_locality = base.dependent_locality
+	}
 
 	// ~80% keep the house number (the rest are street-only forms, also idiomatic).
 	if (base.house_number && random() < 0.8) {
