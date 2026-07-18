@@ -13,15 +13,15 @@
 
 **Golden 2pp gate** (`data/eval/golden/v0.1.2`, channels-on, v385 vs shipped v381, same run):
 
-| tag | v385 | shipped | Δ |
-| --- | --- | --- | --- |
-| exact-match | 24.2% (1105) | 24.2% (1104) | +1 row |
-| locality | 46.8 | 46.8 | flat |
-| region | 78.1 | 78.6 | −0.5 |
-| postcode | 97.3 | 97.3 | flat |
-| street | 15.3 | 15.3 | flat |
-| house_number | 96.9 | 96.7 | +0.2 |
-| **country** | **89.8** | **91.4** | **−1.6** |
+| tag          | v385         | shipped      | Δ        |
+| ------------ | ------------ | ------------ | -------- |
+| exact-match  | 24.2% (1105) | 24.2% (1104) | +1 row   |
+| locality     | 46.8         | 46.8         | flat     |
+| region       | 78.1         | 78.6         | −0.5     |
+| postcode     | 97.3         | 97.3         | flat     |
+| street       | 15.3         | 15.3         | flat     |
+| house_number | 96.9         | 96.7         | +0.2     |
+| **country**  | **89.8**     | **91.4**     | **−1.6** |
 
 No tag > 2pp down → **PASS**. The one nick is `country` **−1.6pp** (220 vs 224 / 245 — small-N; recovered from the 2k probe's −2.0). The #1104 country channel reacts to the new CA/MX surfaces. Sub-threshold and stated; the 4-row miss characterization (CA/MX-adjacent vs US/FR) is a tracked follow-up.
 

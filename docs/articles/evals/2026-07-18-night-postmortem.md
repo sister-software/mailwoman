@@ -1,6 +1,6 @@
 # Night postmortem — 2026-07-18 (v7 ship + Latin-locale expansion + v8 planning)
 
-_Drafted during the shift; living document. Operator handed the conn ~night; hourly cron `3a3d942a` fires at :13._
+_Drafted during the shift; finalized at hand-off. Window: ~01:30–11:55 UTC (2026-07-18). Cron `3a3d942a` cancelled at wrap._
 
 ## What shipped / landed
 
@@ -29,8 +29,9 @@ _Drafted during the shift; living document. Operator handed the conn ~night; hou
 **ROOT CAUSE (diagnosed, no-GPU) — the fix is now precise:** the CA/MX/BR shard rows carry **0% country labels** (verified: 0/456k CA/MX, 0/210k BR — Overture addresses are country-implicit, all bare street+locality+postcode). The country lexicon DOES include Canada/Mexico/Brazil (not the gap). So the mechanism is **country-emission dilution**: 666k country-token-less rows at `overture-latam` weight 6.0 teach the model that "no country present" is normal → it under-emits country → US/FR golden country recall drops. It scales with the country-less mass (−1.6 at 456k → −5.3 at 666k), which is why v7.1.0 (CA/MX) passes and v7.2 (+BR) fails on the same axis.
 
 **The fix (day-shift, cheap):** give the LATAM rows country-token exposure — an **international-order variant that appends the country** (`…, Canada` / `…, México` / `…, Brasil`) for a fraction of rows. This is exactly what the `locale` recipe's `intl-fraction` does (it's why DE/FR/etc. don't dilute country); the bare `overture` adapter lacks it. Add an intl-fraction to the overture adapter → rebuild the LATAM shard → retrain → country recovers, and BR (and larger LATAM) becomes a clean add. This ALSO makes v7.1.0's −1.6 a known, fixable nick (a v7.1.1 with country-bearing rows would zero it). (After BR the Overture Latin frontier is closed — Fable.)
+
 - **#1177 Phase-A dedup POC** (`poc/fr-fr-weights-overlay`, `3c339af7`): fr-fr resolves the shared en-us model instead of a 35.8MB copy; **md5-proven identical**; retires 36MB; **also fixes #1117** (fr-fr's stale link-dev-weights pin). Branch for operator review.
-- **v8 non-Latin de-risk — DATA PIPELINE FULLY GREEN** (`2026-07-18-v8-jp-phase0-alignment-derisk.md`): (a) alignment — 1,060 JP rows, 46 prefectures, 100% clean field→char-span, 0 collisions, NO segmenter needed (Fable's named biggest risk retired); (b) corpus-build — `alignRow` produces correct char-offset spans for JP kanji (rural + urban chōme), #555 doesn't bite kanji. **The JP corpus is buildable now.** KR NOT executable (no Overture-KR data) → **JP-first is the only non-Latin path.** Remaining v8 work is TRAINING-side: the built CharCNN is Latin-char-*word* shaped; JP needs a char-*level* encoder/loader/model rework + two schema decisions (address_levels→region/prefecture; `2-3-16` house_number vs sub_block-split) — a **day-shift design arc**, deliberately held for operator sign-off rather than rushed pre-handoff.
+- **v8 non-Latin de-risk — DATA PIPELINE FULLY GREEN** (`2026-07-18-v8-jp-phase0-alignment-derisk.md`): (a) alignment — 1,060 JP rows, 46 prefectures, 100% clean field→char-span, 0 collisions, NO segmenter needed (Fable's named biggest risk retired); (b) corpus-build — `alignRow` produces correct char-offset spans for JP kanji (rural + urban chōme), #555 doesn't bite kanji. **The JP corpus is buildable now.** KR NOT executable (no Overture-KR data) → **JP-first is the only non-Latin path.** Remaining v8 work is TRAINING-side: the built CharCNN is Latin-char-_word_ shaped; JP needs a char-_level_ encoder/loader/model rework + two schema decisions (address_levels→region/prefecture; `2-3-16` house_number vs sub_block-split) — a **day-shift design arc**, deliberately held for operator sign-off rather than rushed pre-handoff.
 
 ## Decisions made autonomously
 
