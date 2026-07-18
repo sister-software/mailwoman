@@ -132,4 +132,21 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.path).toBe("poi")
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
+
+	it("object form degrades to intent-only when the poi db is missing (no throw, no retry storm)", async () => {
+		const pipeline = createRuntimePipeline({
+			...HERMETIC,
+			poiQueryKind: { poiDatabasePath: "/nonexistent/never/poi.db" },
+		})
+		const first = await pipeline("hospital near Springfield")
+		expect(first.path).toBe("poi")
+		expect(first.poiIntent?.type).toBe("intent")
+
+		if (first.poiIntent?.type !== "intent") throw new Error("unreachable")
+
+		expect(first.poiIntent.results).toBeUndefined()
+		// Second call must not throw either (lazy resolve happens once; degrade is sticky).
+		const second = await pipeline("hospital near Springfield")
+		expect(second.poiIntent?.type).toBe("intent")
+	})
 })
