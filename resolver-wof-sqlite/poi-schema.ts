@@ -41,8 +41,24 @@ export interface POITable {
 	gers_id: string | null
 }
 
-/** Staging mirror (loader fills positionally; every column nullable except the coords). */
-export type POIStageTable = POITable
+/**
+ * Staging mirror — every column nullable except the coords (the loader fills positionally; the materialize SELECT
+ * enforces completeness).
+ */
+export interface POIStageTable {
+	h3_cell: number | null
+	category_id: number | null
+	neg_rank: number | null
+	rowid_key: number | null
+	name: string | null
+	name_key: string | null
+	brand_wikidata: string | null
+	latitude: number
+	longitude: number
+	country: string | null
+	confidence: number | null
+	gers_id: string | null
+}
 
 /** `(id → poi-taxonomy category id)` dictionary, e.g. `3 → "cafe"`. */
 export interface POICategoryCodeTable {

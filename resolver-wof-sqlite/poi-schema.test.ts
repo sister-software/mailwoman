@@ -31,7 +31,10 @@ describe("poi schema", () => {
 		const { rows } = await sql<{ sql: string }>`select sql from sqlite_master where name = 'poi'`.execute(kdb)
 		const ddl = rows[0]?.sql.toLowerCase() ?? ""
 		expect(ddl).toContain("without rowid")
-		expect(ddl.indexOf("h3_cell")).toBeLessThan(ddl.indexOf("category_id"))
+		const pkClause = ddl.slice(ddl.indexOf("primary key ("))
+		expect(pkClause).toMatch(
+			/primary key \(\s*"?h3_cell"?\s*,\s*"?category_id"?\s*,\s*"?neg_rank"?\s*,\s*"?rowid_key"?\s*\)/
+		)
 	})
 
 	it("stages + contract tables coexist and accept typed rows", async () => {
@@ -44,6 +47,8 @@ describe("poi schema", () => {
 			.values({
 				h3_cell: 1001,
 				category_id: 3,
+				neg_rank: 0.03,
+				rowid_key: 1,
 				brand_wikidata: "Q38076",
 				name: "McDonald's",
 				name_key: "mcdonalds",
@@ -56,6 +61,8 @@ describe("poi schema", () => {
 			.execute()
 		const row = await kdb.selectFrom("poi_stage").selectAll().executeTakeFirstOrThrow()
 		expect(row.name).toBe("McDonald's")
+		expect(row.h3_cell).toBe(1001)
+		expect(row.confidence).toBe(0.93)
 	})
 
 	it("creates the FTS5 name index (raw DDL — Kysely cannot express virtual tables)", async () => {
