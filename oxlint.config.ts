@@ -20,6 +20,7 @@ const config = createOxlintConfig({
 	ignorePatterns: [
 		...DefaultIgnorePatterns,
 		".pi",
+		"**/scratchpad",
 		"docs/build",
 		"docs/.docusaurus",
 		// Python venv + egg-info under corpus-python/ (vendored JS we don't own).

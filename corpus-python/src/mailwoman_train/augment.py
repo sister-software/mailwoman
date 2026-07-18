@@ -360,6 +360,26 @@ def drop_separator_punct(row: dict, drop_chars: frozenset[str] = DROP_PUNCT) -> 
     }
 
 
+def upper_case_row(row: dict) -> dict | None:
+    """Return a copy of ``row`` with ``raw`` + ``tokens`` upper-cased; labels + char-offset spans pass
+    through UNCHANGED — the exact mirror of :func:`lowercase_row` (#829) for the ALL-CAPS direction.
+
+    Registry corpora (NPPES, Kartverket, state boards) arrive ALL-CAPS; the shipped pipeline handles
+    them with a pre-model case-normalize shim (#690). This augmentation is the punct-drop-pattern
+    (#1101) retirement path for that shim: teach the case in training so the shim can be deleted.
+
+    Returns ``None`` when upper-casing is NOT length-preserving char-by-char (German eszett 'ß' → "SS")
+    — yielding then would desync the spans, so we skip that row instead, mirroring lowercase_row.
+    """
+    raw: str = row["raw"]
+    if any(len(c.upper()) != 1 for c in raw):
+        return None
+    upper = raw.upper()
+    if upper == raw:
+        return None
+    return {**row, "raw": upper, "tokens": [t.upper() for t in row["tokens"]]}
+
+
 def augment_row(
     row: dict,
     rng: random.Random,
@@ -368,6 +388,7 @@ def augment_row(
     glue_prob: float = 0.0,
     case_prob: float = 0.0,
     punct_drop_prob: float = 0.0,
+    upper_case_prob: float = 0.0,
 ) -> Iterator[dict]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -429,3 +450,10 @@ def augment_row(
         dropped = drop_separator_punct(row)
         if dropped is not None:
             yield dropped
+
+    # All-caps augmentation (#690 retirement path): an upper-cased copy so the model learns registry
+    # casing natively. Same prob-guard discipline as punct-drop (rng stream bit-identical at 0).
+    if upper_case_prob > 0 and rng.random() < upper_case_prob:
+        uppered = upper_case_row(row)
+        if uppered is not None:
+            yield uppered

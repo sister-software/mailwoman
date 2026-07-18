@@ -19,7 +19,6 @@
 		{ "path": "../api-kit" },
 		{ "path": "../core" },
 		{ "path": "../resolver" },
-		{ "path": "../classifiers" },
 		{ "path": "../corpus" },
 		{ "path": "../kind-classifier" },
 		{ "path": "../locale-gate" },

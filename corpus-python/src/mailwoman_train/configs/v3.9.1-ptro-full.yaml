@@ -1,0 +1,209 @@
+# === v3.9.0-ptro-probe — B1 step 3 (plan #1134): the PT/RO diacritic tokenizer splice. 8k SHIP CANDIDATE (2k probe PASSED: ro 0.800->1.000, fr guard +0.022, BR held, goldens noise). ===
+#
+# THE ONE VARIABLE vs the SHIPPED v381 (6.5.0): tokenizer v0.9.0-multisplice -> v0.12.0-ptro-splice
+# (+2,310 PT/RO diacritic pieces from 35k WOF PT+RO surfaces; English identity VERIFIED at splice time)
+# + init_from /data/models/ptro-expanded (v381 step-8000 FVT mean-init to 75,453). Same recipe otherwise
+# (the no-fragment tweak shard + punct-drop augmentation v381 shipped with).
+#
+# WHY. Night-2 measured the parity accent class (15% of street fails) with RO comma-below (s,/t,) at
+# BYTE-FALLBACK and PT/RO words shattering at fertility 4-7 (Constanta -> Cons tan <0xC8> <0x9B> a).
+# Letter-family splices shipped clean three times (v5.1.0 bsplice CZ/PL, v5.2.0 nsplice Nordic,
+# v5.9.0 fr-nsplice); the v5.9.0 lesson applies — a TRAINING-FREE splice regressed FR streets, so the
+# spliced pieces get gradient via this fine-tune, never shipped mean-init-only. The CLOSED numsplice
+# verdict does NOT apply: that was the shared numeric manifold; letters are disjoint codepoints.
+# NOTE: RO is NOT in country_weights (never trained) — the splice gives RO tokenizer coverage; the
+# model reads RO only via constituent composition + PT/shared-Romance morphology. Pre-registered as such.
+#
+# PRE-REGISTERED READ (2k, package-shaped int8 vs shipped v381 baselines):
+#   PRIMARY — parity PT/RO subset: street-tag surface exactness on the accent-class rows improves
+#     (fertility is fixed by construction; the question is whether the mean-init'd pieces decode right
+#     at 2k). Falsifier: if PT/RO rows do NOT move, the pieces need more gradient -> the 8k decides.
+#   GUARD — golden us/fr micro within noise of v381 (F1 comparison across tokenizers is INVALID for
+#     PT/RO rows by design; ENGLISH tokenization is byte-identical so us/fr comparisons hold).
+#   GUARD — boards: NO digit board bare-street-hn holds ~0.733; FR fragment OVERALL holds ~0.758.
+#   GUARD — 6 demo presets byte-identical; gauntlet PASS on the 8k candidate before any ship.
+#   #378 — vocab +3.2%; embedding +2310x384 int8 ~ +0.9MB artifact. Within SLO.
+#
+# NOT A SHIP. A PASS justifies the 8k. Promotion is the operator's act (autonomous shift: stage +
+# report, do not promote defaultVersion without the full gate battery green).
+# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.9.0-ptro-probe.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
+  tokenizer_dir: /data/models/tokenizer/v0.12.0-ptro-splice
+  max_length: 128
+  country_weights: # VERBATIM v2.4.1.
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    "NO": 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+    AU: 1.0
+  source_weights: # v3.1.0 weights + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 12.0
+    synth-nl-postcode: 6.0
+    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    synth-fragment: 6.0
+    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # bare-locality counter.
+    synth-fr-fragment: 12.0
+    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
+    synth-no-fragment: 12.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
+  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
+  # comma-drop INV (White House + FR Rue du Chevaleret). ONE new variable vs v373.
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+
+model: # VERBATIM v2.4.1.
+  hidden_size: 384
+  use_span_boundary_head: true
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
+  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  use_country_anchor: true
+  country_feature_dim: 2
+  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
+  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train: # Same-vocab init_from fine-tune off the SHIPPED v261 (fresh optimizer; --resume none on a fresh
+  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
+  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  output_dir: /data/output-v391-ptro-full-s42/checkpoints
+  seed: 42
+  init_from: /data/models/ptro-expanded
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.0e-5
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip_norm: 1.0
+  max_steps: 8000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v3.9.1-ptro-full-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

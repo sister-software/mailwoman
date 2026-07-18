@@ -372,6 +372,58 @@ def sync_src_727():
     secrets=[r2_secret],
     timeout=1200,
 )
+def sync_src_v3100():
+    """SOURCE-ONLY sync for v3.10.0-span-ship-probe (#727 stage-2 STEP 4, plan #1134): pull
+    `corpus-python/src/` from R2, clear pycache, and verify THIS launch's changes landed —
+    the P3 upper-case augment (b3d741bd) + the v3.10.0 config. The span-scorer files were verified
+    by sync_src_727_stage2 (phase 1) and persist, but re-assert the train.py param-group here too:
+    a stale train.py silently trains the head at 1e-5 and wastes the probe (the v3.0.0 lesson).
+    No corpus/tokenizer pull — v3.10.0 is corpus+tokenizer-VERBATIM v3.8.1 (v381), which persists."""
+    import shutil
+    import subprocess
+
+    print("Syncing corpus-python/src/ from R2 (container-side, v3.10.0)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+
+    src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    augment_src = open(f"{src_dir}/augment.py").read()
+    has_upper = "def upper_case_row" in augment_src
+    loader_src = open(f"{src_dir}/data_loader.py").read()
+    has_loader_thread = "augment_upper_case_prob" in loader_src
+    config_src = open(f"{src_dir}/config.py").read()
+    has_cfg = "augment_upper_case_prob" in config_src
+    has_yaml = os.path.isfile(f"{src_dir}/configs/v3.10.0-span-ship-probe.yaml")
+    train_src = open(f"{src_dir}/train.py").read()
+    has_param_groups = "span_head_learning_rate" in train_src
+    has_scorer = os.path.isfile(f"{src_dir}/span_scorer.py")
+    print(f"augment.upper_case_row:        {has_upper}")
+    print(f"data_loader threads upper:     {has_loader_thread}")
+    print(f"config.augment_upper_case:     {has_cfg}")
+    print(f"configs/v3.10.0 yaml:          {has_yaml}")
+    print(f"train.py span param group:     {has_param_groups}")
+    print(f"span_scorer.py present:        {has_scorer}")
+    if not all([has_upper, has_loader_thread, has_cfg, has_yaml, has_param_groups, has_scorer]):
+        raise RuntimeError("v3.10.0 sync verify FAILED — do not launch")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1200,
+)
 def sync_src_727_stage2():
     """SOURCE-ONLY sync (#727 STAGE 2, phase 1): pull `corpus-python/src/` from R2 → volume, clear the stale
     `__pycache__`, and verify the SEMI-MARKOV SPAN SCORER landed.
@@ -1952,6 +2004,21 @@ def export_onnx(
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
+    # #727 stage-2: a span-scorer model's ONNX carries a `span_scores` output, but the JS k-best
+    # decoder (neural/semi-markov-decode.ts, PR #1154) also needs the segment-transition table, which
+    # is DECODE-TIME data, not part of the graph. Write it as a sidecar next to model.onnx so the
+    # grade's oracle@k / seg@1 arc reads can consume it. Returns None (no file) for a span-less model,
+    # keeping the export byte-identical for every pre-#727 recipe.
+    import json as _json
+
+    from mailwoman_train.package_weights import export_semi_crf_transitions
+
+    transitions = export_semi_crf_transitions(model)
+    if transitions is not None:
+        sidecar = out_path.parent / "semi-crf-transitions.json"
+        sidecar.write_text(_json.dumps(transitions, indent=2) + "\n", encoding="utf-8")
+        print(f"span transitions sidecar: {sidecar}")
+
     vol.commit()
     print("Committed to volume.")
 
@@ -2617,6 +2684,37 @@ def mean_init_numsplice():
     print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
     print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
     print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def mean_init_ptro():
+    """B1 step-3 (plan #1134) — expand the SHIPPED v381 step-008000 checkpoint's token_embeddings from
+    v0.9.0-multisplice (73,143) to v0.12.0-ptro-splice (75,453 = +2,310 PT/RO diacritic pieces trained on
+    35k WOF PT+RO surfaces; RO comma-below chars were byte-fallback before). Letter-family FVT mean-init —
+    the bsplice/nsplice/fr-nsplice precedent, NOT the closed numeric-manifold numsplice. English identity
+    verified at splice time. Writes /data/models/ptro-expanded. Expect 73143 -> 75453."""
+    import os
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+
+    vol.reload()
+    out = Path(f"{VOL_MOUNT}/models/ptro-expanded")
+    old_v, new_v = mean_init_embeddings(
+        Path(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+        Path(f"{VOL_MOUNT}/models/tokenizer/v0.12.0-ptro-splice/tokenizer.model"),
+        out,
+    )
+    vol.commit()
+    print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
+    print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
 
 
 @app.function(

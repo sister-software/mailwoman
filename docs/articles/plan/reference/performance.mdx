@@ -6,7 +6,9 @@ Two levers suggest themselves for making a parser faster: batch the work, or run
 Neither one moves this system, and the reasons are invisible from the call site. This page is the
 measurements, so the next person who reaches for a batch path finds the receipts first.
 
-Measured 2026-07-16 against the shipped v6.3.0 model (`v264-country-softguard`, int8), 16-core box.
+Measured 2026-07-16 against the then-shipped v6.3.0 model (`v264-country-softguard`, int8), 16-core box.
+The numbers carry to the current 6.5.0: every release since has been weights-only on the same int8 graph
+shape, so throughput is unchanged (parse latency is graph-bound, not weights-bound).
 
 ## Where the time goes
 

@@ -4,19 +4,18 @@ Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus 
 `@mailwoman/*` runtime closure. That closure is declared in `.release-it.json` and **must stay in sync with
 the dependency graph** — if `mailwoman` (or any published package) gains a new `@mailwoman/*` runtime
 dependency, it has to join that list, or the published `mailwoman` won't install (its dep 404s on npm). As
-of 4.0.0 the set is 13 workspaces: `mailwoman` + `@mailwoman/{core, normalize, query-shape, kind-classifier,
-locale-gate, phrase-grouper, codex, classifiers, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
+of v7.0.0 the set is 12 workspaces: `mailwoman` + `@mailwoman/{core, normalize, query-shape, kind-classifier,
+locale-gate, phrase-grouper, codex, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
 all published at one synced version (the model too — see Versioning policy). The core ones:
 
-| Package                           | Workspace dir           | Notes                                                                                                                  |
-| --------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                                                       |
-| `@mailwoman/core`                 | `core/`                 | tokenization, classification primitives, solver, decoder; ships ~9 MB of libpostal+WOF dictionaries under `core/data/` |
-| `@mailwoman/classifiers`          | `classifiers/`          | rule-based classifiers                                                                                                 |
-| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                                                            |
-| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                                                                |
-| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                                                           |
-| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                                                           |
+| Package                           | Workspace dir           | Notes                                                                               |
+| --------------------------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                    |
+| `@mailwoman/core`                 | `core/`                 | tokenization, decoder; ships ~9 MB of libpostal+WOF dictionaries under `core/data/` |
+| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                         |
+| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                             |
+| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                        |
+| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                        |
 
 [`release-it`](https://github.com/release-it/release-it) drives the cut + tag + publish + GitHub release. [`@release-it-plugins/workspaces`](https://github.com/release-it-plugins/workspaces) coordinates the multi-package version bump and per-package `npm publish`.
 
@@ -443,6 +442,29 @@ ledger-append`, printed by the promotion gate on its PASS output, is what writes
 
 `status.mdx` and `releases.mdx` change together or not at all (each page says so) — a model
 promotion always touches both: a new row on the releases matrix, a re-verified banner on status.
+
+### The metadata gate — `verify-release-metadata.ts` backstops Step 5
+
+Step 5 used to rely on discipline, and discipline slipped: when 6.4.0 shipped, the eval ledger, the
+`releases.mdx` `(current)` row, and the `status.mdx` info box were all silently left on 6.3.0 and
+only caught at 6.5.0 (all three hand-backfilled during that ship). `scripts/verify-release-metadata.ts`
+now fails the publish fast if those three surfaces haven't caught up — the CI step **Verify release
+metadata is propagated** runs it after the Hugging Face weight preflight and before release-it, on
+both dry and real runs (skipped only on `publish_only` recovery). Run it locally any time:
+
+```bash
+node scripts/verify-release-metadata.ts   # exit 0 = propagated; exit 1 = one actionable error per stale surface
+```
+
+It keys off the **model** version — the `version` field of `neural-weights-en-us/model-card.json`,
+NOT npm/`package.json` — and checks: (1) `evals/scores-by-version.json` has a run for that
+`model_version`; (2) `releases.mdx` has a matrix row for it AND the `(current)` marker sits on it;
+(3) the `status.mdx` `:::info[Verified as of …]` box cites it. Because it reads the model card, a
+**code-only release** (npm bumps, the model card doesn't) passes cleanly: the `(current)` marker is
+allowed to sit on a newer row as long as every release above the model version is a documented
+"model unchanged" row. A dry run is the operator's last look before the real dispatch — that's where
+this is meant to catch a forgotten surface. (Out of scope, tracked separately: the isotonic
+calibration tables still carry from the v5.3.0 lineage — the gate does not police those.)
 
 ### Pitfall: `.release-it.json` must list EVERY runtime dep of `mailwoman`
 

@@ -35,7 +35,7 @@ const config: Config = {
 		buildTimeDisplay,
 	},
 	title: "Mailwoman",
-	tagline: "TypeScript-first address parser + geocoder. Runs in Node and the browser.",
+	tagline: "TypeScript-first address parser + geocoder. No API key — runs in Node and the browser.",
 	favicon: "img/favicon-32.png",
 	headTags: [
 		{
@@ -158,7 +158,7 @@ const config: Config = {
 				blog: {
 					path: "research",
 					routeBasePath: "research",
-					blogTitle: "Research Log",
+					blogTitle: "Field notes",
 					blogDescription: "Iteration notes, ship retrospectives, design log entries.",
 					blogSidebarTitle: "All posts",
 					blogSidebarCount: "ALL",
@@ -239,7 +239,7 @@ const config: Config = {
 				},
 				{
 					to: "/research",
-					label: "Research",
+					label: "Field notes",
 					position: "left",
 				},
 				{
@@ -266,13 +266,13 @@ const config: Config = {
 					title: "Try it",
 					items: [
 						{ label: "Demo", to: "/demo" },
-						{ label: "Log", to: "/research" },
+						{ label: "Field notes", to: "/research" },
 					],
 				},
 				{
 					title: "Docs",
 					items: [
-						{ label: "Plan", to: "/docs/plan" },
+						{ label: "Roadmap", to: "/docs/plan/SCOPE" },
 						{ label: "Eval reports", to: "/docs/evals/" },
 						{ label: "Retrospectives", to: "/docs/retrospectives" },
 					],

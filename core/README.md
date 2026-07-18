@@ -81,7 +81,6 @@ The dictionaries are ~9 MB total and are loaded lazily.
 - [`mailwoman`](../mailwoman) — the user-facing CLI + `AddressParser`
 - [`@mailwoman/normalize`](../normalize) — Stage 1 of the pipeline
 - [`@mailwoman/neural`](../neural) — neural classifier (ONNX runtime)
-- [`@mailwoman/classifiers`](../classifiers) — rule-based classifiers
 - [What Mailwoman Is](https://mailwoman.sister.software/articles/concepts/what-mailwoman-is/)
 - [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/)
 

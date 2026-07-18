@@ -13,22 +13,23 @@
  *   See `docs/articles/plan/reference/STAGES.md` for the full contract.
  */
 
-import { solutionToProposals, type AddressParser } from "@mailwoman/core/parser"
 import {
 	runPipeline,
 	type PipelineOpts,
 	type PipelineResult,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
-import type { ClassificationProposal } from "@mailwoman/core/types"
 import { classifyKind as defaultClassifyKind } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
-import { createAddressParser } from "./utils/parser.ts"
+import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
+import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
@@ -72,15 +73,6 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
-	 * The "rule source" for per-component arbitration (#478 increment 3). Defaults to a lazily-built v0
-	 * `createAddressParser` whose solved output is projected to proposals via `solutionToProposals` — constructed on the
-	 * first `arbitrate: true` call and never if arbitration is never used. Override to inject a custom rule parser or a
-	 * fake in tests.
-	 *
-	 * @see RuntimePipelineStages.ruleProposer
-	 */
-	ruleProposer?: RuntimePipelineStages["ruleProposer"]
-	/**
 	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
 	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). The classifier is
 	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
@@ -101,6 +93,42 @@ export interface CreateRuntimePipelineOpts {
 	 * ungated hard-resolve-rates (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
+	/**
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a positive-evidence-gated
+	 * street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured
+	 * 2026-07-18).
+	 *
+	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
+	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
+	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing shard, → no-op
+	 *   (byte-stable): the rerank can only ADD an atlas-confirmed street, never remove a model call.
+	 * - A `StreetLocalityEvidence` → use it (a custom / multi-country index).
+	 * - `false` → disabled (no rerank).
+	 */
+	streetEvidence?: StreetLocalityEvidence | false
+}
+
+/**
+ * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the STREET on street-name evidence — but ONLY when
+ * an evidence index is injected AND the classifier ships a span grammar (a v3+ span-head bundle). Otherwise the
+ * original classifier passes through untouched (byte-stable). The wrapper preserves the `AddressClassifier` contract:
+ * it returns exactly the reranked tree, which is the argmax tree with the street spliced in on atlas-confirmed
+ * evidence, else the plain argmax tree — the pipeline's downstream stages (resolver, etc.) see a normal `AddressTree`.
+ */
+function wrapWithStreetEvidence(
+	classifier: RuntimePipelineStages["classifier"],
+	evidence: StreetLocalityEvidence | undefined
+): RuntimePipelineStages["classifier"] {
+	if (!classifier || !evidence) return classifier
+	const grammar = (classifier as Partial<NeuralAddressClassifier>).spanGrammar
+
+	if (!grammar) return classifier // pre-v3 (span-less) bundle → nothing to rerank
+	const inner = classifier as NeuralAddressClassifier
+
+	return {
+		parse: async (text, cOpts) =>
+			(await rerankByStreetEvidence(inner, text, evidence, grammar, { parseOpts: cOpts })).tree,
+	}
 }
 
 /**
@@ -117,18 +145,6 @@ export interface CreateRuntimePipelineOpts {
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
-	// Lazy v0 rule parser for arbitration (#478 inc 3). Built on first use (only when a caller passes
-	// `arbitrate: true`), so non-arbitrating pipelines pay nothing. The solved v0 output — not raw
-	// classifier firings — is the coherent "rule" source projected to proposals.
-	let v0Parser: AddressParser | undefined
-	const defaultRuleProposer = async (normalizedText: string, locale: string): Promise<ClassificationProposal[]> => {
-		v0Parser ??= createAddressParser()
-		const solutions = await v0Parser.parse(normalizedText, { locale })
-		const top = solutions[0]
-
-		return top ? solutionToProposals(top, "v0-rules") : []
-	}
-
 	const stages: RuntimePipelineStages = {
 		normalize,
 		computeQueryShape,
@@ -139,16 +155,15 @@ export function createRuntimePipeline(
 		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
 		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
-		classifier: opts.classifier,
+		// The #727 phase-4c rerank wrap is applied lazily on the first call (below): an explicitly-passed
+		// evidence index wraps immediately in spirit, but the DEFAULT (auto-load the bundled FR index) is async.
+		classifier: opts.streetEvidence ? wrapWithStreetEvidence(opts.classifier, opts.streetEvidence) : opts.classifier,
 		fst: opts.fst,
 		resolver: opts.resolver,
 		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
 		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
-		// Rule source for arbitration (#478 inc 3) — the lazy v0 parser above, override-able. Invoked
-		// only when a call passes `arbitrate: true`; otherwise never built.
-		ruleProposer: opts.ruleProposer ?? defaultRuleProposer,
 		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
@@ -161,6 +176,12 @@ export function createRuntimePipeline(
 	const autoPlaceCountry = opts.placeCountry === undefined
 	let placeCountryResolved = !autoPlaceCountry
 
+	// #727 phase-4c default-on: with no explicit `streetEvidence` (and not `false`), auto-load the bundled FR index once
+	// on the first call — but ONLY if the classifier ships a span grammar (else there is no k-best to rerank). Resolved
+	// lazily for the same reason placeCountry is: keep the factory synchronous. An explicitly-passed index already
+	// wrapped the classifier above.
+	let streetEvidenceResolved = opts.streetEvidence !== undefined
+
 	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
 		if (!placeCountryResolved) {
 			placeCountryResolved = true
@@ -168,6 +189,19 @@ export function createRuntimePipeline(
 
 			if (fn) {
 				stages.placeCountry = fn
+			}
+		}
+
+		if (!streetEvidenceResolved) {
+			streetEvidenceResolved = true
+			const grammar = (opts.classifier as Partial<NeuralAddressClassifier> | undefined)?.spanGrammar
+
+			if (grammar) {
+				const evidence = await loadDefaultStreetEvidence()
+
+				if (evidence) {
+					stages.classifier = wrapWithStreetEvidence(opts.classifier, evidence)
+				}
 			}
 		}
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call

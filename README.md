@@ -230,12 +230,11 @@ yarn test           # vitest (runs from source, no precompile)
 
 Mailwoman began as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser), a
 rule-based engine: a tokenizer, a set of dictionary/pattern classifiers, and an
-`ExclusiveCartesianSolver` that enumerates consistent solutions. That rule engine still
-lives in the tree (mostly under `@mailwoman/core` and `@mailwoman/classifiers`) and runs as
-a fallback and as one arbitration input. The neural sequence labeler is the primary path
-now; the rules are being migrated out gradually as the model and its surrounding stages
-replace them, so expect that code to shrink over time. It is repository-internal — consumers
-of the published package interact with the neural pipeline, not the solver.
+`ExclusiveCartesianSolver` that enumerated consistent solutions. As the neural sequence
+labeler matured into the primary parse path, that rule engine was retired and — in v7.0.0 —
+deleted from the tree (`@mailwoman/classifiers` and the `@mailwoman/core/{solver,classification}`
+machinery). The last standalone release is `@mailwoman/classifiers@6.x`, frozen; consumers of
+the published package interact with the neural pipeline exclusively.
 
 ### Contributing
 

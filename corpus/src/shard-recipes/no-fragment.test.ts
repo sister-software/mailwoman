@@ -79,6 +79,7 @@ describe("no-fragment", () => {
 		const signal = rows.filter((r) => (r as { components: { street?: string } }).components.street)
 
 		expect(signal.length).toBeGreaterThan(0)
+
 		for (const r of signal) {
 			const c = (r as { components: Record<string, string> }).components
 
@@ -103,6 +104,7 @@ describe("no-fragment", () => {
 
 		expect(kinds.has("loc")).toBe(true)
 		expect(kinds.has("pc")).toBe(true)
+
 		// A counter row NEVER carries a street — else it is not a counter.
 		for (const r of rows) {
 			expect((r as { components: { street?: string } }).components.street).toBeUndefined()

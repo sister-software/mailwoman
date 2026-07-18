@@ -30,6 +30,10 @@ function HomepageHeader(): ReactNode {
 						Read the docs
 					</Link>
 				</div>
+				<p className={styles.heroWhy}>
+					Free to run yourself, forever — AGPL-3.0 open source, with a{" "}
+					<Link to="/docs/licensing/">commercial license</Link> if your legal team wants one.
+				</p>
 				<p className={styles.heroTransform}>
 					<span className={styles.heroIn}>"1600 Pennsylvania Ave NW"</span>
 					<span className={styles.heroArrow}>→</span>
@@ -75,12 +79,13 @@ function Gallery(): ReactNode {
 							<h3 className={styles.cardTitle}>Geocode on-device</h3>
 							<p className={styles.cardBody}>
 								Resolve an address to a real coordinate with no server, no API key, and no query leaving the machine. A
-								37.6 MB model and a byte-ranged global gazetteer do it in the tab.
+								37.6 MB model — one download, a few seconds on ordinary broadband, cached after that — and a byte-ranged
+								global gazetteer do it in the tab.
 							</p>
 							<code className={styles.cardTransform}>"350 5th Ave, New York" → 40.7484, -73.9857 · rooftop</code>
 							<p className={styles.cardLinks}>
 								<Link to="/demo">Try the demo</Link> ·{" "}
-								<Link to="/research/geocoding-that-never-phones-home">Read the story →</Link>
+								<Link to="/research/geocoding-that-never-phones-home">Read the field notes →</Link>
 							</p>
 						</div>
 					</div>
@@ -94,7 +99,7 @@ function Gallery(): ReactNode {
 							</p>
 							<code className={styles.cardTransform}>123 Main St + 123 Main Street Apt 2 → 1 entity</code>
 							<p className={styles.cardLinks}>
-								<Link to="/research/same-building-different-company">Read the story →</Link>
+								<Link to="/research/same-building-different-company">Read the field notes →</Link>
 							</p>
 						</div>
 					</div>
@@ -168,6 +173,67 @@ function FeaturedWork(): ReactNode {
 	)
 }
 
+const COMPARE_ROWS: ReadonlyArray<[capability: string, ...cells: string[]]> = [
+	[
+		"Before your first query",
+		"npm install",
+		"PostgreSQL + planet import",
+		"Nominatim import + OpenSearch",
+		"Elasticsearch cluster + imports",
+		"create an account",
+	],
+	["API key", "none", "none", "none", "none", "required"],
+	["Monthly fee", "none", "none (self-host)", "none (self-host)", "none (self-host)", "metered"],
+	["Runs in the browser, offline", "✅", "—", "—", "—", "—"],
+	["Calibrated confidence per component", "✅", "—", "—", "heuristic", "varies"],
+]
+
+function Compare(): ReactNode {
+	return (
+		<section className={styles.compare}>
+			<div className="container">
+				<Heading as="h2" className={styles.galleryHeading}>
+					How it compares
+				</Heading>
+				<p className={styles.gallerySub}>
+					Good tools sit in every column here — several of them taught us the trade. The difference is what you stand up
+					before the first query, and what each answer carries with it.
+				</p>
+				<div className={styles.compareScroll}>
+					<table className={styles.compareTable}>
+						<thead>
+							<tr>
+								<th></th>
+								<th>Mailwoman</th>
+								<th>Nominatim</th>
+								<th>Photon</th>
+								<th>Pelias</th>
+								<th>Hosted APIs</th>
+							</tr>
+						</thead>
+						<tbody>
+							{COMPARE_ROWS.map(([capability, ...cells]) => (
+								<tr key={capability}>
+									<th scope="row">{capability}</th>
+									{cells.map((cell, i) => (
+										<td key={i}>{cell}</td>
+									))}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+				<p className={styles.compareFootnote}>
+					Already running one of these? Mailwoman ships drop-in Nominatim-, Photon-, and libpostal-compatible APIs, so
+					your client code can stay put. The full capability matrix — including the rows where the other tools win — is
+					in <Link to="/docs/concepts/how-mailwoman-compares">How Mailwoman compares</Link>, with switching guides for
+					each.
+				</p>
+			</div>
+		</section>
+	)
+}
+
 function FeatureStrip(): ReactNode {
 	return (
 		<section className={styles.features}>
@@ -216,11 +282,19 @@ function QuickStart(): ReactNode {
 							npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 						</CodeBlock>
 						<CodeBlock language="ts">
-							{`import { NeuralAddressClassifier } from "@mailwoman/neural"
+							{`import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const components = await neural.parseJSON("1600 Pennsylvania Ave NW, Washington DC")
-// → { house_number: "1600", street: "Pennsylvania Ave NW", locality: "Washington", region: "DC" }`}
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const lookup = new WOFSqlitePlaceLookup({ databasePath: "./wof.sqlite" })
+const parse = createRuntimePipeline({ classifier, resolver: createWOFResolver(lookup as unknown as ResolverBackend) })
+
+const result = await parse("1600 Pennsylvania Ave NW, Washington DC")
+// → house_number "1600" · street "Pennsylvania Ave NW" · locality "Washington" · region "DC"
+//   …and with the resolver attached, each resolved node carries coordinates + its source:
+//   locality "Washington" → lat 38.90, lon -77.04 · src resolver:locality`}
 						</CodeBlock>
 					</div>
 					<div className="col col--6">
@@ -251,12 +325,13 @@ export default function Home(): ReactNode {
 	return (
 		<Layout
 			title={title}
-			description="TypeScript-first address parser + geocoder. Neural classifier + WOF resolver, runs in Node and the browser."
+			description="TypeScript-first address parser + geocoder. No API key, no server required — neural parser + open-data resolver, in Node or entirely in your browser."
 		>
 			<HomepageHeader />
 			<main>
 				<Gallery />
 				<FeaturedWork />
+				<Compare />
 				<FeatureStrip />
 				<QuickStart />
 			</main>

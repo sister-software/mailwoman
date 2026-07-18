@@ -42,6 +42,7 @@ import { parseArgs } from "node:util"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { foldStreetSurface } from "@mailwoman/resolver"
 import {
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
@@ -184,7 +185,10 @@ async function main(): Promise<void> {
 			row.n,
 			row.street_raw,
 			source,
-			args.release
+			args.release,
+			// #727 phase-4c name-existence key: the contract fold of the display name, quotes stripped (a rare CSV
+			// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
+			foldStreetSurface(row.street_raw.replace(/"/g, ""))
 		)
 		written++
 

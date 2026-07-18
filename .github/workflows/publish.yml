@@ -160,6 +160,21 @@ jobs:
           done
           ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin
 
+      # Fail fast if the SHIPPED MODEL's metadata hasn't propagated to the human-facing surfaces. Same
+      # spirit as the HF preflight above: HEAD-check the artifacts a release depends on and stop with an
+      # actionable message BEFORE anything ships, rather than backfilling a release later. On 2026-07-17
+      # this exact gap bit us — when 6.4.0 shipped, THREE surfaces (the eval ledger, the releases.mdx
+      # version matrix's "(current)" row, and the status.mdx info box) were silently left on 6.3.0 and
+      # only noticed at 6.5.0. The script keys off the MODEL version in neural-weights-en-us/model-card.json
+      # (NOT npm/package.json), so a code-only release — which bumps npm but leaves the model card — passes
+      # cleanly. Pure-node: reads the committed card + ledger + docs, needs no compile or weight binaries,
+      # so it runs before release-it's own `yarn compile`. Runs on dry runs too — a dry run is the operator's
+      # last look before the real dispatch, and catching stale metadata there is the whole point. Skipped
+      # only on publish_only (recovery of an already-released version, whose metadata was gated at cut time).
+      - name: Verify release metadata is propagated
+        if: ${{ !inputs.publish_only }}
+        run: node scripts/verify-release-metadata.ts
+
       - name: Release
         if: ${{ !inputs.publish_only }}
         env:

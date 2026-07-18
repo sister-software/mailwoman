@@ -19,9 +19,10 @@ The list is split by where each dependency reaches you:
 ### Pelias Parser — MIT
 
 Mailwoman originated as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser).
-Portions derived from it — the tokenizer, rule-based classifiers, and the
-`ExclusiveCartesianSolver` in `@mailwoman/core` and `@mailwoman/classifiers` — remain under
-the [MIT license](https://github.com/pelias/parser/blob/master/LICENSE).
+The portion still derived from it — the tokenizer in `@mailwoman/core` (`core/tokenization`) —
+remains under the [MIT license](https://github.com/pelias/parser/blob/master/LICENSE). The
+rule-based classifiers and the `ExclusiveCartesianSolver`, also derived from Pelias, were
+removed in v7.0.0 (the last standalone release is `@mailwoman/classifiers@6.x`).
 
 ## Data bundled in the published packages
 

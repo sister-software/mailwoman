@@ -18,7 +18,7 @@ The v1 rules parser (pelias-parser lineage) was kept through the neural transiti
    - `core/tokenization/context.ts` imports runtime values from `core/solver`, and the neural pipeline imports `Span` from the tokenization barrel — the v0 solver sits in the neural module graph today (loaded, never invoked).
 3. **~6.8k LOC of legacy tests** run in CI on every PR, including 27 integration files (2.7k LOC) of hand-curated country-parity assertions driven by test-kit's global `createAddressParser()`.
 
-Non-production paths (all die with the parser): CLI no-weights fallback, `parse --isolated`, `mailwoman debug`, the default-OFF arbitration bridge (`ruleProposer`, research-only, promotion killed by the coordinate gate #685), and the eval-harness v0 baseline legs.
+Non-production paths (all die with the parser): CLI no-weights fallback, `parse`, `mailwoman debug`, the default-OFF arbitration bridge (`ruleProposer`, research-only, promotion killed by the coordinate gate #685), and the eval-harness v0 baseline legs.
 
 ## Decisions (settled 2026-07-12)
 
@@ -100,7 +100,7 @@ Every converted fixture carries provenance: `v1-parity:<country>: "<address>" ma
 | eval-harness v0 legs (`harness-v0-neural` rules leg, `per-type-report`, resolver-eval legs) | v0-vs-neural history lives in the dated eval reports              |
 | test-kit `createAddressParser` + the 27 `mailwoman/test/` parity files                      | after conversion                                                  |
 | umbrella `export * from "@mailwoman/classifiers"` + `utils/parser.ts`                       | breaking API removal → migration guide                            |
-| `mailwoman debug`, `parse --isolated`, no-weights rules fallback                            | fallback replaced by the weights guard                            |
+| `mailwoman debug`, `parse`, no-weights rules fallback                                       | fallback replaced by the weights guard                            |
 | `prepareLocaleIndex()` + libpostal loader machinery in `core/resources`                     | loses all callers with the classifiers; the `.txt` **data** stays |
 
 Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (corpus + FST builders read them raw), `whosonfirst/` + `chromium-i18n/` data, `Span`/`normalizer`/`split`, `types/mapping.ts`, `normalize/`, `codex/`, THIRD_PARTY_NOTICES entries for retained data (verify coverage).

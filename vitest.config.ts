@@ -23,15 +23,9 @@ const here = import.meta.dirname
 export default defineConfig({
 	resolve: {
 		alias: [
-			// @mailwoman/core — `solvers/*` / `filters/*` / `kysley/*` are glob subpaths that preserve
-			// the trailing filename, everything else resolves to a directory `index.ts`.
-			{ find: /^@mailwoman\/core\/solvers\/(.+)$/, replacement: resolve(here, "core/solvers/$1") },
-			{ find: /^@mailwoman\/core\/filters\/(.+)$/, replacement: resolve(here, "core/filters/$1") },
+			// @mailwoman/core — `kysley/*` is a glob subpath that preserves the trailing filename,
+			// everything else resolves to a directory `index.ts`.
 			{ find: /^@mailwoman\/core\/kysley\/(.+)$/, replacement: resolve(here, "core/kysley/$1.ts") },
-			{
-				find: "@mailwoman/core/parser/proposal-pipeline",
-				replacement: resolve(here, "core/parser/proposal-pipeline.ts"),
-			},
 			// coarse-placer (#244) is a single-file subpath (no index.ts), so the generic core/$1/index.ts
 			// rule below would mis-resolve it. Map it to the file directly.
 			{ find: "@mailwoman/core/coarse-placer", replacement: resolve(here, "core/coarse-placer/coarse-placer.ts") },
@@ -46,8 +40,6 @@ export default defineConfig({
 			{ find: /^@mailwoman\/address-id$/, replacement: resolve(here, "address-id/index.ts") },
 			{ find: /^@mailwoman\/api-kit$/, replacement: resolve(here, "api-kit/index.ts") },
 			{ find: /^@mailwoman\/api$/, replacement: resolve(here, "api/index.ts") },
-			{ find: /^@mailwoman\/classifiers\/(.+)$/, replacement: resolve(here, "classifiers/$1") },
-			{ find: /^@mailwoman\/classifiers$/, replacement: resolve(here, "classifiers/index.ts") },
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "corpus/src/$1.ts") },
 			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "corpus/src/index.ts") },
 			{ find: /^@mailwoman\/formatter\/(.+)$/, replacement: resolve(here, "formatter/$1.ts") },
@@ -69,8 +61,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/variant-aliases$/, replacement: resolve(here, "variant-aliases/index.ts") },
 			{ find: /^@mailwoman\/phrase-grouper$/, replacement: resolve(here, "phrase-grouper/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
-			{ find: "mailwoman/sdk/test", replacement: resolve(here, "mailwoman/sdk/test/index.ts") },
-			{ find: "mailwoman/sdk/cli", replacement: resolve(here, "mailwoman/sdk/cli.ts") },
+			{ find: "mailwoman/test-kit", replacement: resolve(here, "mailwoman/test-kit/index.ts") },
+			{ find: "mailwoman/cli-kit", replacement: resolve(here, "mailwoman/cli-kit/index.ts") },
 			{ find: /^mailwoman$/, replacement: resolve(here, "mailwoman/index.ts") },
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
 			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a

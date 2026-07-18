@@ -46,7 +46,7 @@
 					}
 				}
 			},
-			"notes": "Phase 2 ship. F1 reported from PR #42 session-notes (only the per-component F1 numbers were captured; precision/recall/support/calibration not preserved at that time). Early-stopped at step 6000/50000 per §6 '<90% F1 stop and re-examine' clause. See PR #42 for full diagnosis (positional-heuristic overfit from 75% wof-admin single-name training corpus)."
+			"notes": "Phase 2 ship. F1 reported from PR #42 session-notes (only the per-component F1 numbers were captured; precision/recall/support/calibration not preserved at that time). Early-stopped at step 6000/50000 per \u00a76 '<90% F1 stop and re-examine' clause. See PR #42 for full diagnosis (positional-heuristic overfit from 75% wof-admin single-name training corpus)."
 		},
 		{
 			"run_id": "stage1-coarse-v0.1.0-vs-golden-v0.1.2",
@@ -143,7 +143,7 @@
 					}
 				]
 			},
-			"notes": "Apples-to-apples baseline against the expanded golden v0.1.2 (4535 entries) so v0.2.0 (in-flight) gets a direct delta. Calibration is the headline finding — 38K predictions in 0.9-1.0 conf bucket are only 33.7% accurate (model is confidently wrong, severe overconfidence). Postcode precision is artifically 1.0 because the model only emitted ONE postcode prediction out of 2980 (recall 0.0003); not meaningful. Eval ONNX checkpoint: /data/models/quantized/model-v0.1.0-int8.onnx sha256 aa8c2acf55e25fb23beead3bcafd543e44bc874c664d19182a2681554f73ebe6 (but eval ran against the archived pytorch checkpoint at stage1-coarse-v0.1.0-archived/step-006000 which is the source the ONNX was exported from)."
+			"notes": "Apples-to-apples baseline against the expanded golden v0.1.2 (4535 entries) so v0.2.0 (in-flight) gets a direct delta. Calibration is the headline finding \u2014 38K predictions in 0.9-1.0 conf bucket are only 33.7% accurate (model is confidently wrong, severe overconfidence). Postcode precision is artifically 1.0 because the model only emitted ONE postcode prediction out of 2980 (recall 0.0003); not meaningful. Eval ONNX checkpoint: /data/models/quantized/model-v0.1.0-int8.onnx sha256 aa8c2acf55e25fb23beead3bcafd543e44bc874c664d19182a2681554f73ebe6 (but eval ran against the archived pytorch checkpoint at stage1-coarse-v0.1.0-archived/step-006000 which is the source the ONNX was exported from)."
 		},
 		{
 			"run_id": "stage1-coarse-v0.2.0-vs-golden-v0.1.0",
@@ -234,7 +234,7 @@
 					}
 				]
 			},
-			"notes": "Stage 1 coarse v0.2.0 — same architecture as v0.1.0 (8.87M params, 6L/256H/4-heads), trained on corpus-v0.2.0 (263M aligned rows, 6 train sources) with source-weighted multinomial sampler + relaxed coarse gate (fix in PR for #43). The v0.1.0 positional-heuristic overfit was driven by a strict country-tag gate that dropped ~94% of v0.2.0 before any source weighting; with the gate relaxed and the loader interleaving sources at the row level, the model now sees a fixed mix per batch instead of mono-source blocks.\n\nONNX int8 sha256: dece533c5ad0507256a1ee1dbe9768451491802e09d9c6082ea27f7221eb2098.\n\nDelta vs v0.1.0 on the same golden v0.1.0 eval set:\n  region    F1 0.104 → 0.829  (8.0x)\n  locality  F1 0.042 → 0.647  (15.4x)\n  postcode  F1 0.000 → 0.859  (n/a; v0.1.0 only emitted 1 prediction)\n  country   F1 0.000 → 0.000  (only 6 support entries; both models fail; investigate)\n  exact match 0.00 → 0.527\n\nCalibration much tighter: conf>0.9 bucket accuracy 0.337 → 0.882. Below §6 95% target but a real 9x macro-F1 win + 2.6x calibration tightening; ship-worthy per the graceful-failure framing."
+			"notes": "Stage 1 coarse v0.2.0 \u2014 same architecture as v0.1.0 (8.87M params, 6L/256H/4-heads), trained on corpus-v0.2.0 (263M aligned rows, 6 train sources) with source-weighted multinomial sampler + relaxed coarse gate (fix in PR for #43). The v0.1.0 positional-heuristic overfit was driven by a strict country-tag gate that dropped ~94% of v0.2.0 before any source weighting; with the gate relaxed and the loader interleaving sources at the row level, the model now sees a fixed mix per batch instead of mono-source blocks.\n\nONNX int8 sha256: dece533c5ad0507256a1ee1dbe9768451491802e09d9c6082ea27f7221eb2098.\n\nDelta vs v0.1.0 on the same golden v0.1.0 eval set:\n  region    F1 0.104 \u2192 0.829  (8.0x)\n  locality  F1 0.042 \u2192 0.647  (15.4x)\n  postcode  F1 0.000 \u2192 0.859  (n/a; v0.1.0 only emitted 1 prediction)\n  country   F1 0.000 \u2192 0.000  (only 6 support entries; both models fail; investigate)\n  exact match 0.00 \u2192 0.527\n\nCalibration much tighter: conf>0.9 bucket accuracy 0.337 \u2192 0.882. Below \u00a76 95% target but a real 9x macro-F1 win + 2.6x calibration tightening; ship-worthy per the graceful-failure framing."
 		},
 		{
 			"run_id": "stage2-v3.0.0-vs-golden-v0.1.2",
@@ -361,7 +361,7 @@
 					}
 				]
 			},
-			"notes": "Stage 2 v3.0.0 (formerly tagged v0.3.0 in the model-series numbering; realigned at publish to match the npm @mailwoman/neural-weights-en-us@3.0.0 release) — same encoder geometry as v2.0.x (8.87M params, 6L/256H/4-heads) plus a linear-chain CRF decoder (+~500 params with a frozen BIO transition mask) and a 21-label classifier head (was 15) that adds venue / street / house_number BIO classes. Trained on corpus-v0.3.0 (~103M aligned canonical rows, 11 sources incl. the new usgov-nad source with 57M structured 911-grade address points; +30% over v0.2.0). \n\nONNX int8 sha256: 24f74f0b0dc1233e7278063d9e5deffd6d2d329d366100961967dc100aaaf276.\n\nFOUR hparam-iteration runs converged on lr=1.5e-4 (vs v0.2.0's 5e-4), crf_loss_weight=0.05 (down from 1.0), label_smoothing=0.0 (was 0.1), grad_clip_norm=1.0 (new). The dual CE+CRF loss is far more LR-sensitive than v0.2.0's CE-only path. See DECISIONS.md \"v0.3.0 Stage 2 dual loss\" entry for the diagnostic trail; CRF NLL is per-sequence/unbounded vs CE's per-token/log-bounded, and equal-weight summing drowns out CE gradients.\n\nShipped checkpoint: step-001800. Training stopped after observing the same divergence pattern that broke runs 1–3, but delayed enough that this checkpoint reaches val_macro_f1=0.4 on the eval val split before drift kicks in. Per the v0.3.0 success metric (improve over v0.2.0 in at least one of F1, calibration, capability surface), the **capability-surface win is decisive** — v0.3.0 emits 3 new label classes (venue/street/house_number) where v0.2.0 emitted none, with house_number F1=0.78 and venue F1=0.39 on golden v0.1.2's substantial coverage (1742 and 1101 entries respectively).\n\nCoarse F1 vs v0.2.0's small-sample slice eval — **regression on every coarse class** (region 0.83 → 0.18, locality 0.65 → 0.27, postcode 0.86 → 0.76, country n/a → 0.28 on a 245-entry support pool). The combined effect of (a) early-stopping at step 1800 of 50K and (b) the 15→21 label space pulling per-token softmax mass off the coarse predictions explains the drop. v0.4.0 specifically targets recovery. Calibration: conf>0.9 bucket accuracy 0.60 — looser than v0.2.0's 0.88 (small-sample) but a real recalibration on v0.1.2's 37k high-conf predictions.\n\nKnown limitations: the live demo's JS classifier does per-token argmax instead of Viterbi (eval-vs-production drift on orphan-I cases). Viterbi decode in JS + transition-tensor export is the v0.4.0 follow-up."
+			"notes": "Stage 2 v3.0.0 (formerly tagged v0.3.0 in the model-series numbering; realigned at publish to match the npm @mailwoman/neural-weights-en-us@3.0.0 release) \u2014 same encoder geometry as v2.0.x (8.87M params, 6L/256H/4-heads) plus a linear-chain CRF decoder (+~500 params with a frozen BIO transition mask) and a 21-label classifier head (was 15) that adds venue / street / house_number BIO classes. Trained on corpus-v0.3.0 (~103M aligned canonical rows, 11 sources incl. the new usgov-nad source with 57M structured 911-grade address points; +30% over v0.2.0). \n\nONNX int8 sha256: 24f74f0b0dc1233e7278063d9e5deffd6d2d329d366100961967dc100aaaf276.\n\nFOUR hparam-iteration runs converged on lr=1.5e-4 (vs v0.2.0's 5e-4), crf_loss_weight=0.05 (down from 1.0), label_smoothing=0.0 (was 0.1), grad_clip_norm=1.0 (new). The dual CE+CRF loss is far more LR-sensitive than v0.2.0's CE-only path. See DECISIONS.md \"v0.3.0 Stage 2 dual loss\" entry for the diagnostic trail; CRF NLL is per-sequence/unbounded vs CE's per-token/log-bounded, and equal-weight summing drowns out CE gradients.\n\nShipped checkpoint: step-001800. Training stopped after observing the same divergence pattern that broke runs 1\u20133, but delayed enough that this checkpoint reaches val_macro_f1=0.4 on the eval val split before drift kicks in. Per the v0.3.0 success metric (improve over v0.2.0 in at least one of F1, calibration, capability surface), the **capability-surface win is decisive** \u2014 v0.3.0 emits 3 new label classes (venue/street/house_number) where v0.2.0 emitted none, with house_number F1=0.78 and venue F1=0.39 on golden v0.1.2's substantial coverage (1742 and 1101 entries respectively).\n\nCoarse F1 vs v0.2.0's small-sample slice eval \u2014 **regression on every coarse class** (region 0.83 \u2192 0.18, locality 0.65 \u2192 0.27, postcode 0.86 \u2192 0.76, country n/a \u2192 0.28 on a 245-entry support pool). The combined effect of (a) early-stopping at step 1800 of 50K and (b) the 15\u219221 label space pulling per-token softmax mass off the coarse predictions explains the drop. v0.4.0 specifically targets recovery. Calibration: conf>0.9 bucket accuracy 0.60 \u2014 looser than v0.2.0's 0.88 (small-sample) but a real recalibration on v0.1.2's 37k high-conf predictions.\n\nKnown limitations: the live demo's JS classifier does per-token argmax instead of Viterbi (eval-vs-production drift on orphan-I cases). Viterbi decode in JS + transition-tensor export is the v0.4.0 follow-up."
 		},
 		{
 			"run_id": "v1.0.2-consolidation-runB-step020000",
@@ -408,7 +408,7 @@
 						"verdict": "PASS"
 					},
 					"demo_presets": "PASS (5/6 identical; 6th = intended affix split)",
-					"int8_spot_check": "PASS (country 89.8, prefix 64.9, suffix 48.8, unit 90.6 — all within 0.1pp of fp32; DE 90.9)",
+					"int8_spot_check": "PASS (country 89.8, prefix 64.9, suffix 48.8, unit 90.6 \u2014 all within 0.1pp of fp32; DE 90.9)",
 					"int8_md5": "9eb4a99f6db06cccff57939f657c09f9",
 					"quant_deterministic": true
 				},
@@ -419,7 +419,7 @@
 					"unit": "90.6 vs 92"
 				}
 			},
-			"notes": "Parity flag-plant candidate. Capacity wall measured (#492). Gate procedure requires --gazetteer-lexicon + --suppress-gaz-near-postcode. All gate numbers repairs-OFF (#486). Lineage: v1.0.2-consolidation-runB @ step 20000 — init_from consolidation v1.0.0 step-040000 (NOT resume; fresh optimizer — recorded honestly, see session doc), affix 17x, corpus v0.4.12-consolidation; shipped as the unified 4.2.0 release int8 md5 9eb4a99f6db06cccff57939f657c09f9."
+			"notes": "Parity flag-plant candidate. Capacity wall measured (#492). Gate procedure requires --gazetteer-lexicon + --suppress-gaz-near-postcode. All gate numbers repairs-OFF (#486). Lineage: v1.0.2-consolidation-runB @ step 20000 \u2014 init_from consolidation v1.0.0 step-040000 (NOT resume; fresh optimizer \u2014 recorded honestly, see session doc), affix 17x, corpus v0.4.12-consolidation; shipped as the unified 4.2.0 release int8 md5 9eb4a99f6db06cccff57939f657c09f9."
 		},
 		{
 			"run_id": "v1.1.0-relabel-consolidation-step040000",
@@ -467,7 +467,7 @@
 					"coord_p90_km": 7.4
 				}
 			},
-			"notes": "FROM SCRATCH (clean lineage — no init_from). The #511 relabel run: the #492 ladder's root cause (1,039:1 contradictory street labels) fixed by a loader-level affix-split relabel pass; affix compensations reverted (synth-affix 17→2.0, tag weights →1.5). First gate FAILed fr.postcode 99.3/99.5 (NEW leading-postcode digit-split class) — corrected by the conventions mask (#478 slice 1: locale_logits export + codex fr conventions + emission mask + shape-triggered snap repair), same weights, re-gate PASS 12/12. Ship config: addressSystemConventions:'auto'. Gate record: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md. Country leg note: this gate fixed the historically gaz-starved country invocation; 85.1 is not comparable to v4.2.0's 89.8."
+			"notes": "FROM SCRATCH (clean lineage \u2014 no init_from). The #511 relabel run: the #492 ladder's root cause (1,039:1 contradictory street labels) fixed by a loader-level affix-split relabel pass; affix compensations reverted (synth-affix 17\u21922.0, tag weights \u21921.5). First gate FAILed fr.postcode 99.3/99.5 (NEW leading-postcode digit-split class) \u2014 corrected by the conventions mask (#478 slice 1: locale_logits export + codex fr conventions + emission mask + shape-triggered snap repair), same weights, re-gate PASS 12/12. Ship config: addressSystemConventions:'auto'. Gate record: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md. Country leg note: this gate fixed the historically gaz-starved country invocation; 85.1 is not comparable to v4.2.0's 89.8."
 		},
 		{
 			"run_id": "v1.3.0-boundary-consolidation-step040000",
@@ -505,7 +505,7 @@
 					"native_locality_anchor_on": 91
 				}
 			},
-			"notes": "FROM SCRATCH, clean lineage. PASS 17/17 on the densest pre-registered spec to date (arena floor gated for the first time). Three-battery verdict: po_box FAIL 60.4 (dotted-leader truncation — the corpus format cannot label intra-span punctuation) → span bridge corrective → fr.postcode FAIL 99.0 (comma over-merge) → separator exclusion → PASS. Both correctives decode-side, $0 GPU. Ship config: addressSystemConventions:'auto' + bridgePunctuationGaps:true (REQUIRED — see model card notes)."
+			"notes": "FROM SCRATCH, clean lineage. PASS 17/17 on the densest pre-registered spec to date (arena floor gated for the first time). Three-battery verdict: po_box FAIL 60.4 (dotted-leader truncation \u2014 the corpus format cannot label intra-span punctuation) \u2192 span bridge corrective \u2192 fr.postcode FAIL 99.0 (comma over-merge) \u2192 separator exclusion \u2192 PASS. Both correctives decode-side, $0 GPU. Ship config: addressSystemConventions:'auto' + bridgePunctuationGaps:true (REQUIRED \u2014 see model card notes)."
 		},
 		{
 			"run_id": "v193a3-anchor-absorption-step080000-rescore-20260702",
@@ -587,7 +587,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at gate precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v510]"
+			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held \u2014 per-tag F1 unmoved at gate precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v510]"
 		},
 		{
 			"run_id": "nsplice-v2-exonym-meaninit-20260703",
@@ -628,7 +628,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "Coordinated model+code cut on gate v5.2.0-nordic (one $revision: us.postcode 95→94.8, measurement identity — shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8→90.2 (p90res 113→12.7km), NO 92.7→98.1, DK 91.4→95.2, Åbo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v193/v520-gate-out]"
+			"notes": "Coordinated model+code cut on gate v5.2.0-nordic (one $revision: us.postcode 95\u219294.8, measurement identity \u2014 shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8\u219290.2 (p90res 113\u219212.7km), NO 92.7\u219298.1, DK 91.4\u219295.2, \u00c5bo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v193/v520-gate-out]"
 		},
 		{
 			"run_id": "v220-full-family-100k-postship-20260704",
@@ -710,7 +710,7 @@
 					"perturb": 81
 				}
 			},
-			"notes": "Promoted 2026-07-09 via the gauntlet battery (mangle 23.5→17.7% int8, Honoré+René repros, held-out FR z=+0.90 / US z=+0.29 — table on #444); this promotion-gate run executed post-hoc for the ledger per the re-anchor discipline. Tokenizer v0.8.0-fr-nsplice (spliced; training-free path falsified first, #1047). Clears the int8 homograph floor outright (85.1 vs 83.3) — the 5.3.0/5.4.0 adjudicated int8-delta exception is no longer needed. [graded_artifact=int8; gate=v2.3.0-nl-postcode; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fc0a4401-3bda-4fa5-b4b9-4031dda9cbeb/scratchpad/gate-v241-ledger]"
+			"notes": "Promoted 2026-07-09 via the gauntlet battery (mangle 23.5\u219217.7% int8, Honor\u00e9+Ren\u00e9 repros, held-out FR z=+0.90 / US z=+0.29 \u2014 table on #444); this promotion-gate run executed post-hoc for the ledger per the re-anchor discipline. Tokenizer v0.8.0-fr-nsplice (spliced; training-free path falsified first, #1047). Clears the int8 homograph floor outright (85.1 vs 83.3) \u2014 the 5.3.0/5.4.0 adjudicated int8-delta exception is no longer needed. [graded_artifact=int8; gate=v2.3.0-nl-postcode; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fc0a4401-3bda-4fa5-b4b9-4031dda9cbeb/scratchpad/gate-v241-ledger]"
 		},
 		{
 			"run_id": "hono-api-cutover-6-0-0",
@@ -751,7 +751,7 @@
 					"perturb": 81
 				}
 			},
-			"notes": "Code-only Hono API-surface cutover (#1084/#1085); the trained model is UNCHANGED from 5.9.0 (v2.4.1-fr-nsplice-ft, v241) — its model-card stayed at 5.9.0. Metrics carried from the 5.9.0 row, not re-graded (a model-unchanged code release produces byte-identical parses). See releases.mdx."
+			"notes": "Code-only Hono API-surface cutover (#1084/#1085); the trained model is UNCHANGED from 5.9.0 (v2.4.1-fr-nsplice-ft, v241) \u2014 its model-card stayed at 5.9.0. Metrics carried from the 5.9.0 row, not re-graded (a model-unchanged code release produces byte-identical parses). See releases.mdx."
 		},
 		{
 			"run_id": "v2-6-1-span-boundary-full-20260714",
@@ -792,13 +792,13 @@
 					"perturb": 80
 				}
 			},
-			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v261 (#727 stage-1 span-boundary) shipped on the gauntlet COORDINATE gate + operator-approved documented country cosmetic exception (#1104), NOT this v5.3.0-family parity gate. One floor-fail, coordinate-invisible (operator-excepted): fr.postcode 98.9<99.2 — a small FR-postcode dip shared across the multisplice/fragment line, held-out FR coordinate flat. country_homograph 89.x PASSES (v261 has no country channel). See releases.mdx 6.1.0 row. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v261-610]"
+			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v261 (#727 stage-1 span-boundary) shipped on the gauntlet COORDINATE gate + operator-approved documented country cosmetic exception (#1104), NOT this v5.3.0-family parity gate. One floor-fail, coordinate-invisible (operator-excepted): fr.postcode 98.9<99.2 \u2014 a small FR-postcode dip shared across the multisplice/fragment line, held-out FR coordinate flat. country_homograph 89.x PASSES (v261 has no country channel). See releases.mdx 6.1.0 row. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v261-610]"
 		},
 		{
 			"run_id": "v2-6-3-country-channel-20260714",
 			"model_version": "6.2.0",
 			"model_path": "@mailwoman/neural-weights-en-us@6.2.0",
-			"corpus_version": "v257 fragment-campaign corpus (shard-v5) — UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
+			"corpus_version": "v257 fragment-campaign corpus (shard-v5) \u2014 UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
 			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
 			"eval_set_version": "promotion-gate battery (v5.3.0-family): golden v0.1.2 + real-OOD + arena perturb",
 			"eval_set_sha256": "per-file, see data/eval/external",
@@ -833,13 +833,13 @@
 					"perturb": 80
 				}
 			},
-			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v263 shipped on the gauntlet COORDINATE gate + operator-approved documented per-tag trades, NOT this v5.3.0-family parity gate. Two floor-fails, both coordinate-invisible (operator-excepted): us.country_homograph 82.6<83.3 (the country channel's ambiguity guard over-suppresses homograph countries Georgia/Jordan/Jamaica — trades homograph recall for precision) and fr.postcode 98.8<99.2. The channel LIFTS WOF-admin/golden country recall 84.8->89.3% (the #1104 target); held-out US/FR coordinate flat (z -0.16/-0.17). See 2026-07-14-v263-country-channel-result.md. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): us.country_homograph_f1, fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v263-620]"
+			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v263 shipped on the gauntlet COORDINATE gate + operator-approved documented per-tag trades, NOT this v5.3.0-family parity gate. Two floor-fails, both coordinate-invisible (operator-excepted): us.country_homograph 82.6<83.3 (the country channel's ambiguity guard over-suppresses homograph countries Georgia/Jordan/Jamaica \u2014 trades homograph recall for precision) and fr.postcode 98.8<99.2. The channel LIFTS WOF-admin/golden country recall 84.8->89.3% (the #1104 target); held-out US/FR coordinate flat (z -0.16/-0.17). See 2026-07-14-v263-country-channel-result.md. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): us.country_homograph_f1, fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v263-620]"
 		},
 		{
 			"run_id": "v264-country-softguard-6-3-0",
 			"model_version": "6.3.0",
 			"model_path": "@mailwoman/neural-weights-en-us@6.3.0",
-			"corpus_version": "v257 fragment-campaign corpus (shard-v5) — UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
+			"corpus_version": "v257 fragment-campaign corpus (shard-v5) \u2014 UNCHANGED from v261; the country channel paints features on existing rows from the country-surface lexicon at encode time (no new shard).",
 			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
 			"eval_set_version": "promotion-gate battery (v5.3.0-family): golden v0.1.2 + real-OOD + arena perturb",
 			"eval_set_sha256": "per-file, see data/eval/external",
@@ -875,6 +875,88 @@
 				}
 			},
 			"notes": "v264 country-softguard (init_from v263 + country_ambiguous_scale 0.5). Strictly dominates v263: country-homograph 82.6->85.1, golden WOF-admin country 89.3->91.1%, aggregate golden label-fails 1101->1098. Coordinate gauntlet PASS both locales (the ship gate). fr.postcode 99.0 vs family-floor 99.2 = the standing saturated-metric exception (same as v261/v263), coordinate-invisible. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=scratchpad/gate-v264-630]"
+		},
+		{
+			"run_id": "v310-fr-fragment-6-4-0",
+			"model_version": "6.4.0",
+			"model_path": "@mailwoman/neural-weights-en-us@6.4.0",
+			"corpus_version": "v257 fragment-campaign corpus (shard-v5) PLUS the new `synth-fr-fragment` shard @ weight 12.0 \u2014 the ONE variable vs v264. 144,865 rows generated by corpus/src/shard-recipes/fr-fragment.ts from BAN (Base Adresse Nationale, Licence Ouverte) across 6 fragment forms, plus a 20% bare-locality counter-distribution so the model cannot satisfy the shard by flipping its bare-toponym default. The recipe REQUIRES --exclude-surfaces (it throws otherwise): all 2,400 fragment-board eval surfaces are reserved out, so the split is by street SURFACE, not record row. Measured cross_pollution 0.00%.",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v6.0.0-shipped-baseline): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-16",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.5,
+					"country_homograph": 87.5,
+					"micro": 87.2,
+					"locality": 78.8,
+					"region": 89.8,
+					"street": 82.5,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.8,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.9,
+					"house_number": 96.8,
+					"region": 47.2,
+					"cedex_real": 89.1
+				},
+				"de": {
+					"native_locality_anchor_on": 91.4
+				},
+				"arena": {
+					"perturb": 79
+				}
+			},
+			"notes": "The house-number licence: init_from v264 + the synth-fr-fragment BAN shard @ 12.0. FR fragment board bare-street 0.215->0.715. Backfilled 2026-07-17 (the ship did not auto-append). Grade re-run on 2026-07-17 vs v6.0.0-shipped-baseline. [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/gate-v310]"
+		},
+		{
+			"run_id": "v381-punct-fix-6-5-0",
+			"model_version": "6.5.0",
+			"model_path": "@mailwoman/neural-weights-en-us@6.5.0",
+			"corpus_version": "v0.11.0-no-fragment overlay (v0.10.9-fr-fragment base + the synth-no-fragment shard at all-length long-number boost 6) + augment_punct_drop_prob 0.3",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v6.0.0-shipped-baseline): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-17",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.6,
+					"country_homograph": 89.8,
+					"micro": 87,
+					"locality": 78.3,
+					"region": 89.9,
+					"street": 81.8,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.6,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.9,
+					"house_number": 96.4,
+					"region": 47.2,
+					"cedex_real": 89.1
+				},
+				"de": {
+					"native_locality_anchor_on": 91.5
+				},
+				"arena": {
+					"perturb": 79
+				}
+			},
+			"notes": "First model to pass the full Gauntlet clean. #1101 comma-free rooftop fix (augment_punct_drop_prob) + the no-fragment digit-ownership shard (NO bare-street-hn 0.693->0.733). Golden gate PASS, 0 tags >2pp below shipped, us.country_homograph +2.3. Weights-only off v310. [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/gate-v381]"
 		}
 	]
 }

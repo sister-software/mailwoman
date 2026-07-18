@@ -29,12 +29,13 @@ import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 import type { AnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
 import type { CountryLexicon } from "./country-inference.ts"
-import { buildFSTEmissionPriors, type FSTMatcherLike } from "./fst-prior.ts"
+import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import type { InferResult } from "./onnx-runner.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
+import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
 import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.ts"
 import { bridgePunctuationGaps } from "./span-bridge.ts"
 import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.ts"
@@ -90,6 +91,12 @@ export interface NeuralAddressClassifierConfig {
 	startTransitions?: number[]
 	/** Optional learned end-of-sequence transition scores per label. */
 	endTransitions?: number[]
+	/**
+	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
+	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar; exposed via {@link spanGrammar} so
+	 * the phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
+	 */
+	semiCrfGrammar?: SemiCRFTransitions
 	/**
 	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features from the text +
 	 * this lookup and feeds them to the runner — for models trained with the anchor channel (exported with the
@@ -195,6 +202,14 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
+	 * The parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), when the loaded bundle shipped it.
+	 * Consumed by the #727 phase-4c k-best name-evidence rerank; `undefined` on a pre-v3 (span-less) bundle.
+	 */
+	get spanGrammar(): SemiCRFTransitions | undefined {
+		return this.cfg.semiCrfGrammar
+	}
+
+	/**
 	 * The default-ON Stage 2.7 config: codex lexicon (us/au/nz), frozen measured scales (the prior builder's own
 	 * defaults). Built once per instance, only when a parse actually needs it.
 	 */
@@ -244,6 +259,21 @@ export class NeuralAddressClassifier {
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
 		const crf = readCrfTransitions(resolved.crfTransitionsPath)
+		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
+		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
+		// undefined).
+		let semiCrfGrammar: SemiCRFTransitions | undefined
+
+		if (resolved.semiCrfTransitionsPath) {
+			try {
+				semiCrfGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCrfTransitionsPath, "utf8")))
+			} catch (err) {
+				console.error(
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCrfTransitionsPath} — ` +
+						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(err as Error).message}`
+				)
+			}
+		}
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
@@ -335,6 +365,7 @@ export class NeuralAddressClassifier {
 			transitions: crf?.transitions,
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
+			...(semiCrfGrammar ? { semiCrfGrammar } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
@@ -427,6 +458,7 @@ export class NeuralAddressClassifier {
 			logits,
 			// The axis rides with the values (self-describing — consumers must not hardcode the order).
 			...(trace.localeLogits ? { localeLogits: trace.localeLogits, localeCountries: [...LOCALE_COUNTRIES] } : {}),
+			...(trace.spanScores ? { spanScores: trace.spanScores } : {}),
 			detectedSystem: trace.detectedSystem,
 			systemSource: trace.systemSource,
 			priors: trace.priors,
@@ -458,6 +490,7 @@ export class NeuralAddressClassifier {
 			gazetteer?: SoftFeatureChannel
 			country?: SoftFeatureChannel
 			localeLogits?: number[]
+			spanScores?: number[][][]
 			detectedSystem: SystemCode | null
 			systemSource: "off" | "auto" | "pinned"
 			priors: TracePrior[]
@@ -478,7 +511,12 @@ export class NeuralAddressClassifier {
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
 		})
-		const { logits, localeLogits } = await this.cfg.runner.infer(ids, soft.anchor, soft.gazetteer, soft.country)
+		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
+			ids,
+			soft.anchor,
+			soft.gazetteer,
+			soft.country
+		)
 
 		this.assertEmissionWidth(logits)
 
@@ -544,6 +582,9 @@ export class NeuralAddressClassifier {
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
+					...(opts.fstImportanceLengthScaleMode
+						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
+						: {}),
 				})
 			: undefined
 
@@ -714,6 +755,7 @@ export class NeuralAddressClassifier {
 							...(soft.gazetteer ? { gazetteer: soft.gazetteer } : {}),
 							...(soft.country ? { country: soft.country } : {}),
 							...(localeLogits ? { localeLogits } : {}),
+							...(spanScores ? { spanScores } : {}),
 							detectedSystem,
 							systemSource,
 							priors: tracePriors!,
@@ -807,6 +849,8 @@ export interface ParseOpts {
 	fst?: FSTMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
+	/** Match-length scaling mode for the FST importance bias (#1142). Default `both`. */
+	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce
 	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens AND toward `street` / away

@@ -12,6 +12,7 @@ from .augment import (
     lowercase_row,
     row_span_triple,
     splice_expansion,
+    upper_case_row,
 )
 from .tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
 
@@ -650,3 +651,53 @@ def test_augment_row_case_prob_zero_is_bit_identical():
     a = list(augment_row(row, random.Random(7), directional_prob=0.5, region_prob=0.5, case_prob=0.0))
     b = list(augment_row(row, random.Random(7), directional_prob=0.5, region_prob=0.5))
     assert [r["raw"] for r in a] == [r["raw"] for r in b]
+
+
+def test_upper_case_row_preserves_labels_and_spans():
+    # Upper-casing is length-preserving (guarded), so labels + char-offset spans pass through UNCHANGED.
+    row = {
+        "raw": "350 5th Ave nw",
+        "tokens": ["350", "5th", "Ave", "nw"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street"],
+        "span_starts": [0, 4],
+        "span_ends": [3, 14],
+        "span_tags": ["house_number", "street"],
+        "country": "US",
+        "source": "tiger",
+    }
+    out = upper_case_row(row)
+    assert out is not None
+    assert out["raw"] == "350 5TH AVE NW"
+    assert out["tokens"] == ["350", "5TH", "AVE", "NW"]
+    assert out["labels"] == row["labels"]
+    assert out["span_starts"] == row["span_starts"]
+    assert out["span_ends"] == row["span_ends"]
+
+
+def test_upper_case_row_skips_non_length_preserving():
+    # German eszett 'ß' upper-cases to "SS" (2 chars) — would desync spans, so skip the row.
+    row = {
+        "raw": "Große Straße 1",
+        "tokens": ["Große", "Straße", "1"],
+        "labels": ["B-street", "I-street", "B-house_number"],
+    }
+    assert upper_case_row(row) is None
+
+
+def test_upper_case_row_returns_none_when_already_upper():
+    row = {"raw": "MAIN ST 5", "tokens": ["MAIN", "ST", "5"], "labels": ["B-street", "I-street", "B-house_number"]}
+    assert upper_case_row(row) is None
+
+
+def test_augment_row_upper_case_prob_yields_uppercased_copy():
+    row = {
+        "raw": "350 5th Ave NW",
+        "tokens": ["350", "5th", "Ave", "NW"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street"],
+        "country": "US",
+        "source": "tiger",
+    }
+    rng = random.Random(42)
+    results = list(augment_row(row, rng, directional_prob=0.0, region_prob=0.0, upper_case_prob=1.0))
+    assert results[0] is row
+    assert any(r["raw"] == "350 5TH AVE NW" for r in results)

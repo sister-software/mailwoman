@@ -1,50 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type Classification, type Classifier, type LibPostalLanguageCode } from "@mailwoman/core"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
-import { expect, test } from "vitest"
-/**
- * Global test parser instance.
- */
-export const parser = createAddressParser({
-	// languages: ["en"],
-})
-
-export function assert(input: string, ...expectedClassifications: ClassificationRecord[]) {
-	return test(input, async () => {
-		const solutions = await parser.parse(input)
-
-		if (expectedClassifications.length === 0) {
-			if (solutions.length !== 0) {
-				expect(solutions, "Expected no solutions").toEqual([])
-
-				return
-			}
-
-			expect(true, "No solutions and no expected records.").toBe(true)
-
-			return
-		}
-
-		for (let i = 0; i < expectedClassifications.length; i++) {
-			const expectedClassification = expectedClassifications[i]
-			const bestMatch = solutions[i]
-
-			if (!bestMatch) {
-				// throw new Error(`Cannot find a match for expected record ${i}: ${JSON.stringify(expectedClassification)}.`)
-				expect(null, `Match for expected record @ ${i}`).toEqual(expectedClassification)
-
-				return
-			}
-
-			expect(
-				bestMatch.classifications,
-				`Classification record ${i + 1} of ${expectedClassifications.length} matches.`
-			).toEqual(expectedClassification)
-		}
-	})
-}
+import { expect } from "vitest"
 
 /**
  * Assert that two items are deeply equal after JSON serialization.
@@ -114,56 +71,5 @@ export function assertCongruent<Item>(
 		}
 
 		expect(true, `All items match in iterator ${iteratorsIndex}`).toBe(true)
-	}
-}
-
-export type ExpectedClassificationEntry = [
-	input: string,
-	Iterable<LibPostalLanguageCode>,
-	expectPositiveMatch?: boolean,
-]
-
-/**
- * Assert that a classifier correctly classifies a set of inputs.
- */
-export function assertClassification(
-	classifier: Classifier,
-	classificationTarget: Classification,
-	expectations: ExpectedClassificationEntry[]
-) {
-	if (typeof classifier.classify !== "function") {
-		throw new TypeError(`Classifier ${classifier.constructor.name} does not implement the classify method`)
-	}
-
-	for (const [input, expectedLanguages, expectPositiveMatch = true] of expectations) {
-		test(`classify: ${input}`, () => {
-			const actualMatch = classifier.classify(input).classifications.get(classificationTarget)
-
-			if (!actualMatch) {
-				if (expectPositiveMatch) {
-					throw new Error(`"${input}" is not classified as ${classificationTarget}`)
-				}
-
-				expect(true, `"${input}" is not classified as ${classificationTarget}`).toBe(true)
-
-				return
-			}
-
-			expect(actualMatch, `"${input}" is classified as ${classificationTarget}`).toBeTruthy()
-
-			const expectedLanguageSet = new Set(expectedLanguages)
-
-			if (expectedLanguageSet.size) {
-				const actualLanguageSet = new Set(actualMatch.languages)
-
-				if (!actualLanguageSet.isSupersetOf(expectedLanguageSet)) {
-					throw new Error(
-						`Expected "${input}" to be classified in ${JSON.stringify(Array.from(expectedLanguageSet))} but only found in ${JSON.stringify(Array.from(actualLanguageSet))}`
-					)
-				}
-
-				expect(true, `"${input}" is classified as a  in ${JSON.stringify(Array.from(expectedLanguageSet))}`).toBe(true)
-			}
-		})
 	}
 }

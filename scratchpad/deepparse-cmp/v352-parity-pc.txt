@@ -1,8 +1,0 @@
-parity postcode (n=72 rows with a gold postcode)
-  v310 (shipped):     misses=1  rate=0.986
-  v351 (8k full 10-9999): misses=8  rate=0.889
-  v352 (2k 3-digit 100-999): misses=1  rate=0.986
-
-=== rows v352 gets WRONG on postcode that v310 got RIGHT (the guard — should be ~empty) ===
-
-v352 NEW postcode regressions vs v310: 0  (v351 had 7)

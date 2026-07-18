@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isUsStateAbbreviation } from "./state.ts"
+import { isUSStateAbbreviation } from "./state.ts"
 import {
 	isZipCode,
 	pluckStateZIPCode,
@@ -65,11 +65,11 @@ describe("pluckStateZIPCode", () => {
 	})
 })
 
-describe("isUsStateAbbreviation", () => {
+describe("isUSStateAbbreviation", () => {
 	it("accepts states + territories, case-insensitively", () => {
-		expect(isUsStateAbbreviation("CA")).toBe(true)
-		expect(isUsStateAbbreviation("pr")).toBe(true)
-		expect(isUsStateAbbreviation("ZZ")).toBe(false)
+		expect(isUSStateAbbreviation("CA")).toBe(true)
+		expect(isUSStateAbbreviation("pr")).toBe(true)
+		expect(isUSStateAbbreviation("ZZ")).toBe(false)
 	})
 })
 

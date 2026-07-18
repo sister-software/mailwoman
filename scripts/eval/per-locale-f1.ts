@@ -16,7 +16,7 @@
  *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
  *   the interference tripwire firing.
  *
- *   Scoring mirrors `harness-v0-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
+ *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
  *   Stage-3 street parts (`street_prefix`/`street`/`street_suffix` → `street`,
  *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
  *   strings per tag.
@@ -54,6 +54,7 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { computeQueryShape } from "@mailwoman/query-shape"
 
 // Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
 // `oa-resolver-eval` runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs
@@ -89,12 +90,15 @@ interface Args {
 	conventions?: string
 	bridgeGaps?: boolean
 	outJson?: string
+	/** P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read. */
+	rawCase: boolean
 }
 
 function parseArgs(): Args {
 	const out: Partial<Args> = {
 		goldenDir: "data/eval/golden/v0.1.2/dev",
 		files: ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
+		rawCase: false,
 	}
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
@@ -110,6 +114,7 @@ function parseArgs(): Args {
 			"model-card": { type: "string" },
 			"no-anchor": { type: "boolean" },
 			"out-json": { type: "string" },
+			"raw-case": { type: "boolean" },
 			"suppress-gaz-near-postcode": { type: "boolean" },
 			tokenizer: { type: "string" },
 			"weights-cache": { type: "string" },
@@ -169,6 +174,10 @@ function parseArgs(): Args {
 		out.bridgeGaps = true
 	}
 
+	if (values["raw-case"] != null) {
+		out.rawCase = true
+	}
+
 	if (values["out-json"] != null) {
 		out.outJson = values["out-json"] as string
 	}
@@ -177,7 +186,7 @@ function parseArgs(): Args {
 }
 
 // -------------------------------------------------------------------------------------------------
-// Golden row + fold (shared semantics with harness-v0-neural.ts)
+// Golden row + fold (shared semantics with harness-neural.ts)
 // -------------------------------------------------------------------------------------------------
 
 interface GoldenRow {
@@ -436,7 +445,19 @@ async function main(): Promise<void> {
 
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
-			const tree = await neural.parse(row.raw, wordConsistency ? { enforceWordConsistency: wordConsistency } : {})
+			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
+			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
+			// this battery historically fed NEITHER — so the gate scored a config production doesn't run.
+			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
+			// delta was the since-scoped locality bias, PR #1148). Score what ships.
+			const tree = await neural.parse(row.raw, {
+				postcodeRepair: true,
+				queryShape: computeQueryShape(row.raw),
+				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
+				// P3 (#829/#690): --raw-case disables the all-caps title-case shim so the read measures the
+				// MODEL's own case handling (the shim would mask any augment_upper_case_prob effect).
+				...(args.rawCase ? { normalizeCase: false } : {}),
+			})
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
 

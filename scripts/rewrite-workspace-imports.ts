@@ -26,24 +26,17 @@ const scopeRewrites: Array<[RegExp, string]> = [
 	[/^mailwoman\/core\/resources\/whosonfirst$/, "@mailwoman/core/resources/whosonfirst"],
 	[/^mailwoman\/core\/resources\/libpostal$/, "@mailwoman/core/resources/libpostal"],
 	[/^mailwoman\/core\/resources$/, "@mailwoman/core/resources"],
-	[/^mailwoman\/core\/classification$/, "@mailwoman/core/classification"],
 	[/^mailwoman\/core\/tokenization$/, "@mailwoman/core/tokenization"],
-	[/^mailwoman\/core\/parser$/, "@mailwoman/core/parser"],
-	[/^mailwoman\/core\/solver$/, "@mailwoman/core/solver"],
 	[/^mailwoman\/core\/formatter$/, "@mailwoman/core/formatter"],
 	[/^mailwoman\/core$/, "@mailwoman/core"],
 	[/^mailwoman\/utils$/, "@mailwoman/core/utils"],
 	[/^mailwoman\/filters$/, "@mailwoman/core/filters"],
 	[/^mailwoman\/solvers$/, "@mailwoman/core/solvers"],
-	[/^mailwoman\/classifiers$/, "@mailwoman/classifiers"],
 ]
 
 /** Imports that should become repo-relative paths (root-only modules). */
 const rootRelative: Record<string, string> = {
-	// sdk/cli + sdk/test are deprecated shims for cli-kit/test-kit (kept until the next major).
-	"mailwoman/sdk/cli": "sdk/cli.js",
 	"mailwoman/cli-kit": "cli-kit/index.js",
-	"mailwoman/sdk/test": "sdk/test/index.js",
 	"mailwoman/test-kit": "test-kit/index.js",
 }
 
