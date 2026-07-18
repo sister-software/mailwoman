@@ -39,7 +39,7 @@ const DEFAULT_MAX_RINGS = 12
 const DEFAULT_LIMIT = 20
 
 export interface POISearchQuery {
-	/** Poi-taxonomy category id (string side of the dictionary). */
+	/** Poi-taxonomy category id (string side of the dictionary). Ignored when `brandWikidata` is also set — brand wins. */
 	categoryID?: string
 	/** Wikidata QID for brand-exact search. */
 	brandWikidata?: string
@@ -47,7 +47,10 @@ export interface POISearchQuery {
 	name?: string
 	/** Search center. Required for category/brand queries (k-ring expansion). */
 	center?: { latitude: number; longitude: number }
-	/** Ring budget: how many res-9 k-rings to expand before giving up (default 12 ≈ ~4 km). */
+	/**
+	 * Ring budget: how many res-9 k-rings to expand before giving up (default 12 ≈ ~4 km). Counts ring 0, so k reaches
+	 * `maxRings - 1`.
+	 */
 	maxRings?: number
 	limit?: number
 }
@@ -91,8 +94,6 @@ export class POILookup implements Disposable {
 	readonly #categoryCellProbe: ReturnType<DatabaseSync["prepare"]>
 	/** `(h3_cell, brand_wikidata)` → the cell's brand-matched rows (category unconstrained). */
 	readonly #brandCellProbe: ReturnType<DatabaseSync["prepare"]>
-	/** `name_key` → hydrate the full row(s) an FTS hit resolved to. */
-	readonly #nameKeyProbe: ReturnType<DatabaseSync["prepare"]>
 	/** FTS5 `MATCH` over `poi_search`, returning candidate `name_key`s to hydrate. */
 	readonly #nameFTSProbe: ReturnType<DatabaseSync["prepare"]>
 
@@ -124,7 +125,6 @@ export class POILookup implements Disposable {
 		this.#brandCellProbe = this.#db.prepare(
 			`SELECT ${columns} FROM poi WHERE h3_cell = ? AND brand_wikidata = ? ORDER BY neg_rank ASC LIMIT ?`
 		)
-		this.#nameKeyProbe = this.#db.prepare(`SELECT ${columns} FROM poi WHERE name_key = ?`)
 		this.#nameFTSProbe = this.#db.prepare(
 			"SELECT name_key FROM poi_search WHERE poi_search MATCH ? ORDER BY bm25(poi_search) LIMIT ?"
 		)
@@ -154,6 +154,7 @@ export class POILookup implements Disposable {
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
 		let categoryId: number | undefined
 
+		// brandWikidata wins over categoryID when both are set — see POISearchQuery.categoryID.
 		if (!query.brandWikidata) {
 			categoryId = this.#categoryToID.get(query.categoryID!)
 
@@ -165,6 +166,7 @@ export class POILookup implements Disposable {
 		const seenCells = new Set<string>()
 		let rows: POIRow[] = []
 
+		// `ring` starts at 0 (the origin cell itself), so this loop's k reaches `maxRings - 1`.
 		for (let ring = 0; ring < maxRings; ring++) {
 			// gridDisk(origin, ring) returns the WHOLE disk out to `ring`; diffing against what's
 			// already been probed derives just this ring's new cells.
@@ -190,20 +192,48 @@ export class POILookup implements Disposable {
 		return rows.slice(0, limit).map((row) => toHit(row, this.#idToCategory, center))
 	}
 
-	/** Name path: FTS5 MATCH → hydrate by name_key. No center required; distance-sorts if one is given anyway. */
+	/**
+	 * Name path: FTS5 MATCH → hydrate by name_key. No center required; distance-sorts if one is given anyway.
+	 *
+	 * Hydration is ONE batched `WHERE name_key IN (...)` query over the FTS hits' unique `name_key`s, not a per-hit probe
+	 * — with up to `limit` FTS hits, a per-hit probe was up to `limit` full table scans before `createPOINameKeyIndex`
+	 * (poi-schema.ts) + this batching.
+	 */
 	#searchByName(name: string, limit: number, center?: { latitude: number; longitude: number }): POISearchHit[] {
 		const matchQuery = sanitizePOINameQuery(name)
 
 		if (!matchQuery) return []
 
 		const ftsHits = this.#nameFTSProbe.all(matchQuery, limit) as unknown as Array<{ name_key: string | null }>
+		const uniqueKeys: string[] = []
 		const seenKeys = new Set<string>()
-		let rows: POIRow[] = []
 
 		for (const hit of ftsHits) {
 			if (!hit.name_key || seenKeys.has(hit.name_key)) continue
 			seenKeys.add(hit.name_key)
-			rows.push(...(this.#nameKeyProbe.all(hit.name_key) as unknown as POIRow[]))
+			uniqueKeys.push(hit.name_key)
+		}
+
+		if (uniqueKeys.length === 0) return []
+
+		const hydrated = this.#hydrateByNameKeys(uniqueKeys)
+		const rowsByKey = new Map<string, POIRow[]>()
+
+		for (const row of hydrated) {
+			if (row.name_key === null) continue
+			const bucket = rowsByKey.get(row.name_key)
+
+			if (bucket) {
+				bucket.push(row)
+			} else {
+				rowsByKey.set(row.name_key, [row])
+			}
+		}
+
+		let rows: POIRow[] = []
+
+		for (const key of uniqueKeys) {
+			rows.push(...(rowsByKey.get(key) ?? []))
 		}
 
 		if (center) {
@@ -211,6 +241,19 @@ export class POILookup implements Disposable {
 		}
 
 		return rows.slice(0, limit).map((row) => toHit(row, this.#idToCategory, center))
+	}
+
+	/**
+	 * Batched hydration for the FTS name path: `WHERE name_key IN (?, ?, …)`, one query for the whole batch instead of
+	 * one probe per FTS hit. This is a cold path (name search only) with variable arity per call, so the statement is
+	 * prepared fresh each time rather than cached.
+	 */
+	#hydrateByNameKeys(nameKeys: string[]): POIRow[] {
+		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key"
+		const placeholders = nameKeys.map(() => "?").join(", ")
+		const stmt = this.#db.prepare(`SELECT ${columns} FROM poi WHERE name_key IN (${placeholders})`)
+
+		return stmt.all(...nameKeys) as unknown as POIRow[]
 	}
 
 	close(): void {

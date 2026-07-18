@@ -132,6 +132,11 @@ export async function createPOITable(db: Kysely<POIDatabase>): Promise<void> {
 		.execute()
 }
 
+/** Secondary index for the FTS-hydration path. Builders call this AFTER the bulk materialize (index-after-load). */
+export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<void> {
+	await db.schema.createIndex("poi_name_key").on("poi").column("name_key").execute()
+}
+
 export const POI_FTS_TABLE = "poi_search"
 
 /** FTS5 stays raw SQL by project rule (Kysely can't express virtual tables). Content-keyed by name_key. */

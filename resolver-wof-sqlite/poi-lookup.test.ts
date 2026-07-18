@@ -24,7 +24,13 @@ import { latLngToCell } from "h3-js"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { POI_H3_RESOLUTION, POILookup } from "./poi-lookup.ts"
-import { createPOISearchFTS, createPOIStagingTables, createPOITable, type POIDatabase } from "./poi-schema.ts"
+import {
+	createPOINameKeyIndex,
+	createPOISearchFTS,
+	createPOIStagingTables,
+	createPOITable,
+	type POIDatabase,
+} from "./poi-schema.ts"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 
@@ -146,6 +152,9 @@ async function buildFixture(path: string): Promise<void> {
 		raw.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
 	}
 
+	// Index-after-load: builders create the name_key index AFTER the bulk materialize.
+	await createPOINameKeyIndex(kdb)
+
 	await kdb.destroy()
 }
 
@@ -263,6 +272,17 @@ describe("POILookup", () => {
 			expect(lk.search({ categoryID: "zoo", center: SPRINGFIELD })).toEqual([])
 		} finally {
 			lk[Symbol.dispose]()
+		}
+	})
+
+	test("the name_key index exists (FTS-hydration path, not a full table scan)", () => {
+		const raw = new DatabaseSync(dbPath, { readOnly: true })
+
+		try {
+			const found = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?").get("poi_name_key")
+			expect(found).toBeDefined()
+		} finally {
+			raw.close()
 		}
 	})
 
