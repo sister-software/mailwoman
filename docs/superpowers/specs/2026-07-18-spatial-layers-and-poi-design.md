@@ -266,4 +266,13 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
   Rationale: the taxonomy serves every category use case (trails, restaurants, ISP infra alike)
   and refreshes on Overture's cadence, not curation cadence.
 
+- poi.db H3 keying (resolved 2026-07-18, delegated to Claude): rows key on the **res-9 48-bit
+  short cell** as the clustered probe prefix — matching `ADDRESS_H3_RESOLUTION = 9` in
+  `@mailwoman/address-id` so the POI↔address join is a direct key equality. Exact centroids
+  stay on the row (finer granularity derivable; coarser is not). Rationale is the serving
+  profile: the browser/React-Native/web-worker path is byte-range probes over a remote sealed
+  DB, and a res-9-clustered `WITHOUT ROWID` B-tree makes a neighborhood query one contiguous
+  key range (few range requests, no joins) — the same access pattern as the candidate
+  gazetteer. `layer_coverage` cells sit at res 6 (epistemics, not lookups).
+
 Remaining open: when the demo pocket gets a slim POI shard (budget review at Phase-1 exit).
