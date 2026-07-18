@@ -92,6 +92,11 @@ describe("createKindClassifier with a poi lexicon", () => {
 		const base = await classifyKind(input("Empire State Building"), shape())
 		expect(withPOI).toEqual(base)
 	})
+
+	it("does NOT claim a subject + anchor match when the shape has 4+ segments (segCount guard)", async () => {
+		const result = await classify(input("hospital near Springfield"), shape(["a", "b", "c", "d"]), LOCALE)
+		expect(result.kind).not.toBe("poi_query")
+	})
 })
 
 describe("default classifyKind is untouched", () => {
