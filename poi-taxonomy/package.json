@@ -22,6 +22,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./table": {
+			"node": "./table.ts",
+			"default": "./out/table.js",
+			"types": "./out/table.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -30,6 +35,10 @@
 			".": {
 				"types": "./out/index.d.ts",
 				"default": "./out/index.js"
+			},
+			"./table": {
+				"types": "./out/table.d.ts",
+				"default": "./out/table.js"
 			}
 		},
 		"access": "public"
