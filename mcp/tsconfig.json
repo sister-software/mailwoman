@@ -8,5 +8,12 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }, { "path": "../poi-taxonomy" }, { "path": "../mailwoman" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../neural" },
+		{ "path": "../poi-taxonomy" },
+		{ "path": "../resolver" },
+		{ "path": "../resolver-wof-sqlite" },
+		{ "path": "../mailwoman" }
+	]
 }

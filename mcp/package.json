@@ -39,9 +39,20 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"
+	},
+	"peerDependencies": {
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
+	"peerDependenciesMeta": {
+		"@mailwoman/resolver-wof-sqlite": {
+			"optional": true
+		}
 	}
 }
