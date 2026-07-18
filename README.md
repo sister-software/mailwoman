@@ -174,7 +174,7 @@ Not every query is an address. "coffee near Honolulu" is a category search — M
 detects that as distinct from address parsing, splits the category from the location
 constraint, and resolves it against `poi.db`, a sealed spatial layer built from Overture
 Places (US, Canada, Mexico, France). Categories with no permissively licensed source — fire
-hydrants, post boxes — abstain by design rather than returning nothing dressed up as an
+hydrants, post boxes — abstain by design rather than returning an empty result that reads as an
 answer; you build that layer yourself from your own OSM extract.
 
 `@mailwoman/mcp` puts the whole toolset behind an MCP server: parse, geocode, POI search, and
