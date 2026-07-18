@@ -11,19 +11,23 @@ project is going — locale tiers, workstreams, standing invariants — see
 [Current scope & roadmap](./plan/SCOPE.mdx); the Archive's plan directory is history, not the
 roadmap.
 
-:::info[Verified as of 2026-07-17 — release 6.5.0]
-The current npm release is **6.5.0** (`npm view mailwoman version`; `git tag` confirms `v6.5.0`), a
-minor that promotes the **v381 punct-fix** model — the first model to pass the full Gauntlet clean. The
-prior 6.4.0 minor promoted the **v310 fr-fragment** line (the house-number licence), and 6.3.0 promoted
-the **v264 country-softguard** model. 6.0.0 was the breaking, code-only Hono API-surface cutover (all
+:::info[Verified as of 2026-07-18 — model 6.6.0 (npm 7.1.0)]
+The current npm release is **7.1.0** (`npm view mailwoman version`), which promotes the **v385 latam**
+model — model version **6.6.0**. It adds the first genuinely-new locale coverage: Mexican and Canadian
+addresses via a dedicated Overture `overture-latam` shard (MX locality +8.7). The prior **7.0.0** was the
+package-only rules-parser excision (model unchanged from 6.5.0/v381); 6.5.0 promoted the **v381 punct-fix**
+model, the first to pass the full Gauntlet clean; 6.4.0 promoted the **v310 fr-fragment** line (the
+house-number licence), and 6.3.0 the **v264 country-softguard** model. 6.0.0 was the breaking, code-only Hono API-surface cutover (all
 four HTTP surfaces — the native `mailwoman serve` plus the photon/nominatim/libpostal drop-ins — on one
 shared Hono stack, the express server deleted with no shim). See [Releases & capabilities](./releases.mdx)
 for the rows.
 
-**The current model is v381** (`v3.8.1-punct-fix-full`) — a fine-tune off v310 with **two** folded
-changes, one variable at a time: the `synth-no-fragment` digit-ownership shard and the
-`augment_punct_drop_prob` delimiter-free augmentation ([#1101](https://github.com/sister-software/mailwoman/issues/1101)).
-It is the **first model to pass the full Gauntlet clean** — shipped 6.4.0 fails the metamorphic
+**The current model is v385** (`v3.8.5-latam-8k`, model 6.6.0) — a fine-tune off **v381** with **one**
+change: a dedicated `overture-latam` shard (CA + MX Overture-Addresses rows) with +CA/+MX in
+`country_weights`, adding the first genuinely-new locale coverage (MX locality 74.0→82.7). Its base v381
+(`v3.8.1-punct-fix-full`) was the two-change fine-tune off v310 — the `synth-no-fragment` digit-ownership
+shard and the `augment_punct_drop_prob` delimiter-free augmentation ([#1101](https://github.com/sister-software/mailwoman/issues/1101)) —
+and was the **first model to pass the full Gauntlet clean** (v385 holds it, 33/33) — shipped 6.4.0 fails the metamorphic
 `comma-drop` invariant: a comma-free `1600 Pennsylvania Ave NW Washington DC` absorbed the locality into
 the street and lost the rooftop (~2 km, address_point→admin). The punct-drop augmentation — a
 comma-stripped training copy per row with spans re-targeted, built and tested but never enabled in the
