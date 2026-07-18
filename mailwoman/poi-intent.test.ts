@@ -39,6 +39,7 @@ describe("createPOIIntentStage", () => {
 			lookup: poiTaxonomyLookup,
 			parseAnchor: async (text) => {
 				parsed.push(text)
+
 				return anchorResult(text)
 			},
 		})
