@@ -64,6 +64,15 @@ describe("layer manifest IO", () => {
 		using db = await openContractDB()
 		await expect(readLayerManifest(db)).rejects.toThrow(/manifest/)
 	})
+
+	it("round-trips a manifest with attribution absent", async () => {
+		using db = await openContractDB()
+		const { attribution: _attribution, ...manifestWithoutAttribution } = MANIFEST
+		await writeLayerManifest(db, manifestWithoutAttribution)
+		const back = await readLayerManifest(db)
+		expect(back).toEqual(manifestWithoutAttribution)
+		expect("attribution" in back).toBe(false)
+	})
 })
 
 describe("layer coverage IO", () => {
@@ -76,5 +85,11 @@ describe("layer coverage IO", () => {
 		expect(await readLayerCoverage(db, 1001)).toEqual({ h3Cell: 1001, completeness: 0.9, observedRows: 240 })
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN (undefined), never a zero-completeness record.
 		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
+	})
+
+	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
+		using db = await openContractDB()
+		await writeLayerCoverage(db, [{ h3Cell: 1003, completeness: 0, observedRows: 0 }])
+		expect(await readLayerCoverage(db, 1003)).toEqual({ h3Cell: 1003, completeness: 0, observedRows: 0 })
 	})
 })
