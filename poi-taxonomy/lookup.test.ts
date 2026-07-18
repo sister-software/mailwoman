@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { getAllCategories, getPOICategory, lookupPOICategory, requiresBuildLocalLayer } from "./lookup.ts"
 
@@ -50,5 +50,33 @@ describe("taxonomy integrity", () => {
 		for (const category of getAllCategories()) {
 			expect(getPOICategory(category.id)).toBeDefined()
 		}
+	})
+})
+
+describe("taxonomy integrity — malformed table", () => {
+	afterEach(() => {
+		vi.doUnmock("node:fs")
+		vi.resetModules()
+	})
+
+	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
+		vi.resetModules()
+		vi.doMock("node:fs", async () => {
+			const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
+			const malformed = JSON.stringify({
+				version: "0.0.0",
+				overtureRelease: null,
+				categories: [
+					{ id: "hospital", label: "Hospital", hierarchy: ["hospital"], basicLabel: null, source: "overture" },
+				],
+				synonyms: [{ phrase: "x", categoryID: "nope" }],
+			})
+			return {
+				...actual,
+				readFileSync: () => malformed,
+			}
+		})
+
+		await expect(import("./lookup.ts")).rejects.toThrow(/synonym/)
 	})
 })
