@@ -4762,6 +4762,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.3"
   languageName: unknown
   linkType: soft

@@ -237,6 +237,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"h3-js": "^4.5.0",
 		"kysely": "^0.29.3"
 	}
 }
