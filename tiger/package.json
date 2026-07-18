@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/tiger",
-	"version": "6.5.0",
+	"version": "7.0.0",
 	"description": "US Census TIGER/Line data processing and analysis.",
 	"keywords": [
 		"census",
