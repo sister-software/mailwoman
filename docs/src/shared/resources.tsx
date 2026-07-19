@@ -270,6 +270,19 @@ export function adminGazetteerURL(): string {
 }
 
 /**
+ * Byte-ranged POI layer (`poi.db`, ~3.7 GB — 13.68M Overture-places rows across US/CA/MX/FR, spec §3.4) — the clustered
+ * `(h3_cell, category_id, neg_rank, rowid_key)` `WITHOUT ROWID` B-tree the docs POI tester (`POIExplorer` /
+ * `try-it.mdx`) range-loads for LIVE category search. Model-independent (like the admin gazetteer), so it lives on its
+ * own dated path rather than under `<locale>/<model-version>/`. Bump this when the layer is rebuilt + re-uploaded (the
+ * immutable Cache-Control means a fresh DB needs a fresh URL).
+ */
+export const POI_LAYER_VERSION = "2026-07-19a"
+
+export function poiLayerURL(): string {
+	return `${ASSET_BASE_URL}poi/${POI_LAYER_VERSION}/poi.db`
+}
+
+/**
  * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the WOF admin centroid.
  * National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + TIGER interp shards
  * are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated interp estimate — not

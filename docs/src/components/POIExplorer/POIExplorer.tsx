@@ -14,6 +14,13 @@
  *   pure/side-effect-free and would be safe to evaluate under SSR too — the wrapper keeps the debounce
  *   timers and clipboard access off the server render regardless.
  *
+ *   Live poi.db results (category queries only) are wired via `../../shared/poi-httpvfs.ts`, a SECOND
+ *   sql.js-httpvfs worker over the published layer — dynamically imported on the first "Search live"
+ *   click, not eagerly, so the intent-only path (the common case) never pays for it. Deliberately
+ *   skips `DemoEmbedProvider`: that context loads the full model/classifier/FST bundle this tester
+ *   doesn't need, just to hand down a `sqljsBaseURL` string this component can compute itself the same
+ *   way `/trace` and `/demo` do (`useSiteConfig().baseURL + "mailwoman/sqljs"`).
+ *
  *   Usage in MDX:
  *
  *   ```mdx
@@ -36,6 +43,8 @@ import { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import React, { useCallback, useEffect, useState } from "react"
 
+import { useSiteConfig } from "../../hooks/site.ts"
+import type { POISearchHit } from "../../shared/poi-httpvfs.ts"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
 
 import styles from "./styles.module.css"
@@ -72,6 +81,13 @@ const PRESETS: ReadonlyArray<{ label: string; text: string }> = [
 
 const DEFAULT_TEXT = PRESETS[0]!.text
 
+/** `742 m` under 1 km, `1.9 km` past it — matches the demo's distance captions. */
+function formatDistance(distanceM: number): string {
+	if (distanceM < 1000) return `${Math.round(distanceM)} m`
+
+	return `${(distanceM / 1000).toFixed(1)} km`
+}
+
 interface POIExplorerSubject {
 	category: CategoryRecord
 	matchedPhrase: string
@@ -85,6 +101,17 @@ interface POIExplorerResult {
 	overpassQL?: string
 	overpassError?: string
 }
+
+/**
+ * "Search live" state machine. `error` distinguishes the two failure modes the button can hit: the anchor text not
+ * resolving against the candidate gazetteer ("couldn't place '<anchor>'") vs the published poi.db being unreachable
+ * (network/404 — the layer upload can lag a release). Both keep the intent/OverpassQL panel above fully intact.
+ */
+type LiveSearchState =
+	| { status: "idle" }
+	| { status: "loading" }
+	| { status: "error"; message: string }
+	| { status: "success"; hits: POISearchHit[]; centerName: string }
 
 // ---------------------------------------------------------------------------
 // POIExplorer props
@@ -102,10 +129,14 @@ export interface POIExplorerProps {
 const DEBOUNCE_MS = 250
 
 const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) => {
+	const { baseURL } = useSiteConfig()
+	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
+
 	const [text, setText] = useState(defaultText)
 	const [debouncedText, setDebouncedText] = useState(defaultText)
 	const [result, setResult] = useState<POIExplorerResult | null>(null)
 	const [copied, setCopied] = useState(false)
+	const [liveSearch, setLiveSearch] = useState<LiveSearchState>({ status: "idle" })
 
 	// Debounce the input before classifying — avoids re-running the (cheap, but still per-keystroke)
 	// classifier on every character.
@@ -118,6 +149,10 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 	useEffect(() => {
 		let cancelled = false
 		const trimmed = debouncedText.trim()
+
+		// A new query invalidates any live results from the PREVIOUS query — otherwise a stale results
+		// list would sit under a freshly-typed, unrelated category.
+		setLiveSearch({ status: "idle" })
 
 		if (!trimmed) {
 			setResult(null)
@@ -198,6 +233,38 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 		window.setTimeout(() => setCopied(false), 1500)
 	}, [result])
 
+	const onSearchLive = useCallback(async () => {
+		const subject = result?.subject
+
+		if (!subject || !subject.remainder.trim()) return
+
+		setLiveSearch({ status: "loading" })
+
+		try {
+			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } = await import("../../shared/poi-httpvfs.ts")
+
+			const center = await resolveAnchorCenter(sqljsBaseURL, subject.remainder)
+
+			if (!center) {
+				setLiveSearch({ status: "error", message: `couldn't place "${subject.remainder}"` })
+
+				return
+			}
+
+			const worker = await loadPOIWorker(sqljsBaseURL)
+			const hits = await searchPOICategory(worker, {
+				categoryID: subject.category.id,
+				center: { lat: center.lat, lon: center.lon },
+			})
+
+			setLiveSearch({ status: "success", hits, centerName: center.name })
+		} catch {
+			// Any failure past anchor resolution (byte-range fetch, worker init, a still-propagating R2
+			// upload) reads as the layer being unreachable — never a silent zero-result list.
+			setLiveSearch({ status: "error", message: "the published POI layer isn't reachable" })
+		}
+	}, [result, sqljsBaseURL])
+
 	return (
 		<div className={styles.poiExplorer}>
 			<div className={styles.form}>
@@ -271,6 +338,53 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 							) : result.overpassError ? (
 								<p className={styles.error}>{result.overpassError}</p>
 							) : null}
+
+							{taxonomyLookup.requiresBuildLocalLayer(result.subject.category) ? null : (
+								<div className={styles.liveSearchBlock}>
+									<div className={styles.overpassHeader}>
+										<h3>Live results</h3>
+										<button
+											type="button"
+											className={styles.debugBtn}
+											onClick={onSearchLive}
+											disabled={!result.subject.remainder.trim() || liveSearch.status === "loading"}
+											title={
+												result.subject.remainder.trim()
+													? "Search the published poi.db layer"
+													: 'Needs a location anchor (e.g. "near Springfield")'
+											}
+										>
+											{liveSearch.status === "loading" ? "Searching…" : "Search live"}
+										</button>
+									</div>
+
+									{!result.subject.remainder.trim() ? (
+										<p className={styles.noIntent}>Add a location anchor (e.g. "near Springfield") to search live.</p>
+									) : liveSearch.status === "error" ? (
+										<p className={styles.error}>{liveSearch.message}</p>
+									) : liveSearch.status === "success" ? (
+										liveSearch.hits.length === 0 ? (
+											<p className={styles.noIntent}>
+												No {result.subject.category.label.toLowerCase()} results near {liveSearch.centerName}.
+											</p>
+										) : (
+											<>
+												<p className={styles.liveSearchCaption}>Near {liveSearch.centerName}, ranked by distance:</p>
+												<ul className={styles.liveSearchResults}>
+													{liveSearch.hits.map((hit, i) => (
+														<li key={`${hit.name}-${i}`}>
+															<span className={styles.liveSearchName}>{hit.name}</span>
+															<span className={styles.liveSearchMeta}>
+																{formatDistance(hit.distanceM)} · {hit.country}
+															</span>
+														</li>
+													))}
+												</ul>
+											</>
+										)
+									) : null}
+								</div>
+							)}
 						</>
 					) : (
 						<p className={styles.noIntent}>

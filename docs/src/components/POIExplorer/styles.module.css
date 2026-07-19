@@ -172,8 +172,59 @@
 	background: var(--ifm-color-emphasis-200);
 }
 
+.debugBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.debugBtn:disabled:hover {
+	background: var(--ifm-color-emphasis-100);
+}
+
 .error {
 	color: var(--ifm-color-danger);
 	font-family: var(--ifm-font-family-monospace);
 	white-space: pre-wrap;
+}
+
+/* Live search block */
+
+.liveSearchBlock {
+	margin-top: 1rem;
+}
+
+.liveSearchCaption {
+	margin: 0 0 0.4rem;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.liveSearchResults {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.liveSearchResults li {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.75rem;
+	padding: 0.4rem 0.6rem;
+	border-radius: 6px;
+	background: var(--ifm-color-emphasis-100);
+	font-size: 0.9rem;
+}
+
+.liveSearchName {
+	font-weight: 600;
+}
+
+.liveSearchMeta {
+	color: var(--ifm-color-emphasis-600);
+	font-size: 0.8rem;
+	white-space: nowrap;
 }
