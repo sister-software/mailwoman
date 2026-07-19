@@ -4485,7 +4485,6 @@ __metadata:
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"
     kysely: "npm:^0.29.3"
-    lru-cache: "npm:^11.5.2"
     path-ts: "npm:^2.1.0"
     pino: "npm:^10.3.1"
     pino-pretty: "npm:^13.1.3"
