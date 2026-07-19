@@ -44,29 +44,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./resolve": {
-				"types": "./out/resolve.d.ts",
-				"default": "./out/resolve.js"
-			},
-			"./geojson": {
-				"types": "./out/geojson.d.ts",
-				"default": "./out/geojson.js"
-			},
-			"./ingest": {
-				"types": "./out/ingest.d.ts",
-				"default": "./out/ingest.js"
-			},
-			"./tools": {
-				"types": "./out/tools/index.d.ts",
-				"default": "./out/tools/index.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

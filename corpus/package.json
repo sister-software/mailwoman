@@ -54,37 +54,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/src/index.d.ts",
-				"default": "./out/src/index.js"
-			},
-			"./types": {
-				"types": "./out/src/types.d.ts",
-				"default": "./out/src/types.js"
-			},
-			"./format": {
-				"types": "./out/src/format.d.ts",
-				"default": "./out/src/format.js"
-			},
-			"./license": {
-				"types": "./out/src/license.d.ts",
-				"default": "./out/src/license.js"
-			},
-			"./build": {
-				"types": "./out/src/build.d.ts",
-				"default": "./out/src/build.js"
-			},
-			"./adapters": {
-				"types": "./out/src/adapters/index.d.ts",
-				"default": "./out/src/adapters/index.js"
-			},
-			"./tools": {
-				"types": "./out/src/tools/index.d.ts",
-				"default": "./out/src/tools/index.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

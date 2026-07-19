@@ -65,45 +65,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./postcode-anchor": {
-				"types": "./out/postcode-anchor.d.ts",
-				"default": "./out/postcode-anchor.js"
-			},
-			"./postcode-binary-resolver": {
-				"types": "./out/postcode-binary-resolver.d.ts",
-				"default": "./out/postcode-binary-resolver.js"
-			},
-			"./soft-features": {
-				"types": "./out/soft-features.d.ts",
-				"default": "./out/soft-features.js"
-			},
-			"./scorer": {
-				"types": "./out/scorer.d.ts",
-				"default": "./out/scorer.js"
-			},
-			"./tokenizer": {
-				"types": "./out/tokenizer.d.ts",
-				"default": "./out/tokenizer.js"
-			},
-			"./onnx-runner": {
-				"types": "./out/onnx-runner.d.ts",
-				"default": "./out/onnx-runner.js"
-			},
-			"./weights": {
-				"types": "./out/weights.d.ts",
-				"default": "./out/weights.js"
-			},
-			"./browser": {
-				"types": "./out/browser.d.ts",
-				"default": "./out/browser.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

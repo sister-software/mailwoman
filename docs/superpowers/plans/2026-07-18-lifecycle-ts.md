@@ -717,6 +717,14 @@ describe("Service disposal", () => {
 		expect(constructed).toBe(0)
 	})
 
+	it("raises E_NO_RESOLVER for a nullish resolver and E_INVALID_RESOLVER for a bogus one", async () => {
+		const nullService = new Service(null as never)
+		await expect(nullService.resolve()).rejects.toMatchObject({ code: "E_NO_RESOLVER" })
+
+		const bogusService = new Service(42 as never)
+		await expect(bogusService.resolve()).rejects.toMatchObject({ code: "E_INVALID_RESOLVER" })
+	})
+
 	it("is a no-op when resolution failed", async () => {
 		const service = new Service(() => {
 			throw new Error("boom")
@@ -849,6 +857,8 @@ export class Service<T extends object> implements PromiseLike<T>, AsyncDisposabl
 			}
 		} else if (resolver && typeof resolver === "object") {
 			instance = resolver
+		} else if (resolver == null) {
+			throw new LifecycleError("E_NO_RESOLVER", "Service has no resolver. Provide an instance, factory, or constructor.")
 		} else {
 			throw new LifecycleError(
 				"E_INVALID_RESOLVER",

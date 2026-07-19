@@ -34,21 +34,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./format": {
-				"types": "./out/format.d.ts",
-				"default": "./out/format.js"
-			},
-			"./key": {
-				"types": "./out/key.d.ts",
-				"default": "./out/key.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

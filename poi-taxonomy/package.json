@@ -36,22 +36,6 @@
 		"./data/*.json": "./data/*.json"
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./table": {
-				"types": "./out/table.d.ts",
-				"default": "./out/table.js"
-			},
-			"./overpass": {
-				"types": "./out/overpass.d.ts",
-				"default": "./out/overpass.js"
-			},
-			"./data/*.json": "./data/*.json"
-		},
 		"access": "public"
 	}
 }

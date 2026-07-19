@@ -60,42 +60,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			"./schema/*.json": "./dist/schema/*.json",
-			"./styles": {
-				"types": "./out/styles/index.d.ts",
-				"default": "./out/styles/index.js"
-			},
-			"./tiles": {
-				"types": "./out/tiles/index.d.ts",
-				"default": "./out/tiles/index.js"
-			},
-			"./tiles/coords": {
-				"types": "./out/tiles/coords.d.ts",
-				"default": "./out/tiles/coords.js"
-			},
-			"./base": {
-				"types": "./out/base/index.d.ts",
-				"default": "./out/base/index.js"
-			},
-			"./bdc": {
-				"types": "./out/bdc/index.d.ts",
-				"default": "./out/bdc/index.js"
-			},
-			"./coverage": {
-				"types": "./out/coverage/index.d.ts",
-				"default": "./out/coverage/index.js"
-			},
-			"./race-dots": {
-				"types": "./out/race-dots/index.d.ts",
-				"default": "./out/race-dots/index.js"
-			},
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

@@ -31,17 +31,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./build": {
-				"types": "./out/build.d.ts",
-				"default": "./out/build.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

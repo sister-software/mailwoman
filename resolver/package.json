@@ -34,21 +34,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./resolve": {
-				"types": "./out/resolve.d.ts",
-				"default": "./out/resolve.js"
-			},
-			"./span-rescore": {
-				"types": "./out/span-rescore.d.ts",
-				"default": "./out/span-rescore.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

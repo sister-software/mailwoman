@@ -39,25 +39,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./address": {
-				"types": "./out/address.d.ts",
-				"default": "./out/address.js"
-			},
-			"./name": {
-				"types": "./out/name.d.ts",
-				"default": "./out/name.js"
-			},
-			"./organization": {
-				"types": "./out/organization.d.ts",
-				"default": "./out/organization.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

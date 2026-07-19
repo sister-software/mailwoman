@@ -60,13 +60,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

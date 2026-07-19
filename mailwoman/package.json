@@ -90,45 +90,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./geocode-core": {
-				"types": "./out/geocode-core.d.ts",
-				"default": "./out/geocode-core.js"
-			},
-			"./geocode-stream": {
-				"types": "./out/geocode-stream.d.ts",
-				"default": "./out/geocode-stream.js"
-			},
-			"./resolver-backend": {
-				"types": "./out/resolver-backend.d.ts",
-				"default": "./out/resolver-backend.js"
-			},
-			"./gazetteer-pipeline": {
-				"types": "./out/gazetteer-pipeline/index.d.ts",
-				"default": "./out/gazetteer-pipeline/index.js"
-			},
-			"./gazetteer-pipeline/*": {
-				"types": "./out/gazetteer-pipeline/*.d.ts",
-				"default": "./out/gazetteer-pipeline/*.js"
-			},
-			"./cli-kit": {
-				"types": "./out/cli-kit/index.d.ts",
-				"default": "./out/cli-kit/index.js"
-			},
-			"./test-kit": {
-				"types": "./out/test-kit/index.d.ts",
-				"default": "./out/test-kit/index.js"
-			},
-			"./poi-overpass": {
-				"types": "./out/poi-overpass.d.ts",
-				"default": "./out/poi-overpass.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

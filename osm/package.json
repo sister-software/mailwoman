@@ -44,21 +44,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			"./scripts/*": {
-				"types": "./out/scripts/*.d.ts",
-				"default": "./out/scripts/*.js"
-			},
-			"./sdk": {
-				"types": "./out/sdk/index.d.ts",
-				"default": "./out/sdk/index.js"
-			},
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			}
-		},
 		"access": "public"
 	},
 	"scripts": {
