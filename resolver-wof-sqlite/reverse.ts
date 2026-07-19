@@ -200,9 +200,19 @@ export class WOFReverseGeocoder implements Disposable {
 
 	/**
 	 * Resolve a WGS-84 point to its containing admin hierarchy. Async for symmetry with `PlaceLookup.findPlace` (the work
-	 * is sync `node:sqlite` underneath — same convention).
+	 * is sync `node:sqlite` underneath — same convention). Thin wrapper over {@link reverseGeocodeSync}.
 	 */
 	async reverseGeocode(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): Promise<ReverseGeocodeResult> {
+		return this.reverseGeocodeSync(lat, lon, opts)
+	}
+
+	/**
+	 * Synchronous core of {@link reverseGeocode} — every step underneath is already sync `node:sqlite`, so this is the
+	 * REAL implementation; the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
+	 * Exposed directly for callers that can't await mid-call (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`,
+	 * whose `POIIntentOutcome` return type is synchronous by contract — see `poi-intent.ts`'s `deps.execute`).
+	 */
+	reverseGeocodeSync(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): ReverseGeocodeResult {
 		if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
 			throw new RangeError(`WOFReverseGeocoder.reverseGeocode: (${lat}, ${lon}) is not a WGS-84 coordinate`)
 		}

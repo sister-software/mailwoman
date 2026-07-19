@@ -35,6 +35,7 @@ const HOSPITAL_HIT: POISearchHit = {
 	longitude: -89.651,
 	country: "US",
 	confidence: 0.8,
+	gersID: "08f2836a5411a2ff0300b0a0b0c0d0e0",
 	distanceM: 120,
 }
 
@@ -74,6 +75,7 @@ describe("createPOIExecutor", () => {
 				longitude: -89.651,
 				country: "US",
 				confidence: 0.8,
+				gersID: "08f2836a5411a2ff0300b0a0b0c0d0e0",
 				distanceM: 120,
 			},
 		])
@@ -152,6 +154,7 @@ describe("createPOIExecutor", () => {
 			longitude: 20,
 			country: "US",
 			confidence: 0.6,
+			gersID: null,
 		}
 		const executor = createPOIExecutor({
 			lookup: stubLookup((query) => {
@@ -176,8 +179,74 @@ describe("createPOIExecutor", () => {
 				longitude: 20,
 				country: "US",
 				confidence: 0.6,
+				gersID: null,
 			},
 		])
 		expect(seenQueries).toEqual([{ name: "Joe's Diner", center: undefined, limit: undefined }])
+	})
+
+	it("ancestry is ABSENT (no key at all) when no reverseGeocode fn is wired", () => {
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => [HOSPITAL_HIT]),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+		expect(outcome.results![0]).not.toHaveProperty("ancestry")
+	})
+
+	it("ancestry is decorated per-result when reverseGeocode is wired, capped at the result count", () => {
+		const seenCoords: Array<[number, number]> = []
+		const ancestry = [
+			{ placetype: "locality", name: "Springfield", wofID: 1 },
+			{ placetype: "region", name: "Illinois", wofID: 2 },
+			{ placetype: "country", name: "United States", wofID: 3 },
+		]
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => [HOSPITAL_HIT]),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+			reverseGeocode: (latitude, longitude) => {
+				seenCoords.push([latitude, longitude])
+
+				return ancestry
+			},
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+		expect(outcome.results![0]!.ancestry).toEqual(ancestry)
+		// Exactly one reverseGeocode call per result — the ≤20 (≤limit) call budget.
+		expect(seenCoords).toEqual([[HOSPITAL_HIT.latitude, HOSPITAL_HIT.longitude]])
+	})
+
+	it("ancestry stays ABSENT for a result when reverseGeocode returns undefined (e.g. open ocean)", () => {
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => [HOSPITAL_HIT]),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+			reverseGeocode: () => undefined,
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+		expect(outcome.results![0]).not.toHaveProperty("ancestry")
 	})
 })

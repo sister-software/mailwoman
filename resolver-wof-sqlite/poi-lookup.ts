@@ -63,6 +63,8 @@ export interface POISearchHit {
 	longitude: number
 	country: string
 	confidence: number
+	/** Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule; see `POITable.gers_id`). */
+	gersID: string | null
 	distanceM?: number
 }
 
@@ -76,7 +78,15 @@ export interface POILookupOpts {
 /** The `poi` columns every search mode hydrates — a typed projection of the SHARED {@link POITable}. */
 type POIRow = Pick<
 	POITable,
-	"name" | "category_id" | "brand_wikidata" | "latitude" | "longitude" | "country" | "confidence" | "name_key"
+	| "name"
+	| "category_id"
+	| "brand_wikidata"
+	| "latitude"
+	| "longitude"
+	| "country"
+	| "confidence"
+	| "name_key"
+	| "gers_id"
 >
 
 /**
@@ -117,7 +127,7 @@ export class POILookup implements Disposable {
 			this.#idToCategory.set(Number(r.id), String(r.category))
 		}
 
-		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key"
+		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key, gers_id"
 
 		this.#categoryCellProbe = this.#db.prepare(
 			`SELECT ${columns} FROM poi WHERE h3_cell = ? AND category_id = ? ORDER BY neg_rank ASC LIMIT ?`
@@ -249,7 +259,7 @@ export class POILookup implements Disposable {
 	 * prepared fresh each time rather than cached.
 	 */
 	#hydrateByNameKeys(nameKeys: string[]): POIRow[] {
-		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key"
+		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key, gers_id"
 		const placeholders = nameKeys.map(() => "?").join(", ")
 		const stmt = this.#db.prepare(`SELECT ${columns} FROM poi WHERE name_key IN (${placeholders})`)
 
@@ -293,6 +303,7 @@ function toHit(
 		longitude: row.longitude,
 		country: row.country,
 		confidence: row.confidence,
+		gersID: row.gers_id,
 		...(center
 			? { distanceM: haversineKm(center.latitude, center.longitude, row.latitude, row.longitude) * 1000 }
 			: {}),
