@@ -4449,7 +4449,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
-    "@maplibre/maplibre-gl-style-spec": "npm:^25.0.2"
+    "@maplibre/maplibre-gl-style-spec": "npm:^26.1.0"
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
@@ -5040,9 +5040,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maplibre/maplibre-gl-style-spec@npm:^25.0.2":
-  version: 25.0.2
-  resolution: "@maplibre/maplibre-gl-style-spec@npm:25.0.2"
+"@maplibre/maplibre-gl-style-spec@npm:^26.1.0":
+  version: 26.1.0
+  resolution: "@maplibre/maplibre-gl-style-spec@npm:26.1.0"
   dependencies:
     "@mapbox/jsonlint-lines-primitives": "npm:^2.0.3"
     "@mapbox/unitbezier": "npm:^1.0.0"
@@ -5054,7 +5054,7 @@ __metadata:
     gl-style-format: dist/gl-style-format.mjs
     gl-style-migrate: dist/gl-style-migrate.mjs
     gl-style-validate: dist/gl-style-validate.mjs
-  checksum: 10/003ff8978ddb45e73c9c71204ef007bb0eb6d6cfa2a17c9c77c66c3c690dc277fa0eac363e6c8198190a42e78f0f0b6307cd0ad3562739aa2691b3563597df36
+  checksum: 10/d89b23d8ab6815562125ab63fe7eb88825e978439f82c19aba933e03c10a2ddb99b5ec790d4393b37616cb319cc7da1aa7738b3311a2f46b05774688275d18ba
   languageName: node
   linkType: hard
 
