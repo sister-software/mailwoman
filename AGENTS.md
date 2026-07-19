@@ -95,9 +95,9 @@ To make publish robust regardless of repo state, `scripts/publish-workspace.ts` 
 
 `yarn 4`'s `workspace:*` protocol is yarn-specific. `npm publish` ships the literal string and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn pack` translates `workspace:*` to the concrete sibling version in the tarball. That's why `publish-workspace.ts` does pack-then-publish instead of either tool alone.
 
-### Pitfall: `exports` carries a dev-only `node → .ts` condition — `publishConfig.exports` is what ships
+### Pitfall: `exports` carries a dev-only `node → .ts` condition — the PUBLISH map is DERIVED at pack time
 
-Since the first-class-TS migration, every workspace's `exports` entries put a `node` condition first, pointing at the source `.ts` (plain `node` runs source in the repo, no build step), with `default`/`types` pointing at `out/`. Published tarballs ship only `out/**` — the source path would dangle — so each publishable workspace also carries `publishConfig.exports`, the same map with `node` stripped (`types` first, then `default`). `yarn pack` substitutes it into the tarball's package.json; verified against real tarballs. **When adding or changing an exports entry, update both maps** — a subpath present only in the dev map works locally and 404s for consumers.
+Since the first-class-TS migration, every workspace's `exports` entries put a `node` condition first, pointing at the source `.ts` (plain `node` runs source in the repo, no build step), with `default`/`types` pointing at `out/`. Published tarballs ship only `out/**` — so `scripts/publish-workspace.ts` DERIVES the consumer map inside the tarball at pack time: it strips every `node → .ts` condition, reorders `types` first, and HARD-FAILS the publish if any remaining target is TypeScript source or missing from the archive. There is NO hand-maintained `publishConfig.exports` — that duplication existed until 2026-07-19, when removing it without a replacement shipped a fully-broken v7.2.0 (every package's `.` resolved to an unshipped `.ts`); the derivation + guard replaced it. Maintain ONLY the dev map; the guard catches dangling subpaths (it found two dead `core` entries and mailwoman's never-shipped `.d.ts` files on its first run).
 
 ### Recovering from a partial release
 

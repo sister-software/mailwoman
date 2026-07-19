@@ -31,7 +31,6 @@
 	"bin": "./out/cli.js",
 	"files": [
 		"!out/test/**/*",
-		"!**/*.ts",
 		"out/**/*.js",
 		"out/**/*.mjs",
 		"out/**/*.js.map",

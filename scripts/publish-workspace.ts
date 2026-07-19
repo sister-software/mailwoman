@@ -7,12 +7,19 @@
  *   Publish a single workspace. Invoked by `@release-it-plugins/workspaces` once per non-private
  *   workspace.
  *
- *   Two-step flow:
+ *   Three-step flow:
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
  *        while building the tarball. npm's own publish step does NOT do this translation, and
  *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
- *   2. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
+ *   2. Derive the PUBLISH exports map from the dev map inside the tarball — every `node → .ts`
+ *        condition is stripped (the repo runs source under node; consumers get `out/`). The dev
+ *        `exports` in each workspace's package.json is the single source of truth; there is no
+ *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
+ *        when it was removed without a replacement — this transform IS the replacement). A guard
+ *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points at a
+ *        file the tarball doesn't contain.
+ *   3. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
  *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
  *        `yarn npm publish` doesn't integrate with npm's OIDC flow.
  *
@@ -30,12 +37,24 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { copyFileSync, lstatSync, mkdtempSync, readFileSync, readlinkSync, rmSync, unlinkSync } from "node:fs"
+import {
+	copyFileSync,
+	lstatSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	readlinkSync,
+	rmSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
+
+import { collectExportTargets, isTypeScriptSource, transformExportsForPublish } from "./publish-exports.ts"
 
 const repoRoot = repoRootPath()
 
@@ -81,7 +100,10 @@ try {
 		process.exit(packResult.status ?? 1)
 	}
 
-	// Step 2: npm publish <tarball> — npm CLI auto-detects OIDC environment
+	// Step 2: derive the publish exports map + verify the tarball is consumer-resolvable.
+	derivePublishExports(tarballPath, tmpDir)
+
+	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
 	// in GitHub Actions and uses it for Trusted Publishing.
 	const publishArgs = ["publish", tarballPath, "--tag", tag]
 
@@ -124,6 +146,70 @@ try {
 	process.exit(publishResult.status ?? 1)
 } finally {
 	rmSync(tmpDir, { recursive: true, force: true })
+}
+
+/**
+ * Extract the tarball, transform its manifest, verify, and repack over the original path.
+ */
+function derivePublishExports(tarballPath: string, tmpDir: string) {
+	const extractDir = join(tmpDir, "extract")
+	mkdirSync(extractDir, { recursive: true })
+	run("tar", ["-xzf", tarballPath, "-C", extractDir])
+
+	const manifestPath = join(extractDir, "package", "package.json")
+	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
+
+	if (manifest.publishConfig?.exports) {
+		// Legacy hand-maintained publish map — the derivation below supersedes it.
+		delete manifest.publishConfig.exports
+	}
+
+	if (manifest.exports) {
+		manifest.exports = transformExportsForPublish(manifest.exports)
+	}
+
+	const offenders: string[] = []
+
+	for (const target of collectExportTargets(manifest.exports ?? {})) {
+		if (isTypeScriptSource(target)) {
+			offenders.push(`${target} (TypeScript source in the publish map)`)
+			continue
+		}
+		const onDisk = join(extractDir, "package", target)
+
+		if (!lstatSync(onDisk, { throwIfNoEntry: false })) {
+			offenders.push(`${target} (not present in the tarball)`)
+		}
+	}
+
+	if (offenders.length > 0) {
+		console.error(`publish-workspace: UNRESOLVABLE PUBLISH MAP for ${manifest.name} — refusing to publish:`)
+
+		for (const line of offenders) {
+			console.error(`  - ${line}`)
+		}
+		process.exit(1)
+	}
+
+	writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
+	run("tar", ["-czf", tarballPath, "-C", extractDir, "package"])
+	console.error(
+		`publish-workspace: derived publish exports for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets verified)`
+	)
+
+	if (dryRun) {
+		console.error(`publish-workspace: [dry-run] exports = ${JSON.stringify(manifest.exports)}`)
+	}
+}
+
+/** SpawnSync wrapper that exits on failure. */
+function run(command: string, args: string[]) {
+	const result = spawnSync(command, args, { stdio: ["ignore", "inherit", "inherit"] })
+
+	if (result.status !== 0) {
+		console.error(`publish-workspace: ${command} ${args.join(" ")} failed (exit ${result.status})`)
+		process.exit(result.status ?? 1)
+	}
 }
 
 /**

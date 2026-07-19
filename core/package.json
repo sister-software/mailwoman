@@ -74,11 +74,6 @@
 			"default": "./out/resources/whosonfirst/index.js",
 			"types": "./out/resources/whosonfirst/index.d.ts"
 		},
-		"./resources/libpostal": {
-			"node": "./resources/libpostal/index.ts",
-			"default": "./out/resources/libpostal/index.js",
-			"types": "./out/resources/libpostal/index.d.ts"
-		},
 		"./utils": {
 			"node": "./utils/index.ts",
 			"default": "./out/utils/index.js",
@@ -103,11 +98,6 @@
 			"node": "./lifecycle/index.ts",
 			"default": "./out/lifecycle/index.js",
 			"types": "./out/lifecycle/index.d.ts"
-		},
-		"./identifiers": {
-			"node": "./identifiers/index.ts",
-			"default": "./out/identifiers/index.js",
-			"types": "./out/identifiers/index.d.ts"
 		},
 		"./objects": {
 			"node": "./objects.ts",
