@@ -4475,6 +4475,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
+    async-init: "npm:^1.0.0"
     axios: "npm:^1.18.1"
     axios-cache-interceptor: "npm:^1.12.0"
     change-case: "npm:^5.4.4"
@@ -9564,6 +9565,13 @@ __metadata:
   version: 1.0.0
   resolution: "async-generator-function@npm:1.0.0"
   checksum: 10/3d49e7acbeee9e84537f4cb0e0f91893df8eba976759875ae8ee9e3d3c82f6ecdebdb347c2fad9926b92596d93cdfc78ecc988bcdf407e40433e8e8e6fe5d78e
+  languageName: node
+  linkType: hard
+
+"async-init@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "async-init@npm:1.0.0"
+  checksum: 10/4c475523f6aac5deee13cf368594dba48f4af6574cad8038fb2149402a52f96131b68c2dee71cddefc0bd078f2c057466d4829005cee81426b518ea62e3cb3f9
   languageName: node
   linkType: hard
 

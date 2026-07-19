@@ -5,6 +5,7 @@
  */
 
 import { ConsoleLogger, type IRuntimeLogger } from "@mailwoman/core/logging"
+import { isAsyncDisposable } from "async-init"
 import Axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type CreateAxiosDefaults } from "axios"
 import {
 	type AxiosCacheInstance,
@@ -13,7 +14,6 @@ import {
 	setupCache,
 } from "axios-cache-interceptor"
 
-import { ServiceSymbol } from "../lifecycle/ServiceSymbol.ts"
 import { delegateAxiosError } from "./responses.ts"
 
 export type { IRuntimeLogger }
@@ -162,7 +162,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		const storedCache = this.config.caching?.storage
 
-		if (ServiceSymbol.isAsyncDisposable(storedCache)) {
+		if (isAsyncDisposable(storedCache)) {
 			await storedCache[Symbol.asyncDispose]()
 		}
 
