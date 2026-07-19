@@ -261,6 +261,7 @@ const sidebars: SidebarsConfig = {
 		"contributing-docs",
 		"plan/CONTRIBUTING_MODEL_WORK",
 		"plan/reference/OPERATIONS",
+		"plan/reference/poi-layer-runbook",
 		"plan/reference/coverage-overlay",
 		"plan/reference/VERDICT_SMOKES",
 		"plan/reference/WIKIPEDIA_IMPORTANCE",
