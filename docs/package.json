@@ -59,17 +59,17 @@
 		"@docusaurus/tsconfig": "^3.10.2",
 		"@docusaurus/types": "^3.10.2",
 		"@playwright/test": "^1.61.1",
-		"@storybook/addon-docs": "^10.5.0",
-		"@storybook/react-vite": "^10.5.0",
+		"@storybook/addon-docs": "^10.5.2",
+		"@storybook/react-vite": "^10.5.2",
 		"@types/node": "^26.1.1",
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
 		"@types/react-map-gl": "^6.1.8",
 		"@vitejs/plugin-react": "^6.0.3",
 		"sql.js-httpvfs": "^0.8.12",
-		"storybook": "^10.5.0",
+		"storybook": "^10.5.2",
 		"typescript": "^6.0.3",
-		"vite": "^8.0.16"
+		"vite": "^8.1.5"
 	},
 	"browserslist": {
 		"production": [

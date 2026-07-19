@@ -323,7 +323,7 @@
 		"fast-glob": "^3.3.3",
 		"http-status-codes": "^2.3.0",
 		"json-colorizer": "^3.0.1",
-		"kysely": "^0.29.3",
+		"kysely": "^0.29.4",
 		"lru-cache": "^11.5.2",
 		"path-ts": "^2.1.0",
 		"pino": "^10.3.1",

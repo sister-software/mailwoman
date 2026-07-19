@@ -35,11 +35,11 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.4.0",
+		"@hono/zod-openapi": "^1.5.1",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
-		"hono": "^4.12.29",
+		"hono": "^4.12.31",
 		"zod": "^4.4.3"
 	}
 }
