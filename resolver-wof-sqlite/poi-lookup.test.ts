@@ -52,6 +52,7 @@ interface FixtureRow {
 	latitude: number
 	longitude: number
 	confidence?: number
+	gersID?: string | null
 }
 
 const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3 }
@@ -63,6 +64,7 @@ const CAFE_ALPHA: FixtureRow = {
 	brandWikidata: null,
 	latitude: 39.782,
 	longitude: -89.6501,
+	gersID: "08f2836a5411a2ff0300b0a0a0a0a0a0",
 }
 const CAFE_BETA: FixtureRow = {
 	name: "Cafe Beta",
@@ -144,7 +146,7 @@ async function buildFixture(path: string): Promise<void> {
 				longitude: row.longitude,
 				country: "US",
 				confidence,
-				gers_id: null,
+				gers_id: row.gersID ?? null,
 			})
 			.execute()
 
@@ -179,6 +181,9 @@ describe("POILookup", () => {
 			expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
 			expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
 			expect(hits[1]!.distanceM).toBeLessThan(hits[2]!.distanceM!)
+			// gers_id round-trips: Cafe Alpha was seeded with one, the others with null.
+			expect(hits[0]!.gersID).toBe(CAFE_ALPHA.gersID)
+			expect(hits[1]!.gersID).toBeNull()
 			// Sanity: the app-level distance matches a plain haversine of the same pair.
 			expect(hits[0]!.distanceM).toBeCloseTo(
 				haversineKm(SPRINGFIELD.latitude, SPRINGFIELD.longitude, CAFE_ALPHA.latitude, CAFE_ALPHA.longitude) * 1000,

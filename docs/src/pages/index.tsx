@@ -269,8 +269,7 @@ function FeatureStrip(): ReactNode {
 						<p>
 							A <code>poi_query</code> kind and a sealed <code>poi.db</code> resolve category searches ("coffee near
 							Honolulu") the way address queries resolve. <code>@mailwoman/mcp</code> exposes the same parse / geocode /
-							POI-search toolset to any MCP-compatible agent over stdio. On <code>main</code> now, landing on npm in the
-							next release.
+							POI-search toolset to any MCP-compatible agent over stdio. On npm since <code>7.2.1</code>.
 						</p>
 					</div>
 				</div>

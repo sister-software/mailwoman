@@ -1,0 +1,45 @@
+{"id": "cat-us-01", "query": "coffee near Springfield IL", "expect": {"kind": "results", "categoryID": "cafe", "anchorGold": {"latitude": 39.7817, "longitude": -89.6501}, "maxNearestKm": 25.0}}
+{"id": "cat-us-02", "query": "restaurant near Chicago IL", "expect": {"kind": "results", "categoryID": "restaurant", "anchorGold": {"latitude": 41.8781, "longitude": -87.6298}, "maxNearestKm": 25.0}}
+{"id": "cat-us-03", "query": "hotel near Austin TX", "expect": {"kind": "results", "categoryID": "hotel", "anchorGold": {"latitude": 30.2672, "longitude": -97.7431}, "maxNearestKm": 25.0}}
+{"id": "cat-us-04", "query": "bank near Seattle WA", "expect": {"kind": "results", "categoryID": "bank", "anchorGold": {"latitude": 47.6062, "longitude": -122.3321}, "maxNearestKm": 25.0}}
+{"id": "cat-us-05", "query": "pharmacy near Denver CO", "expect": {"kind": "results", "categoryID": "pharmacy", "anchorGold": {"latitude": 39.7392, "longitude": -104.9903}, "maxNearestKm": 25.0}}
+{"id": "cat-us-06", "query": "school near Chicago IL", "expect": {"kind": "results", "categoryID": "school", "anchorGold": {"latitude": 41.8781, "longitude": -87.6298}, "maxNearestKm": 25.0}}
+{"id": "cat-ca-01", "query": "restaurant near Toronto ON", "expect": {"kind": "results", "categoryID": "restaurant", "anchorGold": {"latitude": 43.6532, "longitude": -79.3832}, "maxNearestKm": 25.0}}
+{"id": "cat-ca-02", "query": "gas station near Ottawa ON", "expect": {"kind": "results", "categoryID": "gas_station", "anchorGold": {"latitude": 45.4215, "longitude": -75.6972}, "maxNearestKm": 25.0}}
+{"id": "cat-ca-03", "query": "hotel near Vancouver BC", "expect": {"kind": "results", "categoryID": "hotel", "anchorGold": {"latitude": 49.2827, "longitude": -123.1207}, "maxNearestKm": 25.0}}
+{"id": "cat-ca-04", "query": "bank near Calgary", "expect": {"kind": "results", "categoryID": "bank", "anchorGold": {"latitude": 51.0447, "longitude": -114.0719}, "maxNearestKm": 25.0}}
+{"id": "cat-ca-05", "query": "cafe near Montreal, Canada", "expect": {"kind": "results", "categoryID": "cafe", "anchorGold": {"latitude": 45.5019, "longitude": -73.5674}, "maxNearestKm": 25.0}}
+{"id": "cat-mx-01", "query": "cafe near Guadalajara, Mexico", "expect": {"kind": "results", "categoryID": "cafe", "anchorGold": {"latitude": 20.6597, "longitude": -103.3496}, "maxNearestKm": 25.0}}
+{"id": "cat-mx-02", "query": "pharmacy near Tijuana", "expect": {"kind": "results", "categoryID": "pharmacy", "anchorGold": {"latitude": 32.5149, "longitude": -117.0382}, "maxNearestKm": 25.0}}
+{"id": "cat-mx-03", "query": "bank near Monterrey", "expect": {"kind": "results", "categoryID": "bank", "anchorGold": {"latitude": 25.6866, "longitude": -100.3161}, "maxNearestKm": 25.0}}
+{"id": "cat-mx-04", "query": "restaurant near Cancun", "expect": {"kind": "results", "categoryID": "restaurant", "anchorGold": {"latitude": 21.1619, "longitude": -86.8515}, "maxNearestKm": 25.0}}
+{"id": "cat-mx-05", "query": "hotel near Mexico City", "expect": {"kind": "results", "categoryID": "hotel", "anchorGold": {"latitude": 19.4326, "longitude": -99.1332}, "maxNearestKm": 25.0}}
+{"id": "cat-fr-01", "query": "hotel near Lyon France", "expect": {"kind": "results", "categoryID": "hotel", "anchorGold": {"latitude": 45.764, "longitude": 4.8357}, "maxNearestKm": 25.0}}
+{"id": "cat-fr-02", "query": "restaurant near Marseille", "expect": {"kind": "results", "categoryID": "restaurant", "anchorGold": {"latitude": 43.2965, "longitude": 5.3698}, "maxNearestKm": 25.0}}
+{"id": "cat-fr-03", "query": "pharmacy near Toulouse", "expect": {"kind": "results", "categoryID": "pharmacy", "anchorGold": {"latitude": 43.6047, "longitude": 1.4442}, "maxNearestKm": 25.0}}
+{"id": "cat-fr-04", "query": "bank near Nice France", "expect": {"kind": "results", "categoryID": "bank", "anchorGold": {"latitude": 43.7102, "longitude": 7.262}, "maxNearestKm": 25.0}}
+{"id": "cat-fr-05", "query": "cafe near Paris", "expect": {"kind": "results", "categoryID": "cafe", "anchorGold": {"latitude": 48.8566, "longitude": 2.3522}, "maxNearestKm": 25.0}}
+{"id": "cat-fr-06", "query": "library near Marseille", "expect": {"kind": "results", "categoryID": "library", "anchorGold": {"latitude": 43.2965, "longitude": 5.3698}, "maxNearestKm": 25.0}}
+{"id": "syn-01", "query": "er near Denver CO", "locale": "en-US", "expect": {"kind": "results", "categoryID": "hospital", "anchorGold": {"latitude": 39.7392, "longitude": -104.9903}, "maxNearestKm": 25.0}}
+{"id": "syn-02", "query": "petrol station near Toronto ON", "locale": "en-GB", "expect": {"kind": "results", "categoryID": "gas_station", "anchorGold": {"latitude": 43.6532, "longitude": -79.3832}, "maxNearestKm": 25.0}}
+{"id": "syn-03", "query": "mailbox near Toronto ON", "locale": "en-CA", "expect": {"kind": "abstain", "reason": "requires_build_local_layer"}}
+{"id": "syn-04", "query": "coffee shop near Austin TX", "expect": {"kind": "results", "categoryID": "cafe", "anchorGold": {"latitude": 30.2672, "longitude": -97.7431}, "maxNearestKm": 25.0}}
+{"id": "syn-05", "query": "grocery near Chicago IL", "expect": {"kind": "results", "categoryID": "supermarket", "anchorGold": {"latitude": 41.8781, "longitude": -87.6298}, "maxNearestKm": 25.0}}
+{"id": "abstain-01", "query": "fire hydrant near Springfield IL", "expect": {"kind": "abstain", "reason": "requires_build_local_layer"}}
+{"id": "abstain-02", "query": "drinking fountain near Chicago IL", "expect": {"kind": "abstain", "reason": "requires_build_local_layer"}}
+{"id": "abstain-03", "query": "datacenter near Denver CO", "expect": {"kind": "abstain", "reason": "requires_build_local_layer"}}
+{"id": "abstain-04", "query": "coffee", "expect": {"kind": "abstain", "reason": "anchor_required"}}
+{"id": "abstain-05", "query": "hospital", "expect": {"kind": "abstain", "reason": "anchor_required"}}
+{"id": "abstain-06", "query": "bank", "expect": {"kind": "abstain", "reason": "anchor_required"}}
+{"id": "addr-01", "query": "1600 Pennsylvania Ave NW, Washington, DC 20500", "expect": {"kind": "address"}}
+{"id": "addr-02", "query": "123 Main St, Springfield, IL 62701", "expect": {"kind": "address"}}
+{"id": "addr-03", "query": "100 Queen St W, Toronto, ON M5H 2N2", "expect": {"kind": "address"}}
+{"id": "addr-04", "query": "Av. Insurgentes Sur 123, Ciudad de Mexico", "expect": {"kind": "address"}}
+{"id": "addr-05", "query": "hospital, 350 5th Ave, New York, NY 10118", "expect": {"kind": "address"}}
+{"id": "addr-06", "query": "restaurant, 100 rue de Rivoli, 75001 Paris", "expect": {"kind": "address"}}
+{"id": "nm-01", "query": "pharmacy, Montreal, Canada", "expect": {"kind": "results", "categoryID": "pharmacy", "anchorGold": {"latitude": 45.5019, "longitude": -73.5674}, "maxNearestKm": 25.0}}
+{"id": "nm-02", "query": "gas station near Springfield, IL", "expect": {"kind": "results", "categoryID": "gas_station", "anchorGold": {"latitude": 39.7817, "longitude": -89.6501}, "maxNearestKm": 25.0}}
+{"id": "nm-03", "query": "atm, Toronto, ON", "expect": {"kind": "results", "categoryID": "atm", "anchorGold": {"latitude": 43.6532, "longitude": -79.3832}, "maxNearestKm": 25.0}}
+{"id": "nm-04", "query": "hiking trail near Marseille", "expect": {"kind": "results", "categoryID": "trail", "anchorGold": {"latitude": 43.2965, "longitude": 5.3698}, "maxNearestKm": 25.0}}
+{"id": "nm-05", "query": "post office near Ottawa, ON", "expect": {"kind": "results", "categoryID": "post_office", "anchorGold": {"latitude": 45.4215, "longitude": -75.6972}, "maxNearestKm": 25.0}}
+{"id": "nm-06", "query": "supermarket near Guadalajara, Mexico", "expect": {"kind": "results", "categoryID": "supermarket", "anchorGold": {"latitude": 20.6597, "longitude": -103.3496}, "maxNearestKm": 25.0}}
