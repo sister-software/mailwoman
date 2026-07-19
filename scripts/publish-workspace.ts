@@ -53,7 +53,8 @@ import { dirname, join, resolve } from "node:path"
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
 
-import { collectExportTargets, transformExportsForPublish } from "./publish-exports.ts"
+import { packWorkspaceForPublish } from "./pack-workspace.ts"
+import { collectExportTargets } from "./publish-exports.ts"
 
 const repoRoot = repoRootPath()
 
@@ -88,37 +89,10 @@ const tmpDir = mkdtempSync(join(tmpdir(), "mailwoman-publish-"))
 const tarballPath = join(tmpDir, "package.tgz")
 
 try {
-	// Step 1: INJECT the derived publish map, pack, restore. The committed manifest carries ONLY
-	// the dev exports map (curated subpaths; `node → .ts` first for in-repo source runs). Consumers
-	// cannot use that condition — Node refuses to type-strip under node_modules — so we derive
-	// `publishConfig.exports` here (strip node→source, types first) and let yarn pack's documented
-	// publishConfig substitution write it into the tarball manifest. The workspace file is restored
-	// in a finally block; nothing derived is ever committed.
-	const manifestPath = resolve(cwd, "package.json")
-	const originalManifest = readFileSync(manifestPath, "utf8")
-	const packArgs = ["pack", "-o", tarballPath]
-
-	try {
-		const manifest = JSON.parse(originalManifest)
-
-		if (manifest.exports) {
-			manifest.publishConfig = {
-				...manifest.publishConfig,
-				exports: transformExportsForPublish(manifest.exports),
-			}
-			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
-			console.error(`publish-workspace: injected derived publishConfig.exports for ${manifest.name}`)
-		}
-		console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
-		const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
-
-		if (packResult.status !== 0) {
-			console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
-			process.exit(packResult.status ?? 1)
-		}
-	} finally {
-		writeFileSync(manifestPath, originalManifest)
-	}
+	// Step 1: pack with the derived publish map injected (shared helper — same path the CI
+	// smoke test uses, so what we test is what we ship).
+	console.error(`publish-workspace: packing ${workspacePath} with injected publish exports`)
+	packWorkspaceForPublish(cwd, tarballPath)
 
 	// Step 2: verify the tarball is consumer-resolvable (every concrete exports target is shipped).
 	verifyPublishExports(tarballPath)
