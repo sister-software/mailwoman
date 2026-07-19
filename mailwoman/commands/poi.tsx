@@ -28,7 +28,7 @@
 import { existsSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
-import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
@@ -168,6 +168,20 @@ function formatOverpassBlock(intent: POIIntent): string {
 	return emitOverpassQL(intent)
 }
 
+/**
+ * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country entries, coarsest-last (the
+ * hierarchy's own deepest-first order reversed), skipping other placetypes (county, neighbourhood, …) to keep the table
+ * narrow. Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none of those three tiers (e.g.
+ * open-ocean/approximate misses).
+ */
+function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
+	if (!ancestry || ancestry.length === 0) return ""
+	const byPlacetype = new Map(ancestry.map((a) => [a.placetype, a.name]))
+	const parts = ["locality", "region", "country"].map((t) => byPlacetype.get(t)).filter((name) => name !== undefined)
+
+	return parts.length > 0 ? ` · ${parts.join(", ")}` : ""
+}
+
 function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>): string[] {
 	if (results.length === 0) return ["(no results)"]
 
@@ -184,7 +198,7 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 				(r.distanceM !== undefined ? String(Math.round(r.distanceM)) : "-").padStart(10),
 				r.latitude.toFixed(6).padStart(12),
 				r.longitude.toFixed(6).padStart(12),
-			].join("  ")
+			].join("  ") + formatAncestrySuffix(r.ancestry)
 		)
 	}
 

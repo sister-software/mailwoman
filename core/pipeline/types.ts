@@ -153,6 +153,15 @@ export interface POIResult {
 	longitude: number
 	country: string
 	confidence: number
+	/** Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule). */
+	gersID: string | null
+	/**
+	 * Read-time WOF ancestry, deepest-first — the paid-down half of the poiQueryKind register row's debt. Attached by the
+	 * executor ONLY when a reverse geocoder was wired (`runtime-pipeline.ts`'s lazy `WOFReverseGeocoder`); house
+	 * meaning-of-zero style — ABSENT (the key is omitted), never an empty array or `undefined`-valued, when no reverse
+	 * geocoder is available.
+	 */
+	ancestry?: ReadonlyArray<{ placetype: string; name: string; wofID: number }>
 	distanceM?: number
 }
 

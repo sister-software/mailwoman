@@ -32,10 +32,45 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
+import { loadDefaultReverseGeocoder } from "./default-reverse-geocoder.ts"
 import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
 import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
-import { createPOIExecutor } from "./poi-executor.ts"
+import { createPOIExecutor, type POIAncestryEntry } from "./poi-executor.ts"
 import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
+
+/** Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls. */
+interface ReverseGeocoderLike {
+	reverseGeocodeSync(
+		latitude: number,
+		longitude: number
+	): { hierarchy: ReadonlyArray<{ id: number; name: string; placetype: string }> }
+}
+
+/**
+ * Adapt a `WOFReverseGeocoder` into the synchronous `reverseGeocode` fn `createPOIExecutor` expects (see
+ * `poi-executor.ts` — the executor's return type carries no `Promise`, so this can't `await` the async `reverseGeocode`
+ * method; `reverseGeocodeSync` is its already-synchronous core). Deepest-first `hierarchy` maps straight onto the
+ * compact ancestry triple, AS-IS (spec's design point 4). A throw (e.g. an out-of-range coordinate slipping past
+ * upstream validation) degrades to `undefined` — one bad point never fails the whole search. An empty `hierarchy` (e.g.
+ * a valid coordinate with no bbox candidates — open ocean) ALSO degrades to `undefined`, not `[]` — house
+ * meaning-of-zero: `decorateAncestry` only adds the `ancestry` key when there's something to add, and an empty array is
+ * truthy, so this has to collapse it here rather than let a length-0 array slip through as "present."
+ */
+function buildSyncReverseGeocode(
+	geocoder: ReverseGeocoderLike
+): (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined {
+	return (latitude, longitude) => {
+		try {
+			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)
+
+			if (hierarchy.length === 0) return undefined
+
+			return hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
+		} catch {
+			return undefined
+		}
+	}
+}
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
@@ -263,8 +298,18 @@ export function createRuntimePipeline(
 
 			try {
 				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
+				// Read-time WOF ancestry (poiQueryKind register row's second debt payment): lazily loaded
+				// alongside the lookup, same lazy-loader shape as placeCountry/streetEvidence above. A
+				// missing admin gazetteer (no `place_bbox` R*Tree on disk) degrades to `undefined` here —
+				// results still execute, they just carry no `ancestry` key (graceful, same spirit as the
+				// poi.db-missing catch below).
+				const reverseGeocoder = await loadDefaultReverseGeocoder()
 
-				poiExecute = createPOIExecutor({ lookup: new POILookup({ databasePath: poiDatabasePath }), requiresBuildLocal })
+				poiExecute = createPOIExecutor({
+					lookup: new POILookup({ databasePath: poiDatabasePath }),
+					requiresBuildLocal,
+					reverseGeocode: reverseGeocoder ? buildSyncReverseGeocode(reverseGeocoder) : undefined,
+				})
 			} catch {
 				// Missing/unreadable poi.db → degrade to the intent-only executor already wired above
 				// (build-local abstain still works; everything else falls back to bare intent).

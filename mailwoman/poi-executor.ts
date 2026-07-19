@@ -25,11 +25,27 @@ export interface POIExecutorLookup {
 	search(query: POISearchQuery): POISearchHit[]
 }
 
+/** The compact read-time ancestry triple a result's `ancestry` carries — deepest-first, mirrors `POIResult.ancestry`. */
+export interface POIAncestryEntry {
+	placetype: string
+	name: string
+	wofID: number
+}
+
 export interface POIExecutorOpts {
 	/** Absent = no poi.db configured (intent-only mode, today's Plan-2 behavior for non-build-local categories). */
 	lookup: POIExecutorLookup | undefined
 	/** `@mailwoman/poi-taxonomy`'s `requiresBuildLocalLayer(getPOICategory(id)!)`, injected so this stays lexicon-free. */
 	requiresBuildLocal: (categoryID: string) => boolean
+	/**
+	 * Read-time WOF ancestry lookup (the poiQueryKind register row's second debt payment) — injected SYNCHRONOUSLY
+	 * because this executor's return type (`POIIntentOutcome`, no Promise) is called synchronously from `poi-intent.ts`'s
+	 * `deps.execute`. Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no
+	 * `poiDatabasePath`) — results carry no `ancestry` key at all (house meaning-of-zero: absence, not an empty array).
+	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter; this module never imports
+	 * `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
+	 */
+	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }
 
 /**
@@ -44,7 +60,11 @@ export interface POIExecutorOpts {
  * 4. Otherwise: run `lookup.search(...)` and attach the mapped results.
  */
 export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) => POIIntentOutcome {
-	const { lookup, requiresBuildLocal } = opts
+	const { lookup, requiresBuildLocal, reverseGeocode } = opts
+
+	// Bound to `results.map`, so decoration is capped at whatever `limit` bounded the search — the ≤20-calls budget
+	// (spec's default DEFAULT_LIMIT) falls out of that, not a separate cap here.
+	const toResult = (hit: POISearchHit): POIResult => decorateAncestry(toPOIResult(hit), reverseGeocode)
 
 	return (intent: POIIntent): POIIntentOutcome => {
 		const { subject } = intent
@@ -61,7 +81,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		if (subject.kind === "name") {
 			const results = lookup.search({ name: subject.text, center: resolveCenter(intent), limit: intent.limit })
 
-			return { type: "intent", intent, results: results.map(toPOIResult) }
+			return { type: "intent", intent, results: results.map(toResult) }
 		}
 
 		const center = resolveCenter(intent)
@@ -83,8 +103,24 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			return { type: "abstain", reason: "requires_build_local_layer" }
 		}
 
-		return { type: "intent", intent, results: results.map(toPOIResult) }
+		return { type: "intent", intent, results: results.map(toResult) }
 	}
+}
+
+/**
+ * Decorate one result with its read-time ancestry — a no-op (result unchanged) when no `reverseGeocode` fn was wired,
+ * when the fn comes back `undefined` for this particular coordinate (e.g. open ocean, outside gazetteer coverage), or
+ * when it comes back an empty array. The empty-array case is defense in depth: `runtime-pipeline.ts`'s
+ * `buildSyncReverseGeocode` already collapses `hierarchy: []` to `undefined`, but a bare truthy check here would still
+ * let a length-0 array from some OTHER `reverseGeocode` implementation (e.g. a test stub) slip through as "present" —
+ * `[]` is truthy. The `ancestry` key is only ever added, never set to `undefined` or `[]` (house meaning-of-zero
+ * style).
+ */
+function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["reverseGeocode"]): POIResult {
+	if (!reverseGeocode) return result
+	const ancestry = reverseGeocode(result.latitude, result.longitude)
+
+	return ancestry && ancestry.length > 0 ? { ...result, ancestry } : result
 }
 
 /**
@@ -128,6 +164,7 @@ function toPOIResult(hit: POISearchHit): POIResult {
 		longitude: hit.longitude,
 		country: hit.country,
 		confidence: hit.confidence,
+		gersID: hit.gersID,
 		...(hit.distanceM !== undefined ? { distanceM: hit.distanceM } : {}),
 	}
 }

@@ -57,9 +57,9 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   byte-range/httpvfs serving profile. Coverage cells sit at res 6.
 - **WOF ancestry is decorated at read time, not build time** (deviation from the spec's
   original build-time-PIP wording, pre-declared in plan 3). The read-time half plus
-  `gers_id` on results is RECORDED DEBT in the
-  [runtime-flag register](./runtime-flags.mdx) and must land before the spec §3.6 query
-  board is graded.
+  `gersID` on results landed 2026-07-19 (`mailwoman/poi-executor.ts`'s `reverseGeocode`
+  dep, wired lazily in `runtime-pipeline.ts` from a `WOFReverseGeocoder`) — see the
+  [runtime-flag register](./runtime-flags.mdx).
 - **ODbL never ships.** Infrastructure categories (`source: "mailwoman-infra"` in the
   taxonomy) abstain with `requires_build_local_layer`; Overture's _base_ theme is ODbL too
   (Overture does not launder OSM's license), so there is no permissive source to "just
