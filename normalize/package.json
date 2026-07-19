@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/normalize",
-	"version": "7.2.0",
+	"version": "7.2.1",
 	"description": "Stage 1 of the runtime pipeline — deterministic input preprocessing (Unicode NFC, punctuation, whitespace, abbreviation). Pure functions, no ML.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -12,7 +12,15 @@
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"exports": {

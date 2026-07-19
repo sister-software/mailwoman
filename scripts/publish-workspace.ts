@@ -6,12 +6,19 @@
  *   Publish a single workspace. Invoked by `@release-it-plugins/workspaces` once per non-private
  *   workspace.
  *
- *   Two-step flow:
+ *   Three-step flow:
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
  *        while building the tarball. npm's own publish step does NOT do this translation, and
  *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
- *   2. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
+ *   2. Derive the PUBLISH exports map from the dev map inside the tarball — every `node → .ts`
+ *        condition is stripped (the repo runs source under node; consumers get `out/`). The dev
+ *        `exports` in each workspace's package.json is the single source of truth; there is no
+ *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
+ *        when it was removed without a replacement — this transform IS the replacement). A guard
+ *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points at a
+ *        file the tarball doesn't contain.
+ *   3. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
  *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
  *        `yarn npm publish` doesn't integrate with npm's OIDC flow.
  *
@@ -29,12 +36,23 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { copyFileSync, lstatSync, mkdtempSync, readFileSync, readlinkSync, rmSync, unlinkSync } from "node:fs"
+import {
+	copyFileSync,
+	lstatSync,
+	mkdtempSync,
+	readFileSync,
+	readlinkSync,
+	rmSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
+
+import { collectExportTargets, transformExportsForPublish } from "./publish-exports.ts"
 
 const repoRoot = repoRootPath()
 
@@ -69,18 +87,42 @@ const tmpDir = mkdtempSync(join(tmpdir(), "mailwoman-publish-"))
 const tarballPath = join(tmpDir, "package.tgz")
 
 try {
-	// Step 1: yarn pack — produces a tarball with workspace:* deps translated
-	// to concrete versions.
+	// Step 1: INJECT the derived publish map, pack, restore. The committed manifest carries ONLY
+	// the dev exports map (curated subpaths; `node → .ts` first for in-repo source runs). Consumers
+	// cannot use that condition — Node refuses to type-strip under node_modules — so we derive
+	// `publishConfig.exports` here (strip node→source, types first) and let yarn pack's documented
+	// publishConfig substitution write it into the tarball manifest. The workspace file is restored
+	// in a finally block; nothing derived is ever committed.
+	const manifestPath = resolve(cwd, "package.json")
+	const originalManifest = readFileSync(manifestPath, "utf8")
 	const packArgs = ["pack", "-o", tarballPath]
-	console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
-	const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
 
-	if (packResult.status !== 0) {
-		console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
-		process.exit(packResult.status ?? 1)
+	try {
+		const manifest = JSON.parse(originalManifest)
+
+		if (manifest.exports) {
+			manifest.publishConfig = {
+				...manifest.publishConfig,
+				exports: transformExportsForPublish(manifest.exports),
+			}
+			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
+			console.error(`publish-workspace: injected derived publishConfig.exports for ${manifest.name}`)
+		}
+		console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
+		const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
+
+		if (packResult.status !== 0) {
+			console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
+			process.exit(packResult.status ?? 1)
+		}
+	} finally {
+		writeFileSync(manifestPath, originalManifest)
 	}
 
-	// Step 2: npm publish <tarball> — npm CLI auto-detects OIDC environment
+	// Step 2: verify the tarball is consumer-resolvable (every concrete exports target is shipped).
+	verifyPublishExports(tarballPath)
+
+	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
 	// in GitHub Actions and uses it for Trusted Publishing.
 	const publishArgs = ["publish", tarballPath, "--tag", tag]
 
@@ -123,6 +165,43 @@ try {
 	process.exit(publishResult.status ?? 1)
 } finally {
 	rmSync(tmpDir, { recursive: true, force: true })
+}
+
+/**
+ * Verify every concrete `exports` target exists inside the packed tarball. We ship SOURCE + built output + declarations
+ * in one package (Node ≥24 type-strips the `node → .ts` condition natively; bundlers/TS take `default`/`types` from
+ * `out/`), so the map publishes AS-IS — this guard only proves nothing dangles. It would have caught the v7.2.0
+ * ship-break (exports pointing at files the `files` globs excluded) and mailwoman's historically never-shipped
+ * `.d.ts`.
+ */
+function verifyPublishExports(tarballPath: string) {
+	const listing = spawnSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
+
+	if (listing.status !== 0) {
+		console.error(`publish-workspace: tar -tzf failed (exit ${listing.status})`)
+		process.exit(listing.status ?? 1)
+	}
+	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
+	const manifestRead = spawnSync("tar", ["-xzf", tarballPath, "-O", "package/package.json"], { encoding: "utf8" })
+
+	if (manifestRead.status !== 0) {
+		console.error(`publish-workspace: could not read package.json from tarball (exit ${manifestRead.status})`)
+		process.exit(manifestRead.status ?? 1)
+	}
+	const manifest = JSON.parse(manifestRead.stdout)
+	const offenders = collectExportTargets(manifest.exports ?? {}).filter((target) => !shipped.has(target))
+
+	if (offenders.length > 0) {
+		console.error(`publish-workspace: UNRESOLVABLE PUBLISH MAP for ${manifest.name} — refusing to publish:`)
+
+		for (const line of offenders) {
+			console.error(`  - ${line} (not present in the tarball)`)
+		}
+		process.exit(1)
+	}
+	console.error(
+		`publish-workspace: exports verified for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets shipped)`
+	)
 }
 
 /**

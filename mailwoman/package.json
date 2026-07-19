@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "7.2.0",
+	"version": "7.2.1",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -31,14 +31,21 @@
 	"bin": "./out/cli.js",
 	"files": [
 		"!out/test/**/*",
-		"!**/*.ts",
 		"out/**/*.js",
 		"out/**/*.mjs",
 		"out/**/*.js.map",
 		"out/**/*.mjs.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"out/**/*.json"
+		"out/**/*.json",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"exports": {

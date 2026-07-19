@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/un-locode-lookup",
-	"version": "7.2.0",
+	"version": "7.2.1",
 	"description": "Place → UN/LOCODE (UNECE Code for Trade and Transport Locations), by country + name or nearest coordinate. node:sqlite over the UNECE code list. An @mailwoman/annotations Annotator.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -14,7 +14,15 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"README.md"
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"exports": {

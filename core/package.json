@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/core",
-	"version": "7.2.0",
+	"version": "7.2.1",
 	"description": "Mailwoman core: tokenization, decoder, formatter, resources, filters, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -14,7 +14,15 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"data/**/*",
-		"THIRD_PARTY_NOTICES.md"
+		"THIRD_PARTY_NOTICES.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"exports": {
@@ -74,11 +82,6 @@
 			"default": "./out/resources/whosonfirst/index.js",
 			"types": "./out/resources/whosonfirst/index.d.ts"
 		},
-		"./resources/libpostal": {
-			"node": "./resources/libpostal/index.ts",
-			"default": "./out/resources/libpostal/index.js",
-			"types": "./out/resources/libpostal/index.d.ts"
-		},
 		"./utils": {
 			"node": "./utils/index.ts",
 			"default": "./out/utils/index.js",
@@ -103,11 +106,6 @@
 			"node": "./lifecycle/index.ts",
 			"default": "./out/lifecycle/index.js",
 			"types": "./out/lifecycle/index.d.ts"
-		},
-		"./identifiers": {
-			"node": "./identifiers/index.ts",
-			"default": "./out/identifiers/index.js",
-			"types": "./out/identifiers/index.d.ts"
 		},
 		"./objects": {
 			"node": "./objects.ts",

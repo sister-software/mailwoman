@@ -95,9 +95,9 @@ To make publish robust regardless of repo state, `scripts/publish-workspace.ts` 
 
 `yarn 4`'s `workspace:*` protocol is yarn-specific. `npm publish` ships the literal string and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn pack` translates `workspace:*` to the concrete sibling version in the tarball. That's why `publish-workspace.ts` does pack-then-publish instead of either tool alone.
 
-### Pitfall: `exports` carries a dev-only `node → .ts` condition — `publishConfig.exports` is what ships
+### Pitfall: `exports` carries a dev-only `node → .ts` condition — `publishConfig.exports` is INJECTED at pack time, never committed
 
-Since the first-class-TS migration, every workspace's `exports` entries put a `node` condition first, pointing at the source `.ts` (plain `node` runs source in the repo, no build step), with `default`/`types` pointing at `out/`. Published tarballs ship only `out/**` — the source path would dangle — so each publishable workspace also carries `publishConfig.exports`, the same map with `node` stripped (`types` first, then `default`). `yarn pack` substitutes it into the tarball's package.json; verified against real tarballs. **When adding or changing an exports entry, update both maps** — a subpath present only in the dev map works locally and 404s for consumers.
+Every workspace's committed `exports` map is the DEV map only: curated subpaths with a `node` condition first pointing at `.ts` source (plain `node` runs source in the repo). Consumers can never use that condition — Node refuses to type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) — so `scripts/publish-workspace.ts` derives `publishConfig.exports` from the dev map at pack time (strip `node → .ts`, `types` first), lets `yarn pack`'s publishConfig substitution write it into the tarball manifest, and restores the workspace file. A guard then refuses to publish if any exports target is missing from the tarball. Do NOT commit a `publishConfig.exports` (the hand-maintained duplication was retired 2026-07-19 after its removal-without-replacement shipped a fully-broken v7.2.0) and maintain ONLY the dev map. Tarballs ship source `.ts` + `out/` JS + `.d.ts` (the `files` arrays include all three; the guard's first runs caught two dead `core` subpaths and mailwoman's never-shipped `.d.ts`).
 
 ### Recovering from a partial release
 
