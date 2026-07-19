@@ -178,8 +178,8 @@ hydrants, post boxes — abstain by design rather than returning an empty result
 answer; you build that layer yourself from your own OSM extract.
 
 `@mailwoman/mcp` puts the whole toolset behind an MCP server: parse, geocode, POI search, and
-an OverpassQL export, over stdio, for any MCP-compatible agent. Both of these are on `main`
-today and land on npm in the next release.
+an OverpassQL export, over stdio, for any MCP-compatible agent. Both ship on npm as of
+`mailwoman` 7.2.1.
 
 ```bash
 mailwoman poi "gas station near Springfield, IL" --db poi.db
