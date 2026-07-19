@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/poi-taxonomy",
-	"version": "7.2.0",
+	"version": "7.2.1",
 	"description": "POI category taxonomy + phrase lexicon — Overture category snapshot, infrastructure extension namespace, and the synonym table mapping query phrases ('drinking fountain', 'fiber hut') to category ids.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
