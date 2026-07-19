@@ -24,9 +24,11 @@
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { join, resolve } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+
+import { packWorkspaceForPublish } from "./pack-workspace.ts"
 
 const repoRoot = repoRootPath()
 // The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load
@@ -111,7 +113,10 @@ try {
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
 		const tgz = join(tarDir, `${dir}.tgz`)
-		run("yarn", ["workspace", name, "pack", "-o", tgz], repoRoot)
+		// Pack via the SHARED publish path (injected publishConfig.exports) — a raw `yarn pack`
+		// ships the dev map (node → .ts), which consumers can never load (node_modules type-strip
+		// refusal) and which this smoke exists to catch.
+		packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 		deps[name] = `file:${tgz}`
 	}
 	writeFileSync(
