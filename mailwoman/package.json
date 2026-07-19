@@ -120,6 +120,7 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/variant-aliases": "workspace:*",
 		"chalk": "^5.6.2",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",

@@ -14,13 +14,21 @@ import type { LocaleHint } from "./types.ts"
 const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
 
-	if (norm === "hospital") return [{ categoryID: "hospital", matchedPhrase: "hospital", confidence: 1.0 }]
-
-	if (norm === "drinking fountain") {
-		return [{ categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1.0 }]
+	if (norm === "hospital") {
+		return [{ kind: "category", categoryID: "hospital", matchedPhrase: "hospital", confidence: 1.0 }]
 	}
 
-	if (norm === "walk in clinic") return [{ categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1.0 }]
+	if (norm === "drinking fountain") {
+		return [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1.0 }]
+	}
+
+	if (norm === "walk in clinic") {
+		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1.0 }]
+	}
+
+	if (norm === "chevron") {
+		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1.0 }]
+	}
 
 	return []
 }
@@ -61,6 +69,18 @@ describe("matchPOISubject", () => {
 		expect(m?.match.categoryID).toBe("clinic")
 		expect(m?.subject).toBe("walk in clinic")
 		expect(m?.remainder).toBe("Boston MA")
+	})
+
+	it("carries a brand hit's kind + wikidata through opaquely (mechanics don't special-case brand)", () => {
+		const m = matchPOISubject("chevron near Houston TX", "en-US", LOOKUP)
+		expect(m?.match).toEqual({
+			kind: "brand",
+			categoryID: "Chevron",
+			wikidata: "Q319642",
+			matchedPhrase: "chevron",
+			confidence: 1.0,
+		})
+		expect(m?.remainder).toBe("Houston TX")
 	})
 })
 

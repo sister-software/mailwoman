@@ -13,9 +13,18 @@ import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 /** One lexicon hit for a candidate subject phrase. */
 export interface POIPhraseMatch {
+	/**
+	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. For
+	 * `kind: "brand"`, the brand's canonical display name (NOT a taxonomy id) — `matchPOISubject` never reads this field
+	 * itself, so the caller (`mailwoman`'s `poi-intent.ts`) is the one that interprets it per `kind`.
+	 */
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
+	/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
+	kind: "category" | "brand"
+	/** Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match). */
+	wikidata?: string
 }
 
 /** Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss. */

@@ -16,6 +16,7 @@ import {
 	aggregateBrands,
 	buildBrandTable,
 	type BrandNameCount,
+	DEFAULT_DOMINANCE,
 	DEFAULT_MIN_ROWS,
 	serializeBrandTable,
 } from "./build-brands.ts"
@@ -118,6 +119,71 @@ describe("aggregateBrands", () => {
 
 		const atFloor: BrandNameCount[] = [{ wikidata: "Q1", name: "Right At Floor", n: DEFAULT_MIN_ROWS }]
 		expect(aggregateBrands(atFloor)).toHaveLength(1)
+	})
+})
+
+describe("aggregateBrands — dominance floor", () => {
+	it("keeps a QID whose modal share sits exactly at the DEFAULT_DOMINANCE boundary (>=, not >)", () => {
+		const rows: BrandNameCount[] = [
+			{ wikidata: "Q1", name: "Real Chain", n: 50 },
+			{ wikidata: "Q1", name: "Everything Else", n: 50 },
+		]
+
+		// Two variants tied at 50/50 — the modal share is exactly 0.5 regardless of which name the alphabetical
+		// tie-break picks; what matters here is the QID survives the floor at the boundary.
+		const brands = aggregateBrands(rows, 1)
+		expect(brands.map((b) => b.wikidata)).toEqual(["Q1"])
+	})
+
+	it("drops a QID whose modal share falls short of the boundary (no single variant reaches half)", () => {
+		const rows: BrandNameCount[] = [
+			{ wikidata: "Q1", name: "Modal But Not Dominant", n: 49 },
+			{ wikidata: "Q1", name: "Second", n: 26 },
+			{ wikidata: "Q1", name: "Third", n: 25 },
+		]
+
+		// modal share = 49/100 = 0.49 < 0.5
+		expect(aggregateBrands(rows, 1)).toEqual([])
+	})
+
+	it("drops a systematically-mistagged QID — one name never clears half the QID's rows (Q4835981/'CVS' shape)", () => {
+		// ~20 unrelated chains sharing one QID, no single name anywhere near dominant.
+		const rows: BrandNameCount[] = Array.from({ length: 20 }, (_, i) => ({
+			wikidata: "Q4835981",
+			name: `Unrelated Chain ${i}`,
+			n: 50,
+		}))
+
+		expect(aggregateBrands(rows, 1)).toEqual([])
+	})
+
+	it("applies the dominance floor independently of minRows — a QID can clear minRows and still be dropped", () => {
+		const rows: BrandNameCount[] = [
+			{ wikidata: "Q1", name: "Minority Name", n: 40 },
+			{ wikidata: "Q1", name: "Also Minority", n: 60 },
+		]
+
+		// Clears a generous minRows (100 total >= 1) but modal share 60/100 = 0.6 ... raise the bar to prove the
+		// floor bites independently: use a custom dominance above the modal share.
+		expect(aggregateBrands(rows, 1, 0.7).map((b) => b.wikidata)).toEqual([])
+		expect(aggregateBrands(rows, 1, 0.5).map((b) => b.wikidata)).toEqual(["Q1"])
+	})
+
+	it("defaults dominance to DEFAULT_DOMINANCE when omitted", () => {
+		const rows: BrandNameCount[] = [
+			{ wikidata: "Q1", name: "Modal But Not Dominant", n: 49 },
+			{ wikidata: "Q1", name: "Second", n: 26 },
+			{ wikidata: "Q1", name: "Third", n: 25 },
+		]
+
+		expect(DEFAULT_DOMINANCE).toBe(0.5)
+		expect(aggregateBrands(rows, 1)).toEqual([])
+	})
+
+	it("a lone name variant always has modal share 1.0 and clears any dominance floor", () => {
+		const rows: BrandNameCount[] = [{ wikidata: "Q1", name: "Only Name", n: 30 }]
+
+		expect(aggregateBrands(rows, 1, 0.99).map((b) => b.wikidata)).toEqual(["Q1"])
 	})
 })
 

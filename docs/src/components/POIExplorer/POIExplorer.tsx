@@ -65,6 +65,7 @@ type CategoryRecord = NonNullable<ReturnType<typeof taxonomyLookup.getPOICategor
  */
 const poiLexicon: POIPhraseLookup = (phrase, locale) =>
 	taxonomyLookup.lookupPOICategory(phrase, locale).map((match) => ({
+		kind: "category",
 		categoryID: match.category.id,
 		matchedPhrase: match.matchedPhrase,
 		confidence: match.confidence,

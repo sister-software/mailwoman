@@ -35,6 +35,17 @@ const resultsFixture: PoiBoardFixture = {
 	},
 }
 
+const brandResultsFixture: PoiBoardFixture = {
+	id: "t-brand-results",
+	query: "chevron near Houston TX",
+	expect: {
+		kind: "results",
+		brandWikidata: "Q319642",
+		anchorGold: { latitude: 29.7604, longitude: -95.3698 },
+		maxNearestKm: 25,
+	},
+}
+
 const abstainFixture: PoiBoardFixture = {
 	id: "t-abstain",
 	query: "fire hydrant near Springfield IL",
@@ -151,6 +162,73 @@ describe("gradeCase — results expectation", () => {
 	})
 })
 
+describe("gradeCase — brand results expectation", () => {
+	it("passes when the top result's brandWikidata matches the expected QID", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [
+				poiResult({
+					latitude: 29.7604,
+					longitude: -95.3698,
+					categoryID: "gas_station",
+					brandWikidata: "Q319642",
+				}),
+			],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+		expect(grade.nearestKm).toBeCloseTo(0, 3)
+	})
+
+	it("fails when the top result's brandWikidata doesn't match, even if in range", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [
+				poiResult({
+					latitude: 29.7604,
+					longitude: -95.3698,
+					categoryID: "gas_station",
+					brandWikidata: "Q999999",
+				}),
+			],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/top brandWikidata Q999999 !== expected Q319642/)
+	})
+
+	it("fails on zero results", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.resultCount).toBe(0)
+	})
+
+	it("category grading is unaffected by the brandWikidata branch (regression guard)", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+	})
+})
+
 describe("gradeCase — abstain expectation", () => {
 	it("passes on an exact reason match", () => {
 		const outcome = intentOutcome({ type: "abstain", reason: "requires_build_local_layer" })
@@ -207,9 +285,9 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	it("carries ~45 cases", () => {
-		expect(fixtures.length).toBeGreaterThanOrEqual(40)
-		expect(fixtures.length).toBeLessThanOrEqual(50)
+	it("carries ~51 cases (v1's 45 + v1.1's 6 brand cases)", () => {
+		expect(fixtures.length).toBeGreaterThanOrEqual(48)
+		expect(fixtures.length).toBeLessThanOrEqual(56)
 	})
 
 	it("has unique ids", () => {
@@ -233,6 +311,8 @@ describe("the committed poi-board fixture set", () => {
 			austin: "US",
 			seattle: "US",
 			denver: "US",
+			houston: "US",
+			dallas: "US",
 			toronto: "CA",
 			ottawa: "CA",
 			vancouver: "CA",
@@ -293,5 +373,28 @@ describe("the committed poi-board fixture set", () => {
 			if (f.expect.kind !== "abstain") continue
 			expect(f.expect.reason.length, f.id).toBeGreaterThan(0)
 		}
+	})
+
+	it("every results-kind expect carries EXACTLY ONE of categoryID / brandWikidata", () => {
+		for (const f of fixtures) {
+			if (f.expect.kind !== "results") continue
+			const hasCategory = f.expect.categoryID !== undefined
+			const hasBrand = f.expect.brandWikidata !== undefined
+
+			expect(hasCategory !== hasBrand, f.id).toBe(true)
+		}
+	})
+
+	it("carries at least 4 brand cases: brand+anchor results, locale-gated slang, and a bare-brand abstain", () => {
+		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata !== undefined)
+
+		expect(brandResults.length).toBeGreaterThanOrEqual(4)
+
+		const slang = fixtures.find((f) => f.id === "brand-slang-01")
+		expect(slang?.locale).toBeTruthy()
+		expect(slang?.expect.kind).toBe("results")
+
+		const bare = fixtures.find((f) => f.id === "brand-bare-01")
+		expect(bare?.expect).toEqual({ kind: "abstain", reason: "anchor_required" })
 	})
 })
