@@ -256,30 +256,41 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 
 	try {
 		for (const parquetPath of parquetPaths) {
-			const result = await db.runAndReadAll(
+			// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising
+			// the whole result — a full four-country build (millions of US rows) blew the ~4GB V8 heap
+			// that way (OOM 2026-07-18, `DuckDBNodeAddon::get_data_from_pointer` → `napi_create_buffer_copy`).
+			// stream()+fetchChunk() keeps JS memory bounded to one chunk at a time, matching the
+			// address-points.tsx / coverage-core.ts precedent (OOM 2026-06-14).
+			const stream = await db.stream(
 				`SELECT name, category, brand_wikidata, lat, lon, country, confidence, gers_id
 				 FROM read_parquet('${parquetPath}')`
 			)
+			// A streamed DataChunk carries no column names of its own, so pull them off the result once.
+			const colNames = stream.columnNames()
 
-			for (const row of result.getRowObjects() as unknown as Array<{
-				name: string | null
-				category: string | null
-				brand_wikidata: string | null
-				lat: number
-				lon: number
-				country: string
-				confidence: number
-				gers_id: string | null
-			}>) {
-				yield {
-					name: row.name,
-					category: row.category,
-					brandWikidata: row.brand_wikidata,
-					latitude: Number(row.lat),
-					longitude: Number(row.lon),
-					country: row.country,
-					confidence: Number(row.confidence),
-					gersID: row.gers_id,
+			for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
+				const rows = chunk.getRowObjects(colNames) as unknown as Array<{
+					name: string | null
+					category: string | null
+					brand_wikidata: string | null
+					lat: number
+					lon: number
+					country: string
+					confidence: number
+					gers_id: string | null
+				}>
+
+				for (const row of rows) {
+					yield {
+						name: row.name,
+						category: row.category,
+						brandWikidata: row.brand_wikidata,
+						latitude: Number(row.lat),
+						longitude: Number(row.lon),
+						country: row.country,
+						confidence: Number(row.confidence),
+						gersID: row.gers_id,
+					}
 				}
 			}
 		}
