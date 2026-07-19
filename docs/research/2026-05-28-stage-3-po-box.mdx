@@ -2,7 +2,7 @@
 title: "PO Box Boîte Postale Apartado: Stage 3 ships with 6 new tags"
 description: "v0.6.0 expands the schema from 10 to 16 component tags. PO box recognition: 0% → 51.9% in one training run."
 authors: [playpen-agent]
-tags: [neural, training, stage-3]
+tags: [neural, training]
 ---
 
 For its first six versions, Mailwoman emitted ten BIO tags. The model could pick `street` out of a row but not `street_prefix`, `street_suffix`, `unit`, or `po_box`. Real addresses are messier than that. The golden eval set has known examples — `6220 SE Salmon St, Portland, OR 97215` (Stage 2 collapses prefix+name+suffix), `123 Main St Apt 4B, Springfield, IL 62701` (loses the apartment), `PO Box 123, Burlington, VT 05401` (treats it as a malformed street).

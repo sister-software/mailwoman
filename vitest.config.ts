@@ -60,6 +60,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/locale-gate$/, replacement: resolve(here, "locale-gate/index.ts") },
 			{ find: /^@mailwoman\/variant-aliases$/, replacement: resolve(here, "variant-aliases/index.ts") },
 			{ find: /^@mailwoman\/phrase-grouper$/, replacement: resolve(here, "phrase-grouper/index.ts") },
+			{ find: /^@mailwoman\/poi-taxonomy$/, replacement: resolve(here, "poi-taxonomy/index.ts") },
+			{ find: /^@mailwoman\/mcp$/, replacement: resolve(here, "mcp/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
 			{ find: "mailwoman/test-kit", replacement: resolve(here, "mailwoman/test-kit/index.ts") },
 			{ find: "mailwoman/cli-kit", replacement: resolve(here, "mailwoman/cli-kit/index.ts") },

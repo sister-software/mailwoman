@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "7.1.0",
+	"version": "7.2.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -82,44 +82,14 @@
 			"node": "./test-kit/index.ts",
 			"default": "./out/test-kit/index.js",
 			"types": "./out/test-kit/index.d.ts"
+		},
+		"./poi-overpass": {
+			"node": "./poi-overpass.ts",
+			"default": "./out/poi-overpass.js",
+			"types": "./out/poi-overpass.d.ts"
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./geocode-core": {
-				"types": "./out/geocode-core.d.ts",
-				"default": "./out/geocode-core.js"
-			},
-			"./geocode-stream": {
-				"types": "./out/geocode-stream.d.ts",
-				"default": "./out/geocode-stream.js"
-			},
-			"./resolver-backend": {
-				"types": "./out/resolver-backend.d.ts",
-				"default": "./out/resolver-backend.js"
-			},
-			"./gazetteer-pipeline": {
-				"types": "./out/gazetteer-pipeline/index.d.ts",
-				"default": "./out/gazetteer-pipeline/index.js"
-			},
-			"./gazetteer-pipeline/*": {
-				"types": "./out/gazetteer-pipeline/*.d.ts",
-				"default": "./out/gazetteer-pipeline/*.js"
-			},
-			"./cli-kit": {
-				"types": "./out/cli-kit/index.d.ts",
-				"default": "./out/cli-kit/index.js"
-			},
-			"./test-kit": {
-				"types": "./out/test-kit/index.d.ts",
-				"default": "./out/test-kit/index.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {
@@ -137,6 +107,7 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
+		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
@@ -147,6 +118,7 @@
 		"d3-scale-chromatic": "^3.1.0",
 		"fast-glob": "^3.3.3",
 		"geojson": "^0.5.0",
+		"h3-js": "^4.5.0",
 		"ink": "^7.0.5",
 		"ioredis": "^5.11.1",
 		"pastel": "^4.0.1",

@@ -19,10 +19,10 @@ These document the production dependency closure of the top-level [`mailwoman`](
 package as published to npm — concrete versions, 389 transitive dependencies, development-only
 dependencies excluded (consumers never install those).
 
-| Standard      | Spec version | File                                                                                                 |
-| ------------- | ------------ | ---------------------------------------------------------------------------------------------------- |
-| **SPDX**      | 2.3          | [`mailwoman-5.10.1.spdx.json`](pathname:///sbom/mailwoman-5.10.1.spdx.json) (`dataLicense: CC0-1.0`) |
-| **CycloneDX** | 1.5          | [`mailwoman-5.10.1.cdx.json`](pathname:///sbom/mailwoman-5.10.1.cdx.json)                            |
+| Standard      | Spec version | File                                                                                               |
+| ------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| **SPDX**      | 2.3          | [`mailwoman-7.1.0.spdx.json`](pathname:///sbom/mailwoman-7.1.0.spdx.json) (`dataLicense: CC0-1.0`) |
+| **CycloneDX** | 1.5          | [`mailwoman-7.1.0.cdx.json`](pathname:///sbom/mailwoman-7.1.0.cdx.json)                            |
 
 Both files are generated with the built-in `npm sbom` command (npm ≥ 9.5) — no third-party
 tooling in the trust path.

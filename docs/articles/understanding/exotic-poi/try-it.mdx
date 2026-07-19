@@ -1,0 +1,37 @@
+---
+sidebar_position: 7
+title: "Try it: the POI intent tester"
+tags:
+  - domain
+  - venue
+  - international
+  - multilingual
+---
+
+# Try it: the POI intent tester
+
+Type a query below and watch Mailwoman's kind classifier decide whether it's a POI query or an address, then extract the subject (a category, in the current lexicon), split off the location anchor, and render an OverpassQL export you can paste into [Overpass Turbo](https://overpass-turbo.eu/).
+
+The intent detection runs entirely in your browser with no network request: it's the same `matchPOISubject` + `createKindClassifier` + OverpassQL emitter Mailwoman ships as a library — see [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy). Hitting "Search live" on a category result adds byte-range HTTP requests against the published gazetteer + POI layer — still no server-side code, no model weights, but not offline either.
+
+import { POIExplorer } from "@site/src/components/POIExplorer/POIExplorer"
+
+<POIExplorer />
+
+## Reading the result
+
+- **Kind badge** — the Stage 2.5 kind classifier's verdict (`poi_query`, `structured_address`, …) with its confidence. Expand it to see the runner-up kinds.
+- **Category chip** — which taxonomy category the subject phrase matched, when the kind is `poi_query`.
+- **build-local badge** — this category's data lives only in ODbL sources (OpenStreetMap). Mailwoman ships the builder for the local layer, not the data itself — see [Amenity queries](./amenity-queries.mdx) for why that split exists.
+- **anchor** — the text left over after the subject phrase is split off (`near Springfield`, `, New York`). This is what the runtime pipeline would hand to the address parser to resolve a location constraint.
+- **OverpassQL export** — a ready-to-run query against the category's OSM tag, scoped to the anchor when one resolved. Overpass is an export target, not a serving backend: Mailwoman prints the query, it never runs it for you.
+- **Search live** — for a category result with an anchor, range-loads the published `poi.db` (13.68M Overture-places rows, US/CA/MX/FR) straight in your browser via sql.js-httpvfs and shows real, distance-ranked results — no server, no model weights, just byte-range reads against the same admin gazetteer + POI layer the CLI's `mailwoman poi` and the `mailwoman_poi_search` MCP tool query. It's a k-ring walk capped a few hundred meters out per click, category-only (no free-text/brand search — see [Amenity queries](./amenity-queries.mdx) for why that split exists), and only as good as the anchor: an unresolvable place name shows "couldn't place" rather than a silent empty list. A `build-local` category never offers the button — its data isn't published, by design.
+
+## Why "hospital, 350 5th Ave, New York" doesn't become a POI query
+
+Try that preset. The lexicon matches `hospital` as a subject, but the remainder — `350 5th Ave, New York` — leads with a house number. That's the signature of a venue-led full address ("the hospital located at this specific address"), not a category search, so the classifier's `structured_address` score wins and the query falls through to the "parses as an address" state instead of an Overpass export. This is the same guard [the parser uses in production](../our-approach/the-staged-pipeline.mdx) to keep full addresses from getting mis-routed into the POI branch just because they happen to start with a category word.
+
+## What isn't here yet
+
+- **Brand and landmark subjects.** The current taxonomy lexicon only matches categories (`hospital`, `fire_hydrant`, `drinking_water`, …) — brand names ("Walmart") and bare landmark names ("Eiffel Tower") aren't in the phrase table yet. See [Franchise queries](./franchise-queries.mdx) and [Landmark queries](./landmark-queries.mdx) for the target shape.
+- **Free-text and brand search in the tester.** The CLI and the `mailwoman_poi_search` MCP tool also support FTS5 name search and brand-exact lookups against a built `poi.db`; this browser tester stays category-only, matching the runbook's multi-hop exclusion for the demo.

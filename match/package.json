@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/match",
-	"version": "7.1.0",
+	"version": "7.2.0",
 	"description": "The geocode-first record matcher: block → score → cluster. This first cut ships the string comparators (Jaro / Jaro-Winkler + an edit-distance fallback for compound surnames) that the Fellegi-Sunter scorer is built on.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -59,41 +59,6 @@
 		}
 	},
 	"publishConfig": {
-		"exports": {
-			"./package.json": "./package.json",
-			".": {
-				"types": "./out/index.d.ts",
-				"default": "./out/index.js"
-			},
-			"./blocking": {
-				"types": "./out/blocking.d.ts",
-				"default": "./out/blocking.js"
-			},
-			"./clustering": {
-				"types": "./out/clustering.d.ts",
-				"default": "./out/clustering.js"
-			},
-			"./comparators": {
-				"types": "./out/comparators.d.ts",
-				"default": "./out/comparators.js"
-			},
-			"./distance": {
-				"types": "./out/distance.d.ts",
-				"default": "./out/distance.js"
-			},
-			"./fellegi-sunter": {
-				"types": "./out/fellegi-sunter.d.ts",
-				"default": "./out/fellegi-sunter.js"
-			},
-			"./em": {
-				"types": "./out/em.d.ts",
-				"default": "./out/em.js"
-			},
-			"./tf": {
-				"types": "./out/tf.d.ts",
-				"default": "./out/tf.js"
-			}
-		},
 		"access": "public"
 	},
 	"dependencies": {

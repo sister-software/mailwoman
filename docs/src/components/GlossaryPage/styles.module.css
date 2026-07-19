@@ -1,0 +1,262 @@
+/**
+ * Styles for the custom /glossary page (see index.tsx). Infima variables throughout so both
+ * themes work without per-theme overrides; term-card styling follows the upstream plugin's look.
+ */
+
+.glossaryMain {
+	min-width: 0;
+}
+
+.pageTitle {
+	scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+.header {
+	margin-bottom: 2.5rem;
+}
+
+.description {
+	font-size: 1.1rem;
+	color: var(--ifm-color-emphasis-700);
+	margin-bottom: 1.5rem;
+}
+
+.searchInput {
+	width: 100%;
+	max-width: 32rem;
+	padding: 0.75rem 1rem;
+	font-size: 1rem;
+	font-family: inherit;
+	border: 2px solid var(--ifm-color-emphasis-300);
+	border-radius: 0.5rem;
+	background: var(--ifm-background-color);
+	color: var(--ifm-font-color-base);
+	transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+	outline: none;
+	border-color: var(--ifm-color-primary);
+}
+
+.tagBar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 1.25rem;
+}
+
+.tagToggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.3rem 0.75rem;
+	font-size: 0.85rem;
+	font-family: inherit;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--ifm-color-emphasis-600);
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+}
+
+.tagToggle:hover {
+	border-color: var(--ifm-color-primary);
+	color: var(--ifm-color-primary);
+}
+
+.tagToggle[aria-pressed="true"] {
+	background: var(--ifm-color-primary);
+	border-color: var(--ifm-color-primary);
+	color: var(--ifm-color-primary-contrast-background, #fff);
+}
+
+.tagCount {
+	font-size: 0.75rem;
+	opacity: 0.75;
+	font-variant-numeric: tabular-nums;
+}
+
+.tagBarAction {
+	padding: 0.3rem 0.75rem;
+	font-size: 0.85rem;
+	font-family: inherit;
+	border: none;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--ifm-color-primary);
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.tagBarAction:disabled {
+	visibility: hidden;
+}
+
+.noResults {
+	text-align: center;
+	padding: 3rem 1rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.categorySection {
+	margin-bottom: 3rem;
+}
+
+.categoryHeading {
+	display: flex;
+	align-items: baseline;
+	gap: 0.6rem;
+	font-size: 1.6rem;
+	color: var(--ifm-color-primary);
+	border-bottom: 2px solid var(--ifm-color-emphasis-300);
+	padding-bottom: 0.5rem;
+	margin-bottom: 0.5rem;
+	scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+.categoryCount {
+	font-size: 0.95rem;
+	font-weight: normal;
+	color: var(--ifm-color-emphasis-600);
+	font-variant-numeric: tabular-nums;
+}
+
+.categoryDescription {
+	color: var(--ifm-color-emphasis-700);
+	font-size: 0.95rem;
+	margin-bottom: 1.5rem;
+}
+
+.termList {
+	display: grid;
+	gap: 1.25rem;
+	margin: 0;
+}
+
+.termItem {
+	padding: 1.25rem 1.5rem;
+	background: var(--ifm-card-background-color);
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 0.5rem;
+	transition:
+		border-color 0.2s,
+		box-shadow 0.2s;
+	scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+.termItem:hover {
+	border-color: var(--ifm-color-primary);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.termItem:target {
+	border-color: var(--ifm-color-primary);
+}
+
+.termName {
+	font-size: 1.15rem;
+	font-weight: bold;
+	color: var(--ifm-heading-color);
+	margin-bottom: 0.6rem;
+}
+
+.abbreviation {
+	font-size: 0.9rem;
+	color: var(--ifm-color-emphasis-600);
+	font-weight: normal;
+}
+
+.termDefinition {
+	margin: 0;
+	line-height: 1.6;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.aliases {
+	margin-top: 0.6rem;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	font-style: italic;
+}
+
+.relatedTerms {
+	margin-top: 0.85rem;
+	padding-top: 0.85rem;
+	border-top: 1px solid var(--ifm-color-emphasis-200);
+	font-size: 0.9rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.relatedTerms a {
+	color: var(--ifm-color-primary);
+	text-decoration: none;
+}
+
+.relatedTerms a:hover {
+	text-decoration: underline;
+}
+
+.backlinkList {
+	margin-top: 0.85rem;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.backlinkList a {
+	color: var(--ifm-color-primary);
+	text-decoration: none;
+}
+
+.backlinkList a:hover {
+	text-decoration: underline;
+}
+
+.termTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-top: 0.85rem;
+}
+
+.termTagChip {
+	padding: 0.1rem 0.55rem;
+	font-size: 0.75rem;
+	font-family: inherit;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 999px;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-700);
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		color 0.15s;
+}
+
+.termTagChip:hover {
+	border-color: var(--ifm-color-primary);
+	color: var(--ifm-color-primary);
+}
+
+.footer {
+	margin-top: 3rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--ifm-color-emphasis-200);
+	color: var(--ifm-color-emphasis-600);
+}
+
+[data-theme="dark"] .termItem,
+[data-theme="dark"] .searchInput {
+	background: var(--ifm-background-surface-color);
+}
+
+@media (max-width: 768px) {
+	.termItem {
+		padding: 1rem;
+	}
+}

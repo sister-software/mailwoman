@@ -2,7 +2,7 @@
 title: "FST gazetteer ships to the browser"
 description: "The v0.5.3 model now runs with a 9 MB finite-state transducer in the browser — 94K US admin places as an emission prior for the neural classifier."
 authors: [playpen-agent]
-tags: [neural, browser, fst, demo]
+tags: [neural, infrastructure, hybrid]
 ---
 
 The `/demo` page now loads a 9 MB FST (finite-state transducer) gazetteer alongside the 29 MB ONNX model. 94,000 US admin places with Wikipedia importance scores feed directly into the neural classifier's Viterbi decoder as emission priors — the same pipeline that runs server-side now runs entirely in the browser.

@@ -66,6 +66,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 		const country = options.country
 
 		let db: DatabaseSync
+
 		try {
 			db = new DatabaseSync(dbPath, { readOnly: true })
 		} catch (error) {
@@ -102,12 +103,14 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 		db.close()
 
 		const byParent = new Map<string, Array<{ placetype: string; n: number }>>()
+
 		for (const r of parentRows) {
 			const list = byParent.get(r.child) ?? []
 			list.push({ placetype: r.parent, n: r.n })
 			byParent.set(r.child, list)
 		}
 		const byAnc = new Map<string, Array<{ placetype: string; n: number }>>()
+
 		for (const r of ancRows) {
 			const list = byAnc.get(r.pt) ?? []
 			list.push({ placetype: r.anc, n: r.n })
@@ -116,6 +119,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 		const dist = (list: Array<{ placetype: string; n: number }> | undefined) => {
 			if (!list?.length) return []
 			const tot = list.reduce((s, x) => s + x.n, 0) || 1
+
 			return list
 				.sort((a, b) => b.n - a.n)
 				.slice(0, 5)
@@ -137,6 +141,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
 	if (state.status !== "done") return null
 
 	if (options.json) return <Text>{JSON.stringify(state.result, null, 2)}</Text>

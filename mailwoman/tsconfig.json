@@ -25,6 +25,7 @@
 		{ "path": "../neural" },
 		{ "path": "../normalize" },
 		{ "path": "../phrase-grouper" },
+		{ "path": "../poi-taxonomy" },
 		{ "path": "../query-shape" },
 		{ "path": "../registry" },
 		{ "path": "../resolver-wof-sqlite" },

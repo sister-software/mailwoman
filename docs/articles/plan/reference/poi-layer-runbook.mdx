@@ -1,0 +1,121 @@
+---
+title: POI layer runbook — building, verifying, and publishing poi.db
+role: reference
+audience: maintainer
+source-of-truth: docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
+tags:
+  - operations
+  - poi
+  - data
+---
+
+# POI layer runbook
+
+Operational knowledge from the first poi.db builds (2026-07-18/19, the exotic-POI arc,
+PRs #1180–#1185). Read this before touching `gazetteer build poi`, the poi executor, or the
+layer publish path. The design rationale lives in the spec named in the front matter; this
+page is the "what bites you" record.
+
+## Build
+
+```bash
+node mailwoman/out/cli.js gazetteer build poi --countries US,CA,MX,FR \
+	--out $MAILWOMAN_DATA_ROOT/poi/poi-full.db
+```
+
+Two phases: DuckDB ingest (Overture Places S3 → per-country parquet under
+`<data-root>/overture/<release>/`) then the SQLite build (staged bulk load → clustered
+materialize → FTS → `poi_name_key` index → layer manifest + coverage → seal). `--limit N`
+caps rows for smoke builds. `--skipIngest` reuses existing parquet.
+
+### Overture Places schema gotchas
+
+- **There is no top-level `country` column** in the Places theme (the addresses theme has
+  one; Places does not). Country lives at `addresses[1].country` (1-based DuckDB list
+  index). The builder probes `DESCRIBE` output and picks the right expression
+  (`chooseCountryExpression`); rows with no address struct are **excluded from country
+  slices** under the addresses-based filter — this is the accepted v1 limitation.
+- **The category property is mid-transition.** The old `categories` property is slated for
+  removal in Overture's September 2026 release; the new `taxonomy` property
+  (`taxonomy.primary`) replaces it. The builder probes for both and prefers `taxonomy`
+  (`chooseCategoryColumn`). When bumping the pinned release, re-check the probe output in
+  the build log — it prints which property it chose.
+- **`--limit` samples are geographically clustered, not representative.** LIMIT takes the
+  first rows the scan yields; the first 50k US rows in the 2026-05-20.0 release all landed
+  in Hawaii. Fine for smoke verification, useless for coverage judgments. Never grade
+  coverage or the query board on a limited build.
+- `brand.names.primary` is deliberately NOT extracted — the QID (`brand.wikidata`) is the
+  join key and the row's own `name` carries the display form. Re-adding it is a schema +
+  builder change, not a flag.
+
+### Key decisions (do not silently re-decide)
+
+- **res-9 H3 clustering** (`(h3_cell, category_id, neg_rank, rowid_key)` WITHOUT ROWID PK):
+  matches `ADDRESS_H3_RESOLUTION = 9` in `@mailwoman/address-id` so the POI↔address join is
+  key-equality, and makes a neighborhood query one contiguous B-tree range — the
+  byte-range/httpvfs serving profile. Coverage cells sit at res 6.
+- **WOF ancestry is decorated at read time, not build time** (deviation from the spec's
+  original build-time-PIP wording, pre-declared in plan 3). The read-time half plus
+  `gers_id` on results is RECORDED DEBT in the
+  [runtime-flag register](./runtime-flags.mdx) and must land before the spec §3.6 query
+  board is graded.
+- **ODbL never ships.** Infrastructure categories (`source: "mailwoman-infra"` in the
+  taxonomy) abstain with `requires_build_local_layer`; Overture's _base_ theme is ODbL too
+  (Overture does not launder OSM's license), so there is no permissive source to "just
+  use." We ship the builder.
+
+## Verify
+
+A build isn't verified until a **live query** returns ranked results:
+
+```bash
+node mailwoman/out/cli.js poi "coffee near <city-in-coverage>" --db <built.db>
+```
+
+The CLI needs a resolver to turn anchor text into coordinates (`--resolve-db` /
+`--candidate-db`, defaulting to the standard shard paths) — without one, every anchored
+query abstains `anchor_required`, which looks like a data bug and isn't. An empty results
+list with a resolved anchor means the sample lacks coverage there (see the LIMIT note);
+an `anchor_required` abstain means the resolver isn't wired.
+
+Fixture-level tests cannot catch source-schema drift or scale behavior — the first live
+builds caught three bugs (the country column, the CLI resolver gap, and a full-scale OOM)
+that 800+ green tests missed. End every poi.db-touching change with a live smoke build,
+and treat the first FULL-scale build as its own gate: the 2026-07-19 four-country run died
+at Node's default ~4 GB heap inside DuckDB's buffer-copy path because the parquet reader
+materialized instead of streamed. Row readers over DuckDB must use the chunked/streaming
+API; memory must stay flat with row count.
+
+Two more full-scale-only failures, both fixed 2026-07-19 and worth knowing the class of:
+the DuckDB parquet reader must STREAM (chunked fetches; a materializing reader OOM'd the
+~4 GB JS heap at 13.68M rows — peak RSS is ~2.4 GB streamed), and any Kysely bulk
+`.values(...)` insert must be CHUNKED (`writeLayerCoverage`'s single INSERT for 159,702
+res-6 cells exceeded SQLite's bound-variable limit; batches of 5,000 rows now). The class:
+anything linear in row count that fixture scale cannot exercise.
+
+Reference numbers from the first complete 4-country build (release 2026-05-20.0,
+confidence ≥ 0.85): 13,681,698 rows (US 11.52M / CA 794k / FR 721k / MX 644k),
+1,936 categories, 159,702 coverage cells, 3.7 GB sealed. Continental probe:
+"coffee near Springfield IL" → 11 ranked results, nearest 743 m.
+
+A crashed build leaves a partial, unsealed `.db` behind (the builder direct-writes and
+seals at the end, per the candidate-builder precedent). The next run's `rmSync` clears it,
+but never point a reader — or the publish path — at an unsealed file: no manifest row is
+the tell (`readLayerManifest` throws).
+
+## Publish (demo)
+
+Decision of record (2026-07-19): publish the FULL multi-country poi.db to R2 for byte-range
+access — no separate demo slice artifact. Demo config: category queries only (no FTS name
+search over httpvfs — multi-hop traversal is the slow path), ring budget capped ~3–4 (the
+CLI default is 12). Contingency if the shipped file or probe latency surprises: a
+clearly-labeled regional slice, as fallback only. Publishing rides the existing
+`gazetteer publish` R2 path + a demo version-constant bump; the docs tester
+(`understanding/exotic-poi/try-it.mdx`) is intent-only until the layer is published.
+
+## Flag state
+
+`poiQueryKind` is default-OFF (`boolean | { poiDatabasePath }`); flag-off is byte-identical
+by construction. The promotion gate before any default flip is in the
+[runtime-flag register](./runtime-flags.mdx). `forceFullPipeline` does not bypass the poi
+branch (routing branch, not a fast-path — decided, documented on `PipelineOpts`).
