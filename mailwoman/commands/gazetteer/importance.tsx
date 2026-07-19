@@ -173,7 +173,9 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			for (const wofID of wofIDs) {
 				const existing = wofImportance.get(wofID) ?? 0
 
-				if (importance > existing) wofImportance.set(wofID, importance)
+				if (importance > existing) {
+					wofImportance.set(wofID, importance)
+				}
 			}
 		}
 

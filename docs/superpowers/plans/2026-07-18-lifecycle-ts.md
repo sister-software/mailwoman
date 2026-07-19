@@ -858,7 +858,10 @@ export class Service<T extends object> implements PromiseLike<T>, AsyncDisposabl
 		} else if (resolver && typeof resolver === "object") {
 			instance = resolver
 		} else if (resolver == null) {
-			throw new LifecycleError("E_NO_RESOLVER", "Service has no resolver. Provide an instance, factory, or constructor.")
+			throw new LifecycleError(
+				"E_NO_RESOLVER",
+				"Service has no resolver. Provide an instance, factory, or constructor."
+			)
 		} else {
 			throw new LifecycleError(
 				"E_INVALID_RESOLVER",

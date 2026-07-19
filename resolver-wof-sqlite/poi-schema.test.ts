@@ -21,6 +21,7 @@ import {
 
 function openMemory(): { raw: DatabaseSync; kdb: DatabaseClient<POIDatabase> } {
 	const raw = new DatabaseSync(":memory:")
+
 	return { raw, kdb: new DatabaseClient<POIDatabase>({ database: raw }) }
 }
 
