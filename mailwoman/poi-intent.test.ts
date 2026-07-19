@@ -5,8 +5,9 @@
  */
 
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
+import { loadDefaultReverseGeocoder } from "./default-reverse-geocoder.ts"
 import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
 import { createRuntimePipeline } from "./runtime-pipeline.ts"
 
@@ -131,6 +132,43 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		expect(result.path).toBe("poi")
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
+	})
+
+	// Placed BEFORE the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches its
+	// result for the process/module lifetime (see default-reverse-geocoder.ts), so this test needs to be
+	// the FIRST thing in this file to touch it — otherwise a later call could observe an already-resolved
+	// promise from an earlier call made under the ambient (non-stubbed) env.
+	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
+		// This lab box's default data root (/mnt/playpen/mailwoman-data, see core/utils/data-root.ts) DOES
+		// carry a real admin-global-priority.db, so without this override `loadDefaultReverseGeocoder`
+		// would resolve for real here and this test would silently stop exercising the degrade path.
+		// `MAILWOMAN_DATA_ROOT` points `wofShardPaths()` (default-reverse-geocoder.ts's admin-shard probe)
+		// at a root with no `wof/` shard on disk — `existsSync` filters everything out, same seam
+		// resolver-backend.test.ts uses (vi.stubEnv over the live $public getter in core/env/index.ts). No
+		// wiring change needed — this is the "stub via the seam that exists" branch, not the
+		// placeCountry-style injectable-override fallback.
+		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
+
+		try {
+			await expect(loadDefaultReverseGeocoder()).resolves.toBeNull()
+
+			const pipeline = createRuntimePipeline({
+				...HERMETIC,
+				poiQueryKind: { poiDatabasePath: "/nonexistent/never/ancestry-degrade-poi.db" },
+			})
+			const result = await pipeline("hospital near Springfield")
+
+			expect(result.path).toBe("poi")
+			expect(result.poiIntent?.type).toBe("intent")
+
+			if (result.poiIntent?.type !== "intent") throw new Error("unreachable")
+
+			for (const poiResult of result.poiIntent.results ?? []) {
+				expect(poiResult).not.toHaveProperty("ancestry")
+			}
+		} finally {
+			vi.unstubAllEnvs()
+		}
 	})
 
 	it("object form degrades to intent-only when the poi db is missing (no throw, no retry storm)", async () => {

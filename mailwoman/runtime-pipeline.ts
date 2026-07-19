@@ -51,16 +51,21 @@ interface ReverseGeocoderLike {
  * `poi-executor.ts` — the executor's return type carries no `Promise`, so this can't `await` the async `reverseGeocode`
  * method; `reverseGeocodeSync` is its already-synchronous core). Deepest-first `hierarchy` maps straight onto the
  * compact ancestry triple, AS-IS (spec's design point 4). A throw (e.g. an out-of-range coordinate slipping past
- * upstream validation) degrades to `undefined` — one bad point never fails the whole search.
+ * upstream validation) degrades to `undefined` — one bad point never fails the whole search. An empty `hierarchy` (e.g.
+ * a valid coordinate with no bbox candidates — open ocean) ALSO degrades to `undefined`, not `[]` — house
+ * meaning-of-zero: `decorateAncestry` only adds the `ancestry` key when there's something to add, and an empty array is
+ * truthy, so this has to collapse it here rather than let a length-0 array slip through as "present."
  */
 function buildSyncReverseGeocode(
 	geocoder: ReverseGeocoderLike
 ): (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined {
 	return (latitude, longitude) => {
 		try {
-			return geocoder
-				.reverseGeocodeSync(latitude, longitude)
-				.hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
+			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)
+
+			if (hierarchy.length === 0) return undefined
+
+			return hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
 		} catch {
 			return undefined
 		}

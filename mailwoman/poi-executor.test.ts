@@ -249,4 +249,22 @@ describe("createPOIExecutor", () => {
 		if (outcome.type !== "intent") throw new Error("unreachable")
 		expect(outcome.results![0]).not.toHaveProperty("ancestry")
 	})
+
+	it("ancestry stays ABSENT for a result when reverseGeocode returns an empty array ([] leaks the truthy check)", () => {
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => [HOSPITAL_HIT]),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+			reverseGeocode: () => [],
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+		expect("ancestry" in outcome.results![0]!).toBe(false)
+	})
 })

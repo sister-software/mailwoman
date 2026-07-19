@@ -109,14 +109,18 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 /**
  * Decorate one result with its read-time ancestry — a no-op (result unchanged) when no `reverseGeocode` fn was wired,
- * or when the fn comes back `undefined` for this particular coordinate (e.g. open ocean, outside gazetteer coverage).
- * The `ancestry` key is only ever added, never set to `undefined` (house meaning-of-zero style).
+ * when the fn comes back `undefined` for this particular coordinate (e.g. open ocean, outside gazetteer coverage), or
+ * when it comes back an empty array. The empty-array case is defense in depth: `runtime-pipeline.ts`'s
+ * `buildSyncReverseGeocode` already collapses `hierarchy: []` to `undefined`, but a bare truthy check here would still
+ * let a length-0 array from some OTHER `reverseGeocode` implementation (e.g. a test stub) slip through as "present" —
+ * `[]` is truthy. The `ancestry` key is only ever added, never set to `undefined` or `[]` (house meaning-of-zero
+ * style).
  */
 function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["reverseGeocode"]): POIResult {
 	if (!reverseGeocode) return result
 	const ancestry = reverseGeocode(result.latitude, result.longitude)
 
-	return ancestry ? { ...result, ancestry } : result
+	return ancestry && ancestry.length > 0 ? { ...result, ancestry } : result
 }
 
 /**
