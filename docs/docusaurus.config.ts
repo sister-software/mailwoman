@@ -44,7 +44,8 @@ const config: Config = {
 		{
 			tagName: "meta",
 			attributes: {
-				"theme-color": "#00093b",
+				name: "theme-color",
+				content: "#00093b",
 			},
 		},
 		{
@@ -84,11 +85,16 @@ const config: Config = {
 
 	url: "https://mailwoman.sister.software",
 	baseUrl: "/",
+	// GitHub Pages 301-redirects every slashless URL to its `…/` form. Without this flag,
+	// Docusaurus emits slashless canonicals/sitemap/links, and the Algolia Crawler drops
+	// every page whose canonical ≠ served URL — the whole docs tree vanished from search.
+	trailingSlash: true,
 
 	organizationName: "sister-software",
 	projectName: "mailwoman",
 
 	onBrokenLinks: "throw",
+	onBrokenAnchors: "throw",
 
 	i18n: {
 		defaultLocale: "en",
@@ -181,6 +187,11 @@ const config: Config = {
 						title: "Mailwoman Research Log",
 						copyright: `Copyright © ${new Date().getFullYear()} Sister Software.`,
 					},
+				},
+				sitemap: {
+					// Internal utility pages — keep them reachable but out of the sitemap
+					// (and thus out of crawler discovery). Patterns cover both slash forms.
+					ignorePatterns: ["/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
 					customCss: [
