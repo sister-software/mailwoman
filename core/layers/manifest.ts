@@ -114,14 +114,28 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
 	return manifest
 }
 
-/** Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine). */
+/**
+ * Rows per INSERT statement (3 bound params/row = 15,000 params/statement), kept safely under SQLite's default 32,766
+ * bound-variable ceiling — a continental-scale build's res-6 coverage cell count blows past that limit in a single
+ * `.values()` call (found 2026-07-19).
+ */
+export const COVERAGE_INSERT_BATCH = 5_000
+
+/**
+ * Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine), chunked to stay under SQLite's
+ * bound-variable limit.
+ */
 export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cells: CoverageCell[]): Promise<void> {
 	if (cells.length === 0) return
 
-	await db
-		.insertInto("layer_coverage")
-		.values(cells.map((c) => ({ h3_cell: c.h3Cell, completeness: c.completeness, observed_rows: c.observedRows })))
-		.execute()
+	for (let i = 0; i < cells.length; i += COVERAGE_INSERT_BATCH) {
+		const batch = cells.slice(i, i + COVERAGE_INSERT_BATCH)
+
+		await db
+			.insertInto("layer_coverage")
+			.values(batch.map((c) => ({ h3_cell: c.h3Cell, completeness: c.completeness, observed_rows: c.observedRows })))
+			.execute()
+	}
 }
 
 /**
