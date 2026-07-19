@@ -1,5 +1,6 @@
+import { defaultRegistry } from "async-init"
+
 import { ResourceError } from "../../errors/index.ts"
-import { ServiceRepository } from "../../lifecycle/index.ts"
 import { ConsoleLogger } from "../../logging/index.ts"
 
 /**
@@ -38,15 +39,11 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 	const timeout = setTimeout(() => {
 		ConsoleLogger.error("Script did not exit in a timely manner.")
 
-		ServiceRepository.abortController.abort(signal)
-
-		const services = ServiceRepository.inspect()
-		ConsoleLogger.warn(services, `${services.length} did not dispose.`)
-
 		process.exit(1)
 	}, 15_000)
 
-	return ServiceRepository.dispose()
+	return defaultRegistry
+		.dispose()
 		.catch(logScriptError)
 		.finally(() => {
 			clearTimeout(timeout)
