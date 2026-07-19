@@ -86,6 +86,18 @@ at Node's default ~4 GB heap inside DuckDB's buffer-copy path because the parque
 materialized instead of streamed. Row readers over DuckDB must use the chunked/streaming
 API; memory must stay flat with row count.
 
+Two more full-scale-only failures, both fixed 2026-07-19 and worth knowing the class of:
+the DuckDB parquet reader must STREAM (chunked fetches; a materializing reader OOM'd the
+~4 GB JS heap at 13.68M rows — peak RSS is ~2.4 GB streamed), and any Kysely bulk
+`.values(...)` insert must be CHUNKED (`writeLayerCoverage`'s single INSERT for 159,702
+res-6 cells exceeded SQLite's bound-variable limit; batches of 5,000 rows now). The class:
+anything linear in row count that fixture scale cannot exercise.
+
+Reference numbers from the first complete 4-country build (release 2026-05-20.0,
+confidence ≥ 0.85): 13,681,698 rows (US 11.52M / CA 794k / FR 721k / MX 644k),
+1,936 categories, 159,702 coverage cells, 3.7 GB sealed. Continental probe:
+"coffee near Springfield IL" → 11 ranked results, nearest 743 m.
+
 A crashed build leaves a partial, unsealed `.db` behind (the builder direct-writes and
 seals at the end, per the candidate-builder precedent). The next run's `rmSync` clears it,
 but never point a reader — or the publish path — at an unsealed file: no manifest row is
