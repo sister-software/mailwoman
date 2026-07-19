@@ -37,7 +37,15 @@
 		"out/**/*.mjs.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"out/**/*.json"
+		"out/**/*.json",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"exports": {

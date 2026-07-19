@@ -13,7 +13,15 @@
 		"postcode-fr.bin",
 		"anchor-lexicon-v1.json",
 		"country-surface-lexicon-v1.json",
-		"README.md"
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"publishConfig": {
 		"access": "public"

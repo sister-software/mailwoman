@@ -14,7 +14,15 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"data/**/*",
-		"THIRD_PARTY_NOTICES.md"
+		"THIRD_PARTY_NOTICES.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"exports": {

@@ -40,7 +40,6 @@ import { spawnSync } from "node:child_process"
 import {
 	copyFileSync,
 	lstatSync,
-	mkdirSync,
 	mkdtempSync,
 	readFileSync,
 	readlinkSync,
@@ -54,7 +53,7 @@ import { dirname, join, resolve } from "node:path"
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
 
-import { collectExportTargets, isTypeScriptSource, transformExportsForPublish } from "./publish-exports.ts"
+import { collectExportTargets, transformExportsForPublish } from "./publish-exports.ts"
 
 const repoRoot = repoRootPath()
 
@@ -89,19 +88,40 @@ const tmpDir = mkdtempSync(join(tmpdir(), "mailwoman-publish-"))
 const tarballPath = join(tmpDir, "package.tgz")
 
 try {
-	// Step 1: yarn pack — produces a tarball with workspace:* deps translated
-	// to concrete versions.
+	// Step 1: INJECT the derived publish map, pack, restore. The committed manifest carries ONLY
+	// the dev exports map (curated subpaths; `node → .ts` first for in-repo source runs). Consumers
+	// cannot use that condition — Node refuses to type-strip under node_modules — so we derive
+	// `publishConfig.exports` here (strip node→source, types first) and let yarn pack's documented
+	// publishConfig substitution write it into the tarball manifest. The workspace file is restored
+	// in a finally block; nothing derived is ever committed.
+	const manifestPath = resolve(cwd, "package.json")
+	const originalManifest = readFileSync(manifestPath, "utf8")
 	const packArgs = ["pack", "-o", tarballPath]
-	console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
-	const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
 
-	if (packResult.status !== 0) {
-		console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
-		process.exit(packResult.status ?? 1)
+	try {
+		const manifest = JSON.parse(originalManifest)
+
+		if (manifest.exports) {
+			manifest.publishConfig = {
+				...manifest.publishConfig,
+				exports: transformExportsForPublish(manifest.exports),
+			}
+			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
+			console.error(`publish-workspace: injected derived publishConfig.exports for ${manifest.name}`)
+		}
+		console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
+		const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
+
+		if (packResult.status !== 0) {
+			console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
+			process.exit(packResult.status ?? 1)
+		}
+	} finally {
+		writeFileSync(manifestPath, originalManifest)
 	}
 
-	// Step 2: derive the publish exports map + verify the tarball is consumer-resolvable.
-	derivePublishExports(tarballPath, tmpDir)
+	// Step 2: verify the tarball is consumer-resolvable (every concrete exports target is shipped).
+	verifyPublishExports(tarballPath)
 
 	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
 	// in GitHub Actions and uses it for Trusted Publishing.
@@ -149,67 +169,40 @@ try {
 }
 
 /**
- * Extract the tarball, transform its manifest, verify, and repack over the original path.
+ * Verify every concrete `exports` target exists inside the packed tarball. We ship SOURCE + built output + declarations
+ * in one package (Node ≥24 type-strips the `node → .ts` condition natively; bundlers/TS take `default`/`types` from
+ * `out/`), so the map publishes AS-IS — this guard only proves nothing dangles. It would have caught the v7.2.0
+ * ship-break (exports pointing at files the `files` globs excluded) and mailwoman's historically never-shipped
+ * `.d.ts`.
  */
-function derivePublishExports(tarballPath: string, tmpDir: string) {
-	const extractDir = join(tmpDir, "extract")
-	mkdirSync(extractDir, { recursive: true })
-	run("tar", ["-xzf", tarballPath, "-C", extractDir])
+function verifyPublishExports(tarballPath: string) {
+	const listing = spawnSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
 
-	const manifestPath = join(extractDir, "package", "package.json")
-	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
-
-	if (manifest.publishConfig?.exports) {
-		// Legacy hand-maintained publish map — the derivation below supersedes it.
-		delete manifest.publishConfig.exports
+	if (listing.status !== 0) {
+		console.error(`publish-workspace: tar -tzf failed (exit ${listing.status})`)
+		process.exit(listing.status ?? 1)
 	}
+	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
+	const manifestRead = spawnSync("tar", ["-xzf", tarballPath, "-O", "package/package.json"], { encoding: "utf8" })
 
-	if (manifest.exports) {
-		manifest.exports = transformExportsForPublish(manifest.exports)
+	if (manifestRead.status !== 0) {
+		console.error(`publish-workspace: could not read package.json from tarball (exit ${manifestRead.status})`)
+		process.exit(manifestRead.status ?? 1)
 	}
-
-	const offenders: string[] = []
-
-	for (const target of collectExportTargets(manifest.exports ?? {})) {
-		if (isTypeScriptSource(target)) {
-			offenders.push(`${target} (TypeScript source in the publish map)`)
-			continue
-		}
-		const onDisk = join(extractDir, "package", target)
-
-		if (!lstatSync(onDisk, { throwIfNoEntry: false })) {
-			offenders.push(`${target} (not present in the tarball)`)
-		}
-	}
+	const manifest = JSON.parse(manifestRead.stdout)
+	const offenders = collectExportTargets(manifest.exports ?? {}).filter((target) => !shipped.has(target))
 
 	if (offenders.length > 0) {
 		console.error(`publish-workspace: UNRESOLVABLE PUBLISH MAP for ${manifest.name} — refusing to publish:`)
 
 		for (const line of offenders) {
-			console.error(`  - ${line}`)
+			console.error(`  - ${line} (not present in the tarball)`)
 		}
 		process.exit(1)
 	}
-
-	writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
-	run("tar", ["-czf", tarballPath, "-C", extractDir, "package"])
 	console.error(
-		`publish-workspace: derived publish exports for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets verified)`
+		`publish-workspace: exports verified for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets shipped)`
 	)
-
-	if (dryRun) {
-		console.error(`publish-workspace: [dry-run] exports = ${JSON.stringify(manifest.exports)}`)
-	}
-}
-
-/** SpawnSync wrapper that exits on failure. */
-function run(command: string, args: string[]) {
-	const result = spawnSync(command, args, { stdio: ["ignore", "inherit", "inherit"] })
-
-	if (result.status !== 0) {
-		console.error(`publish-workspace: ${command} ${args.join(" ")} failed (exit ${result.status})`)
-		process.exit(result.status ?? 1)
-	}
 }
 
 /**
