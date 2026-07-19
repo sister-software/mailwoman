@@ -6,9 +6,10 @@
 
 import { describe, expect, it } from "vitest"
 
+import { lookupPOIBrand as nodeLookupPOIBrand } from "./brands.ts"
 import { lookupPOICategory as nodeLookupPOICategory } from "./lookup.ts"
-import { createPOITaxonomyLookup } from "./table.ts"
-import type { CategoryRecord, POITaxonomyTable } from "./types.ts"
+import { createPOIBrandLookup, createPOITaxonomyLookup } from "./table.ts"
+import type { BrandRecord, CategoryRecord, POIBrandTable, POITaxonomyTable } from "./types.ts"
 
 const hospital: CategoryRecord = {
 	id: "hospital" as CategoryRecord["id"],
@@ -100,6 +101,93 @@ describe("createPOITaxonomyLookup", () => {
 
 		const injected = injectedLookup.lookupPOICategory("hospital")
 		const node = nodeLookupPOICategory("hospital")
+
+		expect(injected).toEqual(node)
+	})
+})
+
+const chevron: BrandRecord = {
+	wikidata: "Q1" as BrandRecord["wikidata"],
+	name: "Chevron",
+	aliases: ["Chevron Gas"],
+	rows: 100,
+}
+
+const acme: BrandRecord = {
+	wikidata: "Q2" as BrandRecord["wikidata"],
+	name: "Acme",
+	aliases: [],
+	rows: 50,
+}
+
+const TWO_BRAND_TABLE: POIBrandTable = {
+	version: "test-0.0.1",
+	sourceLayer: { name: "poi", version: "test", sourceVintage: "test" },
+	brands: [chevron, acme],
+}
+
+describe("createPOIBrandLookup", () => {
+	it("matches brands by exact name from the injected table", () => {
+		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
+
+		expect(lookup.lookupPOIBrand("Chevron")[0]?.brand.wikidata).toBe("Q1")
+		expect(lookup.lookupPOIBrand("chevron")[0]?.confidence).toBe(1.0)
+	})
+
+	it("matches an alias variant", () => {
+		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
+
+		const [match] = lookup.lookupPOIBrand("Chevron Gas")
+		expect(match?.brand.wikidata).toBe("Q1")
+		expect(match?.matchedPhrase).toBe("Chevron Gas")
+	})
+
+	it("breaks ties by rows descending when two brands share a phrase", () => {
+		const collision: POIBrandTable = {
+			version: "test-0.0.1",
+			sourceLayer: { name: "poi", version: "test", sourceVintage: "test" },
+			brands: [
+				{ wikidata: "Q10" as BrandRecord["wikidata"], name: "Shared Name", aliases: [], rows: 10 },
+				{ wikidata: "Q20" as BrandRecord["wikidata"], name: "Shared Name", aliases: [], rows: 90 },
+			],
+		}
+		const lookup = createPOIBrandLookup(collision)
+
+		const matches = lookup.lookupPOIBrand("Shared Name")
+		expect(matches.map((m) => m.brand.wikidata)).toEqual(["Q20", "Q10"])
+	})
+
+	it("returns [] for an unknown phrase", () => {
+		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
+		expect(lookup.lookupPOIBrand("nonexistent brand")).toEqual([])
+	})
+
+	it("resolveBrandName wraps lookupPOIBrand's best match", () => {
+		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
+
+		expect(lookup.resolveBrandName("Acme")).toBe(acme)
+		expect(lookup.resolveBrandName("nonexistent brand")).toBeUndefined()
+	})
+
+	it("exposes getBrand / getAllBrands over the injected table", () => {
+		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
+
+		expect(lookup.getBrand("Q1")).toBe(chevron)
+		expect(lookup.getBrand("nonexistent")).toBeUndefined()
+		expect(lookup.getAllBrands()).toEqual([chevron, acme])
+	})
+
+	it("agrees with the node entry on a shared phrase from the real committed brand table", async () => {
+		const { readFileSync } = await import("node:fs")
+		const { resolve } = await import("node:path")
+		const table = JSON.parse(readFileSync(resolve(import.meta.dirname, "data/brands.json"), "utf8")) as POIBrandTable
+
+		const injectedLookup = createPOIBrandLookup(table)
+		const [firstBrand] = table.brands
+		expect(firstBrand, "expected the committed brand table to be non-empty").toBeDefined()
+
+		const injected = injectedLookup.lookupPOIBrand(firstBrand!.name)
+		const node = nodeLookupPOIBrand(firstBrand!.name)
 
 		expect(injected).toEqual(node)
 	})

@@ -66,3 +66,45 @@ export interface POITaxonomyTable {
 	categories: CategoryRecord[]
 	synonyms: SynonymEntry[]
 }
+
+declare const POIBrandWikidataIDBrand: unique symbol
+
+/** A brand's Wikidata QID, e.g. `Q38076` (McDonald's). Branded — cast via {@link toPOIBrandWikidataID}. */
+export type POIBrandWikidataID = string & { readonly [POIBrandWikidataIDBrand]: true }
+
+/** Brand a raw string as a {@link POIBrandWikidataID}. Purely a compile-time assertion. */
+export function toPOIBrandWikidataID(id: string): POIBrandWikidataID {
+	return id as POIBrandWikidataID
+}
+
+/**
+ * One brand, aggregated from a built `poi.db`'s `(brand_wikidata, name)` pairs (see
+ * `mailwoman/gazetteer-pipeline/poi/build-brands.ts`).
+ */
+export interface BrandRecord {
+	wikidata: POIBrandWikidataID
+	/** The modal (most-frequently observed) name variant. */
+	name: string
+	/** Other observed name variants clearing the build's noise floor, e.g. `["McDonalds", "Mc Donald's"]`. */
+	aliases: string[]
+	/** Total `poi.db` rows carrying this QID, across every observed name variant. */
+	rows: number
+}
+
+/** Which built layer a {@link POIBrandTable} was aggregated from — the layer manifest's own identity fields. */
+export interface POIBrandSourceLayer {
+	/** The layer's manifest name, e.g. `poi`. */
+	name: string
+	/** The layer manifest's own `version` field. */
+	version: string
+	/** The layer manifest's `sourceVintage`, e.g. an Overture release string. */
+	sourceVintage: string
+}
+
+/** The on-disk shape of `data/brands.json`. */
+export interface POIBrandTable {
+	/** The brand TABLE's own schema/data version — independent of {@link POIBrandSourceLayer.version}. */
+	version: string
+	sourceLayer: POIBrandSourceLayer
+	brands: BrandRecord[]
+}
