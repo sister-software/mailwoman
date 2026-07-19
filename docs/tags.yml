@@ -161,6 +161,22 @@ non-latin:
 
 #endregion
 
+#region Operations
+
+operations:
+  label: Operations
+  description: Runbooks and operational records — build, verify, publish.
+
+poi:
+  label: Points of interest
+  description: The POI query surface — taxonomy, layers, executors, and the agent toolset.
+
+data:
+  label: Data pipelines
+  description: Data acquisition, layer builds, and sealed-artifact discipline.
+
+#endregion
+
 #region Theme
 
 motivation:
