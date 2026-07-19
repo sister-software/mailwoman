@@ -257,7 +257,9 @@ describe("the committed poi-board fixture set", () => {
 			const lower = f.query.toLowerCase()
 			const hit = Object.entries(cityToCountry).find(([city]) => lower.includes(city))
 
-			if (hit) counts[hit[1]]!++
+			if (hit) {
+				counts[hit[1]]!++
+			}
 		}
 
 		for (const country of ["US", "CA", "MX", "FR"]) {
