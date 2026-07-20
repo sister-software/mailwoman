@@ -51,12 +51,15 @@ export type {
 	CategoryRecord,
 	LiveSearchState,
 	LoadPOIRuntime,
+	POIBrandSubject,
+	POICategorySubject,
 	POIExplorerResult,
 	POILiveSearch,
 	POILiveSearchResult,
 	POIRuntime,
 	POISearchHit,
 	POISubject,
+	POISubjectBase,
 	TaxonomyLookup,
 } from "./poi/types.ts"
 export { usePOISearch } from "./poi/usePOISearch.ts"

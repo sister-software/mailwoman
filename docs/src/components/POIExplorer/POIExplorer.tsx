@@ -10,6 +10,15 @@
  *   function that dynamically imports `../../shared/poi-httpvfs.ts` on first use, so the httpvfs/worker
  *   machinery never enters the package's browser graph and the intent-only common case pays nothing.
  *
+ *   The injected probe is CATEGORY-ONLY, and `brandLiveSearch` is left off (default), so a chain-brand
+ *   query ("chevron near Houston") shows its intent + Wikidata QID chip but no live block. A brand-wide
+ *   fetch over httpvfs hydrates every one of a brand's globally-scattered rows from the 3.9 GB clustered
+ *   layer — measured pathological even for the smallest brand (25 rows → 13 s / 60 range requests; a
+ *   40-row brand → 15 s / 108 requests; big brands time out at 500+ requests / 130+ MB), and a `LIMIT`
+ *   bound returns the wrong geography (rows come back in `h3_cell`, not distance, order). Brand live
+ *   search is therefore a server-side capability (the Node `POILookup` does it in <1 ms via the same
+ *   index); the browser tester stays intent-only for brands. See the 2026-07-20 tester-brand report.
+ *
  *   Usage in MDX (unchanged):
  *
  *   ```mdx

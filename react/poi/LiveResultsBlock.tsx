@@ -14,15 +14,15 @@ import { formatDistance } from "./runtime.ts"
 import type { LiveSearchState } from "./types.ts"
 
 export interface LiveResultsBlockProps {
-	/** Category label for empty-state copy ("No hospital results near …"). */
-	categoryLabel: string
+	/** Subject label for empty-state copy — a category ("No hospital results near …") or a brand ("No chevron results …"). */
+	subjectLabel: string
 	/** The location anchor the search runs against (empty ⇒ the button is disabled with a hint). */
 	anchor: string
 	state: LiveSearchState
 	onSearch: () => void
 }
 
-export function LiveResultsBlock({ categoryLabel, anchor, state, onSearch }: LiveResultsBlockProps): ReactNode {
+export function LiveResultsBlock({ subjectLabel, anchor, state, onSearch }: LiveResultsBlockProps): ReactNode {
 	const hasAnchor = anchor.trim().length > 0
 
 	return (
@@ -47,7 +47,7 @@ export function LiveResultsBlock({ categoryLabel, anchor, state, onSearch }: Liv
 			) : state.status === "success" ? (
 				state.hits.length === 0 ? (
 					<p className="mw-muted">
-						No {categoryLabel.toLowerCase()} results near {state.centerName}.
+						No {subjectLabel.toLowerCase()} results near {state.centerName}.
 					</p>
 				) : (
 					<>

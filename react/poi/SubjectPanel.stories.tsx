@@ -22,6 +22,7 @@ const category = (label: string): CategoryRecord => ({ id: label.toLowerCase(), 
 export const WithAnchor: Story = {
 	args: {
 		subject: {
+			kind: "category",
 			category: category("Hospital"),
 			matchedPhrase: "hospital",
 			confidence: 0.84,
@@ -34,11 +35,37 @@ export const WithAnchor: Story = {
 export const BuildLocal: Story = {
 	args: {
 		subject: {
+			kind: "category",
 			category: category("Drinking Fountain"),
 			matchedPhrase: "drinking fountain",
 			confidence: 0.91,
 			remainder: "Springfield",
 			buildLocal: true,
+		},
+	},
+}
+
+export const Brand: Story = {
+	args: {
+		subject: {
+			kind: "brand",
+			name: "Chevron",
+			wikidata: "Q319642",
+			matchedPhrase: "chevron",
+			confidence: 1,
+			remainder: "Houston",
+		},
+	},
+}
+
+export const BrandNoQID: Story = {
+	args: {
+		subject: {
+			kind: "brand",
+			name: "Chevron",
+			matchedPhrase: "chevron",
+			confidence: 1,
+			remainder: "Houston",
 		},
 	},
 }
