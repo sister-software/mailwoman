@@ -4557,6 +4557,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/fastify@workspace:fastify":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/fastify@workspace:fastify"
+  peerDependencies:
+    fastify: ">=5"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:formatter":
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:formatter"
@@ -4756,6 +4764,14 @@ __metadata:
 "@mailwoman/query-shape@workspace:*, @mailwoman/query-shape@workspace:query-shape":
   version: 0.0.0-use.local
   resolution: "@mailwoman/query-shape@workspace:query-shape"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/react@workspace:react":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/react@workspace:react"
+  peerDependencies:
+    react: ">=18"
   languageName: unknown
   linkType: soft
 

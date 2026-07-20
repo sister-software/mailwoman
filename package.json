@@ -50,6 +50,8 @@
 		"phrase-grouper",
 		"poi-taxonomy",
 		"mcp",
+		"react",
+		"fastify",
 		"query-shape",
 		"resolver-wof-sqlite",
 		"resolver-wof-wasm",
