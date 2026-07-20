@@ -1,0 +1,23 @@
+/**
+ * Minimal Infima (`--ifm-*`) token shim for standalone rendering (Storybook + Vitest browser). The
+ * component stylesheet already carries inline fallbacks for every token, so this is belt-and-braces:
+ * it fixes the brand primary + a base font so the isolated components look like they do in the docs.
+ */
+
+:root {
+	--ifm-color-primary: #e0367c;
+	--ifm-color-success: #2e8555;
+	--ifm-color-emphasis-100: #f5f6f7;
+	--ifm-color-emphasis-200: #ebedf0;
+	--ifm-color-emphasis-300: #dadde1;
+	--ifm-color-emphasis-500: #8c8c8c;
+	--ifm-color-emphasis-600: #6e6e6e;
+	--ifm-color-emphasis-700: #4a5163;
+	--ifm-color-emphasis-800: #303846;
+	--ifm-color-danger: #d9364c;
+	--ifm-background-surface-color: #ffffff;
+	--ifm-font-family-base: system-ui, -apple-system, "Segoe UI", roboto, ubuntu, cantarell, "Noto Sans", sans-serif;
+	--ifm-font-family-monospace: "SFMono-Regular", consolas, "Liberation Mono", menlo, courier, monospace;
+
+	font-family: var(--ifm-font-family-base);
+}

@@ -1966,6 +1966,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@blazediff/core@npm:1.9.1":
+  version: 1.9.1
+  resolution: "@blazediff/core@npm:1.9.1"
+  checksum: 10/6bb615f104da313934bcabc09627f3c803461bf85182453d5c13a6a354be4d32b35504b84f1043c21e95d0f6c0acb45083caeb72e72c1d6a76ca5e1f61f25510
+  languageName: node
+  linkType: hard
+
 "@braintree/sanitize-url@npm:^7.1.1":
   version: 7.1.2
   resolution: "@braintree/sanitize-url@npm:7.1.2"
@@ -4531,6 +4538,7 @@ __metadata:
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/react": "workspace:^"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
@@ -4767,9 +4775,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/react@workspace:react":
+"@mailwoman/react@workspace:^, @mailwoman/react@workspace:react":
   version: 0.0.0-use.local
   resolution: "@mailwoman/react@workspace:react"
+  dependencies:
+    "@mailwoman/kind-classifier": "workspace:*"
+    "@mailwoman/poi-taxonomy": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
+    "@storybook/addon-docs": "npm:^10.5.0"
+    "@storybook/react-vite": "npm:^10.5.0"
+    "@types/react": "npm:^19.2.17"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^6.0.3"
+    "@vitest/browser": "npm:4.1.10"
+    "@vitest/browser-playwright": "npm:4.1.10"
+    playwright: "npm:^1.61.1"
+    react: "npm:^19.2.7"
+    react-dom: "npm:^19.2.7"
+    storybook: "npm:^10.5.0"
+    vite: "npm:^8.0.16"
+    vitest: "npm:4.1.10"
   peerDependencies:
     react: ">=18"
   languageName: unknown
@@ -8755,6 +8780,41 @@ __metadata:
     babel-plugin-react-compiler:
       optional: true
   checksum: 10/135a63a27592108ea0fcbd8a5d71753f9e8b484568113e15975f59d48bd796ca361de501e4acec6f04ae1e5dcb2d266b82ed158c759c4177b2504755d481e35c
+  languageName: node
+  linkType: hard
+
+"@vitest/browser-playwright@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/browser-playwright@npm:4.1.10"
+  dependencies:
+    "@vitest/browser": "npm:4.1.10"
+    "@vitest/mocker": "npm:4.1.10"
+    tinyrainbow: "npm:^3.1.0"
+  peerDependencies:
+    playwright: "*"
+    vitest: 4.1.10
+  peerDependenciesMeta:
+    playwright:
+      optional: false
+  checksum: 10/deac879677899a7e5200ad7d46a66dbf07dd68f6ad0d258b03825337a1fa5417851af189291ea21284137760595b94c1f5bff12b82a5471422ba5d2512aacb3a
+  languageName: node
+  linkType: hard
+
+"@vitest/browser@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/browser@npm:4.1.10"
+  dependencies:
+    "@blazediff/core": "npm:1.9.1"
+    "@vitest/mocker": "npm:4.1.10"
+    "@vitest/utils": "npm:4.1.10"
+    magic-string: "npm:^0.30.21"
+    pngjs: "npm:^7.0.0"
+    sirv: "npm:^3.0.2"
+    tinyrainbow: "npm:^3.1.0"
+    ws: "npm:^8.19.0"
+  peerDependencies:
+    vitest: 4.1.10
+  checksum: 10/52c3f94de6b755bbe5165874a6f0e4ea66331b81b355423fa43b73d963d1f2eaedb1d9ab24e124430e12f39cdf496f360715415e76756f42ccf09d6079a8bafb
   languageName: node
   linkType: hard
 
@@ -18536,7 +18596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright@npm:1.61.1, playwright@npm:^1.61.0":
+"playwright@npm:1.61.1, playwright@npm:^1.61.0, playwright@npm:^1.61.1":
   version: 1.61.1
   resolution: "playwright@npm:1.61.1"
   dependencies:
@@ -18573,6 +18633,13 @@ __metadata:
   dependencies:
     fflate: "npm:^0.8.2"
   checksum: 10/58996ea34414fd1452ce229ef9188210331d092ce5999ba9a77e2cf53d93021f1a0a214d479de96e73e3b0c714870cf721da118ca4c5e1c85b221e63e52925bd
+  languageName: node
+  linkType: hard
+
+"pngjs@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "pngjs@npm:7.0.0"
+  checksum: 10/e843ebbb0df092ee0f3a3e7dbd91ff87a239a4e4c4198fff202916bfb33b67622f4b83b3c29f3ccae94fcb97180c289df06068624554f61686fe6b9a4811f7db
   languageName: node
   linkType: hard
 
@@ -21299,6 +21366,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sirv@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "sirv@npm:3.0.2"
+  dependencies:
+    "@polka/url": "npm:^1.0.0-next.24"
+    mrmime: "npm:^2.0.0"
+    totalist: "npm:^3.0.0"
+  checksum: 10/259617f4ab57664be6d963f5b27b38a6351d3e91ce70d6726985d087b40efd595fcf7f72ae010babf5e0acb63bcb3e3d6db8de34604da1011be6e28ee32aa15d
+  languageName: node
+  linkType: hard
+
 "sisteransi@npm:^1.0.5":
   version: 1.0.5
   resolution: "sisteransi@npm:1.0.5"
@@ -23612,6 +23690,21 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 10/088411956432c8f876158409d5a285cb9ad1382f593391f51d3a599bd0a5b277f876609ebd00fc3596321c4a4c9064d6fffe1ebad960e8ea7fd9ae25324f35c2
+  languageName: node
+  linkType: hard
+
+"ws@npm:^8.19.0":
+  version: 8.21.1
+  resolution: "ws@npm:8.21.1"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10/8493bc543072763d7bacffb2282c9d7954dc5c599c9df4c2d15f91c217f63e293a33ffc70756e3f2bf8c5d85bc6069ad7d9983c382d4713c807b083ffb1b1719
   languageName: node
   linkType: hard
 
