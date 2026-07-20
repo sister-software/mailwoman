@@ -38,10 +38,18 @@ import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman
 export const DEFAULT_MIN_ROWS = 25
 
 /**
+ * `--dominance` default — a QID's modal name must cover at least this fraction of its total rows to qualify. Below the
+ * floor, the QID is systematically mistagged (many unrelated chains sharing one Wikidata QID, e.g. Q4835981's "CVS"
+ * over ~20 unrelated chains) rather than one real chain with noisy alias spellings — dropped entirely, not just demoted
+ * out of the alias list the way sub-noise-floor variants are.
+ */
+export const DEFAULT_DOMINANCE = 0.5
+
+/**
  * The brand TABLE's own schema/data version — bump when the shape or matching semantics change. Independent of
  * {@link POIBrandSourceLayer.version}, which tracks the source `poi.db`'s own layer-manifest version.
  */
-export const BRAND_TABLE_VERSION = "0.1.0"
+export const BRAND_TABLE_VERSION = "0.2.0"
 
 /** Default `poi.db` read location — same default `build/poi.tsx`'s command uses for its `--out`. */
 export function defaultPOIDatabasePath(): string {
@@ -118,14 +126,18 @@ interface RawBrandAggregate {
  * is the sum of every observed `(wikidata, name)` count; `name` is the MODAL (highest-count) variant, ties broken
  * alphabetically; `aliases` are every OTHER variant clearing the noise floor `max(3, 1% of rows)` (guards against
  * typo/OCR-noise variants swelling the alias list), sorted alphabetically. QIDs whose total falls under `minRows` are
- * dropped entirely. The final list is sorted by `rows` descending, ties broken by QID.
+ * dropped entirely. QIDs whose modal name covers LESS than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
+ * = 0.5) are ALSO dropped entirely — a modal share under the floor means the QID is systematically mistagged across
+ * many unrelated names, not one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
+ * The final list is sorted by `rows` descending, ties broken by QID.
  *
  * The two explicit tie-breaks (alphabetical for name/alias ties, QID for brand-total ties) are what make a rebuild
  * against the same db byte-identical — determinism never depends on SQL row order or `Map` iteration order here.
  */
 export function aggregateBrands(
 	rows: Iterable<BrandNameCount>,
-	minRows: number = DEFAULT_MIN_ROWS
+	minRows: number = DEFAULT_MIN_ROWS,
+	dominance: number = DEFAULT_DOMINANCE
 ): RawBrandAggregate[] {
 	const byBrand = new Map<string, Map<string, number>>()
 
@@ -151,6 +163,10 @@ export function aggregateBrands(
 			([nameA, nA], [nameB, nB]) => nB - nA || nameA.localeCompare(nameB)
 		)
 		const modalName = sortedVariants[0]![0]
+		const modalCount = sortedVariants[0]![1]
+
+		if (modalCount / total < dominance) continue
+
 		const noiseFloor = Math.max(3, total * 0.01)
 		const aliases = sortedVariants
 			.slice(1)
@@ -180,6 +196,8 @@ export interface BuildBrandTableOptions {
 	 */
 	sourceLayer?: POIBrandSourceLayer
 	minRows?: number
+	/** Dominance floor — see {@link aggregateBrands}. Defaults to {@link DEFAULT_DOMINANCE}. */
+	dominance?: number
 	/** The brand table's own `version` field. Defaults to {@link BRAND_TABLE_VERSION}. */
 	version?: string
 }
@@ -199,7 +217,11 @@ export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promis
 
 	const rows = opts.rows ?? readBrandNameCounts(opts.dbPath!)
 	const sourceLayer = opts.sourceLayer ?? (await readSourceLayer(opts.dbPath!))
-	const brands: BrandRecord[] = aggregateBrands(rows, opts.minRows ?? DEFAULT_MIN_ROWS).map((b) => ({
+	const brands: BrandRecord[] = aggregateBrands(
+		rows,
+		opts.minRows ?? DEFAULT_MIN_ROWS,
+		opts.dominance ?? DEFAULT_DOMINANCE
+	).map((b) => ({
 		wikidata: b.wikidata as BrandRecord["wikidata"],
 		name: b.name,
 		aliases: b.aliases,

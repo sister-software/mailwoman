@@ -47,7 +47,13 @@ export const POI_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/poi-board.jso
 
 export interface PoiBoardResultsExpect {
 	kind: "results"
-	categoryID: string
+	/**
+	 * Exactly one of `categoryID` / `brandWikidata` is set per fixture — the grader checks the top result's matching
+	 * field. `brandWikidata` cases (part 2 of the brand-lexicon work) assert the top result's `POIResult.brandWikidata`
+	 * equals this QID; `categoryID` cases are unchanged from v1.
+	 */
+	categoryID?: string
+	brandWikidata?: string
 	anchorGold: { latitude: number; longitude: number }
 	maxNearestKm: number
 }
@@ -149,14 +155,17 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 		}
 	}
 
-	// expect.kind === "results"
+	// expect.kind === "results" — either a categoryID or a brandWikidata expectation (never both).
+	const expectedLabel =
+		expect.brandWikidata !== undefined ? `brandWikidata=${expect.brandWikidata}` : `categoryID=${expect.categoryID}`
+
 	if (poiOutcome.type !== "intent") {
 		return {
 			id: fixture.id,
 			query: fixture.query,
 			expectKind: "results",
 			pass: false,
-			detail: `expected results (categoryID=${expect.categoryID}), got abstain(${poiOutcome.reason})`,
+			detail: `expected results (${expectedLabel}), got abstain(${poiOutcome.reason})`,
 		}
 	}
 
@@ -168,7 +177,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 			query: fixture.query,
 			expectKind: "results",
 			pass: false,
-			detail: `expected ≥1 result (categoryID=${expect.categoryID}), got 0`,
+			detail: `expected ≥1 result (${expectedLabel}), got 0`,
 			resultCount: 0,
 		}
 	}
@@ -176,16 +185,28 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	const nearestKm = Math.min(
 		...results.map((r) => haversineKm(r.latitude, r.longitude, expect.anchorGold.latitude, expect.anchorGold.longitude))
 	)
-	const topCategoryID = results[0]!.categoryID
 	const withinRange = nearestKm <= expect.maxNearestKm
-	const topCategoryMatches = topCategoryID === expect.categoryID
-	const pass = withinRange && topCategoryMatches
+
+	// Brand and category checks use the SAME "top field, mismatch phrase" shape (`top <field> <got> !== expected <want>`)
+	// — kept as two branches (not a single templated string) so the category branch's exact wording stays byte-stable
+	// against v1 assertions (`top category X !== expected Y`).
+	const topCategoryID = results[0]!.categoryID
+	const topBrandWikidata = results[0]!.brandWikidata
+	const topMatches =
+		expect.brandWikidata !== undefined ? topBrandWikidata === expect.brandWikidata : topCategoryID === expect.categoryID
+	const topSummary =
+		expect.brandWikidata !== undefined ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
+	const mismatchDetail =
+		expect.brandWikidata !== undefined
+			? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
+			: `top category ${topCategoryID} !== expected ${expect.categoryID}`
+	const pass = withinRange && topMatches
 
 	const detail = pass
-		? `${results.length} results, nearest ${nearestKm.toFixed(2)} km, top category ${topCategoryID}`
+		? `${results.length} results, nearest ${nearestKm.toFixed(2)} km, ${topSummary}`
 		: [
 				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : undefined,
-				!topCategoryMatches ? `top category ${topCategoryID} !== expected ${expect.categoryID}` : undefined,
+				!topMatches ? mismatchDetail : undefined,
 			]
 				.filter(Boolean)
 				.join("; ")

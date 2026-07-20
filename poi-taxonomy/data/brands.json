@@ -1,5 +1,5 @@
 {
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"sourceLayer": {
 		"name": "poi",
 		"version": "2026-05-20.0",
@@ -17,29 +17,6 @@
 			"name": "Crédit Agricole",
 			"aliases": [],
 			"rows": 1976
-		},
-		{
-			"wikidata": "Q4835981",
-			"name": "CVS",
-			"aliases": [
-				"7-Eleven",
-				"Alon 7-Eleven",
-				"Break Time",
-				"Chevron",
-				"Circle K",
-				"Costco",
-				"Git-N-Go",
-				"Heb",
-				"Kroger",
-				"Racetrac",
-				"Royal Farms",
-				"Speedway",
-				"Target",
-				"Tom Thumb",
-				"Walgreens",
-				"Wawa"
-			],
-			"rows": 970
 		},
 		{
 			"wikidata": "Q621532",
@@ -76,12 +53,6 @@
 			"name": "Caisse d'Épargne",
 			"aliases": [],
 			"rows": 541
-		},
-		{
-			"wikidata": "Q861042",
-			"name": "FLOW",
-			"aliases": [],
-			"rows": 489
 		},
 		{
 			"wikidata": "Q7937525",
@@ -126,12 +97,6 @@
 			"rows": 403
 		},
 		{
-			"wikidata": "Q458363",
-			"name": "QUICK STOP",
-			"aliases": [],
-			"rows": 401
-		},
-		{
 			"wikidata": "Q846647",
 			"name": "Banque Populaire",
 			"aliases": [],
@@ -162,34 +127,16 @@
 			"rows": 340
 		},
 		{
-			"wikidata": "Q1283291",
-			"name": "Valero",
-			"aliases": [],
-			"rows": 335
-		},
-		{
 			"wikidata": "Q1072948",
 			"name": "Chili's",
 			"aliases": [],
 			"rows": 327
 		},
 		{
-			"wikidata": "Q44294",
-			"name": "Faulkner-Ciocca Ford",
-			"aliases": [],
-			"rows": 326
-		},
-		{
 			"wikidata": "Q847743",
 			"name": "Dunkin'",
 			"aliases": [],
 			"rows": 326
-		},
-		{
-			"wikidata": "Q2072840",
-			"name": "12th State CrossFit",
-			"aliases": [],
-			"rows": 295
 		},
 		{
 			"wikidata": "Q1141226",
@@ -204,40 +151,16 @@
 			"rows": 270
 		},
 		{
-			"wikidata": "Q125924689",
-			"name": "Chevron",
-			"aliases": ["Citgo", "Exxon", "Marathon", "Raceway", "Valero"],
-			"rows": 267
-		},
-		{
-			"wikidata": "Q779722",
-			"name": "LCL ACHERES",
-			"aliases": [],
-			"rows": 266
-		},
-		{
 			"wikidata": "Q806914",
 			"name": "Banorte",
 			"aliases": [],
 			"rows": 265
 		},
 		{
-			"wikidata": "Q109675651",
-			"name": "Exxon",
-			"aliases": [],
-			"rows": 247
-		},
-		{
 			"wikidata": "Q775060",
 			"name": "Texaco",
 			"aliases": [],
 			"rows": 246
-		},
-		{
-			"wikidata": "Q135273843",
-			"name": "Hasty Market",
-			"aliases": ["Avondale Food Stores", "Depanneur 7 Jours", "Provi-soir", "Provi-Soir", "Quickie"],
-			"rows": 241
 		},
 		{
 			"wikidata": "Q610492",
@@ -258,34 +181,16 @@
 			"rows": 225
 		},
 		{
-			"wikidata": "Q157169",
-			"name": "A.J. McClung YMCA",
-			"aliases": [],
-			"rows": 223
-		},
-		{
 			"wikidata": "Q2624442",
 			"name": "MAC Cosmetics",
 			"aliases": [],
 			"rows": 221
 		},
 		{
-			"wikidata": "Q6686",
-			"name": "GARAGE DU CENTRE",
-			"aliases": [],
-			"rows": 211
-		},
-		{
 			"wikidata": "Q17085454",
 			"name": "Enterprise",
 			"aliases": [],
 			"rows": 206
-		},
-		{
-			"wikidata": "Q109676002",
-			"name": "Mobil",
-			"aliases": [],
-			"rows": 204
 		},
 		{
 			"wikidata": "Q465751",
@@ -310,18 +215,6 @@
 			"name": "Chick-fil-A",
 			"aliases": [],
 			"rows": 189
-		},
-		{
-			"wikidata": "Q5430314",
-			"name": "Fairfield by Marriott Inn & Suites Aiken",
-			"aliases": [],
-			"rows": 185
-		},
-		{
-			"wikidata": "Q27460",
-			"name": "ACHARD AUTOMOBILES",
-			"aliases": [],
-			"rows": 182
 		},
 		{
 			"wikidata": "Q4807808",
@@ -366,12 +259,6 @@
 			"rows": 163
 		},
 		{
-			"wikidata": "Q2869542",
-			"name": "Atol Audition - Beynost",
-			"aliases": [],
-			"rows": 162
-		},
-		{
 			"wikidata": "Q867662",
 			"name": "Esso",
 			"aliases": ["Station ESSO"],
@@ -382,18 +269,6 @@
 			"name": "Shell",
 			"aliases": [],
 			"rows": 158
-		},
-		{
-			"wikidata": "Q6742",
-			"name": "GARAGE DU GOLF",
-			"aliases": [],
-			"rows": 158
-		},
-		{
-			"wikidata": "Q135284888",
-			"name": "Express Mart",
-			"aliases": [],
-			"rows": 148
 		},
 		{
 			"wikidata": "Q5422162",
@@ -408,43 +283,14 @@
 			"rows": 144
 		},
 		{
-			"wikidata": "Q459477",
-			"name": "FedEx ShipSite",
-			"aliases": [
-				"Centro de Envío FedEx",
-				"FedEx Office Print & Ship Center",
-				"FedEx Office Ship Center",
-				"FedEx Ship Center"
-			],
-			"rows": 139
-		},
-		{
-			"wikidata": "Q16974764",
-			"name": "Amazon Locker - Aces",
-			"aliases": [],
-			"rows": 136
-		},
-		{
 			"wikidata": "Q791136",
 			"name": "Avis",
 			"aliases": [],
 			"rows": 135
 		},
 		{
-			"wikidata": "Q5364003",
-			"name": "Super 8 by Wyndham - Mesa/Gilbert",
-			"aliases": [],
-			"rows": 130
-		},
-		{
 			"wikidata": "Q60964499",
 			"name": "Beauty Success",
-			"aliases": [],
-			"rows": 124
-		},
-		{
-			"wikidata": "Q746525",
-			"name": "CIC  LYON JEAN MACE",
 			"aliases": [],
 			"rows": 124
 		},
@@ -545,26 +391,8 @@
 			"rows": 97
 		},
 		{
-			"wikidata": "Q6006077",
-			"name": "100 Queens Quay East",
-			"aliases": [],
-			"rows": 96
-		},
-		{
-			"wikidata": "Q6464734",
-			"name": "La Quinta Inn & Suites by Wyndham Alamo - McAllen East",
-			"aliases": [],
-			"rows": 96
-		},
-		{
 			"wikidata": "Q2634111",
 			"name": "Action",
-			"aliases": [],
-			"rows": 95
-		},
-		{
-			"wikidata": "Q6835667",
-			"name": "Aviation Plaza",
 			"aliases": [],
 			"rows": 95
 		},
@@ -573,24 +401,6 @@
 			"name": "Kiabi",
 			"aliases": [],
 			"rows": 94
-		},
-		{
-			"wikidata": "Q7374385",
-			"name": "Royal LePage Frank Real Estate, Brokerage",
-			"aliases": ["Royal LePage Anchor Realty", "Royal LePage Team Realty, Brokerage"],
-			"rows": 91
-		},
-		{
-			"wikidata": "Q810773",
-			"name": "ARENA HUB PLAZA",
-			"aliases": [],
-			"rows": 91
-		},
-		{
-			"wikidata": "Q1127798",
-			"name": "Q-Park 1er mai",
-			"aliases": [],
-			"rows": 90
 		},
 		{
 			"wikidata": "Q5451873",
@@ -605,18 +415,6 @@
 			"rows": 89
 		},
 		{
-			"wikidata": "Q487907",
-			"name": "Bank of America Drive-Thru ATM | Fall River Shopping Plaza",
-			"aliases": [],
-			"rows": 89
-		},
-		{
-			"wikidata": "Q1092539",
-			"name": "Cinnabon Anchorage 5th Avenue Mall",
-			"aliases": [],
-			"rows": 88
-		},
-		{
 			"wikidata": "Q2645636",
 			"name": "Allstate",
 			"aliases": [],
@@ -629,39 +427,15 @@
 			"rows": 87
 		},
 		{
-			"wikidata": "Q1656230",
-			"name": "412 XPRESS",
-			"aliases": [],
-			"rows": 86
-		},
-		{
-			"wikidata": "Q7271456",
-			"name": "Quest Diagnostics - Richmond",
-			"aliases": [],
-			"rows": 86
-		},
-		{
 			"wikidata": "Q735261",
 			"name": "Petro-Canada",
 			"aliases": ["Esso"],
 			"rows": 85
 		},
 		{
-			"wikidata": "Q109341187",
-			"name": "COUNTRY STORE",
-			"aliases": [],
-			"rows": 84
-		},
-		{
 			"wikidata": "Q1156045",
 			"name": "Public Storage",
 			"aliases": [],
-			"rows": 84
-		},
-		{
-			"wikidata": "Q62127191",
-			"name": "Agfinity Inc",
-			"aliases": ["Synergy Community Cooperative"],
 			"rows": 84
 		},
 		{
@@ -695,28 +469,10 @@
 			"rows": 79
 		},
 		{
-			"wikidata": "Q1047239",
-			"name": "Days Inn & Suites by Wyndham Bridgeport - Clarksburg",
-			"aliases": [],
-			"rows": 78
-		},
-		{
-			"wikidata": "Q5880423",
-			"name": "Holiday Inn Express & Suites Anchorage - Midtown",
-			"aliases": [],
-			"rows": 78
-		},
-		{
 			"wikidata": "Q89029601",
 			"name": "Casino Shop",
 			"aliases": [],
 			"rows": 78
-		},
-		{
-			"wikidata": "Q1458135",
-			"name": "ibis budget Aix en Provence Est Le Canet",
-			"aliases": [],
-			"rows": 77
 		},
 		{
 			"wikidata": "Q7285144",
@@ -767,24 +523,6 @@
 			"rows": 72
 		},
 		{
-			"wikidata": "Q5343830",
-			"name": "Amanda A Hedrick",
-			"aliases": [],
-			"rows": 72
-		},
-		{
-			"wikidata": "Q920166",
-			"name": "Ibis Albert, Pays De La Somme",
-			"aliases": [],
-			"rows": 72
-		},
-		{
-			"wikidata": "Q55931",
-			"name": "Allen Samuels Hyundai",
-			"aliases": [],
-			"rows": 71
-		},
-		{
 			"wikidata": "Q62082526",
 			"name": "Nothing Bundt Cakes",
 			"aliases": [],
@@ -809,18 +547,6 @@
 			"rows": 69
 		},
 		{
-			"wikidata": "Q108669250",
-			"name": "Ferretería El Surtidor",
-			"aliases": [],
-			"rows": 69
-		},
-		{
-			"wikidata": "Q246",
-			"name": "DBF MONTPELLIER",
-			"aliases": [],
-			"rows": 69
-		},
-		{
 			"wikidata": "Q3007012",
 			"name": "Cuisinella",
 			"aliases": [],
@@ -833,32 +559,8 @@
 			"rows": 69
 		},
 		{
-			"wikidata": "Q7893575",
-			"name": "Advanced Regional Surgery Center",
-			"aliases": [],
-			"rows": 69
-		},
-		{
 			"wikidata": "Q105306275",
 			"name": "Undiz",
-			"aliases": [],
-			"rows": 68
-		},
-		{
-			"wikidata": "Q136311",
-			"name": "Sunglass Hut at Macy's",
-			"aliases": ["Sunglass Hut", "Sunglass Outfitters By Sunglass Hut"],
-			"rows": 68
-		},
-		{
-			"wikidata": "Q4672981",
-			"name": "Ace Hardware",
-			"aliases": [],
-			"rows": 68
-		},
-		{
-			"wikidata": "Q83891559",
-			"name": "ALASKA INDUSTRIAL HARDWARE",
 			"aliases": [],
 			"rows": 68
 		},
@@ -866,12 +568,6 @@
 			"wikidata": "Q2412064",
 			"name": "Campanile",
 			"aliases": [],
-			"rows": 67
-		},
-		{
-			"wikidata": "Q857063",
-			"name": "ATM Walgreens",
-			"aliases": ["ATM Circle K", "ATM Target"],
 			"rows": 67
 		},
 		{
@@ -889,12 +585,6 @@
 		{
 			"wikidata": "Q40165577",
 			"name": "Basic-Fit",
-			"aliases": [],
-			"rows": 64
-		},
-		{
-			"wikidata": "Q5576353",
-			"name": "Godfather's Pizza Express-Ottumwa, IA",
 			"aliases": [],
 			"rows": 64
 		},
@@ -917,12 +607,6 @@
 			"rows": 62
 		},
 		{
-			"wikidata": "Q29570",
-			"name": "DAVIDSON AUTOMOTIVE GROUP",
-			"aliases": [],
-			"rows": 62
-		},
-		{
 			"wikidata": "Q112359190",
 			"name": "Take 5 Oil Change",
 			"aliases": [],
@@ -935,26 +619,8 @@
 			"rows": 61
 		},
 		{
-			"wikidata": "Q499707",
-			"name": "AJACCIO",
-			"aliases": [],
-			"rows": 61
-		},
-		{
-			"wikidata": "Q5184987",
-			"name": "Cricket Wireless",
-			"aliases": [],
-			"rows": 61
-		},
-		{
 			"wikidata": "Q15903261",
 			"name": "Marshalls",
-			"aliases": [],
-			"rows": 60
-		},
-		{
-			"wikidata": "Q3147425",
-			"name": "ibis Styles Ancenis Centre",
 			"aliases": [],
 			"rows": 60
 		},
@@ -965,32 +631,14 @@
 			"rows": 60
 		},
 		{
-			"wikidata": "Q64971203",
-			"name": "500 Place d'Armes - P3",
-			"aliases": [],
-			"rows": 60
-		},
-		{
 			"wikidata": "Q85751038",
 			"name": "CAVA",
 			"aliases": [],
 			"rows": 59
 		},
 		{
-			"wikidata": "Q106924414",
-			"name": "Arden Hills",
-			"aliases": [],
-			"rows": 58
-		},
-		{
 			"wikidata": "Q121502262",
 			"name": "The Exercise Coach",
-			"aliases": [],
-			"rows": 58
-		},
-		{
-			"wikidata": "Q20165",
-			"name": "BASSIGNY POIDS LOURDS",
 			"aliases": [],
 			"rows": 58
 		},
@@ -1005,12 +653,6 @@
 			"name": "Key Food",
 			"aliases": [],
 			"rows": 57
-		},
-		{
-			"wikidata": "Q3060668",
-			"name": "Barneaud Pneus Gap",
-			"aliases": [],
-			"rows": 56
 		},
 		{
 			"wikidata": "Q465952",
@@ -1049,12 +691,6 @@
 			"rows": 54
 		},
 		{
-			"wikidata": "Q36033",
-			"name": "Banister Mitsubishi-Hampton",
-			"aliases": [],
-			"rows": 54
-		},
-		{
 			"wikidata": "Q90020479",
 			"name": "Coccinelle Express",
 			"aliases": [],
@@ -1063,18 +699,6 @@
 		{
 			"wikidata": "Q1066777",
 			"name": "Charleys Philly Steaks",
-			"aliases": [],
-			"rows": 52
-		},
-		{
-			"wikidata": "Q113215945",
-			"name": "16 DE SEPTIEMBRE",
-			"aliases": [],
-			"rows": 52
-		},
-		{
-			"wikidata": "Q1869471",
-			"name": "Gandy",
 			"aliases": [],
 			"rows": 52
 		},
@@ -1097,20 +721,8 @@
 			"rows": 51
 		},
 		{
-			"wikidata": "Q1273376",
-			"name": "Espace Culturel",
-			"aliases": ["Brico", "Station E.Leclerc", "Une heure pour Soi", "Voyages"],
-			"rows": 50
-		},
-		{
 			"wikidata": "Q1673079",
 			"name": "Iron Mountain",
-			"aliases": [],
-			"rows": 50
-		},
-		{
-			"wikidata": "Q3442791",
-			"name": "Ross Stores Buying Office",
 			"aliases": [],
 			"rows": 50
 		},
@@ -1121,20 +733,8 @@
 			"rows": 50
 		},
 		{
-			"wikidata": "Q80335",
-			"name": "Leonidas",
-			"aliases": [],
-			"rows": 50
-		},
-		{
 			"wikidata": "Q1925685",
 			"name": "Metro by T-Mobile",
-			"aliases": [],
-			"rows": 49
-		},
-		{
-			"wikidata": "Q217599",
-			"name": "Station Carrefour",
 			"aliases": [],
 			"rows": 49
 		},
@@ -1143,18 +743,6 @@
 			"name": "Decathlon",
 			"aliases": [],
 			"rows": 49
-		},
-		{
-			"wikidata": "Q1058722",
-			"name": "1700 Broadway (53rd & 7th)",
-			"aliases": [],
-			"rows": 48
-		},
-		{
-			"wikidata": "Q121357206",
-			"name": "City Electric Supply Abbotsford",
-			"aliases": [],
-			"rows": 48
 		},
 		{
 			"wikidata": "Q1972120",
@@ -1172,18 +760,6 @@
 			"wikidata": "Q109329782",
 			"name": "Caliber Collision",
 			"aliases": ["Caliber Auto Glass"],
-			"rows": 47
-		},
-		{
-			"wikidata": "Q1630895",
-			"name": "Hotel F1 Geneva Saint-Julien-Genevois",
-			"aliases": [],
-			"rows": 47
-		},
-		{
-			"wikidata": "Q3354445",
-			"name": "Opticien Le Mans - Optic 2000",
-			"aliases": [],
 			"rows": 47
 		},
 		{
@@ -1211,32 +787,14 @@
 			"rows": 46
 		},
 		{
-			"wikidata": "Q3146662",
-			"name": "Adams Supermarket-Terryville IGA #400",
-			"aliases": [],
-			"rows": 46
-		},
-		{
 			"wikidata": "Q7912852",
 			"name": "Valvoline",
 			"aliases": [],
 			"rows": 46
 		},
 		{
-			"wikidata": "Q1658320",
-			"name": "24 SEVEN 11",
-			"aliases": [],
-			"rows": 45
-		},
-		{
 			"wikidata": "Q3113677",
 			"name": "GrandOptical",
-			"aliases": [],
-			"rows": 45
-		},
-		{
-			"wikidata": "Q35996",
-			"name": "Mazda",
 			"aliases": [],
 			"rows": 45
 		},
@@ -1251,12 +809,6 @@
 			"name": "Marco's Pizza",
 			"aliases": [],
 			"rows": 45
-		},
-		{
-			"wikidata": "Q35349",
-			"name": "Allstar Kia",
-			"aliases": [],
-			"rows": 44
 		},
 		{
 			"wikidata": "Q4906876",
@@ -1277,21 +829,9 @@
 			"rows": 44
 		},
 		{
-			"wikidata": "Q1543874",
-			"name": "Bradley International Airport",
-			"aliases": [],
-			"rows": 43
-		},
-		{
 			"wikidata": "Q1820137",
 			"name": "Shoppers Drug Mart",
 			"aliases": ["Pharmaprix"],
-			"rows": 43
-		},
-		{
-			"wikidata": "Q5032010",
-			"name": "Candlewood Suites Anchorage - Midtown",
-			"aliases": [],
 			"rows": 43
 		},
 		{
@@ -1313,20 +853,8 @@
 			"rows": 42
 		},
 		{
-			"wikidata": "Q4822010",
-			"name": "Auntie Anne's 301 6th Ave",
-			"aliases": [],
-			"rows": 42
-		},
-		{
 			"wikidata": "Q4999220",
 			"name": "Burlington",
-			"aliases": [],
-			"rows": 42
-		},
-		{
-			"wikidata": "Q53268",
-			"name": "Castlegar Toyota",
 			"aliases": [],
 			"rows": 42
 		},
@@ -1343,12 +871,6 @@
 			"rows": 42
 		},
 		{
-			"wikidata": "Q7830092",
-			"name": "TownePlace Suites by Marriott Brentwood",
-			"aliases": [],
-			"rows": 42
-		},
-		{
 			"wikidata": "Q827258",
 			"name": "Bershka",
 			"aliases": [],
@@ -1357,12 +879,6 @@
 		{
 			"wikidata": "Q184399",
 			"name": "Zeeman",
-			"aliases": [],
-			"rows": 41
-		},
-		{
-			"wikidata": "Q19903688",
-			"name": "Target Optical",
 			"aliases": [],
 			"rows": 41
 		},
@@ -1391,12 +907,6 @@
 			"rows": 40
 		},
 		{
-			"wikidata": "Q304769",
-			"name": "A & D Supermarket",
-			"aliases": [],
-			"rows": 40
-		},
-		{
 			"wikidata": "Q3812045",
 			"name": "Kiko Milano",
 			"aliases": [],
@@ -1415,20 +925,8 @@
 			"rows": 40
 		},
 		{
-			"wikidata": "Q86707084",
-			"name": "Aledo",
-			"aliases": [],
-			"rows": 40
-		},
-		{
 			"wikidata": "Q114618507",
 			"name": "Playa Bowls",
-			"aliases": [],
-			"rows": 39
-		},
-		{
-			"wikidata": "Q463436",
-			"name": "Ardmore PA",
 			"aliases": [],
 			"rows": 39
 		},
@@ -1445,38 +943,8 @@
 			"rows": 38
 		},
 		{
-			"wikidata": "Q1740314",
-			"name": "Arvada",
-			"aliases": [],
-			"rows": 38
-		},
-		{
-			"wikidata": "Q249173",
-			"name": "Apex Cycle Sports Inc.",
-			"aliases": [],
-			"rows": 38
-		},
-		{
-			"wikidata": "Q7304949",
-			"name": "Admiralty Inn & Suites - a Red Collection Hotel",
-			"aliases": [],
-			"rows": 38
-		},
-		{
 			"wikidata": "Q1143589",
 			"name": "Culver's",
-			"aliases": [],
-			"rows": 37
-		},
-		{
-			"wikidata": "Q181642",
-			"name": "CO2 Inflatables",
-			"aliases": [],
-			"rows": 37
-		},
-		{
-			"wikidata": "Q2422884",
-			"name": "American Vintage - Galeries Lafayette Bordeaux - Femme",
 			"aliases": [],
 			"rows": 37
 		},
@@ -1493,12 +961,6 @@
 			"rows": 37
 		},
 		{
-			"wikidata": "Q5835668",
-			"name": "2000 Market",
-			"aliases": [],
-			"rows": 37
-		},
-		{
 			"wikidata": "Q7703648",
 			"name": "Terrible's",
 			"aliases": [],
@@ -1509,12 +971,6 @@
 			"name": "Bojangles'",
 			"aliases": [],
 			"rows": 37
-		},
-		{
-			"wikidata": "Q128119319",
-			"name": "SHOE DEPT. 724",
-			"aliases": [],
-			"rows": 36
 		},
 		{
 			"wikidata": "Q1393809",
@@ -1535,12 +991,6 @@
 			"rows": 36
 		},
 		{
-			"wikidata": "Q5617505",
-			"name": "GULF EXPRESS",
-			"aliases": [],
-			"rows": 36
-		},
-		{
 			"wikidata": "Q630866",
 			"name": "Arby's",
 			"aliases": [],
@@ -1555,12 +1005,6 @@
 		{
 			"wikidata": "Q509255",
 			"name": "Buffalo Wild Wings",
-			"aliases": [],
-			"rows": 35
-		},
-		{
-			"wikidata": "Q7990205",
-			"name": "Americana at Brand",
 			"aliases": [],
 			"rows": 35
 		},
@@ -1589,12 +1033,6 @@
 			"rows": 34
 		},
 		{
-			"wikidata": "Q7968882",
-			"name": "Warby Parker Aliso Village",
-			"aliases": [],
-			"rows": 34
-		},
-		{
 			"wikidata": "Q1429287",
 			"name": "Alamo",
 			"aliases": [],
@@ -1613,32 +1051,8 @@
 			"rows": 33
 		},
 		{
-			"wikidata": "Q2940190",
-			"name": "Carrefour Express Beauziac",
-			"aliases": [],
-			"rows": 33
-		},
-		{
 			"wikidata": "Q115675881",
 			"name": "Brow Art 23",
-			"aliases": [],
-			"rows": 32
-		},
-		{
-			"wikidata": "Q188217",
-			"name": "AUTOFORUM",
-			"aliases": [],
-			"rows": 32
-		},
-		{
-			"wikidata": "Q26678",
-			"name": "BAYERN AUTO SPORT DUNKERQUE",
-			"aliases": [],
-			"rows": 32
-		},
-		{
-			"wikidata": "Q2882416",
-			"name": "Acworth",
 			"aliases": [],
 			"rows": 32
 		},
@@ -1647,18 +1061,6 @@
 			"name": "BJ's Wholesale Club",
 			"aliases": [],
 			"rows": 32
-		},
-		{
-			"wikidata": "Q7234777",
-			"name": "175 W. Jackson",
-			"aliases": [],
-			"rows": 32
-		},
-		{
-			"wikidata": "Q123409898",
-			"name": "BIOPED BRADFORD",
-			"aliases": [],
-			"rows": 31
 		},
 		{
 			"wikidata": "Q1654122",
@@ -1691,12 +1093,6 @@
 			"rows": 31
 		},
 		{
-			"wikidata": "Q2818848",
-			"name": "Abbotsford Vlge SC",
-			"aliases": [],
-			"rows": 30
-		},
-		{
 			"wikidata": "Q4853573",
 			"name": "Banregio",
 			"aliases": [],
@@ -1721,38 +1117,8 @@
 			"rows": 30
 		},
 		{
-			"wikidata": "Q96372437",
-			"name": "Ascension Medical Group St. John Palliative Care",
-			"aliases": [],
-			"rows": 30
-		},
-		{
 			"wikidata": "Q2078880",
 			"name": "CVS Pharmacy",
-			"aliases": [],
-			"rows": 29
-		},
-		{
-			"wikidata": "Q21015663",
-			"name": "Back Bay",
-			"aliases": [],
-			"rows": 29
-		},
-		{
-			"wikidata": "Q2689639",
-			"name": "Market Amendeuix-Oneix Saint-Palais",
-			"aliases": [],
-			"rows": 29
-		},
-		{
-			"wikidata": "Q7315394",
-			"name": "Apiary Hotel Belleview Station",
-			"aliases": [],
-			"rows": 29
-		},
-		{
-			"wikidata": "Q798819",
-			"name": "Allegan",
 			"aliases": [],
 			"rows": 29
 		},
@@ -1765,18 +1131,6 @@
 		{
 			"wikidata": "Q16983222",
 			"name": "Handel's Homemade Ice Cream",
-			"aliases": [],
-			"rows": 28
-		},
-		{
-			"wikidata": "Q23317",
-			"name": "A.J.P AUTOMOBILES",
-			"aliases": [],
-			"rows": 28
-		},
-		{
-			"wikidata": "Q2945643",
-			"name": "Skechers Altaria",
 			"aliases": [],
 			"rows": 28
 		},
@@ -1797,12 +1151,6 @@
 			"name": "Sport Clips",
 			"aliases": [],
 			"rows": 28
-		},
-		{
-			"wikidata": "Q2850015",
-			"name": "Animalis Beauvais",
-			"aliases": [],
-			"rows": 27
 		},
 		{
 			"wikidata": "Q3524695",
@@ -1829,18 +1177,6 @@
 			"rows": 27
 		},
 		{
-			"wikidata": "Q7605116",
-			"name": "Staybridge Suites Allen",
-			"aliases": [],
-			"rows": 27
-		},
-		{
-			"wikidata": "Q1034654",
-			"name": "AMERICAN UNIVERSITY",
-			"aliases": [],
-			"rows": 26
-		},
-		{
 			"wikidata": "Q115898759",
 			"name": "Todomoda",
 			"aliases": [],
@@ -1850,12 +1186,6 @@
 			"wikidata": "Q127962",
 			"name": "Levi's",
 			"aliases": ["Levi's Outlet"],
-			"rows": 26
-		},
-		{
-			"wikidata": "Q18636413",
-			"name": "60 State",
-			"aliases": [],
 			"rows": 26
 		},
 		{
@@ -1871,12 +1201,6 @@
 			"rows": 26
 		},
 		{
-			"wikidata": "Q59773555",
-			"name": "BOA East Hartford CT2-120 (Hartford, CT)",
-			"aliases": [],
-			"rows": 26
-		},
-		{
 			"wikidata": "Q7102943",
 			"name": "Orkin",
 			"aliases": [],
@@ -1887,18 +1211,6 @@
 			"name": "ShopRite",
 			"aliases": [],
 			"rows": 26
-		},
-		{
-			"wikidata": "Q491627",
-			"name": "BOSS Store",
-			"aliases": ["BOSS Men's Bodywear & Hosiery Shop", "BOSS Shop"],
-			"rows": 25
-		},
-		{
-			"wikidata": "Q533415",
-			"name": "Best Buy",
-			"aliases": ["Best Buy Warehouse"],
-			"rows": 25
 		},
 		{
 			"wikidata": "Q6117132",

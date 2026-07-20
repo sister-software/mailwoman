@@ -22,6 +22,7 @@ import zod from "zod"
 import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import {
 	buildBrandTable,
+	DEFAULT_DOMINANCE,
 	DEFAULT_MIN_ROWS,
 	defaultBrandTableOutPath,
 	defaultPOIDatabasePath,
@@ -32,6 +33,13 @@ const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("Built poi.db to read. Default <data-root>/poi/poi.db"),
 	out: zod.string().optional().describe("brands.json output path. Default poi-taxonomy/data/brands.json"),
 	minRows: zod.string().optional().describe(`Minimum total rows to keep a brand. Default ${DEFAULT_MIN_ROWS}`),
+	dominance: zod
+		.string()
+		.optional()
+		.describe(
+			`Minimum fraction of a QID's total rows its modal name must cover to qualify — below this the QID is ` +
+				`dropped entirely (systematic mistagging). Default ${DEFAULT_DOMINANCE}`
+		),
 })
 
 export { OptionsSchema as options }
@@ -41,9 +49,10 @@ const GazetteerBuildPOIBrands: CommandComponent<typeof OptionsSchema> = ({ optio
 		const dbPath = options.db ?? defaultPOIDatabasePath()
 		const out = options.out ?? defaultBrandTableOutPath()
 		const minRows = options.minRows ? Number.parseInt(options.minRows, 10) : DEFAULT_MIN_ROWS
+		const dominance = options.dominance ? Number.parseFloat(options.dominance) : DEFAULT_DOMINANCE
 
 		console.error(`▸ reading ${dbPath}`)
-		const table = await buildBrandTable({ dbPath, minRows })
+		const table = await buildBrandTable({ dbPath, minRows, dominance })
 
 		console.error(`▸ writing ${out}`)
 		writeBrandTable(table, out)
@@ -54,7 +63,7 @@ const GazetteerBuildPOIBrands: CommandComponent<typeof OptionsSchema> = ({ optio
 			.map((b, i) => `  ${i + 1}. ${b.name} (${b.wikidata}) — ${b.rows.toLocaleString()} rows`)
 
 		return [
-			`brands.json: ${out} (${table.brands.length.toLocaleString()} brands, min-rows=${minRows})`,
+			`brands.json: ${out} (${table.brands.length.toLocaleString()} brands, min-rows=${minRows}, dominance=${dominance})`,
 			`source: ${table.sourceLayer.name} ${table.sourceLayer.version} (vintage ${table.sourceLayer.sourceVintage})`,
 			"top 5 by rows:",
 			...top5,
