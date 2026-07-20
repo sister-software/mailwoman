@@ -22,7 +22,11 @@ export interface POIPhraseMatch {
 	matchedPhrase: string
 	confidence: number
 	/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
-	kind: "category" | "brand"
+	/**
+	 * Absent = "category" (the pre-brand shape) — optional so pre-7.3 POIPhraseLookup implementors stay
+	 * source-compatible.
+	 */
+	kind?: "category" | "brand"
 	/** Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match). */
 	wikidata?: string
 }

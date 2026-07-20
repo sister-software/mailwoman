@@ -104,7 +104,7 @@ export function createPOIIntentStage(
 
 		const intent: POIIntent = {
 			subject:
-				matched.match.kind === "brand"
+				(matched.match.kind ?? "category") === "brand"
 					? {
 							kind: "brand",
 							name: matched.match.categoryID,
