@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/cartographer",
-	"version": "7.3.0",
+	"version": "7.4.0",
 	"description": "Mapping utilities for the Mailwoman geo-spatial data pipeline.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
