@@ -133,8 +133,20 @@ describe("createPOIIntentStage", () => {
 const HERMETIC = { placeCountry: false as const, streetEvidence: false as const }
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
-	it("OFF by default: a category phrase never takes the poi path", async () => {
+	// #1177: default-ON since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets
+	// byte-identical — docs/articles/evals/2026-07-20-poi-promotion-battery.md). `undefined` behaves like
+	// `true` (intent-only mode) without the caller opting in.
+	it("ON by default: a category phrase takes the poi path without opting in", async () => {
 		const pipeline = createRuntimePipeline({ ...HERMETIC })
+		const result = await pipeline("hospital")
+
+		expect(result.path).toBe("poi")
+		expect(result.poiIntent?.type).toBe("intent")
+		expect(result.kind.kind).toBe("poi_query")
+	})
+
+	it("OFF: poiQueryKind: false disables the poi path entirely", async () => {
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: false })
 		const result = await pipeline("hospital")
 
 		expect(result.path).not.toBe("poi")

@@ -62,7 +62,14 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
-	poi: zod.boolean().optional().default(false).describe("Enable poi_query detection (poiQueryKind flag)."),
+	poi: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"poi_query detection (poiQueryKind flag). DEFAULT-ON since 2026-07-20 (promotion battery: 0/4507 golden " +
+				"misroutes, 6/6 demo presets byte-identical). Pass --no-poi to restore the pre-flag address-only kind classification."
+		),
 	downloadWeights: zod
 		.boolean()
 		.optional()

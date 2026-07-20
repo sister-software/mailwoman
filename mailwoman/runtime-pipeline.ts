@@ -148,17 +148,21 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	streetEvidence?: StreetLocalityEvidence | false
 	/**
-	 * POI-query detection + intent extraction (spec §3.1, exotic-POI arc plans 2 + 4). Default-OFF — see the runtime-flag
-	 * register. When set: the kind classifier gains the poi-taxonomy lexicon (`poi_query` kind), the poi-intent stage is
-	 * wired, and the anchor remainder parses through this same pipeline with the poi stage OFF (recursion guard). When
-	 * unset/false the pipeline is byte-identical to pre-flag builds. An explicit `classifyKind` override wins over the
-	 * poi-aware default.
+	 * POI-query detection + intent extraction (spec §3.1, exotic-POI arc plans 2 + 4). **Default-ON since 2026-07-20**
+	 * (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets byte-identical — see
+	 * `docs/articles/evals/2026-07-20-poi-promotion-battery.md` and the runtime-flag register). When active: the kind
+	 * classifier gains the poi-taxonomy lexicon (`poi_query` kind), the poi-intent stage is wired, and the anchor
+	 * remainder parses through this same pipeline with the poi stage OFF (recursion guard). An explicit `classifyKind`
+	 * override wins over the poi-aware default.
 	 *
-	 * - `true` — intent-only mode: the stage extracts the intent but never executes it (today's Plan-2 behavior), EXCEPT
-	 *   the build-local abstain still fires (`requires_build_local_layer` needs no db — see `poi-executor.ts`).
+	 * - `undefined` (default) — same as `true`: intent-only mode. The stage extracts the intent but never executes it
+	 *   (today's Plan-2 behavior), EXCEPT the build-local abstain still fires (`requires_build_local_layer` needs no db —
+	 *   see `poi-executor.ts`).
+	 * - `true` — explicit intent-only mode, same as the default.
 	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily on the first pipeline call
 	 *   (mirrors the {@link placeCountry} lazy-load pattern so this factory stays synchronous) and wired into the
 	 *   executor, so a matched intent comes back with `results` attached (or an `anchor_required` abstain).
+	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
 	 */
 	poiQueryKind?: boolean | { poiDatabasePath?: string }
 }
@@ -200,17 +204,22 @@ function wrapWithStreetEvidence(
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
+	// #1177: default-ON since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo
+	// presets byte-identical). `undefined` → `true` (intent-only mode); an explicit `false` still
+	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
+	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
+	const poiQueryKindEffective = opts.poiQueryKind ?? true
 	const stages: RuntimePipelineStages = {
 		normalize,
 		computeQueryShape,
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
-		// POI arc (default-OFF). The poi-aware classifier only exists behind the flag; an explicit
-		// classifyKind override always wins. The anchor re-parse runs THIS pipeline minus the poi
-		// stage: same stages object, but runPipeline never takes the poi branch because
-		// anchorStages.poiIntent is absent and anchorStages.classifyKind is the default.
+		// POI arc (default-ON since 2026-07-20). The poi-aware classifier only exists when the flag
+		// resolves truthy; an explicit classifyKind override always wins. The anchor re-parse runs THIS
+		// pipeline minus the poi stage: same stages object, but runPipeline never takes the poi branch
+		// because anchorStages.poiIntent is absent and anchorStages.classifyKind is the default.
 		classifyKind:
 			opts.classifyKind ??
-			(opts.poiQueryKind ? createKindClassifier({ poiLexicon: poiTaxonomyLookup }) : defaultClassifyKind),
+			(poiQueryKindEffective ? createKindClassifier({ poiLexicon: poiTaxonomyLookup }) : defaultClassifyKind),
 		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper. Hard dep in v0.5.0 —
 		// not an opt-in shim. The plan doc framed Stage 2.7 as backward-compatible-opt-in for the
 		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
@@ -240,15 +249,15 @@ export function createRuntimePipeline(
 		return category ? requiresBuildLocalLayer(category) : false
 	}
 
-	// `poiQueryKind: true` → intent-only executor (lookup undefined, build-local abstain still fires).
-	// `poiQueryKind: { poiDatabasePath }` → upgraded below, on the first call, once the lookup resolves.
-	// Reassigned in place (not a fresh `createPOIIntentStage` deps object) so the stage — wired once,
-	// synchronously, right below — always dispatches through the latest executor.
-	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | undefined = opts.poiQueryKind
+	// `poiQueryKind` undefined/`true` → intent-only executor (lookup undefined, build-local abstain
+	// still fires). `poiQueryKind: { poiDatabasePath }` → upgraded below, on the first call, once the
+	// lookup resolves. Reassigned in place (not a fresh `createPOIIntentStage` deps object) so the
+	// stage — wired once, synchronously, right below — always dispatches through the latest executor.
+	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | undefined = poiQueryKindEffective
 		? createPOIExecutor({ lookup: undefined, requiresBuildLocal })
 		: undefined
 
-	if (opts.poiQueryKind) {
+	if (poiQueryKindEffective) {
 		stages.poiIntent = createPOIIntentStage({
 			lookup: poiTaxonomyLookup,
 			// Inline spread, evaluated at CALL time: the factory's lazy stages (placeCountry,
