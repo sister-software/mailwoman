@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/mcp",
-	"version": "7.4.0",
+	"version": "7.5.0",
 	"description": "MCP server — mailwoman's spatial toolset for agents (parse, geocode, poi_search, overpass_export, layer_manifest).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
