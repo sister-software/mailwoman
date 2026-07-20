@@ -8,11 +8,12 @@
  *   } })` surface end-to-end: subject match → anchor parse → anchor resolve → poi.db search, the same
  *   construction `mailwoman poi` uses.
  *
- *   PRE-REGISTRATION DISCIPLINE: this is the FIRST run of this board. There are no floors yet — the
- *   command is report-only (always exits 0 on case failures; a non-zero exit means the HARNESS broke,
- *   not that a case failed). Floors get written in a follow-up PR once the v1 numbers establish a
- *   baseline worth holding. Don't read a case failure here as a regression; there is nothing to
- *   regress FROM yet.
+ *   FLOORS (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`
+ *   (`POI_BOARD_FLOORS` / `evaluateFloors`, pre-registered in
+ *   `docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`). Floors are graded and printed on
+ *   EVERY run; a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
+ *   command stays report-only (exit 0 on case failures; a non-zero exit then means the HARNESS broke —
+ *   missing fixtures, missing db, a pipeline construction error — not a graded case failing).
  *
  *   Composition (`fixtures/poi-board.jsonl`, committed): ~22 category+anchor cases spanning all four
  *   currently-shipped poi.db countries (US/CA/MX/FR), ~5 locale-gated-synonym cases (exercising
@@ -46,7 +47,13 @@ export const POI_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/poi-board.jso
 
 export interface PoiBoardResultsExpect {
 	kind: "results"
-	categoryID: string
+	/**
+	 * Exactly one of `categoryID` / `brandWikidata` is set per fixture — the grader checks the top result's matching
+	 * field. `brandWikidata` cases (part 2 of the brand-lexicon work) assert the top result's `POIResult.brandWikidata`
+	 * equals this QID; `categoryID` cases are unchanged from v1.
+	 */
+	categoryID?: string
+	brandWikidata?: string
 	anchorGold: { latitude: number; longitude: number }
 	maxNearestKm: number
 }
@@ -148,14 +155,17 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 		}
 	}
 
-	// expect.kind === "results"
+	// expect.kind === "results" — either a categoryID or a brandWikidata expectation (never both).
+	const expectedLabel =
+		expect.brandWikidata !== undefined ? `brandWikidata=${expect.brandWikidata}` : `categoryID=${expect.categoryID}`
+
 	if (poiOutcome.type !== "intent") {
 		return {
 			id: fixture.id,
 			query: fixture.query,
 			expectKind: "results",
 			pass: false,
-			detail: `expected results (categoryID=${expect.categoryID}), got abstain(${poiOutcome.reason})`,
+			detail: `expected results (${expectedLabel}), got abstain(${poiOutcome.reason})`,
 		}
 	}
 
@@ -167,7 +177,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 			query: fixture.query,
 			expectKind: "results",
 			pass: false,
-			detail: `expected ≥1 result (categoryID=${expect.categoryID}), got 0`,
+			detail: `expected ≥1 result (${expectedLabel}), got 0`,
 			resultCount: 0,
 		}
 	}
@@ -175,16 +185,28 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	const nearestKm = Math.min(
 		...results.map((r) => haversineKm(r.latitude, r.longitude, expect.anchorGold.latitude, expect.anchorGold.longitude))
 	)
-	const topCategoryID = results[0]!.categoryID
 	const withinRange = nearestKm <= expect.maxNearestKm
-	const topCategoryMatches = topCategoryID === expect.categoryID
-	const pass = withinRange && topCategoryMatches
+
+	// Brand and category checks use the SAME "top field, mismatch phrase" shape (`top <field> <got> !== expected <want>`)
+	// — kept as two branches (not a single templated string) so the category branch's exact wording stays byte-stable
+	// against v1 assertions (`top category X !== expected Y`).
+	const topCategoryID = results[0]!.categoryID
+	const topBrandWikidata = results[0]!.brandWikidata
+	const topMatches =
+		expect.brandWikidata !== undefined ? topBrandWikidata === expect.brandWikidata : topCategoryID === expect.categoryID
+	const topSummary =
+		expect.brandWikidata !== undefined ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
+	const mismatchDetail =
+		expect.brandWikidata !== undefined
+			? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
+			: `top category ${topCategoryID} !== expected ${expect.categoryID}`
+	const pass = withinRange && topMatches
 
 	const detail = pass
-		? `${results.length} results, nearest ${nearestKm.toFixed(2)} km, top category ${topCategoryID}`
+		? `${results.length} results, nearest ${nearestKm.toFixed(2)} km, ${topSummary}`
 		: [
 				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : undefined,
-				!topCategoryMatches ? `top category ${topCategoryID} !== expected ${expect.categoryID}` : undefined,
+				!topMatches ? mismatchDetail : undefined,
 			]
 				.filter(Boolean)
 				.join("; ")
@@ -215,6 +237,8 @@ export interface PoiBoardOptions {
 	candidateDb?: string
 	/** Suppress the human-readable table (the CLI's `--json` mode prints the full report instead). */
 	quiet?: boolean
+	/** Enforce the pre-registered floors: return a non-zero exit code on any breach (floors are always printed). */
+	enforce?: boolean
 }
 
 /**
@@ -258,12 +282,92 @@ export interface QuantileStats {
 	max: number
 }
 
+/**
+ * Pre-registered pass-rate floors for the board (spec §3.6). Set in the follow-up PR after the v1 baseline
+ * (`docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`) established numbers to hold against.
+ *
+ * - `overall` ≥ 0.90 — the whole board's assembled-answer pass rate. A soft floor: coverage gaps in poi.db (the
+ *   `trail`/`supermarket` holdouts) are allowed to cost a few points without failing the board.
+ * - `abstain` = 1.00 — every abstain case must abstain for the right reason. A hard floor: an abstain miss means the poi
+ *   branch claimed a query poi.db structurally cannot answer, the exact false-positive this board guards.
+ * - `address` = 1.00 — every address-guard case must stay on the address path. A hard floor for the same reason: the poi
+ *   branch must never hijack a full address.
+ */
+export const POI_BOARD_FLOORS = {
+	overall: 0.9,
+	abstain: 1.0,
+	address: 1.0,
+} as const
+
+/** One graded floor line — printed on every run, and the breach unit `--enforce` keys its exit code off. */
+export interface FloorLine {
+	/** The floor key (`overall` / `abstain` / `address`). */
+	key: keyof typeof POI_BOARD_FLOORS
+	/** Human label for the printed line. */
+	label: string
+	/** Observed pass rate (0..1) for this slice. */
+	observed: number
+	/** The required floor (0..1). */
+	floor: number
+	/** `observed >= floor` — a missing slice (no cases of that kind) counts as NOT met. */
+	met: boolean
+	/** `pass/total` for the slice (or `0/0` when the slice is absent), for the printed line. */
+	fraction: string
+}
+
+export interface FloorEvaluation {
+	lines: FloorLine[]
+	/** True when ANY floor line is unmet — the signal `--enforce` turns into a non-zero exit. */
+	breached: boolean
+}
+
+/** The slice of a report `evaluateFloors` reads — kept narrow so tests can hand in a synthetic result set. */
+export interface FloorInput {
+	overallPassRate: number
+	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
+}
+
+/**
+ * Grade a report against {@link POI_BOARD_FLOORS}. Pure — no I/O, no pipeline — so breach detection is unit-tested
+ * against synthetic reports (`poi-board.test.ts`) without a live board run. A category floor over an absent slice (zero
+ * cases of that kind) is treated as UNMET, not vacuously met.
+ */
+export function evaluateFloors(report: FloorInput): FloorEvaluation {
+	const categoryLine = (key: "abstain" | "address", label: string): FloorLine => {
+		const bucket = report.byExpectKind[key]
+		const floor = POI_BOARD_FLOORS[key]
+		const total = bucket?.total ?? 0
+		const pass = bucket?.pass ?? 0
+		// An absent slice can't clear a 100% floor — grading nothing is not the same as grading everything right.
+		const observed = total > 0 ? pass / total : 0
+
+		return { key, label, observed, floor, met: total > 0 && observed >= floor, fraction: `${pass}/${total}` }
+	}
+
+	const overallTotal = Object.values(report.byExpectKind).reduce((sum, b) => sum + b.total, 0)
+	const overallPass = Object.values(report.byExpectKind).reduce((sum, b) => sum + b.pass, 0)
+	const overallLine: FloorLine = {
+		key: "overall",
+		label: "overall",
+		observed: report.overallPassRate,
+		floor: POI_BOARD_FLOORS.overall,
+		met: report.overallPassRate >= POI_BOARD_FLOORS.overall,
+		fraction: `${overallPass}/${overallTotal}`,
+	}
+
+	const lines = [overallLine, categoryLine("abstain", "abstain"), categoryLine("address", "address-guard")]
+
+	return { lines, breached: lines.some((line) => !line.met) }
+}
+
 export interface PoiBoardReport {
 	generatedAt: string
 	db: string
 	totalCases: number
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
 	overallPassRate: number
+	/** Pre-registered floors graded against this report (spec §3.6). Printed on every run; enforced under `--enforce`. */
+	floors: FloorEvaluation
 	/** Report-only metrics over every `POIResult` row returned across ALL cases (any expect kind). */
 	resultRowCount: number
 	gersIDPresentRate: number
@@ -384,13 +488,15 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 	}
 
 	const totalPass = cases.filter((c) => c.pass).length
+	const overallPassRate = cases.length > 0 ? totalPass / cases.length : 0
 
 	const report: PoiBoardReport = {
 		generatedAt: new Date().toISOString(),
 		db,
 		totalCases: cases.length,
 		byExpectKind,
-		overallPassRate: cases.length > 0 ? totalPass / cases.length : 0,
+		overallPassRate,
+		floors: evaluateFloors({ overallPassRate, byExpectKind }),
 		resultRowCount,
 		gersIDPresentRate: resultRowCount > 0 ? gersIDPresent / resultRowCount : 0,
 		ancestryPresentRate: resultRowCount > 0 ? ancestryPresent / resultRowCount : 0,
@@ -402,11 +508,12 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 		printReport(report)
 	}
 
-	return { report, exitCode: 0 }
+	// Floors are always graded and printed; `--enforce` is what turns a breach into a non-zero exit.
+	return { report, exitCode: options.enforce && report.floors.breached ? 1 : 0 }
 }
 
 function printReport(report: PoiBoardReport): void {
-	console.log(`\nPOI query board (spec §3.6) — v1, REPORT-ONLY (no floors yet) — db: ${report.db}`)
+	console.log(`\nPOI query board (spec §3.6) — floors enforced under --enforce — db: ${report.db}`)
 	console.log(`${report.totalCases} cases, ${(report.overallPassRate * 100).toFixed(1)}% overall pass rate\n`)
 	console.log("  expect kind     n     pass    rate")
 
@@ -426,6 +533,21 @@ function printReport(report: PoiBoardReport): void {
 			`\nnearest-distance distribution (km, results-cases with ≥1 result, n=${s.count}): min ${s.min.toFixed(2)}  p50 ${s.p50.toFixed(2)}  p95 ${s.p95.toFixed(2)}  max ${s.max.toFixed(2)}`
 		)
 	}
+
+	console.log("\nfloors (spec §3.6):")
+
+	for (const line of report.floors.lines) {
+		const mark = line.met ? "✓" : "✗"
+		console.log(
+			`  ${mark} ${line.label.padEnd(14)} ${(line.observed * 100).toFixed(1)}% (${line.fraction})  floor ${(line.floor * 100).toFixed(0)}%`
+		)
+	}
+
+	console.log(
+		report.floors.breached
+			? "  → BREACH: at least one floor unmet (exit non-zero under --enforce)"
+			: "  → all floors met"
+	)
 
 	const failures = report.cases.filter((c) => !c.pass)
 

@@ -12,7 +12,15 @@ import { readFileSync } from "node:fs"
 import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
 import { describe, expect, it } from "vitest"
 
-import { gradeCase, POI_BOARD_FIXTURES, type PoiBoardFixture, type PoiBoardOutcome } from "./poi-board.ts"
+import {
+	evaluateFloors,
+	type FloorInput,
+	gradeCase,
+	POI_BOARD_FIXTURES,
+	POI_BOARD_FLOORS,
+	type PoiBoardFixture,
+	type PoiBoardOutcome,
+} from "./poi-board.ts"
 
 const fixtures = readFileSync(POI_BOARD_FIXTURES, "utf8")
 	.split("\n")
@@ -30,6 +38,17 @@ const resultsFixture: PoiBoardFixture = {
 		kind: "results",
 		categoryID: "cafe",
 		anchorGold: { latitude: 39.7817, longitude: -89.6501 },
+		maxNearestKm: 25,
+	},
+}
+
+const brandResultsFixture: PoiBoardFixture = {
+	id: "t-brand-results",
+	query: "chevron near Houston TX",
+	expect: {
+		kind: "results",
+		brandWikidata: "Q319642",
+		anchorGold: { latitude: 29.7604, longitude: -95.3698 },
 		maxNearestKm: 25,
 	},
 }
@@ -150,6 +169,73 @@ describe("gradeCase — results expectation", () => {
 	})
 })
 
+describe("gradeCase — brand results expectation", () => {
+	it("passes when the top result's brandWikidata matches the expected QID", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [
+				poiResult({
+					latitude: 29.7604,
+					longitude: -95.3698,
+					categoryID: "gas_station",
+					brandWikidata: "Q319642",
+				}),
+			],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+		expect(grade.nearestKm).toBeCloseTo(0, 3)
+	})
+
+	it("fails when the top result's brandWikidata doesn't match, even if in range", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [
+				poiResult({
+					latitude: 29.7604,
+					longitude: -95.3698,
+					categoryID: "gas_station",
+					brandWikidata: "Q999999",
+				}),
+			],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.detail).toMatch(/top brandWikidata Q999999 !== expected Q319642/)
+	})
+
+	it("fails on zero results", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "brand", name: "Chevron", wikidata: "Q319642", matched: "chevron" } },
+			results: [],
+		})
+
+		const grade = gradeCase(brandResultsFixture, outcome)
+
+		expect(grade.pass).toBe(false)
+		expect(grade.resultCount).toBe(0)
+	})
+
+	it("category grading is unaffected by the brandWikidata branch (regression guard)", () => {
+		const outcome = intentOutcome({
+			type: "intent",
+			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+		})
+
+		const grade = gradeCase(resultsFixture, outcome)
+
+		expect(grade.pass).toBe(true)
+	})
+})
+
 describe("gradeCase — abstain expectation", () => {
 	it("passes on an exact reason match", () => {
 		const outcome = intentOutcome({ type: "abstain", reason: "requires_build_local_layer" })
@@ -206,9 +292,9 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	it("carries ~45 cases", () => {
-		expect(fixtures.length).toBeGreaterThanOrEqual(40)
-		expect(fixtures.length).toBeLessThanOrEqual(50)
+	it("carries ~51 cases (v1's 45 + v1.1's 6 brand cases)", () => {
+		expect(fixtures.length).toBeGreaterThanOrEqual(48)
+		expect(fixtures.length).toBeLessThanOrEqual(56)
 	})
 
 	it("has unique ids", () => {
@@ -232,6 +318,8 @@ describe("the committed poi-board fixture set", () => {
 			austin: "US",
 			seattle: "US",
 			denver: "US",
+			houston: "US",
+			dallas: "US",
 			toronto: "CA",
 			ottawa: "CA",
 			vancouver: "CA",
@@ -292,5 +380,122 @@ describe("the committed poi-board fixture set", () => {
 			if (f.expect.kind !== "abstain") continue
 			expect(f.expect.reason.length, f.id).toBeGreaterThan(0)
 		}
+	})
+
+	it("every results-kind expect carries EXACTLY ONE of categoryID / brandWikidata", () => {
+		for (const f of fixtures) {
+			if (f.expect.kind !== "results") continue
+			const hasCategory = f.expect.categoryID !== undefined
+			const hasBrand = f.expect.brandWikidata !== undefined
+
+			expect(hasCategory !== hasBrand, f.id).toBe(true)
+		}
+	})
+
+	it("carries at least 4 brand cases: brand+anchor results, locale-gated slang, and a bare-brand abstain", () => {
+		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata !== undefined)
+
+		expect(brandResults.length).toBeGreaterThanOrEqual(4)
+
+		const slang = fixtures.find((f) => f.id === "brand-slang-01")
+		expect(slang?.locale).toBeTruthy()
+		expect(slang?.expect.kind).toBe("results")
+
+		const bare = fixtures.find((f) => f.id === "brand-bare-01")
+		expect(bare?.expect).toEqual({ kind: "abstain", reason: "anchor_required" })
+	})
+})
+
+describe("evaluateFloors — breach detection", () => {
+	// Synthetic slice counts → a FloorInput, mirroring `runPoiBoard`'s `byExpectKind` + `overallPassRate`.
+	function report(slices: Record<string, { total: number; pass: number }>): FloorInput {
+		const byExpectKind: FloorInput["byExpectKind"] = {}
+		let total = 0
+		let pass = 0
+
+		for (const [kind, s] of Object.entries(slices)) {
+			byExpectKind[kind] = { total: s.total, pass: s.pass, rate: s.total > 0 ? s.pass / s.total : 0 }
+			total += s.total
+			pass += s.pass
+		}
+
+		return { overallPassRate: total > 0 ? pass / total : 0, byExpectKind }
+	}
+
+	// The committed v1.1 standing (2026-07-20 promotion battery): 33/37 results, 8/8 abstain, 6/6 address →
+	// 47/51 = 92.2% overall. All three floors met (overall 92.2% ≥ 90%, both hard floors 100%).
+	const shipping = report({
+		results: { total: 37, pass: 33 },
+		abstain: { total: 8, pass: 8 },
+		address: { total: 6, pass: 6 },
+	})
+
+	it("passes the committed v1.1 standing (47/51 = 92.2%, abstain 8/8, address 6/6) — no breach", () => {
+		const evaluation = evaluateFloors(shipping)
+
+		expect(evaluation.breached).toBe(false)
+		expect(evaluation.lines.every((l) => l.met)).toBe(true)
+
+		const overall = evaluation.lines.find((l) => l.key === "overall")!
+		expect(overall.observed).toBeCloseTo(47 / 51, 5)
+		expect(overall.fraction).toBe("47/51")
+	})
+
+	it("breaches when overall dips below 90% even with both category floors met", () => {
+		// 30/37 results (81%) but abstain/address still perfect → overall 44/51 ≈ 86% < 90%.
+		const evaluation = evaluateFloors(
+			report({
+				results: { total: 37, pass: 30 },
+				abstain: { total: 8, pass: 8 },
+				address: { total: 6, pass: 6 },
+			})
+		)
+
+		expect(evaluation.breached).toBe(true)
+
+		const overall = evaluation.lines.find((l) => l.key === "overall")!
+		expect(overall.met).toBe(false)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(true)
+	})
+
+	it("breaches on a single abstain miss (100% floor is hard) even when overall clears 90%", () => {
+		// 7/8 abstain is a single false-positive; overall 50/51 still ≥ 90%, but the abstain floor is 100%.
+		const evaluation = evaluateFloors(
+			report({
+				results: { total: 37, pass: 37 },
+				abstain: { total: 8, pass: 7 },
+				address: { total: 6, pass: 6 },
+			})
+		)
+
+		expect(evaluation.breached).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(false)
+		expect(evaluation.lines.find((l) => l.key === "overall")!.met).toBe(true)
+	})
+
+	it("breaches on a single address-guard miss (the poi branch hijacking an address)", () => {
+		const evaluation = evaluateFloors(
+			report({
+				results: { total: 37, pass: 37 },
+				abstain: { total: 8, pass: 8 },
+				address: { total: 6, pass: 5 },
+			})
+		)
+
+		expect(evaluation.breached).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(false)
+	})
+
+	it("treats an absent category slice as UNMET (a 100% floor can't be vacuously cleared)", () => {
+		const evaluation = evaluateFloors(report({ results: { total: 37, pass: 37 } }))
+
+		expect(evaluation.breached).toBe(true)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(false)
+		expect(evaluation.lines.find((l) => l.key === "abstain")!.fraction).toBe("0/0")
+	})
+
+	it("exposes the pre-registered floor thresholds", () => {
+		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1.0, address: 1.0 })
 	})
 })

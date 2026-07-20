@@ -5,16 +5,29 @@
  *   POI subject detection for the `poi_query` kind. The lexicon is INJECTED (`POIPhraseLookup`) —
  *   this package keeps its bitter-lesson invariant (no dictionaries in-tree); the phrase table
  *   lives in `@mailwoman/poi-taxonomy` and is wired in by `createRuntimePipeline` behind the
- *   default-OFF `poiQueryKind` flag. Spec §3.1.
+ *   `poiQueryKind` flag (default-ON since 2026-07-20). Spec §3.1.
  */
 
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 /** One lexicon hit for a candidate subject phrase. */
 export interface POIPhraseMatch {
+	/**
+	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. For
+	 * `kind: "brand"`, the brand's canonical display name (NOT a taxonomy id) — `matchPOISubject` never reads this field
+	 * itself, so the caller (`mailwoman`'s `poi-intent.ts`) is the one that interprets it per `kind`.
+	 */
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
+	/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
+	/**
+	 * Absent = "category" (the pre-brand shape) — optional so pre-7.3 POIPhraseLookup implementors stay
+	 * source-compatible.
+	 */
+	kind?: "category" | "brand"
+	/** Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match). */
+	wikidata?: string
 }
 
 /** Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss. */

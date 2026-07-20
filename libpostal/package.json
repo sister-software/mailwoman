@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/libpostal",
-	"version": "7.2.1",
+	"version": "7.3.0",
 	"description": "libpostal drop-in — a libpostal-compatible parse/expand HTTP API over Mailwoman's neural address parser. The lowest-dependency drop-in: parse needs no gazetteer. Run it with `npx @mailwoman/libpostal serve`.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

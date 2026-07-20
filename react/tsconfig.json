@@ -1,0 +1,12 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": []
+}

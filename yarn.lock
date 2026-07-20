@@ -4557,6 +4557,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/fastify@workspace:fastify":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/fastify@workspace:fastify"
+  peerDependencies:
+    fastify: ">=5"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:formatter":
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:formatter"
@@ -4759,6 +4767,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/react@workspace:react":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/react@workspace:react"
+  peerDependencies:
+    react: ">=18"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/record@workspace:*, @mailwoman/record@workspace:record":
   version: 0.0.0-use.local
   resolution: "@mailwoman/record@workspace:record"
@@ -4922,7 +4938,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/variant-aliases@workspace:variant-aliases":
+"@mailwoman/variant-aliases@workspace:*, @mailwoman/variant-aliases@workspace:variant-aliases":
   version: 0.0.0-use.local
   resolution: "@mailwoman/variant-aliases@workspace:variant-aliases"
   languageName: unknown
@@ -15895,6 +15911,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
+    "@mailwoman/variant-aliases": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"

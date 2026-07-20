@@ -34,7 +34,7 @@ Mailwoman's parser is designed for address strings. Its output is `{house_number
 
 The right behavior for a POI query is:
 
-1. **Recognize that it's a POI query, not an address.** The kind classifier (Stage 2.5) carries a `poi_query` kind alongside `postcode_only`, `structured_address`, `intersection`, and the rest, gated behind the `poiQueryKind` runtime flag (default off). Try it against a category query like `fire hydrant`.
+1. **Recognize that it's a POI query, not an address.** The kind classifier (Stage 2.5) carries a `poi_query` kind alongside `postcode_only`, `structured_address`, `intersection`, and the rest, driven by the `poiQueryKind` runtime flag (default-ON since 2026-07-20). Try it against a category query like `fire hydrant`.
 2. **Extract the POI type and location constraint.** `gas station near Springfield, IL` splits into category `gas_station` and anchor `Springfield, IL`. The anchor is an address or place name, and it runs through the normal parse pipeline once split off.
 3. **Resolve against a POI database.** With a built `poi.db`, the executor answers "nearest gas station" with distance-ranked results, nearest first. Without one, the pipeline still reports the matched category and anchor but cannot rank results.
 

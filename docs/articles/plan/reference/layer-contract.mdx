@@ -1,0 +1,183 @@
+---
+title: Spatial-layer contract — the schema every layer database embeds
+role: reference
+audience: maintainer
+owner: operations
+source-of-truth: docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
+tags:
+  - operations
+  - data
+---
+
+# Spatial-layer contract
+
+Every mailwoman dataset — the shipped poi.db, a user's locally-built OSM layer, a private
+CRM layer — is the **same artifact shape**: a sealed, readonly, provenance-tracked SQLite
+database ("a layer") keyed on a shared spatial spine. That sameness is the whole point: it
+lets shipped, build-local, and private layers share one query surface (`@mailwoman/spatial`
+primitives, the `mailwoman_layer_manifest` MCP tool, future `layer_query`) without the
+consumer knowing or caring where the data came from.
+
+This page is the contract in prose, for layer authors. The code lives in
+[`core/layers/`](https://github.com/sister-software/mailwoman/tree/main/core/layers)
+(`schema.ts` — the tables; `manifest.ts` — read/write IO); the design rationale lives in the
+spec named in the front matter. If you are building a specific layer, read the worked example
+first — the [POI layer runbook](./poi-layer-runbook.mdx) is the "what bites you" record from the
+first four poi.db builds.
+
+## What a layer is
+
+A layer extends the gazetteer discipline (sealed 0444 artifacts, Kysely schema modules,
+build-then-swap) from reference data to analysis data. Concretely, a layer database:
+
+- Embeds the **two contract tables** below (`layer_manifest`, `layer_coverage`) regardless of
+  tier, plus whatever domain tables the layer needs.
+- Is **sealed 0444** on completion (`sealDatabase` from `@mailwoman/core/utils`) — a readonly
+  artifact, never reopened read-write. Updates are full rebuilds, built-then-swapped into place
+  (build to a temp path, move the old one aside, move the new one in) so the live artifact is
+  always consistent even if a build fails halfway.
+- Addresses every domain row by **at least one spine key** so cross-layer joins and spatial
+  primitives have a common coordinate to key on.
+
+## The spine
+
+Every layer row is addressable by at least one of three shared keys. Parallel id spaces stay
+nullable metadata (the GERS rule) — you carry the ones your source has, and declare which in
+the manifest's `spine_keys`.
+
+| spine key    | column       | meaning                                                                                                     |
+| ------------ | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| `h3`         | author-named | H3 cell, stored as a **48-bit short cell** (`shortenH3Cell`/`expandH3Cell`). Resolution declared per table. |
+| `wof_id`     | author-named | WOF ancestry anchor — the resolver's existing id space (Who's On First).                                    |
+| `address_id` | author-named | The `@mailwoman/address-id` key, where rows are address-grained.                                            |
+
+The manifest declares column names and the H3 resolution in its `spine_keys` field (a
+`SpineKeys` record, JSON-encoded in the table). At least one key is **required** —
+`writeLayerManifest` throws at build time and `readLayerManifest` throws at open time if a
+manifest declares none.
+
+## The manifest — `layer_manifest`
+
+A single-row table holding the layer's identity, provenance, and licensing. The `name` column
+is the primary key; the writer inserts exactly once. `readLayerManifest` refuses a table that
+is empty or multi-row — a layer with no identity, or two, fails loudly rather than misbehaving
+downstream.
+
+| field                                                | meaning                                                                           |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `name`, `version`, `schema_version`                  | identity                                                                          |
+| `tier`                                               | `shipped` \| `build-local` \| `private` (see below)                               |
+| `license`, `attribution`                             | SPDX-ish expression, e.g. `CDLA-Permissive-2.0`, `ODbL-1.0`; attribution nullable |
+| `source`, `source_vintage`, `build_cmd`, `build_sha` | provenance — pin baselines by SHA + the command that produced them                |
+| `freshness_policy`                                   | `sealed` (rebuild-only) \| `versioned-refresh` (re-issued under the same name)    |
+| `spine_keys`                                         | which spine columns this layer carries, and the H3 resolution (JSON-encoded)      |
+| `created_at`                                         | ISO-8601, supplied by the build script — never generated in-library               |
+
+`created_at` is deliberately caller-supplied: the library never stamps a timestamp, so a
+rebuild from the same inputs is reproducible rather than carrying a fresh "now" on every run.
+
+### Tiers
+
+The tier is the distribution posture — it governs whether _we_ publish the artifact or ship
+only the builder.
+
+- **`shipped`** — permissive sources only (Overture Places CDLA-P, Census/TIGER public domain,
+  Wikidata CC0, Foursquare labels Apache-2.0). Built by us and published to R2/npm like the
+  gazetteer.
+- **`build-local`** — share-alike sources (ODbL: OSM POIs, Overture's _base_ theme). We ship
+  the **builder CLI**; the user builds on their own disk; nothing ODbL is distributed by us.
+  Same posture as the unpublished `osm/` workspace. When a build-local layer is absent, the
+  answer is "requires the locally-built layer," never a mangled or invented result.
+- **`private`** — the user's own data (CRM, survey notes, parcel relationships), conforming to
+  the same schema, loaded from `$MAILWOMAN_DATA_ROOT`, never leaving their machine. This is how
+  "internal geo" joins the same query surface as public layers.
+
+### Freshness policy
+
+- **`sealed`** — immutable; updates are full rebuilds (the gazetteer discipline). The default.
+- **`versioned-refresh`** — periodically re-issued under the same name (e.g. a registry of
+  people or programs that genuinely changes over time). Still sealed per-issue; the policy just
+  records that a newer issue under the same name is expected.
+
+## Coverage — `layer_coverage` and the meaning-of-zero rule
+
+A layer derived from an incomplete survey (OSM above all) **must** carry a `layer_coverage`
+table: per-H3-cell (coarse resolution) survey completeness, so a consumer can tell "mapped and
+absent" apart from "unmapped."
+
+| column          | meaning                                                       |
+| --------------- | ------------------------------------------------------------- |
+| `h3_cell`       | 48-bit short H3 cell at the resolution the manifest declares  |
+| `completeness`  | estimated completeness of the source survey in the cell, 0..1 |
+| `observed_rows` | rows this layer actually holds in the cell                    |
+
+**The meaning-of-zero rule.** A _missing_ `layer_coverage` row means **UNKNOWN — unmapped**,
+never "surveyed and found empty." `readLayerCoverage` returns `undefined` for an unsurveyed
+cell, and callers must not conflate that with `{ completeness: 0 }`. Absence of a row is never
+evidence by itself. This is why the field is **contract-mandatory from day one** even for
+layers that happen to be complete today: retrofitting epistemics onto a sealed artifact means
+rebuilding every one of them. See [the meaning of zero](./the-meaning-of-zero.mdx) for the general
+principle (a magnitude never carries its own absence — split presence from value).
+
+Scorers built on layers inherit the rule: they emit `{ claim, evidence_found,
+coverage_confidence }`, never a bare score. A sparse-coverage cell degrades a score toward
+"insufficient survey data," which is itself a legitimate output — not a silent zero.
+
+## The TypeScript API
+
+`@mailwoman/core/layers` is the single seam. A layer's build script and its readers both go
+through it; the domain tables are the layer's own business.
+
+```ts
+import {
+	type LayerContractDatabase,
+	createLayerManifestTable,
+	createLayerCoverageTable,
+	writeLayerManifest,
+	readLayerManifest,
+	writeLayerCoverage,
+	readLayerCoverage,
+	COVERAGE_INSERT_BATCH,
+} from "@mailwoman/core/layers"
+```
+
+- **DDL** — `createLayerManifestTable(db)` and `createLayerCoverageTable(db)` build the two
+  tables through Kysely's schema-builder (coverage is `WITHOUT ROWID` — small fixed-width rows
+  probed by PK, the sweet spot). Intersect `LayerContractDatabase` into your layer's own schema
+  interface so a column added to one side is a compile error against the other.
+- **Write (build-time, cold path)** — `writeLayerManifest(db, manifest)` inserts the single
+  identity row and validates invariants (known tier, known freshness policy, at least one spine
+  key) before it writes. `writeLayerCoverage(db, cells)` bulk-inserts coverage, chunked at
+  `COVERAGE_INSERT_BATCH` (5,000 rows/statement) to stay under SQLite's 32,766 bound-variable
+  ceiling — a continental-scale res-6 cell count blows past that limit in one `.values()` call.
+- **Read** — `readLayerManifest(db)` returns the parsed, camelCase `LayerManifest` (and throws
+  on an empty, multi-row, or invalid table). `readLayerCoverage(db, h3Cell)` returns a
+  `CoverageCell` or `undefined` — honor the meaning-of-zero rule on the `undefined`.
+
+Validation runs at **both** ends deliberately: a hand-built or corrupted layer fails at open
+time, not three joins downstream.
+
+## Authoring checklist
+
+Building a new layer? The contract obligations, in order:
+
+1. Define your domain schema as a Kysely schema module (`createXTable` co-located with the
+   typed interface), following the house DB discipline — raw positional INSERTs for the hot
+   bulk load, `WITHOUT ROWID` only for small PK-probed tables, FTS5 as raw DDL where needed.
+2. Intersect `LayerContractDatabase` into your schema and call `createLayerManifestTable` +
+   `createLayerCoverageTable`.
+3. Pick a spine: carry every id space your source gives you, declare them in `spine_keys`, and
+   key every domain row by at least one.
+4. Populate `layer_coverage` from your source's actual survey extent — one row per surveyed
+   cell, `completeness` honest, unsurveyed cells left absent (not zero-filled).
+5. Write the manifest with real provenance: `source` + `source_vintage` + `build_cmd` +
+   `build_sha`, the correct `tier` and `license`, and a caller-supplied `created_at`.
+6. Build to a temp path, verify, then swap into place under `$MAILWOMAN_DATA_ROOT` and seal 0444. Never mutate a shipped or live layer — rebuild it.
+
+## See also
+
+- [POI layer runbook](./poi-layer-runbook.mdx) — the worked example: the poi.db build/verify/publish
+  path, the Overture schema gotchas, the fixtures→smoke→full-scale verification ladder.
+- [The meaning of zero](./the-meaning-of-zero.mdx) — the general epistemics principle behind the
+  coverage rule.
+- [Address-data sources](./address-data-sources.mdx) — the source catalog the shipped layers draw from.

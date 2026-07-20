@@ -32,10 +32,6 @@
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import { createKindClassifier, matchPOISubject } from "@mailwoman/kind-classifier"
 import type { POIPhraseLookup, QueryKindResult } from "@mailwoman/kind-classifier"
-// The .json extension is required on the specifier — `resolveJsonModule` resolves it to the parsed
-// object's inferred shape, which is why the cast below is needed to satisfy `POITaxonomyTable`'s
-// branded `POICategoryID` fields.
-import taxonomyTableJSON from "@mailwoman/poi-taxonomy/data/taxonomy.json"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import type { OverpassIntentLike } from "@mailwoman/poi-taxonomy/overpass"
 import { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
@@ -49,27 +45,40 @@ import { KindBadge } from "../KindBadge/KindBadge.tsx"
 import styles from "./styles.module.css"
 
 // ---------------------------------------------------------------------------
-// Module-level setup — pure, runs once when the chunk loads.
+// Runtime — the taxonomy table is DYNAMICALLY imported (see loadPOIRuntime).
 // ---------------------------------------------------------------------------
 
-const taxonomyLookup = createPOITaxonomyLookup(
-	taxonomyTableJSON as unknown as Parameters<typeof createPOITaxonomyLookup>[0]
-)
+type TaxonomyLookup = ReturnType<typeof createPOITaxonomyLookup>
+type CategoryRecord = NonNullable<ReturnType<TaxonomyLookup["getPOICategory"]>>
 
-type CategoryRecord = NonNullable<ReturnType<typeof taxonomyLookup.getPOICategory>>
+/** The lazily-loaded POI runtime: the taxonomy lookup, the adapted lexicon, and the kind classifier over it. */
+interface POIRuntime {
+	lookup: TaxonomyLookup
+	lexicon: POIPhraseLookup
+	classify: ReturnType<typeof createKindClassifier>
+}
 
 /**
- * Adapts `POITaxonomyLookup.lookupPOICategory` to the `POIPhraseLookup` shape `matchPOISubject`/`createKindClassifier`
- * expect.
+ * Builds the POI runtime, dynamically importing the taxonomy JSON so webpack code-splits it into its own chunk. The
+ * table is now the full ~2k-record Overture snapshot (up from the 23-record seed) — a static `import … from
+ * ".../taxonomy.json"` would inline that whole JSON into this component's chunk and balloon the docs bundle. The
+ * dynamic `import()` defers it to a separate chunk fetched only when POIExplorer actually mounts.
  */
-const poiLexicon: POIPhraseLookup = (phrase, locale) =>
-	taxonomyLookup.lookupPOICategory(phrase, locale).map((match) => ({
-		categoryID: match.category.id,
-		matchedPhrase: match.matchedPhrase,
-		confidence: match.confidence,
-	}))
+async function loadPOIRuntime(): Promise<POIRuntime> {
+	const table = (await import("@mailwoman/poi-taxonomy/data/taxonomy.json")).default
+	const lookup = createPOITaxonomyLookup(table as unknown as Parameters<typeof createPOITaxonomyLookup>[0])
 
-const classifyPOIKind = createKindClassifier({ poiLexicon })
+	// Adapts `POITaxonomyLookup.lookupPOICategory` to the `POIPhraseLookup` shape matchPOISubject/createKindClassifier expect.
+	const lexicon: POIPhraseLookup = (phrase, locale) =>
+		lookup.lookupPOICategory(phrase, locale).map((match) => ({
+			kind: "category",
+			categoryID: match.category.id,
+			matchedPhrase: match.matchedPhrase,
+			confidence: match.confidence,
+		}))
+
+	return { lookup, lexicon, classify: createKindClassifier({ poiLexicon: lexicon }) }
+}
 
 const PRESETS: ReadonlyArray<{ label: string; text: string }> = [
 	{ label: "Drinking fountain", text: "drinking fountain near Springfield" },
@@ -92,6 +101,8 @@ interface POIExplorerSubject {
 	matchedPhrase: string
 	confidence: number
 	remainder: string
+	/** Precomputed in the effect (where the runtime is in scope) so render never needs the lookup. */
+	buildLocal: boolean
 }
 
 interface POIExplorerResult {
@@ -136,6 +147,22 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 	const [result, setResult] = useState<POIExplorerResult | null>(null)
 	const [copied, setCopied] = useState(false)
 	const [liveSearch, setLiveSearch] = useState<LiveSearchState>({ status: "idle" })
+	// The taxonomy runtime loads asynchronously (dynamic import of the ~2k-record table) — null until ready.
+	const [runtime, setRuntime] = useState<POIRuntime | null>(null)
+
+	useEffect(() => {
+		let cancelled = false
+
+		loadPOIRuntime().then((loaded) => {
+			if (!cancelled) {
+				setRuntime(loaded)
+			}
+		})
+
+		return () => {
+			cancelled = true
+		}
+	}, [])
 
 	// Debounce the input before classifying — avoids re-running the (cheap, but still per-keystroke)
 	// classifier on every character.
@@ -146,6 +173,8 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 	}, [text])
 
 	useEffect(() => {
+		if (!runtime) return
+
 		let cancelled = false
 		const trimmed = debouncedText.trim()
 
@@ -162,11 +191,11 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 		const input = { raw: trimmed, normalized: trimmed }
 		const shape = computeQueryShape(trimmed)
 
-		classifyPOIKind(input, shape).then((kindResult) => {
+		runtime.classify(input, shape).then((kindResult) => {
 			if (cancelled) return
 
-			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, undefined, poiLexicon) : null
-			const category = matched ? taxonomyLookup.getPOICategory(matched.match.categoryID) : undefined
+			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, undefined, runtime.lexicon) : null
+			const category = matched ? runtime.lookup.getPOICategory(matched.match.categoryID) : undefined
 
 			if (!matched || !category) {
 				setResult({ kindResult })
@@ -195,6 +224,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 					matchedPhrase: matched.match.matchedPhrase,
 					confidence: matched.match.confidence,
 					remainder: matched.remainder,
+					buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
 				},
 				overpassQL,
 				overpassError,
@@ -204,7 +234,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 		return () => {
 			cancelled = true
 		}
-	}, [debouncedText])
+	}, [debouncedText, runtime])
 
 	const onCopy = useCallback(async () => {
 		const overpassQL = result?.overpassQL
@@ -235,7 +265,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 	const onSearchLive = useCallback(async () => {
 		const subject = result?.subject
 
-		if (!subject || !subject.remainder.trim()) return
+		if (!runtime || !subject || !subject.remainder.trim()) return
 
 		setLiveSearch({ status: "loading" })
 
@@ -253,6 +283,9 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 			const worker = await loadPOIWorker(sqljsBaseURL)
 			const hits = await searchPOICategory(worker, {
 				categoryID: subject.category.id,
+				// Fan the canonical seed id out over its Overture leaves — same translation layer the Node reader uses, so
+				// `supermarket`/`trail` (curated ids the db stores as `grocery_store`/`hiking_trail`) stop zero-resulting.
+				categoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
 				center: { lat: center.lat, lon: center.lon },
 			})
 
@@ -262,7 +295,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 			// upload) reads as the layer being unreachable — never a silent zero-result list.
 			setLiveSearch({ status: "error", message: "the published POI layer isn't reachable" })
 		}
-	}, [result, sqljsBaseURL])
+	}, [result, runtime, sqljsBaseURL])
 
 	return (
 		<div className={styles.poiExplorer}>
@@ -300,9 +333,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 						<>
 							<div className={styles.subjectRow}>
 								<span className={styles.categoryChip}>{result.subject.category.label}</span>
-								{taxonomyLookup.requiresBuildLocalLayer(result.subject.category) ? (
-									<span className={styles.buildLocalBadge}>build-local</span>
-								) : null}
+								{result.subject.buildLocal ? <span className={styles.buildLocalBadge}>build-local</span> : null}
 							</div>
 
 							<dl className={styles.subjectDetail}>
@@ -316,7 +347,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 								<dd>{result.subject.remainder ? result.subject.remainder : <em>none — global query</em>}</dd>
 							</dl>
 
-							{taxonomyLookup.requiresBuildLocalLayer(result.subject.category) ? (
+							{result.subject.buildLocal ? (
 								<p className={styles.buildLocalNote}>
 									Requires the locally-built OSM layer (ODbL) — mailwoman ships the builder, not the data.
 								</p>
@@ -338,7 +369,7 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 								<p className={styles.error}>{result.overpassError}</p>
 							) : null}
 
-							{taxonomyLookup.requiresBuildLocalLayer(result.subject.category) ? null : (
+							{result.subject.buildLocal ? null : (
 								<div className={styles.liveSearchBlock}>
 									<div className={styles.overpassHeader}>
 										<h3>Live results</h3>

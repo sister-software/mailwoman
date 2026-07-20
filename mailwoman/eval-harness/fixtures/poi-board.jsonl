@@ -43,3 +43,9 @@
 {"id": "nm-04", "query": "hiking trail near Marseille", "expect": {"kind": "results", "categoryID": "trail", "anchorGold": {"latitude": 43.2965, "longitude": 5.3698}, "maxNearestKm": 25.0}}
 {"id": "nm-05", "query": "post office near Ottawa, ON", "expect": {"kind": "results", "categoryID": "post_office", "anchorGold": {"latitude": 45.4215, "longitude": -75.6972}, "maxNearestKm": 25.0}}
 {"id": "nm-06", "query": "supermarket near Guadalajara, Mexico", "expect": {"kind": "results", "categoryID": "supermarket", "anchorGold": {"latitude": 20.6597, "longitude": -103.3496}, "maxNearestKm": 25.0}}
+{"id": "brand-us-01", "query": "chevron near Houston TX", "expect": {"kind": "results", "brandWikidata": "Q319642", "anchorGold": {"latitude": 29.7604, "longitude": -95.3698}, "maxNearestKm": 25.0}}
+{"id": "brand-us-02", "query": "applebee's near Dallas TX", "expect": {"kind": "results", "brandWikidata": "Q621532", "anchorGold": {"latitude": 32.7767, "longitude": -96.797}, "maxNearestKm": 25.0}}
+{"id": "brand-fr-01", "query": "Crédit Agricole near Lyon France", "expect": {"kind": "results", "brandWikidata": "Q590952", "anchorGold": {"latitude": 45.764, "longitude": 4.8357}, "maxNearestKm": 25.0}}
+{"id": "brand-ca-01", "query": "Tim Hortons near Toronto ON", "expect": {"kind": "results", "brandWikidata": "Q175106", "anchorGold": {"latitude": 43.6532, "longitude": -79.3832}, "maxNearestKm": 25.0}}
+{"id": "brand-slang-01", "query": "mcdo near Marseille", "locale": "fr-FR", "expect": {"kind": "results", "brandWikidata": "Q38076", "anchorGold": {"latitude": 43.2965, "longitude": 5.3698}, "maxNearestKm": 25.0}}
+{"id": "brand-bare-01", "query": "chevron", "expect": {"kind": "abstain", "reason": "anchor_required"}}
