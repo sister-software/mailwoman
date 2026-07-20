@@ -25,6 +25,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { POI_H3_RESOLUTION, POILookup } from "./poi-lookup.ts"
 import {
+	createPOIBrandIndex,
 	createPOINameKeyIndex,
 	createPOISearchFTS,
 	createPOIStagingTables,
@@ -56,7 +57,7 @@ interface FixtureRow {
 	gersID?: string | null
 }
 
-const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3 }
+const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3, supermarket: 4 }
 
 // 3 cafes near Springfield, increasing distance.
 const CAFE_ALPHA: FixtureRow = {
@@ -81,13 +82,38 @@ const CAFE_GAMMA: FixtureRow = {
 	latitude: 39.79,
 	longitude: -89.6501,
 }
-// 1 branded fast-food row, also near Springfield.
+// 1 branded fast-food row, near Springfield (McDonald's, Q38076).
 const MCDONALDS: FixtureRow = {
 	name: "McDonald's",
 	category: "fast_food",
 	brandWikidata: "Q38076",
 	latitude: 39.781,
 	longitude: -89.651,
+}
+// A SECOND McDonald's (same Q38076) ~280 km away in Chicago — far outside the default ~4 km ring budget. The brand
+// path is a brand-wide fetch (no k-ring), so both must surface, distance-sorted (Springfield one first).
+const MCDONALDS_CHICAGO: FixtureRow = {
+	name: "McDonald's (Loop)",
+	category: "fast_food",
+	brandWikidata: "Q38076",
+	latitude: 41.8805,
+	longitude: -87.6299,
+}
+// Costco (Q715583): one near Springfield, one ~2,800 km away in San Francisco. The SF one is past the 500 km sanity
+// radius, so a Costco brand search from Springfield returns ONLY the near one.
+const COSTCO_NEAR: FixtureRow = {
+	name: "Costco Springfield",
+	category: "supermarket",
+	brandWikidata: "Q715583",
+	latitude: 39.783,
+	longitude: -89.652,
+}
+const COSTCO_FAR: FixtureRow = {
+	name: "Costco SF",
+	category: "supermarket",
+	brandWikidata: "Q715583",
+	latitude: 37.7749,
+	longitude: -122.4194,
 }
 // 7 rows ~280 km away in Chicago — a distinct res-9 cell, well outside the default ~4 km ring budget.
 // Includes the fixture's ONLY `museum` rows, so a museum search from Springfield must come back empty.
@@ -109,7 +135,17 @@ const PIER_39: FixtureRow = {
 	longitude: -122.4098,
 }
 
-const ALL_ROWS = [CAFE_ALPHA, CAFE_BETA, CAFE_GAMMA, MCDONALDS, ...CHICAGO_ROWS, PIER_39]
+const ALL_ROWS = [
+	CAFE_ALPHA,
+	CAFE_BETA,
+	CAFE_GAMMA,
+	MCDONALDS,
+	MCDONALDS_CHICAGO,
+	COSTCO_NEAR,
+	COSTCO_FAR,
+	...CHICAGO_ROWS,
+	PIER_39,
+]
 
 async function buildFixture(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
@@ -154,8 +190,9 @@ async function buildFixture(path: string): Promise<void> {
 		raw.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
 	}
 
-	// Index-after-load: builders create the name_key index AFTER the bulk materialize.
+	// Index-after-load: builders create the name_key + brand_wikidata indexes AFTER the bulk materialize.
 	await createPOINameKeyIndex(kdb)
+	await createPOIBrandIndex(kdb)
 
 	await kdb.destroy()
 }
@@ -195,15 +232,55 @@ describe("POILookup", () => {
 		}
 	})
 
-	test("brand search finds the QID row (category unconstrained)", () => {
+	test("brand search finds the QID rows (category unconstrained), nearest-first", () => {
 		const lk = new POILookup({ databasePath: dbPath })
 
 		try {
 			const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-			expect(hits).toHaveLength(1)
-			expect(hits[0]!.name).toBe("McDonald's")
-			expect(hits[0]!.brandWikidata).toBe("Q38076")
+			// Both Q38076 rows surface: the near Springfield one AND the ~280 km Chicago one — the brand path is a
+			// brand-wide fetch, not a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
+			expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
+			expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
 			expect(hits[0]!.categoryID).toBe("fast_food")
+			expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
+	test("brand search reaches instances far beyond any k-ring budget (distance-sorted)", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			// The Chicago McDonald's is ~280 km from Springfield — hundreds of rings out. k-ring could never reach it;
+			// the brand-wide fetch returns it, and its reported distance confirms it's the far instance.
+			const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
+			const chicago = hits.find((h) => h.name === "McDonald's (Loop)")!
+			expect(chicago).toBeDefined()
+			expect(chicago.distanceM! / 1000).toBeGreaterThan(200)
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
+	test("brand search drops instances past the 500 km sanity radius", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			// Two Costco (Q715583) rows: one near Springfield, one ~2,800 km away in SF. Only the near one is within
+			// the sanity radius — the SF one is dropped, so "Costco near Springfield" is not answered with an SF hit.
+			const hits = lk.search({ brandWikidata: "Q715583", center: SPRINGFIELD })
+			expect(hits.map((h) => h.name)).toEqual(["Costco Springfield"])
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
+	test("a brand QID with no rows returns [] cleanly", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			expect(lk.search({ brandWikidata: "Q00000000", center: SPRINGFIELD })).toEqual([])
 		} finally {
 			lk[Symbol.dispose]()
 		}
@@ -323,6 +400,22 @@ describe("POILookup", () => {
 		try {
 			const found = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?").get("poi_name_key")
 			expect(found).toBeDefined()
+		} finally {
+			raw.close()
+		}
+	})
+
+	test("the brand_wikidata partial index exists (brand-wide fetch, not a full table scan)", () => {
+		const raw = new DatabaseSync(dbPath, { readOnly: true })
+
+		try {
+			const found = raw
+				.prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?")
+				.get("poi_brand_wikidata") as { sql: string } | undefined
+			expect(found).toBeDefined()
+			// PARTIAL: the DDL carries the `WHERE brand_wikidata IS NOT NULL` predicate.
+			expect(found!.sql.toLowerCase()).toContain("where")
+			expect(found!.sql.toLowerCase()).toContain("brand_wikidata")
 		} finally {
 			raw.close()
 		}
