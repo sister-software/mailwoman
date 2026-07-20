@@ -1,0 +1,110 @@
+# Build + push the ghcr.io/sister-software/mailwoman container image.
+#
+# What this ships: the "docker run → geocoding endpoint" image for non-JS stacks. It does NOT build
+# the monorepo — the Dockerfile's install stage pulls the PUBLISHED @mailwoman/* packages from npm
+# (see docker/package.json + the root Dockerfile), so a build here doubles as an integration test of
+# the published artifacts. Model weights are baked in; the gazetteer is volume-mounted at /data.
+#
+# Triggers:
+#   - workflow_dispatch: manual run with an explicit `tag` input (e.g. "7.2.1"). Use this to (re)build
+#     against a specific published line, or to smoke-test the image plumbing without cutting a release.
+#   - release published: an automatic rebuild whenever a GitHub release goes out, tagging the image
+#     with that release's version so ghcr tracks the npm line.
+#
+# Tags pushed: the resolved version AND `latest`. linux/amd64 only for now — onnxruntime-node ships
+# glibc x64 prebuilds; arm64 is a follow-up (needs the arm64 ORT prebuild + an emulated/native build
+# leg). Auth is the runtime GITHUB_TOKEN with packages:write — no PAT, no external secret.
+
+name: Docker publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image version tag (e.g. 7.2.1). Also pushed as :latest."
+        required: true
+        type: string
+  release:
+    types: [published]
+
+# Least privilege: read the repo, write GHCR packages. (`id-token: write` returns when image signing
+# lands — cosign/attestation — but is omitted until then so the workflow isn't over-privileged.)
+permissions:
+  contents: read
+  packages: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Resolve the version tag from whichever trigger fired: the dispatch input, else the release tag
+      # (strip a leading "v"). Everything downstream reads steps.version.outputs.value.
+      - name: Resolve version
+        id: version
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -n "$DISPATCH_TAG" ]; then
+            value="$DISPATCH_TAG"
+          else
+            value="${RELEASE_TAG#v}"
+          fi
+          if [ -z "$value" ]; then
+            echo "::error::could not resolve a version tag"
+            exit 1
+          fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+          echo "Resolved image version: $value"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata (labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.value }}
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+          labels: |
+            org.opencontainers.image.title=mailwoman
+            org.opencontainers.image.source=https://github.com/sister-software/mailwoman
+            org.opencontainers.image.url=https://mailwoman.sister.software
+            org.opencontainers.image.documentation=https://mailwoman.sister.software/docs
+            org.opencontainers.image.licenses=AGPL-3.0-only OR LicenseRef-Commercial
+            org.opencontainers.image.vendor=Sister Software
+            org.opencontainers.image.version=${{ steps.version.outputs.value }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
