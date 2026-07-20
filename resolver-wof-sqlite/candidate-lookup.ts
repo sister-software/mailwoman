@@ -245,59 +245,92 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			filterParams.push(b.minLat, b.maxLat, b.minLon, b.maxLon)
 		}
 
-		const probe = (nk: string): CandidateRow[] => {
+		// Region scope: when the cascade resolves a region and passes it down as `parentID` (the walk sets
+		// `query.parentID = parentResolved.id`), the candidate build stamps each place's region-tier ancestor
+		// id into `region_id` (build-candidate.ts `regionOf`), and that id equals the resolved region's WOF id
+		// — so `region_id = parentID` scopes the probe to in-region rows. Without it a bare same-name probe is
+		// population-first and "Springfield, IL" (parentID = Illinois) drops to the larger Springfield, MO.
+		// Kept OUT of the shared `filters` so a region MISS falls back to the unscoped cascade below: a
+		// country/non-region parent (no `region_id` match), a `region_id=0` row (place with no region
+		// ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
+		const regionParentID = query.parentID ? query.parentID : undefined
+
+		const probe = (nk: string, regionID: number | undefined): CandidateRow[] => {
 			const conds = ["name_key = ?", ...filters]
+			const params: Array<string | number> = [nk, ...filterParams]
+
+			if (regionID !== undefined) {
+				conds.push("region_id = ?")
+				params.push(regionID)
+			}
+
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank " +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
 
-			return this.#db.prepare(sql).all(nk, ...filterParams, limit) as unknown as CandidateRow[]
+			return this.#db.prepare(sql).all(...params, limit) as unknown as CandidateRow[]
 		}
 
-		let rows = probe(nameKey)
+		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope. Region scoping
+		// only tightens an already-population-first pick, so a region MISS re-runs the whole cascade unscoped
+		// (below) rather than dropping a place that has no in-region row.
+		const cascade = (regionID: number | undefined): CandidateRow[] => {
+			let rows = probe(nameKey, regionID)
 
-		if (rows.length === 0) {
-			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
-			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
-			// miss; the cascade's region bbox disambiguates any base-name ambiguity.
-			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
+			if (rows.length === 0) {
+				// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
+				// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
+				// miss; the cascade's region bbox disambiguates any base-name ambiguity.
+				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
-			if (strippedKey && strippedKey !== nameKey) {
-				rows = probe(strippedKey)
-			}
-		}
-
-		// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
-		// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set; we re-rank by
-		// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
-		// the same on either backend. The country/placetype/bbox filters still apply via `probe`. Skipped
-		// when the index is absent (byte-stable for an older candidate.db).
-		//
-		// Gate: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
-		// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
-		// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
-		// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
-		// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
-		if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
-			const match = ftsTrigramQuery(nameKey)
-
-			if (match) {
-				const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
-				const ranked = hits
-					.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
-					.filter((h) => h.s >= FUZZY_MIN)
-					.sort((a, b) => b.s - a.s)
-				const seen = new Set<string>()
-
-				for (const h of ranked) {
-					if (seen.has(h.nk)) continue
-					seen.add(h.nk)
-					rows.push(...probe(h.nk))
-
-					if (rows.length >= limit) break
+				if (strippedKey && strippedKey !== nameKey) {
+					rows = probe(strippedKey, regionID)
 				}
-				rows = rows.slice(0, limit)
 			}
+
+			// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
+			// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set; we re-rank by
+			// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
+			// the same on either backend. The country/placetype/bbox/region filters still apply via `probe`.
+			// Skipped when the index is absent (byte-stable for an older candidate.db).
+			//
+			// Gate: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
+			// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
+			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
+			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
+			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
+			if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
+				const match = ftsTrigramQuery(nameKey)
+
+				if (match) {
+					const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
+					const ranked = hits
+						.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
+						.filter((h) => h.s >= FUZZY_MIN)
+						.sort((a, b) => b.s - a.s)
+					const seen = new Set<string>()
+
+					for (const h of ranked) {
+						if (seen.has(h.nk)) continue
+						seen.add(h.nk)
+						rows.push(...probe(h.nk, regionID))
+
+						if (rows.length >= limit) break
+					}
+					rows = rows.slice(0, limit)
+				}
+			}
+
+			return rows
+		}
+
+		let rows = cascade(regionParentID)
+
+		// Region-scope fallback: if scoping to the parent region found nothing across the whole cascade, retry
+		// unscoped so a place with no in-region row (missing ancestry, or a country/non-region parent) still
+		// resolves exactly as it does today. Only when a region scope was actually applied.
+		if (rows.length === 0 && regionParentID !== undefined) {
+			rows = cascade(undefined)
 		}
 
 		const candidates = rows.map((row): PlaceCandidate => {
