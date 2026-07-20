@@ -32,7 +32,8 @@
 			"hierarchy": ["eat_and_drink", "cafe"],
 			"basicLabel": "Cafe",
 			"osmTag": "amenity=cafe",
-			"source": "overture"
+			"source": "overture",
+			"overtureCategories": ["cafe", "coffee_shop"]
 		},
 		{
 			"id": "fast_food_restaurant",
@@ -48,7 +49,19 @@
 			"hierarchy": ["retail", "food_and_beverage_retail", "supermarket"],
 			"basicLabel": "Supermarket",
 			"osmTag": "shop=supermarket",
-			"source": "overture"
+			"source": "overture",
+			"overtureCategories": [
+				"grocery_store",
+				"organic_grocery_store",
+				"international_grocery_store",
+				"asian_grocery_store",
+				"korean_grocery_store",
+				"mexican_grocery_store",
+				"indian_grocery_store",
+				"japanese_grocery_store",
+				"wholesale_grocer",
+				"greengrocer"
+			]
 		},
 		{
 			"id": "gas_station",
@@ -72,7 +85,8 @@
 			"hierarchy": ["education", "school"],
 			"basicLabel": "School",
 			"osmTag": "amenity=school",
-			"source": "overture"
+			"source": "overture",
+			"overtureCategories": ["school", "elementary_school", "middle_school", "high_school", "private_school"]
 		},
 		{
 			"id": "library",
@@ -96,7 +110,8 @@
 			"hierarchy": ["active_life", "trail"],
 			"basicLabel": "Trail",
 			"osmTag": "route=hiking",
-			"source": "overture"
+			"source": "overture",
+			"overtureCategories": ["hiking_trail", "mountain_bike_trail", "recreational_trail_or_path"]
 		},
 		{
 			"id": "atm",
@@ -112,7 +127,8 @@
 			"hierarchy": ["financial_service", "bank"],
 			"basicLabel": "Bank",
 			"osmTag": "amenity=bank",
-			"source": "overture"
+			"source": "overture",
+			"overtureCategories": ["bank", "bank_credit_union"]
 		},
 		{
 			"id": "post_office",

@@ -23,6 +23,7 @@ export interface POITaxonomyLookup {
 	getPOICategory(id: string): CategoryRecord | undefined
 	getAllCategories(): ReadonlyArray<CategoryRecord>
 	requiresBuildLocalLayer(category: CategoryRecord): boolean
+	resolveOvertureCategories(seedID: string): string[]
 }
 
 interface PhraseEntry {
@@ -130,5 +131,21 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 		return category.source === "mailwoman-infra"
 	}
 
-	return { lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer }
+	/**
+	 * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids a built `poi.db` stores for it
+	 * (the missing translation layer). Returns the category's `overtureCategories` when it declares a non-empty list,
+	 * else `[seedID]` (identity — the default for the 21 seeds whose id already equals its Overture leaf). An unknown
+	 * seed id resolves to `[]` — a clean miss, mirroring `getPOICategory`'s undefined.
+	 */
+	function resolveOvertureCategories(seedID: string): string[] {
+		const category = byID.get(seedID)
+
+		if (!category) return []
+
+		return category.overtureCategories && category.overtureCategories.length > 0
+			? [...category.overtureCategories]
+			: [category.id]
+	}
+
+	return { lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer, resolveOvertureCategories }
 }

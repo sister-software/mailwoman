@@ -66,4 +66,13 @@ export function requiresBuildLocalLayer(category: CategoryRecord): boolean {
 	return CORE.requiresBuildLocalLayer(category)
 }
 
+/**
+ * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids a built `poi.db` stores for it. Seed
+ * ids that declare no `overtureCategories` resolve to `[seedID]` (identity); an unknown seed id resolves to `[]`. The
+ * POI executor fans a category query out over this list and re-tags the hits with the canonical seed id.
+ */
+export function resolveOvertureCategories(seedID: string): string[] {
+	return CORE.resolveOvertureCategories(seedID)
+}
+
 export const POI_TAXONOMY_VERSION = TABLE.version

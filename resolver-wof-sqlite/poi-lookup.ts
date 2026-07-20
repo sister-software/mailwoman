@@ -41,6 +41,13 @@ const DEFAULT_LIMIT = 20
 export interface POISearchQuery {
 	/** Poi-taxonomy category id (string side of the dictionary). Ignored when `brandWikidata` is also set — brand wins. */
 	categoryID?: string
+	/**
+	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category rolls up into (e.g.
+	 * `supermarket` → `grocery_store`, `organic_grocery_store`, …). When set, the k-ring walk probes EVERY resolvable
+	 * leaf per cell and unions the rows; unknown leaves are skipped. Supersedes `categoryID` (which is treated as a
+	 * one-element list `[categoryID]` when this is absent). Ignored when `brandWikidata` is set — brand wins.
+	 */
+	categoryIDs?: string[]
 	/** Wikidata QID for brand-exact search. */
 	brandWikidata?: string
 	/** Free-text name (FTS5). */
@@ -147,7 +154,7 @@ export class POILookup implements Disposable {
 			return this.#searchByName(query.name, limit, query.center)
 		}
 
-		if (query.categoryID || query.brandWikidata) {
+		if (query.categoryID || (query.categoryIDs && query.categoryIDs.length > 0) || query.brandWikidata) {
 			if (!query.center) {
 				throw new Error("POILookup.search: category/brand search requires a `center`")
 			}
@@ -162,14 +169,24 @@ export class POILookup implements Disposable {
 	#searchKRing(query: POISearchQuery, limit: number): POISearchHit[] {
 		const center = query.center!
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
-		let categoryId: number | undefined
+		const categoryIds: number[] = []
 
-		// brandWikidata wins over categoryID when both are set — see POISearchQuery.categoryID.
+		// brandWikidata wins over categoryID(s) when both are set — see POISearchQuery.categoryID.
 		if (!query.brandWikidata) {
-			categoryId = this.#categoryToID.get(query.categoryID!)
+			// `categoryIDs` (the fan-out list) supersedes the single `categoryID`; either way, resolve each id through the
+			// dictionary and drop the ones the db doesn't carry (Overture-taxonomy drift, or an identity id with no rows).
+			const seedIDs = query.categoryIDs?.length ? query.categoryIDs : query.categoryID ? [query.categoryID] : []
 
-			// An unknown category (not in the dictionary) can't have rows — a clean miss, not a throw.
-			if (categoryId === undefined) return []
+			for (const id of seedIDs) {
+				const resolved = this.#categoryToID.get(id)
+
+				if (resolved !== undefined) {
+					categoryIds.push(resolved)
+				}
+			}
+
+			// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss, not a throw.
+			if (categoryIds.length === 0) return []
 		}
 
 		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
@@ -187,11 +204,15 @@ export class POILookup implements Disposable {
 				seenCells.add(cell)
 				const shortCell = h3CellToInt(cell as H3Cell)
 
-				const hits = query.brandWikidata
-					? (this.#brandCellProbe.all(shortCell, query.brandWikidata, limit) as unknown as POIRow[])
-					: (this.#categoryCellProbe.all(shortCell, categoryId!, limit) as unknown as POIRow[])
-
-				rows.push(...hits)
+				if (query.brandWikidata) {
+					rows.push(...(this.#brandCellProbe.all(shortCell, query.brandWikidata, limit) as unknown as POIRow[]))
+				} else {
+					// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
+					// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
+					for (const categoryId of categoryIds) {
+						rows.push(...(this.#categoryCellProbe.all(shortCell, categoryId, limit) as unknown as POIRow[]))
+					}
+				}
 			}
 
 			rows = sortByDistance(rows, center)

@@ -38,6 +38,14 @@ export interface POIExecutorOpts {
 	/** `@mailwoman/poi-taxonomy`'s `requiresBuildLocalLayer(getPOICategory(id)!)`, injected so this stays lexicon-free. */
 	requiresBuildLocal: (categoryID: string) => boolean
 	/**
+	 * `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories(id)`, injected so this stays lexicon-free — maps a canonical
+	 * seed category id to the Overture `taxonomy.primary` leaf ids a built `poi.db` actually stores (`supermarket` →
+	 * `grocery_store`, …). The category branch probes the full leaf list and re-tags every hit back to the canonical seed
+	 * id. Omitted ⇒ identity (`[categoryID]`), the pre-fan-out behavior — 21 of 23 seeds already equal their Overture
+	 * leaf.
+	 */
+	resolveOvertureCategories?: (categoryID: string) => string[]
+	/**
 	 * Read-time WOF ancestry lookup (the poiQueryKind register row's second debt payment) — injected SYNCHRONOUSLY
 	 * because this executor's return type (`POIIntentOutcome`, no Promise) is called synchronously from `poi-intent.ts`'s
 	 * `deps.execute`. Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no
@@ -61,6 +69,8 @@ export interface POIExecutorOpts {
  */
 export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) => POIIntentOutcome {
 	const { lookup, requiresBuildLocal, reverseGeocode } = opts
+	// Identity fallback: no injected resolver ⇒ the seed id IS its own Overture probe id.
+	const resolveOvertureCategories = opts.resolveOvertureCategories ?? ((categoryID: string) => [categoryID])
 
 	// Bound to `results.map`, so decoration is capped at whatever `limit` bounded the search — the ≤20-calls budget
 	// (spec's default DEFAULT_LIMIT) falls out of that, not a separate cap here.
@@ -90,20 +100,33 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			return { type: "abstain", reason: "anchor_required" }
 		}
 
-		const query: POISearchQuery =
-			subject.kind === "brand"
-				? subject.wikidata
-					? { brandWikidata: subject.wikidata, center, limit: intent.limit }
-					: { name: subject.name, center, limit: intent.limit }
-				: { categoryID: subject.categoryID, center, limit: intent.limit }
+		if (subject.kind === "brand") {
+			const query: POISearchQuery = subject.wikidata
+				? { brandWikidata: subject.wikidata, center, limit: intent.limit }
+				: { name: subject.name, center, limit: intent.limit }
 
-		const results = lookup.search(query)
+			// Brand hits aren't category-scoped — keep whatever raw leaf id each row carries.
+			return { type: "intent", intent, results: lookup.search(query).map(toResult) }
+		}
+
+		// Category branch: fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …),
+		// then re-tag every hit back to the canonical id — the search was scoped to this ONE canonical category, so
+		// every row belongs to it, and the board grades `results[0].categoryID` against the canonical seed id.
+		const results = lookup.search({
+			categoryIDs: resolveOvertureCategories(subject.categoryID),
+			center,
+			limit: intent.limit,
+		})
 
 		if (buildLocalCategory && results.length === 0) {
 			return { type: "abstain", reason: "requires_build_local_layer" }
 		}
 
-		return { type: "intent", intent, results: results.map(toResult) }
+		return {
+			type: "intent",
+			intent,
+			results: results.map((hit) => ({ ...toResult(hit), categoryID: subject.categoryID })),
+		}
 	}
 }
 
