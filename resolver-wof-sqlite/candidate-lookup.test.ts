@@ -53,11 +53,24 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (200, 'Chicago', 'locality', 'US', 41.88, -87.63, 41.6, -87.9, 42.0, -87.5, -1, 0);
 		-- Qualifier case: the gazetteer name is bare "Lenk"; the query "Lenk im Simmental" strips to it.
 		INSERT INTO spr VALUES (302, 'Lenk', 'locality', 'CH', 46.46, 7.44, 46.4, 7.4, 46.5, 7.5, -1, 0);
+		-- Region-scope case (parentID → region_id): two same-name US localities under DIFFERENT regions.
+		-- Springfield, MO is the more populous, so population-first (no parentID) picks it; Springfield, IL
+		-- is the in-region answer when the walk passes parentID = Illinois (400).
+		INSERT INTO spr VALUES (400, 'Illinois', 'region', 'US', 40.0, -89.0, 37.0, -91.5, 42.5, -87.0, -1, 0);
+		INSERT INTO spr VALUES (401, 'Missouri', 'region', 'US', 38.3, -92.4, 36.0, -95.8, 40.6, -89.1, -1, 0);
+		INSERT INTO spr VALUES (310, 'Springfield', 'locality', 'US', 39.78, -89.65, 39.7, -89.75, 39.85, -89.55, -1, 0);
+		INSERT INTO spr VALUES (311, 'Springfield', 'locality', 'US', 37.19, -93.29, 37.1, -93.4, 37.3, -93.2, -1, 0);
 
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
 		INSERT INTO place_population VALUES (200, 2700000);
 		INSERT INTO place_population VALUES (302, 2400);
+		INSERT INTO place_population VALUES (310, 114000);
+		INSERT INTO place_population VALUES (311, 169000);
+
+		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
+		INSERT INTO ancestors VALUES (310, 400, 'region');
+		INSERT INTO ancestors VALUES (311, 401, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
@@ -272,6 +285,57 @@ describe("WOFCandidateTableLookup", () => {
 			expect((await lk.findPlace({ text: "Moscw", placetype: "locality", country: "RU" }))[0]?.name).toBe("Moscow")
 			// Garbage stays a miss — the trigram-Jaccard threshold filters noise (no false fuzzy hit).
 			expect(await lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).toHaveLength(0)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("parentID scopes the probe to the in-region place (Springfield → IL under Illinois, not the larger MO)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// Baseline: no parentID → population-first picks the larger Springfield, MO (169k > 114k).
+			const bare = await lk.findPlace({ text: "Springfield", placetype: "locality", country: "US", limit: 5 })
+			expect(bare.map((c) => c.id)).toContain(310)
+			expect(bare.map((c) => c.id)).toContain(311)
+			expect(bare[0]!.id).toBe(311) // MO first, by population
+			expect(bare[0]!.lat).toBeCloseTo(37.19, 2)
+
+			// With parentID = Illinois (400), region_id scoping returns ONLY Springfield, IL (310) —
+			// the population-first MO pick is dropped because it isn't in the parent region.
+			const scoped = await lk.findPlace({
+				text: "Springfield",
+				placetype: "locality",
+				country: "US",
+				parentID: 400,
+				limit: 5,
+			})
+			expect(scoped).toHaveLength(1)
+			expect(scoped[0]!.id).toBe(310)
+			expect(scoped[0]!.lat).toBeCloseTo(39.78, 2)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("parentID falls back to the unscoped probe when the region has no in-region match", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// parentID = 999 is a region NO Springfield sits under → the region-scoped cascade returns
+			// nothing, so the reader retries unscoped and resolves exactly as the bare query does today
+			// (population-first Springfield, MO). Fallback is recall-safe: a wrong/absent parent never
+			// drops a place that a plain lookup would have found.
+			const scoped = await lk.findPlace({
+				text: "Springfield",
+				placetype: "locality",
+				country: "US",
+				parentID: 999,
+				limit: 5,
+			})
+			expect(scoped.length).toBeGreaterThan(0)
+			expect(scoped[0]!.id).toBe(311) // unscoped population-first — same as the no-parentID baseline
+			expect(scoped[0]!.lat).toBeCloseTo(37.19, 2)
 		} finally {
 			lk.close()
 		}
