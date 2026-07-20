@@ -12,7 +12,7 @@
  *   not the MA one.
  */
 
-import { matchCountry } from "@mailwoman/codex/country"
+import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
 import {
@@ -989,6 +989,132 @@ async function reconcileExplicitCountry(
 	localityNode.metadata = { ...localityNode.metadata, explicit_country_repicked: true }
 }
 
+/**
+ * Region-country coherence — the joint-consistency resolve keyed on a REGION token the locale-inferred default-country
+ * filter could not resolve. Companion to {@link applyExplicitCountryCoherence} (which keys on an explicit COUNTRY token)
+ * and disjoint from {@link applyAdminCoherence} (which needs a region that DID resolve): this pass owns the mirror case,
+ * where the region qualifier is a foreign subdivision the default-country hard filter (`spr.country = ?`) discarded.
+ *
+ * "Montreal QC" under a US locale: the walk applies `defaultCountry="US"` as a hard candidate filter to every admin
+ * lookup, so the region "QC" (a Canadian subdivision) resolves to nothing and is dropped — the one signal that would
+ * redirect the country to CA — and the locality "Montreal" is force-matched to the populous US namesake (Montreal, WI).
+ * The greedy order threw away the evidence that could correct it.
+ *
+ * The fix expands the region token to its country via codex's ISO-3166-2 subdivision table (`matchSubdivision`: "QC" →
+ * `{ name: "Quebec", country: "CA" }`, handling the FTS index's missing "QC" alt-name code-side), then asks the two
+ * questions the greedy walk skipped: does that subdivision genuinely resolve UNDER its own country, and is there a
+ * same-named locality under it? Only when BOTH hold does it swap the region and locality to the in-country pair.
+ * Geography confirms; the subdivision table is a soft name→country prior, not a routing decision.
+ *
+ * Evidence-gated to stay byte-stable on the domestic path. It fires ONLY when (a) a default country is in force, (b)
+ * the region node is UNRESOLVED (the default-country filter came up empty — a US region resolves fine under `US`, so a
+ * well-formed US query never trips this), (c) the token is a subdivision of a DIFFERENT country than the default, and
+ * (d) both the foreign region and a same-named foreign locality resolve. "Springfield, IL" / "Portland, ME": the region
+ * resolves under `US`, so gate (b) fails and the tree is untouched. Costs one region + one locality lookup per
+ * triggering pair. See `ResolveOpts.adminCoherence`.
+ */
+async function applyRegionCountryCoherence(
+	roots: readonly AddressNode[],
+	backend: ResolverBackend,
+	defaultCountry: string | undefined
+): Promise<void> {
+	// No default country → no hard country filter was applied, so no region qualifier was discarded by one. The bug
+	// this pass corrects is specific to the locale-inferred default country; without it, there is nothing to rescue.
+	if (!defaultCountry) return
+
+	const visit = async (node: AddressNode, regionAncestor: AddressNode | null): Promise<void> => {
+		// Track the nearest region ancestor regardless of its resolution state (the trigger is an UNRESOLVED region).
+		const regionHere = node.tag === "region" || node.tag === "subregion" ? node : regionAncestor
+
+		// Fire for an UNRESOLVED region (the default-country filter came up empty) whose companion locality node
+		// exists — regardless of the locality's resolution state, so it covers both the resolved-but-foreign namesake
+		// (Montreal → the greedy US pick, Montreal WI) and the unresolved locality the span-rescore tier would
+		// otherwise back-fill with a US namesake. The in-country lookups below are the evidence gate.
+		if (
+			regionHere &&
+			!isResolvedWithCoord(regionHere) &&
+			(node.tag === "locality" || node.tag === "dependent_locality") &&
+			node.value.trim().length > 0
+		) {
+			await reconcileRegionCountry(regionHere, node, backend, defaultCountry)
+		}
+
+		for (const child of node.children) {
+			await visit(child, regionHere)
+		}
+	}
+
+	for (const root of roots) {
+		await visit(root, null)
+	}
+}
+
+/**
+ * Re-pick an (unresolved region, resolved-but-foreign-namesake locality) pair to the in-country instance the
+ * default-country filter hid. `matchSubdivision` turns the region token into `{ name, country }` (null for anything
+ * that isn't a US state or CA province → no-op); the region's full name then resolves it under that country (expanding
+ * the abbreviation the gazetteer FTS index lacks), and the locality is re-scoped to the same country. Leaves both nodes
+ * untouched unless every gate holds — the subdivision names a different country than the default, the region resolves
+ * under it, and a same-named locality exists there — so the domestic path stays byte-identical.
+ */
+async function reconcileRegionCountry(
+	regionNode: AddressNode,
+	localityNode: AddressNode,
+	backend: ResolverBackend,
+	defaultCountry: string
+): Promise<void> {
+	const sub = matchSubdivision(regionNode.value)
+
+	if (!sub) return
+
+	// The subdivision must belong to a DIFFERENT country than the locale default. A US-state token under a US default
+	// (sub.country === defaultCountry) never reaches the swap — the pass is inert on the domestic path.
+	if (sub.country.toUpperCase() === defaultCountry.toUpperCase()) return
+
+	// The locality already resolved in the subdivision's country? Then the greedy walk was already right — byte-stable.
+	const localityCountry = (localityNode.metadata?.["resolver_country"] as string | undefined)?.toUpperCase()
+
+	if (localityCountry === sub.country.toUpperCase()) return
+
+	// Confirm the subdivision genuinely resolves under its own country, by its full name (expands "QC" → "Quebec", the
+	// form the FTS index carries). No resolvable region → no evidence the token is a real foreign subdivision; abstain.
+	const regionScoped = await backend.findPlace({
+		text: sub.name,
+		placetype: "region",
+		country: sub.country,
+		limit: 3,
+	})
+	const rc = regionScoped.find((r) => r.exactMatch && !(r.lat === 0 && r.lon === 0))
+
+	if (!rc) return
+
+	// Is there a same-named locality under that country? (the descendant test, by country column — the same primitive
+	// reconcileExplicitCountry uses.) No in-country namesake → keep the greedy result (fail-safe).
+	const scoped = await backend.findPlace({
+		text: localityNode.value,
+		placetype: "locality",
+		country: sub.country,
+		limit: 3,
+	})
+	const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
+
+	if (!lc) return
+
+	// Adopt the in-country pair: the region gets the foreign subdivision, the locality its same-named foreign instance.
+	decorateNode(
+		regionNode,
+		rc,
+		regionScoped.filter((r) => r !== rc)
+	)
+	regionNode.metadata = { ...regionNode.metadata, region_country_repicked: true }
+	decorateNode(
+		localityNode,
+		lc,
+		scoped.filter((l) => l !== lc)
+	)
+	localityNode.metadata = { ...localityNode.metadata, region_country_repicked: true }
+}
+
 class WOFResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -1047,6 +1173,12 @@ class WOFResolver implements Resolver {
 			// locality landed in the wrong country (the populous US namesake). Runs after the region pass so the
 			// two never contend (region-fallthrough vs resolved-but-foreign are disjoint locality states).
 			await applyExplicitCountryCoherence(newRoots, this.#backend)
+			// Region-country coherence: a region qualifier the locale-inferred default-country hard filter could not
+			// resolve (a foreign subdivision — "Montreal QC" under a US locale). The default filter discarded "QC" and
+			// force-matched the locality to the US namesake; this re-resolves the subdivision + its same-named locality
+			// under the subdivision's OWN country. Disjoint from the two passes above (unresolved region + resolved
+			// locality); evidence-gated + byte-stable on the domestic path (a US region resolves under `US`).
+			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
 		}
 
 		// Postcode-consistency (#370 "Lever A"): default-ON (promoted 2026-07-04 — the corrected gate:
