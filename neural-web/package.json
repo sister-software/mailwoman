@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-web",
-	"version": "7.4.0",
+	"version": "7.5.0",
 	"description": "Browser-side mailwoman neural runtime. Pairs the existing tokenizer + decoder with an onnxruntime-web inference path (WebGPU primary, WASM SIMD fallback). Drop-in for @mailwoman/neural when targeting a static-asset deploy (Phase B of the demo plan).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

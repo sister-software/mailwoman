@@ -76,6 +76,16 @@ jobs:
       - name: Test
         run: yarn ci:test
 
+      # @mailwoman/react's suites are Vitest browser mode (playwright/chromium) and are excluded
+      # from the root sweep above — importing vitest/browser under the forks pool is a hard error
+      # (the failure class that turned Test red from #1215 until this step existed). This leg is
+      # their only CI coverage; if it's removed, the react package ships untested.
+      - name: Install Playwright chromium (react browser tests)
+        run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
+
+      - name: Test react (browser mode)
+        run: yarn workspace @mailwoman/react test:browser
+
       # Packs every published workspace + installs the tarballs into a throwaway project (no monorepo
       # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
       # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side

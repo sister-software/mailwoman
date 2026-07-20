@@ -10,7 +10,7 @@ dependencies = [
 	# Pin loose; install via `pip install -e .` from this directory.
 	# PyArrow was dropped in Phase 1.5 (#18 §4) when corpus build moved to JS-native Parquet
 	# via @dsnp/parquetjs, then re-added in Phase 2 (issue #10) for the training data loader.
-	"sentencepiece>=0.2.0",
+	"sentencepiece>=0.2.2",
 	"pyarrow>=25.0.0",
 	"pyyaml>=6",
 	"numpy>=1.26,<3",
@@ -19,7 +19,7 @@ dependencies = [
 # Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities
 # can install without dragging PyTorch / Transformers / ONNX onto every machine.
 [project.optional-dependencies]
-dev = ["pytest>=9.1.1", "ruff==0.15.21"]
+dev = ["pytest>=9.1.1", "ruff==0.15.22"]
 train = [
 	# Pinned to the exact export/quant toolchain that produced the v4.1.0 ONNX artifact
 	# (2026-06-09). Unpinned `>=` drifted (transformers→5.x, onnx→1.21) and broke int8
@@ -33,7 +33,7 @@ train = [
 	# dynamo exporter dependency — same pin as the Modal training image (train_remote.py).
 	"onnxscript==0.7.0",
 	"onnxruntime==1.26.0",
-	"tqdm>=4.68.4",
+	"tqdm>=4.69.0",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime
 	# (see mailwoman_train/trackio_logging.py) so its absence never breaks a train run.
 	"trackio",

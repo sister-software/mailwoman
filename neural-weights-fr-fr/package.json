@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-fr-fr",
-	"version": "7.4.0",
+	"version": "7.5.0",
 	"description": "Mailwoman neural-classifier weights for locale 'fr-fr'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the fr-specific data siblings. Loaded by @mailwoman/neural at runtime.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

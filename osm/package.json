@@ -53,7 +53,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"kysely": "^0.29.3",
+		"kysely": "^0.29.4",
 		"spliterator": "^4.0.0"
 	},
 	"engines": {

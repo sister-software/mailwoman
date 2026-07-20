@@ -14,7 +14,7 @@ const HITS: POISearchHit[] = [
 
 test("LiveResultsBlock disables search + prompts when there is no anchor", () => {
 	const { container } = renderComponent(
-		<LiveResultsBlock categoryLabel="Drinking Fountain" anchor="" state={{ status: "idle" }} onSearch={() => {}} />
+		<LiveResultsBlock subjectLabel="Drinking Fountain" anchor="" state={{ status: "idle" }} onSearch={() => {}} />
 	)
 
 	expect((container.querySelector("button") as HTMLButtonElement).disabled).toBe(true)
@@ -25,7 +25,7 @@ test("LiveResultsBlock fires onSearch and renders ranked hits on success", async
 	let searched = false
 	const { container } = renderComponent(
 		<LiveResultsBlock
-			categoryLabel="Drinking Fountain"
+			subjectLabel="Drinking Fountain"
 			anchor="Springfield"
 			state={{ status: "success", hits: HITS, centerName: "Springfield, IL" }}
 			onSearch={() => {
@@ -45,7 +45,7 @@ test("LiveResultsBlock fires onSearch and renders ranked hits on success", async
 test("LiveResultsBlock surfaces the error message", () => {
 	const { container } = renderComponent(
 		<LiveResultsBlock
-			categoryLabel="Drinking Fountain"
+			subjectLabel="Drinking Fountain"
 			anchor="Nowhere"
 			state={{ status: "error", message: 'couldn\'t place "Nowhere"' }}
 			onSearch={() => {}}

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/nominatim",
-	"version": "7.4.0",
+	"version": "7.5.0",
 	"description": "Nominatim drop-in — a Nominatim-compatible HTTP geocoding API (search / reverse / lookup / status) over the Mailwoman engine. Run it with `npx @mailwoman/nominatim serve`.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -37,7 +37,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.4.0",
+		"@hono/zod-openapi": "^1.5.1",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
@@ -50,7 +50,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
-		"hono": "^4.12.29",
+		"hono": "^4.12.31",
 		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"
 	}

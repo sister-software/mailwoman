@@ -25,6 +25,13 @@ export interface UsePOISearchOptions {
 	loadRuntime?: LoadPOIRuntime
 	/** Injected live-search probe. Absent ⇒ the live-results affordance is disabled. */
 	runLiveSearch?: POILiveSearch
+	/**
+	 * Whether the injected probe can serve BRAND subjects (fetch by Wikidata QID). Default false: brand subjects show the
+	 * intent + QID chip but no live-search affordance. The docs' httpvfs probe leaves this off — brand-wide row hydration
+	 * is pathological over byte-range (measured) — so brand live search is a server-side-backend capability. Category
+	 * live search is unaffected either way.
+	 */
+	brandLiveSearch?: boolean
 	/** Debounce before (re)classifying. @default 250 */
 	debounceMs?: number
 }
@@ -71,6 +78,7 @@ export function usePOISearch({
 	text,
 	loadRuntime = loadPOIRuntime,
 	runLiveSearch,
+	brandLiveSearch = false,
 	debounceMs = 250,
 }: UsePOISearchOptions): UsePOISearch {
 	const [runtime, setRuntime] = useState<POIRuntime | null>(null)
@@ -122,9 +130,34 @@ export function usePOISearch({
 			if (cancelled) return
 
 			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, undefined, runtime.lexicon) : null
-			const category = matched ? runtime.lookup.getPOICategory(matched.match.categoryID) : undefined
 
-			if (!matched || !category) {
+			if (!matched) {
+				setResult({ kindResult })
+
+				return
+			}
+
+			// Brand subject: the lexicon carries the brand's canonical name as `categoryID` + its Wikidata QID. No category
+			// record, no OverpassQL (brands are searched by QID against the layer's `brand_wikidata` index, not OSM tags).
+			if ((matched.match.kind ?? "category") === "brand") {
+				setResult({
+					kindResult,
+					subject: {
+						kind: "brand",
+						name: matched.match.categoryID,
+						...(matched.match.wikidata ? { wikidata: matched.match.wikidata } : {}),
+						matchedPhrase: matched.match.matchedPhrase,
+						confidence: matched.match.confidence,
+						remainder: matched.remainder,
+					},
+				})
+
+				return
+			}
+
+			const category = runtime.lookup.getPOICategory(matched.match.categoryID)
+
+			if (!category) {
 				setResult({ kindResult })
 
 				return
@@ -133,6 +166,7 @@ export function usePOISearch({
 			setResult({
 				kindResult,
 				subject: {
+					kind: "category",
 					category,
 					matchedPhrase: matched.match.matchedPhrase,
 					confidence: matched.match.confidence,
@@ -149,22 +183,39 @@ export function usePOISearch({
 	}, [debouncedText, runtime])
 
 	const subject = result?.subject
+	// A subject is live-searchable when a probe is wired, it has an anchor, and: a CATEGORY that isn't build-local, or a
+	// BRAND with a QID AND a brand-capable probe (`brandLiveSearch`). Brands without a QID / without a brand probe show
+	// the intent + QID chip but no live affordance.
+	const subjectLiveCapable =
+		subject !== undefined &&
+		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
 	const canSearchLive = Boolean(
-		runLiveSearch && runtime && subject && !subject.buildLocal && subject.remainder.trim().length > 0
+		runLiveSearch && runtime && subject && subjectLiveCapable && subject.remainder.trim().length > 0
 	)
 
 	const searchLive = useCallback(async () => {
-		if (!runLiveSearch || !runtime || !subject || subject.buildLocal || !subject.remainder.trim()) return
+		if (!runLiveSearch || !runtime || !subject || !subject.remainder.trim()) return
+
+		if (subject.kind === "category" ? subject.buildLocal : !(brandLiveSearch && subject.wikidata)) return
 
 		setLiveSearch({ status: "loading" })
 
 		try {
-			const outcome = await runLiveSearch({
-				categoryID: subject.category.id,
-				// Fan the canonical seed id out over its Overture leaves — the same translation the Node reader uses.
-				overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
-				anchor: subject.remainder,
-			})
+			const outcome = await runLiveSearch(
+				subject.kind === "brand"
+					? {
+							categoryID: subject.name,
+							overtureCategoryIDs: [],
+							anchor: subject.remainder,
+							brandWikidata: subject.wikidata,
+						}
+					: {
+							categoryID: subject.category.id,
+							// Fan the canonical seed id out over its Overture leaves — the same translation the Node reader uses.
+							overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
+							anchor: subject.remainder,
+						}
+			)
 
 			if (outcome.status === "success") {
 				setLiveSearch({ status: "success", hits: outcome.hits, centerName: outcome.centerName })
@@ -176,7 +227,7 @@ export function usePOISearch({
 		} catch {
 			setLiveSearch({ status: "error", message: "the published POI layer isn't reachable" })
 		}
-	}, [runLiveSearch, runtime, subject])
+	}, [runLiveSearch, runtime, subject, brandLiveSearch])
 
 	return { runtimeReady: runtime !== null, result, liveSearch, canSearchLive, searchLive }
 }

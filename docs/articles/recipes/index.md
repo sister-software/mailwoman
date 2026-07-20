@@ -10,6 +10,7 @@ source-of-truth: self
 
 Task-oriented walkthroughs for jobs people actually show up with: geocode a table, put the results on a map, keep a coordinate private. Each one states what you'll have by the end and links the reference or concept page it builds on.
 
+- **[Point your existing stack at Mailwoman](./geopy-and-http.md)** — run the Nominatim-compatible drop-in from one `docker run`, then point the geopy (or plain-HTTP) client you already have at it, with no code change.
 - **[Batch geocoding](./batch-geocoding.md)** — turn a list of addresses into a list of coordinates with one bulk request, with per-row error isolation so one bad row never sinks the batch.
 - **[Displaying results on a map](./display-on-a-map.md)** — render resolved entities to a self-contained `map.html` you can open in a browser, from the same data you'd export as GeoJSON for QGIS.
 - **[The free first pass](./multi-service-geocoding.md)** — run Mailwoman locally as a no-cost first geocoding pass, and spend a paid API's budget only on the residual it couldn't pin well enough.
