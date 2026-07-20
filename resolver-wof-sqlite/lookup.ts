@@ -404,7 +404,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		} else {
 			const shards = resolveShards(opts.databasePath!)
 			this.#shards = shards
-			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: false })
+			// Read-only by default — shipped gazetteer shards are sealed 0444 and Docker `:ro` mounts
+			// forbid write-mode opens, so a writable open fails there. The only code path that writes to
+			// the main shard is `#ensureFTS()` (FTS5 index build), gated on `opts.buildFTS`; open writable
+			// ONLY when that build was explicitly requested. Every read query (FTS5 MATCH, the aux-table
+			// SELECTs, ATTACH, and the `busy_timeout` PRAGMA) works read-only. See the docker read-only
+			// mount limitation (#1213).
+			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: !opts.buildFTS })
 			this.#ownsDB = true
 
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to

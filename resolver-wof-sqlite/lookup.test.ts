@@ -12,6 +12,9 @@
  *   fetch).
  */
 
+import { chmodSync, mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -203,8 +206,8 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildFixtureDB(path = ":memory:"): DatabaseSync {
+	const db = new DatabaseSync(path)
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
 	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
 	// (modern) and `is_current = 1` (legacy) mean current; `0` means not current. See #91.
@@ -461,5 +464,40 @@ describe("WOFSqlitePlaceLookup ctor", () => {
 		db.exec(`CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT);`)
 		expect(() => new WOFSqlitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
 		db.close()
+	})
+
+	test("SMOKE: a sealed 0444 on-disk shard opens and still answers FTS queries end-to-end", async () => {
+		// SMOKE test, not the regression guard: SQLite silently downgrades a write-mode open to read-only on
+		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does NOT distinguish old
+		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
+		// mode chosen per `buildFTS` — read-only on every query path, read-write only for the FTS build) is
+		// enforced by the DatabaseSync construction spy in `lookup-readonly-open.test.ts`.
+		const dir = mkdtempSync(join(tmpdir(), "mw-wof-ro-"))
+		const dbPath = join(dir, "admin-fixture.db")
+
+		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped shard.
+		{
+			const disk = buildFixtureDB(dbPath)
+			const builder = new WOFSqlitePlaceLookup({ database: disk, buildFTS: true })
+			builder.close() // #ownsDB is false for a passed-in handle, so `disk` stays open; FTS is now persisted.
+			disk.close()
+		}
+		chmodSync(dbPath, 0o444)
+
+		let ro: WOFSqlitePlaceLookup | undefined
+
+		try {
+			// The real code path: databasePath → `new DatabaseSync(path, { readOnly: !opts.buildFTS })`.
+			// With buildFTS omitted this opens the 0444 file read-only; a write-mode open would throw here.
+			ro = new WOFSqlitePlaceLookup({ databasePath: dbPath })
+			const candidates = await ro.findPlace({ text: "Paris", country: "US" })
+			expect(candidates.length).toBeGreaterThan(0)
+			expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
+		} finally {
+			ro?.close()
+			// Restore write permission so the temp dir can be cleaned up.
+			chmodSync(dbPath, 0o644)
+			rmSync(dir, { recursive: true, force: true })
+		}
 	})
 })
