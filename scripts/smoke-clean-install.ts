@@ -21,7 +21,7 @@
  *
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawn } from "node:child_process"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
@@ -75,8 +75,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/nominatim": "nominatim",
 	// `@mailwoman/mcp`'s bin (`out/cli.js`, the `mailwoman-mcp` entry) connects an stdio transport at module
 	// scope, so IMPORT_CHECK below (which imports the package ENTRYPOINT — `index.ts`, i.e. server.ts +
-	// tools.ts only) never exercises cli.ts directly; the bin's dep closure is covered only transitively,
-	// via the closure-wide npm install. Follow-up tracked to add a real bin-exec check (2026-07-19).
+	// tools.ts only) never exercises cli.ts directly. The bin's OWN dep closure (its static imports:
+	// `mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio transport) is now covered by the
+	// bin-exec leg (`checkMCPBin`, 2026-07-20) — a real JSON-RPC initialize + tools/list handshake against
+	// the installed bin — instead of only transitively via the closure-wide npm install.
 	"@mailwoman/mcp": "mcp",
 }
 
@@ -99,6 +101,149 @@ const IMPORT_CHECK = [
 // also packed by this script), else its `@mailwoman/*` dep resolves from the registry and skews the test.
 // `@mailwoman/core` qualifies: zero `@mailwoman/*` runtime deps.
 const STANDALONE_LEAVES = ["@mailwoman/core"]
+
+/** The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count. */
+const MCP_EXPECTED_TOOL_COUNT = 5
+
+/**
+ * Bin-exec leg for `@mailwoman/mcp` (2026-07-20). IMPORT_CHECK imports the package ENTRYPOINT (server.ts + tools.ts);
+ * it never runs `cli.ts`, whose OWN static imports (`mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio
+ * transport) can pull an undeclared dep that only surfaces when the bin actually boots. This spawns the INSTALLED
+ * `mailwoman-mcp` bin over stdio, hand-writes the two newline-delimited JSON-RPC frames of the MCP handshake
+ * (`initialize` → `notifications/initialized` → `tools/list`; no SDK client needed), asserts exactly five tools, then
+ * closes stdin and asserts the process exits cleanly — the whole exchange bounded by `timeoutMs` (~30s). A missing dep,
+ * a non-zero exit, a wrong tool count, or a hung process all fail the smoke here, before publish.
+ */
+async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number> {
+	const binPath = join(projDir, "node_modules", ".bin", "mailwoman-mcp")
+	const child = spawn(binPath, [], { cwd: projDir, stdio: ["pipe", "pipe", "pipe"] })
+
+	let stderr = ""
+	child.stderr.on("data", (d: Buffer) => {
+		stderr += d.toString()
+	})
+	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write; swallow it so
+	// the real failure surfaces via the `error`/`exit` events below, not an uncaught stream error.
+	child.stdin.on("error", () => {})
+
+	// Parse newline-delimited JSON-RPC frames off stdout; resolve a waiter when its id's response lands.
+	let buffer = ""
+	const responses = new Map<number, { id: number; result?: { tools?: unknown[] }; error?: unknown }>()
+	const waiters = new Map<number, (msg: { result?: { tools?: unknown[] }; error?: unknown }) => void>()
+
+	child.stdout.on("data", (chunk: Buffer) => {
+		buffer += chunk.toString()
+		let nl: number
+
+		while ((nl = buffer.indexOf("\n")) >= 0) {
+			const line = buffer.slice(0, nl).trim()
+			buffer = buffer.slice(nl + 1)
+
+			if (!line) continue
+
+			try {
+				const msg = JSON.parse(line) as { id?: number; result?: { tools?: unknown[] }; error?: unknown }
+
+				if (typeof msg.id === "number") {
+					responses.set(msg.id, { id: msg.id, result: msg.result, error: msg.error })
+					waiters.get(msg.id)?.(msg)
+				}
+			} catch {
+				// Non-JSON stdout noise (shouldn't happen on a clean stdio transport) — ignore.
+			}
+		}
+	})
+
+	// Failure channels the handshake races against, so a missing/crashing bin fails FAST instead of hanging:
+	// `error` (spawn ENOENT — the bin path doesn't exist), `exit` (crashed before answering), the overall timeout.
+	const exited = new Promise<number | null>((res) => child.on("exit", (code) => res(code)))
+	const failed = new Promise<never>((_, rej) =>
+		child.on("error", (err) => rej(new Error(`mailwoman-mcp failed to spawn (${binPath}): ${(err as Error).message}`)))
+	)
+	let overallTimer: NodeJS.Timeout | undefined
+	const timedOut = new Promise<never>((_, rej) => {
+		overallTimer = setTimeout(() => {
+			child.kill("SIGKILL")
+			rej(new Error(`mailwoman-mcp handshake exceeded ${timeoutMs}ms; stderr:\n${stderr}`))
+		}, timeoutMs)
+	})
+
+	const waitFor = (id: number) =>
+		Promise.race([
+			new Promise<{ result?: { tools?: unknown[] }; error?: unknown }>((res, rej) => {
+				const existing = responses.get(id)
+
+				if (existing) return res(existing)
+				waiters.set(id, res)
+				exited.then((code) =>
+					rej(new Error(`mailwoman-mcp exited (code ${code}) before responding to id ${id}; stderr:\n${stderr}`))
+				)
+			}),
+			failed,
+			timedOut,
+		])
+
+	const send = (obj: unknown) => {
+		if (!child.stdin.destroyed) {
+			child.stdin.write(`${JSON.stringify(obj)}\n`)
+		}
+	}
+
+	try {
+		send({
+			jsonrpc: "2.0",
+			id: 1,
+			method: "initialize",
+			params: {
+				protocolVersion: "2024-11-05",
+				capabilities: {},
+				clientInfo: { name: "mw-smoke", version: "0.0.0" },
+			},
+		})
+		const initResp = await waitFor(1)
+
+		if (initResp.error) throw new Error(`initialize failed: ${JSON.stringify(initResp.error)}`)
+
+		send({ jsonrpc: "2.0", method: "notifications/initialized" })
+		send({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} })
+		const listResp = await waitFor(2)
+
+		if (listResp.error) throw new Error(`tools/list failed: ${JSON.stringify(listResp.error)}`)
+		const tools = listResp.result?.tools ?? []
+
+		if (tools.length !== MCP_EXPECTED_TOOL_COUNT) {
+			const names = tools.map((t) => (t as { name?: string }).name ?? "?").join(", ")
+
+			throw new Error(`expected ${MCP_EXPECTED_TOOL_COUNT} tools, got ${tools.length}: ${names}`)
+		}
+
+		// Clean shutdown: closing stdin ends the stdio transport; the process (lazy deps, nothing loaded) must exit 0.
+		child.stdin.end()
+		let shutdownTimer: NodeJS.Timeout | undefined
+		const exitCode = await Promise.race([
+			exited,
+			timedOut,
+			new Promise<never>((_, rej) => {
+				shutdownTimer = setTimeout(() => {
+					child.kill("SIGKILL")
+					rej(new Error(`mailwoman-mcp did not exit within the shutdown window; stderr:\n${stderr}`))
+				}, 5_000)
+			}),
+		]).finally(() => clearTimeout(shutdownTimer))
+
+		if (exitCode !== 0 && exitCode !== null) {
+			throw new Error(`mailwoman-mcp exited non-zero (${exitCode}) on stdin close; stderr:\n${stderr}`)
+		}
+
+		return tools.length
+	} finally {
+		clearTimeout(overallTimer)
+
+		if (child.exitCode === null && child.signalCode === null) {
+			child.kill("SIGKILL")
+		}
+	}
+}
 
 const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
 const tarDir = join(tmp, "tarballs")
@@ -146,6 +291,10 @@ try {
 	for (const pkg of IMPORT_CHECK) {
 		run("node", ["--input-type=module", "-e", `await import("${pkg}")`], proj)
 	}
+
+	console.log("[smoke] mailwoman-mcp bin: JSON-RPC initialize + tools/list over stdio…")
+	const toolCount = await checkMCPBin(proj)
+	console.log(`[smoke]   → ${toolCount} tools listed, bin shut down cleanly`)
 
 	// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the WHOLE `mailwoman`
 	// closure into ONE project, so a hoisted-but-undeclared dep is always present in node_modules — it

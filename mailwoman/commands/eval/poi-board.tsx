@@ -7,10 +7,11 @@
  *   real `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` surface against every
  *   committed fixture and grades the ASSEMBLED answer (matched category + coordinate), not label F1.
  *
- *   v1 is REPORT-ONLY (pre-registration discipline — see `eval-harness/poi-board.ts`'s header): this
- *   command always exits 0 on case failures. A non-zero exit means the HARNESS broke (missing
- *   fixtures, missing db, a pipeline construction error), never a graded case failing. Floors land in
- *   a follow-up PR once the v1 numbers exist to set them against.
+ *   Floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`.
+ *   They are graded and printed on EVERY run. Pass `--enforce` to turn a breach into a non-zero exit
+ *   (the CI-gate mode). Without `--enforce` the command stays report-only — it exits 0 on case
+ *   failures, and a non-zero exit means the HARNESS broke (missing fixtures, missing db, a pipeline
+ *   construction error), never a graded case failing.
  */
 
 import { Text } from "ink"
@@ -51,6 +52,11 @@ const OptionsSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("Print the full report as JSON instead of the human-readable table"),
+	enforce: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe("Exit non-zero if any pre-registered floor is breached (overall ≥ 90%, abstain/address = 100%)"),
 })
 
 export { OptionsSchema as options }
@@ -58,7 +64,7 @@ export { OptionsSchema as options }
 const EvalPoiBoard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { report } = await runPoiBoard({
+			const { report, exitCode } = await runPoiBoard({
 				locale: options.locale,
 				weightsCacheRoot: options.weightsCache,
 				fixturesPath: options.fixtures,
@@ -66,9 +72,10 @@ const EvalPoiBoard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				resolveDb: options.resolveDb,
 				candidateDb: options.candidateDb,
 				quiet: options.json,
+				enforce: options.enforce,
 			})
 
-			return { report, exitCode: 0 }
+			return { report, exitCode }
 		},
 		({ exitCode }) => exitCode
 	)

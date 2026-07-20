@@ -17,6 +17,11 @@ PRs #1180–#1185). Read this before touching `gazetteer build poi`, the poi exe
 layer publish path. The design rationale lives in the spec named in the front matter; this
 page is the "what bites you" record.
 
+poi.db is layer #1. The schema every layer database embeds — the `layer_manifest` /
+`layer_coverage` contract, the spine keys, tiers, and the meaning-of-zero rule this build
+follows — is specified in the [spatial-layer contract](./layer-contract.mdx). Read that first if
+you are authoring a new layer rather than rebuilding poi.db.
+
 ## Build
 
 ```bash
