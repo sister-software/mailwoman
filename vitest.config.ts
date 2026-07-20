@@ -105,6 +105,12 @@ export default defineConfig({
 			// full copy of the repo's test files. Without this exclude, vitest descends into every
 			// active worktree and runs every test suite N×(worktree count) times.
 			"**/.claude/worktrees/**",
+			// @mailwoman/react's tests are Vitest BROWSER MODE only (playwright/chromium via the
+			// workspace's own vitest.config.ts + `test:browser`). Importing vitest/browser inside
+			// this root forks-pool sweep is a hard error ("can be imported only inside the Browser
+			// Mode"), which is exactly what broke CI's Test leg from #1215 onward. CI runs the
+			// browser leg as its own step (test.yml "Test react (browser mode)").
+			"**/react/**/*.test.{ts,tsx}",
 		],
 	},
 })
