@@ -270,6 +270,43 @@ describe("POILookup", () => {
 		}
 	})
 
+	test("categoryIDs fan-out unions rows across every resolved leaf, nearest-first", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			// `cafe` + `fast_food` near Springfield = the 3 cafes + McDonald's, unioned and distance-sorted.
+			const hits = lk.search({ categoryIDs: ["cafe", "fast_food"], center: SPRINGFIELD, limit: 10 })
+			expect(new Set(hits.map((h) => h.name))).toEqual(new Set(["Cafe Alpha", "Cafe Beta", "Cafe Gamma", "McDonald's"]))
+
+			for (let i = 1; i < hits.length; i++) {
+				expect(hits[i]!.distanceM).toBeGreaterThanOrEqual(hits[i - 1]!.distanceM!)
+			}
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
+	test("categoryIDs skips leaves the dictionary doesn't carry, keeping the resolvable ones", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			const hits = lk.search({ categoryIDs: ["cafe", "zoo"], center: SPRINGFIELD, limit: 10 })
+			expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
+	test("categoryIDs with no resolvable leaf is a clean miss, not a throw", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			expect(lk.search({ categoryIDs: ["zoo", "aquarium"], center: SPRINGFIELD })).toEqual([])
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
 	test("an unknown category id is a clean miss, not a throw", () => {
 		const lk = new POILookup({ databasePath: dbPath })
 

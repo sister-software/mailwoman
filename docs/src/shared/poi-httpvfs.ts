@@ -81,6 +81,13 @@ export function loadPOICategoryCodes(worker: POIHTTPVFSWorker): Promise<Map<stri
 
 export interface POISearchOpts {
 	categoryID: string
+	/**
+	 * Fan-out leaves — the Overture `taxonomy.primary` ids this canonical category rolls up into (`supermarket` →
+	 * `grocery_store`, …), from `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories`. When set, every resolvable leaf
+	 * is probed per cell and the rows are unioned; unknown leaves are skipped. Absent ⇒ probe `categoryID` alone
+	 * (identity) — matching the Node reader's back-compat.
+	 */
+	categoryIDs?: string[]
 	center: { lat: number; lon: number }
 	/**
 	 * Ring budget (default 6, k reaches 5 — empirically ~1 km against the sealed layer: a live cross-check against a real
@@ -113,9 +120,13 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 	const limit = Math.max(1, opts.limit ?? DEFAULT_LIMIT)
 	const maxRings = Math.max(1, opts.maxRings ?? DEFAULT_MAX_RINGS)
 	const codes = await loadPOICategoryCodes(worker)
-	const categoryId = codes.get(opts.categoryID)
+	// Fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …), resolving each through
+	// the db's dictionary and dropping the ones it doesn't carry. Absent list ⇒ the seed id itself (identity).
+	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
+	const categoryIds = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
-	if (categoryId === undefined) return []
+	if (categoryIds.length === 0) return []
+	const categoryIdList = categoryIds.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
 	const seenCells = new Set<string>()
@@ -133,9 +144,12 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			const shortCell = Number(BigInt(`0x${shortenH3Cell(cell as H3Cell)}`))
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
 			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.
+			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
+			// user input — no injection surface). LIMIT still caps the per-cell pull; the outer ring loop + final sort
+			// trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
-				`WHERE h3_cell = ${shortCell} AND category_id = ${categoryId} ORDER BY neg_rank ASC LIMIT ${limit}`
+				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIdList}) ORDER BY neg_rank ASC LIMIT ${limit}`
 			const hits = rowsFromExec(await worker.db.exec(sql)) as unknown as Array<{
 				name: string | null
 				latitude: number

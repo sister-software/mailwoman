@@ -255,6 +255,9 @@ const POIExplorerInner: React.FC<{ defaultText: string }> = ({ defaultText }) =>
 			const worker = await loadPOIWorker(sqljsBaseURL)
 			const hits = await searchPOICategory(worker, {
 				categoryID: subject.category.id,
+				// Fan the canonical seed id out over its Overture leaves — same translation layer the Node reader uses, so
+				// `supermarket`/`trail` (curated ids the db stores as `grocery_store`/`hiking_trail`) stop zero-resulting.
+				categoryIDs: taxonomyLookup.resolveOvertureCategories(subject.category.id),
 				center: { lat: center.lat, lon: center.lon },
 			})
 

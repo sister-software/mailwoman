@@ -27,7 +27,7 @@ import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
-import { getPOICategory, requiresBuildLocalLayer } from "@mailwoman/poi-taxonomy"
+import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
@@ -254,7 +254,7 @@ export function createRuntimePipeline(
 	// lookup resolves. Reassigned in place (not a fresh `createPOIIntentStage` deps object) so the
 	// stage — wired once, synchronously, right below — always dispatches through the latest executor.
 	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | undefined = poiQueryKindEffective
-		? createPOIExecutor({ lookup: undefined, requiresBuildLocal })
+		? createPOIExecutor({ lookup: undefined, requiresBuildLocal, resolveOvertureCategories })
 		: undefined
 
 	if (poiQueryKindEffective) {
@@ -317,6 +317,7 @@ export function createRuntimePipeline(
 				poiExecute = createPOIExecutor({
 					lookup: new POILookup({ databasePath: poiDatabasePath }),
 					requiresBuildLocal,
+					resolveOvertureCategories,
 					reverseGeocode: reverseGeocoder ? buildSyncReverseGeocode(reverseGeocoder) : undefined,
 				})
 			} catch {

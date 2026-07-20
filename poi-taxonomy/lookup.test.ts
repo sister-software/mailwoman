@@ -6,7 +6,13 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { getAllCategories, getPOICategory, lookupPOICategory, requiresBuildLocalLayer } from "./lookup.ts"
+import {
+	getAllCategories,
+	getPOICategory,
+	lookupPOICategory,
+	requiresBuildLocalLayer,
+	resolveOvertureCategories,
+} from "./lookup.ts"
 
 describe("lookupPOICategory", () => {
 	it("matches a category by its own id-phrase and label", () => {
@@ -56,6 +62,43 @@ describe("taxonomy integrity", () => {
 	it("every category carries a well-formed osmTag", () => {
 		for (const category of getAllCategories()) {
 			expect(category.osmTag, `osmTag missing on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
+		}
+	})
+})
+
+describe("resolveOvertureCategories", () => {
+	it("fans a mismatched seed id out over its Overture leaves", () => {
+		const supermarket = resolveOvertureCategories("supermarket")
+		expect(supermarket).toContain("grocery_store")
+		// The curated seed id itself is NOT a stored Overture leaf — it must not leak into the probe list.
+		expect(supermarket).not.toContain("supermarket")
+
+		const trail = resolveOvertureCategories("trail")
+		expect(trail).toEqual(["hiking_trail", "mountain_bike_trail", "recreational_trail_or_path"])
+	})
+
+	it("keeps the canonical id when a category adds sibling leaves (cafe → cafe + coffee_shop)", () => {
+		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
+	})
+
+	it("defaults to identity for a seed id that already equals its Overture leaf", () => {
+		expect(resolveOvertureCategories("hotel")).toEqual(["hotel"])
+		expect(resolveOvertureCategories("restaurant")).toEqual(["restaurant"])
+	})
+
+	it("returns [] for an unknown seed id (clean miss, mirrors getPOICategory)", () => {
+		expect(resolveOvertureCategories("flux_capacitor_depot")).toEqual([])
+	})
+
+	it("every declared Overture leaf is a distinct string, and identity holds for the undeclared rest", () => {
+		for (const category of getAllCategories()) {
+			const leaves = resolveOvertureCategories(category.id)
+
+			if (category.overtureCategories && category.overtureCategories.length > 0) {
+				expect(leaves).toEqual([...category.overtureCategories])
+			} else {
+				expect(leaves).toEqual([category.id])
+			}
 		}
 	})
 })

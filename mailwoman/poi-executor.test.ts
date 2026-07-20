@@ -80,8 +80,67 @@ describe("createPOIExecutor", () => {
 			},
 		])
 		expect(seenQueries).toEqual([
-			{ categoryID: "hospital", center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
+			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
 		])
+	})
+
+	it("category fan-out: probes the injected Overture leaves and re-tags hits to the canonical seed id", () => {
+		const seenQueries: POISearchQuery[] = []
+		// The db stores the raw Overture leaf id on each row — the executor must re-tag it back to `supermarket`.
+		const groceryHit: POISearchHit = { ...HOSPITAL_HIT, name: "Jewel-Osco", categoryID: "grocery_store" }
+		const executor = createPOIExecutor({
+			lookup: stubLookup((query) => {
+				seenQueries.push(query)
+
+				return [groceryHit]
+			}),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+			resolveOvertureCategories: (id) => (id === "supermarket" ? ["grocery_store", "organic_grocery_store"] : [id]),
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryID: "supermarket", matched: "grocery" },
+			anchor: { text: "Chicago IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+		// The query fans out over the leaves (not the raw seed id); the emitted id is the canonical seed id.
+		expect(seenQueries).toEqual([
+			{
+				categoryIDs: ["grocery_store", "organic_grocery_store"],
+				center: { latitude: 39.78, longitude: -89.65 },
+				limit: undefined,
+			},
+		])
+		expect(outcome.results![0]!.categoryID).toBe("supermarket")
+		expect(outcome.results![0]!.name).toBe("Jewel-Osco")
+	})
+
+	it("category identity default: no injected resolver ⇒ probes [categoryID] and re-tag is a no-op", () => {
+		const seenQueries: POISearchQuery[] = []
+		const executor = createPOIExecutor({
+			lookup: stubLookup((query) => {
+				seenQueries.push(query)
+
+				return [HOSPITAL_HIT]
+			}),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+		expect(seenQueries).toEqual([
+			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
+		])
+		expect(outcome.results![0]!.categoryID).toBe("hospital")
 	})
 
 	it("anchor_required: category subject, lookup present, no resolvable center", () => {

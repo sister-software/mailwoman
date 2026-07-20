@@ -44,6 +44,15 @@ export interface CategoryRecord {
 	 */
 	osmTag?: string
 	source: CategorySource
+	/**
+	 * Overture `taxonomy.primary` LEAF ids that roll up into this canonical category — i.e. the values a built `poi.db`
+	 * actually stores. The seed taxonomy keys categories by curated ids (`supermarket`, `trail`), but the db stores
+	 * Overture leaves (`grocery_store`, `hiking_trail`, …); this is the one-to-many translation layer between the two
+	 * namespaces. Omitted/empty ⇒ the id IS its own probe id (identity — 21 of 23 seeds rely on that, e.g. `hospital` =
+	 * Overture `hospital`). `mailwoman-infra` categories carry no Overture leaf and abstain build-local, so they leave
+	 * this omitted too.
+	 */
+	overtureCategories?: POICategoryID[]
 }
 
 /** One lexicon entry mapping a query phrase to a category. */
