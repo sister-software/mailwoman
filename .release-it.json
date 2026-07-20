@@ -32,6 +32,7 @@
 				"cartographer",
 				"neural-web",
 				"variant-aliases",
+				"react",
 				"mailwoman",
 				"mcp",
 				"timezone-lookup",
@@ -39,7 +40,8 @@
 				"nuts-lookup",
 				"libpostal",
 				"photon",
-				"nominatim"
+				"nominatim",
+				"fastify"
 			],
 			"publish": true,
 			"publishCommand": "node scripts/publish-workspace.ts",

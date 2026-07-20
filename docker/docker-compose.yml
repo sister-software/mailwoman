@@ -1,0 +1,73 @@
+# Example compose for ghcr.io/sister-software/mailwoman.
+#
+# `docker compose up mailwoman` boots the native /v1 API (the default). The three drop-in services
+# (nominatim / photon / libpostal) are alternative front-ends over the SAME image + weights — enable
+# one with `docker compose up nominatim` (etc.). All mount the gazetteer read-only at /data.
+#
+# The data volume is OPTIONAL for `mailwoman` and `libpostal` (both answer parse-level requests with
+# no data). `nominatim` and `photon` need a gazetteer to boot.
+#
+# Read-only-data note: point MAILWOMAN_CANDIDATE_DB at the candidate gazetteer file. The candidate
+# backend opens SQLite read-only, so it works on a `:ro` mount; the FTS admin backend opens
+# read-write and does NOT. See docker/README.md.
+
+services:
+  # Native /v1 API — parse, geocode, batch, format, health, metrics. The default.
+  mailwoman:
+    image: ghcr.io/sister-software/mailwoman:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${MAILWOMAN_DATA_HOST:-./data}:/data:ro
+    environment:
+      # Set when your candidate.db is a symlink or lives under a non-default name; auto-detected at
+      # /data/wof/candidate.db otherwise. Leave unset (and mount nothing) for a parse-only first run.
+      MAILWOMAN_CANDIDATE_DB: /data/wof/candidate.db
+
+  # Nominatim-compatible drop-in: GET /search /reverse /lookup /status. OpenCage-style annotations.
+  nominatim:
+    image: ghcr.io/sister-software/mailwoman:latest
+    command: ["node", "node_modules/@mailwoman/nominatim/out/cli.js", "serve"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${MAILWOMAN_DATA_HOST:-./data}:/data:ro
+    environment:
+      MAILWOMAN_CANDIDATE_DB: /data/wof/candidate.db
+    # The image's baked HEALTHCHECK targets the native server on :3000 — override it for the drop-in.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # Photon-compatible autocomplete drop-in: GET /api /reverse. GeoJSON FeatureCollections.
+  photon:
+    image: ghcr.io/sister-software/mailwoman:latest
+    command: ["node", "node_modules/@mailwoman/photon/out/cli.js", "serve"]
+    ports:
+      - "2322:2322"
+    volumes:
+      - ${MAILWOMAN_DATA_HOST:-./data}:/data:ro
+    environment:
+      MAILWOMAN_CANDIDATE_DB: /data/wof/candidate.db
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:2322/api?q=berlin').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # libpostal-compatible drop-in: POST/GET /parse, /expand. Weights-only — no data volume needed.
+  libpostal:
+    image: ghcr.io/sister-software/mailwoman:latest
+    command: ["node", "node_modules/@mailwoman/libpostal/out/cli.js", "serve"]
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/parse?address=1+main+st').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3

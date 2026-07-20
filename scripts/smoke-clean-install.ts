@@ -50,6 +50,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/codex": "codex",
 	"@mailwoman/poi-taxonomy": "poi-taxonomy",
 	"@mailwoman/kind-classifier": "kind-classifier",
+	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
+	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
+	// auto-installed from the registry.
+	"@mailwoman/react": "react",
 	"@mailwoman/locale-gate": "locale-gate",
 	"@mailwoman/normalize": "normalize",
 	"@mailwoman/phrase-grouper": "phrase-grouper",
@@ -72,6 +76,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/libpostal": "libpostal",
 	"@mailwoman/photon": "photon",
 	"@mailwoman/nominatim": "nominatim",
+	// The Fastify plugin. Its entrypoint's only eager runtime import is `fastify-plugin` (a declared dep) —
+	// `mailwoman`/`@mailwoman/core` are reached via dynamic import() on the first request, and `fastify` is a
+	// type-only (peer) import — so IMPORT_CHECK below loads it without fastify installed.
+	"@mailwoman/fastify": "fastify",
 	// `@mailwoman/mcp`'s bin (`out/cli.js`, the `mailwoman-mcp` entry) connects an stdio transport at module
 	// scope, so IMPORT_CHECK below (which imports the package ENTRYPOINT — `index.ts`, i.e. server.ts +
 	// tools.ts only) never exercises cli.ts directly. The bin's OWN dep closure (its static imports:
@@ -93,6 +101,8 @@ const IMPORT_CHECK = [
 	"@mailwoman/photon",
 	"@mailwoman/nominatim",
 	"@mailwoman/mcp",
+	"@mailwoman/fastify",
+	"@mailwoman/react",
 ]
 
 // Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep
