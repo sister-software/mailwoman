@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/react",
 	"version": "0.0.1",
-	"description": "React components + headless hooks for mailwoman — parse/geocode/POI explorers, Storybook-tested, Docusaurus-independent. 0.0.1 is a name-reservation placeholder; the first functional release ships with the next mailwoman minor.",
+	"description": "React components + headless hooks for mailwoman — parse/geocode/POI explorers, Storybook-tested, Docusaurus-independent.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -13,6 +13,8 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
+		"README.md",
+		"styles.css",
 		"*.ts",
 		"*.tsx",
 		"**/*.ts",
@@ -20,11 +22,20 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!**/*.stories.ts",
+		"!**/*.stories.tsx",
+		"!.storybook/**",
+		"!vitest.config.ts",
+		"!test/**",
+		"!out/test/**",
+		"!out/storybook-static/**",
+		"!storybook-static/**"
 	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
+		"./styles.css": "./styles.css",
 		".": {
 			"node": "./index.ts",
 			"default": "./out/index.js",
@@ -34,7 +45,33 @@
 	"publishConfig": {
 		"access": "public"
 	},
+	"scripts": {
+		"storybook": "storybook dev -p 6007 --no-open",
+		"build-storybook": "storybook build",
+		"test:browser": "vitest run --config vitest.config.ts"
+	},
+	"dependencies": {
+		"@mailwoman/kind-classifier": "workspace:*",
+		"@mailwoman/poi-taxonomy": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*"
+	},
+	"devDependencies": {
+		"@storybook/addon-docs": "^10.5.0",
+		"@storybook/react-vite": "^10.5.0",
+		"@types/react": "^19.2.17",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^6.0.3",
+		"@vitest/browser": "4.1.10",
+		"@vitest/browser-playwright": "4.1.10",
+		"playwright": "^1.61.1",
+		"react": "^19.2.7",
+		"react-dom": "^19.2.7",
+		"storybook": "^10.5.0",
+		"vite": "^8.0.16",
+		"vitest": "4.1.10"
+	},
 	"peerDependencies": {
-		"react": ">=18"
+		"react": ">=18",
+		"react-dom": ">=18"
 	}
 }

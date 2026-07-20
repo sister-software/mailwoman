@@ -4,9 +4,21 @@
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": ["node"]
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": []
+	"exclude": [
+		"./out/**/*",
+		"./storybook-static/**",
+		"./test/**",
+		"./**/*.test.ts",
+		"./**/*.test.tsx",
+		"./**/*.stories.ts",
+		"./**/*.stories.tsx",
+		"./.storybook/**",
+		"./vitest.config.ts"
+	],
+	"references": [{ "path": "../kind-classifier" }, { "path": "../poi-taxonomy" }, { "path": "../query-shape" }]
 }

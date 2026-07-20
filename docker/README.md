@@ -66,15 +66,15 @@ gotchas worth naming:
 
 ## The `/v1` surface (default server)
 
-| Route          | Method    | Needs data | Notes                                   |
-| -------------- | --------- | ---------- | --------------------------------------- |
-| `/v1/parse`    | GET, POST | no         | weights-only                            |
-| `/v1/geocode`  | POST      | yes        | `503` when no gazetteer                 |
-| `/v1/batch`    | POST      | yes        | per-row error isolation; `503` when dry |
-| `/v1/format`   | POST      | no         | always available                        |
-| `/health`      | GET       | no         | the HEALTHCHECK target                  |
-| `/metrics`     | GET       | no         | in-process latency/tier snapshot        |
-| `/openapi.json`| GET       | no         | emitted OpenAPI document                |
+| Route           | Method    | Needs data | Notes                                   |
+| --------------- | --------- | ---------- | --------------------------------------- |
+| `/v1/parse`     | GET, POST | no         | weights-only                            |
+| `/v1/geocode`   | POST      | yes        | `503` when no gazetteer                 |
+| `/v1/batch`     | POST      | yes        | per-row error isolation; `503` when dry |
+| `/v1/format`    | POST      | no         | always available                        |
+| `/health`       | GET       | no         | the HEALTHCHECK target                  |
+| `/metrics`      | GET       | no         | in-process latency/tier snapshot        |
+| `/openapi.json` | GET       | no         | emitted OpenAPI document                |
 
 The container always listens on **3000** inside; remap with `-p <host>:3000`.
 

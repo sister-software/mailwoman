@@ -52,8 +52,8 @@ const HOST = "0.0.0.0"
 const DATA_ROOT = mailwomanDataRoot()
 
 /**
- * Same WOF-path resolution as `mailwoman/api-engine.ts`: the `$MAILWOMAN_WOF_DB` comma-separated
- * override, else the conventional per-shard `wof/` paths that actually exist on disk.
+ * Same WOF-path resolution as `mailwoman/api-engine.ts`: the `$MAILWOMAN_WOF_DB` comma-separated override, else the
+ * conventional per-shard `wof/` paths that actually exist on disk.
  */
 function wofPaths() {
 	const env = $public.MAILWOMAN_WOF_DB
