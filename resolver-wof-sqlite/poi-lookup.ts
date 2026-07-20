@@ -11,8 +11,11 @@
  *     cell's clustered `(h3_cell, category_id, neg_rank, …)` range. Rings accumulate until `limit`
  *     rows are on hand after a completed ring, or `maxRings` is exhausted; the pool is sorted by
  *     haversine distance from `center` after every ring.
- *   - **Brand**: the same k-ring walk, but probing on `brand_wikidata` instead — category
- *     unconstrained, so a chain's rows surface regardless of how they were categorized.
+ *   - **Brand**: NOT a k-ring walk. Brand rows are globally sparse (~0.31% of poi.db; median nearest
+ *     tagged instance ~110 km), so ring expansion could never reach them. Instead a single brand-wide
+ *     indexed fetch on `brand_wikidata` (the partial `poi_brand_wikidata` index) pulls EVERY row for
+ *     the QID — category unconstrained — then haversine-sorts from `center` and takes the nearest
+ *     `limit`, bounded by a `BRAND_MAX_DISTANCE_KM` sanity radius.
  *   - **Name**: FTS5 `MATCH` against the `poi_search` virtual table, hydrated back to full rows by
  *     `name_key`. No center required; if one is given, hits are still distance-sorted.
  *
@@ -32,8 +35,15 @@ import type { POICategoryCodeTable, POITable } from "./poi-schema.ts"
 /** Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4). */
 export const POI_H3_RESOLUTION = 9
 
-/** Ring budget default: 12 res-9 k-rings ≈ ~4 km. */
+/** Ring budget default: 12 res-9 k-rings ≈ ~4 km. Category path only — the brand path ignores rings entirely. */
 const DEFAULT_MAX_RINGS = 12
+
+/**
+ * Brand sanity radius (km): the brand-wide fetch returns the global nearest at ANY distance, so this drops hits far
+ * enough to be certainly the wrong continent — "Applebee's near Marseille" comes back empty rather than with a 5,700 km
+ * hit. A product bound, not a reach cap (the index already makes the fetch cheap regardless of distance).
+ */
+const BRAND_MAX_DISTANCE_KM = 500
 
 /** Row-count default when a query doesn't specify `limit`. */
 const DEFAULT_LIMIT = 20
@@ -109,8 +119,8 @@ export class POILookup implements Disposable {
 
 	/** `(h3_cell, category_id)` → the cell's category-clustered range, most-confident-first. */
 	readonly #categoryCellProbe: ReturnType<DatabaseSync["prepare"]>
-	/** `(h3_cell, brand_wikidata)` → the cell's brand-matched rows (category unconstrained). */
-	readonly #brandCellProbe: ReturnType<DatabaseSync["prepare"]>
+	/** `brand_wikidata` → ALL of a brand's rows globally (partial-index range-scan); distance-sorted in JS, not SQL. */
+	readonly #brandProbe: ReturnType<DatabaseSync["prepare"]>
 	/** FTS5 `MATCH` over `poi_search`, returning candidate `name_key`s to hydrate. */
 	readonly #nameFTSProbe: ReturnType<DatabaseSync["prepare"]>
 
@@ -139,9 +149,7 @@ export class POILookup implements Disposable {
 		this.#categoryCellProbe = this.#db.prepare(
 			`SELECT ${columns} FROM poi WHERE h3_cell = ? AND category_id = ? ORDER BY neg_rank ASC LIMIT ?`
 		)
-		this.#brandCellProbe = this.#db.prepare(
-			`SELECT ${columns} FROM poi WHERE h3_cell = ? AND brand_wikidata = ? ORDER BY neg_rank ASC LIMIT ?`
-		)
+		this.#brandProbe = this.#db.prepare(`SELECT ${columns} FROM poi WHERE brand_wikidata = ?`)
 		this.#nameFTSProbe = this.#db.prepare(
 			"SELECT name_key FROM poi_search WHERE poi_search MATCH ? ORDER BY bm25(poi_search) LIMIT ?"
 		)
@@ -159,35 +167,55 @@ export class POILookup implements Disposable {
 				throw new Error("POILookup.search: category/brand search requires a `center`")
 			}
 
+			// brandWikidata wins over categoryID(s) when both are set — see POISearchQuery.categoryID. The brand path is
+			// a brand-wide indexed fetch, NOT a k-ring walk (brand rows are too sparse for ring expansion to reach).
+			if (query.brandWikidata) {
+				return this.#searchBrand(query.brandWikidata, query.center, limit)
+			}
+
 			return this.#searchKRing(query, limit)
 		}
 
 		return []
 	}
 
-	/** Category or brand path: k-ring expansion from `query.center`'s res-9 cell, probing each new ring's cells. */
+	/**
+	 * Brand path: a single brand-wide indexed fetch — NO k-ring. Fetch EVERY row for the QID (the partial
+	 * `poi_brand_wikidata` index makes this a range-scan, not a 13.68M full scan), haversine-sort from `center`, drop
+	 * anything past the {@link BRAND_MAX_DISTANCE_KM} sanity radius, and take the nearest `limit`. Returns the true
+	 * nearest at any distance — the reach ceiling k-ring hits on sparse brand rows is gone.
+	 */
+	#searchBrand(brandWikidata: string, center: { latitude: number; longitude: number }, limit: number): POISearchHit[] {
+		const rows = this.#brandProbe.all(brandWikidata) as unknown as POIRow[]
+
+		return sortByDistance(rows, center)
+			.filter(
+				(row) => haversineKm(center.latitude, center.longitude, row.latitude, row.longitude) <= BRAND_MAX_DISTANCE_KM
+			)
+			.slice(0, limit)
+			.map((row) => toHit(row, this.#idToCategory, center))
+	}
+
+	/** Category path: k-ring expansion from `query.center`'s res-9 cell, probing each new ring's cells. */
 	#searchKRing(query: POISearchQuery, limit: number): POISearchHit[] {
 		const center = query.center!
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
 		const categoryIds: number[] = []
 
-		// brandWikidata wins over categoryID(s) when both are set — see POISearchQuery.categoryID.
-		if (!query.brandWikidata) {
-			// `categoryIDs` (the fan-out list) supersedes the single `categoryID`; either way, resolve each id through the
-			// dictionary and drop the ones the db doesn't carry (Overture-taxonomy drift, or an identity id with no rows).
-			const seedIDs = query.categoryIDs?.length ? query.categoryIDs : query.categoryID ? [query.categoryID] : []
+		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`; either way, resolve each id through the
+		// dictionary and drop the ones the db doesn't carry (Overture-taxonomy drift, or an identity id with no rows).
+		const seedIDs = query.categoryIDs?.length ? query.categoryIDs : query.categoryID ? [query.categoryID] : []
 
-			for (const id of seedIDs) {
-				const resolved = this.#categoryToID.get(id)
+		for (const id of seedIDs) {
+			const resolved = this.#categoryToID.get(id)
 
-				if (resolved !== undefined) {
-					categoryIds.push(resolved)
-				}
+			if (resolved !== undefined) {
+				categoryIds.push(resolved)
 			}
-
-			// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss, not a throw.
-			if (categoryIds.length === 0) return []
 		}
+
+		// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss, not a throw.
+		if (categoryIds.length === 0) return []
 
 		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
 		const seenCells = new Set<string>()
@@ -204,14 +232,10 @@ export class POILookup implements Disposable {
 				seenCells.add(cell)
 				const shortCell = h3CellToInt(cell as H3Cell)
 
-				if (query.brandWikidata) {
-					rows.push(...(this.#brandCellProbe.all(shortCell, query.brandWikidata, limit) as unknown as POIRow[]))
-				} else {
-					// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
-					// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
-					for (const categoryId of categoryIds) {
-						rows.push(...(this.#categoryCellProbe.all(shortCell, categoryId, limit) as unknown as POIRow[]))
-					}
+				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
+				// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
+				for (const categoryId of categoryIds) {
+					rows.push(...(this.#categoryCellProbe.all(shortCell, categoryId, limit) as unknown as POIRow[]))
 				}
 			}
 

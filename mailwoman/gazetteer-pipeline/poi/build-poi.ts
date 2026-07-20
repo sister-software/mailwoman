@@ -49,6 +49,7 @@ import {
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
+	createPOIBrandIndex,
 	createPOINameKeyIndex,
 	createPOISearchFTS,
 	createPOIStagingTables,
@@ -477,8 +478,9 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	db.exec(`INSERT INTO poi (${cols}) SELECT ${cols} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key;`)
 	await kdb.schema.dropTable("poi_stage").execute()
 
-	progress("index", "name_key index (index-after-load)")
+	progress("index", "name_key + brand_wikidata indexes (index-after-load)")
 	await createPOINameKeyIndex(kdb)
+	await createPOIBrandIndex(kdb)
 
 	progress("fts", "building FTS5 name index")
 	createPOISearchFTS(db)
