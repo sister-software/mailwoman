@@ -4615,6 +4615,10 @@ __metadata:
   resolution: "@mailwoman/fastify@workspace:fastify"
   dependencies:
     "@mailwoman/core": "workspace:^"
+    "@mailwoman/neural": "workspace:*"
+    "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     fastify: "npm:^5.10.0"
     fastify-plugin: "npm:^6.0.0"
     mailwoman: "workspace:^"
