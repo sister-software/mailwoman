@@ -35,8 +35,20 @@ import type { POICategoryCodeTable, POITable } from "./poi-schema.ts"
 /** Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4). */
 export const POI_H3_RESOLUTION = 9
 
-/** Ring budget default: 12 res-9 k-rings ≈ ~4 km. Category path only — the brand path ignores rings entirely. */
-const DEFAULT_MAX_RINGS = 12
+/**
+ * Ring budget default: 16 res-9 k-rings ≈ ~5.4 km (corner) / ~4.3 km worst-bearing. Category path only — the brand path
+ * ignores rings entirely.
+ *
+ * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a boundary miss for SPARSE categories: the
+ * nearest `trail` instance sits at 3.90 km, but the res-9 disk of radius 11 (maxRings 12) reaches only ~3.16 km in its
+ * worst bearing — the cell holding that trail isn't covered until ring 13 (maxRings 14). Dense categories are
+ * unaffected: the loop breaks the ring it accumulates `limit` rows (cafe@Paris fills 20 by ring 2), so this ceiling
+ * never enters their probe budget. Only sparse-but-present categories that never reach `limit` scan the fuller budget —
+ * a cold, one-shot `mailwoman poi` path, not per-keystroke. 16 (not the bare threshold 14) leaves ~2 rings of margin so
+ * the gate is stable against small db rebuilds, while staying ~4x tighter than the board's 25 km "roughly right place"
+ * window (no wrong-city false positives). The browser reader passes its own smaller `maxRings` and is untouched.
+ */
+const DEFAULT_MAX_RINGS = 16
 
 /**
  * Brand sanity radius (km): the brand-wide fetch returns the global nearest at ANY distance, so this drops hits far
@@ -65,7 +77,7 @@ export interface POISearchQuery {
 	/** Search center. Required for category/brand queries (k-ring expansion). */
 	center?: { latitude: number; longitude: number }
 	/**
-	 * Ring budget: how many res-9 k-rings to expand before giving up (default 12 ≈ ~4 km). Counts ring 0, so k reaches
+	 * Ring budget: how many res-9 k-rings to expand before giving up (default 16 ≈ ~5.4 km). Counts ring 0, so k reaches
 	 * `maxRings - 1`.
 	 */
 	maxRings?: number
