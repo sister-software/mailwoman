@@ -27,11 +27,11 @@ on:
   release:
     types: [published]
 
-# Least privilege: read the repo, write GHCR packages. `id-token` is here for future cosign/attestation.
+# Least privilege: read the repo, write GHCR packages. (`id-token: write` returns when image signing
+# lands — cosign/attestation — but is omitted until then so the workflow isn't over-privileged.)
 permissions:
   contents: read
   packages: write
-  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -86,7 +86,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ steps.version.outputs.value }}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
           labels: |
             org.opencontainers.image.title=mailwoman
             org.opencontainers.image.source=https://github.com/sister-software/mailwoman
