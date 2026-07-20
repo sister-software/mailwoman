@@ -42,6 +42,8 @@
 		{ "path": "./phrase-grouper" },
 		{ "path": "./poi-taxonomy" },
 		{ "path": "./mcp" },
+		{ "path": "./react" },
+		{ "path": "./fastify" },
 		{ "path": "./query-shape" },
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },

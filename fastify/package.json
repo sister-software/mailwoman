@@ -1,0 +1,40 @@
+{
+	"name": "@mailwoman/fastify",
+	"version": "0.0.1",
+	"description": "Fastify plugin for mailwoman — register geocoding, parsing, and POI search routes plus a fastify.mailwoman decorator over the local pipeline. 0.0.1 is a name-reservation placeholder; the first functional release ships with the next mailwoman minor.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "fastify"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"peerDependencies": {
+		"fastify": ">=5"
+	}
+}
