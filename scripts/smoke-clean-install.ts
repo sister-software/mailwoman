@@ -51,6 +51,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/codex": "codex",
 	"@mailwoman/poi-taxonomy": "poi-taxonomy",
 	"@mailwoman/kind-classifier": "kind-classifier",
+	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
+	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
+	// auto-installed from the registry.
+	"@mailwoman/react": "react",
 	"@mailwoman/locale-gate": "locale-gate",
 	"@mailwoman/normalize": "normalize",
 	"@mailwoman/phrase-grouper": "phrase-grouper",
@@ -94,6 +98,7 @@ const IMPORT_CHECK = [
 	"@mailwoman/photon",
 	"@mailwoman/nominatim",
 	"@mailwoman/mcp",
+	"@mailwoman/react",
 ]
 
 // Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep

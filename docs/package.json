@@ -42,6 +42,7 @@
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/react": "workspace:^",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mdx-js/react": "^3.1.1",

@@ -82,13 +82,16 @@ export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): str
 export function buildWorkspaceAliases(): Record<string, string> {
 	const aliases: Record<string, string> = {}
 
-	// Bare package aliases (exact match via `$` suffix).
+	// Bare package aliases (exact match via `$` suffix). `@mailwoman/react` resolves to source so its
+	// `.tsx` explorers transpile inline (like every other workspace source import); the `./styles.css`
+	// subpath is left to package-exports resolution (the `$` keeps this alias from swallowing it).
 	for (const pkg of [
 		"@mailwoman/neural-web",
 		"@mailwoman/resolver-wof-wasm",
 		"@mailwoman/core",
 		"@mailwoman/query-shape",
 		"@mailwoman/kind-classifier",
+		"@mailwoman/react",
 	]) {
 		try {
 			aliases[`${pkg}$`] = resolveWorkspaceEntry(pkg)

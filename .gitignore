@@ -60,6 +60,9 @@ pids
 out
 dist
 
+# Storybook production build output (@mailwoman/react `build-storybook`)
+storybook-static
+
 # `mailwoman clients generate` output (mailwoman/tools/generate-clients.ts) — the emitted specs +
 # the assembled/verified Python package and Rust crate. One-directional build product, never
 # committed; the gated CI job (publish.yml) regenerates it fresh on every dispatch.
