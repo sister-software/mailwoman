@@ -116,7 +116,11 @@ clearly-labeled regional slice, as fallback only. Publishing rides the existing
 
 ## Flag state
 
-`poiQueryKind` is default-OFF (`boolean | { poiDatabasePath }`); flag-off is byte-identical
-by construction. The promotion gate before any default flip is in the
-[runtime-flag register](./runtime-flags.mdx). `forceFullPipeline` does not bypass the poi
-branch (routing branch, not a fast-path — decided, documented on `PipelineOpts`).
+`poiQueryKind` is **default-ON since 2026-07-20** (`boolean | { poiDatabasePath }`) — the
+promotion gate passed: 0/4,507 golden misroutes, 6/6 demo presets byte-identical, POI board
+v1.1 92.2% (see
+[`2026-07-20-poi-promotion-battery.md`](../../evals/2026-07-20-poi-promotion-battery.md) and
+the [runtime-flag register](./runtime-flags.mdx)). `undefined`/`true` is intent/abstain-only
+(no db); pass `false` to restore the pre-flag, byte-identical address-only classification.
+`forceFullPipeline` does not bypass the poi branch (routing branch, not a fast-path —
+decided, documented on `PipelineOpts`).

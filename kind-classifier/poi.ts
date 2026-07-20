@@ -6,7 +6,7 @@
  *   POI subject detection for the `poi_query` kind. The lexicon is INJECTED (`POIPhraseLookup`) —
  *   this package keeps its bitter-lesson invariant (no dictionaries in-tree); the phrase table
  *   lives in `@mailwoman/poi-taxonomy` and is wired in by `createRuntimePipeline` behind the
- *   default-OFF `poiQueryKind` flag. Spec §3.1.
+ *   `poiQueryKind` flag (default-ON since 2026-07-20). Spec §3.1.
  */
 
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
