@@ -79,7 +79,7 @@ mailwoman parse --tui
 
 # Diagnose the install — what works, what's missing, and the one command to fix each gap
 mailwoman doctor          # human-readable checklist (exit 1 if a core check fails)
-mailwoman doctor --json   # machine-readable { checks: [...], exitCode }
+mailwoman doctor --json   # machine-readable { checks: [{ id, label, status, detail, fix?, core }], exitCode }
 ```
 
 ## Library API

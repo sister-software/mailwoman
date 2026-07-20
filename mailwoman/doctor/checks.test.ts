@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	assembleReport,
+	checkPOI,
 	CheckStatus,
 	computeExitCode,
 	dataRootCheck,
@@ -22,7 +23,6 @@ import {
 	onnxRuntimeCheck,
 	parseVersion,
 	parseVersionFloor,
-	poiCheck,
 	versionMeetsFloor,
 	weightsCheck,
 	type DoctorCheck,
@@ -134,9 +134,9 @@ describe("dataRootCheck (optional)", () => {
 })
 
 describe("gazetteerCheck (optional)", () => {
-	it("ok on a discovered candidate.db", () => {
+	it("ok on an env-resolved candidate.db", () => {
 		const c = gazetteerCheck({
-			found: { kind: "candidate", path: "/wof/candidate.db", sizeBytes: 1_400_000_000 },
+			envCandidate: { path: "/wof/candidate.db", sizeBytes: 1_400_000_000 },
 			probed: ["/wof/candidate.db"],
 		})
 		expect(c.status).toBe(CheckStatus.OK)
@@ -145,22 +145,36 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("ok on a discovered WOF shard", () => {
-		const c = gazetteerCheck({ found: { kind: "wof", path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
+		const c = gazetteerCheck({ wofShard: { path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("WOF admin shard")
 	})
 
-	it("missing with the download URL when nothing found", () => {
+	it("DEGRADED (the trap) — candidate.db at the convention path but $MAILWOMAN_CANDIDATE_DB unset", () => {
+		// A fresh consumer downloads candidate.db to <root>/wof/candidate.db but never sets the env. geocode/serve
+		// resolve candidate env-only (no convention fallback) — so the file is on disk yet the tools won't touch it.
+		const c = gazetteerCheck({
+			conventionCandidate: "/data/wof/candidate.db",
+			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
+		})
+		expect(c.status).toBe(CheckStatus.Degraded)
+		expect(c.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
+		expect(c.detail).toContain("geocode/serve won't use it")
+		expect(c.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
+	})
+
+	it("missing with the download URL + env-set hint when nothing found", () => {
 		const c = gazetteerCheck({ probed: ["/a", "/b"] })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("public.sister.software/mailwoman/gazetteer")
+		expect(c.fix).toContain("export MAILWOMAN_CANDIDATE_DB=")
 		expect(c.detail).toContain("2 paths")
 	})
 })
 
-describe("poiCheck (optional)", () => {
+describe("checkPOI (optional)", () => {
 	it("ok with manifest identity when the layer opens", () => {
-		const c = poiCheck({
+		const c = checkPOI({
 			path: "/poi/poi.db",
 			exists: true,
 			manifest: { name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" },
@@ -171,14 +185,14 @@ describe("poiCheck (optional)", () => {
 	})
 
 	it("missing with a build/download fix when absent", () => {
-		const c = poiCheck({ path: "/poi/poi.db", exists: false })
+		const c = checkPOI({ path: "/poi/poi.db", exists: false })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("mailwoman gazetteer build poi")
 		expect(c.fix).toContain("poi/2026-07-20a")
 	})
 
 	it("degraded when present but the manifest is unreadable", () => {
-		const c = poiCheck({ path: "/poi/poi.db", exists: true, error: "layer manifest: expected exactly 1 row, found 0" })
+		const c = checkPOI({ path: "/poi/poi.db", exists: true, error: "layer manifest: expected exactly 1 row, found 0" })
 		expect(c.status).toBe(CheckStatus.Degraded)
 		expect(c.detail).toContain("unreadable")
 	})

@@ -26,10 +26,11 @@ function healthyDeps(): DoctorDeps {
 		}),
 		weightsPackageName: (locale) => `@mailwoman/neural-weights-${locale}`,
 		dataRoot: () => ({ path: "/data", fromEnv: true }),
-		candidatePath: () => "/data/wof/candidate.db",
+		envCandidatePath: () => "/data/wof/candidate.db",
+		conventionCandidatePath: () => "/data/wof/candidate.db",
 		wofShardPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
-		readPoiManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
+		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
 		loadOnnx: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
@@ -91,10 +92,10 @@ describe("runDoctor (injected seams)", () => {
 		expect(byId(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
 	})
 
-	it("gazetteer discovery falls back to a WOF shard when no candidate.db", async () => {
+	it("gazetteer discovery falls back to a WOF shard when no env candidate.db", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			candidatePath: () => undefined,
+			envCandidatePath: () => undefined,
 			existsSync: (p) => p === "/data/wof/admin.db",
 		})
 		const gaz = byId(report.checks, "gazetteer")
@@ -102,12 +103,32 @@ describe("runDoctor (injected seams)", () => {
 		expect(gaz.detail).toContain("WOF admin shard")
 	})
 
+	it("THE TRAP: candidate.db on disk at the convention path + env unset + no WOF shards → degraded, exit still 0", async () => {
+		const report = await runDoctor({
+			...healthyDeps(),
+			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, but the file sits at the convention path.
+			envCandidatePath: () => undefined,
+			existsSync: () => false,
+			conventionCandidatePath: () => "/data/wof/candidate.db",
+			readPOIManifest: async () => {
+				throw new Error("unreachable — poi path does not exist")
+			},
+		})
+		const gaz = byId(report.checks, "gazetteer")
+		expect(gaz.status).toBe(CheckStatus.Degraded)
+		expect(gaz.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
+		expect(gaz.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
+		// A convention-only candidate is not a core failure — parse still runs.
+		expect(report.exitCode).toBe(0)
+	})
+
 	it("no gazetteer at all → optional missing, exit still 0 (core intact)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			candidatePath: () => undefined,
+			envCandidatePath: () => undefined,
+			conventionCandidatePath: () => undefined,
 			existsSync: () => false,
-			readPoiManifest: async () => {
+			readPOIManifest: async () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
 		})
@@ -119,7 +140,7 @@ describe("runDoctor (injected seams)", () => {
 	it("poi.db present but manifest unreadable → degraded (not a hard error)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			readPoiManifest: async () => {
+			readPOIManifest: async () => {
 				throw new Error("layer manifest: expected exactly 1 row, found 0")
 			},
 		})

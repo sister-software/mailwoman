@@ -23,19 +23,20 @@ import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/l
 import { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 
+import { resolveCandidateDBPath } from "../resolver-backend.ts"
 import {
 	assembleReport,
+	checkPOI,
 	dataRootCheck,
 	gazetteerCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
 	onnxRuntimeCheck,
-	poiCheck,
 	weightsCheck,
 	type DoctorCheck,
 	type DoctorReport,
 	type GazetteerObservation,
-	type PoiObservation,
+	type POIObservation,
 	type WeightsObservation,
 } from "./checks.ts"
 
@@ -63,16 +64,18 @@ export interface DoctorDeps {
 	/** The resolved data root (blessed helper) + whether it came from the env. */
 	dataRoot(): { path: string; fromEnv: boolean }
 	/**
-	 * The configured candidate.db path if it exists ($MAILWOMAN_CANDIDATE_DB then the `<root>/wof/candidate.db`
-	 * convention).
+	 * The candidate.db the TOOLS would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
+	 * on disk. NO convention-path fallback: that's exactly what geocode/serve do.
 	 */
-	candidatePath(): string | undefined
+	envCandidatePath(): string | undefined
+	/** The `<data-root>/wof/candidate.db` convention path IF it exists on disk — used to detect the env-unset trap. */
+	conventionCandidatePath(): string | undefined
 	/** The WOF admin shard paths to probe ($MAILWOMAN_WOF_DB split, else the default shard set). */
 	wofShardPaths(): string[]
 	/** The default POI layer path (`gazetteer build poi`'s own default). */
 	poiPath(): string
 	/** Read + validate a POI layer manifest (throws on a missing/invalid manifest). */
-	readPoiManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }>
+	readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }>
 	/** Attempt to load the ONNX native binding (throws when unavailable). */
 	loadOnnx(): Promise<void>
 	/** The running Node version (`process.versions.node`). */
@@ -94,15 +97,8 @@ function readEnginesFloor(): string {
 	}
 }
 
-/**
- * The candidate.db discovery order `mailwoman geocode` / `mailwoman serve` use: an explicit `$MAILWOMAN_CANDIDATE_DB`
- * first, then the `<data-root>/wof/candidate.db` convention path that `serve` auto-detects. Returns the first that
- * exists, else `undefined`.
- */
-function defaultCandidatePath(): string | undefined {
-	const env = $public.MAILWOMAN_CANDIDATE_DB
-
-	if (env && existsSync(env)) return env
+/** The `<data-root>/wof/candidate.db` convention path if it exists on disk — the file a fresh consumer downloads. */
+function defaultConventionCandidatePath(): string | undefined {
 	const convention = dataRootPath("wof", "candidate.db")
 
 	return existsSync(convention) ? convention : undefined
@@ -123,7 +119,7 @@ function defaultWOFShardPaths(): string[] {
 }
 
 /** Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints. */
-async function readPoiManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
+async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
 	const raw = new DatabaseSync(path, { readOnly: true })
 	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
 
@@ -159,10 +155,13 @@ export function defaultDoctorDeps(): DoctorDeps {
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
 		dataRoot: () => ({ path: mailwomanDataRoot(), fromEnv: Boolean($public.MAILWOMAN_DATA_ROOT) }),
-		candidatePath: defaultCandidatePath,
+		// Mirror the tools EXACTLY: `resolveCandidateDBPath` is env-only (no convention fallback). A candidate.db at the
+		// convention path with the env unset is surfaced separately via `conventionCandidatePath` → the degraded trap.
+		envCandidatePath: () => resolveCandidateDBPath(),
+		conventionCandidatePath: defaultConventionCandidatePath,
 		wofShardPaths: defaultWOFShardPaths,
 		poiPath: () => dataRootPath("poi", "poi.db"),
-		readPoiManifest,
+		readPOIManifest,
 		loadOnnx: async () => {
 			await import("onnxruntime-node")
 		},
@@ -191,28 +190,35 @@ function gatherWeights(deps: DoctorDeps): WeightsObservation {
 }
 
 function gatherGazetteer(deps: DoctorDeps): GazetteerObservation {
-	const candidate = deps.candidatePath()
+	// Same precedence the tools apply: env candidate.db → WOF FTS shards. A convention-path candidate.db with the env
+	// unset is picked up by NEITHER, so it surfaces as the degraded trap (only when nothing else would work).
+	const envCandidate = deps.envCandidatePath()
 
-	if (candidate) {
-		return { found: { kind: "candidate", path: candidate, sizeBytes: deps.fileSize(candidate) }, probed: [candidate] }
+	if (envCandidate) {
+		return { envCandidate: { path: envCandidate, sizeBytes: deps.fileSize(envCandidate) }, probed: [envCandidate] }
 	}
 	const shards = deps.wofShardPaths()
 	const existing = shards.find((p) => deps.existsSync(p))
 
 	if (existing) {
-		return { found: { kind: "wof", path: existing, sizeBytes: deps.fileSize(existing) }, probed: shards }
+		return { wofShard: { path: existing, sizeBytes: deps.fileSize(existing) }, probed: shards }
+	}
+	const convention = deps.conventionCandidatePath()
+
+	if (convention) {
+		return { conventionCandidate: convention, probed: [...shards, convention] }
 	}
 
 	return { probed: shards }
 }
 
-async function gatherPoi(deps: DoctorDeps): Promise<PoiObservation> {
+async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 	const path = deps.poiPath()
 
 	if (!deps.existsSync(path)) return { path, exists: false }
 
 	try {
-		return { path, exists: true, manifest: await deps.readPoiManifest(path) }
+		return { path, exists: true, manifest: await deps.readPOIManifest(path) }
 	} catch (error) {
 		return { path, exists: true, error: error instanceof Error ? error.message : String(error) }
 	}
@@ -262,7 +268,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		fromEnv: root.fromEnv,
 	})
 	const gazetteer = gazetteerCheck(gatherGazetteer(deps))
-	const poi = poiCheck(await gatherPoi(deps))
+	const poi = checkPOI(await gatherPOI(deps))
 
 	// Informational: locale overlays.
 	const overlays = deps.overlayLocales.map((locale) => gatherOverlay(deps, locale))

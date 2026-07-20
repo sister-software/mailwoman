@@ -204,10 +204,20 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 	return { ...base, status: CheckStatus.OK, detail: `${o.path} (${source}) — exists, writable` }
 }
 
-/** Facts about the admin gazetteer discovery (mirrors `mailwoman geocode`). */
+/**
+ * Facts about the admin gazetteer discovery, mirroring exactly what the TOOLS pick up. `mailwoman geocode` / `serve`
+ * resolve a candidate.db ONLY through `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`) — there is no
+ * convention-path fallback — else they fall back to the WOF FTS shards. So a candidate.db sitting at the
+ * `<data-root>/wof/candidate.db` convention path while the env is UNSET is a TRAP: on disk, but the tools won't touch
+ * it.
+ */
 export interface GazetteerObservation {
-	/** The discovered backend, or absent when neither a candidate.db nor any WOF shard was found. */
-	found?: { kind: "candidate" | "wof"; path: string; sizeBytes?: number }
+	/** A candidate.db the tools would actually use — explicit/`$MAILWOMAN_CANDIDATE_DB`, on disk. Green. */
+	envCandidate?: { path: string; sizeBytes?: number }
+	/** A WOF admin shard on disk — the FTS backend the tools fall back to when no env candidate is set. Green. */
+	wofShard?: { path: string; sizeBytes?: number }
+	/** A candidate.db at the convention path while `$MAILWOMAN_CANDIDATE_DB` is UNSET — the trap. Degraded, not green. */
+	conventionCandidate?: string
 	/** The paths probed, for the not-found detail. */
 	probed: string[]
 }
@@ -218,13 +228,26 @@ const CANDIDATE_URL = "https://public.sister.software/mailwoman/gazetteer/2026-0
 export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
 
-	if (o.found) {
-		const size = o.found.sizeBytes ? ` (${formatBytes(o.found.sizeBytes)})` : ""
+	if (o.envCandidate) {
+		const size = o.envCandidate.sizeBytes ? ` (${formatBytes(o.envCandidate.sizeBytes)})` : ""
 
+		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.envCandidate.path}${size}` }
+	}
+
+	if (o.wofShard) {
+		const size = o.wofShard.sizeBytes ? ` (${formatBytes(o.wofShard.sizeBytes)})` : ""
+
+		return { ...base, status: CheckStatus.OK, detail: `WOF admin shard · ${o.wofShard.path}${size}` }
+	}
+
+	// The trap: candidate.db is on disk at the convention path, but the tools resolve candidate only via the env — so
+	// they'd report "no gazetteer data found" while doctor could naively show green. Report degraded, not ok.
+	if (o.conventionCandidate) {
 		return {
 			...base,
-			status: CheckStatus.OK,
-			detail: `${o.found.kind === "candidate" ? "candidate.db" : "WOF admin shard"} · ${o.found.path}${size}`,
+			status: CheckStatus.Degraded,
+			detail: `candidate.db on disk (${o.conventionCandidate}) but $MAILWOMAN_CANDIDATE_DB unset — geocode/serve won't use it`,
+			fix: `export MAILWOMAN_CANDIDATE_DB=${o.conventionCandidate}`,
 		}
 	}
 
@@ -232,12 +255,12 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.Missing,
 		detail: `no candidate.db or WOF shard found (probed ${o.probed.length} path${o.probed.length === 1 ? "" : "s"})`,
-		fix: `curl -fSL ${CANDIDATE_URL} -o <data-root>/wof/candidate.db   (or set $MAILWOMAN_CANDIDATE_DB / $MAILWOMAN_WOF_DB)`,
+		fix: `curl -fSL ${CANDIDATE_URL} -o <data-root>/wof/candidate.db   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)`,
 	}
 }
 
 /** Facts about the POI layer (mirrors `gazetteer build poi`'s default output path). */
-export interface PoiObservation {
+export interface POIObservation {
 	path: string
 	exists: boolean
 	/** The parsed layer manifest, when the db opened and validated. */
@@ -249,7 +272,7 @@ export interface PoiObservation {
 const POI_URL = "https://public.sister.software/mailwoman/poi/2026-07-20a/poi.db"
 
 /** Check #5 — the POI layer. Optional: only POI-query execution needs it. */
-export function poiCheck(o: PoiObservation): DoctorCheck {
+export function checkPOI(o: POIObservation): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false }
 	const fix = `mailwoman gazetteer build poi   (or: curl -fSL ${POI_URL} -o ${o.path})`
 

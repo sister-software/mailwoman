@@ -31,7 +31,10 @@ const OptionsSchema = zod.object({
 		.boolean()
 		.optional()
 		.default(false)
-		.describe("Emit the report as JSON ({ checks: [{ id, status, detail, fix? }], exitCode }) instead of a checklist."),
+		.describe(
+			"Emit the report as JSON instead of a checklist: { checks: [{ id, label, status, detail, fix?, core }], exitCode } " +
+				"— a superset of { id, status, detail, fix? } (label + core aid machine consumers)."
+		),
 })
 
 export { OptionsSchema as options }
