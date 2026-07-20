@@ -106,6 +106,35 @@ this board's job to fix.
   string values piped through `<Text>`, which this command avoids by building the report
   in-process rather than shelling out to the compiled CLI and parsing its text output.
 
+## Floors set — 2026-07-20 (follow-up PR)
+
+The pre-registered floors are now **live** in the harness (`POI_BOARD_FLOORS` /
+`evaluateFloors` in `eval-harness/poi-board.ts`), graded and printed on every run:
+
+| floor         | threshold | rationale                                                                                    |
+| ------------- | --------- | -------------------------------------------------------------------------------------------- |
+| overall       | ≥ 90%     | soft — coverage gaps (`trail`/`supermarket`) may cost a few points without failing the board |
+| abstain       | = 100%    | hard — an abstain miss is the poi branch claiming a query poi.db structurally cannot answer  |
+| address-guard | = 100%    | hard — the poi branch must never hijack a full address                                       |
+
+Floors print on every run; `mailwoman eval poi-board --enforce` turns a breach into a
+non-zero exit (the CI-gate mode). Without `--enforce` the command stays report-only.
+
+**Current standing (v1.1, 2026-07-20 promotion battery — `2026-07-20-poi-promotion-battery.md`):**
+the fixture set has grown from v1's 45 to **51** (v1.1 added 6 brand cases — see
+`poi-board.test.ts`). The board sits at **47/51 = 92.2% overall**, with **33/37 results**,
+**abstain 8/8 (100%)**, and **address-guard 6/6 (100%)** — both hard floors met, and overall
+clears the 90% soft floor with margin. The `results` misses are the known coverage-gap
+holdouts already logged under "Notable failures" above (the `supermarket` and `trail`
+category gaps — `syn-05`, `nm-06`, `nm-04`), plus a brand case; all are `results`-kind, so
+they cost the overall rate but touch neither hard floor. **All three floors pass at the
+current standing.**
+
+Breach detection is unit-tested against synthetic result sets (`poi-board.test.ts`,
+`evaluateFloors — breach detection`) — no live board run needed to prove a floor fails: an
+overall dip below 90%, a single abstain miss, a single address-guard miss, and an absent
+category slice each register as a breach.
+
 ## Next steps (not this PR)
 
 - Set floors off these numbers once the operator reviews them (spec §3.6's own sequencing).
