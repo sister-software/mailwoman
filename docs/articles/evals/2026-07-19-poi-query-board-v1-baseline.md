@@ -145,3 +145,19 @@ category slice each register as a breach.
 - The Montreal/Calgary anchor-resolution quirks are FTS-backend homonym-ranking behavior,
   independent of this board; worth a look under `resolver-wof-sqlite`'s bm25 tiering, not
   logged as a poi-board failure because no fixture encodes an expectation against it.
+
+## Standing update — 2026-07-20 (after #1206 / #1208 / #1209)
+
+Three changes since the v1.1 promotion battery moved the board: #1206 fanned category
+queries out from the curated seed id to its Overture leaves, #1208 switched brand searches to
+an indexed brand-wide fetch, and #1209 replaced the seed taxonomy with the full ~2,110-category
+Overture snapshot under a curated overlay. Re-run against the rebuilt `poi.db`
+(`poi/2026-07-20a/poi.db`), the board now sits at **50/51 = 98.0% overall**, with **36/37
+results**, **abstain 8/8 (100%)**, and **address-guard 6/6 (100%)**.
+
+`nm-04` (`hiking trail near Marseille`) is the sole holdout. It is a ring-budget case, not a
+coverage gap: the nearest `hiking_trail` row sits ~3.9 km from the Marseille anchor while the
+executor's k-ring reach lands at ~4 km, so the row falls just outside the searched cells. The
+`supermarket` gaps (`syn-05`, `nm-06`) and the `trail` gap on the other anchors that failed in
+v1.1 now return rows — the leaf fan-out and the fuller taxonomy reach the categories the seed
+mapping missed. Both hard floors hold, and overall clears the 90% soft floor with margin.

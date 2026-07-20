@@ -247,6 +247,10 @@
 			"categoryID": "supermarket"
 		},
 		{
+			"phrase": "greengrocer",
+			"categoryID": "supermarket"
+		},
+		{
 			"phrase": "petrol station",
 			"categoryID": "gas_station",
 			"locales": ["en-GB", "en-AU", "en-NZ", "en-ZA"]
@@ -277,6 +281,10 @@
 		},
 		{
 			"phrase": "hiking trail",
+			"categoryID": "trail"
+		},
+		{
+			"phrase": "mountain bike trail",
 			"categoryID": "trail"
 		},
 		{
@@ -349,6 +357,26 @@
 		{
 			"phrase": "electrical substation",
 			"categoryID": "power_substation"
+		},
+		{
+			"phrase": "high school",
+			"categoryID": "school"
+		},
+		{
+			"phrase": "middle school",
+			"categoryID": "school"
+		},
+		{
+			"phrase": "elementary school",
+			"categoryID": "school"
+		},
+		{
+			"phrase": "private school",
+			"categoryID": "school"
+		},
+		{
+			"phrase": "credit union",
+			"categoryID": "bank"
 		}
 	]
 }

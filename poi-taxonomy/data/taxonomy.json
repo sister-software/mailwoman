@@ -15212,6 +15212,10 @@
 			"categoryID": "cafe"
 		},
 		{
+			"phrase": "credit union",
+			"categoryID": "bank"
+		},
+		{
 			"phrase": "cycling trail",
 			"categoryID": "trail"
 		},
@@ -15239,6 +15243,10 @@
 		{
 			"phrase": "electrical substation",
 			"categoryID": "power_substation"
+		},
+		{
+			"phrase": "elementary school",
+			"categoryID": "school"
 		},
 		{
 			"phrase": "emergency room",
@@ -15270,6 +15278,10 @@
 			"categoryID": "gas_station"
 		},
 		{
+			"phrase": "greengrocer",
+			"categoryID": "supermarket"
+		},
+		{
 			"phrase": "grocery",
 			"categoryID": "supermarket"
 		},
@@ -15277,6 +15289,10 @@
 			"phrase": "grocery store",
 			"categoryID": "supermarket",
 			"locales": ["en-US"]
+		},
+		{
+			"phrase": "high school",
+			"categoryID": "school"
 		},
 		{
 			"phrase": "hiking trail",
@@ -15292,8 +15308,16 @@
 			"locales": ["en-US", "en-CA"]
 		},
 		{
+			"phrase": "middle school",
+			"categoryID": "school"
+		},
+		{
 			"phrase": "motel",
 			"categoryID": "hotel"
+		},
+		{
+			"phrase": "mountain bike trail",
+			"categoryID": "trail"
 		},
 		{
 			"phrase": "petrol station",
@@ -15307,6 +15331,10 @@
 		{
 			"phrase": "postbox",
 			"categoryID": "post_box"
+		},
+		{
+			"phrase": "private school",
+			"categoryID": "school"
 		},
 		{
 			"phrase": "street cabinet",
