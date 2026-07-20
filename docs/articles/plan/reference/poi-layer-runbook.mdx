@@ -115,8 +115,16 @@ Decision of record (2026-07-19): publish the FULL multi-country poi.db to R2 for
 access — no separate demo slice artifact. Demo config: category queries only (no FTS name
 search over httpvfs — multi-hop traversal is the slow path), ring budget capped ~3–4 (the
 CLI default is 12). Contingency if the shipped file or probe latency surprises: a
-clearly-labeled regional slice, as fallback only. Publishing rides the existing
-`gazetteer publish` R2 path + a demo version-constant bump; the docs tester
+clearly-labeled regional slice, as fallback only.
+
+**Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the demo-assets
+uploader, not the gazetteer path: stage a hardlink dir mirroring the R2 layout
+`poi/<version>/poi.db` (a hardlink avoids re-copying the 3.7 GB file), then
+`set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <staged-dir>`
+(source the repo `.env` first — the R2 credentials live there). Then bump the demo
+version constant (`POI_LAYER_VERSION` in `docs/src/shared/resources.tsx`). Note:
+`gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and is **not**
+the poi path; using it would land the file at the wrong key. The docs tester
 (`understanding/exotic-poi/try-it.mdx`) is intent-only until the layer is published.
 
 ## Flag state
@@ -125,7 +133,11 @@ clearly-labeled regional slice, as fallback only. Publishing rides the existing
 promotion gate passed: 0/4,507 golden misroutes, 6/6 demo presets byte-identical, POI board
 v1.1 92.2% (see
 [`2026-07-20-poi-promotion-battery.md`](../../evals/2026-07-20-poi-promotion-battery.md) and
-the [runtime-flag register](./runtime-flags.mdx)). `undefined`/`true` is intent/abstain-only
+the [runtime-flag register](./runtime-flags.mdx)). After #1206/#1208/#1209 (leaf fan-out,
+indexed brand fetch, full ~2,110-category snapshot) the board stands at **50/51 = 98.0%**
+against the rebuilt `poi/2026-07-20a/poi.db` — `nm-04` the sole holdout (a ring-budget case,
+not a coverage gap), both hard floors green (see the 2026-07-20 standing update in
+[`2026-07-19-poi-query-board-v1-baseline.md`](../../evals/2026-07-19-poi-query-board-v1-baseline.md)). `undefined`/`true` is intent/abstain-only
 (no db); pass `false` to restore the pre-flag, byte-identical address-only classification.
 `forceFullPipeline` does not bypass the poi branch (routing branch, not a fast-path —
 decided, documented on `PipelineOpts`).

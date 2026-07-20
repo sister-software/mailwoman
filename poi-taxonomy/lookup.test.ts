@@ -157,6 +157,23 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(lookupPOICategory("supermarket").map((m) => m.category.id)).toEqual(["supermarket"])
 	})
 
+	it("recovers absorbed-leaf phrases via curated synonyms (#1209 review)", () => {
+		// The curated overlay absorbs these Overture leaves (`high_school`, `bank_credit_union`, `mountain_bike_trail`,
+		// `greengrocer`), so their leaf id-phrases are no longer emitted standalone. Curated synonyms keep the direct
+		// phrases resolving to the canonical curated id.
+		expect(lookupPOICategory("high school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("middle school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("elementary school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("private school").map((m) => m.category.id)).toEqual(["school"])
+		expect(lookupPOICategory("mountain bike trail").map((m) => m.category.id)).toEqual(["trail"])
+		expect(lookupPOICategory("greengrocer").map((m) => m.category.id)).toEqual(["supermarket"])
+
+		// `credit union` is special: Overture keeps a standalone `credit_union` category (its own id-phrase), and the
+		// curated `bank` record absorbs the SEPARATE `bank_credit_union` leaf. The added synonym maps the phrase onto
+		// bank too, so it now yields both — the specific standalone category first, then the curated bank rollup.
+		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["credit_union", "bank"])
+	})
+
 	it("regenerates deterministically and matches the committed table by content", () => {
 		// The generator is self-deterministic: two runs produce byte-identical output (no Map/sort nondeterminism).
 		const once = serializeTaxonomyTable(generateTaxonomyTable())

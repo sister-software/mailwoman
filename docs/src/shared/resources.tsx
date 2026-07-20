@@ -276,7 +276,7 @@ export function adminGazetteerURL(): string {
  * own dated path rather than under `<locale>/<model-version>/`. Bump this when the layer is rebuilt + re-uploaded (the
  * immutable Cache-Control means a fresh DB needs a fresh URL).
  */
-export const POI_LAYER_VERSION = "2026-07-19a"
+export const POI_LAYER_VERSION = "2026-07-20a"
 
 export function poiLayerURL(): string {
 	return `${ASSET_BASE_URL}poi/${POI_LAYER_VERSION}/poi.db`
