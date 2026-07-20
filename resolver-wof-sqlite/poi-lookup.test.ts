@@ -20,7 +20,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { haversineKm, shortenH3Cell, type H3Cell } from "@mailwoman/spatial"
-import { latLngToCell } from "h3-js"
+import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { POI_H3_RESOLUTION, POILookup } from "./poi-lookup.ts"
@@ -57,7 +57,23 @@ interface FixtureRow {
 	gersID?: string | null
 }
 
-const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3, supermarket: 4 }
+const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3, supermarket: 4, trail: 5 }
+
+// A SPARSE-category instance placed at EXACTLY gridDistance 13 from the Springfield origin cell — the nm-04 boundary. A
+// res-9 disk of radius r covers gridDistance ≤ r, and the reader's loop over `maxRings` rings covers gridDistance ≤
+// `maxRings - 1`; so this cell first appears at maxRings 14 and is MISSED by the old 12-ring default (covers ≤ 11). The
+// coordinate is derived from h3-js (a real ring-13 cell's center), never hardcoded — same discipline as `cellFor`. This
+// mirrors "hiking trail near Marseille", whose nearest `trail` sits at gridDistance 13 (~3.9 km) in the real poi.db.
+const TRAIL_GRID_DISTANCE = 13
+const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
+const [TRAIL_LAT, TRAIL_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, TRAIL_GRID_DISTANCE)[0]!)
+const TRAIL_SPARSE: FixtureRow = {
+	name: "Ridge Trail",
+	category: "trail",
+	brandWikidata: null,
+	latitude: TRAIL_LAT,
+	longitude: TRAIL_LNG,
+}
 
 // 3 cafes near Springfield, increasing distance.
 const CAFE_ALPHA: FixtureRow = {
@@ -144,6 +160,7 @@ const ALL_ROWS = [
 	COSTCO_NEAR,
 	COSTCO_FAR,
 	...CHICAGO_ROWS,
+	TRAIL_SPARSE,
 	PIER_39,
 ]
 
@@ -340,8 +357,27 @@ describe("POILookup", () => {
 
 		try {
 			// The only `museum` rows in the fixture sit ~280 km away in Chicago — far outside the
-			// default ~4 km (12-ring) budget from Springfield.
+			// default ~5.4 km (16-ring) budget from Springfield.
 			expect(lk.search({ categoryID: "museum", center: SPRINGFIELD })).toEqual([])
+		} finally {
+			lk[Symbol.dispose]()
+		}
+	})
+
+	test("sparse category: the default budget reaches a gridDistance-13 instance the old 12-ring budget missed (nm-04)", () => {
+		const lk = new POILookup({ databasePath: dbPath })
+
+		try {
+			// The single `trail` row sits exactly 13 rings out — the nm-04 "hiking trail near Marseille" boundary.
+			// The default budget (16 rings, covers gridDistance ≤ 15) reaches it.
+			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
+			// The OLD 12-ring budget (covers gridDistance ≤ 11) does NOT — this is the exact boundary miss nm-04 exposed.
+			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
+			// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
+			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])
+			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 14 }).map((h) => h.name)).toEqual([
+				"Ridge Trail",
+			])
 		} finally {
 			lk[Symbol.dispose]()
 		}
