@@ -32,6 +32,12 @@ export interface POIExplorerProps {
 	loadRuntime?: LoadPOIRuntime
 	/** Live poi.db probe. Absent ⇒ intent-only (no live-results affordance). */
 	runLiveSearch?: POILiveSearch
+	/**
+	 * Whether {@link runLiveSearch} can serve BRAND subjects (fetch by QID). Default false: a brand subject shows the
+	 * intent + QID chip but no live block. The docs' httpvfs probe leaves this off (brand-wide byte-range hydration is
+	 * pathological — measured); a server-side backend can enable it.
+	 */
+	brandLiveSearch?: boolean
 }
 
 interface POIExplorerInnerProps extends POIExplorerProps {
@@ -39,9 +45,30 @@ interface POIExplorerInnerProps extends POIExplorerProps {
 	presets: ReadonlyArray<Preset>
 }
 
-function POIExplorerInner({ defaultText, presets, loadRuntime, runLiveSearch }: POIExplorerInnerProps): ReactNode {
+function POIExplorerInner({
+	defaultText,
+	presets,
+	loadRuntime,
+	runLiveSearch,
+	brandLiveSearch,
+}: POIExplorerInnerProps): ReactNode {
 	const [text, setText] = useState(defaultText)
-	const { result, liveSearch, searchLive } = usePOISearch({ text, loadRuntime, runLiveSearch })
+	const { result, liveSearch, searchLive } = usePOISearch({
+		text,
+		loadRuntime,
+		runLiveSearch,
+		brandLiveSearch,
+	})
+
+	const subject = result?.subject
+	// The live block appears whenever the subject COULD be live-searched with an anchor — i.e. capable minus the
+	// anchor-present requirement (`canSearchLive` also requires an anchor; the block itself renders the "add an anchor"
+	// hint, so it must show one step earlier). Category: not build-local. Brand: brand-capable probe + a QID.
+	const showLiveBlock = Boolean(
+		runLiveSearch &&
+		subject &&
+		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
+	)
 
 	return (
 		<div className="mw-poi-explorer">
@@ -52,15 +79,17 @@ function POIExplorerInner({ defaultText, presets, loadRuntime, runLiveSearch }: 
 				<div className="mw-result">
 					<KindBadge kindResult={result.kindResult} />
 
-					{result.subject ? (
+					{subject ? (
 						<>
-							<SubjectPanel subject={result.subject} />
-							<OverpassBlock overpassQL={result.overpassQL} overpassError={result.overpassError} />
+							<SubjectPanel subject={subject} />
+							{subject.kind === "category" ? (
+								<OverpassBlock overpassQL={result.overpassQL} overpassError={result.overpassError} />
+							) : null}
 
-							{runLiveSearch && !result.subject.buildLocal ? (
+							{showLiveBlock ? (
 								<LiveResultsBlock
-									categoryLabel={result.subject.category.label}
-									anchor={result.subject.remainder}
+									subjectLabel={subject.kind === "brand" ? subject.name : subject.category.label}
+									anchor={subject.remainder}
 									state={liveSearch}
 									onSearch={searchLive}
 								/>
@@ -80,6 +109,7 @@ export function POIExplorer({
 	presets = POI_PRESETS,
 	loadRuntime,
 	runLiveSearch,
+	brandLiveSearch,
 }: POIExplorerProps): ReactNode {
 	return (
 		<ClientOnly
@@ -95,6 +125,7 @@ export function POIExplorer({
 					presets={presets}
 					loadRuntime={loadRuntime}
 					runLiveSearch={runLiveSearch}
+					brandLiveSearch={brandLiveSearch}
 				/>
 			)}
 		</ClientOnly>

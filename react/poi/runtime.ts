@@ -11,36 +11,61 @@
 
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
-import { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
+import { createPOIBrandLookup, createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
 import type { POIRuntime } from "./types.ts"
 
 /**
- * Build the POI runtime, dynamically importing the taxonomy JSON so the ~2k-record table lands in its own chunk. A
+ * Build the POI runtime, dynamically importing the taxonomy + brand JSON so the tables land in their own chunk. A
  * static import would inline the whole snapshot into every consumer's bundle.
+ *
+ * The lexicon unions categories then brands, mirroring the Node runtime's `poiTaxonomyLookup` precedence: a phrase that
+ * matches a taxonomy CATEGORY wins (the curated set); only on a category miss does the chain-brand table fire,
+ * returning a `kind: "brand"` match carrying the brand's canonical name + Wikidata QID. (The Node path also chains
+ * `@mailwoman/variant-aliases` regional slang; the browser tester leaves that out — one fewer package + data table for
+ * a demo, and the QID-keyed brand table already covers the headline brands.)
  */
 export async function loadPOIRuntime(): Promise<POIRuntime> {
-	const table = (await import("@mailwoman/poi-taxonomy/data/taxonomy.json")).default
+	const [table, brandTable] = await Promise.all([
+		import("@mailwoman/poi-taxonomy/data/taxonomy.json").then((m) => m.default),
+		import("@mailwoman/poi-taxonomy/data/brands.json").then((m) => m.default),
+	])
 	const lookup = createPOITaxonomyLookup(table as unknown as Parameters<typeof createPOITaxonomyLookup>[0])
+	const brands = createPOIBrandLookup(brandTable as unknown as Parameters<typeof createPOIBrandLookup>[0])
 
-	// Adapt `POITaxonomyLookup.lookupPOICategory` to the `POIPhraseLookup` shape the classifier expects.
-	const lexicon: POIPhraseLookup = (phrase, locale) =>
-		lookup.lookupPOICategory(phrase, locale).map((match) => ({
-			kind: "category",
-			categoryID: match.category.id,
+	// Adapt the taxonomy + brand lookups to the `POIPhraseLookup` shape the classifier expects: categories first, brands
+	// on a category miss.
+	const lexicon: POIPhraseLookup = (phrase, locale) => {
+		const categoryHits = lookup.lookupPOICategory(phrase, locale)
+
+		if (categoryHits.length > 0) {
+			return categoryHits.map((match) => ({
+				kind: "category",
+				categoryID: match.category.id,
+				matchedPhrase: match.matchedPhrase,
+				confidence: match.confidence,
+			}))
+		}
+
+		return brands.lookupPOIBrand(phrase).map((match) => ({
+			kind: "brand",
+			categoryID: match.brand.name,
+			wikidata: match.brand.wikidata,
 			matchedPhrase: match.matchedPhrase,
 			confidence: match.confidence,
 		}))
+	}
 
 	return { lookup, lexicon, classify: createKindClassifier({ poiLexicon: lexicon }) }
 }
 
-/** Default example queries for the POI explorer. */
+/** Default example queries for the POI explorer — a mix of category, build-local, and chain-brand subjects. */
 export const POI_PRESETS = [
 	{ label: "Drinking fountain", value: "drinking fountain near Springfield" },
 	{ label: "Fire hydrant", value: "fire hydrant" },
 	{ label: "Hospital + address", value: "hospital, 350 5th Ave, New York" },
-	{ label: "Biking trails", value: "biking trails near Portland" },
+	{ label: "Chevron (brand)", value: "chevron near Houston" },
+	{ label: "Applebee's (brand)", value: "applebee's near Chicago" },
 ] as const
 
 export const POI_DEFAULT_TEXT = POI_PRESETS[0].value

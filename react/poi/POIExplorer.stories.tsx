@@ -9,7 +9,12 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import { makePOIRuntime, mockLiveSearchSuccess } from "../test/mocks.tsx"
+import {
+	makeBrandPOIRuntime,
+	makePOIRuntime,
+	mockBrandLiveSearchSuccess,
+	mockLiveSearchSuccess,
+} from "../test/mocks.tsx"
 import { POIExplorer } from "./POIExplorer.tsx"
 
 const meta: Meta<typeof POIExplorer> = {
@@ -27,3 +32,21 @@ type Story = StoryObj<typeof POIExplorer>
 export const IntentOnly: Story = {}
 
 export const WithLiveSearch: Story = { args: { runLiveSearch: mockLiveSearchSuccess } }
+
+/**
+ * A chain-brand subject, intent-only — the QID chip renders but no live block (the docs' default: no brand-capable
+ * probe).
+ */
+export const BrandIntentOnly: Story = {
+	args: { defaultText: "chevron near Houston", loadRuntime: async () => makeBrandPOIRuntime() },
+}
+
+/** A chain-brand subject with a brand-capable probe wired — the live block appears and searches by QID. */
+export const BrandWithLiveSearch: Story = {
+	args: {
+		defaultText: "chevron near Houston",
+		loadRuntime: async () => makeBrandPOIRuntime(),
+		runLiveSearch: mockBrandLiveSearchSuccess,
+		brandLiveSearch: true,
+	},
+}

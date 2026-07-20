@@ -214,6 +214,27 @@
 	letter-spacing: 0.02em;
 }
 
+.mw-subject__badge--brand {
+	background: var(--ifm-color-info-contrast-background, rgba(84, 199, 236, 0.15));
+	color: var(--ifm-color-info-darkest, #14657d);
+}
+
+.mw-subject__qid {
+	display: inline-block;
+	padding: 0.2rem 0.5rem;
+	border-radius: 999px;
+	background: var(--ifm-color-emphasis-200, #ebedf0);
+	color: var(--ifm-color-emphasis-800, #303846);
+	font-family: var(--ifm-font-family-monospace, monospace);
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.mw-subject__qid:hover {
+	text-decoration: underline;
+}
+
 .mw-subject__note {
 	margin: 0 0 0.75rem;
 	font-size: 0.85rem;

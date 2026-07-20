@@ -11,7 +11,7 @@ import { LiveResultsBlock } from "./LiveResultsBlock.tsx"
 const meta: Meta<typeof LiveResultsBlock> = {
 	title: "POI/LiveResultsBlock",
 	component: LiveResultsBlock,
-	args: { categoryLabel: "Drinking Fountain", anchor: "Springfield", onSearch: () => {} },
+	args: { subjectLabel: "Drinking Fountain", anchor: "Springfield", onSearch: () => {} },
 }
 
 export default meta
@@ -25,6 +25,21 @@ export const Success: Story = {
 			hits: [
 				{ name: "Washington Park Fountain", lat: 39.79, lon: -89.65, distanceM: 320, country: "US", confidence: 0.8 },
 				{ name: "Lincoln Library Fountain", lat: 39.8, lon: -89.64, distanceM: 910, country: "US", confidence: 0.7 },
+			],
+		},
+	},
+}
+
+export const Brand: Story = {
+	args: {
+		subjectLabel: "Chevron",
+		anchor: "Houston",
+		state: {
+			status: "success",
+			centerName: "Houston, TX",
+			hits: [
+				{ name: "Chevron", lat: 29.76, lon: -95.37, distanceM: 210, country: "US", confidence: 0.9 },
+				{ name: "Chevron", lat: 29.79, lon: -95.4, distanceM: 4200, country: "US", confidence: 0.85 },
 			],
 		},
 	},

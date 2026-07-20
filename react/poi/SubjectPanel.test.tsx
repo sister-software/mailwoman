@@ -8,15 +8,28 @@ import { expect, test } from "vitest"
 
 import { renderComponent } from "../test/render.tsx"
 import { SubjectPanel } from "./SubjectPanel.tsx"
-import type { CategoryRecord, POISubject } from "./types.ts"
+import type { CategoryRecord, POIBrandSubject, POICategorySubject } from "./types.ts"
 
-function subject(overrides: Partial<POISubject> = {}): POISubject {
+function subject(overrides: Partial<POICategorySubject> = {}): POICategorySubject {
 	return {
+		kind: "category",
 		category: { id: "hospital", label: "Hospital" } as unknown as CategoryRecord,
 		matchedPhrase: "hospital",
 		confidence: 0.84,
 		remainder: "New York",
 		buildLocal: false,
+		...overrides,
+	}
+}
+
+function brandSubject(overrides: Partial<POIBrandSubject> = {}): POIBrandSubject {
+	return {
+		kind: "brand",
+		name: "Chevron",
+		wikidata: "Q319642",
+		matchedPhrase: "chevron",
+		confidence: 1,
+		remainder: "Houston",
 		...overrides,
 	}
 }
@@ -42,4 +55,22 @@ test("SubjectPanel marks a missing anchor as a global query", () => {
 	const { container } = renderComponent(<SubjectPanel subject={subject({ remainder: "" })} />)
 
 	expect(container.textContent).toContain("global query")
+})
+
+test("SubjectPanel renders a brand subject with its name, brand badge, and a linked QID chip", () => {
+	const { container } = renderComponent(<SubjectPanel subject={brandSubject()} />)
+
+	expect(container.querySelector(".mw-subject__chip")?.textContent).toBe("Chevron")
+	expect(container.querySelector(".mw-subject__badge--brand")?.textContent).toContain("brand")
+	const qid = container.querySelector(".mw-subject__qid") as HTMLAnchorElement | null
+	expect(qid?.textContent).toBe("Q319642")
+	expect(qid?.getAttribute("href")).toContain("wikidata.org/wiki/Q319642")
+	expect(container.textContent).toContain("Houston")
+})
+
+test("SubjectPanel omits the QID chip for a brand matched by name alone", () => {
+	const { container } = renderComponent(<SubjectPanel subject={brandSubject({ wikidata: undefined })} />)
+
+	expect(container.querySelector(".mw-subject__chip")?.textContent).toBe("Chevron")
+	expect(container.querySelector(".mw-subject__qid")).toBeNull()
 })
