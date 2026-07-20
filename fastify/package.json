@@ -13,6 +13,7 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
+		"README.md",
 		"*.ts",
 		"*.tsx",
 		"**/*.ts",
@@ -33,6 +34,14 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:^",
+		"fastify-plugin": "^6.0.0",
+		"mailwoman": "workspace:^"
+	},
+	"devDependencies": {
+		"fastify": "^5.10.0"
 	},
 	"peerDependencies": {
 		"fastify": ">=5"
