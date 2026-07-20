@@ -1,0 +1,20 @@
+{
+	"name": "mailwoman-docker",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Dependency manifest for the ghcr.io/sister-software/mailwoman image — installs the PUBLISHED @mailwoman/* packages (weights included). Not published; consumed only by the root Dockerfile's install stage. Ranges track the latest published line so a rebuild doubles as a nightly integration test of the npm artifacts.",
+	"dependencies": {
+		"@mailwoman/api": "latest",
+		"@mailwoman/api-kit": "latest",
+		"@mailwoman/core": "latest",
+		"@mailwoman/libpostal": "latest",
+		"@mailwoman/neural": "latest",
+		"@mailwoman/neural-weights-en-us": "latest",
+		"@mailwoman/nominatim": "latest",
+		"@mailwoman/photon": "latest",
+		"@mailwoman/resolver": "latest",
+		"@mailwoman/resolver-wof-sqlite": "latest",
+		"mailwoman": "latest"
+	}
+}
