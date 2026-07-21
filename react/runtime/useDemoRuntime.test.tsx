@@ -10,6 +10,7 @@
  *   progress/step channel is reported through `ctx`.
  */
 
+import { userEvent } from "@vitest/browser/context"
 import type { ReactNode } from "react"
 import { expect, test, vi } from "vitest"
 
@@ -106,7 +107,7 @@ test("selectVersion reloads the bundle for the new version", async () => {
 	const { container } = renderComponent(<Harness />)
 	await vi.waitFor(() => expect(text(container, ".assets-version")).toBe("v2"), { timeout: 2000 })
 
-	container.querySelector<HTMLButtonElement>(".pick-v1")?.click()
+	await userEvent.click(container.querySelector(".pick-v1") as HTMLButtonElement)
 
 	await vi.waitFor(() => expect(text(container, ".assets-version")).toBe("v1"), { timeout: 2000 })
 	expect(text(container, ".version")).toBe("v1")
@@ -118,7 +119,7 @@ test("setForceWASM reloads with the WASM flag set", async () => {
 	await vi.waitFor(() => expect(text(container, ".ready")).toBe("yes"), { timeout: 2000 })
 	expect(text(container, ".assets-wasm")).toBe("false")
 
-	container.querySelector<HTMLButtonElement>(".force-wasm")?.click()
+	await userEvent.click(container.querySelector(".force-wasm") as HTMLButtonElement)
 
 	await vi.waitFor(() => expect(text(container, ".assets-wasm")).toBe("true"), { timeout: 2000 })
 	expect(text(container, ".backend")).toBe("wasm")

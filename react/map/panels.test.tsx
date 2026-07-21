@@ -12,6 +12,7 @@ import { userEvent } from "@vitest/browser/context"
 import { useState } from "react"
 import { expect, test, vi } from "vitest"
 
+import { actDelay } from "../test/act.ts"
 import { FAKE_SUGGESTIONS, makeFakeParseResult } from "../test/mocks.tsx"
 import { renderComponent } from "../test/render.tsx"
 import { BackendControl } from "./BackendControl.tsx"
@@ -196,8 +197,9 @@ test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () 
 	const input = container.querySelector('[data-testid="ac-input"]') as HTMLInputElement
 	await userEvent.type(input, "90210")
 
-	// A short wait past the debounce — a digit-leading query never fires the fetcher.
-	await new Promise((resolve) => setTimeout(resolve, 60))
+	// A short wait past the debounce — a digit-leading query never fires the fetcher. Held in act() so the
+	// debounce's own state update + the abstaining effect (which DO run) settle in-scope, not unwrapped.
+	await actDelay(60)
 	expect(autocomplete).not.toHaveBeenCalled()
 	expect(container.querySelectorAll('[role="option"]').length).toBe(0)
 })
