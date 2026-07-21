@@ -98,10 +98,10 @@ export type { UseParsePipeline, UseParsePipelineOptions } from "./pipeline/usePa
 export { useDemoRuntime } from "./runtime/useDemoRuntime.ts"
 export type {
 	DemoAssetsLoadContext,
+	DemoLoaderState,
 	DemoManifest,
 	DemoReleaseBase,
 	DemoRuntimeConfig,
-	UseDemoRuntime,
 } from "./runtime/useDemoRuntime.ts"
 
 // ── Map (types only from root) ──────────────────────────────────────────────

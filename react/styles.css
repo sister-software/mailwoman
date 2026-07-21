@@ -660,3 +660,134 @@
 	min-height: 320px;
 	overflow: hidden;
 }
+
+/* ── Geocoder demo (composed: full-viewport map + floating control panel) ──── */
+
+/*
+ * The demo fills its positioning context; the host sizes it (a full-viewport wrapper in docs). The map is the
+ * background layer, the control panel floats over the top-left (bottom on narrow screens). A host that wants a
+ * different layout can restyle these classes without touching the components.
+ */
+.mw-geocoder-demo {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	min-height: 480px;
+}
+
+.mw-geocoder-demo__map {
+	position: absolute;
+	inset: 0;
+}
+
+.mw-demo-controls {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	z-index: 2;
+	width: min(360px, calc(100% - 2rem));
+	max-height: calc(100% - 2rem);
+	overflow-y: auto;
+	padding: 1rem;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--ifm-background-surface-color, #fff) 92%, transparent);
+	box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+	font-size: 0.95rem;
+}
+
+@media (max-width: 600px) {
+	.mw-demo-controls {
+		top: auto;
+		bottom: 1rem;
+		left: 1rem;
+		right: 1rem;
+		width: auto;
+	}
+}
+
+/* ── Demo control field (version / compare-version selects) ──────────────── */
+
+.mw-demo-control {
+	margin-bottom: 0.75rem;
+}
+
+.mw-demo-control__label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.mw-demo-control__select {
+	width: 100%;
+	padding: 0.4rem;
+	font: inherit;
+	border: 1px solid var(--ifm-color-emphasis-300, #d1d5db);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color, #fff);
+	color: var(--ifm-font-color-base, inherit);
+}
+
+.mw-demo-control__select:disabled {
+	opacity: 0.5;
+}
+
+/* ── Backend indicator + WASM toggle / compare toggle ────────────────────── */
+
+.mw-demo-backend,
+.mw-demo-compare {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin-bottom: 0.75rem;
+	font-size: 0.85rem;
+}
+
+.mw-demo-compare {
+	display: block;
+}
+
+.mw-demo-backend__active {
+	opacity: 0.7;
+}
+
+.mw-demo-backend__toggle,
+.mw-demo-compare__toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	cursor: pointer;
+	opacity: 0.8;
+}
+
+.mw-demo-compare__toggle {
+	margin-bottom: 0.5rem;
+}
+
+.mw-demo-compare__status {
+	margin: 0.25rem 0 0;
+	font-size: 0.8rem;
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+}
+
+/* ── Place autocomplete listbox (reuses .mw-chip) ────────────────────────── */
+
+.mw-demo-suggest {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: baseline;
+}
+
+.mw-demo-suggest__label {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+	margin-right: 0.25rem;
+}
+
+.mw-chip--active {
+	outline: 2px solid var(--ifm-color-primary, #e0367c);
+	outline-offset: 1px;
+}

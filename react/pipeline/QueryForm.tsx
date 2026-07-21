@@ -7,7 +7,7 @@
  *   parsing. Presentational; `onSubmit` fires on form submission.
  */
 
-import type { ReactNode } from "react"
+import type { InputHTMLAttributes, KeyboardEvent, ReactNode } from "react"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 
@@ -18,9 +18,22 @@ export interface QueryFormProps {
 	disabled?: boolean
 	busy?: boolean
 	placeholder?: string
+	/** Keydown on the input — the seam a combobox (the demo's place-autocomplete) needs for arrow/Enter/Esc nav. */
+	onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
+	/** Escape hatch for extra `<input>` attributes (aria-combobox props, `autoComplete`, …). Merged last. */
+	inputProps?: InputHTMLAttributes<HTMLInputElement>
 }
 
-export function QueryForm({ value, onChange, onSubmit, disabled, busy, placeholder }: QueryFormProps): ReactNode {
+export function QueryForm({
+	value,
+	onChange,
+	onSubmit,
+	disabled,
+	busy,
+	placeholder,
+	onKeyDown,
+	inputProps,
+}: QueryFormProps): ReactNode {
 	return (
 		<form
 			className="mw-field"
@@ -37,6 +50,8 @@ export function QueryForm({ value, onChange, onSubmit, disabled, busy, placehold
 				onChange={(e) => onChange(e.target.value)}
 				disabled={disabled}
 				placeholder={placeholder}
+				onKeyDown={onKeyDown}
+				{...inputProps}
 			/>
 			<button type="submit" disabled={disabled || busy}>
 				{busy ? (
