@@ -94,6 +94,16 @@ export type {
 export { useParsePipeline } from "./pipeline/useParsePipeline.ts"
 export type { UseParsePipeline, UseParsePipelineOptions } from "./pipeline/useParsePipeline.ts"
 
+// ── Demo runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
+export { useDemoRuntime } from "./runtime/useDemoRuntime.ts"
+export type {
+	DemoAssetsLoadContext,
+	DemoManifest,
+	DemoReleaseBase,
+	DemoRuntimeConfig,
+	UseDemoRuntime,
+} from "./runtime/useDemoRuntime.ts"
+
 // ── Map (types only from root) ──────────────────────────────────────────────
 // The demo-map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
 // (WebGL + DOM at import) never enter the package-root graph — a bare `import("@mailwoman/react")` in node
