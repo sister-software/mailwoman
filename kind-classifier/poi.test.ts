@@ -84,6 +84,108 @@ describe("matchPOISubject", () => {
 	})
 })
 
+/**
+ * ANCHOR_SEPARATOR behaviour-preservation + ReDoS safety.
+ *
+ * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`) to clear CodeQL's
+ * `js/polynomial-redos` alert. `matchPOISubject` trims both the subject and the remainder, so surrounding whitespace on
+ * the separator is redundant — the split behaviour must be byte-identical. These cases pin the split point, subject,
+ * remainder, and match for every branch, anchor word, and whitespace shape. Values are the exact output of the
+ * pre-linearization regex (each anchor word is flanked by whitespace on both sides, a comma splits regardless of
+ * surrounding whitespace).
+ */
+describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearization)", () => {
+	// Fixed subject lexicon: hits only these short leading phrases. The WHOLE inputs below are longer (they carry the
+	// place), so the whole-input path misses and the separator scan runs — surfacing the split point itself.
+	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
+	const subjectLookup: POIPhraseLookup = (phrase) => {
+		const t = phrase.trim().toLowerCase()
+
+		return SUBJECTS.has(t) ? [{ kind: "category", categoryID: t, matchedPhrase: t, confidence: 1 }] : []
+	}
+
+	const cases: Array<{ text: string; subject: string; remainder: string }> = [
+		// comma branch — whitespace variants around the comma all trim to the same split
+		{ text: "cafe, Boston", subject: "cafe", remainder: "Boston" },
+		{ text: "cafe ,Boston", subject: "cafe", remainder: "Boston" },
+		{ text: "cafe , Boston", subject: "cafe", remainder: "Boston" },
+		{ text: "cafe  ,  Boston", subject: "cafe", remainder: "Boston" },
+		{ text: "cafe\t,\tBoston", subject: "cafe", remainder: "Boston" },
+		{ text: "cafe,Boston", subject: "cafe", remainder: "Boston" },
+		// each anchor word, single-space flanks
+		{ text: "gas station near Ottawa", subject: "gas station", remainder: "Ottawa" },
+		{ text: "hotel in Paris", subject: "hotel", remainder: "Paris" },
+		{ text: "atm at JFK", subject: "atm", remainder: "JFK" },
+		{ text: "trails around Denver", subject: "trails", remainder: "Denver" },
+		// anchor word, multi-space + tab flanks (greedy trailing consumption preserved)
+		{ text: "gas station   near   Ottawa", subject: "gas station", remainder: "Ottawa" },
+		{ text: "hotel\tin\tParis", subject: "hotel", remainder: "Paris" },
+		{ text: "atm  at  JFK", subject: "atm", remainder: "JFK" },
+		// multi-separator: first split wins (subject "cafe"), remainder keeps the rest verbatim after trim
+		{ text: "cafe, Boston, MA", subject: "cafe", remainder: "Boston, MA" },
+		{ text: "cafe near town in Denver", subject: "cafe", remainder: "town in Denver" },
+		// shared whitespace between comma and a following anchor: comma's trailing \s* consumes it,
+		// so the anchor does NOT re-split — remainder carries "near y" intact
+		{ text: "x,  near y", subject: "x", remainder: "near y" },
+	]
+
+	it.each(cases)("splits $text → subject=$subject remainder=$remainder", ({ text, subject, remainder }) => {
+		const m = matchPOISubject(text, "en-US", subjectLookup)
+		expect(m).not.toBeNull()
+		expect(m!.subject).toBe(subject)
+		expect(m!.remainder).toBe(remainder)
+	})
+
+	it("resolves the whole input when it hits, without scanning for a separator", () => {
+		const m = matchPOISubject("cafe", "en-US", subjectLookup)
+		expect(m).toEqual({
+			match: { kind: "category", categoryID: "cafe", matchedPhrase: "cafe", confidence: 1 },
+			subject: "cafe",
+			remainder: "",
+		})
+	})
+
+	it("returns null when nothing matches (no whole hit, no lexicon-hitting prefix)", () => {
+		// Separators exist ("in"), but no split prefix hits the lexicon → null, exactly as the old regex.
+		expect(matchPOISubject("Empire State Building", "en-US", subjectLookup)).toBeNull()
+	})
+
+	it("skips a leading separator (index === 0 guard) — no split before the first token", () => {
+		// Leading comma: the sole separator is at index 0 and is skipped; the whole-input path already missed → null.
+		expect(matchPOISubject(", Boston", "en-US", subjectLookup)).toBeNull()
+	})
+
+	it("substring anchor words without whitespace flanks do NOT split (identical to the old regex)", () => {
+		// "maintain" contains "in" and "at"; "nearby" contains "near" — none are whitespace-flanked, so no split.
+		expect(matchPOISubject("maintainnearby", "en-US", subjectLookup)).toBeNull()
+	})
+})
+
+describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
+	// Never-hitting lexicon forces the full separator scan over the whole input on every call.
+	const neverHits: POIPhraseLookup = () => []
+
+	it("returns quickly on a long adversarial whitespace run (no polynomial backtracking)", () => {
+		const pathological = "\t".repeat(100_000) + "x"
+		const start = performance.now()
+		const m = matchPOISubject(pathological, "en-US", neverHits)
+		const elapsed = performance.now() - start
+		expect(m).toBeNull()
+		// The old O(n²) form took seconds on 1e5 chars; the linear form completes in single-digit ms. 100ms is a
+		// generous ceiling that still fails loudly if quadratic backtracking returns.
+		expect(elapsed).toBeLessThan(100)
+	})
+
+	it("returns quickly on a long whitespace run before a bare comma", () => {
+		const pathological = "a" + " ".repeat(100_000) + ","
+		const start = performance.now()
+		const m = matchPOISubject(pathological, "en-US", neverHits)
+		const elapsed = performance.now() - start
+		expect(m).toBeNull()
+		expect(elapsed).toBeLessThan(100)
+	})
+})
+
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
