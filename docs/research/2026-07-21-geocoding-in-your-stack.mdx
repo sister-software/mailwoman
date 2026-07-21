@@ -1,0 +1,72 @@
+---
+slug: geocoding-in-your-stack
+title: "Turn on geocoding without turning it into a project"
+authors: [teffen]
+tags: [geocoding, infrastructure, motivation]
+date: 2026-07-21
+---
+
+You need to turn an address into a coordinate. That's the whole ask. The problem is that the two ways to get there both start as a project.
+
+Rent an API and the address is now someone else's business. Every lookup is a billable request and a row of your users' home addresses leaving your infrastructure, and the free tier caps out at one request a second, so a table of any size takes days. Self-host Nominatim instead and you've signed up for PostgreSQL, an `osm2pgsql` import measured in hours and tens of gigabytes, and a service you run on a box you can never embed inside your own app. Either way, the thing you wanted — `geocode(address)` — sits on the far side of a week of setup.
+
+{/* truncate */}
+
+Mailwoman is a parser and geocoder that runs from a SQLite file and a ~40&nbsp;MB model, entirely on your own machine ([nothing it does phones home](/research/geocoding-that-never-phones-home)). None of that helps if wiring it in is its own week, though. So the work of the last stretch wasn't the model. It was making the thing install the way the rest of your dependencies do.
+
+## Your existing client already works
+
+Mailwoman ships endpoints that speak the wire formats your stack was already built against. `@mailwoman/nominatim` answers `/search` and `/reverse` and `/status` the way Nominatim does. `@mailwoman/photon` returns the GeoJSON that Photon clients expect for autocomplete. `@mailwoman/libpostal` parses and expands on the `/parse` and `/expand` routes. The client library you wrote against those services doesn't know it's talking to something else.
+
+geopy is the clearest case. Its `Nominatim` class takes a `domain`, so pointing it at a local instance is two keyword arguments and no code change:
+
+```python
+from geopy.geocoders import Nominatim
+
+geo = Nominatim(domain="localhost:8080", scheme="http", user_agent="my-app")
+loc = geo.geocode("1600 Pennsylvania Avenue NW, Washington, DC 20500")
+print(loc.latitude, loc.longitude)   # 38.8977 -77.0365
+```
+
+Same call you already had. It now resolves against a rooftop-level result on your own box, and the result carries an OpenCage-style `annotations` block — timezone, coordinate formats, the things upstream Nominatim leaves empty — hanging off `loc.raw`.
+
+## One `docker run` for the server
+
+The container installs the published packages and bakes the model weights in, so a fresh pull parses addresses with no data at all. Geocoding needs a gazetteer, which stays out of the image and mounts at `/data`:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v /path/to/mailwoman-data:/data:ro \
+  ghcr.io/sister-software/mailwoman:latest \
+  node node_modules/@mailwoman/nominatim/out/cli.js serve
+```
+
+You have an endpoint. Curl it, point geopy at it, put it behind your load balancer. The image also runs the native `/v1` API and the Photon and libpostal drop-ins on their own commands, so one artifact covers the formats your services speak.
+
+## In-process, when a round trip is silly
+
+A Node service that needs a coordinate shouldn't have to talk to itself over HTTP. `@mailwoman/fastify` registers the routes and a `fastify.mailwoman` decorator over the local pipeline, built once at startup:
+
+```ts
+import Fastify from "fastify"
+import mailwoman from "@mailwoman/fastify"
+
+const app = Fastify()
+await app.register(mailwoman, { resolveDatabasePath: "/data/wof/candidate.db" })
+
+const { lat, lon } = await app.mailwoman.geocode("350 5th Ave, New York")
+```
+
+For the frontend, `@mailwoman/react` is the parse, geocode, and POI components that drive our own docs demos, split into small pieces and headless hooks so you can take the `usePOISearch` logic without our markup. Python and Rust callers have generated clients on PyPI and crates.io (`mailwoman-client`). And for agents, `@mailwoman/mcp` exposes parsing, geocoding, POI search, and spatial export as MCP tools over stdio, so a model can look an address up as a tool call instead of guessing at coordinates.
+
+## What it costs you
+
+You bring the gazetteer. The model is in the image, but geocoding needs the admin database, and that's a download or a build — the worldwide candidate file is about 1.4&nbsp;GB, and it's read-only, so it mounts `:ro` and you never think about it again. Until it's in place, the server parses but won't geocode, which is a degrade with a clear message, not a crash. If you're not sure what's present, `mailwoman doctor` checks the weights, the data root, the gazetteer, and the runtime and tells you the one command to fix each gap.
+
+The other cost is the shape. This is SQLite, not a cluster, so one instance is one node. That's the point on a single box or inside an app, and it means you scale by running more copies behind a balancer rather than by tuning a shared database. If your plan was a managed Postgres fleet, this isn't that, on purpose.
+
+And the license is AGPL, with a commercial option. If you're embedding it in something you ship closed, that's the conversation to have first.
+
+## Where it stops
+
+None of this changes what the geocoder does — it's the same parser and the same resolver from a month of eval posts. What changed is the distance between reading this and having an endpoint, which is now a `docker run` or an `npm install`, not a migration. The address still turns into a coordinate. It just does it inside the stack you already have.
