@@ -1,9 +1,10 @@
 # Build + deploy the Docusaurus docs site.
 #
-# On pull_request: structure gate + build (catches broken links, MDX parse errors, and —
-# before any install — frontmatter/duplicate-title/orphan regressions via
-# docs/scripts/check-docs-structure.ts).
-# On push to main: same, then deploy to GitHub Pages.
+# On pull_request: the build job runs on EVERY PR (so it can be a required status check), but the
+# structure gate + build steps execute only when a demo-affecting path changed — otherwise the job
+# reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
+# frontmatter/duplicate-title/orphan regressions via docs/scripts/check-docs-structure.ts.
+# On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
 #
 # Binary assets (model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db) are
 # fetched at runtime from the HF Bucket (sister-software/mailwoman), NOT bundled
@@ -18,21 +19,17 @@ on:
   # the live demo serves the old bundle (which is exactly how the "New York → West New York" fix
   # almost shipped invisibly). workflow_dispatch is the manual escape hatch when a dependency
   # outside these paths changes.
+  #
+  # The pull_request trigger deliberately carries NO `paths:` filter, so the `build` job runs and
+  # reports a check on EVERY PR — a prerequisite for making it a required status check in the
+  # branch ruleset. A workflow-level `paths:` filter would leave PRs that touch none of these paths
+  # with no check reported at all, which a required-check rule reads as "waiting forever" and the
+  # PR can never merge. Instead the heavy steps are gated per-job below on a change-detection step;
+  # an unaffected PR reports green in seconds. The `push` trigger keeps its `paths:` filter — deploy
+  # should only fire when the built output can actually change.
   workflow_dispatch: {}
   pull_request:
     branches: [main]
-    paths:
-      - "docs/**"
-      - "neural-web/**"
-      # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
-      - "neural/**"
-      - "resolver-wof-wasm/**"
-      - "resolver-wof-sqlite/**"
-      - "resolver/**"
-      - "core/**"
-      - "spatial/**"
-      - "codex/**"
-      - "*.md"
   push:
     branches: [main]
     paths:
@@ -50,6 +47,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
   pages: write
   id-token: write
 
@@ -67,7 +65,32 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Change detection replaces the trigger-level `paths:` filter (see the `on:` comment). On a
+      # pull_request, this computes whether any demo-affecting path changed; the heavy steps below
+      # run only when it did. On push/workflow_dispatch the filter is skipped and the steps run
+      # unconditionally (the push trigger already path-filtered the event, and dispatch is manual).
+      # This keeps the job — and therefore its status check — reported on EVERY PR.
+      - name: Detect demo-affecting changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docs:
+              - "docs/**"
+              - "neural-web/**"
+              # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
+              - "neural/**"
+              - "resolver-wof-wasm/**"
+              - "resolver-wof-sqlite/**"
+              - "resolver/**"
+              - "core/**"
+              - "spatial/**"
+              - "codex/**"
+              - "*.md"
+
       - name: Setup Node
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -80,18 +103,23 @@ jobs:
       # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
       # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
       - name: Docs structure checks
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check-docs-structure.ts
 
       - name: Enable Corepack (yarn 4)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: corepack enable
 
       - name: Install dependencies
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn install --immutable
 
       - name: Compile workspaces
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn compile
 
       - name: Build docs
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn workspace @mailwoman/docs build
 
       - name: Upload Pages artifact
