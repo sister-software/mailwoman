@@ -438,3 +438,63 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 		expect(ranked.every((r) => r.effectiveNegRank === r.neg_rank)).toBe(true)
 	})
 })
+
+describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio lever, regression lock)", () => {
+	// THE RULE, locked here so it can't silently drift: δ=1.0 (PRIMARY_PREFERENCE_LOG10) means a
+	// cross-country ALIAS must be ≥10x more populous than the same-key foreign PRIMARY to win; below 10x the
+	// primary wins and the alias is demoted out of the exact tier. This is a population-RATIO proxy for
+	// NOTABILITY — the refinement to a true notability signal is tracked as a follow-up.
+	//
+	// The band the reviewer characterized on the real gazetteer, reproduced with synthetic fixtures so the
+	// class is pinned WITHOUT the 3.9 GB live db: "Cancun" → Cancún MX (~5x, flips to the primary);
+	// "Florence" → Florence US (Firenze only ~9.5x, under the bar → primary); "Naples" → Napoli IT (~50x)
+	// and "Vienna" → Wien AT (~118x) stay foreign. Non-vacuous by construction: a naive unbounded
+	// `is_primary DESC` fails the >10x + same-country cases (it would force the primary); a pure-population
+	// order fails the <10x case (it would keep the more-populous alias).
+	const US = 2
+	const IT = 3
+	const AT = 4
+	// A row from a raw population — build-candidate stores neg_rank = -log10(population + 1), so the pure
+	// lever sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
+	const pop = (population: number, is_primary: number, country_id: number) => ({
+		neg_rank: -Math.log10(population + 1),
+		is_primary,
+		country_id,
+	})
+
+	test("cross-country alias JUST UNDER 10x loses to the foreign primary (Florence → Florence US)", () => {
+		// primary US 100k vs foreign alias IT 950k → ratio ~9.5x < 10x → primary wins, alias demoted.
+		const ranked = rankByPrimaryPreference([pop(950_000, 0, IT), pop(100_000, 1, US)], 5)
+		expect(ranked[0]!.is_primary).toBe(1)
+		expect(ranked[0]!.country_id).toBe(US)
+		expect(ranked.find((r) => r.country_id === IT)!.demoted).toBe(true)
+	})
+
+	test("cross-country alias WELL OVER 10x still wins (Naples → Napoli / Vienna → Wien class)", () => {
+		// primary US 20k vs foreign alias AT ~1.9M → ratio ~95x > 10x → the dominant alias wins, NOT demoted.
+		const ranked = rankByPrimaryPreference([pop(1_900_000, 0, AT), pop(20_000, 1, US)], 5)
+		expect(ranked[0]!.is_primary).toBe(0)
+		expect(ranked[0]!.country_id).toBe(AT)
+		expect(ranked[0]!.demoted).toBe(false)
+	})
+
+	test("the 10x threshold is tight: 10.5x → alias wins, 9.5x → foreign primary wins", () => {
+		// 10.5x → over the bar → the alias wins.
+		const over = rankByPrimaryPreference([pop(1_050_000, 0, IT), pop(100_000, 1, US)], 5)
+		expect(over[0]!.country_id).toBe(IT)
+		expect(over[0]!.is_primary).toBe(0)
+		// 9.5x → under the bar → the foreign primary wins.
+		const under = rankByPrimaryPreference([pop(950_000, 0, IT), pop(100_000, 1, US)], 5)
+		expect(under[0]!.country_id).toBe(US)
+		expect(under[0]!.is_primary).toBe(1)
+	})
+
+	test("SAME-country collision is unaffected by the ratio lever — population-first at any ratio", () => {
+		// primary US 100k vs alias US 950k (same country) → no penalty → the bigger alias wins even at ~9.5x
+		// (below the cross-country bar) and is never demoted. A naive `is_primary DESC` would wrongly pick the
+		// primary here — this is the guard that the lever stays CROSS-country-only.
+		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
+		expect(ranked[0]!.is_primary).toBe(0)
+		expect(ranked[0]!.demoted).toBe(false)
+	})
+})
