@@ -111,6 +111,46 @@ export interface LoadFromURLsOptions {
 	fetchImpl?: typeof fetch
 }
 
+/**
+ * Fetch + decode the postcode anchor binaries TOLERANTLY, then merge the ones that loaded.
+ *
+ * Each `postcode-<cc>.bin` is OPTIONAL: the postcode anchor is a soft ranking channel, not a load-bearing model input,
+ * so a single missing/404 binary must NEVER reject the whole classifier load. This is the fix for the 2026-07 demo
+ * outage — `postcode-de.bin` went 404 on prod R2 for every shipped version while postcode-us/fr stayed 200, and the old
+ * throwing `Promise.all(urls.map(fetchBytes))` rejected on that one 404. That rejection propagated up through
+ * `loadNeuralClassifierFromURLs` → `runtime.ready` never fired → the demo input stayed permanently disabled even though
+ * the model, tokenizer, and the other two postcode binaries were all fine.
+ *
+ * Behavior: fetch each binary independently; SKIP any that fail (404 or network) with a loud `console.warn` naming the
+ * URL + the failure; merge the successes via {@link mergeAnchorLookups}. If ALL fail, return `undefined` — identical to
+ * the no-`postcodeBinaryURLs`-configured path, so the classifier still loads (anchor-off identity, ranking degrades
+ * slightly but nothing blocks). A PRESENT-but-corrupt binary (bad magic) throws inside `PostcodeBinaryResolver`; that
+ * is caught here too and treated as a skip — a garbage optional asset should degrade, not brick the demo.
+ */
+async function loadPostcodeAnchorLookup(
+	urls: readonly string[],
+	fetchImpl: typeof fetch
+): Promise<AnchorLookup | undefined> {
+	const settled = await Promise.all(
+		urls.map(async (url): Promise<AnchorLookup | null> => {
+			try {
+				return new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).toAnchorLookup()
+			} catch (error) {
+				console.warn(
+					`[mailwoman/neural-web] optional postcode anchor binary skipped: ${url} — ` +
+						`${error instanceof Error ? error.message : String(error)}. ` +
+						"The postcode anchor is a soft ranking channel; the classifier loads without it (degraded ranking only)."
+				)
+
+				return null
+			}
+		})
+	)
+	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
+
+	return lookups.length ? mergeAnchorLookups(lookups) : undefined
+}
+
 /** Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. */
 function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 	if (lookups.length === 1) return lookups[0]!
@@ -198,11 +238,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, opts.runner),
 		opts.postcodeBinaryURLs?.length
-			? Promise.all(
-					opts.postcodeBinaryURLs.map(async (url) =>
-						new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).toAnchorLookup()
-					)
-				).then(mergeAnchorLookups)
+			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
 			: Promise.resolve<AnchorLookup | undefined>(undefined),
 	])
 
