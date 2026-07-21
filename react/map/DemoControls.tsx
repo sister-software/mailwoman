@@ -106,6 +106,8 @@ export function DemoControls({
 				inputProps={autocomplete.inputProps}
 			/>
 
+			{panels.bias}
+
 			<PlaceAutocomplete
 				suggestions={autocomplete.suggestions}
 				activeIndex={autocomplete.activeIndex}
@@ -122,9 +124,8 @@ export function DemoControls({
 					geocode.setText(value)
 					geocode.reset()
 				}}
+				trailing={panels.permalink ? panels.permalink(geocode.text) : null}
 			/>
-
-			{panels.permalink ? panels.permalink(geocode.text) : null}
 
 			{loading && !runtime.ready ? (
 				<LoadingIndicator
@@ -136,19 +137,30 @@ export function DemoControls({
 			) : null}
 			{errorMessage ? <p className="mw-error">{errorMessage}</p> : null}
 
+			{panels.aboveResult ? panels.aboveResult({ result }) : null}
+
 			{busy ? (
 				<div className="mw-result">
 					<LoadingIndicator mode="staged" steps={runtime.parseStageLabels} activeStep={geocode.parseStage} />
 				</div>
 			) : result ? (
-				<ResultPanel
-					result={result}
-					selectedCandidate={selectedCandidate}
-					selectedCandidateIndex={geocode.selectedCandidateIndex}
-					onSelectCandidate={geocode.selectCandidate}
-					extras={panels.extras}
-					failure={panels.failure}
-				/>
+				panels.result ? (
+					panels.result({
+						result,
+						selectedCandidate,
+						selectedCandidateIndex: geocode.selectedCandidateIndex,
+						onSelectCandidate: geocode.selectCandidate,
+					})
+				) : (
+					<ResultPanel
+						result={result}
+						selectedCandidate={selectedCandidate}
+						selectedCandidateIndex={geocode.selectedCandidateIndex}
+						onSelectCandidate={geocode.selectCandidate}
+						extras={panels.extras}
+						failure={panels.failure}
+					/>
+				)
 			) : null}
 
 			{panels.compare

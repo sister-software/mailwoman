@@ -22,6 +22,7 @@
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
+import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import type {
 	DemoAssetsLoadContext,
 	DemoManifest,
@@ -30,7 +31,14 @@ import type {
 	ResolvedPlaceView,
 } from "@mailwoman/react"
 import { useDemoRuntime } from "@mailwoman/react"
-import type { DemoMapStyle, DemoRuntime, MapBias, ResolvedMapPlace, Suggestion } from "@mailwoman/react/map"
+import type {
+	DemoMapStyle,
+	DemoRuntime,
+	MapBias,
+	OverlaySpec,
+	ResolvedMapPlace,
+	Suggestion,
+} from "@mailwoman/react/map"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -51,6 +59,7 @@ import type {
 	FSTProvenanceLike,
 	MailwomanClassifierLike,
 	MailwomanLookupLike,
+	ParseTraceLike,
 	ResolvedHit,
 } from "../../shared/resources.tsx"
 import {
@@ -64,7 +73,13 @@ import {
 	regionToStateSlug,
 	streetShardURL,
 } from "../../shared/resources.tsx"
-import { fetchBasemapSource, loadPolygonDB, type PlaceGeometry, type PolygonDB } from "../demo/_map-helpers.ts"
+import {
+	fetchBasemapSource,
+	loadPolygonDB,
+	type PlaceGeometry,
+	type PolygonDB,
+	TILE_WORKER_URL,
+} from "../demo/_map-helpers.ts"
 
 /** Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`. */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
@@ -97,6 +112,14 @@ interface CandidateExtras {
 	uncertaintyM?: number
 }
 
+/** Device-location proximity-bias control (the "📍 Use my location" button state + toggle). */
+export interface GeoBiasControl {
+	/** Whether a device location is currently applied as a soft bias. */
+	active: boolean
+	/** Toggle the device-location bias on/off (prompts for geolocation when turning on). */
+	toggle: () => void
+}
+
 export interface UseDemoNextRuntime {
 	/** The composed runtime `<GeocoderDemo>` consumes, or `null` until the basemap style has loaded. */
 	runtime: DemoRuntime | null
@@ -104,6 +127,17 @@ export interface UseDemoNextRuntime {
 	releases: ReleaseInfo[]
 	/** Whether the CPU/WASM backend is forced (threaded into the host compare classifier load). */
 	forceWASM: boolean
+	/** The device-location proximity-bias control (the demo's "Use my location" row). */
+	geoBias: GeoBiasControl
+	/** The version's isotonic calibrator (raw softmax → calibrated probability), or `null` if none loaded. */
+	calibrator: ((raw: number) => number | null) | undefined
+	/**
+	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer). Resolves `null` when the
+	 * classifier bundle predates the `traceParse` seam or the trace fails. Feature-detect via {@link supportsTrace}.
+	 */
+	traceParse: (input: string) => Promise<ParseTraceLike | null>
+	/** Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle). */
+	supportsTrace: boolean
 }
 
 export interface UseDemoNextRuntimeOptions {
@@ -278,6 +312,31 @@ export function useDemoNextRuntime({
 	const versionRef = useRef<string | null>(rt.selectedVersion)
 	versionRef.current = rt.selectedVersion
 
+	// ── Device-location bias (#938): the "Use my location" button's soft proximity hint. A ref (not state) so
+	// granting it mid-session doesn't re-create the parse callback; `geoBiasActive` drives only the button's pressed
+	// state. `runParseWithBias` reads the ref and joins it as a weaker second hint (weight 0.6) below the map-center one.
+	const geoBiasRef = useRef<{ lat: number; lon: number } | null>(null)
+	const [geoBiasActive, setGeoBiasActive] = useState(false)
+
+	const toggleGeoBias = useCallback(() => {
+		if (geoBiasRef.current) {
+			geoBiasRef.current = null
+			setGeoBiasActive(false)
+
+			return
+		}
+
+		if (typeof navigator === "undefined" || !navigator.geolocation) return
+		navigator.geolocation.getCurrentPosition(
+			(pos) => {
+				geoBiasRef.current = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+				setGeoBiasActive(true)
+			},
+			() => setGeoBiasActive(false),
+			{ maximumAge: 600_000, timeout: 8_000 }
+		)
+	}, [])
+
 	// Per-candidate map-render extras, keyed by the candidate object `useParsePipeline` hands back verbatim.
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
@@ -437,10 +496,15 @@ export function useDemoNextRuntime({
 			}
 
 			// Viewport bias (#938): the map center as a SOFT proximity hint. The library's decay is population-ceilinged.
+			// The device location (when granted via the "Use my location" button) joins as a weaker second hint.
 			const resolveBias: ResolveBias = []
 
 			if (bias) {
 				resolveBias.push({ lat: bias.center[1], lon: bias.center[0], weight: 1 })
+			}
+
+			if (geoBiasRef.current) {
+				resolveBias.push({ ...geoBiasRef.current, weight: 0.6 })
 			}
 
 			const tBeforeResolve = performance.now()
@@ -476,15 +540,20 @@ export function useDemoNextRuntime({
 				extrasRef.current.set(candidates[i]!, { bbox: c.bbox })
 			})
 
-			// Street-level coordinate wins the pin (more precise than any admin centroid). id=0 → not a WOF place.
+			// Street-level coordinate wins the pin (more precise than any admin centroid). id=0 → not a WOF place. The
+			// `tier` + `uncertaintyM` ride on the candidate itself (a structural superset of `ResolvedPlaceView`, exactly
+			// like the live demo's `ResolvedHit`) so the docs `<ResultPanel>` renders the "precision ≈ interpolated · ±N m"
+			// row instead of a "WOF id 0" — the map render still reads them back through `extrasRef` below.
 			if (streetResolution) {
-				const streetCandidate: ResolvedPlaceView = {
+				const streetCandidate: ResolvedPlaceView & { tier: StreetResolution["tier"]; uncertaintyM: number } = {
 					id: 0,
 					name: `${String(houseNumberNode!.value)} ${streetValue}`,
 					placetype: streetResolution.tier,
 					lat: streetResolution.lat,
 					lon: streetResolution.lon,
 					score: 1,
+					tier: streetResolution.tier,
+					uncertaintyM: streetResolution.uncertaintyM,
 				}
 				extrasRef.current.set(streetCandidate, {
 					tier: streetResolution.tier,
@@ -598,6 +667,35 @@ export function useDemoNextRuntime({
 		[sqljsBaseURL, polygonCache]
 	)
 
+	// ── Decode-path trace (dev-mode ModelVisualizer): trace the current input through the loaded classifier. ──
+	const traceParse = useCallback(async (input: string): Promise<ParseTraceLike | null> => {
+		const classifier = assetsRef.current?.classifier
+
+		if (!classifier?.traceParse) return null
+
+		try {
+			return await classifier.traceParse(input, { addressSystemConventions: "auto" })
+		} catch {
+			return null
+		}
+	}, [])
+
+	// ── Coverage "fog of war" overlay: the same XYZ vector source + default-off fill layers the live demo wires,
+	// handed to the package's declarative `<OverlayLayers>`. Default-off (`visible: false`); the LayerToggleControl
+	// (injected via `panels.mapControls`) flips each fog reading on. The tile-worker `race-dots` overlay stays off. ──
+	const overlays = useMemo<OverlaySpec[]>(
+		() => [
+			{
+				id: CoverageTileSetID,
+				source: createCoverageSource(`${TILE_WORKER_URL}/${CoverageTileSetID}.json`),
+				layers: CoverageLayers,
+				visible: false,
+				label: "Coverage",
+			},
+		],
+		[]
+	)
+
 	// ── Version + backend surface (mirror the loader state; the picker/backend controls drive these) ─────────
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),
@@ -634,6 +732,7 @@ export function useDemoNextRuntime({
 			errorMessage: rt.errorMessage,
 			// Map surface
 			mapStyle,
+			overlays,
 			initialCenter: [initialCenter[0], initialCenter[1]],
 			initialZoom: 3,
 			runParseWithBias,
@@ -668,7 +767,16 @@ export function useDemoNextRuntime({
 		resolveMapPlace,
 		availableVersions,
 		parseStageLabels,
+		overlays,
 	])
 
-	return { runtime, releases: rt.manifest?.releases ?? [], forceWASM: rt.forceWASM }
+	return {
+		runtime,
+		releases: rt.manifest?.releases ?? [],
+		forceWASM: rt.forceWASM,
+		geoBias: { active: geoBiasActive, toggle: toggleGeoBias },
+		calibrator,
+		traceParse,
+		supportsTrace: rt.assets?.classifier?.traceParse != null,
+	}
 }

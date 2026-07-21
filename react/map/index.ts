@@ -18,6 +18,7 @@ export type {
 	DemoBackend,
 	DemoCompareContext,
 	DemoPanels,
+	DemoResultContext,
 	DemoRuntime,
 	DemoVersionOption,
 	LngLatTuple,
