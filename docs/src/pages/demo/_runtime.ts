@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useDemoNextRuntime` — the DOCS-EDGE runtime injection for the `/demo-next` staging route. It builds
- *   the REAL {@link DemoRuntime} that `@mailwoman/react/map`'s `<GeocoderDemo>` consumes, wiring the exact
- *   fetchers/factories the live `/demo` page (`_app.tsx`) drives inline — but WITHOUT touching that page.
+ *   `useDemoMapRuntime` — the DOCS-EDGE runtime injection for the `/demo` page. It builds the REAL
+ *   {@link DemoRuntime} that `@mailwoman/react/map`'s `<GeocoderDemo>` consumes, wiring the docs-side
+ *   async fetchers/factories that drive the fully-client-side geocoder.
  *
  *   The shared load orchestration (version-selection state machine, per-version sequencing, ready/error
  *   state) is owned by `@mailwoman/react`'s `useDemoRuntime`; this module injects the docs-side async
@@ -17,7 +17,7 @@
  *
  *   Node-safety is not a concern here — this is docs-only code (webpack/browser), never imported by the
  *   published `@mailwoman/react` package. It reuses the SAME shared helpers the live demo uses
- *   (`../../shared/demo-helpers`, `../../shared/resources`, `../demo/_map-helpers`) so the two paths can't
+ *   (`../../shared/demo-helpers`, `../../shared/resources`, `./_map-helpers`) so the two paths can't
  *   drift on the parse/resolve/geometry math.
  */
 
@@ -79,7 +79,7 @@ import {
 	type PlaceGeometry,
 	type PolygonDB,
 	TILE_WORKER_URL,
-} from "../demo/_map-helpers.ts"
+} from "./_map-helpers.ts"
 
 /** Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`. */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
@@ -120,7 +120,7 @@ export interface GeoBiasControl {
 	toggle: () => void
 }
 
-export interface UseDemoNextRuntime {
+export interface UseDemoMapRuntime {
 	/** The composed runtime `<GeocoderDemo>` consumes, or `null` until the basemap style has loaded. */
 	runtime: DemoRuntime | null
 	/** The selectable releases (for the host compare panel that loads its own second classifier). */
@@ -140,7 +140,7 @@ export interface UseDemoNextRuntime {
 	supportsTrace: boolean
 }
 
-export interface UseDemoNextRuntimeOptions {
+export interface UseDemoMapRuntimeOptions {
 	/** Same-origin base for the sql.js-httpvfs worker + wasm (e.g. `/mailwoman/sqljs`). */
 	sqljsBaseURL: string
 	/** Site base URL (for the range-cache service worker registration). */
@@ -150,15 +150,15 @@ export interface UseDemoNextRuntimeOptions {
 }
 
 /**
- * Build the real {@link DemoRuntime} for `/demo-next`. Injects the docs fetchers into the shared `useDemoRuntime`
- * loader, then wraps the loaded assets with the map surface (style / overlays / bias-aware parse / autocomplete /
- * calibrator / map-place enricher). The returned `runtime` is `null` until the basemap style resolves.
+ * Build the real {@link DemoRuntime} for `/demo`. Injects the docs fetchers into the shared `useDemoRuntime` loader,
+ * then wraps the loaded assets with the map surface (style / overlays / bias-aware parse / autocomplete / calibrator /
+ * map-place enricher). The returned `runtime` is `null` until the basemap style resolves.
  */
-export function useDemoNextRuntime({
+export function useDemoMapRuntime({
 	sqljsBaseURL,
 	baseURL,
 	initialCenter,
-}: UseDemoNextRuntimeOptions): UseDemoNextRuntime {
+}: UseDemoMapRuntimeOptions): UseDemoMapRuntime {
 	// ── Injected loaders ──────────────────────────────────────────────────────
 	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => {
 		// `cache: "reload"` bypasses the (immutable-Cache-Control) HTTP cache for the version pointer so a
@@ -190,7 +190,7 @@ export function useDemoNextRuntime({
 				classifier: cls,
 				diagnostics,
 				postcodeAnchorLookup,
-				// The runtime API is wider than the TS types; cast through unknown (same pattern as `_app.tsx`).
+				// The runtime API is wider than the TS types; cast through unknown (the runtime bundle ships a wider surface than its types).
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} = (await neuralWeb.loadNeuralClassifierFromURLs(
 				neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
@@ -455,7 +455,7 @@ export function useDemoNextRuntime({
 						)
 					}
 				} catch (streetErr) {
-					console.warn("[mailwoman demo-next] street tier unavailable; falling back to admin cascade", streetErr)
+					console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", streetErr)
 				}
 			}
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Docs-side control widgets injected into `<GeocoderDemo>` via the `DemoPanels` seam for the `/demo-next`
+ *   Docs-side control widgets injected into `<GeocoderDemo>` via the `DemoPanels` seam for the `/demo` page
  *   staging route: the device-location proximity-bias row (`panels.bias`) and the two opt-in display toggles
  *   (`panels.aboveResult`) — calibrated confidence + dev mode. Each is lifted verbatim from the live demo's
  *   `_app.tsx` control section so the two routes render pixel-identically; they reuse the same
@@ -13,7 +13,7 @@
 
 import type React from "react"
 
-import demoStyles from "../demo/styles.module.css"
+import demoStyles from "./styles.module.css"
 
 export interface GeoBiasRowProps {
 	/** Whether a device location is currently applied as a bias. */

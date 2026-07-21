@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DemoNextCompare>` — the host-side compare panel for `/demo-next`, injected into `<GeocoderDemo>` via
+ *   `<DemoCompare>` — the host-side compare panel for `/demo`, injected into `<GeocoderDemo>` via
  *   `DemoPanels.compare`. The package owns only the compare TOGGLE + version selection (`useCompareState`);
  *   the SECOND parse stays host-side by design, so this component loads its own compare classifier and
  *   re-parses the current input whenever the primary result changes — then renders the docs
@@ -21,7 +21,7 @@ import { DEFAULT_LOCALE, flattenTree } from "../../shared/demo-helpers.ts"
 import type { DemoResult, MailwomanClassifierLike, ResultNode } from "../../shared/resources.tsx"
 import { neuralClassifierLoadURLs } from "../../shared/resources.tsx"
 
-export interface DemoNextCompareProps {
+export interface DemoCompareProps {
 	/** The primary (left) parse result from the package's compare context. */
 	primary: ParseResult | null
 	/** Whether compare mode is on. */
@@ -37,7 +37,7 @@ export interface DemoNextCompareProps {
 }
 
 /** Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`. */
-export const DemoNextCompare: React.FC<DemoNextCompareProps> = ({
+export const DemoCompare: React.FC<DemoCompareProps> = ({
 	primary,
 	compareMode,
 	compareVersion,

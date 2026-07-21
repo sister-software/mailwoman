@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DemoNextDebugDrawer>` — the dev-mode decode-path drawer for `/demo-next`, injected into `<GeocoderDemo>`
+ *   `<DemoDebugDrawer>` — the dev-mode decode-path drawer for `/demo`, injected into `<GeocoderDemo>`
  *   via `DemoPanels.debugDrawer`. It mirrors the live demo's model-visualizer aside (`_app.tsx`): when dev mode
  *   is on and a result is present, it traces the current input through the host's classifier and renders the
  *   docs `<ModelVisualizer>` beside the map. Dev-mode-gated by design — closed by default, opened by the
@@ -17,9 +17,9 @@ import { useEffect, useState } from "react"
 import { ModelVisualizer } from "../../components/ModelVisualizer/ModelVisualizer.tsx"
 import type { ParseTraceLike } from "../../shared/resources.tsx"
 
-import demoStyles from "../demo/styles.module.css"
+import demoStyles from "./styles.module.css"
 
-export interface DemoNextDebugDrawerProps {
+export interface DemoDebugDrawerProps {
 	/** The current parse result (its input is re-traced when dev mode is on). */
 	result: ParseResult | null
 	/** Whether dev mode is on. */
@@ -31,7 +31,7 @@ export interface DemoNextDebugDrawerProps {
 }
 
 /** The model-visualizer drawer — mounts only in dev mode once a trace is ready. */
-export const DemoNextDebugDrawer: React.FC<DemoNextDebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
+export const DemoDebugDrawer: React.FC<DemoDebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
 	const [trace, setTrace] = useState<ParseTraceLike | null>(null)
 	const input = result?.input ?? null
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DemoNextMapControls>` — the `/demo-next` map controls injected into `<GeocoderDemo>` via
+ *   `<DemoMapControls>` — the `/demo` map controls injected into `<GeocoderDemo>` via
  *   `DemoPanels.mapControls` (rendered as `<DemoMap>` children, inside the react-map-gl `<Map>` context). It
  *   ports the live demo's two imperative `map.addControl(...)` calls onto the declarative binding:
  *
@@ -20,10 +20,10 @@ import { useEffect, useState } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
-import { DebugControl } from "../demo/_debug.tsx"
+import { DebugControl } from "./_debug.tsx"
 
 /** Mounts the layer-toggle + feature-inspector controls on the surrounding `<Map>`. */
-export const DemoNextMapControls: React.FC = () => {
+export const DemoMapControls: React.FC = () => {
 	// The layer-toggle panel: a maplibre `IControl` mounted top-right (matches `_app.tsx`'s `addControl(..., "top-right")`).
 	useControl(() => new LayerToggleControl(), { position: "top-right" })
 
