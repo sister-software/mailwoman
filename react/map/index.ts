@@ -23,3 +23,22 @@ export type {
 	OverlaySpec,
 	Suggestion,
 } from "./types.ts"
+
+// ── Pure geometry + render spec (node-safe; no react-map-gl at runtime) ──────
+export { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "./geometry.ts"
+export type { BoundsTuple, PlaceBBox, PlaceGeometry } from "./geometry.ts"
+export { cameraToViewState, computeMapPlaceRenderSpec } from "./place-render.ts"
+export type { LngLat, MapCameraTarget, MapPlaceRenderSpec, PlaceTier, ResolvedMapPlace } from "./place-render.ts"
+export { useMapPlaceRender } from "./useMapPlaceRender.ts"
+
+// ── Declarative overlays (react-map-gl `<Marker>`/`<Source>`/`<Layer>`) ──────
+export { OverlayLayers } from "./OverlayLayers.tsx"
+export type { OverlayLayersProps } from "./OverlayLayers.tsx"
+export { PlaceMarker } from "./PlaceMarker.tsx"
+export type { PlaceMarkerProps } from "./PlaceMarker.tsx"
+export { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
+export type { ResolvedPlaceLayersProps } from "./ResolvedPlaceLayers.tsx"
+export { ResultCamera } from "./ResultCamera.tsx"
+export type { ResultCameraProps } from "./ResultCamera.tsx"
+export { ResultOverlay } from "./ResultOverlay.tsx"
+export type { ResultOverlayProps } from "./ResultOverlay.tsx"

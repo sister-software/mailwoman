@@ -53,7 +53,8 @@
 	"scripts": {
 		"storybook": "storybook dev -p 6007 --no-open",
 		"build-storybook": "storybook build",
-		"test:browser": "vitest run --config vitest.config.ts"
+		"test:browser": "vitest run --config vitest.config.ts",
+		"test:node": "vitest run --config vitest.node.config.ts"
 	},
 	"dependencies": {
 		"@mailwoman/kind-classifier": "workspace:*",
