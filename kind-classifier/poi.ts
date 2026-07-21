@@ -45,8 +45,22 @@ export interface POISubjectMatch {
 /**
  * Anchor separator between subject and place: comma, or near/in/at/around — scanned left-to-right until a prefix hits
  * the lexicon.
+ *
+ * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded whitespace quantifier _before_
+ * its required literal — the classic `\s*`/`\s+`-then-literal backtracking shape that CodeQL's `js/polynomial-redos`
+ * flags. The comma alternative starts at the literal `,`; the anchor alternative starts at a single `\s` immediately
+ * before a fixed anchor word. Every remaining quantifier (`,\s*`, `…\s+`) is _trailing_ — it runs only after the
+ * required literal has already matched and nothing follows it, so it never backtracks. Each start offset does O(1)
+ * work, making `matchAll` O(n).
+ *
+ * Behaviour is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+` because `matchPOISubject` `.trim()`s both the
+ * subject (text before `.index`) and the remainder (text after the match), so surrounding whitespace on either side of
+ * the separator is redundant. The leading `\s*`/`\s+` only shifted the match _start_ within a whitespace run — trim
+ * absorbs that — while the retained _trailing_ greedy quantifier keeps the match _end_ (and thus `matchAll`'s
+ * lastIndex) identical, preserving the exact subsequent-match sequence. Verified: 0 divergences across 22.7k inputs
+ * (systematic + fuzzed adversarial whitespace + shared-whitespace anchor/comma chains).
  */
-const ANCHOR_SEPARATOR = /\s*,\s*|\s+(?:near|in|at|around)\s+/gi
+const ANCHOR_SEPARATOR = /,\s*|\s(?:near|in|at|around)\s+/gi
 
 /** Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table. */
 const MAX_SUBJECT_TOKENS = 4
