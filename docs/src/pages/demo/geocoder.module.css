@@ -1,12 +1,12 @@
 /**
- * `/demo-next` chrome overrides. The published `@mailwoman/react/map` `<GeocoderDemo>` ships a deliberately
+ * `/demo` GeocoderDemo chrome overrides. The published `@mailwoman/react/map` `<GeocoderDemo>` ships a deliberately
  * GENERIC floating-panel layout (`.mw-demo-controls`) — a host is expected to restyle it. Here we override those
- * classes to match the live `/demo` page's `.controls` chrome exactly (below-navbar offset, 400px width,
- * translucent blur, 16px radius) so the two routes are pixel-identical. Scoped under `.demoNextRoot` so the
- * overrides never leak to other pages that embed the package.
+ * classes to give the `/demo` page its signature chrome (below-navbar offset, 400px width, translucent
+ * blur, 16px radius). Scoped under `.geocoderRoot` so the overrides never leak to other pages that embed
+ * the package.
  */
 
-.demoNextRoot :global(.mw-demo-controls) {
+.geocoderRoot :global(.mw-demo-controls) {
 	top: calc(var(--ifm-navbar-height, 60px) + 3rem);
 	bottom: 1rem;
 	left: 1rem;
@@ -26,7 +26,7 @@
 	font-size: 1rem;
 }
 
-:global([data-theme="dark"]) .demoNextRoot :global(.mw-demo-controls) {
+:global([data-theme="dark"]) .geocoderRoot :global(.mw-demo-controls) {
 	background: rgba(27, 27, 29, 0.85);
 	border-color: rgba(255, 255, 255, 0.1);
 	box-shadow:
@@ -37,12 +37,12 @@
 /* MapLibre anchors its top-right control stack (the layer toggles) at the map's top edge — which is the viewport
    top here, under the fixed Docusaurus navbar. Push it below the navbar so the panel isn't clipped (mirrors the
    live demo's `.mapWrap :global(.maplibregl-ctrl-top-right)` rule). */
-.demoNextRoot :global(.maplibregl-ctrl-top-right) {
+.geocoderRoot :global(.maplibregl-ctrl-top-right) {
 	top: var(--ifm-navbar-height, 60px);
 }
 
 @media (max-width: 600px) {
-	.demoNextRoot :global(.mw-demo-controls) {
+	.geocoderRoot :global(.mw-demo-controls) {
 		top: auto;
 		bottom: 0;
 		left: 0;

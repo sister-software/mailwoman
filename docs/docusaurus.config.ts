@@ -191,7 +191,7 @@ const config: Config = {
 				sitemap: {
 					// Internal utility pages — keep them reachable but out of the sitemap
 					// (and thus out of crawler discovery). Patterns cover both slash forms.
-					ignorePatterns: ["/debug", "/debug/", "/trace", "/trace/", "/demo-next", "/demo-next/"],
+					ignorePatterns: ["/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
 					customCss: [

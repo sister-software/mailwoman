@@ -3,36 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pure MapLibre helpers for the demo page — basemap source fetch, resolved-place outline drawing
- *   (crisp polygon, approximate circle), bbox math, and the style-ready gate. Extracted from
- *   `index.tsx` so the page component carries React/state concerns only and these stay
- *   independently unit-testable (see `map-helpers.test.ts`).
+ *   Pure MapLibre helpers for the demo page — basemap source fetch, approximate-extent circle geometry,
+ *   bbox math, and the crisp-polygon DB opener. Consumed by the docs runtime (`_runtime.ts`) that feeds
+ *   `@mailwoman/react/map`'s declarative `<GeocoderDemo>` overlays, and unit-tested in
+ *   `map-helpers.test.ts`.
  *
- *   None of these touch React — they take a `MapLibreMap` (or plain coordinates) and mutate the map
- *   or compute geometry.
+ *   None of these touch React — they compute geometry or open a range-loaded DB; the map itself is now
+ *   driven declaratively by the package, so the old imperative source/layer drawing helpers are gone.
  */
 
-import type { Map as MapLibreMap, VectorSourceSpecification } from "maplibre-gl"
+import type { VectorSourceSpecification } from "maplibre-gl"
 
 export const TILE_WORKER_URL = "https://tiles.sister.software"
 export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
-
-const BBOX_SOURCE = "mailwoman-bbox"
-const BBOX_FILL_LAYER = "mailwoman-bbox-fill"
-const BBOX_LINE_LAYER = "mailwoman-bbox-line"
-
-/**
- * AddSource / addLayer / removeLayer / removeSource all throw "Style is not done loading" if called too early. Every
- * state-mutating call funnels through here so the initial-load and post-setStyle paths never race.
- */
-export function whenStyleReady(map: MapLibreMap, fn: () => void): void {
-	if (map.isStyleLoaded()) {
-		fn()
-
-		return
-	}
-	map.once("styledata", () => whenStyleReady(map, fn))
-}
 
 /**
  * A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline.
@@ -42,55 +25,8 @@ export type PlaceGeometry =
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
 
 /**
- * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the crisp admin polygon
- * funnel through here so they reuse one source (`setData` swaps the geometry in place).
- */
-function setPlaceOutline(map: MapLibreMap, geometry: PlaceGeometry): void {
-	const geojson = {
-		type: "FeatureCollection" as const,
-		features: [{ type: "Feature" as const, geometry, properties: {} }],
-	}
-	whenStyleReady(map, () => {
-		const existing = map.getSource(BBOX_SOURCE) as { setData?: (g: unknown) => void } | undefined
-
-		if (existing && typeof existing.setData === "function") {
-			existing.setData(geojson)
-
-			return
-		}
-		map.addSource(BBOX_SOURCE, { type: "geojson", data: geojson })
-		map.addLayer({
-			id: BBOX_FILL_LAYER,
-			type: "fill",
-			source: BBOX_SOURCE,
-			paint: { "fill-color": "#e0367c", "fill-opacity": 0.12 },
-		})
-		map.addLayer({
-			id: BBOX_LINE_LAYER,
-			type: "line",
-			source: BBOX_SOURCE,
-			paint: { "line-color": "#e0367c", "line-width": 2 },
-		})
-	})
-}
-
-/**
- * Approximate-extent circle for places without a crisp polygon: centered on the place point, radius from the bbox
- * half-diagonal (clamped 0.5–50 km). 64-point GeoJSON ring with latitude correction — visually a circle anywhere
- * outside the poles.
- */
-export function drawApproxCircle(
-	map: MapLibreMap,
-	lat: number,
-	lon: number,
-	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-): void {
-	setPlaceOutline(map, approxCircleGeometry(lat, lon, bbox))
-}
-
-/**
- * The 64-point ring used by {@link drawApproxCircle}, split out so the geometry math can be unit tested without a live
- * map.
+ * The 64-point approximate-extent ring for places without a crisp polygon: centered on the place point, radius from the
+ * bbox half-diagonal (clamped 0.5–50 km), with latitude correction — visually a circle anywhere outside the poles.
  */
 export function approxCircleGeometry(
 	lat: number,
@@ -111,35 +47,6 @@ export function approxCircleGeometry(
 	}
 
 	return { type: "Polygon", coordinates: [ring] }
-}
-
-/**
- * A circle of an EXACT radius in meters — for the street-level uncertainty (#377): a 10 m situs floor or a calibrated
- * interp radius. Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km floor for admin fallbacks), this
- * honors small radii so an exact building reads as a tight dot.
- */
-export function radiusCircleGeometry(lat: number, lon: number, radiusM: number): PlaceGeometry {
-	const kmPerDegLat = 111.32
-	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
-	const radiusKm = Math.max(0.008, radiusM / 1000) // ~8 m min so a 10 m situs circle is still visible
-	const ring: number[][] = []
-
-	for (let i = 0; i <= 64; i++) {
-		const theta = (2 * Math.PI * i) / 64
-		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
-	}
-
-	return { type: "Polygon", coordinates: [ring] }
-}
-
-/** Draw a street-level uncertainty circle (exact meter radius) around a situs/interp coordinate. */
-export function drawRadiusCircle(map: MapLibreMap, lat: number, lon: number, radiusM: number): void {
-	setPlaceOutline(map, radiusCircleGeometry(lat, lon, radiusM))
-}
-
-/** Draw the crisp admin polygon straight from the polygon DB's GeoJSON geometry. */
-export function drawPlaceGeometry(map: MapLibreMap, geometry: PlaceGeometry): void {
-	setPlaceOutline(map, geometry)
 }
 
 /** Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays. */
@@ -207,30 +114,6 @@ export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<
 	return {
 		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
 	}
-}
-
-/** Tear down the resolved-place outline (layers + source) once the style is ready. */
-export function clearBbox(map: MapLibreMap): void {
-	whenStyleReady(map, () => {
-		if (map.getLayer(BBOX_FILL_LAYER)) {
-			map.removeLayer(BBOX_FILL_LAYER)
-		}
-
-		if (map.getLayer(BBOX_LINE_LAYER)) {
-			map.removeLayer(BBOX_LINE_LAYER)
-		}
-
-		if (map.getSource(BBOX_SOURCE)) {
-			map.removeSource(BBOX_SOURCE)
-		}
-	})
-}
-
-/** Read Docusaurus's current color mode straight off the `<html data-theme>` attribute. */
-export function currentDocusaurusTheme(): "light" | "dark" {
-	if (typeof document === "undefined") return "light"
-
-	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
 }
 
 /** Fetch + normalize the protomaps v4 basemap tilejson into a MapLibre vector source spec. */
