@@ -93,3 +93,21 @@ export type {
 } from "./pipeline/types.ts"
 export { useParsePipeline } from "./pipeline/useParsePipeline.ts"
 export type { UseParsePipeline, UseParsePipelineOptions } from "./pipeline/useParsePipeline.ts"
+
+// ── Map (types only from root) ──────────────────────────────────────────────
+// The demo-map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
+// (WebGL + DOM at import) never enter the package-root graph — a bare `import("@mailwoman/react")` in node
+// must not pull them. Only the CONTRACT types are re-exported here (fully erased at compile time, so no
+// runtime linkage): the `DemoMap` component + hooks are import-able solely via `@mailwoman/react/map`.
+export type {
+	DemoBackend,
+	DemoMapExtraProps,
+	DemoMapProps,
+	DemoMapStyle,
+	DemoRuntime,
+	DemoVersionOption,
+	LngLatTuple,
+	MapBias,
+	OverlaySpec,
+	Suggestion,
+} from "./map/index.ts"

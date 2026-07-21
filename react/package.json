@@ -40,6 +40,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./map": {
+			"node": "./map/index.ts",
+			"default": "./out/map/index.js",
+			"types": "./out/map/index.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -63,15 +68,27 @@
 		"@vitejs/plugin-react": "^6.0.3",
 		"@vitest/browser": "4.1.10",
 		"@vitest/browser-playwright": "4.1.10",
+		"maplibre-gl": "^5.24.0",
 		"playwright": "^1.61.1",
 		"react": "^19.2.7",
 		"react-dom": "^19.2.7",
+		"react-map-gl": "^8.1.1",
 		"storybook": "^10.5.2",
 		"vite": "^8.1.5",
 		"vitest": "4.1.10"
 	},
 	"peerDependencies": {
+		"maplibre-gl": ">=5",
 		"react": ">=18",
-		"react-dom": ">=18"
+		"react-dom": ">=18",
+		"react-map-gl": ">=8"
+	},
+	"peerDependenciesMeta": {
+		"maplibre-gl": {
+			"optional": true
+		},
+		"react-map-gl": {
+			"optional": true
+		}
 	}
 }
