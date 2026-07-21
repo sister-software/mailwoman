@@ -100,6 +100,17 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		}
 	}
 
+	// @mailwoman/react/map — the geocoder-demo map surface (react-map-gl/maplibre). The bare
+	// `@mailwoman/react$` alias above is exact-match ($), so it does NOT catch this subpath; without an
+	// explicit source alias webpack would resolve the package `exports` to the COMPILED
+	// `react/out/map/index.js` (which `yarn start` never rebuilds — the same staleness trap the core
+	// sub-entrypoint aliases document). Point it at source so `<GeocoderDemo>` transpiles inline + hot-reloads.
+	const reactDir = resolveWorkspaceDir("@mailwoman/react")
+
+	if (reactDir) {
+		aliases["@mailwoman/react/map"] = resolveWorkspaceDirEntry(reactDir, "map")
+	}
+
 	// @mailwoman/cartographer — only browser-safe sub-entrypoints.
 	const cartographerDir = resolveWorkspaceDir("@mailwoman/cartographer")
 
