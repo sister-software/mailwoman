@@ -119,6 +119,9 @@ function GeocoderDemoInner({
 						zoom: runtime.initialZoom ?? 3,
 					}}
 					style={{ width: "100%", height: "100%" }}
+					// Match the live demo's chrome: one compact attribution pill (the map's own default is a wide, always-open
+					// "MapLibre | © …" bar), no maplibre wordmark logo.
+					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false }}
 				>
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
@@ -138,7 +141,7 @@ function GeocoderDemoInner({
 				onForceWASMChange={onForceWASMChange}
 			/>
 
-			{panels.debugDrawer}
+			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}
 		</div>
 	)
 }

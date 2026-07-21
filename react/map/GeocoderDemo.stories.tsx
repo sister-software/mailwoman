@@ -97,7 +97,7 @@ export const WithPanels: Story = {
 					🔗 permalink
 				</span>
 			),
-			debugDrawer: null,
+			debugDrawer: () => null,
 		},
 	},
 }

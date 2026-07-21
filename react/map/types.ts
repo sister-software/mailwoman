@@ -138,6 +138,23 @@ export interface DemoCompareContext {
 }
 
 /**
+ * The state a {@link DemoPanels.result} render-prop receives, so a host can render its OWN result block (the docs
+ * `<ResultPanel>` with its span-highlight / timing / hierarchy / precision detail) in place of the package's default
+ * {@link ResultPanel}. Everything the default panel needs is passed through; the candidate-selection state stays owned
+ * by the package (`useDemoGeocode`).
+ */
+export interface DemoResultContext {
+	/** The current parse+resolve result. */
+	result: ParseResult
+	/** The selected candidate (falls back to the first), enriched for the resolved-place detail. */
+	selectedCandidate: ResolvedPlaceView | null
+	/** The selected candidate index, for the picker's active state. */
+	selectedCandidateIndex: number
+	/** Fired when a candidate in the picker is chosen. */
+	onSelectCandidate: (index: number) => void
+}
+
+/**
  * Host-injected panels for {@link GeocoderDemo}, the map analogue of `PipelinePanels`. Each is an already-rendered
  * `ReactNode` (or a thunk of the parse result / compare state) so the package needs neither the heavy docs visualizers
  * (ModelVisualizer, VersionCompare, AboutDemo, PermalinkButton) nor their data types. Every field is optional — the
@@ -150,14 +167,39 @@ export interface DemoPanels {
 	releaseInfo?: ReactNode
 	/** Rendered at the bottom of the control panel (e.g. a guided tour). */
 	footer?: ReactNode
+	/**
+	 * A device-location / proximity-bias control, rendered between the query form and the autocomplete list (the demo's
+	 * "📍 Use my location" row). Host-owned so the geolocation permission + the bias it feeds into the host's
+	 * {@link DemoRuntime.runParseWithBias} stay a host concern.
+	 */
+	bias?: ReactNode
 	/** Heavy visualizers (span highlight, tree, timing, BIO, …), rendered from the result. */
 	extras?: (result: ParseResult) => ReactNode
-	/** Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic). */
+	/**
+	 * Rendered just above the result block (present or empty). The demo's opt-in display toggles live here — calibrated
+	 * confidence + dev-mode — because the host owns both the toggle state AND the {@link result} / {@link debugDrawer}
+	 * renderers those toggles drive.
+	 */
+	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
+	/**
+	 * Replace the package's default {@link ResultPanel} entirely. When provided, the host renders its own result block
+	 * (the docs `<ResultPanel>` — span highlight, timing, hierarchy, precision detail, calibrated confidences) from the
+	 * {@link DemoResultContext}. Absent → the built-in panel renders.
+	 */
+	result?: (context: DemoResultContext) => ReactNode
+	/**
+	 * Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic). Ignored when
+	 * {@link result} is set.
+	 */
 	failure?: (result: ParseResult) => ReactNode
 	/** The version-compare view — the host renders its own diff from the compare state it owns. */
 	compare?: (context: DemoCompareContext) => ReactNode
-	/** The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). */
-	debugDrawer?: ReactNode
+	/**
+	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). A render-prop so the host can
+	 * trace the CURRENT result (its input) — the package passes the live parse result; the host gates on its own dev-mode
+	 * state and returns `null` when the drawer is closed.
+	 */
+	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode
 	/** Extra map controls mounted as `<DemoMap>` children (host's DebugControl / LayerToggle via `useControl`). */
 	mapControls?: ReactNode
 	/** A permalink control for the current address (host's PermalinkButton). */
