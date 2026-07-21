@@ -7,17 +7,20 @@
  *   machine + the declarative map, while the host injects a {@link DemoRuntime} that owns ONNX / httpvfs
  *   / R2 and the composed map style. {@link DemoRuntime} EXTENDS {@link PipelineRuntime} so the shared
  *   `runParse` / `parseStageLabels` / `loading` contract is reused, and adds the map-specific surface
- *   (style, overlays, initial center, viewport bias, backend/version selection).
+ *   (style, overlays, initial center, viewport bias, backend/version selection). Phase 4 adds the
+ *   `resolveMapPlace` enricher, the {@link DemoPanels} injection bag, and the {@link DemoCompareContext}.
  *
- *   Phase 1 is TYPES ONLY — the `useDemoRuntime` hook that produces one lands in a later phase. The
- *   map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
- *   runtime, so this module stays node-safe and could be re-exported from the package root.
+ *   The map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
+ *   runtime, so this module stays node-safe (its concrete-value CONSUMERS — `DemoMap`, `GeocoderDemo` —
+ *   are the ones gated behind the `@mailwoman/react/map` subpath).
  */
 
+import type { ReactNode } from "react"
 import type { LayerSpecification, SourceSpecification } from "react-map-gl/maplibre"
 
-import type { PipelineRuntime } from "../pipeline/types.ts"
+import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "../pipeline/types.ts"
 import type { DemoMapStyle } from "./DemoMap.tsx"
+import type { ResolvedMapPlace } from "./place-render.ts"
 
 /** `[longitude, latitude]`. */
 export type LngLatTuple = [number, number]
@@ -74,8 +77,6 @@ export type DemoBackend = "webgpu" | "wasm"
  * `StyleSpecificationComposer` + the tile-worker TileJSON), supplies the overlay specs, the initial center (from
  * geolocation), the FST autocomplete, and the calibrator — nothing in the package imports `@mailwoman/cartographer`,
  * `@mailwoman/neural-web`, httpvfs, or Docusaurus.
- *
- * TYPE ONLY in phase 1 — no implementation ships yet.
  */
 export interface DemoRuntime extends PipelineRuntime {
 	// ── Map ────────────────────────────────────────────────────────────────
@@ -102,6 +103,14 @@ export interface DemoRuntime extends PipelineRuntime {
 	autocomplete?: (query: string) => Promise<Suggestion[]>
 	/** Maps a raw model score to a calibrated one; `null` when no calibration table is loaded. */
 	calibrator?: (raw: number) => number | null
+	/**
+	 * Enrich the selected candidate into the richer {@link ResolvedMapPlace} the declarative map render consumes (bbox,
+	 * street tier + uncertainty, a pre-fetched crisp polygon) — the fields that live on the demo's `ResolvedHit` but not
+	 * on the shared {@link ResolvedPlaceView}. The host owns this because those extras (and the async polygon fetch in the
+	 * real demo) are host/gazetteer concerns; the package keeps {@link ParseResult} unpolluted. Absent → the candidate
+	 * renders as a bare point (marker + a mid-zoom fly-to). Returning `null` also renders nothing.
+	 */
+	resolveMapPlace?: (candidate: ResolvedPlaceView, result: ParseResult) => ResolvedMapPlace | null
 
 	// ── Version + backend selection ─────────────────────────────────────────
 	/** The selectable model bundles the version picker offers. */
@@ -110,8 +119,47 @@ export interface DemoRuntime extends PipelineRuntime {
 	selectedVersion?: string
 	/** Switch the active model bundle (re-loads weights/tokenizer/gazetteer). */
 	selectVersion?: (version: string) => void
-	/** The backend the neural runtime resolved to. */
-	activeBackend?: DemoBackend
+	/** The backend the neural runtime resolved to (e.g. `webgpu (28 MB int8)`); free-form for the label. */
+	activeBackend?: string
+	/** Whether the CPU/WASM backend is currently forced (the controlled value for the backend toggle). */
+	forceWASM?: boolean
 	/** Force the WASM backend (opt out of WebGPU), for the backend toggle. */
 	setForceWASM?: (forceWASM: boolean) => void
+}
+
+/** The compare-mode state a {@link DemoPanels.compare} render-prop receives (the second parse itself stays host-side). */
+export interface DemoCompareContext {
+	/** The current primary parse result, or `null` before the first submit. */
+	result: ParseResult | null
+	/** Whether the compare toggle is on. */
+	compareMode: boolean
+	/** The version selected to compare against, or `null` when none is chosen. */
+	compareVersion: string | null
+}
+
+/**
+ * Host-injected panels for {@link GeocoderDemo}, the map analogue of `PipelinePanels`. Each is an already-rendered
+ * `ReactNode` (or a thunk of the parse result / compare state) so the package needs neither the heavy docs visualizers
+ * (ModelVisualizer, VersionCompare, AboutDemo, PermalinkButton) nor their data types. Every field is optional — the
+ * fake-runtime Storybook stories pass none and still render the whole demo.
+ */
+export interface DemoPanels {
+	/** Rendered at the top of the control panel (e.g. the docs "About this demo"). */
+	header?: ReactNode
+	/** One-line release blurb for the selected version. */
+	releaseInfo?: ReactNode
+	/** Rendered at the bottom of the control panel (e.g. a guided tour). */
+	footer?: ReactNode
+	/** Heavy visualizers (span highlight, tree, timing, BIO, …), rendered from the result. */
+	extras?: (result: ParseResult) => ReactNode
+	/** Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic). */
+	failure?: (result: ParseResult) => ReactNode
+	/** The version-compare view — the host renders its own diff from the compare state it owns. */
+	compare?: (context: DemoCompareContext) => ReactNode
+	/** The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). */
+	debugDrawer?: ReactNode
+	/** Extra map controls mounted as `<DemoMap>` children (host's DebugControl / LayerToggle via `useControl`). */
+	mapControls?: ReactNode
+	/** A permalink control for the current address (host's PermalinkButton). */
+	permalink?: (text: string) => ReactNode
 }

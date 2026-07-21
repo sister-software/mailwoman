@@ -16,6 +16,8 @@ export { DemoMap } from "./DemoMap.tsx"
 export type { DemoMapExtraProps, DemoMapProps, DemoMapStyle } from "./DemoMap.tsx"
 export type {
 	DemoBackend,
+	DemoCompareContext,
+	DemoPanels,
 	DemoRuntime,
 	DemoVersionOption,
 	LngLatTuple,
@@ -42,3 +44,29 @@ export { ResultCamera } from "./ResultCamera.tsx"
 export type { ResultCameraProps } from "./ResultCamera.tsx"
 export { ResultOverlay } from "./ResultOverlay.tsx"
 export type { ResultOverlayProps } from "./ResultOverlay.tsx"
+
+// ── Demo controls + composed demo (phase 4) ─────────────────────────────────
+export { BackendControl } from "./BackendControl.tsx"
+export type { BackendControlProps } from "./BackendControl.tsx"
+export { CompareToggle } from "./CompareToggle.tsx"
+export type { CompareToggleProps } from "./CompareToggle.tsx"
+export { DemoControls } from "./DemoControls.tsx"
+export type { DemoControlsProps } from "./DemoControls.tsx"
+export { GeocoderDemo } from "./GeocoderDemo.tsx"
+export type { GeocoderDemoProps } from "./GeocoderDemo.tsx"
+export { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
+export type { PlaceAutocompleteProps } from "./PlaceAutocomplete.tsx"
+export { ResultPanel } from "./ResultPanel.tsx"
+export type { ResultPanelProps } from "./ResultPanel.tsx"
+export { useCompareState } from "./useCompareState.ts"
+export type { UseCompareState } from "./useCompareState.ts"
+export { useDemoGeocode } from "./useDemoGeocode.ts"
+export type { UseDemoGeocode, UseDemoGeocodeOptions } from "./useDemoGeocode.ts"
+export { usePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
+export type {
+	AutocompleteInputProps,
+	UsePlaceAutocomplete,
+	UsePlaceAutocompleteOptions,
+} from "./usePlaceAutocomplete.ts"
+export { VersionPicker } from "./VersionPicker.tsx"
+export type { VersionPickerProps } from "./VersionPicker.tsx"

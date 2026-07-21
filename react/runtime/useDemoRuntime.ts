@@ -72,8 +72,16 @@ export interface DemoRuntimeConfig<TAssets, TRelease extends DemoReleaseBase = D
 	initialProgress?: string
 }
 
-/** The state `useDemoRuntime` produces — the load orchestration a demo surface renders + re-projects. */
-export interface UseDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase> {
+/**
+ * The state `useDemoRuntime` produces — the load-orchestration state a demo surface renders + re-projects.
+ *
+ * NAMING (phase 4): this is the LOADER STATE, deliberately distinct from {@link DemoRuntime} (the injected runtime
+ * contract `<GeocoderDemo>` consumes). The two were same-stem before (`UseDemoRuntime` vs `DemoRuntime`); phase 4
+ * disambiguates by renaming the loader-state type to `DemoLoaderState`. A host builds a {@link DemoRuntime} by pairing
+ * this loader state (assets + backend + version) with the map surface (style, overlays, bias, parse) — see the map
+ * subpath's `DemoRuntime`.
+ */
+export interface DemoLoaderState<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase> {
 	/** The releases manifest, once fetched. */
 	manifest: DemoManifest<TRelease> | null
 	/** The currently-selected version, or `null` before the manifest resolves. */
@@ -111,7 +119,7 @@ export interface UseDemoRuntime<TAssets, TRelease extends DemoReleaseBase = Demo
  */
 export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase>(
 	config: DemoRuntimeConfig<TAssets, TRelease>
-): UseDemoRuntime<TAssets, TRelease> {
+): DemoLoaderState<TAssets, TRelease> {
 	const { initialProgress = "Loading releases…" } = config
 
 	const [manifest, setManifest] = useState<DemoManifest<TRelease> | null>(null)
