@@ -69,7 +69,7 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 
 describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	for (const rel of [
-		"../pages/demo/_app.tsx",
+		"../pages/demo/_runtime.ts",
 		"../contexts/DemoEmbed.tsx",
 		"../../../mailwoman/release-tools/publish-hf.ts",
 	]) {
