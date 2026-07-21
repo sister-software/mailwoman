@@ -646,3 +646,17 @@
 	border-width: 0 2px 2px 0;
 	transform: translateY(-60%) rotate(45deg);
 }
+
+/* ── Demo map (react-map-gl/maplibre shell) ──────────────────────────────── */
+
+/*
+ * The <DemoMap> wrapper. Sizing is the host's call (pass `style`/`className`), but a min-height keeps
+ * the map from collapsing to zero when a consumer forgets. The inner <Map> fills 100% of this box.
+ * The host must ALSO import `maplibre-gl/dist/maplibre-gl.css` for the map's own control/canvas styles.
+ */
+.mw-demo-map {
+	position: relative;
+	width: 100%;
+	min-height: 320px;
+	overflow: hidden;
+}
