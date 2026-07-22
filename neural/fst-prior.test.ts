@@ -4,8 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { existsSync } from "node:fs"
+
 import { repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, test } from "vitest"
 
 import {
 	buildFSTEmissionPriors,
@@ -19,6 +21,12 @@ import { STAGE2_BIO_LABELS } from "./labels.ts"
 import { MailwomanTokenizer } from "./tokenizer.ts"
 
 const TOKENIZER_MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+
+// Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom) — this is what the fix-round-2
+// re-review actually reproduced the bare-▁-orphan drop against. Not present in stripped-down CI, so this whole
+// block skips there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
+const PRODUCTION_TOKENIZER_PATH = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.9.0-multisplice/tokenizer.model"
+const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
@@ -316,21 +324,19 @@ describe("groupPiecesIntoWords — interior punctuation (Critical fix regression
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stokeontrent"])
 	})
 
-	it('documents the fixture-vocab residual: "Stockton on the Forest" still loses "on"', async () => {
-		// NOT part of the Critical fix — this is the reviewer's Important #2 case. The real fixture-tokenizer
-		// split is ["▁Stock","ton","▁","on","▁the","▁Forest"]: a BARE "▁" piece (a lone space with no other
-		// content) closes "Stockton", and the following "on" carries no leading ▁ of its own (this small test
-		// vocab never learned a merged "▁on" piece). "on" has nothing to attach to and is dropped — not by the
-		// interior-punctuation bug (there's no punctuation here at all), but because an alnum piece with no
-		// leading ▁ and no active word can't principled-ly start one. A production-scale vocab merges common
-		// short words like "on" into a neighbouring ▁-piece as a matter of course, so this is a fixture-vocab
-		// artifact, not a design gap — see the `groupPiecesIntoWords` docstring's "Known residual" section and
-		// the fix-wave report.
+	it('recovers "on" in "Stockton on the Forest" via pending-word-start (fix round 2, re-review finding)', async () => {
+		// Fix-wave round 1 documented this as a "fixture-vocab artifact" and left it dropped — re-review against
+		// the PRODUCTION tokenizer (v0.9.0-multisplice) falsified that adjudication: the bare-▁-orphan pattern is
+		// live and widespread there ("Stockton on the Forest", "Newcastle upon Tyne", "Weston super Mare",
+		// "Kingston upon Hull", and a trailing "IL" all reproduce — see the skipIf-gated production-tokenizer
+		// block below). Fixed via pending-word-start: a bare "▁" piece (real split here:
+		// ["▁Stock","ton","▁","on","▁the","▁Forest"]) closes "Stockton" and leaves `current === null` PENDING;
+		// the next piece ("on", no leading ▁ of its own) opens a fresh word instead of being dropped.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
-		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "the", "forest"])
+		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "on", "the", "forest"])
 	})
 
 	it('still yields ["stockton", "", "lancashire"]-shaped groups for "Stockton , Lancashire" (comma stands alone, no fusion)', async () => {
@@ -346,3 +352,29 @@ describe("groupPiecesIntoWords — interior punctuation (Critical fix regression
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "lancashire"])
 	})
 })
+
+describe.skipIf(!haveProductionTokenizer)(
+	"groupPiecesIntoWords — bare-▁-orphan recovery, PRODUCTION tokenizer (fix round 2, reviewer re-review table)",
+	() => {
+		// The reviewer's re-review falsified fix-wave round 1's "fixture-vocab artifact" adjudication by
+		// reproducing the bare-▁-orphan drop against the real production tokenizer
+		// (v0.9.0-multisplice) — worse there than on the small test fixture: it hits short common words
+		// ("on", "upon", "super") AND a trailing single-letter abbreviation ("IL"). This is the reviewer's
+		// exact 5-case repro table, run verbatim, asserting FULL group recovery.
+		const cases: Array<{ raw: string; expected: string[] }> = [
+			{ raw: "Stockton on the Forest", expected: ["stockton", "on", "the", "forest"] },
+			{ raw: "Newcastle upon Tyne", expected: ["newcastle", "upon", "tyne"] },
+			{ raw: "Weston super Mare", expected: ["weston", "super", "mare"] },
+			{ raw: "Kingston upon Hull", expected: ["kingston", "upon", "hull"] },
+			{ raw: "123 Main Street, Springfield, IL", expected: ["123", "main", "street", "springfield", "il"] },
+		]
+
+		test.each(cases)("$raw → $expected", async ({ raw, expected }) => {
+			const tokenizer = await MailwomanTokenizer.loadFromFile(PRODUCTION_TOKENIZER_PATH)
+			const { pieces } = tokenizer.encode(raw)
+			const groups = groupPiecesIntoWords(pieces)
+			const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
+			expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(expected)
+		})
+	}
+)

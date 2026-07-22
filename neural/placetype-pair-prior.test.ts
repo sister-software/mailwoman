@@ -9,15 +9,30 @@
  *   mock-index idiom — a hand-built `PairIndexLike` double, no real binary artifact needed.
  */
 
+import { existsSync } from "node:fs"
+
 import { repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, test } from "vitest"
 
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import type { PairIndexLike } from "./pair-index-resolver.ts"
+import {
+	PairIndexResolver,
+	serializePairIndex,
+	type PairIndexEntry,
+	type PairIndexHeader,
+	type PairIndexLike,
+} from "./pair-index-resolver.ts"
 import { buildPlacetypePairPriors } from "./placetype-pair-prior.ts"
 import { MailwomanTokenizer } from "./tokenizer.ts"
 
 const LABELS = STAGE2_BIO_LABELS
+
+const FIXTURE_TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+
+// Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom). Not present in
+// stripped-down CI; runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
+const PRODUCTION_TOKENIZER_PATH = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.9.0-multisplice/tokenizer.model"
+const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {
 	return LABELS.indexOf(label as (typeof LABELS)[number])
@@ -267,4 +282,96 @@ describe("buildPlacetypePairPriors — disjointness", () => {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
 	})
+})
+
+describe("buildPlacetypePairPriors — dual-key tie-break (fix round 2, re-review adjudication-3 minor)", () => {
+	it("prefers the space-joined form when it and the concatenated form would resolve to DIFFERENT tags", () => {
+		// A real index can't disagree with itself about the same real-world pair, but `probeWindowPair`'s
+		// search order is what actually GUARANTEES the stated preference rather than leaving it to chance:
+		// space/space is tried before any combination involving a concat form, so a hit there short-circuits
+		// before the concat form is ever probed.
+		const index = mockPairIndex({ "x|a b": "locality", "x|ab": "region" }, 6.0)
+		const pieces = makePieces("x a b")
+		const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		// "x" (piece 0) resolves to "locality" (the space-joined "a b" hit), never "region".
+		expect(matrix[0]![labelCol("B-locality")]).toBe(6.0)
+		expect(matrix[0]![labelCol("B-region")]).toBe(0)
+		// The concatenated form was never even attempted — the space/space hit short-circuited first.
+		expect(index.calls).toContainEqual(["x", "a b"])
+		expect(index.calls).not.toContainEqual(["x", "ab"])
+	})
+})
+
+describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix round 2, real PIX1 round trip)", () => {
+	// Item 3 of the fix-round-2 brief: a REAL PairIndexBuilder-shaped entry, through a REAL tokenizer, through
+	// the REAL PIX1 serialize/deserialize round trip — not a hand-built `PairIndexLike` double. This is the
+	// case that was structurally impossible to express with `makePieces` (one synthetic ▁-per-word piece each
+	// — it can't reproduce a genuine bare-▁-orphan split) and that fix round 1's mock-only coverage therefore
+	// never exercised.
+	//
+	// The entry below is not re-derived by calling `PairIndexBuilder` here: that class lives in the `mailwoman`
+	// workspace (CLI/gazetteer tooling), which depends on `@mailwoman/neural` — not the reverse — and
+	// `placetype-pair-prior.ts` has no exported package subpath for `mailwoman` to import back into, so
+	// instantiating it from `neural/`'s own test suite would invert the dependency direction. Instead this
+	// hard-codes the EXACT (child, parent, tag) triple `PairIndexBuilder.addRow("Fishburn", "Stockton-on-Tees")`
+	// produces — pinned verbatim by `mailwoman/gazetteer-pipeline/pair-index.test.ts`'s "folds CITY/DISTRICT
+	// through normalizeFSTToken and tags dependent_locality" test (`{ child: "fishburn", parent:
+	// "stocktonontees", tag: "dependent_locality" }`) — and feeds it through the REAL `serializePairIndex` /
+	// `PairIndexResolver` binary round trip. If the builder's fold ever drifts, that sibling test catches it;
+	// this test locks in that the DECODE side (tokenizer → groupPiecesIntoWords → dual-key window probe →
+	// real PIX1 resolver) resolves it correctly once it exists.
+	const REAL_BUILDER_ENTRIES: PairIndexEntry[] = [
+		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality" },
+	]
+	const REAL_HEADER: PairIndexHeader = {
+		country: "gb",
+		delta: 6.0,
+		schemaVersion: 1,
+		foldVersion: 1,
+		sourceMD5s: [],
+		buildDate: "2026-07-22",
+	}
+
+	/**
+	 * `PairIndexResolver` exposes `delta` under `.header.delta`, not as a top-level property — `PairIndexLike.delta` is a
+	 * top-level (optional) field, so a raw `PairIndexResolver` instance passed directly as `opts.index` type-checks (the
+	 * field is optional) but silently reads `undefined`, falling through to the `DEFAULT_DELTA` fallback instead of the
+	 * artifact's real calibrated value. This thin structural adapter is the bridge a real caller (Task 7, per the Task-4
+	 * report) will need too — noted for the operator in the fix-round-2 report as an incidental finding, not a
+	 * fix-round-2 item in its own right. The `.probe()` call below is the REAL resolver's, not reimplemented.
+	 */
+	function asPairIndexLike(resolver: PairIndexResolver): PairIndexLike {
+		return { probe: (child, parent) => resolver.probe(child, parent), delta: resolver.header.delta }
+	}
+
+	it('a space-typed query ("Fishburn Stockton on Tees") resolves against the hyphen-folded real index entry, fixture tokenizer', async () => {
+		const bytes = serializePairIndex(REAL_HEADER, REAL_BUILDER_ENTRIES)
+		const index = asPairIndexLike(new PairIndexResolver(bytes))
+
+		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
+		// Real split: ["▁F","ish","burn","▁Stock","ton","▁","on","▁Te","es"] — the bare "▁" before "on" is
+		// exactly the pattern fix round 2 recovers; pre-fix, "on" would vanish and the 3-word parent window
+		// "stockton on tees" would never even be built, let alone probed.
+		const { pieces } = tokenizer.encode("Fishburn Stockton on Tees")
+		const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+	})
+
+	test.skipIf(!haveProductionTokenizer)(
+		'a space-typed query ("Fishburn Stockton on Tees") resolves against the same real index entry, PRODUCTION tokenizer',
+		async () => {
+			const bytes = serializePairIndex(REAL_HEADER, REAL_BUILDER_ENTRIES)
+			const index = asPairIndexLike(new PairIndexResolver(bytes))
+
+			const tokenizer = await MailwomanTokenizer.loadFromFile(PRODUCTION_TOKENIZER_PATH)
+			// Real split: ["▁Fish","burn","▁Stockton","▁","on","▁","Tees"] — same bare-▁-orphan shape, on the
+			// tokenizer the re-review actually found this bug against.
+			const { pieces } = tokenizer.encode("Fishburn Stockton on Tees")
+			const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+			expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		}
+	)
 })

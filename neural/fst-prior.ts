@@ -186,42 +186,42 @@ export function buildFSTEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * **The word boundary is `▁` (the SentencePiece space sentinel) — and ONLY `▁`.** A piece that starts with `▁` always
- * closes whatever word is in progress and opens a new one (or, if it carries no alnum content — a lone space piece, or
- * a punctuation piece the tokenizer happened to fuse with its own leading space — opens an empty placeholder group
- * instead, see below). Every other piece is interior to the word already in progress:
+ * **The word boundary is `▁` (the SentencePiece space sentinel) — and ONLY `▁`.** The loop carries one piece of state,
+ * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is PENDING (nothing is open,
+ * and the next real content should start one fresh, whatever piece it arrives on). Three kinds of piece, crossed with
+ * that state, is the whole state machine:
  *
- * - An **alnum piece with no leading `▁`** is a SentencePiece subword continuation (`"▁Stock"` + `"ton"` → "Stockton")
- *   and appends onto `current`.
- * - A **punctuation-only piece with no leading `▁`** ("-", "'") is interior punctuation — a hyphen or apostrophe sitting
- *   inside a hyphenated/possessive place name ("Stockton-on-Tees", "Bishop's Stortford"). It must NOT close or reset
- *   `current`: doing so would silently drop every piece that follows it until the next `▁`, since those pieces (also
- *   lacking their own `▁`) would then find no `current` to append to (this was the Critical bug this docstring now pins
- *   — see the fix-wave report). Interior punctuation contributes nothing to `fstToken` (`normalizeFSTToken` strips
- *   punctuation anyway) but its piece index still lands in `current.pieceIndices`, so callers that write bias back per
- *   piece-index (`applyBias` here, the affix/neighbour writes in `street-morphology-prior.ts`) cover the whole word,
- *   hyphen included, not just the alnum pieces either side of it.
+ * 1. **`▁`-prefixed, with alnum content** (a genuine new word, e.g. `"▁Stock"`, `"▁Tyne"`): always closes whatever
+ *    `current` holds (pushing it to `groups`) and opens a fresh one. This is the only case that unconditionally starts
+ *    a word — every other case below is conditioned on whether one is already open or pending.
+ * 2. **`▁`-prefixed, NO alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
+ *    a punctuation piece the tokenizer fused with its own leading space): closes whatever `current` holds, same as case
+ *    1, but does NOT open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
+ *    }`, preserving index alignment) and leaves the state PENDING (`current = null`) for whatever piece comes next.
+ * 3. **Not `▁`-prefixed** (interior to whatever's already true — nothing here is itself a boundary):
  *
- * **Leading punctuation with no word to continue** — the very first piece (`i === 0`) being punctuation-only, or any
- * punctuation-only piece with no leading `▁` arriving when `current` is already `null` (e.g. two `▁`-less punctuation
- * pieces back to back) — has nothing to attach to. It gets the same empty-placeholder treatment as a `▁`-prefixed
- * punctuation piece: a standalone `{ fstToken: "", pieceIndices: [i] }` group. This is also what keeps `"Stockton ,
- * Lancashire"` from silently fusing "Stockton" and "Lancashire" into one window: the comma (however many raw pieces the
- * tokenizer spends on the comma + its surrounding space) always resolves to one or more empty groups between the two
- * real words, never to zero — non-empty-filtering callers (`placetype-pair-prior.ts`'s window builder) see "stockton"
- * and "lancashire" as separate, non-adjacent-fused entries regardless of how many empty groups sit between them.
+ *    - **Alnum** (a SentencePiece subword split, e.g. `"ton"` after `"▁Stock"`): if a word is open (`current` is non-null),
+ *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
+ *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
+ *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
+ *      fresh here instead of being dropped. **This is the fix**: earlier code only ever opened a new word on a
+ *      `▁`-prefixed piece (or `i === 0`), so a pending word whose first piece happened to lack its own `▁` — the exact
+ *      shape a SentencePiece vocab produces for a short/common word that was never learned as a merged `"▁word"` token
+ *      (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on the production
+ *      `v0.9.0-multisplice` tokenizer) — silently vanished. Confirmed live, not a fixture-vocab quirk: see the fix-round-2
+ *      report for the production-tokenizer repro table.
+ *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open, it's interior punctuation — absorbed into
+ *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
+ *      never resetting it, so the pieces that follow still have a `current` to land on (the Critical fix from the first
+ *      fix wave — "Stockton-on-Tees", "Bishop's Stortford"). If a word is PENDING, this punctuation piece has nothing to
+ *      attach to either — same empty-placeholder treatment as case 2 — and the state stays PENDING; the punctuation
+ *      doesn't consume or clear the pending word, it just has nothing of its own to open.
  *
- * **Known residual (fixture-vocab artifact, not a design gap):** a piece that is bare `▁` with zero other content (the
- * tokenizer's rendering of a lone space as its own token) closes `current` and, having no alnum, becomes an empty
- * placeholder — same as any other punctuation-only `▁` piece. If the SentencePiece vocab is small enough that the
- * following word's own leading-`▁` variant was never learned (so the next piece is a bare alnum piece with no `▁`, e.g.
- * `"on"` instead of `"▁on"`), that word arrives with nothing to attach to and — like any other `▁`-less alnum piece
- * with `current === null` — is dropped. Observed on the test fixture tokenizer for `"Stockton on the Forest"`
- * (`["▁Stock","ton","▁","on","▁the","▁Forest"]`; "on" is lost). A production-scale vocab merges extremely common short
- * words like "on" into the preceding/following `▁`-piece as a matter of course, so this shouldn't recur against a real
- * tokenizer; fixing it here would require inventing a "pending continuation" state carried across the bare-`▁`
- * placeholder with no textual signal that one is owed, which is speculative rather than principled — left undone and
- * documented per the fix-wave report rather than patched with an unrequested special case.
+ * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire" into one group:
+ * however many raw empty-placeholder groups the comma/space sequence produces (one from the bare `▁`, one from the
+ * comma itself if it too has no leading `▁`), they never carry real content, so non-empty-filtering callers
+ * (`placetype-pair-prior.ts`'s window builder) still see "stockton" and "lancashire" as two separate,
+ * non-adjacent-fused entries.
  *
  * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so consumers like the
  * street-morphology prior can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper
@@ -242,6 +242,8 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			}
 
 			if (!hasAlnum) {
+				// Case 2: a bare ▁ (or a ▁-fused punctuation piece) — close current, emit its own placeholder, and
+				// leave `current === null` as the PENDING signal for whatever piece follows.
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
 				continue
@@ -249,21 +251,23 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
 			current = { fstToken: literal, pieceIndices: [i] }
 		} else if (!hasAlnum) {
-			// Interior punctuation: continues (never resets) the current word if there is one; otherwise it has
-			// nothing to attach to and stands alone (see the docstring's "leading punctuation" case).
+			// Case 3, punctuation: interior (absorbed) if a word is open; otherwise it has nothing to attach to and
+			// stands alone — the pending state (if any) is left untouched for the next piece.
 			if (current) {
 				current.pieceIndices.push(i)
 			} else {
 				groups.push({ fstToken: "", pieceIndices: [i] })
 			}
 		} else if (current) {
-			// Alnum continuation of the word in progress (a SentencePiece subword split with no leading ▁).
+			// Case 3, alnum, word already open: ordinary SentencePiece subword continuation.
 			current.pieceIndices.push(i)
 			current.fstToken += p.piece
+		} else {
+			// Case 3, alnum, PENDING (current === null): this piece is the pending word's actual start — it has no
+			// leading ▁ of its own, but nothing else could possibly claim it, so it opens `current` fresh rather than
+			// being dropped. See the docstring's numbered case 3 for the production-tokenizer motivation.
+			current = { fstToken: p.piece, pieceIndices: [i] }
 		}
-		// else: an alnum piece with no leading ▁ and no `current` to continue — the fixture-vocab residual
-		// documented above. Dropped exactly as before this fix (unlike interior punctuation, there's no
-		// principled group for it to start; it isn't a boundary itself, so it can't open one).
 	}
 
 	if (current) {
