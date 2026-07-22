@@ -169,6 +169,14 @@ def build_optimizer(
     `_restamp_resume_lrs` exists to fix, but for the label instead of the LR. The return tuple
     sidesteps this: labels never touch the param-group dict, so `optim.load_state_dict()` can't
     clobber them.
+
+    The "rest" (base) group is skipped entirely when empty — e.g. `train.trainable_only_prefixes`
+    (the cRT probe lever) freezes every param outside a carve-out prefix, so once that prefix is
+    also carved out here nothing remains for "rest". `AdamW`/`LambdaLR` both tolerate a
+    zero-params group fine (constructed, stepped, and state_dict-round-tripped clean in testing —
+    a single shared `lr_lambda` is applied per group regardless of param count), so this is a
+    shape choice, not a workaround for broken behavior: an all-carved-out run should read as a
+    clean 1-group optimizer, not a 2-group optimizer with a permanently-empty phantom "base".
     """
     trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
 
@@ -197,8 +205,9 @@ def build_optimizer(
         groups.append({"params": head, "lr": lr})
         labels.append(key)
 
-    groups.insert(0, {"params": [p for _, p in rest], "lr": learning_rate})
-    labels.insert(0, "base")
+    if rest:
+        groups.insert(0, {"params": [p for _, p in rest], "lr": learning_rate})
+        labels.insert(0, "base")
     return AdamW(groups, lr=learning_rate, weight_decay=weight_decay), labels
 
 
@@ -550,6 +559,36 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         if frozen == 0:
             raise RuntimeError("freeze_token_embeddings=True but no token_embeddings params found")
         print(f"[freeze_token_embeddings] frozen={frozen:,} trainable={sum(p.numel() for p in trainable_params):,}")
+
+    # 2026-07-22 cRT probe (census-bias plan "Parallel training-side experiment"): classifier-only
+    # retraining with a frozen encoder — every param NOT matching a listed prefix is frozen, every
+    # match stays trainable. Mirrors the freeze_encoder idiom above (explicit filtered param list,
+    # loud count print, raise-if-empty). Mutually exclusive with freeze_encoder/freeze_token_embeddings:
+    # all three exclude parts of the encoder from training, and combining them would make "which
+    # lever produced the effect" ambiguous. See build_optimizer for the empty-base-group handling
+    # this lever provokes when paired with a `classifier_learning_rate` carve-out (rest becomes empty).
+    trainable_only_prefixes = tuple(getattr(cfg.train, "trainable_only_prefixes", []) or [])
+    if trainable_only_prefixes:
+        if getattr(cfg.train, "freeze_encoder", False) or getattr(cfg.train, "freeze_token_embeddings", False):
+            raise ValueError(
+                "train.trainable_only_prefixes is mutually exclusive with freeze_encoder/"
+                "freeze_token_embeddings — combining them makes lever attribution ambiguous"
+            )
+        frozen = trainable = 0
+        for name, p in model.named_parameters():
+            if name.startswith(trainable_only_prefixes):
+                p.requires_grad = True
+                trainable += p.numel()
+            else:
+                p.requires_grad = False
+                frozen += p.numel()
+        trainable_params = [p for p in model.parameters() if p.requires_grad]
+        if not trainable_params:
+            raise RuntimeError(f"train.trainable_only_prefixes={list(trainable_only_prefixes)} matched no params")
+        print(
+            f"[trainable_only_prefixes] frozen={frozen:,} trainable={trainable:,} "
+            f"(prefixes={list(trainable_only_prefixes)})"
+        )
 
     # build_optimizer filters on requires_grad, so the freeze_* idioms above are honored without the
     # explicit trainable_params hand-off (a frozen param has requires_grad=False by then).
