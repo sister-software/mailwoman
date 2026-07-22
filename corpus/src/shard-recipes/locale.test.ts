@@ -19,7 +19,15 @@ import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { SynthesizedLocaleRow } from "../synthesize-german.ts"
-import { applyCountryAppend, cleanCityNoise, readTuples } from "./locale.ts"
+import {
+	applyCountryAppend,
+	applyDistrictAsLocalityOverride,
+	cleanCityNoise,
+	type LocaleCountrySource,
+	type LocalePart,
+	readTuples,
+	resolveLocaleParts,
+} from "./locale.ts"
 import { makeMulberry32 } from "./scaffold.ts"
 
 describe("cleanCityNoise", () => {
@@ -151,6 +159,72 @@ describe("readTuples (OA CSV parse)", () => {
 		])
 	})
 
+	it("districtAsLocality: drops dependent_locality when it equals locality (case-insensitive) instead of emitting a same-value pair", async () => {
+		const file = join(tmp(), "part.csv")
+		writeFileSync(
+			file,
+			[
+				OA_HEADER,
+				// CITY and DISTRICT name the same place (differing only in case) — the ES CNIG `poblacion ==
+				// municipio` majority case (the address point sits in the municipio's own main town, not a
+				// pedanía). Must NOT surface as dependent_locality === locality.
+				"1,2,10,Main St,,AMURRIO,Amurrio,Araba,01450,id,hash",
+				// Genuinely distinct CITY/DISTRICT still produces dependent_locality (the districtAsLocality
+				// contract is otherwise unchanged).
+				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
+			].join("\n") + "\n"
+		)
+
+		const tuples = await readTuples({ path: file, districtAsLocality: true }, () => 0)
+
+		expect(tuples).toEqual([
+			{ house_number: "10", street: "Main St", locality: "Amurrio", region: "Araba", postcode: "01450" },
+			{
+				house_number: "11",
+				street: "Elm Ave",
+				locality: "Amurrio",
+				dependent_locality: "Baranbio",
+				region: "Araba",
+				postcode: "01450",
+			},
+		])
+	})
+
+	it("ES pedanía (cnigRaw): joins tipo_vial+nombre_via→street, poblacion→dependent_locality, municipio→locality", async () => {
+		const file = join(tmp(), "es-raw.csv")
+		writeFileSync(
+			file,
+			[
+				"X,Y,id_porpk,tipo,tipo_vial,nombre_via,numero,extension,id_pob,poblacion,cod_postal,ine_mun,municipio,provincia,comunidad_autonoma,fuente_datos,fecha_modificacion",
+				// poblacion filled + distinct from municipio (real pedanía row, mirrors the verified Amurrio/Baranbio sample).
+				'-2.922,43.0507,"1","PK",CARRETERA,A-2522,35,,"1600005667",Baranbio,01450,01002,Amurrio,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
+				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality
+				// NZ-pattern fallback, exercised here through the CNIG column names instead of CITY/DISTRICT).
+				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
+			].join("\n") + "\n"
+		)
+
+		const tuples = await readTuples({ path: file, cnigRaw: true, districtAsLocality: true }, () => 0)
+
+		expect(tuples).toEqual([
+			{
+				house_number: "35",
+				street: "CARRETERA A-2522",
+				locality: "Amurrio",
+				dependent_locality: "Baranbio",
+				region: "País Vasco/Euskadi",
+				postcode: "01450",
+			},
+			{
+				house_number: "15",
+				street: "CARRETERA A-4136",
+				locality: "Alegría-Dulantzi",
+				region: "País Vasco/Euskadi",
+				postcode: "01240",
+			},
+		])
+	})
+
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
 		const file = join(tmp(), "part.csv")
 		writeFileSync(
@@ -227,5 +301,56 @@ describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
 		expect(row.components.country).toBeDefined()
 		expect(COUNTRY_SURFACE_FORMS.NZ).toContain(row.components.country)
 		expect(row.raw).toBe(`14 Beulah Hill, London SE19 3NF, ${row.components.country}`)
+	})
+})
+
+describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", () => {
+	it("undefined (flag absent) returns the SAME part object — no override, byte-identical to before the flag existed", () => {
+		const part: LocalePart = { path: "/x.csv", districtAsLocality: true }
+
+		expect(applyDistrictAsLocalityOverride(part, undefined)).toBe(part)
+	})
+
+	it("true forces districtAsLocality on, even overriding a part pinned false-ish (unset)", () => {
+		const part: LocalePart = { path: "/x.csv" }
+
+		expect(applyDistrictAsLocalityOverride(part, true)).toEqual({ path: "/x.csv", districtAsLocality: true })
+		// original part is untouched — the override never mutates the registered COUNTRY_SOURCES entry.
+		expect(part.districtAsLocality).toBeUndefined()
+	})
+
+	it("false forces districtAsLocality off, overriding a part pinned true (GB/NZ debugging escape hatch)", () => {
+		const part: LocalePart = { path: "/x.csv", districtAsLocality: true }
+
+		expect(applyDistrictAsLocalityOverride(part, false)).toEqual({ path: "/x.csv", districtAsLocality: false })
+	})
+})
+
+describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
+	const defaultParts: LocalePart[] = [{ path: "/conformed.csv" }]
+	const pedaniaParts: LocalePart[] = [{ zip: "/raw.zip", csv: "raw.csv", cnigRaw: true, districtAsLocality: true }]
+	const esLikeSource: LocaleCountrySource = {
+		source: "synth-es",
+		corpusVersion: "0.9.9",
+		parts: defaultParts,
+		pedaniaParts,
+	}
+	const noPedaniaSource: LocaleCountrySource = { source: "synth-de", corpusVersion: "0.4.0", parts: defaultParts }
+
+	it("override undefined (flag absent): default parts, regardless of whether pedaniaParts exists", () => {
+		expect(resolveLocaleParts(esLikeSource, undefined)).toBe(defaultParts)
+		expect(resolveLocaleParts(noPedaniaSource, undefined)).toBe(defaultParts)
+	})
+
+	it("override true + pedaniaParts registered: selects pedaniaParts (the synth-es-pedania build)", () => {
+		expect(resolveLocaleParts(esLikeSource, true)).toBe(pedaniaParts)
+	})
+
+	it("override true + no pedaniaParts registered: falls back to default parts (GB/NZ — just forces the per-part flag)", () => {
+		expect(resolveLocaleParts(noPedaniaSource, true)).toBe(defaultParts)
+	})
+
+	it("override false: always the default parts, even when pedaniaParts exists", () => {
+		expect(resolveLocaleParts(esLikeSource, false)).toBe(defaultParts)
 	})
 })
