@@ -193,10 +193,10 @@ describe("normalizeFSTToken", () => {
 		expect(result).toBe("stocktonontees")
 	})
 
-	it("lowercases and strips spaces treated as punctuation (Stockton on Tees → stocktonontees)", () => {
-		// When passed through groupPiecesIntoWords, each word is normalized separately
-		// but hyphens disappear via the punctuation strip, and spaces separate words
-		// then are removed. Here we test the single-token behavior:
+	it("leaves spaces intact (Zs, not punctuation) — hyphen/space equivalence comes from the caller's split-then-join", () => {
+		// Spaces (U+0020) are Unicode category Zs (separator), not P or S, so normalizeFSTToken leaves them intact.
+		// Each word is normalized separately via groupPiecesIntoWords, then words are joined with no separator —
+		// that's where "Stockton on Tees" becomes "stocktonontees" (same as "Stockton-on-Tees" after hyphen strip).
 		const stockton = normalizeFSTToken("Stockton")
 		const on = normalizeFSTToken("on")
 		const tees = normalizeFSTToken("Tees")

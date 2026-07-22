@@ -239,9 +239,11 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
  * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
  * specific form (indexed and query surfaces agree on diacritics).
  *
- * Hyphens and spaces are treated as equivalent ("Stockton-on-Tees" → "stocktonontees", same as "Stockton on Tees" when
- * each word is normalized and joined). The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P
- * and S).
+ * The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P and S), leaving spaces intact — space
+ * (U+0020) is Unicode category Zs (separator), NOT matched by `\p{P}` or `\p{S}`. So this function preserves spaces
+ * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space EQUIVALENCE that produces
+ * "stocktonontees" is a property of the caller's split-then-join pipeline in `groupPiecesIntoWords` — each word is
+ * normalized separately, then words are joined with no separator.
  */
 export function normalizeFSTToken(s: string): string {
 	const cleaned = s
