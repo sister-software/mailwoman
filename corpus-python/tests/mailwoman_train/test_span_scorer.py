@@ -317,8 +317,9 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
     from mailwoman_train.train import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)
-    optim = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=1e-3)
+    optim, labels = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=1e-3)
     assert len(optim.param_groups) == 2
+    assert labels == ["base", "span_head_learning_rate"]
     by_lr = {g["lr"]: g for g in optim.param_groups}
     assert set(by_lr) == {1e-5, 1e-3}
     # Every span/semi-CRF param is in the fast group; nothing else is.
@@ -335,10 +336,11 @@ def test_build_optimizer_is_single_group_without_the_override():
     from mailwoman_train.train import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)
-    optim = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=None)
+    optim, labels = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=None)
     assert len(optim.param_groups) == 1
     assert optim.param_groups[0]["lr"] == 1e-5
     assert len(optim.param_groups[0]["params"]) == len(list(model.parameters()))
+    assert labels == ["base"]
 
 
 def test_build_optimizer_respects_frozen_params():
@@ -349,7 +351,7 @@ def test_build_optimizer_respects_frozen_params():
     for name, p in model.named_parameters():
         if "token_embeddings" in name:
             p.requires_grad = False
-    optim = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=1e-3)
+    optim, _labels = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=1e-3)
     grouped = {id(p) for g in optim.param_groups for p in g["params"]}
     frozen = {id(p) for n, p in model.named_parameters() if "token_embeddings" in n}
     assert not (grouped & frozen)

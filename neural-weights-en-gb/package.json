@@ -1,0 +1,35 @@
+{
+	"name": "@mailwoman/neural-weights-en-gb",
+	"version": "7.5.0",
+	"description": "Mailwoman neural-classifier weights for locale 'en-gb'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the gb-specific data siblings. Loaded by @mailwoman/neural at runtime.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "neural-weights-en-gb"
+	},
+	"files": [
+		"model-card.json",
+		"postcode-gb.bin",
+		"anchor-lexicon-v1.json",
+		"country-surface-lexicon-v1.json",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/neural-weights-en-us": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-en-us"
+	}
+}

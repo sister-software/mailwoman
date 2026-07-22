@@ -277,6 +277,77 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	})
 })
 
+// Diagnostic for the en-GB locale arc (docs/superpowers/specs/2026-07-22-en-gb-locale-arc-design.md,
+// Phase 3): the spec assumed the word-consistency heal lumps "suburb, city" into one locality span.
+// These characterize `emitSpans` directly to settle whether the decode pipeline itself preserves the
+// dependent_locality/locality distinction across a comma.
+describe("buildAddressTree — dependent_locality/locality comma separation (spec Phase-3 diagnostic)", () => {
+	function tagsOf(nodes: AddressNode[]): string[] {
+		const out: string[] = []
+		const walk = (n: AddressNode): void => {
+			out.push(n.tag)
+
+			for (const c of n.children) {
+				walk(c)
+			}
+		}
+
+		for (const n of nodes) {
+			walk(n)
+		}
+
+		return out
+	}
+
+	test("distinct tags across a comma stay two spans (Plimmerton, Porirua)", () => {
+		// "Plimmerton, Porirua" — dependent_locality then (after the comma) locality.
+		const raw = "Plimmerton, Porirua"
+		const tokens: DecoderToken[] = [
+			tok("Plimmerton", 0, 10, "B-dependent_locality"),
+			tok(",", 10, 11, "O"),
+			tok("Porirua", 12, 19, "B-locality"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const tags = tagsOf(tree.roots).sort()
+		expect(tags).toEqual(["dependent_locality", "locality"])
+
+		const depLocality = findByTag(tree.roots, "dependent_locality")!
+		const locality = findByTag(tree.roots, "locality")!
+		expect(depLocality.value).toBe("Plimmerton")
+		expect(locality.value).toBe("Porirua")
+	})
+
+	test("GUARD: same-tag spans across a comma stay two spans (Springfield, Chicago)", () => {
+		// Documents the comma guard already asserted in emitSpans: same-tag same-address spans
+		// separated by a comma never merge, so a locality/locality "suburb, city" pair the model
+		// emits as two distinct B-locality spans is not lumped by the decoder.
+		const raw = "Springfield, Chicago"
+		const tokens: DecoderToken[] = [
+			tok("Springfield", 0, 11, "B-locality"),
+			tok(",", 11, 12, "O"),
+			tok("Chicago", 13, 20, "B-locality"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const localities: AddressNode[] = []
+		const walk = (n: AddressNode): void => {
+			if (n.tag === "locality") {
+				localities.push(n)
+			}
+
+			for (const c of n.children) {
+				walk(c)
+			}
+		}
+
+		for (const r of tree.roots) {
+			walk(r)
+		}
+
+		expect(localities.length).toBe(2)
+		expect(localities.map((l) => l.value).sort()).toEqual(["Chicago", "Springfield"])
+	})
+})
+
 function findByTag(nodes: AddressNode[], tag: string): AddressNode | null {
 	for (const n of nodes) {
 		if (n.tag === tag) return n

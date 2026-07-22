@@ -197,8 +197,9 @@ function resolveFromPackageDir(
 	// tokenizer.model from its `files` and resolve them from the base package, while its OWN data siblings
 	// (model-card, postcode-<cc>.bin, lexicons) still resolve locally. Base takes precedence over any local
 	// model copy — that is also what closes #1117 (fr-fr's link-dev-weights pinned a stale model).
+	const baseDir = resolveBaseWeightsDir(packageDir)
+
 	if (!opts.modelPath) {
-		const baseDir = resolveBaseWeightsDir(packageDir)
 		const baseModel = baseDir ? resolve(baseDir, "model.onnx") : undefined
 
 		if (baseDir && baseModel && existsSync(baseModel)) {
@@ -221,8 +222,23 @@ function resolveFromPackageDir(
 		)
 	}
 
+	// Card-less overlay fallback: an overlay package that ships no model-card.json of its own (en-gb —
+	// only its GB-specific data siblings) still needs the trained label vocabulary to decode correctly.
+	// Without this, `readLabelsFromModelCard(undefined)` silently defaults to `STAGE2_BIO_LABELS` (21
+	// labels) while the shared base model emits a wider STAGE3+ vocabulary (33 labels), and the first
+	// parse throws in `assertEmissionWidth`. Mirrors the model/tokenizer base fallback above — same
+	// `+base` source suffix convention.
 	const modelCardCandidate = resolve(packageDir, "model-card.json")
-	const modelCardPath = existsSync(modelCardCandidate) ? modelCardCandidate : undefined
+	const baseModelCardCandidate = baseDir ? resolve(baseDir, "model-card.json") : undefined
+	const modelCardPath = existsSync(modelCardCandidate)
+		? modelCardCandidate
+		: baseModelCardCandidate && existsSync(baseModelCardCandidate)
+			? baseModelCardCandidate
+			: undefined
+
+	if (!existsSync(modelCardCandidate) && modelCardPath && !source.endsWith("+base")) {
+		source = `${source}+base`
+	}
 
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined

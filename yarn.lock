@@ -4561,6 +4561,7 @@ __metadata:
   resolution: "@mailwoman/corpus@workspace:corpus"
   dependencies:
     "@dsnp/parquetjs": "npm:1.8.8"
+    "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
@@ -4715,6 +4716,14 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb"
+  dependencies:
+    "@mailwoman/neural-weights-en-us": "workspace:*"
   languageName: unknown
   linkType: soft
 

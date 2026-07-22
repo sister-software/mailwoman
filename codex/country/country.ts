@@ -30,6 +30,7 @@ export const COUNTRY_SURFACE_FORMS = {
 	NL: ["Netherlands", "Nederland", "The Netherlands", "Holland", "NL", "NLD"],
 	CA: ["Canada", "CA", "CAN"],
 	AU: ["Australia", "AU", "AUS"],
+	NZ: ["New Zealand", "NZ", "Aotearoa"],
 	CH: ["Switzerland", "Schweiz", "Suisse", "Svizzera", "CH"],
 	AT: ["Austria", "Österreich", "Osterreich", "AT"],
 	BE: ["Belgium", "België", "Belgique", "BE"],

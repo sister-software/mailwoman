@@ -130,9 +130,21 @@ export interface ShardRecipeOpts {
 	edgesDir?: string
 	country?: string
 	intlFraction?: number
+	/** `locale`: fraction of rows that append an explicit country surface form + a `country` component. Default 0. */
+	countryFraction?: number
+	/**
+	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping for this invocation. `undefined` (flag
+	 * absent) leaves each `COUNTRY_SOURCES` part's own value untouched — every existing locale build stays
+	 * byte-identical. `true`/`false` forces that value on every part read this run. ES's pedanía shard
+	 * (`synth-es-pedania`) additionally uses `true` to select {@link LocaleCountrySource.pedaniaParts} instead of the
+	 * default `parts` — see `locale.ts`.
+	 */
+	districtAsLocality?: boolean
 	bareProb?: number
 	hnProb?: number
 	communes?: string
+	/** `fr-lieudit`: BAN `adresses-<dept>.csv` directory. Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`. */
+	banDir?: string
 	multilocaleCount?: number
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. REQUIRED for those

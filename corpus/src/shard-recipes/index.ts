@@ -15,6 +15,7 @@ import { czPcFirstPrepositionRecipe } from "./cz-pcfirst-preposition.ts"
 import { frAdminSplitRecipe } from "./fr-admin-split.ts"
 import { frBareStreetRecipe } from "./fr-bare-street.ts"
 import { frFragmentRecipe } from "./fr-fragment.ts"
+import { frLieuditRecipe } from "./fr-lieudit.ts"
 import { frOrderRecipe } from "./fr-order.ts"
 import { germanRecipe } from "./german.ts"
 import { houseVenueRecipe } from "./house-venue.ts"
@@ -52,6 +53,7 @@ const RECIPES: readonly ShardRecipe[] = [
 	frAdminSplitRecipe,
 	frBareStreetRecipe,
 	frFragmentRecipe,
+	frLieuditRecipe,
 	czPcFirstPrepositionRecipe,
 	nlPostcodeRecipe,
 	noStreetLedRecipe,

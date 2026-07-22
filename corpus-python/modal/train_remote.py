@@ -1011,6 +1011,182 @@ def sync_latam():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_gb():
+    """GB locale add (Task 7, dependent_locality dead-tag resurrection probe) — pull the v0.14.0-gb
+    overlay (base v0.13.0-latam + the one new synth-gb-v1 shard, 800k rows) + latest code/config from
+    R2 (container-side). The v0.13.0-latam base (703 shards, itself an overlay over
+    v0.11.0-no-fragment) persists on the volume from sync_latam; only the synth-gb parquet + MANIFEST
+    + the new v3.10.0-gb-probe config are new. Mirror of sync_latam."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.14.0-gb overlay (GB locale) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.14.0-gb/corpus-v0.14.0-gb/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nGB v0.14.0-gb overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb"
+    latam = f"{VOL_MOUNT}/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam/train/part-latam.parquet"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.10.0-gb-probe.yaml"
+    print("  v3.10.0-gb-probe config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  synth-gb shard present:", os.path.isfile(f"{cdir}/train/part-gb.parquet"))
+    print("  v0.13.0-latam base shard (from sync_latam) present:", os.path.isfile(latam))
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
+    print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
+    print(
+        "  init_from v385 (output-v384-latam-probe-s42) step-008000 on volume:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
+    )
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_deploc():
+    """dependent_locality FEED run (v3.11.0-deploc-feed) — pull the v0.15.0-deploc overlay
+    (base v0.14.0-gb + THREE new shards: synth-nz-v2, synth-es-pedania-v1, synth-fr-lieudit-v1,
+    ~2.4M rows combined) + latest code/config from R2 (container-side). The v0.14.0-gb base (704
+    shards, itself an overlay over v0.13.0-latam) persists on the volume from sync_gb; only the
+    three new parquet shards + MANIFEST + the new v3.11.0-deploc-feed config are new. Mirror of
+    sync_gb."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.15.0-deploc overlay (dep-loc FEED: NZ+ES+FR-lieudit) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.15.0-deploc/corpus-v0.15.0-deploc/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\ndeploc v0.15.0-deploc overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc"
+    gb_base = f"{VOL_MOUNT}/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb/train/part-gb.parquet"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.11.0-deploc-feed.yaml"
+    manifest_path = f"{cdir}/MANIFEST.json"
+    print("  v3.11.0-deploc-feed config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(manifest_path))
+    print("  synth-nz shard present:", os.path.isfile(f"{cdir}/train/part-nz.parquet"))
+    print("  synth-es-pedania shard present:", os.path.isfile(f"{cdir}/train/part-es-pedania.parquet"))
+    print("  synth-fr-lieudit shard present:", os.path.isfile(f"{cdir}/train/part-fr-lieudit.parquet"))
+    print("  v0.14.0-gb base shard (from sync_gb) present:", os.path.isfile(gb_base))
+    print(
+        "  init_from v385 (output-v384-latam-probe-s42) step-008000 on volume:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
+    )
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+    if os.path.isfile(manifest_path):
+        import json
+
+        manifest = json.loads(open(manifest_path).read())
+        sources_in_manifest = {s.get("source") for s in manifest.get("shards", [])}
+        for expected in ("synth-nz", "synth-es-pedania", "synth-fr-lieudit"):
+            print(f"  manifest contains source={expected!r}:", expected in sources_in_manifest)
+        print("  configs dir has v3.11.0-deploc-feed.yaml:", os.path.isfile(cfg))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1200,
+)
+def sync_src_gb():
+    """SOURCE-ONLY sync for the v3.10.x dep-loc probes: pull `corpus-python/src/` from R2, clear
+    pycache, and VERIFY the resurrection levers landed volume-side — commit 78adb380 added
+    `reinit_label_rows` + `classifier_learning_rate` to train.py/config.py, and a volume-side
+    config.py predating them would silently drop both keys via the `_merge` hasattr gate (#1248).
+    This sync asserts the marker string is present in BOTH files before returning, so a stale sync
+    fails loud instead of silently launching a lever-less run. (Historical note: written mid-arc
+    under a run-A "instrument failure" hypothesis that later checkpoint-cosine analysis SUPERSEDED —
+    runs A/B were byte-identical, levers fired in both; the config-header record in
+    v3.10.1-gb-probe2.yaml is authoritative.) No corpus/tokenizer pull — the v0.14.0-gb overlay +
+    v0.9.0-multisplice tokenizer persist on the volume from sync_gb."""
+    import shutil
+    import subprocess
+
+    print("Syncing corpus-python/src/ from R2 (container-side, v3.10.0-gb-probe run B)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+
+    src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    train_src = open(f"{src_dir}/train.py").read()
+    config_src = open(f"{src_dir}/config.py").read()
+    has_train_marker = "reinit_label_rows" in train_src
+    has_config_marker = "reinit_label_rows" in config_src
+    print(f"train.py has reinit_label_rows:   {has_train_marker}")
+    print(f"config.py has reinit_label_rows:  {has_config_marker}")
+    if not has_train_marker or not has_config_marker:
+        raise RuntimeError(
+            "v3.10.0-gb-probe run-B sync verify FAILED — reinit_label_rows missing on volume; do not launch"
+        )
+    print("\nv3.10.0-gb-probe run-B source sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_no_fragment_b4b():
     """B4b — pull the REBUILT v0.11.0-no-fragment overlay (bare-street-prob 0.30 -> 0.70) + src from R2.
     Only the one synth-no-fragment parquet + MANIFEST changed vs the v3.3.0 build; the 701 base refs

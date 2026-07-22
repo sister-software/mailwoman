@@ -43,9 +43,20 @@ const OptionsSchema = zod.object({
 	edgesDir: zod.string().optional().describe("intersection: TIGER EDGES dir"),
 	country: zod.string().optional().describe("locale: target country"),
 	intlFraction: zod.string().optional().describe("german/locale: international-order fraction"),
+	countryFraction: zod
+		.string()
+		.optional()
+		.describe("locale: fraction of rows that append an explicit country surface form. Default 0"),
+	districtAsLocality: zod
+		.boolean()
+		.optional()
+		.describe(
+			"locale: override the per-part districtAsLocality mapping (--no-district-as-locality to force off). Unset leaves each part's own value untouched"
+		),
 	bareProb: zod.string().optional().describe("street-bare: P(bare street)"),
 	hnProb: zod.string().optional().describe("street-bare: P(house number)"),
 	communes: zod.string().optional().describe("fr-admin-split: communes source"),
+	banDir: zod.string().optional().describe("fr-lieudit: BAN adresses-<dept>.csv directory"),
 	excludeSurfaces: zod
 		.string()
 		.optional()
@@ -97,9 +108,12 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 			edgesDir: options.edgesDir,
 			country: options.country,
 			intlFraction: num(options.intlFraction),
+			countryFraction: num(options.countryFraction),
+			districtAsLocality: options.districtAsLocality,
 			bareProb: num(options.bareProb),
 			hnProb: num(options.hnProb),
 			communes: options.communes,
+			banDir: options.banDir,
 			excludeSurfaces: options.excludeSurfaces,
 			multilocaleCount: num(options.multilocaleCount),
 		}
