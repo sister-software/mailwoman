@@ -54,6 +54,18 @@ describe("toOpenCageComponents", () => {
 	it("never emits a bare country_code as the only component", () => {
 		expect(toOpenCageComponents({}, "US")).toEqual({})
 	})
+
+	it("maps dependent_locality onto both suburb and quarter for GB (its template renders quarter)", () => {
+		const oc = toOpenCageComponents({ dependent_locality: "Plaistow", locality: "Bromley" }, "GB")
+		expect(oc.suburb).toBe("Plaistow")
+		expect(oc.quarter).toBe("Plaistow")
+	})
+
+	it("maps dependent_locality onto suburb only for NZ (its template already renders suburb)", () => {
+		const oc = toOpenCageComponents({ dependent_locality: "Ponsonby", locality: "Auckland" }, "NZ")
+		expect(oc.suburb).toBe("Ponsonby")
+		expect(oc.quarter).toBeUndefined()
+	})
 })
 
 describe("formatAddress", () => {
@@ -69,6 +81,49 @@ describe("formatAddress", () => {
 
 	it("returns an empty string for an empty dict", () => {
 		expect(formatAddress({}, "US")).toBe("")
+	})
+
+	it("surfaces dependent_locality for GB — the template renders `quarter`, not `suburb`", () => {
+		const formatted = formatAddress(
+			{
+				house_number: "2",
+				street: "High Street",
+				dependent_locality: "Plaistow",
+				locality: "Bromley",
+				postcode: "BR1 4AA",
+			},
+			"GB",
+			{ separator: ", " }
+		)
+
+		expect(formatted).toContain("Plaistow")
+
+		// Plaistow (the quarter/sub-locality) renders before Bromley (the locality) per the GB template order.
+		expect(formatted.indexOf("Plaistow")).toBeLessThan(formatted.indexOf("Bromley"))
+	})
+
+	it("still surfaces dependent_locality for NZ — the template renders `suburb` directly", () => {
+		const formatted = formatAddress(
+			{
+				house_number: "12",
+				street: "Queen Street",
+				dependent_locality: "Ponsonby",
+				locality: "Auckland",
+				postcode: "1011",
+			},
+			"NZ",
+			{ separator: ", " }
+		)
+
+		expect(formatted).toContain("Ponsonby")
+	})
+
+	it("is unaffected for a country without dependent_locality (US)", () => {
+		const formatted = formatAddress(US_ADDRESS, "US", { separator: ", " })
+
+		for (const token of ["123", "Main", "Portland", "97201"]) {
+			expect(formatted).toContain(token)
+		}
 	})
 })
 

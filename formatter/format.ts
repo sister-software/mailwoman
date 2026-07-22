@@ -24,8 +24,46 @@
  */
 
 import addressFormatter from "@fragaria/address-formatter"
+import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
 import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
 import type { ComponentTag } from "@mailwoman/core/types"
+
+/**
+ * Country codes whose vendored OpenCage `address_template` renders the sub-locality slot as `{{{quarter}}}` and does
+ * NOT also reference `{{{suburb}}}` — derived from the vendored template data itself
+ * (`@fragaria/address-formatter/src/templates/templates.json`), not a hardcoded country list. `dependent_locality` is
+ * mapped to `suburb` unconditionally below (that's what NZ's template reads, and most templates that carry a
+ * sub-locality slot use `suburb`); for the countries in this set, `suburb` is a dead fallback slot the primary template
+ * never reaches (GB is the one that surfaced this — see `.superpowers/sdd/task-4-report.md`), so we additionally mirror
+ * the value onto `quarter` so it actually renders.
+ *
+ * One country (`BR`) references BOTH `suburb` and `quarter` in its primary template for two distinct concepts (a
+ * finer-grained "quarter" line above the neighbourhood line) — it's deliberately excluded from this set so
+ * `dependent_locality` doesn't double-render there.
+ */
+const QUARTER_ONLY_COUNTRY_CODES: ReadonlySet<string> = (() => {
+	const codes = new Set<string>()
+	const templates = fragariaTemplates as Record<string, { address_template?: string }>
+
+	for (const [code, def] of Object.entries(templates)) {
+		// Restrict to real 2-letter country codes — the template data also carries language-variant
+		// pseudo-keys (`CA_en`, `CA_fr`, `JP_ja`, …) that aren't selected by country_code lookup.
+		if (!/^[A-Z]{2}$/.test(code)) continue
+
+		const template = def.address_template
+
+		if (!template) continue
+
+		const hasQuarter = /\{\{\{\s*quarter\s*\}\}\}/.test(template)
+		const hasSuburb = /\{\{\{\s*suburb\s*\}\}\}/.test(template)
+
+		if (hasQuarter && !hasSuburb) {
+			codes.add(code)
+		}
+	}
+
+	return codes
+})()
 
 /** A partial map of `ComponentTag` → string value — the canonical formatter input. */
 export type ComponentDict = Partial<Record<ComponentTag, string>>
@@ -175,6 +213,13 @@ export function toOpenCageComponents(components: ComponentDict, country: string)
 
 	if (components.dependent_locality) {
 		out.suburb = components.dependent_locality
+
+		// See QUARTER_ONLY_COUNTRY_CODES: some templates (GB among them) name this slot `quarter`
+		// instead of `suburb`. Mirroring the value there is additive — `suburb` stays set for every
+		// other country's template (NZ included) that reads it directly.
+		if (QUARTER_ONLY_COUNTRY_CODES.has(country.trim().toUpperCase())) {
+			out.quarter = components.dependent_locality
+		}
 	}
 
 	if (components.subregion) {
