@@ -4561,6 +4561,7 @@ __metadata:
   resolution: "@mailwoman/corpus@workspace:corpus"
   dependencies:
     "@dsnp/parquetjs": "npm:1.8.8"
+    "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"

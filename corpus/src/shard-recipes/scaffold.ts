@@ -143,6 +143,8 @@ export interface ShardRecipeOpts {
 	bareProb?: number
 	hnProb?: number
 	communes?: string
+	/** `fr-lieudit`: BAN `adresses-<dept>.csv` directory. Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`. */
+	banDir?: string
 	multilocaleCount?: number
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. REQUIRED for those
