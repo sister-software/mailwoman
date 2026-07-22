@@ -208,4 +208,24 @@ describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
 		expect(row).toEqual(before)
 		expect(calls).toBe(0)
 	})
+
+	it("countryFraction 1 + a country with no COUNTRY_SURFACE_FORMS entry: throws instead of silently no-opping (BR/NZ lesson)", () => {
+		const random = makeMulberry32(1)
+		const row = makeRow()
+
+		expect(() => applyCountryAppend(row, "ZZ_FAKE", 1, random)).toThrow(
+			"No COUNTRY_SURFACE_FORMS entry for ZZ_FAKE — add it to codex/country/country.ts before using --country-fraction"
+		)
+	})
+
+	it("countryFraction 1: NZ now appends a real surface form", () => {
+		const random = makeMulberry32(7)
+		const row = makeRow()
+
+		applyCountryAppend(row, "NZ", 1, random)
+
+		expect(row.components.country).toBeDefined()
+		expect(COUNTRY_SURFACE_FORMS.NZ).toContain(row.components.country)
+		expect(row.raw).toBe(`14 Beulah Hill, London SE19 3NF, ${row.components.country}`)
+	})
 })

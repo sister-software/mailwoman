@@ -329,11 +329,17 @@ export function applyCountryAppend(
 	if (countryFraction > 0 && random() < countryFraction) {
 		const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
 
-		if (forms?.length) {
-			const form = forms[Math.floor(random() * forms.length)]!
-			synth.raw = `${synth.raw}, ${form}`
-			synth.components = { ...synth.components, country: form }
+		if (!forms?.length) {
+			// The BR/NZ lesson: a missing table entry must never silently no-op a requested fraction —
+			// it must raise so the gap is caught at build time, not discovered later as a 0% gate failure.
+			throw new Error(
+				`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
+			)
 		}
+
+		const form = forms[Math.floor(random() * forms.length)]!
+		synth.raw = `${synth.raw}, ${form}`
+		synth.components = { ...synth.components, country: form }
 	}
 }
 
