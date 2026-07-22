@@ -137,7 +137,7 @@ def build_optimizer(
     weight_decay: float,
     span_head_learning_rate: float | None = None,
     classifier_learning_rate: float | None = None,
-) -> AdamW:
+) -> tuple[AdamW, list[str]]:
     """AdamW over the model's trainable params, optionally carving out named param groups.
 
     Why the span-head override exists: a randomly-initialized head on a PRETRAINED encoder cannot
@@ -156,6 +156,19 @@ def build_optimizer(
 
     Frozen params (`requires_grad=False`, the `freeze_*` idioms) are excluded from every group.
     Omitting both overrides yields exactly one group — byte-identical to every prior recipe.
+
+    Returns `(optim, labels)` — `labels[i]` names `optim.param_groups[i]` (`"base"` for the
+    untouched-LR group, else the override's config key). This is the SINGLE source of the
+    group-order-to-label mapping: a resume path that needs to re-stamp LRs by group (see
+    `_restamp_resume_lrs`) must read `labels` from here, not hand-build a parallel if-chain that
+    duplicates this function's carve-out order — a reorder here would silently desync a copy.
+    A group dict key (e.g. `pg["mailwoman_label"]`) was considered instead, but
+    `AdamW.load_state_dict()`'s `update_group()` returns the CHECKPOINT's saved group dict
+    verbatim (params/param_names aside), so a label stamped fresh at group-construction time
+    does not survive loading an older checkpoint that predates the label — same class of bug
+    `_restamp_resume_lrs` exists to fix, but for the label instead of the LR. The return tuple
+    sidesteps this: labels never touch the param-group dict, so `optim.load_state_dict()` can't
+    clobber them.
     """
     trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
 
@@ -166,9 +179,11 @@ def build_optimizer(
         carveouts.append((("classifier.",), classifier_learning_rate, "classifier_learning_rate"))
 
     if not carveouts:
-        return AdamW([p for _, p in trainable], lr=learning_rate, weight_decay=weight_decay)
+        optim = AdamW([p for _, p in trainable], lr=learning_rate, weight_decay=weight_decay)
+        return optim, ["base"]
 
     groups = []
+    labels = []
     rest = trainable
     for prefixes, lr, key in carveouts:
         head = [p for n, p in rest if n.startswith(prefixes)]
@@ -180,9 +195,11 @@ def build_optimizer(
             )
         print(f"[{key}] {sum(p.numel() for p in head):,} params @ {lr}")
         groups.append({"params": head, "lr": lr})
+        labels.append(key)
 
     groups.insert(0, {"params": [p for _, p in rest], "lr": learning_rate})
-    return AdamW(groups, lr=learning_rate, weight_decay=weight_decay)
+    labels.insert(0, "base")
+    return AdamW(groups, lr=learning_rate, weight_decay=weight_decay), labels
 
 
 def reinit_label_rows(model, labels: list[str]) -> None:
@@ -231,13 +248,17 @@ def _restamp_resume_lrs(
     the live config's new value as if it took effect. See
     `.superpowers/sdd/fork-implementation-notes.md` Q1/Q3/Q5#1 for the full trace.
 
-    `live_lrs`/`labels` must be captured from the FRESH optimizer's `param_groups`
-    (`build_optimizer`'s own output, pre-load) so the order matches positionally — that's the
-    caller's contract, not re-derived here, to avoid a second copy of build_optimizer's
-    group-construction rules drifting out of sync with the original. A length mismatch here
-    would mean that contract was violated (not a real resume-drift case — a real group-count
-    mismatch already raised inside `optim.load_state_dict()` before this function is ever
-    called), so `zip(..., strict=True)` fails loud rather than silently truncating.
+    `live_lrs` must be captured from the FRESH optimizer's `param_groups` (pre-load); `labels`
+    must be `build_optimizer`'s own returned label list, unmodified — passing both straight
+    through from `build_optimizer`'s call site is what keeps them positionally aligned with
+    `optim.param_groups`. `build_optimizer` is the SINGLE source of the group-order-to-label
+    mapping; do not hand-build a parallel if-chain here or at the call site — that duplicates
+    its carve-out order and a reorder there would silently desync the labels (values stay
+    correct regardless, since they're sourced positionally from `optim.param_groups`, but the
+    printed `[resume-lr]` attribution would lie). A length mismatch here would mean that
+    contract was violated (not a real resume-drift case — a real group-count mismatch already
+    raised inside `optim.load_state_dict()` before this function is ever called), so
+    `zip(..., strict=True)` fails loud rather than silently truncating.
 
     Prints one `[resume-lr]` line per group whose LR the checkpoint actually clobbered; prints
     nothing when every group already matches (the checkpoint was saved with the same LRs the
@@ -532,7 +553,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
 
     # build_optimizer filters on requires_grad, so the freeze_* idioms above are honored without the
     # explicit trainable_params hand-off (a frozen param has requires_grad=False by then).
-    optim = build_optimizer(
+    optim, live_group_labels = build_optimizer(
         model,
         learning_rate=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
@@ -541,15 +562,10 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     )
     # Captured BEFORE any resume load. `optim.load_state_dict()` (below, resume branch) silently
     # overwrites every param-group's `lr`/`initial_lr` with the CHECKPOINT's saved values, so
-    # these live-config LRs — in build_optimizer's own group order (base, then span_head?, then
-    # classifier?) — are the only place the live values survive resume. See
-    # `_restamp_resume_lrs`.
+    # these live-config LRs — plus `live_group_labels` above, both sourced directly from
+    # `build_optimizer`'s own return — are the only place the live values (and their group
+    # attribution) survive resume. See `_restamp_resume_lrs`.
     live_group_lrs = [g["lr"] for g in optim.param_groups]
-    live_group_labels = ["base"]
-    if getattr(cfg.train, "span_head_learning_rate", None) is not None:
-        live_group_labels.append("span_head_learning_rate")
-    if getattr(cfg.train, "classifier_learning_rate", None) is not None:
-        live_group_labels.append("classifier_learning_rate")
     scheduler = _build_scheduler(optim, cfg.train)
     print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")
     amp_dtype = _precision_to_dtype(cfg.train.precision, device)

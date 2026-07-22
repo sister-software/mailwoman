@@ -21,17 +21,19 @@ class TinyModel(torch.nn.Module):
 
 def test_classifier_learning_rate_makes_two_groups():
     m = TinyModel()
-    optim = build_optimizer(m, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
+    optim, labels = build_optimizer(m, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     lrs = sorted(g["lr"] for g in optim.param_groups)
     assert lrs == [1e-5, 1e-3]
     hot = next(g for g in optim.param_groups if g["lr"] == 1e-3)
     assert sum(p.numel() for p in hot["params"]) == 33 * 4 + 33  # classifier.weight + bias only
+    assert labels == ["base", "classifier_learning_rate"]
 
 
 def test_no_override_is_single_group():
     m = TinyModel()
-    optim = build_optimizer(m, learning_rate=1e-5, weight_decay=0.01)
+    optim, labels = build_optimizer(m, learning_rate=1e-5, weight_decay=0.01)
     assert len(optim.param_groups) == 1
+    assert labels == ["base"]
 
 
 def test_reinit_label_rows_resets_only_named_rows():
