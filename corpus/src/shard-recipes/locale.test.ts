@@ -3,19 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `locale` recipe's OA CITY-noise normalization (#241). The classes come from the
- *   2026-07-02 full-stream audit of the ES/IT/NL sources — see the {@link cleanCityNoise} docstring
- *   for the audit numbers. The invariant under test: drop pseudo-localities, strip glued admin-code
- *   suffixes, and DON'T touch the audit-verified real names a naive suffix rule would mangle.
+ *   Tests for the `locale` recipe's OA CITY-noise normalization (#241) and the country-append fraction (#728
+ *   pattern, GB arc task 3). The `cleanCityNoise` classes come from the 2026-07-02 full-stream audit of the
+ *   ES/IT/NL sources — see the {@link cleanCityNoise} docstring for the audit numbers. The invariant under test:
+ *   drop pseudo-localities, strip glued admin-code suffixes, and DON'T touch the audit-verified real names a naive
+ *   suffix rule would mangle. `applyCountryAppend` is tested in isolation (not through the full `localeRecipe.run`,
+ *   which streams real multi-GB OA/PPD CSVs) so the byte-identical-when-unset invariant is provable without I/O.
  */
 
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { cleanCityNoise, readTuples } from "./locale.ts"
+import type { SynthesizedLocaleRow } from "../synthesize-german.ts"
+import { applyCountryAppend, cleanCityNoise, readTuples } from "./locale.ts"
+import { makeMulberry32 } from "./scaffold.ts"
 
 describe("cleanCityNoise", () => {
 	it("drops ES cadastral pseudo-localities (comma / ≥4-digit run)", () => {
@@ -120,6 +125,32 @@ describe("readTuples (OA CSV parse)", () => {
 		])
 	})
 
+	it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLocality (empty CITY kept)", async () => {
+		const file = join(tmp(), "gb.csv")
+		writeFileSync(
+			file,
+			[
+				"NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE",
+				'14,"Beulah Hill",,"London","Greater London",SE19 3NF',
+				'2,"High Street","Plaistow","Bromley","Greater London",BR1 4AA',
+			].join("\n")
+		)
+
+		const tuples = await readTuples({ path: file, districtAsLocality: true }, () => 0)
+
+		expect(tuples).toEqual([
+			{ house_number: "14", street: "Beulah Hill", locality: "London", region: "Greater London", postcode: "SE19 3NF" },
+			{
+				house_number: "2",
+				street: "High Street",
+				locality: "Bromley",
+				region: "Greater London",
+				postcode: "BR1 4AA",
+				dependent_locality: "Plaistow",
+			},
+		])
+	})
+
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
 		const file = join(tmp(), "part.csv")
 		writeFileSync(
@@ -138,5 +169,43 @@ describe("readTuples (OA CSV parse)", () => {
 		expect(tuples).toEqual([
 			{ house_number: "13", street: "Keep St", locality: "Keepville", region: "R", postcode: "00000" },
 		])
+	})
+})
+
+describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
+	const makeRow = (): SynthesizedLocaleRow => ({
+		raw: "14 Beulah Hill, London SE19 3NF",
+		components: { house_number: "14", street: "Beulah Hill", locality: "London", postcode: "SE19 3NF" },
+		locale: "en-GB",
+	})
+
+	it("countryFraction 1: every row ends with a GB surface form and carries components.country", () => {
+		const random = makeMulberry32(1)
+
+		for (let i = 0; i < 2; i++) {
+			const row = makeRow()
+
+			applyCountryAppend(row, "GB", 1, random)
+
+			expect(row.components.country).toBeDefined()
+			expect(COUNTRY_SURFACE_FORMS.GB).toContain(row.components.country)
+			expect(row.raw).toBe(`14 Beulah Hill, London SE19 3NF, ${row.components.country}`)
+		}
+	})
+
+	it("countryFraction 0 (the default when the flag is absent): rows are untouched, RNG untouched — byte-identical", () => {
+		let calls = 0
+		const random = (): number => {
+			calls++
+
+			return 0
+		}
+		const row = makeRow()
+		const before = { ...row, components: { ...row.components } }
+
+		applyCountryAppend(row, "GB", 0, random)
+
+		expect(row).toEqual(before)
+		expect(calls).toBe(0)
 	})
 })

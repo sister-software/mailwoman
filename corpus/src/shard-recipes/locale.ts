@@ -28,12 +28,13 @@
 import { spawn } from "node:child_process"
 import { createReadStream } from "node:fs"
 
+import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
-import { type LocaleBaseTuple, synthesizeLocaleRow } from "../synthesize-german.ts"
+import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "../synthesize-german.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**
@@ -110,6 +111,16 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// Eval holdout: a probe build excludes ~12% of NZ localities (a locality-bucket split) for a source-disjoint
 		// coord board; that split is a BUILD-TIME concern (scratchpad), so the committed recipe reads the full CSV.
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
+	},
+	GB: {
+		// HM Land Registry Price Paid Data tuples (25.67M rows; see Task 2's ppd ingest). PPD's DISTRICT is the
+		// postal town (locality) and CITY is the dependent locality — legitimately EMPTY on the majority of rows
+		// (most GB addresses have no dependent locality). `districtAsLocality` maps DISTRICT→locality and, when
+		// present, CITY→dependent_locality; the `readTuples` gate above only drops a row when BOTH are empty, so
+		// the majority empty-CITY rows survive.
+		source: "synth-gb",
+		corpusVersion: "0.9.9",
+		parts: [{ path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"), districtAsLocality: true }],
 	},
 }
 
@@ -233,17 +244,25 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			const street = get(cells, cols.street)
 			const rawCity = get(cells, cols.city)
 
-			if (!street || !rawCity) continue
+			if (!street) continue
 
-			// Default: CITY → locality. NZ (`districtAsLocality`) inverts it — the OA DISTRICT holds the city
+			// Default: CITY → locality. NZ/GB (`districtAsLocality`) inverts it — the OA DISTRICT holds the city
 			// (`Auckland`) and CITY holds the suburb (`Birkenhead`), so DISTRICT → locality and CITY →
 			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
-			// sub-locality. See {@link LocalePart.districtAsLocality}.
+			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the MAJORITY of GB rows CITY
+			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the gate below only
+			// drops a `districtAsLocality` row when BOTH are empty, not when CITY alone is (that used to silently
+			// drop most of the GB source — see the fixed `readTuples` gate below). See
+			// {@link LocalePart.districtAsLocality}.
 			let locality: string | null
 			let dependent_locality: string | undefined
 
 			if (part.districtAsLocality) {
-				const cleanedDistrict = cleanCityNoise(get(cells, cols.district))
+				const rawDistrict = get(cells, cols.district)
+
+				if (!rawCity && !rawDistrict) continue
+
+				const cleanedDistrict = cleanCityNoise(rawDistrict)
 
 				if (cleanedDistrict) {
 					locality = cleanedDistrict
@@ -252,6 +271,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 					locality = cleanCityNoise(rawCity)
 				}
 			} else {
+				if (!rawCity) continue
 				locality = cleanCityNoise(rawCity)
 			}
 
@@ -292,13 +312,43 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	return reservoir
 }
 
+/**
+ * Country-append fraction (the fr-admin-split #728 pattern, generalized to the locale recipe): mutates `synth` in
+ * place, `countryFraction` of the time appending an explicit country surface form ("United Kingdom") to `raw` + a
+ * `country` component — the model relearns to emit country WHEN the token is present without over-firing it on the
+ * (still-majority) country-less rows. `countryFraction <= 0` (the default) short-circuits the `random()` draw away
+ * entirely — no `synth` mutation and no RNG consumption — so every existing locale's emit stream stays byte-identical
+ * to before this option existed. Exported for {@link locale.test.ts}.
+ */
+export function applyCountryAppend(
+	synth: SynthesizedLocaleRow,
+	country: string,
+	countryFraction: number,
+	random: () => number
+): void {
+	if (countryFraction > 0 && random() < countryFraction) {
+		const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
+
+		if (forms?.length) {
+			const form = forms[Math.floor(random() * forms.length)]!
+			synth.raw = `${synth.raw}, ${form}`
+			synth.components = { ...synth.components, country: form }
+		}
+	}
+}
+
 export const localeRecipe: ShardRecipe = {
 	name: "locale",
-	description: "Per-locale coverage rows (DE/FR/NL/IT/ES) from real OA tuples, both orders → synthesizeLocaleRow",
+	description: "Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples, both orders → synthesizeLocaleRow",
 	mode: "generate",
 	options: [
-		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ). Default DE" },
+		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ|GB). Default DE" },
 		{ flag: "--intl-fraction <f>", description: "Fraction rendered international order. Default 0.4" },
+		{
+			flag: "--country-fraction <f>",
+			description:
+				"Fraction of rows that append an explicit country surface form (`, United Kingdom`) + a `country` component (fr-admin-split pattern). Default 0 — byte-identical to before when unset.",
+		},
 	],
 	async run(opts, write) {
 		// Emit PRNG: the legacy build-locale-shard.mjs seeded mulberry32(opts.seed). The reservoir uses a
@@ -316,6 +366,13 @@ export const localeRecipe: ShardRecipe = {
 
 		if (!(intlFraction >= 0 && intlFraction <= 1)) {
 			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
+		}
+		// Default 0 → the `random() < countryFraction` draw below is short-circuited away entirely (never
+		// consumed), so every existing locale's emit stream is byte-identical to before this option existed.
+		const countryFraction = opts.countryFraction ?? 0
+
+		if (!(countryFraction >= 0 && countryFraction <= 1)) {
+			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
 		}
 		const source = opts.sourceName ?? countrySource.source
 		const count = opts.count ?? 4000
@@ -362,6 +419,7 @@ export const localeRecipe: ShardRecipe = {
 				skipped++
 				continue
 			}
+			applyCountryAppend(synth, country, countryFraction, random)
 
 			if (opts.golden) {
 				// Golden rows must round-trip through alignRow exactly like training rows (#241 done-when): a

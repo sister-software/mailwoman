@@ -130,6 +130,8 @@ export interface ShardRecipeOpts {
 	edgesDir?: string
 	country?: string
 	intlFraction?: number
+	/** `locale`: fraction of rows that append an explicit country surface form + a `country` component. Default 0. */
+	countryFraction?: number
 	bareProb?: number
 	hnProb?: number
 	communes?: string
