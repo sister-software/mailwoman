@@ -213,6 +213,47 @@ def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
     raise ValueError(f"unknown train.lr_schedule={schedule!r}; expected 'cosine' or 'constant'")
 
 
+def _restamp_resume_lrs(
+    optim: AdamW,
+    scheduler: LambdaLR,
+    live_lrs: list[float],
+    labels: list[str],
+) -> None:
+    """Re-stamp the LIVE config's per-group LR onto a resumed optimizer + scheduler.
+
+    `optim.load_state_dict()` overwrites every param-group key — `lr`/`initial_lr` included —
+    with the CHECKPOINT's saved values (`update_group()` in `torch.optim.optimizer.Optimizer`
+    returns the saved dict verbatim aside from `params`), so `build_optimizer`'s fresh
+    live-config groups are silently discarded the instant the state dict loads. `scheduler.
+    load_state_dict()` compounds this: it does `self.__dict__.update(state_dict)`, overwriting
+    `scheduler.base_lrs` with the checkpoint's values too. Left unfixed, a resumed run trains at
+    the CHECKPOINT's old LR forever while `[resume-drift]` loudly — and misleadingly — reports
+    the live config's new value as if it took effect. See
+    `.superpowers/sdd/fork-implementation-notes.md` Q1/Q3/Q5#1 for the full trace.
+
+    `live_lrs`/`labels` must be captured from the FRESH optimizer's `param_groups`
+    (`build_optimizer`'s own output, pre-load) so the order matches positionally — that's the
+    caller's contract, not re-derived here, to avoid a second copy of build_optimizer's
+    group-construction rules drifting out of sync with the original. A length mismatch here
+    would mean that contract was violated (not a real resume-drift case — a real group-count
+    mismatch already raised inside `optim.load_state_dict()` before this function is ever
+    called), so `zip(..., strict=True)` fails loud rather than silently truncating.
+
+    Prints one `[resume-lr]` line per group whose LR the checkpoint actually clobbered; prints
+    nothing when every group already matches (the checkpoint was saved with the same LRs the
+    live config specifies — a byte-identical no-op).
+    """
+    for i, (pg, live_lr, label) in enumerate(zip(optim.param_groups, live_lrs, labels, strict=True)):
+        checkpoint_lr = pg["lr"]
+        if checkpoint_lr != live_lr:
+            print(f"[resume-lr] group {i} ({label}): checkpoint {checkpoint_lr} -> config {live_lr}")
+        pg["lr"] = live_lr
+        if "initial_lr" in pg:
+            pg["initial_lr"] = live_lr
+    if hasattr(scheduler, "base_lrs"):
+        scheduler.base_lrs = list(live_lrs)
+
+
 def _precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
     if precision == "fp16":
         return torch.float16 if device.type == "cuda" else None
@@ -498,6 +539,17 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         span_head_learning_rate=getattr(cfg.train, "span_head_learning_rate", None),
         classifier_learning_rate=getattr(cfg.train, "classifier_learning_rate", None),
     )
+    # Captured BEFORE any resume load. `optim.load_state_dict()` (below, resume branch) silently
+    # overwrites every param-group's `lr`/`initial_lr` with the CHECKPOINT's saved values, so
+    # these live-config LRs — in build_optimizer's own group order (base, then span_head?, then
+    # classifier?) — are the only place the live values survive resume. See
+    # `_restamp_resume_lrs`.
+    live_group_lrs = [g["lr"] for g in optim.param_groups]
+    live_group_labels = ["base"]
+    if getattr(cfg.train, "span_head_learning_rate", None) is not None:
+        live_group_labels.append("span_head_learning_rate")
+    if getattr(cfg.train, "classifier_learning_rate", None) is not None:
+        live_group_labels.append("classifier_learning_rate")
     scheduler = _build_scheduler(optim, cfg.train)
     print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")
     amp_dtype = _precision_to_dtype(cfg.train.precision, device)
@@ -551,6 +603,10 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             # scheduler so LR is correct for the resumed step. ``scheduler.step()`` is cheap.
             for _ in range(resume_step):
                 scheduler.step()
+        # Re-stamp the live config's LRs — must run AFTER both loads above, since either one
+        # (optim.load_state_dict or scheduler.load_state_dict) can clobber them back to the
+        # checkpoint's saved values. See `_restamp_resume_lrs`.
+        _restamp_resume_lrs(optim, scheduler, live_group_lrs, live_group_labels)
         print(f"resumed at step={resume_step}")
 
     csv_path = csv_log_path(cfg)
