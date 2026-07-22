@@ -31,11 +31,21 @@ function caseWord(word: string, isFirst: boolean): string {
 	if (!word) return word
 	const lower = word.toLowerCase()
 	if (!isFirst && GB_PARTICLES.has(lower)) return lower
-	// Capitalize the first letter only; keep everything after apostrophes lowercase.
-	return lower[0]!.toUpperCase() + lower.slice(1)
+	// Capitalize the first letter of each apostrophe-separated segment, except possessive 's.
+	return lower
+		.split("'")
+		.map((segment, idx) => {
+			if (!segment) return segment
+			// Don't capitalize a trailing bare possessive 's
+			if (idx > 0 && segment === "s") return segment
+			// Capitalize the first letter of this segment
+			return segment[0]!.toUpperCase() + segment.slice(1)
+		})
+		.join("'")
 }
 
 export function titleCaseGB(value: string): string {
+	value = value.trim()
 	let wordIndex = 0
 	return value
 		.split(/\s+/)
