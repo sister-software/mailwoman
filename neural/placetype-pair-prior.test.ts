@@ -190,6 +190,71 @@ describe("buildPlacetypePairPriors — marker suppression", () => {
 	})
 })
 
+describe("buildPlacetypePairPriors — dual-key probe (hyphen/space cross-form)", () => {
+	it("matches a concat-keyed index entry from a space-written multi-word window (Fix 2)", () => {
+		// The index was built (hypothetically) from a source register that recorded the parent as the
+		// hyphenated "Stockton-on-Tees" — `normalizeFSTToken` strips the hyphens, so its fold is the bare
+		// concatenation "stocktonontees" with no interior space. The QUERY writes the same place with
+		// spaces, so it groups into three words and its space-joined window key ("stockton on tees") never
+		// equals the index's concatenated key. Only the dual-key probe's concat form bridges the two.
+		const index = mockPairIndex({ "fishburn|stocktonontees": "dependent_locality" }, 6.0)
+		const pieces = makePieces("fishburn stockton on tees")
+		const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// Prove the concat form was actually what hit — the space-joined form for this exact pair was probed
+		// too (and missed).
+		expect(index.calls).toContainEqual(["fishburn", "stockton on tees"])
+		expect(index.calls).toContainEqual(["fishburn", "stocktonontees"])
+	})
+
+	it("a hyphen-written query (single word-group post Fix-1) matches the same concat-keyed entry directly", async () => {
+		// "Stockton-on-Tees" collapses to ONE word group after Fix 1 (the interior-punctuation fix), so its
+		// own fold IS "stocktonontees" — space form and concat form are the same string for a single-word
+		// window, and the match needs no fallback at all. This pins the Fix-1/Fix-2 interplay: the grouping
+		// fix is what makes the hyphenated query's own single-token fold equal the index's concatenated key.
+		const tokenizer = await MailwomanTokenizer.loadFromFile(
+			repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+		)
+		const { pieces } = tokenizer.encode("Fishburn Stockton-on-Tees")
+		const index = mockPairIndex({ "fishburn|stocktonontees": "dependent_locality" }, 6.0)
+		const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+	})
+})
+
+describe("buildPlacetypePairPriors — marker-scope regression (Fix 3, reviewer Important #2)", () => {
+	it("suppression is CHILD-role-only: a marker word does NOT suppress a window it appears in as the PARENT", () => {
+		// The window "Ashworth" is immediately followed by "House" — a structural marker — so if
+		// `isMarkerSuppressed` were (incorrectly) also consulted for the Y (parent) role, this pair would
+		// never fire: "Ashworth" would be excluded from the probe loop before `index.probe` ever ran. The
+		// suppression check must only ever gate the X (child) window; "Ashworth" is disjoint from "sometown"
+		// and IS "sometown"'s child-role partner here, not the other way around, so it's fine for it to sit
+		// next to "House" in the source text.
+		const index = mockPairIndex({ "sometown|ashworth": "dependent_locality" }, 6.0)
+		const pieces = makePieces("sometown Ashworth House")
+		const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// Confirm it was ACTUALLY probed (not merely defaulting to some other match) — "ashworth" alone,
+		// not "ashworth house", is what resolved the tag.
+		expect(index.calls).toContainEqual(["sometown", "ashworth"])
+	})
+
+	it('suppression STILL applies to the CHILD role: "Ashworth" followed by "House" is never probed as a child', () => {
+		// Same index, same words, but now "Ashworth" is asked to play the CHILD role against "sometown" as
+		// parent — this is the class the marker table exists to close ("Ashworth House" reading as a venue,
+		// not the place "Ashworth"). The window must never even be probed.
+		const index = mockPairIndex({ "ashworth|sometown": "dependent_locality" }, 6.0)
+		const pieces = makePieces("Ashworth House sometown")
+		const matrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		expect(matrix[0]!.every((v) => v === 0)).toBe(true)
+		expect(index.calls.some(([child]) => child === "ashworth")).toBe(false)
+	})
+})
+
 describe("buildPlacetypePairPriors — disjointness", () => {
 	it("never pairs two OVERLAPPING candidate windows, even when the index has an entry for that exact pair", () => {
 		// A contrived index entry keyed on two windows that would overlap ("a b" / "b c" both cover the

@@ -44,6 +44,21 @@
  *   probe that instead concatenated the words with no separator (`"sthelens"`) would never hit a real
  *   index entry. See `placetype-pair-prior.test.ts` for the "St Helens" regression case.
  *
+ *   **Dual-key probe (hyphen/space cross-form).** The space-join above is right for a source `CITY` value
+ *   that was itself written with spaces ("St Helens"). It is WRONG for a source value that was written
+ *   hyphenated ("Stockton-on-Tees") — `normalizeFSTToken` strips the hyphens as punctuation, so the Task-3
+ *   builder folds that field to ONE concatenated token, `"stocktonontees"`, with no interior space at all.
+ *   A query that instead WRITES the same place with spaces ("Stockton on Tees") groups into three
+ *   `▁`-delimited words, and its space-joined window key (`"stockton on tees"`) never matches that
+ *   concatenated index entry. So every window is probed under BOTH candidate keys — the space-join AND the
+ *   bare concatenation (`slice.map(fstToken).join("")`) — for BOTH the X and Y role, since either side of a
+ *   real pair can be the multi-word one. `probeWindows` tries the four `(x-form, y-form)` combinations in a
+ *   fixed order — space/space, space/concat, concat/space, concat/concat — and returns on the first hit: a
+ *   real index cannot disagree with itself on the SAME pair of real-world places, but if a contrived index
+ *   ever did resolve two different tags across forms, this order means the space-joined attempt (tried
+ *   first) wins. A single-word window's two forms are identical strings, so this costs nothing extra for
+ *   the common case — the extra probes only fire for genuine multi-word windows.
+ *
  *   **Two-sided, order-free matching.** For each candidate window X (in either textual position
  *   relative to any other window — "two-sided" means the search for a matching partner is NOT limited
  *   to windows that follow X, unlike the forward-only FST walk in `fst-prior.ts`), X gets a bias iff
@@ -136,6 +151,11 @@ interface CandidateWindow {
 	/** The space-joined fold — see the module docstring's "St Helens" → "st helens" note. */
 	key: string
 	/**
+	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note. Identical to
+	 * {@link key} for a single-word window; only diverges for a genuine multi-word one.
+	 */
+	concatKey: string
+	/**
 	 * Inclusive position range within the FILTERED (non-punctuation) word-group list — used for the disjointness check
 	 * and to locate the immediately-following word for marker suppression.
 	 */
@@ -151,9 +171,11 @@ function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): C
 	for (let start = 0; start < nonEmptyGroups.length; start++) {
 		for (let len = 1; len <= maxWords && start + len <= nonEmptyGroups.length; len++) {
 			const slice = nonEmptyGroups.slice(start, start + len)
+			const tokens = slice.map((g) => g.fstToken)
 
 			windows.push({
-				key: slice.map((g) => g.fstToken).join(" "),
+				key: tokens.join(" "),
+				concatKey: tokens.join(""),
 				startPos: start,
 				endPos: start + len - 1,
 				pieceIndices: slice.flatMap((g) => g.pieceIndices),
@@ -167,6 +189,27 @@ function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): C
 /** Two windows are disjoint iff their word-group position ranges don't overlap (also excludes a window from itself). */
 function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.endPos < b.startPos || b.endPos < a.startPos
+}
+
+/**
+ * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms — see the
+ * module docstring's "dual-key probe" section. Tries space/space, space/concat, concat/space, concat/concat in that
+ * order and returns the first hit; a window's two forms collapse to one string when it's a single word, so this is a
+ * single probe (not four) for the common case.
+ */
+function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateWindow): ComponentTag | undefined {
+	const xKeys = x.key === x.concatKey ? [x.key] : [x.key, x.concatKey]
+	const yKeys = y.key === y.concatKey ? [y.key] : [y.key, y.concatKey]
+
+	for (const xKey of xKeys) {
+		for (const yKey of yKeys) {
+			const tag = index.probe(xKey, yKey)
+
+			if (tag) return tag
+		}
+	}
+
+	return undefined
 }
 
 /** Is `x` immediately followed (in the non-punctuation word sequence) by a structural marker? */
@@ -242,7 +285,7 @@ export function buildPlacetypePairPriors(
 		for (const y of windows) {
 			if (!disjoint(x, y)) continue
 
-			const tag = index.probe(x.key, y.key)
+			const tag = probeWindowPair(index, x, y)
 
 			if (tag) {
 				matchedTag = tag
