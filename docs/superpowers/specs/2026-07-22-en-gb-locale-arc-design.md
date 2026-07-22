@@ -45,7 +45,7 @@
 - `postcode-gb.bin` from Code-Point Open (postcode-us.bin analog). `wof/postalcode-gb.db` already on disk.
 - ONSPD → postcode anchor channel.
 - Wave 2: EPC×OS Open UPRN join → `address-points-gb.db`.
-- **Word-consistency-heal fix:** "dependent locality, post town" must survive as two spans (currently lumped into one locality). Ships regardless — NZ needs it too.
+- **Finding (Task 5 diagnostic):** characterization tests confirm the decode pipeline preserves dependent_locality/locality across commas; the NZ-era "heal lumps" observation was model-level span emission, addressed by the resurrection.
 - Kind-classifier/query-shape: confirm GB postcode (outward+inward) recognition.
 
 ### Phase 4 — packaging + release
@@ -63,7 +63,7 @@
 1. GB shard built from PPD with provenance manifest; formatter-verified before training.
 2. Probe reads reported against pre-registration; fork outcome (resurrected vs locality-mapped) recorded in the ledger.
 3. 8k candidate passes the full gate battery + gauntlet before any promote (promotion is the operator's act).
-4. `postcode-gb.bin` + heal fix shipped; GB postcode anchors verified in the pipeline.
+4. `postcode-gb.bin` shipped; GB postcode anchors verified in the pipeline.
 5. `@mailwoman/neural-weights-en-gb` publishes from CI with copy-weights coverage; demo parses a GB preset correctly end to end.
 
 ## Non-goals (v1)
