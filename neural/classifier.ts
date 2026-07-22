@@ -162,9 +162,12 @@ export interface NeuralAddressClassifierConfig {
 
 	/**
 	 * Default placetype-pair index (placetype-pair-prior arc, Task 5 — see `ParseOpts.placetypePair` for the full
-	 * matching contract). Set by `loadFromWeights` when the resolved weights package ships a country-matching
-	 * `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse `opts.placetypePair` overrides this
-	 * default; omitting both is the byte-stable no-prior default (undefined → zero matrix).
+	 * matching contract, including the Task 6 probe-mode default). Set by `loadFromWeights` when the resolved weights
+	 * package ships a country-matching `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse
+	 * `opts.placetypePair` overrides this default; omitting both is the byte-stable no-prior default (undefined → zero
+	 * matrix). `#decode` always injects the current parse's `inputText` into whichever object wins (config default or
+	 * per-parse override) — see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field
+	 * nor a per-parse override needs to carry its own text.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
 
@@ -683,7 +686,7 @@ export class NeuralAddressClassifier {
 		// might bias toward still gets masked out.
 		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
 		const placetypePairPrior = placetypePairOpt
-			? buildPlacetypePairPriors(placetypePairOpt, pieces, this.labels)
+			? buildPlacetypePairPriors({ ...placetypePairOpt, inputText: text }, pieces, this.labels)
 			: undefined
 
 		if (placetypePairPrior) {
@@ -992,24 +995,37 @@ export interface ParseOpts {
 	addressSystemConventions?: "auto" | SystemCode
 
 	/**
-	 * Placetype-pair emission bias (placetype-pair-prior arc, Task 4). When provided, contiguous word windows (1..3 words
-	 * — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the measured distribution that set the ceiling)
-	 * are probed against a PIX1 pair index of (child, parent) place-name pairs harvested from a real address register
-	 * (the Task-3 GB shard: PPD `CITY`/ `DISTRICT`). A window that resolves against some OTHER, disjoint window anywhere
-	 * in the input gets an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward
-	 * `dependent_locality` when "London" also appears in the input, because the index has recorded ("shoreditch",
-	 * "london") → `dependent_locality`.
+	 * Placetype-pair emission bias (placetype-pair-prior arc, Tasks 4-6). When provided, candidates are probed against a
+	 * PIX1 pair index of (child, parent) place-name pairs harvested from a real address register (the Task-3 GB shard:
+	 * PPD `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets
+	 * an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality`
+	 * when "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
+	 * `dependent_locality`.
+	 *
+	 * **`probeMode` — segment (default) vs window (opt-in), Task 6 verdict.** How a "candidate" is built matters a great
+	 * deal. `"segment"` (the v1 default set by this task) restricts candidates to WHOLE comma-delimited segments; the
+	 * original `"window"` mode (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s
+	 * `WINDOW_MAX_WORDS` docstring for the measured distribution that set that ceiling) is preserved but now opt-in. The
+	 * flip happened because window mode, measured against a 6,500-row venue-confound falsifier board (real UK business
+	 * names that embed a real place name — "Bitterne Charcoal Grill" embeds "Bitterne") at the real artifact's δ=6.0,
+	 * produced a **52.123% false-positive rate** (2026-07-22, `.superpowers/sdd/task-6-report.md`) against a
+	 * pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness and fires just as readily inside a
+	 * longer venue/business phrase as it does on a bare place name. Segment mode structurally can't make that mistake —
+	 * "Bitterne Charcoal Grill" has no internal comma, so its only candidate key is the 3-word fold, which never equals a
+	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract,
+	 * both modes' honestly-reported trade-offs, and the re-enablement bar for window mode as a default. The runtime-flag
+	 * register row documenting BOTH probe modes for the pipeline lands in Task 7, not here — this field (and its default)
+	 * is the plumbing/measurement, not the ship decision.
 	 *
 	 * Country-agnostic at the API surface: this module does no country gating itself — the caller is responsible for
 	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never
 	 * match, composing harmlessly).
 	 *
-	 * Default OFF: an omitted field produces a zero matrix, byte-identical to every parse before this task. Evidence:
-	 * rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the probe set that motivated
-	 * this prior — the real `pair-index-gb.bin` artifact (Task 3) ships that delta in its header, so `biasScale` below
-	 * exists only as a fallback for a hand-built `PairIndexLike` test double that omits `delta`. The runtime-flag
-	 * register row for turning this on by default in the pipeline lands in Task 7, not here — this field is the plumbing,
-	 * not the ship decision.
+	 * Default OFF (the whole prior, independent of `probeMode`): an omitted field produces a zero matrix, byte-identical
+	 * to every parse before this task. Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate
+	 * at δ=6.0 on the curated probe set that motivated this prior — the real `pair-index-gb.bin` artifact (Task 3) ships
+	 * that delta in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike` test
+	 * double that omits `delta`.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
 }

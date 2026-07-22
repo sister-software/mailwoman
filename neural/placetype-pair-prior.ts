@@ -19,10 +19,66 @@
  *   delta in its header. Default OFF: an omitted `opts` (no configured index) produces a zero matrix,
  *   byte-identical to every parse before this task.
  *
- *   **Windowing.** A candidate is any CONTIGUOUS run of 1..{@link WINDOW_MAX_WORDS} non-punctuation
- *   words (punctuation-only word groups, e.g. a bare comma, are skipped without breaking contiguity —
- *   same idiom as `fst-prior.ts`/`street-morphology-prior.ts`). `WINDOW_MAX_WORDS = 3` is the p99 of
- *   the GB PPD `CITY` word-length distribution measured building the Task-3 artifact (n=9,031,691
+ *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict.** `opts.probeMode` selects HOW a
+ *   candidate is built, and it matters a great deal:
+ *
+ *   - `"segment"` (**DEFAULT**, v1) — a candidate is a WHOLE comma-delimited segment of the input, folded
+ *     as one unit. See "Segment mode" below for the full contract.
+ *   - `"window"` — the original sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
+ *     below), preserved unchanged for opt-in use.
+ *
+ *   The rung-3 gate above measured the prior's RECALL/FP on a curated probe set — real (child, parent)
+ *   pairs in isolation, no surrounding venue text. Task 6 of this arc (`.superpowers/sdd/task-6-report.md`,
+ *   2026-07-22) went looking for the failure mode a curated probe set can't see: a **6,500-row venue-confound
+ *   board**, built from real UK Food Standards Agency establishment names that happen to embed a real GB
+ *   place name inside a longer venue/business string ("Bitterne Charcoal Grill" embeds the place "Bitterne";
+ *   "North Cadbury Village Stores Ltd" embeds "North Cadbury"). Run through the full pipeline with the prior
+ *   ON in **window mode**, at the real artifact's δ=6.0, against the feed-2k dependent_locality-resurrected
+ *   checkpoint: **52.123% false-positive rate** (3,388/6,500 rows emitted a `dependent_locality` span
+ *   overlapping the venue's own text) — against a pre-registered FP=0 bar. Window mode's sub-segment
+ *   sliding probe has no venue-boundary awareness: it finds "North Cadbury" as a 2-word window INSIDE
+ *   "North Cadbury Village Stores Ltd" just as readily as it finds a bare "North Cadbury" standing alone,
+ *   because a window is any contiguous 1..3-word run regardless of what larger phrase currently contains
+ *   it. Marker suppression ({@link STRUCTURAL_MARKER_WORDS}) closes a handful of specific successor-word
+ *   classes ("Church Road", "Manor House") but was never a general venue-boundary detector, and the
+ *   venue-confound board's FP hits are dominated by venue name shapes the marker table was never built to
+ *   catch ("… Stores Ltd", "… Academy", "… Charcoal Grill"). This is the arc's pre-registered fallback
+ *   engaging: **segment mode is the v1 default**, and window mode moves behind this opt-in flag.
+ *   Re-enabling window mode as a default requires BOTH (a) a venue-aware suppression mechanism (a
+ *   venue/POI-name detector ahead of the prior, not just a fixed successor-word table) AND (b) a
+ *   re-measured venue-confound FP of 0 on this same board (or its successor) with that mechanism engaged —
+ *   see the task-6 report's "Concerns for whoever adjudicates the acceptance bars" §1 for the design options
+ *   considered and not yet built.
+ *
+ *   **Segment mode.** A candidate is an ENTIRE comma-delimited segment of the input — not a sliding
+ *   sub-window. Segments are reconstructed from the tokenizer pieces' own character offsets against the raw
+ *   input text (`opts.inputText`, mirroring `query-shape-prior.ts`'s `BuildPriorsOpts.inputText` — the caller
+ *   supplies the same raw text it already has in hand; see {@link buildSegmentWindows}): every literal `,`
+ *   character in the input increments the segment counter, and each non-punctuation word group is assigned
+ *   to the segment its first piece's start offset falls into. A segment's key is the WHOLE segment folded —
+ *   both the space-joined form (each word's own fold, joined with `" "`) and the concat form (joined with no
+ *   separator) — exactly the same dual-key contract as window mode's "dual-key probe" section below, just at
+ *   segment granularity instead of per-window. This is what defeats the venue-confound class structurally:
+ *   "North Cadbury Village Stores Ltd" is ONE segment (no internal comma), so its only candidate key is the
+ *   5-word fold "north cadbury village stores ltd" — which never equals the census's 2-word "north cadbury"
+ *   entry. A real place name only fires when it occupies a segment BY ITSELF (i.e. the input actually
+ *   comma-delimits it as its own field) — which is exactly the shape a real structured address has
+ *   ("5 Fishburn Road, Fishburn, Stockton-on-Tees") and a venue-embedding string does not.
+ *
+ *   Two known, honestly-reported trade-offs of the segment default (Task 6 measurements, all against the
+ *   feed-2k checkpoint): (1) a residual FP class survives — when a non-venue FIELD (e.g. the venue-confound
+ *   board's synthetic `street` field) happens to equal a bare census child verbatim as its OWN segment (e.g.
+ *   `"Moelfre B & B, Moelfre, Abergele, …"` — the street segment is literally "Moelfre"), segment mode still
+ *   fires, because the mechanism is purely textual/segmental, not semantic; this is not a bug in the segment
+ *   restriction, it is the segment restriction doing exactly what it's specified to do. (2) recall on a
+ *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
+ *   internal split — see the task-6 report's Measurement 2(c) for the exact number. Window mode remains
+ *   available, opt-in, for callers who have their own venue-boundary gate and have re-verified FP=0.
+ *
+ *   **Windowing (window mode only).** A candidate is any CONTIGUOUS run of 1..{@link WINDOW_MAX_WORDS}
+ *   non-punctuation words (punctuation-only word groups, e.g. a bare comma, are skipped without breaking
+ *   contiguity — same idiom as `fst-prior.ts`/`street-morphology-prior.ts`). `WINDOW_MAX_WORDS = 3` is the
+ *   p99 of the GB PPD `CITY` word-length distribution measured building the Task-3 artifact (n=9,031,691
  *   non-empty-CITY rows):
  *
  *   | words | rows      | share  |
@@ -71,14 +127,17 @@
  *   for this task per the same "note as a future tunable" discipline as `fst-prior.ts`'s length-scaling
  *   header.
  *
- *   **Marker suppression** (the DeepSeek venue-confound filter). A window immediately followed by a
- *   structural-marker word (or a house-number-shaped token) is a street/venue HEAD, not a standalone
- *   place reference, and is skipped outright — no probe, no bias — regardless of whether it would
- *   otherwise have matched. Rationale per marker, see {@link STRUCTURAL_MARKER_WORDS}: without this, a
- *   pair-index entry like `("church", "some-locality")` would fire on "Church" in "Church House" /
- *   "Church Road" / "Church Court" — none of which are the place "Church", all of which are
- *   street/venue names that happen to START with a word the register also knows as a place name
- *   somewhere else in the country.
+ *   **Marker suppression** (the DeepSeek venue-confound filter) — **active in both probe modes,
+ *   unchanged by the segment-mode default**. A candidate immediately followed by a structural-marker word
+ *   (or a house-number-shaped token) is a street/venue HEAD, not a standalone place reference, and is
+ *   skipped outright — no probe, no bias — regardless of whether it would otherwise have matched.
+ *   Rationale per marker, see {@link STRUCTURAL_MARKER_WORDS}: without this, a pair-index entry like
+ *   `("church", "some-locality")` would fire on "Church" in "Church House" / "Church Road" / "Church
+ *   Court" — none of which are the place "Church", all of which are street/venue names that happen to
+ *   START with a word the register also knows as a place name somewhere else in the country. This is a
+ *   narrower, purely lexical defense than the venue-confound falsifier above needed — it was never meant
+ *   to be a general venue-boundary detector, which is exactly why the segment restriction exists
+ *   alongside it rather than instead of it.
  *
  *   **Bias write.** `+delta` on `B-<tag>` (window's first piece) / `I-<tag>` (the rest), same
  *   per-piece pattern as `fst-prior.ts`'s `applyBias` — `Math.max` against any bias already written by
@@ -136,6 +195,18 @@ function looksLikeHouseNumber(token: string): boolean {
 	return /^\d+[a-z]?$/.test(token)
 }
 
+/**
+ * `probeMode` selects the candidate-building strategy — see the module docstring's "Probe mode" section for the
+ * 2026-07-22 venue-confound falsifier verdict that motivates the default.
+ *
+ * - `"segment"` (**default**) — a candidate is a WHOLE comma-delimited segment, folded as one unit. Requires `inputText`
+ *   to find segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated
+ *   as one segment (matches the documented comma-free-input degradation, not a distinct failure mode).
+ * - `"window"` — the original sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default
+ *   requires a venue-aware suppression mechanism AND a re-measured venue-confound FP=0 (see the module docstring).
+ */
+export type PlacetypePairProbeMode = "segment" | "window"
+
 export interface PlacetypePairPriorOpts {
 	/** The PIX1 pair index to probe. */
 	index: PairIndexLike
@@ -144,15 +215,32 @@ export interface PlacetypePairPriorOpts {
 	 * {@link DEFAULT_DELTA}.
 	 */
 	biasScale?: number
+	/**
+	 * Candidate-building strategy. Default `"segment"` — see {@link PlacetypePairProbeMode} and the module docstring's
+	 * "Probe mode" section for the 52.1% venue-confound FP measurement (2026-07-22, `.superpowers/sdd/task-6-report.md`)
+	 * that set this default.
+	 */
+	probeMode?: PlacetypePairProbeMode
+	/**
+	 * Raw input text — required for `probeMode: "segment"` to locate comma boundaries via the tokenizer pieces' own
+	 * character offsets (see {@link buildSegmentWindows}). Mirrors `query-shape-prior.ts`'s `BuildPriorsOpts.inputText`:
+	 * the caller already has this string in hand (the same text passed to `tokenizer.encode`) and passes it straight
+	 * through. Unused in `"window"` mode. Omitting it in segment mode is not an error — it degrades to treating the whole
+	 * input as one segment, same as a genuinely comma-free query.
+	 */
+	inputText?: string
 }
 
-/** A candidate word-window: 1..{@link WINDOW_MAX_WORDS} contiguous non-punctuation words. */
+/**
+ * A candidate — either a 1..{@link WINDOW_MAX_WORDS}-word sliding window (window mode) or a whole comma-delimited
+ * segment (segment mode).
+ */
 interface CandidateWindow {
 	/** The space-joined fold — see the module docstring's "St Helens" → "st helens" note. */
 	key: string
 	/**
 	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note. Identical to
-	 * {@link key} for a single-word window; only diverges for a genuine multi-word one.
+	 * {@link key} for a single-word candidate; only diverges for a genuine multi-word one.
 	 */
 	concatKey: string
 	/**
@@ -164,7 +252,7 @@ interface CandidateWindow {
 	pieceIndices: number[]
 }
 
-/** Build every contiguous 1..maxWords window over the non-punctuation word groups. */
+/** Build every contiguous 1..maxWords window over the non-punctuation word groups (window mode). */
 function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
@@ -180,6 +268,72 @@ function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): C
 				endPos: start + len - 1,
 				pieceIndices: slice.flatMap((g) => g.pieceIndices),
 			})
+		}
+	}
+
+	return windows
+}
+
+/**
+ * Build one candidate per comma-delimited SEGMENT of the input (segment mode) — see the module docstring's "Segment
+ * mode" section for the venue-confound rationale. Segment boundaries are reconstructed from the tokenizer pieces' own
+ * character offsets against `inputText`: every literal `,` in `inputText` increments the running segment counter, and
+ * each non-punctuation word group is assigned to the segment its FIRST piece's start offset falls into (offsets, not
+ * piece-text inspection, so this is robust to however the tokenizer happened to attach a comma piece to its neighboring
+ * word group — `groupPiecesIntoWords` absorbs trailing punctuation into the preceding word's `pieceIndices`, so a
+ * comma's own piece span can land inside either group depending on tokenization; counting commas strictly BEFORE a
+ * group's own start offset sidesteps that ambiguity entirely). Groups sharing a segment index are always contiguous in
+ * `nonEmptyGroups` (both lists are built in text order), so a single forward pass suffices.
+ *
+ * Without `inputText` (or an input with no commas at all), every group falls in segment 0 — the whole input becomes ONE
+ * candidate, matching the documented comma-free-input degradation rather than silently doing something else.
+ */
+function buildSegmentWindows(
+	nonEmptyGroups: readonly WordGroup[],
+	pieces: ReadonlyArray<TokenLike>,
+	inputText: string | undefined
+): CandidateWindow[] {
+	const windows: CandidateWindow[] = []
+
+	if (nonEmptyGroups.length === 0) return windows
+
+	const commaOffsets: number[] = []
+
+	if (inputText) {
+		for (let i = 0; i < inputText.length; i++) {
+			if (inputText[i] === ",") commaOffsets.push(i)
+		}
+	}
+
+	// commaOffsets is built in ascending order, so `commaIdx` only ever advances — one linear pass across both lists.
+	let commaIdx = 0
+	const segmentOf = (group: WordGroup): number => {
+		const groupStart = pieces[group.pieceIndices[0]!]!.start
+
+		while (commaIdx < commaOffsets.length && commaOffsets[commaIdx]! < groupStart) commaIdx++
+
+		return commaIdx
+	}
+
+	let segStart = 0
+	let segIndex = segmentOf(nonEmptyGroups[0]!)
+
+	for (let i = 1; i <= nonEmptyGroups.length; i++) {
+		const nextSegIndex = i < nonEmptyGroups.length ? segmentOf(nonEmptyGroups[i]!) : -1
+
+		if (i === nonEmptyGroups.length || nextSegIndex !== segIndex) {
+			const slice = nonEmptyGroups.slice(segStart, i)
+			const tokens = slice.map((g) => g.fstToken)
+
+			windows.push({
+				key: tokens.join(" "),
+				concatKey: tokens.join(""),
+				startPos: segStart,
+				endPos: i - 1,
+				pieceIndices: slice.flatMap((g) => g.pieceIndices),
+			})
+			segStart = i
+			segIndex = nextSegIndex
 		}
 	}
 
@@ -273,9 +427,18 @@ export function buildPlacetypePairPriors(
 	const wordGroups = groupPiecesIntoWords(pieces)
 	const nonEmptyGroups = wordGroups.filter((g) => g.fstToken !== "")
 
-	if (nonEmptyGroups.length < 2) return matrix // need ≥2 disjoint windows to form a pair
+	if (nonEmptyGroups.length < 2) return matrix // need ≥2 disjoint candidates to form a pair
 
-	const windows = buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS)
+	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "segment"
+	const windows =
+		probeMode === "window"
+			? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS)
+			: buildSegmentWindows(nonEmptyGroups, pieces, opts.inputText)
+
+	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
+	// second, disjoint candidate to pair against. Bail before the O(n²) loop below; this is the
+	// documented comma-free-input degradation, not a bug.
+	if (windows.length < 2) return matrix
 
 	for (const x of windows) {
 		if (isMarkerSuppressed(nonEmptyGroups, x)) continue

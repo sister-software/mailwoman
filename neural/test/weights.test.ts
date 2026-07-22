@@ -298,8 +298,15 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			// doc on how normalizeFSTToken folds interior whitespace.
 			expect(resolver.probe("holland fen", "lincoln")).toBe("dependent_locality")
 
+			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-LESS (see its docstring — the comma form scored
+			// LOWER for this exact pair). Task 6 defaulted the prior to `probeMode: "segment"`, under which a
+			// comma-free three-word input is one inert segment — no bias, no flip. This is the window-mode
+			// sub-window behavior on purpose, so `probeMode: "window"` (the now-opt-in mode) is passed
+			// explicitly, reusing the SAME real resolver already probed above as the per-parse override.
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
-			const json = await cls.parseJSON(GB_WIDE_MARGIN_ADDRESS)
+			const json = await cls.parseJSON(GB_WIDE_MARGIN_ADDRESS, {
+				placetypePair: { index: resolver, probeMode: "window" },
+			})
 			expect(json.dependent_locality).toBe("Holland Fen")
 		},
 		LINK_SCRIPT_TIMEOUT_MS

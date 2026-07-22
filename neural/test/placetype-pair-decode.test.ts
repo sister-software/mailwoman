@@ -8,6 +8,11 @@
  *   the encoder is confident about (a large contrary logit) is NOT overridden by the prior — the
  *   encoder's veto stays intact at a realistic magnitude. Both exercise `#decode` end-to-end via
  *   `traceParse` + a canned `NeuralRunner` — the same harness `trace-parse.test.ts` uses.
+ *
+ *   Both fixtures below are the comma-free two-word "Shoreditch London" shape, which is decode-order
+ *   plumbing, not a probe-mode test — `probeMode: "window"` is passed explicitly (Task 6 defaulted the
+ *   prior to `"segment"` mode, under which this comma-free input would collapse to one inert segment and
+ *   never reach the decode-order behavior these tests actually check).
  */
 
 import { repoRootPath } from "@mailwoman/core/utils"
@@ -83,7 +88,10 @@ describe("placetype-pair prior — decode-order integration", () => {
 		// weak magnitude-1 baseline) already makes "shoreditch"'s three pieces unanimous BEFORE
 		// enforceWordConsistency runs — there is nothing left for the heal to do.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
-		const biased = await classifier.traceParse(text, { spanProposer: false, placetypePair: { index } })
+		const biased = await classifier.traceParse(text, {
+			spanProposer: false,
+			placetypePair: { index, probeMode: "window" },
+		})
 
 		expect(biased.priors.find((p) => p.kind === "placetypePair")).toEqual({ kind: "placetypePair", applied: true })
 		expect(biased.repairs.find((r) => r.pass === "wordConsistency")).toBeUndefined()
@@ -114,7 +122,10 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality") // delta 6.0
 
-		const trace = await classifier.traceParse(text, { spanProposer: false, placetypePair: { index } })
+		const trace = await classifier.traceParse(text, {
+			spanProposer: false,
+			placetypePair: { index, probeMode: "window" },
+		})
 
 		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({ kind: "placetypePair", applied: true })
 
