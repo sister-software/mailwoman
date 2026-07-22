@@ -301,7 +301,9 @@ function buildSegmentWindows(
 
 	if (inputText) {
 		for (let i = 0; i < inputText.length; i++) {
-			if (inputText[i] === ",") commaOffsets.push(i)
+			if (inputText[i] === ",") {
+				commaOffsets.push(i)
+			}
 		}
 	}
 
@@ -310,7 +312,9 @@ function buildSegmentWindows(
 	const segmentOf = (group: WordGroup): number => {
 		const groupStart = pieces[group.pieceIndices[0]!]!.start
 
-		while (commaIdx < commaOffsets.length && commaOffsets[commaIdx]! < groupStart) commaIdx++
+		while (commaIdx < commaOffsets.length && commaOffsets[commaIdx]! < groupStart) {
+			commaIdx++
+		}
 
 		return commaIdx
 	}
