@@ -117,4 +117,24 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		expect(a.probe("shoreditch", "london")).toBe(b.probe("shoreditch", "london"))
 		expect(a.probe("camden", "london")).toBe(b.probe("camden", "london"))
 	})
+
+	it("distinguishes pairs that would collide under naive concatenation", () => {
+		// Both entries would produce "new york ny" under space-join of child + parent,
+		// requiring the key to encode (child, parent) as a tuple, not a concatenation.
+		const collisionEntries: PairIndexEntry[] = [
+			{ child: "new york", parent: "ny", tag: "locality" },
+			{ child: "new", parent: "york ny", tag: "locality" },
+		]
+
+		const r = resolver(collisionEntries)
+
+		// Each (child, parent) pair must resolve to its own tag.
+		expect(r.probe("new york", "ny")).toBe("locality")
+		expect(r.probe("new", "york ny")).toBe("locality")
+
+		// Cross probes and malformed probes must miss.
+		expect(r.probe("new york ny", "")).toBeUndefined()
+		expect(r.probe("new york", "york ny")).toBeUndefined()
+		expect(r.probe("new", "ny")).toBeUndefined()
+	})
 })

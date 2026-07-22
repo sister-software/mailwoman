@@ -41,6 +41,11 @@
 			"default": "./out/postcode-binary-resolver.js",
 			"types": "./out/postcode-binary-resolver.d.ts"
 		},
+		"./pair-index-resolver": {
+			"node": "./pair-index-resolver.ts",
+			"default": "./out/pair-index-resolver.js",
+			"types": "./out/pair-index-resolver.d.ts"
+		},
 		"./soft-features": {
 			"node": "./soft-features.ts",
 			"default": "./out/soft-features.js",
