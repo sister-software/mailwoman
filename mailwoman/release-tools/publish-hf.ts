@@ -25,6 +25,8 @@
  *   --model-card /path/to/model-card.json\
  *   --fst /path/to/fst-en-US.bin\
  *   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json\
+ *   --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-en-gb/postcode-gb.bin\
+ *   --pair-indexes neural-weights-en-gb/pair-index-gb.bin\
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
  *   --set-default
@@ -92,6 +94,7 @@ export interface PublishHFOptions {
 	modelSize?: string
 	steps?: number
 	postcodes?: string
+	pairIndexes?: string
 	gazetteerLexicon?: string
 	countryLexicon?: string
 	polygons?: string
@@ -202,6 +205,23 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		}
 	}
 
+	// Optional placetype-pair-index binaries (placetype-pair-prior arc, Task 8): comma-separated
+	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
+	// postcodeBins exactly, but this artifact never falls back to a base package (see
+	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.
+	const pairIndexBins = args.pairIndexes
+		? args.pairIndexes
+				.split(",")
+				.map((s: string) => s.trim())
+				.filter(Boolean)
+		: []
+
+	for (const localPath of pairIndexBins) {
+		if (!existsSync(localPath) || statSync(localPath).size === 0) {
+			fail(`pair-index binary ${localPath} missing/empty`)
+		}
+	}
+
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
@@ -242,6 +262,13 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	for (const localPath of postcodeBins) {
+		const remoteName = localPath.split("/").pop()
+		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", localPath, dst])
+	}
+
+	for (const localPath of pairIndexBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 		console.error(`  → ${dst}`)

@@ -369,13 +369,17 @@ HF_TOKEN=$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf 
   --locale en-us --label "..." --description "..." \
   --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
   --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
-  --postcodes "<csv of postcode-*.bin>" --polygons <src>/.../wof-polygons.db --steps <step> --set-default
+  --postcodes "<csv of postcode-*.bin>" --pair-indexes "<csv of pair-index-*.bin, if any locale ships one>" \
+  --polygons <src>/.../wof-polygons.db --steps <step> --set-default
 
 set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <src>
 ```
 
 Pass `--postcodes` + `--polygons` to the HF script too, or its `releases.json` gets `hasAnchor:false`
-/`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). **A release is done only when BOTH
+/`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). `--pair-indexes` (placetype-pair-prior
+arc, Task 8) is COUNTRY-SPECIFIC BY DESIGN — omit it entirely for a release where no locale ships one; today
+only `en-gb` does (`pair-index-gb.bin`), driven by `release.config.json`'s `softFeed.pairIndexByCountry`.
+**A release is done only when BOTH
 backends agree** — CI's weight fetch reads HF; the demo reads R2:
 
 ```bash
