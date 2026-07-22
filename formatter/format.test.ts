@@ -263,6 +263,14 @@ describe("injectDependentLocalityLine", () => {
 		const raw = "Carretera A-2522, 35\n01450 Amurrio"
 		expect(injectDependentLocalityLine(raw, "Bilbao", "Baranbio")).toBe(raw)
 	})
+
+	it("anchors on the LAST matching line, not the first (a street named after its own municipio)", () => {
+		// "Avenida de Amurrio" is a street literally named after the town — its line also contains the
+		// locality substring. A first-match anchor would splice the dependent-locality line above the
+		// STREET; it belongs above the actual locality/postcode line further down.
+		const result = injectDependentLocalityLine("Avenida de Amurrio, 12\n01450 Amurrio", "Amurrio", "Baranbio")
+		expect(result).toBe("Avenida de Amurrio, 12\nBaranbio\n01450 Amurrio")
+	})
 })
 
 describe("formatFromClassificationMap", () => {

@@ -195,7 +195,12 @@ export function injectDependentLocalityLine(
 	if (!locality) return raw
 
 	const normalizedLocality = locality.trim().toLowerCase()
-	const anchorIndex = lines.findIndex((line) => line.toLowerCase().includes(normalizedLocality))
+	// LAST match, not first: a street line can legitimately embed the locality name too (the "Avenida de
+	// <municipio>" class — a street literally named after the town it's in). Anchoring on the first hit
+	// then splices the dependent-locality line above the STREET line instead of above the actual
+	// locality/postcode line further down. The last match is always the real locality line — nothing
+	// renders after it that would also carry the name.
+	const anchorIndex = lines.findLastIndex((line) => line.toLowerCase().includes(normalizedLocality))
 
 	if (anchorIndex === -1) return raw
 
