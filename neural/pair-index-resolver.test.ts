@@ -67,6 +67,12 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		expect(r.header.delta).toBe(0.42)
 	})
 
+	it("exposes delta as a top-level accessor so the resolver conforms to PairIndexLike", () => {
+		const r = resolver()
+
+		expect(r.delta).toBe(0.42)
+	})
+
 	it("rejects a buffer with a bad magic", () => {
 		expect(() => new PairIndexResolver(new Uint8Array(16))).toThrow(/bad magic/)
 	})

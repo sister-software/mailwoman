@@ -217,6 +217,14 @@ export class PairIndexResolver {
 	probe(childFolded: string, parentFolded: string): ComponentTag | undefined {
 		return this.#probeMap.get(pairKey(childFolded, parentFolded))
 	}
+
+	/**
+	 * Exposes the calibrated delta bias magnitude so the resolver conforms to {@link PairIndexLike} and can be passed
+	 * directly.
+	 */
+	get delta(): number {
+		return this.header.delta
+	}
 }
 
 /**

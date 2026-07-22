@@ -333,21 +333,9 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 		buildDate: "2026-07-22",
 	}
 
-	/**
-	 * `PairIndexResolver` exposes `delta` under `.header.delta`, not as a top-level property — `PairIndexLike.delta` is a
-	 * top-level (optional) field, so a raw `PairIndexResolver` instance passed directly as `opts.index` type-checks (the
-	 * field is optional) but silently reads `undefined`, falling through to the `DEFAULT_DELTA` fallback instead of the
-	 * artifact's real calibrated value. This thin structural adapter is the bridge a real caller (Task 7, per the Task-4
-	 * report) will need too — noted for the operator in the fix-round-2 report as an incidental finding, not a
-	 * fix-round-2 item in its own right. The `.probe()` call below is the REAL resolver's, not reimplemented.
-	 */
-	function asPairIndexLike(resolver: PairIndexResolver): PairIndexLike {
-		return { probe: (child, parent) => resolver.probe(child, parent), delta: resolver.header.delta }
-	}
-
 	it('a space-typed query ("Fishburn Stockton on Tees") resolves against the hyphen-folded real index entry, fixture tokenizer', async () => {
 		const bytes = serializePairIndex(REAL_HEADER, REAL_BUILDER_ENTRIES)
-		const index = asPairIndexLike(new PairIndexResolver(bytes))
+		const index = new PairIndexResolver(bytes)
 
 		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
 		// Real split: ["▁F","ish","burn","▁Stock","ton","▁","on","▁Te","es"] — the bare "▁" before "on" is
@@ -363,7 +351,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 		'a space-typed query ("Fishburn Stockton on Tees") resolves against the same real index entry, PRODUCTION tokenizer',
 		async () => {
 			const bytes = serializePairIndex(REAL_HEADER, REAL_BUILDER_ENTRIES)
-			const index = asPairIndexLike(new PairIndexResolver(bytes))
+			const index = new PairIndexResolver(bytes)
 
 			const tokenizer = await MailwomanTokenizer.loadFromFile(PRODUCTION_TOKENIZER_PATH)
 			// Real split: ["▁Fish","burn","▁Stockton","▁","on","▁","Tees"] — same bare-▁-orphan shape, on the
