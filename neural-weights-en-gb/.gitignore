@@ -1,0 +1,15 @@
+# Symlinks created by `scripts/link-dev-weights.sh` for local testing.
+# At publish time these get replaced with real files copied from /mnt/playpen/
+# (per the `files` array in package.json).
+/model.onnx
+/tokenizer.model
+
+# Soft-feed artifacts materialized at publish time by scripts/copy-weights.ts (#718 D1):
+# the compact PCB1 postcode-anchor binary + the gazetteer-anchor lexicon. Built from the
+# WOF postcode shard + data/gazetteer/, not committed (mirrors model.onnx/tokenizer.model).
+/postcode-*.bin
+/anchor-lexicon-v1.json
+
+# The #1104 country soft-feed channel's lexicon artifact (same treatment as anchor-lexicon-v1.json
+# above — copied from data/gazetteer/ at dev-link/publish time, not committed here).
+/country-surface-lexicon-v1.json

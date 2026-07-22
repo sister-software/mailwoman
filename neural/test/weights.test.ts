@@ -10,6 +10,10 @@
  *   - Auto-resolve tests symlink the dev weights into `@mailwoman/neural-weights-en-us` first and then
  *       attempt `loadFromWeights({locale: "en-us"})`. They skip if the dev model isn't on disk so
  *       CI in stripped-down environments still passes.
+ *   - The en-gb case exercises the #1177 base-overlay dedup: en-gb ships no model.onnx/tokenizer.model
+ *       of its own (declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`), so resolution
+ *       must fall through to the en-us package dir (`source` suffixed `+base`) while still resolving
+ *       en-gb's OWN `postcode-gb.bin` locally.
  */
 
 import { execFileSync } from "node:child_process"
@@ -66,5 +70,22 @@ describe("resolveWeights — package auto-resolve", () => {
 		// v0.4.0: the resolver surfaces model-card.json so loadFromWeights can read
 		// the trained label vocabulary from it (issue #116 §5(a)).
 		expect(r.modelCardPath).toMatch(/neural-weights-en-us\/model-card\.json$/)
+	})
+
+	// #1177 base-overlay dedup, en-gb form: model/tokenizer resolve from the en-us base
+	// (mailwoman.baseWeights), while the GB-specific postcode anchor resolves locally.
+	test.skipIf(!haveModel)("en-gb resolves model/tokenizer from the en-us base + postcode-gb.bin locally", () => {
+		const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+		execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+		const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
+		execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+
+		const r = resolveWeights({ locale: "en-gb" })
+		expect(r.source).toBe("package:@mailwoman/neural-weights-en-gb+base")
+		expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
+		expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+		expect(r.anchorLookupPath?.binary).toBe(true)
+		expect(r.anchorLookupPath?.path).toMatch(/neural-weights-en-gb\/postcode-gb\.bin$/)
 	})
 })
