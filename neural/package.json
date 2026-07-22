@@ -46,6 +46,11 @@
 			"default": "./out/pair-index-resolver.js",
 			"types": "./out/pair-index-resolver.d.ts"
 		},
+		"./fst-prior": {
+			"node": "./fst-prior.ts",
+			"default": "./out/fst-prior.js",
+			"types": "./out/fst-prior.d.ts"
+		},
 		"./soft-features": {
 			"node": "./soft-features.ts",
 			"default": "./out/soft-features.js",
