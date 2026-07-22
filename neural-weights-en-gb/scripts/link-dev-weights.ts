@@ -49,7 +49,7 @@
 
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, readFileSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
@@ -81,6 +81,40 @@ function linkForce(src: string, dest: string): void {
 	}
 
 	symlinkSync(src, dest)
+}
+
+/**
+ * Read or compute MD5 hash for a file, using a sidecar .md5 cache to avoid re-hashing large files. The sidecar is
+ * written in standard md5sum format: `<hash> <filename>` (hash, two spaces, filename). On subsequent runs, if the
+ * sidecar exists and its mtime >= the source file's mtime, the hash is read from the sidecar; otherwise it's recomputed
+ * and the sidecar is updated.
+ */
+async function md5FileWithSidecar(path: string): Promise<string> {
+	const sidecarPath = `${path}.md5`
+	const sourceStats = statSync(path)
+
+	if (existsSync(sidecarPath)) {
+		try {
+			const sidecarStats = statSync(sidecarPath)
+			if (sidecarStats.mtime >= sourceStats.mtime) {
+				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
+				const [hash] = sidecarContent.split(/\s+/)
+				if (hash && hash.length === 32) {
+					// Valid md5 hash (32 hex chars)
+					console.log(`md5(${path}): read from sidecar`)
+					return hash
+				}
+			}
+		} catch {
+			// If sidecar read fails, fall through to recompute
+		}
+	}
+
+	const hash = await md5File(path)
+	const filename = path.split(/[/\\]/).pop() || path
+	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+	console.log(`md5(${path}): computed and cached in sidecar`)
+	return hash
 }
 
 /**
@@ -241,7 +275,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
-			const currentSourceMD5 = await md5File(String(PPD_SOURCE_CSV))
+			const currentSourceMD5 = await md5FileWithSidecar(String(PPD_SOURCE_CSV))
 
 			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
 				pairIndexIsFresh = true
