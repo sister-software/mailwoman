@@ -23,6 +23,7 @@
  *   evidence for that window, not a guess).
  */
 
+import { SeededRandom } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair-index-resolver"
 
@@ -149,4 +150,47 @@ export class PairIndexBuilder {
 			distribution,
 		}
 	}
+}
+
+export interface PairIndexHoldoutResult {
+	/** Entries to actually serialize into the index — the full set MINUS the held-out fraction. */
+	kept: PairIndexEntry[]
+	/** Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6). */
+	heldOut: PairIndexEntry[]
+}
+
+/**
+ * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout falsifier (Task 6):
+ * "rebuild the GB index minus a random 10% of pairs (seed 42)" so the acceptance bars can be re-anchored against a
+ * measured degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build
+ * (a shipped index always has `fraction: 0`, i.e. holds out nothing).
+ *
+ * Order-independent and seed-deterministic: entries are sorted by (child, parent) BEFORE the seeded shuffle (mirrors
+ * {@link serializePairIndex}'s own sort), so the same `(fraction, seed)` pair always withholds the same entries
+ * regardless of what order the caller's `entries` array arrives in (e.g. `Map` iteration order, which
+ * {@link PairIndexBuilder.finish} does not guarantee is stable across runs/engines).
+ *
+ * `fraction` is clamped to `[0, 1]`; `Math.round(fraction * entries.length)` entries are withheld — rounds to 0 (a
+ * no-op holdout) on a fraction too small to withhold even one entry from a small input.
+ */
+export function applyPairIndexHoldout(
+	entries: readonly PairIndexEntry[],
+	fraction: number,
+	seed: number
+): PairIndexHoldoutResult {
+	const clamped = Math.min(1, Math.max(0, fraction))
+
+	if (clamped === 0 || entries.length === 0) {
+		return { kept: [...entries], heldOut: [] }
+	}
+
+	const sorted = [...entries].sort((a, b) =>
+		a.child < b.child ? -1 : a.child > b.child ? 1 : a.parent < b.parent ? -1 : a.parent > b.parent ? 1 : 0
+	)
+
+	new SeededRandom(seed).shuffle(sorted)
+
+	const holdoutCount = Math.round(clamped * sorted.length)
+
+	return { heldOut: sorted.slice(0, holdoutCount), kept: sorted.slice(holdoutCount) }
 }

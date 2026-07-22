@@ -38,7 +38,7 @@ import { CSVSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
-import { PairIndexBuilder } from "../../gazetteer-pipeline/pair-index.ts"
+import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
  * The rung-3 census's distinct-pair count for the GB source (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431
@@ -64,6 +64,21 @@ const OptionsSchema = zod.object({
 			"REQUIRED, no default — the soft-prior bias magnitude a probe hit contributes at decode time. " +
 				"The calibration task supplies the real value; this command refuses to default it silently."
 		),
+	holdoutFraction: zod
+		.number()
+		.min(0)
+		.max(1)
+		.default(0)
+		.describe(
+			"DEV-ONLY falsifier flag (placetype-pair-prior arc, Task 6) — withhold this fraction of deduplicated pairs " +
+				"from the build (seeded, deterministic; see --holdout-seed), for measuring decode-layer degradation " +
+				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
+				"nonzero value for a shipped artifact build."
+		),
+	holdoutSeed: zod
+		.number()
+		.default(42)
+		.describe("Seed for --holdout-fraction's deterministic withholding. Ignored when --holdout-fraction is 0."),
 })
 
 export { OptionsSchema as options }
@@ -105,7 +120,17 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "")
 		}
 
-		const { entries, rowsKept, rowsSkipped, distribution } = builder.finish()
+		const built = builder.finish()
+		const { rowsKept, rowsSkipped, distribution } = built
+
+		// Task 6 falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
+		// downstream eval can measure decode-layer degradation on pairs the index never saw. A no-op
+		// (`entries === built.entries` by value) when --holdout-fraction is the 0 default.
+		const { kept: entries, heldOut } = applyPairIndexHoldout(
+			built.entries,
+			options.holdoutFraction,
+			options.holdoutSeed
+		)
 		const sourceMD5 = await md5File(sourcePath)
 
 		const pairIndexHeader: PairIndexHeader = {
@@ -143,17 +168,30 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			),
 		]
 
+		// The rung-3 cross-check assumes a COMPLETE build — a nonzero --holdout-fraction deliberately produces a
+		// smaller `entries.length` by design, so the strict count-match gate is meaningless (and would misreport
+		// "BLOCKED") under holdout. Gate against `built.entries.length` (pre-holdout) instead in that case.
+		const preHoldoutCount = built.entries.length
 		const gateLine =
 			country === "gb"
-				? entries.length === EXPECTED_GB_PAIR_COUNT
-					? `CROSS-CHECK PASS: ${entries.length.toLocaleString()} distinct pairs (rung-3 expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})`
-					: `CROSS-CHECK BLOCKED: ${entries.length.toLocaleString()} distinct pairs != rung-3's ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} — investigate fold divergence before trusting this artifact`
-				: `(cross-check only registered for gb; ${entries.length.toLocaleString()} distinct pairs)`
+				? options.holdoutFraction > 0
+					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})`
+					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT
+						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (rung-3 expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})`
+						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != rung-3's ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} — investigate fold divergence before trusting this artifact`
+				: `(cross-check only registered for gb; ${preHoldoutCount.toLocaleString()} distinct pairs)`
+
+		const holdoutLine =
+			options.holdoutFraction > 0
+				? `HOLDOUT: withheld ${heldOut.length.toLocaleString()}/${preHoldoutCount.toLocaleString()} pairs ` +
+					`(fraction=${options.holdoutFraction}, seed=${options.holdoutSeed}) — ${entries.length.toLocaleString()} pairs written`
+				: undefined
 
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
+			...(holdoutLine ? [holdoutLine] : []),
 			gateLine,
 			...distLines,
 			...probeLines,
