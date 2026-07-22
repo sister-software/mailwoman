@@ -186,9 +186,9 @@ export function buildFSTEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so the street-morphology prior
- * can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper signature; not part of
- * the public neural API.
+ * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so consumers like the
+ * street-morphology prior can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper
+ * signature; not part of the public neural API.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
@@ -231,7 +231,19 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 	return groups
 }
 
-function normalizeFSTToken(s: string): string {
+/**
+ * Normalize a whitespace word to FST-index form: NFKC → lowercase → strip punctuation and symbols.
+ *
+ * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
+ * forms; it does NOT strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
+ * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
+ * specific form (indexed and query surfaces agree on diacritics).
+ *
+ * Hyphens and spaces are treated as equivalent ("Stockton-on-Tees" → "stocktonontees", same as "Stockton on Tees" when
+ * each word is normalized and joined). The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P
+ * and S).
+ */
+export function normalizeFSTToken(s: string): string {
 	const cleaned = s
 		.normalize("NFKC")
 		.toLowerCase()

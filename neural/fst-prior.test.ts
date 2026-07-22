@@ -6,7 +6,14 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildFSTEmissionPriors, type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.ts"
+import {
+	buildFSTEmissionPriors,
+	groupPiecesIntoWords,
+	normalizeFSTToken,
+	type FSTMatcherLike,
+	type FSTMatchLike,
+	type FSTPlaceEntryLike,
+} from "./fst-prior.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 
 function labelCol(label: string): number {
@@ -177,5 +184,65 @@ describe("buildFSTEmissionPriors", () => {
 		expect(off[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0, 2)
 		const both = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { importanceLengthScaleMode: "both" })
 		expect(both[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0 * 0.25, 2)
+	})
+})
+
+describe("normalizeFSTToken", () => {
+	it("lowercases and strips hyphens (Stockton-on-Tees → stocktonontees)", () => {
+		const result = normalizeFSTToken("Stockton-on-Tees")
+		expect(result).toBe("stocktonontees")
+	})
+
+	it("lowercases and strips spaces treated as punctuation (Stockton on Tees → stocktonontees)", () => {
+		// When passed through groupPiecesIntoWords, each word is normalized separately
+		// but hyphens disappear via the punctuation strip, and spaces separate words
+		// then are removed. Here we test the single-token behavior:
+		const stockton = normalizeFSTToken("Stockton")
+		const on = normalizeFSTToken("on")
+		const tees = normalizeFSTToken("Tees")
+		expect(stockton + on + tees).toBe("stocktonontees")
+	})
+
+	it("preserves diacritics (Álava → álava, not alava)", () => {
+		const result = normalizeFSTToken("Álava")
+		expect(result).toBe("álava")
+	})
+
+	it("strips punctuation including apostrophes (BISHOP'S → bishops)", () => {
+		const result = normalizeFSTToken("BISHOP'S")
+		expect(result).toBe("bishops")
+	})
+
+	it("returns empty string for punctuation-only input", () => {
+		const result = normalizeFSTToken("...")
+		expect(result).toBe("")
+	})
+
+	it("returns empty string for empty input", () => {
+		const result = normalizeFSTToken("")
+		expect(result).toBe("")
+	})
+
+	it("applies NFKC normalization (ligatures and compatibility forms)", () => {
+		// NFKC unifies compatibility forms; for example, the NFKC form resolves superscript
+		// and subscript characters to their base forms.
+		const result = normalizeFSTToken("ﬁnance") // 'ﬁ' is U+FB01 (fi ligature)
+		expect(result).toBe("finance")
+	})
+})
+
+describe("groupPiecesIntoWords with normalizeFSTToken", () => {
+	it("normalizes individual word groups correctly", () => {
+		const pieces = [{ piece: "▁Stockton" }, { piece: "-" }, { piece: "▁on" }, { piece: "-" }, { piece: "▁Tees" }]
+		const groups = groupPiecesIntoWords(pieces)
+		// Whitespace-delimited grouping; hyphens are punctuation, so they form separate empty groups
+		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
+		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "on", "tees"])
+	})
+
+	it("normalizes diacritics consistently in grouped words", () => {
+		const pieces = [{ piece: "▁Álava" }]
+		const groups = groupPiecesIntoWords(pieces)
+		expect(groups[0]!.fstToken).toBe("álava")
 	})
 })
