@@ -16,7 +16,7 @@ describe("titleCaseGB", () => {
 		expect(titleCaseGB("STRATFORD-UPON-AVON")).toBe("Stratford-upon-Avon")
 		expect(titleCaseGB("WESTON-SUPER-MARE")).toBe("Weston-super-Mare")
 	})
-	it("keeps letters after apostrophes lowercase", () => {
+	it("capitalizes each apostrophe-separated segment except a bare trailing possessive 's", () => {
 		expect(titleCaseGB("BISHOP'S STORTFORD")).toBe("Bishop's Stortford")
 		expect(titleCaseGB("ST JOHN'S WOOD")).toBe("St John's Wood")
 	})
