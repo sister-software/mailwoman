@@ -26,12 +26,22 @@
  *
  *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) the same way: no
  *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
- *   the compiled `gazetteer pair-index` CLI. `--delta 6.0` is the rung-3-measured value baked
- *   into the real `docs/static/mailwoman/pair-index-gb.bin` artifact's header (Task 3) — LOUD
- *   NOTE: this is NOT a final calibrated number, it's the rung-3 probe-set delta; a future
- *   calibration task owns re-setting it, and this script's literal must move in lockstep with
- *   whatever that task lands (same discipline as the `DEFAULT_MODEL`/`DEFAULT_TOKENIZER`
- *   lockstep comment above).
+ *   the compiled `gazetteer pair-index` CLI. `--delta 5.0` is the Task-7-CALIBRATED value
+ *   (2026-07-22, `.superpowers/sdd/task-7-report.md`) baked into the real
+ *   `neural-weights-en-gb/pair-index-gb.bin` artifact's header — superseding Task 3's
+ *   rung-3 probe-set placeholder (6.0). Calibration method: a δ ∈ {3,4,4.5,5,6,7} sweep against
+ *   ~2k held-out PPD-tail register rows (dependent_locality tag-correct recall) and the 6,500-row
+ *   FSA venue-confound board (FP), for BOTH ship-candidate checkpoints (feed-2k, feed-8k) — the
+ *   two calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). This shared artifact bakes
+ *   feed-8k's value (5.0): Task 7's full battery found feed-2k FAILS the FR-fragment
+ *   `bare-locality` hallucination bar (0.665 vs ≥0.90 — an early-training-collapse pattern, the
+ *   SAME shape as the sibling en-gb-locale-arc's probe-2 checkpoint) while feed-8k passes it
+ *   (0.988) and every other registered bar except digit `bare-street-hn` (a narrower, already-
+ *   documented regression) — so feed-8k is Task 7's RECOMMENDATION, and this artifact matches. If
+ *   the operator promotes feed-2k instead, re-run this same CLI command with `--delta 4.5` and
+ *   update `PAIR_INDEX_DELTA` below in lockstep — the artifact and this script's literal must
+ *   never drift (same discipline as the `DEFAULT_MODEL`/`DEFAULT_TOKENIZER` lockstep comment
+ *   above).
  *
  *   FRESHNESS GUARD on the skip-if-exists path (review follow-up): a bare `existsSync` skip is
  *   right for `postcode-gb.bin` (rebuilds in seconds from a small WOF shard) but wrong on its own
@@ -240,10 +250,10 @@ if (!existsSync(CLI)) {
 
 // `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's
 // derived from the HM Land Registry PPD tuples CSV) — build it the same way, via the compiled
-// `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the rung-3-measured value baked into the
-// real `docs/static/mailwoman/pair-index-gb.bin` header (Task 3) — see this file's header comment:
-// NOT a final calibrated number, only the rung-3 probe-set delta. Skips with a warning (not a hard
-// failure) so a worktree without the PPD source CSV can still link everything else.
+// `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the Task-7-CALIBRATED value baked into
+// the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header comment for
+// the calibration method and the feed-2k-vs-feed-8k lockstep note. Skips with a warning (not a
+// hard failure) so a worktree without the PPD source CSV can still link everything else.
 //
 // UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds), the PPD tuples CSV is
 // ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min). `weights.test.ts`
@@ -254,7 +264,7 @@ if (!existsSync(CLI)) {
 // artifact into every test run.
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
-const PAIR_INDEX_DELTA = 6.0
+const PAIR_INDEX_DELTA = 5.0
 
 let pairIndexIsFresh = false
 

@@ -1023,9 +1023,11 @@ export interface ParseOpts {
 	 *
 	 * Default OFF (the whole prior, independent of `probeMode`): an omitted field produces a zero matrix, byte-identical
 	 * to every parse before this task. Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate
-	 * at δ=6.0 on the curated probe set that motivated this prior — the real `pair-index-gb.bin` artifact (Task 3) ships
-	 * that delta in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike` test
-	 * double that omits `delta`.
+	 * at δ=6.0 on the curated probe set that motivated this prior. **Superseded by Task 7's δ calibration** (2026-07-22,
+	 * `.superpowers/sdd/task-7-report.md`): the real `pair-index-gb.bin` artifact now ships δ=5.0 (a held-out
+	 * register-row + venue-confound sweep, feed-8k's calibrated optimum and Task 7's recommended ship checkpoint; feed-2k
+	 * calibrates to 4.5 but fails the FR-fragment bare-locality bar) in its header, so `biasScale` below exists only as a
+	 * fallback for a hand-built `PairIndexLike` test double that omits `delta`.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
 }

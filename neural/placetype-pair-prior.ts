@@ -15,8 +15,11 @@
  *   priors still get the final vote; this one only proposes.
  *
  *   Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the
- *   probe set that motivated this prior — the real `pair-index-gb.bin` artifact (Task 3) ships that
- *   delta in its header. Default OFF: an omitted `opts` (no configured index) produces a zero matrix,
+ *   probe set that motivated this prior. **Superseded by Task 7's δ calibration** (2026-07-22,
+ *   `.superpowers/sdd/task-7-report.md`, a held-out register-row + venue-confound sweep) — the real
+ *   `pair-index-gb.bin` artifact now ships δ=5.0 in its header (feed-8k's calibrated optimum and Task
+ *   7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment
+ *   bare-locality bar). Default OFF: an omitted `opts` (no configured index) produces a zero matrix,
  *   byte-identical to every parse before this task.
  *
  *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict.** `opts.probeMode` selects HOW a
