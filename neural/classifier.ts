@@ -34,6 +34,7 @@ import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScale
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import type { InferResult } from "./onnx-runner.ts"
+import { buildPlacetypePairPriors, type PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
@@ -626,6 +627,22 @@ export class NeuralAddressClassifier {
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
 
+		// Placetype-pair prior (placetype-pair-prior arc, Task 4): retrieval-augmented complement to the
+		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Default OFF (no
+		// configured index → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
+		// might bias toward still gets masked out.
+		const placetypePairPrior = opts?.placetypePair
+			? buildPlacetypePairPriors(opts.placetypePair, pieces, this.labels)
+			: undefined
+
+		if (placetypePairPrior) {
+			emissions = addEmissionMatrix(emissions, placetypePairPrior)
+		}
+		tracePriors?.push({
+			kind: "placetypePair",
+			applied: placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior),
+		})
+
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
 		// from the decoder's vocabulary outright (-1e9 ≈ log 0). Copy-on-mask — `emissions` may alias
 		// `logits`, which the per-token confidence below reads unmasked.
@@ -922,6 +939,28 @@ export interface ParseOpts {
 	 * corrupted leading FR postcodes.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+
+	/**
+	 * Placetype-pair emission bias (placetype-pair-prior arc, Task 4). When provided, contiguous word windows (1..3 words
+	 * — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the measured distribution that set the ceiling)
+	 * are probed against a PIX1 pair index of (child, parent) place-name pairs harvested from a real address register
+	 * (the Task-3 GB shard: PPD `CITY`/ `DISTRICT`). A window that resolves against some OTHER, disjoint window anywhere
+	 * in the input gets an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward
+	 * `dependent_locality` when "London" also appears in the input, because the index has recorded ("shoreditch",
+	 * "london") → `dependent_locality`.
+	 *
+	 * Country-agnostic at the API surface: this module does no country gating itself — the caller is responsible for
+	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never
+	 * match, composing harmlessly).
+	 *
+	 * Default OFF: an omitted field produces a zero matrix, byte-identical to every parse before this task. Evidence:
+	 * rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the probe set that motivated
+	 * this prior — the real `pair-index-gb.bin` artifact (Task 3) ships that delta in its header, so `biasScale` below
+	 * exists only as a fallback for a hand-built `PairIndexLike` test double that omits `delta`. The runtime-flag
+	 * register row for turning this on by default in the pipeline lands in Task 7, not here — this field is the plumbing,
+	 * not the ship decision.
+	 */
+	placetypePair?: PlacetypePairPriorOpts
 }
 
 /**
