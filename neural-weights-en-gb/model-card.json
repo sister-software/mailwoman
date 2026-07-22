@@ -1,0 +1,160 @@
+{
+	"name": "neural-weights-en-gb",
+	"version": "6.7.0",
+	"$comment_new_card": "NEW in 6.7.0 (Task 8, placetype-pair-prior arc, 2026-07-23). The overlay previously shipped NO model-card.json of its own — `resolveFromPackageDir` fell back to `neural-weights-en-us/model-card.json` (the #1177 card-less-overlay path, `source` suffixed `+base`) so the classifier had a label vocab to decode against. This card is now overlay-LOCAL and, per the #1249 base-card-fallback design, resolveFromPackageDir prefers it over the base card — the fallback becomes dormant for en-gb from this version forward (still live for any future overlay that ships none). `labels`/`requires`/`architecture`/`components_supported` below are duplicated VERBATIM from the base card so decode behavior is byte-identical to the pre-6.7.0 fallback; only the provenance/eval/notes content is GB-specific. See `neural-weights-en-us/model-card.json` (same version) for the full training/provenance record this card doesn't repeat.",
+	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model of its own — resolves both from `@mailwoman/neural-weights-en-us` via `mailwoman.baseWeights` (byte-identical artifact; one encoder serves both locales). What this package ships: `postcode-gb.bin` (GB outward-code postcode-anchor binary, built from the WOF GB postcode shard) and `pair-index-gb.bin` (the placetype-pair-prior arc's PIX1 retrieval index, built from HM Land Registry PPD tuples). See `neural-weights-en-us/model-card.json` v6.7.0 for the base model's full training provenance (v3.11.0-deploc-feed step-8000, \"feed-8k\").",
+	"phase": "STAGED, NOT PROMOTED — mirrors the base card's status exactly (same encoder, same ship blocker). The base's Gauntlet metamorphic-layer FAIL (Task 8, 2026-07-23) blocks THIS overlay too, since en-gb has no encoder of its own to grade separately. GB-specific artifacts (postcode-gb.bin, pair-index-gb.bin) are independently graded below and clear every registered bar on their own — the block is entirely inherited from the base checkpoint choice, not a GB-specific finding.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"locale": "en-gb",
+	"base_model": {
+		"package": "@mailwoman/neural-weights-en-us",
+		"version": "6.7.0",
+		"resolution": "mailwoman.baseWeights in package.json — resolveWeights/resolveFromPackageDir resolve model.onnx + tokenizer.model from the base package dir (source suffixed \"+base\"); this card's own labels/requires/architecture below are a verbatim copy of the base's, not re-derived at runtime — keep them in lockstep on every base ship (same discipline as neural-weights-en-gb/scripts/link-dev-weights.ts's DEFAULT_MODEL/DEFAULT_TOKENIZER md5 lockstep comment)."
+	},
+	"gb_artifacts": {
+		"postcode_gb_bin": {
+			"format": "PCB1 compact postcode-anchor binary (#240/#718 D1)",
+			"granularity": "outward code only (e.g. \"SW1A\", not the full unit \"SW1A 1AA\") — 2.7M unit postcodes is both too large for the browser budget and finer-grained than an anchor needs; a full unit code that misses the exact lookup falls back to its outward centroid automatically (extractPostcodeAnchors)",
+			"source": "WOF GB postcode shard (softFeed.postcodeDBByCountry.gb, release.config.json)",
+			"not_committed": "derived artifact, .gitignore'd, materialized by scripts/copy-weights.ts at release time and scripts/link-dev-weights.ts for local dev — same posture as postcode-fr.bin"
+		},
+		"pair_index_gb_bin": {
+			"format": "PIX1 placetype-pair index (placetype-pair-prior arc, Task 3) — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Fishburn\", \"Stockton-on-Tees\")",
+			"source": "HM Land Registry Price Paid Data (PPD) tuples CSV, $MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv, md5 dbd675bdc970ea60f96f0a470429a128, 25,674,048 rows",
+			"pairs": 19209,
+			"bytes": 457842,
+			"delta_calibration": "δ=5.0 (Task 7, .superpowers/sdd/task-7-report.md, 2026-07-22) — SUPERSEDES Task 3's δ=6.0 rung-3 probe placeholder. Calibrated via a δ ∈ {3,4,4.5,5,6,7} sweep against a held-out PPD-tail set (dependent_locality tag-correct recall, n=653) and the 6,500-row FSA venue-confound falsifier board (FP), separately for both v3.11.0-deploc-feed ship-candidate checkpoints — they calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). This artifact bakes feed-8k's value (5.0), matching Task 7's checkpoint recommendation (see the base card's phase/model_lineage). δ is a genuine recall/FP dial, NOT a free lunch — FP grows monotonically with δ (roughly 6-10× from δ=3 to δ=7 on both checkpoints), so the smallest δ clearing the recall bar is load-bearing, not a formality.",
+			"probe_mode": "\"segment\" (whole comma-delimited segments only) — the library default since d2a1242f. The retired \"window\" (sliding sub-word) mode measured 52.1% venue-confound FP against a pre-registered FP=0 bar and is opt-in-only now; segment mode cuts that to <1% at the calibrated δ, at the cost of going fully inert on comma-stripped input (see eval.gb_golden_comma_stripped below — a documented v1 trade, not a bug).",
+			"country_gate": "hard-gated — the prior only fires when the resolved locale's country matches the index header's country (gb). Never crosses into en-us parses (see the base card's en-us companion test / neural/test/weights.test.ts).",
+			"not_committed": "derived artifact, .gitignore'd (same posture as postcode-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-gb --country gb --source <ppd-csv> --delta 5.0`"
+		}
+	},
+	"architecture": {
+		"$comment": "Verbatim copy of the base card's architecture — same encoder, no GB-specific change.",
+		"hidden_size": 384,
+		"num_hidden_layers": 6,
+		"num_attention_heads": 6,
+		"intermediate_size": 1536,
+		"max_position_embeddings": 128,
+		"vocab_size": 73143,
+		"num_labels": 33,
+		"crf_at_training": false,
+		"crf_at_inference": true,
+		"phrase_priors": true
+	},
+	"requires": {
+		"$comment": "Verbatim copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. Keep in lockstep with neural-weights-en-us/model-card.json on every base ship.",
+		"anchor": {
+			"required": true
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"country": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
+		"suppress_gazetteer_near_postcode": true
+	},
+	"labels": [
+		"O",
+		"B-country",
+		"I-country",
+		"B-region",
+		"I-region",
+		"B-locality",
+		"I-locality",
+		"B-dependent_locality",
+		"I-dependent_locality",
+		"B-postcode",
+		"I-postcode",
+		"B-subregion",
+		"I-subregion",
+		"B-cedex",
+		"I-cedex",
+		"B-venue",
+		"I-venue",
+		"B-street",
+		"I-street",
+		"B-house_number",
+		"I-house_number",
+		"B-street_prefix",
+		"I-street_prefix",
+		"B-street_suffix",
+		"I-street_suffix",
+		"B-unit",
+		"I-unit",
+		"B-po_box",
+		"I-po_box",
+		"B-intersection_a",
+		"I-intersection_a",
+		"B-intersection_b",
+		"I-intersection_b"
+	],
+	"components_supported": [
+		"country",
+		"region",
+		"locality",
+		"dependent_locality",
+		"postcode",
+		"subregion",
+		"cedex",
+		"venue",
+		"street",
+		"house_number",
+		"street_prefix",
+		"street_suffix",
+		"unit",
+		"po_box",
+		"intersection_a",
+		"intersection_b"
+	],
+	"notes": "First graded GB story (Task 8, 2026-07-23) — before this, the overlay was packaging scaffolding only (README's own prior wording: 'GB-specific per-tag evaluation numbers are not yet published'). GB dependent_locality full-pipeline recall (base checkpoint + pair-index prior ON @ δ=5.0): 69/69 emission, 67/69 tag-correct (97.1%), on the 69-row gb-golden dependent_locality board. The three-way ablation (base card's eval.gate_2026_07_23_v3110_deploc_feed_8k.dependent_locality_ablation) shows this recall is carried almost entirely by the PRIOR, not the checkpoint's own resurrected classifier row: v385 (pre-feed) + prior @ δ=6 alone already gets 3/69; the feed checkpoint with the prior OFF gets 0/69; only prior ON @ the calibrated δ reaches 67/69. Comma-stripped input is fully inert (0/69) — the documented segment-mode v1 trade, not a regression. Venue-confound FP at δ=5.0: 48/6,500 (0.738%), well under the retired δ=6.0 working number (122/6,500, 1.877%). The two GB misses (both already characterized in Task 6): 'Goulbourne Road, St Georges, Telford, TF2 9LE' (word-boundary, wrong-value) and '101 Coniston Avenue, Knott End on Sea, Poulton-le-Fylde' (pre-existing model-level miss, independent of the prior).",
+	"eval": {
+		"gb_golden_dependent_locality": {
+			"n": 69,
+			"prior_on_at_delta_5": { "emit": 69, "tag_correct": 67, "tag_correct_pct": 97.1 },
+			"source": "mailwoman/eval-harness/fixtures/gb-golden.jsonl"
+		},
+		"gb_golden_comma_stripped": {
+			"n": 69,
+			"prior_on_at_delta_5": { "emit": 0, "tag_correct": 0 },
+			"note": "fully inert — the documented segment-probe-mode v1 trade (probe mode only matches whole comma-delimited segments), not a bug"
+		},
+		"venue_confound_fp": {
+			"board": "gb-venue-confound-full.jsonl, 6,500 rows",
+			"delta_star": 5.0,
+			"fp": "48/6500",
+			"fp_pct": 0.738,
+			"retired_delta_6_floor": "122/6500 (1.877%)"
+		},
+		"delta_sweep_feed_8k": {
+			"$comment": "held-out dependent_locality tag-correct recall (n=653) / venue-confound FP (n=6500), both checkpoints swept — feed-8k row only (this card's checkpoint); see the base card / task-7-report.md for feed-2k's row.",
+			"3": { "tag_correct_pct": 56.0, "fp_pct": 0.215 },
+			"4": { "tag_correct_pct": 87.9, "fp_pct": 0.323 },
+			"4.5": { "tag_correct_pct": 93.4, "fp_pct": 0.523 },
+			"5.0_selected": { "tag_correct_pct": 96.3, "fp_pct": 0.738 },
+			"6": { "tag_correct_pct": 98.2, "fp_pct": 1.646 },
+			"7": { "tag_correct_pct": 98.9, "fp_pct": 2.062 }
+		},
+		"gauntlet": "not separately run for this overlay — see the base card's eval.gate_2026_07_23_v3110_deploc_feed_8k.gauntlet. en-gb ships no encoder of its own to grade; the base checkpoint's metamorphic-layer FAIL applies here by inheritance."
+	},
+	"format": {
+		"$comment": "Model/tokenizer format is the base's — see neural-weights-en-us/model-card.json. This overlay's own artifacts:",
+		"postcode_gb_bin": "PCB1 binary, outward-code granularity",
+		"pair_index_gb_bin": "PIX1 binary, 457,842 bytes, 19,209 pairs, δ=5.0"
+	},
+	"files": {
+		"model_card": "model-card.json",
+		"postcode_anchor": "postcode-gb.bin",
+		"pair_index": "pair-index-gb.bin",
+		"gazetteer_lexicon": "anchor-lexicon-v1.json",
+		"country_lexicon": "country-surface-lexicon-v1.json"
+	}
+}

@@ -13,7 +13,10 @@
  *   - The en-gb case exercises the #1177 base-overlay dedup: en-gb ships no model.onnx/tokenizer.model
  *       of its own (declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`), so resolution
  *       must fall through to the en-us package dir (`source` suffixed `+base`) while still resolving
- *       en-gb's OWN `postcode-gb.bin` locally.
+ *       en-gb's OWN `postcode-gb.bin` locally. Since Task 8 (6.7.0), en-gb ALSO ships its own
+ *       `model-card.json` (the #1249 base-card-fallback design's overlay-local path) — the card-less
+ *       fallback for `modelCardPath` specifically is now dormant for en-gb (model/tokenizer still fall
+ *       through to base; only the card resolves locally, per `resolveFromPackageDir`'s precedence).
  *   - The placetype-pair-prior arc Task 5 block is the arc's end-to-end smoke: en-gb resolves
  *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
@@ -189,11 +192,12 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
 			expect(r.anchorLookupPath?.binary).toBe(true)
 			expect(r.anchorLookupPath?.path).toMatch(/neural-weights-en-gb\/postcode-gb\.bin$/)
-			// Card-less overlay fallback: en-gb ships no model-card.json of its own — it must resolve
-			// the en-us base's card so `loadFromWeights` reads the trained (STAGE3+, 33-label) vocab
-			// instead of silently defaulting to STAGE2_BIO_LABELS (21 labels), which throws in
-			// `assertEmissionWidth` on the first parse (the bug this test guards against).
-			expect(r.modelCardPath).toMatch(/neural-weights-en-us\/model-card\.json$/)
+			// Overlay-local card (Task 8, 6.7.0): en-gb now ships its own model-card.json (a verbatim
+			// copy of the base's labels/requires — see that file's header comment), so
+			// `resolveFromPackageDir` resolves it LOCALLY instead of falling through to the en-us base
+			// card. The label vocab is byte-identical either way (STAGE3+, 33 labels), so
+			// `assertEmissionWidth` still never trips — this assertion just moved to the new source.
+			expect(r.modelCardPath).toMatch(/neural-weights-en-gb\/model-card\.json$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const tree = await cls.parse("10 Downing Street, London SW1A 2AA")

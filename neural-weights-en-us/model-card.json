@@ -1,21 +1,24 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "6.6.0",
-	"model_lineage": "v3.8.5-latam-8k (v385) — init_from v381 (the shipped 6.5.0), ONE folded change: a dedicated `overture-latam` corpus shard (CA 299,809 + MX 156,421 Overture-Addresses rows, weight 6.0) added to `country_weights` (+CA, +MX) — the FIRST genuinely-new locale coverage. 2k probe → 8k resume, LR 1.0e-5 constant. Tokenizer v0.9.0-multisplice (73,143) UNCHANGED; every lexicon UNCHANGED; architecture identical. Weights-only vs 6.5.0.",
-	"phase": "PROMOTED (6.6.0, shipped as npm 7.1.0) — v385: the CA/MX Overture locale add, init_from v381. The model now parses Mexican addresses (Spanish city surfaces, Privada/Calle streets) meaningfully better than shipped: MX locality +8.7 (74.0→82.7, native-order held-out board); CA neutral (US-order, already parsed — coverage-provenance, ships free). Gated on v6.0.0-shipped-baseline + the golden 2pp gate (PASS: 0 tags >2pp below shipped v381; the one nick is country −1.6, small-N 220/245, sub-threshold and stated) + the Gauntlet (PASS 33/33; identical known-xfail profile to v381). Weights-only: no lexicon, inference, or browser change from 6.5.0. BR dropped this cycle (Overture rows are country-implicit → dilute country emission −5.3pp; fix = the countryAppendFraction intl-render, tracked for v7.2).",
+	"version": "6.7.0",
+	"model_lineage": "v3.11.0-deploc-feed step-8000 (\"feed-8k\") — init_from v385 (6.6.0) step-8000, same-vocab fine-tune, `--resume none`, 8k steps (2k probe → 8k resume), LR 1.0e-5 constant. ONE escalation over the probe-2 checkpoint (v3.10.1-gb-probe2): dependent_locality training mass split across FOUR locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% of stream; combined ≈6.66%, matching probe-2's 6.6% total but at a MUCH lower max single-locale share — 20.2%→6.1% — the diversity fix for probe-2's skew costs) instead of GB alone. THREE resurrection levers, bundled (each alone is a known no-op per #456/#1100): (1) `reinit_label_rows: [B-dependent_locality, I-dependent_locality]` — mean-of-live re-init of the baked-dead classifier rows; (2) `classifier_learning_rate: 1.0e-3` — a dedicated hot Adam param group on `classifier.*` (Adam's update is scale-invariant, so only a real param group moves a baked-negative row); (3) `class_weights` B-/I-dependent_locality 0.3→1.0 (Task 4a's third suppressor: re-init + hot LR are useless under a downweight). Tokenizer v0.9.0-multisplice (73,143) UNCHANGED; every lexicon UNCHANGED; architecture identical. Weights-only vs 6.6.0.",
+	"phase": "STAGED, NOT PROMOTED (6.7.0 candidate) — ship checkpoint feed-8k operator-ratified 2026-07-23 over the sibling feed-2k checkpoint (Task 7's recommendation: feed-2k fails FR-fragment bare-locality outright, 0.665 vs ≥0.90; feed-8k's own miss — digit bare-street-hn — is narrower and covered by the digit-gate revision below). BLOCKED ON A NEW FINDING (Task 8, 2026-07-23): the Gauntlet's metamorphic layer FAILS on feed-8k — a NEW INV[comma-drop] violation on '1600 Pennsylvania Ave NW, Washington DC 20500' (comma-dropped form loses the rooftop resolution entirely, resolving to 0,0; v385 holds this case). The SAME layer independently FAILS on feed-2k too, with DIFFERENT violations (BAND[num-ordinal]/INV[comma-drop]/INV[abbrev] all mis-resolving '350 Fifth Avenue, New York, NY' 283.5km away) — this reads as a lineage-wide v3.11.0-deploc-feed regression in NY/DC-class admin resolution robustness, not a single-checkpoint fluke. Regression (33/33) and held-out (z=0.00, not significantly worse) layers PASS on feed-8k; only metamorphic fails. This is a SHIP-BLOCKING gate per the recipe's own pre-registration ('SHIP GATE: … gauntlet PASS') and was not caught by Tasks 6/7 (neither ran the Gauntlet). Every other pre-registered guard passes (see eval.gate_2026_07_23_v3110_deploc_feed_8k below) — promotion awaits the operator's triage of this one finding.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "v0.13.0-latam overlay (v0.11.0-no-fragment base + a 456,230-row `overture-latam` shard: CA 299,809 + MX 156,421 Overture-Addresses rows) — the dedicated LATAM source does NOT dilute the trained EU `overture` rows",
+		"corpus_version": "v0.15.0-deploc (v0.14.0-gb base + synth-nz-v2 + synth-es-pedania + synth-fr-lieudit) — the FOUR-locale dependent_locality feed. synth-gb-v1 (800k rows, 32.8% B-dependent_locality) at source weight 10.0 (down from probe-2's 36.0 — the diversity fix), synth-nz-v2 at 4.0 (79.2% dep-loc density), synth-es-pedania-v1 at 5.0 (30.3% density), synth-fr-lieudit-v1 at 3.0 (100% density — every row IS a lieu-dit). overture-latam (CA/MX, 6.6.0) unchanged at weight 6.0.",
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
 		"best_step": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v3.8.5-latam-8k.yaml — init_from v381 step-8000, LR 1.0e-5 constant, 8k (2k probe → 8k resume); the ONE-at-a-time addition over 6.5.0 is the `overture-latam` CA/MX shard at weight 6.0 with +CA/+MX in country_weights.",
-		"tokenizer_splice": "tokenizer_splice.py build-tokenizer --locales fr --per-file-cap 2000000 over OA fr/countrywide.csv (seed 42, 350k-line corpus, unigram vocab 24000) -> splice 2406 non-ASCII FR pieces into v0.7.1-nsplice (English byte-identity asserted). UNCHANGED from v240 (md5 04995524). The v241 delta over v240 is that the new embedding rows now receive GRADIENT via the init_from fine-tune, not just FVT mean-init.",
+		"recipe": "v3.11.0-deploc-feed.yaml — init_from v385 (6.6.0) step-8000, `--resume none` REQUIRED (reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it), LR 1.0e-5 constant, 8k (2k probe → 8k resume). The THREE bundled resurrection levers over 6.6.0: reinit_label_rows [B-/I-dependent_locality], classifier_learning_rate 1.0e-3 (dedicated `classifier.*` param group), class_weights B-/I-dependent_locality 0.3→1.0 — plus the FOUR-locale corpus feed above.",
+		"tokenizer_splice": "tokenizer_splice.py build-tokenizer --locales fr --per-file-cap 2000000 over OA fr/countrywide.csv (seed 42, 350k-line corpus, unigram vocab 24000) -> splice 2406 non-ASCII FR pieces into v0.7.1-nsplice (English byte-identity asserted). UNCHANGED from v240 (md5 04995524).",
 		"data_attribution": [
-			"Overture Maps Foundation — Addresses theme (CDLA-Permissive-2.0): the `overture-latam` CA/MX training shard (456,230 rows) NEW in 6.6.0. Attribution-only, not share-alike.",
-			"BAN — Base Adresse Nationale (DINUM / IGN, Licence Ouverte 2.0): the `synth-fr-fragment` training shard (144,865 rows) NEW in 6.4.0, and the FR fragment eval board. Street surfaces are disjoint between the two.",
+			"HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training shard (800,000 rows) NEW in 6.7.0, and the `pair-index-gb.bin` placetype-pair index (`neural-weights-en-gb`, this same task). Crown copyright, attribution required.",
+			"LINZ-derived OpenAddresses NZ (CC-BY 4.0): the `synth-nz-v2` training shard (800,000 rows) NEW in 6.7.0.",
+			"OpenAddresses ES tuples (CC-BY per OA source): the `synth-es-pedania-v1` training shard (800,000 rows, below-municipio pedanía place names) NEW in 6.7.0.",
+			"BAN — Base Adresse Nationale (DINUM / IGN, Licence Ouverte 2.0): the `synth-fr-lieudit-v1` training shard (`nom_ld` lieu-dit field) NEW in 6.7.0, additional to the existing `synth-fr-fragment` shard (144,865 rows, 6.4.0).",
+			"Overture Maps Foundation — Addresses theme (CDLA-Permissive-2.0): the `overture-latam` CA/MX training shard (456,230 rows, 6.6.0). Attribution-only, not share-alike.",
 			"OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
 			"OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
 			"OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source): oa-sk coord eval set (free-rider validation)",
@@ -109,7 +112,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v3.8.5-latam-8k (v385), shipped as npm 7.1.0. ONE folded change over 6.5.0: a dedicated `overture-latam` shard (CA 299,809 + MX 156,421 Overture-Addresses rows, weight 6.0) with +CA/+MX in country_weights — the first genuinely-new locale coverage in the arc. THE WIN: MX locality +8.7 (74.0→82.7 on the native-order held-out board) — the model now reads 'Calle Zeverino León 749, 28809 Manzanillo' and places Manzanillo correctly instead of guessing. CA is neutral (Canadian addresses look American; v381 already parsed them — adds coverage-provenance, ships free). Golden 2pp gate PASS: 0 tags >2pp below shipped v381; the one nick is country −1.6 (220 vs 224 / 245, small-N, sub-threshold — the #1104 country channel reacting to the new CA/MX surfaces). Gauntlet PASS 33/33, identical known-xfail profile to v381 (the FR 'Rue du Chevaleret' #1101 xfail persists). Weights-only — no lexicon, inference, or browser change from 6.5.0. KNOWN OPEN: BR was dropped this cycle — Overture rows are country-implicit (0% carry a country token), so training on 666k of them dilutes country emission (−5.3pp, fails the gate); the fix is a countryAppendFraction intl-render on the Overture adapter (tracked for v7.2). CALIBRATION: the isotonic tables carry from the v5.3.0 lineage; opt-in, default output unaffected; re-fit is a tracked follow-up.",
+	"notes": "v3.11.0-deploc-feed step-8000 (\"feed-8k\"), STAGED not promoted. Escalates the confirmed-but-skewed probe-2 mechanism (v3.10.1-gb-probe2: first-ever decode-layer dependent_locality emissions, GB 1/69, NZ 3/246) by feeding FOUR locales at once (GB+NZ+ES+FR-lieudit) instead of GB alone, holding total dep-loc stream density constant (~6.66%) while dropping the max single-locale share 20.2%→6.1% — the fix for probe-2's golden-us/FR-fragment/val skew costs. THE WIN, measured with the placetype-pair prior ON at its calibrated δ (a sibling arc, not this one): GB dependent_locality full-pipeline recall 67/69 (97.1%) — but the three-way ablation (below) shows this is almost entirely the PRIOR's contribution, not the checkpoint's own resurrected classifier row (raw decode-layer GB emission without the prior is 0/69 for feed-8k — see the ablation table). NZ, ES, and FR-lieudit have no equivalent prior to lean on and show the checkpoint's own resurrection is weak: NZ 0/246 (STILL zero, despite being the arc's original target locale), ES 7/65 (10.8%), FR-lieudit 1/80 (1.25%). All six pre-registered guards pass at feed-8k: golden us −0.5pp / fr +1.2pp (both within-or-favorable), FR-fragment bare-locality 0.988 (PASS, beats v385's own 0.983 — feed-2k FAILS this outright at 0.665, the reason feed-8k not feed-2k is the ratified ship checkpoint), val macro_f1 +1.29pp (favorable), 6 demo presets byte-identical, error-analysis no tag >2pp (worst: street −1.5pp). DIGIT GATE REVISION (operator-ratified 2026-07-23, Teffen Ellis): the pre-registered digit bar was originally read against the v3.10/v3.10.1 GB-probe lineage's OWN prior 8k checkpoint (bare-street-hn 0.902, a same-lineage probe-run number, not a real ship baseline) — that comparison is not apples-to-apples for THIS feed-8k checkpoint, which forked from v385 (6.6.0), not from a GB-probe ancestor. The bar is RESTATED against v385's own fresh-measured baseline (0.755, same session, same board): feed-8k scores 0.868, a +11.3pp gain over the correct baseline — PASS. The 0.902 probe-anchor number is retained here as historical context only, not as the active bar. GAUNTLET: FAILS (Task 8, 2026-07-23) — see phase field above; this is the one open ship blocker. CALIBRATION: the isotonic tables carry from the v5.3.0 lineage unchanged; opt-in, default output unaffected; re-fit is a tracked follow-up.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
@@ -131,8 +134,85 @@
 		"held_out_ece_calibrated": 0.0017,
 		"note": "RE-FIT on v5.3.0 (2026-07-04): calibration.json + calibration-per-locale.json are now fitted on THIS model's confidence distribution (35,600 spans over the 8k held-out set), not carried from v4.x. The from-scratch model was under-confident (meanConf 0.913 vs acc 0.980, gap -0.067); the fit corrects held-out OA ECE 0.0698→0.0017 (overall 0.0677→0.0028, per-locale NL 0.166→0.000 / DE 0.114→0.003). Reproduce: collect-span-confidences.ts → fit-isotonic-calibration.py --model-version 5.3.0. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "models/quantized/model-v385-latam8k-int8.onnx under $MAILWOMAN_DATA_ROOT; training output on Modal volume mailwoman-training:/output-v384-latam-probe-s42/checkpoints/step-008000",
+	"base_relpath": "models/quantized/model-v3110-deploc-feed-step-008000-int8.onnx under $MAILWOMAN_DATA_ROOT; training output on Modal volume mailwoman-training:/output-v3110-deploc-feed-s42/checkpoints/step-008000",
 	"eval": {
+		"gate_2026_07_23_v3110_deploc_feed_8k": {
+			"$comment": "Task 8 (placetype-pair-prior arc, ship-prep) full battery + Gauntlet, feed-8k vs v385 (6.6.0), all measured fresh this session (ONNX CPU int8). Full transcript: .superpowers/sdd/task-8-prep-report.md; the calibration + checkpoint-choice battery this gate builds on: .superpowers/sdd/task-7-report.md.",
+			"verdict": "SHIP-BLOCKED — every pre-registered guard PASSES; the Gauntlet (a standing ship-gate requirement, not one of the six pre-registered guards) FAILS on its metamorphic layer. Not promoted pending operator triage.",
+			"golden_us_fr": {
+				"us_micro_f1": {
+					"v385_fresh": 0.867,
+					"feed_8k": 0.862,
+					"delta_pp": -0.5,
+					"bar": "±0.7pp of v385",
+					"result": "PASS"
+				},
+				"fr_micro_f1": {
+					"v385_fresh": 0.899,
+					"feed_8k": 0.911,
+					"delta_pp": 1.2,
+					"bar": "±0.7pp of v385",
+					"result": "outside magnitude, favorable direction"
+				}
+			},
+			"fr_fragment_bare_locality": {
+				"v385_fresh": [0.983, [0.964, 0.991]],
+				"feed_8k": [0.988, [0.971, 0.995]],
+				"feed_2k_for_contrast": [0.665, [0.617, 0.709]],
+				"bar": ">= 0.90",
+				"result": "PASS (feed-8k); feed-2k FAILS outright — the deciding reason feed-8k is the ratified ship checkpoint over feed-2k"
+			},
+			"digit_bare_street_hn_gate_revision": {
+				"$comment": "Operator-ratified 2026-07-23 (Teffen Ellis). The pre-registered bar (0.902) was a same-lineage GB-probe checkpoint's own number, not a real ship baseline for a v385-forked checkpoint. Restated against v385's own fresh baseline, measured same session same board.",
+				"v385_fresh_baseline": 0.755,
+				"feed_8k": [0.868, [0.831, 0.897]],
+				"delta_pp": 11.3,
+				"old_bar_0_902_probe_anchor": "historical context only, not the active bar — CI [0.831,0.897] excludes it",
+				"result": "PASS (bar restated against 0.755; +11.3pp)"
+			},
+			"val_macro_f1": {
+				"v385": 0.7047,
+				"feed_8k": 0.7176,
+				"delta_pp": 1.29,
+				"bar": "±1.0pp of v385",
+				"result": "outside magnitude, favorable direction"
+			},
+			"dependent_locality_boards": {
+				"gb_prior_on_at_delta_5": { "n": 69, "emit": 69, "tag_correct": 67, "tag_correct_pct": 97.1 },
+				"nz_checkpoint_only": { "n": 246, "emit": 0, "tag_correct": 0 },
+				"es_checkpoint_only": { "n": 65, "emit": 9, "tag_correct": 7, "tag_correct_pct": 10.8 },
+				"fr_lieudit_checkpoint_only": { "n": 80, "emit": 2, "tag_correct": 1, "tag_correct_pct": 1.25 }
+			},
+			"dependent_locality_ablation": {
+				"$comment": "The prior — not the checkpoint's own resurrected classifier row — carries nearly all of GB's measured recall. NZ/ES/FR-lieudit have no equivalent prior and show the checkpoint's own resurrection is weak-to-absent.",
+				"v385_plus_prior_at_delta_6_rung3_control": { "n": 69, "emit_tag_correct": "3/69", "note": "weights matter" },
+				"feed_checkpoint_prior_off": {
+					"n": 69,
+					"emit_tag_correct": "0/69",
+					"note": "prior matters (either checkpoint)"
+				},
+				"feed_checkpoint_prior_on_at_delta_star": {
+					"n": 69,
+					"emit": "69/69",
+					"tag_correct": "67/69 (97.1%)",
+					"note": "together: +67pp"
+				}
+			},
+			"venue_confound_fp": {
+				"delta_star": 5.0,
+				"fp": "48/6500",
+				"fp_pct": 0.738,
+				"floor": "<= 122/6500 (the retired δ=6.0 working number)"
+			},
+			"demo_presets": "6/6 byte-identical (both weights worlds — en-us control path AND en-gb weights with the prior wired)",
+			"error_analysis_2pp_rule": { "worst_mover": "street -1.5pp", "no_tag_regresses_gt_2pp": true, "result": "PASS" },
+			"gauntlet": {
+				"regression": "PASS (33/33 gated; 1 tracked known_fail now passes and should be promoted to status=pass — fr-chat-qui-peche-street-swallows-locality)",
+				"metamorphic": "FAIL — NEW gate-failing violation: INV[comma-drop] '1600 Pennsylvania Ave NW, Washington DC 20500' -> comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 -> 0,0). v385 HOLDS this exact case (confirmed same session). feed-2k independently FAILS the same layer with DIFFERENT violations on '350 Fifth Avenue, New York, NY' (283.5km off) — reads as a lineage-wide v3.11.0-deploc-feed robustness regression on NY/DC-class admin resolution, not a single-checkpoint fluke. Neither Task 6 nor Task 7 ran the Gauntlet; this is a NEW finding from Task 8.",
+				"held_out": "PASS — z=0.00 (candidate not significantly worse), n=300 fresh FR/BAN draw",
+				"combined_verdict": "FAIL — do not ship (until the metamorphic regression above is triaged)"
+			}
+		},
 		"gate_2026_07_18_v710_camx": "v6.0.0-shipped-baseline gate + golden 2pp gate (v385 vs shipped v381, channels-on, same run): PASS. Golden: exact-match 24.2% (1105 vs 1104, +1 row), country 89.8 vs 91.4 (−1.6, small-N 220/245, sub-threshold — the only mover >0.5pp down), region 78.1 vs 78.6 (−0.5), locality/postcode/street/house_number flat. NO tag >2pp down. Native-order held-out board: MX locality 74.0→82.7 (+8.7), CA neutral. Gauntlet (eval gauntlet --candidate): regression 33/33 PASS; metamorphic INV 62/63, DIR 3/3, BAND 16/21 — identical known-xfail profile to shipped v381 (the 1 INV[comma-drop] xfail is the pre-existing FR #1101 case; US comma-drop held). No new regression. Grade: docs/articles/evals/2026-07-18-v710-camx-latam-grade.md.",
 		"gate_2026_07_17_v650_punct_digit": "v6.0.0-shipped-baseline gate: PASS, 0 tags >2pp below shipped v310, +2.3pp us.country_homograph_f1 (only >2pp mover). Gauntlet: PASS — clear to ship (regression 33/33; metamorphic INV[comma-drop] 9/10 held — the US '1600 Pennsylvania Ave NW Washington DC' comma-free rooftop RESTORED, the FR 'Rue du Chevaleret' remains the tracked #1101 xfail; held-out FR/BAN n=300 not significantly worse). Digit ownership (NO board 3): bare-street-hn 0.693->0.733 (+4pp), bare-pc guard held 1.000. Grade: package-shaped --weights-cache (#718), int8 candidate vs int8 shipped, on 2026-07-17.",
 		"gate_2026_07_16_v640_fr_fragment": {
@@ -411,11 +491,19 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Shipped: model.onnx = int8 v385-latam8k (v3.8.5-latam-8k, init_from v381); tokenizer v0.9.0-multisplice (UNCHANGED). md5 of the graded int8 artifact.",
+		"$comment": "The SHIPPED artifact's md5 — this is the identity `neural-weights-en-us/scripts/link-dev-weights.ts`'s #397 guard and `mailwoman eval gauntlet`'s self-check (#1024 drift guard) verify the dev symlink / materialized tarball against, repo-wide. Deliberately LEFT AT v385 (6.6.0): 6.7.0 is a STAGED, NOT-PROMOTED candidate (see phase) — flipping this to the candidate's md5 before the operator actually promotes would silently repoint every other branch's `yarn test`/local dev at unshipped bytes. The candidate's own identity is `staged_candidate_files_md5` below; only THAT flips to feed-8k. Bump this block (and the two DEFAULT_* paths in link-dev-weights.ts) together, in lockstep, at actual promotion time.",
 		"model.onnx": "700f3cf4c08f31536f0bc053c281b19e",
 		"tokenizer.model": "5c01cdcd4ae25849c5cb26b69fd3dde9"
 	},
+	"staged_candidate_files_md5": {
+		"$comment": "6.7.0's candidate artifact (feed-8k) — NOT yet the shipped identity above. int8, v3.11.0-deploc-feed step-008000, init_from v385 (6.6.0) step-8000. Tokenizer UNCHANGED from the shipped v385 tokenizer (same v0.9.0-multisplice bytes — no tokenizer change this cycle).",
+		"model.onnx": "7f75fc449d8abcaa06fb6d4a5502ced7",
+		"tokenizer.model": "5c01cdcd4ae25849c5cb26b69fd3dde9",
+		"model_bytes": 39411976,
+		"source_path": "$MAILWOMAN_DATA_ROOT/models/quantized/model-v3110-deploc-feed-step-008000-int8.onnx"
+	},
 	"capabilities": {
+		"$carried_forward_comment": "NOT regenerated for 6.7.0 (Task 8 ship-prep did not re-run `mailwoman eval capability-manifest`) — these numbers are the 6.6.0/v385 measurement, carried forward as the best available reference. Flagged explicitly rather than silently reused; a fresh manifest is a tracked follow-up if 6.7.0 promotes.",
 		"server": {
 			"us": {
 				"street_prefix": {
