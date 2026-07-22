@@ -19,8 +19,9 @@
  *   `.superpowers/sdd/task-7-report.md`, a held-out register-row + venue-confound sweep) — the real
  *   `pair-index-gb.bin` artifact now ships δ=5.0 in its header (feed-8k's calibrated optimum and Task
  *   7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment
- *   bare-locality bar). Default OFF: an omitted `opts` (no configured index) produces a zero matrix,
- *   byte-identical to every parse before this task.
+ *   bare-locality bar). Default OFF: when an omitted `opts` field is supplied to `parse()`, the prior
+ *   falls back to the weights configuration's default wiring for the locale (auto-wired for en-gb-shaped
+ *   caches); to disable the prior entirely, pass an explicit null-index override to the config.
  *
  *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict.** `opts.probeMode` selects HOW a
  *   candidate is built, and it matters a great deal:
@@ -145,7 +146,7 @@
  *   **Bias write.** `+delta` on `B-<tag>` (window's first piece) / `I-<tag>` (the rest), same
  *   per-piece pattern as `fst-prior.ts`'s `applyBias` — `Math.max` against any bias already written by
  *   an earlier window, never additive-stacked. `delta` resolves as `index.delta ?? opts.biasScale ??`
- *   {@link DEFAULT_DELTA} — the real artifact's header carries `delta` (6.0), so `biasScale` exists
+ *   {@link DEFAULT_DELTA} — the real artifact's header carries the calibrated per-country `delta` (5.0 for GB as of the 2026-07-22 calibration; see task-7 sweep), so `biasScale` exists
  *   only as an override for a hand-built `PairIndexLike` test double that omits it.
  *
  *   Missing index (`opts` undefined, or `opts.index` absent) → zero matrix, composes harmlessly with
@@ -168,7 +169,8 @@ const WINDOW_MAX_WORDS = 3
 
 /**
  * Bias magnitude used when neither the index nor the caller supplies one. Real usage always has `index.delta` (the
- * Task-3 artifact's header carries 6.0), so this is a defensive fallback, not a tuned value.
+ * calibrated per-country delta from the artifact header, 5.0 for GB as of the 2026-07-22 calibration; see task-7
+ * sweep), so this is a defensive fallback, not a tuned value.
  */
 const DEFAULT_DELTA = 1.0
 
