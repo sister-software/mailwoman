@@ -14,16 +14,21 @@
  *       of its own (declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`), so resolution
  *       must fall through to the en-us package dir (`source` suffixed `+base`) while still resolving
  *       en-gb's OWN `postcode-gb.bin` locally.
+ *   - The placetype-pair-prior arc Task 5 block is the arc's end-to-end smoke: en-gb resolves
+ *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
+ *       real GB dependent_locality address parses with the tag applied. A companion case proves the
+ *       prior is INERT on en-us (no sibling shipped) against the identical GB-shaped input.
  */
 
 import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "../index.ts"
+import { PairIndexResolver } from "../pair-index-resolver.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const MODEL_PATH =
@@ -41,6 +46,27 @@ const CLI_PATH = repoRootPath("mailwoman", "out", "cli.js")
 const GB_WOF_DB_PATH = dataRootPath("wof", "postalcode-gb.db")
 const haveCLI = existsSync(CLI_PATH)
 const haveGBWofDB = existsSync(String(GB_WOF_DB_PATH))
+
+// The Task 5 smoke's en-gb link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
+// pair-index-gb.bin from the PPD tuples CSV (see that script's header) — needs the source CSV on disk
+// same as the postcode-binary build needs the WOF shard above.
+const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
+const havePPDSource = existsSync(String(PPD_SOURCE_CSV_PATH))
+
+// Both en-gb tests below shell out to neural-weights-en-gb's link-dev-weights.ts, which (on a COLD
+// worktree with no pair-index-gb.bin yet) builds it from the ~25.6M-row PPD tuples CSV — several
+// minutes, well past vitest's global 15s default (see that script's header for the skip-if-exists
+// fast path this only matters for the FIRST run). Generous per-test timeout, not a perf target.
+const LINK_SCRIPT_TIMEOUT_MS = 600_000
+
+/**
+ * A real GB address whose middle place ("Fishburn") is the verified PROBE OK (child, parent) pair from the Task-3
+ * artifact ("Fishburn" / "Stockton-on-Tees" → dependent_locality). Deliberately house-number-less: with a leading house
+ * number ("14 Beulah Hill, …") the base model's own B-locality logit for "Fishburn" is confident enough (raw gap ~6.9)
+ * that the +6.0 pair-index delta narrows but does not flip it — this phrasing's unbiased margin is narrow enough for
+ * the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
+ */
+const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, TS21 3AB"
 
 describe("resolveWeights — explicit-path mode", () => {
 	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", () => {
@@ -112,6 +138,60 @@ describe("resolveWeights — package auto-resolve", () => {
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const tree = await cls.parse("10 Downing Street, London SW1A 2AA")
 			expect(tree.roots.length).toBeGreaterThan(0)
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
+})
+
+// placetype-pair-prior arc, Task 5: the arc's end-to-end proof. `pairIndexPath` resolves on en-gb,
+// `loadFromWeights` constructs a country-gated `PairIndexResolver` default from it, and a real GB
+// dependent_locality address decodes with the tag applied. The en-us companion proves the SAME input
+// produces NO bias when the package ships no sibling index — the prior degrades to byte-stable, not to
+// a crash or a silent wrong-country apply.
+describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task 5 smoke)", () => {
+	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+		"en-gb: pairIndexPath resolves, the country-gated default fires, and Fishburn decodes as dependent_locality",
+		async () => {
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+
+			const r = resolveWeights({ locale: "en-gb" })
+			expect(r.pairIndexPath).toMatch(/neural-weights-en-gb\/pair-index-gb\.bin$/)
+
+			// Probe the built artifact directly FIRST (per the brief) — establishes that
+			// ("fishburn", "stocktonontees") is genuinely a PROBE OK pair in THIS build before trusting
+			// the end-to-end parse below to prove anything about the wiring.
+			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			expect(resolver.header.country).toBe("gb")
+			expect(resolver.probe("fishburn", "stocktonontees")).toBe("dependent_locality")
+
+			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
+			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
+			expect(placetypePairRecord?.applied).toBe(true)
+
+			const json = await cls.parseJSON(GB_DEPENDENT_LOCALITY_ADDRESS)
+			expect(json.dependent_locality).toBe("Fishburn")
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
+
+	test.skipIf(!haveModel || !haveCLI)(
+		"en-us: no pair-index sibling shipped — the SAME GB-shaped input applies NO placetype-pair bias",
+		async () => {
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const r = resolveWeights({ locale: "en-us" })
+			expect(r.pairIndexPath).toBeUndefined()
+
+			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
+			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
+			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
+			expect(placetypePairRecord?.applied).toBe(false)
 		}
 	)
 })

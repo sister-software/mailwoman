@@ -13,3 +13,9 @@
 # The #1104 country soft-feed channel's lexicon artifact (same treatment as anchor-lexicon-v1.json
 # above — copied from data/gazetteer/ at dev-link/publish time, not committed here).
 /country-surface-lexicon-v1.json
+
+# The placetype-pair index (placetype-pair-prior arc, Task 5) — built from the HM Land Registry PPD
+# tuples CSV by `scripts/link-dev-weights.ts` for local dev. Release-pipeline wiring (getting the real
+# artifact into the publish tarball) is Task 8's scope, not this one — same not-committed treatment as
+# postcode-*.bin above in the meantime.
+/pair-index-*.bin

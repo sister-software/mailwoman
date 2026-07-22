@@ -161,6 +161,14 @@ export interface NeuralAddressClassifierConfig {
 	spanProposer?: SpanProposerConfig | false
 
 	/**
+	 * Default placetype-pair index (placetype-pair-prior arc, Task 5 — see `ParseOpts.placetypePair` for the full
+	 * matching contract). Set by `loadFromWeights` when the resolved weights package ships a country-matching
+	 * `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse `opts.placetypePair` overrides this
+	 * default; omitting both is the byte-stable no-prior default (undefined → zero matrix).
+	 */
+	placetypePair?: PlacetypePairPriorOpts
+
+	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
 	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
 	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence gates
@@ -248,6 +256,7 @@ export class NeuralAddressClassifier {
 			{ parseGazetteerLexicon },
 			{ parseCountryLexicon },
 			{ PostcodeBinaryResolver },
+			{ PairIndexResolver },
 			fs,
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
@@ -256,6 +265,7 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
 			import(/* webpackIgnore: true */ "./country-inference.ts"),
 			import(/* webpackIgnore: true */ "./postcode-binary-resolver.ts"),
+			import(/* webpackIgnore: true */ "./pair-index-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
 		const resolved: ResolvedWeights = resolveWeights(opts)
@@ -354,6 +364,37 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		// Placetype-pair index sibling (placetype-pair-prior arc, Task 5): construct a PairIndexResolver
+		// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one
+		// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
+		// not something to apply anyway): the index header's `country` must equal the resolved locale's
+		// country subtag, or the default is skipped with a single warning naming both. Unlike the
+		// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
+		// case here — the prior is opt-in plumbing (Task 7 owns the ship decision), so a missing/mismatched
+		// index degrades silently to the pre-Task-5 byte-stable default, loud only via the gate warning.
+		let placetypePair: PlacetypePairPriorOpts | undefined
+
+		if (resolved.pairIndexPath) {
+			try {
+				const pairIndexResolver = new PairIndexResolver(new Uint8Array(fs.readFileSync(resolved.pairIndexPath)))
+				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
+
+				if (pairIndexResolver.header.country === localeCountry) {
+					placetypePair = { index: pairIndexResolver }
+				} else {
+					console.warn(
+						`[mailwoman/neural] loadFromWeights: pair-index country "${pairIndexResolver.header.country}" ` +
+							`(${resolved.pairIndexPath}) does not match the resolved locale's country "${localeCountry}" — ` +
+							`skipping the placetype-pair prior default.`
+					)
+				}
+			} catch (err) {
+				console.error(
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.pairIndexPath}: ${(err as Error).message}`
+				)
+			}
+		}
+
 		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
@@ -371,6 +412,7 @@ export class NeuralAddressClassifier {
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
+			...(placetypePair ? { placetypePair } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
 		})
@@ -627,12 +669,15 @@ export class NeuralAddressClassifier {
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
 
-		// Placetype-pair prior (placetype-pair-prior arc, Task 4): retrieval-augmented complement to the
-		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Default OFF (no
-		// configured index → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
+		// Placetype-pair prior (placetype-pair-prior arc, Tasks 4-5): retrieval-augmented complement to the
+		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Config-level
+		// default set by loadFromWeights (Task 5's country-gated construction); per-call opts override it,
+		// same "opts ?? cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below. Default
+		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
 		// might bias toward still gets masked out.
-		const placetypePairPrior = opts?.placetypePair
-			? buildPlacetypePairPriors(opts.placetypePair, pieces, this.labels)
+		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
+		const placetypePairPrior = placetypePairOpt
+			? buildPlacetypePairPriors(placetypePairOpt, pieces, this.labels)
 			: undefined
 
 		if (placetypePairPrior) {

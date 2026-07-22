@@ -23,6 +23,15 @@
  *   place via the compiled `gazetteer postcode-binary` CLI (same command
  *   `scripts/copy-weights.ts` runs at publish time), mirroring how `postcode-fr.bin`
  *   already lives as a real (non-symlinked) file in `neural-weights-fr-fr/`.
+ *
+ *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) the same way: no
+ *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
+ *   the compiled `gazetteer pair-index` CLI. `--delta 6.0` is the rung-3-measured value baked
+ *   into the real `docs/static/mailwoman/pair-index-gb.bin` artifact's header (Task 3) — LOUD
+ *   NOTE: this is NOT a final calibrated number, it's the rung-3 probe-set delta; a future
+ *   calibration task owns re-setting it, and this script's literal must move in lockstep with
+ *   whatever that task lands (same discipline as the `DEFAULT_MODEL`/`DEFAULT_TOKENIZER`
+ *   lockstep comment above).
  */
 
 import { spawnSync } from "node:child_process"
@@ -155,4 +164,55 @@ if (!existsSync(CLI)) {
 		process.exit(1)
 	}
 	console.log(`built ${POSTCODE_BIN_DEST}`)
+}
+
+// `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's
+// derived from the HM Land Registry PPD tuples CSV) — build it the same way, via the compiled
+// `gazetteer pair-index` CLI. `--delta 6.0` mirrors the rung-3-measured value baked into the real
+// `docs/static/mailwoman/pair-index-gb.bin` header (Task 3) — see this file's header comment: NOT
+// a final calibrated number, only the rung-3 probe-set delta. Skips with a warning (not a hard
+// failure) so a worktree without the PPD source CSV can still link everything else.
+//
+// UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds), the PPD tuples CSV is
+// ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min). `weights.test.ts`
+// invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING
+// UNCONDITIONALLY here would make every test run pay that cost. Skip when the artifact already exists
+// — delete `pair-index-gb.bin` by hand (or bump `--delta`/change the source) to force a rebuild.
+const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
+const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
+
+if (existsSync(PAIR_INDEX_BIN_DEST)) {
+	console.log(`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} already exists (delete it to force a rebuild)`)
+} else if (!existsSync(CLI)) {
+	console.error(
+		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build pair-index-gb.bin.`
+	)
+} else if (!existsSync(String(PPD_SOURCE_CSV))) {
+	console.error(
+		`WARNING: missing ${PPD_SOURCE_CSV} — pair-index-gb.bin not built; the placetype-pair prior default will resolve OFF for GB.`
+	)
+} else {
+	const result = spawnSync(
+		process.execPath,
+		[
+			CLI,
+			"gazetteer",
+			"pair-index",
+			"--out",
+			PKG_DIR,
+			"--country",
+			"gb",
+			"--source",
+			String(PPD_SOURCE_CSV),
+			"--delta",
+			"6.0",
+		],
+		{ stdio: "inherit" }
+	)
+
+	if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
+		console.error(`ERROR: failed to build ${PAIR_INDEX_BIN_DEST} (exit ${result.status})`)
+		process.exit(1)
+	}
+	console.log(`built ${PAIR_INDEX_BIN_DEST}`)
 }
