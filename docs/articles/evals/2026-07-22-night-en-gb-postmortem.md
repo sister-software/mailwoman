@@ -51,6 +51,14 @@ The null condition is **not** met — the tag is learnable; the _schedule_ is wr
 - ES semantics preserved via new source name + explicit flag; findLastIndex formatter fix landed with the ES shard's first-match drift documented, not rebuilt.
 - Selective staging of `train_remote.py` (our 3 sync fns committed; operator's `sync_latam_br` restored untouched to the working tree).
 
+## Addendum (08:00–09:30 UTC): the fork is launch-ready
+
+Post-wrap idle work turned the morning fork from "decide, then engineer" into "decide, then launch":
+
+- **`fork-implementation-notes.md`** (SDD scratch): full trace of the resume path. Key discovery — `optim.load_state_dict` **silently clobbers config LRs back to checkpoint values** while the `[resume-drift]` audit prints the new values (false confidence). A config-only two-phase resume would have been a silent no-op; options A and B were both unimplementable as designed.
+- **Fixed and reviewed** (2 commits on the PR): `62d73672` re-stamps live-config LRs onto param groups + scheduler after resume-load (loud per-group print, byte-identical silent path); `32b58ed4` single-sources the group labels from `build_optimizer` (tuple return — a group-dict key would suffer the same load_state_dict clobber, live-probed).
+- Also landed post-wrap: ES/FR golden boards (`58497b30` — the four-locale dep-loc eval set is complete), the EPC×UPRN design probe (GO: 99.99% join, WGS84 in-file, smoke 5/5), and catalog corrections in `.notes/data-sources.md`.
+
 ## Numbers
 
 Shift span 04:42–~08:00 UTC (wrap-work continuing to 15:00 under cron). Modal: 4 training runs (2×2k probe-class, 1×2k rerun, 1×8k) + ~8 export/quantize jobs ≈ **1.3 A100-hours**. GPU lost to error: ~5 min (run B). Local: 3 shard builds (800k each) + boards + 25.67M-row extraction. NaN incidents: 0. CI failures: 0. Demo regressions: 0 (nothing shipped). Agents dispatched: ~25 (implementers, reviewers, fixers, ops, probes); every code commit task-reviewed + whole-branch reviewed.
