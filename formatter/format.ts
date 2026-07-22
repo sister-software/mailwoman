@@ -28,21 +28,64 @@ import fragariaTemplates from "@fragaria/address-formatter/src/templates/templat
 import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
 import type { ComponentTag } from "@mailwoman/core/types"
 
+/** Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace. */
+function slotPattern(slot: string): RegExp {
+	return new RegExp(`\\{\\{\\{\\s*${slot}\\s*\\}\\}\\}`)
+}
+
 /**
- * Country codes whose vendored OpenCage `address_template` renders the sub-locality slot as `{{{quarter}}}` and does
- * NOT also reference `{{{suburb}}}` — derived from the vendored template data itself
- * (`@fragaria/address-formatter/src/templates/templates.json`), not a hardcoded country list. `dependent_locality` is
- * mapped to `suburb` unconditionally below (that's what NZ's template reads, and most templates that carry a
- * sub-locality slot use `suburb`); for the countries in this set, `suburb` is a dead fallback slot the primary template
- * never reaches (GB is the one that surfaced this — see `.superpowers/sdd/task-4-report.md`), so we additionally mirror
- * the value onto `quarter` so it actually renders.
- *
- * One country (`BR`) references BOTH `suburb` and `quarter` in its primary template for two distinct concepts (a
- * finer-grained "quarter" line above the neighbourhood line) — it's deliberately excluded from this set so
- * `dependent_locality` doesn't double-render there.
+ * `true` if `template` references `{{{slot}}}` OUTSIDE of any `{{#first}}...{{/first}}` block. A slot named inside a
+ * `{{#first}}` alternation (Fragaria's Mustache lambda that renders every alternative then keeps only the first
+ * non-empty one, joined by `||`) is not an independently-renderable line — it only surfaces when every alternative
+ * ahead of it in the chain is empty. Several "neither slot" templates reference `quarter`/`suburb`-adjacent tags
+ * (`village`, `hamlet`, `place`) purely as fallback alternatives for `city` or `road`, which are always populated by
+ * this formatter — so those references never actually render and are unsafe to target.
  */
-const QUARTER_ONLY_COUNTRY_CODES: ReadonlySet<string> = (() => {
-	const codes = new Set<string>()
+function hasStandaloneSlot(template: string, slot: string): boolean {
+	if (!slotPattern(slot).test(template)) return false
+
+	const firstBlockPattern = /\{\{#first\}\}([\s\S]*?)\{\{\/first\}\}/g
+	let strippedTemplate = template
+	let match: RegExpExecArray | null
+
+	while ((match = firstBlockPattern.exec(template))) {
+		strippedTemplate = strippedTemplate.replace(match[0], "")
+	}
+
+	return slotPattern(slot).test(strippedTemplate)
+}
+
+/**
+ * Derived, at module load, from the vendored template data (`@fragaria/address-formatter/src/templates/templates.json`)
+ * — never a hardcoded country list. Classifies every real 2-letter country code's primary `address_template` by how (if
+ * at all) it can render a sub-locality/`dependent_locality` value:
+ *
+ * - `quarterOnly` — renders `{{{quarter}}}` but not `{{{suburb}}}` (GB and friends — see
+ *   `.superpowers/sdd/task-4-report.md` / `task-4a-report.md`). `dependent_locality` is mirrored onto `quarter`.
+ * - `placeOnly` — references NEITHER `{{{suburb}}}` NOR `{{{quarter}}}`, but DOES carry a standalone `{{{place}}}` line
+ *   (not buried inside a `{{#first}}` alternation with `road`/`city`, where it would never render — see
+ *   `hasStandaloneSlot`). FR's lieu-dit is the confirmed case: `{{{place}}}` sits on its own line, exactly where French
+ *   postal convention (La Poste's line 5, "Lieu-dit") puts it — directly above the postcode+town line.
+ *   `dependent_locality` is mirrored onto `place`.
+ * - `postRender` — references NEITHER slot AND has no standalone `place` line either (ES's pedanía is the confirmed case
+ *   — its template's only `place`/`village`/`hamlet` references are folded into the `{{#first}}` alternation for
+ *   `city`, which `city` itself always wins). These countries get `formatAddress`'s post-render line-injection fallback
+ *   (see `injectDependentLocalityLine`) — there is no template-native slot to target.
+ *
+ * `dependent_locality` is mapped to `suburb` unconditionally in `toOpenCageComponents` regardless of this
+ * classification (that's what NZ and the ~66 other "suburb-only" templates read directly); `BR` references BOTH
+ * `suburb` and `quarter` for two distinct concepts and is excluded from all three sets by construction (its template
+ * already renders `dependent_locality` via the unconditional `suburb` mapping — mirroring onto `quarter` too would
+ * double-render the same value on two lines).
+ */
+const DEPENDENT_LOCALITY_SLOTS: {
+	quarterOnly: ReadonlySet<string>
+	placeOnly: ReadonlySet<string>
+	postRender: ReadonlySet<string>
+} = (() => {
+	const quarterOnly = new Set<string>()
+	const placeOnly = new Set<string>()
+	const postRender = new Set<string>()
 	const templates = fragariaTemplates as Record<string, { address_template?: string }>
 
 	for (const [code, def] of Object.entries(templates)) {
@@ -54,15 +97,21 @@ const QUARTER_ONLY_COUNTRY_CODES: ReadonlySet<string> = (() => {
 
 		if (!template) continue
 
-		const hasQuarter = /\{\{\{\s*quarter\s*\}\}\}/.test(template)
-		const hasSuburb = /\{\{\{\s*suburb\s*\}\}\}/.test(template)
+		const hasQuarter = slotPattern("quarter").test(template)
+		const hasSuburb = slotPattern("suburb").test(template)
 
 		if (hasQuarter && !hasSuburb) {
-			codes.add(code)
+			quarterOnly.add(code)
+		} else if (!hasQuarter && !hasSuburb) {
+			if (hasStandaloneSlot(template, "place")) {
+				placeOnly.add(code)
+			} else {
+				postRender.add(code)
+			}
 		}
 	}
 
-	return codes
+	return { quarterOnly, placeOnly, postRender }
 })()
 
 /** A partial map of `ComponentTag` → string value — the canonical formatter input. */
@@ -100,14 +149,59 @@ export function formatAddress(components: ComponentDict, country: string, opts: 
 
 	if (Object.keys(ocComponents).length === 0) return ""
 
-	const raw = addressFormatter.format(ocComponents, {
+	let raw = addressFormatter.format(ocComponents, {
 		abbreviate: opts.abbreviate ?? false,
 		appendCountry: opts.appendCountry ?? false,
 	})
 
+	// Last-resort path (see DEPENDENT_LOCALITY_SLOTS.postRender): ES's pedanía and its siblings have no
+	// template-native slot at all — the primary template never surfaces `suburb`/`quarter`/`place`. Splice the
+	// value in as its own line, positioned the way OpenCage's own fallback templates already do it for these
+	// same countries (a dedicated sub-locality line directly above the postcode+city line).
+	if (components.dependent_locality && DEPENDENT_LOCALITY_SLOTS.postRender.has(country.trim().toUpperCase())) {
+		raw = injectDependentLocalityLine(raw, components.locality, components.dependent_locality)
+	}
+
 	const trimmed = raw.replace(/\s+$/g, "")
 
 	return opts.separator !== undefined ? trimmed.replace(/\n+/g, opts.separator) : trimmed
+}
+
+/**
+ * Splice `dependentLocality` in as its own line immediately above the line carrying `locality` (a case-insensitive
+ * substring match against that line only — not the whole rendered string, which would misfire on incidental substring
+ * collisions elsewhere in the address). Used by `formatAddress` for the `DEPENDENT_LOCALITY_SLOTS.postRender` fallback,
+ * where no template slot exists to target directly.
+ *
+ * Idempotent: if `raw` already carries a line that IS `dependentLocality` verbatim (case/whitespace-insensitive), no
+ * second line is inserted. If `locality` is missing or doesn't appear on any line of `raw`, there's no safe anchor to
+ * splice against, so `raw` is returned unchanged (matches the pre-fix behavior of silently dropping the value, rather
+ * than guessing a position).
+ *
+ * Exported for testing.
+ */
+export function injectDependentLocalityLine(
+	raw: string,
+	locality: string | undefined,
+	dependentLocality: string
+): string {
+	const lines = raw.split("\n")
+	const normalizedDepLoc = dependentLocality.trim().toLowerCase()
+
+	if (lines.some((line) => line.trim().toLowerCase() === normalizedDepLoc)) {
+		return raw
+	}
+
+	if (!locality) return raw
+
+	const normalizedLocality = locality.trim().toLowerCase()
+	const anchorIndex = lines.findIndex((line) => line.toLowerCase().includes(normalizedLocality))
+
+	if (anchorIndex === -1) return raw
+
+	lines.splice(anchorIndex, 0, dependentLocality)
+
+	return lines.join("\n")
 }
 
 /**
@@ -214,11 +308,16 @@ export function toOpenCageComponents(components: ComponentDict, country: string)
 	if (components.dependent_locality) {
 		out.suburb = components.dependent_locality
 
-		// See QUARTER_ONLY_COUNTRY_CODES: some templates (GB among them) name this slot `quarter`
+		// See DEPENDENT_LOCALITY_SLOTS: some templates (GB among them) name this slot `quarter`
 		// instead of `suburb`. Mirroring the value there is additive — `suburb` stays set for every
 		// other country's template (NZ included) that reads it directly.
-		if (QUARTER_ONLY_COUNTRY_CODES.has(country.trim().toUpperCase())) {
+		const depLocCountryCode = country.trim().toUpperCase()
+
+		if (DEPENDENT_LOCALITY_SLOTS.quarterOnly.has(depLocCountryCode)) {
 			out.quarter = components.dependent_locality
+		} else if (DEPENDENT_LOCALITY_SLOTS.placeOnly.has(depLocCountryCode)) {
+			// FR and friends: neither `suburb` nor `quarter` renders, but a standalone `place` line does.
+			out.place = components.dependent_locality
 		}
 	}
 
