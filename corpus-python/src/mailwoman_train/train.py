@@ -136,48 +136,72 @@ def build_optimizer(
     learning_rate: float,
     weight_decay: float,
     span_head_learning_rate: float | None = None,
+    classifier_learning_rate: float | None = None,
 ) -> AdamW:
-    """AdamW over the model's trainable params, optionally giving the #727 span head its own LR.
+    """AdamW over the model's trainable params, optionally carving out named param groups.
 
-    Why the override exists: a randomly-initialized head on a PRETRAINED encoder cannot train at the
-    encoder's fine-tuning LR. The v3.0.0 probe inherited `lr: 1e-5` from v2.6.4 (a recipe that
-    fine-tunes existing weights) and the fresh span head barely moved in 2k steps — loss 26.4 → 17.8,
-    still falling, raw span NLL ~35 where a converged semi-CRF sits at O(1). Two param groups let the
-    head run at ~1e-3 while the encoder keeps its gentle 1e-5.
+    Why the span-head override exists: a randomly-initialized head on a PRETRAINED encoder cannot
+    train at the encoder's fine-tuning LR. The v3.0.0 probe inherited `lr: 1e-5` from v2.6.4 (a
+    recipe that fine-tunes existing weights) and the fresh span head barely moved in 2k steps — loss
+    26.4 → 17.8, still falling, raw span NLL ~35 where a converged semi-CRF sits at O(1). A carved-out
+    group lets the head run at ~1e-3 while the encoder keeps its gentle 1e-5.
+
+    `classifier_learning_rate` carves the output head (`classifier.`) into its own group —
+    the dead-tag resurrection lever (#456/#1100): a re-initialized output row (see
+    `reinit_label_rows`) cannot climb out of a baked-negative neighborhood at the encoder's
+    fine-tune LR, and Adam's gradient scale-invariance rules out hook-based row scaling.
 
     `LambdaLR` scales each group's OWN `initial_lr` by the same multiplier, so the existing
-    warmup/cosine schedule composes with this for free — both groups keep their shape and their ratio.
+    warmup/cosine schedule composes with this for free — every group keeps its shape and its ratio.
 
     Frozen params (`requires_grad=False`, the `freeze_*` idioms) are excluded from every group.
-    Omitting `span_head_learning_rate` yields exactly one group — byte-identical to every prior recipe.
+    Omitting both overrides yields exactly one group — byte-identical to every prior recipe.
     """
     trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
 
-    if span_head_learning_rate is None:
+    carveouts: list[tuple[tuple[str, ...], float, str]] = []
+    if span_head_learning_rate is not None:
+        carveouts.append((("span_scorer.", "semi_crf."), span_head_learning_rate, "span_head_learning_rate"))
+    if classifier_learning_rate is not None:
+        carveouts.append((("classifier.",), classifier_learning_rate, "classifier_learning_rate"))
+
+    if not carveouts:
         return AdamW([p for _, p in trainable], lr=learning_rate, weight_decay=weight_decay)
 
-    head_prefixes = ("span_scorer.", "semi_crf.")
-    head = [p for n, p in trainable if n.startswith(head_prefixes)]
-    rest = [p for n, p in trainable if not n.startswith(head_prefixes)]
+    groups = []
+    rest = trainable
+    for prefixes, lr, key in carveouts:
+        head = [p for n, p in rest if n.startswith(prefixes)]
+        rest = [(n, p) for n, p in rest if not n.startswith(prefixes)]
+        if not head:
+            raise RuntimeError(
+                f"train.{key} is set but no params match prefixes {prefixes} — "
+                "check the model config enables the corresponding module, or drop the override"
+            )
+        print(f"[{key}] {sum(p.numel() for p in head):,} params @ {lr}")
+        groups.append({"params": head, "lr": lr})
 
-    if not head:
-        raise RuntimeError(
-            "train.span_head_learning_rate is set but no span_scorer/semi_crf params exist — "
-            "set model.use_span_scorer: true, or drop the override"
-        )
-    print(
-        f"[span_head_lr] head={sum(p.numel() for p in head):,} params @ {span_head_learning_rate} | "
-        f"encoder={sum(p.numel() for p in rest):,} @ {learning_rate}"
-    )
+    groups.insert(0, {"params": [p for _, p in rest], "lr": learning_rate})
+    return AdamW(groups, lr=learning_rate, weight_decay=weight_decay)
 
-    return AdamW(
-        [
-            {"params": rest, "lr": learning_rate},
-            {"params": head, "lr": span_head_learning_rate},
-        ],
-        lr=learning_rate,
-        weight_decay=weight_decay,
-    )
+
+def reinit_label_rows(model, labels: list[str]) -> None:
+    """Reset the named BIO labels' classifier rows (weight + bias) to the mean of the LIVE rows.
+
+    The dead-tag mechanism: init_from a checkpoint where a tag never fires leaves its output
+    row deeply negative; class weights only scale a vanishing gradient (v382/v383 no-ops).
+    Mean-of-live re-init (the FVT mean-init precedent) puts the row back on the decision
+    surface so the resurrection LR can steer it.
+    """
+    rows = [LABEL_TO_ID[label] for label in labels]
+    with torch.no_grad():
+        live = [i for i in range(model.classifier.out_features) if i not in rows]
+        mean_w = model.classifier.weight[live].mean(dim=0)
+        mean_b = model.classifier.bias[live].mean()
+        for i in rows:
+            model.classifier.weight[i] = mean_w
+            model.classifier.bias[i] = mean_b
+    print(f"[reinit_label_rows] rows {rows} ← live-row mean ({labels})")
 
 
 def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
@@ -424,6 +448,12 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             sd = torch.load(Path(init_from) / "pytorch_model.bin", map_location="cpu", weights_only=True)
             missing, unexpected = model.load_state_dict(sd, strict=False)
             print(f"[init_from] loaded encoder from {init_from} (missing={len(missing)} unexpected={len(unexpected)})")
+
+        reinit = list(getattr(cfg.train, "reinit_label_rows", []) or [])
+        if reinit:
+            if not init_from:
+                raise ValueError("train.reinit_label_rows requires train.init_from")
+            reinit_label_rows(model, reinit)
     model.to(device)
 
     print(f"device={device} param_count={model_param_count(model):,}")
@@ -466,6 +496,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         learning_rate=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
         span_head_learning_rate=getattr(cfg.train, "span_head_learning_rate", None),
+        classifier_learning_rate=getattr(cfg.train, "classifier_learning_rate", None),
     )
     scheduler = _build_scheduler(optim, cfg.train)
     print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")
