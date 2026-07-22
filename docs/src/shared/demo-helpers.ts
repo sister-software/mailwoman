@@ -105,6 +105,11 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris" },
+	// GB dependent_locality (placetype-pair-prior arc, Task 8) — a verified `gb-golden` board row
+	// (mailwoman/eval-harness/fixtures/gb-golden.jsonl). Only lights up once the demo repoints to a
+	// released en-gb-shaped weights bundle with the pair-index prior wired (post-promotion); harmless
+	// before that (parses through whatever weights the demo currently serves, same as any other input).
+	{ label: "Macclesfield (GB dependent_locality)", address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD" },
 ]
 
 // ---------------------------------------------------------------------------
