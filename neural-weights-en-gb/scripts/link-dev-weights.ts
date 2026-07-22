@@ -32,6 +32,19 @@
  *   calibration task owns re-setting it, and this script's literal must move in lockstep with
  *   whatever that task lands (same discipline as the `DEFAULT_MODEL`/`DEFAULT_TOKENIZER`
  *   lockstep comment above).
+ *
+ *   FRESHNESS GUARD on the skip-if-exists path (review follow-up): a bare `existsSync` skip is
+ *   right for `postcode-gb.bin` (rebuilds in seconds from a small WOF shard) but wrong on its own
+ *   here — an existing `pair-index-gb.bin` could be stale against either (a) a bumped `--delta`
+ *   literal below (the #397-guard-style md5-lockstep discipline the model/tokenizer check above
+ *   already uses, applied to this artifact) or (b) a changed PPD source CSV on disk. Mirrors that
+ *   SAME md5-lockstep pattern: peek the existing binary's header (magic + header block ONLY, via
+ *   `peekPairIndexHeader` — reimplemented locally, not imported from `@mailwoman/neural`, so this
+ *   data-only package doesn't gain a dependency on the ONNX-runtime-carrying workspace for one
+ *   header read) and compare `header.delta` against this script's own `PAIR_INDEX_DELTA` const,
+ *   and `header.sourceMD5s[0]` (the md5 the artifact was actually built from, per
+ *   `pair-index.tsx`'s own self-recorded provenance) against a freshly computed md5 of the CURRENT
+ *   PPD source CSV. Either mismatch forces a loud rebuild instead of a silent skip.
  */
 
 import { spawnSync } from "node:child_process"
@@ -40,7 +53,7 @@ import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = repoRootPath("neural-weights-en-gb")
 // In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this
@@ -68,6 +81,31 @@ function linkForce(src: string, dest: string): void {
 	}
 
 	symlinkSync(src, dest)
+}
+
+/**
+ * Minimal PIX1 header-only reader: magic + header block, same validation as `PairIndexResolver`'s constructor and
+ * `peekPairIndexHeader` (`neural/pair-index-resolver.ts`) — bad-magic throw, future-schema throw — but reimplemented
+ * locally rather than imported, so this data-only weights package doesn't gain a dependency on `@mailwoman/neural`
+ * (which pulls in onnxruntime-node) just to read four header fields. Kept intentionally tiny; if the PIX1 format ever
+ * changes, `pair-index-resolver.ts`'s own header parse is the source of truth this must stay in sync with.
+ */
+function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD5: string | undefined } {
+	const bytes = readFileSync(path)
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+	const MAGIC = 0x31_58_49_50 // "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
+
+	if (view.getUint32(0, true) !== MAGIC) {
+		throw new Error(`pair index: bad magic reading ${path}`)
+	}
+
+	const headerLen = view.getUint32(4, true)
+	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
+		delta: number
+		sourceMD5s?: string[]
+	}
+
+	return { delta: header.delta, sourceMD5: header.sourceMD5s?.[0] }
 }
 
 linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
@@ -168,21 +206,60 @@ if (!existsSync(CLI)) {
 
 // `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's
 // derived from the HM Land Registry PPD tuples CSV) — build it the same way, via the compiled
-// `gazetteer pair-index` CLI. `--delta 6.0` mirrors the rung-3-measured value baked into the real
-// `docs/static/mailwoman/pair-index-gb.bin` header (Task 3) — see this file's header comment: NOT
-// a final calibrated number, only the rung-3 probe-set delta. Skips with a warning (not a hard
+// `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the rung-3-measured value baked into the
+// real `docs/static/mailwoman/pair-index-gb.bin` header (Task 3) — see this file's header comment:
+// NOT a final calibrated number, only the rung-3 probe-set delta. Skips with a warning (not a hard
 // failure) so a worktree without the PPD source CSV can still link everything else.
 //
 // UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds), the PPD tuples CSV is
 // ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min). `weights.test.ts`
 // invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING
-// UNCONDITIONALLY here would make every test run pay that cost. Skip when the artifact already exists
-// — delete `pair-index-gb.bin` by hand (or bump `--delta`/change the source) to force a rebuild.
+// UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact
+// is verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a
+// bumped delta or a changed PPD snapshot silently ship a byte-identical-looking but out-of-date
+// artifact into every test run.
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
+const PAIR_INDEX_DELTA = 6.0
+
+let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
-	console.log(`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} already exists (delete it to force a rebuild)`)
+	try {
+		const { delta: existingDelta, sourceMD5: existingSourceMD5 } = peekPairIndexDeltaAndSourceMD5(PAIR_INDEX_BIN_DEST)
+
+		if (existingDelta !== PAIR_INDEX_DELTA) {
+			console.log(
+				`STALE pair-index-gb.bin: header delta ${existingDelta} !== this script's PAIR_INDEX_DELTA ${PAIR_INDEX_DELTA} — rebuilding.`
+			)
+		} else if (!existsSync(String(PPD_SOURCE_CSV))) {
+			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
+			// delta match (the "missing source, can't build" branch below would fire anyway if this were
+			// stale and needed a rebuild).
+			pairIndexIsFresh = true
+			console.log(
+				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
+			)
+		} else {
+			const currentSourceMD5 = await md5File(String(PPD_SOURCE_CSV))
+
+			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
+				pairIndexIsFresh = true
+				console.log(`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + source md5 match)`)
+			} else {
+				console.log(
+					`STALE pair-index-gb.bin: header source md5 ${existingSourceMD5 ?? "(none recorded)"} != current ` +
+						`${PPD_SOURCE_CSV} md5 ${currentSourceMD5} — rebuilding.`
+				)
+			}
+		}
+	} catch (err) {
+		console.log(`pair-index-gb.bin header unreadable (${(err as Error).message}) — rebuilding.`)
+	}
+}
+
+if (pairIndexIsFresh) {
+	// Nothing to do — the loud skip/rebuild message was already printed above.
 } else if (!existsSync(CLI)) {
 	console.error(
 		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build pair-index-gb.bin.`
@@ -205,7 +282,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 			"--source",
 			String(PPD_SOURCE_CSV),
 			"--delta",
-			"6.0",
+			String(PAIR_INDEX_DELTA),
 		],
 		{ stdio: "inherit" }
 	)

@@ -18,6 +18,20 @@
  *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
  *       prior is INERT on en-us (no sibling shipped) against the identical GB-shaped input.
+ *   - Task-5 REVIEW FOLLOW-UP (this file's "placetype-pair prior" describe block): the block used to
+ *       assert a single argmax flip on `GB_DEPENDENT_LOCALITY_ADDRESS`, whose measured margin at the
+ *       shipped δ=6.0 is only ~0.211 logits — any future recalibration of that delta could flip the
+ *       assertion for reasons having nothing to do with wiring correctness. Split into three tiers: (a)
+ *       WIRING assertions (pairIndexPath resolves; `applied` true/false) stay on the original address and
+ *       are margin-independent by construction — `applied` reports whether the prior fired, not whether it
+ *       won; (b) a bias-DELTA assertion compares the biased trace against a same-input trace with the
+ *       prior forced off (a no-match `PairIndexLike` stub passed via `opts.placetypePair`), so the measured
+ *       delta at the child token isolates the prior's own contribution — margin-independent, and provable
+ *       without ever touching the model's own unbiased preference; (c) exactly one flip assertion remains,
+ *       moved to `GB_WIDE_MARGIN_ADDRESS` — a real census pair chosen by probing candidates from
+ *       `scratchpad/gb-probe-grade/census-gb-pairs.jsonl` for the widest post-bias margin (see that
+ *       const's docstring for the measured candidate table). Margin ≥~3 survives a δ recalibration down to
+ *       ~3 before the flip could invert.
  */
 
 import { execFileSync } from "node:child_process"
@@ -28,7 +42,7 @@ import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "../index.ts"
-import { PairIndexResolver } from "../pair-index-resolver.ts"
+import { PairIndexResolver, type PairIndexLike } from "../pair-index-resolver.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const MODEL_PATH =
@@ -65,8 +79,54 @@ const LINK_SCRIPT_TIMEOUT_MS = 600_000
  * number ("14 Beulah Hill, …") the base model's own B-locality logit for "Fishburn" is confident enough (raw gap ~6.9)
  * that the +6.0 pair-index delta narrows but does not flip it — this phrasing's unbiased margin is narrow enough for
  * the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
+ *
+ * KNIFE-EDGE, KEPT ON PURPOSE (review follow-up): measured post-bias margin at δ=6.0 is only ~0.211 logits (biased
+ * B-dependent_locality 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to gate an argmax-flip
+ * assertion on (see `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the WIRING assertions below (`pairIndexPath`
+ * resolves, `applied` true/false) and the bias-DELTA assertion, both margin-independent.
  */
 const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, TS21 3AB"
+
+/**
+ * A real GB (child, parent) pair — "Holland Fen" / "Lincoln", HM Land Registry PPD `CITY`/`DISTRICT` — chosen for the
+ * WIDEST post-bias margin found by probing the rung-3 census (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431
+ * real pairs) against the shipped `pair-index-gb.bin` (δ=6.0). Method: every pair rendered as `"{Child}, {Parent}"`,
+ * `traceParse`d, and scored by (biased B-dependent_locality emission at the child's first piece) − (runner-up label's
+ * emission at that same piece) — i.e. the post-bias argmax margin. Top results (comma form unless noted):
+ *
+ * | rank | pair                              | margin | argmax               |
+ * | ---- | --------------------------------- | ------ | -------------------- |
+ * | 1    | Holland Fen / Lincoln (no comma)  | 3.488  | B-dependent_locality |
+ * | 2    | Holland Park / London (no comma)  | 3.050  | B-dependent_locality |
+ * | 3    | Holland Fen / Lincoln             | 2.837  | B-dependent_locality |
+ * | 4    | Up Hatherley / Cheltenham         | 2.412  | B-dependent_locality |
+ * | 5    | Lower Bullingham / Hereford       | 2.349  | B-dependent_locality |
+ * | —    | Shoreditch / London (Task-5 orig) | 0.496  | B-dependent_locality |
+ * | —    | Fishburn / Stockton-on-Tees       | 0.211  | B-dependent_locality |
+ * | —    | Sedgefield / Stockton-on-Tees     | −1.128 | B-locality (no flip) |
+ *
+ * "Holland" alone is a country-name confound ("Holland" = Netherlands) — the runner-up label at rank 1/2/6 above is
+ * `B-country`/`I-country`, not `B-locality`; the comma-LESS form scored higher than the comma form for both Holland
+ * pairs, so this const drops the comma deliberately. A margin of ~3.5 survives a δ recalibration down to ~3 before the
+ * flip could invert (post-bias margin at a lower δ' is `margin_at_6.0 − (6.0 − δ')`).
+ */
+const GB_WIDE_MARGIN_ADDRESS = "Holland Fen Lincoln"
+
+/**
+ * Locate the first tokenizer piece belonging to `word` (case-insensitive prefix match on the piece with its `▁`
+ * word-start marker stripped) — used to index into `trace.emissions`/`trace.logits` for the bias-DELTA assertion.
+ */
+function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: string): number {
+	const needle = word.slice(0, 4).toLowerCase()
+
+	return pieces.findIndex((p) => p.piece.replace(/^▁/, "").toLowerCase().startsWith(needle))
+}
+
+/**
+ * A `PairIndexLike` stub that never matches — forces the placetype-pair prior OFF for a single `traceParse` call via
+ * `opts.placetypePair`, isolating its contribution without touching any other channel/config.
+ */
+const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => undefined }
 
 describe("resolveWeights — explicit-path mode", () => {
 	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", () => {
@@ -148,9 +208,15 @@ describe("resolveWeights — package auto-resolve", () => {
 // dependent_locality address decodes with the tag applied. The en-us companion proves the SAME input
 // produces NO bias when the package ships no sibling index — the prior degrades to byte-stable, not to
 // a crash or a silent wrong-country apply.
+//
+// Review follow-up (see the module docstring's "Task-5 REVIEW FOLLOW-UP" bullet): the wiring assertions
+// below never depend on the model's own margin — `applied` reports whether the prior fired, and the
+// bias-DELTA assertion measures the prior's OWN contribution against a same-input, prior-forced-off trace.
+// Only the LAST test in this block asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS` (margin
+// ~3.5), not the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task 5 smoke)", () => {
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
-		"en-gb: pairIndexPath resolves, the country-gated default fires, and Fishburn decodes as dependent_locality",
+		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
 			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
@@ -171,10 +237,70 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
+			// `applied` reports EFFECT (a nonzero bias was composed), not argmax victory — true regardless
+			// of whether the base model's own preference was thin enough for the bias to flip the decode.
 			expect(placetypePairRecord?.applied).toBe(true)
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
 
-			const json = await cls.parseJSON(GB_DEPENDENT_LOCALITY_ADDRESS)
-			expect(json.dependent_locality).toBe("Fishburn")
+	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+		"en-gb: the placetype-pair bias at the child token equals the artifact's calibrated delta (margin-independent)",
+		async () => {
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+
+			const r = resolveWeights({ locale: "en-gb" })
+			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+
+			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+
+			// Same input, twice: once with the classifier's real (loader-installed) default index, once with
+			// `opts.placetypePair` overridden to a stub that never matches — every OTHER channel/config is
+			// identical, so the emission delta at the child token isolates the placetype-pair prior's own
+			// contribution from the model's own (margin-dependent) belief and from every other prior.
+			const biasedTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
+			const unbiasedTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, {
+				placetypePair: { index: NO_MATCH_PAIR_INDEX },
+			})
+
+			expect(unbiasedTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(false)
+
+			const bDepLocCol = biasedTrace.labels.indexOf("B-dependent_locality")
+			expect(bDepLocCol).toBeGreaterThanOrEqual(0)
+
+			const pieceIdx = findChildPieceIndex(biasedTrace.pieces, "Fish")
+			expect(pieceIdx).toBeGreaterThanOrEqual(0)
+
+			const delta = biasedTrace.emissions[pieceIdx]![bDepLocCol]! - unbiasedTrace.emissions[pieceIdx]![bDepLocCol]!
+			expect(delta).toBeCloseTo(resolver.header.delta, 5)
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
+
+	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+		"en-gb: a wide-margin real pair flips the decode — Holland Fen decodes as dependent_locality (the arc's ONE flip assertion)",
+		async () => {
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+
+			const r = resolveWeights({ locale: "en-gb" })
+			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			// Setup precondition, per the brief: confirm the pair is genuinely PROBE OK in THIS build before
+			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
+			// SPACE-preserved token ("holland fen"), not concatenated — see pair-index-resolver.ts's header
+			// doc on how normalizeFSTToken folds interior whitespace.
+			expect(resolver.probe("holland fen", "lincoln")).toBe("dependent_locality")
+
+			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+			const json = await cls.parseJSON(GB_WIDE_MARGIN_ADDRESS)
+			expect(json.dependent_locality).toBe("Holland Fen")
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)

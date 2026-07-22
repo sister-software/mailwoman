@@ -164,6 +164,45 @@ export function serializePairIndex(header: PairIndexHeader, entries: readonly Pa
 }
 
 /**
+ * Read just the magic + header block (no entry parsing, no Map build) — the same validation the constructor does
+ * (bad-magic throw, future-schema throw) but stops the instant the header JSON is decoded. Lets a caller inspect
+ * `country`/`delta`/`sourceMD5s` etc. before paying for the full entry parse — e.g.
+ * `NeuralAddressClassifier.loadFromWeights`'s hard country gate (`classifier.ts`) reads this FIRST and only constructs
+ * a `PairIndexResolver` (which walks every entry to build the probe `Map`) when the header's country matches the
+ * resolved locale; a mismatch skips construction entirely rather than paying the full parse just to discard the
+ * result.
+ */
+export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
+	return readHeaderBlock(bytes).header
+}
+
+/**
+ * Shared magic+header decode used by both {@link peekPairIndexHeader} and the {@link PairIndexResolver} constructor, so
+ * the two can never drift on what counts as a valid header. Returns the parsed header AND the byte offset immediately
+ * following it, so the constructor can resume entry parsing from exactly where this left off without re-decoding.
+ */
+function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; offset: number } {
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+
+	if (view.getUint32(0, true) !== MAGIC) throw new Error("pair index: bad magic")
+
+	let o = 4
+	const headerLen = view.getUint32(o, true)
+	o += 4
+	const decoder = new TextDecoder()
+	const header = JSON.parse(decoder.decode(bytes.subarray(o, o + headerLen))) as PairIndexHeader
+	o += headerLen
+
+	if (header.schemaVersion > KNOWN_SCHEMA_VERSION) {
+		throw new Error(
+			`pair index: schemaVersion ${header.schemaVersion} is newer than this reader knows (known up to ${KNOWN_SCHEMA_VERSION})`
+		)
+	}
+
+	return { header, offset: o }
+}
+
+/**
  * Pure-JS, browser-safe reader over the PIX1 flat binary. Builds a `Map<pairKey, ComponentTag>` once in the constructor
  * (cheap at the ~20k-entry scale this index targets) so `probe()` is O(1).
  */
@@ -172,28 +211,16 @@ export class PairIndexResolver {
 	readonly #probeMap: ReadonlyMap<string, ComponentTag>
 
 	constructor(bytes: Uint8Array) {
-		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-
-		if (view.getUint32(0, true) !== MAGIC) throw new Error("pair index: bad magic")
-
-		let o = 4
-		const headerLen = view.getUint32(o, true)
-		o += 4
-		const decoder = new TextDecoder()
-		const header = JSON.parse(decoder.decode(bytes.subarray(o, o + headerLen))) as PairIndexHeader
-		o += headerLen
-
-		if (header.schemaVersion > KNOWN_SCHEMA_VERSION) {
-			throw new Error(
-				`pair index: schemaVersion ${header.schemaVersion} is newer than this reader knows (known up to ${KNOWN_SCHEMA_VERSION})`
-			)
-		}
+		const { header, offset } = readHeaderBlock(bytes)
 
 		this.header = header
 
+		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+		let o = offset
 		const pairCount = view.getUint32(o, true)
 		o += 4
 
+		const decoder = new TextDecoder()
 		const map = new Map<string, ComponentTag>()
 
 		for (let i = 0; i < pairCount; i++) {

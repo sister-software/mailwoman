@@ -256,7 +256,7 @@ export class NeuralAddressClassifier {
 			{ parseGazetteerLexicon },
 			{ parseCountryLexicon },
 			{ PostcodeBinaryResolver },
-			{ PairIndexResolver },
+			{ PairIndexResolver, peekPairIndexHeader },
 			fs,
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
@@ -372,18 +372,24 @@ export class NeuralAddressClassifier {
 		// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
 		// case here — the prior is opt-in plumbing (Task 7 owns the ship decision), so a missing/mismatched
 		// index degrades silently to the pre-Task-5 byte-stable default, loud only via the gate warning.
+		//
+		// Review follow-up (header peek before construction): the country check reads ONLY the magic +
+		// header block via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index
+		// never pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor (which
+		// DOES walk every entry) only runs once the gate has already confirmed the country match.
 		let placetypePair: PlacetypePairPriorOpts | undefined
 
 		if (resolved.pairIndexPath) {
 			try {
-				const pairIndexResolver = new PairIndexResolver(new Uint8Array(fs.readFileSync(resolved.pairIndexPath)))
+				const pairIndexBytes = new Uint8Array(fs.readFileSync(resolved.pairIndexPath))
+				const peekedHeader = peekPairIndexHeader(pairIndexBytes)
 				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
-				if (pairIndexResolver.header.country === localeCountry) {
-					placetypePair = { index: pairIndexResolver }
+				if (peekedHeader.country === localeCountry) {
+					placetypePair = { index: new PairIndexResolver(pairIndexBytes) }
 				} else {
 					console.warn(
-						`[mailwoman/neural] loadFromWeights: pair-index country "${pairIndexResolver.header.country}" ` +
+						`[mailwoman/neural] loadFromWeights: pair-index country "${peekedHeader.country}" ` +
 							`(${resolved.pairIndexPath}) does not match the resolved locale's country "${localeCountry}" — ` +
 							`skipping the placetype-pair prior default.`
 					)

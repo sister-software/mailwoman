@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	PairIndexResolver,
+	peekPairIndexHeader,
 	serializePairIndex,
 	type PairIndexEntry,
 	type PairIndexHeader,
@@ -142,5 +143,43 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		expect(r.probe("new york ny", "")).toBeUndefined()
 		expect(r.probe("new york", "york ny")).toBeUndefined()
 		expect(r.probe("new", "ny")).toBeUndefined()
+	})
+})
+
+describe("peekPairIndexHeader", () => {
+	it("returns the header verbatim without building the probe Map (correctness, not timing)", () => {
+		// A synthetic index large enough that a full parse would be a real cost (10k entries) — peek must
+		// still return the exact header the constructor would, having touched none of the entry bytes.
+		const bigEntries: PairIndexEntry[] = Array.from({ length: 10_000 }, (_, i) => ({
+			child: `child-${i}`,
+			parent: `parent-${i % 50}`,
+			tag: "dependent_locality" as const,
+		}))
+		const bytes = serializePairIndex(HEADER, bigEntries)
+
+		expect(peekPairIndexHeader(bytes)).toEqual(HEADER)
+		// Cross-check against the constructor's own header parse — peek and full-parse must never disagree.
+		expect(peekPairIndexHeader(bytes)).toEqual(new PairIndexResolver(bytes).header)
+	})
+
+	it("rejects a buffer with a bad magic, same as the constructor", () => {
+		expect(() => peekPairIndexHeader(new Uint8Array(16))).toThrow(/bad magic/)
+	})
+
+	it("succeeds on a header-only-valid buffer whose entry section is truncated — the constructor throws on the same bytes", () => {
+		// Serialize a normal index, then truncate everything after the header + pairCount fields — the
+		// header block itself is untouched and fully valid, but the entry bytes it declares (pairCount > 0)
+		// don't exist. This is the gate's real-world shape: a caller that peeks BEFORE constructing must
+		// never pay for (or trip over) a full parse when it's about to discard the result on a country
+		// mismatch.
+		const bytes = serializePairIndex(HEADER, ENTRIES)
+		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+		const headerLen = view.getUint32(4, true)
+		const pairCountOffset = 4 + 4 + headerLen
+		// Keep magic + headerLen + header JSON + the pairCount u32 itself, drop every entry record byte.
+		const truncated = bytes.subarray(0, pairCountOffset + 4)
+
+		expect(peekPairIndexHeader(truncated)).toEqual(HEADER)
+		expect(() => new PairIndexResolver(truncated)).toThrow()
 	})
 })
