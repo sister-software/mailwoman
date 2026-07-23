@@ -111,6 +111,14 @@ export interface ResolvedWeights {
 	 * `loadFromWeights` soft-feed via `parseCountryLexicon`.
 	 */
 	countryLexiconPath?: string
+	/**
+	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3) shipped
+	 * beside the resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
+	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
+	 * `baseWeights` package (a shared base ships no locale-specific pairs to offer; en-us has none, en-gb ships its own
+	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
+	 */
+	pairIndexPath?: string
 	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
 	source: string
 }
@@ -196,8 +204,9 @@ function resolveFromPackageDir(
 	// tokenizer.model from its `files` and resolve them from the base package, while its OWN data siblings
 	// (model-card, postcode-<cc>.bin, lexicons) still resolve locally. Base takes precedence over any local
 	// model copy — that is also what closes #1117 (fr-fr's link-dev-weights pinned a stale model).
+	const baseDir = resolveBaseWeightsDir(packageDir)
+
 	if (!opts.modelPath) {
-		const baseDir = resolveBaseWeightsDir(packageDir)
 		const baseModel = baseDir ? resolve(baseDir, "model.onnx") : undefined
 
 		if (baseDir && baseModel && existsSync(baseModel)) {
@@ -220,8 +229,23 @@ function resolveFromPackageDir(
 		)
 	}
 
+	// Card-less overlay fallback: an overlay package that ships no model-card.json of its own (en-gb —
+	// only its GB-specific data siblings) still needs the trained label vocabulary to decode correctly.
+	// Without this, `readLabelsFromModelCard(undefined)` silently defaults to `STAGE2_BIO_LABELS` (21
+	// labels) while the shared base model emits a wider STAGE3+ vocabulary (33 labels), and the first
+	// parse throws in `assertEmissionWidth`. Mirrors the model/tokenizer base fallback above — same
+	// `+base` source suffix convention.
 	const modelCardCandidate = resolve(packageDir, "model-card.json")
-	const modelCardPath = existsSync(modelCardCandidate) ? modelCardCandidate : undefined
+	const baseModelCardCandidate = baseDir ? resolve(baseDir, "model-card.json") : undefined
+	const modelCardPath = existsSync(modelCardCandidate)
+		? modelCardCandidate
+		: baseModelCardCandidate && existsSync(baseModelCardCandidate)
+			? baseModelCardCandidate
+			: undefined
+
+	if (!existsSync(modelCardCandidate) && modelCardPath && !source.endsWith("+base")) {
+		source = `${source}+base`
+	}
 
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
@@ -243,6 +267,9 @@ function resolveFromPackageDir(
 	const countryCandidate = resolve(packageDir, "country-surface-lexicon-v1.json")
 	const countryLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
+	// Placetype-pair index sibling (placetype-pair-prior arc Task 5) — resolved LOCALLY from packageDir
+	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
+	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
 
 	return {
 		modelPath,
@@ -253,6 +280,7 @@ function resolveFromPackageDir(
 		...(anchorLookupPath ? { anchorLookupPath } : {}),
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
+		...(pairIndexPath ? { pairIndexPath } : {}),
 		source,
 	}
 }
@@ -277,6 +305,20 @@ function resolveAnchorLookupSibling(
 	if (existsSync(json)) return { path: json, binary: false }
 
 	return undefined
+}
+
+/**
+ * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3).
+ * COUNTRY-SPECIFIC BY DESIGN: this artifact is resolved from `packageDir` ONLY, unlike the model/tokenizer/model-card
+ * siblings above, which fall back to a `baseWeights` package — a shared base has no locale-specific place-pair data to
+ * offer, so a base package without its own `pair-index-<cc>.bin` simply has none (no fallback attempted). `undefined`
+ * when the package doesn't ship one for `country`.
+ */
+function resolvePairIndexSibling(packageDir: string, country: string): string | undefined {
+	if (!country) return undefined
+	const candidate = resolve(packageDir, `pair-index-${country}.bin`)
+
+	return existsSync(candidate) ? candidate : undefined
 }
 
 /**

@@ -19,9 +19,11 @@ export interface PresetChipsProps {
 	disabled?: boolean
 	/** Leading label. @default "Try:" */
 	caption?: string
+	/** Optional trailing content rendered inside the chip row after the presets (e.g. an inline permalink button). */
+	trailing?: ReactNode
 }
 
-export function PresetChips({ presets, onPick, disabled, caption = "Try:" }: PresetChipsProps): ReactNode {
+export function PresetChips({ presets, onPick, disabled, caption = "Try:", trailing }: PresetChipsProps): ReactNode {
 	return (
 		<div className="mw-presets">
 			<span className="mw-presets__label">{caption}</span>
@@ -37,6 +39,7 @@ export function PresetChips({ presets, onPick, disabled, caption = "Try:" }: Pre
 					{preset.label}
 				</button>
 			))}
+			{trailing}
 		</div>
 	)
 }

@@ -59,6 +59,7 @@ type CandidateRow = Pick<
 	| "max_lat"
 	| "max_lon"
 	| "neg_rank"
+	| "is_primary"
 >
 
 /**
@@ -67,6 +68,100 @@ type CandidateRow = Pick<
  */
 const FUZZY_FETCH = 40
 const FUZZY_MIN = 0.34
+
+/**
+ * Bounded PRIMARY-NAME preference across a CROSS-COUNTRY name collision (the `is_primary` ranking signal).
+ *
+ * The raw candidate order is population-first (`neg_rank ASC`) and treats an ALIAS row (a place's alt-name / exonym,
+ * `is_primary=0`) and a PRIMARY-name row (`is_primary=1`) on equal footing. So a foreign place whose transliterated
+ * exonym coincidentally normalizes to a query — Changchun CN stores the Turkish exonym "Çançun" (`name_key="cancun"`),
+ * 4.19 M pop — outranks the PRIMARY-name place the query actually means (Cancún MX, 0.89 M pop). This penalty makes a
+ * same-key alias have to clear a population MARGIN over a foreign primary before it wins.
+ *
+ * It is deliberately NOT a dominant sort key (no `ORDER BY is_primary DESC`, which would make every primary outrank
+ * every alias and break the alt-names users depend on — "NYC"→New York, "LA"→Los Angeles, "Frisco"→San Francisco). Two
+ * bounds keep it a soft prior:
+ *
+ * 1. **Cross-country only.** The penalty applies to an alias ONLY when the top-population primary sharing the key is in a
+ *    DIFFERENT country. A SAME-country nickname contest (San Francisco's alias "Frisco" vs the primary Frisco, TX —
+ *    both US) is left on pure population, so the legitimate alias still wins.
+ * 2. **Population-bounded.** The penalty is {@link PRIMARY_PREFERENCE_LOG10} in log10-population units — an alias must be
+ *    at least 10x more populous than the foreign primary to still win. So a genuinely dominant alias keeps winning
+ *    ("Los Angeles" over La, Ghana — gap 1.6; "Las Vegas" over Vegas, Cuba — gap 2.4) while a near-tie coincidental
+ *    collision defers to the primary (Cancún over Changchun — gap 0.7).
+ */
+const PRIMARY_PREFERENCE_LOG10 = 1.0
+
+/**
+ * Over-fetch cap for {@link rankByPrimaryPreference}: the candidate rows for one `name_key` (all same-name places
+ * worldwide) are re-ranked in-process, so the probe fetches this many (population-ordered) before the re-rank rather
+ * than the caller's small `limit`, ensuring the intended primary isn't cut below the fold by a cluster of more-populous
+ * foreign aliases. Bounded and small — a single contiguous B-tree scan.
+ */
+const RERANK_FETCH = 64
+
+/** A candidate row annotated with the {@link rankByPrimaryPreference} effective rank + the exact-tier demotion flag. */
+export type RankedRow<R> = R & {
+	/**
+	 * `neg_rank` plus the bounded cross-country alias penalty — the value the row is ORDERED by, and the base the emitted
+	 * `prominence` is derived from (so the resolver walk's `prominence ?? score` sort, `resolve.ts`, agrees with this
+	 * order; the raw `score`/`neg_rank` is left intact for the walk's `minWinningScore` gate).
+	 */
+	effectiveNegRank: number
+	/**
+	 * True when this row is a cross-country alias that LOST the bounded population contest to the same-key primary — a
+	 * coincidental foreign exonym (Changchun's "Çançun" for "Cancun"). Such a row is dropped out of the exact-match tier
+	 * (`exactMatch=false`) so the resolver walk's country pin — the model's `anchorPosterior`, which "never crosses the
+	 * exact/partial boundary" (`resolve.ts`) — can't ride a spurious posterior (CN 0.86 for "Cancun") back over the
+	 * primary. Only the LOSING foreign alias is demoted; a dominant alias (Los Angeles over La, Ghana) keeps its exact
+	 * tier, and a same-country nickname (San Francisco's "Frisco") is never touched.
+	 */
+	demoted: boolean
+}
+
+/**
+ * Bounded cross-country primary-name preference (see {@link PRIMARY_PREFERENCE_LOG10}). Pure + total-ordered so
+ * `candidate-lookup.test.ts` can exercise it on synthetic rows. `rows` arrive population-ordered (`neg_rank ASC`); an
+ * alias (`is_primary=0`) is pushed back by `delta` in log10-population units ONLY when the top-population primary
+ * sharing the key is in a different country, and is `demoted` out of the exact tier when that penalty leaves it BEHIND
+ * the primary. Returns the top `limit` after the re-rank, each annotated.
+ */
+export function rankByPrimaryPreference<R extends Pick<CandidateRow, "neg_rank" | "is_primary" | "country_id">>(
+	rows: readonly R[],
+	limit: number,
+	delta = PRIMARY_PREFERENCE_LOG10
+): Array<RankedRow<R>> {
+	// The primary the alias actually competes with for the top slot: highest population (min neg_rank). Undefined
+	// when the set has no primary → nothing to prefer, penalty is 0, order stays population-first (today's behavior).
+	let topPrimary: R | undefined
+
+	for (const r of rows) {
+		if (r.is_primary === 1 && (topPrimary === undefined || r.neg_rank < topPrimary.neg_rank)) {
+			topPrimary = r
+		}
+	}
+
+	const topCountry = topPrimary?.country_id
+	// A cross-country alias (different country than the top primary) is penalized; it is DEMOTED when even after — i.e.
+	// the penalty leaves its effective rank behind the primary's raw rank (it lost the bounded population contest).
+	const isCrossCountryAlias = (r: R): boolean =>
+		topCountry !== undefined && r.is_primary !== 1 && r.country_id !== topCountry
+	const annotate = (r: R): RankedRow<R> => {
+		const penalized = isCrossCountryAlias(r)
+		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
+
+		return { ...r, effectiveNegRank, demoted: penalized && effectiveNegRank > topPrimary!.neg_rank }
+	}
+
+	return (
+		rows
+			.map((r, i) => ({ row: annotate(r), i }))
+			// Effective rank ASC; ties keep population order, then original index (stable).
+			.sort((a, b) => a.row.effectiveNegRank - b.row.effectiveNegRank || a.row.neg_rank - b.row.neg_rank || a.i - b.i)
+			.slice(0, limit)
+			.map((x) => x.row)
+	)
+}
 
 /**
  * Unpadded character-trigrams of `s`, OR'd into an FTS5 trigram MATCH query (each quoted so FTS treats it as a literal
@@ -244,59 +339,98 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			filterParams.push(b.minLat, b.maxLat, b.minLon, b.maxLon)
 		}
 
-		const probe = (nk: string): CandidateRow[] => {
+		// Region scope: when the cascade resolves a region and passes it down as `parentID` (the walk sets
+		// `query.parentID = parentResolved.id`), the candidate build stamps each place's region-tier ancestor
+		// id into `region_id` (build-candidate.ts `regionOf`), and that id equals the resolved region's WOF id
+		// — so `region_id = parentID` scopes the probe to in-region rows. Without it a bare same-name probe is
+		// population-first and "Springfield, IL" (parentID = Illinois) drops to the larger Springfield, MO.
+		// Kept OUT of the shared `filters` so a region MISS falls back to the unscoped cascade below: a
+		// country/non-region parent (no `region_id` match), a `region_id=0` row (place with no region
+		// ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
+		const regionParentID = query.parentID ? query.parentID : undefined
+
+		const probe = (nk: string, regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]
+			const params: Array<string | number> = [nk, ...filterParams]
+
+			if (regionID !== undefined) {
+				conds.push("region_id = ?")
+				params.push(regionID)
+			}
+
+			// Fetch population-ordered (the clustered-key order — a cheap ordered scan), over-fetching to
+			// RERANK_FETCH so the bounded cross-country primary-preference re-rank (below) can promote the
+			// intended primary even when a cluster of more-populous foreign aliases sits ahead of it. `is_primary`
+			// + `country_id` feed that re-rank. A single-country probe (a country filter, or all rows same
+			// country) re-ranks to the identical population order, so the common path is untouched.
 			const sql =
-				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank " +
+				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary " +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
+			const fetched = this.#db.prepare(sql).all(...params, Math.max(limit, RERANK_FETCH)) as unknown as CandidateRow[]
 
-			return this.#db.prepare(sql).all(nk, ...filterParams, limit) as unknown as CandidateRow[]
+			return rankByPrimaryPreference(fetched, limit)
 		}
 
-		let rows = probe(nameKey)
+		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope. Region scoping
+		// only tightens an already-population-first pick, so a region MISS re-runs the whole cascade unscoped
+		// (below) rather than dropping a place that has no in-region row.
+		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
+			let rows = probe(nameKey, regionID)
 
-		if (rows.length === 0) {
-			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
-			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
-			// miss; the cascade's region bbox disambiguates any base-name ambiguity.
-			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
+			if (rows.length === 0) {
+				// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
+				// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
+				// miss; the cascade's region bbox disambiguates any base-name ambiguity.
+				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
-			if (strippedKey && strippedKey !== nameKey) {
-				rows = probe(strippedKey)
-			}
-		}
-
-		// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
-		// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set; we re-rank by
-		// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
-		// the same on either backend. The country/placetype/bbox filters still apply via `probe`. Skipped
-		// when the index is absent (byte-stable for an older candidate.db).
-		//
-		// Gate: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
-		// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
-		// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
-		// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
-		// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
-		if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
-			const match = ftsTrigramQuery(nameKey)
-
-			if (match) {
-				const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
-				const ranked = hits
-					.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
-					.filter((h) => h.s >= FUZZY_MIN)
-					.sort((a, b) => b.s - a.s)
-				const seen = new Set<string>()
-
-				for (const h of ranked) {
-					if (seen.has(h.nk)) continue
-					seen.add(h.nk)
-					rows.push(...probe(h.nk))
-
-					if (rows.length >= limit) break
+				if (strippedKey && strippedKey !== nameKey) {
+					rows = probe(strippedKey, regionID)
 				}
-				rows = rows.slice(0, limit)
 			}
+
+			// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
+			// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set; we re-rank by
+			// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
+			// the same on either backend. The country/placetype/bbox/region filters still apply via `probe`.
+			// Skipped when the index is absent (byte-stable for an older candidate.db).
+			//
+			// Gate: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
+			// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
+			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
+			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
+			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
+			if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
+				const match = ftsTrigramQuery(nameKey)
+
+				if (match) {
+					const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
+					const ranked = hits
+						.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
+						.filter((h) => h.s >= FUZZY_MIN)
+						.sort((a, b) => b.s - a.s)
+					const seen = new Set<string>()
+
+					for (const h of ranked) {
+						if (seen.has(h.nk)) continue
+						seen.add(h.nk)
+						rows.push(...probe(h.nk, regionID))
+
+						if (rows.length >= limit) break
+					}
+					rows = rows.slice(0, limit)
+				}
+			}
+
+			return rows
+		}
+
+		let rows = cascade(regionParentID)
+
+		// Region-scope fallback: if scoping to the parent region found nothing across the whole cascade, retry
+		// unscoped so a place with no in-region row (missing ancestry, or a country/non-region parent) still
+		// resolves exactly as it does today. Only when a region scope was actually applied.
+		if (rows.length === 0 && regionParentID !== undefined) {
+			rows = cascade(undefined)
 		}
 
 		const candidates = rows.map((row): PlaceCandidate => {
@@ -311,10 +445,20 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				country: this.#idToCountry.get(Number(row.country_id)) ?? "",
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
+				// `score` stays the RAW population rank (`-neg_rank`) — it feeds the resolver walk's absolute
+				// `minWinningScore` gate (`resolve.ts`), which must see real prominence, never a penalized value.
 				score: -Number(row.neg_rank),
-				// Every candidate row IS an exact normalized-name (or alias/abbrev) match — the cascade's
-				// exact tier accepts alias-exact hits ("New York City" → New York) the same as canonical.
-				exactMatch: true,
+				// `prominence` carries the bounded cross-country primary preference (the effective, penalty-adjusted
+				// rank). The walk ORDERS candidates by `prominence ?? score` (`resolve.ts`), so this is what makes the
+				// re-rank actually stick through resolution — without it the walk re-sorts by raw `score` and a
+				// more-populous foreign alias (Changchun for "Cancun") wins back the node. Equals `score` for every
+				// un-penalized row (primaries + same-country aliases), so the common ordering is unchanged.
+				prominence: -Number(row.effectiveNegRank),
+				// Every candidate row IS an exact normalized-name (or alias/abbrev) match — the cascade's exact tier
+				// accepts alias-exact hits ("New York City" → New York) the same as canonical — EXCEPT a cross-country
+				// alias that lost the bounded contest to a same-key primary (`demoted`): it drops to the partial tier so
+				// the walk's country posterior can't cross back over the primary (see `RankedRow.demoted`).
+				exactMatch: !row.demoted,
 				...(hasBbox
 					? {
 							bbox: {
@@ -346,8 +490,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// candidates the user is actually LOOKING at — an in-view namesake still wins (Dublin, OH from
 			// an Ohio view), a distant one no longer does (Paris stays FR from a Michigan view).
 			const PROX_SCALE_KM = 30
-			const prominence = (c: PlaceCandidate): number => {
-				const popTerm = POP_BOOST * Math.min(1, Math.max(0, c.score) / POP_SCALE_LOG10)
+			const combinedProminence = (c: PlaceCandidate): number => {
+				// Population base is the PENALIZED `prominence` (set above = -effectiveNegRank), not raw `score`, so
+				// the cross-country primary preference carries into the bias-weighted order too — a coincidental
+				// foreign alias doesn't ride population back over a primary just because a viewport hint is present.
+				const popBase = c.prominence ?? c.score
+				const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
 				let proxTerm = 0
 
 				if (!(c.lat === 0 && c.lon === 0)) {
@@ -363,9 +511,15 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 				return popTerm + proxTerm
 			}
-			// Stable within equal prominence (preserves the population order the B-tree already gave).
+			// Persist the combined value into `prominence` so the resolver walk's `prominence ?? score` sort (and any
+			// other node consumer) honors the bias order — then sort. Stable within equal prominence (preserves the
+			// population order the B-tree already gave).
 			candidates
-				.map((c, i) => ({ c, i, p: prominence(c) }))
+				.map((c, i) => {
+					c.prominence = combinedProminence(c)
+
+					return { c, i, p: c.prominence }
+				})
 				.sort((a, b) => b.p - a.p || a.i - b.i)
 				.forEach((x, j) => (candidates[j] = x.c))
 		}

@@ -277,6 +277,15 @@ class TrainConfig:
     # `learning_rate`. A randomly-initialized head cannot train at a fine-tuning LR — the v3.0.0 probe
     # proved that the expensive way. None ⇒ one param group ⇒ byte-identical to every prior recipe.
     span_head_learning_rate: float | None = None
+    # #456/#1100 dead-tag resurrection: carve the output head (`classifier.`) into its own param
+    # group, exactly parallel to span_head_learning_rate above. Pairs with reinit_label_rows below —
+    # a re-initialized row cannot climb out of a baked-negative neighborhood at the encoder's LR.
+    classifier_learning_rate: float | None = None
+    # BIO label names (e.g. "B-dependent_locality") whose classifier rows get reset to the live-row
+    # mean at init_from time (see train.reinit_label_rows). Requires train.init_from — resetting rows
+    # on a from-scratch model is a no-op (already random) and signals a config mistake. Empty ⇒ no-op,
+    # byte-identical to every prior recipe.
+    reinit_label_rows: list[str] = field(default_factory=list)
     warmup_steps: int = 1000
     max_steps: int = 50000
     eval_every_steps: int = 2000
@@ -324,6 +333,15 @@ class TrainConfig:
     # never-trained mean-init rows is the mechanism. Freezing removes it while the encoder
     # layers learn the boundary rules (the multi-word wins were encoder-layer learning).
     freeze_token_embeddings: bool = False
+    # cRT-style probe (classifier-only retraining, frozen encoder — 2026-07-22 census-bias plan
+    # "Parallel training-side experiment"): every param NOT starting with one of these prefixes
+    # gets requires_grad=False; matches stay trainable. Empty (default) = no-op, byte-identical
+    # to every prior recipe. Mutually exclusive with freeze_encoder/freeze_token_embeddings — the
+    # three levers overlap in intent (encoder-representation exclusion) and combining them would
+    # make the "which lever did it" attribution ambiguous. See train.py's application site (mirrors
+    # the freeze_encoder idiom: loud count print, raise-if-no-match) and build_optimizer's
+    # empty-base-group handling for the classifier-only case.
+    trainable_only_prefixes: list[str] = field(default_factory=list)
     # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
     # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
     # When enabled, the metrics written to train_log.csv are also streamed to a Trackio

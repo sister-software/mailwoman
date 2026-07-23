@@ -22,7 +22,7 @@ import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "./build-candidate.ts"
-import { WOFCandidateTableLookup } from "./candidate-lookup.ts"
+import { rankByPrimaryPreference, WOFCandidateTableLookup } from "./candidate-lookup.ts"
 
 const ALIAS_SEP = "\u{E000}"
 
@@ -52,14 +52,47 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (200, 'Chicago', 'locality', 'US', 41.88, -87.63, 41.6, -87.9, 42.0, -87.5, -1, 0);
 		-- Qualifier case: the gazetteer name is bare "Lenk"; the query "Lenk im Simmental" strips to it.
 		INSERT INTO spr VALUES (302, 'Lenk', 'locality', 'CH', 46.46, 7.44, 46.4, 7.4, 46.5, 7.5, -1, 0);
+		-- Region-scope case (parentID → region_id): two same-name US localities under DIFFERENT regions.
+		-- Springfield, MO is the more populous, so population-first (no parentID) picks it; Springfield, IL
+		-- is the in-region answer when the walk passes parentID = Illinois (400).
+		INSERT INTO spr VALUES (400, 'Illinois', 'region', 'US', 40.0, -89.0, 37.0, -91.5, 42.5, -87.0, -1, 0);
+		INSERT INTO spr VALUES (401, 'Missouri', 'region', 'US', 38.3, -92.4, 36.0, -95.8, 40.6, -89.1, -1, 0);
+		INSERT INTO spr VALUES (310, 'Springfield', 'locality', 'US', 39.78, -89.65, 39.7, -89.75, 39.85, -89.55, -1, 0);
+		INSERT INTO spr VALUES (311, 'Springfield', 'locality', 'US', 37.19, -93.29, 37.1, -93.4, 37.3, -93.2, -1, 0);
+
+		-- Cross-country COLLISION (the Cancún/Changchun class): "Zedton" is a MX primary (0.89 M); a more-populous
+		-- foreign place "Farland" CN (4.19 M) carries an exonym alias that normalizes to the SAME key "zedton".
+		-- The population gap (0.67 log10) is under the 1.0 preference margin → the primary must win and the alias
+		-- is demoted out of the exact tier (so a country posterior can't cross back).
+		INSERT INTO spr VALUES (600, 'Zedton', 'locality', 'MX', 21.15, -86.84, 21.0, -87.0, 21.3, -86.7, -1, 0);
+		INSERT INTO spr VALUES (601, 'Farland', 'locality', 'CN', 43.86, 125.28, 43.6, 125.0, 44.1, 125.6, -1, 0);
+		-- DOMINANT alt-name (the LA/Los Angeles class): "Wyeburg" is a tiny GH primary (98 k); a huge foreign
+		-- place "Wyemetro" US (3.8 M) is aliased to "wyeburg". Gap 1.6 log10 > 1.0 margin → the alias still wins
+		-- and stays in the exact tier.
+		INSERT INTO spr VALUES (602, 'Wyeburg', 'locality', 'GH', 5.55, -0.2, 5.5, -0.3, 5.6, -0.1, -1, 0);
+		INSERT INTO spr VALUES (603, 'Wyemetro', 'locality', 'US', 34.05, -118.24, 33.9, -118.5, 34.2, -118.0, -1, 0);
 
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
 		INSERT INTO place_population VALUES (200, 2700000);
 		INSERT INTO place_population VALUES (302, 2400);
+		INSERT INTO place_population VALUES (310, 114000);
+		INSERT INTO place_population VALUES (311, 169000);
+		INSERT INTO place_population VALUES (600, 888797);
+		INSERT INTO place_population VALUES (601, 4193073);
+		INSERT INTO place_population VALUES (602, 98000);
+		INSERT INTO place_population VALUES (603, 3800000);
+
+		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
+		INSERT INTO ancestors VALUES (310, 400, 'region');
+		INSERT INTO ancestors VALUES (311, 401, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
+		-- The colliding exonym: Farland CN carries an alt-name that normalizes to "zedton" (the Çançun→cancun class).
+		INSERT INTO place_search VALUES (601, 'Zedton');
+		-- The dominant alt-name: Wyemetro US is aliased to "Wyeburg" (the LA→Los Angeles class).
+		INSERT INTO place_search VALUES (603, 'Wyeburg');
 	`)
 	db.close()
 }
@@ -274,5 +307,193 @@ describe("WOFCandidateTableLookup", () => {
 		} finally {
 			lk.close()
 		}
+	})
+
+	test("parentID scopes the probe to the in-region place (Springfield → IL under Illinois, not the larger MO)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// Baseline: no parentID → population-first picks the larger Springfield, MO (169k > 114k).
+			const bare = await lk.findPlace({ text: "Springfield", placetype: "locality", country: "US", limit: 5 })
+			expect(bare.map((c) => c.id)).toContain(310)
+			expect(bare.map((c) => c.id)).toContain(311)
+			expect(bare[0]!.id).toBe(311) // MO first, by population
+			expect(bare[0]!.lat).toBeCloseTo(37.19, 2)
+
+			// With parentID = Illinois (400), region_id scoping returns ONLY Springfield, IL (310) —
+			// the population-first MO pick is dropped because it isn't in the parent region.
+			const scoped = await lk.findPlace({
+				text: "Springfield",
+				placetype: "locality",
+				country: "US",
+				parentID: 400,
+				limit: 5,
+			})
+			expect(scoped).toHaveLength(1)
+			expect(scoped[0]!.id).toBe(310)
+			expect(scoped[0]!.lat).toBeCloseTo(39.78, 2)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("parentID falls back to the unscoped probe when the region has no in-region match", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// parentID = 999 is a region NO Springfield sits under → the region-scoped cascade returns
+			// nothing, so the reader retries unscoped and resolves exactly as the bare query does today
+			// (population-first Springfield, MO). Fallback is recall-safe: a wrong/absent parent never
+			// drops a place that a plain lookup would have found.
+			const scoped = await lk.findPlace({
+				text: "Springfield",
+				placetype: "locality",
+				country: "US",
+				parentID: 999,
+				limit: 5,
+			})
+			expect(scoped.length).toBeGreaterThan(0)
+			expect(scoped[0]!.id).toBe(311) // unscoped population-first — same as the no-parentID baseline
+			expect(scoped[0]!.lat).toBeCloseTo(37.19, 2)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("bounded primary preference: a same-key foreign primary beats a more-populous colliding alias (Cancún/Changchun)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// "Zedton" MX (0.89 M primary) vs the exonym alias of "Farland" CN (4.19 M, 0.67 log10 more populous).
+			// Population-first alone would pick the foreign alias; the bounded preference keeps the primary.
+			const hits = await lk.findPlace({ text: "Zedton", placetype: "locality", limit: 5 })
+			expect(hits[0]!.name).toBe("Zedton")
+			expect(hits[0]!.country).toBe("MX")
+			expect(hits[0]!.exactMatch).toBe(true)
+			// The colliding foreign alias is demoted OUT of the exact tier (so a country posterior can't cross back).
+			const alias = hits.find((h) => h.country === "CN")
+			expect(alias).toBeDefined()
+			expect(alias!.exactMatch).toBe(false)
+			// `score` stays the RAW population rank (for the walk's minWinningScore gate); `prominence` carries the
+			// penalty, so the primary's prominence now exceeds the more-populous alias's.
+			expect(hits[0]!.score).toBeLessThan(alias!.score)
+			expect(hits[0]!.prominence!).toBeGreaterThan(alias!.prominence!)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("bounded primary preference: a dominant alt-name still wins over an obscure same-key foreign primary (LA/Los Angeles)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// "Wyeburg" GH (98 k primary) vs the alias of "Wyemetro" US (3.8 M, 1.6 log10 more populous — over the
+			// 1.0 margin). The dominant alias must still win AND stay in the exact tier (recall of real alt-names).
+			const hits = await lk.findPlace({ text: "Wyeburg", placetype: "locality", limit: 5 })
+			expect(hits[0]!.name).toBe("Wyemetro")
+			expect(hits[0]!.country).toBe("US")
+			expect(hits[0]!.exactMatch).toBe(true)
+		} finally {
+			lk.close()
+		}
+	})
+})
+
+describe("rankByPrimaryPreference (bounded cross-country primary preference)", () => {
+	// Synthetic rows (population-ordered, neg_rank ASC) — the pure re-rank contract, no DB.
+	const row = (neg_rank: number, is_primary: number, country_id: number) => ({ neg_rank, is_primary, country_id })
+
+	test("a colliding foreign alias within the margin loses to the primary and is demoted", () => {
+		// primary MX (neg -5.95) vs foreign alias CN (neg -6.62 — more populous, gap 0.67 < 1.0 margin).
+		const ranked = rankByPrimaryPreference([row(-6.62, 0, 2), row(-5.95, 1, 1)], 5)
+		expect(ranked[0]!.is_primary).toBe(1) // primary first
+		expect(ranked[0]!.country_id).toBe(1)
+		expect(ranked[0]!.demoted).toBe(false)
+		const alias = ranked.find((r) => r.country_id === 2)!
+		expect(alias.demoted).toBe(true) // the losing foreign alias is demoted out of the exact tier
+		expect(alias.effectiveNegRank).toBeCloseTo(-5.62, 5) // -6.62 + 1.0 penalty
+	})
+
+	test("a dominant foreign alias over the margin still wins and is NOT demoted", () => {
+		// primary GH (neg -4.99) vs foreign alias US (neg -6.58 — gap 1.59 > 1.0 margin).
+		const ranked = rankByPrimaryPreference([row(-6.58, 0, 1), row(-4.99, 1, 3)], 5)
+		expect(ranked[0]!.is_primary).toBe(0) // the dominant alias wins
+		expect(ranked[0]!.country_id).toBe(1)
+		expect(ranked[0]!.demoted).toBe(false) // stays exact — real alt-name recall preserved
+	})
+
+	test("a same-country alias is never penalized (population decides — Frisco → San Francisco)", () => {
+		// primary US small (neg -5.34) vs alias US big (neg -5.91) — SAME country, so pure population.
+		const ranked = rankByPrimaryPreference([row(-5.91, 0, 1), row(-5.34, 1, 1)], 5)
+		expect(ranked[0]!.is_primary).toBe(0) // the bigger same-country alias wins
+		expect(ranked[0]!.demoted).toBe(false)
+		expect(ranked[0]!.effectiveNegRank).toBeCloseTo(-5.91, 5) // no penalty applied
+	})
+
+	test("with no primary in the set, population order is untouched", () => {
+		const ranked = rankByPrimaryPreference([row(-6.0, 0, 1), row(-4.0, 0, 2)], 5)
+		expect(ranked.map((r) => r.neg_rank)).toEqual([-6.0, -4.0]) // unchanged
+		expect(ranked.every((r) => !r.demoted)).toBe(true)
+		expect(ranked.every((r) => r.effectiveNegRank === r.neg_rank)).toBe(true)
+	})
+})
+
+describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio lever, regression lock)", () => {
+	// THE RULE, locked here so it can't silently drift: δ=1.0 (PRIMARY_PREFERENCE_LOG10) means a
+	// cross-country ALIAS must be ≥10x more populous than the same-key foreign PRIMARY to win; below 10x the
+	// primary wins and the alias is demoted out of the exact tier. This is a population-RATIO proxy for
+	// NOTABILITY — the refinement to a true notability signal is tracked as a follow-up.
+	//
+	// The band the reviewer characterized on the real gazetteer, reproduced with synthetic fixtures so the
+	// class is pinned WITHOUT the 3.9 GB live db: "Cancun" → Cancún MX (~5x, flips to the primary);
+	// "Florence" → Florence US (Firenze only ~9.5x, under the bar → primary); "Naples" → Napoli IT (~50x)
+	// and "Vienna" → Wien AT (~118x) stay foreign. Non-vacuous by construction: a naive unbounded
+	// `is_primary DESC` fails the >10x + same-country cases (it would force the primary); a pure-population
+	// order fails the <10x case (it would keep the more-populous alias).
+	const US = 2
+	const IT = 3
+	const AT = 4
+	// A row from a raw population — build-candidate stores neg_rank = -log10(population + 1), so the pure
+	// lever sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
+	const pop = (population: number, is_primary: number, country_id: number) => ({
+		neg_rank: -Math.log10(population + 1),
+		is_primary,
+		country_id,
+	})
+
+	test("cross-country alias JUST UNDER 10x loses to the foreign primary (Florence → Florence US)", () => {
+		// primary US 100k vs foreign alias IT 950k → ratio ~9.5x < 10x → primary wins, alias demoted.
+		const ranked = rankByPrimaryPreference([pop(950_000, 0, IT), pop(100_000, 1, US)], 5)
+		expect(ranked[0]!.is_primary).toBe(1)
+		expect(ranked[0]!.country_id).toBe(US)
+		expect(ranked.find((r) => r.country_id === IT)!.demoted).toBe(true)
+	})
+
+	test("cross-country alias WELL OVER 10x still wins (Naples → Napoli / Vienna → Wien class)", () => {
+		// primary US 20k vs foreign alias AT ~1.9M → ratio ~95x > 10x → the dominant alias wins, NOT demoted.
+		const ranked = rankByPrimaryPreference([pop(1_900_000, 0, AT), pop(20_000, 1, US)], 5)
+		expect(ranked[0]!.is_primary).toBe(0)
+		expect(ranked[0]!.country_id).toBe(AT)
+		expect(ranked[0]!.demoted).toBe(false)
+	})
+
+	test("the 10x threshold is tight: 10.5x → alias wins, 9.5x → foreign primary wins", () => {
+		// 10.5x → over the bar → the alias wins.
+		const over = rankByPrimaryPreference([pop(1_050_000, 0, IT), pop(100_000, 1, US)], 5)
+		expect(over[0]!.country_id).toBe(IT)
+		expect(over[0]!.is_primary).toBe(0)
+		// 9.5x → under the bar → the foreign primary wins.
+		const under = rankByPrimaryPreference([pop(950_000, 0, IT), pop(100_000, 1, US)], 5)
+		expect(under[0]!.country_id).toBe(US)
+		expect(under[0]!.is_primary).toBe(1)
+	})
+
+	test("SAME-country collision is unaffected by the ratio lever — population-first at any ratio", () => {
+		// primary US 100k vs alias US 950k (same country) → no penalty → the bigger alias wins even at ~9.5x
+		// (below the cross-country bar) and is never demoted. A naive `is_primary DESC` would wrongly pick the
+		// primary here — this is the guard that the lever stays CROSS-country-only.
+		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
+		expect(ranked[0]!.is_primary).toBe(0)
+		expect(ranked[0]!.demoted).toBe(false)
 	})
 })

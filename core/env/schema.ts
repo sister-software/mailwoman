@@ -108,6 +108,9 @@ export const PrivateEnvSchema = z.object({
 	CF_AUTH_TOKEN: z.string().optional(),
 	GEOCODE_EARTH_API_KEY: z.string().optional(),
 
+	// UK EPC bulk-download API token (en-GB acquisition — EPC certificates, UPRN-joinable).
+	UK_EPC_TOKEN: z.string().optional(),
+
 	// LLM API keys for the corpus golden-expansion tooling.
 	DEEPSEEK_API_KEY: z.string().optional(),
 	ANTHROPIC_API_KEY: z.string().optional(),

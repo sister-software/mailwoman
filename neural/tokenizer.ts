@@ -19,8 +19,25 @@
  *       entirely BMP characters, JS code-unit indexing is correct in practice. Surrogate- pair
  *       codepoints would need `Array.from(s).length` accounting; deferred until the parity test
  *       surfaces a real case.
- *   - Byte-fallback pieces (`<0xHH>`) are not handled here. The v0.1.0 corpus and golden set are
- *       Latin-script; the parity test will surface any unhandled cases.
+ *   - Byte-fallback pieces (`<0xHH>`) ARE handled: a run of one or more consecutive `<0xHH>` pieces (the vocab’s
+ *       fallback for any character with no direct token — observed live on curly quotes “”’’, guillemets «», and
+ *       braces {} even on Latin-script input, not just non-Latin scripts) is buffered and decoded as one UTF-8 byte
+ *       sequence via `TextDecoder`, and the cursor advances by the DECODED string’s length — not by the literal
+ *       `”<0xHH>”` placeholder’s length (6 chars for a single byte that represents 1 real character, or worse for a
+ *       multi-byte codepoint split across several fallback pieces). Before this fix the cursor over-advanced on every
+ *       byte-fallback piece, desyncing every subsequent piece’s offsets for the REST of the input — see
+ *       `neural/test/tokenizer-byte-fallback.test.ts` for the repro and the fix-wave writeup
+ *       (`.superpowers/sdd/task-9-audit-report.md`, paired-punctuation audit).
+ *   - A byte-fallback run is split **per source character** at UTF-8 sequence boundaries (lead-byte scan): each
+ *       character’s pieces carry that character’s own `[start, end)` span — the last piece of the character’s byte
+ *       segment owns the real range (so `raw.slice(start, end)` recovers exactly that character), earlier pieces in
+ *       the segment get a zero-width range at the character’s start (the same “own placeholder, zero contribution”
+ *       idiom `groupPiecesIntoWords` uses for a bare ▁). This is what lets heterogeneous BIO tags inside one run
+ *       survive decode: a run spanning multiple characters (東京都渋谷区 — every character its own 3-byte run
+ *       segment) no longer collapses to one combined span on the run’s final piece, which used to silently absorb a
+ *       B- tag boundary inside the run (the CJK residual resolved 2026-07-23; required before any non-Latin/CJK
+ *       tokenizer ships). For a single-character run (curly quote, emoji) the split is a no-op — one segment,
+ *       identical spans to the pre-split behavior.
  *
  *   The wrapper supports two load modes:
  *
@@ -33,6 +50,28 @@ import { SentencePieceProcessor } from "@sctg/sentencepiece-js"
 
 /** SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK). */
 export const SPACE_SENTINEL = "▁"
+
+/** A SentencePiece byte-fallback piece — the vocab's escape hatch for a character with no direct token. */
+const BYTE_FALLBACK_RE = /^<0x([0-9A-Fa-f]{2})>$/
+
+const utf8Decoder = new TextDecoder("utf-8", { fatal: false })
+
+/**
+ * Byte length of a UTF-8 sequence, from its lead byte. A continuation or invalid lead byte returns 1 so a malformed
+ * byte forms its own one-byte segment (decoding to U+FFFD) instead of derailing the character split for the rest of the
+ * run.
+ */
+function utf8SequenceLength(leadByte: number): number {
+	if (leadByte < 0x80) return 1
+
+	if (leadByte >= 0xc0 && leadByte < 0xe0) return 2
+
+	if (leadByte >= 0xe0 && leadByte < 0xf0) return 3
+
+	if (leadByte >= 0xf0 && leadByte < 0xf8) return 4
+
+	return 1
+}
 
 /** A tokenized piece paired with its char-range in the original input. */
 export interface TokenizedPiece {
@@ -92,11 +131,69 @@ export class MailwomanTokenizer {
 		const tokenized: TokenizedPiece[] = []
 		let cursor = 0
 
+		// A run of consecutive byte-fallback pieces (see BYTE_FALLBACK_RE's doc comment) accumulates here until a
+		// non-byte-fallback piece (or end of input) closes it — see flushByteRun.
+		let byteRun: { pieces: string[]; ids: number[]; bytes: number[] } | null = null
+
+		const flushByteRun = (): void => {
+			if (!byteRun) return
+
+			// Split the run at UTF-8 character boundaries (lead-byte scan) so each source character's pieces carry
+			// that character's own span — a run spanning multiple characters must NOT collapse onto one combined
+			// offset, or heterogeneous BIO tags inside the run get absorbed into a single span (see file header).
+			let pieceIndex = 0
+
+			for (let byteIndex = 0; byteIndex < byteRun.bytes.length;) {
+				const segmentLength = Math.min(utf8SequenceLength(byteRun.bytes[byteIndex]!), byteRun.bytes.length - byteIndex)
+				const decoded = utf8Decoder.decode(Uint8Array.from(byteRun.bytes.slice(byteIndex, byteIndex + segmentLength)))
+				const start = cursor
+				cursor += decoded.length
+				const end = cursor
+
+				for (let k = 0; k < segmentLength; k++) {
+					const isLast = k === segmentLength - 1
+					// The segment's LAST piece owns the character's real [start, end) span (so `raw.slice(start, end)`
+					// recovers the character); earlier pieces get a zero-width range at the character's start — the
+					// same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses for a bare ▁.
+					tokenized.push({
+						piece: byteRun.pieces[pieceIndex]!,
+						id: byteRun.ids[pieceIndex]!,
+						start,
+						end: isLast ? end : start,
+					})
+					pieceIndex++
+				}
+
+				byteIndex += segmentLength
+			}
+
+			byteRun = null
+		}
+
 		for (let i = 0; i < pieces.length; i++) {
 			const piece = pieces[i]!
 			const id = ids[i] ?? -1
 			const hasSentinel = piece.startsWith(SPACE_SENTINEL)
 			const literal = hasSentinel ? piece.slice(SPACE_SENTINEL.length) : piece
+			const byteMatch = BYTE_FALLBACK_RE.exec(literal)
+
+			if (byteMatch) {
+				if (!byteRun) {
+					if (hasSentinel) {
+						while (cursor < text.length && /\s/.test(text[cursor]!)) {
+							cursor++
+						}
+					}
+					byteRun = { pieces: [], ids: [], bytes: [] }
+				}
+
+				byteRun.pieces.push(piece)
+				byteRun.ids.push(id)
+				byteRun.bytes.push(Number.parseInt(byteMatch[1]!, 16))
+				continue
+			}
+
+			flushByteRun()
 
 			if (hasSentinel) {
 				while (cursor < text.length && /\s/.test(text[cursor]!)) {
@@ -110,6 +207,8 @@ export class MailwomanTokenizer {
 
 			tokenized.push({ piece, id, start, end })
 		}
+
+		flushByteRun()
 
 		return { pieces: tokenized, ids }
 	}

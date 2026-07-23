@@ -250,6 +250,10 @@
 			"applied": false
 		},
 		{
+			"kind": "placetypePair",
+			"applied": false
+		},
+		{
 			"kind": "conventionsMask",
 			"applied": false
 		}

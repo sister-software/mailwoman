@@ -18,7 +18,8 @@
 		"./**/*.stories.ts",
 		"./**/*.stories.tsx",
 		"./.storybook/**",
-		"./vitest.config.ts"
+		"./vitest.config.ts",
+		"./vitest.node.config.ts"
 	],
 	"references": [{ "path": "../kind-classifier" }, { "path": "../poi-taxonomy" }, { "path": "../query-shape" }]
 }

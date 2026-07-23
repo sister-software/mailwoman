@@ -1,0 +1,291 @@
+# === v3.11.1-deploc-consolidate — RESUME feed-8k +2k @ damped classifier LR. GAUNTLET-REPAIR run. ===
+# One pre-registered attempt (operator-ratified 2026-07-23). Context: NO checkpoint of the
+# v3.11.0-deploc-feed run is gauntlet-clean on the metamorphic layer — the NY-cell violation trio
+# heals only AT step-8000, and step-8000 introduces the Pennsylvania-Ave comma-drop break (train-loss
+# anomaly at 7850-7950 immediately precedes that save). Trajectory says: the run self-heals given more
+# steps; the hot classifier group (1e-3) keeps introducing new churn. THE FIX: continue past the
+# anomaly with the classifier group damped 10x.
+#
+# MECHANICS (this is a RESUME, not init_from — night-shift skill rule; optimizer/scheduler/step
+# continue): launch with --resume auto against the SAME output_dir (checkpoints 9000/10000 append).
+# reinit_label_rows is structurally unreachable on the resume path (correct — do NOT re-fire).
+# The [resume-lr] restamp lines in the startup log are the PROOF the damped LR took effect —
+# capture them at launch; group `classifier_learning_rate` must print `checkpoint 0.001 -> config 0.0001`.
+#
+# PRE-REGISTERED (one attempt, stop rule absolute):
+#   PRIMARY : gauntlet metamorphic layer = 0 violations at step-010000 (both prior checkpoints'
+#             break classes: NY-cell trio stays healed; Pennsylvania-Ave class heals).
+#   GUARDS  : digit bare-street-hn >= v385 baseline 0.755 (operator-restated bar); FR bare-locality
+#             >= 0.90; golden us/fr within ±0.7pp of v385; 6 presets byte-identical; GB dep-loc
+#             board w/ prior @ δ=5.0 ~69/69, FP 0; error-analysis no tag >2pp vs v385.
+#   STOP    : if not clean at 10000, NO model ships from this lineage this round — the fork goes to
+#             a full redesign discussion. No further resume extensions, no knob iteration.
+#
+# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.11.1-deploc-consolidate.yaml --resume auto
+#
+# --- original v3.11.0-deploc-feed header follows (provenance; its Launch line does NOT apply) ---
+# Escalation of v3.10.1-gb-probe2 (PRIMARY PASS: first decode-layer dep-loc emissions ever — NZ 3/246,
+# GB 1/69; raw-BIO GB 12/69, min gap 0.000). Probe-2's costs were SKEW costs (synth-gb alone at 20.2%
+# of stream): golden us −0.8pp (0.1 outside bar), FR-fragment bare-locality 0.98→0.60, val −1.7pp.
+# THIS run holds combined dep-loc density (~6.3% of stream vs probe-2's ~6.6%) while splitting mass
+# across FOUR locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% stream; densities .328/.792/.303/1.00)
+# — combined dep-loc 6.66% ≈ probe-2's 6.6% EXACTLY (one variable = diversity), max single-locale share 20.2% → 6.1%. Same resurrection levers as the probes (reinit rows 7/8 +
+# classifier group 1e-3, init_from v385) — this is the properly-fed retrain of the confirmed mechanism.
+# Roster final 2026-07-22 ~05:5x UTC: all four shards landed + gate-checked (synth-fr-lieudit @ 100% dep-loc).
+#
+# PRE-REGISTERED READ (written before the numbers exist; operator-approved task list 2026-07-22):
+#   PRIMARY  : decode-layer dependent_locality emission MATERIALLY above probe-2 floors (NZ > 3/246,
+#              GB > 1/69) with tag-correct majority; raw-BIO emission + gap trajectory reported.
+#   GUARDS (each REGISTERED, none composite-maskable):
+#     - golden us micro within ±0.7pp of v385  [probe-2 missed by 0.1pp — must recover]
+#     - golden fr micro within ±0.7pp of v385
+#     - FR-fragment BARE-LOCALITY class ≥ 0.90 (v385 baseline 0.978; probe-2 collapsed to 0.603 —
+#       the composite board number is NOT the bar; this class is)
+#     - digit board bare-street-hn flat vs 0.902 (probe-1/2 level; v385 fresh baseline 0.755)
+#     - 6 demo presets byte-identical to v385
+#     - val macro_f1 within 1.0pp of v385's 0.7047
+#   SHIP GATE : full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet PASS.
+#              Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the
+#              2026-07-22 night shift CONDITIONAL on every bar above passing. Any bar fails → stage
+#              only, report, no promote (no silent gate drift; treadmill guard: no knob iteration).
+#
+# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.11.0-deploc-feed.yaml --resume none
+#   (--resume none REQUIRED: reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it.)
+#
+# --- original v3.10.0-gb-probe header follows (provenance retained) ---
+# Clone of v3.8.5-latam-8k.yaml (the shipped v385/6.6.0 CA/MX Overture recipe) with EXACTLY the
+# deltas below — one-variable discipline, everything else verbatim.
+#
+# [SUPERSEDED HISTORY — retained for the record, CORRECTED by the probe-2 header above]: the
+# "run A = instrument failure" adjudication was WRONG. Runs A and B produced byte-identical
+# checkpoints; captured run-B startup logs + rows-7/8 cosine analysis prove every lever fired in
+# BOTH runs (sources were already synced before run A). The maxΔ-based "rows unchanged" reading
+# used the wrong instrument (element scale ~0.07 at 384 dims; cosine 0.10 vs 0.62-0.73 was the
+# truth). Probe 1's real confound was positive-mass starvation + decode-layer scoring.
+#
+# THE VARIABLES (three, bundled because each alone is a known no-op — #456/#1100 dead-tag history):
+#   1. data.corpus_dir -> v0.14.0-gb (v0.13.0-latam base + the new synth-gb-v1 shard, 800k rows,
+#      32.8% B-dependent_locality) + data.source_weights.synth-gb (36.0 in THIS probe-2 file; the
+#      probe-1 value was 6.0 — see probe-2 header above; other locale-add shards unchanged).
+#   2. model.class_weights B-/I-dependent_locality 0.3 -> 1.0. Task 4a's fix made GB actually EMIT
+#      the tag in the corpus; a 0.3 downweight on top of a near-zero classifier row is the THIRD
+#      suppressor and would mute the very signal this probe is testing.
+#   3. train.reinit_label_rows (rows 7/8, mean-of-live re-init) + train.classifier_learning_rate
+#      1.0e-3 (a dedicated hot param group on `classifier.` — Adam's update is scale-invariant, so
+#      only a real param group moves a baked-negative row; see train.py build_optimizer/
+#      reinit_label_rows, #1100 Task 6).
+#
+# ⚠️ LAUNCH DISCIPLINE: this recipe MUST launch with `--resume none`. `reinit_label_rows` and
+# `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
+# auto` run takes the `if resume_from:` branch instead and NEVER evaluates `reinit_label_rows` at
+# all (silent no-op, not an error). See train.py L433-456.
+#
+# init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
+# own `output_dir` string (`output-v384-latam-probe-s42`) is a REUSED name from the v384 2k probe —
+# do not read it as v385's identity. Verified on the volume 2026-07-22: `modal volume ls
+# mailwoman-training /output-v384-latam-probe-s42/checkpoints/` lists step-001000..step-008000 (8
+# checkpoints, matching the v3.8.5 recipe's max_steps 8000 / save_every_steps 1000), and
+# `/output-v384-latam-probe-s42/model.onnx` + `train_log.csv` are both present at the dir root
+# (the exported-and-shipped artifact), corroborating neural-weights-en-us/model-card.json's v385
+# provenance (recipe v3.8.5-latam-8k.yaml, init_from v381 step-8000, best_step 8000). No
+# `output-v385-*` directory exists on the volume — v385 IS output-v384-latam-probe-s42.
+#
+# PRE-REGISTERED READ (written before the numbers exist; verbatim from
+# docs/superpowers/plans/2026-07-22-en-gb-locale-arc.md Task 7):
+#   PRIMARY : dependent_locality emission on the 246-row NZ board + GB board.
+#   GUARDS  : golden us/fr noise, digit + FR fragment boards, 6 demo presets byte-identical.
+#   FALLBACK: locality-mapped ship, no knob-spinning.
+#
+# 2k PROBE (not a ship candidate). On PASS: operator decides whether to escalate to 8k. On a
+# PRIMARY miss: invoke the pre-registered fallback (locality-mapped) — do not iterate the knobs.
+#
+# Launch (see probe-2 header above): --config v3.10.1-gb-probe2.yaml --resume none
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc # FEED — v0.14.0-gb + synth-nz-v2 + synth-es-pedania (+synth-fr-lieudit if landed).
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights: # VERBATIM v2.4.1.
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    "NO": 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+    AU: 1.0
+    CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
+    MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
+  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 12.0
+    synth-nl-postcode: 6.0
+    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    synth-fragment: 6.0
+    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # bare-locality counter.
+    synth-fr-fragment: 12.0
+    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
+    synth-no-fragment: 12.0
+    synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box shard — harmless, same country)
+    synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
+    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
+  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
+  # comma-drop INV (White House + FR Rue du Chevaleret). ONE new variable vs v373.
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+
+model: # VERBATIM v2.4.1.
+  hidden_size: 384
+  use_span_boundary_head: true
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
+  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  use_country_anchor: true
+  country_feature_dim: 2
+  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
+  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0 # DELTA (0.3 -> 1.0) — the third suppressor: re-init + hot LR are useless under a 0.3 downweight.
+    I-dependent_locality: 1.0 # DELTA (0.3 -> 1.0) — see B-dependent_locality above.
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; --resume none on a fresh
+  # output_dir honors init_from, weights only).
+  output_dir: /data/output-v3110-deploc-feed-s42/checkpoints # FEED output dir.
+  seed: 42
+  init_from: /data/output-v384-latam-probe-s42/checkpoints/step-008000 # DELTA — the verified v385 (6.6.0) checkpoint. See header for the volume-verification evidence.
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.0e-5
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip_norm: 1.0
+  max_steps: 10000 # CONSOLIDATE — resume from step-8000 (+2k). The step counter CONTINUES; 10000 = 2k additional.
+  eval_every_steps: 1000
+  save_every_steps: 1000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  classifier_learning_rate: 1.0e-4 # CONSOLIDATE — damped 10x from the feed run's 1e-3; the resume-lr restamp (62d73672/32b58ed4) makes this TAKE EFFECT on resume. # DELTA — NEW. The dead-tag resurrection hot param group (#1100 Task 6); see header.
+  reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"] # DELTA — NEW. Mean-of-live re-init of the baked-dead rows; REQUIRES init_from AND --resume none (see header).
+  trackio_project: mailwoman
+  trackio_run_name: v3.11.1-deploc-consolidate-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
