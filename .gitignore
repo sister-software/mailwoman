@@ -92,6 +92,9 @@ playwright-report
 playwright-traces
 test-results
 *.lcov
+.vitest-attachments
+__screenshots__
+
 
 # Python artifacts (packages/corpus-python)
 **/.venv/
