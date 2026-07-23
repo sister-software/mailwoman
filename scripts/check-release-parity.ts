@@ -39,11 +39,14 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
 
 const RELEASES_MDX_PATH = repoRootPath("docs", "articles", "releases.mdx")
+const MODEL_CARD_PATH = repoRootPath("neural-weights-en-us", "model-card.json")
 
 interface ParityCheck {
 	name: string
 	value: string
 	ok: boolean
+	/** What the value was compared against — printed on failure. */
+	expected: string
 }
 
 /** Strip a leading `v` so demo-manifest versions (`v5.1.0`) compare against npm versions (`5.1.0`). */
@@ -94,17 +97,34 @@ const warnOnly = values["warn-only"] ?? false
 const npmLatest = await readNPMLatest()
 const checks: ParityCheck[] = []
 
+// TWO VERSION SERIES (2026-07-23 realignment — see releases.mdx's "Two version series" intro):
+// the demo serves MODELS, so its `defaultVersion` carries the model-card lineage number (6.6.0),
+// not the npm package number — comparing it against npm latest went permanently red the moment a
+// code-only release shipped (daily failures 07-21→07-23 across v7.3–v7.5). The demo leg now
+// compares against the SHIPPED model identity: `neural-weights-en-us/model-card.json#version`
+// (the same source verify-release-metadata keys off). The docs matrix row stays vs npm latest —
+// that surface documents package releases.
+const cardModelVersion = normalizeVersion(
+	(JSON.parse(readFileSync(MODEL_CARD_PATH, "utf8")) as { version: string }).version
+)
+
 const demoDefault = await readDemoDefaultVersion()
 checks.push({
 	name: `demo manifest defaultVersion (${DEMO_MANIFEST_URL})`,
 	value: demoDefault,
-	ok: demoDefault === npmLatest,
+	ok: demoDefault === cardModelVersion,
+	expected: `${cardModelVersion} (model-card version)`,
 })
 
 const docsCurrent = readDocsCurrentVersion()
-checks.push({ name: "docs/articles/releases.mdx (current) row", value: docsCurrent, ok: docsCurrent === npmLatest })
+checks.push({
+	name: "docs/articles/releases.mdx (current) row",
+	value: docsCurrent,
+	ok: docsCurrent === npmLatest,
+	expected: npmLatest,
+})
 
-console.log(`npm dist-tags.latest: ${npmLatest}\n`)
+console.log(`npm dist-tags.latest: ${npmLatest} · shipped model (card): ${cardModelVersion}\n`)
 
 let failed = false
 
@@ -114,7 +134,7 @@ for (const check of checks) {
 	if (!check.ok) {
 		failed = true
 	}
-	console.log(`${mark} ${check.name}: ${check.value}${check.ok ? "" : ` (expected ${npmLatest})`}`)
+	console.log(`${mark} ${check.name}: ${check.value}${check.ok ? "" : ` (expected ${check.expected})`}`)
 }
 
 if (failed && !warnOnly) {
