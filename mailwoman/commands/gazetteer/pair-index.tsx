@@ -41,11 +41,25 @@ import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
- * The rung-3 census's distinct-pair count for the GB source (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431
- * lines) — the cross-check this build must reproduce. A mismatch means this build's fold diverged from that census's,
- * not that the census was wrong; investigate before trusting the artifact.
+ * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. Re-anchored
+ * (final-review fix) from the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) down
+ * to 19,209. This is not a bug fix — a real Task-3 cross-check rebuild fired the gate at exactly this delta and it was
+ * adjudicated as the production fold correctly MERGING punctuation-variant duplicates the raw census counted separately
+ * (e.g. "St Helens" vs "St. Helens" fold to the SAME `(child, parent)` key). The collision receipt: 221 merge groups —
+ * 220 groups where 2 raw census lines collapse to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where
+ * 3 raw lines collapse to 1 entry (1 × 2 collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 =
+ * 19,209. See `.superpowers/sdd/progress.md`'s Task 3 entry for the adjudication record. A mismatch AGAINST 19,209 on a
+ * real rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate
+ * before trusting the artifact.
  */
-const EXPECTED_GB_PAIR_COUNT = 19_431
+const EXPECTED_GB_PAIR_COUNT = 19_209
+
+/**
+ * The raw rung-3 census's pre-fold line count (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) — retained as a named
+ * constant for provenance/debugging (e.g. diffing a future source refresh against this cycle's raw count), NOT the
+ * cross-check target. See {@link EXPECTED_GB_PAIR_COUNT}'s doc comment for why the production target is lower.
+ */
+const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
 /** Known (child, parent) pairs from the rung-3 GB census, probed after write as a self-check. */
 const GB_PROBE_PAIRS: ReadonlyArray<readonly [city: string, district: string]> = [
@@ -172,13 +186,17 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		// smaller `entries.length` by design, so the strict count-match gate is meaningless (and would misreport
 		// "BLOCKED") under holdout. Gate against `built.entries.length` (pre-holdout) instead in that case.
 		const preHoldoutCount = built.entries.length
+		// Pre-fold context suffix — the raw rung-3 census line count, for provenance/debugging (e.g. diffing a
+		// future source refresh against this cycle's raw count). Not the cross-check target; see
+		// `EXPECTED_GB_PAIR_COUNT`'s doc comment for the 221-group collision receipt that separates the two numbers.
+		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 		const gateLine =
 			country === "gb"
 				? options.holdoutFraction > 0
-					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})`
+					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})${preFoldSuffix}`
 					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT
-						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (rung-3 expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})`
-						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != rung-3's ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} — investigate fold divergence before trusting this artifact`
+						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (production baseline expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})${preFoldSuffix}`
+						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != the production baseline's ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} — investigate fold divergence before trusting this artifact${preFoldSuffix}`
 				: `(cross-check only registered for gb; ${preHoldoutCount.toLocaleString()} distinct pairs)`
 
 		const holdoutLine =
