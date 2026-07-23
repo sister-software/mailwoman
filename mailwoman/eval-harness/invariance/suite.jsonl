@@ -61,3 +61,14 @@
 {"id":"gb-banbury","raw":"10 Station Road, Cropredy, Banbury, OX17 1PP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"gb-swindon-no-postcode","raw":"Masefield, Royal Wootton Bassett, Swindon","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"gb-stockton-saint-prefix","raw":"St Bedes Avenue, Fishburn, Stockton-on-Tees","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+// ---------------------------------------------------------------------------------------------------------------
+// PAIRED-PUNCTUATION rows (Task 9 audit, `.superpowers/sdd/task-9-audit-report.md`) — quoted venue, parenthetical
+// aside, bracketed designator, and braces (the vocab byte-fallback class the audit's tokenizer fix targets). Every
+// row below carries the two new Task-9 classes (`wrap-in-quotes`, `add-parenthetical`, transforms.ts) alongside the
+// six universal ones; `abbreviation-swap` is included wherever the row carries a bare street-suffix token per the
+// same narrow EN table (all four rows do — "St"/"Road" — none trip the Saint-prefix guard, verified directly
+// against `abbreviationSwap`).
+{"id":"gb-quoted-venue","raw":"\"The Grange\", Fishburn, Stockton-on-Tees","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"gb-parenthetical-aside","raw":"12 High St (rear entrance), Leeds","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"gb-bracketed-designator","raw":"Unit 4 [Block B], 10 Station Road, Banbury, OX17 1PP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"us-brace-suite","raw":"Suite {12B}, 200 Main St, Austin, TX 78701","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}

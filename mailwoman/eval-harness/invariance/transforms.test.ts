@@ -11,18 +11,20 @@ import { describe, expect, it } from "vitest"
 import { canonicalizeAbbreviations, getTransform, TRANSFORMS } from "./transforms.ts"
 
 describe("TRANSFORMS registry", () => {
-	it("carries the seven classes the spec names", () => {
+	it("carries the seven spec-named classes plus the two Task-9 paired-punct classes", () => {
 		const ids = TRANSFORMS.map((t) => t.id).sort()
 
 		expect(ids).toEqual(
 			[
 				"abbreviation-swap",
+				"add-parenthetical",
 				"case-fold",
 				"comma-drop",
 				"idempotence",
 				"lowercase",
 				"trailing-punct",
 				"whitespace-jitter",
+				"wrap-in-quotes",
 			].sort()
 		)
 	})
@@ -165,6 +167,26 @@ describe("canonicalizeAbbreviations", () => {
 		const after = canonicalizeAbbreviations("Pennsylvania Avenue NW")
 
 		expect(before).toBe(after)
+	})
+})
+
+describe("wrap-in-quotes (Task 9 paired-punctuation audit)", () => {
+	it("wraps the whole input in a matching straight-quote pair", () => {
+		expect(getTransform("wrap-in-quotes").apply("350 Fifth Avenue")).toBe('"350 Fifth Avenue"')
+	})
+
+	it("is always applicable — never null, even for an empty string", () => {
+		expect(getTransform("wrap-in-quotes").apply("")).not.toBeNull()
+	})
+})
+
+describe("add-parenthetical (Task 9 paired-punctuation audit)", () => {
+	it("appends a bracketed aside", () => {
+		expect(getTransform("add-parenthetical").apply("12 High St, Leeds")).toBe("12 High St, Leeds (main entrance)")
+	})
+
+	it("is always applicable — never null", () => {
+		expect(getTransform("add-parenthetical").apply("")).not.toBeNull()
 	})
 })
 

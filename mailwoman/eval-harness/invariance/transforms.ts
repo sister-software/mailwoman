@@ -204,6 +204,34 @@ function trailingPunct(raw: string): string | null {
 }
 
 // -------------------------------------------------------------------------------------------------
+// paired-punct (Task 9 audit — quotes, brackets, braces, parens, guillemets)
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Wrap the WHOLE input in a matching straight-quote pair — the same "wrap the whole thing" idiom as `trailing-punct`,
+ * but with a paired delimiter instead of a single trailing char. Mirrors a real, mundane input shape: an address
+ * copy-pasted out of a spreadsheet cell or CSV field that still carries its enclosing quotes. Always applicable (every
+ * string can be wrapped). A correct decode path strips the wrap (boundary-trim, see `core/decoder/build-tree.ts`'s
+ * `trimBoundary`) and recovers the identical components — this is a genuine metamorphic invariance, not a semantic
+ * change, so a violation here is a real paired-punctuation regression.
+ */
+function wrapInQuotes(raw: string): string | null {
+	return `"${raw}"`
+}
+
+/**
+ * Append an irrelevant bracketed aside — the paired-punctuation sibling of `trailing-punct`'s "add innocuous trailing
+ * content" idiom (Ribeiro et al. 2020's INV class explicitly covers appending irrelevant clauses/asides). The
+ * parenthetical content ("main entrance") never appears in any golden component for these rows, so every EXISTING
+ * component (house_number, street, locality, postcode, …) must survive unchanged; the aside itself getting no tag (or a
+ * `venue`/`unit`-shaped one) is not itself a violation — the runner's `compareComponents` only flags a degradation/loss
+ * on components that were present before and change or vanish after.
+ */
+function addParenthetical(raw: string): string | null {
+	return `${raw} (main entrance)`
+}
+
+// -------------------------------------------------------------------------------------------------
 // idempotence
 // -------------------------------------------------------------------------------------------------
 
@@ -251,6 +279,20 @@ export const TRANSFORMS: readonly Transform[] = [
 		label: "whitespace-jitter",
 		literatureAnchor: "Ribeiro et al. 2020 (CheckList) INV — added/extra whitespace invariance",
 		apply: whitespaceJitter,
+	},
+	{
+		id: "wrap-in-quotes",
+		label: "wrap-in-quotes",
+		literatureAnchor:
+			"Ribeiro et al. 2020 (CheckList) INV — irrelevant surrounding punctuation invariance (paired-punctuation audit, Task 9)",
+		apply: wrapInQuotes,
+	},
+	{
+		id: "add-parenthetical",
+		label: "add-parenthetical",
+		literatureAnchor:
+			"Ribeiro et al. 2020 (CheckList) INV — appending an irrelevant clause/aside invariance (paired-punctuation audit, Task 9)",
+		apply: addParenthetical,
 	},
 	{
 		id: "trailing-punct",

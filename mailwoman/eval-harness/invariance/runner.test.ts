@@ -16,8 +16,9 @@ describe("loadSuite", () => {
 	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", () => {
 		const rows = loadSuite()
 
+		// 19 base rows + 4 Task-9 paired-punctuation rows = 23.
 		expect(rows.length).toBeGreaterThanOrEqual(16)
-		expect(rows.length).toBeLessThanOrEqual(20)
+		expect(rows.length).toBeLessThanOrEqual(25)
 
 		for (const row of rows) {
 			expect(row.id).toBeTruthy()
