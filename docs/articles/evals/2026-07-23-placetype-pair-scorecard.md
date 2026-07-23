@@ -209,6 +209,19 @@ Each ingredient is provably necessary; the fine-tune's resurrection puts the tag
 winning, the prior supplies the calibrated final push. Neither alone reaches production-usable
 recall.
 
+> **CORRECTION + SUPERSESSION (2026-07-23, Option-A δ-sweep — later the same day).** Two fixes to
+> the table above. (1) The 3/69 "v385 + prior" row was a rung-3 hand-rolled probe at δ=6, not a
+> production-decode measurement — the production number is **0/69 at δ=5–6's low end** (δ=5: 0/69;
+> δ=6: 6/69). (2) The conclusion "neither alone reaches production-usable recall" was
+> **δ-conditional and is now falsified**: sweeping δ on the untouched v385 shows both curves
+> saturate at **δ=10 — 69/69 emit, 69/69 tag-correct, golden-FP 0/51** — exceeding every trained
+> candidate in the arc, at a venue-confound floor of 3.338% (vs 0.738% for the feed candidate at
+> δ=5). v385's dead-classifier deficit is large but _uniform_ (~7.0 logits mean), so a δ that
+> clears it clears the whole board at once. The ablation's necessity claim survives only in this
+> form: at δ≤6, weights-resurrection is necessary; at δ=10, the prior alone suffices for this
+> board, and the trade moves entirely into the venue-confound FP floor. Full sweep:
+> `.superpowers/sdd/task-8-report.md` § "Option A: v385 δ-sweep".
+
 ---
 
 ## Gauntlet — NEW finding, Task 8, 2026-07-23
