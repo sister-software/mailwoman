@@ -25,6 +25,10 @@
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
+ *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index (Task 8), built from a
+ *       PPD-style (child, parent) tuples CSV (`softFeed.pairIndexByCountry[<cc>].source` + `.delta`) via
+ *       `mailwoman gazetteer pair-index`. COUNTRY-SPECIFIC BY DESIGN — a workspace whose country has no
+ *       `pairIndexByCountry` entry ships no sibling and is silently skipped (see materializePairIndex).
  *
  *   Idempotent. Used by .release-it.json's before:init hook.
  */
@@ -49,6 +53,7 @@ const SOURCE_TOKENIZER = $public.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot
 const SOFT_FEED = config.softFeed ?? {}
 const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
 const SOURCE_COUNTRY = SOFT_FEED.countryLexicon ? resolve(repoRoot, SOFT_FEED.countryLexicon) : null
+const PAIR_INDEX_BY_COUNTRY: Record<string, { source: string; delta: number }> = SOFT_FEED.pairIndexByCountry ?? {}
 
 const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
 
@@ -98,6 +103,7 @@ async function main() {
 		process.stderr.write(`copied weights → ${workspace}/{model.onnx,tokenizer.model}\n`)
 
 		await materializeSoftFeed(workspace, dir)
+		await materializePairIndex(workspace, dir)
 	}
 }
 
@@ -168,6 +174,56 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	if (!existsSync(binDest)) throw new Error(`gazetteer postcode-binary ran but ${binDest} was not produced`)
 	process.stderr.write(`built soft-feed → ${workspace}/postcode-${country}.bin\n`)
+}
+
+/**
+ * Materialize the placetype-pair-prior arc's PIX1 index (`pair-index-<cc>.bin`) into a weights workspace — mirrors
+ * {@link materializeSoftFeed}'s postcode-binary block exactly, but keyed off `softFeed.pairIndexByCountry` (a CSV
+ * source + a required calibrated `--delta`, not a WOF DB) instead of `postcodeDBByCountry`. COUNTRY-SPECIFIC BY DESIGN,
+ * same as the runtime resolver (`neural/weights.ts`'s `resolvePairIndexSibling`): a workspace whose country has no
+ * `pairIndexByCountry` entry ships no pair-index sibling and is skipped silently (not every locale gets one).
+ */
+async function materializePairIndex(workspace: string, dir: string) {
+	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
+	const entry = PAIR_INDEX_BY_COUNTRY[country]
+
+	if (!entry) {
+		return
+	}
+	const source = entry.source.startsWith("/") ? entry.source : resolve(dataRoot, entry.source)
+
+	if (!existsSync(source)) {
+		throw new Error(
+			`Missing pair-index source CSV for ${country}: ${source}\nSet MAILWOMAN_DATA_ROOT or softFeed.pairIndexByCountry.${country}.source.`
+		)
+	}
+	const binDest = resolve(dir, `pair-index-${country}.bin`)
+	await removeIfPresent(binDest)
+	// `gazetteer pair-index` is the compiled Pastel command; `.release-it.json` runs `yarn compile` right
+	// before this script, so mailwoman/out/cli.js exists (same precondition as postcode-binary above).
+	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+	const r = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"gazetteer",
+			"pair-index",
+			"--out",
+			dir,
+			"--country",
+			country,
+			"--source",
+			source,
+			"--delta",
+			String(entry.delta),
+		],
+		{ stdio: "inherit" }
+	)
+
+	if (r.status !== 0) throw new Error(`gazetteer pair-index failed for ${country} (exit ${r.status})`)
+
+	if (!existsSync(binDest)) throw new Error(`gazetteer pair-index ran but ${binDest} was not produced`)
+	process.stderr.write(`built soft-feed → ${workspace}/pair-index-${country}.bin (delta=${entry.delta})\n`)
 }
 
 async function removeIfPresent(path: PathLike) {

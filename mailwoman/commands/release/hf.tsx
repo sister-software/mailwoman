@@ -36,6 +36,12 @@ const OptionsSchema = zod.object({
 	modelSize: zod.string().optional().describe("Override the displayed model size (default: derived from --model)"),
 	steps: zod.number().optional().describe("Training steps recorded in releases.json (default 100000)"),
 	postcodes: zod.string().optional().describe("Comma-separated postcode soft-feed binaries (postcode-us.bin,…)"),
+	pairIndexes: zod
+		.string()
+		.optional()
+		.describe(
+			"Comma-separated placetype-pair-index soft-feed binaries (pair-index-gb.bin,…; placetype-pair-prior arc, Task 8)"
+		),
 	gazetteerLexicon: zod
 		.string()
 		.optional()

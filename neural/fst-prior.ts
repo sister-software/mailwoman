@@ -23,6 +23,26 @@ import type { TokenLike } from "./query-shape-prior.ts"
 
 const SPACE_SENTINEL = "▁"
 
+/**
+ * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's escape hatch for a character with no direct token (curly
+ * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab; see `tokenizer.ts`'s doc
+ * comment). The placeholder TEXT itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
+ * as real alnum content — without this guard, a byte-fallback piece's placeholder text leaks into `fstToken` as garbage
+ * ("0x7bblock" instead of "block"), silently corrupting the FST/pair-index probe key for any place name written with
+ * one of these characters (paired-punctuation audit, `.superpowers/sdd/task-9-audit-report.md`). Matched against the
+ * piece with any leading `▁` stripped, mirroring how `hasAlnum`/`literal` are computed below.
+ */
+const BYTE_FALLBACK_RE = /^<0x[0-9A-Fa-f]{2}>$/
+
+/** Is `piece` real word content, ignoring a leading `▁` sentinel? False for a byte-fallback placeholder — see above. */
+function hasWordContent(piece: string): boolean {
+	const literal = piece.startsWith(SPACE_SENTINEL) ? piece.slice(SPACE_SENTINEL.length) : piece
+
+	if (BYTE_FALLBACK_RE.test(literal)) return false
+
+	return /[\p{L}\p{N}]/u.test(piece)
+}
+
 // ---------------------------------------------------------------------------
 // Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
 // ---------------------------------------------------------------------------
@@ -186,9 +206,46 @@ export function buildFSTEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so the street-morphology prior
- * can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper signature; not part of
- * the public neural API.
+ * **The word boundary is `▁` (the SentencePiece space sentinel) — and ONLY `▁`.** The loop carries one piece of state,
+ * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is PENDING (nothing is open,
+ * and the next real content should start one fresh, whatever piece it arrives on). Three kinds of piece, crossed with
+ * that state, is the whole state machine:
+ *
+ * 1. **`▁`-prefixed, with alnum content** (a genuine new word, e.g. `"▁Stock"`, `"▁Tyne"`): always closes whatever
+ *    `current` holds (pushing it to `groups`) and opens a fresh one. This is the only case that unconditionally starts
+ *    a word — every other case below is conditioned on whether one is already open or pending.
+ * 2. **`▁`-prefixed, NO alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
+ *    a punctuation piece the tokenizer fused with its own leading space): closes whatever `current` holds, same as case
+ *    1, but does NOT open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
+ *    }`, preserving index alignment) and leaves the state PENDING (`current = null`) for whatever piece comes next.
+ * 3. **Not `▁`-prefixed** (interior to whatever's already true — nothing here is itself a boundary):
+ *
+ *    - **Alnum** (a SentencePiece subword split, e.g. `"ton"` after `"▁Stock"`): if a word is open (`current` is non-null),
+ *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
+ *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
+ *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
+ *      fresh here instead of being dropped. **This is the fix**: earlier code only ever opened a new word on a
+ *      `▁`-prefixed piece (or `i === 0`), so a pending word whose first piece happened to lack its own `▁` — the exact
+ *      shape a SentencePiece vocab produces for a short/common word that was never learned as a merged `"▁word"` token
+ *      (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on the production
+ *      `v0.9.0-multisplice` tokenizer) — silently vanished. Confirmed live, not a fixture-vocab quirk: see the fix-round-2
+ *      report for the production-tokenizer repro table.
+ *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open, it's interior punctuation — absorbed into
+ *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
+ *      never resetting it, so the pieces that follow still have a `current` to land on (the Critical fix from the first
+ *      fix wave — "Stockton-on-Tees", "Bishop's Stortford"). If a word is PENDING, this punctuation piece has nothing to
+ *      attach to either — same empty-placeholder treatment as case 2 — and the state stays PENDING; the punctuation
+ *      doesn't consume or clear the pending word, it just has nothing of its own to open.
+ *
+ * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire" into one group:
+ * however many raw empty-placeholder groups the comma/space sequence produces (one from the bare `▁`, one from the
+ * comma itself if it too has no leading `▁`), they never carry real content, so non-empty-filtering callers
+ * (`placetype-pair-prior.ts`'s window builder) still see "stockton" and "lancashire" as two separate,
+ * non-adjacent-fused entries.
+ *
+ * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so consumers like the
+ * street-morphology prior can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper
+ * signature; not part of the public neural API.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
@@ -196,25 +253,40 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 
 	for (let i = 0; i < pieces.length; i++) {
 		const p = pieces[i]!
-		const hasAlnum = /[\p{L}\p{N}]/u.test(p.piece)
+		const hasAlnum = hasWordContent(p.piece)
+		const startsNewWord = p.piece.startsWith(SPACE_SENTINEL) || i === 0
 
-		if (p.piece.startsWith(SPACE_SENTINEL) || i === 0 || !hasAlnum) {
+		if (startsNewWord) {
 			if (current) {
 				groups.push(current)
 			}
 
 			if (!hasAlnum) {
+				// Case 2: a bare ▁ (or a ▁-fused punctuation piece) — close current, emit its own placeholder, and
+				// leave `current === null` as the PENDING signal for whatever piece follows.
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
 				continue
 			}
 			const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
 			current = { fstToken: literal, pieceIndices: [i] }
-		} else {
+		} else if (!hasAlnum) {
+			// Case 3, punctuation: interior (absorbed) if a word is open; otherwise it has nothing to attach to and
+			// stands alone — the pending state (if any) is left untouched for the next piece.
 			if (current) {
 				current.pieceIndices.push(i)
-				current.fstToken += p.piece
+			} else {
+				groups.push({ fstToken: "", pieceIndices: [i] })
 			}
+		} else if (current) {
+			// Case 3, alnum, word already open: ordinary SentencePiece subword continuation.
+			current.pieceIndices.push(i)
+			current.fstToken += p.piece
+		} else {
+			// Case 3, alnum, PENDING (current === null): this piece is the pending word's actual start — it has no
+			// leading ▁ of its own, but nothing else could possibly claim it, so it opens `current` fresh rather than
+			// being dropped. See the docstring's numbered case 3 for the production-tokenizer motivation.
+			current = { fstToken: p.piece, pieceIndices: [i] }
 		}
 	}
 
@@ -231,7 +303,21 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 	return groups
 }
 
-function normalizeFSTToken(s: string): string {
+/**
+ * Normalize a whitespace word to FST-index form: NFKC → lowercase → strip punctuation and symbols.
+ *
+ * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
+ * forms; it does NOT strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
+ * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
+ * specific form (indexed and query surfaces agree on diacritics).
+ *
+ * The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P and S), leaving spaces intact — space
+ * (U+0020) is Unicode category Zs (separator), NOT matched by `\p{P}` or `\p{S}`. So this function preserves spaces
+ * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space EQUIVALENCE that produces
+ * "stocktonontees" is a property of the caller's split-then-join pipeline in `groupPiecesIntoWords` — each word is
+ * normalized separately, then words are joined with no separator.
+ */
+export function normalizeFSTToken(s: string): string {
 	const cleaned = s
 		.normalize("NFKC")
 		.toLowerCase()

@@ -172,6 +172,99 @@ describe("buildAddressTree — boundary trim", () => {
 	})
 })
 
+// Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
+// `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time, with no notion of
+// "pairing" at all. That's what makes it inherently safe for UNBALANCED paired punctuation too: it never looks for a
+// matching partner, so a lone leading quote with no closer, or a lone trailing paren with no opener, trims exactly
+// the same way a single stray comma does. These cases characterize that the existing mechanism (built for the
+// v0.4.0 comma-slip class) generalizes to quotes/brackets/braces/guillemets without any dedicated code.
+describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
+	test('strips a wrapping straight-quote pair from a venue-shaped span ("The Grange")', () => {
+		const raw = '"The Grange", Fishburn'
+		const tokens: DecoderToken[] = [
+			tok('"The', 0, 4, "B-venue"),
+			tok('Grange",', 5, 13, "I-venue"),
+			tok("Fishburn", 14, 22, "B-locality"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const venue = findByTag(tree.roots, "venue")!
+		expect(venue.value).toBe("The Grange")
+		expect(raw.slice(venue.start, venue.end)).toBe("The Grange")
+	})
+
+	test("strips a wrapping parenthetical from an aside-shaped span (rear entrance)", () => {
+		const raw = "12 High St (rear entrance), Leeds"
+		const tokens: DecoderToken[] = [tok("(rear", 11, 16, "B-unit"), tok("entrance),", 17, 27, "I-unit")]
+		const tree = buildAddressTree(raw, tokens)
+		const unit = findByTag(tree.roots, "unit")!
+		expect(unit.value).toBe("rear entrance")
+	})
+
+	test("strips a wrapping bracket pair from a designator-shaped span [Block B]", () => {
+		const raw = "Unit 4 [Block B]"
+		const tokens: DecoderToken[] = [tok("[Block", 7, 13, "B-unit"), tok("B]", 14, 16, "I-unit")]
+		const tree = buildAddressTree(raw, tokens)
+		const unit = findByTag(tree.roots, "unit")!
+		expect(unit.value).toBe("Block B")
+	})
+
+	test("strips a wrapping brace pair {Block C}", () => {
+		const raw = "{Block C}, Leeds"
+		const tokens: DecoderToken[] = [tok("{Block", 0, 6, "B-unit"), tok("C},", 7, 10, "I-unit")]
+		const tree = buildAddressTree(raw, tokens)
+		const unit = findByTag(tree.roots, "unit")!
+		expect(unit.value).toBe("Block C")
+	})
+
+	test("strips wrapping guillemets «The Grange»", () => {
+		const raw = "«The Grange», Fishburn"
+		const tokens: DecoderToken[] = [
+			tok("«The", 0, 4, "B-venue"),
+			tok("Grange»,", 5, 13, "I-venue"),
+			tok("Fishburn", 14, 22, "B-locality"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const venue = findByTag(tree.roots, "venue")!
+		expect(venue.value).toBe("The Grange")
+	})
+
+	test("strips curly quotes “The Grange” the same way as straight quotes", () => {
+		const raw = "“The Grange”, Fishburn"
+		const tokens: DecoderToken[] = [tok("“The", 0, 4, "B-venue"), tok("Grange”,", 5, 13, "I-venue")]
+		const tree = buildAddressTree(raw, tokens)
+		const venue = findByTag(tree.roots, "venue")!
+		expect(venue.value).toBe("The Grange")
+	})
+
+	test("UNBALANCED leading quote (no closer anywhere) still trims cleanly, no crash", () => {
+		const raw = '"The Grange, Fishburn'
+		const tokens: DecoderToken[] = [
+			tok('"The', 0, 4, "B-venue"),
+			tok("Grange,", 5, 12, "I-venue"),
+			tok("Fishburn", 13, 21, "B-locality"),
+		]
+		expect(() => buildAddressTree(raw, tokens)).not.toThrow()
+		const venue = findByTag(buildAddressTree(raw, tokens).roots, "venue")!
+		expect(venue.value).toBe("The Grange")
+	})
+
+	test("UNBALANCED trailing paren (no opener anywhere) still trims cleanly, no crash", () => {
+		const raw = "12 High St rear entrance), Leeds"
+		const tokens: DecoderToken[] = [tok("rear", 11, 15, "B-unit"), tok("entrance),", 16, 26, "I-unit")]
+		expect(() => buildAddressTree(raw, tokens)).not.toThrow()
+		const unit = findByTag(buildAddressTree(raw, tokens).roots, "unit")!
+		expect(unit.value).toBe("rear entrance")
+	})
+
+	test("an all-punctuation paired-quote-only span (empty content) is dropped, not crashed on", () => {
+		const raw = '"", Fishburn'
+		const tokens: DecoderToken[] = [tok('"",', 0, 3, "B-venue"), tok("Fishburn", 4, 12, "B-locality")]
+		expect(() => buildAddressTree(raw, tokens)).not.toThrow()
+		const tree = buildAddressTree(raw, tokens)
+		expect(tree.roots.some((r) => r.tag === "venue")).toBe(false)
+	})
+})
+
 // Spurious-boundary repair. The neural model fragments some multi-word locality values into two
 // B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode-
 // agnostic emission bug (argmax == viterbi; see scripts/diag-saintalbans.ts). A `B-X` token that is

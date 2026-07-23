@@ -662,6 +662,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectLon: 2.3467,
 		expectToleranceM: 50_000,
 		addedAt: "2026-07-15",
-		note: "KNOWN FAIL (measured 2026-07-15): the street span swallows the trailing locality — street parses as 'Rue du Chat-qui-Pêche, Paris' and the tree then resolves to NOTHING. The only miss in the operator's 10-row tricky list (9/10 pass), so the esoteric morphology is NOT the problem — the boundary is. This is the #727 span-head's class; expect it to flip when Phase 2+ lands.",
+		note: "Passes on the staged v3.11.x candidates (task-8 record) — flip to pass WHEN a lineage successor promotes; shipped v385 still fails (verified 2026-07-23). The street/locality boundary that swallowed 'Paris' on 2026-07-15 has since flipped in experimental lineages (#727 span-head). Was the only miss in the operator's 10-row tricky list (9/10 passed at the time); tracked as span-head's class. See final-review fix-wave report / #1189 adjudication for context.",
 	},
 ]

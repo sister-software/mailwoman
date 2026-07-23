@@ -34,6 +34,7 @@ import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScale
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import type { InferResult } from "./onnx-runner.ts"
+import { buildPlacetypePairPriors, type PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
@@ -160,6 +161,17 @@ export interface NeuralAddressClassifierConfig {
 	spanProposer?: SpanProposerConfig | false
 
 	/**
+	 * Default placetype-pair index (placetype-pair-prior arc, Task 5 — see `ParseOpts.placetypePair` for the full
+	 * matching contract, including the Task 6 probe-mode default). Set by `loadFromWeights` when the resolved weights
+	 * package ships a country-matching `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse
+	 * `opts.placetypePair` overrides this default; omitting both is the byte-stable no-prior default (undefined → zero
+	 * matrix). `#decode` always injects the current parse's `inputText` into whichever object wins (config default or
+	 * per-parse override) — see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field
+	 * nor a per-parse override needs to carry its own text.
+	 */
+	placetypePair?: PlacetypePairPriorOpts
+
+	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
 	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
 	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence gates
@@ -247,6 +259,7 @@ export class NeuralAddressClassifier {
 			{ parseGazetteerLexicon },
 			{ parseCountryLexicon },
 			{ PostcodeBinaryResolver },
+			{ PairIndexResolver, peekPairIndexHeader },
 			fs,
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
@@ -255,6 +268,7 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
 			import(/* webpackIgnore: true */ "./country-inference.ts"),
 			import(/* webpackIgnore: true */ "./postcode-binary-resolver.ts"),
+			import(/* webpackIgnore: true */ "./pair-index-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
 		const resolved: ResolvedWeights = resolveWeights(opts)
@@ -353,6 +367,43 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		// Placetype-pair index sibling (placetype-pair-prior arc, Task 5): construct a PairIndexResolver
+		// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one
+		// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
+		// not something to apply anyway): the index header's `country` must equal the resolved locale's
+		// country subtag, or the default is skipped with a single warning naming both. Unlike the
+		// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
+		// case here — the prior is opt-in plumbing (Task 7 owns the ship decision), so a missing/mismatched
+		// index degrades silently to the pre-Task-5 byte-stable default, loud only via the gate warning.
+		//
+		// Review follow-up (header peek before construction): the country check reads ONLY the magic +
+		// header block via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index
+		// never pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor (which
+		// DOES walk every entry) only runs once the gate has already confirmed the country match.
+		let placetypePair: PlacetypePairPriorOpts | undefined
+
+		if (resolved.pairIndexPath) {
+			try {
+				const pairIndexBytes = new Uint8Array(fs.readFileSync(resolved.pairIndexPath))
+				const peekedHeader = peekPairIndexHeader(pairIndexBytes)
+				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
+
+				if (peekedHeader.country === localeCountry) {
+					placetypePair = { index: new PairIndexResolver(pairIndexBytes) }
+				} else {
+					console.warn(
+						`[mailwoman/neural] loadFromWeights: pair-index country "${peekedHeader.country}" ` +
+							`(${resolved.pairIndexPath}) does not match the resolved locale's country "${localeCountry}" — ` +
+							`skipping the placetype-pair prior default.`
+					)
+				}
+			} catch (err) {
+				console.error(
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.pairIndexPath}: ${(err as Error).message}`
+				)
+			}
+		}
+
 		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
@@ -370,6 +421,7 @@ export class NeuralAddressClassifier {
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
+			...(placetypePair ? { placetypePair } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
 		})
@@ -625,6 +677,25 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
+
+		// Placetype-pair prior (placetype-pair-prior arc, Tasks 4-5): retrieval-augmented complement to the
+		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Config-level
+		// default set by loadFromWeights (Task 5's country-gated construction); per-call opts override it,
+		// same "opts ?? cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below. Default
+		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
+		// might bias toward still gets masked out.
+		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
+		const placetypePairPrior = placetypePairOpt
+			? buildPlacetypePairPriors({ ...placetypePairOpt, inputText: text }, pieces, this.labels)
+			: undefined
+
+		if (placetypePairPrior) {
+			emissions = addEmissionMatrix(emissions, placetypePairPrior)
+		}
+		tracePriors?.push({
+			kind: "placetypePair",
+			applied: placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior),
+		})
 
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
 		// from the decoder's vocabulary outright (-1e9 ≈ log 0). Copy-on-mask — `emissions` may alias
@@ -922,6 +993,60 @@ export interface ParseOpts {
 	 * corrupted leading FR postcodes.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+
+	/**
+	 * Per-call override for the config-level `placetypePair` default (see
+	 * {@link NeuralAddressClassifierConfig.placetypePair}). Explicit `false` disables an AUTO-WIRED config default for
+	 * this one call — the same typed-disable shape as {@link spanProposer} above (`SpanProposerConfig | false` at the
+	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. Final-review
+	 * fix: before this, `ParseOpts.placetypePair` only accepted an object, so there was no way to force the prior OFF for
+	 * one call short of substituting a never-matching `PairIndexLike` stub (`neural/test/weights.test.ts`'s
+	 * `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but not a real "disable" signal, and not type-checkable as
+	 * one. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false` correctly with no further
+	 * change: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit `false` here wins over any
+	 * config default without needing a special case.
+	 *
+	 * Placetype-pair emission bias (placetype-pair-prior arc, Tasks 4-6). When provided, candidates are probed against a
+	 * PIX1 pair index of (child, parent) place-name pairs harvested from a real address register (the Task-3 GB shard:
+	 * PPD `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets
+	 * an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality`
+	 * when "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
+	 * `dependent_locality`.
+	 *
+	 * **`probeMode` — segment (default) vs window (opt-in), Task 6 verdict.** How a "candidate" is built matters a great
+	 * deal. `"segment"` (the v1 default set by this task) restricts candidates to WHOLE comma-delimited segments; the
+	 * original `"window"` mode (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s
+	 * `WINDOW_MAX_WORDS` docstring for the measured distribution that set that ceiling) is preserved but now opt-in. The
+	 * flip happened because window mode, measured against a 6,500-row venue-confound falsifier board (real UK business
+	 * names that embed a real place name — "Bitterne Charcoal Grill" embeds "Bitterne") at the real artifact's δ=6.0,
+	 * produced a **52.123% false-positive rate** (2026-07-22, `.superpowers/sdd/task-6-report.md`) against a
+	 * pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness and fires just as readily inside a
+	 * longer venue/business phrase as it does on a bare place name. Segment mode structurally can't make that mistake —
+	 * "Bitterne Charcoal Grill" has no internal comma, so its only candidate key is the 3-word fold, which never equals a
+	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract,
+	 * both modes' honestly-reported trade-offs, and the re-enablement bar for window mode as a default. The runtime-flag
+	 * register row documenting BOTH probe modes for the pipeline lands in Task 7, not here — this field (and its default)
+	 * is the plumbing/measurement, not the ship decision.
+	 *
+	 * Country-agnostic at the API surface: this module does no country gating itself — the caller is responsible for
+	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never
+	 * match, composing harmlessly).
+	 *
+	 * Default resolution: **an omitted field is NOT unconditionally byte-identical to every parse before this task.**
+	 * `#decode` resolves this as `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a
+	 * config-level default (the country-gated construction for en-gb-shaped caches, Task 5), an omitted per-call field
+	 * falls through to THAT default and the prior fires. Byte-identical-to-pre-task behavior only holds when NEITHER this
+	 * field NOR the config default is set (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin`
+	 * sibling to auto-wire). Pass explicit `false` to force the prior off for one call regardless of an auto-wired config
+	 * default (see this field's own doc comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22)
+	 * measured 100% recall / 0.0% false-positive rate at δ=6.0 on the curated probe set that motivated this prior.
+	 * **Superseded by Task 7's δ calibration** (2026-07-22, `.superpowers/sdd/task-7-report.md`): the real
+	 * `pair-index-gb.bin` artifact now ships δ=5.0 (a held-out register-row + venue-confound sweep, feed-8k's calibrated
+	 * optimum and Task 7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment bare-locality
+	 * bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike` test double
+	 * that omits `delta`.
+	 */
+	placetypePair?: PlacetypePairPriorOpts | false
 }
 
 /**

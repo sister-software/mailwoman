@@ -20,8 +20,24 @@
  *       entirely BMP characters, JS code-unit indexing is correct in practice. Surrogate- pair
  *       codepoints would need `Array.from(s).length` accounting; deferred until the parity test
  *       surfaces a real case.
- *   - Byte-fallback pieces (`<0xHH>`) are not handled here. The v0.1.0 corpus and golden set are
- *       Latin-script; the parity test will surface any unhandled cases.
+ *   - Byte-fallback pieces (`<0xHH>`) ARE handled: a run of one or more consecutive `<0xHH>` pieces (the vocab’s
+ *       fallback for any character with no direct token — observed live on curly quotes “”’’, guillemets «», and
+ *       braces {} even on Latin-script input, not just non-Latin scripts) is buffered and decoded as one UTF-8 byte
+ *       sequence via `TextDecoder`, and the cursor advances by the DECODED string’s length — not by the literal
+ *       `”<0xHH>”` placeholder’s length (6 chars for a single byte that represents 1 real character, or worse for a
+ *       multi-byte codepoint split across several fallback pieces). Before this fix the cursor over-advanced on every
+ *       byte-fallback piece, desyncing every subsequent piece’s offsets for the REST of the input — see
+ *       `neural/test/tokenizer-byte-fallback.test.ts` for the repro and the fix-wave writeup
+ *       (`.superpowers/sdd/task-9-audit-report.md`, paired-punctuation audit). All pieces in a byte-fallback run share
+ *       the SAME `[start, end)` range (the run’s combined decoded span); intermediate pieces defer their content to
+ *       the run’s last piece via a zero-width range at the run’s start — a narrower compromise than the bare-▁ idiom
+ *       (which is zero-width by construction), but the same “own placeholder, zero contribution” principle.
+ *
+ *   **RESIDUAL (CJK/non-Latin blocker, review-verified 2026-07-23):** a byte-fallback run spanning MULTIPLE distinct
+ *   source characters collapses to one combined offset on the run’s last piece — heterogeneous BIO tags inside such a
+ *   run are silently absorbed into one span (demonstrated on 東京都渋谷区: a B-region inside the run produced no node).
+ *   Not live on the Latin-script production tokenizer; MUST be resolved before any non-Latin/CJK tokenizer ships
+ *   (per-character run splitting is the likely fix).
  *
  *   The wrapper supports two load modes:
  *
@@ -34,6 +50,11 @@ import { SentencePieceProcessor } from "@sctg/sentencepiece-js"
 
 /** SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK). */
 export const SPACE_SENTINEL = "▁"
+
+/** A SentencePiece byte-fallback piece — the vocab's escape hatch for a character with no direct token. */
+const BYTE_FALLBACK_RE = /^<0x([0-9A-Fa-f]{2})>$/
+
+const utf8Decoder = new TextDecoder("utf-8", { fatal: false })
 
 /** A tokenized piece paired with its char-range in the original input. */
 export interface TokenizedPiece {
@@ -93,11 +114,59 @@ export class MailwomanTokenizer {
 		const tokenized: TokenizedPiece[] = []
 		let cursor = 0
 
+		// A run of consecutive byte-fallback pieces (see BYTE_FALLBACK_RE's doc comment) accumulates here until a
+		// non-byte-fallback piece (or end of input) closes it — see flushByteRun.
+		let byteRun: { pieces: string[]; ids: number[]; bytes: number[] } | null = null
+
+		const flushByteRun = (): void => {
+			if (!byteRun) return
+
+			const decoded = utf8Decoder.decode(Uint8Array.from(byteRun.bytes))
+			const start = cursor
+			cursor += decoded.length
+			const end = cursor
+
+			for (let k = 0; k < byteRun.pieces.length; k++) {
+				const isLast = k === byteRun.pieces.length - 1
+				// Every piece in the run shares the combined [start, end) span on the LAST piece (so `raw.slice(start,
+				// end)` on the run's final piece recovers the real decoded text); earlier pieces get a zero-width range
+				// at the run's start — the same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses
+				// for a bare ▁.
+				tokenized.push({
+					piece: byteRun.pieces[k]!,
+					id: byteRun.ids[k]!,
+					start,
+					end: isLast ? end : start,
+				})
+			}
+
+			byteRun = null
+		}
+
 		for (let i = 0; i < pieces.length; i++) {
 			const piece = pieces[i]!
 			const id = ids[i] ?? -1
 			const hasSentinel = piece.startsWith(SPACE_SENTINEL)
 			const literal = hasSentinel ? piece.slice(SPACE_SENTINEL.length) : piece
+			const byteMatch = BYTE_FALLBACK_RE.exec(literal)
+
+			if (byteMatch) {
+				if (!byteRun) {
+					if (hasSentinel) {
+						while (cursor < text.length && /\s/.test(text[cursor]!)) {
+							cursor++
+						}
+					}
+					byteRun = { pieces: [], ids: [], bytes: [] }
+				}
+
+				byteRun.pieces.push(piece)
+				byteRun.ids.push(id)
+				byteRun.bytes.push(Number.parseInt(byteMatch[1]!, 16))
+				continue
+			}
+
+			flushByteRun()
 
 			if (hasSentinel) {
 				while (cursor < text.length && /\s/.test(text[cursor]!)) {
@@ -111,6 +180,8 @@ export class MailwomanTokenizer {
 
 			tokenized.push({ piece, id, start, end })
 		}
+
+		flushByteRun()
 
 		return { pieces: tokenized, ids }
 	}

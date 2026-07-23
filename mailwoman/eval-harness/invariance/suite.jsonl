@@ -1,0 +1,85 @@
+// INVARIANCE MINI-SUITE (#886 five-whys follow-up) — a standing, seconds-cheap metamorphic-invariance
+// fixture meant to run in EVERY probe grade, not just the release Gauntlet. 23 base addresses (19
+// original + 4 Task-9 paired-punctuation rows, see below) across US/FR/DE/GB, drawn from the golden
+// boards (data/eval/golden/v0.1.2/dev/us.jsonl, gb-golden.jsonl, parity-corpus.jsonl deu-*/fra-*) and
+// the Gauntlet's own metamorphic bases (mailwoman/eval-harness/gauntlet/cases/metamorphic.ts) for
+// realism, plus the two gauntlet-famous landmark cases named in the original task: the White House and
+// the Empire State Building. 23 rows × their applicable transforms = 156 pairs total (0 skipped).
+//
+// `transforms` lists the perturbation classes (mailwoman/eval-harness/invariance/transforms.ts) that
+// APPLY to that row. Six of the seven classes (comma-drop [when a comma is present], case-fold,
+// lowercase, whitespace-jitter, trailing-punct, idempotence) are near-universally applicable and are
+// listed on every row that qualifies. `abbreviation-swap` is the one genuinely conditional class: the
+// suite's table is DELIBERATELY narrow (Ave/Avenue, St/Street, Rd/Road only — see transforms.ts) and
+// EN-anchored, so it fires only on rows carrying one of those exact tokens. Every FR/DE row is excluded
+// from `abbreviation-swap` for the same reason: Rue/Boulevard/Straße/Route are simply not in that table
+// — this is a scope decision (the swap table mirrors the spec's literal wording), not a coverage gap in
+// the invariance runner itself. GB rows carrying Drive/Close (not Ave/St/Rd) are excluded the same way.
+// Row 19 ("St Bedes Avenue…") is a deliberate edge case: "St" is the LEADING token there (a Saint-prefix,
+// not a Street suffix) — transforms.ts's guard skips swapping it, but "Avenue" later in the string still
+// qualifies the row for the class.
+//
+// BASELINE PROFILE (v385, the shipped dev-linked default — @mailwoman/neural-weights-en-us symlinked to
+// model-v385-latam-step-008000-int8.onnx as of 2026-07-23): v385 is NOT clean — 101 INVARIANT / 7
+// DEGRADED / 13 LOST of 121 pairs. Both named landmark cases (White House, Empire State Building) hold
+// INVARIANT across every transform, matching the model-card's note that v385 (unlike feed-8k) survives
+// the Pennsylvania-Ave comma-drop. The dominant failure signature on the OTHER 17 rows is comma-drop
+// swallowing a trailing token into the preceding tag (street/postcode absorbing the next word) — the
+// same delimiter-free-parsing family as the tracked #1101 FR gap. Full transcript + per-case detail:
+// .superpowers/sdd/invariance-suite-report.md. This is the profile `--baseline` regression mode diffs
+// a candidate against — a candidate that matches v385's (imperfect) profile pays no `--max-degraded`
+// cost; one that INTRODUCES a NEW violation v385 didn't have does (see the feed-8k Pennsylvania-Ave
+// comma-drop finding in the report — flagged NEW, not pre-existing).
+//
+// RE-VERIFIED 2026-07-23 (review fix wave — see "## Fix wave" in the report): three verdict-classification
+// definitions changed underneath this suite — hallucinated critical tags now count as LOST (not silently
+// ignored), the abbreviation-swap Saint-prefix guard was rewritten (no longer index-0-only), and the
+// whitespace-jitter applicability guard was tightened to match its mutation. Re-running the full suite
+// against this SAME v385 weights produced the IDENTICAL 101/7/13 profile (121 pairs, 0 skipped) — a
+// byte-identical transcript to the pre-fix-wave run. Say that plainly: this fixture just doesn't happen to
+// exercise the exact shapes the definition changes target (no row here has a critical tag hallucinated
+// from nothing, and the tightened Saint-prefix guard doesn't change any of THIS suite's own abbreviation-
+// swap outcomes — gb-banbury and gb-stockton-saint-prefix still resolve the same way). The definitions are
+// still real fixes (each has a dedicated unit-test RED→GREEN in transforms.test.ts / compare.test.ts /
+// runner.test.ts reproducing the reviewer's exact cases) — they simply don't move THIS fixture's aggregate
+// numbers. A future fixture row exercising a hallucinated critical tag would be a legitimate suite addition.
+//
+// EXPANDED 2026-07-23 (Task 9, paired-punctuation audit) — 4 new rows appended below (see that section's
+// own header comment), taking the suite from 19/121 to 23/156. The BASELINE PROFILE paragraph above is the
+// ORIGINAL 19-row/121-pair measurement and is left as the historical record for that fixture size — it is
+// NOT the current full-suite profile. The extended 23-row/156-pair profiles for BOTH v385 (132 INVARIANT /
+// 5 DEGRADED / 19 LOST) and feed-8k (131 INVARIANT / 12 DEGRADED / 13 LOST) live in
+// `.superpowers/sdd/task-9-audit-report.md`'s "Invariance suite additions" section, including the
+// per-new-row breakdown (gb-quoted-venue, gb-parenthetical-aside, gb-bracketed-designator, us-brace-suite)
+// and which violations are pre-existing comma-drop-family misses vs the model-accuracy gap on the
+// bracketed-designator shape (not character leakage — see that report for the direct control comparison).
+{"id":"us-white-house","raw":"1600 Pennsylvania Ave NW, Washington, DC 20500","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"us-empire-state","raw":"350 Fifth Avenue, New York, NY 10118","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"us-portland-directional","raw":"6220 SE Salmon St, Portland, OR 97215, USA","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"us-springfield-unit","raw":"123 Main St Apt 4B, Springfield, IL 62701","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"us-cincinnati-zip4","raw":"500 W 7th St Ste 1100, Cincinnati, OH 45203-1234","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"us-infinite-loop","raw":"1 Infinite Loop, Cupertino, CA 95014","country":"US","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"fr-chevaleret","raw":"181 Rue du Chevaleret, 75013 Paris","country":"FR","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"fr-palais","raw":"2 Boulevard du Palais, 75001 Paris","country":"FR","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"fr-montmartre","raw":"123 Rue Montmartre, Paris","country":"FR","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"fr-lieudit-line","raw":"907 Route de Line, Line, 24590 Salignac-Eyvigues","country":"FR","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"de-unter-den-linden","raw":"Unter den Linden 77, 10117 Berlin","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"de-falkplatz","raw":"Am Falkpl. 5, 10437 Berlin","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"de-genter-strasse","raw":"Genter Straße 16a, Munich, Germany","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"de-kaschk-bar","raw":"Kaschk Bar, Linienstraße 40 10119 Berlin","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-macclesfield","raw":"41 Hightree Drive, Henbury, Macclesfield, SK11 9PD","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-leicester","raw":"7 Carpenters Close, Glenfield, Leicester, LE3 8RS","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-banbury","raw":"10 Station Road, Cropredy, Banbury, OX17 1PP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-swindon-no-postcode","raw":"Masefield, Royal Wootton Bassett, Swindon","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-stockton-saint-prefix","raw":"St Bedes Avenue, Fishburn, Stockton-on-Tees","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+// ---------------------------------------------------------------------------------------------------------------
+// PAIRED-PUNCTUATION rows (Task 9 audit, `.superpowers/sdd/task-9-audit-report.md`) — quoted venue, parenthetical
+// aside, bracketed designator, and braces (the vocab byte-fallback class the audit's tokenizer fix targets). Every
+// row below carries the two new Task-9 classes (`wrap-in-quotes`, `add-parenthetical`, transforms.ts) alongside the
+// six universal ones; `abbreviation-swap` is included wherever the row carries a bare street-suffix token per the
+// same narrow EN table (all four rows do — "St"/"Road" — none trip the Saint-prefix guard, verified directly
+// against `abbreviationSwap`).
+{"id":"gb-quoted-venue","raw":"\"The Grange\", Fishburn, Stockton-on-Tees","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"gb-parenthetical-aside","raw":"12 High St (rear entrance), Leeds","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"gb-bracketed-designator","raw":"Unit 4 [Block B], 10 Station Road, Banbury, OX17 1PP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"us-brace-suite","raw":"Suite {12B}, 200 Main St, Austin, TX 78701","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}

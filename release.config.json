@@ -18,6 +18,13 @@
 			"us": "postalcode-us.db",
 			"fr": "postalcode-intl.db",
 			"gb": "postalcode-gb.db"
+		},
+		"pairIndexByCountry": {
+			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) — mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default — see `mailwoman gazetteer pair-index --help`). `source` is relative to weights.dataRoot (NOT weights.dataRoot/wof, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
+			"gb": {
+				"source": "ppd/2026-07-22/gb-tuples.csv",
+				"delta": 5.0
+			}
 		}
 	},
 	"assets": {

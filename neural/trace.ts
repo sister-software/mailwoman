@@ -25,7 +25,14 @@ import type { SoftFeatureChannel } from "./soft-features.ts"
  * and the trace test asserts against it, so adding a prior without its participation record is a test failure, not a
  * silent omission.
  */
-export const TRACE_PRIOR_KINDS = ["queryShape", "fst", "streetMorphology", "spanProposer", "conventionsMask"] as const
+export const TRACE_PRIOR_KINDS = [
+	"queryShape",
+	"fst",
+	"streetMorphology",
+	"spanProposer",
+	"placetypePair",
+	"conventionsMask",
+] as const
 
 export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 
