@@ -19,9 +19,24 @@
  *   `.superpowers/sdd/task-7-report.md`, a held-out register-row + venue-confound sweep) — the real
  *   `pair-index-gb.bin` artifact now ships δ=5.0 in its header (feed-8k's calibrated optimum and Task
  *   7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment
- *   bare-locality bar). Default OFF: when an omitted `opts` field is supplied to `parse()`, the prior
- *   falls back to the weights configuration's default wiring for the locale (auto-wired for en-gb-shaped
- *   caches); to disable the prior entirely, pass an explicit null-index override to the config.
+ *   bare-locality bar).
+ *
+ *   **Disable semantics (final-review fix — the previous wording here was self-contradictory).** This
+ *   module has no notion of "on"/"off" by itself — `buildPlacetypePairPriors(opts, …)` just returns a
+ *   zero matrix whenever `opts?.index` is absent, and the CALLER (`neural/classifier.ts`'s `#decode`)
+ *   decides what `opts` resolves to. Three distinct cases, don't conflate them:
+ *
+ *   - **No config default, no per-call override** (e.g. `loadFromWeights({ locale: "en-us" })`, which
+ *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely byte-identical to every parse before
+ *     this arc: `opts` is `undefined` all the way down.
+ *   - **A config default IS auto-wired** (`loadFromWeights` for an en-gb-shaped cache, Task 5) and the
+ *     caller passes nothing per-call — the prior is ON, not off; omitting the per-call field does NOT
+ *     recover byte-identical behavior in this case (see `ParseOpts.placetypePair`'s own doc comment for
+ *     the exact resolution order).
+ *   - **A config default is auto-wired and the caller wants it off for THIS call** — pass an explicit
+ *     `placetypePair: false` per-call (typed disable, same shape as `spanProposer`). There is no
+ *     config-level "null-index override" mechanism; the typed `false` on `ParseOpts` is the real
+ *     mechanism.
  *
  *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict.** `opts.probeMode` selects HOW a
  *   candidate is built, and it matters a great deal:
@@ -142,6 +157,18 @@
  *   narrower, purely lexical defense than the venue-confound falsifier above needed — it was never meant
  *   to be a general venue-boundary detector, which is exactly why the segment restriction exists
  *   alongside it rather than instead of it.
+ *
+ *   **Segment-boundary awareness (final-review fix).** In segment mode, the successor check only suppresses when the
+ *   successor word is in the SAME comma-delimited segment as the candidate — a successor that has already crossed into
+ *   the NEXT segment can never be read as a street/venue-head suffix of THIS candidate, because a comma sits between
+ *   them. Reviewer repro: `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) must NOT be suppressed by "5"
+ *   (segment 1's first word, a house-number shape), because the comma means "5" is never a suffix of "Fishburn" in the
+ *   source text. Since a segment-mode candidate already spans its ENTIRE segment (see "Segment mode" below), this
+ *   check is structurally near-inert for segment mode's own candidates — the real protection against a "Church
+ *   Road"-shaped false read is the whole-segment fusion itself ("Church Road" is one candidate, key "church road",
+ *   never probed as bare "church"); the successor check here exists for defense-in-depth and to keep window mode's
+ *   (comma-oblivious, unchanged) behavior sharing one code path. See `isMarkerSuppressed`'s doc comment for the exact
+ *   mechanism.
  *
  *   **Bias write.** `+delta` on `B-<tag>` (window's first piece) / `I-<tag>` (the rest), same
  *   per-piece pattern as `fst-prior.ts`'s `applyBias` — `Math.max` against any bias already written by
@@ -280,28 +307,22 @@ function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): C
 }
 
 /**
- * Build one candidate per comma-delimited SEGMENT of the input (segment mode) — see the module docstring's "Segment
- * mode" section for the venue-confound rationale. Segment boundaries are reconstructed from the tokenizer pieces' own
- * character offsets against `inputText`: every literal `,` in `inputText` increments the running segment counter, and
- * each non-punctuation word group is assigned to the segment its FIRST piece's start offset falls into (offsets, not
- * piece-text inspection, so this is robust to however the tokenizer happened to attach a comma piece to its neighboring
- * word group — `groupPiecesIntoWords` absorbs trailing punctuation into the preceding word's `pieceIndices`, so a
- * comma's own piece span can land inside either group depending on tokenization; counting commas strictly BEFORE a
- * group's own start offset sidesteps that ambiguity entirely). Groups sharing a segment index are always contiguous in
- * `nonEmptyGroups` (both lists are built in text order), so a single forward pass suffices.
+ * Compute the segment index of every entry in `nonEmptyGroups`, by counting literal `,` characters in `inputText` that
+ * fall strictly before each group's first piece's start offset (offsets, not piece-text inspection, so this is robust
+ * to however the tokenizer happened to attach a comma piece to its neighboring word group — `groupPiecesIntoWords`
+ * absorbs trailing punctuation into the preceding word's `pieceIndices`, so a comma's own piece span can land inside
+ * either group depending on tokenization; counting commas strictly BEFORE a group's own start offset sidesteps that
+ * ambiguity entirely). Shared by {@link buildSegmentWindows} (to know where segment boundaries fall) and
+ * {@link isMarkerSuppressed} (to know whether a candidate's successor word is in the SAME segment or has already crossed
+ * into the next one — see the module docstring's "Marker suppression" section).
  *
- * Without `inputText` (or an input with no commas at all), every group falls in segment 0 — the whole input becomes ONE
- * candidate, matching the documented comma-free-input degradation rather than silently doing something else.
+ * Without `inputText` (or an input with no commas at all), every group falls in segment 0.
  */
-function buildSegmentWindows(
+function computeGroupSegments(
 	nonEmptyGroups: readonly WordGroup[],
 	pieces: ReadonlyArray<TokenLike>,
 	inputText: string | undefined
-): CandidateWindow[] {
-	const windows: CandidateWindow[] = []
-
-	if (nonEmptyGroups.length === 0) return windows
-
+): number[] {
 	const commaOffsets: number[] = []
 
 	if (inputText) {
@@ -314,7 +335,8 @@ function buildSegmentWindows(
 
 	// commaOffsets is built in ascending order, so `commaIdx` only ever advances — one linear pass across both lists.
 	let commaIdx = 0
-	const segmentOf = (group: WordGroup): number => {
+
+	return nonEmptyGroups.map((group) => {
 		const groupStart = pieces[group.pieceIndices[0]!]!.start
 
 		while (commaIdx < commaOffsets.length && commaOffsets[commaIdx]! < groupStart) {
@@ -322,15 +344,27 @@ function buildSegmentWindows(
 		}
 
 		return commaIdx
-	}
+	})
+}
+
+/**
+ * Build one candidate per comma-delimited SEGMENT of the input (segment mode) — see the module docstring's "Segment
+ * mode" section for the venue-confound rationale. Groups sharing a segment index are always contiguous in
+ * `nonEmptyGroups` (both lists are built in text order), so a single forward pass over the precomputed `groupSegments`
+ * (see {@link computeGroupSegments}) suffices.
+ */
+function buildSegmentWindows(
+	nonEmptyGroups: readonly WordGroup[],
+	groupSegments: readonly number[]
+): CandidateWindow[] {
+	const windows: CandidateWindow[] = []
+
+	if (nonEmptyGroups.length === 0) return windows
 
 	let segStart = 0
-	let segIndex = segmentOf(nonEmptyGroups[0]!)
 
 	for (let i = 1; i <= nonEmptyGroups.length; i++) {
-		const nextSegIndex = i < nonEmptyGroups.length ? segmentOf(nonEmptyGroups[i]!) : -1
-
-		if (i === nonEmptyGroups.length || nextSegIndex !== segIndex) {
+		if (i === nonEmptyGroups.length || groupSegments[i] !== groupSegments[segStart]) {
 			const slice = nonEmptyGroups.slice(segStart, i)
 			const tokens = slice.map((g) => g.fstToken)
 
@@ -342,7 +376,6 @@ function buildSegmentWindows(
 				pieceIndices: slice.flatMap((g) => g.pieceIndices),
 			})
 			segStart = i
-			segIndex = nextSegIndex
 		}
 	}
 
@@ -375,11 +408,27 @@ function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateW
 	return undefined
 }
 
-/** Is `x` immediately followed (in the non-punctuation word sequence) by a structural marker? */
-function isMarkerSuppressed(nonEmptyGroups: readonly WordGroup[], x: CandidateWindow): boolean {
+/**
+ * Is `x` immediately followed (in the non-punctuation word sequence) by a structural marker?
+ *
+ * `groupSegments`, when supplied (segment mode only — see the call site), gates this on the successor sharing `x`'s OWN
+ * segment. Without that gate, a candidate at the tail of one comma-delimited segment reads the FIRST word of the NEXT
+ * segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of this candidate.
+ * Final-review fix (reviewer repro): `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) was wrongly suppressed
+ * because "5" (segment 1's first word, a house-number shape) sat next in `nonEmptyGroups`, even though the comma
+ * between them means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted),
+ * suppression is unchanged — comma placement was never consulted there, by design (see `buildWindows`).
+ */
+function isMarkerSuppressed(
+	nonEmptyGroups: readonly WordGroup[],
+	x: CandidateWindow,
+	groupSegments?: readonly number[]
+): boolean {
 	const successor = nonEmptyGroups[x.endPos + 1]
 
 	if (!successor) return false
+
+	if (groupSegments && groupSegments[x.endPos] !== groupSegments[x.endPos + 1]) return false
 
 	return STRUCTURAL_MARKER_WORDS.has(successor.fstToken) || looksLikeHouseNumber(successor.fstToken)
 }
@@ -439,10 +488,14 @@ export function buildPlacetypePairPriors(
 	if (nonEmptyGroups.length < 2) return matrix // need ≥2 disjoint candidates to form a pair
 
 	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "segment"
+	// `groupSegments` is only meaningful (and only computed) in segment mode — window mode's marker suppression stays
+	// comma-blind, unchanged from before this fix (see `isMarkerSuppressed`'s doc comment).
+	const groupSegments =
+		probeMode === "window" ? undefined : computeGroupSegments(nonEmptyGroups, pieces, opts.inputText)
 	const windows =
 		probeMode === "window"
 			? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS)
-			: buildSegmentWindows(nonEmptyGroups, pieces, opts.inputText)
+			: buildSegmentWindows(nonEmptyGroups, groupSegments!)
 
 	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
 	// second, disjoint candidate to pair against. Bail before the O(n²) loop below; this is the
@@ -450,7 +503,7 @@ export function buildPlacetypePairPriors(
 	if (windows.length < 2) return matrix
 
 	for (const x of windows) {
-		if (isMarkerSuppressed(nonEmptyGroups, x)) continue
+		if (isMarkerSuppressed(nonEmptyGroups, x, groupSegments)) continue
 
 		let matchedTag: ComponentTag | undefined
 

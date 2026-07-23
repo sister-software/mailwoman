@@ -285,6 +285,44 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
+	// Final-review fix: the typed disable (`ParseOpts.placetypePair: false`) — the real "turn an
+	// AUTO-WIRED config default off for one call" mechanism, replacing the `NO_MATCH_PAIR_INDEX` stub
+	// workaround above with an actual disable signal that's type-checkable as one. See
+	// `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case contract this
+	// pins the middle case of: a config default IS auto-wired here (en-gb), so `false` is doing real work,
+	// not just matching an already-inert default.
+	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
+		async () => {
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+
+			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+
+			// Baseline: no per-call override — the config default fires (confirms this address/build genuinely
+			// has something to disable, not just asserting on an already-inert prior).
+			const wiredTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
+			expect(wiredTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
+
+			// `placetypePair: false` — inert regardless of the auto-wired default.
+			const disabledTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, { placetypePair: false })
+			expect(disabledTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
+				kind: "placetypePair",
+				applied: false,
+			})
+
+			// Not just "applied: false" — the emissions themselves must be byte-identical to a genuinely
+			// prior-absent decode, not merely a zero-effect bias composed in.
+			const bDepLocCol = disabledTrace.labels.indexOf("B-dependent_locality")
+			const pieceIdx = findChildPieceIndex(disabledTrace.pieces, "Fish")
+			expect(disabledTrace.emissions[pieceIdx]![bDepLocCol]).toBe(disabledTrace.logits[pieceIdx]![bDepLocCol])
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
+
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: a wide-margin real pair flips the decode — Holland Fen decodes as dependent_locality (the arc's ONE flip assertion)",
 		async () => {

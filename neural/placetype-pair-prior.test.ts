@@ -468,6 +468,53 @@ describe("buildPlacetypePairPriors — segment mode (Task 6, DEFAULT since the v
 	})
 })
 
+describe("buildPlacetypePairPriors — marker suppression must not cross segment boundaries (final-review fix)", () => {
+	it('reviewer repro: "Fishburn, 5 Fishburn Road" biases Fishburn — successor "5" is in the NEXT segment, so it must never suppress', () => {
+		// Segment 0 is "Fishburn" alone; segment 1 is the whole 3-word "5 Fishburn Road" (no internal comma). Before
+		// the fix, `isMarkerSuppressed` read `nonEmptyGroups[x.endPos + 1]` unconditionally — for segment 0's
+		// candidate ("Fishburn"), that's segment 1's FIRST word ("5"), a house-number shape, which wrongly vetoed
+		// "Fishburn" before it was ever probed. The comma between them means "5" can never be a suffix of
+		// "Fishburn" in the source text, so suppression must not fire.
+		const index = mockPairIndex({ "fishburn|5 fishburn road": "dependent_locality" }, 6.0)
+		const text = "Fishburn, 5 Fishburn Road"
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// Prove it structurally: "fishburn" WAS attempted as a child probe (not silently vetoed).
+		expect(index.calls.some(([child]) => child === "fishburn")).toBe(true)
+	})
+
+	it('control: WINDOW mode marker suppression is unaffected by comma placement — "Fishburn Road, Leeds" still suppresses "Fishburn" (successor "Road" IS in the same clause)', () => {
+		// Window mode never consulted segment boundaries before this fix and must not start now — "Fishburn"
+		// immediately followed by "Road" (the structural marker) is still suppressed regardless of the later comma.
+		const index = mockPairIndex({ "fishburn|leeds": "dependent_locality" }, 6.0)
+		const text = "Fishburn Road, Leeds"
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, probeMode: "window", inputText: text }, pieces, LABELS)
+
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+		expect(index.calls.some(([child]) => child === "fishburn")).toBe(false)
+	})
+
+	it('control: SEGMENT mode on "Fishburn Road, Leeds" still correctly withholds bias from bare "fishburn" — the whole-segment fusion (not marker suppression) is what protects this shape', () => {
+		// "Fishburn Road" is ONE whole-segment candidate (key "fishburn road" / concat "fishburnroad") — it never
+		// equals the index's bare "fishburn" key under either fold form, so this stays unbiased regardless of the
+		// segment-boundary fix above. Locks down that the fix didn't accidentally make this MORE permissive.
+		const index = mockPairIndex({ "fishburn|leeds": "dependent_locality" }, 6.0)
+		const text = "Fishburn Road, Leeds"
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+		expect(index.calls.some(([child]) => child === "fishburn")).toBe(false)
+	})
+})
+
 describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fixture tokenizer)", () => {
 	// Segment mode's own doc comment claims a quoted venue is "one segment... which never equals the census's...
 	// entry" for the VENUE-CONFOUND class specifically. These cases check the OTHER direction: when the quoted text

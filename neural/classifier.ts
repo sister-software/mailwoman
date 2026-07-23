@@ -995,6 +995,17 @@ export interface ParseOpts {
 	addressSystemConventions?: "auto" | SystemCode
 
 	/**
+	 * Per-call override for the config-level `placetypePair` default (see
+	 * {@link NeuralAddressClassifierConfig.placetypePair}). Explicit `false` disables an AUTO-WIRED config default for
+	 * this one call — the same typed-disable shape as {@link spanProposer} above (`SpanProposerConfig | false` at the
+	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. Final-review
+	 * fix: before this, `ParseOpts.placetypePair` only accepted an object, so there was no way to force the prior OFF for
+	 * one call short of substituting a never-matching `PairIndexLike` stub (`neural/test/weights.test.ts`'s
+	 * `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but not a real "disable" signal, and not type-checkable as
+	 * one. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false` correctly with no further
+	 * change: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit `false` here wins over any
+	 * config default without needing a special case.
+	 *
 	 * Placetype-pair emission bias (placetype-pair-prior arc, Tasks 4-6). When provided, candidates are probed against a
 	 * PIX1 pair index of (child, parent) place-name pairs harvested from a real address register (the Task-3 GB shard:
 	 * PPD `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets
@@ -1021,15 +1032,21 @@ export interface ParseOpts {
 	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never
 	 * match, composing harmlessly).
 	 *
-	 * Default OFF (the whole prior, independent of `probeMode`): an omitted field produces a zero matrix, byte-identical
-	 * to every parse before this task. Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate
-	 * at δ=6.0 on the curated probe set that motivated this prior. **Superseded by Task 7's δ calibration** (2026-07-22,
-	 * `.superpowers/sdd/task-7-report.md`): the real `pair-index-gb.bin` artifact now ships δ=5.0 (a held-out
-	 * register-row + venue-confound sweep, feed-8k's calibrated optimum and Task 7's recommended ship checkpoint; feed-2k
-	 * calibrates to 4.5 but fails the FR-fragment bare-locality bar) in its header, so `biasScale` below exists only as a
-	 * fallback for a hand-built `PairIndexLike` test double that omits `delta`.
+	 * Default resolution: **an omitted field is NOT unconditionally byte-identical to every parse before this task.**
+	 * `#decode` resolves this as `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a
+	 * config-level default (the country-gated construction for en-gb-shaped caches, Task 5), an omitted per-call field
+	 * falls through to THAT default and the prior fires. Byte-identical-to-pre-task behavior only holds when NEITHER this
+	 * field NOR the config default is set (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin`
+	 * sibling to auto-wire). Pass explicit `false` to force the prior off for one call regardless of an auto-wired config
+	 * default (see this field's own doc comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22)
+	 * measured 100% recall / 0.0% false-positive rate at δ=6.0 on the curated probe set that motivated this prior.
+	 * **Superseded by Task 7's δ calibration** (2026-07-22, `.superpowers/sdd/task-7-report.md`): the real
+	 * `pair-index-gb.bin` artifact now ships δ=5.0 (a held-out register-row + venue-confound sweep, feed-8k's calibrated
+	 * optimum and Task 7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment bare-locality
+	 * bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike` test double
+	 * that omits `delta`.
 	 */
-	placetypePair?: PlacetypePairPriorOpts
+	placetypePair?: PlacetypePairPriorOpts | false
 }
 
 /**
