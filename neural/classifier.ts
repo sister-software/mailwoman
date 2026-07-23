@@ -34,7 +34,11 @@ import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScale
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import type { InferResult } from "./onnx-runner.ts"
-import { buildPlacetypePairPriors, type PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
+import {
+	buildPlacetypePairPriors,
+	type PlacetypePairPriorOpts,
+	type PlacetypePairProbeTrace,
+} from "./placetype-pair-prior.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
@@ -685,16 +689,29 @@ export class NeuralAddressClassifier {
 		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
 		// might bias toward still gets masked out.
 		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
+		// Trace-only out-record: which probe-chain path fired (segment vs anchored vs window) — see
+		// PlacetypePairProbeTrace. Only allocated when tracing, like the tracePriors list itself.
+		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
 		const placetypePairPrior = placetypePairOpt
-			? buildPlacetypePairPriors({ ...placetypePairOpt, inputText: text }, pieces, this.labels)
+			? buildPlacetypePairPriors(
+					{ ...placetypePairOpt, inputText: text, probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace },
+					pieces,
+					this.labels
+				)
 			: undefined
 
 		if (placetypePairPrior) {
 			emissions = addEmissionMatrix(emissions, placetypePairPrior)
 		}
+
+		const placetypePairApplied = placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior)
+
 		tracePriors?.push({
 			kind: "placetypePair",
-			applied: placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior),
+			applied: placetypePairApplied,
+			// `probePath` rides only when a bias actually landed — an applied:false record stays shape-identical to
+			// every trace produced before the probe chain existed.
+			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
 		})
 
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
@@ -1013,20 +1030,24 @@ export interface ParseOpts {
 	 * when "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
 	 * `dependent_locality`.
 	 *
-	 * **`probeMode` — segment (default) vs window (opt-in), Task 6 verdict.** How a "candidate" is built matters a great
-	 * deal. `"segment"` (the v1 default set by this task) restricts candidates to WHOLE comma-delimited segments; the
-	 * original `"window"` mode (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s
-	 * `WINDOW_MAX_WORDS` docstring for the measured distribution that set that ceiling) is preserved but now opt-in. The
-	 * flip happened because window mode, measured against a 6,500-row venue-confound falsifier board (real UK business
-	 * names that embed a real place name — "Bitterne Charcoal Grill" embeds "Bitterne") at the real artifact's δ=6.0,
-	 * produced a **52.123% false-positive rate** (2026-07-22, `.superpowers/sdd/task-6-report.md`) against a
-	 * pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness and fires just as readily inside a
-	 * longer venue/business phrase as it does on a bare place name. Segment mode structurally can't make that mistake —
-	 * "Bitterne Charcoal Grill" has no internal comma, so its only candidate key is the 3-word fold, which never equals a
-	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract,
-	 * both modes' honestly-reported trade-offs, and the re-enablement bar for window mode as a default. The runtime-flag
-	 * register row documenting BOTH probe modes for the pipeline lands in Task 7, not here — this field (and its default)
-	 * is the plumbing/measurement, not the ship decision.
+	 * **`probeMode` — the `"auto"` probe chain (default) vs the explicit `"segment"`/`"anchored"`/`"window"` overrides.**
+	 * How a "candidate" is built matters a great deal. The default `"auto"` chain (v1.1, 2026-07-24 anchored
+	 * adjacent-pair design) runs the segment path when the input has ≥2 comma-delimited segments — byte-identical to
+	 * explicit `"segment"` there, by construction — and the anchored-adjacent path on comma-free input (where segment
+	 * mode is deterministically inert; any anchored bias is strictly additive against that zero baseline). `"segment"`
+	 * (the v1 default set by Task 6) restricts candidates to WHOLE comma-delimited segments; the original `"window"` mode
+	 * (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the
+	 * measured distribution that set that ceiling) is preserved but now opt-in. The flip happened because window mode,
+	 * measured against a 6,500-row venue-confound falsifier board (real UK business names that embed a real place name —
+	 * "Bitterne Charcoal Grill" embeds "Bitterne") at the real artifact's δ=6.0, produced a **52.123% false-positive
+	 * rate** (2026-07-22, `.superpowers/sdd/task-6-report.md`) against a pre-registered FP=0 bar: a sub-segment window
+	 * has no venue-boundary awareness and fires just as readily inside a longer venue/business phrase as it does on a
+	 * bare place name. Segment mode structurally can't make that mistake — "Bitterne Charcoal Grill" has no internal
+	 * comma, so its only candidate key is the 3-word fold, which never equals a 1-word census entry. See
+	 * `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract, both modes'
+	 * honestly-reported trade-offs, and the re-enablement bar for window mode as a default. The runtime-flag register row
+	 * documenting BOTH probe modes for the pipeline lands in Task 7, not here — this field (and its default) is the
+	 * plumbing/measurement, not the ship decision.
 	 *
 	 * Country-agnostic at the API surface: this module does no country gating itself — the caller is responsible for
 	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never

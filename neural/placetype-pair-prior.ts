@@ -38,11 +38,22 @@
  *     config-level "null-index override" mechanism; the typed `false` on `ParseOpts` is the real
  *     mechanism.
  *
- *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict.** `opts.probeMode` selects HOW a
- *   candidate is built, and it matters a great deal:
+ *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict, extended by the 2026-07-24 anchored
+ *   adjacent-pair design** (`docs/superpowers/plans/2026-07-24-pair-prior-comma-scope-BRAINSTORM_RESPONSE.md`).
+ *   `opts.probeMode` selects HOW a candidate is built, and it matters a great deal:
  *
- *   - `"segment"` (**DEFAULT**, v1) — a candidate is a WHOLE comma-delimited segment of the input, folded
- *     as one unit. See "Segment mode" below for the full contract.
+ *   - `"auto"` (**DEFAULT**, v1.1) — the production probe CHAIN: the segment path first (engages iff the
+ *     input splits into ≥2 comma-delimited segments, and then runs byte-identically to explicit
+ *     `"segment"` mode — a construction property, the chain shares the segment path's code verbatim);
+ *     when it cannot engage (a comma-free input is one giant segment — the population segment mode is
+ *     deterministically inert on), the anchored-adjacent path takes over. Any anchored bias is strictly
+ *     additive against what was previously a guaranteed zero matrix, so byte-stability outside the
+ *     comma-free target population is trivial.
+ *   - `"segment"` (the v1 default, still available as an explicit override) — a candidate is a WHOLE
+ *     comma-delimited segment of the input, folded as one unit. See "Segment mode" below for the full
+ *     contract. Comma-free input = one segment = zero matrix, the documented v1 trade-off.
+ *   - `"anchored"` — the anchored adjacent-pair path alone (harness use; the chain reaches it only on
+ *     comma-free input). See "Anchored mode" below.
  *   - `"window"` — the original sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
  *     below), preserved unchanged for opt-in use.
  *
@@ -93,6 +104,26 @@
  *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
  *   internal split — see the task-6 report's Measurement 2(c) for the exact number. Window mode remains
  *   available, opt-in, for callers who have their own venue-boundary gate and have re-verified FP=0.
+ *
+ *   **Anchored mode (v1.1)** — the comma-free complement to segment mode, reached by the `"auto"` chain
+ *   exactly where segment mode is structurally inert. The delta vs window mode is candidate SELECTION
+ *   only (the probing/dual-key/bias machinery is shared verbatim): instead of probing every window
+ *   against every other window anywhere in the string (the any-to-any geometry behind window mode's
+ *   79% venue-confound FP at δ=10 — see the brainstorm doc's FP anatomy), candidates are pinned to the
+ *   register-style GB suffix geometry: the PARENT (post-town position) is a 1..{@link WINDOW_MAX_WORDS}-word
+ *   window immediately LEFT of a postcode-shaped span (shape per `postcode-repair.ts`'s
+ *   {@link collectMatches} — the same family the repair pass and postcode-anchor path run; the anchor
+ *   sits left of the WHOLE span, GB outward+inward included), or the string-FINAL window when no
+ *   postcode shape is present. The CHILD is a 1..{@link ANCHORED_CHILD_MAX_WORDS}-word window
+ *   immediately left of the parent (`child.endPos + 1 === parent.startPos`). Candidates are tried
+ *   longest-match-first on both sides, which implements LEFT-MAXIMALITY for free: if extending the
+ *   child one word left also pairs with the same parent, the longer child was already probed (and won)
+ *   before the shorter one — a partial-child probe ("cadbury" under "north cadbury") can never fire.
+ *   The FIRST hit biases the CHILD span only (the parent keeps the model's own — typically strong
+ *   `locality` — read, matching how the other modes only ever bias the X role) and probing stops.
+ *   Marker suppression applies to the child exactly as window mode applies it. A venue-embedded
+ *   confound at the string start ("Queens Park Cafe …") is rejected by construction — its text is
+ *   never immediately left of the post-town anchor.
  *
  *   **Windowing (window mode only).** A candidate is any CONTIGUOUS run of 1..{@link WINDOW_MAX_WORDS}
  *   non-punctuation words (punctuation-only word groups, e.g. a bare comma, are skipped without breaking
@@ -185,6 +216,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 
 import { groupPiecesIntoWords, type WordGroup } from "./fst-prior.ts"
 import type { PairIndexLike } from "./pair-index-resolver.ts"
+import { collectMatches } from "./postcode-repair.ts"
 import type { TokenLike } from "./query-shape-prior.ts"
 
 /**
@@ -193,6 +225,15 @@ import type { TokenLike } from "./query-shape-prior.ts"
  * prior; the observed max was 5 (287 of 9,031,691 rows).
  */
 const WINDOW_MAX_WORDS = 3
+
+/**
+ * Anchored mode's child-window word cap. Wider than {@link WINDOW_MAX_WORDS} on purpose: the anchored geometry already
+ * rejects the venue-confound class by construction (a venue phrase is never immediately left of the post-town anchor),
+ * so the over-matching risk that froze the sliding-window cap at the p99 doesn't apply, and the observed register max
+ * is 5 words with a real 4-word class ("Knott End on Sea" — experiment 0, task-8 report). Segment/window modes keep
+ * their own caps unchanged.
+ */
+const ANCHORED_CHILD_MAX_WORDS = 4
 
 /**
  * Bias magnitude used when neither the index nor the caller supplies one. Real usage always has `index.delta` (the
@@ -229,15 +270,29 @@ function looksLikeHouseNumber(token: string): boolean {
 
 /**
  * `probeMode` selects the candidate-building strategy — see the module docstring's "Probe mode" section for the
- * 2026-07-22 venue-confound falsifier verdict that motivates the default.
+ * 2026-07-22 venue-confound falsifier verdict and the 2026-07-24 anchored adjacent-pair design.
  *
- * - `"segment"` (**default**) — a candidate is a WHOLE comma-delimited segment, folded as one unit. Requires `inputText`
- *   to find segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated
- *   as one segment (matches the documented comma-free-input degradation, not a distinct failure mode).
+ * - `"auto"` (**default**) — the production probe CHAIN: segment path when the input has ≥2 comma-delimited segments
+ *   (byte-identical to explicit `"segment"` there, by construction), else the anchored-adjacent path.
+ * - `"segment"` — a candidate is a WHOLE comma-delimited segment, folded as one unit. Requires `inputText` to find
+ *   segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated as one
+ *   segment (matches the documented comma-free-input degradation, not a distinct failure mode).
+ * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
+ *   value for harness use; the chain reaches it only on comma-free input.
  * - `"window"` — the original sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default
  *   requires a venue-aware suppression mechanism AND a re-measured venue-confound FP=0 (see the module docstring).
  */
-export type PlacetypePairProbeMode = "segment" | "window"
+export type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
+
+/**
+ * Out-record for trace support, mutated in place by {@link buildPlacetypePairPriors} when the caller supplies it via
+ * {@link PlacetypePairPriorOpts.probeTrace}. `firedPath` is set only when at least one bias was actually written —
+ * EFFECT, not configuration, matching the classifier's applied-flag pattern — and names the candidate-construction path
+ * that produced it (under `"auto"`, which leg of the chain engaged).
+ */
+export interface PlacetypePairProbeTrace {
+	firedPath?: "segment" | "anchored" | "window"
+}
 
 export interface PlacetypePairPriorOpts {
 	/** The PIX1 pair index to probe. */
@@ -248,19 +303,26 @@ export interface PlacetypePairPriorOpts {
 	 */
 	biasScale?: number
 	/**
-	 * Candidate-building strategy. Default `"segment"` — see {@link PlacetypePairProbeMode} and the module docstring's
-	 * "Probe mode" section for the 52.1% venue-confound FP measurement (2026-07-22, `.superpowers/sdd/task-6-report.md`)
-	 * that set this default.
+	 * Candidate-building strategy. Default `"auto"` (the segment→anchored probe chain) — see
+	 * {@link PlacetypePairProbeMode} and the module docstring's "Probe mode" section for the 52.1% venue-confound FP
+	 * measurement (2026-07-22, `.superpowers/sdd/task-6-report.md`) that set the v1 segment path, and the 2026-07-24
+	 * anchored adjacent-pair design that added the comma-free leg.
 	 */
 	probeMode?: PlacetypePairProbeMode
 	/**
-	 * Raw input text — required for `probeMode: "segment"` to locate comma boundaries via the tokenizer pieces' own
-	 * character offsets (see {@link buildSegmentWindows}). Mirrors `query-shape-prior.ts`'s `BuildPriorsOpts.inputText`:
-	 * the caller already has this string in hand (the same text passed to `tokenizer.encode`) and passes it straight
-	 * through. Unused in `"window"` mode. Omitting it in segment mode is not an error — it degrades to treating the whole
-	 * input as one segment, same as a genuinely comma-free query.
+	 * Raw input text — required for the segment path to locate comma boundaries via the tokenizer pieces' own character
+	 * offsets (see {@link buildSegmentWindows}), and for the anchored path to locate a postcode-shaped span (see
+	 * {@link resolveAnchorParentEnd}). Mirrors `query-shape-prior.ts`'s `BuildPriorsOpts.inputText`: the caller already
+	 * has this string in hand (the same text passed to `tokenizer.encode`) and passes it straight through. Unused in
+	 * `"window"` mode. Omitting it is not an error — the segment path degrades to treating the whole input as one segment
+	 * (same as a genuinely comma-free query), the anchored path to the string-final parent anchor.
 	 */
 	inputText?: string
+	/**
+	 * Optional out-record: which probe path actually produced a bias (see {@link PlacetypePairProbeTrace}). Supplied by
+	 * the classifier's trace path; mutated in place, never read by this module.
+	 */
+	probeTrace?: PlacetypePairProbeTrace
 }
 
 /**
@@ -408,6 +470,104 @@ function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateW
 	return undefined
 }
 
+/** Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector). */
+function makeCandidateWindow(nonEmptyGroups: readonly WordGroup[], startPos: number, endPos: number): CandidateWindow {
+	const slice = nonEmptyGroups.slice(startPos, endPos + 1)
+	const tokens = slice.map((g) => g.fstToken)
+
+	return {
+		key: tokens.join(" "),
+		concatKey: tokens.join(""),
+		startPos,
+		endPos,
+		pieceIndices: slice.flatMap((g) => g.pieceIndices),
+	}
+}
+
+/**
+ * Locate the anchored-mode parent anchor: the filtered word-group position the parent window must END at. With a
+ * postcode-shaped span in the input (shape per {@link collectMatches} — the same per-country regex family the repair
+ * pass and the postcode-anchor path run), that's the position immediately LEFT of the span's first word-group — left of
+ * the WHOLE span, so a two-token GB postcode (outward + inward) never leaks into a parent candidate. Without a postcode
+ * shape (or without `inputText` to search), the parent is string-final: the last word-group position.
+ *
+ * With several postcode-shaped spans, the LAST one (by start offset) anchors — string-final postcodes are the register
+ * convention this mode targets. Can return `-1` (postcode shape at the very start of the string): the caller treats any
+ * position `< 1` as "no room for a child left of the parent" and stays inert.
+ */
+function resolveAnchorParentEnd(
+	nonEmptyGroups: readonly WordGroup[],
+	pieces: ReadonlyArray<TokenLike>,
+	inputText: string | undefined
+): number {
+	const lastPos = nonEmptyGroups.length - 1
+
+	if (!inputText) return lastPos
+
+	const matches = collectMatches(inputText)
+
+	if (matches.length === 0) return lastPos
+
+	let anchor = matches[0]!
+
+	for (const m of matches) {
+		if (m.start > anchor.start) {
+			anchor = m
+		}
+	}
+
+	for (let i = 0; i < nonEmptyGroups.length; i++) {
+		const group = nonEmptyGroups[i]!
+		const start = pieces[group.pieceIndices[0]!]!.start
+		const end = pieces[group.pieceIndices[group.pieceIndices.length - 1]!]!.end
+
+		if (start < anchor.end && anchor.start < end) return i - 1
+	}
+
+	// The postcode-shaped span intersects no word-group (it fell inside text the tokenizer's word grouping dropped) —
+	// degrade to the string-final anchor rather than going inert on a technicality.
+	return lastPos
+}
+
+/**
+ * The anchored adjacent-pair probe (see the module docstring's "Anchored mode" section): parent windows of
+ * 1..{@link WINDOW_MAX_WORDS} words ending at `parentEnd`, child windows of 1..{@link ANCHORED_CHILD_MAX_WORDS} words
+ * immediately left of the parent (`child.endPos + 1 === parent.startPos`), both tried longest-first — which is what
+ * implements the left-maximality rule: for a given parent, the longest child pairing with it is found (and returned)
+ * before any of its right-suffixes can be probed. Returns the FIRST hit; the caller biases the child span only.
+ *
+ * Marker suppression: an adjacent child's successor word is always the parent's own first word, identical for every
+ * child length under that parent — so one suppressed child suppresses the whole child loop for that parent (`break`,
+ * equivalent to window mode's per-candidate skip).
+ */
+function probeAnchoredAdjacentPair(
+	index: PairIndexLike,
+	nonEmptyGroups: readonly WordGroup[],
+	parentEnd: number
+): { child: CandidateWindow; tag: ComponentTag } | undefined {
+	// parentStart must leave at least one word-group to its left for a child, so parentLen caps at parentEnd.
+	const maxParentLen = Math.min(WINDOW_MAX_WORDS, parentEnd)
+
+	for (let parentLen = maxParentLen; parentLen >= 1; parentLen--) {
+		const parentStart = parentEnd - parentLen + 1
+		const parent = makeCandidateWindow(nonEmptyGroups, parentStart, parentEnd)
+		const childEnd = parentStart - 1
+		const maxChildLen = Math.min(ANCHORED_CHILD_MAX_WORDS, childEnd + 1)
+
+		for (let childLen = maxChildLen; childLen >= 1; childLen--) {
+			const child = makeCandidateWindow(nonEmptyGroups, childEnd - childLen + 1, childEnd)
+
+			if (isMarkerSuppressed(nonEmptyGroups, child)) break
+
+			const tag = probeWindowPair(index, child, parent)
+
+			if (tag) return { child, tag }
+		}
+	}
+
+	return undefined
+}
+
 /**
  * Is `x` immediately followed (in the non-punctuation word sequence) by a structural marker?
  *
@@ -487,20 +647,45 @@ export function buildPlacetypePairPriors(
 
 	if (nonEmptyGroups.length < 2) return matrix // need ≥2 disjoint candidates to form a pair
 
-	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "segment"
-	// `groupSegments` is only meaningful (and only computed) in segment mode — window mode's marker suppression stays
-	// comma-blind, unchanged from before this fix (see `isMarkerSuppressed`'s doc comment).
-	const groupSegments =
-		probeMode === "window" ? undefined : computeGroupSegments(nonEmptyGroups, pieces, opts.inputText)
-	const windows =
-		probeMode === "window"
-			? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS)
-			: buildSegmentWindows(nonEmptyGroups, groupSegments!)
+	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "auto"
+	// `groupSegments` is only meaningful (and only computed) on the segment path — window mode's marker suppression
+	// stays comma-blind by design (see `isMarkerSuppressed`'s doc comment), and the anchored path only ever handles
+	// comma-free input, where every group shares segment 0 anyway.
+	const needsSegments = probeMode === "segment" || probeMode === "auto"
+	const groupSegments = needsSegments ? computeGroupSegments(nonEmptyGroups, pieces, opts.inputText) : undefined
+	const segmentWindows = groupSegments ? buildSegmentWindows(nonEmptyGroups, groupSegments) : undefined
+
+	// The "auto" probe-chain dispatch (v1.1 — module docstring, "Probe mode"): with <2 comma segments the segment path
+	// is structurally inert (one giant candidate cannot pair with itself), so the anchored-adjacent path takes over.
+	// With ≥2 segments the chain falls through to the segment loop below UNCHANGED — comma'd inputs are byte-identical
+	// to explicit `"segment"` mode by construction, not by measurement.
+	if (probeMode === "anchored" || (probeMode === "auto" && segmentWindows!.length < 2)) {
+		const parentEnd = resolveAnchorParentEnd(nonEmptyGroups, pieces, opts.inputText)
+
+		// A parent anchored at position 0 leaves no word-group to its left to serve as a child — inert.
+		if (parentEnd < 1) return matrix
+
+		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd)
+
+		if (hit) {
+			applyWindowBias(matrix, labelToCol, hit.child, hit.tag, bias)
+
+			if (opts.probeTrace) {
+				opts.probeTrace.firedPath = "anchored"
+			}
+		}
+
+		return matrix
+	}
+
+	const windows = probeMode === "window" ? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS) : segmentWindows!
 
 	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
 	// second, disjoint candidate to pair against. Bail before the O(n²) loop below; this is the
 	// documented comma-free-input degradation, not a bug.
 	if (windows.length < 2) return matrix
+
+	let anyApplied = false
 
 	for (const x of windows) {
 		if (isMarkerSuppressed(nonEmptyGroups, x, groupSegments)) continue
@@ -521,6 +706,11 @@ export function buildPlacetypePairPriors(
 		if (!matchedTag) continue
 
 		applyWindowBias(matrix, labelToCol, x, matchedTag, bias)
+		anyApplied = true
+	}
+
+	if (anyApplied && opts.probeTrace) {
+		opts.probeTrace.firedPath = probeMode === "window" ? "window" : "segment"
 	}
 
 	return matrix

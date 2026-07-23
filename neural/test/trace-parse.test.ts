@@ -117,6 +117,60 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
 	})
 
+	it("placetypePair record carries probePath naming the probe-chain leg (segment vs anchored), absent when inert", async () => {
+		const tokenizer = await loadTokenizer()
+		// A minimal PairIndexLike double — one real GB pair, hit under any key form.
+		const index = {
+			delta: 6.0,
+			probe: (child: string, parent: string) =>
+				child === "moelfre" && parent === "abergele" ? ("dependent_locality" as const) : undefined,
+		}
+
+		const commaText = "Moelfre, Abergele"
+		const { pieces: commaPieces } = tokenizer.encode(commaText)
+		const commaClassifier = new NeuralAddressClassifier({
+			tokenizer,
+			runner: new FakeRunner(logitsWithBoost(commaPieces.length, 0, "B-street")),
+		})
+		const commaTrace = await commaClassifier.traceParse(commaText, {
+			placetypePair: { index },
+			spanProposer: false,
+		})
+
+		// Comma'd input → the chain's segment leg fires.
+		expect(commaTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
+			kind: "placetypePair",
+			applied: true,
+			probePath: "segment",
+		})
+
+		const bareText = "Moelfre Abergele"
+		const { pieces: barePieces } = tokenizer.encode(bareText)
+		const bareClassifier = new NeuralAddressClassifier({
+			tokenizer,
+			runner: new FakeRunner(logitsWithBoost(barePieces.length, 0, "B-street")),
+		})
+		const bareTrace = await bareClassifier.traceParse(bareText, {
+			placetypePair: { index },
+			spanProposer: false,
+		})
+
+		// Comma-free input → the anchored-adjacent leg.
+		expect(bareTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
+			kind: "placetypePair",
+			applied: true,
+			probePath: "anchored",
+		})
+
+		// No configured index → the record keeps its pre-chain shape: no probePath key at all.
+		const inertTrace = await bareClassifier.traceParse(bareText, { spanProposer: false })
+
+		expect(inertTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
+			kind: "placetypePair",
+			applied: false,
+		})
+	})
+
 	it("emissions differ from logits when a prior applies, match when none do", async () => {
 		const tokenizer = await loadTokenizer()
 		const text = "12345"
