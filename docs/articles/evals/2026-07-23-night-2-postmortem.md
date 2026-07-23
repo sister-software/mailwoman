@@ -102,6 +102,18 @@ any re-dispatch safe.
    proposal), #1254 (this postmortem), #1255 (release-skill gotcha), #1256 (CJK byte-fallback
    fix), #1257 (pair-index country-gate warn-branch test), #1258 (fileMD5 dedup).
 
+## Lab-health findings (07:47 UTC sweep)
+
+- **Runaway orphan needs a one-liner from you**: PID 2060383 (`python3 -`), an orphaned heredoc
+  from this session's pre-compaction background task `b4eqw3mrl` (started 01:42 UTC), has burned
+  a full core for 8+ hours with zero bytes of output and a deleted stdin — pure waste heat (Tctl
+  92°C). The raw `kill` was classifier-blocked and TaskStop lost the pre-compaction registry, so
+  it's still running. Safe to `kill 2060383` (identity verified via `/proc/2060383/fd` → the
+  task's output file; it produced nothing).
+- Local demo probe on :7770 answers 000 and nothing is listening there; the public docs site is
+  healthy (200). Reads as the local probe service not running rather than an outage — left
+  untouched pending your read on which service belongs there.
+
 ## Concrete next steps
 
 - Morning: merge #1253–#1258; pick the release-path fix; pick the redesign run — the cRT
