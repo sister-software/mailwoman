@@ -144,3 +144,23 @@ catch) is already fully receipted whether or not a new model lands first.
 A+B combined (the likely path if the operator wants a model this week): ~2 agent-nights, ≤$5.
 Every prior full run in this arc cost ~$1.50 GPU; money is not the constraint — attributable
 information is.
+
+## Postscript (added during night #2): the cRT comma-drop diagnostic — hypothesis (c) substantially weakened
+
+The headline zero-GPU probe proposed above was run the same night (already-local cRT checkpoints;
+grading agent, ~2 min). Result: with the **encoder frozen for the entire run**, the Pennsylvania
+`INV[comma-drop]` break is **absent at cRT-2k/4k/6k and present at cRT-8k** — the identical
+failure signature (coordinate → 0,0) as the full-fine-tune lineage's own step-8000, confirmed
+independently by the invariance suite and the gauntlet.
+
+Reading: the break originates in **classifier-head dynamics under the dep-loc-heavy stream**, not
+in encoder boundary statistics — hypothesis (c) is substantially weakened, (a)/(b) strengthen.
+The late emergence (clean through 6k, breaks by 8k, matching v3.12's 5k–7k
+single-violation narrowing followed by the 8k regression) is an accumulation shape: hot
+classifier LR × long exposure degrades the head after the resurrection window has already done
+its work. That is precisely the failure mode **option B** (two-phase schedule: hot through the
+~2k window, anneal to base LR after) is built to avoid — B is now the mechanistically favored
+run, with A's remaining probes (Pennsylvania logit-trace diff) as optional sharpening rather
+than prerequisites.
+
+Receipts: `.superpowers/sdd/task-8-report.md` § "cRT comma-drop diagnostic".
