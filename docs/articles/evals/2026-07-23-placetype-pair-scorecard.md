@@ -294,3 +294,43 @@ applies to both candidates and was not part of the original six pre-registered g
 - If the operator ultimately promotes feed-2k instead of feed-8k, the shipped `pair-index-gb.bin`
   must be rebuilt at `--delta 4.5` and `neural-weights-en-gb/scripts/link-dev-weights.ts`'s
   `PAIR_INDEX_DELTA` flipped back down (both one-line changes, documented inline in that file).
+
+---
+
+## Postscript — consolidation verdict (2026-07-23, same day, after this scorecard)
+
+The Gauntlet finding above was not left open indefinitely: the operator authorized ONE
+pre-registered repair attempt per the arc's treadmill guard, `v3.11.1-deploc-consolidate` — resume
+feed-8k +2k steps at a damped classifier learning rate, targeting the comma-drop regression
+mechanistically (the resurrection lever that likely over-fit the comma-structured dep-loc shards).
+
+**CONSOLIDATION VERDICT: NOT CLEAN.** The comma-drop break is byte-identical between the 8k and
+10k checkpoints — a stable learned behavior, not training-run churn that a couple more steps would
+wash out. Every OTHER guard still PASSES at 10k, including golden-us (at a 0.06pp margin), but the
+one regression this run existed to fix did not move at all.
+
+**STOP RULE EXECUTED.** Per the recipe's own pre-registration ("no knob iteration inside this
+pre-registration"), a second attempt was not made. **The v3.11.x lineage is CLOSED for shipping** —
+neither feed-2k nor feed-8k nor this consolidation checkpoint promotes. The currently-shipped
+model remains v385 (6.6.0); `neural-weights-en-us/model-card.json`'s `version` field was corrected
+back to 6.6.0 accordingly (it had briefly carried an unshipped 6.7.0), with the intended candidate
+number preserved as `staged_candidate_version`.
+
+**Root-cause hypothesis for the redesign:** the four dependent_locality feed shards (GB/NZ/ES/
+FR-lieudit) are ~100% comma-structured — every training row delimits its fields with commas. This
+plausibly pushed the model toward treating a comma as load-bearing boundary evidence, at the cost
+of robustness on comma-free US input (the White House / Pennsylvania Ave case) — the same coin as
+this arc's own documented GB comma-stripped-input inertness trade (segment-mode's v1 boundary,
+`gb_golden_comma_stripped` above).
+
+**ARC PATH FORWARD:** the placetype-pair-prior CODE ships regardless of the model decision — the
+prior, the PIX1 index, and the release-path packaging are all correct and composed correctly with
+the currently-shipped v385 base (the prior is inert-but-ready: `neural-weights-en-gb` ships no
+model of its own by design, so shipping the code introduces no behavior change until an operator
+explicitly wires a candidate). Model promotion itself waits for a clean checkpoint under a NEW,
+separately pre-registered recipe: **v3.12**, sketched at
+`docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md` — a comma-drop augmentation share
+extended to the new locale shards (the augmentation machinery already exists from v381), gated on
+its own why-3 verification step before any GPU spend. See that document for the full pre-
+registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
+lockstep — read it, not just this scorecard, for the authoritative current status.

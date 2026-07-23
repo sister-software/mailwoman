@@ -33,15 +33,17 @@
  *   ~2k held-out PPD-tail register rows (dependent_locality tag-correct recall) and the 6,500-row
  *   FSA venue-confound board (FP), for BOTH ship-candidate checkpoints (feed-2k, feed-8k) — the
  *   two calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). This shared artifact bakes
- *   feed-8k's value (5.0): Task 7's full battery found feed-2k FAILS the FR-fragment
- *   `bare-locality` hallucination bar (0.665 vs ≥0.90 — an early-training-collapse pattern, the
- *   SAME shape as the sibling en-gb-locale-arc's probe-2 checkpoint) while feed-8k passes it
- *   (0.988) and every other registered bar except digit `bare-street-hn` (a narrower, already-
- *   documented regression) — so feed-8k is Task 7's RECOMMENDATION, and this artifact matches. If
- *   the operator promotes feed-2k instead, re-run this same CLI command with `--delta 4.5` and
- *   update `PAIR_INDEX_DELTA` below in lockstep — the artifact and this script's literal must
- *   never drift (same discipline as the `DEFAULT_MODEL`/`DEFAULT_TOKENIZER` lockstep comment
- *   above).
+ *   feed-8k's value (5.0): the operator ratified feed-8k as the ship checkpoint (2026-07-23) over
+ *   feed-2k (which fails the FR-fragment `bare-locality` hallucination bar outright, 0.665 vs
+ *   ≥0.90 — the same early-training-collapse shape as the sibling en-gb-locale-arc's probe-2
+ *   checkpoint). That checkpoint choice is FINAL, not open — the feed-2k branch this comment used
+ *   to describe is moot. **What actually blocks promotion is the Gauntlet**, not the checkpoint
+ *   pick: feed-8k FAILS the metamorphic layer (loses the "1600 Pennsylvania Ave NW" comma-drop
+ *   rooftop resolution; v385 holds it), and a same-day repair attempt
+ *   (`v3.11.1-deploc-consolidate`) came back NOT CLEAN — STOP RULE EXECUTED, the v3.11.x lineage
+ *   is CLOSED for shipping. This artifact (δ=5.0, feed-8k-calibrated) stays correct and ready
+ *   regardless — the prior composes with whatever model eventually ships. Path forward: v3.12
+ *   (`docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md`, operator-gated redesign).
  *
  *   FRESHNESS GUARD on the skip-if-exists path (review follow-up): a bare `existsSync` skip is
  *   right for `postcode-gb.bin` (rebuilds in seconds from a small WOF shard) but wrong on its own
@@ -252,8 +254,9 @@ if (!existsSync(CLI)) {
 // derived from the HM Land Registry PPD tuples CSV) — build it the same way, via the compiled
 // `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the Task-7-CALIBRATED value baked into
 // the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header comment for
-// the calibration method and the feed-2k-vs-feed-8k lockstep note. Skips with a warning (not a
-// hard failure) so a worktree without the PPD source CSV can still link everything else.
+// the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed,
+// not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard
+// failure) so a worktree without the PPD source CSV can still link everything else.
 //
 // UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds), the PPD tuples CSV is
 // ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min). `weights.test.ts`

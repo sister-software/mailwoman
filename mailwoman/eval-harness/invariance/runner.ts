@@ -334,10 +334,14 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 		for (const v of violations) {
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
+			// Final-review fix: this used to hardcode "baseline held INVARIANT" for every NEW violation, but
+			// "not pre-existing" (worse severity than the baseline) does not imply the baseline was INVARIANT —
+			// the baseline could itself have been DEGRADED while the candidate is the strictly-worse LOST.
+			// Print the baseline's ACTUAL recorded verdict instead of asserting one.
 			const provenance = options.baselineParse
 				? v.preExisting
 					? " [pre-existing: baseline also violates — non-blocking]"
-					: " [NEW — baseline held INVARIANT]"
+					: ` [NEW — baseline verdict was ${v.baselineVerdict}]`
 				: ""
 			report(`  ${tag} [${v.transformId}] ${v.rowId} "${v.raw}" → "${v.transformed}"${provenance}`)
 

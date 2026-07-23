@@ -1,9 +1,10 @@
 // INVARIANCE MINI-SUITE (#886 five-whys follow-up) — a standing, seconds-cheap metamorphic-invariance
-// fixture meant to run in EVERY probe grade, not just the release Gauntlet. 19 base addresses across
-// US/FR/DE/GB, drawn from the golden boards (data/eval/golden/v0.1.2/dev/us.jsonl, gb-golden.jsonl,
-// parity-corpus.jsonl deu-*/fra-*) and the Gauntlet's own metamorphic bases (mailwoman/eval-harness/
-// gauntlet/cases/metamorphic.ts) for realism, plus the two gauntlet-famous landmark cases named in the
-// task: the White House and the Empire State Building.
+// fixture meant to run in EVERY probe grade, not just the release Gauntlet. 23 base addresses (19
+// original + 4 Task-9 paired-punctuation rows, see below) across US/FR/DE/GB, drawn from the golden
+// boards (data/eval/golden/v0.1.2/dev/us.jsonl, gb-golden.jsonl, parity-corpus.jsonl deu-*/fra-*) and
+// the Gauntlet's own metamorphic bases (mailwoman/eval-harness/gauntlet/cases/metamorphic.ts) for
+// realism, plus the two gauntlet-famous landmark cases named in the original task: the White House and
+// the Empire State Building. 23 rows × their applicable transforms = 156 pairs total (0 skipped).
 //
 // `transforms` lists the perturbation classes (mailwoman/eval-harness/invariance/transforms.ts) that
 // APPLY to that row. Six of the seven classes (comma-drop [when a comma is present], case-fold,
@@ -42,6 +43,16 @@
 // still real fixes (each has a dedicated unit-test RED→GREEN in transforms.test.ts / compare.test.ts /
 // runner.test.ts reproducing the reviewer's exact cases) — they simply don't move THIS fixture's aggregate
 // numbers. A future fixture row exercising a hallucinated critical tag would be a legitimate suite addition.
+//
+// EXPANDED 2026-07-23 (Task 9, paired-punctuation audit) — 4 new rows appended below (see that section's
+// own header comment), taking the suite from 19/121 to 23/156. The BASELINE PROFILE paragraph above is the
+// ORIGINAL 19-row/121-pair measurement and is left as the historical record for that fixture size — it is
+// NOT the current full-suite profile. The extended 23-row/156-pair profiles for BOTH v385 (132 INVARIANT /
+// 5 DEGRADED / 19 LOST) and feed-8k (131 INVARIANT / 12 DEGRADED / 13 LOST) live in
+// `.superpowers/sdd/task-9-audit-report.md`'s "Invariance suite additions" section, including the
+// per-new-row breakdown (gb-quoted-venue, gb-parenthetical-aside, gb-bracketed-designator, us-brace-suite)
+// and which violations are pre-existing comma-drop-family misses vs the model-accuracy gap on the
+// bracketed-designator shape (not character leakage — see that report for the direct control comparison).
 {"id":"us-white-house","raw":"1600 Pennsylvania Ave NW, Washington, DC 20500","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"us-empire-state","raw":"350 Fifth Avenue, New York, NY 10118","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"us-portland-directional","raw":"6220 SE Salmon St, Portland, OR 97215, USA","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}

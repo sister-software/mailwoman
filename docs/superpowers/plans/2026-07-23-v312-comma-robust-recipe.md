@@ -19,7 +19,7 @@ The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply 
 ## Pre-registered acceptance (full set, no reinterpretation)
 
 1. PRIMARY: gauntlet metamorphic layer = 0 violations at the selected checkpoint; invariance suite shows NO new violation classes vs the v385 baseline profile.
-2. GB dep-loc board with prior @ δ=5.0 ≥ 69/69 emit / ≥66 tag-correct, FP 0 (the prior carries this — the bar guards against recipe collateral).
+2. GB dep-loc board with prior @ δ=5.0 ≥ 69/69 emit / ≥66 tag-correct, **FP 0 on the gb-golden board's own no-dependent_locality rows** (i.e. specificity on the golden board itself — the prior must not emit on a row that has no dependent_locality in gold). This is a DIFFERENT number from the venue-confound board's false-positive floor, documented separately: 0.738% (48/6,500) at δ=5.0 on the 6,500-row FSA venue-confound board is the accepted, already-shipped-artifact FP rate for THAT board and is not required to be zero — see `neural-weights-en-gb/model-card.json`'s `eval.venue_confound_fp`. Don't conflate the two: this bar guards against the RECIPE fix introducing new gb-golden collateral, not against re-litigating the venue-confound floor.
 3. All operator-ratified bars: digit ≥0.755, bare-locality ≥0.90, golden us/fr ±0.7pp, presets byte-identical, error-analysis ≤2pp/tag.
 4. STOP RULE: one run. If the Step-0-selected fix doesn't produce a gauntlet-clean checkpoint, the model side goes to a full redesign discussion (candidates on record: two-phase LR schedule variant; curriculum ordering; the augmentation-vs-mass interaction study) — no knob iteration inside this pre-registration.
 

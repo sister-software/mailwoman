@@ -29,9 +29,9 @@ no JavaScript logic of its own; it is loaded at inference time by
 > the base package's model + tokenizer at runtime (byte-identical artifact; one
 > encoder serves both locales). What this package ships is the **GB-specific
 > soft-feed data**: the outward-code postcode-anchor binary (`postcode-gb.bin`)
-> built from the HM Land Registry PPD postcode gazetteer, the placetype-pair
-> retrieval index (`pair-index-gb.bin`, see _Evaluation_ below), plus the
-> shared gazetteer/country lexicons.
+> built from the WOF GB postcode shard, the placetype-pair retrieval index
+> (`pair-index-gb.bin`, built from the HM Land Registry PPD tuples — see
+> _Evaluation_ below), plus the shared gazetteer/country lexicons.
 
 ## What this is
 

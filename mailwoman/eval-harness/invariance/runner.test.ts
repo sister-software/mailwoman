@@ -176,6 +176,35 @@ describe("runInvarianceSuite", () => {
 		expect(result.pass).toBe(false) // gates
 	})
 
+	it("final-review fix: the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
+		// Same reviewer repro as the severity-gate test above (baseline DEGRADED, candidate LOST — a NEW,
+		// gating violation) — but this time asserting on the printed report LINE itself, not just the
+		// structured outcome. Before the fix, every NEW violation's line claimed "baseline held INVARIANT"
+		// regardless of what the baseline actually did; here the baseline was DEGRADED, not INVARIANT, so a
+		// hardcoded claim would be false on its face.
+		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+		const candidateParse: ParseFn = async (raw) =>
+			raw.includes(",")
+				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" } // house_number dropped — LOST
+				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+		const baselineParse: ParseFn = async (raw) =>
+			raw.includes(",")
+				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
+				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+
+		const lines: string[] = []
+		await runInvarianceSuite({
+			rows: [brokenRow],
+			parse: candidateParse,
+			baselineParse,
+			report: (line) => lines.push(line),
+		})
+
+		const violationLine = lines.find((l) => l.includes("[NEW"))
+		expect(violationLine).toContain("[NEW — baseline verdict was DEGRADED]")
+		expect(violationLine).not.toContain("held INVARIANT")
+	})
+
 	it("--baseline severity gate: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
 		const degradedRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 		const candidateParse: ParseFn = async (raw) =>
