@@ -105,3 +105,19 @@ Note: the runtime country context = the locale the weights resolved for (en-gb �
 ## Pre-registered acceptance
 
 As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout numbers; plus: Task 5's en-gb parse smoke green; trace snapshot test green with the new kind; non-GB byte-identity proven by test, not assertion.
+
+### Task 9: Paired-punctuation audit — quotes, brackets, braces, parens (final task)
+
+**Scope:** characterize + harden the decode path's handling of paired punctuation, end to end: tokenizer pieces → `groupPiecesIntoWords` (the pending-start machine's treatment of quote/bracket pieces — leading-quote word starts, trailing quote+comma) → `normalizeFSTToken` fold (quotes strip via `\p{P}` — verify probeable windows survive quoting) → priors (a quoted venue/place name must still probe) → decoder spans (do stray quote/bracket chars leak into component values at span edges? `build-tree` raw slicing) → formatter round-trip.
+
+**Explicit cases (table-driven, fixture tier + skipIf-production tier per the Task-4 pattern):** `"The Grange", Fishburn, Stockton-on-Tees` (quoted venue); `12 High St (rear entrance), Leeds` (parenthetical aside); `Unit 4 [Block B]` (bracketed designator); braces; curly vs straight quotes (what does NFKC map?); guillemets «»; UNBALANCED pairs (fail-open, never crash, never drop).
+
+**Gates:** zero crashes on any case; zero silent WORD DROPS (the Task-4 class — assert group recovery); span edges don't capture stray paired chars (characterize; fix if local to span trimming, else document-with-rationale). Same adjudication discipline: any "accepted behavior" verdict carries evidence, and anything in the drop/mangle class gets fixed, not documented.
+
+**Sequencing:** final task — runs after Task 8, before the arc's whole-branch review, so it audits the SHIPPED configuration.
+
+## Post-plan amendments (2026-07-23)
+
+- Task 9 (above) was an operator addition during execution; it found and fixed a third shared-plumbing production bug class (tokenizer byte-fallback offset corruption) — see the arc PR.
+- The v3.11.x model lineage was CLOSED by pre-registered stop rule (gauntlet metamorphic); the model path continues in `2026-07-23-v312-comma-robust-recipe.md`. The arc's code ships inert-until-promote by design.
+- The metamorphic invariance mini-suite (unplanned addition, five-whys outcome) is now a mandatory probe-level guard.
