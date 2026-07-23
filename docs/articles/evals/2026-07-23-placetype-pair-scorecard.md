@@ -347,3 +347,21 @@ extended to the new locale shards (the augmentation machinery already exists fro
 its own why-3 verification step before any GPU spend. See that document for the full pre-
 registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
 lockstep — read it, not just this scorecard, for the authoritative current status.
+
+---
+
+## Postscript 2 (2026-07-24): the arc's actual ending — v1.1 anchored chain, shipped as 6.6.1 / 7.7.0
+
+The correction above turned out to be the hinge. Follow-through, all zero-GPU, all pre-registered
+(bars in the ledger before each run): the ship battery caught segment mode fully inert on
+comma-free input (0/69 — structural, not statistical); the window-mode re-sweep confirmed the
+historical FP verdict and located the real flaw in the any-to-any pair GEOMETRY (79% venue FP at
+δ=10); the brainstorm-response design (anchored adjacent-pair candidates, post-town-anchored,
+probe chain segment→anchored) was built and passed every bar first try: comma-stripped 50/69 emit
+/ 94% tag-correct, anchored venue floor 4/6500 (0.062%), segment path reproduced exactly through
+the chain, presets + golden byte-identical, invariance profile improved (138 invariant vs 134).
+Shipped: bundle 6.6.1 (δ=10 pair-index, model bytes unchanged) + `@mailwoman/neural` 7.7.0 (auto
+probe chain). The training-side resurrection lineage closed at five falsified mechanisms and
+three stop-rule executions; the capability ships on the untouched v385. Receipts:
+`.superpowers/sdd/task-8-report.md` §§ "Option A" through "v1.1 anchored-mode battery"; design
+record `2026-07-24-pair-prior-comma-scope-{KIMI_HANDOFF,BRAINSTORM_RESPONSE}.md`.

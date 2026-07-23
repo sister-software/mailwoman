@@ -998,6 +998,56 @@
 				}
 			},
 			"notes": "v385 CA/MX Overture locale add (npm 7.1.0). Golden 2pp vs shipped v381 PASS (country -1.6 small-N); gauntlet 33/33; MX locality +8.7. v6.0.0-shipped-baseline: sole floor miss fr.cedex_real 85.6 vs 85.8 (-0.2pp, ~1 row, FR tag orthogonal to CA/MX) — operator-adjudicated as noise 2026-07-18. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.cedex_real. [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=scratchpad/release-v7.1.0/gate-out]"
+		},
+		{
+			"run_id": "v385-en-gb-pair-prior-6-6-1",
+			"model_version": "6.6.1",
+			"model_path": "@mailwoman/neural-weights-en-us@7.7.0 (+ @mailwoman/neural-weights-en-gb@7.7.0 pair-index δ=10)",
+			"corpus_version": "v0.13.0-latam overlay (v0.11.0-no-fragment base + a 456,230-row `overture-latam` shard: CA 299,809 + MX 156,421 Overture-Addresses rows) — the dedicated LATAM source does NOT dilute the trained EU `overture` rows — MODEL BYTES UNCHANGED from 6.6.0 (v385); 6.6.1 is a decode-artifact bundle revision, no training",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "placetype-pair v1.1 battery (pre-registered): gb-golden 120 (69 dep-loc + 51 no-DL), comma-stripped variant, gb-venue-confound 6,500, invariance suite (--baseline v385), presets + golden us/fr byte-identity",
+			"eval_set_sha256": "per-file, see .superpowers/sdd/task-8-report.md provenance blocks",
+			"trained_at": null,
+			"training_steps": 0,
+			"training_wall_clock_seconds": 0,
+			"hardware": "zero-GPU (decode-side artifact + code only)",
+			"metrics": {
+				"us": {
+					"postcode": 96.9,
+					"country_homograph": 89.8,
+					"micro": 86.7,
+					"locality": 77.9,
+					"region": 89.7,
+					"street": 80.9,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.1,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.8,
+					"house_number": 95.7,
+					"region": 44.4,
+					"cedex_real": 85.6
+				},
+				"de": {
+					"native_locality_anchor_on": 91.3
+				},
+				"gb_dependent_locality": {
+					"golden_emit": "69/69",
+					"golden_tag_correct": "69/69 (100%)",
+					"comma_stripped_emit": "50/69",
+					"comma_stripped_tag_correct": "47/50 (94.0%)",
+					"golden_no_dl_fp": "0/51",
+					"venue_confound_fp_segment_path": "217/6500 (3.338%)",
+					"venue_confound_fp_anchored_path": "4/6500 (0.062%)"
+				},
+				"arena": {
+					"perturb": 80
+				}
+			},
+			"notes": "GB dependent_locality LIVE via the placetype-pair decode prior alone on the untouched v385 (Option-A δ-sweep: deficit uniform ~7.0 logits, δ=10 saturates board + FP curves together). neural 7.7.0 auto probe chain: segment path (comma'd, byte-identical to prior default) / anchored-adjacent path (comma-free; parent anchored at post-town position, child adjacent left-maximal). us/fr/de/arena metrics carried from the 6.6.0 row VERBATIM — model bytes unchanged, presets + golden us/fr verified byte-identical in the battery. Training resurrection lineage closed (5 falsified mechanisms, 3 stop rules); record: docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md + 2026-07-24-pair-prior-comma-scope-*.md."
 		}
 	]
 }

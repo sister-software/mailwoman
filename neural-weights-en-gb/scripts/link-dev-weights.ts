@@ -272,7 +272,7 @@ if (!existsSync(CLI)) {
 // artifact into every test run.
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
-const PAIR_INDEX_DELTA = 5.0
+const PAIR_INDEX_DELTA = 10
 
 let pairIndexIsFresh = false
 
