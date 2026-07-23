@@ -55,10 +55,12 @@ jobs:
         run: yarn install --immutable
 
       # Remote mode (MAILWOMAN_DEMO_URL set) skips the local build+serve + the `build` project,
-      # so only the browser chromium is needed. `--with-deps` pulls the system libs on the runner.
+      # so only the browser chromium is needed. No --with-deps: it sudo-installs apt packages,
+      # and the lab runners have no passwordless sudo — system libs are provisioned on the host
+      # once (`playwright install-deps chromium`, operator sudo).
       - name: Install Playwright chromium
         working-directory: docs
-        run: yarn playwright install --with-deps chromium
+        run: yarn playwright install chromium
 
       - name: Smoke the deployed demo
         working-directory: docs
