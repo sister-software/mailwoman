@@ -37,23 +37,14 @@
  */
 
 import { spawnSync } from "node:child_process"
-import {
-	copyFileSync,
-	lstatSync,
-	mkdtempSync,
-	readFileSync,
-	readlinkSync,
-	rmSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs"
+import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
+import { join, resolve } from "node:path"
 
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
 
-import { packWorkspaceForPublish } from "./pack-workspace.ts"
+import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
 import { collectExportTargets } from "./publish-exports.ts"
 
 const repoRoot = repoRootPath()
@@ -179,22 +170,6 @@ function verifyPublishExports(tarballPath: string) {
 	)
 }
 
-/**
- * Replace any symlinked `files` entries with real copies of their targets.
- */
-function dereferenceWorkspaceSymlinks(workspaceDir: string) {
-	const pkg = JSON.parse(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
-
-	for (const entry of pkg.files ?? []) {
-		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
-		const target = resolve(workspaceDir, entry)
-		const st = lstatSync(target, { throwIfNoEntry: false })
-
-		if (!st?.isSymbolicLink()) continue
-		const linkDest = readlinkSync(target)
-		const resolved = resolve(dirname(target), linkDest)
-		unlinkSync(target)
-		copyFileSync(resolved, target)
-		console.error(`publish-workspace: dereferenced ${entry} ← ${resolved}`)
-	}
-}
+// dereferenceWorkspaceSymlinks moved to pack-workspace.ts (2026-07-23) so packWorkspaceForPublish
+// derefs for EVERY caller (smoke included); the explicit call above stays as the documented
+// safety net (AGENTS.md "symlinks in the publish tarball").

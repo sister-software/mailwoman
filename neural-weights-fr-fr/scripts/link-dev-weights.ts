@@ -4,42 +4,37 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Symlink dev model + tokenizer files into this package for local testing.
- *   See @mailwoman/neural-weights-en-us/scripts/link-dev-weights.ts for the rationale.
+ *   Materialize the fr-fr overlay's dev artifacts. See
+ *   @mailwoman/neural-weights-en-us/scripts/link-dev-weights.ts for the base rationale.
  *
- *   A single multilingual model serves both en-us and fr-fr (byte-identical artifact;
- *   fr-fr just carries its own calibration). Re-symlinks the SAME files as en-us until
- *   per-locale training lands. Keep these defaults in lockstep with en-us's DEFAULT_*
- *   on every ship (currently v5.1.0 = bsplice-meaninit + the spliced v0.6.0-bsplice
- *   tokenizer). The md5 guard reads en-us's model-card `files_md5` — one truth for the
- *   one artifact (fr-fr's own card carries no files_md5 block).
+ *   #1179 OVERLAY FORM (2026-07-23 rewrite): fr-fr declares `mailwoman.baseWeights:
+ *   "@mailwoman/neural-weights-en-us"`, so `resolveWeights` falls through to the en-us package
+ *   for `model.onnx` / `tokenizer.model` / the card. This script therefore no longer links a
+ *   model or tokenizer at all — it REMOVES any leftover local pair so the base fallback engages.
+ *   (The previous version re-symlinked a pinned v241-fr-nsplice model on every `yarn test`;
+ *   since #1179 that local file SHADOWED the base fallback, silently running the stale model for
+ *   every dev fr-fr parse, and its #397 md5 guard could never pass against the en-us card. One
+ *   model, one pin — en-us's script owns it.)
+ *
+ *   What fr-fr DOES own locally (locale-specific soft-feed siblings; `resolveFromPackageDir`
+ *   resolves these from the overlay dir with no base fallback):
+ *
+ *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files,
+ *       symlinked from `data/gazetteer/`.
+ *   - `postcode-fr.bin` — derived from the WOF intl postcode shard
+ *       (`softFeed.postcodeDBByCountry.fr` = postalcode-intl.db), built in place via the compiled
+ *       `gazetteer postcode-binary` CLI (skip-if-exists; rebuilds in seconds). Without it a fresh
+ *       worktree parses anchor-OFF — see the en-us script's section comment for the CI failure
+ *       this caused.
  */
 
-import { createHash } from "node:crypto"
-import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import { existsSync, lstatSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = repoRootPath("neural-weights-fr-fr")
-// In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — v5.9.0
-// v241-fr-nsplice-ft pair. The 2026-07-02 ship missed this bump (both linkers still pinned
-// the demo-only v4.16.0 pair); the guard below now fails loud on any future miss.
-const SRC_MODEL =
-	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v241-fr-nsplice-ft-step-12000-int8.onnx")
-const SRC_TOKENIZER =
-	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.8.0-fr-nsplice", "tokenizer.model")
-
-if (!existsSync(SRC_MODEL)) {
-	console.error(`missing source model: ${SRC_MODEL}`)
-	process.exit(1)
-}
-
-if (!existsSync(SRC_TOKENIZER)) {
-	console.error(`missing source tokenizer: ${SRC_TOKENIZER}`)
-	process.exit(1)
-}
 
 /** Replicate `ln -sf SRC DEST`: drop any pre-existing link/file at the destination, then symlink. */
 function linkForce(src: string, dest: string): void {
@@ -50,44 +45,62 @@ function linkForce(src: string, dest: string): void {
 	symlinkSync(src, dest)
 }
 
-linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
-linkForce(SRC_TOKENIZER, resolve(PKG_DIR, "tokenizer.model"))
-
-console.log(`linked ${PKG_DIR}/{model.onnx,tokenizer.model}`)
-
-// #397 guard, lockstep form: the fr-fr artifact IS the en-us artifact, so verify the
-// linked default bytes against en-us's model-card `files_md5` (skipped under an
-// explicit MAILWOMAN_DEV_* override — deliberate experimentation).
-if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
-	const enUSCard = JSON.parse(
-		readFileSync(resolve(PKG_DIR, "..", "neural-weights-en-us", "model-card.json"), "utf8")
-	) as { files_md5?: Record<string, string> }
-	const checks: Array<[string, string, string | undefined]> = [
-		["model", resolve(PKG_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
-		["tokenizer", resolve(PKG_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
-	]
-
-	for (const [label, path, expected] of checks) {
-		if (
-			($public.MAILWOMAN_DEV_MODEL && label === "model") ||
-			($public.MAILWOMAN_DEV_TOKENIZER && label === "tokenizer")
-		)
-			continue
-
-		if (!expected) {
-			console.error(
-				`ERROR (#397 guard): en-us model-card.json has no files_md5 entry for ${label} — cannot verify the dev pin.`
-			)
-			process.exit(1)
-		}
-		const actual = createHash("md5").update(readFileSync(path)).digest("hex")
-
-		if (actual !== expected) {
-			console.error(
-				`ERROR (#397 guard): linked default ${label} md5 ${actual} != shipped ${expected} (en-us card files_md5).`
-			)
-			console.error("  Bump this script's SRC_* defaults in lockstep with en-us on each ship.")
-			process.exit(1)
-		}
+/** Remove a leftover local file/symlink so the #1179 base-weights fallback engages. */
+function removeIfPresent(dest: string): void {
+	try {
+		lstatSync(dest)
+	} catch {
+		return
 	}
+	unlinkSync(dest)
+	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
+}
+
+removeIfPresent(resolve(PKG_DIR, "model.onnx"))
+removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
+
+// --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------
+const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
+const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
+
+if (existsSync(SRC_GAZETTEER_LEXICON)) {
+	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
+} else {
+	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
+}
+
+if (existsSync(SRC_COUNTRY_LEXICON)) {
+	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+} else {
+	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
+}
+
+const FR_WOF_DB = dataRootPath("wof", "postalcode-intl.db")
+const CLI = repoRootPath("mailwoman", "out", "cli.js")
+const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-fr.bin")
+
+if (existsSync(POSTCODE_BIN_DEST)) {
+	console.log(`skipped postcode-fr.bin build — ${POSTCODE_BIN_DEST} already present`)
+} else if (!existsSync(CLI)) {
+	console.error(
+		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build postcode-fr.bin.`
+	)
+} else if (!existsSync(FR_WOF_DB)) {
+	console.error(
+		`WARNING: missing ${FR_WOF_DB} — postcode-fr.bin not built; the anchor channel will resolve OFF for FR.`
+	)
+} else {
+	const result = spawnSync(
+		process.execPath,
+		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `FR:${FR_WOF_DB}`],
+		{ stdio: "inherit" }
+	)
+
+	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
+		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
+		process.exit(1)
+	}
+	console.log(`built ${POSTCODE_BIN_DEST}`)
 }

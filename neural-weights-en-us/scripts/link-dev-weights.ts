@@ -39,6 +39,7 @@
  *   ---------------------------------------------------------------------------
  */
 
+import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { existsSync, readFileSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
@@ -136,4 +137,61 @@ if (!TOKENIZER_OVERRIDDEN) {
 	assertMd5("tokenizer", TOKENIZER_DEST, DEFAULT_TOKENIZER_MD5)
 } else {
 	console.error("  (tokenizer override active — skipping #397 default-hash check)")
+}
+
+// --- soft-feed siblings (the fresh-worktree anchor-OFF gap; mirrors en-gb's script) ------
+//
+// Historically this script linked only model+tokenizer, leaving `anchor-lexicon-v1.json` /
+// `country-surface-lexicon-v1.json` / `postcode-us.bin` absent in a fresh worktree — the CLI
+// then parses anchor-OFF/gazetteer-OFF/country-OFF with only stderr warnings (train/inference
+// mismatch, visibly degraded parses: the 2026-07-23 CI unit-leg failure was "Paris, TX"
+// resolving to Paris FRANCE on the self-hosted runners' fresh checkouts for exactly this
+// reason). The two lexicons are checked-in repo files (`data/gazetteer/…` — the same source
+// `release.config.json`'s `softFeed.*` names and `scripts/copy-weights.ts` copies at publish
+// time); `postcode-us.bin` is derived from the WOF US postcode shard, built in place via the
+// compiled `gazetteer postcode-binary` CLI (skip-if-exists — it rebuilds in seconds, and the
+// shard is versionless on disk, unlike en-gb's md5-guarded pair index).
+const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
+const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
+
+if (existsSync(SRC_GAZETTEER_LEXICON)) {
+	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
+} else {
+	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
+}
+
+if (existsSync(SRC_COUNTRY_LEXICON)) {
+	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+} else {
+	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
+}
+
+const US_WOF_DB = dataRootPath("wof", "postalcode-us.db")
+const CLI = repoRootPath("mailwoman", "out", "cli.js")
+const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-us.bin")
+
+if (existsSync(POSTCODE_BIN_DEST)) {
+	console.log(`skipped postcode-us.bin build — ${POSTCODE_BIN_DEST} already present`)
+} else if (!existsSync(CLI)) {
+	console.error(
+		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build postcode-us.bin.`
+	)
+} else if (!existsSync(US_WOF_DB)) {
+	console.error(
+		`WARNING: missing ${US_WOF_DB} — postcode-us.bin not built; the anchor channel will resolve OFF for US.`
+	)
+} else {
+	const result = spawnSync(
+		process.execPath,
+		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `US:${US_WOF_DB}`],
+		{ stdio: "inherit" }
+	)
+
+	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
+		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
+		process.exit(1)
+	}
+	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
