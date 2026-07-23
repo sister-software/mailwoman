@@ -32,7 +32,7 @@ harm and the matched share is principled) + the single change:
   window's kinematics — the resume-vs-init_from rule).
 - Same seed, fresh output dir `output-v3130-two-phase-s42`, save_every 1000, 8k total.
 
-Cost: ~~25 min A100 (~~$1.50) + the standard grade.
+Cost: about 25 min A100 (about $1.50) + the standard grade.
 
 ## Pre-registered acceptance (inherited verbatim from v3.12 — no reinterpretation)
 
