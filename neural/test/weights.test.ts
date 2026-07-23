@@ -38,14 +38,26 @@
  */
 
 import { execFileSync } from "node:child_process"
-import { existsSync, readFileSync } from "node:fs"
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "../index.ts"
-import { PairIndexResolver, type PairIndexLike } from "../pair-index-resolver.ts"
+import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "../pair-index-resolver.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const MODEL_PATH =
@@ -367,6 +379,81 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
 			expect(placetypePairRecord?.applied).toBe(false)
+		}
+	)
+})
+
+// The hard country gate's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
+// PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the gate
+// must warn + skip the prior default, and the load must still succeed (skip-not-throw). Unreachable
+// through a correctly-built package (resolvePairIndexSibling matches on the locale's own country
+// code), so the test manufactures the mispackaging: a cacheRoot package layout whose
+// `pair-index-us.bin` carries a "gb" header.
+describe("loadFromWeights — pair-index country gate (warn branch)", () => {
+	test.skipIf(!haveModel)(
+		"mispackaged sibling (header country ≠ locale country) warns and skips the prior",
+		async () => {
+			// Guarantee the en-us workspace has its dev binaries materialized, then mirror the package
+			// into a temp cacheRoot layout via symlinks (cacheDir = <cacheRoot>/node_modules/<pkg>).
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const packageDir = repoRootPath("neural-weights-en-us")
+			const cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-pair-gate-"))
+			const fakePackageDir = join(cacheRoot, "node_modules", "@mailwoman", "neural-weights-en-us")
+			mkdirSync(fakePackageDir, { recursive: true })
+
+			for (const entry of readdirSync(packageDir)) {
+				const source = join(packageDir, entry)
+
+				if (statSync(source).isFile()) symlinkSync(source, join(fakePackageDir, entry))
+			}
+
+			// The mispackaged artifact: named for en-us's country, but the header says gb.
+			writeFileSync(
+				join(fakePackageDir, "pair-index-us.bin"),
+				serializePairIndex(
+					{
+						country: "gb",
+						delta: 5,
+						schemaVersion: 1,
+						foldVersion: 1,
+						sourceMD5s: [],
+						buildDate: "2026-07-23",
+					},
+					[{ child: "holland fen", parent: "boston", tag: "dependent_locality" }]
+				)
+			)
+
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+			try {
+				// The sibling RESOLVES (filename matches the locale's country) — the gate is downstream.
+				const r = resolveWeights({ locale: "en-us", cacheRoot })
+				expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
+
+				const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us", cacheRoot })
+
+				expect(
+					warnSpy.mock.calls.some(
+						(call) =>
+							typeof call[0] === "string" &&
+							call[0].includes('pair-index country "gb"') &&
+							call[0].includes(`does not match the resolved locale's country "us"`)
+					)
+				).toBe(true)
+
+				// Skip-not-throw: the prior default was NOT constructed, and parsing still works.
+				const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
+				const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
+				expect(placetypePairRecord?.applied).toBe(false)
+
+				const tree = await cls.parse("75004 Paris")
+				expect(tree.roots.length).toBeGreaterThan(0)
+			} finally {
+				warnSpy.mockRestore()
+				rmSync(cacheRoot, { recursive: true, force: true })
+			}
 		}
 	)
 })
