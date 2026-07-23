@@ -167,3 +167,10 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **The FST is model-independent** → reuse the prior version's; don't rebuild it for a model bump.
 - **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.
 - **Stage binaries BESIDE the canonical** (new filename); the operator gates the actual swap = the merge + dispatch.
+- **Branch rulesets can reject release-it's push to main** (v7.6.0, 2026-07-23: the "Production
+  Integrity" ruleset — PR + `test` required, bypass = OrganizationAdmin only — rejected the release
+  commit with GH013 AFTER a green dry-run; dry-run doesn't exercise the push). Before ANY real
+  dispatch: `gh api repos/sister-software/mailwoman/rulesets` and confirm the Actions path can land
+  the release commit. If a ruleset blocks it, that's an OPERATOR decision (bypass actor vs PR-based
+  release rework) — do not loosen a protection rule to ship. Rollback behavior is good: release-it
+  removes the pushed tag, npm untouched, `--tolerate-republish` makes re-dispatch safe.
