@@ -98,17 +98,20 @@ any re-dispatch safe.
    grading the already-local cRT checkpoints) / B (two-phase LR schedule, never tried, launch-
    ready) / D (locality-mapped v1 = current shipped state, zero risk for October). C
    (accept-and-gate 7k's single violation) is on the table only as an explicit gate revision.
-3. Merge the night's PRs (all CI-green): #1253 (run record + dossier), #1254 (this postmortem),
-   #1255 (release-skill gotcha), #1256 (CJK byte-fallback fix).
+3. Merge the night's PRs (all CI-green): #1253 (run record + dossier + v3.13 option-B recipe
+   proposal), #1254 (this postmortem), #1255 (release-skill gotcha), #1256 (CJK byte-fallback
+   fix), #1257 (pair-index country-gate warn-branch test), #1258 (fileMD5 dedup).
 
 ## Concrete next steps
 
-- Morning: merge #1253/#1254/#1255/#1256; pick the release-path fix; pick the redesign run —
-  the cRT diagnostic makes B the favored candidate (A's remaining probes optional; D is free).
+- Morning: merge #1253–#1258; pick the release-path fix; pick the redesign run — the cRT
+  diagnostic makes B the favored candidate, and its recipe is pre-drafted as an operator-gated
+  proposal (`docs/superpowers/plans/2026-07-23-v313-two-phase-recipe.md`, on #1253; the one open
+  parameter is the phase boundary, 2000 vs 3000).
 - If the release path reopens: re-dispatch `publish.yml -f version=7.6.0` — everything upstream
   is verified green; then the demo repoint question (separate task, unchanged tonight).
-- Deferred backlog remaining: fileMD5 dedup, country-mismatch warn-branch test. (The CJK
-  byte-fallback residual was closed during the shift — see the idle-backlog addendum.)
+- Deferred backlog: EMPTY — all three items closed during the shift (see the idle-backlog
+  addendum).
 
 ## Idle-backlog addendum (worked after the wrap sections above were drafted)
 
@@ -121,6 +124,10 @@ any re-dispatch safe.
   boundaries; +4 exact-tuple characterization tests (東京都渋谷区, mixed-script, curly-quote
   no-op, emoji surrogate span); neural suite 380 → 384 green, Latin byte-identical. Reviewed
   in-session. Closes the v8 non-Latin hard blocker pending merge.
+- **Pair-index country-gate warn-branch test — PR #1257** (mispackaged-sibling fixture via a
+  temp cacheRoot layout; the gate's warn branch had zero coverage). **fileMD5 dedup — PR #1258**
+  (local helper → the blessed `md5File` in core/utils). **v3.13 option-B recipe pre-drafted**
+  (operator-gated proposal on #1253 — the morning green-light is one word).
 - **Release-skill ruleset gotcha — PR #1255** (preflight `gh api …/rulesets` before any real
   dispatch; do-not-loosen rule; verified rollback behavior).
 
