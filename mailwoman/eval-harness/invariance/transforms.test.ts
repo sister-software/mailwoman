@@ -84,6 +84,27 @@ describe("abbreviation-swap", () => {
 	it("returns null for a bare leading 'St' with no other swappable token", () => {
 		expect(swap("St Ives, Cornwall")).toBeNull()
 	})
+
+	it("the Saint-prefix guard isn't index-0-only — protects a mid-string 'St <Name>' and swaps the real suffix instead", () => {
+		// The reviewer's reproduction: a naive index-0-only guard misses "St" here (it's the third token, not
+		// the first) and corrupts "St Andrews" into "Street Andrews". The fix must both (a) leave "St Andrews"
+		// alone and (b) still find the standalone "Street" suffix token later in the string.
+		expect(swap("The Vicarage, St Andrews Street, Cambridge")).toBe("The Vicarage, St Andrews St, Cambridge")
+	})
+
+	it("does NOT treat 'St' followed by a secondary-address designator (Apt/Ste) as a Saint-prefix", () => {
+		expect(swap("123 Main St Apt 4B, Springfield, IL 62701")).toBe("123 Main Street Apt 4B, Springfield, IL 62701")
+		expect(swap("500 W 7th St Ste 1100, Cincinnati, OH 45203-1234")).toBe(
+			"500 W 7th Street Ste 1100, Cincinnati, OH 45203-1234"
+		)
+	})
+
+	it("does NOT treat a phrase-final 'St,' (own trailing punctuation) as a Saint-prefix, even before a capitalized place name", () => {
+		// "St" here closes the street phrase right before the next comma-delimited component — the
+		// own-trailing-punctuation discriminator, not the following-word one, is what correctly lets this swap
+		// even though "Portland" (like "Andrews") is a capitalized non-suffix word.
+		expect(swap("6220 SE Salmon St, Portland, OR 97215, USA")).toBe("6220 SE Salmon Street, Portland, OR 97215, USA")
+	})
 })
 
 describe("case-fold / lowercase", () => {
@@ -108,6 +129,13 @@ describe("whitespace-jitter", () => {
 
 	it("returns null when there's no whitespace at all", () => {
 		expect(getTransform("whitespace-jitter").apply("Rathausplatz")).toBeNull()
+	})
+
+	it("returns null when whitespace is present but none of it is a literal space (guard must match the mutation)", () => {
+		// The mutation only doubles literal " " characters. A guard that accepts any `\s` (tabs, etc.) but
+		// finds no space to double is a silent no-op INVARIANT — the transform claims it ran but nothing
+		// actually changed.
+		expect(getTransform("whitespace-jitter").apply("A\tB")).toBeNull()
 	})
 })
 

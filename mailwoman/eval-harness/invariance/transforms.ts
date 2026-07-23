@@ -57,9 +57,66 @@ const SHORT_TO_LONG = new Map([
 ])
 
 /**
- * Swap the first matching Ave/Avenue/St/Street/Rd/Road token. `St` as the LEADING token is skipped — that position is
- * the "St Bedes"/"St Ives" Saint-prefix shape, not a Street suffix, so swapping it would silently corrupt the test's
- * own ground truth rather than exercise the intended class.
+ * Suffix words (both long and short spellings) the Saint-prefix look-ahead treats as "this IS a street suffix, not a
+ * name".
+ */
+const STREET_SUFFIX_WORDS = new Set(["avenue", "ave", "street", "st", "road", "rd"])
+
+/**
+ * Secondary-address designators (unit/suite/floor markers) the look-ahead ALSO treats as "not name-shaped" — these are
+ * capitalized like a proper noun but are never what follows a genuine Saint-prefix ("St Apt 4B" isn't a place name).
+ * Without this set, `"123 Main St Apt 4B"` / `"...St Ste 1100"` would misread the street-suffix "St" as a Saint-prefix
+ * purely because "Apt"/"Ste" are capitalized.
+ */
+const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl", "floor", "bldg", "rm", "room"])
+
+/**
+ * Heuristic Saint-prefix guard for a candidate "st" token — two discriminators, both must clear for the guard to fire:
+ *
+ * 1. The "st" token itself must NOT be phrase-final (no trailing comma/period of its own). A Saint-prefix is always
+ *    immediately adjacent to the name it prefixes ("St Andrews", "St Ives") and so never carries its own trailing
+ *    punctuation; a street SUFFIX often closes a phrase right before the next address component ("...Salmon St,
+ *    Portland, ..."). This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even though
+ *    both have "St" followed by a capitalized non-suffix word.
+ * 2. The NEXT token must be capitalized and NOT itself a street-suffix word or a secondary-address designator — the shape
+ *    of "St Andrews", "St Ives", "St Bedes". This is a FOLLOWING-token heuristic, not a positional one: a Saint-prefix
+ *    isn't always string-initial (`"The Vicarage, St Andrews Street"` has "St" as the third token, not index 0 — a
+ *    purely positional guard misses it and corrupts the name).
+ *
+ * Known limits: this still can't distinguish a genuine Saint-prefix from a street-suffix "St" immediately followed,
+ * mid-phrase (no comma), by an ordinary capitalized word that ISN'T a designator or suffix — e.g. a street literally
+ * named "St Rose Ave" read out of context. v1 accepts that residual false-exempt (an under-tested row) over a
+ * false-swap (a corrupted ground-truth string): mislabeling "St Andrews" as a suffix breaks the test's own fixture,
+ * which is worse than skipping a swap. A future tightening could check the following word against a gazetteer of known
+ * Saint-prefixed place names instead of a fixed word list.
+ */
+function isSaintPrefixFollower(tokens: string[], i: number): boolean {
+	const ownBare = tokens[i]!.replace(/[.,]+$/, "")
+	const ownTrail = tokens[i]!.slice(ownBare.length)
+
+	if (ownTrail) {
+		return false // phrase-final "St," — a suffix closing a phrase, never a Saint-prefix.
+	}
+
+	for (let j = i + 1; j < tokens.length; j++) {
+		if (/^\s+$/.test(tokens[j]!)) continue
+
+		const bare = tokens[j]!.replace(/[.,]+$/, "")
+
+		if (!bare) return false
+
+		const lower = bare.toLowerCase()
+
+		return /^[A-Z]/.test(bare) && !STREET_SUFFIX_WORDS.has(lower) && !SECONDARY_DESIGNATOR_WORDS.has(lower)
+	}
+
+	return false
+}
+
+/**
+ * Swap the first matching Ave/Avenue/St/Street/Rd/Road token. A candidate "st" token is skipped when
+ * `isSaintPrefixFollower` judges it a Saint-prefix (see that function's doc comment for the heuristic and its known
+ * limits) — swapping it would silently corrupt the test's own ground truth rather than exercise the intended class.
  */
 function abbreviationSwap(raw: string): string | null {
 	const tokens = raw.split(/(\s+)/)
@@ -69,7 +126,7 @@ function abbreviationSwap(raw: string): string | null {
 		const trail = tokens[i]!.slice(bare.length)
 		const lower = bare.toLowerCase()
 
-		if (lower === "st" && i === 0) continue // Saint-prefix guard — see doc comment above.
+		if (lower === "st" && isSaintPrefixFollower(tokens, i)) continue // Saint-prefix guard — see doc comment above.
 
 		const long = LONG_TO_SHORT.get(lower)
 		const short = SHORT_TO_LONG.get(lower)
@@ -125,9 +182,14 @@ function lowercase(raw: string): string | null {
 // whitespace-jitter
 // -------------------------------------------------------------------------------------------------
 
-/** Double every run of whitespace. Always applicable — every realistic address has at least one space. */
+/**
+ * Double every literal space character. Applicable only when the input carries a literal space — the guard checks the
+ * SAME class of whitespace the mutation acts on (` `, not any `\s`), so a row whose only whitespace is e.g. a tab never
+ * silently reports a no-op INVARIANT (the guard used to accept any `\s` while the mutation only ever touched `" "`, a
+ * mismatch that could pass a row through untouched and misreport it as holding).
+ */
 function whitespaceJitter(raw: string): string | null {
-	if (!/\s/.test(raw)) return null
+	if (!raw.includes(" ")) return null
 
 	return raw.replace(/ /g, "  ")
 }

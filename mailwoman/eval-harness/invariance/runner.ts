@@ -28,7 +28,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 
-import { compareComponents, type Verdict } from "./compare.ts"
+import { compareComponents, VERDICT_SEVERITY, type Verdict } from "./compare.ts"
 import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
 
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
@@ -278,7 +278,19 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 							})()
 
 				outcome.baselineVerdict = baselineResult.verdict
-				outcome.preExisting = outcome.verdict !== "INVARIANT" && baselineResult.verdict !== "INVARIANT"
+				// Severity-aware, NOT severity-blind: a violation is pre-existing only if the candidate's verdict
+				// is not WORSE than the baseline's on this SAME (row, transform) pair — INVARIANT < DEGRADED <
+				// LOST. Two non-INVARIANT verdicts on both sides used to be enough to call it pre-existing, which
+				// let a candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on
+				// the same pair (the reviewer's repro: baseline drops a non-critical `unit` on comma-drop,
+				// candidate drops the CRITICAL `house_number` on the identical pair — that must gate, not hide).
+				// v1 is verdict-severity matching only, not content-diff matching: it doesn't check whether the
+				// candidate's LOST is the SAME underlying break as the baseline's LOST (e.g. same tag, same kind
+				// of corruption) — only that it's no worse in kind. A future tightening could require the diffs
+				// to name the same tag before calling two LOSTs "the same" pre-existing gap.
+				outcome.preExisting =
+					outcome.verdict !== "INVARIANT" &&
+					VERDICT_SEVERITY[outcome.verdict] <= VERDICT_SEVERITY[baselineResult.verdict]
 			}
 
 			outcomes.push(outcome)

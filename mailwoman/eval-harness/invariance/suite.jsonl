@@ -29,6 +29,19 @@
 // a candidate against — a candidate that matches v385's (imperfect) profile pays no `--max-degraded`
 // cost; one that INTRODUCES a NEW violation v385 didn't have does (see the feed-8k Pennsylvania-Ave
 // comma-drop finding in the report — flagged NEW, not pre-existing).
+//
+// RE-VERIFIED 2026-07-23 (review fix wave — see "## Fix wave" in the report): three verdict-classification
+// definitions changed underneath this suite — hallucinated critical tags now count as LOST (not silently
+// ignored), the abbreviation-swap Saint-prefix guard was rewritten (no longer index-0-only), and the
+// whitespace-jitter applicability guard was tightened to match its mutation. Re-running the full suite
+// against this SAME v385 weights produced the IDENTICAL 101/7/13 profile (121 pairs, 0 skipped) — a
+// byte-identical transcript to the pre-fix-wave run. Say that plainly: this fixture just doesn't happen to
+// exercise the exact shapes the definition changes target (no row here has a critical tag hallucinated
+// from nothing, and the tightened Saint-prefix guard doesn't change any of THIS suite's own abbreviation-
+// swap outcomes — gb-banbury and gb-stockton-saint-prefix still resolve the same way). The definitions are
+// still real fixes (each has a dedicated unit-test RED→GREEN in transforms.test.ts / compare.test.ts /
+// runner.test.ts reproducing the reviewer's exact cases) — they simply don't move THIS fixture's aggregate
+// numbers. A future fixture row exercising a hallucinated critical tag would be a legitimate suite addition.
 {"id":"us-white-house","raw":"1600 Pennsylvania Ave NW, Washington, DC 20500","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"us-empire-state","raw":"350 Fifth Avenue, New York, NY 10118","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"us-portland-directional","raw":"6220 SE Salmon St, Portland, OR 97215, USA","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}

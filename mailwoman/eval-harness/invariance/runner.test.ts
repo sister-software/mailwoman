@@ -151,6 +151,70 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.preExisting).toBe(false)
 	})
 
+	it("--baseline severity gate: candidate LOST where baseline only DEGRADED is a NEW (gating) violation, not pre-existing", async () => {
+		// The reviewer's exact reproduction: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
+		// candidate drops `house_number` on the SAME pair (LOST — critical). Severity-blind matching (both
+		// sides merely "non-INVARIANT") would wrongly call this pre-existing and let it through. A candidate
+		// verdict that is WORSE than the baseline's on the same (row, transform) must always be NEW.
+		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+		const candidateParse: ParseFn = async (raw) =>
+			raw.includes(",")
+				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" } // house_number dropped — LOST
+				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+		const baselineParse: ParseFn = async (raw) =>
+			raw.includes(",")
+				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
+				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+
+		const result = await runInvarianceSuite({ rows: [brokenRow], parse: candidateParse, baselineParse })
+
+		expect(result.outcomes[0]?.verdict).toBe("LOST")
+		expect(result.outcomes[0]?.baselineVerdict).toBe("DEGRADED")
+		expect(result.outcomes[0]?.preExisting).toBe(false) // NOT pre-existing — the candidate is WORSE
+		expect(result.newCounts.lost).toBe(1)
+		expect(result.pass).toBe(false) // gates
+	})
+
+	it("--baseline severity gate: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
+		const degradedRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+		const candidateParse: ParseFn = async (raw) =>
+			raw.includes(",")
+				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
+				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+		const baselineParse = candidateParse // identical shape — both DEGRADED on the same pair
+
+		const result = await runInvarianceSuite({ rows: [degradedRow], parse: candidateParse, baselineParse })
+
+		expect(result.outcomes[0]?.verdict).toBe("DEGRADED")
+		expect(result.outcomes[0]?.baselineVerdict).toBe("DEGRADED")
+		expect(result.outcomes[0]?.preExisting).toBe(true)
+		expect(result.pass).toBe(true)
+	})
+
+	it("wires abbreviation-swap through the canonicalizing comparator (typo-in-id dispatch regression guard)", async () => {
+		// Swapping "Avenue" -> "Ave" in the input makes a span-extraction model correctly echo "Ave" in its
+		// `street` output — that's the transform doing its job, not a violation. Comparing RAW values would
+		// flag it as a false LOST (street is critical); compareForTransform's abbreviation-swap branch
+		// canonicalizes both sides to long-form first. This test goes through the REAL "abbreviation-swap"
+		// transform id (not a fake one) so a typo'd id string in that dispatch (the false-positive class the
+		// build report found) fails this test with a spurious LOST instead of staying silently dead.
+		const abbrevRow: InvarianceRow = {
+			id: "abbrev-wiring-row",
+			raw: "350 Fifth Avenue, New York, NY",
+			country: "US",
+			transforms: ["abbreviation-swap"],
+		}
+		const parse: ParseFn = async (raw) =>
+			raw.includes("Avenue")
+				? { house_number: "350", street: "Fifth Avenue", locality: "New York", region: "NY" }
+				: { house_number: "350", street: "Fifth Ave", locality: "New York", region: "NY" } // echoes the swap
+
+		const result = await runInvarianceSuite({ rows: [abbrevRow], parse })
+
+		expect(result.outcomes[0]?.verdict).toBe("INVARIANT")
+		expect(result.pass).toBe(true)
+	})
+
 	it("throws when a fixture row declares a transform id that doesn't exist", async () => {
 		const badRow: InvarianceRow = { ...row, transforms: ["not-a-real-transform"] }
 		const parse: ParseFn = async () => ({})

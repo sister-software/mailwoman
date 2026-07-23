@@ -14,11 +14,24 @@
  *   even when the transformed parse is non-empty, because the address is no longer resolvable to the same
  *   place. A drift confined to non-critical tags (locality, region, dependent_locality, unit, …) is
  *   DEGRADED: recoverable, worth flagging, not ship-blocking on its own.
+ *
+ *   A critical tag that's ABSENT in the original parse but PRESENT in the transformed one — a hallucination
+ *   — is ALSO LOST, not DEGRADED and not ignored. (Adjudicated: review fix wave, 2026-07-23.) A missing
+ *   critical tag degrades gracefully to a coarser admin-tier fallback; a hallucinated one can resolve to a
+ *   SPECIFIC WRONG rooftop with high apparent confidence — worse than falling back, because nothing
+ *   downstream knows to distrust it.
  */
 
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
+
+/**
+ * Ordinal severity — INVARIANT < DEGRADED < LOST. Used by the runner's `--baseline` regression gate to decide whether a
+ * candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's, not merely "also
+ * non-INVARIANT" (see runner.ts's `preExisting` computation).
+ */
+export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }
 
 export interface CompareResult {
 	verdict: Verdict
@@ -56,9 +69,18 @@ export function compareComponents(
 
 	for (const tag of CRITICAL_TAGS) {
 		const o = normVal(original[tag])
-
-		if (!o) continue // tag not present in the original — nothing critical to protect here.
 		const t = normVal(transformed[tag])
+
+		if (!o) {
+			// Not present in the original. A hallucinated value on the TRANSFORMED side is still LOST — see
+			// the header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
+			if (t) {
+				criticalBroken = true
+				diff.push(`${tag}: ∅ → "${transformed[tag]}" (hallucinated)`)
+			}
+
+			continue
+		}
 
 		if (o !== t) {
 			criticalBroken = true
