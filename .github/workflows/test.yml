@@ -4,6 +4,15 @@
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
 #
+# STRUCTURE — four independent legs fan out across the lab's self-hosted runner fleet
+# (lab-1..lab-4, one job slot each), then the `test` aggregator gates on all of them.
+# The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
+# required status check matches the context `test`, and publish.yml's prepare phase
+# auto-merges the release PR on that same check. Rename it and both break.
+# Each leg repeats the checkout→install→compile prefix (~75s) rather than sharing a
+# build artifact — the legs run concurrently on the same host, so the prefix costs
+# wall-clock once, and artifact round-trips through GitHub's storage would cost more.
+#
 # workflow_dispatch exists for the PR-based release flow (publish.yml mode=prepare): PRs created
 # with GITHUB_TOKEN never trigger `on: pull_request` (GitHub's anti-recursion rule), so the
 # prepare job dispatches this workflow against the release branch explicitly — the `test` check
@@ -31,11 +40,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  test:
+  # Lint + typechecks. `typecheck:scripts` and the docs typecheck need the workspace
+  # .d.ts under each `out/`, hence Compile before them.
+  static:
     runs-on:
       - self-hosted
-      - ubuntu-latest
-    timeout-minutes: 15
+      - Linux
+      - X64
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -82,22 +94,116 @@ jobs:
       - name: Typecheck docs
         run: yarn workspace @mailwoman/docs typecheck
 
+  # The root Vitest sweep.
+  unit:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
       - name: Test
         run: yarn ci:test
 
-      # @mailwoman/react's suites are Vitest browser mode (playwright/chromium) and are excluded
-      # from the root sweep above — importing vitest/browser under the forks pool is a hard error
-      # (the failure class that turned Test red from #1215 until this step existed). This leg is
-      # their only CI coverage; if it's removed, the react package ships untested.
+  # @mailwoman/react's suites are Vitest browser mode (playwright/chromium) and are excluded
+  # from the root sweep — importing vitest/browser under the forks pool is a hard error
+  # (the failure class that turned Test red from #1215 until this leg existed). This leg is
+  # their only CI coverage; if it's removed, the react package ships untested.
+  react:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
       - name: Install Playwright chromium (react browser tests)
         run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
 
-      # Packs every published workspace + installs the tarballs into a throwaway project (no monorepo
-      # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
-      # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
-      # effect — all invisible in-repo, all fatal to a fresh `npm install`.
+  # Packs every published workspace + installs the tarballs into a throwaway project (no monorepo
+  # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
+  # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
+  # effect — all invisible in-repo, all fatal to a fresh `npm install`.
+  smoke:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
       - name: Clean-install smoke test
         run: yarn ci:smoke
+
+  # Aggregator — the ONLY check the ruleset + release auto-merge look at (context `test`).
+  # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
+  # check reads as "waiting forever" and blocks merges silently).
+  test:
+    needs: [static, unit, react, smoke]
+    if: always()
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any leg failed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        run: |
+          echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
+          exit 1
+
+      - name: All legs green
+        run: echo "static, unit, react, smoke — all green"

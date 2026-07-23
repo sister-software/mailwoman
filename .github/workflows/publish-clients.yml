@@ -56,7 +56,8 @@ jobs:
     timeout-minutes: 20
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     steps:
       # `ref: main`: the generated client's version syncs to mailwoman/package.json on main (the
       # release flow is main-only by construction — `.release-it.json` git.requireBranch).

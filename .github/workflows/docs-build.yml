@@ -62,7 +62,8 @@ jobs:
   build:
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -135,7 +136,8 @@ jobs:
     needs: build
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

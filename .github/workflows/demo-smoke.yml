@@ -33,7 +33,8 @@ jobs:
   smoke:
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     timeout-minutes: 15
     env:
       # workflow_dispatch override wins; the scheduled run uses production.

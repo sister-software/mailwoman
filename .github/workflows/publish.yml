@@ -78,7 +78,8 @@ jobs:
     if: ${{ inputs.mode == 'prepare' }}
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     timeout-minutes: 15
     permissions:
       contents: write # push the release/v<version> branch
@@ -171,7 +172,8 @@ jobs:
     if: ${{ inputs.mode == 'publish' }}
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     timeout-minutes: 30
     permissions:
       contents: write # push the version tag + create the GitHub release
@@ -359,7 +361,8 @@ jobs:
     needs: publish
     runs-on:
       - self-hosted
-      - ubuntu-latest
+      - Linux
+      - X64
     timeout-minutes: 20
     # NOTE: this job occupies the workflow-level `publish` concurrency group. During an incident:
     # cancel THIS job from the Actions UI (always safe — it publishes nothing) to free the queue.
