@@ -60,6 +60,16 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/phrase-grouper": "phrase-grouper",
 	"@mailwoman/query-shape": "query-shape",
 	"@mailwoman/neural": "neural",
+	// The weights bundles — data-only, but real deps of photon/nominatim/fastify (all in this
+	// closure), so on a version-bumped release branch npm would otherwise chase the not-yet-published
+	// registry version (the v7.6.0 ETARGET chicken-and-egg). Packing them also makes the smoke test
+	// the ACTUAL weight packaging instead of the registry's previous release — the postcode-de.bin
+	// class (a soft-feed sibling silently missing from a shipped tarball) is only visible this way.
+	// PREREQ: the binaries must be materialized first (test.yml's weights-cache/copy-weights step) —
+	// `yarn pack` quietly packs whatever subset of the `files` globs exists.
+	"@mailwoman/neural-weights-en-us": "neural-weights-en-us",
+	"@mailwoman/neural-weights-fr-fr": "neural-weights-fr-fr",
+	"@mailwoman/neural-weights-en-gb": "neural-weights-en-gb",
 	"@mailwoman/formatter": "formatter",
 	"@mailwoman/record": "record",
 	"@mailwoman/match": "match",
