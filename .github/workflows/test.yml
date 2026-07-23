@@ -119,6 +119,31 @@ jobs:
       - name: Compile
         run: yarn compile
 
+      # The lab runners have $MAILWOMAN_DATA_ROOT, so the data-dependent suites (e.g.
+      # default-country.test.ts's `parse --resolve` legs) ACTIVATE here — they were silently
+      # skipped on GitHub-hosted. Those parses need the weights workspaces fully materialized
+      # (model + the #718 soft-feed siblings: postcode-*.bin, anchor/country lexicons,
+      # pair-index-*.bin); a bare checkout has only the committed metadata, so the CLI runs
+      # anchor-OFF and the namesake-binding assertions fail (Paris TX → Paris FR).
+      # copy-weights takes ~4m30 (the GB pair-index build), so the artifacts are cached on the
+      # inputs that determine them and rebuilt only when release.config.json or a lexicon moves.
+      - name: Restore weights cache (model + soft-feed siblings)
+        id: weights-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            neural-weights-*/model.onnx
+            neural-weights-*/tokenizer.model
+            neural-weights-*/postcode-*.bin
+            neural-weights-*/pair-index-*.bin
+            neural-weights-*/anchor-lexicon-v1.json
+            neural-weights-*/country-surface-lexicon-v1.json
+          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json') }}
+
+      - name: Materialize weights (cache miss — ~5 min, once per release.config change)
+        if: steps.weights-cache.outputs.cache-hit != 'true'
+        run: node scripts/copy-weights.ts
+
       - name: Test
         run: yarn ci:test
 
@@ -187,6 +212,29 @@ jobs:
 
       - name: Compile
         run: yarn compile
+
+      # Same cache as the unit leg (same key → shared entry). Smoke packs the weights workspaces
+      # into the throwaway install (see WORKSPACES in smoke-clean-install.ts): photon/nominatim/
+      # fastify declare @mailwoman/neural-weights-en-us as a real dep, so on a version-bumped
+      # release branch npm would otherwise chase the not-yet-published registry version (ETARGET —
+      # the chicken-and-egg that blocked the v7.6.0 release PR). `yarn pack` quietly packs whatever
+      # subset of the `files` globs exists, so the binaries MUST be present before packing.
+      - name: Restore weights cache (model + soft-feed siblings)
+        id: weights-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            neural-weights-*/model.onnx
+            neural-weights-*/tokenizer.model
+            neural-weights-*/postcode-*.bin
+            neural-weights-*/pair-index-*.bin
+            neural-weights-*/anchor-lexicon-v1.json
+            neural-weights-*/country-surface-lexicon-v1.json
+          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json') }}
+
+      - name: Materialize weights (cache miss — ~5 min, once per release.config change)
+        if: steps.weights-cache.outputs.cache-hit != 'true'
+        run: node scripts/copy-weights.ts
 
       - name: Clean-install smoke test
         run: yarn ci:smoke
