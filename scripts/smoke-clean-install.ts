@@ -22,7 +22,7 @@
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
 import { execFileSync, spawn } from "node:child_process"
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
@@ -70,6 +70,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/neural-weights-en-us": "neural-weights-en-us",
 	"@mailwoman/neural-weights-fr-fr": "neural-weights-fr-fr",
 	"@mailwoman/neural-weights-en-gb": "neural-weights-en-gb",
+	"@mailwoman/variant-aliases": "variant-aliases",
+	// mailwoman's OTHER optional peer (besides resolver-wof-sqlite above) — optional or not, npm
+	// still resolves its version spec, so an unpacked workspace dep ETARGETs on a release branch.
+	"@mailwoman/tiger": "tiger",
 	"@mailwoman/formatter": "formatter",
 	"@mailwoman/record": "record",
 	"@mailwoman/match": "match",
@@ -272,7 +276,41 @@ execFileSync("mkdir", ["-p", tarDir, proj])
 const run = (cmd: string, args: string[], cwd: string) =>
 	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 
+/**
+ * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed workspace must itself be in WORKSPACES. An
+ * unpacked one doesn't fail here on main — npm silently resolves the REGISTRY version (the stale-dependency skew this
+ * smoke exists to catch) — and hard-fails with ETARGET on a version-bumped release branch (the v7.6.0 chicken-and-egg:
+ * neural-weights, then variant-aliases). Fail loud at pack time instead, naming the edge.
+ */
+function assertClosureComplete() {
+	const missing = new Map<string, string[]>()
+
+	for (const [name, dir] of Object.entries(WORKSPACES)) {
+		const manifest = JSON.parse(readFileSync(resolve(repoRoot, dir, "package.json"), "utf8")) as Record<
+			string,
+			Record<string, string>
+		>
+
+		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
+			for (const [dep, spec] of Object.entries(manifest[depType] ?? {})) {
+				const firstParty = dep.startsWith("@mailwoman/") || dep === "mailwoman"
+
+				if (firstParty && spec.startsWith("workspace:") && !(dep in WORKSPACES)) {
+					missing.set(dep, [...(missing.get(dep) ?? []), `${name} (${depType})`])
+				}
+			}
+		}
+	}
+
+	if (missing.size > 0) {
+		const edges = [...missing].map(([dep, users]) => `  ${dep} <- ${users.join(", ")}`).join("\n")
+
+		throw new Error(`[smoke] WORKSPACES closure incomplete — add these to the pack set:\n${edges}`)
+	}
+}
+
 try {
+	assertClosureComplete()
 	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
 	const deps: Record<string, string> = {}
 
