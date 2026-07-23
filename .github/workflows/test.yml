@@ -150,8 +150,12 @@ jobs:
       - name: Compile
         run: yarn compile
 
+      # No --with-deps: that path sudo-installs apt packages (fine on GitHub-hosted, but the lab
+      # runners have no passwordless sudo). The chromium system libs are provisioned on the host
+      # once (`playwright install-deps chromium`, operator sudo); this step only fetches the
+      # browser build into ~/.cache/ms-playwright, shared across all runner instances.
       - name: Install Playwright chromium (react browser tests)
-        run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
+        run: yarn workspace @mailwoman/react exec playwright install chromium
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
