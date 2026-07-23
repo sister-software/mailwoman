@@ -28,16 +28,17 @@
  *       multi-byte codepoint split across several fallback pieces). Before this fix the cursor over-advanced on every
  *       byte-fallback piece, desyncing every subsequent piece’s offsets for the REST of the input — see
  *       `neural/test/tokenizer-byte-fallback.test.ts` for the repro and the fix-wave writeup
- *       (`.superpowers/sdd/task-9-audit-report.md`, paired-punctuation audit). All pieces in a byte-fallback run share
- *       the SAME `[start, end)` range (the run’s combined decoded span); intermediate pieces defer their content to
- *       the run’s last piece via a zero-width range at the run’s start — a narrower compromise than the bare-▁ idiom
- *       (which is zero-width by construction), but the same “own placeholder, zero contribution” principle.
- *
- *   **RESIDUAL (CJK/non-Latin blocker, review-verified 2026-07-23):** a byte-fallback run spanning MULTIPLE distinct
- *   source characters collapses to one combined offset on the run’s last piece — heterogeneous BIO tags inside such a
- *   run are silently absorbed into one span (demonstrated on 東京都渋谷区: a B-region inside the run produced no node).
- *   Not live on the Latin-script production tokenizer; MUST be resolved before any non-Latin/CJK tokenizer ships
- *   (per-character run splitting is the likely fix).
+ *       (`.superpowers/sdd/task-9-audit-report.md`, paired-punctuation audit).
+ *   - A byte-fallback run is split **per source character** at UTF-8 sequence boundaries (lead-byte scan): each
+ *       character’s pieces carry that character’s own `[start, end)` span — the last piece of the character’s byte
+ *       segment owns the real range (so `raw.slice(start, end)` recovers exactly that character), earlier pieces in
+ *       the segment get a zero-width range at the character’s start (the same “own placeholder, zero contribution”
+ *       idiom `groupPiecesIntoWords` uses for a bare ▁). This is what lets heterogeneous BIO tags inside one run
+ *       survive decode: a run spanning multiple characters (東京都渋谷区 — every character its own 3-byte run
+ *       segment) no longer collapses to one combined span on the run’s final piece, which used to silently absorb a
+ *       B- tag boundary inside the run (the CJK residual resolved 2026-07-23; required before any non-Latin/CJK
+ *       tokenizer ships). For a single-character run (curly quote, emoji) the split is a no-op — one segment,
+ *       identical spans to the pre-split behavior.
  *
  *   The wrapper supports two load modes:
  *
@@ -55,6 +56,23 @@ export const SPACE_SENTINEL = "▁"
 const BYTE_FALLBACK_RE = /^<0x([0-9A-Fa-f]{2})>$/
 
 const utf8Decoder = new TextDecoder("utf-8", { fatal: false })
+
+/**
+ * Byte length of a UTF-8 sequence, from its lead byte. A continuation or invalid lead byte returns 1 so a malformed
+ * byte forms its own one-byte segment (decoding to U+FFFD) instead of derailing the character split for the rest of the
+ * run.
+ */
+function utf8SequenceLength(leadByte: number): number {
+	if (leadByte < 0x80) return 1
+
+	if (leadByte >= 0xc0 && leadByte < 0xe0) return 2
+
+	if (leadByte >= 0xe0 && leadByte < 0xf0) return 3
+
+	if (leadByte >= 0xf0 && leadByte < 0xf8) return 4
+
+	return 1
+}
 
 /** A tokenized piece paired with its char-range in the original input. */
 export interface TokenizedPiece {
@@ -121,23 +139,33 @@ export class MailwomanTokenizer {
 		const flushByteRun = (): void => {
 			if (!byteRun) return
 
-			const decoded = utf8Decoder.decode(Uint8Array.from(byteRun.bytes))
-			const start = cursor
-			cursor += decoded.length
-			const end = cursor
+			// Split the run at UTF-8 character boundaries (lead-byte scan) so each source character's pieces carry
+			// that character's own span — a run spanning multiple characters must NOT collapse onto one combined
+			// offset, or heterogeneous BIO tags inside the run get absorbed into a single span (see file header).
+			let pieceIndex = 0
 
-			for (let k = 0; k < byteRun.pieces.length; k++) {
-				const isLast = k === byteRun.pieces.length - 1
-				// Every piece in the run shares the combined [start, end) span on the LAST piece (so `raw.slice(start,
-				// end)` on the run's final piece recovers the real decoded text); earlier pieces get a zero-width range
-				// at the run's start — the same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses
-				// for a bare ▁.
-				tokenized.push({
-					piece: byteRun.pieces[k]!,
-					id: byteRun.ids[k]!,
-					start,
-					end: isLast ? end : start,
-				})
+			for (let byteIndex = 0; byteIndex < byteRun.bytes.length;) {
+				const segmentLength = Math.min(utf8SequenceLength(byteRun.bytes[byteIndex]!), byteRun.bytes.length - byteIndex)
+				const decoded = utf8Decoder.decode(Uint8Array.from(byteRun.bytes.slice(byteIndex, byteIndex + segmentLength)))
+				const start = cursor
+				cursor += decoded.length
+				const end = cursor
+
+				for (let k = 0; k < segmentLength; k++) {
+					const isLast = k === segmentLength - 1
+					// The segment's LAST piece owns the character's real [start, end) span (so `raw.slice(start, end)`
+					// recovers the character); earlier pieces get a zero-width range at the character's start — the
+					// same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses for a bare ▁.
+					tokenized.push({
+						piece: byteRun.pieces[pieceIndex]!,
+						id: byteRun.ids[pieceIndex]!,
+						start,
+						end: isLast ? end : start,
+					})
+					pieceIndex++
+				}
+
+				byteIndex += segmentLength
 			}
 
 			byteRun = null

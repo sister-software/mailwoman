@@ -133,3 +133,95 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(ids).toEqual([])
 	})
 })
+
+/** Project each piece to `[piece, start, end]` for exact-tuple assertions. */
+async function encodeToTuples(raw: string): Promise<Array<[string, number, number]>> {
+	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
+	const { pieces } = tokenizer.encode(raw)
+
+	return pieces.map((p) => [p.piece, p.start, p.end])
+}
+
+describe("MailwomanTokenizer — per-character byte-fallback run splitting (CJK residual)", () => {
+	test("東京都渋谷区 — a multi-character run splits at UTF-8 character boundaries, no offset collapse", async () => {
+		// On the fixture vocab 東/谷/区 have direct tokens, while 京都渋 fall back to ONE contiguous 9-piece byte run
+		// (3 bytes per character). Before the split, all 9 pieces collapsed onto [1, 4) at the run's final piece —
+		// a BIO tag boundary inside the run (e.g. B-region at 都) could never surface as its own span.
+		const tuples = await encodeToTuples("東京都渋谷区")
+
+		expect(tuples).toEqual([
+			["▁", 0, 0],
+			["東", 0, 1],
+			["<0xE4>", 1, 1],
+			["<0xBA>", 1, 1],
+			["<0xAC>", 1, 2], // 京
+			["<0xE9>", 2, 2],
+			["<0x83>", 2, 2],
+			["<0xBD>", 2, 3], // 都
+			["<0xE6>", 3, 3],
+			["<0xB8>", 3, 3],
+			["<0x8B>", 3, 4], // 渋
+			["谷", 4, 5],
+			["区", 5, 6],
+		])
+	})
+
+	test("mixed Latin + CJK — offsets stay aligned through the run and beyond", async () => {
+		const raw = "1 Chome 東京都 Tokyo"
+		const tuples = await encodeToTuples(raw)
+
+		expect(tuples).toEqual([
+			["▁1", 0, 1],
+			["▁Cho", 2, 5],
+			["me", 5, 7],
+			["▁", 8, 8],
+			["東", 8, 9],
+			["<0xE4>", 9, 9],
+			["<0xBA>", 9, 9],
+			["<0xAC>", 9, 10], // 京
+			["<0xE9>", 10, 10],
+			["<0x83>", 10, 10],
+			["<0xBD>", 10, 11], // 都
+			["▁T", 12, 13],
+			["ok", 13, 15],
+			["yo", 15, 17],
+		])
+	})
+
+	test("single-character run (curly quotes) — the split is a no-op, pre-split behavior preserved exactly", async () => {
+		const tuples = await encodeToTuples("Flat “A”")
+
+		expect(tuples).toEqual([
+			["▁Flat", 0, 4],
+			["▁", 5, 5],
+			["<0xE2>", 5, 5],
+			["<0x80>", 5, 5],
+			["<0x9C>", 5, 6], // “
+			["A", 6, 7],
+			["<0xE2>", 7, 7],
+			["<0x80>", 7, 7],
+			["<0x9D>", 7, 8], // ”
+		])
+	})
+
+	test("emoji (4-byte UTF-8, one character, TWO UTF-16 code units) — the segment spans both code units", async () => {
+		const raw = "Cafe 🚀 Leeds"
+		const tuples = await encodeToTuples(raw)
+
+		expect(tuples).toEqual([
+			["▁Ca", 0, 2],
+			["fe", 2, 4],
+			["▁", 5, 5],
+			["<0xF0>", 5, 5],
+			["<0x9F>", 5, 5],
+			["<0x9A>", 5, 5],
+			["<0x80>", 5, 7], // 🚀 — a surrogate pair, so the span is 2 code units wide
+			["▁Le", 8, 10],
+			["e", 10, 11],
+			["d", 11, 12],
+			["s", 12, 13],
+		])
+
+		expect(raw.slice(5, 7)).toBe("🚀")
+	})
+})
