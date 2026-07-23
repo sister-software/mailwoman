@@ -108,12 +108,15 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	if (existsSync(sidecarPath)) {
 		try {
 			const sidecarStats = statSync(sidecarPath)
+
 			if (sidecarStats.mtime >= sourceStats.mtime) {
 				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
 				const [hash] = sidecarContent.split(/\s+/)
+
 				if (hash && hash.length === 32) {
 					// Valid md5 hash (32 hex chars)
 					console.log(`md5(${path}): read from sidecar`)
+
 					return hash
 				}
 			}
@@ -126,6 +129,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	const filename = path.split(/[/\\]/).pop() || path
 	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
 	console.log(`md5(${path}): computed and cached in sidecar`)
+
 	return hash
 }
 
@@ -139,7 +143,8 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD5: string | undefined } {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	const MAGIC = 0x31_58_49_50 // "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
+	const MAGIC = 0x31_58_49_50
+	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
 
 	if (view.getUint32(0, true) !== MAGIC) {
 		throw new Error(`pair index: bad magic reading ${path}`)

@@ -30,14 +30,18 @@ const GB_PARTICLES = new Set([
 function caseWord(word: string, isFirst: boolean): string {
 	if (!word) return word
 	const lower = word.toLowerCase()
+
 	if (!isFirst && GB_PARTICLES.has(lower)) return lower
+
 	// Capitalize the first letter of each apostrophe-separated segment, except possessive 's.
 	return lower
 		.split("'")
 		.map((segment, idx) => {
 			if (!segment) return segment
+
 			// Don't capitalize a trailing bare possessive 's
 			if (idx > 0 && segment === "s") return segment
+
 			// Capitalize the first letter of this segment
 			return segment[0]!.toUpperCase() + segment.slice(1)
 		})
@@ -47,6 +51,7 @@ function caseWord(word: string, isFirst: boolean): string {
 export function titleCaseGB(value: string): string {
 	value = value.trim()
 	let wordIndex = 0
+
 	return value
 		.split(/\s+/)
 		.map((token) => {
@@ -55,6 +60,7 @@ export function titleCaseGB(value: string): string {
 				.map((seg, segIndex) => caseWord(seg, wordIndex === 0 && segIndex === 0))
 				.join("-")
 			wordIndex += 1
+
 			return cased
 		})
 		.join(" ")

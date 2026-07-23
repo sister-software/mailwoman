@@ -16,6 +16,7 @@ const row = (
 		county: "GREATER LONDON",
 	}
 	const r = { ...base, ...over }
+
 	return [
 		"{id}",
 		"36995",
@@ -39,6 +40,7 @@ const row = (
 async function run(rows: string[][]): Promise<{ lines: string[]; stats: PPDExtractStats }> {
 	const lines: string[] = []
 	const stats = await extractPPDTuples(rows, (line) => lines.push(line))
+
 	return { lines, stats }
 }
 

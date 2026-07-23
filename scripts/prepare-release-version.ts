@@ -48,7 +48,9 @@ function fail(message: string): never {
 	process.exit(1)
 }
 
-if (!values.version) fail("--version is required (patch | minor | major | x.y.z)")
+if (!values.version) {
+	fail("--version is required (patch | minor | major | x.y.z)")
+}
 
 const rootManifestPath = resolve(repoRoot, "package.json")
 const rootManifest = JSON.parse(readFileSync(rootManifestPath, "utf8")) as { version?: string }
@@ -65,7 +67,9 @@ if (values.version === "major" || values.version === "minor" || values.version =
 } else {
 	const explicit = semver.valid(values.version)
 
-	if (!explicit) fail(`not a valid semver or increment keyword: "${values.version}"`)
+	if (!explicit) {
+		fail(`not a valid semver or increment keyword: "${values.version}"`)
+	}
 
 	if (!semver.gt(explicit, rootManifest.version)) {
 		fail(`explicit target ${explicit} is not greater than the current root version ${rootManifest.version}`)
@@ -80,7 +84,9 @@ const releaseItConfig = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.j
 }
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
-if (!Array.isArray(workspaces) || workspaces.length === 0) fail(".release-it.json workspace list is empty")
+if (!Array.isArray(workspaces) || workspaces.length === 0) {
+	fail(".release-it.json workspace list is empty")
+}
 
 const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoRoot, ws, "package.json"))]
 
@@ -88,7 +94,9 @@ const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoR
 const parsed = manifestPaths.map((path) => {
 	const manifest = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
 
-	if (typeof manifest.version !== "string") fail(`${path} has no version field`)
+	if (typeof manifest.version !== "string") {
+		fail(`${path} has no version field`)
+	}
 
 	return { path, manifest }
 })

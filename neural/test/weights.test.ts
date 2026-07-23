@@ -406,7 +406,9 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			for (const entry of readdirSync(packageDir)) {
 				const source = join(packageDir, entry)
 
-				if (statSync(source).isFile()) symlinkSync(source, join(fakePackageDir, entry))
+				if (statSync(source).isFile()) {
+					symlinkSync(source, join(fakePackageDir, entry))
+				}
 			}
 
 			// The mispackaged artifact: named for en-us's country, but the header says gb.
