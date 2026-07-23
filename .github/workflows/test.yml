@@ -3,6 +3,12 @@
 # What this catches: workspace breakage that local-only flows missed, such
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
+#
+# workflow_dispatch exists for the PR-based release flow (publish.yml mode=prepare): PRs created
+# with GITHUB_TOKEN never trigger `on: pull_request` (GitHub's anti-recursion rule), so the
+# prepare job dispatches this workflow against the release branch explicitly — the `test` check
+# run lands on the branch head SHA, which is what the "Production Integrity" ruleset's required
+# status check matches on, letting the release PR auto-merge.
 name: Test
 
 on:
@@ -10,6 +16,7 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
