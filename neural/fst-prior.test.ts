@@ -353,6 +353,39 @@ describe("groupPiecesIntoWords — interior punctuation (Critical fix regression
 	})
 })
 
+describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
+	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece byte-fallback (`<0xHH>` pieces) on
+	// curly quotes, guillemets, and even ASCII braces/brackets — not just non-Latin scripts. Before the fix,
+	// `hasAlnum` read the PLACEHOLDER TEXT ("<0x7B>" — hex digits and letters) as real alnum content, so a
+	// byte-fallback piece silently injected garbage into fstToken ("0x7bblock" instead of "block"), corrupting
+	// every FST/pair-index probe key for a place name written with one of these characters. See
+	// `.superpowers/sdd/task-9-audit-report.md`.
+
+	it('folds "{Block C}, Leeds" to clean words, no "0x7b"/"0x7d" garbage', async () => {
+		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
+		const { pieces } = tokenizer.encode("{Block C}, Leeds")
+		const groups = groupPiecesIntoWords(pieces)
+		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
+		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["block", "c", "leeds"])
+	})
+
+	it('folds curly-quoted "“The Grange”, Fishburn" the SAME as straight-quoted (no hex garbage, no dropped word)', async () => {
+		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
+		const { pieces } = tokenizer.encode("“The Grange”, Fishburn")
+		const groups = groupPiecesIntoWords(pieces)
+		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
+		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["the", "grange", "fishburn"])
+	})
+
+	it('folds guillemet-quoted "«The Grange», Fishburn" the same way', async () => {
+		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
+		const { pieces } = tokenizer.encode("«The Grange», Fishburn")
+		const groups = groupPiecesIntoWords(pieces)
+		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
+		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["the", "grange", "fishburn"])
+	})
+})
+
 describe.skipIf(!haveProductionTokenizer)(
 	"groupPiecesIntoWords — bare-▁-orphan recovery, PRODUCTION tokenizer (fix round 2, reviewer re-review table)",
 	() => {

@@ -467,3 +467,62 @@ describe("buildPlacetypePairPriors — segment mode (Task 6, DEFAULT since the v
 		expect(windowMatrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
 	})
 })
+
+describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fixture tokenizer)", () => {
+	// Segment mode's own doc comment claims a quoted venue is "one segment... which never equals the census's...
+	// entry" for the VENUE-CONFOUND class specifically. These cases check the OTHER direction: when the quoted text
+	// itself IS the real place name (occupying its own comma-delimited field, same shape as any other segment-exact
+	// match), the probe key must fold to the CLEAN word text — the wrapping quote/bracket/brace/guillemet chars must
+	// never survive into the index probe key, or a real match silently misses (a false negative the arc's own
+	// "recall, not precision" framing would treat as a genuine gap).
+
+	it('a quoted venue segment (\'"The Grange", Fishburn\') probes the CLEAN fold "the grange" — no leftover quote chars', async () => {
+		const index = mockPairIndex({ "the grange|fishburn": "dependent_locality" }, 6.0)
+		const text = '"The Grange", Fishburn'
+		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
+		const { pieces } = tokenizer.encode(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]!.some((v) => v > 0) || matrix.some((row) => row[labelCol("B-dependent_locality")]! > 0)).toBe(true)
+		// The probe key is the clean fold, not '"the grange"' / 'the grange"' / any quote-contaminated variant.
+		expect(index.calls.some(([child]) => child === "the grange")).toBe(true)
+		expect(index.calls.some(([child]) => child.includes('"'))).toBe(false)
+	})
+
+	it("a bracketed segment ('[Block B], Fishburn') probes the clean fold \"block b\"", async () => {
+		const index = mockPairIndex({ "block b|fishburn": "dependent_locality" }, 6.0)
+		const text = "[Block B], Fishburn"
+		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
+		const { pieces } = tokenizer.encode(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix.some((row) => row[labelCol("B-dependent_locality")]! > 0)).toBe(true)
+		expect(index.calls.some(([child]) => child === "block b")).toBe(true)
+		expect(index.calls.some(([child]) => /[[\]]/.test(child))).toBe(false)
+	})
+
+	it("a curly-quoted segment ('\"The Grange\", Fishburn' with curly quotes) probes the SAME clean fold as straight quotes", async () => {
+		// Regression guard for the byte-fallback groupPiecesIntoWords fix (Task 9): before that fix, this exact
+		// case's probe key was "0xe20x800x9cthe"/"grange0xe20x800x9d" — garbage that could never match a real
+		// index entry, a silent false negative.
+		const index = mockPairIndex({ "the grange|fishburn": "dependent_locality" }, 6.0)
+		const text = "“The Grange”, Fishburn"
+		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
+		const { pieces } = tokenizer.encode(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix.some((row) => row[labelCol("B-dependent_locality")]! > 0)).toBe(true)
+		expect(index.calls.some(([child]) => child === "the grange")).toBe(true)
+	})
+
+	it("UNBALANCED quote (only an opener, no closer anywhere in the input) never crashes and still probes the clean fold", async () => {
+		const index = mockPairIndex({ "the grange|fishburn": "dependent_locality" }, 6.0)
+		const text = '"The Grange, Fishburn'
+		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
+		const { pieces } = tokenizer.encode(text)
+
+		expect(() => buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)).not.toThrow()
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+		expect(matrix.some((row) => row[labelCol("B-dependent_locality")]! > 0)).toBe(true)
+	})
+})

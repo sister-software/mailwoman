@@ -23,6 +23,26 @@ import type { TokenLike } from "./query-shape-prior.ts"
 
 const SPACE_SENTINEL = "▁"
 
+/**
+ * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's escape hatch for a character with no direct token (curly
+ * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab; see `tokenizer.ts`'s doc
+ * comment). The placeholder TEXT itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
+ * as real alnum content — without this guard, a byte-fallback piece's placeholder text leaks into `fstToken` as garbage
+ * ("0x7bblock" instead of "block"), silently corrupting the FST/pair-index probe key for any place name written with
+ * one of these characters (paired-punctuation audit, `.superpowers/sdd/task-9-audit-report.md`). Matched against the
+ * piece with any leading `▁` stripped, mirroring how `hasAlnum`/`literal` are computed below.
+ */
+const BYTE_FALLBACK_RE = /^<0x[0-9A-Fa-f]{2}>$/
+
+/** Is `piece` real word content, ignoring a leading `▁` sentinel? False for a byte-fallback placeholder — see above. */
+function hasWordContent(piece: string): boolean {
+	const literal = piece.startsWith(SPACE_SENTINEL) ? piece.slice(SPACE_SENTINEL.length) : piece
+
+	if (BYTE_FALLBACK_RE.test(literal)) return false
+
+	return /[\p{L}\p{N}]/u.test(piece)
+}
+
 // ---------------------------------------------------------------------------
 // Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
 // ---------------------------------------------------------------------------
@@ -233,7 +253,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 
 	for (let i = 0; i < pieces.length; i++) {
 		const p = pieces[i]!
-		const hasAlnum = /[\p{L}\p{N}]/u.test(p.piece)
+		const hasAlnum = hasWordContent(p.piece)
 		const startsNewWord = p.piece.startsWith(SPACE_SENTINEL) || i === 0
 
 		if (startsNewWord) {
