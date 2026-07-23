@@ -33,7 +33,9 @@ env:
 
 jobs:
   sweep:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7

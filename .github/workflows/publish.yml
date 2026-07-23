@@ -76,7 +76,9 @@ jobs:
   # PHASE 1 — version bump on a release branch + auto-merging PR. No npm, no tags, no HF.
   prepare:
     if: ${{ inputs.mode == 'prepare' }}
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write # push the release/v<version> branch
@@ -167,7 +169,9 @@ jobs:
   # workspace publishes ride --tolerate-republish).
   publish:
     if: ${{ inputs.mode == 'publish' }}
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write # push the version tag + create the GitHub release
@@ -196,7 +200,7 @@ jobs:
       # mixed versions.
       - name: Verify version sync on main
         id: version
-        run: | # shell
+        run: |
           set -euo pipefail
           node - <<'NODE'
           const { readFileSync } = require("node:fs")
@@ -353,7 +357,9 @@ jobs:
   # (`needs: publish`), so it can't turn a working npm release red.
   clients:
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
     timeout-minutes: 20
     # NOTE: this job occupies the workflow-level `publish` concurrency group. During an incident:
     # cancel THIS job from the Actions UI (always safe — it publishes nothing) to free the queue.

@@ -31,7 +31,9 @@ concurrency:
 
 jobs:
   smoke:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
     timeout-minutes: 15
     env:
       # workflow_dispatch override wins; the scheduled run uses production.

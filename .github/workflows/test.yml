@@ -32,7 +32,9 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
