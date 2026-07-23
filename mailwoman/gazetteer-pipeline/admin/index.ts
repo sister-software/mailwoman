@@ -14,12 +14,11 @@
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
-import { createHash } from "node:crypto"
-import { createReadStream, existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
 import {
@@ -63,17 +62,6 @@ export interface BuildAdminResult {
 	verify: VerifyResult | null
 	sealed: boolean
 	elapsedSeconds: number
-}
-
-/** Streamed md5 of a (multi-GB) artifact — the build-log fingerprint. */
-async function fileMD5(path: string): Promise<string> {
-	const hash = createHash("md5")
-
-	for await (const chunk of createReadStream(path)) {
-		hash.update(chunk as Buffer)
-	}
-
-	return hash.digest("hex")
 }
 
 /** Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed. */
@@ -195,7 +183,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	if (existsSync(buildLogPath)) {
 		phase("build-log", buildLogPath)
 		const log = JSON.parse(readFileSync(buildLogPath, "utf8")) as { notes?: string[] }
-		const md5 = (await fileMD5(out)).slice(0, 8)
+		const md5 = (await md5File(out)).slice(0, 8)
 		const stamp = new Date().toISOString().slice(0, 10)
 		log.notes ??= []
 		log.notes.push(
