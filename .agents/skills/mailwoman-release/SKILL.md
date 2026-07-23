@@ -108,27 +108,36 @@ node mailwoman/out/cli.js release hf v<target> \
 The script self-verifies each artifact is reachable via HTTPS. Confirm `en-us/v<target>/model.onnx`
 returns HTTP 200 before dispatching.
 
-## Step 3 — dispatch the CI publish (dry-run, then real)
+## Step 3 — dispatch the CI publish (two-phase, PR-based; dry-run first)
+
+The "Production Integrity" ruleset requires the release commit to land via a PR with a green
+`test` check, so the ship is TWO dispatches around an auto-merging release PR (the direct
+release-it push was retired 2026-07-23 after GH013 — see the gotcha below):
 
 ```bash
-# Dry-run: confirms version bump + code-package flow + OIDC (skips the HF fetch + weights publish):
-gh workflow run publish.yml --ref main -f version=<target> -f dry_run=true
+# Optional preview — shows the bump diff without pushing anything:
+gh workflow run publish.yml --ref main -f mode=prepare -f version=<target> -f dry_run=true
+
+# Phase 1 — bump on release/v<target>, open the PR, dispatch Test at the branch, enable auto-merge:
+gh workflow run publish.yml --ref main -f mode=prepare -f version=<target>
 RID=$(gh run list --workflow=publish.yml --limit 1 --json databaseId -q '.[0].databaseId')
 gh run watch $RID --exit-status --interval 15      # must be: completed / success
+# Wait for the auto-merge (test green → the PR merges itself; no human click needed):
+gh pr view "release/v<target>" --json state -q .state   # until MERGED
 
-# Real run (the actual ship — bumps, commits `release: v<target>`, tags, pushes main, npm-publishes
-# all workspaces via OIDC with provenance, GitHub release):
-gh workflow run publish.yml --ref main -f version=<target>
+# Phase 2 — tag + GitHub release + npm publish of the merged commit on main:
+gh workflow run publish.yml --ref main -f mode=publish
+gh run watch <rid> --exit-status --interval 15
 ```
 
-- **Pass the explicit semver** to `-f version=` (e.g. `4.13.0`). It becomes release-it's
-  `--increment=<value>`. (`--minor` through the local yarn wrapper silently degraded to a _patch_ —
-  `4.12.1` — so the explicit number is the safe form everywhere.)
+- **Pass the explicit semver** to `-f version=` (e.g. `4.13.0`) — computed increments have
+  degraded to a patch before; the explicit number is the safe form everywhere.
 - The repo is PUBLIC → provenance attestation works (`publish-workspace.ts` adds `--provenance` when
   `MAILWOMAN_NPM_PROVENANCE=1`; CI sets it). On a private repo npm rejects it (E422) — leave it off.
-- **Partial-failure recovery**: if a real run bumped+tagged+pushed but died mid-publish, re-dispatch
-  with `-f publish_only=true` — it skips git/version work and re-publishes each workspace at its
-  current version via OIDC + `--tolerate-republish` (already-published = no-op).
+- **Partial-failure recovery**: `mode=publish` is idempotent (tag/release are create-if-missing;
+  workspace publishes ride `--tolerate-republish`) — just re-dispatch it.
+- The HF weight fetch + preflight run in **phase 2** (mode=publish), so HF staging must be complete
+  before THAT dispatch; phase 1 needs no binaries.
 
 ## Step 4 — verify the ship (the PUBLISHED tarball, not the workspace)
 
@@ -167,10 +176,12 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **The FST is model-independent** → reuse the prior version's; don't rebuild it for a model bump.
 - **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.
 - **Stage binaries BESIDE the canonical** (new filename); the operator gates the actual swap = the merge + dispatch.
-- **Branch rulesets can reject release-it's push to main** (v7.6.0, 2026-07-23: the "Production
-  Integrity" ruleset — PR + `test` required, bypass = OrganizationAdmin only — rejected the release
-  commit with GH013 AFTER a green dry-run; dry-run doesn't exercise the push). Before ANY real
-  dispatch: `gh api repos/sister-software/mailwoman/rulesets` and confirm the Actions path can land
-  the release commit. If a ruleset blocks it, that's an OPERATOR decision (bypass actor vs PR-based
-  release rework) — do not loosen a protection rule to ship. Rollback behavior is good: release-it
-  removes the pushed tag, npm untouched, `--tolerate-republish` makes re-dispatch safe.
+- **Branch rulesets reject direct pushes to main** (v7.6.0, 2026-07-23: the "Production Integrity"
+  ruleset — PR + `test` required, bypass = OrganizationAdmin only — rejected the old release-it
+  direct push with GH013 AFTER a green dry-run; dry-run doesn't exercise the push). That incident
+  produced the current two-phase PR flow (Step 3). If a ruleset change ever blocks the flow again,
+  it's an OPERATOR decision — do not loosen a protection rule to ship.
+- **Release PRs need their `test` check dispatched explicitly** — GITHUB_TOKEN-created PRs never
+  trigger `on: pull_request` (anti-recursion), so mode=prepare runs `gh workflow run test.yml --ref
+release/v<target>` itself. If an auto-merge ever hangs with "expected — waiting", check whether
+  that dispatch failed and re-run it; do NOT merge past the check.

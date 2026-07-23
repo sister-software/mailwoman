@@ -1,85 +1,181 @@
-# Manual-dispatch publish workflow with npm Trusted Publishing.
+# Manual-dispatch publish workflow with npm Trusted Publishing — PR-BASED, two-phase.
 #
-# Triggered from GitHub Actions UI → "Run workflow". Bumps versions
-# (sync across all workspaces), tags, pushes, publishes to npm, and
-# creates a GitHub release. Same flow as the local `yarn release`
-# documented in RELEASING.md, just running in CI.
+# WHY TWO PHASES (2026-07-23): the "Production Integrity" ruleset on `main` requires every change
+# to arrive via a PR with a green `test` check — which rejects the old release-it direct push
+# (GH013; see the night-2 postmortem, docs/articles/evals/2026-07-23-night-2-postmortem.md). The
+# release therefore splits at the merge boundary:
 #
-# Auth: npm Trusted Publishing (OIDC). No NPM_TOKEN secret needed in
-# this workflow — npmjs.com is configured to accept publishes from
-# this exact workflow file (path: .github/workflows/publish.yml). The
-# `id-token: write` permission below is what lets GitHub Actions mint
-# the OIDC token npm verifies against.
+#   PHASE 1 — mode=prepare (dispatch with a version): bump every workspace manifest on a
+#   `release/v<version>` branch (scripts/prepare-release-version.ts — no git side effects of its
+#   own), open the release PR, dispatch the Test workflow against the branch (required because
+#   GITHUB_TOKEN-created PRs never trigger `on: pull_request` workflows — GitHub's anti-recursion
+#   rule), and enable auto-merge. The PR merges itself the moment `test` goes green; no human click
+#   is required, so a solo night shift can still release end-to-end.
 #
-# GITHUB_TOKEN is provided automatically by the runtime.
+#   PHASE 2 — mode=publish (dispatch AFTER the release PR has merged): tag the merged commit,
+#   create the GitHub release, fetch the weight binaries from Hugging Face, and publish every
+#   workspace via OIDC. Idempotent by construction (--tolerate-republish; tag/release creation
+#   skipped when they already exist), so re-dispatching after a partial failure is always safe —
+#   this same mode IS the recovery path (the old publish_only input).
 #
-# Publishes ALL packages — code AND the neural-weights-* — entirely from
-# CI via OIDC, so no npm credentials live anywhere. The weights workspaces
-# ship real model.onnx + tokenizer.model binaries; the "Fetch weight
-# binaries from Hugging Face" step below pulls them from the PUBLIC HF
-# bucket (the same files the demo loads, no auth) before publish, so the
-# binaries don't need to be on the runner. Prerequisite for a real run:
-# the model for this version must already be staged on HF — push it with
-# `mailwoman release hf` (HF token, run on the operator's host)
-# first. (A prior R2 weights-pull lived here; mailwoman-assets is the
-# training-data bucket, the pull never reliably shipped a model, and it
-# was removed. The model store is Hugging Face.)
+# Auth: npm Trusted Publishing (OIDC). No NPM_TOKEN secret needed in this workflow — npmjs.com is
+# configured to accept publishes from this exact workflow file (path:
+# .github/workflows/publish.yml). The `id-token: write` permission on the publish job is what lets
+# GitHub Actions mint the OIDC token npm verifies against.
 #
-# A second job, `clients`, runs after `publish` succeeds: it regenerates the
-# Python + Rust API clients (`mailwoman clients generate` — Phase 5 Task 4)
-# against whatever `mailwoman/package.json` reads on `main` at that point (the
-# just-bumped version on a real run, unchanged on a dry run) and uploads both
-# as workflow artifacts on EVERY dispatch — inspection copies only. This
-# workflow NEVER publishes clients: registry publishing lives in the two
-# environment-bound workflows `publish-python.yml` (PyPI Trusted Publishing,
-# `pypi` environment — PyPI's trust binds to that exact filename) and
-# `publish-cargo.yml` (`cargo` environment's CARGO_REGISTRY_TOKEN secret),
+# Publishes ALL packages — code AND the neural-weights-* — entirely from CI via OIDC, so no npm
+# credentials live anywhere. The weights workspaces ship real model.onnx + tokenizer.model
+# binaries; the "Fetch weight binaries from Hugging Face" step pulls them from the PUBLIC HF bucket
+# (the same files the demo loads, no auth) before publish. Prerequisite for a real publish run: the
+# model for the card version must already be staged on HF — push it with `mailwoman release hf`
+# (HF token, run on the operator's host) first.
+#
+# A `clients` job runs after `publish` succeeds: it regenerates the Python + Rust API clients as
+# workflow artifacts — inspection copies only. This workflow NEVER publishes clients: registry
+# publishing lives in publish-python.yml (PyPI Trusted Publishing) and publish-cargo.yml,
 # dispatched separately by the operator. See RELEASING.md "Client packages".
 name: NPM Publish
 
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Version bump (patch / minor / major / specific semver like 2.1.0)"
+      mode:
+        description: "prepare = bump versions + open the auto-merging release PR. publish = tag + npm-publish the ALREADY-MERGED release commit on main (also the partial-failure recovery path)."
         required: true
+        default: prepare
+        type: choice
+        options:
+          - prepare
+          - publish
+      version:
+        description: "prepare only: version bump (patch / minor / major / specific semver like 2.1.0)"
+        required: false
         default: patch
         type: string
       dry_run:
-        description: "Dry run — show what would happen, don't actually publish"
-        required: false
-        default: false
-        type: boolean
-      publish_only:
-        description: "Finish a partial release: skip release-it's version bump/tag (already done) and just publish each workspace at its current version via OIDC (--tolerate-republish). Use when a prior run bumped+tagged but failed mid-publish."
+        description: "Dry run — show what would happen, don't push/publish anything"
         required: false
         default: false
         type: boolean
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 env:
   # Opt into Node 24 for JavaScript-based actions (checkout, setup-node, etc.)
   # ahead of the forced switch in June 2026 / removal in Sep 2026.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
-# Serialize publish runs. Don't cancel an in-flight publish — release-it has
-# already created commits/tags by the time a second dispatch arrives, and
-# killing it mid-flight leaves the repo in a partial-release state.
+# Serialize publish runs. Don't cancel an in-flight run — a prepare may be mid-push and a publish
+# may be mid-tarball; killing either leaves a partial state a human then has to unwind.
 concurrency:
   group: publish
   cancel-in-progress: false
 
 jobs:
-  publish:
+  # PHASE 1 — version bump on a release branch + auto-merging PR. No npm, no tags, no HF.
+  prepare:
+    if: ${{ inputs.mode == 'prepare' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+    permissions:
+      contents: write # push the release/v<version> branch
+      pull-requests: write # open the release PR + enable auto-merge
+      actions: write # dispatch the Test workflow against the release branch
     steps:
       - uses: actions/checkout@v7
         with:
-          # release-it needs full history to compute the version tag base.
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Fail fast if the SHIPPED MODEL's metadata hasn't propagated to the human-facing surfaces
+      # (ledger / releases.mdx / status.mdx — the 6.4.0 gap). Keys off the MODEL version in
+      # neural-weights-en-us/model-card.json, so a code-only release passes cleanly. Runs on dry
+      # runs too — the dry run is the operator's last look before the real dispatch.
+      - name: Verify release metadata is propagated
+        run: node scripts/verify-release-metadata.ts
+
+      - name: Resolve + bump versions
+        id: bump
+        run: | # shell
+          set -euo pipefail
+          OUT=$(node scripts/prepare-release-version.ts --version "${{ inputs.version }}")
+          echo "${OUT}"
+          VERSION=$(echo "${OUT}" | grep -oP '(?<=^RESOLVED_VERSION=).+')
+          # Collision guards — the version must be new to both git and npm.
+          if git tag -l "v${VERSION}" | grep -q .; then
+            echo "::error::tag v${VERSION} already exists — pick a different version"; exit 1
+          fi
+          if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1; then
+            echo "::error::mailwoman@${VERSION} is already on npm — pick a different version"; exit 1
+          fi
+          yarn oxfmt package.json '**/package.json'
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: "Dry run: show the bump and stop"
+        if: ${{ inputs.dry_run }}
+        run: | # shell
+          echo "Would open release PR for v${{ steps.bump.outputs.version }} with:"
+          git diff --stat
+          git diff package.json
+
+      - name: Open the auto-merging release PR
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: | # shell
+          set -euo pipefail
+          BRANCH="release/v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
+          git add package.json '*/package.json'
+          git commit -m "release: v${VERSION}"
+          git push -u origin "${BRANCH}"
+          PR_URL=$(gh pr create --base main --head "${BRANCH}" \
+            --title "release: v${VERSION}" \
+            --body "Automated release PR (publish.yml mode=prepare). Version bump across the root + all $(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.length") workspaces. Auto-merges when the required \`test\` check passes; then dispatch \`publish.yml\` with mode=publish to tag + npm-publish.")
+          echo "release PR: ${PR_URL}"
+          # GITHUB_TOKEN-created PRs don't trigger `on: pull_request` workflows (anti-recursion),
+          # so the required `test` check would never report and auto-merge would hang forever.
+          # Dispatch the Test workflow against the branch explicitly — its check run lands on the
+          # branch head SHA, which is exactly what the ruleset's required check matches on.
+          gh workflow run test.yml --ref "${BRANCH}"
+          gh pr merge --auto --squash "${PR_URL}"
+          {
+            echo "## Release PR opened: v${VERSION}"
+            echo ""
+            echo "- ${PR_URL} (auto-merges when \`test\` is green)"
+            echo "- Next: dispatch this workflow with **mode=publish** after the merge."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  # PHASE 2 — tag + GitHub release + npm publish of the merged release commit on main.
+  # Idempotent: safe to re-dispatch after a partial failure (tag/release are create-if-missing,
+  # workspace publishes ride --tolerate-republish).
+  publish:
+    if: ${{ inputs.mode == 'publish' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # push the version tag + create the GitHub release
+      id-token: write # npm Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
           fetch-depth: 0
 
       - name: Setup Node
@@ -92,18 +188,34 @@ jobs:
       - name: Enable Corepack (yarn 4)
         run: corepack enable
 
-      - name: Configure git identity (for release-it commits)
-        run: | # shell
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The release PR must have merged: every workspace manifest on main must agree with the root.
+      # A drifted tree means phase 1 hasn't landed (or landed partially) — publishing it would ship
+      # mixed versions.
+      - name: Verify version sync on main
+        id: version
+        run: | # shell
+          set -euo pipefail
+          node - <<'NODE'
+          const { readFileSync } = require("node:fs")
+          const root = JSON.parse(readFileSync("package.json", "utf8")).version
+          const workspaces = JSON.parse(readFileSync(".release-it.json", "utf8")).plugins["@release-it-plugins/workspaces"].workspaces
+          const drift = workspaces
+            .map((ws) => [ws, JSON.parse(readFileSync(`${ws}/package.json`, "utf8")).version])
+            .filter(([, v]) => v !== root)
+          if (drift.length) {
+            console.error(`version drift vs root ${root}:`, drift)
+            process.exit(1)
+          }
+          console.log(`main is version-synced at ${root} (root + ${workspaces.length} workspaces)`)
+          NODE
+          echo "version=$(node -p "require('./package.json').version")" >> "${GITHUB_OUTPUT}"
+
       # Fetch the weight binaries from the PUBLIC Hugging Face bucket (the same
-      # files the demo loads at runtime — no auth needed). This replaces the old
-      # R2 pull and means the whole release, weights included, publishes from CI
-      # via OIDC: no npm credentials anywhere. Requires the model AND the #718
+      # files the demo loads at runtime — no auth needed). The whole release, weights included,
+      # publishes from CI via OIDC: no npm credentials anywhere. Requires the model AND the #718
       # soft-feed postcode binaries AND (when en-gb ships one) the placetype-pair-index
       # binary to be staged on HF for this version (push them with `mailwoman release hf
       # <version> --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin --pair-indexes
@@ -173,69 +285,45 @@ jobs:
           done
           ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-gb/pair-index-gb.bin
 
-      # Fail fast if the SHIPPED MODEL's metadata hasn't propagated to the human-facing surfaces. Same
-      # spirit as the HF preflight above: HEAD-check the artifacts a release depends on and stop with an
-      # actionable message BEFORE anything ships, rather than backfilling a release later. On 2026-07-17
-      # this exact gap bit us — when 6.4.0 shipped, THREE surfaces (the eval ledger, the releases.mdx
-      # version matrix's "(current)" row, and the status.mdx info box) were silently left on 6.3.0 and
-      # only noticed at 6.5.0. The script keys off the MODEL version in neural-weights-en-us/model-card.json
-      # (NOT npm/package.json), so a code-only release — which bumps npm but leaves the model card — passes
-      # cleanly. Pure-node: reads the committed card + ledger + docs, needs no compile or weight binaries,
-      # so it runs before release-it's own `yarn compile`. Runs on dry runs too — a dry run is the operator's
-      # last look before the real dispatch, and catching stale metadata there is the whole point. Skipped
-      # only on publish_only (recovery of an already-released version, whose metadata was gated at cut time).
-      - name: Verify release metadata is propagated
-        if: ${{ !inputs.publish_only }}
-        run: node scripts/verify-release-metadata.ts
-
-      - name: Release
-        if: ${{ !inputs.publish_only }}
+      - name: Tag + GitHub release
+        if: ${{ !inputs.dry_run }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # copy-weights is always skipped (its /mnt/playpen source paths don't
-          # exist on CI) — the binaries are placed by the HF fetch step above.
-          # On a real run we DO publish the weights packages (binaries present);
-          # on a dry run we skip them (no binaries fetched, nothing to publish).
-          MAILWOMAN_SKIP_WEIGHTS_COPY: "1"
-          MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.dry_run && '1' || '' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: | # shell
           set -euo pipefail
-          # publish-workspace.ts (a release-it hook) imports @mailwoman/core/env, which resolves
-          # to the COMPILED core/out tree (#874 moved env into core) — compile before release-it
-          # or every workspace publish dies ERR_MODULE_NOT_FOUND. The publish_only path below
-          # already compiles; this is the same requirement on the normal path (first bit v5.1.0).
-          yarn compile
-          ARGS=(--ci --increment="${{ inputs.version }}")
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-              ARGS+=(--dry-run)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --tags origin "v${VERSION}" | grep -q .; then
+            echo "tag v${VERSION} already on origin (recovery re-run) — skipping tag push"
+          else
+            git tag -a "v${VERSION}" -m "Release v${VERSION}"
+            git push origin "v${VERSION}"
           fi
-          yarn release "${ARGS[@]}"
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "GitHub release v${VERSION} already exists (recovery re-run) — skipping"
+          else
+            gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes
+          fi
 
-      # Recovery path for a partial release: a prior run already bumped + tagged +
-      # pushed (release-it does git BEFORE npm), but died mid-publish (e.g. one
-      # package missing its npm Trusted Publisher). Re-running the normal flow would
-      # collide with the existing tag. This skips all git/version work and just
-      # publishes each workspace AT ITS CURRENT package.json version via the same
-      # per-workspace path (OIDC + --tolerate-republish, so already-published
-      # versions are no-ops). Continues past per-package failures and reports the
-      # full failed set at the end, so one run pinpoints every package that still
-      # rejects OIDC instead of stopping at the first.
-      - name: Finish publish (per-workspace, OIDC, no git bump)
-        if: ${{ inputs.publish_only && !inputs.dry_run }}
+      # Publish every workspace at its (already-merged) package.json version via OIDC.
+      # #756: derive the workspace set from .release-it.json — ONE source of truth, dependency
+      # order preserved (core … mailwoman). --tolerate-republish makes re-runs no-ops per package;
+      # the loop continues past per-package failures and reports the full failed set at the end, so
+      # one run pinpoints every package that still rejects OIDC instead of stopping at the first.
+      - name: Publish workspaces (per-workspace, OIDC)
+        if: ${{ !inputs.dry_run }}
         env:
           MAILWOMAN_SKIP_WEIGHTS_COPY: "1"
           RELEASE_IT_WORKSPACES_TAG: latest
           RELEASE_IT_WORKSPACES_ACCESS: public
         run: | # shell
           set -uo pipefail
+          # publish-workspace.ts imports @mailwoman/core/env, which resolves to the COMPILED
+          # core/out tree (#874) — compile first or every workspace publish dies ERR_MODULE_NOT_FOUND.
           yarn compile
-          # #756: derive the workspace set from .release-it.json — the SAME list release-it publishes on a
-          # normal run — so this recovery loop can't drift from it (the v4.12.0 tiger-skip: tiger was in
-          # .release-it.json but missing from the hardcoded list here, so publish_only silently skipped it).
-          # The order (core … mailwoman) is the dependency order release-it already uses. The #757 test
-          # asserts every entry carries a repository field, so a new workspace can't reach release malformed.
           WORKSPACES=$(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.join(' ')")
-          echo "publish_only workspaces (from .release-it.json): ${WORKSPACES}"
+          echo "workspaces (from .release-it.json): ${WORKSPACES}"
           FAILED=()
           for ws in ${WORKSPACES}; do
             echo "::group::publish ${ws}"
@@ -248,10 +336,16 @@ jobs:
             echo "::endgroup::"
           done
           if [ ${#FAILED[@]} -gt 0 ]; then
-            echo "::error::publish_only: failed workspaces: ${FAILED[*]}"
+            echo "::error::publish: failed workspaces: ${FAILED[*]}"
             exit 1
           fi
-          echo "All workspaces published."
+          echo "All workspaces published at v${{ steps.version.outputs.version }}."
+
+      - name: "Dry run: compile only"
+        if: ${{ inputs.dry_run }}
+        run: | # shell
+          yarn compile
+          echo "Dry run: version sync + compile verified for v${{ steps.version.outputs.version }}. No tag, no release, no publish."
 
   # Regenerate the Python + Rust API clients (Phase 5 Task 4) as INSPECTION ARTIFACTS — this job
   # never publishes anything (registry publishing = publish-python.yml / publish-cargo.yml, each
@@ -261,24 +355,15 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # NOTE: this job occupies the workflow-level `publish` concurrency group (artifact generation
-    # always runs on dispatch). A follow-up dispatch — notably the `publish_only` recovery path —
-    # queues behind it for the cold setup+generate leg. During an incident: cancel THIS job from the
-    # Actions UI (always safe — it publishes nothing) to free the queue immediately.
-    # Least privilege: this job doesn't push commits/tags (unlike `publish`) and doesn't use npm's
-    # OIDC Trusted Publishing, so it needs neither `contents: write` nor `id-token: write`.
+    # NOTE: this job occupies the workflow-level `publish` concurrency group. During an incident:
+    # cancel THIS job from the Actions UI (always safe — it publishes nothing) to free the queue.
+    # Least privilege: no pushes, no OIDC — neither `contents: write` nor `id-token: write`.
     permissions:
       contents: read
     steps:
-      # `ref: main` (not the dispatch SHA) is deliberate: on a real (non-dry-run, non-publish_only)
-      # run, the `publish` job above just committed + pushed the version bump to `main` via
-      # release-it. The default checkout would pin `github.sha` — the commit that existed BEFORE that
-      # push — which would generate clients at the OLD, already-superseded version. Checking out
-      # `main` fresh pulls that just-pushed commit instead, so `mailwoman/package.json`'s version (the
-      # version every generated client syncs to — see `mailwoman/tools/generate-clients.ts`) is
-      # correct. This is safe because the whole publish flow is main-only by construction
-      # (`.release-it.json`'s `git.requireBranch: "main"` already refuses to release from anywhere
-      # else), so `main` and "the release that just ran" always agree once `publish` has succeeded.
+      # `ref: main` is deliberate: on a publish run, main already carries the merged release commit
+      # (phase 1's PR), so `mailwoman/package.json`'s version — the version every generated client
+      # syncs to (see `mailwoman/tools/generate-clients.ts`) — is the just-published one.
       - uses: actions/checkout@v7
         with:
           ref: main
@@ -304,4 +389,3 @@ jobs:
           name: mailwoman-client-rust
           path: clients-build/mailwoman-client-rust.tar.gz
           if-no-files-found: error
-

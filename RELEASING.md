@@ -27,6 +27,11 @@ all published at one synced version (the model too — see Versioning policy). T
 
 ## Dry run
 
+> **The local `yarn release` flow is retired for real cuts** (2026-07-23): the "Production
+> Integrity" ruleset on `main` rejects release-it's direct push (GH013). Real releases go through
+> the two-phase CI flow — see "Releasing from CI" below. `yarn release --dry-run` remains useful
+> as a local preview of the version bump + pack surface.
+
 Verify the flow without actually publishing:
 
 ```bash
@@ -387,10 +392,20 @@ curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, bot
 curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the gated md5
 ```
 
-### Step 4 — publish npm from CI, then verify registry-direct + a clean install
+### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install
+
+The "Production Integrity" ruleset on `main` (2026-07-22) requires every change — the release
+version-bump commit included — to land via a PR with a green `test` check, so the publish is two
+dispatches around an auto-merging PR:
 
 ```bash
-gh workflow run publish.yml -f version=<NEW> -f dry_run=false
+# Phase 1: bump versions on release/v<NEW>, open the PR, auto-merge when `test` is green
+gh workflow run publish.yml -f mode=prepare -f version=<NEW>
+gh run watch <id> --exit-status
+gh pr view release/v<NEW> --json state,mergeStateStatus   # wait for MERGED
+
+# Phase 2 (after the merge): tag + GitHub release + npm publish of the merged commit
+gh workflow run publish.yml -f mode=publish
 gh run watch <id> --exit-status
 ```
 
@@ -478,16 +493,16 @@ workspace isn't in `.release-it.json`'s list it never gets bumped+published, so 
 (and `spatial`) — they're in the list now; **any future runtime dep must join it too.** This is the same
 warning as the top of this doc, restated because it recurs.
 
-### Pitfall: partial release — use `publish_only`, never re-run the full workflow
+### Pitfall: partial release — just re-dispatch `mode=publish`
 
 The CI publish can land most packages then die mid-publish (seen on v4.11.0: a transient npm OIDC
-`E401 … Failed to generate Web Auth URLs` hit `record` + `registry` while the other 15 published). Once that
-happens the commit + tag `v<NEW>` already exist, so **re-dispatching the full workflow trips on the tag.**
-Use the dedicated recovery input instead — it skips release-it's bump/tag and just re-publishes each
-workspace at its current version over OIDC with `--tolerate-republish` (already-published ones are no-ops):
+`E401 … Failed to generate Web Auth URLs` hit `record` + `registry` while the other 15 published).
+`mode=publish` is idempotent by construction — the tag and GitHub release are create-if-missing, and
+each workspace publish rides `--tolerate-republish` (already-published ones are no-ops) — so the
+recovery is simply the same dispatch again:
 
 ```bash
-gh workflow run publish.yml -f version=<NEW> -f publish_only=true -f dry_run=false
+gh workflow run publish.yml -f mode=publish
 ```
 
 The E401/Web-Auth flavor was transient for v4.11.0 (the `publish_only` retry cleared it). If it recurs on the
@@ -511,15 +526,24 @@ the recovery loop below can finish stragglers from here without OIDC.
 `.github/workflows/publish.yml` exposes the same flow from the GitHub Actions UI. Auth uses **npm Trusted Publishing** (OIDC) — no `NPM_TOKEN` secret in the repo, no auth token in `~/.npmrc`. npmjs.com is configured to accept publishes from this exact workflow file path.
 
 1. **One-time setup on the npm side** (done for the original packages): each already-published `@mailwoman/*` package + `mailwoman` has a Trusted Publisher configured pointing at `sister-software/mailwoman` repo + workflow file `.github/workflows/publish.yml`. If you move/rename that file, update the npm side too. **A package added since then must have its publisher configured before CI can publish it** — see "Adding a NEW package" below. _(As of 4.0.0, the six packages first-published by hand — codex + the five new deps — still need their Trusted Publishers set up.)_
-2. **Run a release** — Actions tab → `publish` workflow → Run workflow.
-   - `version` — `patch` / `minor` / `major` / specific semver like `2.1.0`. Default `patch`.
-   - `dry_run` — boolean. Default false. Set true to preview without publishing.
+2. **Run a release** — Actions tab → `publish` workflow → Run workflow. TWO dispatches (the
+   "Production Integrity" ruleset requires the version-bump commit to arrive via a PR with a green
+   `test` check — the direct release-it push was retired 2026-07-23 after it started bouncing off
+   the ruleset with GH013):
+   - **`mode=prepare`** with `version` (`patch` / `minor` / `major` / specific semver like `2.1.0`):
+     runs the metadata gate (`scripts/verify-release-metadata.ts`), bumps the root + every
+     `.release-it.json` workspace via `scripts/prepare-release-version.ts`, pushes
+     `release/v<NEW>`, opens the release PR, dispatches the Test workflow against the branch
+     (GITHUB_TOKEN-created PRs never trigger `on: pull_request` — anti-recursion), and enables
+     auto-merge. The PR merges itself when `test` is green — no human click, so a solo night
+     shift can still release.
+   - **`mode=publish`** (after the PR merges): verifies main is version-synced, fetches the weight
+     binaries from HF at the model-card version, tags `v<NEW>`, creates the GitHub release, and
+     publishes every workspace via OIDC. Idempotent — re-dispatch on partial failure.
+   - `dry_run` — boolean, works with both modes. `prepare` shows the bump diff without pushing;
+     `publish` verifies version sync + compiles without tagging/publishing.
 
-   The CI workflow is **code-only**: it publishes every workspace except the two `neural-weights-*`, which it
-   version-bumps in git but skips on npm (their binaries aren't on the runner). Cut the weights publish locally
-   (next section).
-
-The workflow checks out main, installs, runs `yarn release --ci --increment=<version>`. release-it's pre-flight hooks (compile + test + copy-weights) run as usual. Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled).
+Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled). release-it itself is no longer invoked by CI — `.release-it.json` remains the canonical workspace list (both phases derive from it) and the config for the legacy local flow, which the ruleset now blocks at the push step (dry runs still work).
 
 ### Adding a NEW package: it can't be first-published from CI
 

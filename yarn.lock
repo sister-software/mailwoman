@@ -5026,6 +5026,7 @@ __metadata:
     "@types/pluralize": "npm:^0.0.33"
     "@types/react": "npm:^19.2.17"
     "@types/regenerate": "npm:^1.4.3"
+    "@types/semver": "npm:^7.7.1"
     ansi_up: "npm:^6.0.6"
     chalk: "npm:^5.6.2"
     csv-parse: "npm:^7.0.1"
@@ -5037,6 +5038,7 @@ __metadata:
     oxlint: "npm:1.74.0"
     react: "npm:^19.2.7"
     release-it: "npm:^19.2.4"
+    semver: "npm:^7.8.5"
     spliterator: "npm:^4.0.0"
     typescript: "npm:^6.0.3"
     vitest: "npm:4.1.10"
@@ -8657,6 +8659,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10/7ece5fbb5d9c8fc76ab0de2f99d705edf92f18e701d4f9d9b0647275e32eb65e656c1badf9dfaa12f4e1ff3e250561c8c9cfe79e8b5f33dd1417ac0f1804f6cc
+  languageName: node
+  linkType: hard
+
+"@types/semver@npm:^7.7.1":
+  version: 7.7.1
+  resolution: "@types/semver@npm:7.7.1"
+  checksum: 10/8f09e7e6ca3ded67d78ba7a8f7535c8d9cf8ced83c52e7f3ac3c281fe8c689c3fe475d199d94390dc04fc681d51f2358b430bb7b2e21c62de24f2bee2c719068
   languageName: node
   linkType: hard
 
@@ -21313,7 +21322,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.6.0":
+"semver@npm:^7.6.0, semver@npm:^7.8.5":
   version: 7.8.5
   resolution: "semver@npm:7.8.5"
   bin:
