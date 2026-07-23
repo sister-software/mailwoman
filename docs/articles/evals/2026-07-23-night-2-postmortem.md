@@ -1,7 +1,8 @@
 # Night shift #2 postmortem — 2026-07-23
 
-Drafted during the shift; finalized at hand-off. Window: ~04:50–15:00 UTC (conn handed with full
-ship autonomy: training, publishing, merging, HF — all behind the pre-registered gates).
+Drafted during the shift; finalized at hand-off. Window: 04:50–12:10 UTC (operator returned
+early; conn was handed with full ship autonomy: training, publishing, merging, HF — all behind
+the pre-registered gates).
 
 ## What shipped
 
@@ -147,7 +148,7 @@ any re-dispatch safe.
 
 | Metric               | Value                                                      |
 | -------------------- | ---------------------------------------------------------- |
-| Shift window         | ~04:50–15:00 UTC                                           |
+| Shift window         | 04:50–12:10 UTC                                            |
 | Models trained       | 1 (v3.12.0-comma-robust, 8k steps, A100 ~25 min)           |
 | Modal spend          | ~$1.50                                                     |
 | Checkpoints graded   | 8 (invariance + gauntlet each; battery withheld by design) |
