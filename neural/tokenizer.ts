@@ -20,18 +20,24 @@
  *       entirely BMP characters, JS code-unit indexing is correct in practice. Surrogate- pair
  *       codepoints would need `Array.from(s).length` accounting; deferred until the parity test
  *       surfaces a real case.
- *   - Byte-fallback pieces (`<0xHH>`) ARE handled: a run of one or more consecutive `<0xHH>` pieces (the vocab's
- *       fallback for any character with no direct token — observed live on curly quotes “”‘’, guillemets «», and
+ *   - Byte-fallback pieces (`<0xHH>`) ARE handled: a run of one or more consecutive `<0xHH>` pieces (the vocab’s
+ *       fallback for any character with no direct token — observed live on curly quotes “”’’, guillemets «», and
  *       braces {} even on Latin-script input, not just non-Latin scripts) is buffered and decoded as one UTF-8 byte
- *       sequence via `TextDecoder`, and the cursor advances by the DECODED string's length — not by the literal
- *       `"<0xHH>"` placeholder's length (6 chars for a single byte that represents 1 real character, or worse for a
+ *       sequence via `TextDecoder`, and the cursor advances by the DECODED string’s length — not by the literal
+ *       `”<0xHH>”` placeholder’s length (6 chars for a single byte that represents 1 real character, or worse for a
  *       multi-byte codepoint split across several fallback pieces). Before this fix the cursor over-advanced on every
- *       byte-fallback piece, desyncing every subsequent piece's offsets for the REST of the input — see
+ *       byte-fallback piece, desyncing every subsequent piece’s offsets for the REST of the input — see
  *       `neural/test/tokenizer-byte-fallback.test.ts` for the repro and the fix-wave writeup
  *       (`.superpowers/sdd/task-9-audit-report.md`, paired-punctuation audit). All pieces in a byte-fallback run share
- *       the SAME `[start, end)` range (the run's combined decoded span) except intermediate pieces get a zero-width
- *       range at the run's start — same "own placeholder, zero contribution" idiom `groupPiecesIntoWords` uses for a
- *       bare `▁`.
+ *       the SAME `[start, end)` range (the run’s combined decoded span); intermediate pieces defer their content to
+ *       the run’s last piece via a zero-width range at the run’s start — a narrower compromise than the bare-▁ idiom
+ *       (which is zero-width by construction), but the same “own placeholder, zero contribution” principle.
+ *
+ *   **RESIDUAL (CJK/non-Latin blocker, review-verified 2026-07-23):** a byte-fallback run spanning MULTIPLE distinct
+ *   source characters collapses to one combined offset on the run’s last piece — heterogeneous BIO tags inside such a
+ *   run are silently absorbed into one span (demonstrated on 東京都渋谷区: a B-region inside the run produced no node).
+ *   Not live on the Latin-script production tokenizer; MUST be resolved before any non-Latin/CJK tokenizer ships
+ *   (per-character run splitting is the likely fix).
  *
  *   The wrapper supports two load modes:
  *
