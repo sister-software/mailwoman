@@ -43,9 +43,16 @@ function col(label: string): number {
 }
 
 /** A minimal `PairIndexLike` resolving exactly one (child, parent) pair, at the real artifact's delta (6.0). */
-function fixedPairIndex(child: string, parent: string, tag: string, delta = 6.0): PairIndexLike {
+function fixedPairIndex(
+	child: string,
+	parent: string,
+	tag: string,
+	delta = 6.0,
+	transitionBeta?: number
+): PairIndexLike {
 	return {
 		delta,
+		...(transitionBeta !== undefined ? { transitionBeta } : {}),
 		probe: (c, p) => (c === child && p === parent ? (tag as never) : undefined),
 	}
 }
@@ -143,5 +150,77 @@ describe("placetype-pair prior — decode-order integration", () => {
 		// The bias DID fire (nonzero emissions delta), but the encoder's 20-vs-6 margin still wins the
 		// decode — "shoreditch" decodes street, exactly as the encoder alone would have called it.
 		expect(trace.path.slice(0, 3)).toEqual([streetB, streetI, streetI])
+	})
+})
+
+describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
+	/**
+	 * The task-8 path-fusion lattice, reconstructed on the fixture tokenizer: the emission-side δ (6.0) wins nothing —
+	 * "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased dependent_locality reading (6 + 6 + 6 = 18)
+	 * by 4, MORE than the per-piece emission gap but LESS than β=5. So a beta-less decode keeps the fused path (the
+	 * measured current-main behavior on the 17 comma-free GB rows), and the transitionBeta artifact flips it — the
+	 * probe's recovery mechanism, end-to-end through `#decode` → viterbi. Comma-free input, `probeMode` omitted: the auto
+	 * chain's ANCHORED leg is the one that fires, matching the production population.
+	 */
+	function fusedLogits(): number[][] {
+		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
+		logits[0]![col("B-street")] = 8
+		logits[1]![col("I-street")] = 7
+		logits[2]![col("I-street")] = 7
+		logits[3]![col("B-locality")] = 10
+
+		return logits
+	}
+
+	it("beta-less index: the fused street path survives — byte-identity with the pre-beta decode (characterization)", async () => {
+		const tokenizer = await loadTokenizer()
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(fusedLogits()) })
+		const index = fixedPairIndex("shoreditch", "london", "dependent_locality") // no transitionBeta
+
+		const trace = await classifier.traceParse("Shoreditch London", {
+			spanProposer: false,
+			placetypePair: { index },
+		})
+
+		// The prior FIRED (anchored leg, emission bias composed) yet the global path stays fused — the exact
+		// emission-only miss the task-8 probe measured, and the exact decode a pre-TRANSITION-BETA build produces.
+		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({
+			kind: "placetypePair",
+			applied: true,
+			probePath: "anchored",
+		})
+		expect(trace.path).toEqual([col("B-street"), col("I-street"), col("I-street"), col("B-locality")])
+	})
+
+	it("transitionBeta 5: the SAME lattice flips to dependent_locality, with emissions byte-identical to the beta-less run", async () => {
+		const tokenizer = await loadTokenizer()
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(fusedLogits()) })
+
+		const betaLess = await classifier.traceParse("Shoreditch London", {
+			spanProposer: false,
+			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality") },
+		})
+		const withBeta = await classifier.traceParse("Shoreditch London", {
+			spanProposer: false,
+			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6.0, 5) },
+		})
+
+		// The child span flips whole — entry bonus at the first piece, BIO continuation follows.
+		expect(withBeta.path).toEqual([
+			col("B-dependent_locality"),
+			col("I-dependent_locality"),
+			col("I-dependent_locality"),
+			col("B-locality"),
+		])
+		// The beta is a DECODER term: the post-prior emission matrices are byte-identical across the two runs —
+		// only the transition side moved.
+		expect(withBeta.emissions).toEqual(betaLess.emissions)
+
+		// And the flip lands in the tree the user sees.
+		const json = await classifier.parseJSON("Shoreditch London", {
+			spanProposer: false,
+			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6.0, 5) },
+		})
+		expect(json.dependent_locality).toBe("Shoreditch")
 	})
 })

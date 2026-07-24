@@ -146,6 +146,34 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	})
 })
 
+describe("transitionBeta header field (TRANSITION-BETA build)", () => {
+	it("round-trips a header WITH transitionBeta: header fidelity + the resolver accessor + peek all agree", () => {
+		const header: PairIndexHeader = { ...HEADER, transitionBeta: 5 }
+		const bytes = serializePairIndex(header, ENTRIES)
+		const r = new PairIndexResolver(bytes)
+
+		expect(r.header).toEqual(header)
+		expect(r.transitionBeta).toBe(5)
+		expect(peekPairIndexHeader(bytes).transitionBeta).toBe(5)
+		// The rest of the format is untouched — entries still probe.
+		expect(r.probe("shoreditch", "london")).toBe("dependent_locality")
+	})
+
+	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
+		// HEADER carries no transitionBeta — serializing it produces byte-for-byte the same header JSON an
+		// artifact built before this field existed carries (no key at all, not null/0), so this IS the
+		// old-binary case, not a simulation of it.
+		const bytes = serializePairIndex(HEADER, ENTRIES)
+		const r = new PairIndexResolver(bytes)
+
+		expect(r.transitionBeta).toBeUndefined()
+		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
+		expect("transitionBeta" in r.header).toBe(false)
+		// schemaVersion stays 1 — absence-tolerant readers need no version gate (forward + backward compatible).
+		expect(r.header.schemaVersion).toBe(1)
+	})
+})
+
 describe("peekPairIndexHeader", () => {
 	it("returns the header verbatim without building the probe Map (correctness, not timing)", () => {
 		// A synthetic index large enough that a full parse would be a real cost (10k entries) — peek must

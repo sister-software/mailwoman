@@ -79,6 +79,28 @@ function isValidTransition(from: string, to: string): boolean {
 	return true
 }
 
+/**
+ * A position-scoped transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition INTO `toLabel`
+ * at exactly `timestep` — from ANY predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
+ * the bonus lands on the start transition instead). The placetype-pair prior emits one per pair hit at the child span's
+ * first piece when its index header carries `transitionBeta`; the hook itself is generic — a sparse list of
+ * adjustments, no knowledge of who produced them.
+ *
+ * Because the bonus is predecessor-independent, it cannot change WHICH predecessor wins for `toLabel` at `timestep` —
+ * it changes whether paths ENTERING `toLabel` there outscore paths that stay fused through a competing run (the task-8
+ * probe's path-fusion mechanism: a locally-winning emission bias can still lose globally when the forced
+ * `I-`/fresh-`B-` continuation costs more than the local win recovers; a transition-entry bonus pays that structural
+ * toll directly).
+ */
+export interface ViterbiTransitionAdjustment {
+	/** Timestep whose INCOMING transition is adjusted. */
+	timestep: number
+	/** Label index (into the emission row / transition matrix axes) the adjusted transition lands on. */
+	toLabel: number
+	/** Additive bonus (log-score units, like the transition matrix itself). */
+	bonus: number
+}
+
 export interface ViterbiInput {
 	/** `emissions[t][k]` — log-emission for label k at timestep t. Pass raw logits or log-softmaxes. */
 	emissions: number[][]
@@ -88,6 +110,11 @@ export interface ViterbiInput {
 	startTransitions?: number[]
 	/** Per-label log-score for being the LAST label. */
 	endTransitions?: number[]
+	/**
+	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}). Omitted/empty = the exact
+	 * pre-TRANSITION-BETA decode — no behavioral term is added anywhere.
+	 */
+	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
 
 export interface ViterbiResult {
@@ -112,15 +139,38 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
+	// Sparse per-timestep lookup for the position-scoped transition bonuses. Null when none were
+	// passed — the hot loop below then never consults it (the pre-TRANSITION-BETA code path, exactly).
+	let adjustAt: Map<number, Map<number, number>> | null = null
+
+	if (input.transitionAdjustments?.length) {
+		adjustAt = new Map()
+
+		for (const adj of input.transitionAdjustments) {
+			let byLabel = adjustAt.get(adj.timestep)
+
+			if (!byLabel) {
+				byLabel = new Map()
+				adjustAt.set(adj.timestep, byLabel)
+			}
+			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX, not sum — the
+			// emission side's `applyWindowBias` uses the same Math.max discipline, and overlapping window-mode
+			// candidates must not stack the bonus.
+			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
+		}
+	}
+
 	// dp[t][k] = best log-score ending at (timestep t, label k)
 	const dp: number[][] = []
 	const back: number[][] = []
 
-	// t = 0
+	// t = 0 — an adjustment at timestep 0 lands on the start transition (the sequence start is the
+	// only "predecessor" a first label has).
+	const firstAdjust = adjustAt?.get(0)
 	const first = new Array<number>(numLabels)
 
 	for (let k = 0; k < numLabels; k++) {
-		first[k] = startTrans[k]! + emissions[0]![k]!
+		first[k] = startTrans[k]! + (firstAdjust?.get(k) ?? 0) + emissions[0]![k]!
 	}
 	dp.push(first)
 	back.push(new Array<number>(numLabels).fill(-1))
@@ -128,6 +178,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	for (let t = 1; t < T; t++) {
 		const cur = new Array<number>(numLabels)
 		const ptr = new Array<number>(numLabels)
+		const tAdjust = adjustAt?.get(t)
 
 		for (let k = 0; k < numLabels; k++) {
 			let bestScore = NEG_INF
@@ -141,7 +192,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 					bestPrev = j
 				}
 			}
-			cur[k] = bestScore + emissions[t]![k]!
+			// The bonus is predecessor-independent, so it distributes over the max — adding it AFTER the
+			// argmax over j is exact, not an approximation.
+			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}
 		dp.push(cur)

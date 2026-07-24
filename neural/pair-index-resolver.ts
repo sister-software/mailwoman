@@ -68,6 +68,17 @@ export interface PairIndexHeader {
 	sourceMD5s: string[]
 	/** ISO date the shard was built. */
 	buildDate: string
+	/**
+	 * OPTIONAL per-country transition-bonus magnitude (TRANSITION-BETA build, 2026-07-24): on a pair hit, the prior emits
+	 * a position-scoped decoder adjustment of `+transitionBeta` on every transition INTO `B-<tag>` at the child span's
+	 * first piece — the path-fusion recovery lever the task-8 transition-level probe measured (β=5: 13/17 comma-free GB
+	 * misses recovered, zero measured collateral on 47 correct rows + 200 venue-confound rows). ABSENT = no transition
+	 * term at all (today's emission-only behavior) — backward compatible (old binaries lack the field and keep working)
+	 * AND forward compatible (old readers parse the header JSON and simply never consult the extra key; `schemaVersion`
+	 * stays 1 because absence-tolerant readers need no gate). Calibrated per country like `delta`: the GB artifact ships
+	 * 5; the NZ artifact deliberately ships WITHOUT it (unmeasured there, and comma-free NZ is already at 99.2%).
+	 */
+	transitionBeta?: number
 }
 
 /**
@@ -253,14 +264,26 @@ export class PairIndexResolver {
 	get delta(): number {
 		return this.header.delta
 	}
+
+	/**
+	 * Exposes the optional transition-bonus magnitude (see {@link PairIndexHeader.transitionBeta}) so the resolver
+	 * conforms to {@link PairIndexLike}. `undefined` on a binary built without the field — the prior then emits no
+	 * transition adjustments (the pre-TRANSITION-BETA behavior, exactly).
+	 */
+	get transitionBeta(): number | undefined {
+		return this.header.transitionBeta
+	}
 }
 
 /**
  * Minimal subset of `PairIndexResolver` a prior module consumes — structural typing so callers depend on the shape, not
  * the class (the `query-shape-prior.ts` "…Like" convention). `delta` is optional because a hand-built test double may
- * omit it; a real index's header carries the authoritative value.
+ * omit it; a real index's header carries the authoritative value. `transitionBeta` is optional in BOTH senses: a test
+ * double may omit it, and a real header legitimately lacks it (see {@link PairIndexHeader.transitionBeta} — absent means
+ * no transition term, not a default).
  */
 export interface PairIndexLike {
 	probe(child: string, parent: string): ComponentTag | undefined
 	readonly delta?: number
+	readonly transitionBeta?: number
 }
