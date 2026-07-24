@@ -365,3 +365,26 @@ probe chain). The training-side resurrection lineage closed at five falsified me
 three stop-rule executions; the capability ships on the untouched v385. Receipts:
 `.superpowers/sdd/task-8-report.md` §§ "Option A" through "v1.1 anchored-mode battery"; design
 record `2026-07-24-pair-prior-comma-scope-{KIMI_HANDOFF,BRAINSTORM_RESPONSE}.md`.
+
+---
+
+## Postscript 3 (2026-07-24, night-3): country two shipped + the doors beyond dependent_locality
+
+**en-nz shipped** (bundle 6.6.2 / npm 7.8.0): LINZ-derived pair index (3,134 pairs, δ=10 — the
+uniform-deficit shape replicates cross-country: NZ gap mean 7.8 logits vs GB 7.0, same δ works),
+plus the identical-adjacent-segment (x,x) rule for NZ's repeated-name convention ("Mangawhai,
+Mangawhai" — 21.6% of NZ register names carry identity pairs; GB has zero, verified). NZ board:
+246/246 emit + tag-correct as-written (100%), 244/246 comma-free. E2E verified off the public
+registry, both probe paths. Venue precision on REAL data (6,500 Overture NZ rows, synthetic
+interim retired): segment 3.569%, anchored 1.354% in the shipped no-anchor-bin configuration
+(corrected same-night from a borrowed-cache 0.862% — measurement context matters and gets
+documented, not buried).
+
+**The generalization map** (the operator's "full use of the gazetteer" question): healthy-tag
+reassignment (namesakes) FALSIFIED — the parse was never wrong there (189/189 region tagging);
+transition-level pair evidence MEASURED OPEN — β=5 on the boundary transition recovers 13/17 of
+the comma-free path-fusion misses (β=8: 15/17) with zero collateral on 47 correct rows + 200
+venue rows; graduates to a build proposal. Venue pairs (#1287) and street pairs (#1288) filed
+with probe designs. The GB postcode-clip fix (#1290) rode the same night: a 41.5% silent clip
+rate traced to an unreachable repair pass — one codex conventions row + a card pin, exact
+26→83, clips 0, all pair-prior surfaces byte-identical.
