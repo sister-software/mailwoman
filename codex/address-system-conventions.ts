@@ -19,6 +19,7 @@
  */
 
 import { CODE_POSTAL_PATTERN } from "./fr/code-postal.ts"
+import { UK_POSTCODE_PATTERN } from "./gb/postcode.ts"
 import type { SystemCode } from "./postcode-systems.ts"
 
 export interface AddressSystemConventions {
@@ -57,6 +58,24 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	fr: {
 		forbiddenTags: ["street_suffix"],
 		postcodePattern: CODE_POSTAL_PATTERN,
+	},
+
+	/**
+	 * United Kingdom (Royal Mail / UK-gov postcode shape — see `gb/postcode.ts` for the full provenance note): the
+	 * postcode is variable-length ALPHANUMERIC, outward + inward (`SW1A 1AA`, `M1 1AE`, `SK11 9PD`), the most complex
+	 * shape of any system in the codex. That very shape is what makes the snap repair valuable: the model fragments it
+	 * (`SK11 9PD` → region "S" + postcode "K11 9PD") and a fragment is a strict sub-match of the pattern-valid string in
+	 * the raw text — exactly the shape-INVALID class `postcodePattern` exists to flag.
+	 *
+	 * Provenance (#1275, 2026-07-24): on the GB golden board's 106 postcode rows under the en-gb bundle, the clip class
+	 * (parsed postcode = proper suffix of the truth) was 44/106 with this row absent — the repair gate never opened
+	 * because `conventionsForSystem("gb")` returned null. With the repair reachable, exact 26 → 83 and the clip class
+	 * goes to zero. No `forbiddenTags`: no measured GB-ungrammatical tag class exists (the FR street_suffix forbid's
+	 * lesson — a forbid needs measured zero-cost receipts, and GB street grammar shares the trailing-suffix family with
+	 * US/CA).
+	 */
+	gb: {
+		postcodePattern: UK_POSTCODE_PATTERN,
 	},
 }
 

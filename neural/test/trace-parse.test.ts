@@ -236,6 +236,68 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(trace.tokens.some((t) => t.label.endsWith("postcode"))).toBe(true)
 	})
 
+	it("GB conventions pin (#1275): a clipped GB postcode is snap-repaired with NO explicit postcodeRepair opt", async () => {
+		// Characterizes the #1275 clip class: the en-gb overlay mis-tags the first piece of the outward
+		// code as region ("SK11 9PD" → region "S" + postcode "K11 9PD"). The en-gb model-card pins
+		// `requires.conventions.mode` to "gb", which loadFromWeights forwards as the classifier's
+		// `addressSystemConventions` config — reproduced here directly. The codex gb row's
+		// `postcodePattern` must open the repair gate so the snap path reunites the span.
+		const tokenizer = await loadTokenizer()
+		const text = "Macclesfield SK11 9PD"
+		const { pieces } = tokenizer.encode(text)
+		const postcodeStart = text.indexOf("SK11")
+		// First piece carrying actual postcode characters (the fixture tokenizer emits a zero-width "▁"
+		// piece at a word boundary — a zero-width span can never overlap the repair's raw-text match).
+		const firstPostcodePiece = pieces.findIndex((p) => p.start >= postcodeStart && p.end > p.start)
+		expect(firstPostcodePiece).toBeGreaterThan(0)
+
+		// The diagnosed mislabel shape: locality run, then B-region on the outward code's first piece,
+		// then the postcode labels on the remainder (the clip).
+		const logits = pieces.map((_, i) => {
+			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+			const label =
+				i < firstPostcodePiece
+					? i === 0
+						? "B-locality"
+						: "I-locality"
+					: i === firstPostcodePiece
+						? "B-region"
+						: i === firstPostcodePiece + 1
+							? "B-postcode"
+							: "I-postcode"
+			row[STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])] = 6
+
+			return row
+		})
+
+		// WITHOUT the pin (pre-#1275 en-gb reality): the gate never opens, the clip stands.
+		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
+		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
+		expect(clippedTrace.repairs).toEqual([])
+		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
+		expect(clipped.postcode).toBeDefined()
+		expect(clipped.postcode).not.toBe("SK11 9PD")
+		expect("SK11 9PD".endsWith(clipped.postcode!)).toBe(true)
+
+		// WITH the pin (what the en-gb card now declares): pinned system → codex gb row → repair gate
+		// opens → the snap path relabels the whole raw-text match as one postcode span.
+		const pinned = new NeuralAddressClassifier({
+			tokenizer,
+			runner: new FakeRunner(logits),
+			addressSystemConventions: "gb",
+		})
+		const trace = await pinned.traceParse(text, { spanProposer: false })
+		expect(trace.systemSource).toBe("pinned")
+		expect(trace.detectedSystem).toBe("gb")
+		const repair = trace.repairs.find((r) => r.pass === "postcodeRepair")
+		expect(repair).toBeDefined()
+		expect(repair!.before).not.toEqual(repair!.after)
+
+		const repaired = (await pinned.parseJSON(text)) as { postcode?: string; region?: string }
+		expect(repaired.postcode).toBe("SK11 9PD")
+		expect(repaired.region).toBeUndefined()
+	})
+
 	it("no repairs requested → repairs empty", async () => {
 		const tokenizer = await loadTokenizer()
 		const text = "350 5th Ave"

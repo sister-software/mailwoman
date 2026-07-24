@@ -427,7 +427,13 @@ export class NeuralAddressClassifier {
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
-			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
+			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
+			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is
+			// runtime-safe. An overlay card may pin a concrete system here (en-gb pins "gb", #1275) when the
+			// locale head's auto detection under-fires for the bundle's own locale.
+			...(addressSystemConventions
+				? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode }
+				: {}),
 		})
 	}
 

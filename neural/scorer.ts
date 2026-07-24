@@ -23,7 +23,7 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
-import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
+import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
@@ -437,7 +437,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
 		suppressGazetteerNearPostcode,
-		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
+		// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
+		// downstream, never a throw. Overlay cards may pin a concrete system (en-gb pins "gb", #1275).
+		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
 		bridgePunctuationGaps,
 	})
 }
