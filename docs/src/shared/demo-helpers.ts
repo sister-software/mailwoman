@@ -11,10 +11,11 @@
 // usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
+import type { ParseResult } from "@mailwoman/react"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
-import type { MailwomanLookupLike } from "./resources.tsx"
+import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -110,6 +111,10 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	// released en-gb-shaped weights bundle with the pair-index prior wired (post-promotion); harmless
 	// before that (parses through whatever weights the demo currently serves, same as any other input).
 	{ label: "Macclesfield (GB dependent_locality)", address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD" },
+	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of the city of
+	// Porirua. Same shape as the GB row above: only lights up once the demo repoints to a released weights bundle
+	// with the en-nz pair-index prior wired; harmless before that (parses through whatever weights the demo serves).
+	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua 5026" },
 ]
 
 // ---------------------------------------------------------------------------
@@ -211,6 +216,108 @@ export function flattenTree(
 	}
 
 	return out.reverse()
+}
+
+// ---------------------------------------------------------------------------
+// Parse orchestration — the shared classify → resolve front-half (#861 / #1278)
+// ---------------------------------------------------------------------------
+
+/** A source-order parsed node, as {@link flattenTree} yields it. */
+export type FlatNode = ReturnType<typeof flattenTree>[number]
+
+/** What both demo parse paths need out of the neural classify stage before resolution. */
+export interface ClassifyStageResult {
+	/** The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`). */
+	tree: unknown
+	/** Source-order flattened nodes. */
+	nodes: FlatNode[]
+	/** The query-shape kind hypothesis (`postcode_only` / `structured_address` / …). */
+	kindResult: ParseResult["kindResult"]
+	/** Wall-clock timing for the two front-half stages, in ms. */
+	timing: { shape: number; classify: number }
+}
+
+/**
+ * The neural classify front-half, shared by BOTH demo parse paths (the `/demo` map's `runParseWithBias` and the
+ * MDX-embed `PipelineExplorer`'s `runParse`): the 4-way pipeline import, the query-shape + kind pass, the neural
+ * `runPipeline`, and the tree flatten — with the two front-half timings captured. The caller owns resolution
+ * (`runCascade`, plus the map path's street tier / anchor fallback) and the staged `onStage` progress ticks.
+ *
+ * #1278: this is the single seam the locale-gate pre-parse plugs into. A future per-parse country / conventions hint is
+ * threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
+ */
+export interface ClassifyStageDeps {
+	/** The loaded neural classifier (must be ready — the caller guards `null`). */
+	classifier: MailwomanClassifierLike
+	/** The optional FST gazetteer prior. */
+	fst?: FSTMatcherLike | null
+}
+
+export interface ClassifyStageHooks {
+	/**
+	 * Fired after the (synchronous) query-shape + kind pass, immediately before the neural pipeline runs. Drives the
+	 * staged progress UI's "Running neural classifier…" transition. Both callers wire it to their `onStage(1)`.
+	 */
+	onClassifierStart?: () => void
+}
+
+/**
+ * Run the shared classify front-half. See {@link ClassifyStageResult} / {@link ClassifyStageDeps}.
+ */
+export async function runClassifyStage(
+	input: string,
+	deps: ClassifyStageDeps,
+	hooks: ClassifyStageHooks = {}
+): Promise<ClassifyStageResult> {
+	const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
+		import("@mailwoman/query-shape"),
+		import("@mailwoman/kind-classifier"),
+		import("@mailwoman/core/pipeline"),
+		import("@mailwoman/phrase-grouper"),
+	])
+
+	const tStart = performance.now()
+	const queryShape = computeQueryShape(input)
+	const kindResult = classifyKindSync({ raw: input, normalized: input }, queryShape)
+	const tShape = performance.now()
+
+	hooks.onClassifierStart?.()
+
+	const { tree } = await runPipeline(input, {
+		computeQueryShape,
+		groupPhrases,
+		classifier: deps.classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+		fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
+	})
+	const tClassify = performance.now()
+
+	return {
+		tree,
+		nodes: flattenTree(tree),
+		kindResult: kindResult as ParseResult["kindResult"],
+		timing: { shape: tShape - tStart, classify: tClassify - tShape },
+	}
+}
+
+/**
+ * Dual-role (#402) resolution, shared by both parse paths: whether the resolved pin doubles as another admin tier.
+ * Best-effort + optional — a placeless pin (`id === 0`, e.g. the map path's anchor/street synthesized hits), a lookup
+ * with no `coincidentRolesFor`, an empty relation, or a failed query all resolve to `undefined` (no dual-role badge).
+ */
+export async function resolveDualRoles(
+	lookup: MailwomanLookupLike,
+	primaryHit: { id: number } | undefined
+): Promise<DualRole[] | undefined> {
+	if (!primaryHit || !primaryHit.id || !lookup.coincidentRolesFor) return undefined
+
+	try {
+		const roles = await lookup.coincidentRolesFor(primaryHit.id)
+
+		return roles.length > 0 ? roles : undefined
+	} catch {
+		// relation absent / query failed → no dual-role badge
+		return undefined
+	}
 }
 
 // ---------------------------------------------------------------------------

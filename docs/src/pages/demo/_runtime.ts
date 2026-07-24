@@ -42,34 +42,25 @@ import type {
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type { Calibrator, ReleaseInfo, ResolveBias, StreetResolution } from "../../shared/demo-helpers.ts"
+import type { ReleaseInfo, ResolveBias, StreetResolution } from "../../shared/demo-helpers.ts"
 import {
 	DEFAULT_LOCALE,
-	flattenTree,
 	normalizeReleasesManifest,
+	resolveDualRoles,
 	resolveStreet,
 	runCascade,
+	runClassifyStage,
 } from "../../shared/demo-helpers.ts"
-import { createCalibrator } from "../../shared/demo-helpers.ts"
+import type { DocsDemoAssets } from "../../shared/demo-loader.ts"
+import { loadDemoAssets } from "../../shared/demo-loader.ts"
 import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
-import type {
-	DualRole,
-	FSTMatcherLike,
-	FSTProvenanceLike,
-	MailwomanClassifierLike,
-	MailwomanLookupLike,
-	ParseTraceLike,
-	ResolvedHit,
-} from "../../shared/resources.tsx"
+import type { ParseTraceLike, ResolvedHit } from "../../shared/resources.tsx"
 import {
-	adminGazetteerURL,
 	assetURL,
 	HOSTED_STREET_SLUGS,
-	loadFSTGazetteer,
 	NATIONAL_STREET_FALLBACK_SLUG,
 	NATIONAL_STREET_SLUGS,
-	neuralClassifierLoadURLs,
 	regionToStateSlug,
 	streetShardURL,
 } from "../../shared/resources.tsx"
@@ -92,17 +83,6 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
 	interp: HTTPVFSInterpolator | undefined
-}
-
-/** The docs-side asset bundle `useDemoRuntime` loads + holds for the selected version (opaque to the package). */
-interface DocsDemoAssets {
-	classifier: MailwomanClassifierLike
-	/** Postcode-anchor centroid lookup (US ZIP → real centroid), for the postcode-only dead-end fallback. */
-	anchorLookup: Map<string, { lat: number; lon: number }> | null
-	fstMatcher: FSTMatcherLike | null
-	fstProvenance: FSTProvenanceLike | null
-	lookup: MailwomanLookupLike | null
-	calibrator: Calibrator | null
 }
 
 /** Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`. */
@@ -170,102 +150,11 @@ export function useDemoMapRuntime({
 		return res.ok ? normalizeReleasesManifest(await res.json()) : null
 	}, [])
 
+	// Delegates to the shared `loadDemoAssets` (the ONE docs-side loader, also used by the MDX-embed context) so the
+	// two demo entry points can't drift on the classifier/calibration/FST/WOF load sequence.
 	const loadAssets = useCallback(
-		async (release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<DocsDemoAssets> => {
-			ctx.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
-
-			const steps: string[] = ["Loading classifier"]
-
-			if (release.hasFST) {
-				steps.push("Loading FST gazetteer")
-			}
-
-			if (release.hasWOFDb) {
-				steps.push("Loading WOF database")
-			}
-			ctx.setStepLabels(steps)
-
-			const neuralWeb = await import("@mailwoman/neural-web")
-			const {
-				classifier: cls,
-				diagnostics,
-				postcodeAnchorLookup,
-				// The runtime API is wider than the TS types; cast through unknown (the runtime bundle ships a wider surface than its types).
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} = (await neuralWeb.loadNeuralClassifierFromURLs(
-				neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-					hasAnchor: release.hasAnchor,
-					forceWASM: ctx.forceWASM,
-				})
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			)) as unknown as any as {
-				classifier: MailwomanClassifierLike
-				diagnostics?: { backend: string; modelBytes: number } | null
-				postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
-			}
-
-			ctx.setBackend(
-				diagnostics
-					? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
-					: "unknown"
-			)
-			ctx.setStepIndex(0)
-
-			// Isotonic confidence calibration (#59) — tolerate a 404 (pre-v4.0.0 bundles ship no table).
-			let calibrator: Calibrator | null = null
-
-			try {
-				const calRes = await fetch(assetURL(DEFAULT_LOCALE, release.version, "calibration.json"))
-
-				if (calRes.ok) {
-					calibrator = createCalibrator(await calRes.json())
-				}
-			} catch {
-				// No calibration table for this version — raw scores it is.
-			}
-
-			let fstMatcher: FSTMatcherLike | null = null
-			let fstProvenance: FSTProvenanceLike | null = null
-
-			if (release.hasFST) {
-				try {
-					const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, release.version)
-					fstMatcher = fstResult.matcher
-					fstProvenance = fstResult.provenance ?? null
-				} catch {
-					// FST not available for this version.
-				}
-			}
-			ctx.setStepIndex(1)
-
-			let lookup: MailwomanLookupLike | null = null
-
-			if (release.hasWOFDb) {
-				try {
-					const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
-					const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)
-
-					if (!ctx.signal.aborted) {
-						const wofLookup = new WOFCandidateTableLookup(worker)
-						// Fire-and-forget warm-up so the first interactive query starts warm.
-						void wofLookup.warmUp().catch(() => {})
-						lookup = wofLookup as unknown as MailwomanLookupLike
-					}
-				} catch {
-					// WOF DB not available for this version.
-				}
-			}
-			ctx.setStepIndex(2)
-
-			return {
-				classifier: cls,
-				anchorLookup: postcodeAnchorLookup ?? null,
-				fstMatcher,
-				fstProvenance,
-				lookup,
-				calibrator,
-			}
-		},
+		(release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<DocsDemoAssets> =>
+			loadDemoAssets(release, ctx, sqljsBaseURL),
 		[sqljsBaseURL]
 	)
 
@@ -395,29 +284,15 @@ export function useDemoMapRuntime({
 			if (!classifier) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
-			const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
-				import("@mailwoman/query-shape"),
-				import("@mailwoman/kind-classifier"),
-				import("@mailwoman/core/pipeline"),
-				import("@mailwoman/phrase-grouper"),
-			])
+			// Shared classify front-half (#861 / #1278 seam): 4-way pipeline import → query-shape/kind → neural
+			// runPipeline → flatten, with the two front-half timings captured. `onStage(1)` fires between shape and
+			// classify, exactly as before.
+			const { tree, nodes, kindResult, timing } = await runClassifyStage(
+				input,
+				{ classifier, fst: assets?.fstMatcher },
+				{ onClassifierStart: () => hooks.onStage(1) }
+			)
 
-			const tStart = performance.now()
-			const queryShape = computeQueryShape(input)
-			const kindResult = classifyKindSync({ raw: input, normalized: input }, queryShape)
-			const tShape = performance.now()
-
-			hooks.onStage(1)
-
-			const { tree } = await runPipeline(input, {
-				computeQueryShape,
-				groupPhrases,
-				classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
-				fst: (assets?.fstMatcher ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
-			})
-			const tClassify = performance.now()
-
-			const nodes = flattenTree(tree)
 			const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 			const stateNode = nodes
 				.filter((n) => n.tag === "region" || n.tag === "state")
@@ -472,10 +347,10 @@ export function useDemoMapRuntime({
 					nodes: asView(nodes),
 					resolved: null,
 					candidates: [],
-					kindResult: kindResult as ParseResult["kindResult"],
+					kindResult,
 					fstActive: assets?.fstMatcher != null,
 					fstProvenance: assets?.fstProvenance ?? null,
-					timing: { shape: tShape - tStart, classify: tClassify - tShape },
+					timing,
 				}
 			}
 
@@ -562,21 +437,9 @@ export function useDemoMapRuntime({
 				candidates.unshift(streetCandidate)
 			}
 
-			// Dual-role (#402): whether the resolved place doubles as another admin tier. Best-effort + optional.
-			let dualRoles: DualRole[] | undefined
-			const primaryHit = candidates[0]
-
-			if (primaryHit && primaryHit.id && wofLookup.coincidentRolesFor) {
-				try {
-					const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
-
-					if (roles.length > 0) {
-						dualRoles = roles
-					}
-				} catch {
-					/* relation absent / query failed → no dual-role badge */
-				}
-			}
+			// Dual-role (#402): whether the resolved place doubles as another admin tier. Best-effort + optional
+			// (shared with the MDX-embed path). A synthesized street/anchor pin (`id === 0`) is skipped by the helper.
+			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
 
 			return {
 				input,
@@ -584,10 +447,10 @@ export function useDemoMapRuntime({
 				nodes: asView(nodes),
 				resolved: candidates[0] ?? null,
 				candidates,
-				kindResult: kindResult as ParseResult["kindResult"],
+				kindResult,
 				fstActive: assets?.fstMatcher != null,
 				fstProvenance: assets?.fstProvenance ?? null,
-				timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
+				timing: { ...timing, resolve: tResolve - tBeforeResolve },
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},

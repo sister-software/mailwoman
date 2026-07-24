@@ -23,7 +23,9 @@ import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
 
 import type { Calibrator, ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
-import { createCalibrator, DEFAULT_LOCALE, normalizeReleasesManifest } from "../shared/demo-helpers.ts"
+import { DEFAULT_LOCALE, normalizeReleasesManifest } from "../shared/demo-helpers.ts"
+import type { DocsDemoAssets } from "../shared/demo-loader.ts"
+import { loadDemoAssets } from "../shared/demo-loader.ts"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 import type {
 	FSTMatcherLike,
@@ -31,7 +33,7 @@ import type {
 	MailwomanClassifierLike,
 	MailwomanLookupLike,
 } from "../shared/resources.tsx"
-import { adminGazetteerURL, assetURL, loadFSTGazetteer } from "../shared/resources.tsx"
+import { assetURL } from "../shared/resources.tsx"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -79,18 +81,6 @@ export interface DemoEmbedState {
 	forceWASM: boolean
 }
 
-/**
- * The docs-side asset bundle `useDemoRuntime` loads + holds for the selected version. Opaque to the package (which only
- * sequences the load); this provider re-projects it onto the flat {@link DemoEmbedState} its consumers read.
- */
-interface DocsDemoAssets {
-	classifier: MailwomanClassifierLike
-	fstMatcher: FSTMatcherLike | null
-	fstProvenance: FSTProvenanceLike | null
-	lookup: MailwomanLookupLike | null
-	calibrator: Calibrator | null
-}
-
 const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
 
 // ---------------------------------------------------------------------------
@@ -132,116 +122,14 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		}
 	}, [])
 
-	// Load the classifier + calibration + FST + WOF bundle for one release. Reports staged progress via
-	// `ctx`; `useDemoRuntime` owns the terminal ready/error state and reveals the returned bundle atomically.
+	// Load the classifier + calibration + FST + WOF bundle for one release, via the shared `loadDemoAssets` (the ONE
+	// docs-side loader, also used by the `/demo` page). Reports staged progress via `ctx`; `useDemoRuntime` owns the
+	// terminal ready/error state and reveals the returned bundle atomically. The extra try/catch keeps this path's
+	// diagnostic console log on a load failure (the embed's original behavior).
 	const loadAssets = useCallback(
 		async (release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<DocsDemoAssets> => {
 			try {
-				ctx.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
-
-				// Build staged step labels based on what this release includes.
-				const steps: string[] = ["Loading classifier"]
-
-				if (release.hasFST) {
-					steps.push("Loading FST gazetteer")
-				}
-
-				if (release.hasWOFDb) {
-					steps.push("Loading WOF database")
-				}
-				ctx.setStepLabels(steps)
-
-				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the browser-safe
-				// entry. TypeScript types are narrower than the runtime API so we cast through unknown (same
-				// pattern as the demo page).
-				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier, diagnostics } = (await neuralWeb.loadNeuralClassifierFromURLs({
-					modelURL: assetURL(DEFAULT_LOCALE, release.version, "model.onnx"),
-					tokenizerURL: assetURL(DEFAULT_LOCALE, release.version, "tokenizer.model"),
-					modelCardURL: assetURL(DEFAULT_LOCALE, release.version, "model-card.json"),
-					// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The
-					// loader tolerates a 404 for older bundles (logging loudly when the model needed it).
-					gazetteerLexiconURL: assetURL(DEFAULT_LOCALE, release.version, "anchor-lexicon-v1.json"),
-					runner: { useWebGPU: !ctx.forceWASM },
-					...(release.hasAnchor
-						? {
-								postcodeBinaryURLs: [
-									assetURL(DEFAULT_LOCALE, release.version, "postcode-us.bin"),
-									assetURL(DEFAULT_LOCALE, release.version, "postcode-de.bin"),
-									assetURL(DEFAULT_LOCALE, release.version, "postcode-fr.bin"),
-								],
-							}
-						: {}),
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				})) as unknown as any as {
-					classifier: MailwomanClassifierLike
-					diagnostics?: { backend: string; modelBytes: number } | null
-				}
-				ctx.setBackend(
-					diagnostics
-						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
-						: "unknown"
-				)
-
-				// Step 0 complete: classifier loaded.
-				ctx.setStepIndex(0)
-
-				// Isotonic confidence calibration (#59): turns the version's `calibration.json` table into a
-				// (raw)=>calibrated map. Tolerate a 404 — pre-v4.0.0 bundles ship no table, in which case the
-				// demo shows raw softmax scores (and says so). The table is the model's OWN held-out
-				// reliability, so it must match the loaded version.
-				let calibrator: Calibrator | null = null
-
-				try {
-					const calRes = await fetch(assetURL(DEFAULT_LOCALE, release.version, "calibration.json"))
-
-					if (calRes.ok) {
-						calibrator = createCalibrator(await calRes.json())
-					}
-				} catch {
-					// No calibration table for this version — raw scores it is.
-				}
-
-				let fstMatcher: FSTMatcherLike | null = null
-				let fstProvenance: FSTProvenanceLike | null = null
-
-				if (release.hasFST) {
-					try {
-						const fstResult = await loadFSTGazetteer(DEFAULT_LOCALE, release.version)
-						fstMatcher = fstResult.matcher
-						fstProvenance = fstResult.provenance ?? null
-					} catch {
-						// FST not available for this version
-					}
-				}
-
-				// Step 1 complete: FST loaded (or skipped).
-				ctx.setStepIndex(1)
-
-				let lookup: MailwomanLookupLike | null = null
-
-				if (release.hasWOFDb) {
-					try {
-						const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("../shared/httpvfs-resolver")
-						const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)
-
-						if (!ctx.signal.aborted) {
-							const wofLookup = new WOFCandidateTableLookup(worker)
-							// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now so the first
-							// interactive query starts warm. The worker serializes execs, so a user query issued
-							// mid-warm-up simply queues behind pages it was going to need anyway.
-							void wofLookup.warmUp().catch(() => {})
-							lookup = wofLookup
-						}
-					} catch {
-						// WOF DB not available for this version
-					}
-				}
-
-				// Step 2 complete: all assets loaded.
-				ctx.setStepIndex(2)
-
-				return { classifier, fstMatcher, fstProvenance, lookup, calibrator }
+				return await loadDemoAssets(release, ctx, sqljsBaseURL)
 			} catch (error) {
 				console.error("Error loading resources", error)
 				throw error
