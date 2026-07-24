@@ -95,6 +95,18 @@
  *   comma-delimits it as its own field) — which is exactly the shape a real structured address has
  *   ("5 Fishburn Road, Fishburn, Stockton-on-Tees") and a venue-embedding string does not.
  *
+ *   **Same-field trailing postcode (#1308).** An idiomatic NZ / free-text GB address writes the postcode in the SAME
+ *   comma-field as the post town, with no comma between them: "…Plimmerton, Porirua 5026", "…Henbury, Macclesfield SK11
+ *   9PD". Without correction that segment folds to "porirua 5026" / "macclesfield sk11 9pd" and misses the index's bare
+ *   "porirua" / "macclesfield" parent, so the (child, parent) pair never fires (the comma-separated "…, Porirua, 5026"
+ *   and no-postcode forms already flip — the postcode simply lands in its own segment there). The segment path fixes this
+ *   by stripping a TRAILING postcode-shaped run from a segment's KEY before it becomes a parent-candidate probe key — per
+ *   the index header country's postcode shape (`@mailwoman/codex/<system>`; see {@link segmentParentPostcodeShape} /
+ *   {@link stripTrailingSegmentPostcode}). Only a trailing run, never a segment that IS just a postcode, and only for a
+ *   country with a known codex shape (else byte-stable). SEGMENT PATH ONLY — anchored mode already anchors LEFT of the
+ *   whole postcode span (see "Anchored mode"), and window mode is untouched. Positions/pieceIndices still span the whole
+ *   segment, so only the probe key changes.
+ *
  *   **Identity pairs — the repeated-name convention (segment path only).** Some registers conventionally
  *   write the same name twice when the dependent locality and the post town coincide — NZ is the measured
  *   case ("Mangawhai, Mangawhai": 63/246 rows of the NZ golden board, 25.6%; task-8 report § "NZ arc"),
@@ -252,6 +264,8 @@
  *   this locale) — the probe loop simply never finds a tag.
  */
 
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
+import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import { groupPiecesIntoWords, type WordGroup } from "./fst-prior.ts"
@@ -514,14 +528,72 @@ function computeGroupSegments(
 }
 
 /**
+ * Most trailing word-groups a segment-parent postcode strip will ever remove (#1308). A GB postcode is two space-split
+ * word-groups at most (outward + inward, "SK11 9PD"); NZ is one (four digits). Two covers both — and, anchored
+ * full-match against the country shape, a longer accidental run can't match a real postcode pattern anyway.
+ */
+const MAX_TRAILING_POSTCODE_WORDS = 2
+
+/**
+ * Per-country postcode shape used ONLY by the segment path's trailing-postcode strip (#1308), keyed by the pair index
+ * header's lowercase ISO country. Each entry is the SAME anchored shape codex owns as that system's source of truth
+ * (`@mailwoman/codex/<system>`), so the strip and the postcode-repair / postcode-anchor passes never drift on what a GB
+ * / NZ postcode is. Country-aware BY DESIGN: a header country with no entry here → no strip → byte-stable (see
+ * {@link segmentParentPostcodeShape}). Grow this map only with a real codex shape for the added country.
+ */
+const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
+	["gb", UK_POSTCODE_PATTERN],
+	["nz", NZ_POSTCODE_PATTERN],
+])
+
+/** The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip). */
+function segmentParentPostcodeShape(country: string | undefined): RegExp | undefined {
+	return country ? SEGMENT_PARENT_POSTCODE_SHAPES.get(country.toLowerCase()) : undefined
+}
+
+/**
+ * Drop a TRAILING postcode-shaped run from a segment's fold tokens before it becomes a parent-candidate key (#1308).
+ * The bug this closes: an idiomatic NZ / free-text GB address writes the postcode in the SAME comma-field as the post
+ * town ("Porirua 5026", "Macclesfield SK11 9PD"), so the whole segment folds to "porirua 5026" / "macclesfield sk11
+ * 9pd" and misses the index's bare "porirua" / "macclesfield" parent — the (child, parent) pair never fires. Stripping
+ * the trailing postcode lets the town alone key the parent probe.
+ *
+ * Guards (all three from the issue): (1) only a TRAILING run — the longest suffix of
+ * ≤{@link MAX_TRAILING_POSTCODE_WORDS} tokens whose bare concatenation full-matches `shape` (longest-first so a
+ * two-token GB postcode strips whole); (2) NEVER the entire segment — `tokens.length < 2` returns unchanged, so a field
+ * that IS just a postcode (the comma-separated "…, 5026" form) is left exactly as today and remains inert as before;
+ * (3) country-aware — a `shape` of `undefined` (no header country, or no codex shape for it) returns the tokens
+ * untouched, so the segment key is byte-identical to pre-#1308 behavior. No trailing postcode → the loop finds no match
+ * and returns the input array.
+ */
+function stripTrailingSegmentPostcode(tokens: readonly string[], shape: RegExp | undefined): readonly string[] {
+	if (shape === undefined || tokens.length < 2) return tokens
+
+	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
+
+	for (let take = maxTake; take >= 1; take--) {
+		if (shape.test(tokens.slice(tokens.length - take).join(""))) return tokens.slice(0, tokens.length - take)
+	}
+
+	return tokens
+}
+
+/**
  * Build one candidate per comma-delimited SEGMENT of the input (segment mode) — see the module docstring's "Segment
  * mode" section for the venue-confound rationale. Groups sharing a segment index are always contiguous in
  * `nonEmptyGroups` (both lists are built in text order), so a single forward pass over the precomputed `groupSegments`
  * (see {@link computeGroupSegments}) suffices.
+ *
+ * `parentPostcodeShape` (the index's country trailing-postcode shape, #1308) strips a trailing postcode from the
+ * segment's KEY forms only (see {@link stripTrailingSegmentPostcode}) — `startPos`/`endPos`/`pieceIndices` still span
+ * the WHOLE segment, so disjointness, marker suppression, the identity-repeat check, and the bias write are all
+ * byte-identical to pre-#1308 behavior; ONLY the probe key of a parent-candidate segment carrying a same-field postcode
+ * changes.
  */
 function buildSegmentWindows(
 	nonEmptyGroups: readonly WordGroup[],
-	groupSegments: readonly number[]
+	groupSegments: readonly number[],
+	parentPostcodeShape: RegExp | undefined
 ): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
@@ -532,11 +604,14 @@ function buildSegmentWindows(
 	for (let i = 1; i <= nonEmptyGroups.length; i++) {
 		if (i === nonEmptyGroups.length || groupSegments[i] !== groupSegments[segStart]) {
 			const slice = nonEmptyGroups.slice(segStart, i)
-			const tokens = slice.map((g) => g.fstToken)
+			const keyTokens = stripTrailingSegmentPostcode(
+				slice.map((g) => g.fstToken),
+				parentPostcodeShape
+			)
 
 			windows.push({
-				key: tokens.join(" "),
-				concatKey: tokens.join(""),
+				key: keyTokens.join(" "),
+				concatKey: keyTokens.join(""),
 				startPos: segStart,
 				endPos: i - 1,
 				pieceIndices: slice.flatMap((g) => g.pieceIndices),
@@ -803,7 +878,13 @@ export function buildPlacetypePairPriors(
 	// comma-free input, where every group shares segment 0 anyway.
 	const needsSegments = probeMode === "segment" || probeMode === "auto"
 	const groupSegments = needsSegments ? computeGroupSegments(nonEmptyGroups, pieces, opts.inputText) : undefined
-	const segmentWindows = groupSegments ? buildSegmentWindows(nonEmptyGroups, groupSegments) : undefined
+	// #1308: the segment path strips a trailing same-field postcode from parent-candidate keys, per the index country's
+	// codex shape. Resolved on the segment path only — anchored and window modes never see it (they build their own
+	// candidates), so their behavior is byte-identical to pre-#1308.
+	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country) : undefined
+	const segmentWindows = groupSegments
+		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape)
+		: undefined
 
 	// The "auto" probe-chain dispatch (v1.1 — module docstring, "Probe mode"): with <2 comma segments the segment path
 	// is structurally inert (one giant candidate cannot pair with itself), so the anchored-adjacent path takes over.

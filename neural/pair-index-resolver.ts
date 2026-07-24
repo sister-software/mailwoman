@@ -266,6 +266,15 @@ export class PairIndexResolver {
 	}
 
 	/**
+	 * Exposes the header's ISO country code so the resolver conforms to {@link PairIndexLike}. Consumed by the
+	 * placetype-pair prior's segment path to pick the country-specific trailing-postcode shape it strips before folding a
+	 * parent-candidate segment key (see `placetype-pair-prior.ts`'s `segmentParentPostcodeShape`).
+	 */
+	get country(): string {
+		return this.header.country
+	}
+
+	/**
 	 * Exposes the optional transition-bonus magnitude (see {@link PairIndexHeader.transitionBeta}) so the resolver
 	 * conforms to {@link PairIndexLike}. `undefined` on a binary built without the field — the prior then emits no
 	 * transition adjustments (the pre-TRANSITION-BETA behavior, exactly).
@@ -286,4 +295,11 @@ export interface PairIndexLike {
 	probe(child: string, parent: string): ComponentTag | undefined
 	readonly delta?: number
 	readonly transitionBeta?: number
+	/**
+	 * The index header's ISO country code (lowercase, e.g. `"gb"`/`"nz"`). Optional for the same two reasons as `delta`
+	 * and `transitionBeta`: a hand-built test double may omit it, and it drives an OPTIONAL behavior — the segment path's
+	 * country-aware trailing-postcode strip (see `placetype-pair-prior.ts`'s `segmentParentPostcodeShape`). Absent, or a
+	 * country with no known postcode shape → no strip (byte-stable).
+	 */
+	readonly country?: string
 }
