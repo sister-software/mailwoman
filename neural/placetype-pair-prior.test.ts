@@ -105,13 +105,15 @@ function makePiecesWithCommas(text: string): Array<{ piece: string; start: numbe
 function mockPairIndex(
 	entries: Record<string, string>,
 	delta?: number,
-	transitionBeta?: number
+	transitionBeta?: number,
+	country?: string
 ): PairIndexLike & { calls: Array<[string, string]> } {
 	const calls: Array<[string, string]> = []
 
 	return {
 		delta,
 		transitionBeta,
+		country,
 		calls,
 		probe(child: string, parent: string) {
 			calls.push([child, parent])
@@ -492,6 +494,111 @@ describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now
 		const { matrix: windowMatrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
 		expect(windowMatrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+	})
+})
+
+describe("buildPlacetypePairPriors — segment-parent same-field postcode strip (#1308)", () => {
+	// The bug (verified on shipped artifacts, CLI): when the postcode sits in the SAME comma-field as the post town with
+	// no comma between them (the idiomatic NZ form and a common GB free-text form), the parent segment folds to
+	// "porirua 5026" / "macclesfield sk11 9pd" and misses the index's bare "porirua" / "macclesfield" — the (child,
+	// parent) pair never fires. The fix strips a trailing postcode-shaped run (per the index country's codex shape) from
+	// the parent-candidate KEY before folding. Characterization (per the issue, CLI-level, on the shipped δ-only NZ /
+	// δ+β GB artifacts): "…Plimmerton, Porirua 5026" → Plimmerton=dependent_locality (was locality); "41 Hightree
+	// Drive, Henbury, Macclesfield SK11 9PD" → Henbury=dependent_locality (was locality). The comma-separated
+	// ("…, Porirua, 5026") and no-postcode forms already flipped and must not regress.
+
+	it('GB: "Macclesfield SK11 9PD" parent segment folds to "macclesfield" — the pair fires (the fix)', () => {
+		const index = mockPairIndex({ "henbury|macclesfield": "dependent_locality" }, 6.0, undefined, "gb")
+		const text = "41 Hightree Drive, Henbury, Macclesfield SK11 9PD"
+		// groups: 0=41 1=Hightree 2=Drive(+,) 3=Henbury(+,) 4=Macclesfield 5=SK11 6=9PD; Henbury's first piece is 4.
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// Henbury (the child) is biased dependent_locality — it only resolves once "Macclesfield SK11 9PD" strips to the
+		// bare "macclesfield" parent key.
+		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// The parent was probed under the STRIPPED key, never the postcode-bearing fold.
+		expect(index.calls).toContainEqual(["henbury", "macclesfield"])
+		expect(index.calls.some(([, parent]) => parent.includes("sk11") || parent.includes("9pd"))).toBe(false)
+	})
+
+	it('NZ: "Porirua 5026" parent segment folds to "porirua" — the pair fires (the fix)', () => {
+		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6.0, undefined, "nz")
+		const text = "35 Steyne Avenue, Plimmerton, Porirua 5026"
+		// groups: 0=35 1=Steyne 2=Avenue(+,) 3=Plimmerton(+,) 4=Porirua 5=5026; Plimmerton's first piece is 4.
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(index.calls).toContainEqual(["plimmerton", "porirua"])
+		expect(index.calls.some(([, parent]) => parent.includes("5026"))).toBe(false)
+	})
+
+	it("no trailing postcode: a multi-word parent segment folds byte-identically with the strip armed (no-op)", () => {
+		// "Stockton on Tees" is a 3-word parent that is NOT a postcode — the strip must leave it untouched. Proven by
+		// byte-identical matrix AND probe-call sequence against a country-less (strip-disabled) run.
+		const entries = { "fishburn|stocktonontees": "dependent_locality" }
+		const text = "Fishburn, Stockton on Tees"
+		const armed = mockPairIndex(entries, 6.0, undefined, "gb")
+		const disabled = mockPairIndex(entries, 6.0)
+		const armedResult = buildPlacetypePairPriors({ index: armed, inputText: text }, makePiecesWithCommas(text), LABELS)
+		const baseResult = buildPlacetypePairPriors(
+			{ index: disabled, inputText: text },
+			makePiecesWithCommas(text),
+			LABELS
+		)
+
+		expect(armedResult.matrix).toEqual(baseResult.matrix)
+		expect(armed.calls).toEqual(disabled.calls)
+		// The parent's full fold survived — nothing was stripped, and the pair still fires via the concat form.
+		expect(armed.calls).toContainEqual(["fishburn", "stockton on tees"])
+		expect(armedResult.matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+	})
+
+	it("a segment that IS only a postcode is never stripped to nothing and never a spurious parent", () => {
+		// "5026" occupies its own field (single token). The strip guard (tokens.length < 2 → unchanged) must leave it
+		// verbatim — never emptied, never treated as a place-name parent.
+		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6.0, undefined, "nz")
+		const text = "Plimmerton, 5026"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// No (plimmerton, 5026) entry → zero matrix; "5026" was probed as itself, not dropped or emptied.
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+		expect(index.calls.some(([child]) => child === "5026")).toBe(true)
+		expect(index.calls.some(([child, parent]) => child === "" || parent === "")).toBe(false)
+	})
+
+	it("comma-separated postcode (its own segment) → unchanged: the town's own field still flips the child, as before #1308", () => {
+		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6.0, undefined, "nz")
+		const text = "35 Steyne Avenue, Plimmerton, Porirua, 5026"
+		// groups: 0=35 1=Steyne 2=Avenue(+,) 3=Plimmerton(+,) 4=Porirua(+,) 5=5026; Plimmerton's first piece is 4.
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// The child flips via the "Porirua" segment (its OWN comma-field) — the postcode segment "5026" is ignored,
+		// exactly as before this fix.
+		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(index.calls).toContainEqual(["plimmerton", "porirua"])
+		expect(index.calls.some(([child]) => child === "5026")).toBe(true)
+	})
+
+	it("a country with no known codex shape (au) → no strip, byte-stable: the same-field postcode stays in the parent key and the pair does NOT fire", () => {
+		// AU is 4-digit too, but is deliberately NOT in SEGMENT_PARENT_POSTCODE_SHAPES — the strip gates on the prior's
+		// own country map, not on whether SOME shape exists. So "Porirua 5026" keeps its postcode-bearing fold and misses
+		// the bare "porirua" parent, exactly as pre-#1308.
+		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6.0, undefined, "au")
+		const text = "Plimmerton, Porirua 5026"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+		expect(index.calls).toContainEqual(["plimmerton", "porirua 5026"])
+		expect(index.calls).not.toContainEqual(["plimmerton", "porirua"])
 	})
 })
 
