@@ -170,10 +170,13 @@ jobs:
   # workspace publishes ride --tolerate-republish).
   publish:
     if: ${{ inputs.mode == 'publish' }}
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    # GITHUB-HOSTED ON PURPOSE (do not sweep to self-hosted with the other jobs): npm rejects
+    # provenance attestation from self-hosted runners outright — E422 "Unsupported GitHub Actions
+    # runner environment: \"self-hosted\". Only \"github-hosted\" runners are supported when
+    # publishing with provenance" (this failed the whole v7.6.0 publish loop on 2026-07-23, run
+    # 30030865677; tag/release had already been created — mode=publish's idempotency covered the
+    # recovery). Nothing in this job needs lab data: the weights come from the HF fetch step.
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write # push the version tag + create the GitHub release
