@@ -184,7 +184,7 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 describe("resolveWeights — package auto-resolve", () => {
 	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
 		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-		execFileSync(process.execPath, ["--experimental-strip-types", linkScript], { stdio: "pipe" })
+		execFileSync(process.execPath, [linkScript], { stdio: "pipe" })
 
 		const r = resolveWeights({ locale: "en-us" })
 		expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")
@@ -205,10 +205,10 @@ describe("resolveWeights — package auto-resolve", () => {
 		"en-gb resolves model/tokenizer/model-card from the en-us base + postcode-gb.bin locally, and parses",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-gb" })
 			expect(r.source).toBe("package:@mailwoman/neural-weights-en-gb+base")
@@ -241,10 +241,10 @@ describe("resolveWeights — package auto-resolve", () => {
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode shard), and parses",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const enNZLinkScript = repoRootPath("neural-weights-en-nz", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enNZLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enNZLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-nz" })
 			expect(r.source).toBe("package:@mailwoman/neural-weights-en-nz+base")
@@ -290,10 +290,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-gb" })
 			expect(r.pairIndexPath).toMatch(/neural-weights-en-gb\/pair-index-gb\.bin$/)
@@ -319,10 +319,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		"en-gb: the placetype-pair bias at the child token equals the artifact's calibrated delta (margin-independent)",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
@@ -362,10 +362,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 
@@ -394,10 +394,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		"en-gb: a wide-margin real pair flips the decode — Holland Fen decodes as dependent_locality (the arc's ONE flip assertion)",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enGBLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
@@ -425,7 +425,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		"en-us: no pair-index sibling shipped — the SAME GB-shaped input applies NO placetype-pair bias",
 		async () => {
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-us" })
 			expect(r.pairIndexPath).toBeUndefined()
@@ -451,7 +451,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// Guarantee the en-us workspace has its dev binaries materialized, then mirror the package
 			// into a temp cacheRoot layout via symlinks (cacheDir = <cacheRoot>/node_modules/<pkg>).
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const packageDir = repoRootPath("neural-weights-en-us")
 			const cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-pair-gate-"))
