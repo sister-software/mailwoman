@@ -21,9 +21,8 @@
  */
 
 import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { parseArgs } from "node:util"
-
-import { repoRootPath } from "@mailwoman/core/utils"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -38,8 +37,13 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 // not what the publisher believes it wrote.
 const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
 
-const RELEASES_MDX_PATH = repoRootPath("docs", "articles", "releases.mdx")
-const MODEL_CARD_PATH = repoRootPath("neural-weights-en-us", "model-card.json")
+// Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" —
+// the version-parity workflow runs it WITHOUT installing; a @mailwoman/core import here crashed
+// every CI run with ERR_MODULE_NOT_FOUND while local runs silently resolved via repo node_modules,
+// which is how the 2026-07-2x dailies were red without anyone seeing a version comparison at all).
+const REPO_ROOT = resolve(import.meta.dirname, "..")
+const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "articles", "releases.mdx")
+const MODEL_CARD_PATH = resolve(REPO_ROOT, "neural-weights-en-us", "model-card.json")
 
 interface ParityCheck {
 	name: string
