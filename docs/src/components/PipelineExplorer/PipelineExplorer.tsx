@@ -30,7 +30,7 @@ import { useMemo } from "react"
 import "@mailwoman/react/styles.css"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
-import { DEFAULT_ADDRESS, flattenTree, runCascade } from "../../shared/demo-helpers.ts"
+import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "../../shared/demo-helpers.ts"
 import { AboutDemo } from "../AboutDemo/AboutDemo.tsx"
 import { BIOHighlight } from "../BIOHighlight/BIOHighlight.tsx"
 import { ClassifierOverlay } from "../ClassifierOverlay/ClassifierOverlay.tsx"
@@ -86,29 +86,13 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 			async runParse(input, { onStage }): Promise<ParseResult> {
 				if (!classifier) throw new Error("classifier not ready")
 
-				const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
-					import("@mailwoman/query-shape"),
-					import("@mailwoman/kind-classifier"),
-					import("@mailwoman/core/pipeline"),
-					import("@mailwoman/phrase-grouper"),
-				])
-
-				const tStart = performance.now()
-				const queryShape = computeQueryShape(input)
-				const kindResult = classifyKindSync({ raw: input, normalized: input }, queryShape)
-				const tShape = performance.now()
-
-				onStage(1)
-
-				const pipelineResult = await runPipeline(input, {
-					computeQueryShape,
-					groupPhrases,
-					classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
-					fst: (fstMatcher ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
-				})
-				const tClassify = performance.now()
-				const tree = pipelineResult.tree
-				const nodes = flattenTree(tree)
+				// Shared classify front-half (#861 / #1278 seam) — identical to the `/demo` map path, minus the
+				// map-only street tier / bias. `onStage(1)` fires between shape and classify, as before.
+				const { tree, nodes, kindResult, timing } = await runClassifyStage(
+					input,
+					{ classifier, fst: fstMatcher },
+					{ onClassifierStart: () => onStage(1) }
+				)
 
 				if (!lookup) {
 					return {
@@ -120,7 +104,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 						kindResult,
 						fstActive: fstMatcher !== null,
 						fstProvenance,
-						timing: { shape: tShape - tStart, classify: tClassify - tShape },
+						timing,
 					}
 				}
 
@@ -138,20 +122,8 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 					score: c.score,
 				}))
 
-				let dualRoles: ParseResult["dualRoles"]
-				const primaryHit = candidates[0]
-
-				if (primaryHit && lookup.coincidentRolesFor) {
-					try {
-						const roles = await lookup.coincidentRolesFor(primaryHit.id)
-
-						if (roles.length > 0) {
-							dualRoles = roles
-						}
-					} catch {
-						/* relation absent → no dual-role badge */
-					}
-				}
+				// Dual-role (#402), shared with the `/demo` map path.
+				const dualRoles = await resolveDualRoles(lookup, candidates[0])
 
 				return {
 					input,
@@ -162,7 +134,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 					kindResult,
 					fstActive: fstMatcher !== null,
 					fstProvenance,
-					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
+					timing: { ...timing, resolve: tResolve - tBeforeResolve },
 					dualRoles,
 				}
 			},

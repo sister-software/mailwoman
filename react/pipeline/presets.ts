@@ -21,4 +21,7 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "ZIP only", value: "90210" },
 	{ label: "Berlin (native order)", value: "Straußstraße 27, 12623 Berlin" },
 	{ label: "Paris (street fall-through)", value: "181 Rue du Chevaleret, Paris" },
+	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of the city of
+	// Porirua. Lights up once a released weights bundle wires the en-nz pair-index prior; harmless before that.
+	{ label: "Plimmerton (NZ dependent_locality)", value: "35 Steyne Avenue, Plimmerton, Porirua 5026" },
 ]
