@@ -1,8 +1,10 @@
-"""ModelCard + README rendering tests for the Stage 2 (v0.3.0) ship.
+"""ModelCard + README rendering tests, pinned to the active label stage.
 
 Frozen-string tests would couple the prose to every minor wording change, so the
 asserts target the essential facts: phase string, component list, target
-status, smoke-disclaimer presence.
+status, smoke-disclaimer presence. The phase assertions track the CURRENT stage
+(STAGE3 as of the v0.6.0 ship) and move with ``labels.ACTIVE_TAGS`` at each
+stage bump — never pin them to a historical stage (#1247).
 """
 
 from __future__ import annotations
@@ -19,12 +21,13 @@ from mailwoman_train.package_weights import (
 )
 
 
-def test_phase_label_reports_stage_2():
-    # With ACTIVE_TAGS pointing at STAGE2_TAGS (the v0.3.0 ship-line), the phase
-    # label must mention Stage 2 — otherwise the published model card silently
-    # mislabels itself.
+def test_phase_label_reports_current_stage():
+    # With ACTIVE_TAGS pointing at STAGE3_TAGS (the v0.6.0 ship-line), the phase
+    # label must mention Stage 3 — otherwise the published model card silently
+    # mislabels itself. The named-stage branch must fire, not the "Custom" fallback.
     label = _phase_label()
-    assert "Stage 2" in label, f"unexpected phase label {label!r}"
+    assert "Stage 3" in label, f"unexpected phase label {label!r}"
+    assert not label.startswith("Custom"), f"phase label fell through to the fallback: {label!r}"
 
 
 def test_model_card_lists_all_active_components():
@@ -104,7 +107,7 @@ def test_readme_includes_phase_and_components():
         training_hardware="gfx1103",
         smoke=False,
     )
-    assert "Stage 2" in md
+    assert _phase_label() in md
     assert "venue" in md
     assert "street" in md
     assert "house_number" in md

@@ -25,16 +25,26 @@ from pathlib import Path
 
 import torch
 
-from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE1_COARSE_TAGS, STAGE2_FINE_TAGS, STAGE2_TAGS
+from .labels import (
+    ACTIVE_BIO_LABELS,
+    ACTIVE_TAGS,
+    STAGE1_COARSE_TAGS,
+    STAGE2_FINE_TAGS,
+    STAGE2_TAGS,
+    STAGE3_FINE_TAGS,
+    STAGE3_TAGS,
+)
 
 
 def _phase_label() -> str:
     """Derive the ModelCard ``phase`` string from the active label set.
 
     Single source of truth: ``labels.ACTIVE_TAGS``. When the ship-line moves
-    (e.g. ACTIVE bumps to a hypothetical STAGE3), this is the only place that
+    (e.g. ACTIVE bumps to STAGE4), this is the only place that
     needs to learn the new name.
     """
+    if ACTIVE_TAGS == STAGE3_TAGS:
+        return "Stage 3 (street decomposition + unit/po_box/intersection)"
     if ACTIVE_TAGS == STAGE2_TAGS:
         return "Stage 2 (coarse + venue/street/house_number)"
     if ACTIVE_TAGS == STAGE1_COARSE_TAGS:
@@ -235,6 +245,13 @@ _phase2_status_line = _target_status_line
 
 def _components_supported_blurb() -> str:
     """One-line description of the active component set, derived from labels.ACTIVE_TAGS."""
+    if ACTIVE_TAGS == STAGE3_TAGS:
+        fine = " / ".join(STAGE2_FINE_TAGS + STAGE3_FINE_TAGS)
+        return (
+            f"Stage 3 ships coarse plus fine-grained {fine} "
+            "(street decomposed into prefix/suffix; unit, po_box, and intersection added). "
+            f"Token classifier emits {len(ACTIVE_BIO_LABELS)} BIO labels."
+        )
     if ACTIVE_TAGS == STAGE2_TAGS:
         coarse = " / ".join(STAGE1_COARSE_TAGS)
         fine = " / ".join(STAGE2_FINE_TAGS)
