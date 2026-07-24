@@ -90,6 +90,15 @@ const OptionsSchema = zod.object({
 			"REQUIRED, no default — the soft-prior bias magnitude a probe hit contributes at decode time. " +
 				"The calibration task supplies the real value; this command refuses to default it silently."
 		),
+	transitionBeta: zod
+		.number()
+		.optional()
+		.describe(
+			"OPTIONAL — the decoder transition-entry bonus a probe hit contributes (+β into B-<tag> at the child's " +
+				"first piece; TRANSITION-BETA build, task-8 probe). Written into the PIX1 header ONLY when passed — " +
+				"omitting it builds a beta-less artifact (no transition term at decode, the pre-beta behavior). " +
+				"Per-country calibration like --delta: GB ships 5; NZ ships without it."
+		),
 	holdoutFraction: zod
 		.number()
 		.min(0)
@@ -159,6 +168,8 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		)
 		const sourceMD5 = await md5File(sourcePath)
 
+		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
+		// beta-less binary, byte-shape-identical to every pre-TRANSITION-BETA artifact) — not a null/0.
 		const pairIndexHeader: PairIndexHeader = {
 			country,
 			delta: options.delta,
@@ -166,6 +177,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			foldVersion: 1,
 			sourceMD5s: [sourceMD5],
 			buildDate: new Date().toISOString(),
+			...(options.transitionBeta !== undefined ? { transitionBeta: options.transitionBeta } : {}),
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
@@ -227,6 +239,8 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
+			`header: delta=${options.delta}` +
+				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)"),
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
 			...(holdoutLine ? [holdoutLine] : []),

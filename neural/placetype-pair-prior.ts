@@ -234,6 +234,19 @@
  *   {@link DEFAULT_DELTA} — the real artifact's header carries the calibrated per-country `delta` (5.0 for GB as of the 2026-07-22 calibration; see task-7 sweep), so `biasScale` exists
  *   only as an override for a hand-built `PairIndexLike` test double that omits it.
  *
+ *   **Transition term (TRANSITION-BETA build, 2026-07-24).** When the index header carries the optional
+ *   `transitionBeta` (see `PairIndexHeader.transitionBeta`), every applied bias ALSO emits a
+ *   position-scoped decoder transition adjustment — `+β` on every transition into `B-<tag>` at the child
+ *   span's first piece (see {@link TransitionAdjustment} and `viterbi.ts`'s `ViterbiTransitionAdjustment`).
+ *   This is the path-fusion recovery lever the task-8 transition-level probe measured: the emission δ can
+ *   win the per-token argmax at the child-start piece while the global Viterbi still routes through a
+ *   fused street/locality run; the entry-transition bonus pays the structural continuation toll directly
+ *   (β=5: 13/17 comma-free GB misses recovered, zero measured collateral). No hit / no `transitionBeta` →
+ *   an empty adjustment list, byte-identical decode to the emission-only behavior. One refinement
+ *   (2026-07-24, the v2 battery's single named-row regression): a child immediately preceded by a
+ *   venue-title preposition ("New Inn at Hoff") keeps the emission bias but draws NO transition
+ *   adjustment — see {@link TITLE_PREPOSITION_PREDECESSORS} for the rationale and growth discipline.
+ *
  *   Missing index (`opts` undefined, or `opts.index` absent) → zero matrix, composes harmlessly with
  *   `addEmissionMatrix`. Same for a present-but-empty/never-matching index (no country data loaded for
  *   this locale) — the probe loop simply never finds a tag.
@@ -296,6 +309,35 @@ function looksLikeHouseNumber(token: string): boolean {
 }
 
 /**
+ * Venue-title prepositions (BETA REFINEMENT, 2026-07-24 — v2 battery bar-2 regression): when the word-group immediately
+ * PRECEDING the child window folds to one of these, the TRANSITION adjustment (TRANSITION-BETA) is withheld for that
+ * hit — the EMISSION bias stays exactly as-is. Rationale: an immediately-preceding "at"/"of" marks a LEXICALIZED venue
+ * title ("New Inn at Hoff", "Church of St Mary") — the embedded place name is part of the venue's own name, not an
+ * address field. Address syntax introduces dependent localities POSITIONALLY (field order, adjacency to the post town),
+ * never prepositionally, so a prepositional predecessor is venue-title evidence and the entry-path bonus must not tip a
+ * near-miss into a false positive (the measured trigger: "New Inn at Hoff, Appleby-In-Westmorland" — the β=5 entry
+ * bonus alone flipped it, failing the venue-anchored ≤4/6500 bar by one row). Interior place-name prepositions ("Barrow
+ * upon Soar", "Knott End on Sea") are unaffected by construction — this is a PREDECESSOR check, not a membership test
+ * on the child's own words. No predecessor (child at the string/segment start) → no suppression. LIST GROWTH requires a
+ * per-word rationale line (the same widening discipline as {@link STRUCTURAL_MARKER_WORDS}); long-term the list derives
+ * from register statistics (#1296).
+ *
+ * - `at` — venue-title locative: "New Inn at Hoff", "The Mill at Glynhir".
+ * - `of` — venue-title genitive: "Church of St Mary", "House of Bruar".
+ */
+const TITLE_PREPOSITION_PREDECESSORS: ReadonlySet<string> = new Set(["at", "of"])
+
+/**
+ * Is the word-group immediately preceding `window` a venue-title preposition (see
+ * {@link TITLE_PREPOSITION_PREDECESSORS})? A window at position 0 has no predecessor and never suppresses.
+ */
+function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], window: CandidateWindow): boolean {
+	const predecessor = window.startPos > 0 ? nonEmptyGroups[window.startPos - 1] : undefined
+
+	return predecessor !== undefined && TITLE_PREPOSITION_PREDECESSORS.has(predecessor.fstToken)
+}
+
+/**
  * `probeMode` selects the candidate-building strategy — see the module docstring's "Probe mode" section for the
  * 2026-07-22 venue-confound falsifier verdict and the 2026-07-24 anchored adjacent-pair design.
  *
@@ -350,6 +392,41 @@ export interface PlacetypePairPriorOpts {
 	 * the classifier's trace path; mutated in place, never read by this module.
 	 */
 	probeTrace?: PlacetypePairProbeTrace
+}
+
+/**
+ * A position-scoped decoder transition bonus (TRANSITION-BETA build, 2026-07-24 — task-8 report § "Transition-level
+ * pair-evidence probe"): `+bonus` on every transition INTO `toLabel` at exactly `pieceIndex`, from any predecessor.
+ * Emitted alongside the emission matrix — one per pair hit, at the CHILD span's first piece, toward `B-<tag>` — and
+ * ONLY when the loaded index's header carries `transitionBeta` (see `PairIndexHeader.transitionBeta`). Rationale: the
+ * emission-side δ wins the per-token argmax at the child-start piece yet the global Viterbi can still route through a
+ * fused street/locality run (switching one piece to `B-dependent_locality` structurally forces the following pieces to
+ * continue/restart, and that forced continuation can cost more emission mass than the local win recovers); a bonus on
+ * the ENTRY transition pays that structural toll where it is levied. Measured at β=5: 13/17 comma-free GB misses
+ * recovered, 0/47 flips on already-correct rows, 0/200 new venue-overlap FP.
+ *
+ * `toLabel` is the full BIO label string — the caller (`classifier.ts`) owns the label→index mapping and converts to
+ * the decoder's index-based `ViterbiTransitionAdjustment` (`viterbi.ts`); this module deliberately never learns the
+ * decoder's axis.
+ */
+export interface TransitionAdjustment {
+	/** Piece position whose INCOMING transition is adjusted — the child span's first piece. */
+	pieceIndex: number
+	/** Full BIO label the adjusted transition lands on (e.g. `"B-dependent_locality"`). */
+	toLabel: string
+	/** Additive bonus (log-score units) — the index header's `transitionBeta`. */
+	bonus: number
+}
+
+/**
+ * What {@link buildPlacetypePairPriors} returns: the emission-bias matrix (the prior's original, unchanged output) plus
+ * the position-scoped transition adjustments. `transitionAdjustments` is EMPTY unless BOTH a pair hit fired AND the
+ * index carries `transitionBeta` — a beta-less index (every artifact before the TRANSITION-BETA build, the NZ artifact
+ * by design) yields `[]`, and the decode is byte-identical to the emission-only behavior.
+ */
+export interface PlacetypePairPriorResult {
+	matrix: number[][]
+	transitionAdjustments: TransitionAdjustment[]
 }
 
 /**
@@ -633,13 +710,29 @@ function isMarkerSuppressed(
 	return STRUCTURAL_MARKER_WORDS.has(successor.fstToken) || looksLikeHouseNumber(successor.fstToken)
 }
 
-/** Write `bias` onto `B-<tag>`/`I-<tag>` for every piece in `window`, `Math.max`'d against whatever's already there. */
+/**
+ * Write `bias` onto `B-<tag>`/`I-<tag>` for every piece in `window`, `Math.max`'d against whatever's already there.
+ *
+ * When `transitionBeta` is set (the index header carried it — TRANSITION-BETA build), ALSO record a position-scoped
+ * transition adjustment into `adjustments`: `+β` on every transition into `B-<tag>` at the window's FIRST piece (see
+ * {@link TransitionAdjustment}). Lives here — not at the call sites — so every path that applies a bias (segment,
+ * anchored, window) emits the adjustment identically, and a hit the emission side skips (unknown label, `bCol`
+ * undefined) never emits one either. Duplicate (pieceIndex, toLabel) cells (overlapping window-mode candidates) compose
+ * by `Math.max`, mirroring the emission write's own discipline.
+ *
+ * BETA REFINEMENT (2026-07-24): a child whose immediately-preceding word-group folds to a venue-title preposition (see
+ * {@link TITLE_PREPOSITION_PREDECESSORS}) draws the emission bias as normal but NO transition adjustment — enforced
+ * here, for the same single-site reason: every emitting path (segment, anchored, window) suppresses identically.
+ */
 function applyWindowBias(
+	nonEmptyGroups: readonly WordGroup[],
 	matrix: number[][],
 	labelToCol: ReadonlyMap<string, number>,
 	window: CandidateWindow,
 	tag: ComponentTag,
-	bias: number
+	bias: number,
+	transitionBeta: number | undefined,
+	adjustments: TransitionAdjustment[]
 ): void {
 	const bCol = labelToCol.get(`B-${tag}`)
 	const iCol = labelToCol.get(`I-${tag}`)
@@ -652,29 +745,46 @@ function applyWindowBias(
 
 		matrix[pi]![col] = Math.max(matrix[pi]![col]!, bias)
 	}
+
+	if (transitionBeta === undefined || window.pieceIndices.length === 0) return
+
+	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
+
+	const pieceIndex = window.pieceIndices[0]!
+	const toLabel = `B-${tag}`
+	const existing = adjustments.find((a) => a.pieceIndex === pieceIndex && a.toLabel === toLabel)
+
+	if (existing) {
+		existing.bonus = Math.max(existing.bonus, transitionBeta)
+	} else {
+		adjustments.push({ pieceIndex, toLabel, bonus: transitionBeta })
+	}
 }
 
 /**
- * Build a `[seqLen][numLabels]` bias matrix from placetype-pair index matches. See the module docstring for the full
- * windowing/matching/suppression contract.
+ * Build a `[seqLen][numLabels]` bias matrix from placetype-pair index matches, plus the position-scoped transition
+ * adjustments (TRANSITION-BETA build — empty unless the index carries `transitionBeta` AND a hit fired; see
+ * {@link PlacetypePairPriorResult}). See the module docstring for the full windowing/matching/suppression contract.
  */
 export function buildPlacetypePairPriors(
 	opts: PlacetypePairPriorOpts | undefined,
 	pieces: ReadonlyArray<TokenLike & { piece: string }>,
 	labels: ReadonlyArray<string>
-): number[][] {
+): PlacetypePairPriorResult {
 	const T = pieces.length
 	const L = labels.length
 	const matrix: number[][] = []
+	const transitionAdjustments: TransitionAdjustment[] = []
 
 	for (let t = 0; t < T; t++) {
 		matrix.push(new Array<number>(L).fill(0))
 	}
 
-	if (!opts?.index) return matrix
+	if (!opts?.index) return { matrix, transitionAdjustments }
 
 	const { index } = opts
 	const bias = index.delta ?? opts.biasScale ?? DEFAULT_DELTA
+	const transitionBeta = index.transitionBeta
 
 	const labelToCol = new Map<string, number>()
 
@@ -685,7 +795,7 @@ export function buildPlacetypePairPriors(
 	const wordGroups = groupPiecesIntoWords(pieces)
 	const nonEmptyGroups = wordGroups.filter((g) => g.fstToken !== "")
 
-	if (nonEmptyGroups.length < 2) return matrix // need ≥2 disjoint candidates to form a pair
+	if (nonEmptyGroups.length < 2) return { matrix, transitionAdjustments } // need ≥2 disjoint candidates to form a pair
 
 	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "auto"
 	// `groupSegments` is only meaningful (and only computed) on the segment path — window mode's marker suppression
@@ -703,19 +813,28 @@ export function buildPlacetypePairPriors(
 		const parentEnd = resolveAnchorParentEnd(nonEmptyGroups, pieces, opts.inputText)
 
 		// A parent anchored at position 0 leaves no word-group to its left to serve as a child — inert.
-		if (parentEnd < 1) return matrix
+		if (parentEnd < 1) return { matrix, transitionAdjustments }
 
 		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd)
 
 		if (hit) {
-			applyWindowBias(matrix, labelToCol, hit.child, hit.tag, bias)
+			applyWindowBias(
+				nonEmptyGroups,
+				matrix,
+				labelToCol,
+				hit.child,
+				hit.tag,
+				bias,
+				transitionBeta,
+				transitionAdjustments
+			)
 
 			if (opts.probeTrace) {
 				opts.probeTrace.firedPath = "anchored"
 			}
 		}
 
-		return matrix
+		return { matrix, transitionAdjustments }
 	}
 
 	const windows = probeMode === "window" ? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS) : segmentWindows!
@@ -723,7 +842,7 @@ export function buildPlacetypePairPriors(
 	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
 	// second, disjoint candidate to pair against. Bail before the O(n²) loop below; this is the
 	// documented comma-free-input degradation, not a bug.
-	if (windows.length < 2) return matrix
+	if (windows.length < 2) return { matrix, transitionAdjustments }
 
 	let anyApplied = false
 
@@ -758,7 +877,7 @@ export function buildPlacetypePairPriors(
 
 		if (!matchedTag) continue
 
-		applyWindowBias(matrix, labelToCol, x, matchedTag, bias)
+		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedTag, bias, transitionBeta, transitionAdjustments)
 		anyApplied = true
 	}
 
@@ -766,5 +885,5 @@ export function buildPlacetypePairPriors(
 		opts.probeTrace.firedPath = probeMode === "window" ? "window" : "segment"
 	}
 
-	return matrix
+	return { matrix, transitionAdjustments }
 }

@@ -54,7 +54,9 @@
  *   `peekPairIndexHeader` — reimplemented locally, not imported from `@mailwoman/neural`, so this
  *   data-only package doesn't gain a dependency on the ONNX-runtime-carrying workspace for one
  *   header read) and compare `header.delta` against this script's own `PAIR_INDEX_DELTA` const,
- *   and `header.sourceMD5s[0]` (the md5 the artifact was actually built from, per
+ *   `header.transitionBeta` against `PAIR_INDEX_TRANSITION_BETA` (same lockstep discipline —
+ *   TRANSITION-BETA build, 2026-07-24; an absent field on an old binary reads `undefined` and
+ *   forces the rebuild that stamps it in), and `header.sourceMD5s[0]` (the md5 the artifact was actually built from, per
  *   `pair-index.tsx`'s own self-recorded provenance) against a freshly computed md5 of the CURRENT
  *   PPD source CSV. Either mismatch forces a loud rebuild instead of a silent skip.
  */
@@ -148,7 +150,11 @@ async function md5FileWithSidecar(path: string): Promise<string> {
  * (which pulls in onnxruntime-node) just to read four header fields. Kept intentionally tiny; if the PIX1 format ever
  * changes, `pair-index-resolver.ts`'s own header parse is the source of truth this must stay in sync with.
  */
-function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD5: string | undefined } {
+function peekPairIndexHeaderFields(path: string): {
+	delta: number
+	transitionBeta: number | undefined
+	sourceMD5: string | undefined
+} {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const MAGIC = 0x31_58_49_50
@@ -161,10 +167,11 @@ function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD
 	const headerLen = view.getUint32(4, true)
 	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
 		delta: number
+		transitionBeta?: number
 		sourceMD5s?: string[]
 	}
 
-	return { delta: header.delta, sourceMD5: header.sourceMD5s?.[0] }
+	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5: header.sourceMD5s?.[0] }
 }
 
 linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
@@ -281,16 +288,32 @@ if (!existsSync(CLI)) {
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
 const PAIR_INDEX_DELTA = 10
+/**
+ * The GB artifact's decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
+ * task-8 transition-level probe: 13/17 comma-free misses recovered, zero measured collateral). Held in lockstep with
+ * the shipped header exactly like {@link PAIR_INDEX_DELTA}: a mismatch against the existing binary's header forces a
+ * loud rebuild. NZ deliberately ships WITHOUT a beta (unmeasured there) — its link script has no counterpart const.
+ */
+const PAIR_INDEX_TRANSITION_BETA = 5
 
 let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const { delta: existingDelta, sourceMD5: existingSourceMD5 } = peekPairIndexDeltaAndSourceMD5(PAIR_INDEX_BIN_DEST)
+		const {
+			delta: existingDelta,
+			transitionBeta: existingTransitionBeta,
+			sourceMD5: existingSourceMD5,
+		} = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 
 		if (existingDelta !== PAIR_INDEX_DELTA) {
 			console.log(
 				`STALE pair-index-gb.bin: header delta ${existingDelta} !== this script's PAIR_INDEX_DELTA ${PAIR_INDEX_DELTA} — rebuilding.`
+			)
+		} else if (existingTransitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
+			console.log(
+				`STALE pair-index-gb.bin: header transitionBeta ${existingTransitionBeta ?? "(absent)"} !== this script's ` +
+					`PAIR_INDEX_TRANSITION_BETA ${PAIR_INDEX_TRANSITION_BETA} — rebuilding.`
 			)
 		} else if (!existsSync(String(PPD_SOURCE_CSV))) {
 			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
@@ -298,14 +321,16 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 			// stale and needed a rebuild).
 			pairIndexIsFresh = true
 			console.log(
-				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
+				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta + transitionBeta (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
 			const currentSourceMD5 = await md5FileWithSidecar(String(PPD_SOURCE_CSV))
 
 			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
 				pairIndexIsFresh = true
-				console.log(`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + source md5 match)`)
+				console.log(
+					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + transitionBeta + source md5 match)`
+				)
 			} else {
 				console.log(
 					`STALE pair-index-gb.bin: header source md5 ${existingSourceMD5 ?? "(none recorded)"} != current ` +
@@ -343,6 +368,8 @@ if (pairIndexIsFresh) {
 			String(PPD_SOURCE_CSV),
 			"--delta",
 			String(PAIR_INDEX_DELTA),
+			"--transition-beta",
+			String(PAIR_INDEX_TRANSITION_BETA),
 		],
 		{ stdio: "inherit" }
 	)
