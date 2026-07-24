@@ -1104,7 +1104,8 @@
 					"venue_synthetic_interim": "0/510"
 				}
 			},
-			"notes": "NZ dependent_locality LIVE: as-written 246/246 emit + 246/246 tag-correct (100% — the (x,x) identical-adjacent-segment rule recovers all 63 repeated-name rows, e.g. 'Mangawhai, Mangawhai'); comma-free 244/246 (99.2%); golden FP 0/54; GB surfaces reproduced byte-exact (0 identity pairs in the GB index — structural inertness verified). Model bytes unchanged (v385). NZ venue precision evidence is synthetic-interim until #1279."
+			"notes": "NZ dependent_locality LIVE: as-written 246/246 emit + 246/246 tag-correct (100% — the (x,x) identical-adjacent-segment rule recovers all 63 repeated-name rows, e.g. 'Mangawhai, Mangawhai'); comma-free 244/246 (99.2%); golden FP 0/54; GB surfaces reproduced byte-exact (0 identity pairs in the GB index — structural inertness verified). Model bytes unchanged (v385). NZ venue precision evidence is synthetic-interim until #1279.",
+			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
 		}
 	]
 }

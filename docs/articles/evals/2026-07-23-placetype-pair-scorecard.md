@@ -388,3 +388,10 @@ venue rows; graduates to a build proposal. Venue pairs (#1287) and street pairs 
 with probe designs. The GB postcode-clip fix (#1290) rode the same night: a 41.5% silent clip
 rate traced to an unreachable repair pass — one codex conventions row + a card pin, exact
 26→83, clips 0, all pair-prior surfaces byte-identical.
+
+**Baseline re-anchor (2026-07-24, dated — no silent drift):** the comma-free GB number registered
+as 50/69 was measured through an en-us-shaped harness cache (no `postcode-gb.bin` → anchor channel
+silent). The production-faithful baseline is **55/69 emit, 52/55 (94.5%) tag-correct** — the GB
+postcode anchors help the decoder split five additional localities. Verified not code drift
+(identical-artifact reruns of both code bases reproduce 50/69 exactly under the old cache). Twice
+tonight the same lesson: measure in the shipped configuration.
