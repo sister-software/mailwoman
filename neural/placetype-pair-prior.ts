@@ -242,7 +242,10 @@
  *   win the per-token argmax at the child-start piece while the global Viterbi still routes through a
  *   fused street/locality run; the entry-transition bonus pays the structural continuation toll directly
  *   (β=5: 13/17 comma-free GB misses recovered, zero measured collateral). No hit / no `transitionBeta` →
- *   an empty adjustment list, byte-identical decode to the emission-only behavior.
+ *   an empty adjustment list, byte-identical decode to the emission-only behavior. One refinement
+ *   (2026-07-24, the v2 battery's single named-row regression): a child immediately preceded by a
+ *   venue-title preposition ("New Inn at Hoff") keeps the emission bias but draws NO transition
+ *   adjustment — see {@link TITLE_PREPOSITION_PREDECESSORS} for the rationale and growth discipline.
  *
  *   Missing index (`opts` undefined, or `opts.index` absent) → zero matrix, composes harmlessly with
  *   `addEmissionMatrix`. Same for a present-but-empty/never-matching index (no country data loaded for
@@ -303,6 +306,35 @@ const STRUCTURAL_MARKER_WORDS: ReadonlySet<string> = new Set(["house", "road", "
  */
 function looksLikeHouseNumber(token: string): boolean {
 	return /^\d+[a-z]?$/.test(token)
+}
+
+/**
+ * Venue-title prepositions (BETA REFINEMENT, 2026-07-24 — v2 battery bar-2 regression): when the word-group immediately
+ * PRECEDING the child window folds to one of these, the TRANSITION adjustment (TRANSITION-BETA) is withheld for that
+ * hit — the EMISSION bias stays exactly as-is. Rationale: an immediately-preceding "at"/"of" marks a LEXICALIZED venue
+ * title ("New Inn at Hoff", "Church of St Mary") — the embedded place name is part of the venue's own name, not an
+ * address field. Address syntax introduces dependent localities POSITIONALLY (field order, adjacency to the post town),
+ * never prepositionally, so a prepositional predecessor is venue-title evidence and the entry-path bonus must not tip a
+ * near-miss into a false positive (the measured trigger: "New Inn at Hoff, Appleby-In-Westmorland" — the β=5 entry
+ * bonus alone flipped it, failing the venue-anchored ≤4/6500 bar by one row). Interior place-name prepositions ("Barrow
+ * upon Soar", "Knott End on Sea") are unaffected by construction — this is a PREDECESSOR check, not a membership test
+ * on the child's own words. No predecessor (child at the string/segment start) → no suppression. LIST GROWTH requires a
+ * per-word rationale line (the same widening discipline as {@link STRUCTURAL_MARKER_WORDS}); long-term the list derives
+ * from register statistics (#1296).
+ *
+ * - `at` — venue-title locative: "New Inn at Hoff", "The Mill at Glynhir".
+ * - `of` — venue-title genitive: "Church of St Mary", "House of Bruar".
+ */
+const TITLE_PREPOSITION_PREDECESSORS: ReadonlySet<string> = new Set(["at", "of"])
+
+/**
+ * Is the word-group immediately preceding `window` a venue-title preposition (see
+ * {@link TITLE_PREPOSITION_PREDECESSORS})? A window at position 0 has no predecessor and never suppresses.
+ */
+function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], window: CandidateWindow): boolean {
+	const predecessor = window.startPos > 0 ? nonEmptyGroups[window.startPos - 1] : undefined
+
+	return predecessor !== undefined && TITLE_PREPOSITION_PREDECESSORS.has(predecessor.fstToken)
 }
 
 /**
@@ -687,8 +719,13 @@ function isMarkerSuppressed(
  * anchored, window) emits the adjustment identically, and a hit the emission side skips (unknown label, `bCol`
  * undefined) never emits one either. Duplicate (pieceIndex, toLabel) cells (overlapping window-mode candidates) compose
  * by `Math.max`, mirroring the emission write's own discipline.
+ *
+ * BETA REFINEMENT (2026-07-24): a child whose immediately-preceding word-group folds to a venue-title preposition (see
+ * {@link TITLE_PREPOSITION_PREDECESSORS}) draws the emission bias as normal but NO transition adjustment — enforced
+ * here, for the same single-site reason: every emitting path (segment, anchored, window) suppresses identically.
  */
 function applyWindowBias(
+	nonEmptyGroups: readonly WordGroup[],
 	matrix: number[][],
 	labelToCol: ReadonlyMap<string, number>,
 	window: CandidateWindow,
@@ -710,6 +747,8 @@ function applyWindowBias(
 	}
 
 	if (transitionBeta === undefined || window.pieceIndices.length === 0) return
+
+	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
 
 	const pieceIndex = window.pieceIndices[0]!
 	const toLabel = `B-${tag}`
@@ -779,7 +818,16 @@ export function buildPlacetypePairPriors(
 		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd)
 
 		if (hit) {
-			applyWindowBias(matrix, labelToCol, hit.child, hit.tag, bias, transitionBeta, transitionAdjustments)
+			applyWindowBias(
+				nonEmptyGroups,
+				matrix,
+				labelToCol,
+				hit.child,
+				hit.tag,
+				bias,
+				transitionBeta,
+				transitionAdjustments
+			)
 
 			if (opts.probeTrace) {
 				opts.probeTrace.firedPath = "anchored"
@@ -829,7 +877,7 @@ export function buildPlacetypePairPriors(
 
 		if (!matchedTag) continue
 
-		applyWindowBias(matrix, labelToCol, x, matchedTag, bias, transitionBeta, transitionAdjustments)
+		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedTag, bias, transitionBeta, transitionAdjustments)
 		anyApplied = true
 	}
 

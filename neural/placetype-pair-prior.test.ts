@@ -980,6 +980,67 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		}
 	})
 
+	it('venue-title "at" predecessor (the Hoff shape): emission bias present, transition adjustment WITHHELD', () => {
+		// The v2 battery's single named-row regression, miniaturized: "New Inn at Hoff, Appleby-In-Westmorland"
+		// comma-stripped routes through the anchored leg, the pair index resolves ("hoff", "appleby"), and the
+		// β entry bonus alone tipped the venue near-miss into a false positive. The refinement: an
+		// immediately-preceding "at" marks a lexicalized venue title, so the TRANSITION adjustment is withheld
+		// while the emission bias stays exactly as-is.
+		const index = mockPairIndex({ "hoff|appleby": "dependent_locality" }, 10, 5)
+		const text = "New Inn at Hoff Appleby"
+		const pieces = makePieces(text)
+		const trace: PlacetypePairProbeTrace = {}
+		const { matrix, transitionAdjustments } = buildPlacetypePairPriors(
+			{ index, inputText: text, probeTrace: trace },
+			pieces,
+			LABELS
+		)
+
+		expect(trace.firedPath).toBe("anchored")
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(10) // emission untouched
+		expect(transitionAdjustments).toEqual([])
+	})
+
+	it('venue-title "of" predecessor: same withholding ("House of Bruar" genitive shape)', () => {
+		const index = mockPairIndex({ "bruar|pitlochry": "dependent_locality" }, 10, 5)
+		const text = "House of Bruar Pitlochry"
+		const pieces = makePieces(text)
+		const { matrix, transitionAdjustments } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[2]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(transitionAdjustments).toEqual([])
+	})
+
+	it("no predecessor (child at the string start): adjustment present, unchanged", () => {
+		const index = mockPairIndex({ "hoff|appleby": "dependent_locality" }, 10, 5)
+		const text = "Hoff Appleby"
+		const pieces = makePieces(text)
+		const { transitionAdjustments } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(transitionAdjustments).toEqual([{ pieceIndex: 0, toLabel: "B-dependent_locality", bonus: 5 }])
+	})
+
+	it('normal predecessor ("Close" — ordinary address syntax): adjustment present, unchanged', () => {
+		const index = mockPairIndex({ "glenfield|leicester": "dependent_locality" }, 10, 5)
+		const text = "Carpenters Close Glenfield Leicester"
+		const pieces = makePieces(text)
+		const { transitionAdjustments } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(transitionAdjustments).toEqual([{ pieceIndex: 2, toLabel: "B-dependent_locality", bonus: 5 }])
+	})
+
+	it('interior place-name preposition ("Knott End on Sea"): unaffected by construction — predecessor check, not membership', () => {
+		// The child's OWN words contain "on"; only the word immediately BEFORE the child is consulted (here a
+		// house number — ordinary address syntax), so the multi-word child keeps its adjustment at its first piece.
+		const index = mockPairIndex({ "knott end on sea|poulton": "dependent_locality" }, 10, 5)
+		const text = "5 Knott End on Sea Poulton"
+		const pieces = makePieces(text)
+		const { matrix, transitionAdjustments } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[1]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(transitionAdjustments).toEqual([{ pieceIndex: 1, toLabel: "B-dependent_locality", bonus: 5 }])
+	})
+
 	it("window mode: overlapping candidates sharing a first piece dedupe to ONE max'd adjustment, not a stacked pair", () => {
 		// Both "shoreditch east" (2-word window) and "shoreditch" (1-word window) resolve against "london";
 		// both start at piece 0, so both applyWindowBias calls target the same (pieceIndex, toLabel) cell —
