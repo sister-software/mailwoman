@@ -38,6 +38,8 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"out/**/*.json",
+		"eval-harness/gates/*.json",
+		"eval-harness/baselines.json",
 		"*.ts",
 		"*.tsx",
 		"**/*.ts",
