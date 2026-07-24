@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Loader wiring for the PIX1 placetype-pair index (#1278 browser wiring): fetch tolerance, the hard
- *   country gate, and the classifier construction — the browser mirror of
- *   `NeuralAddressClassifier.loadFromWeights`'s placetypePair block.
+ *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-gate wiring): fetch
+ *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time gate),
+ *   and the OPTIONAL config-default posture pin the `country` load-option now sets.
  *
  *   Strategy mirrors `loader.tolerance.test.ts`: mock onnxruntime-web (no model file) + partial-mock
  *   `@mailwoman/neural/browser` to stub the tokenizer + capture the classifier config, while keeping
- *   the REAL `serializePairIndex` / `peekPairIndexHeader` / `PairIndexResolver`, so the
- *   fetch-peek-gate-construct path under test runs for real. The decode-level behavior (prior applied
- *   on match, byte-stability without a match) lives in `loader.pair-prior-decode.test.ts`, which runs
- *   the REAL classifier end-to-end.
+ *   the REAL `serializePairIndex` / `PairIndexResolver`, so the fetch-construct path under test runs for
+ *   real. The per-parse SELECTION among the loaded indexes lives in `loader.locale-gate.test.ts`
+ *   (pure); the decode-level behavior (prior applied on selection, byte-stability without) lives in
+ *   `loader.pair-prior-decode.test.ts`, which runs the REAL classifier end-to-end.
  */
 
 import type { PairIndexHeader } from "@mailwoman/neural/browser"
@@ -177,28 +177,31 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		warn.mockRestore()
 	})
 
-	test("COUNTRY GATE: a gb index under the default (us) gate country is inert — peeked, never constructed", async () => {
+	test("LOAD-ALL: a gb index with NO country posture loads LIVE, but sets no config default (per-parse mode)", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 		const fetchImpl = makeFetch((url) => (url.includes("pair-index-gb") ? gbIndexBytes() : dummyBytes))
 
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX]))
 
 		expect(result.classifier).toBeDefined()
-		// The gate held: no placetypePair config — the decode is byte-stable (asserted end-to-end in
-		// loader.pair-prior-decode.test.ts).
+		// No `country` load-option → no config-default posture pin. The per-parse selection is the only path
+		// (byte-stable when nothing selected — asserted end-to-end in loader.pair-prior-decode.test.ts).
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// The index is still visible to consumers, header country included, resolver withheld.
-		expect(result.pairIndexes).toEqual([{ url: GB_INDEX, country: "gb", resolver: null }])
-
-		// The none-matched misconfiguration is loud and names both sides of the gate.
-		const warned = warn.mock.calls.map((c) => String(c[0])).join("\n")
-		expect(warned).toContain('"us"')
-		expect(warned).toContain('"gb"')
+		// But the index is LIVE and retained (phase 2: load all, don't gate) — the same instance the per-parse
+		// selection can return.
+		const [gb] = result.pairIndexes
+		expect(result.pairIndexes).toHaveLength(1)
+		expect(gb!.url).toBe(GB_INDEX)
+		expect(gb!.country).toBe("gb")
+		expect(gb!.resolver).toBeInstanceOf(PairIndexResolver)
+		expect(gb!.resolver.probe("shoreditch", "london")).toBe("dependent_locality")
+		// Omitting the posture is NOT a misconfiguration — no warn (contrast #1300's gate).
+		expect(warn).not.toHaveBeenCalled()
 
 		warn.mockRestore()
 	})
 
-	test("COUNTRY MATCH: a gb index under country 'en-gb' is constructed and wired as the classifier's placetypePair", async () => {
+	test("CONFIG DEFAULT: a gb index under country 'en-gb' becomes the classifier's placetypePair posture pin", async () => {
 		const fetchImpl = makeFetch((url) => (url.includes("pair-index-gb") ? gbIndexBytes() : dummyBytes))
 
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX], "en-gb"))
@@ -212,11 +215,11 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(wired!.delta).toBe(5)
 		expect(wired!.transitionBeta).toBe(5)
 
-		// The exposed entry carries the SAME resolver instance the classifier got.
+		// The exposed entry carries the SAME resolver instance the classifier got as its default.
 		expect(result.pairIndexes).toEqual([{ url: GB_INDEX, country: "gb", resolver: wired }])
 	})
 
-	test("a bare country code ('gb') matches too — the browser-side widening", async () => {
+	test("a bare country code ('gb') pins the posture too — the browser-side widening", async () => {
 		const fetchImpl = makeFetch((url) => (url.includes("pair-index-gb") ? gbIndexBytes() : dummyBytes))
 
 		await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX], "gb"))
@@ -224,7 +227,29 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(capturedConfig?.placetypePair?.index).toBeInstanceOf(PairIndexResolver)
 	})
 
-	test("multi-locale deploy: gb + nz indexes under 'en-gb' → gb wired, nz gated with NO mismatch warn", async () => {
+	test("CONFIG DEFAULT requested but no matching index → warn, no default; the other indexes still load LIVE", async () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+		// Pin 'fr' but only ship gb + nz — the pin can't be honored.
+		const fetchImpl = makeFetch((url) =>
+			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
+		)
+
+		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX, NZ_INDEX], "fr-fr"))
+
+		// No config default (the pinned country isn't among the loaded ones)…
+		expect(capturedConfig?.placetypePair).toBeUndefined()
+		// …but both indexes are LIVE for the per-parse path.
+		expect(result.pairIndexes.map((i) => i.country)).toEqual(["gb", "nz"])
+		expect(result.pairIndexes.every((i) => i.resolver instanceof PairIndexResolver)).toBe(true)
+		// The unmet pin is loud and names both sides.
+		const warned = warn.mock.calls.map((c) => String(c[0])).join("\n")
+		expect(warned).toContain('"fr"')
+		expect(warned).toContain('"gb"')
+
+		warn.mockRestore()
+	})
+
+	test("multi-locale LOAD-ALL: gb + nz both load LIVE; a 'en-gb' pin makes gb the config default, nz stays available", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 		const fetchImpl = makeFetch((url) =>
 			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
@@ -234,17 +259,36 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		expect(result.pairIndexes).toEqual([
-			{ url: GB_INDEX, country: "gb", resolver: wired },
-			{ url: NZ_INDEX, country: "nz", resolver: null },
-		])
-		// One country matched — the expected multi-locale shape, nothing to warn about.
+		// BOTH load live now — nz is no longer gated to null; it is available for a per-parse nz pick.
+		const [gb, nz] = result.pairIndexes
+		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
+		expect(nz!.country).toBe("nz")
+		expect(nz!.resolver).toBeInstanceOf(PairIndexResolver)
+		expect(nz!.resolver.probe("mangawhai", "mangawhai")).toBe("dependent_locality")
+		// The pin was honored — nothing to warn about.
 		expect(warn).not.toHaveBeenCalled()
 
 		warn.mockRestore()
 	})
 
-	test("no pairIndexURLs at all → empty exposure, no placetypePair config (the pre-#1278 load, unchanged)", async () => {
+	test("selectPairIndexForText is bound on the LoadResult and picks among the loaded indexes", async () => {
+		const fetchImpl = makeFetch((url) =>
+			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
+		)
+
+		// No config posture — pure per-parse selection.
+		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX, NZ_INDEX]))
+		const gbResolver = result.pairIndexes.find((i) => i.country === "gb")!.resolver
+
+		// A UK-postcode input selects the gb index (the SAME retained instance).
+		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toEqual({ index: gbResolver })
+		// A US input matches no loaded index → undefined (byte-stable no-prior).
+		expect(result.selectPairIndexForText("350 5th Ave, New York, NY 10118")).toBeUndefined()
+		// The override pins a posture the text can't reveal.
+		expect(result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })).toEqual({ index: gbResolver })
+	})
+
+	test("no pairIndexURLs at all → empty exposure, no placetypePair config; selectPairIndexForText yields undefined", async () => {
 		const fetchImpl = makeFetch(() => dummyBytes)
 
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, []))
@@ -252,5 +296,6 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(result.classifier).toBeDefined()
 		expect(result.pairIndexes).toEqual([])
 		expect(capturedConfig?.placetypePair).toBeUndefined()
+		expect(result.selectPairIndexForText("10 Downing Street, London SW1A 2AA")).toBeUndefined()
 	})
 })

@@ -6,8 +6,10 @@
 
 export {
 	defaultGazetteerLexiconURL,
+	detectPairIndexCountry,
 	loadNeuralClassifierFromURLs,
 	resolvePairGateCountry,
+	resolvePairIndexForText,
 	type LoadedPairIndex,
 	type LoadFromURLsOptions,
 	type LoadResult,
@@ -25,5 +27,6 @@ export {
 	type NeuralAddressClassifierConfig,
 	type NeuralRunner,
 	type PairIndexHeader,
+	type PlacetypePairPriorOpts,
 } from "@mailwoman/neural/browser"
 export type { InferResult } from "@mailwoman/neural/browser"

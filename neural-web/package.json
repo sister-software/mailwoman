@@ -37,7 +37,9 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
 		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
 	}
 }
