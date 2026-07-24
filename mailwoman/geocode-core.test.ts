@@ -267,6 +267,71 @@ describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
 	})
 })
 
+describe("extractGeocodeResult — street-tier locality from the register commune (#1058)", () => {
+	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's (street,
+	// commune) pair and stamped `street_locality: "Bordeaux"` on the street node; span-rescore's
+	// speculative locality ("Rue", the street's first token — a real commune in the Somme) was
+	// dropped by the resolver for contradicting the register.
+	const streetTierTree = (): AddressTree => ({
+		raw: "Rue Sainte-Catherine, Bordeaux",
+		roots: [
+			node({ tag: "region", value: "Bordeaux", start: 22, end: 30 }),
+			node({
+				tag: "street",
+				value: "Sainte-Catherine",
+				start: 4,
+				end: 20,
+				metadata: {
+					resolution_tier: "street",
+					street_centroid: { lat: 44.8364, lon: -0.5736 },
+					street_locality: "Bordeaux",
+					uncertainty_m: 586,
+				},
+				children: [node({ tag: "street_prefix", value: "Rue", start: 0, end: 3 })],
+			}),
+		],
+	})
+
+	it("decorates `locality` from the register commune, never the street's first token", () => {
+		const r = extractGeocodeResult("Rue Sainte-Catherine, Bordeaux", streetTierTree())
+		expect(r.resolution_tier).toBe("street")
+		expect(r.locality).toBe("Bordeaux") // not "Rue"
+	})
+
+	it("inserts the commune into the hierarchy when no locality entry exists", () => {
+		const r = extractGeocodeResult("Rue Sainte-Catherine, Bordeaux", streetTierTree())
+		const localityEntry = r.hierarchy.find((h) => h.tag === "locality")
+		expect(localityEntry?.name).toBe("Bordeaux")
+	})
+
+	it("does not override a locality hierarchy entry the walk already resolved", () => {
+		const tree = streetTierTree()
+		tree.roots.push(
+			node({
+				tag: "locality",
+				value: "bordeaux",
+				lat: 44.84,
+				lon: -0.58,
+				placeID: "wof:117496",
+				metadata: { resolver_name: "Bordeaux" },
+			})
+		)
+		const r = extractGeocodeResult("Rue Sainte-Catherine, Bordeaux", tree)
+		expect(r.hierarchy.filter((h) => h.tag === "locality")).toHaveLength(1) // no duplicate
+		expect(r.hierarchy[0]?.placeID).toBe("wof:117496") // the resolved entry wins
+	})
+
+	it("is inert for non-street tiers and postcode-scoped street hits (no street_locality stamped)", () => {
+		const tree: AddressTree = {
+			raw: "berlin",
+			roots: [node({ tag: "locality", value: "Berlin", lat: 52.5, lon: 13.4 })],
+		}
+		const r = extractGeocodeResult("berlin", tree)
+		expect(r.locality).toBe("Berlin")
+		expect(r.hierarchy).toHaveLength(1)
+	})
+})
+
 describe("parseForGeocode — query-shape emission prior (#981)", () => {
 	type ParseOpts = Parameters<GeocodeClassifier["parse"]>[1]
 

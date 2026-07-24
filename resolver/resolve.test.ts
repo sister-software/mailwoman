@@ -1077,6 +1077,67 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		expect(streetTier(out)?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8419, lon: -0.5772 })
 	})
 
+	test("#1058: a span-rescored locality that contradicts the register commune is dropped ('Rue' ≠ 'Bordeaux')", async () => {
+		const lookup = fakeStreetCentroids([
+			{ street: "rue sainte catherine", commune: "Bordeaux", lat: 44.8364, lon: -0.5736 },
+		])
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		// The live 5.10.1 shape: span-rescore exact-matched the street's FIRST TOKEN "Rue" to the
+		// commune Rue (Somme) and injected it as the locality; the street-centroid tier then matched
+		// the register's (street, commune) pair — "Rue Sainte-Catherine" in BORDEAUX. The register's
+		// commune evidence is strictly stronger than the speculative injection, so the bogus locality
+		// must not survive as the result's city.
+		const input = tree("Rue Sainte-Catherine, Bordeaux", [
+			node("region", "Bordeaux", 22, 30, [
+				node("street", "Sainte-Catherine", 4, 20, [node("street_prefix", "Rue", 0, 3)]),
+			]),
+			{
+				tag: "locality",
+				value: "Rue",
+				start: 0,
+				end: 3,
+				confidence: 0.5,
+				children: [],
+				placeID: "wof:404374855",
+				lat: 50.2785,
+				lon: 1.6651,
+				metadata: { resolver_name: "Rue", resolver_country: "FR", span_rescore: true },
+			},
+		])
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+		const street = streetTier(out)
+		expect(street?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8364, lon: -0.5736 })
+		expect(street?.metadata?.["street_locality"]).toBe("Bordeaux")
+		// The speculative "Rue" locality is GONE — it contradicted the register's commune.
+		const localities = out.roots.filter((n) => n.tag === "locality")
+		expect(localities).toHaveLength(0)
+	})
+
+	test("#1058: a span-rescored locality that MATCHES the register commune is kept", async () => {
+		const lookup = fakeStreetCentroids([
+			{ street: "rue sainte catherine", commune: "Bordeaux", lat: 44.8364, lon: -0.5736 },
+		])
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const input = tree("Rue Sainte-Catherine, Bordeaux", [
+			node("street", "Rue Sainte-Catherine", 0, 20),
+			{
+				tag: "locality",
+				value: "bordeaux",
+				start: 22,
+				end: 30,
+				confidence: 0.5,
+				children: [],
+				placeID: "wof:117496",
+				lat: 44.84,
+				lon: -0.58,
+				metadata: { resolver_name: "Bordeaux", resolver_country: "FR", span_rescore: true },
+			},
+		])
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+		const localities = out.roots.filter((n) => n.tag === "locality")
+		expect(localities).toHaveLength(1) // same commune (case-insensitive) — kept
+	})
+
 	test("never fires when a house number is present (rooftop tiers' domain)", async () => {
 		let called = false
 		const lookup = fakeStreetCentroids([{ street: "rue de rivoli", commune: "Paris", lat: 1, lon: 2 }], () => {

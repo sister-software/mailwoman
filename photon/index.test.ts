@@ -204,6 +204,21 @@ test("photonOSMTags: maps place tiers to the Photon osm schema, with a safe fall
 	expect(photonOSMTags("whatever")).toEqual({ osm_key: "place", osm_value: "yes", type: "other" }) // unknown → fallback
 })
 
+test("photonOSMTags: every /reverse descent tier has a projection (#1041 close-out)", () => {
+	// The reverse path's deepest placetype comes from resolver-wof-sqlite's DESCENT_TIERS ladder
+	// (county → localadmin → locality → borough → neighbourhood → microhood — keep this list in sync with
+	// resolver-wof-sqlite/reverse.ts). A reverse result can never be address-grade: the ladder caps at
+	// microhood, so the issue's "/reverse parity for address points" checkbox is structurally moot — but
+	// every tier the ladder CAN return must decorate with real tags, never the `place/yes/other` default.
+	const descentTiers = ["county", "localadmin", "locality", "borough", "neighbourhood", "microhood"]
+
+	for (const tier of descentTiers) {
+		expect(photonOSMTags(tier), tier).not.toEqual({ osm_key: "place", osm_value: "yes", type: "other" })
+	}
+
+	expect(photonOSMTags("microhood")).toEqual({ osm_key: "place", osm_value: "neighbourhood", type: "district" })
+})
+
 test("contract: /api and /reverse derive the same osm tags for a place (#1014 checkbox 4)", () => {
 	// The forward projection (primary=locality) and the /reverse path (deepest.placetype=locality) both go through
 	// photonOSMTags, so they can't drift.

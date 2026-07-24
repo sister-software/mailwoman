@@ -66,6 +66,9 @@ const FORWARD_TAG_PROJECTION: Record<
 	house: { key: "name", osmKey: "building", osmValue: "yes", type: "house" },
 	street: { key: "street", osmKey: "highway", osmValue: "residential", type: "street" },
 	neighbourhood: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
+	// The finest tier the /reverse descent ladder (resolver-wof-sqlite `DESCENT_TIERS`) can return — without a row
+	// here a microhood-deepest reverse result fell through to the `place/yes/other` default. #1041 close-out.
+	microhood: { key: "district", osmKey: "place", osmValue: "neighbourhood", type: "district" },
 	dependent_locality: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
 	borough: { key: "district", osmKey: "place", osmValue: "borough", type: "district" },
 	locality: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
