@@ -426,7 +426,13 @@ export class NeuralAddressClassifier {
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
-			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
+			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
+			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is
+			// runtime-safe. An overlay card may pin a concrete system here (en-gb pins "gb", #1275) when the
+			// locale head's auto detection under-fires for the bundle's own locale.
+			...(addressSystemConventions
+				? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode }
+				: {}),
 		})
 	}
 
@@ -691,17 +697,30 @@ export class NeuralAddressClassifier {
 		// Trace-only out-record: which probe-chain path fired (segment vs anchored vs window) — see
 		// PlacetypePairProbeTrace. Only allocated when tracing, like the tracePriors list itself.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
-		const placetypePairPrior = placetypePairOpt
+		const placetypePairResult = placetypePairOpt
 			? buildPlacetypePairPriors(
 					{ ...placetypePairOpt, inputText: text, probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace },
 					pieces,
 					this.labels
 				)
 			: undefined
+		const placetypePairPrior = placetypePairResult?.matrix
 
 		if (placetypePairPrior) {
 			emissions = addEmissionMatrix(emissions, placetypePairPrior)
 		}
+
+		// TRANSITION-BETA: convert the prior's label-string adjustments to the decoder's index axis. Empty
+		// (the overwhelmingly common case — no hit, or a beta-less index) stays `undefined` so the viterbi
+		// call below is argument-identical to the pre-beta path. A label the vocabulary doesn't carry is
+		// dropped, mirroring `applyWindowBias`'s own unknown-label skip.
+		const pairTransitionAdjustments = placetypePairResult?.transitionAdjustments.length
+			? placetypePairResult.transitionAdjustments.flatMap((adj) => {
+					const toLabel = this.labels.indexOf(adj.toLabel)
+
+					return toLabel >= 0 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
+				})
+			: undefined
 
 		const placetypePairApplied = placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior)
 
@@ -748,6 +767,10 @@ export class NeuralAddressClassifier {
 						transitions: this.transitions,
 						startTransitions: this.startTransitions,
 						endTransitions: this.endTransitions,
+						// TRANSITION-BETA: position-scoped entry bonuses from the placetype-pair prior (undefined
+						// unless a pair hit fired on a transitionBeta-carrying index). Viterbi-only by nature — the
+						// argmax path has no transitions to adjust.
+						...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
 					}).path
 				: emissions.map((row) => argmaxSoftmax(row).idx)
 
