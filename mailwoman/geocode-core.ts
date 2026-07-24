@@ -769,7 +769,17 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		}
 	}
 
-	const locality = allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() || null
+	// #1058: a commune-scoped street-centroid hit is REGISTER evidence of the street's locality — the
+	// resolver stamps it as `street_locality` on the street node (and drops span-rescored locality
+	// nodes that contradict it). Surface it as the result locality so `city` decorates from the
+	// register's commune, never from a token of the street name ("Rue Sainte-Catherine, Bordeaux" →
+	// "Bordeaux", not "Rue"). Unset for postcode-scoped hits (no commune evidence) and other tiers.
+	const streetLocality =
+		tier === "street" ? (streetNode?.metadata?.["street_locality"] as string | undefined)?.trim() || null : null
+	const locality =
+		streetLocality ??
+		allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() ??
+		null
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
 
@@ -791,6 +801,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
 		}))
+
+	// #1058: the street tier's register commune fills the locality slot when no locality hierarchy entry
+	// exists (the span-rescored false locality was dropped, or the parse never emitted one) — a
+	// street-tier `city` must come from the register, not from the street's first token.
+	if (streetLocality && !hierarchy.some((h) => h.tag === "locality" || h.tag === "dependent_locality")) {
+		hierarchy.unshift({ tag: "locality", value: streetLocality, name: streetLocality })
+	}
 
 	// #1014: the resolved ISO-3166 alpha-2 country (`resolver_country`, stamped by decorateNode). Same for every
 	// resolved node of one address, so the first that carries it wins.
