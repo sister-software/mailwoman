@@ -1,0 +1,23 @@
+# Base-model artifacts. This overlay ships NO model.onnx/tokenizer.model of its own
+# (mailwoman.baseWeights → @mailwoman/neural-weights-en-us), but publish.yml's HF-fetch
+# step cp's the base pair into this dir as its packaging fallback and older dev flows may
+# leave symlinks behind — keep both out of git either way.
+/model.onnx
+/tokenizer.model
+
+# Soft-feed lexicons materialized at publish time by scripts/copy-weights.ts (#718 D1)
+# and symlinked from data/gazetteer/ by scripts/link-dev-weights.ts for local dev.
+/anchor-lexicon-v1.json
+
+# The #1104 country soft-feed channel's lexicon artifact (same treatment as
+# anchor-lexicon-v1.json above).
+/country-surface-lexicon-v1.json
+
+# No postcode-nz.bin ships YET — no WOF NZ postcode shard exists (model-card follow-up).
+# The pattern is here so a future shard's build output never lands in git by accident.
+/postcode-*.bin
+
+# The placetype-pair index (NZ arc, #1277) — built from the LINZ-derived OpenAddresses
+# countrywide CSV by scripts/link-dev-weights.ts for local dev and scripts/copy-weights.ts
+# at publish time. Same not-committed treatment as en-gb's pair-index-gb.bin.
+/pair-index-*.bin

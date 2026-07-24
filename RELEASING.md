@@ -383,7 +383,9 @@ set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <sr
 Pass `--postcodes` + `--polygons` to the HF script too, or its `releases.json` gets `hasAnchor:false`
 /`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). `--pair-indexes` (placetype-pair-prior
 arc, Task 8) is COUNTRY-SPECIFIC BY DESIGN — omit it entirely for a release where no locale ships one; today
-only `en-gb` does (`pair-index-gb.bin`), driven by `release.config.json`'s `softFeed.pairIndexByCountry`.
+`en-gb` (`pair-index-gb.bin`) and `en-nz` (`pair-index-nz.bin`) do, driven by `release.config.json`'s
+`softFeed.pairIndexByCountry`. (`en-nz` ships NO postcode binary — no WOF NZ postcode shard exists yet; see
+`neural-weights-en-nz/model-card.json`'s `no_postcode_bin` follow-up.)
 **A release is done only when BOTH
 backends agree** — CI's weight fetch reads HF; the demo reads R2:
 
@@ -546,6 +548,10 @@ the recovery loop below can finish stragglers from here without OIDC.
 Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled). release-it itself is no longer invoked by CI — `.release-it.json` remains the canonical workspace list (both phases derive from it) and the config for the legacy local flow, which the ruleset now blocks at the push step (dry runs still work).
 
 ### Adding a NEW package: it can't be first-published from CI
+
+**Version field first**: a new workspace must join at the CURRENT unified version (`npm view
+mailwoman version`), never `0.0.0` — `scripts/prepare-release-version.ts`'s drift guard refuses to
+bump an unsynced tree (bit the en-nz addition on the first 7.8.0 prepare, 2026-07-24).
 
 npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet** — the registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`) because there's no package, and therefore no Trusted Publisher, to authorize against. So a brand-new `@mailwoman/*` workspace needs a **one-time manual first publish with a token** before CI can ever touch it. This bit the 4.0.0 release: `@mailwoman/codex` plus the five new `mailwoman` runtime deps (`kind-classifier`, `locale-gate`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
 

@@ -1,6 +1,6 @@
 {
 	"name": "neural-weights-en-gb",
-	"version": "6.6.1",
+	"version": "6.6.2",
 	"$comment_661": "6.6.1 (2026-07-24) is an ARTIFACT + DECODE bundle revision on an UNCHANGED model: same v385 encoder bytes as 6.6.0 (see base_model), pair-index-gb.bin re-cut at δ=10 (was 5.0 — calibrated for a candidate checkpoint that was never promoted, provably inert on the shipped model: 0/69), consumed by @mailwoman/neural ≥7.7.0's probe CHAIN (probeMode \"auto\": segment path on comma'd input, anchored-adjacent path on comma-free). The 6.7.0 staged-candidate lineage referenced by 6.6.0's card is CLOSED (stop rule, five falsified training mechanisms — see the base card's phase); this capability is carried entirely by the decode-time prior on the shipped model.",
 	"$comment_new_card": "Card became overlay-LOCAL in the 7.6.0 cycle (previously the #1177 card-less-overlay fallback to the base card). `labels`/`requires`/`architecture`/`components_supported` are duplicated VERBATIM from the base card so decode behavior matches the base exactly — keep in lockstep on every base ship.",
 	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model of its own — resolves both from `@mailwoman/neural-weights-en-us` via `mailwoman.baseWeights` (byte-identical artifact; one encoder serves both locales). What this package ships: `postcode-gb.bin` (GB outward-code postcode-anchor binary, built from the WOF GB postcode shard) and `pair-index-gb.bin` (PIX1 placetype-pair retrieval index, built from HM Land Registry PPD tuples, δ=10 as of 6.6.1).",
@@ -9,7 +9,7 @@
 	"locale": "en-gb",
 	"base_model": {
 		"package": "@mailwoman/neural-weights-en-us",
-		"version": "6.6.1",
+		"version": "6.6.2",
 		"$comment": "Same model BYTES as 6.6.0 (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e) — the bundle version moves for the artifact re-cut, the encoder does not.",
 		"resolution": "mailwoman.baseWeights in package.json — resolveWeights/resolveFromPackageDir resolve model.onnx + tokenizer.model from the base package dir (source suffixed \"+base\"); this card's own labels/requires/architecture below are a verbatim copy of the base's, not re-derived at runtime — keep them in lockstep on every base ship (same discipline as neural-weights-en-gb/scripts/link-dev-weights.ts's DEFAULT_MODEL/DEFAULT_TOKENIZER md5 lockstep comment)."
 	},
@@ -123,20 +123,37 @@
 		"$comment": "All rows measured on the SHIPPED v385 base + this package's δ=10 pair-index via @mailwoman/neural 7.7.0's auto probe chain (2026-07-24 battery, pre-registered bars).",
 		"gb_golden_dependent_locality": {
 			"n": 69,
-			"prior_on_at_delta_10": { "emit": 69, "tag_correct": 69, "tag_correct_pct": 100.0 },
+			"prior_on_at_delta_10": {
+				"emit": 69,
+				"tag_correct": 69,
+				"tag_correct_pct": 100.0
+			},
 			"source": "mailwoman/eval-harness/fixtures/gb-golden.jsonl"
 		},
 		"gb_golden_comma_stripped": {
 			"n": 69,
-			"auto_chain_at_delta_10": { "emit": 50, "tag_correct": 47, "tag_correct_pct": 94.0 },
+			"auto_chain_at_delta_10": {
+				"emit": 50,
+				"tag_correct": 47,
+				"tag_correct_pct": 94.0
+			},
 			"note": "the anchored-adjacent path (comma-free input has no segments). Ceiling is 67/69 (2 rows non-adjacent); 17 of the 19 misses are Viterbi path-level (model-side ceiling), not prior misses."
 		},
-		"gb_golden_no_dependent_locality_fp": { "n": 51, "fp": 0 },
+		"gb_golden_no_dependent_locality_fp": {
+			"n": 51,
+			"fp": 0
+		},
 		"venue_confound_fp": {
 			"board": "gb-venue-confound-full.jsonl, 6,500 rows",
 			"delta_star": 10,
-			"segment_path_comma_present": { "fp": "217/6500", "fp_pct": 3.338 },
-			"anchored_path_comma_free": { "fp": "4/6500", "fp_pct": 0.062 },
+			"segment_path_comma_present": {
+				"fp": "217/6500",
+				"fp_pct": 3.338
+			},
+			"anchored_path_comma_free": {
+				"fp": "4/6500",
+				"fp_pct": 0.062
+			},
 			"window_mode_reference": {
 				"fp_pct": 78.969,
 				"note": "opt-in-only mode, documented for contrast — the any-to-any pair geometry is the flaw"
@@ -144,13 +161,41 @@
 		},
 		"delta_sweep_v385": {
 			"$comment": "Option-A sweep, segment mode, comma'd gb-golden board (emit/tag-correct of 69) + venue-confound FP%.",
-			"5": { "emit": 0, "tag_correct": 0, "fp_pct": 0.385 },
-			"6": { "emit": 6, "tag_correct": 5, "fp_pct": 1.4 },
-			"7": { "emit": 35, "tag_correct": 32, "fp_pct": 2.477 },
-			"8": { "emit": 68, "tag_correct": 64, "fp_pct": 3.308 },
-			"10_selected": { "emit": 69, "tag_correct": 69, "fp_pct": 3.338 },
-			"12": { "emit": 69, "tag_correct": 69, "fp_pct": 3.338 },
-			"15": { "emit": 69, "tag_correct": 69, "fp_pct": 3.338 }
+			"5": {
+				"emit": 0,
+				"tag_correct": 0,
+				"fp_pct": 0.385
+			},
+			"6": {
+				"emit": 6,
+				"tag_correct": 5,
+				"fp_pct": 1.4
+			},
+			"7": {
+				"emit": 35,
+				"tag_correct": 32,
+				"fp_pct": 2.477
+			},
+			"8": {
+				"emit": 68,
+				"tag_correct": 64,
+				"fp_pct": 3.308
+			},
+			"10_selected": {
+				"emit": 69,
+				"tag_correct": 69,
+				"fp_pct": 3.338
+			},
+			"12": {
+				"emit": 69,
+				"tag_correct": 69,
+				"fp_pct": 3.338
+			},
+			"15": {
+				"emit": 69,
+				"tag_correct": 69,
+				"fp_pct": 3.338
+			}
 		},
 		"invariance_suite": "zero NEW violation classes vs the v385 baseline with the auto chain active; 138 INVARIANT pairs vs segment-only's 134 (the chain improves the profile).",
 		"presets_and_golden": "6 demo presets + golden us/fr byte-identical to v385 (0/4,206 rows differ) — the en-gb country gate + the chain's comma'd/comma-free dispatch leave non-GB parses untouched by construction and by measurement.",
@@ -167,5 +212,6 @@
 		"pair_index": "pair-index-gb.bin",
 		"gazetteer_lexicon": "anchor-lexicon-v1.json",
 		"country_lexicon": "country-surface-lexicon-v1.json"
-	}
+	},
+	"$comment_662": "6.6.2 (2026-07-24): version lockstep with the base bundle (en-nz overlay joins; the (x,x) identity-pair segment rule lands in neural 7.8.0 — GB is structurally inert to it, 0 identity pairs in this index, re-measured exact). GB artifacts and eval numbers unchanged from 6.6.1."
 }

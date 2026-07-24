@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/api",
-	"version": "7.7.0",
+	"version": "7.8.0",
 	"description": "The native Mailwoman HTTP API — engine-agnostic /v1 surface (parse, geocode, batch, resolve, format) with health, metrics, and an emitted OpenAPI document.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
