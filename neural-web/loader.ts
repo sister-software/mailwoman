@@ -20,14 +20,35 @@ import {
 	MailwomanTokenizer,
 	NeuralAddressClassifier,
 	type NeuralAddressClassifierConfig,
+	PairIndexResolver,
 	parseCountryLexicon,
 	parseGazetteerLexicon,
+	peekPairIndexHeader,
 	PostcodeBinaryResolver,
 } from "@mailwoman/neural/browser"
 
 import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
 export type { WebONNXRunnerDiagnostics }
+
+/**
+ * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader saw it.
+ * `resolver` is constructed ONLY for a country-matched index — a gated-out index had its header peeked
+ * (`peekPairIndexHeader`, no entry parse) and stays `null`, mirroring the node-side `loadFromWeights` discipline of
+ * never paying the full-parse cost for an index the gate discards.
+ */
+export interface LoadedPairIndex {
+	/** URL the binary was fetched from. */
+	url: string
+	/** The header's ISO country code — the value the country gate compared. */
+	country: string
+	/**
+	 * The constructed resolver when `country` matched the loader's gate country (see {@link LoadFromURLsOptions.country});
+	 * `null` when the index loaded but was gated out. A non-null resolver here is the SAME instance wired into the
+	 * classifier's `placetypePair` config.
+	 */
+	resolver: PairIndexResolver | null
+}
 
 export interface LoadResult {
 	classifier: NeuralAddressClassifier
@@ -43,6 +64,13 @@ export interface LoadResult {
 	 * ships placeholder (0,0) for ~22% of US postcodes; this lookup has a real centroid for every covered ZIP.
 	 */
 	postcodeAnchorLookup?: import("@mailwoman/neural").AnchorLookup
+	/**
+	 * Every placetype-pair index that fetched + parsed a header, with its header country and (for the country-matched
+	 * one) the constructed resolver — see {@link LoadedPairIndex}. Empty when `pairIndexURLs` was omitted or every fetch
+	 * failed. Exposed so consumers (the demo's preset lighting) can see which countries' indexes loaded and which one, if
+	 * any, is live on the classifier.
+	 */
+	pairIndexes: readonly LoadedPairIndex[]
 }
 
 export interface LoadFromURLsOptions {
@@ -68,6 +96,29 @@ export interface LoadFromURLsOptions {
 	 * anchor-off identity.
 	 */
 	postcodeBinaryURLs?: readonly string[]
+	/**
+	 * URLs to one or more PIX1 placetype-pair indexes (`pair-index-<cc>.bin`, placetype-pair-prior arc — the GB
+	 * dependent_locality retrieval channel, #1278). Each binary is OPTIONAL and fetched TOLERANTLY (the
+	 * `postcodeBinaryURLs` contract): a 404/network failure/corrupt file is skipped with a loud `console.warn` and never
+	 * blocks the classifier load — older HF release versions ship no pair indexes at all. A fetched index is then
+	 * COUNTRY-GATED: its header's `country` must equal the gate country derived from {@link country}, mirroring the node
+	 * classifier's `loadFromWeights` hard gate (an index built for one country must never bias a parse resolved for a
+	 * different locale). The first matching index is wired into the classifier's `placetypePair` config — probe-chain
+	 * `"auto"` default, `delta`/`transitionBeta` from the index header, identical to the node construction. No match =
+	 * byte-stable decode (the prior stays off).
+	 */
+	pairIndexURLs?: readonly string[]
+	/**
+	 * The country the loaded classifier's parses are FOR — the placetype-pair country gate's right-hand side. Accepts a
+	 * full locale ("en-gb") or a bare ISO country code ("gb"), case-insensitive; a locale is reduced to its country
+	 * subtag, mirroring the node classifier's `localeCountry` derivation (`(opts.locale ?? "en-us").split("-")[1]`).
+	 * Defaults to `"en-us"` → `"us"` — the node default — so omitting it can never light a non-US index by accident.
+	 *
+	 * There is deliberately NO browser-side auto-detection: nothing in this loader or the runner knows a locale (the
+	 * bundle URLs encode one only by convention, and the model's own locale head is a per-parse, post-inference signal —
+	 * too late for a load-time gate). The caller (the demo) owns the posture and passes it explicitly.
+	 */
+	country?: string
 	/**
 	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source is
 	 * `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX declares the
@@ -186,6 +237,72 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 }
 
 /**
+ * Reduce {@link LoadFromURLsOptions.country} to the bare country code the pair-index gate compares. A full locale
+ * ("en-gb") yields its country subtag ("gb") — the node classifier's exact `localeCountry` derivation — and a bare code
+ * ("gb") passes through unchanged (a browser-side widening: the node path only ever receives locales). Omitted =
+ * `"en-us"` → `"us"`, the node default.
+ */
+export function resolvePairGateCountry(country: string | undefined): string {
+	const normalized = (country ?? "en-us").toLowerCase()
+
+	return normalized.split("-")[1] ?? normalized
+}
+
+/**
+ * Fetch + gate the PIX1 placetype-pair indexes TOLERANTLY (the {@link loadPostcodeAnchorLookup} contract): each
+ * `pair-index-<cc>.bin` is OPTIONAL, so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped
+ * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
+ * versions ship no pair indexes at all, and the prior is a soft decode channel, not a load-bearing model input.
+ *
+ * Each fetched index is then COUNTRY-GATED against `gateCountry`, mirroring `NeuralAddressClassifier.loadFromWeights`'s
+ * hard gate INCLUDING its peek-before-construct discipline: the header is read via `peekPairIndexHeader` (no entry
+ * parse, no Map build), and the full `PairIndexResolver` constructor only runs on a match. A mismatched index is
+ * recorded with `resolver: null` — listing several countries' indexes while only one matches the posture is the
+ * anticipated multi-locale deploy shape, so a single mismatch is NOT warned per-index; the loud warning fires only when
+ * indexes loaded but NONE matched (the prior ends up off despite assets being present — the misconfiguration worth
+ * naming).
+ */
+async function loadPairIndexes(
+	urls: readonly string[],
+	gateCountry: string,
+	fetchImpl: typeof fetch
+): Promise<LoadedPairIndex[]> {
+	const settled = await Promise.all(
+		urls.map(async (url): Promise<LoadedPairIndex | null> => {
+			try {
+				const bytes = await fetchBytes(url, fetchImpl)
+				const header = peekPairIndexHeader(bytes)
+
+				return {
+					url,
+					country: header.country,
+					resolver: header.country === gateCountry ? new PairIndexResolver(bytes) : null,
+				}
+			} catch (error) {
+				console.warn(
+					`[mailwoman/neural-web] optional placetype-pair index skipped: ${url} — ` +
+						`${error instanceof Error ? error.message : String(error)}. ` +
+						"The pair prior is a soft decode channel; the classifier loads without it (no placetype-pair bias only)."
+				)
+
+				return null
+			}
+		})
+	)
+	const loaded = settled.filter((index): index is LoadedPairIndex => index !== null)
+
+	if (loaded.length > 0 && !loaded.some((index) => index.resolver)) {
+		console.warn(
+			`[mailwoman/neural-web] no placetype-pair index matched the gate country "${gateCountry}" — ` +
+				`loaded header countries: ${loaded.map((index) => `"${index.country}"`).join(", ")}. ` +
+				'The placetype-pair prior stays OFF (byte-stable decode). Pass `country` (e.g. "en-gb") to light a matching index.'
+		)
+	}
+
+	return loaded
+}
+
+/**
  * Default location of the gazetteer-anchor lexicon: `anchor-lexicon-v1.json` as a sibling of the model file. Matches
  * how release bundles lay out their version directory (model.onnx, tokenizer.model, model-card.json, postcode-*.bin,
  * anchor-lexicon-v1.json side by side).
@@ -234,13 +351,22 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
 	])
 
-	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
+	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, opts.runner),
 		opts.postcodeBinaryURLs?.length
 			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
 			: Promise.resolve<AnchorLookup | undefined>(undefined),
+		opts.pairIndexURLs?.length
+			? loadPairIndexes(opts.pairIndexURLs, resolvePairGateCountry(opts.country), fetchImpl)
+			: Promise.resolve<LoadedPairIndex[]>([]),
 	])
+
+	// Placetype-pair prior (#1278): wire the FIRST country-matched index, exactly the node `loadFromWeights`
+	// construction — `{ index }` alone, so the probe chain defaults to "auto" and `delta`/`transitionBeta` come from the
+	// index header via the resolver's own getters. No match (or no URLs) = no `placetypePair` key at all — the
+	// byte-stable pre-prior decode, asserted in loader.pair-prior-decode.test.ts.
+	const matchedPairIndex = pairIndexes.find((index) => index.resolver !== null)?.resolver ?? undefined
 
 	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
 	const classifier = new NeuralAddressClassifier({
@@ -250,6 +376,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
+		...(matchedPairIndex ? { placetypePair: { index: matchedPairIndex } } : {}),
 		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
 		...(conventions ? { addressSystemConventions: conventions } : {}),
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
@@ -263,7 +390,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		postcodeAnchorLookup,
 	})
 
-	return { classifier, diagnostics: runner.diagnostics, labels }
+	return { classifier, diagnostics: runner.diagnostics, labels, pairIndexes }
 }
 
 /**
