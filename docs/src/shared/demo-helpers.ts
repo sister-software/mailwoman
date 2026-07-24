@@ -95,27 +95,55 @@ export const DEFAULT_LOCALE = "en-us"
 
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
-export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
-	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
-	{ label: "Apple Park", address: "1 Apple Park Way, Cupertino, CA 95014" },
-	{ label: "30 Rockefeller Plaza", address: "30 Rockefeller Plaza, New York, NY 10112" },
-	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
-	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
-	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
-	{ label: "ZIP only", address: "90210" },
-	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
-	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115" },
-	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris" },
+/**
+ * Demo preset addresses. Each carries its `country` (ISO code) — the placetype-pair-prior country pin (#1278 phase 2's
+ * `{country}` override): structural routing (locale-gate) genuinely can't detect every locale from text shape (NZ's
+ * 4-digit postcode isn't distinctive), so a preset PINS its country and {@link pairCountryForInput} hands it to
+ * `selectPairIndexForText` when the input still equals the preset text. Free-typed input (no exact preset match) falls
+ * back to structural detection — GB-with-postcode auto-fires; NZ free-text stays unfired (the accepted consequence of
+ * structural routing, the #1308-sibling reality).
+ */
+export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country: string }> = [
+	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500", country: "us" },
+	{ label: "Apple Park", address: "1 Apple Park Way, Cupertino, CA 95014", country: "us" },
+	{ label: "30 Rockefeller Plaza", address: "30 Rockefeller Plaza, New York, NY 10112", country: "us" },
+	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133", country: "us" },
+	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613", country: "us" },
+	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109", country: "us" },
+	{ label: "ZIP only", address: "90210", country: "us" },
+	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin", country: "de" },
+	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
+	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
 	// GB dependent_locality (placetype-pair-prior arc, Task 8) — a verified `gb-golden` board row
-	// (mailwoman/eval-harness/fixtures/gb-golden.jsonl). Only lights up once the demo repoints to a
-	// released en-gb-shaped weights bundle with the pair-index prior wired (post-promotion); harmless
-	// before that (parses through whatever weights the demo currently serves, same as any other input).
-	{ label: "Macclesfield (GB dependent_locality)", address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD" },
-	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of the city of
-	// Porirua. Same shape as the GB row above: only lights up once the demo repoints to a released weights bundle
-	// with the en-nz pair-index prior wired; harmless before that (parses through whatever weights the demo serves).
-	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua 5026" },
+	// (mailwoman/eval-harness/fixtures/gb-golden.jsonl). "Henbury" flips to dependent_locality via the en-gb pair-index
+	// prior; the `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also
+	// picks gb while the UK postcode is present).
+	{
+		label: "Macclesfield (GB dependent_locality)",
+		address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
+		country: "gb",
+	},
+	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of Porirua. Postcode
+	// DELIBERATELY OMITTED: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
+	// folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) —
+	// tracked as #1308. The `country: "nz"` pin is load-bearing here: locale-gate can't structurally detect NZ (4-digit
+	// postcode isn't a distinctive format), so ONLY the preset pin selects the nz index — free-typed NZ stays unfired.
+	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
+
+/**
+ * The placetype-pair country PIN for one input (#1278 phase 2's `{country}` override). Returns a preset's `country`
+ * when `input` still exactly equals that preset's text (trimmed), else `undefined` → the caller lets structural
+ * detection decide. This is the stale-pin rule: the pin is tied to the preset's IDENTITY (its text), so the instant the
+ * user edits the input it no longer matches and the parse drops to structural locale-gate detection — clean and
+ * stateless (no "active preset" tracking to drift). GB-with-postcode still auto-fires structurally; NZ free-text stays
+ * unfired.
+ */
+export function pairCountryForInput(input: string): string | undefined {
+	const trimmed = input.trim()
+
+	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
+}
 
 // ---------------------------------------------------------------------------
 // US state abbreviation expansion
@@ -246,11 +274,28 @@ export interface ClassifyStageResult {
  * #1278: this is the single seam the locale-gate pre-parse plugs into. A future per-parse country / conventions hint is
  * threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
  */
+/**
+ * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape `neural-web`'s
+ * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-gate over the text SHAPE (postcode
+ * format / script, never place names) and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
+ * or `undefined` when no loaded index matches (byte-stable no-prior). Typed opaquely here because the docs bundle
+ * carries no neural type dependency; `runClassifyStage` threads the result verbatim into the pipeline's `placetypePair`
+ * opt.
+ */
+export type SelectPairIndex = (text: string, opts?: { country?: string }) => object | undefined
+
 export interface ClassifyStageDeps {
 	/** The loaded neural classifier (must be ready — the caller guards `null`). */
 	classifier: MailwomanClassifierLike
 	/** The optional FST gazetteer prior. */
 	fst?: FSTMatcherLike | null
+	/**
+	 * The per-parse placetype-pair prior selector (#1278) — the loaded {@link SelectPairIndex}, or `null`/omitted when no
+	 * pair index was staged for this release. When present, `runClassifyStage` calls it on the input and passes the
+	 * result as the pipeline's `placetypePair` opt; the GB/NZ dependent_locality prior fires while US/FR inputs stay
+	 * byte-stable.
+	 */
+	selectPairIndex?: SelectPairIndex | null
 }
 
 export interface ClassifyStageHooks {
@@ -283,12 +328,24 @@ export async function runClassifyStage(
 
 	hooks.onClassifierStart?.()
 
-	const { tree } = await runPipeline(input, {
-		computeQueryShape,
-		groupPhrases,
-		classifier: deps.classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
-		fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
-	})
+	// Placetype-pair prior (#1278): pick the per-parse index. A preset PINS its country (pairCountryForInput) — the
+	// phase-2 `{country}` override — so a locale structural routing can't detect from text (NZ: 4-digit postcode isn't
+	// distinctive) still fires while the input equals the preset text; the moment the user edits, the pin drops and we
+	// fall back to structural locale-gate detection (GB-with-postcode auto-fires; NZ free-text stays unfired, the
+	// accepted #1308-sibling consequence of structural routing). No index / no match → undefined → byte-stable.
+	const pinnedCountry = pairCountryForInput(input)
+	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : undefined)
+
+	const { tree } = await runPipeline(
+		input,
+		{
+			computeQueryShape,
+			groupPhrases,
+			classifier: deps.classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
+		},
+		placetypePair !== undefined ? { placetypePair } : undefined
+	)
 	const tClassify = performance.now()
 
 	return {

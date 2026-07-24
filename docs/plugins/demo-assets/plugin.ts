@@ -21,7 +21,7 @@ import { resolve } from "node:path"
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import webpack from "webpack"
 
-import { buildWorkspaceAliases, stageSQLJSHTTPVFS } from "./resolve.ts"
+import { buildWorkspaceAliases, stagePairIndexes, stageSQLJSHTTPVFS } from "./resolve.ts"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir
@@ -33,14 +33,18 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 
 		async loadContent() {
 			// Every asset the demo loads at runtime — model, tokenizer, fst, postcodes, the resolver DBs,
-			// releases.json — is served from the R2 bucket (see docs/src/shared/resources.tsx). The ONLY
-			// asset that must be same-origin is the sql.js-httpvfs worker (browsers block cross-origin
-			// `new Worker()`), so we stage its runtime files (worker + wasm + UMD) into the Pages deploy
-			// at `/mailwoman/sqljs/`. Nothing else lands in the Pages deploy.
+			// releases.json — is served from the R2 bucket (see docs/src/shared/resources.tsx). The
+			// assets that must be same-origin are (1) the sql.js-httpvfs worker (browsers block cross-origin
+			// `new Worker()`) and (2) the placetype-pair indexes (#1278 — not on R2 yet; that's the
+			// release-train repoint), so we stage both into the Pages deploy at `/mailwoman/sqljs/` +
+			// `/mailwoman/pair-index/`. Nothing else lands in the Pages deploy.
 			mkdirSync(staticDir, { recursive: true })
 			const sqljsDir = resolve(staticDir, "sqljs")
 			mkdirSync(sqljsDir, { recursive: true })
 			stageSQLJSHTTPVFS(sqljsDir)
+			const pairIndexDir = resolve(staticDir, "pair-index")
+			mkdirSync(pairIndexDir, { recursive: true })
+			stagePairIndexes(pairIndexDir)
 
 			return {}
 		},

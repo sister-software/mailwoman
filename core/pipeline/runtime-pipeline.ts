@@ -29,6 +29,7 @@ import type {
 	PhraseProposal,
 	PipelineOpts,
 	PipelineResult,
+	PlacetypePairPassthrough,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
@@ -501,7 +502,14 @@ export async function runPipeline(
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
-		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst, opts?.normalizeCase)
+		tree = await safeClassify(
+			stages.classifier,
+			normalized.normalized,
+			queryShape,
+			stages.fst,
+			opts?.normalizeCase,
+			opts?.placetypePair
+		)
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
@@ -556,7 +564,8 @@ async function safeClassify(
 	text: string,
 	queryShape: QueryShapeLite,
 	fst?: FSTMatcherLike,
-	normalizeCase?: boolean
+	normalizeCase?: boolean,
+	placetypePair?: PlacetypePairPassthrough
 ): Promise<AddressTree> {
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
@@ -564,12 +573,15 @@ async function safeClassify(
 		// Word-consistency heal on by default (2026-07-15): arbitrates intra-word tag disagreement only, with the
 		// punctuation-separator + byte-fallback gates — clean win across golden us/fr/adversarial + parity floors.
 		// Semantics in neural/word-consistency.ts.
+		// placetypePair (#1278): an opaque per-parse prior handle forwarded verbatim — undefined omits it (byte-stable
+		// no-prior decode), so the classifier's `opts?.placetypePair ?? cfg.placetypePair` resolution is unchanged when absent.
 		return await classifier.parse(text, {
 			queryShape,
 			fst,
 			postcodeRepair: true,
 			normalizeCase,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+			...(placetypePair !== undefined ? { placetypePair } : {}),
 		})
 	} catch {
 		return { raw: text, roots: [] }
