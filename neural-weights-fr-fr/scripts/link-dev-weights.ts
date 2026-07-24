@@ -29,20 +29,28 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, lstatSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, lstatSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 const PKG_DIR = repoRootPath("neural-weights-fr-fr")
 
-/** Replicate `ln -sf SRC DEST`: drop any pre-existing link/file at the destination, then symlink. */
+/**
+ * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
+ * unlink-then-symlink leaves a no-file window that concurrent vitest workers (weights.test.ts + every other suite
+ * resolving weights on the lab runners) can hit mid-suite — bit CI on 2026-07-24 (v1-parse-gate: "missing model files"
+ * while the materialize step had verifiably succeeded). rename(2) replaces the destination atomically.
+ */
 function linkForce(src: string, dest: string): void {
-	if (existsSync(dest)) {
-		unlinkSync(dest)
+	const tmp = `${dest}.tmp-link`
+
+	if (existsSync(tmp)) {
+		unlinkSync(tmp)
 	}
 
-	symlinkSync(src, dest)
+	symlinkSync(src, tmp)
+	renameSync(tmp, dest)
 }
 
 /** Remove a leftover local file/symlink so the #1179 base-weights fallback engages. */
