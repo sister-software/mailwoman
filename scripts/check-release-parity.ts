@@ -104,16 +104,48 @@ const checks: ParityCheck[] = []
 // compares against the SHIPPED model identity: `neural-weights-en-us/model-card.json#version`
 // (the same source verify-release-metadata keys off). The docs matrix row stays vs npm latest —
 // that surface documents package releases.
-const cardModelVersion = normalizeVersion(
-	(JSON.parse(readFileSync(MODEL_CARD_PATH, "utf8")) as { version: string }).version
-)
+const localCard = JSON.parse(readFileSync(MODEL_CARD_PATH, "utf8")) as {
+	version: string
+	files_md5?: Record<string, string>
+}
+const cardModelVersion = normalizeVersion(localCard.version)
 
 const demoDefault = await readDemoDefaultVersion()
+
+// SECOND REFINEMENT (2026-07-24): the demo's parity contract is MODEL BYTES, not the bundle
+// number. Bundle revisions that change only decode-side artifacts (6.6.1: pair-index re-cut;
+// 6.6.2: en-nz overlay) move the card version with ZERO model.onnx change — the demo serving the
+// previous bundle serves the IDENTICAL model, and can't even use the new artifacts until
+// neural-web grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the
+// trailing version's shipped card records the same `files_md5["model.onnx"]` as the current card
+// (fetched from the HF bucket — the same store the demo loads from). Different bytes = real
+// drift = fail, exactly as before.
+let demoOK = demoDefault === cardModelVersion
+let demoNote = `${cardModelVersion} (model-card version)`
+
+if (!demoOK && localCard.files_md5?.["model.onnx"]) {
+	try {
+		const trailingCardURL = `https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${demoDefault}/model-card.json`
+		const trailingCard = (await (await fetch(trailingCardURL)).json()) as {
+			files_md5?: Record<string, string>
+		}
+
+		if (trailingCard.files_md5?.["model.onnx"] === localCard.files_md5["model.onnx"]) {
+			demoOK = true
+			demoNote = `${cardModelVersion} — demo trails on a bundle revision with IDENTICAL model bytes (model.onnx md5 match); acceptable until the demo repoint (#1278)`
+			console.log(
+				`  note: demo defaultVersion ${demoDefault} trails card ${cardModelVersion} but model.onnx bytes are identical — bundle-only revision, parity holds`
+			)
+		}
+	} catch {
+		// Fetch failure → keep the strict verdict; the check stays honest rather than silently passing.
+	}
+}
 checks.push({
 	name: `demo manifest defaultVersion (${DEMO_MANIFEST_URL})`,
 	value: demoDefault,
-	ok: demoDefault === cardModelVersion,
-	expected: `${cardModelVersion} (model-card version)`,
+	ok: demoOK,
+	expected: demoNote,
 })
 
 const docsCurrent = readDocsCurrentVersion()
