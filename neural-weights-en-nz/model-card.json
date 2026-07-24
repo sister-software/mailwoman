@@ -189,9 +189,10 @@
 				"note": "in line with GB's 3.338% (1.07x)"
 			},
 			"anchored_path_comma_free": {
-				"fp": "56/6500",
-				"fp_pct": 0.862,
-				"note": "LOUD-FLAGGED vs GB's anchored 0.062% (13.9x) — real-data finding the synthetic board could not see; still 5.8x under the pre-registered ≤5% v1.1 bar. Class breakdown: cross-confound 0.809%, same-locality 0.987%. Follow-up lever if it ever matters in traffic: the pre-registered Q4 child-side confident-street veto (contingency threshold >5%, NOT triggered)."
+				"fp": "88/6500",
+				"fp_pct": 1.354,
+				"note": "LOUD-FLAGGED vs GB's anchored 0.062% (13.9x) — real-data finding the synthetic board could not see; still 5.8x under the pre-registered ≤5% v1.1 bar. Class breakdown: cross-confound 0.809%, same-locality 0.987%. Follow-up lever if it ever matters in traffic: the pre-registered Q4 child-side confident-street veto (contingency threshold >5%, NOT triggered).",
+				"$correction_2026_07_24": "The initially published 56/6500 (0.862%) was measured with a borrowed en-us anchor cache the SHIPPED package does not carry (en-nz ships no postcode-nz.bin → anchor channel OFF in production). 88/6500 (1.354%) is the shipped-configuration number — 21.8x GB's anchored floor, still 3.7x under the pre-registered ≤5% bar; Q4 veto contingency remains untriggered. Building postcode-nz.bin (the no_postcode_bin follow-up) would ALSO restore the lower FP."
 			},
 			"supersedes": "the 0/510 synthetic interim board (retired 2026-07-24 — did not generalize on the anchored path; #1279)"
 		}
