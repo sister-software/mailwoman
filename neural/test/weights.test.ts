@@ -17,6 +17,12 @@
  *       `model-card.json` (the #1249 base-card-fallback design's overlay-local path) — the card-less
  *       fallback for `modelCardPath` specifically is now dormant for en-gb (model/tokenizer still fall
  *       through to base; only the card resolves locally, per `resolveFromPackageDir`'s precedence).
+ *   - The en-nz case is the same base-overlay dedup in its second (and simpler) form: NO local
+ *       postcode binary exists at all (no WOF NZ postcode shard — see the overlay's model-card
+ *       `no_postcode_bin` follow-up), so `anchorLookupPath` must be undefined while the overlay's
+ *       OWN `pair-index-nz.bin` + model-card resolve locally and model/tokenizer fall through to
+ *       base. One test, wiring-only — the country-gate/prior machinery is generic and already
+ *       exhaustively covered by the en-gb block below.
  *   - The placetype-pair-prior arc Task 5 block is the arc's end-to-end smoke: en-gb resolves
  *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
@@ -81,6 +87,12 @@ const haveGBWofDB = existsSync(String(GB_WOF_DB_PATH))
 // same as the postcode-binary build needs the WOF shard above.
 const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const havePPDSource = existsSync(String(PPD_SOURCE_CSV_PATH))
+
+// The en-nz auto-resolve test's link-dev-weights run shells out to `gazetteer pair-index` to build
+// pair-index-nz.bin from the LINZ-derived OpenAddresses NZ countrywide CSV (see that script's
+// header) — same on-disk precondition shape as the GB PPD source above.
+const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
+const haveNZSource = existsSync(String(NZ_SOURCE_CSV_PATH))
 
 // Both en-gb tests below shell out to neural-weights-en-gb's link-dev-weights.ts, which (on a COLD
 // worktree with no pair-index-gb.bin yet) builds it from the ~25.6M-row PPD tuples CSV — several
@@ -213,6 +225,49 @@ describe("resolveWeights — package auto-resolve", () => {
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const tree = await cls.parse("10 Downing Street, London SW1A 2AA")
+			expect(tree.roots.length).toBeGreaterThan(0)
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
+
+	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details are all shared
+	// with the en-gb case above — what's NEW here is the postcode-less posture. en-nz ships NO
+	// postcode-nz.bin (no WOF NZ postcode shard exists — the overlay's model-card `no_postcode_bin`
+	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
+	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
+	// prior/country-gate behavior itself is generic machinery already covered by the en-gb Task 5
+	// block below and the mispackaging gate at the bottom of this file.
+	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
+		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode shard), and parses",
+		async () => {
+			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enUSLinkScript], { stdio: "pipe" })
+
+			const enNZLinkScript = repoRootPath("neural-weights-en-nz", "scripts", "link-dev-weights.ts")
+			execFileSync(process.execPath, ["--experimental-strip-types", enNZLinkScript], { stdio: "pipe" })
+
+			const r = resolveWeights({ locale: "en-nz" })
+			expect(r.source).toBe("package:@mailwoman/neural-weights-en-nz+base")
+			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
+			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+			// The documented gap, pinned: no postcode-nz.bin ships, so the anchor sibling must NOT
+			// resolve (loadFromWeights then warns once and runs anchor-OFF — the tolerant-loader
+			// contract, not a crash).
+			expect(r.anchorLookupPath).toBeUndefined()
+			expect(r.modelCardPath).toMatch(/neural-weights-en-nz\/model-card\.json$/)
+			expect(r.pairIndexPath).toMatch(/neural-weights-en-nz\/pair-index-nz\.bin$/)
+
+			// Probe the built artifact directly: header country gates to nz, and a known identity pair
+			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x); task-8 report) is
+			// genuinely present in THIS build.
+			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			expect(resolver.header.country).toBe("nz")
+			expect(resolver.header.delta).toBe(10)
+			expect(resolver.probe("plimmerton", "porirua")).toBe("dependent_locality")
+			expect(resolver.probe("mangawhai", "mangawhai")).toBe("dependent_locality")
+
+			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-nz" })
+			const tree = await cls.parse("7 Katipo Drive, Mangawhai, Northland")
 			expect(tree.roots.length).toBeGreaterThan(0)
 		},
 		LINK_SCRIPT_TIMEOUT_MS
