@@ -443,6 +443,27 @@ export function neuralClassifierLoadURLs(
 	}
 }
 
+/**
+ * Placetype-pair indexes staged SAME-ORIGIN by the demo-assets plugin (placetype-pair-prior arc, #1278). Unlike every
+ * other classifier asset (model / tokenizer / postcode binaries), these are NOT on the R2 bucket yet — that repoint is
+ * the release-train's job. For dev/staged verification the plugin copies
+ * `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin` into `static/mailwoman/pair-index/`, served under the site base
+ * alongside the sql.js worker assets. The loader fetches these TOLERANTLY (a 404 when a binary wasn't staged — e.g. a
+ * CI build with no dev weights — is skipped, never fatal), so wiring them here is byte-stable when they're absent.
+ */
+export const STAGED_PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
+
+/**
+ * Build the same-origin URLs for the staged placetype-pair indexes (see {@link STAGED_PAIR_INDEX_COUNTRIES}).
+ *
+ * @param pairIndexBaseURL Same-origin base for the staged binaries (e.g. `/mailwoman/pair-index`).
+ */
+export function pairIndexStagedURLs(pairIndexBaseURL: string): string[] {
+	const base = pairIndexBaseURL.replace(/\/$/, "")
+
+	return STAGED_PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
+}
+
 export async function loadFSTGazetteer(
 	locale: string,
 	version: string

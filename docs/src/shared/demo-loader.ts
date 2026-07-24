@@ -18,10 +18,16 @@
 
 import type { DemoAssetsLoadContext } from "@mailwoman/react"
 
-import type { Calibrator, ReleaseInfo } from "./demo-helpers.ts"
+import type { Calibrator, ReleaseInfo, SelectPairIndex } from "./demo-helpers.ts"
 import { createCalibrator, DEFAULT_LOCALE } from "./demo-helpers.ts"
 import type { FSTMatcherLike, FSTProvenanceLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
-import { adminGazetteerURL, assetURL, loadFSTGazetteer, neuralClassifierLoadURLs } from "./resources.tsx"
+import {
+	adminGazetteerURL,
+	assetURL,
+	loadFSTGazetteer,
+	neuralClassifierLoadURLs,
+	pairIndexStagedURLs,
+} from "./resources.tsx"
 
 /**
  * The docs-side asset bundle `useDemoRuntime` loads + holds for the selected version (opaque to the package). The map
@@ -37,6 +43,13 @@ export interface DocsDemoAssets {
 	fstProvenance: FSTProvenanceLike | null
 	lookup: MailwomanLookupLike | null
 	calibrator: Calibrator | null
+	/**
+	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-gate over the input text
+	 * and returns the loaded index whose header country matches (or `undefined` → byte-stable no-prior). Both demo parse
+	 * paths thread this into `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior. `null`
+	 * when no pair index was staged/loaded for this release (older bundles) — the seam then behaves exactly as before.
+	 */
+	selectPairIndex: SelectPairIndex | null
 }
 
 /**
@@ -66,20 +79,31 @@ export async function loadDemoAssets(
 	}
 	ctx.setStepLabels(steps)
 
+	// Same-origin base for the staged placetype-pair indexes (#1278) — mirrors how `sqljsBaseURL` names the sql.js
+	// worker dir (`…/mailwoman/sqljs`); the plugin stages the pair binaries as its sibling (`…/mailwoman/pair-index`).
+	const pairIndexBaseURL = sqljsBaseURL.replace(/sqljs\/?$/, "pair-index")
+
 	// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the browser-safe entry. The runtime
 	// API is wider than its TS types (the bundle ships `postcodeAnchorLookup` the declaration omits), so we reach the
 	// runtime shape through `unknown`.
 	const neuralWeb = await import("@mailwoman/neural-web")
-	const { classifier, diagnostics, postcodeAnchorLookup } = (await neuralWeb.loadNeuralClassifierFromURLs(
-		neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-			hasAnchor: release.hasAnchor,
-			forceWASM: ctx.forceWASM,
-		})
-	)) as unknown as {
-		classifier: MailwomanClassifierLike
-		diagnostics?: { backend: string; modelBytes: number } | null
-		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
-	}
+	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } =
+		(await neuralWeb.loadNeuralClassifierFromURLs({
+			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
+				hasAnchor: release.hasAnchor,
+				forceWASM: ctx.forceWASM,
+			}),
+			// Placetype-pair prior (#1278): the GB/NZ dependent_locality retrieval channel. Staged SAME-ORIGIN by the
+			// demo-assets plugin (the `pair-index-<cc>.bin` files are not on R2 yet — that's the release-train repoint).
+			// Load ALL of them; the loader keeps each live and `selectPairIndexForText` picks per parse via locale-gate.
+			// Fetched tolerantly — a 404 (e.g. a build with no staged binary) is skipped, so this is byte-stable when absent.
+			pairIndexURLs: pairIndexStagedURLs(pairIndexBaseURL),
+		})) as unknown as {
+			classifier: MailwomanClassifierLike
+			diagnostics?: { backend: string; modelBytes: number } | null
+			postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
+			selectPairIndexForText?: SelectPairIndex | null
+		}
 
 	ctx.setBackend(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
@@ -149,5 +173,6 @@ export async function loadDemoAssets(
 		fstProvenance,
 		lookup,
 		calibrator,
+		selectPairIndex: selectPairIndexForText ?? null,
 	}
 }

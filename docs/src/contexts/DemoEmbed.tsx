@@ -22,7 +22,7 @@ import { useDemoRuntime } from "@mailwoman/react"
 import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
 
-import type { Calibrator, ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
+import type { Calibrator, ReleaseInfo, ReleasesManifest, SelectPairIndex } from "../shared/demo-helpers.ts"
 import { DEFAULT_LOCALE, normalizeReleasesManifest } from "../shared/demo-helpers.ts"
 import type { DocsDemoAssets } from "../shared/demo-loader.ts"
 import { loadDemoAssets } from "../shared/demo-loader.ts"
@@ -54,6 +54,11 @@ export interface DemoEmbedState {
 	fstProvenance: FSTProvenanceLike | null
 	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
 	lookup: MailwomanLookupLike | null
+	/**
+	 * Per-parse placetype-pair prior selector (#1278) — locale-gate over the input picks the GB/NZ dependent_locality
+	 * index. `null` when this release staged no pair index. `PipelineExplorer` threads it into `runClassifyStage`.
+	 */
+	selectPairIndex: SelectPairIndex | null
 	/**
 	 * Maps a raw span confidence → its calibrated probability of correctness, built from the version's `calibration.json`
 	 * (isotonic table). `null` while loading or for a release that ships no calibration table. The demo applies it so a
@@ -165,6 +170,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			fstProvenance: rt.assets?.fstProvenance ?? null,
 			lookup: rt.assets?.lookup ?? null,
 			calibrator: rt.assets?.calibrator ?? null,
+			selectPairIndex: rt.assets?.selectPairIndex ?? null,
 			loadingProgress: rt.loadingProgress,
 			loadingStepIndex: rt.loadingStepIndex,
 			loadingStepLabels: rt.loadingStepLabels,

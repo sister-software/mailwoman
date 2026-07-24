@@ -24,7 +24,7 @@ import {
 } from "@mailwoman/core/pipeline"
 import { classifyKind as defaultClassifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
@@ -185,8 +185,13 @@ function wrapWithStreetEvidence(
 	const inner = classifier as NeuralAddressClassifier
 
 	return {
+		// `cOpts` is the core `ClassifierOpts`; `rerankByStreetEvidence` wants the neural `ParseOpts`. ClassifierOpts is a
+		// structural subset EXCEPT `placetypePair`, which core types opaquely (`object | false`, no neural dep — #1278)
+		// while ParseOpts types it as `PlacetypePairPriorOpts | false`; at runtime the passthrough value IS a valid
+		// PlacetypePairPriorOpts, so the narrowing cast at this core→neural bridge is sound.
 		parse: async (text, cOpts) =>
-			(await rerankByStreetEvidence(inner, text, evidence, grammar, { parseOpts: cOpts })).tree,
+			(await rerankByStreetEvidence(inner, text, evidence, grammar, { parseOpts: cOpts as ParseOpts | undefined }))
+				.tree,
 	}
 }
 

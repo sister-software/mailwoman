@@ -35,6 +35,7 @@ export type {
 	PipelineOpts,
 	PipelineResult,
 	PipelineTiming,
+	PlacetypePairPassthrough,
 	POIIntent,
 	POIIntentOutcome,
 	POIResult,

@@ -116,6 +116,7 @@ docs/static/mailwoman/*.db
 docs/static/mailwoman/*.bin
 docs/static/mailwoman/*.json
 docs/static/mailwoman/sqljs/
+docs/static/mailwoman/pair-index/
 
 .claude/settings.local.json
 CLAUDE.local.md

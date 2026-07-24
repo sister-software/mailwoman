@@ -340,6 +340,58 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 	return true
 }
 
+/**
+ * Stage the placetype-pair indexes (placetype-pair-prior arc, #1278) SAME-ORIGIN into `destDir`
+ * (`static/mailwoman/pair-index/`). The `pair-index-<cc>.bin` files are NOT on the R2 bucket yet — that repoint is the
+ * release-train's job — so for dev/staged verification the demo fetches them from the site's own origin, alongside the
+ * sql.js worker assets. Sources are `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin`, materialized locally by each
+ * package's `scripts/link-dev-weights.ts` (built from the register source CSV; not committed, like model.onnx).
+ *
+ * TOLERANT by design: a missing binary (a fresh worktree that never ran link-dev-weights, or a CI build with no dev
+ * weights) is skipped with a warn — the demo loader fetches these with the same 404-tolerance, so an unstaged binary
+ * just means that country's pair prior resolves OFF (byte-stable). `copyFileSync` dereferences a symlinked source, so
+ * no symlink lands in the deploy.
+ *
+ * @param destDir - E.g. static/mailwoman/pair-index
+ */
+export function stagePairIndexes(destDir: string): boolean {
+	const sources: Array<{ pkg: string; file: string }> = [
+		{ pkg: "@mailwoman/neural-weights-en-gb", file: "pair-index-gb.bin" },
+		{ pkg: "@mailwoman/neural-weights-en-nz", file: "pair-index-nz.bin" },
+	]
+	let copied = 0
+
+	for (const { pkg, file } of sources) {
+		const pkgDir = resolveWorkspaceDir(pkg)
+
+		if (!pkgDir) {
+			console.warn(`[demo-assets] pair-index: ${pkg} not resolvable — ${file} not staged`)
+			continue
+		}
+		const src = resolve(pkgDir, file)
+
+		if (!existsSync(src)) {
+			console.warn(
+				`[demo-assets] pair-index: ${file} missing at ${src} — not staged ` +
+					`(run ${pkg}'s scripts/link-dev-weights.ts to build it; the demo tolerates its absence — that country's pair prior stays OFF).`
+			)
+			continue
+		}
+		const dest = resolve(destDir, file)
+
+		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
+		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
+		copyFileSync(src, dest)
+		copied++
+	}
+
+	if (copied > 0) {
+		console.log(`[demo-assets] pair-index: staged ${copied} index binary/binaries`)
+	}
+
+	return true
+}
+
 // ---------------------------------------------------------------------------
 // FST builder
 // ---------------------------------------------------------------------------
