@@ -1,6 +1,6 @@
 {
 	"name": "neural-weights-en-nz",
-	"version": "6.6.2",
+	"version": "6.6.3",
 	"$comment_662": "6.6.2 (2026-07-24) introduces the en-nz overlay on the SAME unchanged v385 encoder as 6.6.1: no new model bytes anywhere, one new decode-time artifact (pair-index-nz.bin, δ=10) consumed by @mailwoman/neural's probe chain. Full recovery on the NZ repeated-name class (bar 1's 100%) additionally requires @mailwoman/neural ≥7.8.0's identical-adjacent-segment (x,x) rule — on the pre-fix segment path the as-written board measures 74.4% tag-correct (the 63 same-name suburb/town rows fuse); the comma-free anchored path is unaffected either way.",
 	"$comment_new_card": "Overlay-LOCAL card (same posture as en-gb's since the 7.6.0 cycle). `labels`/`requires`/`architecture`/`components_supported` are duplicated VERBATIM from the base card so decode behavior matches the base exactly — keep in lockstep on every base ship.",
 	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model of its own — resolves both from `@mailwoman/neural-weights-en-us` via `mailwoman.baseWeights` (byte-identical artifact; one encoder serves both locales). What this package ships: `pair-index-nz.bin` (PIX1 placetype-pair retrieval index, built from the LINZ-derived OpenAddresses NZ countrywide CSV, δ=10) plus the shared gazetteer/country lexicons. UNLIKE en-gb there is NO postcode-nz.bin — see no_postcode_bin below.",
@@ -9,7 +9,7 @@
 	"locale": "en-nz",
 	"base_model": {
 		"package": "@mailwoman/neural-weights-en-us",
-		"version": "6.6.1",
+		"version": "6.6.3",
 		"$comment": "v385 bytes (model.onnx md5 700f3cf4c08f31536f0bc053c281b19e) — this overlay adds decode-time data only, the encoder does not move.",
 		"resolution": "mailwoman.baseWeights in package.json — resolveWeights/resolveFromPackageDir resolve model.onnx + tokenizer.model from the base package dir (source suffixed \"+base\"); this card's own labels/requires/architecture below are a verbatim copy of the base's, not re-derived at runtime — keep them in lockstep on every base ship (same discipline as en-gb's card)."
 	},
@@ -206,5 +206,6 @@
 		"pair_index": "pair-index-nz.bin",
 		"gazetteer_lexicon": "anchor-lexicon-v1.json",
 		"country_lexicon": "country-surface-lexicon-v1.json"
-	}
+	},
+	"$comment_663": "6.6.3: version lockstep only — the NZ artifact is UNCHANGED (no transitionBeta: unmeasured for NZ and comma-free NZ is already 99.2%; per-country calibration discipline). All NZ surfaces re-verified byte-identical in the transition-beta batteries."
 }

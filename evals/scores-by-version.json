@@ -1106,6 +1106,68 @@
 			},
 			"notes": "NZ dependent_locality LIVE: as-written 246/246 emit + 246/246 tag-correct (100% — the (x,x) identical-adjacent-segment rule recovers all 63 repeated-name rows, e.g. 'Mangawhai, Mangawhai'); comma-free 244/246 (99.2%); golden FP 0/54; GB surfaces reproduced byte-exact (0 identity pairs in the GB index — structural inertness verified). Model bytes unchanged (v385). NZ venue precision evidence is synthetic-interim until #1279.",
 			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
+		},
+		{
+			"run_id": "v385-transition-beta-6-6-3",
+			"model_version": "6.6.3",
+			"model_path": "@mailwoman/neural-weights-en-us@7.8.1 (+ en-gb pair-index δ=10 β=5, en-nz unchanged)",
+			"corpus_version": "v0.13.0-latam overlay (v0.11.0-no-fragment base + a 456,230-row `overture-latam` shard: CA 299,809 + MX 156,421 Overture-Addresses rows) — the dedicated LATAM source does NOT dilute the trained EU `overture` rows — MODEL BYTES UNCHANGED from 6.6.0 (v385); 6.6.1 is a decode-artifact bundle revision, no training",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "transition-beta v2 battery (operator-ratified bars + named-row prediction): GB comma-free, all GB/NZ dep-loc + venue surfaces, golden/presets byte-identity, invariance --baseline v385, postcode-fix compose",
+			"eval_set_sha256": "per-file, see .superpowers/sdd/task-8-report.md provenance blocks",
+			"trained_at": null,
+			"training_steps": 0,
+			"training_wall_clock_seconds": 0,
+			"hardware": "zero-GPU (decode-side artifact + code only)",
+			"metrics": {
+				"us": {
+					"postcode": 96.9,
+					"country_homograph": 89.8,
+					"micro": 86.7,
+					"locality": 77.9,
+					"region": 89.7,
+					"street": 80.9,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.1,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.8,
+					"house_number": 95.7,
+					"region": 44.4,
+					"cedex_real": 85.6
+				},
+				"de": {
+					"native_locality_anchor_on": 91.3
+				},
+				"gb_dependent_locality": {
+					"golden_emit": "69/69",
+					"golden_tag_correct": "69/69 (100%)",
+					"comma_stripped_emit": "63/69",
+					"comma_stripped_tag_correct": "60/63 (95.2%)",
+					"golden_no_dl_fp": "0/51",
+					"venue_confound_fp_segment_path": "217/6500 (3.338%)",
+					"venue_confound_fp_anchored_path": "4/6500 (0.062%)"
+				},
+				"arena": {
+					"perturb": 80
+				},
+				"nz_dependent_locality": {
+					"board_emit": "246/246",
+					"board_tag_correct": "246/246 (100%)",
+					"comma_stripped": "244/246 (99.2%)",
+					"golden_no_suburb_fp": "0/54",
+					"venue_synthetic_interim": "0/510"
+				},
+				"gb_postcode": {
+					"golden_exact": "83/106 (was 26)",
+					"clips": "0 (was 44)"
+				}
+			},
+			"notes": "Model bytes STILL v385. 6.6.3 = GB pair-index re-cut with transitionBeta 5 (position-scoped Viterbi transition bonus at pair-hit child starts, neural 7.8.1) + title-preposition suppression ({at, of}). GB comma-free 55→63/69 emit, 60/63 (95.2%) correct — named-row prediction matched exactly, 8 net-new. Venue-anchored FP restored to the exact pre-beta 4/6500 after the v1 battery caught the 'New Inn at Hoff' collateral (1-row FAIL → suppression → v2 PASS all 5). Also ships #1290 (GB postcode conventions row: exact 26→83, clips 44→0). NZ/golden/presets byte-identical throughout.",
+			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
 		}
 	]
 }
