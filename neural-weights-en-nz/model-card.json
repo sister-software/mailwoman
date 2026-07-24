@@ -114,7 +114,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "6.6.2 is the NZ replication of GB's 6.6.1 story: the prior alone on the untouched v385 base, plus one NZ-specific decode rule. The NZ suburb board's as-written correct-rate was 74.4% pre-fix — every miss traced 1-for-1 to the 63/246 rows where suburb and town share the identical name (segment mode fused both into one dependent_locality span). The (x,x) rule closes that class completely (246/246). The comma-free anchored path was never affected (99.2% both before and after — the highest tag-correct measured on any NZ or GB board in the task-8 report). Venue-confound evidence is INTERIM (see eval.synthetic_venue_fp): no real NZ venue-name source exists on disk (poi.db has zero NZ rows; no NZ Overture/OSM extract; geonames/NZ.txt is a bare postcode reference) — acquisition tracked as issue #1279. All numbers: .superpowers/sdd/task-8-report.md §§ 'NZ arc: census + δ-sweep scoping (#1277)', 'en-nz battery'.",
+	"notes": "6.6.2 is the NZ replication of GB's 6.6.1 story: the prior alone on the untouched v385 base, plus one NZ-specific decode rule. The NZ suburb board's as-written correct-rate was 74.4% pre-fix — every miss traced 1-for-1 to the 63/246 rows where suburb and town share the identical name (segment mode fused both into one dependent_locality span). The (x,x) rule closes that class completely (246/246). The comma-free anchored path was never affected (99.2% both before and after — the highest tag-correct measured on any NZ or GB board in the task-8 report). Venue-confound evidence is INTERIM (see eval.synthetic_venue_fp): no real NZ venue-name source exists on disk (poi.db has zero NZ rows; no NZ Overture/OSM extract; geonames/NZ.txt is a bare postcode reference) — acquisition tracked as issue #1279. All numbers: .superpowers/sdd/task-8-report.md §§ 'NZ arc: census + δ-sweep scoping (#1277)', 'en-nz battery'. EVIDENCE UPGRADE (2026-07-24, #1279 closed): venue-confound precision re-measured on 6,500 REAL Overture NZ rows — segment 3.569% (GB-comparable), anchored 0.862% (14x GB's floor, 5.8x under the bar; documented honestly, veto contingency not triggered). The synthetic interim board is retired.",
 	"eval": {
 		"$comment": "All rows measured on the SHIPPED v385 base + this package's δ=10 pair-index-nz.bin via @mailwoman/neural's auto probe chain + the 7.8.0 identical-adjacent-segment fix (2026-07-24 en-nz battery, pre-registered bars — task-8 report).",
 		"nz_suburb_board_as_written": {
@@ -179,7 +179,22 @@
 			}
 		},
 		"gb_reproduction": "every GB number reproduces to the exact integer through the 7.8.0 (x,x) fix, both probe-chain legs: gb-golden 69/69 emit / 69/69 correct, comma-stripped 50/69 emit / 47/50 (94.0%), golden no-DL FP 0/51, venue FP 217/6500 (segment leg) + 4/6500 (anchored leg). Corroborated structurally: GB's census has 0/19,431 identity pairs, so the rule cannot fire on GB at all.",
-		"presets_and_golden": "6 demo presets + golden us (n=2660) / fr (n=1546) byte-identical through the fix; invariance suite 138 INVARIANT / 6 DEGRADED / 12 LOST — 0 NEW violation classes vs the v385 baseline (identical profile to the pre-fix battery)."
+		"presets_and_golden": "6 demo presets + golden us (n=2660) / fr (n=1546) byte-identical through the fix; invariance suite 138 INVARIANT / 6 DEGRADED / 12 LOST — 0 NEW violation classes vs the v385 baseline (identical profile to the pre-fix battery).",
+		"venue_confound_fp": {
+			"board": "nz-venue-confound-full.jsonl, 6,500 REAL Overture NZ places rows (release 2026-06-17.0, CDLA-Permissive-2.0, bbox extract 202,847 rows — PROVENANCE.md at $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/places/); 70.4% cross-confound, 29.6% venue-contains-own-locality; sample fixture mailwoman/eval-harness/fixtures/nz-venue-confound-sample.jsonl",
+			"delta_star": 10,
+			"segment_path_comma_present": {
+				"fp": "232/6500",
+				"fp_pct": 3.569,
+				"note": "in line with GB's 3.338% (1.07x)"
+			},
+			"anchored_path_comma_free": {
+				"fp": "56/6500",
+				"fp_pct": 0.862,
+				"note": "LOUD-FLAGGED vs GB's anchored 0.062% (13.9x) — real-data finding the synthetic board could not see; still 5.8x under the pre-registered ≤5% v1.1 bar. Class breakdown: cross-confound 0.809%, same-locality 0.987%. Follow-up lever if it ever matters in traffic: the pre-registered Q4 child-side confident-street veto (contingency threshold >5%, NOT triggered)."
+			},
+			"supersedes": "the 0/510 synthetic interim board (retired 2026-07-24 — did not generalize on the anchored path; #1279)"
+		}
 	},
 	"format": {
 		"$comment": "Model/tokenizer format is the base's — see neural-weights-en-us/model-card.json. This overlay's own artifact:",
