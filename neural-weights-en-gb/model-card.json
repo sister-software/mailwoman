@@ -1,6 +1,6 @@
 {
 	"name": "neural-weights-en-gb",
-	"version": "6.6.2",
+	"version": "6.6.3",
 	"$comment_661": "6.6.1 (2026-07-24) is an ARTIFACT + DECODE bundle revision on an UNCHANGED model: same v385 encoder bytes as 6.6.0 (see base_model), pair-index-gb.bin re-cut at δ=10 (was 5.0 — calibrated for a candidate checkpoint that was never promoted, provably inert on the shipped model: 0/69), consumed by @mailwoman/neural ≥7.7.0's probe CHAIN (probeMode \"auto\": segment path on comma'd input, anchored-adjacent path on comma-free). The 6.7.0 staged-candidate lineage referenced by 6.6.0's card is CLOSED (stop rule, five falsified training mechanisms — see the base card's phase); this capability is carried entirely by the decode-time prior on the shipped model.",
 	"$comment_new_card": "Card became overlay-LOCAL in the 7.6.0 cycle (previously the #1177 card-less-overlay fallback to the base card). `labels`/`requires`/`architecture`/`components_supported` are duplicated VERBATIM from the base card so decode behavior matches the base exactly — keep in lockstep on every base ship.",
 	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model of its own — resolves both from `@mailwoman/neural-weights-en-us` via `mailwoman.baseWeights` (byte-identical artifact; one encoder serves both locales). What this package ships: `postcode-gb.bin` (GB outward-code postcode-anchor binary, built from the WOF GB postcode shard) and `pair-index-gb.bin` (PIX1 placetype-pair retrieval index, built from HM Land Registry PPD tuples, δ=10 as of 6.6.1).",
@@ -9,7 +9,7 @@
 	"locale": "en-gb",
 	"base_model": {
 		"package": "@mailwoman/neural-weights-en-us",
-		"version": "6.6.2",
+		"version": "6.6.3",
 		"$comment": "Same model BYTES as 6.6.0 (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e) — the bundle version moves for the artifact re-cut, the encoder does not.",
 		"resolution": "mailwoman.baseWeights in package.json — resolveWeights/resolveFromPackageDir resolve model.onnx + tokenizer.model from the base package dir (source suffixed \"+base\"); this card's own labels/requires/architecture below are a verbatim copy of the base's, not re-derived at runtime — keep them in lockstep on every base ship (same discipline as neural-weights-en-gb/scripts/link-dev-weights.ts's DEFAULT_MODEL/DEFAULT_TOKENIZER md5 lockstep comment)."
 	},
@@ -24,12 +24,14 @@
 			"format": "PIX1 placetype-pair index (placetype-pair-prior arc, Task 3) — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Fishburn\", \"Stockton-on-Tees\")",
 			"source": "HM Land Registry Price Paid Data (PPD) tuples CSV, $MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv, md5 dbd675bdc970ea60f96f0a470429a128, 25,674,048 rows",
 			"pairs": 19209,
-			"bytes": 457843,
-			"md5": "f58f38c03d73e9886227fcb1e80f4905",
+			"bytes": 457862,
+			"md5": "ce0e7d947b14ed9754cc1c8b3ba127c5",
 			"delta_calibration": "δ=10 (Option-A sweep on the SHIPPED v385, task-8 report 2026-07-23 — supersedes 6.6.0's δ=5.0, which was calibrated for the never-promoted feed-8k candidate and is provably inert on v385: 0/69). v385's dead-row deficit is uniform (~7.0 logits mean, 4.95 min), so the emit/correct curves and the venue-FP curve all saturate together at δ=10 (δ=12/15 byte-flat). δ remains a recall/FP dial in general — the sweep table lives in eval.delta_sweep_v385 below.",
 			"probe_mode": "\"auto\" (@mailwoman/neural ≥7.7.0 default): the segment path on comma'd input (whole comma-delimited segments — byte-identical to the previous \"segment\" default by construction AND re-measurement), the ANCHORED-ADJACENT path on comma-free input (parent window anchored immediately left of the postcode-shaped span or string-final; child window immediately adjacent, left-maximal; bias on the child span only). Window mode (any-to-any geometry) remains opt-in-only: 79% venue-confound FP at δ=10 — the geometry, not the probing, is its flaw (see the 2026-07-24 brainstorm-response doc).",
 			"country_gate": "hard-gated — the prior only fires when the resolved locale's country matches the index header's country (gb). Never crosses into en-us parses (see neural/test/weights.test.ts).",
-			"not_committed": "derived artifact, .gitignore'd (same posture as postcode-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-gb --country gb --source <ppd-csv> --delta 10`"
+			"not_committed": "derived artifact, .gitignore'd (same posture as postcode-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-gb --country gb --source <ppd-csv> --delta 10`",
+			"transition_beta": 5,
+			"$comment_663": "6.6.3 re-cut: header gains transitionBeta 5 — on a pair hit, a position-scoped bonus on the transition into B-dependent_locality at the child's first piece (neural ≥7.8.1). Fixes the comma-free path-fusion class: 55→63/69 emit, 95.2% tag-correct. Title-preposition suppression ({at, of} predecessors) withholds the bonus inside lexicalized venue names (the 'New Inn at Hoff' class) — venue-anchored FP restored to the exact pre-beta 4/6500. Rebuild: gazetteer pair-index --delta 10 --transition-beta 5."
 		}
 	},
 	"architecture": {
@@ -133,12 +135,12 @@
 		},
 		"gb_golden_comma_stripped": {
 			"n": 69,
-			"auto_chain_at_delta_10": {
-				"emit": 50,
-				"tag_correct": 47,
-				"tag_correct_pct": 94.0
+			"auto_chain_delta_10_beta_5": {
+				"emit": 63,
+				"tag_correct": 60,
+				"tag_correct_pct": 95.2
 			},
-			"note": "the anchored-adjacent path (comma-free input has no segments). Ceiling is 67/69 (2 rows non-adjacent); 17 of the 19 misses are Viterbi path-level (model-side ceiling), not prior misses."
+			"note": "transition-beta (6.6.3): 8 net-new recoveries over the anchor-channel baseline; residual 6 rows named in the task-8 report (2 multi-piece-continuation, unreachable at any β)."
 		},
 		"gb_golden_no_dependent_locality_fp": {
 			"n": 51,
