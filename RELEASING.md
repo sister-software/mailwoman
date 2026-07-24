@@ -383,7 +383,9 @@ set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <sr
 Pass `--postcodes` + `--polygons` to the HF script too, or its `releases.json` gets `hasAnchor:false`
 /`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). `--pair-indexes` (placetype-pair-prior
 arc, Task 8) is COUNTRY-SPECIFIC BY DESIGN — omit it entirely for a release where no locale ships one; today
-only `en-gb` does (`pair-index-gb.bin`), driven by `release.config.json`'s `softFeed.pairIndexByCountry`.
+`en-gb` (`pair-index-gb.bin`) and `en-nz` (`pair-index-nz.bin`) do, driven by `release.config.json`'s
+`softFeed.pairIndexByCountry`. (`en-nz` ships NO postcode binary — no WOF NZ postcode shard exists yet; see
+`neural-weights-en-nz/model-card.json`'s `no_postcode_bin` follow-up.)
 **A release is done only when BOTH
 backends agree** — CI's weight fetch reads HF; the demo reads R2:
 

@@ -1,7 +1,7 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "7.7.0",
-	"locales": ["en-us", "fr-fr", "en-gb"],
+	"locales": ["en-us", "fr-fr", "en-gb", "en-nz"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
 		"model": "models/quantized/model-v310-fr-fragment-step-008000-int8.onnx",
@@ -23,6 +23,10 @@
 			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) — mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default — see `mailwoman gazetteer pair-index --help`). `source` is relative to weights.dataRoot (NOT weights.dataRoot/wof, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
 			"gb": {
 				"source": "ppd/2026-07-22/gb-tuples.csv",
+				"delta": 10
+			},
+			"nz": {
+				"source": "openaddresses/extracted/nz/countrywide.csv",
 				"delta": 10
 			}
 		}

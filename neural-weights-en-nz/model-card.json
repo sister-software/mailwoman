@@ -1,0 +1,158 @@
+{
+	"name": "neural-weights-en-nz",
+	"version": "6.6.2",
+	"$comment_662": "6.6.2 (2026-07-24) introduces the en-nz overlay on the SAME unchanged v385 encoder as 6.6.1: no new model bytes anywhere, one new decode-time artifact (pair-index-nz.bin, δ=10) consumed by @mailwoman/neural's probe chain. Full recovery on the NZ repeated-name class (bar 1's 100%) additionally requires @mailwoman/neural ≥7.8.0's identical-adjacent-segment (x,x) rule — on the pre-fix segment path the as-written board measures 74.4% tag-correct (the 63 same-name suburb/town rows fuse); the comma-free anchored path is unaffected either way.",
+	"$comment_new_card": "Overlay-LOCAL card (same posture as en-gb's since the 7.6.0 cycle). `labels`/`requires`/`architecture`/`components_supported` are duplicated VERBATIM from the base card so decode behavior matches the base exactly — keep in lockstep on every base ship.",
+	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model of its own — resolves both from `@mailwoman/neural-weights-en-us` via `mailwoman.baseWeights` (byte-identical artifact; one encoder serves both locales). What this package ships: `pair-index-nz.bin` (PIX1 placetype-pair retrieval index, built from the LINZ-derived OpenAddresses NZ countrywide CSV, δ=10) plus the shared gazetteer/country lexicons. UNLIKE en-gb there is NO postcode-nz.bin — see no_postcode_bin below.",
+	"phase": "en-nz battery PASS (2026-07-24, all 6 pre-registered bars — task-8 report § 'en-nz battery'). NZ dependent_locality goes live via the decode-time placetype-pair prior on the untouched shipped v385 base, same Option-A recipe as GB: v385's dead-classifier deficit on the NZ board is large but uniform (raw-BIO gap mean 7.817, min 5.790, any-fire 0/246 — same shape as GB's 7.024), so δ=10 clears the board at saturation (identical plateau to δ=12/15). The repeated-name suburb/town class (NZ-specific, 63/246 rows) is recovered by @mailwoman/neural 7.8.0's identical-adjacent-segment rule.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"locale": "en-nz",
+	"base_model": {
+		"package": "@mailwoman/neural-weights-en-us",
+		"version": "6.6.1",
+		"$comment": "v385 bytes (model.onnx md5 700f3cf4c08f31536f0bc053c281b19e) — this overlay adds decode-time data only, the encoder does not move.",
+		"resolution": "mailwoman.baseWeights in package.json — resolveWeights/resolveFromPackageDir resolve model.onnx + tokenizer.model from the base package dir (source suffixed \"+base\"); this card's own labels/requires/architecture below are a verbatim copy of the base's, not re-derived at runtime — keep them in lockstep on every base ship (same discipline as en-gb's card)."
+	},
+	"nz_artifacts": {
+		"pair_index_nz_bin": {
+			"format": "PIX1 placetype-pair index — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Plimmerton\", \"Porirua\")",
+			"source": "LINZ-derived OpenAddresses NZ countrywide CSV (the census the synth-nz-v2 shard was built from), $MAILWOMAN_DATA_ROOT/openaddresses/extracted/nz/countrywide.csv, source md5 fa79e586de96fe54c17b6763a9ea97c6, 2,123,054 rows kept / 137 skipped (empty CITY)",
+			"pairs": 3134,
+			"bytes": 55471,
+			"md5": "7a0cd02b5d952add8037103b4ec8e058",
+			"delta_calibration": "δ=10 (NZ δ-sweep on the SHIPPED v385, task-8 report 2026-07-24 § 'NZ arc'). Saturates at δ=10 — identical emit/correct to δ=12/15, the same flat-plateau shape as GB's own sweep; golden-FP 0/54 at every δ tested. The sweep table lives in eval.delta_sweep_v385 below.",
+			"repeated_name_convention": "NZ's register genuinely repeats names across the suburb/town tiers: 255/1178 names (21.6%) form identity pairs (child == parent, e.g. Mangawhai / Mangawhai) — the target population of @mailwoman/neural 7.8.0's identical-adjacent-segment (x,x) rule, which splits two identical adjacent segments into dependent_locality + locality instead of fusing them into one span. GB has 0/19,431 identity pairs, so the rule is structurally unreachable there (verified, not assumed — see eval.gb_reproduction).",
+			"country_gate": "hard-gated — the prior only fires when the resolved locale's country matches the index header's country (nz). Never crosses into en-us/en-gb parses (see neural/test/weights.test.ts).",
+			"not_committed": "derived artifact, .gitignore'd (same posture as en-gb's pair-index-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-nz --country nz --source <linz-countrywide-csv> --delta 10`"
+		},
+		"no_postcode_bin": "FOLLOW-UP: this overlay ships NO postcode-nz.bin — no WOF NZ postcode shard exists on disk or in release.config.json's softFeed.postcodeDBByCountry (unlike us/fr/gb). Until one is built, the postcode-anchor channel resolves OFF for en-nz loads (loud single warning via warnUnfedChannel, parse still works — the tolerant-loader contract). Building the NZ shard + wiring postcodeDBByCountry.nz is the tracked follow-up for a later bundle revision."
+	},
+	"architecture": {
+		"$comment": "Verbatim copy of the base card's architecture — same encoder, no NZ-specific change.",
+		"hidden_size": 384,
+		"num_hidden_layers": 6,
+		"num_attention_heads": 6,
+		"intermediate_size": 1536,
+		"max_position_embeddings": 128,
+		"vocab_size": 73143,
+		"num_labels": 33,
+		"crf_at_training": false,
+		"crf_at_inference": true,
+		"phrase_priors": true
+	},
+	"requires": {
+		"$comment": "Verbatim copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. Keep in lockstep with neural-weights-en-us/model-card.json on every base ship. NOTE: anchor.required is true (the encoder is anchor-trained) but this overlay ships no postcode-nz.bin — see nz_artifacts.no_postcode_bin for the resulting anchor-OFF posture on NZ loads.",
+		"anchor": {
+			"required": true
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"country": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
+		"suppress_gazetteer_near_postcode": true
+	},
+	"labels": [
+		"O",
+		"B-country",
+		"I-country",
+		"B-region",
+		"I-region",
+		"B-locality",
+		"I-locality",
+		"B-dependent_locality",
+		"I-dependent_locality",
+		"B-postcode",
+		"I-postcode",
+		"B-subregion",
+		"I-subregion",
+		"B-cedex",
+		"I-cedex",
+		"B-venue",
+		"I-venue",
+		"B-street",
+		"I-street",
+		"B-house_number",
+		"I-house_number",
+		"B-street_prefix",
+		"I-street_prefix",
+		"B-street_suffix",
+		"I-street_suffix",
+		"B-unit",
+		"I-unit",
+		"B-po_box",
+		"I-po_box",
+		"B-intersection_a",
+		"I-intersection_a",
+		"B-intersection_b",
+		"I-intersection_b"
+	],
+	"components_supported": [
+		"country",
+		"region",
+		"locality",
+		"dependent_locality",
+		"postcode",
+		"subregion",
+		"cedex",
+		"venue",
+		"street",
+		"house_number",
+		"street_prefix",
+		"street_suffix",
+		"unit",
+		"po_box",
+		"intersection_a",
+		"intersection_b"
+	],
+	"notes": "6.6.2 is the NZ replication of GB's 6.6.1 story: the prior alone on the untouched v385 base, plus one NZ-specific decode rule. The NZ suburb board's as-written correct-rate was 74.4% pre-fix — every miss traced 1-for-1 to the 63/246 rows where suburb and town share the identical name (segment mode fused both into one dependent_locality span). The (x,x) rule closes that class completely (246/246). The comma-free anchored path was never affected (99.2% both before and after — the highest tag-correct measured on any NZ or GB board in the task-8 report). Venue-confound evidence is INTERIM (see eval.synthetic_venue_fp): no real NZ venue-name source exists on disk (poi.db has zero NZ rows; no NZ Overture/OSM extract; geonames/NZ.txt is a bare postcode reference) — acquisition tracked as issue #1279. All numbers: .superpowers/sdd/task-8-report.md §§ 'NZ arc: census + δ-sweep scoping (#1277)', 'en-nz battery'.",
+	"eval": {
+		"$comment": "All rows measured on the SHIPPED v385 base + this package's δ=10 pair-index-nz.bin via @mailwoman/neural's auto probe chain + the 7.8.0 identical-adjacent-segment fix (2026-07-24 en-nz battery, pre-registered bars — task-8 report).",
+		"nz_suburb_board_as_written": {
+			"n": 246,
+			"auto_chain_at_delta_10_with_xx_fix": { "emit": 246, "tag_correct": 246, "tag_correct_pct": 100.0 },
+			"note": "pre-fix baseline 246 emit / 183 correct (74.4%) — the 63 repeated-name rows were the recovery target and are fully recovered."
+		},
+		"nz_suburb_board_comma_stripped": {
+			"n": 246,
+			"auto_chain_at_delta_10": { "emit": 244, "tag_correct": 244, "tag_correct_pct": 99.2 },
+			"note": "the anchored-adjacent path; byte-identical pre-fix and post-fix (the fix correctly leaves it alone)."
+		},
+		"nz_golden_no_suburb_fp": { "n": 54, "fp": 0 },
+		"synthetic_venue_fp": {
+			"board": "nz-venue-interim-board.jsonl, 510 rows — 170 census pairs × 3 civic/business-name templates",
+			"fp": "0/510",
+			"fp_pct": 0.0,
+			"status": "INTERIM — synthetic templates, NOT real venue-name data. No FSA-equivalent NZ business-name source exists on disk (verified by direct search); read as 'the interim board found no problem', not 'there is no problem'. Real-data acquisition tracked as issue #1279; a real-source re-measure is required before any non-interim FP claim ships."
+		},
+		"delta_sweep_v385": {
+			"$comment": "NZ δ-sweep, auto chain, as-written 246-row suburb board (emit/tag-correct, PRE-fix segment path) + golden-FP of 54 no-suburb rows.",
+			"5": { "emit": 0, "tag_correct": 0, "golden_fp": 0 },
+			"7": { "emit": 13, "tag_correct": 13, "golden_fp": 0 },
+			"8": { "emit": 226, "tag_correct": 181, "golden_fp": 0 },
+			"10_selected": { "emit": 246, "tag_correct": 183, "golden_fp": 0 },
+			"12": { "emit": 246, "tag_correct": 183, "golden_fp": 0 },
+			"15": { "emit": 246, "tag_correct": 183, "golden_fp": 0 }
+		},
+		"gb_reproduction": "every GB number reproduces to the exact integer through the 7.8.0 (x,x) fix, both probe-chain legs: gb-golden 69/69 emit / 69/69 correct, comma-stripped 50/69 emit / 47/50 (94.0%), golden no-DL FP 0/51, venue FP 217/6500 (segment leg) + 4/6500 (anchored leg). Corroborated structurally: GB's census has 0/19,431 identity pairs, so the rule cannot fire on GB at all.",
+		"presets_and_golden": "6 demo presets + golden us (n=2660) / fr (n=1546) byte-identical through the fix; invariance suite 138 INVARIANT / 6 DEGRADED / 12 LOST — 0 NEW violation classes vs the v385 baseline (identical profile to the pre-fix battery)."
+	},
+	"format": {
+		"$comment": "Model/tokenizer format is the base's — see neural-weights-en-us/model-card.json. This overlay's own artifact:",
+		"pair_index_nz_bin": "PIX1 binary, 55,471 bytes, 3,134 pairs, δ=10"
+	},
+	"files": {
+		"model_card": "model-card.json",
+		"pair_index": "pair-index-nz.bin",
+		"gazetteer_lexicon": "anchor-lexicon-v1.json",
+		"country_lexicon": "country-surface-lexicon-v1.json"
+	}
+}

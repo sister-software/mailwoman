@@ -324,10 +324,11 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
 
 /**
  * #1177 base-overlay dedup: resolve the base weights package a locale package overlays. A data-only weights package
- * (fr-fr, and future CA/MX/NZ overlays) can declare `"mailwoman": { "baseWeights": "@mailwoman/neural-weights-en-us" }`
- * in its package.json to SHARE the base `model.onnx` + `tokenizer.model` rather than ship a byte-identical copy.
- * Returns the resolved base package dir, or `undefined` when the field is absent or the base package can't be resolved
- * (in which case the caller keeps the local model paths — no behavior change for a self-contained package).
+ * (fr-fr/en-gb/en-nz, and future CA/MX overlays) can declare `"mailwoman": { "baseWeights":
+ * "@mailwoman/neural-weights-en-us" }` in its package.json to SHARE the base `model.onnx` + `tokenizer.model` rather
+ * than ship a byte-identical copy. Returns the resolved base package dir, or `undefined` when the field is absent or
+ * the base package can't be resolved (in which case the caller keeps the local model paths — no behavior change for a
+ * self-contained package).
  */
 function resolveBaseWeightsDir(packageDir: string): string | undefined {
 	try {

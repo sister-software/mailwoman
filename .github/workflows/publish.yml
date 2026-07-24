@@ -225,11 +225,13 @@ jobs:
       # Fetch the weight binaries from the PUBLIC Hugging Face bucket (the same
       # files the demo loads at runtime — no auth needed). The whole release, weights included,
       # publishes from CI via OIDC: no npm credentials anywhere. Requires the model AND the #718
-      # soft-feed postcode binaries AND (when en-gb ships one) the placetype-pair-index
-      # binary to be staged on HF for this version (push them with `mailwoman release hf
+      # soft-feed postcode binaries AND the placetype-pair-index binaries (en-gb + en-nz)
+      # to be staged on HF for this version (push them with `mailwoman release hf
       # <version> --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin --pair-indexes
-      # pair-index-gb.bin` before dispatching a real run; the gazetteer lexicon is a
-      # checked-in repo file). Skipped on dry runs so a preview doesn't depend on HF staging.
+      # pair-index-gb.bin,pair-index-nz.bin` before dispatching a real run; the gazetteer
+      # lexicon is a checked-in repo file). NOTE: en-nz ships NO postcode binary — no WOF NZ
+      # postcode shard exists (see neural-weights-en-nz/model-card.json's no_postcode_bin
+      # follow-up). Skipped on dry runs so a preview doesn't depend on HF staging.
       - name: Fetch weight binaries from Hugging Face
         if: ${{ !inputs.dry_run }}
         run: | # shell
@@ -243,12 +245,12 @@ jobs:
           # step will fetch and, if any is missing, print the exact remediation and stop immediately.
           echo "Preflight: verifying v${MODEL_VERSION} is staged on Hugging Face…"
           MISSING=0
-          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-gb.bin; do
+          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-gb.bin pair-index-nz.bin; do
             if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
           done
           if [ "$MISSING" = 1 ]; then
             echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
-            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-gb/pair-index-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --set-default   (RELEASING.md §3)"
+            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --set-default   (RELEASING.md §3)"
             exit 1
           fi
           echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
@@ -267,32 +269,39 @@ jobs:
           # The placetype-pair-index binary (placetype-pair-prior arc, Task 8): built from the HM Land
           # Registry PPD tuples CSV (not buildable on CI, same story as the postcode binaries above),
           # so it rides the bucket too, via `mailwoman release hf <version> --pair-indexes
-          # pair-index-gb.bin`. COUNTRY-SPECIFIC BY DESIGN — no base-package fallback (unlike
-          # model.onnx/tokenizer.model below), so en-gb MUST have its own copy staged.
+          # pair-index-gb.bin,pair-index-nz.bin`. COUNTRY-SPECIFIC BY DESIGN — no base-package
+          # fallback (unlike model.onnx/tokenizer.model below), so each overlay MUST have its own
+          # copy staged. en-nz's is built from the LINZ-derived OpenAddresses countrywide CSV;
+          # en-nz ships NO postcode binary (no WOF NZ shard — see its model-card follow-up).
           $CURL "${BASE}/pair-index-gb.bin" -o neural-weights-en-gb/pair-index-gb.bin
-          # fr-fr and en-gb share the en-us model for now (locale-specific weights are future work).
+          $CURL "${BASE}/pair-index-nz.bin" -o neural-weights-en-nz/pair-index-nz.bin
+          # fr-fr, en-gb, and en-nz share the en-us model for now (locale-specific weights are future work).
           cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
           cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
           cp neural-weights-en-us/model.onnx neural-weights-en-gb/model.onnx
           cp neural-weights-en-us/tokenizer.model neural-weights-en-gb/tokenizer.model
+          cp neural-weights-en-us/model.onnx neural-weights-en-nz/model.onnx
+          cp neural-weights-en-us/tokenizer.model neural-weights-en-nz/tokenizer.model
           # The gazetteer-anchor lexicon is a checked-in repo artifact — copy it into every package
           # (no bucket dependency); matches release.config.json softFeed.gazetteerLexicon + copy-weights.
           cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-us/anchor-lexicon-v1.json
           cp data/gazetteer/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json
           cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-gb/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-nz/anchor-lexicon-v1.json
           # The country-surface lexicon (#1104) — same story: a checked-in repo artifact the country channel
           # feeds when the card carries requires.country. Copy into every package (matches softFeed.countryLexicon).
           cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-us/country-surface-lexicon-v1.json
           cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json
           cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-gb/country-surface-lexicon-v1.json
-          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx neural-weights-en-gb/model.onnx \
+          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-nz/country-surface-lexicon-v1.json
+          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx neural-weights-en-gb/model.onnx neural-weights-en-nz/model.onnx \
                    neural-weights-en-us/postcode-us.bin neural-weights-fr-fr/postcode-fr.bin neural-weights-en-gb/postcode-gb.bin \
-                   neural-weights-en-gb/pair-index-gb.bin \
-                   neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json neural-weights-en-gb/anchor-lexicon-v1.json \
-                   neural-weights-en-us/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json neural-weights-en-gb/country-surface-lexicon-v1.json; do
-              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin --pair-indexes pair-index-gb.bin)?"; exit 1; }
+                   neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin \
+                   neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json neural-weights-en-gb/anchor-lexicon-v1.json neural-weights-en-nz/anchor-lexicon-v1.json \
+                   neural-weights-en-us/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json neural-weights-en-gb/country-surface-lexicon-v1.json neural-weights-en-nz/country-surface-lexicon-v1.json; do
+              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin --pair-indexes pair-index-gb.bin,pair-index-nz.bin)?"; exit 1; }
           done
-          ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-gb/pair-index-gb.bin
+          ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin
 
       - name: Tag + GitHub release
         if: ${{ !inputs.dry_run }}
