@@ -93,7 +93,11 @@ describe("placetype-pair prior — decode-order integration", () => {
 			placetypePair: { index, probeMode: "window" },
 		})
 
-		expect(biased.priors.find((p) => p.kind === "placetypePair")).toEqual({ kind: "placetypePair", applied: true })
+		expect(biased.priors.find((p) => p.kind === "placetypePair")).toEqual({
+			kind: "placetypePair",
+			applied: true,
+			probePath: "window",
+		})
 		expect(biased.repairs.find((r) => r.pass === "wordConsistency")).toBeUndefined()
 
 		// The raw decoder path itself (captured BEFORE any heal) is already united across the word.
@@ -127,7 +131,11 @@ describe("placetype-pair prior — decode-order integration", () => {
 			placetypePair: { index, probeMode: "window" },
 		})
 
-		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({ kind: "placetypePair", applied: true })
+		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({
+			kind: "placetypePair",
+			applied: true,
+			probePath: "window",
+		})
 
 		const streetB = col("B-street")
 		const streetI = col("I-street")

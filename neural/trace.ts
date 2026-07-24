@@ -45,6 +45,13 @@ export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 export interface TracePrior {
 	kind: TracePriorKind
 	applied: boolean
+	/**
+	 * `placetypePair` only, and only when `applied` is true: which candidate-construction path of the probe chain
+	 * produced the bias — `"segment"` (comma-delimited segments), `"anchored"` (the comma-free adjacent-pair path), or
+	 * `"window"` (the opt-in sliding window). See `placetype-pair-prior.ts`'s "Probe mode" docstring section. Absent on
+	 * every other kind and whenever the prior carried no bias, so pre-existing traces are unchanged byte-for-byte.
+	 */
+	probePath?: "segment" | "anchored" | "window"
 }
 
 /** The post-decode repair passes, in application order. */

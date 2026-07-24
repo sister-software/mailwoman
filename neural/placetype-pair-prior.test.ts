@@ -12,8 +12,14 @@
  *   `placetype-pair-prior.ts`'s module docstring). Every test above this file's "segment mode" section
  *   passes `probeMode: "window"` explicitly — they exercise the sub-segment sliding-window behavior on
  *   comma-free `makePieces` input, which is now opt-in, not the default. The "segment mode" section below
- *   tests the new default directly, using `makePiecesWithCommas` (a comma-preserving sibling of
+ *   tests that path directly, using `makePiecesWithCommas` (a comma-preserving sibling of
  *   `makePieces`) so segment boundaries actually exist to probe.
+ *
+ *   The default became the `"auto"` probe CHAIN with the 2026-07-24 anchored adjacent-pair design
+ *   (v1.1): segment path on ≥2 comma segments (byte-identical to explicit `"segment"` — asserted below
+ *   as a chain-equivalence property), anchored-adjacent path on comma-free input. The "anchored
+ *   adjacent-pair mode" section tests the new leg; the segment-mode tests all carry commas, so their
+ *   omitted-probeMode calls exercise the chain's segment leg unchanged.
  */
 
 import { existsSync } from "node:fs"
@@ -29,7 +35,7 @@ import {
 	type PairIndexHeader,
 	type PairIndexLike,
 } from "./pair-index-resolver.ts"
-import { buildPlacetypePairPriors } from "./placetype-pair-prior.ts"
+import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "./placetype-pair-prior.ts"
 import { MailwomanTokenizer } from "./tokenizer.ts"
 
 const LABELS = STAGE2_BIO_LABELS
@@ -395,7 +401,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 	)
 })
 
-describe("buildPlacetypePairPriors — segment mode (Task 6, DEFAULT since the venue-confound falsifier verdict)", () => {
+describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now the ≥2-segment leg of the auto chain)", () => {
 	it('a venue-EMBEDDED name does NOT fire — "Queens Park Academy" (one segment, no internal comma) never reduces to the census child "queens park"', () => {
 		// The actual Task-6 venue-confound board FP verbatim (window mode): "Queens Park Academy, Queens Park
 		// Academy Chestnut Avenue, Chester, MK40 4HA" wrongly emitted dependent_locality=["Queens Park"] because
@@ -449,17 +455,24 @@ describe("buildPlacetypePairPriors — segment mode (Task 6, DEFAULT since the v
 		expect(index.calls).toContainEqual(["fishburn", "stocktonontees"])
 	})
 
-	it("window mode still works when explicitly opted in, on the SAME comma-free input segment mode leaves inert", () => {
+	it("comma-free input: explicit segment mode stays inert; the auto default reaches the anchored path; window opt-in unchanged", () => {
 		const index = mockPairIndex({ "shoreditch|london": "dependent_locality" }, 6.0)
 		const pieces = makePieces("Shoreditch London") // no comma — one segment, start to finish
 
-		// Default (segment, omitted probeMode): no internal comma means "Shoreditch London" is ONE segment, and
-		// a single candidate can never form a pair with itself — inert, per the documented comma-free trade-off.
-		const segmentMatrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+		// Explicit "segment": no internal comma means "Shoreditch London" is ONE segment, and a single candidate
+		// can never form a pair with itself — inert, per the documented v1 comma-free trade-off.
+		const segmentMatrix = buildPlacetypePairPriors({ index, probeMode: "segment" }, pieces, LABELS)
 
 		for (const row of segmentMatrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
+		// The "auto" default (v1.1 probe chain): <2 segments hands off to the anchored path — string-final parent
+		// "london", adjacent child "shoreditch" → biased. The population segment mode left inert is exactly the
+		// population the chain's second leg now serves.
+		const autoMatrix = buildPlacetypePairPriors({ index }, pieces, LABELS)
+
+		expect(autoMatrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
 
 		// Explicit opt-in: the original sub-window behavior is unchanged and still resolves the same pair.
 		const windowMatrix = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
@@ -571,5 +584,216 @@ describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fi
 		expect(() => buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)).not.toThrow()
 		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 		expect(matrix.some((row) => row[labelCol("B-dependent_locality")]! > 0)).toBe(true)
+	})
+})
+
+describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe chain, 2026-07-24 design)", () => {
+	it("comma-free adjacent pair + postcode: child biased, parent (and postcode) untouched — anchor sits left of the WHOLE postcode span", () => {
+		const index = mockPairIndex({ "fishburn|stockton on tees": "dependent_locality" }, 6.0)
+		// GB outward+inward = TWO tokens ("TS21" + "3AB") — the parent anchor must end left of both, at "Tees".
+		const text = "St Bedes Avenue Fishburn Stockton on Tees TS21 3AB"
+		const pieces = makePieces(text) // 0=st 1=bedes 2=avenue 3=fishburn 4=stockton 5=on 6=tees 7=ts21 8=3ab
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(6.0)
+
+		// Everything that isn't the child — street prefix, the parent's own words, the postcode — stays untouched.
+		for (const i of [0, 1, 2, 4, 5, 6, 7, 8]) {
+			expect(matrix[i]!.every((v) => v === 0)).toBe(true)
+		}
+		expect(index.calls).toContainEqual(["fishburn", "stockton on tees"])
+	})
+
+	it("comma-free, no postcode: the string-final window is the parent anchor; explicit probeMode 'anchored' matches the auto default", () => {
+		const index = mockPairIndex({ "fishburn|stockton on tees": "dependent_locality" }, 6.0)
+		const text = "St Bedes Avenue Fishburn Stockton on Tees"
+		const pieces = makePieces(text)
+		const autoMatrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(autoMatrix[3]![labelCol("B-dependent_locality")]).toBe(6.0)
+
+		for (const i of [0, 1, 2, 4, 5, 6]) {
+			expect(autoMatrix[i]!.every((v) => v === 0)).toBe(true)
+		}
+
+		// "anchored" is a first-class explicit value (harness use) — identical to the chain's comma-free leg.
+		const explicitMatrix = buildPlacetypePairPriors({ index, probeMode: "anchored", inputText: text }, pieces, LABELS)
+
+		expect(explicitMatrix).toEqual(autoMatrix)
+	})
+
+	it("chain equivalence: a comma'd input under the auto default is byte-identical to explicit segment mode — matrices AND probe-call sequences", () => {
+		// Positive case: a genuine segment-exact pair.
+		const hitEntries = { "moelfre|abergele": "dependent_locality" }
+		const hitText = "Moelfre, Abergele"
+		const hitPieces = makePiecesWithCommas(hitText)
+		const hitAuto = mockPairIndex(hitEntries, 6.0)
+		const hitSegment = mockPairIndex(hitEntries, 6.0)
+		const autoMatrix = buildPlacetypePairPriors({ index: hitAuto, inputText: hitText }, hitPieces, LABELS)
+		const segmentMatrix = buildPlacetypePairPriors(
+			{ index: hitSegment, probeMode: "segment", inputText: hitText },
+			hitPieces,
+			LABELS
+		)
+
+		expect(autoMatrix).toEqual(segmentMatrix)
+		expect(autoMatrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// Not just the same result — the same probes in the same order (the chain shares the segment path's code).
+		expect(hitAuto.calls).toEqual(hitSegment.calls)
+
+		// Zero case: the venue-confound shape stays zero on BOTH, with identical probe sequences.
+		const venueEntries = { "queens park|chester": "dependent_locality" }
+		const venueText = "Queens Park Academy, Chestnut Avenue, Chester"
+		const venuePieces = makePiecesWithCommas(venueText)
+		const venueAuto = mockPairIndex(venueEntries, 6.0)
+		const venueSegment = mockPairIndex(venueEntries, 6.0)
+		const venueAutoMatrix = buildPlacetypePairPriors({ index: venueAuto, inputText: venueText }, venuePieces, LABELS)
+		const venueSegmentMatrix = buildPlacetypePairPriors(
+			{ index: venueSegment, probeMode: "segment", inputText: venueText },
+			venuePieces,
+			LABELS
+		)
+
+		expect(venueAutoMatrix).toEqual(venueSegmentMatrix)
+
+		for (const row of venueAutoMatrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+		expect(venueAuto.calls).toEqual(venueSegment.calls)
+	})
+
+	it("venue-shape start, comma-free: the venue occurrence is not adjacent to the anchor and never fires — only the true adjacent occurrence does", () => {
+		const index = mockPairIndex({ "queens park|chester": "dependent_locality" }, 6.0)
+		const text = "Queens Park Cafe Queens Park Chester"
+		const pieces = makePieces(text) // 0=queens 1=park 2=cafe 3=queens 4=park 5=chester
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// The venue's own "Queens Park" (positions 0-1) and "Cafe" stay untouched — that text is never
+		// immediately left of the parent anchor, so it is rejected by construction, not by suppression.
+		for (const i of [0, 1, 2]) {
+			expect(matrix[i]!.every((v) => v === 0)).toBe(true)
+		}
+
+		// The true adjacent occurrence (positions 3-4, immediately left of the string-final "Chester") fires.
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(matrix[4]![labelCol("I-dependent_locality")]).toBe(6.0)
+		expect(matrix[5]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it('left-maximality: with both ("cadbury","yeovil") and ("north cadbury","yeovil") in the index, the 2-word child wins and there is no double bias', () => {
+		const index = mockPairIndex(
+			{ "cadbury|yeovil": "dependent_locality", "north cadbury|yeovil": "dependent_locality" },
+			6.0
+		)
+		const text = "North Cadbury Yeovil"
+		const pieces = makePieces(text) // 0=north 1=cadbury 2=yeovil
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(matrix[1]![labelCol("I-dependent_locality")]).toBe(6.0)
+		// No partial-child probe: a bare-"cadbury" hit would have written B- on position 1.
+		expect(matrix[1]![labelCol("B-dependent_locality")]).toBe(0)
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		// Longest-match-first means the shorter child was never even probed against the shared parent.
+		expect(index.calls).not.toContainEqual(["cadbury", "yeovil"])
+	})
+
+	it('a 4-word child fires under the anchored cap ("Knott End on Sea" class — wider than WINDOW_MAX_WORDS on purpose)', () => {
+		const index = mockPairIndex({ "knott end on sea|lancaster": "dependent_locality" }, 6.0)
+		const text = "Knott End on Sea Lancaster"
+		const pieces = makePieces(text) // 0=knott 1=end 2=on 3=sea 4=lancaster
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+
+		for (const i of [1, 2, 3]) {
+			expect(matrix[i]![labelCol("I-dependent_locality")]).toBe(6.0)
+		}
+		expect(matrix[4]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it('marker suppression applies to the anchored child: "church" followed by "road" is never probed', () => {
+		// Contrived entry keyed so the pair WOULD hit if the child were probed — the marker successor ("road",
+		// the parent's own first word) is what must block it, exactly as window mode suppresses.
+		const index = mockPairIndex({ "church|road end": "dependent_locality" }, 6.0)
+		const text = "Church Road End"
+		const pieces = makePieces(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+		expect(index.calls.some(([child]) => child === "church")).toBe(false)
+	})
+
+	it("control: the SAME geometry without a marker successor probes and fires — the marker, not the adjacency, blocked above", () => {
+		const index = mockPairIndex({ "church|lane end": "dependent_locality" }, 6.0)
+		const text = "Church Lane End"
+		const pieces = makePieces(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(index.calls).toContainEqual(["church", "lane end"])
+	})
+
+	it("no-hit comma-free input (no postcode shape, no pair anywhere) returns the exact zero matrix", () => {
+		const index = mockPairIndex({ "somewhere|else": "dependent_locality" }, 6.0)
+		const text = "Totally Unrelated Words Here"
+		const pieces = makePieces(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix).toHaveLength(4)
+
+		// Strict ===, per the matrixHasBias contract: every cell is the number 0, not merely falsy.
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+	})
+})
+
+describe("buildPlacetypePairPriors — probeTrace (which chain leg fired)", () => {
+	it('records "segment" on a comma\'d hit, "anchored" on a comma-free hit, and stays unset on a miss', () => {
+		const entries = { "moelfre|abergele": "dependent_locality" }
+
+		const segmentTrace: PlacetypePairProbeTrace = {}
+		const commaText = "Moelfre, Abergele"
+		buildPlacetypePairPriors(
+			{ index: mockPairIndex(entries, 6.0), inputText: commaText, probeTrace: segmentTrace },
+			makePiecesWithCommas(commaText),
+			LABELS
+		)
+		expect(segmentTrace.firedPath).toBe("segment")
+
+		const anchoredTrace: PlacetypePairProbeTrace = {}
+		const bareText = "Moelfre Abergele"
+		buildPlacetypePairPriors(
+			{ index: mockPairIndex(entries, 6.0), inputText: bareText, probeTrace: anchoredTrace },
+			makePieces(bareText),
+			LABELS
+		)
+		expect(anchoredTrace.firedPath).toBe("anchored")
+
+		const missTrace: PlacetypePairProbeTrace = {}
+		const missText = "Totally Unrelated Words"
+		buildPlacetypePairPriors(
+			{ index: mockPairIndex(entries, 6.0), inputText: missText, probeTrace: missTrace },
+			makePieces(missText),
+			LABELS
+		)
+		expect(missTrace.firedPath).toBeUndefined()
+	})
+
+	it('records "window" when the opt-in window mode produced the bias', () => {
+		const windowTrace: PlacetypePairProbeTrace = {}
+		buildPlacetypePairPriors(
+			{
+				index: mockPairIndex({ "shoreditch|london": "dependent_locality" }, 6.0),
+				probeMode: "window",
+				probeTrace: windowTrace,
+			},
+			makePieces("Shoreditch London"),
+			LABELS
+		)
+		expect(windowTrace.firedPath).toBe("window")
 	})
 })
