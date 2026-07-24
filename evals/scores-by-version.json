@@ -1048,6 +1048,63 @@
 				}
 			},
 			"notes": "GB dependent_locality LIVE via the placetype-pair decode prior alone on the untouched v385 (Option-A δ-sweep: deficit uniform ~7.0 logits, δ=10 saturates board + FP curves together). neural 7.7.0 auto probe chain: segment path (comma'd, byte-identical to prior default) / anchored-adjacent path (comma-free; parent anchored at post-town position, child adjacent left-maximal). us/fr/de/arena metrics carried from the 6.6.0 row VERBATIM — model bytes unchanged, presets + golden us/fr verified byte-identical in the battery. Training resurrection lineage closed (5 falsified mechanisms, 3 stop rules); record: docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md + 2026-07-24-pair-prior-comma-scope-*.md."
+		},
+		{
+			"run_id": "v385-en-nz-pair-prior-6-6-2",
+			"model_version": "6.6.2",
+			"model_path": "@mailwoman/neural-weights-en-us@7.8.0 (+ en-gb δ=10, + NEW en-nz pair-index δ=10)",
+			"corpus_version": "v0.13.0-latam overlay (v0.11.0-no-fragment base + a 456,230-row `overture-latam` shard: CA 299,809 + MX 156,421 Overture-Addresses rows) — the dedicated LATAM source does NOT dilute the trained EU `overture` rows — MODEL BYTES UNCHANGED from 6.6.0 (v385); 6.6.1 is a decode-artifact bundle revision, no training",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "en-nz battery (pre-registered): nz suburb board 246 (as-written + comma-stripped), nz golden no-suburb 54, synthetic venue 510 (INTERIM #1279), GB reproduction suite, invariance --baseline v385",
+			"eval_set_sha256": "per-file, see .superpowers/sdd/task-8-report.md provenance blocks",
+			"trained_at": null,
+			"training_steps": 0,
+			"training_wall_clock_seconds": 0,
+			"hardware": "zero-GPU (decode-side artifact + code only)",
+			"metrics": {
+				"us": {
+					"postcode": 96.9,
+					"country_homograph": 89.8,
+					"micro": 86.7,
+					"locality": 77.9,
+					"region": 89.7,
+					"street": 80.9,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.1,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.8,
+					"house_number": 95.7,
+					"region": 44.4,
+					"cedex_real": 85.6
+				},
+				"de": {
+					"native_locality_anchor_on": 91.3
+				},
+				"gb_dependent_locality": {
+					"golden_emit": "69/69",
+					"golden_tag_correct": "69/69 (100%)",
+					"comma_stripped_emit": "50/69",
+					"comma_stripped_tag_correct": "47/50 (94.0%)",
+					"golden_no_dl_fp": "0/51",
+					"venue_confound_fp_segment_path": "217/6500 (3.338%)",
+					"venue_confound_fp_anchored_path": "4/6500 (0.062%)"
+				},
+				"arena": {
+					"perturb": 80
+				},
+				"nz_dependent_locality": {
+					"board_emit": "246/246",
+					"board_tag_correct": "246/246 (100%)",
+					"comma_stripped": "244/246 (99.2%)",
+					"golden_no_suburb_fp": "0/54",
+					"venue_synthetic_interim": "0/510"
+				}
+			},
+			"notes": "NZ dependent_locality LIVE: as-written 246/246 emit + 246/246 tag-correct (100% — the (x,x) identical-adjacent-segment rule recovers all 63 repeated-name rows, e.g. 'Mangawhai, Mangawhai'); comma-free 244/246 (99.2%); golden FP 0/54; GB surfaces reproduced byte-exact (0 identity pairs in the GB index — structural inertness verified). Model bytes unchanged (v385). NZ venue precision evidence is synthetic-interim until #1279."
 		}
 	]
 }
