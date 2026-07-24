@@ -95,6 +95,33 @@
  *   comma-delimits it as its own field) — which is exactly the shape a real structured address has
  *   ("5 Fishburn Road, Fishburn, Stockton-on-Tees") and a venue-embedding string does not.
  *
+ *   **Identity pairs — the repeated-name convention (segment path only).** Some registers conventionally
+ *   write the same name twice when the dependent locality and the post town coincide — NZ is the measured
+ *   case ("Mangawhai, Mangawhai": 63/246 rows of the NZ golden board, 25.6%; task-8 report § "NZ arc"),
+ *   and the LINZ-built pair index records the identity pair ("mangawhai","mangawhai") accordingly. The
+ *   (x,x) entry IS the evidence of the convention (registry-evidence semantics): it says "when this name
+ *   appears twice in adjacent fields, the FIRST occurrence is the dependent locality and the second is the
+ *   post town." Without special handling, BOTH identical adjacent segments loop through the X role, each
+ *   probes the other successfully, both receive the bias, and the parse fuses/mis-tags what should be
+ *   dependent_locality("Mangawhai") + locality("Mangawhai"). The rule: when a segment's IMMEDIATELY
+ *   PRECEDING segment folds to an identical key (any fold form — space-join or concat, so a cross-spelling
+ *   repeat like "Stockton-on-Tees, Stockton on Tees" also counts; see {@link sharesFoldForm}), that segment
+ *   is a REPEAT and draws no bias from any identical-key partner — the model's own (typically strong
+ *   locality) read stands. The head of the run keeps today's behavior and takes the identity bias. In a run
+ *   of ≥3 identical adjacent segments ("X, X, X"), only the FIRST overall is biased: every non-head member
+ *   is a repeat and skips identical-key partners in BOTH directions (its following twin included) — biasing
+ *   the first member of each overlapping pair (first AND second) would recreate exactly the
+ *   two-adjacent-biased-segments fusion this rule removes. NON-adjacent identical segments ("Mangawhai,
+ *   Something, Mangawhai") are outside the convention's shape and keep the ordinary two-sided behavior
+ *   unchanged. Non-identical pairs are untouched in every respect, and inputs with no identical adjacent
+ *   segment keys are byte-stable (asserted in the test suite). Country-agnostic by design: the semantics
+ *   engage wherever a register records the convention — measured 2026-07-24, the shipped `pair-index-gb.bin`
+ *   (19,209 entries, built 2026-07-23) contains ZERO identity pairs, so GB is unaffected today, but a future
+ *   GB build that records CITY==DISTRICT rows would get the same treatment for free. Window mode is
+ *   deliberately excluded (its overlapping sub-windows make "adjacent identical candidates" a different,
+ *   unmeasured population); the anchored path needs no equivalent rule — it only ever biases the child left
+ *   of the parent anchor, so a comma-free "Mangawhai Mangawhai" already biases the first occurrence only.
+ *
  *   Two known, honestly-reported trade-offs of the segment default (Task 6 measurements, all against the
  *   feed-2k checkpoint): (1) a residual FP class survives — when a non-venue FIELD (e.g. the venue-confound
  *   board's synthetic `street` field) happens to equal a bare census child verbatim as its OWN segment (e.g.
@@ -450,6 +477,19 @@ function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 }
 
 /**
+ * Do two candidates fold to an identical key under ANY of their fold forms? The identity test behind the repeated-name
+ * convention (module docstring, "Identity pairs"). Plain repetition ("Mangawhai" / "Mangawhai") matches on `key ===
+ * key`; the cross-form comparisons additionally catch a repeat written in two spellings of the same name
+ * ("Stockton-on-Tees" folds to the single concat token "stocktonontees", which equals the concat form of "Stockton on
+ * Tees") — the same dual-key bridging logic as {@link probeWindowPair}, applied to the identity question. Two genuinely
+ * different places can only collide here if their FOLDS collide, i.e. they carry the same name text — which is exactly
+ * the population the convention rule is scoped to.
+ */
+function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {
+	return a.key === b.key || a.key === b.concatKey || a.concatKey === b.key || a.concatKey === b.concatKey
+}
+
+/**
  * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms — see the
  * module docstring's "dual-key probe" section. Tries space/space, space/concat, concat/space, concat/concat in that
  * order and returns the first hit; a window's two forms collapse to one string when it's a single word, so this is a
@@ -687,13 +727,26 @@ export function buildPlacetypePairPriors(
 
 	let anyApplied = false
 
-	for (const x of windows) {
+	for (let wi = 0; wi < windows.length; wi++) {
+		const x = windows[wi]!
+
 		if (isMarkerSuppressed(nonEmptyGroups, x, groupSegments)) continue
+
+		// The repeated-name convention (module docstring, "Identity pairs" — segment path only; `windows` is in text
+		// order and segment candidates partition the group range contiguously, so `windows[wi - 1]` IS the immediately
+		// preceding segment). A segment whose preceding neighbor folds to an identical key is a REPEAT: the (x, x)
+		// index entry's evidence points at the FIRST occurrence (the dependent locality), so the repeat draws no bias
+		// from any identical-key partner — in either direction, which is what keeps a ≥3-run ("X, X, X") down to ONE
+		// biased segment. Non-identical partners below are untouched.
+		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : undefined
+		const isIdentityRepeat = previous !== undefined && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
 
 		let matchedTag: ComponentTag | undefined
 
 		for (const y of windows) {
 			if (!disjoint(x, y)) continue
+
+			if (isIdentityRepeat && sharesFoldForm(x, y)) continue
 
 			const tag = probeWindowPair(index, x, y)
 

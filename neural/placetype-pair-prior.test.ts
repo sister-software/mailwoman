@@ -20,6 +20,10 @@
  *   as a chain-equivalence property), anchored-adjacent path on comma-free input. The "anchored
  *   adjacent-pair mode" section tests the new leg; the segment-mode tests all carry commas, so their
  *   omitted-probeMode calls exercise the chain's segment leg unchanged.
+ *
+ *   The "identical adjacent segments" section covers the repeated-name-convention rule (NZ arc fix — see
+ *   the module docstring's "Identity pairs" section): an (x, x) index entry biases only the FIRST of two
+ *   identical adjacent segments; the repeat draws no bias from the identity pair.
  */
 
 import { existsSync } from "node:fs"
@@ -748,6 +752,105 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+	})
+})
+
+describe("buildPlacetypePairPriors — identical adjacent segments (NZ repeated-name convention, registry-evidence semantics)", () => {
+	// NZ conventionally repeats the name when suburb == post town ("Mangawhai, Mangawhai" — 63/246 rows of
+	// the NZ golden board, 25.6%; task-8 report § "NZ arc"), and the LINZ-built pair index records the
+	// identity pair ("mangawhai","mangawhai"). The (x, x) entry is itself the evidence of the convention:
+	// the FIRST occurrence is the dependent locality, the second is the post town. See the module
+	// docstring's "Identity pairs" section for the full rule.
+
+	it('NZ convention: "Mangawhai, Mangawhai" with the identity pair in the index — FIRST segment biased, SECOND receives zero bias from this pair', () => {
+		const index = mockPairIndex({ "mangawhai|mangawhai": "dependent_locality" }, 6.0)
+		const text = "Mangawhai, Mangawhai"
+		// pieces: [0]=▁Mangawhai, [1]="," (absorbed into segment 0's word group), [2]=▁Mangawhai
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// The first segment takes the identity bias — dependent_locality, per the (x, x) entry.
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// The SECOND segment (the post town) is untouched: the model's own locality read stands.
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		// Structurally: the repeat never probed its identical twin — the only probe is the head's identity probe.
+		expect(index.calls).toEqual([["mangawhai", "mangawhai"]])
+	})
+
+	it("same input, identity pair NOT in the index: zero matrix — no behavior invented without registry evidence", () => {
+		const index = mockPairIndex({}, 6.0) // empty — the register never recorded the convention for this name
+		const text = "Mangawhai, Mangawhai"
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		for (const row of matrix) {
+			expect(row.every((v) => v === 0)).toBe(true)
+		}
+	})
+
+	it('regression pin: "A, B" DISTINCT adjacent keys with (a, b) in the index — today\'s behavior byte-exact, both roles probed', () => {
+		const index = mockPairIndex({ "alderton|bramford": "dependent_locality" }, 6.0)
+		const text = "Alderton, Bramford"
+		// pieces: [0]=▁Alderton, [1]="," (absorbed into segment 0's group), [2]=▁Bramford
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// Today's exact matrix: B- on the segment's first piece, I- on its absorbed comma piece, nothing else.
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(matrix[0]!.filter((v) => v !== 0)).toHaveLength(1)
+		expect(matrix[1]![labelCol("I-dependent_locality")]).toBe(6.0)
+		expect(matrix[1]!.filter((v) => v !== 0)).toHaveLength(1)
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		// The second segment WAS looped through the X role and probed (and missed) — no skipping for distinct keys.
+		expect(index.calls).toContainEqual(["bramford", "alderton"])
+	})
+
+	it("non-adjacent identical segments (\"Mangawhai, Something, Mangawhai\") keep today's two-sided behavior — out of the convention's shape", () => {
+		const index = mockPairIndex({ "mangawhai|mangawhai": "dependent_locality" }, 6.0)
+		const text = "Mangawhai, Something, Mangawhai"
+		// pieces: [0]=▁Mangawhai, [1]=",", [2]=▁Something, [3]=",", [4]=▁Mangawhai
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		// BOTH identical segments bias, exactly as before this fix: neither has an identical immediately-preceding
+		// neighbor ("Something" sits between them), so neither is a repeat.
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6.0)
+		// The middle segment never resolves — untouched.
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it('three identical adjacent segments ("X, X, X"): only the FIRST segment overall is biased', () => {
+		// The least-surprising containment: biasing the first member of EACH overlapping pair (i.e. first AND
+		// second) would put the bias on two adjacent segments — recreating exactly the fusion failure the rule
+		// removes. So every non-head member of the run is a repeat and draws no identity bias at all.
+		const index = mockPairIndex({ "mangawhai|mangawhai": "dependent_locality" }, 6.0)
+		const text = "Mangawhai, Mangawhai, Mangawhai"
+		// pieces: [0]=▁Mangawhai, [1]=",", [2]=▁Mangawhai, [3]=",", [4]=▁Mangawhai
+		const pieces = makePiecesWithCommas(text)
+		const matrix = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[4]!.every((v) => v === 0)).toBe(true)
+		// Exactly ONE probe fired in total: the head's identity probe. Both repeats skipped every identical-key
+		// partner (in both directions) and had nothing else to probe.
+		expect(index.calls).toEqual([["mangawhai", "mangawhai"]])
+	})
+
+	it('chain sanity: comma-free "Mangawhai Mangawhai" is untouched by this change — the anchored path handles it and already biases only the first occurrence', () => {
+		const index = mockPairIndex({ "mangawhai|mangawhai": "dependent_locality" }, 6.0)
+		const text = "Mangawhai Mangawhai"
+		const pieces = makePieces(text)
+		const trace: PlacetypePairProbeTrace = {}
+		const matrix = buildPlacetypePairPriors({ index, inputText: text, probeTrace: trace }, pieces, LABELS)
+
+		// The anchored leg fires (comma-free input never reaches the segment loop the rule lives in), and its
+		// child-only bias geometry means the first occurrence is biased and the parent (second) is not — the same
+		// outcome as the segment rule, arrived at by construction.
+		expect(trace.firedPath).toBe("anchored")
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6.0)
+		expect(matrix[1]!.every((v) => v === 0)).toBe(true)
 	})
 })
 
