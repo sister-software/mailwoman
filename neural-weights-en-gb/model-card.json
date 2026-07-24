@@ -46,7 +46,7 @@
 		"phrase_priors": true
 	},
 	"requires": {
-		"$comment": "Verbatim copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. Keep in lockstep with neural-weights-en-us/model-card.json on every base ship.",
+		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. Keep in lockstep with neural-weights-en-us/model-card.json on every base ship, EXCEPT conventions.mode, which is deliberately locale-pinned (see conventions.$comment).",
 		"anchor": {
 			"required": true
 		},
@@ -58,7 +58,8 @@
 		},
 		"conventions": {
 			"required": true,
-			"mode": "auto"
+			"mode": "gb",
+			"$comment": "PINNED to gb, not auto (#1275, 2026-07-24): auto reads the locale head, and the head under-detects GB on this overlay (US=0.780 below the 0.8 bar on the comma'd repro row, US=0.986 comma-free) — so the codex gb conventions row (the postcode snap-repair gate) was unreachable and the clip class (SK11 9PD → 'K11 9PD') stood at 44/106 on the gb-golden postcode rows. This bundle exists solely for GB parses, so the system is known a priori — pinning is the ship-default the diagnosis prescribed. Measured: exact 26 → 83, clips 44 → 0."
 		},
 		"bridge": {
 			"required": false

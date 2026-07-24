@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "./address-system-conventions.ts"
+import { UK_POSTCODE_PATTERN } from "./gb/postcode.ts"
 
 describe("FR address-system conventions (#719)", () => {
 	it("does NOT forbid street_prefix — FR uses a LEADING street type the current model emits correctly", () => {
@@ -30,5 +31,35 @@ describe("FR address-system conventions (#719)", () => {
 	it("the literal table row agrees with the lookup (no aliasing surprise)", () => {
 		expect(ADDRESS_SYSTEM_CONVENTIONS.fr?.forbiddenTags ?? []).not.toContain("street_prefix")
 		expect(ADDRESS_SYSTEM_CONVENTIONS.fr?.forbiddenTags ?? []).toContain("street_suffix")
+	})
+})
+
+describe("GB address-system conventions (#1275)", () => {
+	it("declares the codex UK postcode shape — the reference, not a re-declared regex", () => {
+		const gb = conventionsForSystem("gb")
+		expect(gb).not.toBeNull()
+		// Same object as gb/postcode.ts's UK_POSTCODE_PATTERN — the shape family is declared once in the codex.
+		expect(gb!.postcodePattern).toBe(UK_POSTCODE_PATTERN)
+	})
+
+	it("the declared shape accepts canonical GB postcodes and rejects the #1275 clip fragments", () => {
+		const pattern = conventionsForSystem("gb")!.postcodePattern!
+
+		for (const valid of ["SK11 9PD", "SW1A 1AA", "M1 1AE", "B33 8TH", "CR2 6XH", "DN55 1PT"]) {
+			expect(valid).toMatch(pattern)
+		}
+
+		// Clip fragments from the #1275 board ("1 9PD" for SK11 9PD, "2LH" for CV31 2LH, "3 2GL" for
+		// WF3 2GL) are shape-invalid. (A letter-led fragment like "K11 9PD" can still be shape-valid in
+		// isolation — the repair pass operates on raw-text sub-match, not fragment shape, so the pattern
+		// only needs to describe the canonical form.)
+		for (const clipped of ["1 9PD", "2LH", "3 2GL"]) {
+			expect(clipped).not.toMatch(pattern)
+		}
+	})
+
+	it("forbids NO tags — the row exists for the postcode snap-repair gate only", () => {
+		// A forbid needs measured zero-cost receipts (the FR street_prefix lesson, #719). GB has none.
+		expect(conventionsForSystem("gb")!.forbiddenTags).toBeUndefined()
 	})
 })
