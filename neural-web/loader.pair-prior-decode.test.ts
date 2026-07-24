@@ -121,7 +121,7 @@ beforeEach(() => {
 })
 
 describe("loader-built classifier — pair prior in the shared decode (#1278)", () => {
-	test("country-matched index: emission + transition BOTH reach viterbi — the fused lattice flips to dependent_locality", async () => {
+	test("CONFIG DEFAULT (country pin): emission + transition BOTH reach viterbi — the fused lattice flips to dependent_locality", async () => {
 		const { classifier, pairIndexes } = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX], "en-gb"))
 
 		expect(pairIndexes).toHaveLength(1)
@@ -130,28 +130,57 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
 		// δ=6 emissions alone lose by 4; β=5 alone recovers nothing without the emission mass. The flip is
-		// the proof both halves were threaded into the ONE shared decode.
+		// the proof both halves were threaded into the ONE shared decode. Here the prior comes from the
+		// config-default posture pin ('en-gb'); the per-parse path is proven in the next test.
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
 	})
 
-	test("BYTE-STABILITY: a gate-mismatched index (gb bytes, default us country) decodes identically to no index at all", async () => {
+	test("PER-PARSE selection reaches decode: a selected resolver fed as ParseOpts.placetypePair flips the SAME lattice", async () => {
+		// Load with NO country posture → NO config default. The prior can ONLY come from the per-parse
+		// selection, so the flip below is proof the selected resolver threads through the shared decode.
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
-		const gated = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX])) // default country → "us"
+		const result = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX]))
+		warn.mockRestore()
+
+		expect(result.pairIndexes).toHaveLength(1)
+		expect(result.pairIndexes[0]!.resolver).not.toBeNull() // LIVE despite no posture (phase 2 load-all)
+
+		// "Shoreditch London" has no postcode, so detection alone yields `us` (no bias); the `{ country }`
+		// override is the seam a preset uses to pin a posture the text shape can't reveal. The returned opt is
+		// spread as ParseOpts.placetypePair — exactly the demo's intended call site.
+		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
+		expect(placetypePair).toBeDefined()
+
+		const json = await result.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
+		expect(json.dependent_locality).toBe("Shoreditch")
+		expect(json.locality).toBe("London")
+	})
+
+	test("BYTE-STABILITY: a LIVE-but-unselected index (no posture, detection yields no match) decodes identically to no index at all", async () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+		const loaded = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX])) // no country → no config default
 		warn.mockRestore()
 
 		fusedLatticeSession() // fresh canned session for the second load
 		const priorFree = await loadNeuralClassifierFromURLs(baseOpts([]))
 
-		expect(gated.pairIndexes).toEqual([{ url: GB_INDEX, country: "gb", resolver: null }])
+		// Phase 2: the gb index is LIVE + retained (not gated to null), but no posture pin + a text that
+		// detects `us` (no UK postcode) means nothing selects it — byte-stable.
+		expect(loaded.pairIndexes).toHaveLength(1)
+		expect(loaded.pairIndexes[0]!.resolver).not.toBeNull()
 		expect(priorFree.pairIndexes).toEqual([])
 
-		const gatedJSON = await gated.classifier.parseJSON("Shoreditch London", { spanProposer: false })
+		// The per-parse selection returns undefined for this US-detecting text (gb-only load) → no prior.
+		const placetypePair = loaded.selectPairIndexForText("Shoreditch London")
+		expect(placetypePair).toBeUndefined()
+
+		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
 		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
-		// The gated load keeps the encoder's fused street reading — and matches the index-free parse exactly.
-		expect(gatedJSON).toEqual(priorFreeJSON)
-		expect(gatedJSON.street).toBe("Shoreditch")
-		expect(gatedJSON.locality).toBe("London")
+		// The unselected load keeps the encoder's fused street reading — and matches the index-free parse exactly.
+		expect(loadedJSON).toEqual(priorFreeJSON)
+		expect(loadedJSON.street).toBe("Shoreditch")
+		expect(loadedJSON.locality).toBe("London")
 	})
 })

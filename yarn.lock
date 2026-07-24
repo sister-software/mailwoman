@@ -4714,7 +4714,9 @@ __metadata:
   resolution: "@mailwoman/neural-web@workspace:neural-web"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/neural": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
   languageName: unknown
   linkType: soft
