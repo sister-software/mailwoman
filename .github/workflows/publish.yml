@@ -137,7 +137,14 @@ jobs:
       - name: Open the auto-merging release PR
         if: ${{ !inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # RELEASE_PR_TOKEN (fine-grained PAT: THIS repo only, contents + pull-requests write) makes
+          # the release PR belong to a TRUSTED HUMAN actor, so `on: pull_request` workflows run
+          # unprompted — the 7.8.0 cut stalled in `action_required` when a bot-PR Test run started
+          # requiring manual approval, and the approval policy must stay STRICT for outsiders (the
+          # Test legs run on the self-hosted lab fleet; never auto-run stranger code there). Fallback
+          # when the secret is absent: GITHUB_TOKEN + the explicit Test dispatch below.
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          HAS_RELEASE_PR_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' }}
           VERSION: ${{ steps.bump.outputs.version }}
         run: | # shell
           set -euo pipefail
@@ -147,16 +154,23 @@ jobs:
           git checkout -b "${BRANCH}"
           git add package.json '*/package.json'
           git commit -m "release: v${VERSION}"
-          git push -u origin "${BRANCH}"
+          # Push with the same identity that opens the PR (the PAT when present) — a PAT-authored
+          # PR whose branch was pushed by the bot still counts the pusher as the triggering actor
+          # for `on: pull_request`, so both operations must ride the same token.
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
           PR_URL=$(gh pr create --base main --head "${BRANCH}" \
             --title "release: v${VERSION}" \
             --body "Automated release PR (publish.yml mode=prepare). Version bump across the root + all $(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.length") workspaces. Auto-merges when the required \`test\` check passes; then dispatch \`publish.yml\` with mode=publish to tag + npm-publish.")
           echo "release PR: ${PR_URL}"
-          # GITHUB_TOKEN-created PRs don't trigger `on: pull_request` workflows (anti-recursion),
-          # so the required `test` check would never report and auto-merge would hang forever.
-          # Dispatch the Test workflow against the branch explicitly — its check run lands on the
-          # branch head SHA, which is exactly what the ruleset's required check matches on.
-          gh workflow run test.yml --ref "${BRANCH}"
+          if [ "${HAS_RELEASE_PR_TOKEN}" != "true" ]; then
+            # GITHUB_TOKEN-created PRs don't trigger `on: pull_request` workflows (anti-recursion),
+            # so the required `test` check would never report and auto-merge would hang forever.
+            # Dispatch the Test workflow against the branch explicitly — its check run lands on the
+            # branch head SHA, which is exactly what the ruleset's required check matches on. (With
+            # the PAT, `pull_request` fires naturally and a second dispatched run would just burn a
+            # lab runner slot — skip it.)
+            gh workflow run test.yml --ref "${BRANCH}"
+          fi
           gh pr merge --auto --squash "${PR_URL}"
           {
             echo "## Release PR opened: v${VERSION}"
