@@ -260,6 +260,7 @@ const sidebars: SidebarsConfig = {
 	contribute: [
 		"contributing-docs",
 		"plan/CONTRIBUTING_MODEL_WORK",
+		"plan/reference/country-evidence-layer-runbook",
 		"plan/reference/OPERATIONS",
 		"plan/reference/layer-contract",
 		"plan/reference/poi-layer-runbook",
