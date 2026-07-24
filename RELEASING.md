@@ -549,6 +549,10 @@ Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` �
 
 ### Adding a NEW package: it can't be first-published from CI
 
+**Version field first**: a new workspace must join at the CURRENT unified version (`npm view
+mailwoman version`), never `0.0.0` — `scripts/prepare-release-version.ts`'s drift guard refuses to
+bump an unsynced tree (bit the en-nz addition on the first 7.8.0 prepare, 2026-07-24).
+
 npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet** — the registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`) because there's no package, and therefore no Trusted Publisher, to authorize against. So a brand-new `@mailwoman/*` workspace needs a **one-time manual first publish with a token** before CI can ever touch it. This bit the 4.0.0 release: `@mailwoman/codex` plus the five new `mailwoman` runtime deps (`kind-classifier`, `locale-gate`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
 
 The bootstrap (on a machine with `npm login` rights to the `@mailwoman` scope — note the **lab host has no npm credentials**, so this is the operator's machine):
