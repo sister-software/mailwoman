@@ -61,12 +61,24 @@ const EXPECTED_GB_PAIR_COUNT = 19_209
  */
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
-/** Known (child, parent) pairs from the rung-3 GB census, probed after write as a self-check. */
-const GB_PROBE_PAIRS: ReadonlyArray<readonly [city: string, district: string]> = [
-	["Fishburn", "Stockton-on-Tees"],
-	["Shoreditch", "London"],
-	["Sedgefield", "Stockton-on-Tees"],
-]
+/**
+ * Known (child, parent) pairs probed after write as a self-check — PER COUNTRY, keyed by the `--country` code. Probing
+ * another country's names against a freshly built index prints reassuring-looking `PROBE MISS` lines that verify
+ * nothing (the en-nz first build ran the GB names — caught 2026-07-24). A country without an entry gets a loud skip,
+ * not a false verification.
+ */
+const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {
+	gb: [
+		["Fishburn", "Stockton-on-Tees"],
+		["Shoreditch", "London"],
+		["Sedgefield", "Stockton-on-Tees"],
+	],
+	nz: [
+		["Plimmerton", "Porirua"],
+		// The repeated-name convention's identity pair — the (x,x) evidence the segment rule keys on.
+		["Mangawhai", "Mangawhai"],
+	],
+}
 
 const OptionsSchema = zod.object({
 	out: zod.string().default("docs/static/mailwoman").describe("Output dir for pair-index-<country>.bin"),
@@ -164,7 +176,15 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		// Self-verifying readback: construct a fresh resolver over the bytes we just wrote (not the in-memory
 		// `entries`) and probe known pairs, rather than trusting the write silently succeeded.
 		const resolver = new PairIndexResolver(bytes)
-		const probeLines = GB_PROBE_PAIRS.map(([city, district]) => {
+		const countryProbePairs = PROBE_PAIRS_BY_COUNTRY[country]
+
+		if (!countryProbePairs) {
+			throw new Error(
+				`pair-index: no self-check probe pairs registered for country "${country}" — add an entry to ` +
+					`PROBE_PAIRS_BY_COUNTRY (probing another country's names verifies nothing).`
+			)
+		}
+		const probeLines = countryProbePairs.map(([city, district]) => {
 			const child = normalizeFSTToken(city)
 			const parent = normalizeFSTToken(district)
 			const tag = resolver.probe(child, parent)

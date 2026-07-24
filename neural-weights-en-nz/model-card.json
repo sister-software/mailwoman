@@ -19,11 +19,12 @@
 			"source": "LINZ-derived OpenAddresses NZ countrywide CSV (the census the synth-nz-v2 shard was built from), $MAILWOMAN_DATA_ROOT/openaddresses/extracted/nz/countrywide.csv, source md5 fa79e586de96fe54c17b6763a9ea97c6, 2,123,054 rows kept / 137 skipped (empty CITY)",
 			"pairs": 3134,
 			"bytes": 55471,
-			"md5": "7a0cd02b5d952add8037103b4ec8e058",
+			"md5": "673c27895ef9960b9b1bed148d2fc38c",
 			"delta_calibration": "δ=10 (NZ δ-sweep on the SHIPPED v385, task-8 report 2026-07-24 § 'NZ arc'). Saturates at δ=10 — identical emit/correct to δ=12/15, the same flat-plateau shape as GB's own sweep; golden-FP 0/54 at every δ tested. The sweep table lives in eval.delta_sweep_v385 below.",
 			"repeated_name_convention": "NZ's register genuinely repeats names across the suburb/town tiers: 255/1178 names (21.6%) form identity pairs (child == parent, e.g. Mangawhai / Mangawhai) — the target population of @mailwoman/neural 7.8.0's identical-adjacent-segment (x,x) rule, which splits two identical adjacent segments into dependent_locality + locality instead of fusing them into one span. GB has 0/19,431 identity pairs, so the rule is structurally unreachable there (verified, not assumed — see eval.gb_reproduction).",
 			"country_gate": "hard-gated — the prior only fires when the resolved locale's country matches the index header's country (nz). Never crosses into en-us/en-gb parses (see neural/test/weights.test.ts).",
-			"not_committed": "derived artifact, .gitignore'd (same posture as en-gb's pair-index-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-nz --country nz --source <linz-countrywide-csv> --delta 10`"
+			"not_committed": "derived artifact, .gitignore'd (same posture as en-gb's pair-index-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-nz --country nz --source <linz-countrywide-csv> --delta 10`",
+			"": "Ship bytes (2026-07-24 rebuild off the identical census, sourceMD5 fa79e586de96fe54c17b6763a9ea97c6, delta 10, 3,134 pairs). The battery graded a buildDate-differentiated build of the same pairs (7a0cd02b…, unrecoverable session tmp); bars 1-3 re-verified verbatim on THESE bytes — see the en-nz battery postscript in the task-8 report."
 		},
 		"no_postcode_bin": "FOLLOW-UP: this overlay ships NO postcode-nz.bin — no WOF NZ postcode shard exists on disk or in release.config.json's softFeed.postcodeDBByCountry (unlike us/fr/gb). Until one is built, the postcode-anchor channel resolves OFF for en-nz loads (loud single warning via warnUnfedChannel, parse still works — the tolerant-loader contract). Building the NZ shard + wiring postcodeDBByCountry.nz is the tracked follow-up for a later bundle revision."
 	},
@@ -118,15 +119,26 @@
 		"$comment": "All rows measured on the SHIPPED v385 base + this package's δ=10 pair-index-nz.bin via @mailwoman/neural's auto probe chain + the 7.8.0 identical-adjacent-segment fix (2026-07-24 en-nz battery, pre-registered bars — task-8 report).",
 		"nz_suburb_board_as_written": {
 			"n": 246,
-			"auto_chain_at_delta_10_with_xx_fix": { "emit": 246, "tag_correct": 246, "tag_correct_pct": 100.0 },
+			"auto_chain_at_delta_10_with_xx_fix": {
+				"emit": 246,
+				"tag_correct": 246,
+				"tag_correct_pct": 100.0
+			},
 			"note": "pre-fix baseline 246 emit / 183 correct (74.4%) — the 63 repeated-name rows were the recovery target and are fully recovered."
 		},
 		"nz_suburb_board_comma_stripped": {
 			"n": 246,
-			"auto_chain_at_delta_10": { "emit": 244, "tag_correct": 244, "tag_correct_pct": 99.2 },
+			"auto_chain_at_delta_10": {
+				"emit": 244,
+				"tag_correct": 244,
+				"tag_correct_pct": 99.2
+			},
 			"note": "the anchored-adjacent path; byte-identical pre-fix and post-fix (the fix correctly leaves it alone)."
 		},
-		"nz_golden_no_suburb_fp": { "n": 54, "fp": 0 },
+		"nz_golden_no_suburb_fp": {
+			"n": 54,
+			"fp": 0
+		},
 		"synthetic_venue_fp": {
 			"board": "nz-venue-interim-board.jsonl, 510 rows — 170 census pairs × 3 civic/business-name templates",
 			"fp": "0/510",
@@ -135,12 +147,36 @@
 		},
 		"delta_sweep_v385": {
 			"$comment": "NZ δ-sweep, auto chain, as-written 246-row suburb board (emit/tag-correct, PRE-fix segment path) + golden-FP of 54 no-suburb rows.",
-			"5": { "emit": 0, "tag_correct": 0, "golden_fp": 0 },
-			"7": { "emit": 13, "tag_correct": 13, "golden_fp": 0 },
-			"8": { "emit": 226, "tag_correct": 181, "golden_fp": 0 },
-			"10_selected": { "emit": 246, "tag_correct": 183, "golden_fp": 0 },
-			"12": { "emit": 246, "tag_correct": 183, "golden_fp": 0 },
-			"15": { "emit": 246, "tag_correct": 183, "golden_fp": 0 }
+			"5": {
+				"emit": 0,
+				"tag_correct": 0,
+				"golden_fp": 0
+			},
+			"7": {
+				"emit": 13,
+				"tag_correct": 13,
+				"golden_fp": 0
+			},
+			"8": {
+				"emit": 226,
+				"tag_correct": 181,
+				"golden_fp": 0
+			},
+			"10_selected": {
+				"emit": 246,
+				"tag_correct": 183,
+				"golden_fp": 0
+			},
+			"12": {
+				"emit": 246,
+				"tag_correct": 183,
+				"golden_fp": 0
+			},
+			"15": {
+				"emit": 246,
+				"tag_correct": 183,
+				"golden_fp": 0
+			}
 		},
 		"gb_reproduction": "every GB number reproduces to the exact integer through the 7.8.0 (x,x) fix, both probe-chain legs: gb-golden 69/69 emit / 69/69 correct, comma-stripped 50/69 emit / 47/50 (94.0%), golden no-DL FP 0/51, venue FP 217/6500 (segment leg) + 4/6500 (anchored leg). Corroborated structurally: GB's census has 0/19,431 identity pairs, so the rule cannot fire on GB at all.",
 		"presets_and_golden": "6 demo presets + golden us (n=2660) / fr (n=1546) byte-identical through the fix; invariance suite 138 INVARIANT / 6 DEGRADED / 12 LOST — 0 NEW violation classes vs the v385 baseline (identical profile to the pre-fix battery)."
