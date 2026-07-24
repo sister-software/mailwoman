@@ -1834,14 +1834,13 @@ def train(
     print(f"Resume: {resume}")
     print("Starting training...\n")
 
-    # Import and run training
-    import yaml
-
-    from mailwoman_train.config import Config, _merge
+    # Import and run training. load_config is the STRICT path (#1248): an unknown YAML
+    # key — e.g. a lever the volume-side config.py predates — raises here at launch,
+    # naming the dotted key + file, instead of silently running a lever-less fine-tune.
+    from mailwoman_train.config import load_config
     from mailwoman_train.train import train as run_train
 
-    cfg = Config()
-    _merge(cfg, yaml.safe_load(open(config_path)))
+    cfg = load_config(config_path)
 
     # Verify the corpus the config actually points at exists on the volume (post-config so the version
     # isn't hardcoded). The data loader reads cfg.data.corpus_dir; fail loud here if it's missing.
