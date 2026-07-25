@@ -138,6 +138,7 @@ function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const MAGIC = 0x31_58_49_50
+
 	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
 
 	if (view.getUint32(0, true) !== MAGIC) {

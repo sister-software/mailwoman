@@ -15,12 +15,24 @@ import { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
 
 /** Serialized model: metadata in JSON, the dense `weights` (row-major [class][feature]) alongside. */
 export interface CoarsePlacerArtifact {
+	/**
+	 * The coarse placer's classes (the country/region codes it routes to).
+	 */
 	classes: readonly string[]
 	featureDim: number
-	/** Temperature for confidence calibration (logits are divided by this before softmax). */
+	/**
+	 * Temperature for confidence calibration (logits are divided by this before softmax).
+	 */
 	temperature: number
+	/**
+	 * Bias vector. The bias is the log-prior of each class (the model's belief before seeing any input). The bias is
+	 * learned during training, and the temperature is fit on the validation set to calibrate the confidence. The bias is
+	 * added to the weighted sum of features for each class before applying the softmax.
+	 */
 	bias: number[]
-	/** Flat row-major weight matrix, length `classes.length * featureDim`. */
+	/**
+	 * Flat row-major weight matrix, length `classes.length * featureDim`.
+	 */
 	weights: Float32Array
 }
 

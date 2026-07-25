@@ -141,6 +141,7 @@ export function serializePairIndex(header: PairIndexHeader, entries: readonly Pa
 	const headerBytes = encoder.encode(JSON.stringify(header))
 
 	let size = 4 /* magic */ + 4 /* headerLen */ + headerBytes.length + 4
+
 	/* pairCount */
 
 	for (const p of encodedPairs) {
