@@ -126,6 +126,34 @@ must be re-measured against the PRODUCTION gazetteer, not the stub. Plan:
 The `#1142` intersection (fork A only): if you touch the full FST, reconcile with the held 768k-FST
 reship + the importance-unknown-as-zero issue — see the `#1142` memory / issue.
 
+### ⚠ IF `STALE_FST_HANDOFF.md` LANDS FIRST — this section changes (the two arcs may complete out of order)
+
+`docs/superpowers/plans/STALE_FST_HANDOFF.md` (the #1142 768k-importance-FST rebuild + street-context
+gate, dispatched to Kimi) is the enabler for fork A. If it lands **before** this comma-free fix, the
+fork decision above is stale — re-take it with these deltas:
+
+1. **Fork A's two objections are discharged, so re-take A-vs-B — don't assume B.** (a) The FST is no
+   longer stale/importance-incomplete. (b) The York/Washington collateral class is the SAME
+   street-name-collision class the street-context gate suppresses (positive locality bias withheld in
+   street-adjacent position) — so STALE_FST's gate is the mitigation for exactly the collateral that
+   made B the safe hedge. Post-landing, A is "trustworthy FST + collateral already gated," not "broad
+   - messy." Re-decide; B was the discipline hedge against a channel STALE_FST cleans up.
+2. **Discharge the `#1142` intersection note above** — "held 768k reship + importance-unknown-as-zero"
+   → "landed; fork A builds on the rebuilt, gated FST." Update §3's "768k-FST reship still held" → an
+   FST-only (model-independent) artifact release, shipped.
+3. **Scope stays honest, just narrower.** STALE_FST does NOT wire `opts.fst` into the default `parse`
+   path (the probe found it not auto-wired there) or calibrate `fstBiasScale` for the trailing-locality
+   case, and the comma-free board still needs re-running on the REAL rebuilt FST (the probe used a
+   minimal trie). Fork A remains a real arc — lower-risk, not free. Do NOT let "FST rebuilt" read as
+   "comma-free fixed."
+4. **§2 (#1143) resequences** — the gate's house-number-left condition IS #1143's "house number is the
+   license" mechanism, so STALE_FST may partially subsume #1143. Retest #1143 after STALE_FST **and**
+   comma-free, not after comma-free alone.
+5. **§4 mechanism map** — the street-context gate now lives in `fst-prior.ts`; re-verify the drifted
+   line numbers before citing them.
+
+§0 discipline and §5 integrity stand regardless of ordering.
+
 ---
 
 ## 2. DEFERRED — #1143 bare-street-parses-as-locality (retest after comma-free)
