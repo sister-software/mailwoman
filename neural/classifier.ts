@@ -50,6 +50,7 @@ import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } f
 import { MailwomanTokenizer } from "./tokenizer.ts"
 import { TRACE_PRIOR_KINDS } from "./trace.ts"
 import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.ts"
+import { buildTrailingLocalityPriors, type TrailingLocalityPriorOpts } from "./trailing-locality-prior.ts"
 import { repairUnitLabels } from "./unit-repair.ts"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.ts"
@@ -685,6 +686,24 @@ export class NeuralAddressClassifier {
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
 		})
 
+		// Trailing-locality prior (comma-free "street + trailing city", fork B — see
+		// trailing-locality-prior.ts). Opt-in; absent → byte-stable.
+		const trailingLocalityPrior = opts?.trailingLocality
+			? buildTrailingLocalityPriors(pieces, this.labels, {
+					...opts.trailingLocality,
+					// R3 (locality-present ⇒ silent) reads the CURRENT argmax — the emissions as composed so far.
+					emissions: opts.trailingLocality.emissions ?? emissions,
+				})
+			: undefined
+
+		if (trailingLocalityPrior) {
+			emissions = addEmissionMatrix(emissions, trailingLocalityPrior)
+		}
+		tracePriors?.push({
+			kind: "trailingLocality",
+			applied: trailingLocalityPrior !== undefined && matrixHasBias(trailingLocalityPrior),
+		})
+
 		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase priors.
 		// DEFAULT ON since 2026-06-12 (operator ruling): an omitted config builds the codex lexicon
 		// lazily with the frozen measured scales; `spanProposer: false` (config or per-parse) is the
@@ -996,6 +1015,18 @@ export interface ParseOpts {
 	fstStreetMorphology?: FSTMatcherLike
 	/** Override bias magnitudes for the morphology prior. */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
+	/**
+	 * Trailing-locality prior (comma-free "street + trailing city" — fork B). Geometry-gated: fires only on a trailing
+	 * word-span that matches a gazetteer locality by PRESENCE, with street-affix evidence before it, and never on the
+	 * street name itself. Importance-free — complementary to the FST prior, and deliberately decoupled from `fst` /
+	 * `fstStreetMorphology` (the fork-A lesson: broad FST bias is geometrically opposed to the street-context gate).
+	 * Absent → byte-stable. See `trailing-locality-prior.ts`.
+	 *
+	 * ⚠ OPT-IN ONLY, deliberately never auto-wired: the prior cannot separate a trailing city from a person-name street
+	 * surname ("Avenue Marceau Julien") — it regresses the #1143 bare-street population on open-vocabulary street text
+	 * (measured 2026-07-25). Use only where the input register is known comma-free over notable cities.
+	 */
+	trailingLocality?: TrailingLocalityPriorOpts
 	/**
 	 * When true, run the deterministic postcode regex repair pass (v0.7 #35) on the decoded label sequence before
 	 * tree-building. Detects postcode-shaped substrings (GB/CA/NL/US/FR/… patterns) and snaps/adds the postcode span to

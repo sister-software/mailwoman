@@ -11,10 +11,10 @@ import { collectProposals, filterByPolicy, InMemoryPolicyRegistry, type PolicyMo
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
-import { createWOFResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
-import React from "react"
+import type React from "react"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
