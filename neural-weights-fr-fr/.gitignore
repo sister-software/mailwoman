@@ -8,3 +8,7 @@
 # the compact PCB1 postcode-anchor binary + the gazetteer-anchor lexicon.
 /postcode-*.bin
 /anchor-lexicon-v1.json
+
+# Per-locale FST gazetteer (FST-distribution arc, 2026-07-25) — dev symlink from
+# $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/, real binary staged at publish time.
+/fst-*.bin

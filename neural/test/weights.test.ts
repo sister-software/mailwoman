@@ -182,6 +182,18 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 })
 
 describe("resolveWeights — package auto-resolve", () => {
+	// FST-distribution arc (2026-07-25): the per-locale FST gazetteer resolves as a PATH sibling
+	// (`fst-<locale>.bin`) — neural exposes it verbatim (`classifier.fstPath`); the mailwoman runtime
+	// pipeline deserializes + auto-wires it from there. A package without the sibling (en-nz) leaves
+	// fstPath undefined — byte-stable.
+	test.skipIf(!haveModel)("surfaces fstPath for a weights package shipping fst-<locale>.bin", () => {
+		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
+		execFileSync(process.execPath, [linkScript], { stdio: "pipe" })
+
+		const r = resolveWeights({ locale: "en-us" })
+		expect(r.fstPath).toMatch(/neural-weights-en-us\/fst-en-us\.bin$/)
+	})
+
 	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
 		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
 		execFileSync(process.execPath, [linkScript], { stdio: "pipe" })

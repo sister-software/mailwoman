@@ -105,6 +105,13 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	semiCrfGrammar?: SemiCRFTransitions
 	/**
+	 * Path to the per-locale FST gazetteer binary shipped in the resolved weights package (`fst-<locale>.bin`), surfaced
+	 * verbatim from {@link resolveWeights} — PATH ONLY (neural has no resolver-wof-sqlite dependency; the caller's layer
+	 * deserializes). Exposed via {@link NeuralAddressClassifier.fstPath} so the mailwoman runtime pipeline can auto-load
+	 * the gazetteer into `opts.fst` at pipeline construction.
+	 */
+	fstPath?: string
+	/**
 	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features from the text +
 	 * this lookup and feeds them to the runner — for models trained with the anchor channel (exported with the
 	 * `anchor_features`/`anchor_confidence` ONNX inputs). Omit for plain models. Load via `loadAnchorLookup` from
@@ -225,6 +232,15 @@ export class NeuralAddressClassifier {
 	 */
 	get spanGrammar(): SemiCRFTransitions | undefined {
 		return this.cfg.semiCrfGrammar
+	}
+
+	/**
+	 * Path to the per-locale FST gazetteer binary (`fst-<locale>.bin`) when the resolved weights package shipped one,
+	 * else `undefined`. The runtime pipeline deserializes + auto-wires it as the default `opts.fst` (opt out with `fst:
+	 * false` at pipeline construction); direct `classifier.parse` callers can do the same or pass their own.
+	 */
+	get fstPath(): string | undefined {
+		return this.cfg.fstPath
 	}
 
 	/**
@@ -427,6 +443,7 @@ export class NeuralAddressClassifier {
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
+			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
 			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is

@@ -15,6 +15,7 @@
 		"calibration.json",
 		"calibration-per-locale.json",
 		"postcode-us.bin",
+		"fst-en-us.bin",
 		"anchor-lexicon-v1.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",

@@ -113,6 +113,14 @@ export interface ResolvedWeights {
 	 */
 	countryLexiconPath?: string
 	/**
+	 * Path to the per-locale FST gazetteer (`fst-<locale>.bin`) shipped beside the resolved model. `undefined` when the
+	 * package doesn't ship one (e.g. en-nz — byte-stable). PATH ONLY: `neural` deliberately carries no
+	 * `@mailwoman/resolver-wof-sqlite` dependency (the FST prior consumes a structural `FSTMatcherLike`), so
+	 * deserialization happens in the caller's layer — `loadFromWeights` surfaces the path on the classifier
+	 * ({@link NeuralAddressClassifier.fstPath}) and the mailwoman runtime pipeline auto-loads it from there.
+	 */
+	fstPath?: string
+	/**
 	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3) shipped
 	 * beside the resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
 	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
@@ -272,6 +280,12 @@ function resolveFromPackageDir(
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
 
+	// Per-locale FST gazetteer sibling (`fst-<locale>.bin`) — path only; the caller's layer deserializes
+	// (neural carries no resolver-wof-sqlite dependency). Country-scoped by construction: a locale model
+	// parsing foreign addresses simply gets no gazetteer bias for those places (the pair-index posture).
+	const fstCandidate = resolve(packageDir, `fst-${locale}.bin`)
+	const fstPath = existsSync(fstCandidate) ? fstCandidate : undefined
+
 	return {
 		modelPath,
 		tokenizerPath,
@@ -282,6 +296,7 @@ function resolveFromPackageDir(
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
 		...(pairIndexPath ? { pairIndexPath } : {}),
+		...(fstPath ? { fstPath } : {}),
 		source,
 	}
 }
