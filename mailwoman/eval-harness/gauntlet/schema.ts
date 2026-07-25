@@ -27,7 +27,7 @@ export type AddressKind = string
 /** Pelias-style status: tracked as a DELTA (regression / improvement), never as a raw pass-rate gauge. */
 export type CaseStatus = "pass" | "known_fail" | "improvement_target"
 
-export type ResolutionTier = "address_point" | "interpolated" | "admin"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin"
 
 /** One Gauntlet case: a raw input and its expected ASSEMBLED output (parse + place + coordinate + tier). */
 export interface GauntletCaseTable {
@@ -56,6 +56,8 @@ export interface GauntletCaseTable {
 	expect_tolerance_m: number | null
 	/** Expected resolution tier — a result that drifts `address_point`→`admin` is a regression even within tolerance. */
 	expect_tier: ResolutionTier | null
+	/** Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`. */
+	default_country: string | null
 	/** When the case entered the corpus (ISO date). */
 	added_at: string
 	/** Linked bug / PR / issue, when the case is a fixed regression. */
@@ -84,6 +86,7 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"expect_lon",
 	"expect_tolerance_m",
 	"expect_tier",
+	"default_country",
 	"added_at",
 	"bug_ref",
 	"note",
@@ -106,6 +109,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("expect_lon", "real")
 		.addColumn("expect_tolerance_m", "integer")
 		.addColumn("expect_tier", "text")
+		.addColumn("default_country", "text")
 		.addColumn("added_at", "text", (c) => c.notNull())
 		.addColumn("bug_ref", "text")
 		.addColumn("note", "text")

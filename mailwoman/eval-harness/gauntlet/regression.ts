@@ -54,6 +54,12 @@ function componentOf(r: GauntletResult, key: string): string | null {
 			return r.region
 		case "locality":
 			return r.locality
+		case "house_number":
+			return r.house_number
+		case "street":
+			return r.street
+		case "postcode":
+			return r.postcode
 		default:
 			return null
 	}
@@ -86,7 +92,17 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 
 		if (c.expect_components != null) {
-			const exp = JSON.parse(c.expect_components) as Record<string, string>
+			// From our own builder's JSON.stringify, so malformed = a corrupt DB row — surface it as a
+			// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole gate.
+			let exp: Record<string, string>
+
+			try {
+				exp = JSON.parse(c.expect_components) as Record<string, string>
+			} catch {
+				issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
+
+				return issues
+			}
 
 			for (const [k, v] of Object.entries(exp)) {
 				const got = componentOf(r, k)
@@ -117,7 +133,8 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	let gated = 0
 
 	for (const c of cases) {
-		const issues = checkCase(c, await runOne(c.input, deps))
+		const geoOpts = c.default_country ? { defaultCountry: c.default_country } : undefined
+		const issues = checkCase(c, await runOne(c.input, deps, geoOpts))
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 
 		if (c.status === "pass") {

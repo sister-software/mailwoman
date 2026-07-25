@@ -20,8 +20,14 @@ import { type GeocodeResult, geocodeAddress, ShardProvider } from "../../geocode
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 
 export interface GauntletDeps {
-	geocode(input: string): Promise<GeocodeResult>
+	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
 	close(): void
+}
+
+/** Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}). */
+export interface GauntletGeocodeOpts {
+	/** Resolver country prior (ISO-3166 alpha-2) — geocodeAddress's `defaultCountry`. */
+	defaultCountry?: string
 }
 
 /**
@@ -36,7 +42,18 @@ function assertShippedModelMatchesCard(materializedMd5: string): void {
 	const cardPath = resolve("neural-weights-en-us/model-card.json")
 
 	if (!existsSync(cardPath)) return
-	const card = JSON.parse(readFileSync(cardPath, "utf8")) as { version?: string; files_md5?: Record<string, string> }
+	// Soft-return on an UNPARSEABLE card too — the docstring's contract is that a card-format problem is
+	// not this guard's job (the model file itself is always existsSync-gated by the caller).
+	let card: { version?: string; files_md5?: Record<string, string> }
+
+	try {
+		card = JSON.parse(readFileSync(cardPath, "utf8")) as { version?: string; files_md5?: Record<string, string> }
+	} catch {
+		console.error(`[gauntlet] model-card ${cardPath} is not valid JSON — skipping the #1024 md5 guard`)
+
+		return
+	}
+
 	const expected = card.files_md5?.["model.onnx"]
 
 	if (typeof expected !== "string") return
@@ -121,13 +138,14 @@ export async function buildGauntletDeps(
 	const banProvider = new BANShardProvider(mailwomanDataRoot())
 
 	return {
-		geocode: (input: string) =>
+		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) =>
 			geocodeAddress(input, {
 				classifier,
 				resolver,
 				shards: shardProvider.for,
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
+				...geoOpts,
 			}),
 		close: () => {
 			shardProvider.close()
@@ -146,10 +164,13 @@ export interface GauntletResult {
 	region: string | null
 	country: string | null
 	postcode: string | null
+	/** The parsed spans, populated regardless of tier (geocode-core #1041) — asserted by venue/name-trap cases. */
+	house_number: string | null
+	street: string | null
 }
 
-export async function runOne(input: string, deps: GauntletDeps): Promise<GauntletResult> {
-	const g = await deps.geocode(input)
+export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
+	const g = await deps.geocode(input, opts)
 
 	return {
 		lat: g.lat,
@@ -159,5 +180,7 @@ export async function runOne(input: string, deps: GauntletDeps): Promise<Gauntle
 		region: g.region,
 		country: g.hierarchy.find((h) => h.tag === "country")?.value ?? null,
 		postcode: g.postcode,
+		house_number: g.house_number,
+		street: g.street,
 	}
 }
