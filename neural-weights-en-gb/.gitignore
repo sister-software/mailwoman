@@ -19,3 +19,7 @@
 # artifact into the publish tarball) landed in Task 8 (#1249-style audit) — same not-committed
 # treatment as postcode-*.bin above, now and at publish time.
 /pair-index-*.bin
+
+# Per-locale FST gazetteer (FST-distribution arc, 2026-07-25) — dev symlink from
+# $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/, real binary staged at publish time.
+/fst-*.bin

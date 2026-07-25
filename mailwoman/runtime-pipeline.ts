@@ -14,6 +14,8 @@
  *   See `docs/articles/plan/reference/STAGES.md` for the full contract.
  */
 
+import { readFileSync } from "node:fs"
+
 import {
 	runPipeline,
 	type PipelineOpts,
@@ -22,6 +24,7 @@ import {
 	type POIIntentOutcome,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { classifyKind as defaultClassifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
@@ -30,6 +33,9 @@ import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
 import { loadDefaultReverseGeocoder } from "./default-reverse-geocoder.ts"
@@ -79,8 +85,20 @@ export interface CreateRuntimePipelineOpts {
 	resolver?: RuntimePipelineStages["resolver"]
 	/**
 	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification.
+	 *
+	 * DEFAULT-ON (2026-07-25 FST-distribution arc): when omitted AND the classifier's resolved weights package ships a
+	 * `fst-<locale>.bin` sibling ({@link NeuralAddressClassifier.fstPath}), the pipeline deserializes and wires it
+	 * automatically. Pass `false` to suppress both the auto-load and any explicit matcher (the byte-stable escape
+	 * hatch).
 	 */
-	fst?: RuntimePipelineStages["fst"]
+	fst?: RuntimePipelineStages["fst"] | false
+	/**
+	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315), always consumed with the
+	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
+	 * the gate alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load (built from core's
+	 * bundled libpostal dictionaries); `false` suppresses it.
+	 */
+	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 	/**
 	 * Locale gate override — when shipped, replaces the default caller-trust stub.
 	 *
@@ -206,6 +224,46 @@ function wrapWithStreetEvidence(
  * 	createWOFResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
  * 	locale: "en-US" })
  */
+/**
+ * FST-distribution arc (2026-07-25): deserialize the per-locale FST gazetteer shipped in the classifier's resolved
+ * weights package. The classifier surfaces the sibling PATH ({@link NeuralAddressClassifier.fstPath}); the deserialize
+ * lives here because `neural` deliberately carries no resolver-wof-sqlite dependency. Any failure (missing/corrupt
+ * binary, a non-neural classifier) degrades to `undefined` — the byte-stable no-FST default.
+ */
+function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"]): FSTMatcher | undefined {
+	const fstPath =
+		classifier && typeof classifier === "object" && "fstPath" in classifier
+			? (classifier as { fstPath?: string }).fstPath
+			: undefined
+
+	if (!fstPath) return undefined
+
+	try {
+		return deserializeFST(readFileSync(fstPath))
+	} catch (err) {
+		console.warn(`[mailwoman] failed to load weights FST at ${fstPath}: ${(err as Error).message} — parsing without it`)
+
+		return undefined
+	}
+}
+
+/**
+ * Build the street-morphology matcher from core's bundled libpostal dictionaries — the street-context gate's signal
+ * source (#1315), always consumed with the emission prior zeroed at the pipeline's classify call sites. Built on the
+ * first pipeline call (small text dictionaries); failures degrade to `undefined` (gate off, byte-stable).
+ */
+function autoBuildStreetMorphology(): FSTMatcher | undefined {
+	try {
+		return buildStreetMorphologyFST({
+			dictionariesDir: repoRootPath("core", "data", "libpostal", "dictionaries"),
+		}).matcher
+	} catch (err) {
+		console.warn(`[mailwoman] failed to build the street-morphology FST: ${(err as Error).message} — gate off`)
+
+		return undefined
+	}
+}
+
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
@@ -233,7 +291,10 @@ export function createRuntimePipeline(
 		// The #727 phase-4c rerank wrap is applied lazily on the first call (below): an explicitly-passed
 		// evidence index wraps immediately in spirit, but the DEFAULT (auto-load the bundled FR index) is async.
 		classifier: opts.streetEvidence ? wrapWithStreetEvidence(opts.classifier, opts.streetEvidence) : opts.classifier,
-		fst: opts.fst,
+		// FST-distribution arc (2026-07-25): explicit matcher wins; `false` suppresses; `undefined`
+		// auto-loads from the classifier's weights package on the first call (lazy, like placeCountry).
+		fst: opts.fst === false ? undefined : opts.fst,
+		streetMorphology: opts.streetMorphology === false ? undefined : opts.streetMorphology,
 		resolver: opts.resolver,
 		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
@@ -290,6 +351,13 @@ export function createRuntimePipeline(
 	// wrapped the classifier above.
 	let streetEvidenceResolved = opts.streetEvidence !== undefined
 
+	// FST-distribution arc: auto-load the weights-package gazetteer (and the gate's morphology matcher) on the first
+	// call — same lazy convention (file I/O stays out of the synchronous factory). Skipped entirely on explicit
+	// opt-out (`fst: false`) or when the caller shipped their own matcher.
+	const autoFST = opts.fst === undefined
+	let fstResolved = !autoFST
+	let morphologyResolved = opts.streetMorphology !== undefined
+
 	// Object-form `poiQueryKind` additionally executes against a real `POILookup`. Resolved lazily
 	// (like placeCountry/streetEvidence above) so the factory stays synchronous — opening a sqlite
 	// handle is I/O. Boolean `true` (or an object with no `poiDatabasePath`) has nothing to resolve:
@@ -340,6 +408,27 @@ export function createRuntimePipeline(
 
 				if (evidence) {
 					stages.classifier = wrapWithStreetEvidence(opts.classifier, evidence)
+				}
+			}
+		}
+
+		if (!fstResolved) {
+			fstResolved = true
+			const matcher = autoLoadWeightsFST(opts.classifier)
+
+			if (matcher) {
+				stages.fst = matcher
+			}
+		}
+
+		if (!morphologyResolved) {
+			morphologyResolved = true
+			// The gate needs BOTH matchers — skip the build when there's no gazetteer for it to gate.
+			if (stages.fst) {
+				const morph = autoBuildStreetMorphology()
+
+				if (morph) {
+					stages.streetMorphology = morph
 				}
 			}
 		}

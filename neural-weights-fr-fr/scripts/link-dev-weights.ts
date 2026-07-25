@@ -112,3 +112,17 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 	}
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
+
+// Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
+// ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath`
+// in dev and the runtime pipeline can auto-wire the gazetteer + street-context gate. The publish
+// flow stages the real binary (release-sequenced).
+const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-fr-fr.bin")
+const FST_DEST = resolve(PKG_DIR, "fst-fr-fr.bin")
+
+if (existsSync(FST_SRC)) {
+	linkForce(FST_SRC, FST_DEST)
+	console.log(`linked fst-fr-fr.bin ← ${FST_SRC}`)
+} else {
+	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
+}

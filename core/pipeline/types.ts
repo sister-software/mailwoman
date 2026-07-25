@@ -260,6 +260,15 @@ export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
+	/**
+	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context GATE (#1315),
+	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology EMISSION prior measured US-golden-negative
+	 * (−48, 2026-07-25 decomposition) and stays off on the production paths; it remains reachable via direct
+	 * `classifier.parse` for measured, opt-in use.
+	 */
+	fstStreetMorphology?: FSTMatcherLike
+	/** Magnitude overrides for the morphology emission prior — the pipeline always passes the zeroed pair. */
+	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number }
 	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
 	postcodeRepair?: boolean
 	/**
@@ -346,6 +355,12 @@ export interface RuntimePipelineStages {
 	 * classification.
 	 */
 	fst?: FSTMatcherLike
+	/**
+	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315). Consumed ONLY with the
+	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the gate
+	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
+	 */
+	streetMorphology?: FSTMatcherLike
 	resolver?: Resolver
 	/**
 	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance axes (#478): a bounded

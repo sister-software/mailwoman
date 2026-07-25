@@ -449,7 +449,11 @@ export async function runPipeline(
 			tree: argmaxTree,
 			logits,
 			pieces,
-		} = await classifierWithLogits.parseWithLogits(normalized.normalized, { queryShape, fst: stages.fst })
+		} = await classifierWithLogits.parseWithLogits(normalized.normalized, {
+			queryShape,
+			fst: stages.fst,
+			...streetContextGateFor(stages),
+		})
 		timing["token-classify"] = performance.now() - tClassify
 
 		throwIfAborted(opts)
@@ -508,7 +512,8 @@ export async function runPipeline(
 			queryShape,
 			stages.fst,
 			opts?.normalizeCase,
-			opts?.placetypePair
+			opts?.placetypePair,
+			stages.streetMorphology
 		)
 		timing["token-classify"] = performance.now() - tClassify
 	}
@@ -565,7 +570,8 @@ async function safeClassify(
 	queryShape: QueryShapeLite,
 	fst?: FSTMatcherLike,
 	normalizeCase?: boolean,
-	placetypePair?: PlacetypePairPassthrough
+	placetypePair?: PlacetypePairPassthrough,
+	streetMorphology?: FSTMatcherLike
 ): Promise<AddressTree> {
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
@@ -582,10 +588,28 @@ async function safeClassify(
 			normalizeCase,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			...(placetypePair !== undefined ? { placetypePair } : {}),
+			...streetContextGateFor({ fst, streetMorphology }),
 		})
 	} catch {
 		return { raw: text, roots: [] }
 	}
+}
+
+/**
+ * The street-context gate pair (#1315): when BOTH the gazetteer FST and the street-morphology matcher are wired, the
+ * classify call passes the matcher in with the morphology EMISSION prior zeroed — the gate alone (measured golden-flat,
+ * fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the spread is `{}` and
+ * the decode is byte-stable.
+ */
+const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
+
+function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
+	fstStreetMorphology?: FSTMatcherLike
+	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
+} {
+	return stages.fst && stages.streetMorphology
+		? { fstStreetMorphology: stages.streetMorphology, fstStreetMorphologyOpts: { ...ZEROED_MORPHOLOGY_OPTS } }
+		: {}
 }
 
 /** Defensive wrapper: a grouper failure returns an empty proposal list rather than abort. */

@@ -12,6 +12,7 @@
 		"model-card.json",
 		"postcode-gb.bin",
 		"pair-index-gb.bin",
+		"fst-en-gb.bin",
 		"anchor-lexicon-v1.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",
