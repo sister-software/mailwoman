@@ -648,6 +648,18 @@ export class NeuralAddressClassifier {
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
+					// Street-context gate (#1142): reuse the morphology FST already loaded for the
+					// street-morphology prior. Inert when the morphology FST isn't loaded.
+					...(opts.fstStreetMorphology && opts.fstStreetContextGate !== false
+						? {
+								streetContext: {
+									fst: opts.fstStreetMorphology,
+									...(opts.fstStreetContextPositiveScale !== undefined
+										? { positiveScale: opts.fstStreetContextPositiveScale }
+										: {}),
+								},
+							}
+						: {}),
 				})
 			: undefined
 
@@ -961,8 +973,20 @@ export interface ParseOpts {
 	fst?: FSTMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
-	/** Match-length scaling mode for the FST importance bias (#1142). Default `both`. */
+	/** Match-length scaling mode for the FST importance bias (#1142). Default `suppression`. */
 	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
+	/**
+	 * Positive-bias multiplier for the FST street-context gate (#1142) — applied when a matched place name sits in a
+	 * syntactically street-headed position (street-type adjacency / house-number-left). Only consulted when BOTH `fst`
+	 * and `fstStreetMorphology` are provided. Default 0.25 (tune 0.15–0.4).
+	 */
+	fstStreetContextPositiveScale?: number
+	/**
+	 * Master switch for the street-context gate (#1142). Default true — the gate is active whenever BOTH `fst` and
+	 * `fstStreetMorphology` are provided. Pass `false` to run the morphology emission prior WITHOUT the gate (the
+	 * pre-gate behavior); used to decompose the two channels in measurement.
+	 */
+	fstStreetContextGate?: boolean
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce
 	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens AND toward `street` / away

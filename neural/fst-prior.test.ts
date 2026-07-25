@@ -214,6 +214,99 @@ describe("buildFSTEmissionPriors", () => {
 	})
 })
 
+describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic context only, never importance magnitude)", () => {
+	const gazetteer = () =>
+		mockFST(
+			new Map([
+				["washington", [{ wofID: 10, placetype: "locality", importance: 0.8 }]],
+				["new", []],
+				["new york", [{ wofID: 11, placetype: "locality", importance: 0.95 }]],
+			])
+		)
+	const morphology = () =>
+		mockFST(
+			new Map([
+				["blvd", [{ wofID: 900, placetype: "street_affix", importance: 0 }]],
+				["rue", [{ wofID: 901, placetype: "street_affix", importance: 0 }]],
+				["ave", [{ wofID: 902, placetype: "street_affix", importance: 0 }]],
+			])
+		)
+
+	it("suffix adjacency ('Washington Blvd') scales the positive bias ×0.25 (default); suppression keeps #1173 length-scaling", () => {
+		const pieces = makePieces("Washington Blvd")
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.25, 2)
+		// Suppression path untouched by the gate: 1-token match → -1.5 × 0.25 (#1173).
+		expect(gated[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
+		// "Blvd" itself never matches the gazetteer — its row stays zero.
+		expect(gated[1]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it("prefix adjacency ('Rue Washington', FR shape) scales the positive bias", () => {
+		const pieces = makePieces("Rue Washington")
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.25, 2)
+	})
+
+	it("house-number left ('500 Washington') scales the positive bias — 'the house number is the license' (#1143)", () => {
+		const pieces = makePieces("500 Washington")
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.25, 2)
+	})
+
+	it("multi-token match with street adjacency ('New York Ave') scales the positive bias on the whole span", () => {
+		const pieces = makePieces("New York Ave")
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3.0 * 0.25, 2)
+		expect(gated[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3.0 * 0.25, 2)
+	})
+
+	it("'Washington' alone → full boost, BYTE-IDENTICAL to the ungated run (default-safe asymmetry)", () => {
+		const pieces = makePieces("Washington")
+		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated).toEqual(ungated)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0, 2)
+	})
+
+	it("'Washington DC' → adjacent region, gate silent → full boost, byte-identical to ungated", () => {
+		const pieces = makePieces("Washington DC")
+		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated).toEqual(ungated)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0, 2)
+	})
+
+	it("no street context anywhere in the parse → whole matrix byte-identical to ungated", () => {
+		const pieces = makePieces("Hello Washington Goodbye")
+		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology() },
+		})
+		expect(gated).toEqual(ungated)
+	})
+
+	it("custom positiveScale is honored (tuning range 0.15–0.4)", () => {
+		const pieces = makePieces("Washington Blvd")
+		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+			streetContext: { fst: morphology(), positiveScale: 0.15 },
+		})
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.15, 2)
+	})
+})
+
 describe("normalizeFSTToken", () => {
 	it("lowercases and strips hyphens (Stockton-on-Tees → stocktonontees)", () => {
 		const result = normalizeFSTToken("Stockton-on-Tees")

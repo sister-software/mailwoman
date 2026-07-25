@@ -96,6 +96,31 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
  */
 export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
 
+/**
+ * Street-context gate for the positive FST bias (#1142, street-context gate — the FR-fragment complement to #1173's
+ * suppression length-scaling).
+ *
+ * Washington/Madison/Jackson are simultaneously the highest-importance US place names AND the commonest US street
+ * names, so a positive locality/region bias must be withheld when the matched span sits in a syntactically
+ * street-headed position — gated on SYNTAX (street-type adjacency, house-number-left), NEVER on the importance value
+ * (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
+ * Positive-evidence-only: the gate can only scale the positive bias DOWN when street context is present; its absence
+ * never penalizes, and a parse with no street context is byte-identical to the ungated path.
+ *
+ * The street-type signal source is the street-morphology FST (`fst-street-morphology.bin`, locale-general — catches
+ * prefix locales like "Rue de Rivoli", the FR −3), NOT codex `us/street-suffix.ts` (US-only — using it re-introduces an
+ * FR regression).
+ */
+export interface StreetContextGateOpts {
+	/** The street-morphology FST matcher (same instance the street-morphology prior consumes). */
+	fst: FSTMatcherLike
+	/**
+	 * Multiplier applied to the positive `impBias` when the gate fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
+	 * zero — "New York Ave" still deserves some admin mass for the semi-markov decoder.
+	 */
+	positiveScale?: number
+}
+
 export interface FSTPriorOpts {
 	biasScale?: number
 	/**
@@ -105,7 +130,14 @@ export interface FSTPriorOpts {
 	suppressionScale?: number
 	/** See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller). */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
+	/**
+	 * See {@link StreetContextGateOpts}. Absent → current behavior (default-safe no-op).
+	 */
+	streetContext?: StreetContextGateOpts
 }
+
+/** House-number shape for the street-context gate (#1143: "the house number is the license"). */
+const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
 
 /**
  * Build a `[seqLen][numLabels]` bias matrix from FST gazetteer matches.
@@ -146,6 +178,17 @@ export function buildFSTEmissionPriors(
 
 	if (wordGroups.length === 0) return matrix
 
+	// Street-context gate precompute (#1142) — O(words), only when the morphology FST was passed in.
+	// `streetTypeFlags[i]` = word-group i is a street-type token per the morphology FST;
+	// `houseNumberFlags[i]` = word-group i is house-number-shaped.
+	const streetContext = opts.streetContext
+	const streetTypeFlags: boolean[] | null = streetContext
+		? wordGroups.map((g) => g.fstToken !== "" && isStreetAffix(streetContext.fst, g.fstToken))
+		: null
+	const houseNumberFlags: boolean[] | null = streetContext
+		? wordGroups.map((g) => HOUSE_NUMBER_RE.test(g.fstToken))
+		: null
+
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
 
@@ -165,7 +208,8 @@ export function buildFSTEmissionPriors(
 				maxBias,
 				suppressionScale,
 				seenWOFIDs,
-				lengthMode
+				lengthMode,
+				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags)
 			)
 		}
 
@@ -191,7 +235,8 @@ export function buildFSTEmissionPriors(
 					maxBias,
 					suppressionScale,
 					seenWOFIDs,
-					lengthMode
+					lengthMode,
+					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags)
 				)
 			}
 
@@ -326,6 +371,66 @@ export function normalizeFSTToken(s: string): string {
 	return cleaned.length > 0 ? cleaned : ""
 }
 
+/**
+ * Is `token` a street-type affix per the street-morphology FST? The morphology FST's accepting entries carry the
+ * synthetic `street_affix` placetype (see `street-morphology-prior.ts` / the builder).
+ */
+function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
+	const match = fst.walk([token])
+
+	if (!match?.accepted) return false
+
+	return fst.accepting(match.stateID).some((e) => e.placetype === "street_affix")
+}
+
+/** Nearest non-empty word-group index adjacent to a matched span, or -1 when none exists in that direction. */
+function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 | -1): number {
+	for (let i = from + direction; i >= 0 && i < groups.length; i += direction) {
+		if (groups[i]!.fstToken !== "") return i
+	}
+
+	return -1
+}
+
+/**
+ * Street-context gate (#1142): returns the positive-bias multiplier for a matched span at word-groups
+ * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when EITHER syntactic gate fires, else 1.0
+ * (byte-identical to the ungated path):
+ *
+ * 1. **Street-type adjacency** — the word-group immediately after (suffix locales: "Washington Blvd") or before (prefix
+ *    locales: "Rue de Rivoli") the matched span is a street-type token per the morphology FST.
+ * 2. **House-number left** — the word-group immediately before the match is house-number-shaped (`/^\d{1,6}[a-z]?$/` —
+ *    "500 Washington" is street-headed, #1143). A house number before a street-type prefix ("500 rue …") needs no extra
+ *    case: the prefix itself already fires gate 1.
+ *
+ * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone match; context = strong match
+ * in a street position); the suppression path is untouched.
+ */
+function streetContextScale(
+	groups: WordGroup[],
+	startIdx: number,
+	endIdx: number,
+	streetContext: StreetContextGateOpts | undefined,
+	streetTypeFlags: boolean[] | null,
+	houseNumberFlags: boolean[] | null
+): number {
+	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1.0
+
+	const prev = adjacentNonEmptyIndex(groups, startIdx, -1)
+
+	if (prev >= 0 && (streetTypeFlags[prev] || houseNumberFlags[prev])) {
+		return streetContext.positiveScale ?? 0.25
+	}
+
+	const next = adjacentNonEmptyIndex(groups, endIdx, 1)
+
+	if (next >= 0 && streetTypeFlags[next]) {
+		return streetContext.positiveScale ?? 0.25
+	}
+
+	return 1.0
+}
+
 function applyBias(
 	matrix: number[][],
 	labelToCol: Map<string, number>,
@@ -335,7 +440,8 @@ function applyBias(
 	maxBias: number,
 	suppressionScale: number,
 	seenWOFIDs: Set<number>,
-	lengthMode: ImportanceLengthScaleMode
+	lengthMode: ImportanceLengthScaleMode,
+	contextScale: number
 ): void {
 	const seenTags = new Map<string, number>()
 
@@ -357,7 +463,7 @@ function applyBias(
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 
 		if (!bioTag) continue
-		const impBias = entry.importance * biasScale * maxBias * posScale
+		const impBias = entry.importance * biasScale * maxBias * posScale * contextScale
 		const existing = seenTags.get(bioTag) ?? 0
 
 		if (impBias > existing) {
