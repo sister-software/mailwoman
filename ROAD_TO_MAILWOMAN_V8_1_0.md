@@ -1,7 +1,8 @@
 # Road to Mailwoman v8.1.0 — parser architecture: retire the flag-pile, decide the long-term shape
 
-**Status:** converged design → task-list source · **Opened:** 2026-07-26 · **From:** 8.0.0 / bundle
-6.6.3 / model v385 · **Authors:** Claude (brief) + Kimi (response), operator-directed.
+**Status:** converged design → task-list source · **Track 2 ADJUDICATED 2026-07-26 → §8** ·
+**Opened:** 2026-07-26 · **From:** 8.0.0 / bundle 6.6.3 / model v385 · **Authors:** Claude (brief) +
+Kimi (response), operator-directed.
 
 **Directive (operator):** an architecture we can stand behind long-term — one that parses a _variety_
 of addresses competently — not a growing collection of opt-in/opt-out flags a consumer manages
@@ -94,6 +95,10 @@ instead doesn't generalize and doesn't stay clean (B). Neither lever alone is a 
   correct + tag wrong = labeling; boundary wrong = segmentation.**
 - **Decision:** mostly segmentation ⇒ C becomes the architecture, A/B are stage-2 concerns. Mostly
   labeling ⇒ C is dead, the A/B axis is the real one.
+- **✅ VERDICT (2026-07-26): C is dead — 100% LABELING.** On ban-fragments-fr (2800 rows, expanded from
+  the planned 400) all 906 misses are mis-labeling with correct boundaries ("Allée Bienville"→locality).
+  On comma-free multi-component, fusion exists but is TYPE-COUPLED — cutting "des Lyonnais | Paris"
+  requires knowing Paris is a city, so a type-agnostic segmenter can't make the cut. Axis is A/B.
 
 ### Probe B (≤2k steps, harness exists; cRT already did half of it)
 
@@ -103,6 +108,11 @@ instead doesn't generalize and doesn't stay clean (B). Neither lever alone is a 
   2k steps; run the invariance suite (`--baseline v385`).
 - **Decision:** separate head resurrects without the break ⇒ lock-in is head-structural, B is live (and
   is A's enabler). Break persists ⇒ lock-in is deeper (encoder), B alone insufficient.
+- **✅ VERDICT (2026-07-26): B insufficient — lock-in is ENCODER-DEEP.** The separate head (v3.14.0,
+  merge-in-forward like the affix head, hot carveout LR, init_from v385, 2k) DID resurrect dep-loc but
+  STILL paid the signature `us-white-house [comma-drop]` break + 6 more NEW invariance violations vs
+  v385. Head-subspace separation does not protect the shared trainable encoder — the fresh head's
+  gradient disturbs it anyway. Confirms the cRT contrast (the break needs a HOT encoder).
 
 ### Probe A (needs the bundle design from §3; last)
 
@@ -114,6 +124,18 @@ instead doesn't generalize and doesn't stay clean (B). Neither lever alone is a 
   features-present on spans that should be unaffected.
 - **Decision:** bundle learns a useful weighting AND passes ablation ⇒ A is the long-term architecture.
   Fails ablation ⇒ soft-Pelias risk confirmed, needs curriculum work before it's viable.
+- **✅ VERDICT (2026-07-26): A's MECHANISM CONFIRMED; the naked single channel over-trusts — proving
+  the bundle + ablation gate are required, not optional.** Ran as a single-channel staged increment
+  (street-type only — the locality channel is the effort risk, deferred to the build arc): a separate
+  additive input channel from a codex street-type lexicon (483+164 surfaces, fr/us/gb/de/ca), init_from
+  v385, 3k, graded via the ON/OFF feature contrast on the SAME checkpoint (fully controlled). Every P-C
+  target class improves ON (admin-street-homonym **+0.058**, bare-street +0.035, date-name +0.055),
+  stable across step-1500/3000; the negative control (bare-locality) is exactly 0.000. **BUT** the
+  house-number classes are neutral at 1500 (−0.007/+0.003) and DECAY into regression by 3000
+  (−0.070/−0.045): with more training the model over-trusts the lone feature — the predicted RAG
+  retrieval-over-trust pathology, observed empirically. A naked input feature behaves like a soft rule
+  (helps its target, disturbs neighbors) — Wall B's pathology re-expressed input-side. Constraint 3's
+  "re-earned by training + gated" is now measured fact, not caution.
 
 ## 5. Track 1 — Option D, ships v8.1.0 (concrete now, no research gate)
 
@@ -150,12 +172,15 @@ probes scope. v8.1.0 is "stop the pile growing + decide the shape."
 - [ ] D3: decode-surface consolidation — retire `trailingLocality` + every hand knob into
       header-derived self-calibration; guard: zero consumer flags remain.
 
-**Track 2 — probes (research; strictly C → B → A):**
+**Track 2 — probes (research; strictly C → B → A) — ALL COMPLETE 2026-07-26:**
 
-- [ ] P-C: segmentation-vs-labeling split on named held-out (ban-fragments-fr 400 + US slice). Zero-GPU.
-- [ ] P-B: separate-head dep-loc resurrection, 2k steps, invariance `--baseline v385`.
-- [ ] P-A: evidence-bundle input-side probe + the new evidence-ablation invariance gate.
-- [ ] Synthesis: name the next-major architecture direction from the three verdicts.
+- [x] P-C: segmentation-vs-labeling split on named held-out (ban-fragments-fr 400 + US slice). Zero-GPU.
+      **→ C dead: 100% labeling; fusion is type-coupled.**
+- [x] P-B: separate-head dep-loc resurrection, 2k steps, invariance `--baseline v385`.
+      **→ B insufficient: comma-drop break persists; lock-in is encoder-deep.**
+- [x] P-A: evidence-bundle input-side probe + the new evidence-ablation invariance gate.
+      **→ A mechanism confirmed (staged single-channel); naked channel over-trusts ⇒ bundle + gate required.**
+- [x] Synthesis: name the next-major architecture direction from the three verdicts. **→ §8.**
 
 **Discipline (carried in):** probe before any full run (5 falsifications is the tuition); every gate
 names its held-out population; treadmill guard (no third same-axis run solo); positive-evidence-only is
@@ -165,3 +190,43 @@ structural today and must be re-earned + gated under A.
 v3.13 verdict + cRT (`.superpowers/sdd/progress.md`); dep-loc redesign dossier
 (`2026-07-23-deploc-redesign-dossier.md`); decode mechanisms in
 `neural/{placetype-pair-prior,fst-prior,trailing-locality-prior}.ts`.
+
+---
+
+## 8. Adjudication — the named direction (2026-07-26)
+
+**The next-major architecture is Option A: retrieval-augmented ENCODING.** All three probes, run in
+one day (P-C zero-GPU; P-B + P-A ≈ 7 min A100 each), converge from independent directions:
+
+- **P-C** eliminated C and located the failure: street↔locality discrimination for open-vocab spans is
+  a **labeling/evidence** problem, not a segmentation one — and the segmentation errors that do exist
+  are type-coupled, so only better typing fixes them too.
+- **P-B** eliminated standalone B: the Wall-A lock-in lives in the shared encoder representation, so no
+  head topology routes around it. Late-capability absorption needs the capability's **evidence in the
+  input**, not another output subspace. (Head structure may still earn its keep inside an A build — the
+  #727 span-head +7.9pp stands — but it is not the axis.)
+- **P-A** demonstrated the mechanism works exactly where predicted (every P-C target class up, negative
+  control silent at precisely 0.000) — and demonstrated the failure mode of doing it naively: a single
+  naked channel drifts into over-trust with training (house-number classes −0.070/−0.045 by 3k). One
+  probe produced both the existence proof and the design constraint.
+
+**The design that follows (the next arc, not v8.1.0):**
+
+1. **The evidence bundle** — street-type (built, committed: `data/gazetteer/street-type-lexicon-v1.json`
+   - the model/loader/trainer channel plumbing, all default-False at c116f9d1) **+ the locality
+     channel** (open-vocab; per-span FST/gazetteer lookup as a training feature — the effort risk and the
+     main build item). No single channel may be decisive by construction.
+2. **The evidence-ablation invariance gate** — features-zeroed vs present ⇒ no regression on unaffected
+   spans — promoted from "Kimi's caution" to a **measured requirement** by the P-A decay. It enters the
+   standing gate battery the first time an A-trained model is graded, alongside anti-over-trust
+   curriculum (feature dropout / retrieval-ablation training).
+3. **The payoff that makes A the anti-hellscape:** each decode-time mechanism the flag-pile carries
+   (FST emission prior + gate, pair prior, trailing-locality) is a candidate for **retirement into the
+   learned channel** — the model weighs the evidence in context instead of a threshold weighing it
+   blind. Track 1 (D) still ships v8.1.0 first: the pile must stop growing while the replacement is
+   built.
+
+**Sequencing note:** the probes were run against Track 2's original C→B→A order and are complete;
+Track 1 (D1–D3) remains the v8.1.0 gate and is untouched by this adjudication. The A build arc
+(locality channel + ablation gate + curriculum) is scoped as the v8.2/v9 architecture arc —
+productionization routed per the operator's Track-2 delegation.
