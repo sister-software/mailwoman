@@ -120,9 +120,10 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"Conformal calibration multiplier for the interpolation tier's reported uncertainty_m (#374). " +
-				"The raw half-segment radius covers only ~72% of true errors. Default (unset): the per-region " +
-				"table (#584) selects by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured states — " +
-				"for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw)."
+				"The raw half-segment radius covers only ~72% of true errors. Default (unset): the shard's own " +
+				"baked value (its interp_calibration metadata table) when it carries one, else the in-code " +
+				"per-region table (#584) selected by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured " +
+				"states — for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw)."
 		),
 	placeCountry: zod
 		.boolean()

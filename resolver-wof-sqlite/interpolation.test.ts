@@ -11,9 +11,11 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { StreetInterpolator } from "./interpolation.ts"
+import { type StreetSegmentDatabase, writeInterpCalibration } from "./street-segment-schema.ts"
 
 interface SeedSegment {
 	street_norm: string
@@ -265,5 +267,47 @@ describe("StreetInterpolator", () => {
 		expect(interpolator.find({ street: "Main St", number: "150", postcode: "99999" })).toBeNull()
 		expect(interpolator.find({ street: "Main St", number: "12-34", postcode: "05601" })).toBeNull()
 		expect(interpolator.find({ street: "Main St", number: "", postcode: "05601" })).toBeNull()
+	})
+})
+
+// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
+// built against, so it ships in the shard's `interp_calibration` metadata table and is read ONCE at open
+// time. A shard predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
+describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
+	it("reads the shard's baked multiplier at open time", async () => {
+		const calibDB = new DatabaseSync(":memory:")
+		seed(calibDB, [MAIN_EVEN])
+		// The SAME producer the shard builder runs (`writeInterpCalibration`), so the fixture can't
+		// drift from the production shape.
+		const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: calibDB })
+		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
+		const calibrated = new StreetInterpolator({ database: calibDB })
+
+		expect(calibrated.radiusCalibration).toBe(1.7)
+		// find() itself never applies the multiplier — the raw radius stays the honest half-segment
+		// value (conformal-calibrate measures THIS); the resolver owns the multiplication.
+		const hit = calibrated.find({ street: "Main St", number: "150", postcode: "05601" })
+		expect(hit).not.toBeNull()
+		expect(hit!.uncertaintyM).toBeGreaterThan(40)
+		expect(hit!.uncertaintyM).toBeLessThan(70)
+		calibrated.close()
+		calibDB.close()
+	})
+
+	it("reports undefined for a shard predating the metadata table", () => {
+		// The main fixture DB deliberately has no `interp_calibration` table — the shipped-fleet shape.
+		expect(interpolator.radiusCalibration).toBeUndefined()
+	})
+
+	it("reports undefined for an empty or invalid calibration table", () => {
+		const emptyDB = new DatabaseSync(":memory:")
+		seed(emptyDB, [MAIN_EVEN])
+		emptyDB.exec(
+			"CREATE TABLE interp_calibration (radius_multiplier REAL NOT NULL, method TEXT NOT NULL, region TEXT NOT NULL)"
+		)
+		const emptyCalib = new StreetInterpolator({ database: emptyDB })
+		expect(emptyCalib.radiusCalibration).toBeUndefined()
+		emptyCalib.close()
+		emptyDB.close()
 	})
 })

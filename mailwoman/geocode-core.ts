@@ -179,11 +179,18 @@ export interface GeocodeDeps {
 	 */
 	parsedTree?: AddressTree
 	/**
-	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound; `1` or `undefined`
-	 * keeps the raw half-segment heuristic. Accepts either a single multiplier (the legacy Travis 1.7) OR a per-region
-	 * {@link InterpCalibrationTable} — when a table is supplied the factor is selected by the parsed region (DC 1.44 … AZ
-	 * 3.12, `default` otherwise, #584). See
-	 * `docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`.
+	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound. The multiplier is a
+	 * property of the calibration set the ARTIFACT was built against, so a shard that carries one in its
+	 * `interp_calibration` metadata table is self-calibrating (`InterpolationLookup.radiusCalibration`, read at shard
+	 * open — the pair-index δ precedent) and this option is not consulted for it. The two remaining roles:
+	 *
+	 * - A per-region {@link InterpCalibrationTable} — the LEGACY-SHARD fallback, selected by the parsed region (DC 1.44 …
+	 *   AZ 3.12, `default` otherwise, #584), applied only when the shard predates the metadata table (the artifact is
+	 *   silent).
+	 * - A single number — an explicit instrument override forced everywhere, artifact value included (the CLI's
+	 *   `--interp-calibration`). `1` or `undefined` + artifact-silent keeps the raw half-segment heuristic.
+	 *
+	 * See `docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
 	interpCalibration?: number | InterpCalibrationTable
 	/**
@@ -638,14 +645,22 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 	if (interpolation) {
 		opts.interpolation = interpolation
-		// Resolve to a single multiplier: a per-region table selects by the parsed region (`stateSlug`);
-		// a bare number is used as-is (legacy single-factor / explicit caller override).
-		const calibration =
-			typeof deps.interpCalibration === "object"
+		// #374 doctrine: a shard that carries its own conformal multiplier (the `interp_calibration`
+		// metadata table, read at open — `radiusCalibration`) is self-calibrating; the resolver reads it
+		// directly and this path passes nothing. Two carve-outs preserve the ladder:
+		//   1. an explicit caller NUMBER (`deps.interpCalibration` — the CLI's --interp-calibration
+		//      instrument flag) still overrides the artifact, and
+		//   2. a shard predating the metadata table (the shipped fleet) falls back to the in-code
+		//      per-region table selected by the parsed region (`stateSlug`) — byte-identical to before.
+		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
+		const fallback =
+			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
-				: deps.interpCalibration
+				: undefined
+		const calibration = explicit ?? fallback
 
-		if (calibration && calibration !== 1) {
+		// A factor of 1 is a no-op — skipped, EXCEPT as an explicit override of an artifact value ("force raw").
+		if (calibration && (calibration !== 1 || (explicit !== undefined && interpolation.radiusCalibration != null))) {
 			opts.interpolationRadiusCalibration = calibration
 		}
 	}

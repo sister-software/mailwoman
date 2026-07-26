@@ -204,6 +204,17 @@ export interface InterpolatedPointHit {
  */
 export interface InterpolationLookup {
 	find(query: { street: string; number: string; postcode?: string }): InterpolatedPointHit | null
+	/**
+	 * The ARTIFACT's own conformal radius multiplier for `uncertaintyM` (#374), read from the shard's
+	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent): the multiplier
+	 * is a property of the calibration set the artifact was built against, so it ships in the artifact, not in caller
+	 * code. The resolver applies it as the DEFAULT whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
+	 * `undefined` (or an implementation without the property) = the artifact carries none — shards built before the
+	 * metadata table existed; behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
+	 * Implementations must read this at OPEN time (constructor/factory), never per-lookup — `find()` is synchronous by
+	 * design.
+	 */
+	readonly radiusCalibration?: number
 }
 
 /**
@@ -350,14 +361,20 @@ export interface ResolveOpts {
 	 */
 	interpolation?: InterpolationLookup
 	/**
-	 * Conformal calibration multiplier for the interpolation tier's `uncertainty_m` (#374). The raw radius is half the
-	 * matched TIGER segment length — an honest-but-TIGHT prior: a split-conformal calibration on 1562 Travis-County
-	 * interp hits (2026-06-14) found it covers only ~72% of true errors, and that multiplying by **Q̂ ≈ 1.70** yields a
-	 * calibrated 90% bound (91.5% empirical). When set, `applyInterpolation` reports `uncertainty_m = round(raw × this)`
-	 * and preserves the raw value under `uncertainty_raw_m`. Absent = raw heuristic (byte-stable). The factor is the
-	 * CALLER's (it's a property of the calibration set, not the geometry); the geocode CLI passes the TX-derived 1.70.
-	 * Re-calibrate on a multi-region holdout before treating it as national-exact. Report:
+	 * Conformal calibration multiplier OVERRIDE for the interpolation tier's `uncertainty_m` (#374). The raw radius is
+	 * half the matched TIGER segment length — an honest-but-TIGHT prior: a split-conformal calibration on 1562
+	 * Travis-County interp hits (2026-06-14) found it covers only ~72% of true errors, and that multiplying by **Q̂ ≈
+	 * 1.70** yields a calibrated 90% bound (91.5% empirical). When a factor applies, `applyInterpolation` reports
+	 * `uncertainty_m = round(raw × factor)` and preserves the raw value under `uncertainty_raw_m`.
+	 *
+	 * The factor is a property of the CALIBRATION SET the artifact was built against, so it ships IN the artifact:
+	 * {@link InterpolationLookup.radiusCalibration} (the shard's `interp_calibration` metadata table, read at open time)
+	 * is the default whenever this option is absent. Absent + artifact-silent = raw heuristic (byte-stable — shards
+	 * predating the metadata table; production callers fall back to their in-code per-region table for those). Report:
 	 * docs/articles/evals/calibration/2026-06-14-interp-radius-calibration.md.
+	 *
+	 * @internal Instrument knob (D3) — measurement decomposition + legacy-shard fallback only; the artifact header IS
+	 *   the shipped calibration. Set it only to override the artifact's value.
 	 */
 	interpolationRadiusCalibration?: number
 	/**

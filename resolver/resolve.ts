@@ -281,16 +281,20 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, r
 	const hit = lookup.find({ street: assembleStreetValue(street, directionalUnit), number: houseNumber.value, postcode })
 
 	if (!hit) return
-	// Conformal-calibrated radius when the caller supplies a multiplier (#374): the raw half-segment
-	// heuristic underestimates the true spread (~72% coverage on Travis); ×1.70 → a 90% bound. Default
-	// (no multiplier) keeps the raw value, byte-stable. Preserve the raw radius for transparency.
-	const calibrated = radiusCalibration ? Math.round(hit.uncertaintyM * radiusCalibration) : hit.uncertaintyM
+	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
+	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the shard's
+	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default; an
+	// explicit caller factor is the @internal instrument override. Neither present (shards predating the
+	// metadata table, no caller factor) keeps the raw value, byte-stable. Preserve the raw radius for
+	// transparency.
+	const factor = radiusCalibration ?? lookup.radiusCalibration
+	const calibrated = factor ? Math.round(hit.uncertaintyM * factor) : hit.uncertaintyM
 	street.metadata = {
 		...street.metadata,
 		interpolated_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
 		resolution_tier: "interpolated",
 		uncertainty_m: calibrated,
-		...(radiusCalibration ? { uncertainty_raw_m: hit.uncertaintyM, uncertainty_calibration: radiusCalibration } : {}),
+		...(factor ? { uncertainty_raw_m: hit.uncertaintyM, uncertainty_calibration: factor } : {}),
 		interpolation_method: hit.method,
 		...(hit.parityMatched !== undefined ? { parity_matched: hit.parityMatched } : {}),
 		...(hit.bracket !== undefined ? { interpolation_bracket: hit.bracket } : {}),
