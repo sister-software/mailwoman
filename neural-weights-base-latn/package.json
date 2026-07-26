@@ -1,0 +1,33 @@
+{
+	"name": "@mailwoman/neural-weights-base-latn",
+	"version": "7.8.1",
+	"description": "Mailwoman shared Latin-script base model (model.onnx + tokenizer.model). All locale overlays (en-us, fr-fr, en-gb, en-nz) share this base — only per-country data duplicates across overlays.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "neural-weights-base-latn"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"model.onnx",
+		"tokenizer.model",
+		"model-card.json",
+		"calibration.json",
+		"calibration-per-locale.json",
+		"anchor-lexicon-v1.json",
+		"country-surface-lexicon-v1.json",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module"
+}
