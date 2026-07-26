@@ -21,6 +21,15 @@ export type LocaleTag = string
 /** Optional user-location signal for Stage 6 resolver scoring. */
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
 
+/**
+ * Opaque placetype-pair prior handle (placetype-pair-prior arc, #1278). `@mailwoman/core` carries no neural dependency,
+ * so this is a PURE PASSTHROUGH: core never constructs or inspects it — it threads the value verbatim from
+ * {@link PipelineOpts.placetypePair} into {@link ClassifierOpts.placetypePair}, and on into the neural classifier's
+ * `parse` opts, where it is typed concretely (`PlacetypePairPriorOpts | false`). The browser demo produces it via
+ * `neural-web`'s `LoadResult.selectPairIndexForText`. `undefined` (the default) is the byte-stable no-prior decode.
+ */
+export type PlacetypePairPassthrough = object | false
+
 /** Common opts threaded through every stage. */
 export interface PipelineOpts {
 	locale?: LocaleTag
@@ -44,8 +53,6 @@ export interface PipelineOpts {
 	 * docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	 */
 	jointReconcile?: boolean
-	/** @deprecated Use {@link jointReconcile}. Retained as an explicit override for the A/B harnesses. */
-	forceJointReconcile?: boolean
 	/** Hard cap on lookups the resolver may issue; passed through. */
 	resolveOpts?: ResolveOpts
 	/**
@@ -56,6 +63,14 @@ export interface PipelineOpts {
 	 *   either way. Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque, per-parse decode-channel handle threaded
+	 * verbatim to `ClassifierOpts.placetypePair` (and on to the neural classifier's `parse`). The browser demo derives it
+	 * per input via `neural-web`'s `LoadResult.selectPairIndexForText` (locale-gate over the text shape) so a GB/NZ input
+	 * gets its dependent_locality-resurrecting prior while a US/FR input stays byte-stable. `undefined` (default) = no
+	 * prior. See {@link PlacetypePairPassthrough}.
+	 */
+	placetypePair?: PlacetypePairPassthrough
 	/**
 	 * #743/#194: promote a CONFIDENT coarse-placer guess from the soft `anchorPosterior` boost to a HARD country filter
 	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Gated three ways: the placer's confidence ≥
@@ -242,6 +257,15 @@ export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
+	/**
+	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context GATE (#1315),
+	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology EMISSION prior measured US-golden-negative
+	 * (−48, 2026-07-25 decomposition) and stays off on the production paths; it remains reachable via direct
+	 * `classifier.parse` for measured, opt-in use.
+	 */
+	fstStreetMorphology?: FSTMatcherLike
+	/** Magnitude overrides for the morphology emission prior — the pipeline always passes the zeroed pair. */
+	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number }
 	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
 	postcodeRepair?: boolean
 	/**
@@ -258,6 +282,13 @@ export interface ClassifierOpts {
 	enforceWordConsistency?:
 		| boolean
 		| { minMeanConfidence?: number; skipByteFallbackWords?: boolean; splitOnPunctuation?: boolean }
+	/**
+	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque passthrough (see
+	 * {@link PlacetypePairPassthrough}). `safeClassify` forwards `PipelineOpts.placetypePair` here, and the neural
+	 * classifier's `parse` reads it as its own `PlacetypePairPriorOpts | false`. `@mailwoman/core` never inspects it;
+	 * `undefined` is the byte-stable no-prior decode.
+	 */
+	placetypePair?: PlacetypePairPassthrough
 }
 
 /**
@@ -321,6 +352,12 @@ export interface RuntimePipelineStages {
 	 * classification.
 	 */
 	fst?: FSTMatcherLike
+	/**
+	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315). Consumed ONLY with the
+	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the gate
+	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
+	 */
+	streetMorphology?: FSTMatcherLike
 	resolver?: Resolver
 	/**
 	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance axes (#478): a bounded

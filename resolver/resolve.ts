@@ -504,9 +504,14 @@ function applyStreetCentroid(
 	for (const lookup of lookups) {
 		for (const street of thoroughfares) {
 			let hit = postcode ? lookup.find({ street, postcode }) : null
+			let matchedCommune: string | undefined
 
 			for (let i = 0; !hit && i < communes.length; i++) {
 				hit = lookup.find({ street, locality: communes[i]! })
+
+				if (hit) {
+					matchedCommune = communes[i]
+				}
 			}
 
 			if (!hit) continue
@@ -533,9 +538,40 @@ function applyStreetCentroid(
 				uncertainty_m: hit.uncertaintyM,
 			}
 
+			// #1058: a commune-scoped hit is REGISTER evidence of the street's locality — record it for
+			// the geocode layer's locality/city decoration, and drop any span-rescored locality that
+			// contradicts it. Span-rescore injects SPECULATIVELY (a low-confidence street prefix like
+			// "Rue" exact-matches the commune Rue in Somme); the register's exact (street, commune)
+			// match is strictly stronger, so the injected token-of-the-street must not survive as the
+			// result's city.
+			if (matchedCommune) {
+				target.metadata = { ...target.metadata, street_locality: matchedCommune }
+
+				for (let i = roots.length - 1; i >= 0; i--) {
+					const n = roots[i]!
+
+					if (n.tag !== "locality" || n.metadata?.["span_rescore"] !== true) continue
+					const names = [n.value, (n.metadata?.["resolver_name"] as string | undefined) ?? ""]
+
+					if (!names.some((name) => foldName(name) === foldName(matchedCommune))) {
+						roots.splice(i, 1)
+					}
+				}
+			}
+
 			return
 		}
 	}
+}
+
+/** Case/diacritic-insensitive fold for commune-name comparison (#1058) — mirrors span-rescore's `norm`. */
+function foldName(s: string): string {
+	return s
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[^a-z0-9 ]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim()
 }
 
 /**
@@ -1139,8 +1175,7 @@ class WOFResolver implements Resolver {
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
 			// a gazetteer without `coincident_roles`). Pass `hierarchyCompletion: false` to opt out.
-			// `cityStateFallback` is the #387 alias that #405 generalized — still honored.
-			hierarchyCompletion: opts.hierarchyCompletion ?? opts.cityStateFallback ?? true,
+			hierarchyCompletion: opts.hierarchyCompletion ?? true,
 			includeAncestors: opts.includeAncestors ?? false,
 			localityNodePresent: false,
 			resolvedRegion: null,

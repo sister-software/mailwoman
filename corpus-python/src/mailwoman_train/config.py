@@ -376,13 +376,41 @@ class Config:
     eval: EvalConfig = field(default_factory=EvalConfig)
 
 
-def _merge(dst: Any, src: dict[str, Any]) -> None:
+def _merge(
+    dst: Any,
+    src: dict[str, Any],
+    *,
+    strict: bool = True,
+    _path: str = "",
+    _source: str = "<mapping>",
+) -> None:
+    """Merge ``src`` into ``dst``, key by key.
+
+    ``strict=True`` (the default, and what every training entrypoint gets): an unknown
+    key RAISES, naming the full dotted path and the config source — the 2026-07-22
+    en-GB probe run A burned a launch cycle when a YAML carrying
+    ``train.reinit_label_rows`` + ``train.classifier_learning_rate`` met a volume-side
+    config that predated those fields and the levers went inert with zero signal
+    (#1248). Config guards raise, same discipline as the YAML-Norway guard below.
+
+    ``strict=False`` is the escape hatch: unknown keys are silently skipped (the
+    historical hasattr-gate behavior). Reserved for tooling that intentionally
+    consumes a partial view of a config; never for training entrypoints.
+    """
     for k, v in src.items():
+        dotted = f"{_path}.{k}" if _path else str(k)
         if not hasattr(dst, k):
-            raise KeyError(f"unknown config field: {dst.__class__.__name__}.{k}")
+            if strict:
+                raise KeyError(
+                    f"unknown config key {dotted!r} in {_source}: "
+                    f"{dst.__class__.__name__} has no field {k!r}. "
+                    "Either the key is a typo, or the config predates/postdates this "
+                    "code — sync the volume-side source before launching (#1248)."
+                )
+            continue
         cur = getattr(dst, k)
         if hasattr(cur, "__dataclass_fields__") and isinstance(v, dict):
-            _merge(cur, v)
+            _merge(cur, v, strict=strict, _path=dotted, _source=_source)
         else:
             setattr(dst, k, _coerce(dst, k, v))
 
@@ -416,7 +444,7 @@ def _coerce(dst: Any, key: str, value: Any) -> Any:
     return value
 
 
-def load_config(path: str | Path | None) -> Config:
+def load_config(path: str | Path | None, *, strict: bool = True) -> Config:
     cfg = Config()
     if path is None:
         return cfg
@@ -425,7 +453,7 @@ def load_config(path: str | Path | None) -> Config:
         data = yaml.safe_load(fh) or {}
     if not isinstance(data, dict):
         raise ValueError(f"expected top-level mapping in {p}")
-    _merge(cfg, data)
+    _merge(cfg, data, strict=strict, _source=str(p))
     return cfg
 
 

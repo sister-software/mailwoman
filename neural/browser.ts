@@ -26,6 +26,17 @@ export * from "./gazetteer-inference.ts"
 // country-surface-lexicon-v1.json alongside the model and feeds it (country-channel models, v6.2.0+,
 // REQUIRE it: the ONNX declares `country_features` and zero-filled clues are the train/inference mismatch).
 export * from "./country-inference.ts"
+// Browser-safe placetype-pair index reader (placetype-pair-prior arc): the PIX1 resolver + header peek
+// the neural-web loader wires into the classifier's `placetypePair` config, mirroring the node-side
+// `loadFromWeights` country gate. Pure JS over a fetched flat binary — DataView/TextDecoder only, zero
+// Node imports in the module (the serializer half runs in Node tooling but touches no Node APIs either).
+export * from "./pair-index-resolver.ts"
+// Type-only re-export of the placetype-pair prior's per-parse option shape (placetype-pair-prior arc).
+// The neural-web loader's per-parse selection helper returns this so the demo can spread it into a
+// `ParseOpts.placetypePair`; the runtime module (`./placetype-pair-prior.ts`) is browser-safe (probe
+// logic over DataView/TextDecoder, no Node imports) but is only reached through the classifier decode —
+// callers need the TYPE, not the module, so this stays a `type` re-export (fully erased, zero bundle cost).
+export type { PlacetypePairPriorOpts, PlacetypePairPriorResult } from "./placetype-pair-prior.ts"
 // Browser-safe soft-feature choreography (#718): the pure `buildSoftFeatures` that composes the
 // anchor + gazetteer channels (+ near-postcode suppression). No `fs`. The Node-only `./scorer` (which
 // constructs the ONNXRunner + reads the card/lookup/lexicon from disk) is deliberately NOT re-exported

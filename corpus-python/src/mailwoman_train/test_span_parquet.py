@@ -1,31 +1,59 @@
 """Parquet round-trip gate for the v0.5.0 span columns (#519, rebuild-plan step 1).
 
-The shard pipeline is JSONL (builders, via ``alignRow``) → ``scripts/jsonl-to-parquet.py`` →
+The shard pipeline is JSONL (builders, via ``alignRow``) → converter →
 parquet → this package's PyArrow readers. JSONL has carried the span triple since #527; this
 test pins the two properties the parquet leg must now hold:
 
 1. **Round-trip identity** — ``span_starts``/``span_ends``/``span_tags`` written by the real
-   converter script read back bit-identical through PyArrow (the reader stack the training
+   converter read back bit-identical through PyArrow (the reader stack the training
    loader uses), including the empty-triple (all-O) row.
 2. **Loud refusal** — a row missing the triple, or carrying a partial one, fails the conversion
    with a named row. Silent loss (the pre-#519 behavior: columns simply dropped) is the hazard
    this step exists to close.
 
-Runs the converter via subprocess so the gate covers the actual script, not a re-implementation.
+Runs the converter via subprocess so the gate covers the actual converter, not a
+re-implementation. The converter was ported from ``scripts/jsonl-to-parquet.py`` to
+TypeScript (e61a4a0d, the TypeScript-monoculture ship) and now lives at
+``corpus/src/tools/jsonl-to-parquet.ts`` — a DuckDB rewrite verified field-for-field
+against the PyArrow original. The subprocess therefore drives it through ``node`` (which
+strips types natively) with the inline driver below. Requires the JS toolchain at the repo
+root (``node`` on PATH + ``yarn install`` for the converter's deps); the tests skip with a
+reason when either is absent.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONVERTER = REPO_ROOT / "scripts" / "jsonl-to-parquet.py"
+CONVERTER = REPO_ROOT / "corpus" / "src" / "tools" / "jsonl-to-parquet.ts"
+NODE = shutil.which("node")
+
+pytestmark = pytest.mark.skipif(
+    NODE is None or not CONVERTER.is_file() or not (REPO_ROOT / "node_modules").is_dir(),
+    reason="span converter is TypeScript now — needs node on PATH + `yarn install` at the repo root",
+)
+
+# Inline node driver: imports the real TS converter (Node strips types natively), runs it on
+# the argv-supplied paths, and forwards any thrown error's message to stderr with a non-zero
+# exit — so the loud-failure assertions below exercise the converter's own contract text.
+_NODE_DRIVER = """
+import { pathToFileURL } from "node:url";
+const { jsonlToParquet } = await import(pathToFileURL(%s).href);
+const [input, output] = process.argv.slice(1);
+try {
+    await jsonlToParquet({ input, output });
+} catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+}
+""" % json.dumps(str(CONVERTER))  # noqa: UP031 — %-format keeps the JS braces unescaped
 
 
 def _row(**over) -> dict:
@@ -54,9 +82,10 @@ def _convert(tmp_path: Path, rows: list[dict]) -> subprocess.CompletedProcess:
     jsonl.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
     out = tmp_path / "rows.parquet"
     return subprocess.run(
-        [sys.executable, str(CONVERTER), "--input", str(jsonl), "--output", str(out)],
+        [NODE or "node", "--input-type=module", "-e", _NODE_DRIVER, str(jsonl), str(out)],
         capture_output=True,
         text=True,
+        cwd=REPO_ROOT,
     )
 
 

@@ -28,6 +28,7 @@ import type {
 	PhraseProposal,
 	PipelineOpts,
 	PipelineResult,
+	PlacetypePairPassthrough,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
@@ -429,7 +430,7 @@ export async function runPipeline(
 	// the tracked issue); until that's fixed, argmax is the correct default. Set `jointReconcile: true`
 	// to opt back into reconcile (the A/B harnesses do). Report:
 	// docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
-	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? false
+	const jointEnabled = opts?.jointReconcile ?? false
 	const useJointReconcile =
 		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
 
@@ -447,7 +448,11 @@ export async function runPipeline(
 			tree: argmaxTree,
 			logits,
 			pieces,
-		} = await classifierWithLogits.parseWithLogits(normalized.normalized, { queryShape, fst: stages.fst })
+		} = await classifierWithLogits.parseWithLogits(normalized.normalized, {
+			queryShape,
+			fst: stages.fst,
+			...streetContextGateFor(stages),
+		})
 		timing["token-classify"] = performance.now() - tClassify
 
 		throwIfAborted(opts)
@@ -500,7 +505,15 @@ export async function runPipeline(
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
-		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst, opts?.normalizeCase)
+		tree = await safeClassify(
+			stages.classifier,
+			normalized.normalized,
+			queryShape,
+			stages.fst,
+			opts?.normalizeCase,
+			opts?.placetypePair,
+			stages.streetMorphology
+		)
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
@@ -555,7 +568,9 @@ async function safeClassify(
 	text: string,
 	queryShape: QueryShapeLite,
 	fst?: FSTMatcherLike,
-	normalizeCase?: boolean
+	normalizeCase?: boolean,
+	placetypePair?: PlacetypePairPassthrough,
+	streetMorphology?: FSTMatcherLike
 ): Promise<AddressTree> {
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
@@ -563,16 +578,37 @@ async function safeClassify(
 		// Word-consistency heal on by default (2026-07-15): arbitrates intra-word tag disagreement only, with the
 		// punctuation-separator + byte-fallback gates — clean win across golden us/fr/adversarial + parity floors.
 		// Semantics in neural/word-consistency.ts.
+		// placetypePair (#1278): an opaque per-parse prior handle forwarded verbatim — undefined omits it (byte-stable
+		// no-prior decode), so the classifier's `opts?.placetypePair ?? cfg.placetypePair` resolution is unchanged when absent.
 		return await classifier.parse(text, {
 			queryShape,
 			fst,
 			postcodeRepair: true,
 			normalizeCase,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+			...(placetypePair !== undefined ? { placetypePair } : {}),
+			...streetContextGateFor({ fst, streetMorphology }),
 		})
 	} catch {
 		return { raw: text, roots: [] }
 	}
+}
+
+/**
+ * The street-context gate pair (#1315): when BOTH the gazetteer FST and the street-morphology matcher are wired, the
+ * classify call passes the matcher in with the morphology EMISSION prior zeroed — the gate alone (measured golden-flat,
+ * fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the spread is `{}` and
+ * the decode is byte-stable.
+ */
+const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
+
+function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
+	fstStreetMorphology?: FSTMatcherLike
+	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
+} {
+	return stages.fst && stages.streetMorphology
+		? { fstStreetMorphology: stages.streetMorphology, fstStreetMorphologyOpts: { ...ZEROED_MORPHOLOGY_OPTS } }
+		: {}
 }
 
 /** Defensive wrapper: a grouper failure returns an empty proposal list rather than abort. */

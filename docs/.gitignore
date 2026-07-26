@@ -13,6 +13,10 @@
 /static/mailwoman/*.json
 # sql.js-httpvfs worker/wasm — staged into the Pages deploy at build time by the demo-assets plugin.
 /static/mailwoman/sqljs/
+# Placetype-pair indexes (#1278) — staged same-origin into the Pages deploy by the demo-assets plugin
+# (the `*.bin` glob above only covers direct children, not this subdir). Not committed; served from the
+# neural-weights-en-{gb,nz} dev artifacts for staged verification until the release-train repoints to R2.
+/static/mailwoman/pair-index/
 
 # OpenAPI spec copies — build products of the `prebuild` script (four `openapi` CLI subcommands),
 # never handwritten or checked in. See articles/api.mdx's "Drop-in server specifications" section.

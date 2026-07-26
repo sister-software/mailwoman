@@ -36,6 +36,13 @@ hands.
   overrides it. We measured the override version and reversed it; read
   [Closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx) before
   proposing a deterministic tagger.
+- **A dead/starved closed-vocab place-hierarchy tag** (`dependent_locality` — a child place under a
+  parent, that the shipped model won't emit): resurrect it at DECODE time with a
+  **retrieval-augmented pair-index overlay** on the untouched base model — no retrain. This is a
+  repeatable per-country recipe now: follow
+  [Onboarding a country's evidence layer](./reference/country-evidence-layer-runbook.mdx) (the GB +
+  NZ arcs distilled). Note the closed-vs-open-vocab wall stated there — it works for place names and
+  FAILS for venue/street spans (#1287/#1288 falsified with receipts); don't re-run those.
 - **Format quirks both systems miss** (rare edge shapes): consider a [query-shape route](./reference/QUERY_SHAPE.mdx) before a
   shard — some formats are structurally different enough that routing beats tagging.
 - **Cross-locale grammar leakage** (a convention from one address system firing in another —

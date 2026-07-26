@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/tiger",
-	"version": "7.8.1",
+	"version": "8.0.0",
 	"description": "US Census TIGER/Line data processing and analysis.",
 	"keywords": [
 		"census",
@@ -23,10 +23,21 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "tiger"
 	},
+	"files": [
+		"out/",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!__snapshots__/"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		"./schema/*.json": "./dist/schema/*.json",
 		"./sdk": {
 			"node": "./sdk/index.ts",
 			"default": "./out/sdk/index.js",

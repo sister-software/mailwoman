@@ -12,6 +12,7 @@
  *   files; for a static deploy, copy them into the public bundle and pass the resulting URLs.
  */
 
+import { detectLocaleSync } from "@mailwoman/locale-gate"
 import {
 	type AnchorLookup,
 	type CountryLexicon,
@@ -19,14 +20,40 @@ import {
 	MailwomanTokenizer,
 	NeuralAddressClassifier,
 	type NeuralAddressClassifierConfig,
+	PairIndexResolver,
 	parseCountryLexicon,
 	parseGazetteerLexicon,
+	type PlacetypePairPriorOpts,
 	PostcodeBinaryResolver,
 } from "@mailwoman/neural/browser"
+import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
 export type { WebONNXRunnerDiagnostics }
+
+/**
+ * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader retained it.
+ *
+ * Phase 2 (#1278 locale-gate wiring) changed the load contract: because locale-gate detects the country PER PARSE from
+ * the input text (a US and a GB address in the same session need DIFFERENT indexes), the loader can no longer pick one
+ * live resolver at load time. So EVERY successfully-fetched index is now constructed into a live
+ * {@link PairIndexResolver} and retained here, tagged by its header country — the per-parse selection (see
+ * {@link LoadResult.selectPairIndexForText}) chooses among them at decode time. (#1300's load-time country gate —
+ * construct only the one matching index — is superseded; the `country` load-option survives as an optional
+ * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
+ */
+export interface LoadedPairIndex {
+	/** URL the binary was fetched from. */
+	url: string
+	/** The header's ISO country code — the key the per-parse selection matches a detected country against. */
+	country: string
+	/**
+	 * The constructed, live resolver. The SAME instance the per-parse selection returns (and, for a posture-pinned load,
+	 * the classifier's config default).
+	 */
+	resolver: PairIndexResolver
+}
 
 export interface LoadResult {
 	classifier: NeuralAddressClassifier
@@ -42,6 +69,31 @@ export interface LoadResult {
 	 * ships placeholder (0,0) for ~22% of US postcodes; this lookup has a real centroid for every covered ZIP.
 	 */
 	postcodeAnchorLookup?: import("@mailwoman/neural").AnchorLookup
+	/**
+	 * Every placetype-pair index that fetched + parsed, each with its header country and a live resolver — see
+	 * {@link LoadedPairIndex}. Empty when `pairIndexURLs` was omitted or every fetch failed. Exposed so consumers (the
+	 * demo's preset lighting) can see which countries' indexes are loaded and available to the per-parse selection.
+	 */
+	pairIndexes: readonly LoadedPairIndex[]
+	/**
+	 * Per-parse placetype-pair selection (#1278 phase 2) — the primary path. Runs `@mailwoman/query-shape` +
+	 * `@mailwoman/locale-gate` over `text` to derive a country subtag from its STRUCTURAL shape (postcode format /
+	 * script; never place-name dictionaries — bitter-lesson-safe), then returns the {@link LoadedPairIndex} resolver
+	 * whose header country matches, wrapped as a ready-to-spread `placetypePair` option. No matching index (or no indexes
+	 * loaded) → `undefined`, which a caller spreads as `placetypePair: undefined` → the classifier's `opts?.placetypePair
+	 * ?? this.cfg.placetypePair` resolution falls through to the config default (see {@link LoadFromURLsOptions.country})
+	 * or, when none, the byte-stable no-prior decode.
+	 *
+	 * Intended call site (the demo, its own next step):
+	 *
+	 * ```ts
+	 * const tree = await classifier.parse(text, { ...baseOpts, placetypePair: result.selectPairIndexForText(text) })
+	 * ```
+	 *
+	 * `opts.country` (a locale "en-gb" or bare "gb") pins the selection for one call, bypassing detection — the escape
+	 * hatch for a preset that knows its own posture regardless of the text shape.
+	 */
+	selectPairIndexForText: (text: string, opts?: { country?: string }) => PlacetypePairPriorOpts | undefined
 }
 
 export interface LoadFromURLsOptions {
@@ -67,6 +119,37 @@ export interface LoadFromURLsOptions {
 	 * anchor-off identity.
 	 */
 	postcodeBinaryURLs?: readonly string[]
+	/**
+	 * URLs to one or more PIX1 placetype-pair indexes (`pair-index-<cc>.bin`, placetype-pair-prior arc — the GB
+	 * dependent_locality retrieval channel, #1278). Each binary is OPTIONAL and fetched TOLERANTLY (the
+	 * `postcodeBinaryURLs` contract): a 404/network failure/corrupt file is skipped with a loud `console.warn` and never
+	 * blocks the classifier load — older HF release versions ship no pair indexes at all.
+	 *
+	 * **Phase 2 (#1278 locale-gate wiring) — load ALL, select per parse.** Every fetched index is constructed into a live
+	 * {@link PairIndexResolver} and retained ({@link LoadResult.pairIndexes}), tagged by its header country. The
+	 * selection of WHICH index biases a given parse is a per-parse decision — see
+	 * {@link LoadResult.selectPairIndexForText}, which runs locale-gate over the input text — because one loaded
+	 * classifier serves inputs from multiple countries and the country is a property of the text, not the load. (#1300's
+	 * load-time single-index country gate is superseded; the `country` load-option below survives as an optional
+	 * config-default posture pin.)
+	 */
+	pairIndexURLs?: readonly string[]
+	/**
+	 * OPTIONAL default posture for the placetype-pair prior — a locale ("en-gb") or bare ISO country code ("gb"),
+	 * case-insensitive (reduced to its country subtag via {@link resolvePairGateCountry}, the node `localeCountry`
+	 * derivation). When provided AND a fetched index carries a matching header country, that index becomes the
+	 * classifier's CONFIG-LEVEL `placetypePair` default — the posture a parse falls back to when the per-parse
+	 * {@link LoadResult.selectPairIndexForText} returns nothing (or the demo never calls it). This is the single-posture
+	 * "default/override" path: it pins one country the way #1300's demo did.
+	 *
+	 * OMITTED (the recommended shape for the multi-locale demo) sets NO config default — every parse's prior comes solely
+	 * from the per-parse selection, and an input that matches no loaded index decodes byte-stable (no prior). Note the
+	 * behavior change from #1300: omission no longer defaults to `"us"`/gates loading — it means "detect per parse."
+	 *
+	 * There is still no browser-side AUTO-detection at LOAD time (nothing here knows a locale before any text arrives);
+	 * detection happens per parse, on the actual input, in {@link LoadResult.selectPairIndexForText}.
+	 */
+	country?: string
 	/**
 	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source is
 	 * `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX declares the
@@ -185,6 +268,91 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 }
 
 /**
+ * Reduce {@link LoadFromURLsOptions.country} to the bare country code the pair-index gate compares. A full locale
+ * ("en-gb") yields its country subtag ("gb") — the node classifier's exact `localeCountry` derivation — and a bare code
+ * ("gb") passes through unchanged (a browser-side widening: the node path only ever receives locales). Omitted =
+ * `"en-us"` → `"us"`, the node default.
+ */
+export function resolvePairGateCountry(country: string | undefined): string {
+	const normalized = (country ?? "en-us").toLowerCase()
+
+	return normalized.split("-")[1] ?? normalized
+}
+
+/**
+ * Fetch + construct the PIX1 placetype-pair indexes TOLERANTLY (the {@link loadPostcodeAnchorLookup} contract): each
+ * `pair-index-<cc>.bin` is OPTIONAL, so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped
+ * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
+ * versions ship no pair indexes at all, and the prior is a soft decode channel, not a load-bearing model input.
+ *
+ * **Phase 2 (#1278): NO load-time country gate.** Every successfully-fetched index is constructed into a live
+ * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection
+ * ({@link resolvePairIndexForText}) chooses among them at decode time from the input text's detected country — a load
+ * that serves a US and a GB address in one session needs BOTH resolvers live. (#1300 constructed only the single
+ * gate-matching index; that peek-before-construct economy is dropped deliberately — the multi-locale demo needs them
+ * all, and a handful of small pair maps is cheap.)
+ */
+async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch): Promise<LoadedPairIndex[]> {
+	const settled = await Promise.all(
+		urls.map(async (url): Promise<LoadedPairIndex | null> => {
+			try {
+				const resolver = new PairIndexResolver(await fetchBytes(url, fetchImpl))
+
+				return { url, country: resolver.header.country, resolver }
+			} catch (error) {
+				console.warn(
+					`[mailwoman/neural-web] optional placetype-pair index skipped: ${url} — ` +
+						`${error instanceof Error ? error.message : String(error)}. ` +
+						"The pair prior is a soft decode channel; the classifier loads without it (no placetype-pair bias only)."
+				)
+
+				return null
+			}
+		})
+	)
+
+	return settled.filter((index): index is LoadedPairIndex => index !== null)
+}
+
+/**
+ * Detect the placetype-pair country subtag for one input from its STRUCTURAL shape (#1278 phase 2). Runs the two
+ * browser-safe Stage-2 modules the runtime pipeline uses — `@mailwoman/query-shape`'s `computeQueryShape` then
+ * `@mailwoman/locale-gate`'s `detectLocaleSync` — and reduces the resulting `LocaleHint.locale` (e.g. "en-GB") to its
+ * country subtag ("gb") via {@link resolvePairGateCountry}.
+ *
+ * The detection is bitter-lesson-safe by construction: locale-gate keys ONLY off universal cues (postcode format,
+ * script class), never place-name dictionaries. So "10 Downing St, London SW1A 2AA" detects `gb` (UK postcode), but a
+ * bare "Shoreditch London" — no postcode, Latin script — falls through to locale-gate's `en-US` fallback → `us`. The
+ * pair prior is a soft, additive channel, so a conservative miss (no bias) is the safe failure mode.
+ */
+export function detectPairIndexCountry(text: string): string {
+	const shape = computeQueryShape(text)
+	const hint = detectLocaleSync({ raw: text, normalized: text }, shape)
+
+	return resolvePairGateCountry(hint.locale)
+}
+
+/**
+ * Select the placetype-pair prior for one parse (#1278 phase 2). Derives a country subtag — from an explicit
+ * `opts.country` override when given, else {@link detectPairIndexCountry} over `text` — and returns the loaded index
+ * whose header country matches, wrapped as a `placetypePair` option (`{ index }` alone: probe chain defaults to "auto",
+ * `delta`/`transitionBeta` ride the resolver's header getters, exactly the node construction). No matching index →
+ * `undefined` (the caller spreads `placetypePair: undefined` → byte-stable no-prior decode, or fall-through to a config
+ * default). See {@link LoadResult.selectPairIndexForText} for the bound convenience + call-site example.
+ */
+export function resolvePairIndexForText(
+	pairIndexes: readonly LoadedPairIndex[],
+	text: string,
+	opts?: { country?: string }
+): PlacetypePairPriorOpts | undefined {
+	if (pairIndexes.length === 0) return undefined
+	const country = opts?.country != null ? resolvePairGateCountry(opts.country) : detectPairIndexCountry(text)
+	const match = pairIndexes.find((index) => index.country === country)
+
+	return match ? { index: match.resolver } : undefined
+}
+
+/**
  * Default location of the gazetteer-anchor lexicon: `anchor-lexicon-v1.json` as a sibling of the model file. Matches
  * how release bundles lay out their version directory (model.onnx, tokenizer.model, model-card.json, postcode-*.bin,
  * anchor-lexicon-v1.json side by side).
@@ -233,13 +401,38 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
 	])
 
-	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
+	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebONNXRunner.fromBytes(modelBytes, opts.runner),
 		opts.postcodeBinaryURLs?.length
 			? loadPostcodeAnchorLookup(opts.postcodeBinaryURLs, fetchImpl)
 			: Promise.resolve<AnchorLookup | undefined>(undefined),
+		opts.pairIndexURLs?.length
+			? loadPairIndexes(opts.pairIndexURLs, fetchImpl)
+			: Promise.resolve<LoadedPairIndex[]>([]),
 	])
+
+	// Placetype-pair prior (#1278 phase 2): the loaded indexes are ALL live (see loadPairIndexes) and the WHICH-index
+	// choice is per parse (`selectPairIndexForText`, below). The `country` load-option survives only as an optional
+	// CONFIG-DEFAULT posture pin: when the caller passed one AND a loaded index matches it, that index becomes the
+	// classifier's config-level `placetypePair` default a parse falls back to when the per-parse selection returns nothing.
+	// Omitted country = no config default → the byte-stable no-prior decode when nothing is selected per parse.
+	let configPairIndex: PairIndexResolver | undefined
+
+	if (opts.country != null && pairIndexes.length > 0) {
+		const pinnedCountry = resolvePairGateCountry(opts.country)
+		const pinned = pairIndexes.find((index) => index.country === pinnedCountry)
+
+		if (pinned) {
+			configPairIndex = pinned.resolver
+		} else {
+			console.warn(
+				`[mailwoman/neural-web] country "${pinnedCountry}" was requested as the placetype-pair default posture, but no ` +
+					`loaded index matches it — loaded header countries: ${pairIndexes.map((index) => `"${index.country}"`).join(", ")}. ` +
+					"No config default is set; per-parse selection (selectPairIndexForText) still works for the countries that DID load."
+			)
+		}
+	}
 
 	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
 	const classifier = new NeuralAddressClassifier({
@@ -249,6 +442,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
+		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
 		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
 		...(conventions ? { addressSystemConventions: conventions } : {}),
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
@@ -262,7 +456,13 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		postcodeAnchorLookup,
 	})
 
-	return { classifier, diagnostics: runner.diagnostics, labels }
+	return {
+		classifier,
+		diagnostics: runner.diagnostics,
+		labels,
+		pairIndexes,
+		selectPairIndexForText: (text, selectOpts) => resolvePairIndexForText(pairIndexes, text, selectOpts),
+	}
 }
 
 /**

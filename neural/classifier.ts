@@ -49,6 +49,7 @@ import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } f
 import { MailwomanTokenizer } from "./tokenizer.ts"
 import { TRACE_PRIOR_KINDS } from "./trace.ts"
 import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.ts"
+import { buildTrailingLocalityPriors, type TrailingLocalityPriorOpts } from "./trailing-locality-prior.ts"
 import { repairUnitLabels } from "./unit-repair.ts"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.ts"
@@ -102,6 +103,13 @@ export interface NeuralAddressClassifierConfig {
 	 * the phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
 	 */
 	semiCrfGrammar?: SemiCRFTransitions
+	/**
+	 * Path to the per-locale FST gazetteer binary shipped in the resolved weights package (`fst-<locale>.bin`), surfaced
+	 * verbatim from {@link resolveWeights} — PATH ONLY (neural has no resolver-wof-sqlite dependency; the caller's layer
+	 * deserializes). Exposed via {@link NeuralAddressClassifier.fstPath} so the mailwoman runtime pipeline can auto-load
+	 * the gazetteer into `opts.fst` at pipeline construction.
+	 */
+	fstPath?: string
 	/**
 	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features from the text +
 	 * this lookup and feeds them to the runner — for models trained with the anchor channel (exported with the
@@ -223,6 +231,15 @@ export class NeuralAddressClassifier {
 	 */
 	get spanGrammar(): SemiCRFTransitions | undefined {
 		return this.cfg.semiCrfGrammar
+	}
+
+	/**
+	 * Path to the per-locale FST gazetteer binary (`fst-<locale>.bin`) when the resolved weights package shipped one,
+	 * else `undefined`. The runtime pipeline deserializes + auto-wires it as the default `opts.fst` (opt out with `fst:
+	 * false` at pipeline construction); direct `classifier.parse` callers can do the same or pass their own.
+	 */
+	get fstPath(): string | undefined {
+		return this.cfg.fstPath
 	}
 
 	/**
@@ -425,6 +442,7 @@ export class NeuralAddressClassifier {
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
+			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
 			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is
@@ -647,6 +665,18 @@ export class NeuralAddressClassifier {
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
+					// Street-context gate (#1142): reuse the morphology FST already loaded for the
+					// street-morphology prior. Inert when the morphology FST isn't loaded.
+					...(opts.fstStreetMorphology && opts.fstStreetContextGate !== false
+						? {
+								streetContext: {
+									fst: opts.fstStreetMorphology,
+									...(opts.fstStreetContextPositiveScale !== undefined
+										? { positiveScale: opts.fstStreetContextPositiveScale }
+										: {}),
+								},
+							}
+						: {}),
 				})
 			: undefined
 
@@ -670,6 +700,24 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "streetMorphology",
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
+		})
+
+		// Trailing-locality prior (comma-free "street + trailing city", fork B — see
+		// trailing-locality-prior.ts). Opt-in; absent → byte-stable.
+		const trailingLocalityPrior = opts?.trailingLocality
+			? buildTrailingLocalityPriors(pieces, this.labels, {
+					...opts.trailingLocality,
+					// R3 (locality-present ⇒ silent) reads the CURRENT argmax — the emissions as composed so far.
+					emissions: opts.trailingLocality.emissions ?? emissions,
+				})
+			: undefined
+
+		if (trailingLocalityPrior) {
+			emissions = addEmissionMatrix(emissions, trailingLocalityPrior)
+		}
+		tracePriors?.push({
+			kind: "trailingLocality",
+			applied: trailingLocalityPrior !== undefined && matrixHasBias(trailingLocalityPrior),
 		})
 
 		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase priors.
@@ -960,8 +1008,20 @@ export interface ParseOpts {
 	fst?: FSTMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
-	/** Match-length scaling mode for the FST importance bias (#1142). Default `both`. */
+	/** Match-length scaling mode for the FST importance bias (#1142). Default `suppression`. */
 	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
+	/**
+	 * Positive-bias multiplier for the FST street-context gate (#1142) — applied when a matched place name sits in a
+	 * syntactically street-headed position (street-type adjacency / house-number-left). Only consulted when BOTH `fst`
+	 * and `fstStreetMorphology` are provided. Default 0.25 (tune 0.15–0.4).
+	 */
+	fstStreetContextPositiveScale?: number
+	/**
+	 * Master switch for the street-context gate (#1142). Default true — the gate is active whenever BOTH `fst` and
+	 * `fstStreetMorphology` are provided. Pass `false` to run the morphology emission prior WITHOUT the gate (the
+	 * pre-gate behavior); used to decompose the two channels in measurement.
+	 */
+	fstStreetContextGate?: boolean
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce
 	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens AND toward `street` / away
@@ -971,6 +1031,18 @@ export interface ParseOpts {
 	fstStreetMorphology?: FSTMatcherLike
 	/** Override bias magnitudes for the morphology prior. */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
+	/**
+	 * Trailing-locality prior (comma-free "street + trailing city" — fork B). Geometry-gated: fires only on a trailing
+	 * word-span that matches a gazetteer locality by PRESENCE, with street-affix evidence before it, and never on the
+	 * street name itself. Importance-free — complementary to the FST prior, and deliberately decoupled from `fst` /
+	 * `fstStreetMorphology` (the fork-A lesson: broad FST bias is geometrically opposed to the street-context gate).
+	 * Absent → byte-stable. See `trailing-locality-prior.ts`.
+	 *
+	 * ⚠ OPT-IN ONLY, deliberately never auto-wired: the prior cannot separate a trailing city from a person-name street
+	 * surname ("Avenue Marceau Julien") — it regresses the #1143 bare-street population on open-vocabulary street text
+	 * (measured 2026-07-25). Use only where the input register is known comma-free over notable cities.
+	 */
+	trailingLocality?: TrailingLocalityPriorOpts
 	/**
 	 * When true, run the deterministic postcode regex repair pass (v0.7 #35) on the decoded label sequence before
 	 * tree-building. Detects postcode-shaped substrings (GB/CA/NL/US/FR/… patterns) and snaps/adds the postcode span to

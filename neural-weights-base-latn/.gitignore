@@ -1,0 +1,10 @@
+# Symlinks created by scripts/link-dev-weights.ts for local testing.
+/model.onnx
+/tokenizer.model
+
+# Shared soft-feed artifacts
+/model-card.json
+/calibration.json
+/calibration-per-locale.json
+/anchor-lexicon-v1.json
+/country-surface-lexicon-v1.json

@@ -350,12 +350,15 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
 
     - phrase priors ON (the headline change)
     - hidden_size unchanged at the v0.3.0/v0.4.0 baseline (256) — the bump is out of scope
-    - 21-class BIO label vocab (unchanged from v0.3.0; see ACTIVE_BIO_LABELS)
+    - class_weights written against the 21-class STAGE2 BIO vocab (the active set when the
+      config was authored; ACTIVE has since moved to STAGE3's 33 — the STAGE2 vocabulary is
+      an intact prefix of the lineage, so every weight still names a live label)
     - constant-LR smoke per VERDICT_SMOKES.md (driven via CLI flag, not the YAML)
     """
     from pathlib import Path
 
     from mailwoman_train.config import load_config
+    from mailwoman_train.labels import STAGE2_BIO_LABELS
 
     here = Path(__file__).resolve().parent.parent.parent
     cfg_path = here / "src/mailwoman_train/configs/v0_5_0-classifier-smoke.yaml"
@@ -366,8 +369,11 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
     assert cfg.model.hidden_size == 256  # Thread C-s scope: no hidden-size bump
     assert cfg.model.use_crf is True
     assert cfg.model.crf_normalization == "per_token"  # v0.4.0 dual-loss lesson carries over
-    # 21 BIO classes are derived from labels.py — confirm class_weights covers all of them.
-    assert set(cfg.model.class_weights or {}) == set(ACTIVE_BIO_LABELS)
+    # The config is a historical STAGE2-era artifact: its class_weights cover exactly the
+    # 21-label STAGE2 vocabulary, which rides intact inside the current (STAGE3) ACTIVE set.
+    weights = set(cfg.model.class_weights or {})
+    assert weights == set(STAGE2_BIO_LABELS)
+    assert weights <= set(ACTIVE_BIO_LABELS)
     # Smoke-window sizing — short enough to fit in ~minutes on iGPU.
     assert cfg.train.max_steps <= 100
     assert cfg.train.batch_size <= 16

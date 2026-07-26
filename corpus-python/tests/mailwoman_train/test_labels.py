@@ -8,6 +8,9 @@ from mailwoman_train.labels import (
     STAGE2_BIO_LABELS,
     STAGE2_FINE_TAGS,
     STAGE2_TAGS,
+    STAGE3_BIO_LABELS,
+    STAGE3_FINE_TAGS,
+    STAGE3_TAGS,
     active_components_present,
     coarse_components_present,  # alias for back-compat
     collapse_label,
@@ -59,9 +62,46 @@ def test_stage2_preserves_stage1_label_ids():
         assert STAGE2_BIO_LABELS[i] == label
 
 
-def test_active_set_points_at_stage2():
-    assert ACTIVE_TAGS == STAGE2_TAGS
-    assert ACTIVE_BIO_LABELS == STAGE2_BIO_LABELS
+# --- v0.6.0 STAGE3 (current active set) --------------------------------------------
+
+
+def test_stage3_extends_stage2_with_decomposition_tags():
+    assert STAGE3_FINE_TAGS == (
+        "street_prefix",
+        "street_suffix",
+        "unit",
+        "po_box",
+        "intersection_a",
+        "intersection_b",
+    )
+    assert STAGE3_TAGS == STAGE2_TAGS + STAGE3_FINE_TAGS
+    # 1 O + 16 tags × 2 = 33 labels
+    assert len(STAGE3_BIO_LABELS) == 1 + 2 * len(STAGE3_TAGS)
+
+
+def test_stage3_preserves_stage2_label_ids():
+    # Same append-only contract as Stage 1 → 2: a v0.3.0–v0.5.x checkpoint's first 21
+    # label IDs stay valid under the Stage 3 vocabulary.
+    for i, label in enumerate(STAGE2_BIO_LABELS):
+        assert STAGE3_BIO_LABELS[i] == label
+
+
+def test_active_set_points_at_current_stage():
+    # ACTIVE_* tracks the CURRENT training round's vocabulary — STAGE3 as of the v0.6.0
+    # ship (STAGE4 is defined in labels.py but deliberately NOT active; its activation
+    # couples to a retrain + the JS ComponentTag union bump). When the ship-line moves,
+    # this sentinel moves with it in the same commit — never pin ACTIVE to a historical
+    # stage.
+    assert ACTIVE_TAGS == STAGE3_TAGS
+    assert ACTIVE_BIO_LABELS == STAGE3_BIO_LABELS
+
+
+def test_active_set_keeps_historical_stage_prefixes_intact():
+    # The staged-tuple discipline: every historical stage is an intact PREFIX of the
+    # active lineage, so old checkpoints keep valid label IDs under the new vocabulary.
+    assert ACTIVE_TAGS[: len(STAGE2_TAGS)] == STAGE2_TAGS
+    assert ACTIVE_BIO_LABELS[: len(STAGE2_BIO_LABELS)] == STAGE2_BIO_LABELS
+    assert ACTIVE_BIO_LABELS[: len(STAGE1_BIO_LABELS)] == STAGE1_BIO_LABELS
 
 
 # --- collapse_label ------------------------------------------------------------------
@@ -80,11 +120,22 @@ def test_collapse_label_keeps_fine_v0_3_0():
     assert collapse_label("B-house_number") == "B-house_number"
 
 
+def test_collapse_label_keeps_stage3_tags():
+    # Stage 3 (v0.6.0): street decomposition + unit/po_box/intersection survive collapse.
+    assert collapse_label("B-street_prefix") == "B-street_prefix"
+    assert collapse_label("I-street_suffix") == "I-street_suffix"
+    assert collapse_label("I-po_box") == "I-po_box"
+    assert collapse_label("B-intersection_a") == "B-intersection_a"
+
+
 def test_collapse_label_drops_tags_not_in_active_set():
     # Tags that exist in the JS-side ComponentTag union but aren't in ACTIVE_TAGS yet
-    # (e.g. attention, po_box, intersection_a) still collapse to O.
+    # (e.g. attention) still collapse to O. STAGE4 tags are DEFINED in labels.py but
+    # NOT active (activation is coupled to a retrain + the JS union bump) — they
+    # collapse too.
     assert collapse_label("B-attention") == "O"
-    assert collapse_label("I-po_box") == "O"
+    assert collapse_label("B-entrance") == "O"
+    assert collapse_label("I-unit_designator") == "O"
 
 
 def test_collapse_label_drops_unknown_tags():
@@ -112,7 +163,9 @@ def test_active_components_present_accepts_fine_only_rows():
 
 def test_active_components_present_rejects_empty_and_irrelevant():
     assert active_components_present([]) is False
-    assert active_components_present(["attention", "po_box"]) is False  # not in ACTIVE_TAGS
+    # `attention` is in no stage; `entrance`/`staircase` are STAGE4 — defined but not
+    # active — so none of these count toward the gate.
+    assert active_components_present(["attention", "entrance", "staircase"]) is False
 
 
 def test_coarse_components_present_alias():

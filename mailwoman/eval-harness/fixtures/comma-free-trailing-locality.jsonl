@@ -1,0 +1,99 @@
+{"id":"cf-fr-01-fused","locale":"fr-FR","form":"fused","input":"3 Rue des Lyonnais Paris","expect":{"street":"Rue des Lyonnais","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-01-bare","locale":"fr-FR","form":"bare","input":"3 Rue des Lyonnais","expect":{"street":"Rue des Lyonnais","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-01-comma","locale":"fr-FR","form":"comma","input":"3 Rue des Lyonnais, Paris, 75005","expect":{"street":"Rue des Lyonnais","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-02-fused","locale":"fr-FR","form":"fused","input":"10 Rue de Rivoli Paris","expect":{"street":"Rue de Rivoli","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-02-bare","locale":"fr-FR","form":"bare","input":"10 Rue de Rivoli","expect":{"street":"Rue de Rivoli","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-02-comma","locale":"fr-FR","form":"comma","input":"10 Rue de Rivoli, Paris, 75001","expect":{"street":"Rue de Rivoli","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-03-fused","locale":"fr-FR","form":"fused","input":"6 Rue d'Antin Paris","expect":{"street":"Rue d'Antin","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-03-bare","locale":"fr-FR","form":"bare","input":"6 Rue d'Antin","expect":{"street":"Rue d'Antin","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-03-comma","locale":"fr-FR","form":"comma","input":"6 Rue d'Antin, Paris, 75002","expect":{"street":"Rue d'Antin","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-04-fused","locale":"fr-FR","form":"fused","input":"8 Rue Princesse Paris","expect":{"street":"Rue Princesse","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-04-bare","locale":"fr-FR","form":"bare","input":"8 Rue Princesse","expect":{"street":"Rue Princesse","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-04-comma","locale":"fr-FR","form":"comma","input":"8 Rue Princesse, Paris, 75006","expect":{"street":"Rue Princesse","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-05-fused","locale":"fr-FR","form":"fused","input":"8 Rue de Montfaucon Paris","expect":{"street":"Rue de Montfaucon","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-05-bare","locale":"fr-FR","form":"bare","input":"8 Rue de Montfaucon","expect":{"street":"Rue de Montfaucon","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-05-comma","locale":"fr-FR","form":"comma","input":"8 Rue de Montfaucon, Paris, 75006","expect":{"street":"Rue de Montfaucon","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-06-fused","locale":"fr-FR","form":"fused","input":"116 Rue du Temple Paris","expect":{"street":"Rue du Temple","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-06-bare","locale":"fr-FR","form":"bare","input":"116 Rue du Temple","expect":{"street":"Rue du Temple","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-06-comma","locale":"fr-FR","form":"comma","input":"116 Rue du Temple, Paris, 75003","expect":{"street":"Rue du Temple","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-07-fused","locale":"fr-FR","form":"fused","input":"22 Rue Pascal Paris","expect":{"street":"Rue Pascal","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-07-bare","locale":"fr-FR","form":"bare","input":"22 Rue Pascal","expect":{"street":"Rue Pascal","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-07-comma","locale":"fr-FR","form":"comma","input":"22 Rue Pascal, Paris, 75005","expect":{"street":"Rue Pascal","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-08-fused","locale":"fr-FR","form":"fused","input":"13 Rue Gaillon Paris","expect":{"street":"Rue Gaillon","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-08-bare","locale":"fr-FR","form":"bare","input":"13 Rue Gaillon","expect":{"street":"Rue Gaillon","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-08-comma","locale":"fr-FR","form":"comma","input":"13 Rue Gaillon, Paris, 75002","expect":{"street":"Rue Gaillon","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-09-fused","locale":"fr-FR","form":"fused","input":"14 Rue du Pont Neuf Paris","expect":{"street":"Rue du Pont Neuf","locality":"Paris","street_excludes":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-09-bare","locale":"fr-FR","form":"bare","input":"14 Rue du Pont Neuf","expect":{"street":"Rue du Pont Neuf","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-09-comma","locale":"fr-FR","form":"comma","input":"14 Rue du Pont Neuf, Paris, 75001","expect":{"street":"Rue du Pont Neuf","locality":"Paris"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-10-fused","locale":"fr-FR","form":"fused","input":"45 Cours Lafayette Lyon","expect":{"street":"Cours Lafayette","locality":"Lyon","street_excludes":"Lyon"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-10-bare","locale":"fr-FR","form":"bare","input":"45 Cours Lafayette","expect":{"street":"Cours Lafayette","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-10-comma","locale":"fr-FR","form":"comma","input":"45 Cours Lafayette, Lyon, 69003","expect":{"street":"Cours Lafayette","locality":"Lyon"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-11-fused","locale":"fr-FR","form":"fused","input":"7 Promenade des Anglais Nice","expect":{"street":"Promenade des Anglais","locality":"Nice","street_excludes":"Nice"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-11-bare","locale":"fr-FR","form":"bare","input":"7 Promenade des Anglais","expect":{"street":"Promenade des Anglais","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-11-comma","locale":"fr-FR","form":"comma","input":"7 Promenade des Anglais, Nice, 06000","expect":{"street":"Promenade des Anglais","locality":"Nice"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-12-fused","locale":"fr-FR","form":"fused","input":"16 Rue du Château Sainte-Livrade-sur-Lot","expect":{"street":"Rue du Château","locality":"Sainte-Livrade-sur-Lot","street_excludes":"Sainte-Livrade-sur-Lot"},"source":"trailing-locality-probe"}
+{"id":"cf-fr-12-bare","locale":"fr-FR","form":"bare","input":"16 Rue du Château","expect":{"street":"Rue du Château","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-fr-12-comma","locale":"fr-FR","form":"comma","input":"16 Rue du Château, Sainte-Livrade-sur-Lot, 47110","expect":{"street":"Rue du Château","locality":"Sainte-Livrade-sur-Lot"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-01-fused","locale":"en-GB","form":"fused","input":"10 Downing Street London","expect":{"street":"Downing Street","locality":"London","street_excludes":"London"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-01-bare","locale":"en-GB","form":"bare","input":"10 Downing Street","expect":{"street":"Downing Street","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-01-comma","locale":"en-GB","form":"comma","input":"10 Downing Street, London","expect":{"street":"Downing Street","locality":"London"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-02-fused","locale":"en-GB","form":"fused","input":"7 Carpenters Close Leicester","expect":{"street":"Carpenters Close","locality":"Leicester","street_excludes":"Leicester"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-02-bare","locale":"en-GB","form":"bare","input":"7 Carpenters Close","expect":{"street":"Carpenters Close","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-02-comma","locale":"en-GB","form":"comma","input":"7 Carpenters Close, Leicester, LE3 8RS","expect":{"street":"Carpenters Close","locality":"Leicester"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-03-fused","locale":"en-GB","form":"fused","input":"3 Bailiff Grove York","expect":{"street":"Bailiff Grove","locality":"York","street_excludes":"York"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-03-bare","locale":"en-GB","form":"bare","input":"3 Bailiff Grove","expect":{"street":"Bailiff Grove","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-03-comma","locale":"en-GB","form":"comma","input":"3 Bailiff Grove, York, YO42 1AX","expect":{"street":"Bailiff Grove","locality":"York"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-04-fused","locale":"en-GB","form":"fused","input":"4 Long Meadow Newark","expect":{"street":"Long Meadow","locality":"Newark","street_excludes":"Newark"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-04-bare","locale":"en-GB","form":"bare","input":"4 Long Meadow","expect":{"street":"Long Meadow","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-04-comma","locale":"en-GB","form":"comma","input":"4 Long Meadow, Newark, NG22 8DR","expect":{"street":"Long Meadow","locality":"Newark"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-05-fused","locale":"en-GB","form":"fused","input":"60 Jubilee Road Doncaster","expect":{"street":"Jubilee Road","locality":"Doncaster","street_excludes":"Doncaster"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-05-bare","locale":"en-GB","form":"bare","input":"60 Jubilee Road","expect":{"street":"Jubilee Road","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-05-comma","locale":"en-GB","form":"comma","input":"60 Jubilee Road, Doncaster, DN1 2UD","expect":{"street":"Jubilee Road","locality":"Doncaster"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-06-fused","locale":"en-GB","form":"fused","input":"45 Mealsgate Peterborough","expect":{"street":"Mealsgate","locality":"Peterborough","street_excludes":"Peterborough"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-06-bare","locale":"en-GB","form":"bare","input":"45 Mealsgate","expect":{"street":"Mealsgate","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-06-comma","locale":"en-GB","form":"comma","input":"45 Mealsgate, Peterborough, PE4 7LQ","expect":{"street":"Mealsgate","locality":"Peterborough"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-07-fused","locale":"en-GB","form":"fused","input":"9 Corn Fields Atherstone","expect":{"street":"Corn Fields","locality":"Atherstone","street_excludes":"Atherstone"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-07-bare","locale":"en-GB","form":"bare","input":"9 Corn Fields","expect":{"street":"Corn Fields","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-07-comma","locale":"en-GB","form":"comma","input":"9 Corn Fields, Atherstone, CV9 3DZ","expect":{"street":"Corn Fields","locality":"Atherstone"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-08-fused","locale":"en-GB","form":"fused","input":"26 Glenbourne Park Stockport","expect":{"street":"Glenbourne Park","locality":"Stockport","street_excludes":"Stockport"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-08-bare","locale":"en-GB","form":"bare","input":"26 Glenbourne Park","expect":{"street":"Glenbourne Park","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-08-comma","locale":"en-GB","form":"comma","input":"26 Glenbourne Park, Stockport, SK7 1JG","expect":{"street":"Glenbourne Park","locality":"Stockport"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-09-fused","locale":"en-GB","form":"fused","input":"17 Foxglove Way Harwich","expect":{"street":"Foxglove Way","locality":"Harwich","street_excludes":"Harwich"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-09-bare","locale":"en-GB","form":"bare","input":"17 Foxglove Way","expect":{"street":"Foxglove Way","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-09-comma","locale":"en-GB","form":"comma","input":"17 Foxglove Way, Harwich, CO12 4NL","expect":{"street":"Foxglove Way","locality":"Harwich"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-10-fused","locale":"en-GB","form":"fused","input":"34 Burlington Avenue Mansfield","expect":{"street":"Burlington Avenue","locality":"Mansfield","street_excludes":"Mansfield"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-10-bare","locale":"en-GB","form":"bare","input":"34 Burlington Avenue","expect":{"street":"Burlington Avenue","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-10-comma","locale":"en-GB","form":"comma","input":"34 Burlington Avenue, Mansfield, NG20 9AD","expect":{"street":"Burlington Avenue","locality":"Mansfield"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-11-fused","locale":"en-GB","form":"fused","input":"58 Kimberley Road Nottingham","expect":{"street":"Kimberley Road","locality":"Nottingham","street_excludes":"Nottingham"},"source":"trailing-locality-probe"}
+{"id":"cf-gb-11-bare","locale":"en-GB","form":"bare","input":"58 Kimberley Road","expect":{"street":"Kimberley Road","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-gb-11-comma","locale":"en-GB","form":"comma","input":"58 Kimberley Road, Nottingham, NG16 1DF","expect":{"street":"Kimberley Road","locality":"Nottingham"},"source":"trailing-locality-probe"}
+{"id":"cf-us-01-fused","locale":"en-US","form":"fused","input":"350 5th Ave New York","expect":{"street":"5th Ave","locality":"New York","street_excludes":"New York"},"source":"trailing-locality-probe"}
+{"id":"cf-us-01-bare","locale":"en-US","form":"bare","input":"350 5th Ave","expect":{"street":"5th Ave","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-01-comma","locale":"en-US","form":"comma","input":"350 5th Ave, New York, 10118","expect":{"street":"5th Ave","locality":"New York"},"source":"trailing-locality-probe"}
+{"id":"cf-us-02-fused","locale":"en-US","form":"fused","input":"1600 Pennsylvania Ave Washington","expect":{"street":"Pennsylvania Ave","locality":"Washington","street_excludes":"Washington"},"source":"trailing-locality-probe"}
+{"id":"cf-us-02-bare","locale":"en-US","form":"bare","input":"1600 Pennsylvania Ave","expect":{"street":"Pennsylvania Ave","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-02-comma","locale":"en-US","form":"comma","input":"1600 Pennsylvania Ave, Washington, 20500","expect":{"street":"Pennsylvania Ave","locality":"Washington"},"source":"trailing-locality-probe"}
+{"id":"cf-us-03-fused","locale":"en-US","form":"fused","input":"1060 W Addison St Chicago","expect":{"street":"W Addison St","locality":"Chicago","street_excludes":"Chicago"},"source":"trailing-locality-probe"}
+{"id":"cf-us-03-bare","locale":"en-US","form":"bare","input":"1060 W Addison St","expect":{"street":"W Addison St","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-03-comma","locale":"en-US","form":"comma","input":"1060 W Addison St, Chicago, 60613","expect":{"street":"W Addison St","locality":"Chicago"},"source":"trailing-locality-probe"}
+{"id":"cf-us-04-fused","locale":"en-US","form":"fused","input":"400 Broad St Seattle","expect":{"street":"Broad St","locality":"Seattle","street_excludes":"Seattle"},"source":"trailing-locality-probe"}
+{"id":"cf-us-04-bare","locale":"en-US","form":"bare","input":"400 Broad St","expect":{"street":"Broad St","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-04-comma","locale":"en-US","form":"comma","input":"400 Broad St, Seattle, 98109","expect":{"street":"Broad St","locality":"Seattle"},"source":"trailing-locality-probe"}
+{"id":"cf-us-05-fused","locale":"en-US","form":"fused","input":"6220 SE Salmon St Portland","expect":{"street":"SE Salmon St","locality":"Portland","street_excludes":"Portland"},"source":"trailing-locality-probe"}
+{"id":"cf-us-05-bare","locale":"en-US","form":"bare","input":"6220 SE Salmon St","expect":{"street":"SE Salmon St","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-05-comma","locale":"en-US","form":"comma","input":"6220 SE Salmon St, Portland, 97215","expect":{"street":"SE Salmon St","locality":"Portland"},"source":"trailing-locality-probe"}
+{"id":"cf-us-06-fused","locale":"en-US","form":"fused","input":"1 Infinite Loop Cupertino","expect":{"street":"Infinite Loop","locality":"Cupertino","street_excludes":"Cupertino"},"source":"trailing-locality-probe"}
+{"id":"cf-us-06-bare","locale":"en-US","form":"bare","input":"1 Infinite Loop","expect":{"street":"Infinite Loop","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-06-comma","locale":"en-US","form":"comma","input":"1 Infinite Loop, Cupertino, 95014","expect":{"street":"Infinite Loop","locality":"Cupertino"},"source":"trailing-locality-probe"}
+{"id":"cf-us-07-fused","locale":"en-US","form":"fused","input":"500 Boylston St Boston","expect":{"street":"Boylston St","locality":"Boston","street_excludes":"Boston"},"source":"trailing-locality-probe"}
+{"id":"cf-us-07-bare","locale":"en-US","form":"bare","input":"500 Boylston St","expect":{"street":"Boylston St","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-07-comma","locale":"en-US","form":"comma","input":"500 Boylston St, Boston, 02116","expect":{"street":"Boylston St","locality":"Boston"},"source":"trailing-locality-probe"}
+{"id":"cf-us-08-fused","locale":"en-US","form":"fused","input":"20 W 34th St New York","expect":{"street":"W 34th St","locality":"New York","street_excludes":"New York"},"source":"trailing-locality-probe"}
+{"id":"cf-us-08-bare","locale":"en-US","form":"bare","input":"20 W 34th St","expect":{"street":"W 34th St","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-08-comma","locale":"en-US","form":"comma","input":"20 W 34th St, New York, 10001","expect":{"street":"W 34th St","locality":"New York"},"source":"trailing-locality-probe"}
+{"id":"cf-us-09-fused","locale":"en-US","form":"fused","input":"233 S Wacker Dr Chicago","expect":{"street":"S Wacker Dr","locality":"Chicago","street_excludes":"Chicago"},"source":"trailing-locality-probe"}
+{"id":"cf-us-09-bare","locale":"en-US","form":"bare","input":"233 S Wacker Dr","expect":{"street":"S Wacker Dr","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-09-comma","locale":"en-US","form":"comma","input":"233 S Wacker Dr, Chicago, 60606","expect":{"street":"S Wacker Dr","locality":"Chicago"},"source":"trailing-locality-probe"}
+{"id":"cf-us-10-fused","locale":"en-US","form":"fused","input":"701 5th Ave Seattle","expect":{"street":"5th Ave","locality":"Seattle","street_excludes":"Seattle"},"source":"trailing-locality-probe"}
+{"id":"cf-us-10-bare","locale":"en-US","form":"bare","input":"701 5th Ave","expect":{"street":"5th Ave","locality":null},"source":"trailing-locality-probe"}
+{"id":"cf-us-10-comma","locale":"en-US","form":"comma","input":"701 5th Ave, Seattle, 98104","expect":{"street":"5th Ave","locality":"Seattle"},"source":"trailing-locality-probe"}

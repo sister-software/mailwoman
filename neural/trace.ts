@@ -28,6 +28,7 @@ export const TRACE_PRIOR_KINDS = [
 	"queryShape",
 	"fst",
 	"streetMorphology",
+	"trailingLocality",
 	"spanProposer",
 	"placetypePair",
 	"conventionsMask",

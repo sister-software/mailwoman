@@ -12,14 +12,13 @@
 	],
 	"type": "module",
 	"exports": {
-		"./package.json": "./package.json",
-		"./schema/*.json": "./dist/schema/*.json"
+		"./package.json": "./package.json"
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"dependencies": {
-		"@cloudflare/workers-types": "^5.20260719.1",
+		"@cloudflare/workers-types": "^5.20260726.1",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

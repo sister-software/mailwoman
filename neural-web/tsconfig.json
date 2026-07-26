@@ -8,5 +8,10 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }, { "path": "../neural" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../locale-gate" },
+		{ "path": "../neural" },
+		{ "path": "../query-shape" }
+	]
 }
