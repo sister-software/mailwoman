@@ -1,7 +1,8 @@
 {
 	"name": "@mailwoman/neural-weights-base-latn",
 	"version": "7.8.1",
-	"description": "Mailwoman shared Latin-script base model (model.onnx + tokenizer.model). All locale overlays (en-us, fr-fr, en-gb, en-nz) share this base — only per-country data duplicates across overlays.",
+	"private": true,
+	"description": "PARKED (not published as of v8.0.0). Shared Latin-script base model for the future consumer-facing dedup (#1177). The dedup is deferred until its release path is fully wired + CI-validated; for now en-us is the self-contained base and fr-fr/en-gb/en-nz overlay it (the proven v7.x pattern). Do NOT add to release.config.json locales or depend on this from a published package until the release wiring lands.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
