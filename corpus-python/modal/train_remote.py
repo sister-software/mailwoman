@@ -3225,6 +3225,192 @@ def mean_init_numsplice3():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_evidence_bundle():
+    """v3.16.0 probe: sync the training code + configs AND the locality-surface lexicon (the bundle's
+    second channel; 13 MB) from R2. Corpus + init_from v385 + the street-type lexicon persist from the
+    v3.13/v3.15 runs. Clears stale pyc."""
+    import shutil
+    import subprocess
+
+    print("Syncing v3.16.0 evidence-bundle code + lexicon from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v1.json {VOL_MOUNT}/gazetteer/ {R}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv3.16.0 sync complete. Volume committed.")
+
+    src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    print("  v3.16.0 config present:", os.path.isfile(f"{src}/configs/v3.16.0-evidence-bundle.yaml"))
+    print("  locality lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/locality-surface-lexicon-v1.json"))
+    print("  street-type lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json"))
+    print("  model.py has locality channel:", "use_locality_surface_anchor" in open(f"{src}/model.py").read())
+    print("  train.py has evidence_curriculum:", "evidence_curriculum" in open(f"{src}/train.py").read())
+    print(
+        "  init_from checkpoint present:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def grade_evidence_bundle(step: int = 3000):
+    """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
+    computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
+    zeroed (the ablation column — pre-registered leg 3 compares it to v385's P0 fixture numbers).
+    Same scoring as grade_street_type_contrast."""
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    import torch
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.country_lexicon import load_country_lexicon
+    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.gazetteer_anchor import load_gazetteer_lexicon
+    from mailwoman_train.labels import ID_TO_LABEL
+    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.tokenizer import Tokenizer, encode_row
+
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8"
+    subprocess.run(
+        f"rclone copy :s3:{BUCKET}/eval/fixtures/ban-fragments-fr.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
+        shell=True,
+        check=True,
+        capture_output=True,
+    )
+    fixture = f"{VOL_MOUNT}/eval/fixtures/ban-fragments-fr.jsonl"
+
+    ck = Path(f"{VOL_MOUNT}/output-v3160-evidence-bundle-s42/checkpoints/step-{step:06d}")
+    tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
+    model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
+    print(
+        f"loaded step-{step}; street_type={model.use_street_type_anchor} locality_surface={model.use_locality_surface_anchor}"
+    )
+
+    gaz = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json")
+    ctry = load_country_lexicon(f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json")
+    street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json")
+    locality = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/locality-surface-lexicon-v1.json")
+    anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
+
+    STREET_TAGS = {"street", "street_prefix", "street_suffix", "street_prefix_particle"}
+    BUNDLE = ("street_type", "locality_surface")
+
+    def norm(s: str) -> str:
+        return " ".join(s.lower().split())
+
+    def predicted_street(raw: str, feats: dict, zero_bundle: bool) -> str:
+        pieces = tok.encode_with_spans(raw)
+        n = len(pieces)
+        kw = dict(
+            input_ids=torch.tensor([feats["input_ids"][:n]]),
+            attention_mask=torch.tensor([feats["attention_mask"][:n]]),
+        )
+        for ch in ("anchor", "gazetteer", "country", "street_type", "locality_surface"):
+            fk, ckk = f"{ch}_features", f"{ch}_confidence"
+            if fk in feats:
+                zero = zero_bundle and ch in BUNDLE
+                fv = [[0.0] * len(feats[fk][0])] * n if zero else feats[fk][:n]
+                cv = [0.0] * n if zero else feats[ckk][:n]
+                kw[fk] = torch.tensor([fv], dtype=torch.float32)
+                kw[ckk] = torch.tensor([cv], dtype=torch.float32)
+        with torch.no_grad():
+            logits = model(**kw).logits[0]
+        ids = logits.argmax(-1).tolist()
+        chars = [False] * len(raw)
+        for i, pid in enumerate(ids):
+            if i >= n:
+                break
+            tag = ID_TO_LABEL[pid]
+            fam = tag[2:] if tag[:2] in ("B-", "I-") else tag
+            if fam in STREET_TAGS:
+                for c in range(pieces[i].char_begin, pieces[i].char_end):
+                    if c < len(raw):
+                        chars[c] = True
+        out, run = [], []
+        for c in range(len(raw)):
+            if chars[c]:
+                run.append(raw[c])
+            elif run:
+                out.append("".join(run))
+                run = []
+        if run:
+            out.append("".join(run))
+        return norm(" ".join(out))
+
+    rows = [json.loads(ln) for ln in open(fixture, encoding="utf-8") if ln.strip()]
+    by = {}
+    for r in rows:
+        raw = r["input"]
+        gs = r.get("expect", {}).get("street")
+        gold = norm(" ".join(gs)) if isinstance(gs, list) else norm(gs or "")
+        expect_no_street = not gold
+        feats = encode_row(
+            tok,
+            raw,
+            raw.split(),
+            ["O"] * len(raw.split()),
+            max_length=128,
+            anchor_lookup=anchor,
+            anchor_paint_mode="shaped",
+            gazetteer_lexicon=gaz,
+            gazetteer_choreography=True,
+            country_lexicon=ctry,
+            street_type_lexicon=street,
+            locality_surface_lexicon=locality,
+        )
+        on = predicted_street(raw, feats, zero_bundle=False)
+        off = predicted_street(raw, feats, zero_bundle=True)
+        ok_on = (on == "") if expect_no_street else (on == gold)
+        ok_off = (off == "") if expect_no_street else (off == gold)
+        k = r.get("klass", "?")
+        agg = by.setdefault(k, [0, 0, 0])
+        agg[0] += int(ok_on)
+        agg[1] += int(ok_off)
+        agg[2] += 1
+
+    print(f"\n=== v3.16.0 BUNDLE VERDICT: ON vs OFF(ablation) — ban-fragments-fr (step-{step}) ===")
+    print(f"{'klass':<24} {'ON':>7} {'OFF':>7} {'delta':>11}")
+    tot_on = tot_off = tot_n = 0
+    for k in sorted(by):
+        on_c, off_c, n = by[k]
+        tot_on += on_c
+        tot_off += off_c
+        tot_n += n
+        print(f"{k:<24} {on_c / n:>7.3f} {off_c / n:>7.3f} {(on_c - off_c) / n:>+11.3f}")
+    print(f"{'ALL':<24} {tot_on / tot_n:>7.3f} {tot_off / tot_n:>7.3f} {(tot_on - tot_off) / tot_n:>+11.3f}")
+    print(
+        "\nP0 fixture refs for the ablation leg (v385): homonym 159/400, bare-street 241/400, particle 301/400, alnum-hn 373/400, street-hn 373/400, bare-locality 393/400, date-name 53/400."
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=1800,
 )
 def grade_street_type_contrast(step: int = 3000):

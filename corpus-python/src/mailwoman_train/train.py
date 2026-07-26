@@ -197,7 +197,14 @@ def build_optimizer(
         # no-ops when their module is off (the tuple still matches `classifier.`, so no raise).
         carveouts.append(
             (
-                ("classifier.", "deploc_head.", "street_type_projection.", "street_type_token_embedding"),
+                (
+                    "classifier.",
+                    "deploc_head.",
+                    "street_type_projection.",
+                    "street_type_token_embedding",
+                    "locality_surface_projection.",
+                    "locality_surface_token_embedding",
+                ),
                 classifier_learning_rate,
                 "classifier_learning_rate",
             )
@@ -744,6 +751,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     tb["gazetteer_confidence"] = perturb_gazetteer_confidence(
                         tb["gazetteer_confidence"], step, cfg.train.max_steps
                     )
+                # Evidence-bundle anti-over-trust curriculum (v3.16.0): the SAME ramped per-row
+                # zero-out applied to both bundle channels — the P-A decay showed a fresh evidence
+                # channel over-trusts without it. Per-channel independent draws, so the model also
+                # sees each channel alone (the bundle must inform, never become a joint crutch).
+                if getattr(cfg.train, "evidence_curriculum", False):
+                    for key in ("street_type_confidence", "locality_surface_confidence"):
+                        if key in tb:
+                            tb[key] = perturb_gazetteer_confidence(tb[key], step, cfg.train.max_steps)
                 # Optimizer step happens every ``accum`` micro-batches; gradients accumulate
                 # across the micro-batches in between. ``step`` counts *optimizer* steps,
                 # not micro-steps, so it lines up with the cfg.train.max_steps budget.
