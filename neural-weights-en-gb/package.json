@@ -13,6 +13,7 @@
 		"postcode-gb.bin",
 		"pair-index-gb.bin",
 		"fst-en-gb.bin",
+		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",

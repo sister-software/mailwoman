@@ -289,7 +289,12 @@ export function useDemoMapRuntime({
 			// classify, exactly as before.
 			const { tree, nodes, kindResult, timing } = await runClassifyStage(
 				input,
-				{ classifier, fst: assets?.fstMatcher, selectPairIndex: assets?.selectPairIndex },
+				{
+					classifier,
+					fst: assets?.fstMatcher,
+					streetMorphology: assets?.streetMorphologyMatcher,
+					selectPairIndex: assets?.selectPairIndex,
+				},
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 

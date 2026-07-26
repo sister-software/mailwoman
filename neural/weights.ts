@@ -121,6 +121,16 @@ export interface ResolvedWeights {
 	 */
 	fstPath?: string
 	/**
+	 * Path to the locale-GENERAL street-morphology FST (`fst-street-morphology.bin`) shipped beside the resolved model —
+	 * the #1315 street-context gate's signal source, serialized at build time (`mailwoman gazetteer build
+	 * street-morphology`) instead of rebuilt from the libpostal dictionaries per process. `undefined` when the package
+	 * doesn't ship it (the runtime pipeline then falls back to the data-root staging artifact or a per-process dictionary
+	 * build). PATH ONLY, same posture as {@link ResolvedWeights.fstPath}: deserialization happens in the caller's layer.
+	 * Unlike the per-locale FST it may also resolve from the `baseWeights` package (the artifact is identical across
+	 * locales, so a data-only overlay need not ship its own copy).
+	 */
+	streetMorphologyPath?: string
+	/**
 	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3) shipped
 	 * beside the resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
 	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
@@ -286,6 +296,17 @@ function resolveFromPackageDir(
 	const fstCandidate = resolve(packageDir, `fst-${locale}.bin`)
 	const fstPath = existsSync(fstCandidate) ? fstCandidate : undefined
 
+	// Street-morphology FST sibling (`fst-street-morphology.bin`) — locale-GENERAL (built from the libpostal
+	// street_types dictionaries, all locales), so unlike `fst-<locale>.bin` it also resolves from the base weights
+	// package when a data-only overlay doesn't ship its own copy (same fallback family as the model card above).
+	const morphologyCandidate = resolve(packageDir, "fst-street-morphology.bin")
+	const baseMorphologyCandidate = baseDir ? resolve(baseDir, "fst-street-morphology.bin") : undefined
+	const streetMorphologyPath = existsSync(morphologyCandidate)
+		? morphologyCandidate
+		: baseMorphologyCandidate && existsSync(baseMorphologyCandidate)
+			? baseMorphologyCandidate
+			: undefined
+
 	return {
 		modelPath,
 		tokenizerPath,
@@ -297,6 +318,7 @@ function resolveFromPackageDir(
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
 		...(pairIndexPath ? { pairIndexPath } : {}),
 		...(fstPath ? { fstPath } : {}),
+		...(streetMorphologyPath ? { streetMorphologyPath } : {}),
 		source,
 	}
 }

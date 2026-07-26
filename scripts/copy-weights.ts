@@ -104,6 +104,7 @@ async function main() {
 
 		await materializeSoftFeed(workspace, dir)
 		await materializeFST(workspace, dir)
+		await materializeStreetMorphology(workspace, dir)
 		await materializePairIndex(workspace, dir)
 	}
 }
@@ -128,6 +129,30 @@ async function materializeFST(workspace: string, dir: string) {
 	await removeIfPresent(dest)
 	await copyFile(src, dest)
 	process.stderr.write(`copied FST → ${workspace}/fst-${locale}.bin\n`)
+}
+
+/**
+ * Materialize the locale-GENERAL street-morphology FST (`fst-street-morphology.bin`, the #1315 street-context gate's
+ * signal source) into a weights workspace — a verbatim copy of the sealed artifact staged by `mailwoman gazetteer build
+ * street-morphology` at $MAILWOMAN_DATA_ROOT/wof/. Shipping it as a weights sibling is what carries it to the
+ * per-version R2 asset layout the browser demo fetches — the node runtimes can rebuild from the bundled libpostal
+ * dictionaries, the browser cannot. A missing source is skipped with a warning (byte-stable: node consumers fall back
+ * to the per-process dictionary build; the demo parses without the street-context gate, exactly as before).
+ */
+async function materializeStreetMorphology(workspace: string, dir: string) {
+	const src = resolve(dataRoot, "wof", "fst-street-morphology.bin")
+
+	if (!existsSync(src)) {
+		process.stderr.write(
+			`copy-weights: no street-morphology FST at ${src} — skipping ${workspace}/fst-street-morphology.bin (byte-stable)\n`
+		)
+
+		return
+	}
+	const dest = resolve(dir, "fst-street-morphology.bin")
+	await removeIfPresent(dest)
+	await copyFile(src, dest)
+	process.stderr.write(`copied street-morphology FST → ${workspace}/fst-street-morphology.bin\n`)
 }
 
 /**
