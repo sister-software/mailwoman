@@ -186,10 +186,14 @@ probes scope. v8.1.0 is "stop the pile growing + decide the shape."
       updated with the previously-missing #1315/#1318 rows (invariant 5 accounting). A
       `createRuntimePipeline` consumer now sets ZERO decode-tuning flags — every mechanism is
       default-on-with-evidence, header-derived, or an opt-out escape.
-      ⚠ ONE open D-rule question for the v8.1.0 cut: street-particle reads −2.8pp under default-on
-      FST (NOT gate-mediated — a different FST channel; was −1.5pp ✓ at the 7-25 ratification).
-      Within the ratified golden-for-fragment trade's shape but drifted; operator call at the cut:
-      accept with a dated note, or open the channel-attribution investigation first.**
+      ✅ The street-particle D-rule question RESOLVED (2026-07-26, `7c896489` + the artifact swap):
+      build-time degenerate-surface curation of the per-locale FSTs (the "prune the bias list"
+      discipline — the case-folded "LA"/"OP" alias collisions and bare street-type words removed
+      from the artifact, not guarded at decode). Particle −2.8pp → −0.8pp with golden byte-equal
+      and gauntlet PASS; the 3 residual rows are true homographs (La Grange / La Grande, OR /
+      Pierre, SD) — the Option-A class, carried under the ratified trade. Curated artifacts
+      swapped into the shipped path (operator-executed), backups at
+      `fst-per-locale-pre-curation-backup/`.**
 
 **Track 2 — probes (research; strictly C → B → A) — ALL COMPLETE 2026-07-26:**
 
