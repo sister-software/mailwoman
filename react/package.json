@@ -75,6 +75,7 @@
 		"react-dom": "^19.2.8",
 		"react-map-gl": "^8.1.1",
 		"storybook": "^10.5.4",
+		"typescript": "^6.0.3",
 		"vite": "^8.1.5",
 		"vitest": "4.1.10"
 	},
