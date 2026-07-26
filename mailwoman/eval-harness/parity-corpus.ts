@@ -98,11 +98,14 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstStreetMorphology: import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined
 
 	if (options.streetMorphology) {
-		const { buildStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder")
-		const built = buildStreetMorphologyFST({ dictionariesDir: "core/data/libpostal/dictionaries" })
-		fstStreetMorphology = built.matcher
+		// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
+		// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to
+		// inline (with a cwd-relative dictionaries path, no less).
+		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader")
+		const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
+		fstStreetMorphology = loaded.matcher
 		console.log(
-			`street-morphology bias ON: ${built.locales.length} locales, ${built.variantCount} variants (${built.canonicalCount} canonical)`
+			`street-morphology bias ON (${loaded.source === "artifact" ? `sealed artifact ${loaded.path}` : "per-process dictionary build"}${loaded.provenance ? `: ${loaded.provenance.placeCount} canonical affixes, ${loaded.provenance.nameInsertions} variant insertions` : ""})`
 		)
 	}
 

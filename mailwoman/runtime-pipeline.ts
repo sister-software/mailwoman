@@ -24,7 +24,6 @@ import {
 	type POIIntentOutcome,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { classifyKind as defaultClassifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
@@ -35,7 +34,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 
 import { loadDefaultPlaceCountry } from "./default-placer.ts"
 import { loadDefaultReverseGeocoder } from "./default-reverse-geocoder.ts"
@@ -95,8 +94,9 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315), always consumed with the
 	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
-	 * the gate alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load (built from core's
-	 * bundled libpostal dictionaries); `false` suppresses it.
+	 * the gate alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
+	 * `fst-street-morphology.bin` artifact when available (weights-package sibling, else the data-root staging copy),
+	 * degrading to a per-process build from core's bundled libpostal dictionaries; `false` suppresses it.
 	 */
 	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 	/**
@@ -248,17 +248,26 @@ function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"])
 }
 
 /**
- * Build the street-morphology matcher from core's bundled libpostal dictionaries — the street-context gate's signal
- * source (#1315), always consumed with the emission prior zeroed at the pipeline's classify call sites. Built on the
- * first pipeline call (small text dictionaries); failures degrade to `undefined` (gate off, byte-stable).
+ * Load the street-morphology matcher — the street-context gate's signal source (#1315), always consumed with the
+ * emission prior zeroed at the pipeline's classify call sites. Resolved on the first pipeline call through the shared
+ * ladder (`street-morphology-fst-loader`): the classifier's weights-package sibling (`fst-street-morphology.bin`,
+ * surfaced as {@link NeuralAddressClassifier.streetMorphologyPath}), else the data-root sealed artifact, else a
+ * per-process build from core's bundled libpostal dictionaries — the pre-artifact behavior kept as the degrade path.
+ * Failures degrade to `undefined` (gate off, byte-stable).
  */
-function autoBuildStreetMorphology(): FSTMatcher | undefined {
+function autoLoadStreetMorphology(classifier: CreateRuntimePipelineOpts["classifier"]): FSTMatcher | undefined {
+	const artifactPath =
+		classifier && typeof classifier === "object" && "streetMorphologyPath" in classifier
+			? (classifier as { streetMorphologyPath?: string }).streetMorphologyPath
+			: undefined
+
 	try {
-		return buildStreetMorphologyFST({
-			dictionariesDir: repoRootPath("core", "data", "libpostal", "dictionaries"),
+		return loadStreetMorphologyFST({
+			...(artifactPath ? { artifactPath } : {}),
+			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
 		}).matcher
 	} catch (err) {
-		console.warn(`[mailwoman] failed to build the street-morphology FST: ${(err as Error).message} — gate off`)
+		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(err as Error).message} — gate off`)
 
 		return undefined
 	}
@@ -424,9 +433,9 @@ export function createRuntimePipeline(
 		if (!morphologyResolved) {
 			morphologyResolved = true
 
-			// The gate needs BOTH matchers — skip the build when there's no gazetteer for it to gate.
+			// The gate needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
 			if (stages.fst) {
-				const morph = autoBuildStreetMorphology()
+				const morph = autoLoadStreetMorphology(opts.classifier)
 
 				if (morph) {
 					stages.streetMorphology = morph

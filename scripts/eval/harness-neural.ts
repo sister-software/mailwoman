@@ -35,7 +35,6 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import { runIfScript } from "@mailwoman/core/scripting"
 import type { ClassificationRecord } from "@mailwoman/core/types"
-import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	type AnchorLookup,
 	type GazetteerLexicon,
@@ -46,7 +45,7 @@ import {
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 import { createRuntimePipeline } from "mailwoman"
 import ts from "typescript"
 
@@ -734,12 +733,15 @@ async function main(): Promise<void> {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
 			morphologyFST = deserializeFST(readFileSync(args.morphologyBinPath))
 		} else {
-			console.error("Building morphology FST in-process...")
-			const built = buildStreetMorphologyFST({
-				dictionariesDir: repoRootPath("core", "data", "libpostal", "dictionaries"),
-			})
-			morphologyFST = built.matcher
-			console.error(`  ${built.canonicalCount} canonicals / ${built.variantCount} variants`)
+			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
+			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
+			const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
+			morphologyFST = loaded.matcher
+			console.error(
+				loaded.source === "artifact"
+					? `Loaded morphology FST from sealed artifact ${loaded.path}`
+					: "Built morphology FST in-process (no sealed artifact found)"
+			)
 		}
 	}
 

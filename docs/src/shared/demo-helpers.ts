@@ -290,6 +290,12 @@ export interface ClassifyStageDeps {
 	/** The optional FST gazetteer prior. */
 	fst?: FSTMatcherLike | null
 	/**
+	 * The optional street-morphology matcher — the #1315 street-context gate's signal source. The gate only fires when
+	 * BOTH this and `fst` are wired (core's `streetContextGateFor`), matching the node runtime pipeline's default; a
+	 * `null`/omitted matcher parses gate-off, exactly the pre-artifact demo behavior.
+	 */
+	streetMorphology?: FSTMatcherLike | null
+	/**
 	 * The per-parse placetype-pair prior selector (#1278) — the loaded {@link SelectPairIndex}, or `null`/omitted when no
 	 * pair index was staged for this release. When present, `runClassifyStage` calls it on the input and passes the
 	 * result as the pipeline's `placetypePair` opt; the GB/NZ dependent_locality prior fires while US/FR inputs stay
@@ -343,6 +349,7 @@ export async function runClassifyStage(
 			groupPhrases,
 			classifier: deps.classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
+			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
 		},
 		placetypePair !== undefined ? { placetypePair } : undefined
 	)

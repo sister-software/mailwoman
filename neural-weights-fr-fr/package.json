@@ -12,6 +12,7 @@
 		"model-card.json",
 		"postcode-fr.bin",
 		"fst-fr-fr.bin",
+		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",

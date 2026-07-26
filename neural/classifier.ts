@@ -112,6 +112,14 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	fstPath?: string
 	/**
+	 * Path to the locale-general street-morphology FST binary shipped beside the resolved weights
+	 * (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} — PATH ONLY, same posture as
+	 * {@link NeuralConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.streetMorphologyPath} so the runtime
+	 * pipeline's street-context gate (#1315) deserializes the sealed artifact instead of rebuilding it from the libpostal
+	 * dictionaries per process.
+	 */
+	streetMorphologyPath?: string
+	/**
 	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features from the text +
 	 * this lookup and feeds them to the runner — for models trained with the anchor channel (exported with the
 	 * `anchor_features`/`anchor_confidence` ONNX inputs). Omit for plain models. Load via `loadAnchorLookup` from
@@ -241,6 +249,15 @@ export class NeuralAddressClassifier {
 	 */
 	get fstPath(): string | undefined {
 		return this.cfg.fstPath
+	}
+
+	/**
+	 * Path to the locale-general street-morphology FST (`fst-street-morphology.bin`) when the resolved weights package
+	 * (or its base) shipped one, else `undefined`. The runtime pipeline's street-context gate (#1315) deserializes it
+	 * through the shared loader ladder instead of rebuilding from the libpostal dictionaries per process.
+	 */
+	get streetMorphologyPath(): string | undefined {
+		return this.cfg.streetMorphologyPath
 	}
 
 	/**
@@ -444,6 +461,7 @@ export class NeuralAddressClassifier {
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
+			...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
 			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is

@@ -51,6 +51,11 @@
 			"default": "./out/street-morphology-fst-builder.js",
 			"types": "./out/street-morphology-fst-builder.d.ts"
 		},
+		"./street-morphology-fst-loader": {
+			"node": "./street-morphology-fst-loader.ts",
+			"default": "./out/street-morphology-fst-loader.js",
+			"types": "./out/street-morphology-fst-loader.d.ts"
+		},
 		"./fst-matcher": {
 			"node": "./fst-matcher.ts",
 			"default": "./out/fst-matcher.js",
