@@ -10,7 +10,7 @@
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "../decoder/types.ts"
-import type { Resolver } from "../resolver/types.ts"
+import type { GazetteerArtifactCoverage, Resolver } from "../resolver/types.ts"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
 import type {
@@ -58,6 +58,61 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 	it("honours a safelist override (how the eval measures ungated to grow the list)", () => {
 		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
 		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
+	})
+})
+
+describe("runPipeline — artifact-manifest safelist precedence (survey candidate #2)", () => {
+	/** A resolver whose loaded gazetteer artifact declares its own coverage manifest. */
+	const artifactWith = (safelist: string[]): GazetteerArtifactCoverage => ({
+		countryCoverage: new Map(),
+		countryBBoxes: new Map(),
+		hardCountrySafelist: new Set(safelist),
+	})
+
+	const run = async (opts: {
+		placed: string
+		artifact?: GazetteerArtifactCoverage
+		override?: ReadonlySet<string>
+	}): Promise<string | undefined> => {
+		const resolveTree = vi.fn(async (tree: AddressTree) => tree)
+		const resolver: Resolver = { resolveTree }
+
+		if (opts.artifact) {
+			resolver.artifactCoverage = opts.artifact
+		}
+		await runPipeline(
+			"probe input",
+			{
+				classifier: fakeClassifier(fakeTree("probe input")),
+				resolver,
+				placeCountry: () => ({ country: opts.placed, confidence: 1.0 }),
+			},
+			{
+				hardPlaceCountry: true,
+				...(opts.override ? { hardCountrySafelist: opts.override } : {}),
+			}
+		)
+		const resolveOpts = resolveTree.mock.calls[0]?.[1] as { hardCountry?: string } | undefined
+
+		return resolveOpts?.hardCountry
+	}
+
+	it("uses the artifact's safelist when the resolver carries one (FI hard-filters once its artifact says so)", async () => {
+		expect(await run({ placed: "FI", artifact: artifactWith(["FI"]) })).toBe("FI")
+	})
+
+	it("artifact safelist REPLACES the constant — a constant member absent from the artifact stays soft", async () => {
+		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]) })).toBeUndefined()
+	})
+
+	it("no artifact → the code-constant fallback, byte-identical (ES hard, FI soft)", async () => {
+		expect(await run({ placed: "ES" })).toBe("ES")
+		expect(await run({ placed: "FI" })).toBeUndefined()
+	})
+
+	it("the per-call override (the eval instrument) outranks the artifact", async () => {
+		expect(await run({ placed: "FI", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBeUndefined()
+		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBe("ES")
 	})
 })
 

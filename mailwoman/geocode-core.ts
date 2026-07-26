@@ -218,7 +218,11 @@ export interface GeocodeDeps {
 	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
 	 */
 	hardPlaceCountry?: boolean
-	/** #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → built-in. */
+	/**
+	 * #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → the loaded gazetteer
+	 * artifact's own coverage manifest when it carries one, else the built-in constant (the fallback for artifacts
+	 * predating the manifest).
+	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
 	 * #928: when the parsed postcode's FORMAT unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
@@ -544,7 +548,15 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			placedCountry = pcCountry
 			opts.anchorPosterior = { [pcCountry]: 1.0 }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
-			const hardCountry = hardCountryFor(pcCountry, 1.0, opts, deps.hardPlaceCountry ?? true, deps.hardCountrySafelist)
+			// Safelist precedence (survey candidate #2): per-call override (the eval instrument) → the loaded
+			// gazetteer artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
+			const hardCountry = hardCountryFor(
+				pcCountry,
+				1.0,
+				opts,
+				deps.hardPlaceCountry ?? true,
+				deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist
+			)
 
 			if (hardCountry) {
 				opts.hardCountry = hardCountry
@@ -564,13 +576,14 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
 			// #743/#194: default-on coverage-guarded HARD country filter (same gate as the runtime pipeline,
-			// via the shared helper so the two production paths can't drift).
+			// via the shared helper so the two production paths can't drift). Same safelist precedence as
+			// above: per-call override → the artifact's coverage manifest → the code-constant fallback.
 			const hardCountry = hardCountryFor(
 				placed.country,
 				placed.confidence,
 				opts,
 				deps.hardPlaceCountry ?? true,
-				deps.hardCountrySafelist
+				deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist
 			)
 
 			if (hardCountry) {

@@ -19,8 +19,13 @@ export type {
 	SerializableResolveOpts,
 } from "./remote-resolver.ts"
 export { createWOFResolver } from "./resolve.ts"
-export { finestResolvedCoordinate, isImplausibleResolution } from "./plausibility.ts"
-export type { PlausibilityVerdict, ResolvedCoordinate } from "./plausibility.ts"
+export {
+	COUNTRY_BBOX,
+	finestResolvedCoordinate,
+	isImplausibleResolution,
+	outsideExpectedCountry,
+} from "./plausibility.ts"
+export type { PlausibilityOpts, PlausibilityVerdict, ResolvedCoordinate } from "./plausibility.ts"
 export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "./street-evidence.ts"
 export type {
 	PickByStreetEvidenceOpts,

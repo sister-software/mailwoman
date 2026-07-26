@@ -1157,9 +1157,15 @@ async function reconcileRegionCountry(
 
 class WOFResolver implements Resolver {
 	readonly #backend: ResolverBackend
+	/**
+	 * The gazetteer artifact's self-declared coverage facts, passed through from the backend so pipeline-level consumers
+	 * read them from the resolver handle they already hold. Absent on artifacts predating the coverage manifest.
+	 */
+	readonly artifactCoverage: Resolver["artifactCoverage"]
 
 	constructor(backend: ResolverBackend) {
 		this.#backend = backend
+		this.artifactCoverage = backend.artifactCoverage
 	}
 
 	async resolveTree(tree: AddressTree, opts: ResolveOpts = {}): Promise<AddressTree> {
