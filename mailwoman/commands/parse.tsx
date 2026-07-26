@@ -78,14 +78,6 @@ const ParseConfigSchema = zod.object({
 			"If the locale's neural weights aren't installed, download them into ~/.cache/mailwoman/weights " +
 				"without prompting, then parse. Non-interactive-safe (CI, pipes)."
 		),
-	degraded: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Run the structural pipeline stages only (normalize, query-shape, kind, grouper) without the neural " +
-				"encoder, even when weights are installed. A stderr banner names what's degraded."
-		),
 	format: zod.enum(["json", "tuple", "xml"]).optional().default("json").describe("Output projection."),
 	model: zod.string().optional().describe("Explicit model.onnx path (--neural only). Overrides --locale resolution."),
 	tokenizer: zod
@@ -180,9 +172,9 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 		!options.model &&
 		!options.tokenizer
 
-	if (guardEligible && (options.degraded || options.downloadWeights || !probeWeights(options.locale).ok)) {
+	if (guardEligible && (options.downloadWeights || !probeWeights(options.locale).ok)) {
 		return (
-			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
+			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights}>
 				{(outcome) => <ParseTask options={options} args={args} weightsOutcome={outcome} />}
 			</WeightsGuard>
 		)
@@ -226,10 +218,13 @@ function ParseTask({
 			return runNeural(input, options, [])
 		}
 
-		// Guard said degraded (user declined the download, download failed, or --degraded): the real
-		// pipeline minus the encoder. "unavailable" falls through to runPipeline's legacy chain.
+		// Weights not installed and the user declined the download: exit with a clear message (no
+		// more "degraded" parse — #1108 fallback removed, v8 breaking change).
 		if (weightsOutcome === "declined") {
-			return runDegraded(input, options)
+			throw commandError(
+				"Neural weights are required. Install the package: " +
+					`npm install ${weightsPackageName(options.locale)}   or re-run with --download-weights`
+			)
 		}
 
 		// Default: runtime pipeline.
@@ -396,67 +391,11 @@ function serializeTree(
 }
 
 /**
- * The generic degraded-mode banner (stderr — stdout stays machine-parseable). Emitted when the guard hands back a
- * `declined` outcome (interactive "n" / `--degraded` / a failed download) or the explicit `--no-neural` skip — paths
- * that never attempt an encoder load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire. The
- * attempted-and-failed case is announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT
- * emitted there (it would double up).
- */
-function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void {
-	console.error(
-		"⚠ degraded parse: the neural encoder is not loaded — output carries structural-pipeline results only.\n" +
-			`  Upgrade: npm install ${weightsPackageName(options.locale)}   or   mailwoman parse --download-weights <address>`
-	)
-}
-
-/**
- * Encoder-less structural parse (plan 3), WITHOUT the banner: the REAL pipeline stages (normalize → query-shape →
- * locale-gate → kind → grouper fast-paths) with no neural classifier. The tree carries what the structural stages can
- * prove (postcode_only / locality_only fast-paths populate it; free-form addresses may yield an empty tree). The caller
- * owns the degraded notice — either {@link emitDegradedBanner} or the precise absent/load-error warning `tryLoadNeural`
- * already printed — so no path degrades silently, and none double-warns.
- */
-async function runStructuralPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
-	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
-	const result = await pipeline(input, { locale: options.locale })
-
-	return options.debug
-		? JSON.stringify(serializeResult(result, options.format), null, 2)
-		: serializeTree(result.tree, options.format, { includeAlternatives: false })
-}
-
-/**
- * Structural parse fronted by the generic degraded banner — the guard's `declined` / `--no-neural` entry point (the
- * caller here did NOT attempt an encoder load, so it owns the notice).
- */
-async function runDegraded(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
-	emitDegradedBanner(options)
-
-	return runStructuralPipeline(input, options)
-}
-
-/**
  * Default path: runtime pipeline. Lazy-loads the neural classifier + optional resolver. Returns the parsed tree
- * serialized in the requested format. When the encoder is unavailable, degrades to the structural-pipeline stages
- * (normalize → query-shape → kind → grouper fast-paths) rather than any rules parser.
+ * serialized in the requested format.
  */
 async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
-	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning when the load
-	// fails, so an attempted-but-failed encoder load is NEVER silent — including on the --resolve/--debug
-	// paths, which don't route through the degraded banner below (#1108). The explicit --no-neural skip
-	// attempts no load (and gets no such warning); the degraded banner covers it instead.
-	const attemptedNeural = !options.noNeural
-	const classifier = attemptedNeural ? await tryLoadNeural(options) : undefined
-
-	// When the encoder isn't loaded and there's no resolver/debug work to do, the full pipeline can only
-	// emit QueryShape fast-path structure. Route to the structural path so the CLI still produces useful
-	// output for the fast-path kinds (postcode_only, locality_only). `--debug` stays on the pipeline so
-	// the operator gets the requested PipelineResult JSON shape.
-	if (!classifier && !options.resolve && !options.debug) {
-		// tryLoadNeural already warned when the load was attempted; only the explicit --no-neural skip
-		// still needs the generic degraded banner (it never called tryLoadNeural).
-		return attemptedNeural ? runStructuralPipeline(input, options) : runDegraded(input, options)
-	}
+	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
 
 	const wantAlternatives = options.candidates !== undefined
 	const resolveOpts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
@@ -663,36 +602,12 @@ async function runBenchmark(
  *
  * The warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
  */
-async function tryLoadNeural(
-	options: zod.infer<typeof ParseConfigSchema>
-): Promise<NeuralAddressClassifier | undefined> {
-	try {
-		return await NeuralAddressClassifier.loadFromWeights({
-			locale: options.locale,
-			modelPath: options.model,
-			tokenizerPath: options.tokenizer,
-		})
-	} catch (error) {
-		// Graceful degradation: pipeline runs normalize + queryShape + kind (+ resolver) only. The caller
-		// sees `tree.roots` populated from QueryShape fast-paths but nothing from the encoder — so we warn.
-		const message = error instanceof Error ? error.message : String(error)
-		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal). Every OTHER
-		// failure means the weights DID resolve but the encoder couldn't load them — a partial/metadata-only
-		// bundle ("missing model files"), a bad explicit --model/--tokenizer path, or a corrupt artifact — so we
-		// surface the underlying error verbatim rather than mislabel it "not installed" and swallow the cause.
-		const absent = /Could not resolve/iu.test(message)
-
-		if (absent) {
-			console.error(
-				`⚠ neural weights not found — running a degraded structural parse; ` +
-					`install ${weightsPackageName(options.locale)} for full accuracy.`
-			)
-		} else {
-			console.error(`⚠ neural weights failed to load — running a degraded structural parse. Encoder error: ${message}`)
-		}
-
-		return undefined
-	}
+async function tryLoadNeural(options: zod.infer<typeof ParseConfigSchema>): Promise<NeuralAddressClassifier> {
+	return await NeuralAddressClassifier.loadFromWeights({
+		locale: options.locale,
+		modelPath: options.model,
+		tokenizerPath: options.tokenizer,
+	})
 }
 
 /**

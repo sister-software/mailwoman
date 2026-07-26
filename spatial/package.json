@@ -21,7 +21,6 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		"./schema/*.json": "./dist/schema/*.json",
 		"./sdk": {
 			"node": "./sdk/index.ts",
 			"default": "./out/sdk/index.js",
@@ -54,5 +53,17 @@
 	},
 	"engines": {
 		"node": ">=24.18.0"
-	}
+	},
+	"files": [
+		"out/",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!__snapshots__/"
+	]
 }

@@ -680,7 +680,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 		const result = await createWOFResolver(backend).resolveTree(input, {
-			cityStateFallback: true,
+			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")

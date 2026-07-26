@@ -88,8 +88,6 @@ export interface OAResolverEvalOptions {
 	candidateDb?: string
 	/** #718 situs-eval: grade the production coordinate cascade (per-state shards). */
 	cascade?: boolean
-	/** #387 alias for `hierarchyCompletion`. */
-	cityStateFallback?: boolean
 	/** Shard root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`. */
 	dataRoot?: string
 	/** Hard country filter for admin lookups (`none` disables). Default `US`. */
@@ -566,7 +564,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// coincident-roles relation (#403). Opt-in, default-off → by default this eval is byte-identical;
 	// pass it to measure the before/after. Applied to BOTH the neural and rules resolve paths (they
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
-	const hierarchyCompletion = (options.hierarchyCompletion ?? false) || (options.cityStateFallback ?? false)
+	const hierarchyCompletion = options.hierarchyCompletion ?? false
 	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
 	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
 	const adminCoherence =
