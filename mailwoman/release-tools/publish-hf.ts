@@ -12,8 +12,8 @@
  *   - Model.onnx — int8-quantized classifier
  *   - Tokenizer.model — SentencePiece tokenizer
  *   - Model-card.json — training provenance
- *   - Fst-en-US.bin — FST gazetteer (or whatever locale)
- *   - Wof-hot.db — slim WOF database for browser resolver
+ *   - Fst-<locale>.bin — per-locale FST gazetteer (OPTIONAL since #1318; en-nz ships none)
+ *   - Wof-hot.db — slim WOF database for browser resolver (RETIRED 2026-06-20, accepted)
  *
  *   After upload, releases.json is updated in-place and re-uploaded.
  *
@@ -40,21 +40,19 @@ import { resolve } from "node:path"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
 /** The parseArgs option names of the required per-release artifacts. */
-type RequiredFileOption = "model" | "tokenizer" | "model-card" | "fst"
+type RequiredFileOption = "model" | "tokenizer" | "model-card"
 
 /** The camelCase {@linkcode PublishHFOptions} field for each required-file option id. */
 const OPTION_TO_FIELD = {
 	model: "model",
 	tokenizer: "tokenizer",
 	"model-card": "modelCard",
-	fst: "fst",
 } as const satisfies Record<RequiredFileOption, keyof PublishHFOptions>
 
 const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; description: string }> = [
 	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier" },
 	{ option: "tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
 	{ option: "model-card", remoteName: "model-card.json", description: "Model card JSON" },
-	{ option: "fst", remoteName: "fst-en-US.bin", description: "FST gazetteer (filename varies by locale)" },
 	// The slim wof-hot.db was RETIRED 2026-06-20: the demo's admin tier now byte-range-resolves
 	// against the global candidate table, hosted version-independently at
 	// mailwoman/gazetteer/<ver>/candidate.db (NOT a per-release asset — it's model-independent). See
@@ -63,7 +61,6 @@ const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; de
 ]
 
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
-const DEMO_BASE = "https://public.sister.software/mailwoman"
 
 /**
  * HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the truth for demo
@@ -119,12 +116,6 @@ function run(cmd: string, args: string[]) {
 	}
 }
 
-function runCapture(cmd: string, args: string[]) {
-	const r = spawnSync(cmd, args, { encoding: "utf8" })
-
-	return { ok: r.status === 0, stdout: r.stdout || "", stderr: r.stderr || "" }
-}
-
 async function checkRemoteFileExists(url: string) {
 	try {
 		const res = await fetch(url, { method: "HEAD", redirect: "follow" })
@@ -157,16 +148,21 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		fail("--description required")
 	}
 
-	// Adapt remote FST filename to the locale, in BCP-47 casing (lowercase language subtag,
-	// uppercase region subtag): "en-us" -> "en-US" -> "fst-en-US.bin". This MUST match the exact
-	// name the demo fetches (docs/src/shared/resources.tsx → "fst-en-US.bin"); a casing mismatch
-	// 404s the gazetteer at runtime. (Previously `locale.toUpperCase()` produced "fst-EN-US.bin".)
+	// Per-locale FST gazetteer (#1318 FST-distribution arc) — OPTIONAL (en-nz ships none). When provided,
+	// the remote name adapts to BCP-47 casing ("en-us" → "en-US" → "fst-en-US.bin") to match the demo
+	// fetcher (docs/src/shared/resources.tsx); a casing mismatch 404s the gazetteer at runtime.
 	const bcp47 = args.locale
 		.split("-")
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
 		.join("-")
 	const fstRemoteName = `fst-${bcp47}.bin`
-	REQUIRED_FILES[3]!.remoteName = fstRemoteName
+	const fstPath = args.fst
+
+	if (fstPath) {
+		if (!existsSync(fstPath)) fail(`${fstPath} does not exist`)
+
+		if (statSync(fstPath).size === 0) fail(`${fstPath} is empty`)
+	}
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
@@ -275,6 +271,13 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
+	// Per-locale FST gazetteer (#1318) — OPTIONAL (en-nz ships none).
+	if (fstPath) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", fstPath, dst])
+	}
+
 	if (gazetteerLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
 		console.error(`  → ${dst}`)
@@ -306,6 +309,15 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		console.error(`  ✓ ${url}`)
 	}
 
+	// FST gazetteer (#1318) — optional, verified separately.
+	if (fstPath) {
+		const fstURL = `${BUCKET_RESOLVE}/${remoteBase}/${fstRemoteName}`
+		const fstOK = await checkRemoteFileExists(fstURL)
+
+		if (!fstOK) fail(`${fstRemoteName} unreachable at ${fstURL}`)
+		console.error(`  ✓ ${fstURL}`)
+	}
+
 	// --- Phase 4: update releases.json ---
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await fetch(releasesURL, { redirect: "follow" })
@@ -322,7 +334,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		modelSize: args.modelSize ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
 		tokenizerVocab: 48000,
 		steps: args.steps ?? 100000,
-		hasFST: true,
+		hasFST: !!fstPath,
 		hasWOFDb: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
 		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,

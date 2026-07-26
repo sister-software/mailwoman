@@ -103,8 +103,31 @@ async function main() {
 		process.stderr.write(`copied weights → ${workspace}/{model.onnx,tokenizer.model}\n`)
 
 		await materializeSoftFeed(workspace, dir)
+		await materializeFST(workspace, dir)
 		await materializePairIndex(workspace, dir)
 	}
+}
+
+/**
+ * Materialize the per-locale FST gazetteer binary (#1318 FST-distribution arc) into a weights workspace. The source
+ * binary lives at $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin — a verbatim copy (no build step). En-nz has
+ * no FST sibling and is skipped silently (byte-stable).
+ */
+async function materializeFST(workspace: string, dir: string) {
+	const locale = workspace.replace(/^neural-weights-/, "")
+	const src = resolve(dataRoot, "wof", "fst-per-locale", `fst-${locale}.bin`)
+
+	if (!existsSync(src)) {
+		process.stderr.write(
+			`copy-weights: no FST at ${src} — skipping ${workspace}/fst-${locale}.bin (byte-stable; en-nz has none)\n`
+		)
+
+		return
+	}
+	const dest = resolve(dir, `fst-${locale}.bin`)
+	await removeIfPresent(dest)
+	await copyFile(src, dest)
+	process.stderr.write(`copied FST → ${workspace}/fst-${locale}.bin\n`)
 }
 
 /**

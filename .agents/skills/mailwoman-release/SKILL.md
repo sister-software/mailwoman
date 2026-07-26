@@ -87,9 +87,9 @@ there first, or the real run fails the `[ -s "$f" ]` guard.
 node scripts/copy-weights.ts
 md5sum neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5 (a stale leftover reads wrong)
 
-# The FST gazetteer is MODEL-INDEPENDENT — reuse the prior release's:
-curl -fSL "https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v<prev>/fst-en-US.bin" \
-  -o /tmp/fst-en-US.bin
+# Per-locale FST gazetteers (#1318 — MODEL-INDEPENDENT): copy-weights.ts already materialized them
+# (fst-en-us.bin, fst-fr-fr.bin, fst-en-gb.bin) into each neural-weights-<locale>/ workspace.
+# Use them directly — no separate download. En-nz ships none (--fst omitted).
 
 # Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe):
 HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | cut -d= -f2-) \
@@ -98,7 +98,7 @@ node mailwoman/out/cli.js release hf v<target> \
   --model neural-weights-en-us/model.onnx \
   --tokenizer neural-weights-en-us/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
-  --fst /tmp/fst-en-US.bin \
+  --fst neural-weights-en-us/fst-en-us.bin \
   --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
   --label "v<target> — <one-liner>" --description "<what changed + headline metrics>"
