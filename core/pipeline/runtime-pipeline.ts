@@ -603,12 +603,26 @@ async function safeClassify(
  */
 const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
 
+/**
+ * D2 remediation (#1320, ROAD_TO_MAILWOMAN_V8_1_0 §5.2): the pipeline ships the gate at FULL suppression (0.0), not the
+ * classifier's 0.25 default. Measured 2026-07-26 on v8.0.0-as-shipped (branch TS == origin/main, FST md5 == published):
+ * 0.0 puts FR admin-street-homonym at EXACT P0 parity (159/400 vs 157 at 0.25) with golden us/fr and every other
+ * fragment class byte-identical to 0.25 — the "some admin mass for the semi-markov decoder" rationale for 0.25 carried
+ * no measured benefit at the pipeline level. Satisfies the D-rule (iron rule 6) ≥P0 clause for #1318.
+ */
+const STREET_CONTEXT_POSITIVE_SCALE = 0
+
 function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
 	fstStreetMorphology?: FSTMatcherLike
 	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
+	fstStreetContextPositiveScale?: number
 } {
 	return stages.fst && stages.streetMorphology
-		? { fstStreetMorphology: stages.streetMorphology, fstStreetMorphologyOpts: { ...ZEROED_MORPHOLOGY_OPTS } }
+		? {
+				fstStreetMorphology: stages.streetMorphology,
+				fstStreetMorphologyOpts: { ...ZEROED_MORPHOLOGY_OPTS },
+				fstStreetContextPositiveScale: STREET_CONTEXT_POSITIVE_SCALE,
+			}
 		: {}
 }
 
