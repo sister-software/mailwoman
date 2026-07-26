@@ -44,7 +44,7 @@ const OptionsSchema = zod.object({
 	// scripts/eval shim the probes spawn) keep the original two-key contract.
 	adminCoherenceOff: zod.boolean().default(false).describe("#895 tri-state pin: force adminCoherence OFF"),
 	hierarchyCompletion: zod.boolean().default(false).describe("#405: recover the dual-role-place locality"),
-	cityStateFallback: zod.boolean().default(false).describe("#387 alias for --hierarchy-completion"),
+
 	// coordinate tiers
 	postcodeAnchor: zod.boolean().default(false).describe("Add the neural+anchor row (anchor-centroid coordinate)"),
 	postcodeShards: zod.string().optional().describe("Postcode shards for the anchor rows (comma-separated)"),

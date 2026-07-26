@@ -54,8 +54,6 @@ export interface PipelineOpts {
 	 * docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	 */
 	jointReconcile?: boolean
-	/** @deprecated Use {@link jointReconcile}. Retained as an explicit override for the A/B harnesses. */
-	forceJointReconcile?: boolean
 	/** Hard cap on lookups the resolver may issue; passed through. */
 	resolveOpts?: ResolveOpts
 	/**

@@ -431,7 +431,7 @@ export async function runPipeline(
 	// the tracked issue); until that's fixed, argmax is the correct default. Set `jointReconcile: true`
 	// to opt back into reconcile (the A/B harnesses do). Report:
 	// docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
-	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? false
+	const jointEnabled = opts?.jointReconcile ?? false
 	const useJointReconcile =
 		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
 
