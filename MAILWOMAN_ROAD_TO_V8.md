@@ -214,7 +214,7 @@ Tag when ALL of these hold:
    (trailing-locality prior, **opt-in only** — the comma-free decode path is a dead-end per the #1288
    open-vocab wall; routes to #1102 training), #1318 (per-locale FST distribution, **default-on** with
    a dated bar revision that retires at the next model promotion — tracked via #1320).
-4. **The standing gates green** — golden us/fr byte-stable across the train, invariance zero new
+5. **The standing gates green** — golden us/fr byte-stable across the train, invariance zero new
    classes, gauntlet, presets; the publish guard + tarball md5 verification unmodified.
 
 Explicitly NOT gating v8.0.0: any Track C locale claim (rides minors), Track D mechanisms beyond

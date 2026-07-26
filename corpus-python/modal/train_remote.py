@@ -1011,6 +1011,62 @@ def sync_latam():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_latam_br():
+    """CA/MX/BR full-LATAM add (Overture, v7.2 candidate) — pull the v0.14.0-latam-br overlay (base
+    v0.11.0-no-fragment + the CA/MX overture-latam shard @ v0.13.0-latam + the new BR shard) + code/config
+    from R2. The CA/MX shard persists from sync_latam; only the BR shard + config are new. Mirror of sync_latam."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.14.0-latam-br overlay (CA/MX/BR) + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.14.0-latam-br/corpus-v0.14.0-latam-br/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.14.0-latam-br/corpus-v0.14.0-latam-br/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i + 1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nCA/MX/BR v0.14.0-latam-br overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.14.0-latam-br/corpus-v0.14.0-latam-br"
+    latam = f"{VOL_MOUNT}/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam/train/part-latam.parquet"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.8.6-latam-br-8k.yaml"
+    print("  v3.8.6-latam-br config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  BR shard present:", os.path.isfile(f"{cdir}/train/part-br.parquet"))
+    print("  CA/MX shard (from sync_latam) present:", os.path.isfile(latam))
+    base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
+    print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
+    print(
+        "  init_from v381 step-008000 on volume:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
+    )
+    print(
+        "  tokenizer v0.9.0-multisplice on volume:",
+        os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_gb():
     """GB locale add (Task 7, dependent_locality dead-tag resurrection probe) — pull the v0.14.0-gb
     overlay (base v0.13.0-latam + the one new synth-gb-v1 shard, 800k rows) + latest code/config from

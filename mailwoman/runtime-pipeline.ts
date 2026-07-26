@@ -423,6 +423,7 @@ export function createRuntimePipeline(
 
 		if (!morphologyResolved) {
 			morphologyResolved = true
+
 			// The gate needs BOTH matchers — skip the build when there's no gazetteer for it to gate.
 			if (stages.fst) {
 				const morph = autoBuildStreetMorphology()

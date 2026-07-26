@@ -2,6 +2,16 @@
 # Clone of v3.8.5-latam-8k.yaml (the shipped v385/6.6.0 CA/MX Overture recipe) with EXACTLY the
 # deltas below — one-variable discipline, everything else verbatim.
 #
+# 2026-07-22 RUN B (this launch): run A (`output-v3100-gb-probe-s42`) was a VERIFIED INSTRUMENT
+# FAILURE, not a result — the volume-side `config.py` predated commit 78adb380
+# (`reinit_label_rows` + `classifier_learning_rate`), so its `_merge` hasattr gate silently
+# dropped both keys and the probe ran as a plain fine-tune (adjudicated from classifier rows 7/8
+# reading ~unchanged vs v385, not from the loss curve). The corpus overlay + this YAML DID reach
+# the volume correctly in run A. Run B re-syncs `corpus-python/src/` (`sync_src_gb`, verified both
+# `train.py` and `config.py` on the volume now contain `reinit_label_rows`) and launches the
+# IDENTICAL recipe into a fresh output dir — same recipe, sources fixed, one variable (the
+# instrument) corrected.
+#
 # THE VARIABLES (three, bundled because each alone is a known no-op — #456/#1100 dead-tag history):
 #   1. data.corpus_dir -> v0.14.0-gb (v0.13.0-latam base + the new synth-gb-v1 shard, 800k rows,
 #      32.8% B-dependent_locality) + data.source_weights.synth-gb: 6.0 (the same tier as the other
@@ -198,7 +208,7 @@ model: # VERBATIM v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only).
-  output_dir: /data/output-v3100-gb-probe-s42/checkpoints # DELTA — new output dir for this probe.
+  output_dir: /data/output-v3100-gb-probe-b-s42/checkpoints # DELTA — new output dir for this probe (run B: sources synced, see header).
   seed: 42
   init_from: /data/output-v384-latam-probe-s42/checkpoints/step-008000 # DELTA — the verified v385 (6.6.0) checkpoint. See header for the volume-verification evidence.
   batch_size: 128
@@ -220,7 +230,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; -
   classifier_learning_rate: 1.0e-3 # DELTA — NEW. The dead-tag resurrection hot param group (#1100 Task 6); see header.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"] # DELTA — NEW. Mean-of-live re-init of the baked-dead rows; REQUIRES init_from AND --resume none (see header).
   trackio_project: mailwoman
-  trackio_run_name: v3.10.0-gb-probe-s42
+  trackio_run_name: v3.10.0-gb-probe-b-s42
 
 eval:
   golden_dir: /data/eval/golden/v0.1.2

@@ -159,9 +159,13 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	const fstPath = args.fst
 
 	if (fstPath) {
-		if (!existsSync(fstPath)) fail(`${fstPath} does not exist`)
+		if (!existsSync(fstPath)) {
+			fail(`${fstPath} does not exist`)
+		}
 
-		if (statSync(fstPath).size === 0) fail(`${fstPath} is empty`)
+		if (statSync(fstPath).size === 0) {
+			fail(`${fstPath} is empty`)
+		}
 	}
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
@@ -314,7 +318,9 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		const fstURL = `${BUCKET_RESOLVE}/${remoteBase}/${fstRemoteName}`
 		const fstOK = await checkRemoteFileExists(fstURL)
 
-		if (!fstOK) fail(`${fstRemoteName} unreachable at ${fstURL}`)
+		if (!fstOK) {
+			fail(`${fstRemoteName} unreachable at ${fstURL}`)
+		}
 		console.error(`  ✓ ${fstURL}`)
 	}
 
