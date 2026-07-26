@@ -58,7 +58,8 @@
 		"resolver-wof-sqlite",
 		"resolver-wof-wasm",
 		"tile-worker",
-		"docs"
+		"docs",
+		"neural-weights-base-latn"
 	],
 	"type": "module",
 	"scripts": {

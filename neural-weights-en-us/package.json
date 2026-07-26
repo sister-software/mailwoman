@@ -9,11 +9,6 @@
 		"directory": "neural-weights-en-us"
 	},
 	"files": [
-		"model.onnx",
-		"tokenizer.model",
-		"model-card.json",
-		"calibration.json",
-		"calibration-per-locale.json",
 		"postcode-us.bin",
 		"fst-en-us.bin",
 		"anchor-lexicon-v1.json",
@@ -30,5 +25,8 @@
 	],
 	"publishConfig": {
 		"access": "public"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-base-latn"
 	}
 }

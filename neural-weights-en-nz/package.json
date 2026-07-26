@@ -30,6 +30,6 @@
 		"@mailwoman/neural-weights-en-us": "workspace:*"
 	},
 	"mailwoman": {
-		"baseWeights": "@mailwoman/neural-weights-en-us"
+		"baseWeights": "@mailwoman/neural-weights-base-latn"
 	}
 }
