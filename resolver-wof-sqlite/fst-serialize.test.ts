@@ -205,3 +205,69 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		expect(mb).toBeGreaterThan(1)
 	})
 })
+
+describe("surface-ambiguity classes (survey #4) — header flags bit0 + the former _pad byte", () => {
+	function ambiguousMatcher(): FSTMatcher {
+		const nodes: FSTNode[] = [
+			{ edges: new Map(), places: [] },
+			{
+				edges: new Map(),
+				places: [
+					{
+						wofID: 101,
+						placetype: "locality",
+						name: "Pierre",
+						parentChain: [],
+						importance: 0.4,
+						lat: 44.36,
+						lon: -100.35,
+						crossCountryBranches: 7,
+					},
+				],
+			},
+		]
+		nodes[0]!.edges.set("pierre", 1)
+
+		return FSTMatcher.fromNodes(nodes)
+	}
+
+	it("roundtrips crossCountryBranches when present, with the header flag set", () => {
+		const bytes = serializeFST(ambiguousMatcher())
+
+		expect(bytes.readUInt16LE(6) & 1).toBe(1)
+		const restored = deserializeFST(bytes)
+		const q = restored.query("Pierre")
+
+		expect(q.accepting[0]!.crossCountryBranches).toBe(7)
+	})
+
+	it("pre-ambiguity artifacts expose undefined, never a fake zero", () => {
+		const plain = buildSyntheticFST()
+		const bytes = serializeFST(plain)
+
+		expect(bytes.readUInt16LE(6) & 1).toBe(0)
+		const restored = deserializeFST(bytes)
+		const q = restored.query("New York")
+
+		expect(q.accepting[0]!.crossCountryBranches).toBeUndefined()
+	})
+
+	it("mixed presence still flags the header and defaults absent entries to 0 in-band", () => {
+		const m = ambiguousMatcher()
+		// an entry WITHOUT the field alongside one with it — the writer records 0 for it, and since the
+		// header flag is set the reader reports 0 (a build that opted in but had no count for a surface)
+		m.nodes[1]!.places.push({
+			wofID: 102,
+			placetype: "locality",
+			name: "Pierre Part",
+			parentChain: [],
+			importance: 0.1,
+			lat: 29.96,
+			lon: -91.2,
+		})
+		const restored = deserializeFST(serializeFST(m))
+		const q = restored.query("Pierre")
+
+		expect(q.accepting.map((p) => p.crossCountryBranches)).toEqual([7, 0])
+	})
+})
