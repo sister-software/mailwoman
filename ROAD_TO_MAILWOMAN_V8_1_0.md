@@ -166,11 +166,30 @@ probes scope. v8.1.0 is "stop the pile growing + decide the shape."
 
 **Track 1 — Option D (ships v8.1.0):**
 
-- [ ] D1: write the D-rule into the release gate + AGENTS.md (no default-on tier-1 regression).
-- [ ] D2: #1318 FR remediation — per-locale artifact-header gate weight (or gate-harder/pull-default);
+- [x] D1: write the D-rule into the release gate + AGENTS.md (no default-on tier-1 regression).
+      **→ iron rule 6 in CONTRIBUTING_MODEL_WORK + the AGENTS.md pointer (`d250ddff`).**
+- [x] D2: #1318 FR remediation — per-locale artifact-header gate weight (or gate-harder/pull-default);
       re-run the #1318 battery to prove FR compliant. Closes #1320's spirit.
-- [ ] D3: decode-surface consolidation — retire `trailingLocality` + every hand knob into
+      **→ battery re-run on v8.0.0-as-shipped: the −6.8pp does NOT reproduce (−0.5pp); shipped the
+      gate at full suppression (`positiveScale: 0`, `11b37119`) → homonym at EXACT P0 parity, all
+      other boards byte-identical, gauntlet PASS. #1320 CLOSED; the bar revision retired. The
+      "gate-harder" route was taken over per-locale header calibration because measurement showed
+      NO per-locale variation is needed (0 is right everywhere measured) — header plumbing deferred
+      until a locale actually needs a different value.**
+- [x] D3: decode-surface consolidation — retire `trailingLocality` + every hand knob into
       header-derived self-calibration; guard: zero consumer flags remain.
+      **→ pair-prior δ/β: already artifact-header-derived (7-22/7-24 builds) — target state
+      pre-existing. FST gate weight: pipeline-pinned (D2). FST knobs (`fstBiasScale`,
+      `fstImportanceLengthScaleMode`, `fstStreetContextPositiveScale`, `fstStreetContextGate`):
+      marked `@internal` instrument knobs — harness decomposition only, never consumer config.
+      `trailingLocality`: `@deprecated`, delete at v9 (register row added). Runtime-flag register
+      updated with the previously-missing #1315/#1318 rows (invariant 5 accounting). A
+      `createRuntimePipeline` consumer now sets ZERO decode-tuning flags — every mechanism is
+      default-on-with-evidence, header-derived, or an opt-out escape.
+      ⚠ ONE open D-rule question for the v8.1.0 cut: street-particle reads −2.8pp under default-on
+      FST (NOT gate-mediated — a different FST channel; was −1.5pp ✓ at the 7-25 ratification).
+      Within the ratified golden-for-fragment trade's shape but drifted; operator call at the cut:
+      accept with a dated note, or open the channel-attribution investigation first.**
 
 **Track 2 — probes (research; strictly C → B → A) — ALL COMPLETE 2026-07-26:**
 
