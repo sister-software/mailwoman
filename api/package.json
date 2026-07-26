@@ -40,7 +40,7 @@
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
-		"hono": "^4.12.31",
+		"hono": "^4.12.32",
 		"zod": "^4.4.3"
 	}
 }

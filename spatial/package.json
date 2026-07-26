@@ -56,12 +56,12 @@
 	"devDependencies": {
 		"@googlemaps/google-maps-services-js": "^3.4.2",
 		"@mailwoman/annotations": "workspace:*",
-		"@types/google.maps": "^3.65.2",
+		"@types/google.maps": "^3.65.3",
 		"type-fest": "^5.8.0"
 	},
 	"optionalDependencies": {
 		"@googlemaps/google-maps-services-js": "^3.4.2",
-		"@types/google.maps": "^3.65.2"
+		"@types/google.maps": "^3.65.3"
 	},
 	"engines": {
 		"node": ">=24.18.0"

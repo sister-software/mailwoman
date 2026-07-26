@@ -65,7 +65,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@dsnp/parquetjs": "1.8.8",
+		"@dsnp/parquetjs": "1.8.9",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
