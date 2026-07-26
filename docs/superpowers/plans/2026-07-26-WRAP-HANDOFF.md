@@ -8,6 +8,14 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 (pre-registrations #1–#6). The two earlier handoffs (`2026-07-25-LEAD-HANDOFF.md`,
 `STALE_FST_HANDOFF.md`) are now HISTORICAL — they were executed; don't re-do them.
 
+> **Spec-clarity review (DeepSeek pro, 2026-07-26).** This work order was adversarially reviewed by a
+> repo-blind model as a spec-clarity test. Verdict after resolving repo facts: **Tasks 1–3 GREEN**
+> (autonomously executable — no human judgment call, no information missing from the repo). **Task 4
+> was the one genuine gap** — "reconcile" was too vague and risked the executor guessing at roadmap
+> status; it has since been rewritten as an explicit per-item edit list (below). The Task-1 FST source
+> path and the Task-3 fixture location were also pinned as a result of the review. Net: the spec is
+> clear enough for a myopic-but-repo-equipped executor to finish autonomously, with Task 4 now closed.
+
 ---
 
 ## Where the arc landed (settled — do not re-open)
@@ -71,10 +79,16 @@ materialize them:
 mirroring the postcode-binary handling — the AGENTS.md "symlinks in the publish tarball" pitfall is
 the reason). Update the `mailwoman-release` skill's Step 2 + `publish-hf.ts` to stage all three
 per-locale FSTs to HF at the next release. **Verify** with a `yarn pack -o /tmp` dry-run per workspace
-that the tarball contains a REAL `fst-<locale>.bin` (no symlink) and the files-guard passes. Source of
-the artifacts: the 2026-05-28 220k-importance per-locale build (en-us 22MB / fr-fr 10.7MB / en-gb
-3.9MB); en-nz has none → byte-stable. This is the one item that can cause an outage; land it before
-any release is cut.
+that the tarball contains a REAL `fst-<locale>.bin` (no symlink) and the files-guard passes.
+
+**Source path (pinned):** `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin` — this is exactly
+what `neural-weights-en-us/scripts/link-dev-weights.ts:211` already resolves
+(`dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")`) to create the dev symlink. **link-dev-weights.ts
+is your reference implementation** — copy-weights.ts must materialize from the SAME source, just with
+unlink-then-copy instead of symlink. (Confirmed: `copy-weights.ts` has zero `fst` references today;
+`link-dev-weights.ts` handles all three locales.) Blobs are the 2026-05-28 220k-importance per-locale
+build (en-us 22MB / fr-fr 10.7MB / en-gb 3.9MB); en-nz has none → byte-stable. This is the one item
+that can cause an outage; land it before any release is cut.
 
 ### 2. Make the #1318 default-on retirement obligation DURABLE (don't leave it in the ledger)
 
@@ -95,18 +109,27 @@ Disposition agreed (predecessor + coordinator concur): **waive-with-owner+board.
 training campaign (verifiably closing the gap 0.605→0.777). Board = the bare-street class of
 `ban-fragments-fr`, re-scored per candidate.
 
-**Task:** commit the `ban-fragments-fr` bare-street board as a durable re-scoring fixture if it isn't
-already one; update GitHub #1143 with the waive rationale, the owner, the re-anchored numbers, and the
-retest board; set it to the correct state (waived/deferred, linked to #1102). Correct the roadmap
-§3-F 0.215→0.605 if the predecessor didn't already (the report says it did — verify). The 37-row
-token-grab class is the gate's and is live via #1318; the 51-row whole-span class is training's.
+**Task:** the board **already exists** as a committed fixture —
+`mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt` + `.jsonl` — so nothing needs
+authoring. Confirm that fixture is the re-scoring board, then update GitHub #1143 with the waive
+rationale, the owner, the re-anchored numbers, and the retest board; set it to the correct state
+(waived/deferred, linked to #1102). Correct the roadmap §3-F 0.215→0.605 if the predecessor didn't
+already (the report says it did — verify). The 37-row token-grab class is the gate's and is live via
+#1318; the 51-row whole-span class is training's.
 
 ### 4. Reconcile the docs to the resolved state
 
-**Task:** update `MAILWOMAN_ROAD_TO_V8.md` so it reads true post-arc: comma-free = decode dead-end
-(opt-in mechanism only, training via #1102), FST distribution shipped default-on with the tracked bar
-revision, 768k reship rejected, #1143 waived. Make sure no doc still frames comma-free as an open
-decode build.
+**Task (explicit — do exactly these edits to `MAILWOMAN_ROAD_TO_V8.md`, nothing open-ended):**
+
+- Mark **#1315 street-context gate**, **#1317 trailing-locality prior (opt-in)**, and **#1318 per-locale
+  FST distribution (default-on)** as COMPLETE.
+- Remove/close any "future" or "open" entry that frames **decode-time gazetteer** or **comma-free
+  trailing-locality** as a pending BUILD — it is a settled decode dead-end (training-side via #1102).
+- Ensure **§3-F reads 0.605** (not 0.215).
+- Note the **#1318 default-on bar revision** as tracked (the issue from Task 2) with its next-promotion
+  retirement condition.
+- **Otherwise no changes.** Do not restructure or re-status unrelated roadmap items — if something
+  outside the #1315/#1317/#1318 arc looks stale, surface it to the operator rather than editing it.
 
 ---
 
