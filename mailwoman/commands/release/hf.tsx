@@ -42,6 +42,12 @@ const OptionsSchema = zod.object({
 		.describe(
 			"Comma-separated placetype-pair-index soft-feed binaries (pair-index-gb.bin,…; placetype-pair-prior arc, Task 8)"
 		),
+	fsts: zod
+		.string()
+		.optional()
+		.describe(
+			"Comma-separated per-locale FST gazetteers for the npm packages (fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin; #1318). Staged flat by lowercase basename; publish.yml fetches these into each weights workspace."
+		),
 	gazetteerLexicon: zod
 		.string()
 		.optional()

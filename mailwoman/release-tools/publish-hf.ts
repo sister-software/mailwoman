@@ -92,6 +92,7 @@ export interface PublishHFOptions {
 	steps?: number
 	postcodes?: string
 	pairIndexes?: string
+	fsts?: string
 	gazetteerLexicon?: string
 	countryLexicon?: string
 	polygons?: string
@@ -222,6 +223,24 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		}
 	}
 
+	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution): comma-separated
+	// --fsts paths (e.g. fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin). Uploaded flat under the version dir
+	// by their LOWERCASE npm basename — this is what publish.yml fetches into each weights workspace so
+	// the published tarball carries its `fst-<locale>.bin` (files-guard requires it). Distinct from the
+	// singular --fst above, which stages the demo's BCP-47-cased `fst-en-US.bin`. en-nz ships no FST.
+	const fstBins = args.fsts
+		? args.fsts
+				.split(",")
+				.map((s: string) => s.trim())
+				.filter(Boolean)
+		: []
+
+	for (const localPath of fstBins) {
+		if (!existsSync(localPath) || statSync(localPath).size === 0) {
+			fail(`FST binary ${localPath} missing/empty`)
+		}
+	}
+
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
@@ -275,7 +294,17 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
-	// Per-locale FST gazetteer (#1318) — OPTIONAL (en-nz ships none).
+	// Per-locale FST gazetteers for the NPM packages (#1318) — flat under the version dir by lowercase
+	// basename; publish.yml fetches these into each weights workspace so the tarball ships its FST.
+	for (const localPath of fstBins) {
+		const remoteName = localPath.split("/").pop()
+		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", localPath, dst])
+	}
+
+	// Demo's BCP-47-cased FST gazetteer (#1318) — OPTIONAL (en-nz ships none). Distinct filename from
+	// the lowercase --fsts above; the demo fetcher expects `fst-en-US.bin`.
 	if (fstPath) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
 		console.error(`  → ${dst}`)
@@ -322,6 +351,18 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 			fail(`${fstRemoteName} unreachable at ${fstURL}`)
 		}
 		console.error(`  ✓ ${fstURL}`)
+	}
+
+	// Per-locale NPM FSTs (#1318 --fsts) — each must be reachable so publish.yml can fetch it.
+	for (const localPath of fstBins) {
+		const remoteName = localPath.split("/").pop()
+		const url = `${BUCKET_RESOLVE}/${remoteBase}/${remoteName}`
+		const ok = await checkRemoteFileExists(url)
+
+		if (!ok) {
+			fail(`${remoteName} unreachable at ${url}`)
+		}
+		console.error(`  ✓ ${url}`)
 	}
 
 	// --- Phase 4: update releases.json ---
