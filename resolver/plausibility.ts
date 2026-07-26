@@ -26,6 +26,7 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 /**
  * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places it on this ladder; the
@@ -91,8 +92,14 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * DELIBERATELY rough — a guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
  * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`). The US box spans Alaska →
  * the mainland east coast; continental FR only; etc. A country absent here simply never trips the guard (fail-open).
+ *
+ * FALLBACK ROLE (survey candidate #2): these boxes are also baked into the candidate gazetteer's `country_bbox`
+ * manifest table at build time (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record). When a
+ * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those REPLACE this table wholesale
+ * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
+ * key here. This constant is the fallback for artifacts predating the manifest; grow the manifest record, not this.
  */
-const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
+export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
 	US: [18, 72, -180, -66],
 	AU: [-44, -10, 112, 154],
 	BR: [-34, 6, -74, -34],
@@ -113,9 +120,29 @@ const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, nu
 	SI: [45.4, 46.9, 13.3, 16.6],
 }
 
-/** True when the coordinate lies outside `countryCode`'s coarse bbox. Unknown country codes are fail-open (false). */
-export function outsideExpectedCountry(countryCode: string, lat: number, lon: number): boolean {
-	const b = COUNTRY_BBOX[countryCode.toUpperCase()]
+/**
+ * True when the coordinate lies outside `countryCode`'s coarse bbox. Unknown country codes are fail-open (false).
+ *
+ * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes}) is supplied it REPLACES the
+ * built-in {@link COUNTRY_BBOX} table wholesale — absence from the artifact's table fails open, same semantic as an
+ * absent constant key. Omitted → the constant, byte-identical to the pre-manifest behavior.
+ */
+export function outsideExpectedCountry(
+	countryCode: string,
+	lat: number,
+	lon: number,
+	bboxes?: ReadonlyMap<string, CountryBBoxFact>
+): boolean {
+	const cc = countryCode.toUpperCase()
+
+	if (bboxes) {
+		const fact = bboxes.get(cc)
+
+		if (!fact) return false
+
+		return lat < fact.latMin || lat > fact.latMax || lon < fact.lonMin || lon > fact.lonMax
+	}
+	const b = COUNTRY_BBOX[cc]
 
 	if (!b) return false
 
@@ -143,6 +170,12 @@ export interface PlausibilityOpts {
 	 * only in the receipt harness, so the shipped residual read 5/321 while the receipt said 3/321).
 	 */
 	expectedCountry?: string
+	/**
+	 * Artifact-declared guard-B boxes (the loaded gazetteer's `country_bbox` manifest, via
+	 * `resolver.artifactCoverage?.countryBBoxes`). When supplied they replace the built-in {@link COUNTRY_BBOX} table
+	 * wholesale; omitted → the constant (byte-identical fallback for artifacts predating the manifest).
+	 */
+	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
 
 /**
@@ -161,7 +194,7 @@ export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpt
 	if (
 		coordinate &&
 		opts.expectedCountry &&
-		outsideExpectedCountry(opts.expectedCountry, coordinate.lat, coordinate.lon)
+		outsideExpectedCountry(opts.expectedCountry, coordinate.lat, coordinate.lon, opts.countryBBoxes)
 	) {
 		return { implausible: true, reason: "outside-expected-country", coordinate }
 	}

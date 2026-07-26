@@ -25,10 +25,11 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { expandPlacetypeFilter } from "@mailwoman/resolver"
+import { expandPlacetypeFilter, type GazetteerArtifactCoverage } from "@mailwoman/resolver"
 
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
+import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
 import { haversineKm } from "./geo.ts"
 import { trigramJaccard } from "./lookup.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
@@ -212,6 +213,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * country-agnostic retry. Prepared only alongside `#ftsProbe`.
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	/**
+	 * Facts this candidate DB declares about itself — the coverage manifest (`country_coverage` + `country_bbox`) the
+	 * gazetteer build emits, read once at open. `undefined` when the artifact predates the manifest, so every consumer
+	 * (the hard-country coverage gate, guard-B plausibility) falls back to its code constants byte-identically.
+	 */
+	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
@@ -255,6 +262,11 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			)
 			this.#nameKeyExistsProbe = this.#db.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
 		}
+
+		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-gated like
+		// the probes above — a candidate.db built before the manifest reads `undefined` and consumers keep
+		// their code-constant fallbacks byte-identically.
+		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
 	}
 
 	/** Does this query want a locality-tier place? Postal-city aliases (#741) are all localities. */

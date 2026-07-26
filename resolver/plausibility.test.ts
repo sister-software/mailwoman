@@ -9,9 +9,15 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 import { describe, expect, test } from "vitest"
 
-import { finestResolvedCoordinate, isImplausibleResolution } from "./plausibility.ts"
+import {
+	COUNTRY_BBOX,
+	finestResolvedCoordinate,
+	isImplausibleResolution,
+	outsideExpectedCountry,
+} from "./plausibility.ts"
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
 	start: 0,
@@ -109,5 +115,51 @@ describe("isImplausibleResolution", () => {
 
 		expect(verdict.implausible).toBe(false)
 		expect(verdict.coordinate).toBeUndefined()
+	})
+})
+
+describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate #2)", () => {
+	const fact = (country: string, latMin: number, latMax: number, lonMin: number, lonMax: number): CountryBBoxFact => ({
+		country,
+		latMin,
+		latMax,
+		lonMin,
+		lonMax,
+		source: "test",
+	})
+
+	test("no bboxes argument → the code constant, byte-identical (the pre-manifest fallback)", () => {
+		// Every constant entry answers identically through the 3-arg legacy call and the explicit-undefined call.
+		for (const [cc, b] of Object.entries(COUNTRY_BBOX)) {
+			const inside: [number, number] = [(b[0] + b[1]) / 2, (b[2] + b[3]) / 2]
+			const outside: [number, number] = [b[1] + 5, b[3] + 5]
+
+			expect(outsideExpectedCountry(cc, inside[0], inside[1])).toBe(false)
+			expect(outsideExpectedCountry(cc, inside[0], inside[1], undefined)).toBe(false)
+			expect(outsideExpectedCountry(cc, outside[0], outside[1])).toBe(true)
+			expect(outsideExpectedCountry(cc, outside[0], outside[1], undefined)).toBe(true)
+		}
+	})
+
+	test("artifact boxes REPLACE the constant wholesale — an artifact-absent country fails open even when the constant has a box", () => {
+		const artifact = new Map([["FR", fact("FR", 41, 51.5, -5.5, 9.8)]])
+
+		// FR present in the artifact: behaves like the constant.
+		expect(outsideExpectedCountry("FR", 48.86, 2.35, artifact)).toBe(false)
+		expect(outsideExpectedCountry("FR", -6.3, 155.6, artifact)).toBe(true)
+		// US absent from the artifact's table → fail-open, even though the constant carries a US box.
+		expect(outsideExpectedCountry("US", -6.3, 155.6, artifact)).toBe(false)
+		expect(outsideExpectedCountry("US", -6.3, 155.6)).toBe(true)
+	})
+
+	test("isImplausibleResolution threads countryBBoxes through to guard B", () => {
+		const t = tree([node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6, placeID: "wof:ia-png" })])
+		const artifact = new Map([["US", fact("US", 18, 72, -180, -66)]])
+
+		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: artifact }).reason).toBe(
+			"outside-expected-country"
+		)
+		// An artifact WITHOUT a US box → fail-open, overriding the constant.
+		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: new Map() }).implausible).toBe(false)
 	})
 })
