@@ -26,6 +26,13 @@ updates:
       # exact ORT dev build), never as bot PRs.
       - dependency-name: "onnxruntime-node"
       - dependency-name: "onnxruntime-web"
+      # release-it is pinned to ^19.x: @release-it-plugins/workspaces (the
+      # multi-workspace publish plugin that runs the entire release) caps its
+      # release-it peer at "^17 || ^18 || ^19" — no version supports 20/21 yet.
+      # Ignore majors until the plugin catches up; #1327 bumped to 21 and would
+      # have broken the release train.
+      - dependency-name: "release-it"
+        update-types: ["version-update:semver-major"]
 
   # corpus-python (pyproject.toml + uv.lock).
   - package-ecosystem: "uv"
