@@ -979,6 +979,51 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		await resolver.resolveTree(noHn, { interpolation: spy })
 		expect(called).toBe(false)
 	})
+
+	// #374 doctrine (2026-07-26): the conformal multiplier is a property of the calibration set the ARTIFACT
+	// was built against — an artifact carrying it in its header (`InterpolationLookup.radiusCalibration`,
+	// read at shard open) must produce EXACTLY what the legacy caller-supplied path produced.
+	test("artifact-carried radiusCalibration is byte-identical to the caller-supplied factor (#374)", async () => {
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const artifactInterp: InterpolationLookup = { find: fakeInterp.find, radiusCalibration: 1.7 }
+		// Legacy path: the caller resolves the factor and forwards it per call (today's geocode-core).
+		const viaCaller = await resolver.resolveTree(addrTree(), {
+			interpolation: fakeInterp,
+			interpolationRadiusCalibration: 1.7,
+		})
+		// Artifact path: the shard carries the same factor; the caller passes nothing.
+		const viaArtifact = await resolver.resolveTree(addrTree(), { interpolation: artifactInterp })
+
+		// Byte-identical: the full serialized trees match, not just the headline fields.
+		expect(JSON.stringify(viaArtifact)).toBe(JSON.stringify(viaCaller))
+		const street = viaArtifact.roots.find((n) => n.tag === "street")
+		expect(street?.metadata).toMatchObject({
+			uncertainty_m: Math.round(35 * 1.7),
+			uncertainty_raw_m: 35,
+			uncertainty_calibration: 1.7,
+		})
+	})
+
+	test("an explicit caller factor overrides the artifact's (@internal instrument override)", async () => {
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const artifactInterp: InterpolationLookup = { find: fakeInterp.find, radiusCalibration: 1.7 }
+		const result = await resolver.resolveTree(addrTree(), {
+			interpolation: artifactInterp,
+			interpolationRadiusCalibration: 2,
+		})
+		const street = result.roots.find((n) => n.tag === "street")
+		expect(street?.metadata?.["uncertainty_calibration"]).toBe(2)
+		expect(street?.metadata?.["uncertainty_m"]).toBe(70)
+	})
+
+	test("artifact-silent + caller-silent stays raw (the shipped-fleet path, byte-stable)", async () => {
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const result = await resolver.resolveTree(addrTree(), { interpolation: fakeInterp })
+		const street = result.roots.find((n) => n.tag === "street")
+		expect(street?.metadata?.["uncertainty_m"]).toBe(35)
+		expect(street?.metadata?.["uncertainty_raw_m"]).toBeUndefined()
+		expect(street?.metadata?.["uncertainty_calibration"]).toBeUndefined()
+	})
 })
 
 // ---------------------------------------------------------------------------

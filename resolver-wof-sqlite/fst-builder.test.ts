@@ -6,6 +6,7 @@
 
 import { existsSync } from "node:fs"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { buildFSTFromWOF } from "./fst-builder.ts"
@@ -91,5 +92,50 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 		const q = matcher.query("Xyzzyplugh")
 		expect(q.accepting).toEqual([])
 		expect(q.path).toEqual([])
+	})
+})
+
+// The curation block runs against the canonical admin DB (the artifact the shipped per-locale FSTs
+// are actually built from) — the per-repo DB above is a legacy fixture absent on newer hosts.
+const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const HAS_ADMIN = existsSync(ADMIN_DB)
+
+describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", () => {
+	let matcher: FSTMatcher
+	let provenance: import("./fst-types.ts").FSTProvenance
+
+	beforeAll(() => {
+		const built = buildFSTFromWOF({
+			dbPath: ADMIN_DB,
+			countries: ["US"],
+			placetypes: ["country", "region", "county", "locality"],
+			languages: ["eng", ""],
+			// The shipped-index victims: "la" = the case-folded Los Angeles alias colliding with the
+			// French article; "boulevard" = Boulevard, CA colliding with the street-type word.
+			excludeSurfaces: new Set(["la", "boulevard"]),
+			excludeAllTokensOf: new Set(["de", "la", "du", "des"]),
+			exclusionPolicy: "test-policy",
+		})
+		matcher = built.matcher
+		provenance = built.provenance
+	}, 60_000)
+
+	it("refuses whole-surface degenerate keys", () => {
+		expect(matcher.query("la").accepting).toEqual([])
+		expect(matcher.query("boulevard").accepting).toEqual([])
+	})
+
+	it("keeps multi-token names containing a degenerate token", () => {
+		// Curation is whole-surface only — Los Angeles must remain findable.
+		expect(matcher.query("Los Angeles").accepting.length).toBeGreaterThan(0)
+	})
+
+	it("refuses all-function-word compositions", () => {
+		expect(matcher.query("de la").accepting).toEqual([])
+	})
+
+	it("records the policy + excluded count in provenance", () => {
+		expect(provenance.exclusionPolicy).toBe("test-policy")
+		expect(provenance.excludedInsertions).toBeGreaterThan(0)
 	})
 })

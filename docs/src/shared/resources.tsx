@@ -487,3 +487,20 @@ export async function loadFSTGazetteer(
 
 	return { matcher, provenance }
 }
+
+/**
+ * Load the locale-general street-morphology FST (`fst-street-morphology.bin`) for a release — the #1315 street-context
+ * gate's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
+ * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent; the
+ * browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes. Returns `null` when the
+ * release predates the artifact (HTTP 404) — the demo then parses without the gate, exactly as before. A
+ * present-but-corrupt binary throws; the caller's tolerant catch treats that as absent too.
+ */
+export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
+	const res = await fetch(assetURL(locale, version, "fst-street-morphology.bin"))
+
+	if (!res.ok) return null
+	const fstModule = await import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web")
+
+	return fstModule.deserializeFSTWeb(await res.arrayBuffer()) as FSTMatcherLike
+}

@@ -112,6 +112,14 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	fstPath?: string
 	/**
+	 * Path to the locale-general street-morphology FST binary shipped beside the resolved weights
+	 * (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} — PATH ONLY, same posture as
+	 * {@link NeuralConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.streetMorphologyPath} so the runtime
+	 * pipeline's street-context gate (#1315) deserializes the sealed artifact instead of rebuilding it from the libpostal
+	 * dictionaries per process.
+	 */
+	streetMorphologyPath?: string
+	/**
 	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features from the text +
 	 * this lookup and feeds them to the runner — for models trained with the anchor channel (exported with the
 	 * `anchor_features`/`anchor_confidence` ONNX inputs). Omit for plain models. Load via `loadAnchorLookup` from
@@ -241,6 +249,15 @@ export class NeuralAddressClassifier {
 	 */
 	get fstPath(): string | undefined {
 		return this.cfg.fstPath
+	}
+
+	/**
+	 * Path to the locale-general street-morphology FST (`fst-street-morphology.bin`) when the resolved weights package
+	 * (or its base) shipped one, else `undefined`. The runtime pipeline's street-context gate (#1315) deserializes it
+	 * through the shared loader ladder instead of rebuilding from the libpostal dictionaries per process.
+	 */
+	get streetMorphologyPath(): string | undefined {
+		return this.cfg.streetMorphologyPath
 	}
 
 	/**
@@ -444,6 +461,7 @@ export class NeuralAddressClassifier {
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
+			...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
 			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is
@@ -1007,20 +1025,35 @@ export interface ParseOpts {
 	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases.
 	 */
 	fst?: FSTMatcherLike
-	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
+	/**
+	 * Bias magnitude for FST gazetteer matches. Default 1.0.
+	 *
+	 * @internal Instrument knob (D3, ROAD_TO_MAILWOMAN_V8_1_0 §5.3) — exists so the eval harnesses can decompose the
+	 *   FST channel, NOT consumer configuration. The shipped calibration is the default; `createRuntimePipeline`
+	 *   consumers never set this.
+	 */
 	fstBiasScale?: number
-	/** Match-length scaling mode for the FST importance bias (#1142). Default `suppression`. */
+	/**
+	 * Match-length scaling mode for the FST importance bias (#1142). Default `suppression`.
+	 *
+	 * @internal Instrument knob (D3) — measurement decomposition only; the default IS the shipped calibration.
+	 */
 	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
 	 * Positive-bias multiplier for the FST street-context gate (#1142) — applied when a matched place name sits in a
 	 * syntactically street-headed position (street-type adjacency / house-number-left). Only consulted when BOTH `fst`
-	 * and `fstStreetMorphology` are provided. Default 0.25 (tune 0.15–0.4).
+	 * and `fstStreetMorphology` are provided. Classifier-level default 0.25; the PIPELINE ships 0 (full suppression — D2
+	 * remediation, measured 2026-07-26: homonym at exact P0 parity, golden + every other board identical to 0.25).
+	 *
+	 * @internal Instrument knob (D3) — measurement decomposition only; `createRuntimePipeline` pins the shipped value.
 	 */
 	fstStreetContextPositiveScale?: number
 	/**
 	 * Master switch for the street-context gate (#1142). Default true — the gate is active whenever BOTH `fst` and
 	 * `fstStreetMorphology` are provided. Pass `false` to run the morphology emission prior WITHOUT the gate (the
 	 * pre-gate behavior); used to decompose the two channels in measurement.
+	 *
+	 * @internal Instrument knob (D3) — measurement decomposition only.
 	 */
 	fstStreetContextGate?: boolean
 	/**
@@ -1042,6 +1075,10 @@ export interface ParseOpts {
 	 * ⚠ OPT-IN ONLY, deliberately never auto-wired: the prior cannot separate a trailing city from a person-name street
 	 * surname ("Avenue Marceau Julien") — it regresses the #1143 bare-street population on open-vocabulary street text
 	 * (measured 2026-07-25). Use only where the input register is known comma-free over notable cities.
+	 *
+	 * @deprecated D3 (ROAD_TO_MAILWOMAN_V8_1_0 §5.3): scheduled for deletion at the next major. Net-negative on the
+	 *   held-out BAN population — the open-vocab wall no decode prior crosses. The lasting fix is training-side (#1102);
+	 *   the next-major architecture (Option A, retrieval-augmented encoding) absorbs this mechanism's job.
 	 */
 	trailingLocality?: TrailingLocalityPriorOpts
 	/**

@@ -59,6 +59,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 		classifier,
 		fstMatcher,
 		fstProvenance,
+		streetMorphologyMatcher,
 		lookup,
 		selectPairIndex,
 		loadingProgress,
@@ -91,7 +92,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 				// map-only street tier / bias. `onStage(1)` fires between shape and classify, as before.
 				const { tree, nodes, kindResult, timing } = await runClassifyStage(
 					input,
-					{ classifier, fst: fstMatcher, selectPairIndex },
+					{ classifier, fst: fstMatcher, streetMorphology: streetMorphologyMatcher, selectPairIndex },
 					{ onClassifierStart: () => onStage(1) }
 				)
 
@@ -145,6 +146,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 		classifier,
 		fstMatcher,
 		fstProvenance,
+		streetMorphologyMatcher,
 		lookup,
 		selectPairIndex,
 		loadingProgress,

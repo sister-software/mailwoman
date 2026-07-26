@@ -217,3 +217,20 @@ if (existsSync(FST_SRC)) {
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
+
+// Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general
+// artifact ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build
+// street-morphology`) so `resolveWeights` surfaces `streetMorphologyPath` in dev and the
+// street-context gate (#1315) deserializes the artifact instead of rebuilding from dictionaries.
+// Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
+
+if (existsSync(MORPHOLOGY_SRC)) {
+	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
+} else {
+	console.error(
+		`WARNING: missing ${MORPHOLOGY_SRC} — the street-context gate falls back to the per-process dictionary build.`
+	)
+}

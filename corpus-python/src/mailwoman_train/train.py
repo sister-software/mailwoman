@@ -67,6 +67,10 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     if "country_features" in batch:
         tb["country_features"] = torch.tensor(batch["country_features"], dtype=torch.float32, device=device)
         tb["country_confidence"] = torch.tensor(batch["country_confidence"], dtype=torch.float32, device=device)
+    # Street-type channel (P-A / Option A): same presence contract — only when a street-type lexicon is set.
+    if "street_type_features" in batch:
+        tb["street_type_features"] = torch.tensor(batch["street_type_features"], dtype=torch.float32, device=device)
+        tb["street_type_confidence"] = torch.tensor(batch["street_type_confidence"], dtype=torch.float32, device=device)
     return tb
 
 
@@ -184,7 +188,20 @@ def build_optimizer(
     if span_head_learning_rate is not None:
         carveouts.append((("span_scorer.", "semi_crf."), span_head_learning_rate, "span_head_learning_rate"))
     if classifier_learning_rate is not None:
-        carveouts.append((("classifier.",), classifier_learning_rate, "classifier_learning_rate"))
+        # deploc_head (P-B probe) rides the classifier carveout: it is the output head for
+        # dependent_locality, so the fresh head resurrects at the same hot LR the reinit'd
+        # classifier rows used — one variable (separate head vs flat-head reinit), same LR.
+        # street_type_projection/cue (P-A probe) also ride it: the FRESH input channel (init_from
+        # v385 is strict=False → these load fresh) needs the hot LR to learn to use the street signal
+        # in a short probe, while the encoder fine-tunes at the base LR. Both extra prefixes are
+        # no-ops when their module is off (the tuple still matches `classifier.`, so no raise).
+        carveouts.append(
+            (
+                ("classifier.", "deploc_head.", "street_type_projection.", "street_type_token_embedding"),
+                classifier_learning_rate,
+                "classifier_learning_rate",
+            )
+        )
 
     if not carveouts:
         optim = AdamW([p for _, p in trainable], lr=learning_rate, weight_decay=weight_decay)

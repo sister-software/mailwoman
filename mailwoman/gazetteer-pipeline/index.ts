@@ -40,6 +40,7 @@ import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
+import { emitCoverageManifest } from "./coverage-manifest.ts"
 
 /**
  * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames `<CC>.txt` dumps
@@ -190,7 +191,8 @@ export interface BuildOptions {
 
 /**
  * Build the byte-range candidate gazetteer from an admin DB + postcode shards. The FTS5-trigram fuzzy index is baked in
- * by `buildCandidateTable`. Pure pass-through to the canonical builder.
+ * by `buildCandidateTable`; the coverage manifest (survey candidate #2 — the artifact's own hard-filter coverage record
+ * + guard-B bboxes, see `coverage-manifest.ts`) is baked in before the seal.
  */
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
@@ -201,6 +203,11 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		onProgress: opts.onProgress,
 	})
+	// Coverage manifest (survey candidate #2): facts about the artifact live IN the artifact — bake the
+	// measured hard-filter coverage record + guard-B bboxes so consumers read them at open instead of
+	// falling back to the code constants. MUST run pre-seal (a shipped DB is never patched — rebuild).
+	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
+	await emitCoverageManifest({ dbPath: opts.out })
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(opts.out)
 
@@ -314,6 +321,7 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 
 	return `${y}-${m}-${d}${suffix}`
 }
+export * from "./coverage-manifest.ts"
 export * from "./defaults.ts"
 export * from "./fts.ts"
 export * from "./verify.ts"

@@ -11,12 +11,21 @@
  *   `@mailwoman/codex`.
  */
 
-export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter, isPlacetypeFallback } from "./types.ts"
+export {
+	DEFAULT_PLACETYPE_MAP,
+	PLACETYPE_FILTER_GROUPS,
+	expandPlacetypeFilter,
+	hardCountrySafelistFromCoverage,
+	isPlacetypeFallback,
+} from "./types.ts"
 export type {
 	AddressPointHit,
 	AddressPointLookup,
 	Ancestor,
 	CoincidentLocality,
+	CountryBBoxFact,
+	CountryCoverageFact,
+	GazetteerArtifactCoverage,
 	InterpolatedPointHit,
 	InterpolationLookup,
 	PlacetypeMap,

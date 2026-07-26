@@ -432,6 +432,7 @@ def encode_row(
     gazetteer_lexicon=None,
     gazetteer_choreography: bool = False,
     country_lexicon=None,
+    street_type_lexicon=None,
     span_starts: Sequence[int] | None = None,
     span_ends: Sequence[int] | None = None,
     span_tags: Sequence[str] | None = None,
@@ -542,4 +543,21 @@ def encode_row(
             cconfs = cconfs + [0.0] * pad_needed
         out["country_features"] = cfeats
         out["country_confidence"] = cconfs
+
+    if street_type_lexicon is not None:
+        # Street-type channel (P-A / Option A): per-piece street_type clue painted from the RAW SURFACE
+        # by the codex street-type lexicon. Same schema as the gazetteer lexicon, so it reuses the same
+        # generic realign. Independent of the near-postcode choreography (a street-type word is a street
+        # fact wherever it sits). Positive-evidence-only — absence paints zero.
+        from .gazetteer_anchor import realign_gazetteer_to_pieces
+
+        sfeats, sconfs = realign_gazetteer_to_pieces(raw, list(spans), street_type_lexicon)
+        sfeats = sfeats[:max_length]
+        sconfs = sconfs[:max_length]
+        szero = [0.0] * street_type_lexicon.feature_dim
+        if pad_needed > 0:
+            sfeats = sfeats + [szero] * pad_needed
+            sconfs = sconfs + [0.0] * pad_needed
+        out["street_type_features"] = sfeats
+        out["street_type_confidence"] = sconfs
     return out

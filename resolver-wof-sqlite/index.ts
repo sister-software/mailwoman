@@ -23,6 +23,15 @@ export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpt
 
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
 export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "./candidate-lookup.ts"
+export {
+	COUNTRY_BBOX_TABLE,
+	COUNTRY_COVERAGE_TABLE,
+	createCountryBBoxTable,
+	createCountryCoverageTable,
+	readGazetteerCoverageManifest,
+	writeGazetteerCoverageManifest,
+} from "./coverage-manifest-schema.ts"
+export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "./coverage-manifest-schema.ts"
 export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "./street-name-lookup.ts"
 
 export { GEONAMES_ID_BASE, ingestGeonamesAliases, type GeonamesIngestProgress } from "./geonames-aliases.ts"

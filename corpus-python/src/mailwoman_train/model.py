@@ -235,7 +235,10 @@ class MailwomanCoarseEncoder(nn.Module):
         use_country_anchor: bool = False,
         country_feature_dim: int = 2,
         country_ambiguous_scale: float = 1.0,
+        use_street_type_anchor: bool = False,
+        street_type_feature_dim: int = 1,
         use_affix_head: bool = False,
+        use_deploc_head: bool = False,
         use_conventions_loss_mask: bool = False,
         use_span_boundary_head: bool = False,
         span_boundary_loss_weight: float = 0.0,
@@ -304,6 +307,16 @@ class MailwomanCoarseEncoder(nn.Module):
         self.use_country_anchor = use_country_anchor
         self.country_feature_dim = int(country_feature_dim) if use_country_anchor else 0
         self.country_ambiguous_scale = float(country_ambiguous_scale)
+        # Street-type conditioning channel (P-A / Option A, the retrieval-augmented-encoding probe). Same
+        # additive input-layer shape as the country/gazetteer anchors: s_i = c_i · (W_s·street_features +
+        # v_STREET), where street_features is a per-token multi-hot painted from the RAW SURFACE by the
+        # codex street-type lexicon (rue/boulevard/street/straße/…) — never labels, so train and inference
+        # share one computation. A SEPARATE channel (its own projection + cue), NOT a gazetteer slot, so
+        # v385 loads bit-clean and no existing feature dim shifts. Positive-evidence-only. Clue informs,
+        # model decides — the P-A hypothesis is that street↔locality LABELING errors are literal evidence
+        # absence (P-C: open-vocab FR misses are mis-labeling, not mis-segmentation).
+        self.use_street_type_anchor = use_street_type_anchor
+        self.street_type_feature_dim = int(street_type_feature_dim) if use_street_type_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -419,6 +432,17 @@ class MailwomanCoarseEncoder(nn.Module):
             self.country_token_embedding = None
             self.country_feature_scale = None
 
+        # Street-type projection W_s (feature_dim→hidden) + learned v_STREET cue (P-A). None when off
+        # (forward skips it → bit-identical to a no-street-type encoder).
+        self.street_type_projection: nn.Linear | None
+        self.street_type_token_embedding: nn.Parameter | None
+        if self.use_street_type_anchor:
+            self.street_type_projection = nn.Linear(self.street_type_feature_dim, hidden_size, bias=True)
+            self.street_type_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+        else:
+            self.street_type_projection = None
+            self.street_type_token_embedding = None
+
         self.blocks = nn.ModuleList(
             [
                 EncoderBlock(
@@ -472,6 +496,26 @@ class MailwomanCoarseEncoder(nn.Module):
             for k, lid in enumerate(affix_ids):
                 lut[lid] = k + 1
             self.register_buffer("affix_target_lut", lut, persistent=False)
+
+        # Separate dependent_locality head (P-B probe, ROAD_TO_MAILWOMAN_V8_1_0 §4). The dead dep-loc tag
+        # is resurrected in its OWN head subspace instead of by reinit-ing the shared classifier's rows:
+        # a fresh MLP whose 2 logits OWN the B/I-dependent_locality columns (merge-in-forward, exactly like
+        # the affix head, so the inference graph carries it). The encoder stays shared+trainable — the probe
+        # tests whether growing the capability in a separate head avoids the comma-drop invariance break that
+        # every flat-head reinit recipe paid (v3.10–v3.13). init_from v385 (strict=False) leaves this head
+        # fresh; the main CE loss trains it via the merged logits.
+        self.use_deploc_head = use_deploc_head
+        if use_deploc_head:
+            self.deploc_head = nn.Sequential(
+                nn.Linear(hidden_size, 256),
+                nn.GELU(),
+                nn.Dropout(0.1),
+                nn.Linear(256, 3),  # {O, B-dependent_locality, I-dependent_locality}
+            )
+            from .labels import LABEL_TO_ID as _L2I
+
+            deploc_ids = [_L2I["B-dependent_locality"], _L2I["I-dependent_locality"]]
+            self.register_buffer("deploc_label_ids", torch.tensor(deploc_ids, dtype=torch.long), persistent=False)
 
         # Span-boundary auxiliary head (#727, GLiNER-lite probe). A TRAINING-ONLY 2-logit head over the
         # final hidden state predicting, per token, whether an entity span STARTS (a B-* tag) and whether
@@ -573,6 +617,8 @@ class MailwomanCoarseEncoder(nn.Module):
         gazetteer_confidence: torch.Tensor | None = None,
         country_features: torch.Tensor | None = None,
         country_confidence: torch.Tensor | None = None,
+        street_type_features: torch.Tensor | None = None,
+        street_type_confidence: torch.Tensor | None = None,
         char_ids: torch.Tensor | None = None,
     ) -> _CoarseEncoderOutput:
         # Token embedding source: char-composed (CharCNN over per-token char IDs, shape (B, S, W)) or the
@@ -704,6 +750,31 @@ class MailwomanCoarseEncoder(nn.Module):
                 "encoder with use_country_anchor=True or drop the country arguments"
             )
 
+        # Street-type injection (P-A / Option A). Per-token additive: s_i = c_i · (W_s·features + v_STREET).
+        # Confidence is 1.0 where a street-type surface fires, 0 elsewhere — the no-clue identity. Span-local
+        # positional fact; no first-token pooling. Gives the encoder the street-type evidence the P-A
+        # diagnostic showed it never had, so a street name can be distinguished from a locality name.
+        if self.street_type_projection is not None and self.street_type_token_embedding is not None:
+            if street_type_features is None or street_type_confidence is None:
+                street_type_features = torch.zeros(
+                    bsz, seq, self.street_type_feature_dim, dtype=h.dtype, device=h.device
+                )
+                street_type_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
+            elif street_type_features.shape != (bsz, seq, self.street_type_feature_dim):
+                raise ValueError(
+                    f"street_type_features shape {tuple(street_type_features.shape)} != "
+                    f"({bsz}, {seq}, {self.street_type_feature_dim})"
+                )
+            street_vec = (
+                self.street_type_projection(street_type_features.to(h.dtype)) + self.street_type_token_embedding
+            )
+            h = h + street_type_confidence.to(h.dtype).unsqueeze(-1) * street_vec
+        elif street_type_features is not None:
+            raise ValueError(
+                "street_type_features supplied but use_street_type_anchor=False — rebuild the "
+                "encoder with use_street_type_anchor=True or drop the street_type arguments"
+            )
+
         h = self.input_dropout(self.input_ln(h))
 
         # nn.MultiheadAttention key_padding_mask: True = mask (ignore), False = keep.
@@ -755,6 +826,13 @@ class MailwomanCoarseEncoder(nn.Module):
             # Merge: the head OWNS the affix columns (classes 1..4 -> the 4 affix label ids).
             logits = logits.clone()
             logits[:, :, self.affix_label_ids] = affix_logits[:, :, 1:]
+
+        if self.use_deploc_head:
+            # The separate dep-loc head OWNS the B/I-dependent_locality columns (classes 1..2), same
+            # merge-in-forward contract as the affix head so the exported inference graph carries it.
+            deploc_logits = self.deploc_head(h)
+            logits = logits.clone()
+            logits[:, :, self.deploc_label_ids] = deploc_logits[:, :, 1:]
 
         loss: torch.Tensor | None = None
         if labels is not None:
@@ -1054,10 +1132,15 @@ class MailwomanCoarseEncoder(nn.Module):
             # to materialize country_projection / country_token_embedding at the feature width.
             "use_country_anchor": bool(self.use_country_anchor),
             "country_feature_dim": int(self.country_feature_dim),
+            "use_street_type_anchor": bool(getattr(self, "use_street_type_anchor", False)),
+            "street_type_feature_dim": int(getattr(self, "street_type_feature_dim", 0)),
             # #1104 homograph-guard scale — MUST serialize so export/reload rebuild with the same scale
             # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
             "country_ambiguous_scale": float(self.country_ambiguous_scale),
             "use_affix_head": bool(self.use_affix_head),
+            # Separate dep-loc head (P-B): MUST serialize so export/from_pretrained rebuild the head and
+            # load its trained weights — else the dep-loc columns silently fall back to the classifier.
+            "use_deploc_head": bool(getattr(self, "use_deploc_head", False)),
             "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
             # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
             # ignores it (training-only, off the logits path).
@@ -1128,8 +1211,11 @@ class MailwomanCoarseEncoder(nn.Module):
             # Country-lexicon channel (#1104). Default off for back-compat with pre-country checkpoints.
             use_country_anchor=cfg.get("use_country_anchor", False),
             country_feature_dim=cfg.get("country_feature_dim", 2),
+            use_street_type_anchor=cfg.get("use_street_type_anchor", False),
+            street_type_feature_dim=cfg.get("street_type_feature_dim", 1),
             country_ambiguous_scale=cfg.get("country_ambiguous_scale", 1.0),
             use_affix_head=cfg.get("use_affix_head", False),
+            use_deploc_head=cfg.get("use_deploc_head", False),
             use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
             # Span-boundary aux head (#727). Default off for back-compat with pre-#727 checkpoints.
             use_span_scorer=cfg.get("use_span_scorer", False),
@@ -1213,9 +1299,12 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         # Country-lexicon channel (#1104). feature_dim follows the country lexicon's emitted width (2).
         use_country_anchor=getattr(cfg.model, "use_country_anchor", False),
         country_feature_dim=getattr(cfg.model, "country_feature_dim", 2),
+        use_street_type_anchor=getattr(cfg.model, "use_street_type_anchor", False),
+        street_type_feature_dim=getattr(cfg.model, "street_type_feature_dim", 1),
         country_ambiguous_scale=getattr(cfg.model, "country_ambiguous_scale", 1.0),
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),
+        use_deploc_head=getattr(cfg.model, "use_deploc_head", False),
         use_conventions_loss_mask=getattr(cfg.model, "use_conventions_loss_mask", False),
         # Span-boundary aux head (#727, GLiNER-lite probe).
         use_span_boundary_head=getattr(cfg.model, "use_span_boundary_head", False),

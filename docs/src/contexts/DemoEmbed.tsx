@@ -52,6 +52,11 @@ export interface DemoEmbedState {
 	fstMatcher: FSTMatcherLike | null
 	/** Provenance metadata for the FST binary. */
 	fstProvenance: FSTProvenanceLike | null
+	/**
+	 * The street-morphology matcher (#1315 street-context gate) — `null` when the release ships no
+	 * `fst-street-morphology.bin`. `PipelineExplorer` threads it into `runClassifyStage` beside `fstMatcher`.
+	 */
+	streetMorphologyMatcher: FSTMatcherLike | null
 	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
 	lookup: MailwomanLookupLike | null
 	/**
@@ -168,6 +173,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			classifier: rt.assets?.classifier ?? null,
 			fstMatcher: rt.assets?.fstMatcher ?? null,
 			fstProvenance: rt.assets?.fstProvenance ?? null,
+			streetMorphologyMatcher: rt.assets?.streetMorphologyMatcher ?? null,
 			lookup: rt.assets?.lookup ?? null,
 			calibrator: rt.assets?.calibrator ?? null,
 			selectPairIndex: rt.assets?.selectPairIndex ?? null,
