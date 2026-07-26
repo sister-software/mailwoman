@@ -238,6 +238,101 @@ def sync_v050():
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_deploc_head():
+    """P-B probe: sync ONLY the training code + configs from R2 (container-side). The corpus
+    v0.15.0-deploc AND the init_from v385 checkpoint already persist on the volume from the v3.13 run,
+    so this pulls no ~30 GB corpus — just the model.py deploc_head + train.py carveout + config.py flag
+    + the v3.14.0-deploc-head.yaml. Clears stale pyc so the fresh loader imports (the night-3 gotcha)."""
+    import shutil
+    import subprocess
+
+    print("Syncing P-B deploc-head training code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    print(f"  {cmd[:90]}...")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+    if result.stdout:
+        print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nP-B code sync complete. Volume committed.")
+
+    src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    print("  v3.14.0-deploc-head config present:", os.path.isfile(f"{src}/configs/v3.14.0-deploc-head.yaml"))
+    print("  model.py has deploc_head:", "use_deploc_head" in open(f"{src}/model.py").read())
+    print("  train.py carveout has deploc_head:", '"deploc_head."' in open(f"{src}/train.py").read())
+    print("  config.py has use_deploc_head:", "use_deploc_head" in open(f"{src}/config.py").read())
+    print(
+        "  init_from checkpoint present:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_street_type():
+    """P-A probe: sync the training code + configs AND the NEW street-type lexicon from R2 (container-
+    side). The corpus v0.15.0-deploc + the init_from v385 checkpoint already persist on the volume from
+    the v3.13/v3.14 runs, so this pulls no ~30 GB corpus — just the model.py street_type channel +
+    train.py carveout + config.py flags + v3.15.0-street-type.yaml + data/gazetteer/street-type-lexicon-
+    v1.json (the ONE new data artifact — the config reads it at /data/gazetteer/). Clears stale pyc."""
+    import shutil
+    import subprocess
+
+    print("Syncing P-A street-type training code + lexicon from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/street-type-lexicon-v1.json {VOL_MOUNT}/gazetteer/ {R}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-200:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nP-A code + lexicon sync complete. Volume committed.")
+
+    src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    print("  v3.15.0-street-type config present:", os.path.isfile(f"{src}/configs/v3.15.0-street-type.yaml"))
+    print("  street-type lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json"))
+    print("  model.py has street_type channel:", "use_street_type_anchor" in open(f"{src}/model.py").read())
+    print("  train.py carveout has street_type:", "street_type_projection." in open(f"{src}/train.py").read())
+    print("  config.py has street_type fields:", "street_type_lexicon_path" in open(f"{src}/config.py").read())
+    print("  tokenizer.py encode_row paints street_type:", "street_type_lexicon" in open(f"{src}/tokenizer.py").read())
+    print(
+        "  init_from checkpoint present:",
+        os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
+    )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_v060():
     """Pull the latest training code (configs incl. v1.6.0-boundary-stress) + the v0.6.0-boundary-stress
     OVERLAY (manifest + boundary shard) from R2, container-side. The v0.5.0 base + the v0.6.0-a0 tokenizer
@@ -3124,3 +3219,140 @@ def mean_init_numsplice3():
     print(f"mean-init done: {old_v} -> {new_v} rows; {out} committed")
     print("  pytorch_model.bin present:", os.path.isfile(out / "pytorch_model.bin"))
     print("  config.json present:", os.path.isfile(out / "config.json"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def grade_street_type_contrast(step: int = 3000):
+    """P-A VERDICT (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A). The street_type feature ON/OFF contrast on
+    the SAME retrained checkpoint — the clean, fully-controlled read of "does street-type INPUT evidence
+    improve street<->locality discrimination." For each ban-fragments-fr row we build the FULL feature
+    set (anchor + gazetteer + country + street_type, faithful to training) via encode_row, run forward
+    TWICE (street_type_features as-computed, then zeroed), argmax-decode the street span, and compare to
+    the gold street. The ON-OFF street-match delta per class is the verdict; the P-C classes (admin-
+    street-homonym / bare-street / street-particle) are where the evidence hypothesis lives."""
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    import torch
+
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.country_lexicon import load_country_lexicon
+    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.gazetteer_anchor import load_gazetteer_lexicon
+    from mailwoman_train.labels import ID_TO_LABEL
+    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.tokenizer import Tokenizer, encode_row
+
+    vol.reload()
+    # Pull the fixture from R2 (self-contained + re-runnable).
+    R = "--low-level-retries 30 --retries 8"
+    subprocess.run(
+        f"rclone copy :s3:{BUCKET}/eval/fixtures/ban-fragments-fr.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
+        shell=True,
+        check=True,
+        capture_output=True,
+    )
+    fixture = f"{VOL_MOUNT}/eval/fixtures/ban-fragments-fr.jsonl"
+
+    ck = Path(f"{VOL_MOUNT}/output-v3150-street-type-s42/checkpoints/step-{step:06d}")
+    tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
+    model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
+    print(f"loaded checkpoint step-{step}; use_street_type_anchor={model.use_street_type_anchor}")
+
+    gaz = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json")
+    ctry = load_country_lexicon(f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json")
+    street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json")
+    anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
+
+    STREET_TAGS = {"street", "street_prefix", "street_suffix", "street_prefix_particle"}
+
+    def norm(s: str) -> str:
+        return " ".join(s.lower().split())
+
+    def predicted_street(raw: str, feats: dict, zero_street: bool) -> str:
+        pieces = tok.encode_with_spans(raw)
+        n = len(pieces)
+        kw = dict(
+            input_ids=torch.tensor([feats["input_ids"][:n]]),
+            attention_mask=torch.tensor([feats["attention_mask"][:n]]),
+        )
+        for ch in ("anchor", "gazetteer", "country", "street_type"):
+            fk, ck_ = f"{ch}_features", f"{ch}_confidence"
+            if fk in feats:
+                fv = [[0.0] * len(feats[fk][0])] * n if (ch == "street_type" and zero_street) else feats[fk][:n]
+                cv = [0.0] * n if (ch == "street_type" and zero_street) else feats[ck_][:n]
+                kw[fk] = torch.tensor([fv], dtype=torch.float32)
+                kw[ck_] = torch.tensor([cv], dtype=torch.float32)
+        with torch.no_grad():
+            logits = model(**kw).logits[0]
+        ids = logits.argmax(-1).tolist()
+        # group contiguous street-family pieces -> surface via char spans
+        chars = [False] * len(raw)
+        for i, pid in enumerate(ids):
+            if i >= n:
+                break
+            tag = ID_TO_LABEL[pid]
+            fam = tag[2:] if tag[:2] in ("B-", "I-") else tag
+            if fam in STREET_TAGS:
+                for c in range(pieces[i].char_begin, pieces[i].char_end):
+                    if c < len(raw):
+                        chars[c] = True
+        out, run = [], []
+        for c in range(len(raw)):
+            if chars[c]:
+                run.append(raw[c])
+            elif run:
+                out.append("".join(run))
+                run = []
+        if run:
+            out.append("".join(run))
+        return norm(" ".join(out))
+
+    rows = [json.loads(ln) for ln in open(fixture, encoding="utf-8") if ln.strip()]
+    by = {}  # klass -> [on_correct, off_correct, n]
+    for r in rows:
+        raw = r["input"]
+        gs = r.get("expect", {}).get("street")
+        gold = norm(" ".join(gs)) if isinstance(gs, list) else norm(gs or "")
+        expect_no_street = not gold
+        feats = encode_row(
+            tok,
+            raw,
+            raw.split(),
+            ["O"] * len(raw.split()),
+            max_length=128,
+            anchor_lookup=anchor,
+            anchor_paint_mode="shaped",
+            gazetteer_lexicon=gaz,
+            gazetteer_choreography=True,
+            country_lexicon=ctry,
+            street_type_lexicon=street,
+        )
+        on = predicted_street(raw, feats, zero_street=False)
+        off = predicted_street(raw, feats, zero_street=True)
+        ok_on = (on == "") if expect_no_street else (on == gold)
+        ok_off = (off == "") if expect_no_street else (off == gold)
+        k = r.get("klass", "?")
+        agg = by.setdefault(k, [0, 0, 0])
+        agg[0] += int(ok_on)
+        agg[1] += int(ok_off)
+        agg[2] += 1
+
+    print(f"\n=== P-A VERDICT: street_type ON vs OFF — ban-fragments-fr (step-{step}) ===")
+    print(f"{'klass':<24} {'ON':>7} {'OFF':>7} {'delta':>11}")
+    tot_on = tot_off = tot_n = 0
+    for k in sorted(by):
+        on_c, off_c, n = by[k]
+        tot_on += on_c
+        tot_off += off_c
+        tot_n += n
+        print(f"{k:<24} {on_c / n:>7.3f} {off_c / n:>7.3f} {(on_c - off_c) / n:>+11.3f}")
+    print(f"{'ALL':<24} {tot_on / tot_n:>7.3f} {tot_off / tot_n:>7.3f} {(tot_on - tot_off) / tot_n:>+11.3f}")
+    print("\ndelta > 0 => street_type input evidence improves street<->locality discrimination (Option A live).")
