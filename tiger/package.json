@@ -23,6 +23,18 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "tiger"
 	},
+	"files": [
+		"out/",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!__snapshots__/"
+	],
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -62,17 +74,5 @@
 	},
 	"engines": {
 		"node": ">=24.18.0"
-	},
-	"files": [
-		"out/",
-		"*.ts",
-		"*.tsx",
-		"**/*.ts",
-		"**/*.tsx",
-		"!*.test.ts",
-		"!*.test.tsx",
-		"!**/*.test.ts",
-		"!**/*.test.tsx",
-		"!__snapshots__/"
-	]
+	}
 }

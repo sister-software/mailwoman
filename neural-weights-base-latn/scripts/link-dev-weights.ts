@@ -15,6 +15,7 @@ const PKG_DIR = repoRootPath("neural-weights-base-latn")
 
 function linkForce(src: string, dest: string): void {
 	const tmp = `${dest}.tmp-link`
+
 	if (existsSync(tmp)) {
 		unlinkSync(tmp)
 	}

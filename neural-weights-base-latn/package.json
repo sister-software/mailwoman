@@ -8,9 +8,6 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "neural-weights-base-latn"
 	},
-	"publishConfig": {
-		"access": "public"
-	},
 	"files": [
 		"model.onnx",
 		"tokenizer.model",
@@ -29,5 +26,8 @@
 		"!**/*.test.ts",
 		"!**/*.test.tsx"
 	],
-	"type": "module"
+	"type": "module",
+	"publishConfig": {
+		"access": "public"
+	}
 }
