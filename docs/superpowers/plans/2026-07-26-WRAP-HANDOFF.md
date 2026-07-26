@@ -1,6 +1,6 @@
 # Wrap handoff — close out the FST / comma-free / #1143 arc (2026-07-26)
 
-**For:** Kimi (fresh context) · **From:** the coordinating lead (Claude) · **Repo:** mailwoman @ `main`
+**For:** DeepSeek (fresh context, executing lead) · **From:** the coordinating lead (Claude) · **Repo:** mailwoman @ `main`
 (`426379e4` or later). **The arc is ~90% done and merged** — this doc is the remaining wrap-up, not a
 build brief. Read the prior session's own report first:
 `docs/superpowers/plans/2026-07-25-SESSION-REPORT-fst-arcs.md` (your predecessor's verdicts, verified
