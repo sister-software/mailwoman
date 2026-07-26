@@ -88,19 +88,25 @@ node scripts/copy-weights.ts
 md5sum neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5 (a stale leftover reads wrong)
 
 # Per-locale FST gazetteers (#1318 — MODEL-INDEPENDENT): copy-weights.ts already materialized them
-# (fst-en-us.bin, fst-fr-fr.bin, fst-en-gb.bin) into each neural-weights-<locale>/ workspace.
-# Use them directly — no separate download. En-nz ships none (--fst omitted).
+# (fst-en-us.bin, fst-fr-fr.bin, fst-en-gb.bin) into each neural-weights-<locale>/ workspace. Stage
+# them with --fsts (LOWERCASE npm basenames) — publish.yml's preflight REQUIRES all three or the CI
+# publish fails at the files-guard. En-nz ships none. (--fst singular is the SEPARATE demo asset:
+# the BCP-47-cased fst-en-US.bin the demo fetcher expects — omit it unless also repointing the demo.)
 
-# Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe):
+# Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe).
+# The list below MUST cover every artifact publish.yml's preflight checks (model, tokenizer, all three
+# postcodes, both pair-indexes, all three FSTs) or the real run stops at the preflight:
 HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | cut -d= -f2-) \
 node mailwoman/out/cli.js release hf v<target> \
   --locale en-us \
   --model neural-weights-en-us/model.onnx \
   --tokenizer neural-weights-en-us/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
-  --fst neural-weights-en-us/fst-en-us.bin \
-  --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin \
+  --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin \
+  --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin \
+  --pair-indexes neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
+  --country-lexicon data/gazetteer/country-surface-lexicon-v1.json \
   --label "v<target> — <one-liner>" --description "<what changed + headline metrics>"
 # Do NOT pass --set-default — that repoints the DEMO (Step 5), not the npm publish.
 ```

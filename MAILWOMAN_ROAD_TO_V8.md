@@ -241,15 +241,15 @@ The SCOPE standing invariants hold unchanged; the pair-prior arc adds five, earn
 
 ## §6 Open decisions register
 
-| Decision                                 | State                                                       | Where it lives     |
-| ---------------------------------------- | ----------------------------------------------------------- | ------------------ |
-| BDC spec approval (#1214)                | **awaiting operator review — the immediate action**         | open PR            |
-| Demo repoint / bundle-drift gate (#1278) | proposed for v8.0.0 at latest                               | §3-G               |
-| `#1108` fallback: remove vs. make loud   | decide inside Track A audit                                 | §3-A               |
-| Q3 specificity tiers / Q4 street veto    | contingencies, measured-need triggers named                 | §3-D               |
-| osm npm publish                          | blocked on ODbL counsel                                     | `osm/README.md`    |
-| Model-side base redesign                 | unhurried research; inputs = classifier-equilibrium reports | §3-E               |
-| KR locale path                           | no adopted open data path                                   | SCOPE blocked tier |
+| Decision                                 | State                                                                                                                         | Where it lives     |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| BDC spec approval (#1214)                | **awaiting operator review — the immediate action**                                                                           | open PR            |
+| Demo repoint / bundle-drift gate (#1278) | proposed for v8.0.0 at latest                                                                                                 | §3-G               |
+| `#1108` fallback: remove vs. make loud   | **RESOLVED 2026-07-26: KEEP (loud, not removed)** — npx quick-demos must keep working; #1322 over-removed it and was reverted | parse.tsx          |
+| Q3 specificity tiers / Q4 street veto    | contingencies, measured-need triggers named                                                                                   | §3-D               |
+| osm npm publish                          | blocked on ODbL counsel                                                                                                       | `osm/README.md`    |
+| Model-side base redesign                 | unhurried research; inputs = classifier-equilibrium reports                                                                   | §3-E               |
+| KR locale path                           | no adopted open data path                                                                                                     | SCOPE blocked tier |
 
 ## Progress log
 
