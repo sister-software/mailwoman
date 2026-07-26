@@ -206,8 +206,30 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	progress("trie", "Building trie")
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
-	function insertName(tokens: string[], entry: PlaceEntry): void {
-		if (tokens.length === 0) return
+	// Degenerate-surface curation (see BuildFSTOpts.excludeSurfaces). Applied to the WHOLE normalized
+	// surface only — a multi-token name containing a function word ("los angeles") is never affected.
+	const excludeSurfaces = opts.excludeSurfaces
+	const excludeAllTokensOf = opts.excludeAllTokensOf
+	let excludedCount = 0
+
+	function isDegenerate(tokens: string[]): boolean {
+		if (tokens.length === 0) return false
+
+		if (excludeSurfaces?.has(tokens.join(" "))) return true
+
+		if (excludeAllTokensOf !== undefined && tokens.every((t) => excludeAllTokensOf.has(t))) return true
+
+		return false
+	}
+
+	function insertName(tokens: string[], entry: PlaceEntry): boolean {
+		if (tokens.length === 0) return false
+
+		if (isDegenerate(tokens)) {
+			excludedCount++
+
+			return false
+		}
 		let stateID = 0
 
 		for (const t of tokens) {
@@ -227,6 +249,8 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
 		}
+
+		return true
 	}
 
 	let insertCount = 0
@@ -245,8 +269,10 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 
 		// Insert the primary name from spr.
 		const primaryTokens = normalizeTokens(row.name)
-		insertName(primaryTokens, entry)
-		insertCount++
+
+		if (insertName(primaryTokens, entry)) {
+			insertCount++
+		}
 
 		// Insert alt names from the names table.
 		const altNames = namesByPlace.get(row.id) ?? []
@@ -255,15 +281,18 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			if (altName === row.name) continue
 			const altTokens = normalizeTokens(altName)
 
-			if (altTokens.length > 0 && altTokens.join(" ") !== primaryTokens.join(" ")) {
-				insertName(altTokens, entry)
+			if (altTokens.length > 0 && altTokens.join(" ") !== primaryTokens.join(" ") && insertName(altTokens, entry)) {
 				insertCount++
 			}
 		}
 	}
 
 	db.close()
-	progress("done", `Built trie: ${nodes.length} states, ${insertCount} name insertions`)
+	progress(
+		"done",
+		`Built trie: ${nodes.length} states, ${insertCount} name insertions` +
+			(excludedCount > 0 ? ` (${excludedCount} degenerate surfaces excluded)` : "")
+	)
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
@@ -276,6 +305,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		nameInsertions: insertCount,
 		importanceMatches: importanceMap.size,
 		sourceDB: opts.dbPath,
+		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined
+			? { exclusionPolicy: opts.exclusionPolicy ?? "unspecified", excludedInsertions: excludedCount }
+			: {}),
 	}
 
 	return {

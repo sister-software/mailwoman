@@ -60,6 +60,10 @@ export interface FSTProvenance {
 	importanceMatches: number
 	sourceDB?: string
 	modelCardVersion?: string
+	/** Degenerate-surface curation policy applied at build time (absent = uncurated build). */
+	exclusionPolicy?: string
+	/** Name insertions refused by the curation policy. */
+	excludedInsertions?: number
 }
 
 export interface BuildFSTOpts {
@@ -67,6 +71,22 @@ export interface BuildFSTOpts {
 	countries?: string[]
 	placetypes?: PlacetypeID[]
 	languages?: string[]
+	/**
+	 * Degenerate-surface curation (build-time; the ASR-contextual-biasing "prune the bias list" discipline). A name whose
+	 * FULL normalized token sequence joins to a member of this set is never inserted — the surface carries no
+	 * discriminative value as a bias key (bare function words: "la"; bare street-type words: "boulevard"). The FST is a
+	 * bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so excluded places stay
+	 * findable; they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join(" ")`.
+	 */
+	excludeSurfaces?: ReadonlySet<string>
+	/**
+	 * Compositional clause of the same policy: refuse a name whose EVERY normalized token is a member (e.g. "de la") — a
+	 * surface made entirely of function words cannot be discriminative. Source this from stopwords only, never
+	 * street-type words ("Avenue Road" is a real name; "de la" is not).
+	 */
+	excludeAllTokensOf?: ReadonlySet<string>
+	/** Recorded verbatim into provenance when either exclusion set is supplied. */
+	exclusionPolicy?: string
 	onProgress?: (phase: string, detail?: string) => void
 }
 
