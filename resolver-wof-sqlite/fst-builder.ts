@@ -222,6 +222,11 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		return false
 	}
 
+	// Surface-ambiguity classes (survey #4): a per-SURFACE fact, so the entry is cloned per insertion
+	// with its accepting surface's count attached (the same place under "nyc" and "new york city"
+	// records each surface's own ambiguity). Absent map → entries carry no count (back-compat bytes).
+	const surfaceCountryCounts = opts.surfaceCountryCounts
+
 	function insertName(tokens: string[], entry: PlaceEntry): boolean {
 		if (tokens.length === 0) return false
 
@@ -247,7 +252,12 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
-			existing.push(entry)
+			if (surfaceCountryCounts !== undefined) {
+				const count = surfaceCountryCounts.get(tokens.join(" "))
+				existing.push({ ...entry, crossCountryBranches: Math.min(count ?? 1, 255) })
+			} else {
+				existing.push(entry)
+			}
 		}
 
 		return true

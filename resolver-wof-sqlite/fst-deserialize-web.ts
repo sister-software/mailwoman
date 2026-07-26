@@ -59,6 +59,8 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		throw new Error(`FST version ${version} unsupported (expected 1..${MAX_VERSION})`)
 	}
 	const isV2 = version >= 2
+	// flags bit0 (survey #4, mirrors fst-serialize.ts): place rows carry surface-ambiguity data.
+	const hasAmbiguity = (view.getUint16(6, true) & 1) === 1
 
 	const stateCount = view.getUint32(8, true)
 	const edgeCount = view.getUint32(12, true)
@@ -131,6 +133,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 				lat: view.getFloat32(pp + 16, true),
 				lon: view.getFloat32(pp + 20, true),
 				parentChain,
+				...(hasAmbiguity ? { crossCountryBranches: view.getUint8(pp + 6) } : {}),
 			}
 		}
 

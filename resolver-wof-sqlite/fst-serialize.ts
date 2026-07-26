@@ -109,11 +109,15 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	let pos = 0
 
 	// --- Header ---
+	// flags bit0 (survey #4, 2026-07-27): place rows carry surface-ambiguity data in the former _pad
+	// byte (pp+6 = crossCountryBranches u8, pp+7 reserved). Presence-signaled here so VERSION stays
+	// put: pre-ambiguity artifacts read flags=0 → readers expose `undefined`, never a fake 0.
+	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
 	MAGIC.copy(buf, pos)
 	pos += 4
 	buf.writeUInt16LE(VERSION, pos)
 	pos += 2
-	buf.writeUInt16LE(0, pos)
+	buf.writeUInt16LE(hasAmbiguity ? 1 : 0, pos)
 	pos += 2
 	buf.writeUInt32LE(nodes.length, pos)
 	pos += 4
@@ -178,7 +182,9 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt32LE(place.wofID, pp)
 			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
 			buf.writeUInt8(chainLen, pp + 5)
-			buf.writeUInt16LE(0, pp + 6) // pad
+			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 gates the read), byte 1 reserved.
+			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
+			buf.writeUInt8(0, pp + 7)
 			buf.writeUInt32LE(intern(place.name), pp + 8)
 			buf.writeFloatLE(place.importance, pp + 12)
 			buf.writeFloatLE(place.lat, pp + 16)
@@ -209,6 +215,8 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	if (version < 1 || version > VERSION) throw new Error(`FST version ${version} unsupported (expected 1..${VERSION})`)
 	const isV2 = version >= 2
+	// flags bit0 (survey #4): place rows carry surface-ambiguity data in the former _pad byte.
+	const hasAmbiguity = (buf.readUInt16LE(6) & 1) === 1
 
 	const stateCount = buf.readUInt32LE(8)
 	const edgeCount = buf.readUInt32LE(12)
@@ -280,6 +288,8 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				lat: buf.readFloatLE(pp + 16),
 				lon: buf.readFloatLE(pp + 20),
 				parentChain,
+				// Header flags bit0 gates the read (survey #4): pre-ambiguity artifacts expose undefined.
+				...(hasAmbiguity ? { crossCountryBranches: buf.readUInt8(pp + 6) } : {}),
 			}
 		}
 

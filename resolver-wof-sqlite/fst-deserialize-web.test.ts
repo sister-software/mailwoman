@@ -380,3 +380,43 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 })
 
 //#endregion
+
+//#region surface-ambiguity classes (survey #4) — the web reader mirrors fst-serialize's flags bit0
+
+test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
+	const { serializeFST } = await import("./fst-serialize.ts")
+	const { FSTMatcher } = await import("./fst-matcher.ts")
+	const nodes = [
+		{ edges: new Map([["pierre", 1]]), places: [] },
+		{
+			edges: new Map(),
+			places: [
+				{
+					wofID: 101,
+					placetype: "locality" as const,
+					name: "Pierre",
+					parentChain: [],
+					importance: 0.4,
+					lat: 44.36,
+					lon: -100.35,
+					crossCountryBranches: 7,
+				},
+			],
+		},
+	]
+	const withAmbiguity = new Uint8Array(serializeFST(FSTMatcher.fromNodes(nodes)))
+	const m = deserializeFSTWeb(withAmbiguity)
+	const hit = m.walk(["pierre"])!
+
+	expect(m.accepting(hit.stateID)[0]!.crossCountryBranches).toBe(7)
+
+	// The first buffer is already built — mutating the shared fixture only affects the second build.
+	delete (nodes[1]!.places[0] as { crossCountryBranches?: number }).crossCountryBranches
+	const withoutAmbiguity = new Uint8Array(serializeFST(FSTMatcher.fromNodes(nodes)))
+	const m2 = deserializeFSTWeb(withoutAmbiguity)
+	const hit2 = m2.walk(["pierre"])!
+
+	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeUndefined()
+})
+
+//#endregion

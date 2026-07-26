@@ -30,6 +30,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
+import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
@@ -139,6 +140,69 @@ export function loadDegenerateSurfaces(languages: readonly string[] = CURATION_L
 	return { surfaces, stopwordTokens }
 }
 
+/**
+ * Surface-ambiguity scan (survey #4): one pass over the WHOLE admin DB (every country, the builder's default
+ * placetypes) producing normalized-surface → distinct-country count. Shared across all four locale builds — the count
+ * is deliberately global so a US-scoped FST still knows "pierre" is also a place-surface elsewhere (and, one day, that
+ * "paris" is). Primary spr names + all alt names.
+ */
+export function computeSurfaceCountryCounts(dbPath: string): Map<string, number> {
+	const db = new DatabaseSync(dbPath, { open: true })
+	const placetypes = ["country", "region", "county", "locality", "localadmin", "borough", "neighbourhood"]
+	const ph = placetypes.map(() => "?").join(",")
+	// Memory shape matters: the names table runs to millions of rows (GeoNames alias folds included)
+	// and a Set per surface OOMs a default heap. Most surfaces are single-country, so store the FIRST
+	// country as a bare string and promote to an overflow Set only on the second distinct country;
+	// rows stream via iterate() — never materialize the rowset.
+	const first = new Map<string, string>()
+	const overflow = new Map<string, Set<string>>()
+
+	const paint = (surface: string, country: string): void => {
+		const key = normalizeTokens(surface).join(" ")
+
+		if (!key || !country) return
+		const seen = first.get(key)
+
+		if (seen === undefined) {
+			first.set(key, country)
+
+			return
+		}
+
+		if (seen === country) return
+		let set = overflow.get(key)
+
+		if (set === undefined) {
+			set = new Set([seen])
+			overflow.set(key, set)
+		}
+		set.add(country)
+	}
+
+	const primary = db.prepare(`SELECT country, name FROM spr WHERE is_current = 1 AND placetype IN (${ph})`)
+
+	for (const row of primary.iterate(...placetypes) as Iterable<{ country: string; name: string }>) {
+		paint(row.name, row.country)
+	}
+	const alts = db.prepare(
+		`SELECT s.country AS country, n.name AS name FROM names n JOIN spr s ON s.id = n.id
+		 WHERE s.is_current = 1 AND s.placetype IN (${ph})`
+	)
+
+	for (const row of alts.iterate(...placetypes) as Iterable<{ country: string; name: string }>) {
+		paint(row.name, row.country)
+	}
+	db.close()
+
+	const counts = new Map<string, number>()
+
+	for (const key of first.keys()) {
+		counts.set(key, overflow.get(key)?.size ?? 1)
+	}
+
+	return counts
+}
+
 export interface BuildLocaleFSTsOpts {
 	/** Locales to build (default: every FST_LOCALES key). */
 	locales?: string[]
@@ -172,6 +236,13 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			`curation: ${exclusion.surfaces.size} whole surfaces + ${exclusion.stopwordTokens.size} stopword tokens (${EXCLUSION_POLICY_ID})`
 		)
 	}
+	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated control stays a pure
+	// pre-curation byte baseline. One global scan shared by every locale.
+	const surfaceCountryCounts = opts.uncurated ? undefined : computeSurfaceCountryCounts(dbPath)
+
+	if (surfaceCountryCounts) {
+		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)
+	}
 	mkdirSync(outputDir, { recursive: true })
 
 	const built: BuiltLocaleFST[] = []
@@ -192,6 +263,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 						exclusionPolicy: EXCLUSION_POLICY_ID,
 					}
 				: {}),
+			...(surfaceCountryCounts ? { surfaceCountryCounts } : {}),
 			onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 		})
 		const outPath = join(outputDir, `fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)

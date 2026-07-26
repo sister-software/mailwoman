@@ -16,6 +16,13 @@ export interface PlaceEntry {
 	importance: number
 	lat: number
 	lon: number
+	/**
+	 * Surface-ambiguity class (survey #4): how many DISTINCT countries carry a place with THIS entry's accepting surface,
+	 * counted over the whole admin DB at build time (clamped to 255). A property of the surface, not the place — the same
+	 * place reached via different alias surfaces reports each surface's own count. `undefined` = built without ambiguity
+	 * data (pre-2026-07-27 artifacts) — NEVER conflate with 1 (the unambiguous case); the meaning-of-zero rule.
+	 */
+	crossCountryBranches?: number
 }
 
 export type PlacetypeID =
@@ -87,6 +94,16 @@ export interface BuildFSTOpts {
 	excludeAllTokensOf?: ReadonlySet<string>
 	/** Recorded verbatim into provenance when either exclusion set is supplied. */
 	exclusionPolicy?: string
+	/**
+	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of DISTINCT countries
+	 * (across the WHOLE admin DB, not just this build's country scope) with a place carrying that surface. When supplied,
+	 * every inserted place row records the count for ITS accepting surface (`PlaceEntry.crossCountryBranches`) — an entry
+	 * accessible under several surfaces records each surface's own count. Serialized into the place row's former `_pad`
+	 * byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts read as "no
+	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet; consumers (FST-prior tempering,
+	 * the Option-A evidence channel) arrive behind their own measured gates.
+	 */
+	surfaceCountryCounts?: ReadonlyMap<string, number>
 	onProgress?: (phase: string, detail?: string) => void
 }
 
