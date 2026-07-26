@@ -65,6 +65,11 @@ class DataConfig:
     # the loader paints per-piece [country_surface, country_ambiguous] clues from the RAW SURFACE
     # (never gold labels — same computation at train + inference). None → the country channel is off.
     country_lexicon_path: str | None = None
+    # Street-type channel (P-A / Option A probe). Path to the codex-generated street-type lexicon JSON
+    # (built by scripts/build-street-type-lexicon.ts). When set AND model.use_street_type_anchor is on,
+    # the loader paints a per-piece street_type clue from the RAW SURFACE (never gold labels — same
+    # computation at train + inference). None → the street-type channel is off.
+    street_type_lexicon_path: str | None = None
     # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
     # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
@@ -227,6 +232,12 @@ class ModelConfig:
     # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
     # score-affix need no changes). Loss = main CE + affix CE (1:1).
     use_affix_head: bool = False
+    # Separate dependent_locality head (P-B probe): resurrect the dead dep-loc tag in its OWN MLP head
+    # (fresh weights own the B/I-dependent_locality columns, merge-in-forward like the affix head) instead
+    # of reinit-ing the shared classifier rows. Tests whether head-subspace separation avoids the
+    # comma-drop invariance break that every flat-head reinit recipe paid (v3.10–v3.13). init_from-safe
+    # (strict=False leaves the fresh head; main CE trains it via merged logits).
+    use_deploc_head: bool = False
     # Train-time conventions pairing (#478): mask conventions-forbidden labels out of the CE on
     # rows whose gold country has a conventions row (mirror: conventions.py <- codex). The
     # inference mask's training half; hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
@@ -262,6 +273,13 @@ class ModelConfig:
     # probe (89.8→82.6). The scale is a registered buffer, so it BAKES INTO the exported ONNX — no
     # lexicon or inference change; inference feeds the raw [surface, ambiguous] and the graph scales it.
     country_ambiguous_scale: float = 1.0
+    # Street-type channel (P-A / Option A probe). When on (with data.street_type_lexicon_path set), the
+    # encoder takes a per-token street_type clue painted from the raw surface by the codex street-type
+    # lexicon and injects ``c·(W_s·features + v_STREET)`` at the input embedding — its OWN projection,
+    # a separate channel from the gazetteer (so v385 loads clean). Default False keeps numerics identical.
+    use_street_type_anchor: bool = False
+    # Must match the street-type lexicon JSON's feature_dim (emitted single street_type slot).
+    street_type_feature_dim: int = 1
 
 
 @dataclass

@@ -259,7 +259,7 @@ jobs:
           # step will fetch and, if any is missing, print the exact remediation and stop immediately.
           echo "Preflight: verifying v${MODEL_VERSION} is staged on Hugging Face…"
           MISSING=0
-          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin; do
+          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin; do
             if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
           done
           if [ "$MISSING" = 1 ]; then
@@ -297,6 +297,13 @@ jobs:
           $CURL "${BASE}/fst-en-us.bin" -o neural-weights-en-us/fst-en-us.bin
           $CURL "${BASE}/fst-fr-fr.bin" -o neural-weights-fr-fr/fst-fr-fr.bin
           $CURL "${BASE}/fst-en-gb.bin" -o neural-weights-en-gb/fst-en-gb.bin
+          # Street-morphology FST (locale-GENERAL, survey #1 2026-07-26): one artifact, copied into
+          # every weights package that lists it in files[] (the loader resolves via baseWeights, but
+          # each package ships its own copy so a standalone install carries the browser gate).
+          $CURL "${BASE}/fst-street-morphology.bin" -o neural-weights-en-us/fst-street-morphology.bin
+          cp neural-weights-en-us/fst-street-morphology.bin neural-weights-fr-fr/fst-street-morphology.bin
+          cp neural-weights-en-us/fst-street-morphology.bin neural-weights-en-gb/fst-street-morphology.bin
+          cp neural-weights-en-us/fst-street-morphology.bin neural-weights-en-nz/fst-street-morphology.bin
           # fr-fr, en-gb, and en-nz share the en-us model for now (locale-specific weights are future work).
           cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
           cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model

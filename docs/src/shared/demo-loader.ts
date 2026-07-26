@@ -24,6 +24,7 @@ import {
 	adminGazetteerURL,
 	assetURL,
 	loadFSTGazetteer,
+	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
 	pairIndexStagedURLs,
 } from "./resources.tsx"
@@ -40,6 +41,14 @@ export interface DocsDemoAssets {
 	anchorLookup: Map<string, { lat: number; lon: number }> | null
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null
+	/**
+	 * The street-morphology matcher — the #1315 street-context gate's signal source, the node/browser parity fix (SCOPE
+	 * invariant 2: node runtimes wire this by default; the browser previously never could). Loaded with the FST gazetteer
+	 * because the gate needs BOTH (core's `streetContextGateFor` only fires when the two stages are present). `null` when
+	 * the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without the gate,
+	 * byte-identical to before.
+	 */
+	streetMorphologyMatcher: FSTMatcherLike | null
 	lookup: MailwomanLookupLike | null
 	calibrator: Calibrator | null
 	/**
@@ -128,6 +137,7 @@ export async function loadDemoAssets(
 
 	let fstMatcher: FSTMatcherLike | null = null
 	let fstProvenance: FSTProvenanceLike | null = null
+	let streetMorphologyMatcher: FSTMatcherLike | null = null
 
 	if (release.hasFST) {
 		try {
@@ -136,6 +146,18 @@ export async function loadDemoAssets(
 			fstProvenance = fstResult.provenance ?? null
 		} catch {
 			// FST not available for this version.
+		}
+
+		// Street-context gate signal (#1315): fetched tolerantly, like the pair indexes — a release that
+		// predates `fst-street-morphology.bin` returns 404/`null` and the demo parses gate-off, exactly as
+		// before. Only loaded when the gazetteer FST loaded: the gate needs both, so a lone morphology
+		// matcher would be dead weight.
+		if (fstMatcher) {
+			try {
+				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
+			} catch {
+				// Corrupt/unfetchable artifact — treat as absent (gate off).
+			}
 		}
 	}
 
@@ -170,6 +192,7 @@ export async function loadDemoAssets(
 		anchorLookup: postcodeAnchorLookup ?? null,
 		fstMatcher,
 		fstProvenance,
+		streetMorphologyMatcher,
 		lookup,
 		calibrator,
 		selectPairIndex: selectPairIndexForText ?? null,

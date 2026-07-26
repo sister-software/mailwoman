@@ -26,6 +26,14 @@ hands.
    [parity scorecard](../evals/competitive-parity/parity-scorecard-2026-06-09.md)).
 5. **Recompile before eval.** Eval harnesses load compiled `core/out` — a stale build makes your
    core change a silent no-op.
+6. **The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5): no default-on mechanism ships
+   with a known regression vs the shipped model on any tier-1 locale — full stop.** This applies to
+   decode-time mechanisms (priors, gates, FSTs) exactly as it does to model promotions. A bar
+   revision can defer a _target_, never license a default-on _regression_: the compliant routes are
+   fix it, gate it per-locale so the regressing locale is unaffected, or ship it opt-in. (The rule
+   was adopted because #1318 shipped default-on carrying −6.8pp FR admin-street-homonym behind a
+   bar revision — grandfathered as a named violation with a standing remediation obligation, not a
+   precedent.)
 
 ## Which tool for which tag (the lever-shape taxonomy)
 
