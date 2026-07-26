@@ -144,6 +144,18 @@ jobs:
         if: steps.weights-cache.outputs.cache-hit != 'true'
         run: node scripts/copy-weights.ts
 
+      # #1177 Phase A: base-latn symlinks the same model.onnx / tokenizer.model en-us ships.
+      # On a cache miss, copy-weights.ts skips in CI (MAILWOMAN_SKIP_WEIGHTS_COPY), but
+      # the en-us files are already materialized above — symlink them for base-latn so the
+      # resolvers can find them. A cache-hit already carries the files from the glob.
+      - name: Symlink base-latn model (cache miss — en-us already materialized)
+        if: steps.weights-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p neural-weights-base-latn
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+            [ -f "neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "neural-weights-base-latn/$f"
+          done
+
       - name: Test
         run: yarn ci:test
 
@@ -235,6 +247,14 @@ jobs:
       - name: Materialize weights (cache miss — ~5 min, once per release.config change)
         if: steps.weights-cache.outputs.cache-hit != 'true'
         run: node scripts/copy-weights.ts
+
+      - name: Symlink base-latn model (cache miss — en-us already materialized)
+        if: steps.weights-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p neural-weights-base-latn
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+            [ -f "neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "neural-weights-base-latn/$f"
+          done
 
       - name: Clean-install smoke test
         run: yarn ci:smoke
