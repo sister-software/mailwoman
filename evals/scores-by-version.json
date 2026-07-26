@@ -1168,6 +1168,74 @@
 			},
 			"notes": "Model bytes STILL v385. 6.6.3 = GB pair-index re-cut with transitionBeta 5 (position-scoped Viterbi transition bonus at pair-hit child starts, neural 7.8.1) + title-preposition suppression ({at, of}). GB comma-free 55→63/69 emit, 60/63 (95.2%) correct — named-row prediction matched exactly, 8 net-new. Venue-anchored FP restored to the exact pre-beta 4/6500 after the v1 battery caught the 'New Inn at Hoff' collateral (1-row FAIL → suppression → v2 PASS all 5). Also ships #1290 (GB postcode conventions row: exact 26→83, clips 44→0). NZ/golden/presets byte-identical throughout.",
 			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
+		},
+		{
+			"run_id": "v385-fst-curation-6-6-4",
+			"model_version": "6.6.4",
+			"model_path": "@mailwoman/neural-weights-en-us@8.1.0 (curated per-locale FSTs + street-morphology artifact; model bytes v385 unchanged)",
+			"corpus_version": "v0.13.0-latam overlay (v0.11.0-no-fragment base + a 456,230-row `overture-latam` shard: CA 299,809 + MX 156,421 Overture-Addresses rows) — the dedicated LATAM source does NOT dilute the trained EU `overture` rows — MODEL BYTES UNCHANGED from 6.6.0 (v385); 6.6.1 is a decode-artifact bundle revision, no training",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "FST-curation battery (2026-07-26, PR #1332): fragment board P0/shipped/uncurated-control/curated 4-way, golden us/fr row-exact, gauntlet 3-layer, degenerate-surface audit ×4 locales",
+			"eval_set_sha256": "see .superpowers/sdd/progress.md FST-curation block + the PR #1332 commit messages",
+			"trained_at": null,
+			"training_steps": 0,
+			"training_wall_clock_seconds": 0,
+			"hardware": "zero-GPU (decode-side artifact + code only)",
+			"metrics": {
+				"us": {
+					"postcode": 96.9,
+					"country_homograph": 89.8,
+					"micro": 86.7,
+					"locality": 77.9,
+					"region": 89.7,
+					"street": 80.9,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 88.1,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.8,
+					"house_number": 95.7,
+					"region": 44.4,
+					"cedex_real": 85.6
+				},
+				"de": {
+					"native_locality_anchor_on": 91.3
+				},
+				"gb_dependent_locality": {
+					"golden_emit": "69/69",
+					"golden_tag_correct": "69/69 (100%)",
+					"comma_stripped_emit": "63/69",
+					"comma_stripped_tag_correct": "60/63 (95.2%)",
+					"golden_no_dl_fp": "0/51",
+					"venue_confound_fp_segment_path": "217/6500 (3.338%)",
+					"venue_confound_fp_anchored_path": "4/6500 (0.062%)"
+				},
+				"arena": {
+					"perturb": 80
+				},
+				"nz_dependent_locality": {
+					"board_emit": "246/246",
+					"board_tag_correct": "246/246 (100%)",
+					"comma_stripped": "244/246 (99.2%)",
+					"golden_no_suburb_fp": "0/54",
+					"venue_synthetic_interim": "0/510"
+				},
+				"gb_postcode": {
+					"golden_exact": "83/106 (was 26)",
+					"clips": "0 (was 44)"
+				},
+				"fragment_board_fr": {
+					"street_particle": "298/400 (P0 301; shipped-pre-curation 290)",
+					"bare_street": "241/400 (= P0)",
+					"admin_street_homonym": "159/400 (= P0 exact)",
+					"all_classes": "1889/2800 vs P0 1893 (-0.1pp)"
+				}
+			},
+			"notes": "Bundle revision on unchanged model bytes: per-locale FSTs rebuilt with build-time degenerate-surface curation (policy degenerate-surface-exclusion v1.1 in each artifact trailer). Fragment street-particle 290→298/400 (residual 3 = true homographs: La Grange / La Grande OR / Pierre SD), bare-street 240→241 = P0 parity, admin-street-homonym 159 = exact P0 parity (with the D2 gate pin, closed #1320); golden us/fr byte-equal to shipped (+52/+0 vs P0 unchanged); uncurated A/B control == shipped exactly (delta is pure curation); gauntlet PASS ×3 layers incl. candidate weights-cache (held-out z=0.00). Per-tag golden metrics carried forward from 6.6.3 — measured byte-identical. Also ships fst-street-morphology.bin (sealed, locale-general) unifying 3 build sites + enabling the browser street-context gate at the next docs deploy.",
+			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
 		}
 	]
 }
