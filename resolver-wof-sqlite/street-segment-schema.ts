@@ -48,9 +48,26 @@ export interface StreetSegmentTable {
 	release: string
 }
 
+/**
+ * The shard's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal radius multiplier is a
+ * property of the CALIBRATION SET the artifact was built against — so it ships IN the artifact (the pair-index δ
+ * precedent, `neural/pair-index-resolver.ts`), not in caller code. Written once by the builder; read at open time by
+ * {@link StreetInterpolator}. Shards built before this table exists simply lack it — the reader degrades to `undefined`
+ * and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
+ */
+export interface InterpCalibrationRow {
+	/** Conformal multiplier for the raw half-segment `uncertainty_m` radius (#374/#584) — ×Q̂ for a ~90% bound. */
+	radius_multiplier: number
+	/** Provenance of the multiplier (e.g. `split-conformal:2026-06-14`). */
+	method: string
+	/** The calibration-table key the multiplier was selected by (a USPS region code, or `default` for unmeasured). */
+	region: string
+}
+
 /** The street-segment database schema for `new DatabaseClient<StreetSegmentDatabase>(...)`. */
 export interface StreetSegmentDatabase {
 	street_segment: StreetSegmentTable
+	interp_calibration: InterpCalibrationRow
 }
 
 /**
@@ -91,6 +108,25 @@ export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("release", "text", (c) => c.notNull())
 		.execute()
+}
+
+/**
+ * Create + populate the single-row `interp_calibration` metadata table (see {@link InterpCalibrationRow}) — called once
+ * by the shard builder, after the value is selected from the calibration source of record. Build-time only (async
+ * Kysely is fine here); the READ side is the raw sync probe in {@link StreetInterpolator}'s constructor, per the
+ * sync-by-interface doctrine.
+ */
+export async function writeInterpCalibration(
+	db: Kysely<StreetSegmentDatabase>,
+	row: InterpCalibrationRow
+): Promise<void> {
+	await db.schema
+		.createTable("interp_calibration")
+		.addColumn("radius_multiplier", "real", (c) => c.notNull())
+		.addColumn("method", "text", (c) => c.notNull())
+		.addColumn("region", "text", (c) => c.notNull())
+		.execute()
+	await db.insertInto("interp_calibration").values(row).execute()
 }
 
 /** Create the two probe indexes the reader relies on (postcode-scope, street-scope). */

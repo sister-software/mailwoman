@@ -97,6 +97,7 @@ export class StreetInterpolator implements InterpolationLookup {
 	readonly #ownsDB: boolean
 	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
 	readonly #byStreet: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #radiusCalibration: number | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync }) {
 		if (opts.database) {
@@ -122,6 +123,31 @@ export class StreetInterpolator implements InterpolationLookup {
 				 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
 			)
 		}
+
+		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
+		// built against, so it ships in the shard's `interp_calibration` metadata table (street-segment-schema.ts)
+		// and is read here, once, at open time — sync raw `.prepare()` per the sync-by-interface doctrine
+		// (AGENTS.md). Shards predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
+		// back to their in-code table, byte-identically.
+		if (hasTable(this.#db, "interp_calibration")) {
+			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
+				| { radius_multiplier: unknown }
+				| undefined
+			const value = row?.radius_multiplier
+
+			if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+				this.#radiusCalibration = value
+			}
+		}
+	}
+
+	/**
+	 * The artifact's own conformal radius multiplier (#374), read from the shard's `interp_calibration` metadata table at
+	 * construction. `undefined` = the shard predates the table (or carries no valid row) — the resolver then applies no
+	 * artifact default and callers may supply a legacy fallback.
+	 */
+	get radiusCalibration(): number | undefined {
+		return this.#radiusCalibration
 	}
 
 	find(query: InterpolationQuery): InterpolatedHit | null {

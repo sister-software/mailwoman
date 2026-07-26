@@ -332,12 +332,16 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
 				...(addressPoints ? { addressPoints } : {}),
+				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) →
+				// the artifact's own header value (`interpolation.radiusCalibration`, read at shard open — the
+				// resolver consumes it directly, nothing passed here) → the in-code per-region table for shards
+				// predating the `interp_calibration` metadata table.
 				...(interpolation
 					? {
 							interpolation,
-							interpolationRadiusCalibration:
-								incomingOpts.interpolationRadiusCalibration ??
-								interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, slug),
+							...(incomingOpts.interpolationRadiusCalibration == null && interpolation.radiusCalibration == null
+								? { interpolationRadiusCalibration: interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, slug) }
+								: {}),
 						}
 					: {}),
 			}

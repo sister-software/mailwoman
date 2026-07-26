@@ -35,6 +35,15 @@ import { Box, Text } from "ink"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
+import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
+
+/**
+ * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
+ * selects its multiplier from (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`). Bump
+ * when the calibration source of record (`interp-calibration.ts` / `data/calibration/interp-radius-conformal.json`) is
+ * re-measured.
+ */
+const CALIBRATION_METHOD = "split-conformal:2026-06-14"
 
 /** State abbreviation → state FIPS prefix, for picking county files out of --edges-dir. */
 const STATE_FIPS: Record<string, string> = {
@@ -183,7 +192,8 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				"@duckdb/node-api is not installed — `situs interpolation-shard` is a maintainer-only data command"
 			)
 		}
-		const { STREET_SEGMENT_COLUMNS, createStreetSegmentTable, createStreetSegmentIndexes } = segmentSchema
+		const { STREET_SEGMENT_COLUMNS, createStreetSegmentTable, createStreetSegmentIndexes, writeInterpCalibration } =
+			segmentSchema
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
 		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).sort()
@@ -209,6 +219,17 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 		// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
 		const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: db })
 		await createStreetSegmentTable(kdb)
+		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN
+		// the artifact — bake the state's factor (or the conservative default for unmeasured states) into the
+		// shard's `interp_calibration` metadata table. `StreetInterpolator` reads it at open time; callers
+		// stop carrying the number.
+		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
+		const calibration = {
+			radius_multiplier: measuredMultiplier ?? INTERP_RADIUS_CALIBRATION.default,
+			method: CALIBRATION_METHOD,
+			region: measuredMultiplier === undefined ? "default" : STATE,
+		}
+		await writeInterpCalibration(kdb, calibration)
 		const insert = db.prepare(
 			`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
 					 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
@@ -300,6 +321,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
 			`parity: odd ${parityCounts.odd} · even ${parityCounts.even} · mixed ${parityCounts.mixed}`,
 			`skipped non-numeric ranges: ${skippedNonNumeric}`,
+			`baked radius calibration: ×${calibration.radius_multiplier} (${calibration.region}, ${calibration.method})`,
 		]
 	})
 
