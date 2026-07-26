@@ -179,7 +179,7 @@
 	"dependencies": {
 		"async-init": "^1.0.0",
 		"axios": "^1.18.1",
-		"axios-cache-interceptor": "^1.12.0",
+		"axios-cache-interceptor": "^1.12.1",
 		"change-case": "^5.4.4",
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
