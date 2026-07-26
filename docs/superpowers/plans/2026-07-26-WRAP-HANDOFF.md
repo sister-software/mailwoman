@@ -103,19 +103,19 @@ retire or renew the homonym bar revision", linking the ledger entry and the exac
 we've shipped a durable regression and must decide whether to gate the prior harder or revert
 default-on. This is a standing obligation, not optional.
 
-### 3. Formalize the #1143 waive (owner + board + issue state)
+### 3. ~~Formalize the #1143 waive~~ — ✅ DONE (Claude, 2026-07-26)
 
-Disposition agreed (predecessor + coordinator concur): **waive-with-owner+board.** Owner = the #1102
-training campaign (verifiably closing the gap 0.605→0.777). Board = the bare-street class of
-`ban-fragments-fr`, re-scored per candidate.
+Operator delegated the call ("most long-term accurate parsing, not a pile of hacks") → **waived to
+training, no decode patch.** GitHub **#1143 CLOSED as not-planned**
+(https://github.com/sister-software/mailwoman/issues/1143): disposition comment posted (re-anchored
+0.605/0.777, the decode-dead-end rationale, what #1315 covered), title de-ghosted (0.215 removed),
+and **#1102 cross-linked** to carry the residual bare-street class + the `ban-fragments-fr` board as a
+training target. The fixture already existed; nothing was authored.
 
-**Task:** the board **already exists** as a committed fixture —
-`mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt` + `.jsonl` — so nothing needs
-authoring. Confirm that fixture is the re-scoring board, then update GitHub #1143 with the waive
-rationale, the owner, the re-anchored numbers, and the retest board; set it to the correct state
-(waived/deferred, linked to #1102). Correct the roadmap §3-F 0.215→0.605 if the predecessor didn't
-already (the report says it did — verify). The 37-row token-grab class is the gate's and is live via
-#1318; the 51-row whole-span class is training's.
+**Only residual for the executor:** update `MAILWOMAN_ROAD_TO_V8.md` line ~209 (Track-F gate) to mark
+#1143's "waived with named owner + board" condition SATISFIED — this folds into Task 4. §3-F is already
+re-anchored (0.215 marked stale). The 37-row token-grab class is the gate's (live via #1318); the
+51-row whole-span class is training's (#1102).
 
 ### 4. Reconcile the docs to the resolved state
 
