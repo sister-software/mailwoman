@@ -84,6 +84,10 @@ class EncodedExample:
     # ``(max_length,)`` confidence, or None when no street-type lexicon is set.
     street_type_features: list[list[float]] | None = None
     street_type_confidence: list[float] | None = None
+    # Locality-surface channel (v3.16.0 evidence bundle). Per-piece ``(max_length, 2)`` clue +
+    # ``(max_length,)`` confidence, or None when no locality-surface lexicon is set.
+    locality_surface_features: list[list[float]] | None = None
+    locality_surface_confidence: list[float] | None = None
 
 
 def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
@@ -586,6 +590,12 @@ def iter_encoded(
         from .gazetteer_anchor import load_gazetteer_lexicon
 
         street_type_lexicon = load_gazetteer_lexicon(cfg_data.street_type_lexicon_path)
+    # Locality-surface lexicon (v3.16.0): same JSON schema → same loader.
+    locality_surface_lexicon = None
+    if getattr(cfg_data, "locality_surface_lexicon_path", None):
+        from .gazetteer_anchor import load_gazetteer_lexicon
+
+        locality_surface_lexicon = load_gazetteer_lexicon(cfg_data.locality_surface_lexicon_path)
     affix_relabel_lexicon = None
     if getattr(cfg_data, "affix_relabel_lexicon_path", None):
         affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
@@ -634,6 +644,7 @@ def iter_encoded(
             gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
             country_lexicon=country_lexicon,
             street_type_lexicon=street_type_lexicon,
+            locality_surface_lexicon=locality_surface_lexicon,
             # v0.5.0 char-offset labels (#519): rows from a span-schema shard train FROM the
             # spans (encode_row builds the per-char label array from them; the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
@@ -660,6 +671,8 @@ def iter_encoded(
             country_confidence=enc.get("country_confidence"),
             street_type_features=enc.get("street_type_features"),
             street_type_confidence=enc.get("street_type_confidence"),
+            locality_surface_features=enc.get("locality_surface_features"),
+            locality_surface_confidence=enc.get("locality_surface_confidence"),
         )
 
 
@@ -689,6 +702,10 @@ def collate(batch: list[EncodedExample]) -> dict:
     if batch and batch[0].street_type_features is not None:
         out["street_type_features"] = [ex.street_type_features for ex in batch]
         out["street_type_confidence"] = [ex.street_type_confidence for ex in batch]
+    # Locality-surface channel (v3.16.0): same presence contract.
+    if batch and batch[0].locality_surface_features is not None:
+        out["locality_surface_features"] = [ex.locality_surface_features for ex in batch]
+        out["locality_surface_confidence"] = [ex.locality_surface_confidence for ex in batch]
     return out
 
 

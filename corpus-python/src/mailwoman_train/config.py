@@ -70,6 +70,10 @@ class DataConfig:
     # the loader paints a per-piece street_type clue from the RAW SURFACE (never gold labels — same
     # computation at train + inference). None → the street-type channel is off.
     street_type_lexicon_path: str | None = None
+    # Locality-surface channel (v3.16.0 evidence-bundle probe). Path to the locality-surface lexicon
+    # JSON (built by scripts/diagnostic/build-locality-surface-lexicon.ts — WOF US+FR locality names,
+    # curated, homograph bit). Same schema as the gazetteer lexicon; painted from the RAW SURFACE.
+    locality_surface_lexicon_path: str | None = None
     # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
     # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
@@ -280,6 +284,11 @@ class ModelConfig:
     use_street_type_anchor: bool = False
     # Must match the street-type lexicon JSON's feature_dim (emitted single street_type slot).
     street_type_feature_dim: int = 1
+    # Locality-surface channel (v3.16.0 evidence-bundle probe) — Option A's second correlated channel:
+    # per-token [locality, locality_homograph] membership evidence. Default False keeps numerics identical.
+    use_locality_surface_anchor: bool = False
+    # Must match the locality-surface lexicon JSON's feature_dim ([locality, locality_homograph]).
+    locality_surface_feature_dim: int = 2
 
 
 @dataclass
@@ -327,6 +336,12 @@ class TrainConfig:
     # model can't over-rely on the always-on clue — the v0.9.12 US-postcode-recovery knob. Off keeps
     # v0.9.12-style always-on runs reproducible. Requires model.use_gazetteer_anchor.
     gazetteer_curriculum: bool = False
+    # Evidence-bundle anti-over-trust curriculum (v3.16.0 probe — the P-A decay's measured requirement).
+    # When True, the trainer applies the SAME ramped per-row zero-out schedule to the street_type AND
+    # locality_surface confidences, so the model keeps its label competence with and without the bundle
+    # (the retrieval-ablation training the RAG over-trust literature prescribes). The ablation gate
+    # (evidence-zeroed parse ≥ baseline on unaffected spans) is the corresponding eval-side check.
+    evidence_curriculum: bool = False
     # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
     # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
     # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts
