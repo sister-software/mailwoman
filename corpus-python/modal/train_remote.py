@@ -3280,6 +3280,8 @@ def grade_evidence_bundle(
     run: str = "v3160-evidence-bundle",
     lexicon: str = "locality-surface-lexicon-v1.json",
     show_flips: str = "",
+    case: str = "asis",
+    heal: bool = False,
 ):
     """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
     computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
@@ -3363,6 +3365,18 @@ def grade_evidence_bundle(
                 for c in range(pieces[i].char_begin, pieces[i].char_end):
                     if c < len(raw):
                         chars[c] = True
+        if heal:
+            # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
+            # char vote on street-membership — arbitrates the mid-word piece truncations the raw
+            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte gates);
+            # labeled heal-approx in every report.
+            import re as _re
+
+            for m in _re.finditer(r"\S+", raw):
+                seg = chars[m.start() : m.end()]
+                vote = sum(seg) * 2 >= len(seg)
+                for c in range(m.start(), m.end()):
+                    chars[c] = vote
         out, run = [], []
         for c in range(len(raw)):
             if chars[c]:
@@ -3378,6 +3392,12 @@ def grade_evidence_bundle(
     by = {}
     for r in rows:
         raw = r["input"]
+        # Case variant (`case`): lower = production passthrough for uncapitalized users; upper = raw
+        # all-caps (production would title-case via normalizeCase first — this is the worst case).
+        if case == "lower":
+            raw = raw.lower()
+        elif case == "upper":
+            raw = raw.upper()
         gs = r.get("expect", {}).get("street")
         gold = norm(" ".join(gs)) if isinstance(gs, list) else norm(gs or "")
         expect_no_street = not gold
@@ -3407,7 +3427,9 @@ def grade_evidence_bundle(
         if show_flips and k == show_flips and ok_on != ok_off:
             print(f"FLIP[{'ON-wins' if ok_on else 'OFF-wins'}] {raw!r} gold={gold!r} on={on!r} off={off!r}")
 
-    print(f"\n=== v3.16.0 BUNDLE: ON vs OFF(zero={zero}) — ban-fragments-fr (step-{step}) ===")
+    print(
+        f"\n=== v3.16.0 BUNDLE: ON vs OFF(zero={zero}, case={case}, heal={heal}) — ban-fragments-fr (step-{step}) ==="
+    )
     print(f"{'klass':<24} {'ON':>7} {'OFF':>7} {'delta':>11}")
     tot_on = tot_off = tot_n = 0
     for k in sorted(by):
@@ -3428,7 +3450,7 @@ def grade_evidence_bundle(
     secrets=[r2_secret],
     timeout=1800,
 )
-def grade_street_type_contrast(step: int = 3000, show_flips: str = ""):
+def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: bool = False, case: str = "asis"):
     """P-A VERDICT (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A). The street_type feature ON/OFF contrast on
     the SAME retrained checkpoint — the clean, fully-controlled read of "does street-type INPUT evidence
     improve street<->locality discrimination." For each ban-fragments-fr row we build the FULL feature
@@ -3505,6 +3527,18 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = ""):
                 for c in range(pieces[i].char_begin, pieces[i].char_end):
                     if c < len(raw):
                         chars[c] = True
+        if heal:
+            # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
+            # char vote on street-membership — arbitrates the mid-word piece truncations the raw
+            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte gates);
+            # labeled heal-approx in every report.
+            import re as _re
+
+            for m in _re.finditer(r"\S+", raw):
+                seg = chars[m.start() : m.end()]
+                vote = sum(seg) * 2 >= len(seg)
+                for c in range(m.start(), m.end()):
+                    chars[c] = vote
         out, run = [], []
         for c in range(len(raw)):
             if chars[c]:
