@@ -284,3 +284,29 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
    real commune coverage or only duplicates folded surfaces.
 5. **Track-2 handoff:** productionization of the channel is routed to DeepSeek/Track-2 per the §8
    adjudication — does the `pair_index_paths` config sketch above go into that brief as-is?
+
+## Dispositions (2026-07-27, Claude — productionization owner per the ownership change)
+
+1. **Reader mode: DEFER the binary-search/offset-table work.** The training consumer reads once per
+   run; the decode consumer may never exist — the bundle arc absorbed the locality-evidence role
+   input-side, and the productionization plan's Phase 4 is about RETIRING decode priors, not adding
+   one. No speculative machinery: if a decode use materializes, the offset table is one
+   absence-tolerant header key away (the slot the design already reserves).
+2. **namePolicy v2 (eng-preferred): NO for the pair artifacts.** +30k mostly-duplicate rows, and
+   English exonyms would paint training evidence the feed never exhibits (BAN is French) —
+   train/inference skew for no training benefit. The anglophone-writer concern is a RESOLVER
+   concern already owned by the #936 official-names discipline. Revisit only with a measured
+   anglophone-written-FR eval population.
+3. **Next edge: (neighbourhood, locality)** — the doc's lean, now with the bundle arc's sharper
+   reason: the confirmed weakness class is open-vocab×open-vocab discrimination, which this edge
+   exercises and the region edge doesn't. (locality, country) stays unbuilt: the #1104 country
+   channel + coarse-placer own that seam (no double-coverage per D3). Sequenced into the
+   productionization plan's Phase 1 builder consolidation (one WOF-ancestry pass, both edges).
+4. **FR localadmin: YES, measure in the v2 build** — one flag, probe-safe. Expectation: genuine
+   adds (communes are FR's canonical admin unit and BAN cites them); the build report states
+   distinct-pairs added vs folded duplicates, and locality-only stays if it's duplicates.
+5. **The `pair_index_paths` sketch: ADOPTED into the (now Claude-owned) productionization plan,
+   with one amendment** — pair-derived evidence enters as a bundle channel under the SAME
+   three-law selectivity + absence-curriculum regime the bundle arc proved necessary (the sketch
+   predates those findings), and it slots AFTER the binary bundle ships (one artifact churn at a
+   time, per the plan's open-items ordering).
