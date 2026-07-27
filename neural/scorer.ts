@@ -106,6 +106,30 @@ function defaultCountryLexicon(locale: string | undefined): string | undefined {
 	}
 }
 
+/**
+ * Resolve the evidence-bundle lexicon paths (Option-A Phase 3): street-type prefers the committed repo artifact; the
+ * locality-surface lexicon (13 MB, never in git) resolves from the weights package only.
+ */
+function defaultStreetTypeLexicon(locale: string | undefined): string | undefined {
+	const repoDefault = "data/gazetteer/street-type-lexicon-v1.json"
+
+	if (existsSync(repoDefault)) return repoDefault
+
+	try {
+		return resolveWeights({ locale }).streetTypeLexiconPath
+	} catch {
+		return undefined
+	}
+}
+
+function defaultLocalitySurfaceLexicon(locale: string | undefined): string | undefined {
+	try {
+		return resolveWeights({ locale }).localitySurfaceLexiconPath
+	} catch {
+		return undefined
+	}
+}
+
 /** Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1). */
 function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLookup {
 	return source.binary
@@ -123,6 +147,10 @@ export interface ScorerOverrides {
 	anchor?: boolean
 	/** `false` to ablate the gazetteer channel even when the card declares it required. */
 	gazetteer?: boolean
+	/** `false` to ablate the street-type evidence channel (Option-A bundle). */
+	streetType?: boolean
+	/** `false` to ablate the locality-surface evidence channel (Option-A bundle). */
+	localitySurface?: boolean
 	/** `false` to ablate the country-lexicon channel even when the card declares it required (#1104). */
 	country?: boolean
 	/**
@@ -153,6 +181,10 @@ export interface CreateScorerOpts {
 	 * shipped in the weights package (#718 D1).
 	 */
 	gazetteerLexiconPath?: string
+	/** Street-type evidence lexicon path (Option-A bundle). Default: repo artifact, else the weights sibling. */
+	streetTypeLexiconPath?: string
+	/** Locality-surface evidence lexicon path (Option-A bundle). Default: the weights-package sibling. */
+	localitySurfaceLexiconPath?: string
 	/**
 	 * Country-surface lexicon path (#1104). Default {@link DEFAULT_COUNTRY_LEXICON} when it exists, else the soft-feed
 	 * sibling shipped in the weights package.
@@ -390,6 +422,62 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
+	// --- Evidence-bundle channels (Option-A Phase 3) ------------------------------------------------
+	// Same load + fail-closed + declared-ablation pattern as the gazetteer; both lexicons share its
+	// JSON schema and parser. A bundle-trained card declares `street_type` + `locality_surface`.
+	const streetTypeLexiconPath = opts.streetTypeLexiconPath ?? defaultStreetTypeLexicon(opts.locale)
+	const streetTypeRequired = declared.street_type?.required ?? false
+	let streetTypeLexicon: GazetteerLexicon | undefined
+
+	if (overrides.streetType === false) {
+		if (streetTypeRequired) {
+			console.error(
+				`[createScorer] OVERRIDE: street_type channel ABLATED (override streetType:false) but the ` +
+					`model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the bundle.`
+			)
+		}
+	} else {
+		streetTypeLexicon =
+			streetTypeLexiconPath && existsSync(streetTypeLexiconPath)
+				? parseGazetteerLexicon(JSON.parse(readFileSync(streetTypeLexiconPath, "utf8")))
+				: undefined
+
+		if (streetTypeRequired && !streetTypeLexicon) {
+			fail(
+				strict,
+				`street_type channel is declared REQUIRED by the model-card but the lexicon was not found ` +
+					`at ${streetTypeLexiconPath ?? "(unresolved)"}. Provide streetTypeLexiconPath, or pass ` +
+					`overrides.streetType=false for a deliberate ablation.`
+			)
+		}
+	}
+	const localitySurfaceLexiconPath = opts.localitySurfaceLexiconPath ?? defaultLocalitySurfaceLexicon(opts.locale)
+	const localitySurfaceRequired = declared.locality_surface?.required ?? false
+	let localitySurfaceLexicon: GazetteerLexicon | undefined
+
+	if (overrides.localitySurface === false) {
+		if (localitySurfaceRequired) {
+			console.error(
+				`[createScorer] OVERRIDE: locality_surface channel ABLATED (override localitySurface:false) but ` +
+					`the model-card declares it REQUIRED. Deliberate OOD — the model was TRAINED with the bundle.`
+			)
+		}
+	} else {
+		localitySurfaceLexicon =
+			localitySurfaceLexiconPath && existsSync(localitySurfaceLexiconPath)
+				? parseGazetteerLexicon(JSON.parse(readFileSync(localitySurfaceLexiconPath, "utf8")))
+				: undefined
+
+		if (localitySurfaceRequired && !localitySurfaceLexicon) {
+			fail(
+				strict,
+				`locality_surface channel is declared REQUIRED by the model-card but the lexicon was not found ` +
+					`at ${localitySurfaceLexiconPath ?? "(unresolved)"}. Provide localitySurfaceLexiconPath, or pass ` +
+					`overrides.localitySurface=false for a deliberate ablation.`
+			)
+		}
+	}
+
 	// --- Conventions mode -------------------------------------------------------------------------
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
@@ -436,6 +524,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
+		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
+		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		suppressGazetteerNearPostcode,
 		// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
 		// downstream, never a throw. Overlay cards may pin a concrete system (en-gb pins "gb", #1275).
