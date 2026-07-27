@@ -3240,6 +3240,7 @@ def sync_evidence_bundle():
     cmds = [
         f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v1.json {VOL_MOUNT}/gazetteer/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v2.json {VOL_MOUNT}/gazetteer/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
@@ -3273,7 +3274,13 @@ def sync_evidence_bundle():
     secrets=[r2_secret],
     timeout=1800,
 )
-def grade_evidence_bundle(step: int = 3000):
+def grade_evidence_bundle(
+    step: int = 3000,
+    zero: str = "both",
+    run: str = "v3160-evidence-bundle",
+    lexicon: str = "locality-surface-lexicon-v1.json",
+    show_flips: str = "",
+):
     """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
     computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
     zeroed (the ablation column — pre-registered leg 3 compares it to v385's P0 fixture numbers).
@@ -3303,7 +3310,7 @@ def grade_evidence_bundle(step: int = 3000):
     )
     fixture = f"{VOL_MOUNT}/eval/fixtures/ban-fragments-fr.jsonl"
 
-    ck = Path(f"{VOL_MOUNT}/output-v3160-evidence-bundle-s42/checkpoints/step-{step:06d}")
+    ck = Path(f"{VOL_MOUNT}/output-{run}-s42/checkpoints/step-{step:06d}")
     tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
     model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
     print(
@@ -3313,11 +3320,17 @@ def grade_evidence_bundle(step: int = 3000):
     gaz = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json")
     ctry = load_country_lexicon(f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json")
     street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json")
-    locality = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/locality-surface-lexicon-v1.json")
+    locality = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/{lexicon}")
     anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
 
     STREET_TAGS = {"street", "street_prefix", "street_suffix", "street_prefix_particle"}
-    BUNDLE = ("street_type", "locality_surface")
+    # Channel attribution (`zero`): which channels the OFF column zeroes — both | street | locality | none.
+    BUNDLE = {
+        "both": ("street_type", "locality_surface"),
+        "street": ("street_type",),
+        "locality": ("locality_surface",),
+        "none": (),
+    }[zero]
 
     def norm(s: str) -> str:
         return " ".join(s.lower().split())
@@ -3391,8 +3404,10 @@ def grade_evidence_bundle(step: int = 3000):
         agg[0] += int(ok_on)
         agg[1] += int(ok_off)
         agg[2] += 1
+        if show_flips and k == show_flips and ok_on != ok_off:
+            print(f"FLIP[{'ON-wins' if ok_on else 'OFF-wins'}] {raw!r} gold={gold!r} on={on!r} off={off!r}")
 
-    print(f"\n=== v3.16.0 BUNDLE VERDICT: ON vs OFF(ablation) — ban-fragments-fr (step-{step}) ===")
+    print(f"\n=== v3.16.0 BUNDLE: ON vs OFF(zero={zero}) — ban-fragments-fr (step-{step}) ===")
     print(f"{'klass':<24} {'ON':>7} {'OFF':>7} {'delta':>11}")
     tot_on = tot_off = tot_n = 0
     for k in sorted(by):
@@ -3413,7 +3428,7 @@ def grade_evidence_bundle(step: int = 3000):
     secrets=[r2_secret],
     timeout=1800,
 )
-def grade_street_type_contrast(step: int = 3000):
+def grade_street_type_contrast(step: int = 3000, show_flips: str = ""):
     """P-A VERDICT (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A). The street_type feature ON/OFF contrast on
     the SAME retrained checkpoint — the clean, fully-controlled read of "does street-type INPUT evidence
     improve street<->locality discrimination." For each ban-fragments-fr row we build the FULL feature
@@ -3530,6 +3545,8 @@ def grade_street_type_contrast(step: int = 3000):
         agg[0] += int(ok_on)
         agg[1] += int(ok_off)
         agg[2] += 1
+        if show_flips and k == show_flips and ok_on != ok_off:
+            print(f"FLIP[{'ON-wins' if ok_on else 'OFF-wins'}] {raw!r} gold={gold!r} on={on!r} off={off!r}")
 
     print(f"\n=== P-A VERDICT: street_type ON vs OFF — ban-fragments-fr (step-{step}) ===")
     print(f"{'klass':<24} {'ON':>7} {'OFF':>7} {'delta':>11}")
