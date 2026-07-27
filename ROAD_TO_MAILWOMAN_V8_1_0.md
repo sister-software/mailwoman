@@ -1,8 +1,9 @@
 # Road to Mailwoman v8.1.0 — parser architecture: retire the flag-pile, decide the long-term shape
 
-**Status:** converged design → task-list source · **Track 2 ADJUDICATED 2026-07-26 → §8** ·
-**Opened:** 2026-07-26 · **From:** 8.0.0 / bundle 6.6.3 / model v385 · **Authors:** Claude (brief) +
-Kimi (response), operator-directed.
+**Status:** ✅ **v8.1.0 SHIPPED 2026-07-27** (npm + demo on bundle 6.6.4; Track 1 complete, Track 2
+adjudicated §8, the recipe probes complete §9) · the live work is the **§9 build arc**
+(Claude-owned) · **Opened:** 2026-07-26 · **From:** 8.0.0 / bundle 6.6.3 / model v385 ·
+**Authors:** Claude (brief) + Kimi (response), operator-directed.
 
 **Directive (operator):** an architecture we can stand behind long-term — one that parses a _variety_
 of addresses competently — not a growing collection of opt-in/opt-out flags a consumer manages
@@ -250,6 +251,40 @@ one day (P-C zero-GPU; P-B + P-A ≈ 7 min A100 each), converge from independent
    built.
 
 **Sequencing note:** the probes were run against Track 2's original C→B→A order and are complete;
-Track 1 (D1–D3) remains the v8.1.0 gate and is untouched by this adjudication. The A build arc
-(locality channel + ablation gate + curriculum) is scoped as the v8.2/v9 architecture arc —
-productionization routed per the operator's Track-2 delegation.
+Track 1 (D1–D3) shipped as v8.1.0 on 2026-07-27 (npm tag `v8.1.0`, demo on bundle 6.6.4, receipts
+in PR #1332). The A build arc is **Claude-owned** (operator delegation 2026-07-27, superseding the
+earlier DeepSeek routing) and is specified in §9.
+
+---
+
+## 9. The build arc (post-8.1.0) — the confirmed recipe + the register-driven ordering
+
+**The recipe is no longer a direction — it's confirmed buildable** (five pre-registered runs,
+v3.15→v3.18, PR #1335; full receipts in `.superpowers/sdd/progress.md`): the two evidence channels
+(`street_type` 1-dim + `locality_surface` 2-dim) trained off v385 under the **absence-curriculum**
+(ramped per-row zero-out, independent draws) with **three-law lexicon selectivity** — (i)
+degenerate-surface exclusion (the shipped FST curation policy), (ii) 1-token prominence floor 0.25,
+(iii) person-name tier 0.45. Final bars: locality marginal within −0.020 everywhere; homonym +0.055
+as-typed / **+0.292 lowercase-heal**; user-register net +0.020.
+
+**The register doctrine orders the work** (operator, 2026-07-27): the typical web user types a
+FRAGMENT — lowercase, comma-free, no explicit admin toponyms — with context arriving from the map
+viewport and geo-IP, not the text. Explicit hierarchy (state/country/neighbourhood in the text) is
+the batch-validation and record-matching register (workstream 2). Consequences:
+
+1. **The bundle ships first and unchanged** — single-token evidence needs no parent in the text and
+   is measured strongest exactly in the fragment register (`feedback-lowercase-is-the-user-register`:
+   the model's own lowercase base drops ~16pp; the bundle recovers half the homonym collapse there).
+2. **Neighbourhood value delivers INSIDE the bundle, not as pairs**: the locality-surface lexicon v4
+   folds neighbourhood surfaces (same three-law selectivity; DE's 67k Ortsteile become
+   fragment-register evidence) and rides the same production training run.
+3. **Pair-index edges defer to workstream 2**, whose register actually contains explicit pairs; the
+   record matcher can consume them with zero model work when that workstream wakes. Build-on-demand
+   (a four-minute pass), no artifact inventory. Dispositions + the reasoning:
+   `2026-07-26-pair-index-hierarchy-design.md` §Dispositions.
+4. **Ambient-context bias at parse time** (viewport/geo-IP as the implicit parent) is noted as its
+   own future product arc — the resolver biases by viewport today, the parser doesn't.
+
+**Execution plan** (phases, gates, and the named open item — the street channel's lowercase
+house-number share): `docs/superpowers/plans/2026-07-27-option-a-productionization-plan.md`.
+Process posture per the operator: coarse phases, no micro-gates unless genuinely confounded.
