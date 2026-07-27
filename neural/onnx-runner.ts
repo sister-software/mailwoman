@@ -21,6 +21,10 @@ import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
 import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
 import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
 
+/** Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims). */
+export const STREET_TYPE_FEATURE_DIM = 1
+export const LOCALITY_SURFACE_FEATURE_DIM = 2
+
 export interface ONNXRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
 	warmup?: boolean
@@ -162,7 +166,11 @@ export class ONNXRunner {
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		evidence?: {
+			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		}
 	): Promise<InferResult> {
 		const session = await this.ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
@@ -263,6 +271,47 @@ export class ONNXRunner {
 				COUNTRY_FEATURE_DIM,
 			])
 			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
+		}
+
+		// Evidence-bundle channels (Option-A, Phase 2): same feed contract as every soft channel —
+		// present-conditional on the graph's declared inputs, confidence=0 identity zero-fallback for a
+		// bundle-trained model run without lexicons. Inert against every pre-bundle model by construction.
+		const evidenceFeeds = [
+			{ prefix: "street_type", dim: STREET_TYPE_FEATURE_DIM, data: evidence?.streetType },
+			{ prefix: "locality_surface", dim: LOCALITY_SURFACE_FEATURE_DIM, data: evidence?.localitySurface },
+		] as const
+
+		for (const { prefix, dim: fallbackDim, data } of evidenceFeeds) {
+			if (!session.inputNames.includes(`${prefix}_features`)) continue
+
+			if (data) {
+				const dim = data.features[0]?.length ?? fallbackDim
+				const ef = new Float32Array(this.fixedSeqLen * dim)
+				const ec = new Float32Array(this.fixedSeqLen)
+
+				for (let i = 0; i < seqLen; i++) {
+					ec[i] = data.confidence[i] ?? 0
+					const row = data.features[i]
+
+					if (row) {
+						for (let d = 0; d < dim; d++) {
+							ef[i * dim + d] = row[d] ?? 0
+						}
+					}
+				}
+				feeds[`${prefix}_features`] = new ort.Tensor("float32", ef, [1, this.fixedSeqLen, dim])
+				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", ec, [1, this.fixedSeqLen])
+			} else {
+				feeds[`${prefix}_features`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * fallbackDim), [
+					1,
+					this.fixedSeqLen,
+					fallbackDim,
+				])
+				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
+					1,
+					this.fixedSeqLen,
+				])
+			}
 		}
 
 		const output = await session.run(feeds)

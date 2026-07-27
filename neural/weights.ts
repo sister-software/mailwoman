@@ -113,6 +113,13 @@ export interface ResolvedWeights {
 	 */
 	countryLexiconPath?: string
 	/**
+	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2) — `street-type-lexicon-v1.json`. Server tier only;
+	 * ships at the promote whose model requires the bundle channels.
+	 */
+	streetTypeLexiconPath?: string
+	/** Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v4.json`. */
+	localitySurfaceLexiconPath?: string
+	/**
 	 * Path to the per-locale FST gazetteer (`fst-<locale>.bin`) shipped beside the resolved model. `undefined` when the
 	 * package doesn't ship one (e.g. en-nz — byte-stable). PATH ONLY: `neural` deliberately carries no
 	 * `@mailwoman/resolver-wof-sqlite` dependency (the FST prior consumes a structural `FSTMatcherLike`), so
@@ -286,6 +293,15 @@ function resolveFromPackageDir(
 	const countryCandidate = resolve(packageDir, "country-surface-lexicon-v1.json")
 	const countryLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
+	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
+	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them).
+	const streetTypeCandidate = resolve(packageDir, "street-type-lexicon-v1.json")
+	const streetTypeLexiconPath =
+		opts.tier === "pocket" ? undefined : existsSync(streetTypeCandidate) ? streetTypeCandidate : undefined
+	const localitySurfaceCandidate = resolve(packageDir, "locality-surface-lexicon-v4.json")
+	const localitySurfaceLexiconPath =
+		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
+
 	// Placetype-pair index sibling (placetype-pair-prior arc Task 5) — resolved LOCALLY from packageDir
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
@@ -319,6 +335,8 @@ function resolveFromPackageDir(
 		...(pairIndexPath ? { pairIndexPath } : {}),
 		...(fstPath ? { fstPath } : {}),
 		...(streetMorphologyPath ? { streetMorphologyPath } : {}),
+		...(streetTypeLexiconPath ? { streetTypeLexiconPath } : {}),
+		...(localitySurfaceLexiconPath ? { localitySurfaceLexiconPath } : {}),
 		source,
 	}
 }

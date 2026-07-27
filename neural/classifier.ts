@@ -66,7 +66,11 @@ export interface NeuralRunner {
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		evidence?: {
+			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		}
 	): Promise<InferResult>
 }
 
@@ -142,6 +146,14 @@ export interface NeuralAddressClassifierConfig {
 	 * NOT zeroed by `suppressGazetteerNearPostcode`.
 	 */
 	countryLexicon?: CountryLexicon
+	/**
+	 * Optional street-type evidence lexicon (Option-A bundle, Phase 2). When set, `parse` paints per-piece street-type
+	 * clues and feeds them to the runner — for bundle-trained models (exported with the
+	 * `street_type_features`/`street_type_confidence` ONNX inputs). Same JSON schema + parser as the gazetteer lexicon.
+	 */
+	streetTypeLexicon?: GazetteerLexicon
+	/** Optional locality-surface evidence lexicon (Option-A bundle) — `locality_surface_*` ONNX inputs. */
+	localitySurfaceLexicon?: GazetteerLexicon
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces adjacent to a
 	 * postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`). Targets the region-clue→postcode
@@ -405,6 +417,32 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		// Evidence-bundle lexicons (Option-A, Phase 2): same soft-feed pattern; degrade-absent for every
+		// pre-bundle package. `requires`-declared enforcement arrives with the first bundle-trained card.
+		let streetTypeLexicon: GazetteerLexicon | undefined
+
+		if (resolved.streetTypeLexiconPath) {
+			try {
+				streetTypeLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8")))
+			} catch (err) {
+				warnUnfedChannel("street_type", `failed to parse ${resolved.streetTypeLexiconPath}: ${(err as Error).message}`)
+			}
+		}
+		let localitySurfaceLexicon: GazetteerLexicon | undefined
+
+		if (resolved.localitySurfaceLexiconPath) {
+			try {
+				localitySurfaceLexicon = parseGazetteerLexicon(
+					JSON.parse(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
+				)
+			} catch (err) {
+				warnUnfedChannel(
+					"locality_surface",
+					`failed to parse ${resolved.localitySurfaceLexiconPath}: ${(err as Error).message}`
+				)
+			}
+		}
+
 		// Placetype-pair index sibling (placetype-pair-prior arc, Task 5): construct a PairIndexResolver
 		// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one
 		// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
@@ -458,6 +496,8 @@ export class NeuralAddressClassifier {
 			...(semiCrfGrammar ? { semiCrfGrammar } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+			...(streetTypeLexicon ? { streetTypeLexicon } : {}),
+			...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
@@ -609,12 +649,17 @@ export class NeuralAddressClassifier {
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+			streetTypeLexicon: this.cfg.streetTypeLexicon,
+			localitySurfaceLexicon: this.cfg.localitySurfaceLexicon,
 		})
 		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
 			ids,
 			soft.anchor,
 			soft.gazetteer,
-			soft.country
+			soft.country,
+			soft.streetType || soft.localitySurface
+				? { streetType: soft.streetType, localitySurface: soft.localitySurface }
+				: undefined
 		)
 
 		this.assertEmissionWidth(logits)
@@ -1210,7 +1255,10 @@ export interface ParseOpts {
  * exists to surface).
  */
 const warnedUnfedChannels = new Set<string>()
-function warnUnfedChannel(channel: "anchor" | "gazetteer" | "country", detail: string): void {
+function warnUnfedChannel(
+	channel: "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface",
+	detail: string
+): void {
 	if (warnedUnfedChannels.has(channel)) return
 	warnedUnfedChannels.add(channel)
 	console.error(
