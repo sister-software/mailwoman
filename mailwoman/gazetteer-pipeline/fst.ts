@@ -92,7 +92,10 @@ function surfacesOfLine(line: string): string[] {
  * Load the degenerate-surface exclusion sets from the shipped libpostal dictionaries. Returns normalized-join keys
  * (`normalizeTokens(surface).join(" ")`) so they compare exactly against the builder's insertion keys.
  */
-export function loadDegenerateSurfaces(languages: readonly string[] = CURATION_LANGUAGES): {
+export function loadDegenerateSurfaces(
+	languages: readonly string[] = CURATION_LANGUAGES,
+	fold: (surface: string) => string[] = normalizeTokens
+): {
 	surfaces: Set<string>
 	stopwordTokens: Set<string>
 } {
@@ -111,7 +114,7 @@ export function loadDegenerateSurfaces(languages: readonly string[] = CURATION_L
 
 			for (const line of readFileSync(path, "utf8").split("\n")) {
 				for (const surface of surfacesOfLine(line)) {
-					const tokens = normalizeTokens(surface)
+					const tokens = fold(surface)
 
 					if (tokens.length === 0) continue
 					surfaces.add(tokens.join(" "))
@@ -127,7 +130,7 @@ export function loadDegenerateSurfaces(languages: readonly string[] = CURATION_L
 	}
 
 	for (const s of SUPPLEMENTAL_DEGENERATE_SURFACES) {
-		const tokens = normalizeTokens(s)
+		const tokens = fold(s)
 
 		if (tokens.length === 0) continue
 		surfaces.add(tokens.join(" "))

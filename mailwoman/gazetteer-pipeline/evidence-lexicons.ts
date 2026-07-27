@@ -50,6 +50,22 @@ export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 
 const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 
+/**
+ * THE PAINTER FOLD (word_norm) — the rule BOTH painters apply at lookup (`gazetteer_anchor.py` /
+ * `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing non-letter/digit chars (KEEP internal —
+ * "saint-thomas", "d'azur"), lowercase, single-space join. Lexicon entry keys MUST use this fold or they are
+ * unreachable at paint time. NOT the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
+ * worlds fold differently by design; caught at Phase 2 when the locality builder briefly used the FST fold
+ * ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
+ */
+export function painterFold(surface: string): string[] {
+	return surface
+		.split(/\s+/)
+		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+		.filter(Boolean)
+		.map((w) => w.toLowerCase())
+}
+
 /** Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles). */
 export function loadPersonNameSurfaces(): Set<string> {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
@@ -65,7 +81,7 @@ export function loadPersonNameSurfaces(): Set<string> {
 
 		for (const line of readFileSync(f, "utf8").split("\n")) {
 			for (const surface of line.split("|")) {
-				const tokens = normalizeTokens(surface)
+				const tokens = painterFold(surface)
 
 				if (tokens.length === 1) names.add(tokens[0]!)
 			}
@@ -127,7 +143,8 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("loading curation + ambiguity + person-name inputs…")
-	const { surfaces: degenerate, stopwordTokens } = loadDegenerateSurfaces()
+	// Painter-fold the curation sets so they compare against painter-folded entry keys.
+	const { surfaces: degenerate, stopwordTokens } = loadDegenerateSurfaces(undefined, painterFold)
 	const countryCounts = computeSurfaceCountryCounts(dbPath)
 	const personNames = loadPersonNameSurfaces()
 
@@ -173,10 +190,12 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	let skippedProminence = 0
 
 	const add = (surface: string, placeID: number): void => {
-		const tokens = normalizeTokens(surface)
+		const tokens = painterFold(surface)
 
 		if (tokens.length === 0) return
 		const key = tokens.join(" ")
+		// The homograph scan is FST-fold-keyed (it feeds the FST builder too) — fold separately for the join.
+		const fstKey = normalizeTokens(surface).join(" ")
 
 		// Law 1 (+ the letters-required clause: WOF carries numeric alias surfaces like "12").
 		if (degenerate.has(key) || tokens.every((t) => stopwordTokens.has(t)) || !/\p{L}/u.test(key)) {
@@ -192,7 +211,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 			oneTokenMaxImportance.set(key, { own: Math.max(prev.own, own), parent: Math.max(prev.parent, parent) })
 		}
 		maxNgram = Math.max(maxNgram, tokens.length)
-		const homograph = (countryCounts.get(key) ?? 1) >= 2
+		const homograph = (countryCounts.get(fstKey) ?? 1) >= 2
 		entries.set(key, LOCALITY_BIT.locality | (homograph ? LOCALITY_BIT.locality_homograph : 0))
 	}
 
@@ -235,7 +254,9 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		bits: LOCALITY_BIT,
 		max_ngram: maxNgram,
 		rules: {
-			word_norm: "resolver normalizeTokens: NFKC, lowercase, strip punctuation/symbols, split whitespace",
+			word_norm:
+				"per whitespace-word: strip leading/trailing chars that are not Unicode letters/digits (keep internal), " +
+				"lowercase; rejoin single-spaced — the painter fold shared by gazetteer_anchor.py and gazetteer-inference.ts.",
 			entries: "case-insensitive; key = normalizeTokens(surface).join(' ')",
 			code_entries: "unused for this channel (no case-sensitive short codes)",
 			scan: "longest-first n-gram over whitespace words, left to right, non-overlapping",
