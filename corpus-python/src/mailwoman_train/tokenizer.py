@@ -80,7 +80,12 @@ class Tokenizer:
 
     def encode_with_spans(self, raw: str) -> list[PieceSpan]:
         """Encode raw text and return one ``PieceSpan`` per sub-token with char offsets."""
-        proto = self.sp.encode(raw, out_type="immutable_proto")
+        try:
+            proto = self.sp.encode(raw, out_type="immutable_proto")
+        except ValueError:
+            # sentencepiece ≥0.2.2 renamed the proto out_type (Modal's pinned image keeps the old
+            # spelling; local dev venvs track newer). Identical pieces/offsets either way.
+            proto = self.sp.encode(raw, out_type="proto")
         # Build a byte→char index for the original raw string so we can map proto byte offsets.
         raw_bytes = raw.encode("utf-8")
         # ``byte_to_char[i]`` is the char index of the codepoint that owns byte ``i`` (start byte).
