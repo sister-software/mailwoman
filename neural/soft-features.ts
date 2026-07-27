@@ -45,6 +45,14 @@ export interface SoftFeatures {
 	 * (where the gazetteer clue is zeroed by the near-postcode choreography). See `country-inference.ts`.
 	 */
 	country?: SoftFeatureChannel
+	/**
+	 * Street-type evidence channel (Option-A bundle, Phase 2) — present iff `streetTypeLexicon` was supplied. Painted by
+	 * the SAME generic painter as the gazetteer channel (the lexicons share one schema); no choreography — the bundle's
+	 * anti-over-trust discipline is the TRAIN-side curriculum, not a decode-side transform.
+	 */
+	streetType?: SoftFeatureChannel
+	/** Locality-surface evidence channel (Option-A bundle, Phase 2) — present iff `localitySurfaceLexicon` was supplied. */
+	localitySurface?: SoftFeatureChannel
 }
 
 /** Sources + choreography for {@link buildSoftFeatures}. Mirrors the classifier's config fields. */
@@ -62,6 +70,10 @@ export interface SoftFeatureSources {
 	 * choreography. See `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`. Does NOT touch the country channel.
 	 */
 	suppressGazetteerNearPostcode?: boolean
+	/** Street-type evidence lexicon (Option-A bundle). Omit to skip the channel. Same JSON schema as the gazetteer. */
+	streetTypeLexicon?: GazetteerLexicon
+	/** Locality-surface evidence lexicon (Option-A bundle). Omit to skip the channel. */
+	localitySurfaceLexicon?: GazetteerLexicon
 }
 
 /**
@@ -92,10 +104,18 @@ export function buildSoftFeatures(
 			? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 			: gazetteer
 	const country = sources.countryLexicon ? buildCountryFeatures(text, pieces, sources.countryLexicon) : undefined
+	const streetType = sources.streetTypeLexicon
+		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
+		: undefined
+	const localitySurface = sources.localitySurfaceLexicon
+		? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
+		: undefined
 
 	return {
 		...(anchor ? { anchor } : {}),
 		...(gazFed ? { gazetteer: gazFed } : {}),
 		...(country ? { country } : {}),
+		...(streetType ? { streetType } : {}),
+		...(localitySurface ? { localitySurface } : {}),
 	}
 }

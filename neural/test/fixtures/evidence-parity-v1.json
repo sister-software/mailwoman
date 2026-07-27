@@ -1,0 +1,593 @@
+{
+	"generated_by": "neural/test/fixtures/generate-evidence-parity.py",
+	"street_lexicon": {
+		"feature_dim": 1,
+		"slots": ["street_type"],
+		"bits": {
+			"street_type": 1
+		},
+		"max_ngram": 2,
+		"entries": {
+			"rue": 1,
+			"boulevard": 1,
+			"impasse": 1,
+			"chemin": 1,
+			"street": 1,
+			"ancien chemin": 1
+		},
+		"code_entries": {
+			"R": 1,
+			"AV": 1,
+			"ST": 1
+		}
+	},
+	"locality_lexicon": {
+		"feature_dim": 2,
+		"slots": ["locality", "locality_homograph"],
+		"bits": {
+			"locality": 1,
+			"locality_homograph": 2
+		},
+		"max_ngram": 3,
+		"entries": {
+			"paris": 3,
+			"springfield": 3,
+			"rennes": 1,
+			"saint-denis": 3,
+			"l'isle-adam": 1,
+			"la grange park": 1,
+			"belleville": 3
+		},
+		"code_entries": {}
+	},
+	"cases": [
+		{
+			"raw": "12 rue de la Paix, Paris",
+			"pieces": [
+				{
+					"piece": "▁12",
+					"start": 0,
+					"end": 2
+				},
+				{
+					"piece": "▁rue",
+					"start": 2,
+					"end": 6
+				},
+				{
+					"piece": "▁de",
+					"start": 6,
+					"end": 9
+				},
+				{
+					"piece": "▁la",
+					"start": 9,
+					"end": 12
+				},
+				{
+					"piece": "▁Paix",
+					"start": 12,
+					"end": 17
+				},
+				{
+					"piece": ",",
+					"start": 17,
+					"end": 18
+				},
+				{
+					"piece": "▁Paris",
+					"start": 18,
+					"end": 24
+				}
+			],
+			"street": {
+				"features": [[0.0], [1.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[1.0, 1.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+			}
+		},
+		{
+			"raw": "12 rue de la paix, paris",
+			"pieces": [
+				{
+					"piece": "▁12",
+					"start": 0,
+					"end": 2
+				},
+				{
+					"piece": "▁rue",
+					"start": 2,
+					"end": 6
+				},
+				{
+					"piece": "▁de",
+					"start": 6,
+					"end": 9
+				},
+				{
+					"piece": "▁la",
+					"start": 9,
+					"end": 12
+				},
+				{
+					"piece": "▁pa",
+					"start": 12,
+					"end": 15
+				},
+				{
+					"piece": "ix",
+					"start": 15,
+					"end": 17
+				},
+				{
+					"piece": ",",
+					"start": 17,
+					"end": 18
+				},
+				{
+					"piece": "▁paris",
+					"start": 18,
+					"end": 24
+				}
+			],
+			"street": {
+				"features": [[0.0], [1.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[1.0, 1.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+			}
+		},
+		{
+			"raw": "Boulevard des Capucines",
+			"pieces": [
+				{
+					"piece": "▁Boulevard",
+					"start": 0,
+					"end": 9
+				},
+				{
+					"piece": "▁des",
+					"start": 9,
+					"end": 13
+				},
+				{
+					"piece": "▁Capucines",
+					"start": 13,
+					"end": 23
+				}
+			],
+			"street": {
+				"features": [[1.0], [0.0], [0.0]],
+				"confidence": [1.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0]
+			}
+		},
+		{
+			"raw": "Saint-Denis",
+			"pieces": [
+				{
+					"piece": "▁Saint",
+					"start": 0,
+					"end": 5
+				},
+				{
+					"piece": "-",
+					"start": 5,
+					"end": 6
+				},
+				{
+					"piece": "Denis",
+					"start": 6,
+					"end": 11
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[1.0, 1.0],
+					[1.0, 1.0],
+					[1.0, 1.0]
+				],
+				"confidence": [1.0, 1.0, 1.0]
+			}
+		},
+		{
+			"raw": "saint-denis",
+			"pieces": [
+				{
+					"piece": "▁saint",
+					"start": 0,
+					"end": 5
+				},
+				{
+					"piece": "-",
+					"start": 5,
+					"end": 6
+				},
+				{
+					"piece": "denis",
+					"start": 6,
+					"end": 11
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[1.0, 1.0],
+					[1.0, 1.0],
+					[1.0, 1.0]
+				],
+				"confidence": [1.0, 1.0, 1.0]
+			}
+		},
+		{
+			"raw": "L'Isle-Adam",
+			"pieces": [
+				{
+					"piece": "▁L",
+					"start": 0,
+					"end": 1
+				},
+				{
+					"piece": "'",
+					"start": 1,
+					"end": 2
+				},
+				{
+					"piece": "Isle",
+					"start": 2,
+					"end": 6
+				},
+				{
+					"piece": "-",
+					"start": 6,
+					"end": 7
+				},
+				{
+					"piece": "A",
+					"start": 7,
+					"end": 8
+				},
+				{
+					"piece": "dam",
+					"start": 8,
+					"end": 11
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[1.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0]
+				],
+				"confidence": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+			}
+		},
+		{
+			"raw": "123 Main ST",
+			"pieces": [
+				{
+					"piece": "▁123",
+					"start": 0,
+					"end": 3
+				},
+				{
+					"piece": "▁Ma",
+					"start": 3,
+					"end": 6
+				},
+				{
+					"piece": "in",
+					"start": 6,
+					"end": 8
+				},
+				{
+					"piece": "▁ST",
+					"start": 8,
+					"end": 11
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [1.0]],
+				"confidence": [0.0, 0.0, 0.0, 1.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0]
+			}
+		},
+		{
+			"raw": "123 main st",
+			"pieces": [
+				{
+					"piece": "▁123",
+					"start": 0,
+					"end": 3
+				},
+				{
+					"piece": "▁",
+					"start": 3,
+					"end": 4
+				},
+				{
+					"piece": "main",
+					"start": 4,
+					"end": 8
+				},
+				{
+					"piece": "▁st",
+					"start": 8,
+					"end": 11
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0]
+			}
+		},
+		{
+			"raw": "La Grange Park Illinois",
+			"pieces": [
+				{
+					"piece": "▁La",
+					"start": 0,
+					"end": 2
+				},
+				{
+					"piece": "▁Grange",
+					"start": 2,
+					"end": 9
+				},
+				{
+					"piece": "▁Park",
+					"start": 9,
+					"end": 14
+				},
+				{
+					"piece": "▁Illinois",
+					"start": 14,
+					"end": 23
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[1.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [1.0, 1.0, 1.0, 0.0]
+			}
+		},
+		{
+			"raw": "Ancien Chemin de Rennes",
+			"pieces": [
+				{
+					"piece": "▁Ancien",
+					"start": 0,
+					"end": 6
+				},
+				{
+					"piece": "▁Chemin",
+					"start": 6,
+					"end": 13
+				},
+				{
+					"piece": "▁de",
+					"start": 13,
+					"end": 16
+				},
+				{
+					"piece": "▁R",
+					"start": 16,
+					"end": 18
+				},
+				{
+					"piece": "ennes",
+					"start": 18,
+					"end": 23
+				}
+			],
+			"street": {
+				"features": [[1.0], [1.0], [0.0], [0.0], [0.0]],
+				"confidence": [1.0, 1.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 1.0, 1.0]
+			}
+		},
+		{
+			"raw": "Springfield",
+			"pieces": [
+				{
+					"piece": "▁Spring",
+					"start": 0,
+					"end": 6
+				},
+				{
+					"piece": "field",
+					"start": 6,
+					"end": 11
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0]],
+				"confidence": [0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[1.0, 1.0],
+					[1.0, 1.0]
+				],
+				"confidence": [1.0, 1.0]
+			}
+		},
+		{
+			"raw": "nothing to see here",
+			"pieces": [
+				{
+					"piece": "▁no",
+					"start": 0,
+					"end": 2
+				},
+				{
+					"piece": "th",
+					"start": 2,
+					"end": 4
+				},
+				{
+					"piece": "ing",
+					"start": 4,
+					"end": 7
+				},
+				{
+					"piece": "▁",
+					"start": 7,
+					"end": 8
+				},
+				{
+					"piece": "to",
+					"start": 8,
+					"end": 10
+				},
+				{
+					"piece": "▁se",
+					"start": 10,
+					"end": 13
+				},
+				{
+					"piece": "e",
+					"start": 13,
+					"end": 14
+				},
+				{
+					"piece": "▁her",
+					"start": 14,
+					"end": 18
+				},
+				{
+					"piece": "e",
+					"start": 18,
+					"end": 19
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			}
+		},
+		{
+			"raw": "Chemin de Belleville",
+			"pieces": [
+				{
+					"piece": "▁Chemin",
+					"start": 0,
+					"end": 6
+				},
+				{
+					"piece": "▁de",
+					"start": 6,
+					"end": 9
+				},
+				{
+					"piece": "▁Belleville",
+					"start": 9,
+					"end": 20
+				}
+			],
+			"street": {
+				"features": [[1.0], [0.0], [0.0]],
+				"confidence": [1.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[1.0, 1.0]
+				],
+				"confidence": [0.0, 0.0, 1.0]
+			}
+		}
+	]
+}
