@@ -407,7 +407,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 
 	if (/```|<\/?\w+>|^\s*\{/.test(candidate.raw)) return false
 	const normRaw = normalize(candidate.raw)
-	const dropped = new Set(candidate.dropped ?? [])
+	const dropped = new Set(candidate.dropped)
 
 	// LLM cannot drop required components present in the seed.
 	for (const tag of dropped) {

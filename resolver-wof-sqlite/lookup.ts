@@ -793,9 +793,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (useBboxJoin) {
 			joinClause += ` JOIN ${sch}.${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
 			// AABB intersection — both bbox sides must overlap. R*Tree handles this in O(log n).
-			const filterBox = query.bbox
-				? query.bbox
-				: bboxAround(query.near!.lat, query.near!.lon, query.near!.maxDistanceKm!)
+			const filterBox = query.bbox || bboxAround(query.near!.lat, query.near!.lon, query.near!.maxDistanceKm!)
 			where.push("bbox.min_lat <= ? AND bbox.max_lat >= ?", "bbox.min_lon <= ? AND bbox.max_lon >= ?")
 			params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
 		}

@@ -178,7 +178,7 @@ export async function fetchTigerFull(
 
 	if (!listingRes.ok) throw new Error(`Failed to fetch TIGER directory listing: HTTP ${listingRes.status}`)
 	const html = await listingRes.text()
-	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g) ?? [])].toSorted()
+	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g))].toSorted()
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
 

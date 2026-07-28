@@ -361,7 +361,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// Kept OUT of the shared `filters` so a region MISS falls back to the unscoped cascade below: a
 		// country/non-region parent (no `region_id` match), a `region_id=0` row (place with no region
 		// ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
-		const regionParentID = query.parentID ? query.parentID : undefined
+		const regionParentID = query.parentID || undefined
 
 		const probe = (nk: string, regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]

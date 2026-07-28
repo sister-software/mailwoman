@@ -27,7 +27,7 @@ function MatchDetail({ subject }: SubjectPanelProps): ReactNode {
 			<dt>confidence</dt>
 			<dd>{Math.round(subject.confidence * 100)}%</dd>
 			<dt>anchor</dt>
-			<dd>{subject.remainder ? subject.remainder : <em>none — global query</em>}</dd>
+			<dd>{subject.remainder || <em>none — global query</em>}</dd>
 		</dl>
 	)
 }

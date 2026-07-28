@@ -582,7 +582,7 @@ const TrainingChartsInner: React.FC = () => {
 			const newData = new Map(metricData)
 
 			for (const runName of selectedRuns) {
-				const runMap = new Map(newData.get(runName) ?? [])
+				const runMap = new Map(newData.get(runName))
 
 				for (const mk of selectedMetrics) {
 					try {
