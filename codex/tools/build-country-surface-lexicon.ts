@@ -46,6 +46,9 @@ import { dirname, resolve } from "node:path"
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
 
+/** Letters at or below which a token reads as an abbreviation rather than a word. */
+const MAX_ABBREVIATION_LETTERS = 3
+
 const BIT = { country_surface: 1, country_ambiguous: 2 }
 const SLOTS = ["country_surface", "country_ambiguous"]
 
@@ -72,7 +75,7 @@ const norm = (s: string): string => wordNorm(s).toLowerCase()
 const isShortCode = (s: string): boolean => {
 	const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
-	return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
+	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
 // Homograph set: a single-word country surface that is ALSO a US region (name or abbreviation) reads

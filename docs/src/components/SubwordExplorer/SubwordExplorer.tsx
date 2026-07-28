@@ -15,6 +15,7 @@
 
 import type React from "react"
 
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import type { KindResult, ResultNode, StageTiming } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
@@ -186,7 +187,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
 // ---------------------------------------------------------------------------

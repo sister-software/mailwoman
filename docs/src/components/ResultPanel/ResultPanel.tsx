@@ -1,6 +1,7 @@
 import CodeBlock from "@theme/CodeBlock"
 import { Fragment, useCallback, useState } from "react"
 
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import type { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
@@ -22,7 +23,7 @@ export interface ConfidenceCellProps {
 export const ConfidenceCell: React.FC<ConfidenceCellProps> = ({ confidence }) => {
 	if (confidence == null) return <span className={styles.confDash}>—</span>
 	const pct = Math.max(0, Math.min(1, confidence)) * 100
-	const tier = confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	const tier = confidenceTier(confidence)
 
 	return (
 		<div className={styles.confCell}>

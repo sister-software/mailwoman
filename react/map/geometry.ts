@@ -17,6 +17,9 @@
  */
 
 /** Mean km per degree of latitude (WGS84 average). */
+/** Segments used to approximate a circle as a polygon ring. */
+const CIRCLE_SEGMENTS = 64
+
 const KM_PER_DEG_LAT = 111.32
 
 /** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */
@@ -45,7 +48,7 @@ function circleRing(lat: number, lon: number, radiusKm: number): number[][] {
 	const perLon = kmPerDegLon(lat)
 	const ring: number[][] = []
 
-	for (let i = 0; i <= 64; i++) {
+	for (let i = 0; i <= CIRCLE_SEGMENTS; i++) {
 		const theta = (2 * Math.PI * i) / 64
 
 		ring.push([lon + (radiusKm * Math.cos(theta)) / perLon, lat + (radiusKm * Math.sin(theta)) / KM_PER_DEG_LAT])

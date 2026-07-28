@@ -39,6 +39,9 @@ import type { Tagged } from "type-fest"
  * @title UK postcode
  * @pattern ^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$
  */
+/** Shortest valid UK postcode once spaces are stripped, e.g. `M11AE`. */
+const MIN_POSTCODE_LENGTH = 5
+
 export type Postcode = Tagged<string, "UkPostcode">
 
 /**
@@ -59,7 +62,7 @@ export function normalizeUkPostcode(raw: unknown): Postcode | null {
 	// Drop all whitespace, uppercase, then re-insert the single canonical space before the inward 3.
 	const compact = raw.replaceAll(/\s+/g, "").toUpperCase()
 
-	if (compact.length < 5) return null
+	if (compact.length < MIN_POSTCODE_LENGTH) return null
 	const spaced = `${compact.slice(0, -3)} ${compact.slice(-3)}`
 
 	return UK_POSTCODE_PATTERN.test(spaced) ? (spaced as Postcode) : null

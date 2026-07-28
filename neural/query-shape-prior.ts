@@ -34,6 +34,9 @@
  * Minimal subset of `QueryShape` this module consumes. Compatible with `@mailwoman/query-shape`'s exported `QueryShape`
  * type by shape — no import required.
  */
+/** Candidate count above which the shape prior is too diffuse to be worth applying. */
+const MAX_PRIOR_CANDIDATES = 4
+
 export interface QueryShapeLike {
 	knownFormats: ReadonlyArray<KnownFormatHitLike>
 	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
@@ -183,7 +186,7 @@ function applyScopedLocalityBias(
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
 		// Guard 3: the doubleton shape — a short leading name, not a sentence.
-		if (!candidates.length || candidates.length > 4) continue
+		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
 
 		for (let i = 0; i < candidates.length; i++) {
 			const col = i === 0 ? bLocCol : iLocCol

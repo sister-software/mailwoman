@@ -39,6 +39,9 @@ import type { CanadianProvinceCode } from "./province.ts"
  * @title Postal Code
  * @pattern ^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$
  */
+/** Characters in a Canadian postal code once spaces are stripped: `A1A1A1`. */
+const POSTAL_CODE_LENGTH = 6
+
 export type PostalCode = Tagged<string, "CaPostalCode">
 
 /**
@@ -57,7 +60,7 @@ export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
 	const compact = raw.trim().toUpperCase().replaceAll(/\s+/g, "")
 
-	if (compact.length !== 6) return null
+	if (compact.length !== POSTAL_CODE_LENGTH) return null
 	const spaced = `${compact.slice(0, 3)} ${compact.slice(3)}`
 
 	return CA_POSTAL_CODE_PATTERN.test(spaced) ? (spaced as PostalCode) : null

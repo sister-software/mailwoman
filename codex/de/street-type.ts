@@ -25,6 +25,9 @@
  * spelling split). The full reference table, used for synthesis/expansion. For the "is this token part of a street"
  * test, use {@link DE_STREET_SUFFIXES} / {@link isGermanStreetToken}, which exclude the place-name-colliding suffixes.
  */
+/** Shortest token still plausible as a German street-type suffix (`weg`). */
+const MIN_STREET_TYPE_LENGTH = 3
+
 export const DE_STREET_TYPE_VARIANTS = {
 	Straße: ["Str.", "Str", "Strasse"],
 	Weg: [],
@@ -77,7 +80,7 @@ export function isGermanStreetToken(token: unknown): boolean {
 	if (typeof token !== "string") return false
 	const t = token.toLowerCase().replaceAll(/[^a-zà-ÿß]/g, "")
 
-	if (t.length < 3) return false
+	if (t.length < MIN_STREET_TYPE_LENGTH) return false
 
 	return DE_STREET_SUFFIXES.some((s) => t.endsWith(s))
 }

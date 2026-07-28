@@ -33,8 +33,11 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  * - House-number fragments on six FR golden rows (the model double-labels the number; the comma is the only thing keeping
  *   the spans honest). A comma between same-tag spans is a list/separator, never the inside of a surface form.
  */
+/** Tokens a gap may span and still be bridged. Wider gaps are separate spans, not one interrupted span. */
+const MAX_BRIDGEABLE_GAP = 3
+
 function bridgeable(gap: string): boolean {
-	if (!gap.length || gap.length > 3) return false
+	if (!gap.length || gap.length > MAX_BRIDGEABLE_GAP) return false
 
 	if (!/^[.\-/'\u2019\s]*$/.test(gap)) return false
 

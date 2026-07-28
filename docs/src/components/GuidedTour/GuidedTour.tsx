@@ -25,6 +25,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import { flattenTree } from "../../shared/demo-helpers.ts"
 import type { DemoResult } from "../../shared/resources.tsx"
 import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
@@ -66,7 +67,7 @@ function statusBadgeClass(badge: StatusBadge): string {
 function confTier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
 const ConfidenceMini: React.FC<{ confidence?: number }> = ({ confidence }) => {

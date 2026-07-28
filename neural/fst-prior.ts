@@ -21,6 +21,18 @@
 
 import type { TokenLike } from "./query-shape-prior.ts"
 
+/**
+ * Confidence scaling by matched-token count. A one- or two-token FST hit is far likelier to be coincidental than a
+ * three-token one, so short matches are discounted rather than trusted.
+ */
+const FST_MATCH_LENGTH_SCALE: ReadonlyMap<number, number> = new Map([
+	[1, 0.25],
+	[2, 0.7],
+])
+
+/** Scale applied once a match is long enough to stand on its own. */
+const FULL_FST_MATCH_SCALE = 1
+
 const SPACE_SENTINEL = "▁"
 
 /**
@@ -453,7 +465,7 @@ function applyBias(
 	// street-suppression term (safe for the bare-fragment regime where the positive bias earns its keep);
 	// `both` also scales the positive locality bias; `off` disables. Locale-general — no word list.
 	const matchLen = groups.length
-	const lengthScale = matchLen >= 3 ? 1 : matchLen === 2 ? 0.7 : 0.25
+	const lengthScale = FST_MATCH_LENGTH_SCALE.get(matchLen) ?? FULL_FST_MATCH_SCALE
 	const posScale = lengthMode === "both" ? lengthScale : 1
 	const supScale = lengthMode === "off" ? 1 : lengthScale
 

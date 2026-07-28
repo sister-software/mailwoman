@@ -69,6 +69,9 @@ import { resolve } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
+/** Hex characters in an md5 digest. */
+const MD5_HEX_LENGTH = 32
+
 const PKG_DIR = repoRootPath("neural-weights-en-gb")
 // In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this
 // pair identical to neural-weights-en-us/scripts/link-dev-weights.ts's DEFAULT_MODEL /
@@ -123,7 +126,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
 				const [hash] = sidecarContent.split(/\s+/)
 
-				if (hash && hash.length === 32) {
+				if (hash && hash.length === MD5_HEX_LENGTH) {
 					// Valid md5 hash (32 hex chars)
 					console.log(`md5(${path}): read from sidecar`)
 

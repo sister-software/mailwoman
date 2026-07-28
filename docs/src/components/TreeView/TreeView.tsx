@@ -1,3 +1,5 @@
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
+
 import styles from "./styles.module.css"
 
 /**
@@ -19,7 +21,7 @@ export interface TreeViewProps {
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
 function renderNode(node: TreeNode, path: string): React.ReactNode {

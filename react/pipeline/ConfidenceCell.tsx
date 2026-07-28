@@ -9,10 +9,16 @@
 
 import { cx } from "../common/cx.ts"
 
+/** At or above this the cell is drawn as high-confidence. Presentation only — see docs/src/shared/confidence-tiers.ts. */
+const HIGH_CONFIDENCE_MIN = 0.8
+
+/** At or above this the cell is drawn as medium-confidence; below it, low. */
+const MID_CONFIDENCE_MIN = 0.5
+
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidence >= HIGH_CONFIDENCE_MIN ? "high" : confidence >= MID_CONFIDENCE_MIN ? "mid" : "low"
 }
 
 export interface ConfidenceCellProps {

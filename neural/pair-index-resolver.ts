@@ -44,6 +44,9 @@
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 
+/** Tags addressable by the single-byte index the pair table packs into. */
+const MAX_TAGS_PER_BYTE = 256
+
 const MAGIC = 0x31_58_49_50 // "PIX1" little-endian (P=0x50 I=0x49 X=0x58 1=0x31)
 const KNOWN_SCHEMA_VERSION = 1
 
@@ -100,7 +103,7 @@ function pairKey(child: string, parent: string): string {
  * real place name approaches this).
  */
 export function serializePairIndex(header: PairIndexHeader, entries: readonly PairIndexEntry[]): Uint8Array {
-	if (COMPONENT_TAGS.length > 256) {
+	if (COMPONENT_TAGS.length > MAX_TAGS_PER_BYTE) {
 		throw new Error(
 			`pair index: COMPONENT_TAGS has ${COMPONENT_TAGS.length} tags, which exceeds the u8 tagIdx cap (256)`
 		)
