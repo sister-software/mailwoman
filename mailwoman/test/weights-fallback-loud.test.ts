@@ -197,10 +197,3 @@ describe.skipIf(!hasWOFDb)("#1108 loud weights fallback — --resolve degraded e
 		expect(stdout.trim().length).toBeGreaterThan(0)
 	}, 60_000)
 })
-
-if (!hasWOFDb) {
-	describe.skip("#1108 --resolve degraded end-to-end", () => {
-		// oxlint-disable-next-line vitest/expect-expect -- a visible placeholder reporting the absent WOF DB, not a test
-		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB)`, () => {})
-	})
-}

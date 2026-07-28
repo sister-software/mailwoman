@@ -149,10 +149,3 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 		})
 	})
 })
-
-if (!hasWOFDb) {
-	describe.skip("WOFSqlitePlaceLookup integration", () => {
-		// oxlint-disable-next-line vitest/expect-expect -- a visible placeholder reporting the absent WOF DB, not a test
-		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB or download via the README)`, () => {})
-	})
-}

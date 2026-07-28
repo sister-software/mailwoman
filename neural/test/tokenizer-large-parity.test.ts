@@ -125,11 +125,3 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		}
 	})
 })
-
-if (!haveLargeFixture) {
-	describe("MailwomanTokenizer — large-scale parity (skipped)", () => {
-		test(`generate the fixture to enable: see fixtures/generate-tokenizer-parity.py --from-parquet`, () => {
-			expect(true).toBe(true)
-		})
-	})
-}

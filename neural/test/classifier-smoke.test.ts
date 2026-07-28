@@ -69,11 +69,3 @@ describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", (
 		expect(tree.roots).toEqual([])
 	})
 })
-
-if (!haveModel) {
-	describe("NeuralAddressClassifier — smoke (skipped)", () => {
-		test(`model not at ${MODEL_PATH} — set MAILWOMAN_TEST_ONNX_MODEL to enable`, () => {
-			expect(true).toBe(true)
-		})
-	})
-}
