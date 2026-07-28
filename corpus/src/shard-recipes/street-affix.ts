@@ -46,6 +46,12 @@ import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 interface USSource {
 	zip: string
 	csv: string

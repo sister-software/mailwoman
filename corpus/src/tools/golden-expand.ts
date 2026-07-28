@@ -55,6 +55,9 @@ import { dataRootPath, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
+/** Longest raw line still plausibly a single address rather than a concatenated record. */
+const MAX_CANDIDATE_LENGTH = 500
+
 interface CorpusRow {
 	raw: string
 	tokens: string[]
@@ -403,7 +406,7 @@ const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_
 function validate(seed: Seed, candidate: Candidate): boolean {
 	if (!candidate.raw || typeof candidate.raw !== "string") return false
 
-	if (candidate.raw.length > 500) return false
+	if (candidate.raw.length > MAX_CANDIDATE_LENGTH) return false
 
 	if (/```|<\/?\w+>|^\s*\{/.test(candidate.raw)) return false
 	const normRaw = normalize(candidate.raw)

@@ -74,6 +74,12 @@ import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 /** House numbers, weighted toward the small values that dominate real BAN rows. */
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const HOUSE_NUMBERS = [
 	1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 21, 24, 27, 30, 33, 42, 57, 68, 84, 102, 115, 140,
 ]

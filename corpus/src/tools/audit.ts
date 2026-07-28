@@ -18,6 +18,15 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
 
+/** Share of a shard one source may hold before the mix is flagged as dominated by it. */
+const DOMINANT_SOURCE_SHARE = 0.4
+
+/**
+ * How far the leading source may outweigh the runner-up before the mix is flagged. Catches the case where no single
+ * source clears {@link DOMINANT_SOURCE_SHARE} but the distribution is still lopsided.
+ */
+const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
+
 export interface AuditOpts {
 	corpusDir: string
 	configPath?: string
@@ -258,7 +267,10 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 		const top = numeric[0]!
 		const next = numeric[1]?.effectiveSamplePct ?? 0
 
-		if (top.effectiveSamplePct > 0.4 || (next > 0 && top.effectiveSamplePct / next > 1.5)) {
+		if (
+			top.effectiveSamplePct > DOMINANT_SOURCE_SHARE ||
+			(next > 0 && top.effectiveSamplePct / next > MAX_TOP_TO_RUNNER_UP_RATIO)
+		) {
 			top.overweightFactor = next > 0 ? top.effectiveSamplePct / next : Infinity
 		}
 	}

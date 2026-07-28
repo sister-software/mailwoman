@@ -32,6 +32,18 @@ import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /** A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region. */
+
+/**
+ * Longest OpenAddresses unit id reused verbatim. Longer values are building codes or free text, so a synthetic id is
+ * substituted instead.
+ */
+const MAX_REAL_UNIT_ID_LENGTH = 6
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 interface UnitSource {
 	zip: string
 	csv: string
@@ -181,7 +193,8 @@ function makeUnit(random: () => number, oaUnit: string): string {
 	const designator = random() < 0.5 ? title(canonical) : title(US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical])
 
 	if (standalone) return designator
-	const id = oaUnit && oaUnit.length <= 6 ? oaUnit : SYNTH_IDS[Math.floor(random() * SYNTH_IDS.length)]!
+	const id =
+		oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : SYNTH_IDS[Math.floor(random() * SYNTH_IDS.length)]!
 
 	return `${designator} ${id}`
 }

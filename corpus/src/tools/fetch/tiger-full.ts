@@ -30,6 +30,18 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { isTransientStatus, readManifest, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+/** Lowest 2xx status; anything below is informational. */
+const HTTP_OK = 200
+
+/** Lowest 3xx status; at or above it the response is a redirect or an error, not a body. */
+const HTTP_REDIRECT = 300
+
+const BYTES_PER_KIB = 1024
+
 const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
 
 export interface FetchTigerFullOptions extends BaseFetchOptions {
@@ -57,7 +69,7 @@ function humanBytes(bytes: number): string {
 	let value = bytes
 	let unit = 0
 
-	while (value >= 1024 && unit < units.length - 1) {
+	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
 		value /= 1024
 		unit++
 	}
@@ -138,13 +150,13 @@ async function downloadCounty(url: string, dest: string): Promise<CountyResult> 
 	const filename = basename(dest)
 	const status = await streamDownload(url, dest, { timeoutMs: 600_000, retries: 3, retryDelayMs: 5000 })
 
-	if (status < 200 || status >= 300) {
+	if (status < HTTP_OK || status >= HTTP_REDIRECT) {
 		return { ok: false, filename, reason: `HTTP ${status}` }
 	}
 
 	const bytes = statSync(dest).size
 
-	if (bytes < 1024) {
+	if (bytes < BYTES_PER_KIB) {
 		rmSync(dest, { force: true })
 
 		return { ok: false, filename, reason: `too small (${bytes} bytes)` }

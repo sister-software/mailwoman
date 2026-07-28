@@ -32,6 +32,12 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 export interface AnchorAbsorptionBaseTuple {
 	locality: string
 	region: string

@@ -31,6 +31,12 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+const BYTES_PER_KIB = 1024
+
 const execFileAsync = promisify(execFile)
 
 // The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05).
@@ -98,7 +104,7 @@ export async function fetchIMLSPLS(
 	})
 	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
 
-	if (zipSize < 1024) {
+	if (zipSize < BYTES_PER_KIB) {
 		report?.(`  ✗ Response too small (${zipSize} bytes) — probable error page`)
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }

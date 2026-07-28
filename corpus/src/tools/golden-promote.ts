@@ -38,6 +38,15 @@ import { readJSONL, sha256File, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+/** Components a candidate needs before it is rich enough to be worth a golden-set slot. */
+const MIN_GOLDEN_COMPONENTS = 5
+
+/** Components an existing entry must still carry to survive promotion. */
+const MIN_PROMOTABLE_COMPONENTS = 4
+
+/** Quote-delimited segments above which the raw line is malformed rather than merely quoted. */
+const MAX_QUOTE_SEGMENTS = 3
+
 interface GoldenEntry {
 	raw: string
 	components: Record<string, string>
@@ -85,7 +94,7 @@ function normalize(s: string): string {
 function isComponentsGlued(entry: GoldenEntry): boolean {
 	const componentCount = Object.keys(entry.components).length
 
-	if (componentCount < 5) return false
+	if (componentCount < MIN_GOLDEN_COMPONENTS) return false
 	const separators = (entry.raw.match(/[,\n;]/g) ?? []).length
 
 	return separators < 2
@@ -97,7 +106,7 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
  * often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
-	if (Object.keys(entry.components).length < 4) return false
+	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false
 
 	if (entry.country === "FR" || entry.country === "France") return false
 	const postcode = entry.components.postcode
@@ -124,7 +133,7 @@ function isSuspicious(entry: GoldenEntry): boolean {
 
 	if (openBrackets !== closeBrackets) return true
 
-	if (raw.split('"').length > 3) return true
+	if (raw.split('"').length > MAX_QUOTE_SEGMENTS) return true
 
 	// too many quote marks
 	return false

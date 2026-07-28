@@ -65,6 +65,18 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { isTransientStatus, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+/** A successful fetch; anything else is an error page or a redirect we did not follow. */
+const HTTP_OK = 200
+
+/** Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body. */
+const MIN_PLAUSIBLE_SHARD_BYTES = 10_240
+
+const BYTES_PER_KIB = 1024
+
 const execFileAsync = promisify(execFile)
 
 const OA_BASE = "https://batch.openaddresses.io"
@@ -114,7 +126,7 @@ function humanBytes(bytes: number): string {
 	let value = bytes
 	let unit = 0
 
-	while (value >= 1024 && unit < units.length - 1) {
+	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
 		value /= 1024
 		unit++
 	}
@@ -281,7 +293,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		retryDelayMs: 30_000,
 	})
 
-	if (httpStatus !== 200) {
+	if (httpStatus !== HTTP_OK) {
 		// Try the geojsonl.gz directly with token as query param (alternate URL shape).
 		httpStatus = await streamDownload(`${OA_BASE}/api/collections/${collectionID}/geojsonl.gz?token=${token}`, tmpGz, {
 			timeoutMs: 7_200_000,
@@ -290,7 +302,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		})
 	}
 
-	if (httpStatus !== 200) {
+	if (httpStatus !== HTTP_OK) {
 		rmSync(tmpGz, { force: true })
 		report?.(`
 ERROR: Download returned HTTP ${httpStatus}.
@@ -343,7 +355,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	const size = statSync(outputFile).size
 
-	if (size < 10_240) {
+	if (size < MIN_PLAUSIBLE_SHARD_BYTES) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)
 
 		return fail(country)

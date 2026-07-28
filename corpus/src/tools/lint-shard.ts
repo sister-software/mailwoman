@@ -39,6 +39,12 @@ import { execSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+/** Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern. */
+const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
+
+/** Examples printed per finding before the list is truncated. */
+const MAX_LISTED_EXAMPLES = 20
+
 const SEP = ""
 
 // Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure
@@ -335,7 +341,7 @@ function checkRules(shard: ShardStats, rulesFile: LintRulesFile): LintShardFlag[
 			if (!regex.test(token)) continue
 
 			for (const [label, count] of labelMap) {
-				if (rule.forbidden_labels.includes(label) && count >= 5) {
+				if (rule.forbidden_labels.includes(label) && count >= FORBIDDEN_LABEL_REPORT_THRESHOLD) {
 					flags.push({
 						check: "anti-pattern-rule",
 						severity: rule.severity,
@@ -423,7 +429,7 @@ function renderReport(
 			lines.push(`- **[${f.severity.toUpperCase()}]** ${f.detail}`)
 		}
 
-		if (list.length > 20) {
+		if (list.length > MAX_LISTED_EXAMPLES) {
 			lines.push(`- ... and ${list.length - 20} more`)
 		}
 		lines.push("")

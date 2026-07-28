@@ -30,6 +30,12 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+const BYTES_PER_KIB = 1024
+
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
 const SLUG = "state-hi-schools"
 const CSV_FILENAME = "HI_Public_Schools_List.csv"
@@ -92,12 +98,12 @@ interface Manifest {
 
 /** Mimic `numfmt --to=iec` for a friendly byte-size log line. */
 function iec(bytes: number): string {
-	if (bytes < 1024) return String(bytes)
+	if (bytes < BYTES_PER_KIB) return String(bytes)
 	const units = ["K", "M", "G", "T", "P"]
 	let value = bytes / 1024
 	let i = 0
 
-	while (value >= 1024 && i < units.length - 1) {
+	while (value >= BYTES_PER_KIB && i < units.length - 1) {
 		value /= 1024
 		i++
 	}
@@ -182,7 +188,7 @@ export async function fetchStateHISchools(
 	const xlsxSize = statSync(xlsxDest).size
 	report?.(`  Downloaded XLSX: ${iec(xlsxSize)}`)
 
-	if (xlsxSize < 1024) {
+	if (xlsxSize < BYTES_PER_KIB) {
 		report?.(`  ✗ Response too small (${xlsxSize} bytes) — probable error page`)
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }

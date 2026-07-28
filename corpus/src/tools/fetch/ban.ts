@@ -29,6 +29,12 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, loadManifestEntries, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+const BYTES_PER_KIB = 1024
+
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
@@ -152,12 +158,12 @@ export type FetchBanOptions = BaseFetchOptions
 
 /** Mimic `numfmt --to=iec` for a friendly byte-size log line. */
 function iec(bytes: number): string {
-	if (bytes < 1024) return String(bytes)
+	if (bytes < BYTES_PER_KIB) return String(bytes)
 	const units = ["K", "M", "G", "T", "P"]
 	let value = bytes / 1024
 	let i = 0
 
-	while (value >= 1024 && i < units.length - 1) {
+	while (value >= BYTES_PER_KIB && i < units.length - 1) {
 		value /= 1024
 		i++
 	}
@@ -222,7 +228,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		// Guard against truncated 404/error pages.
 		const gzSize = statSync(gzFile).size
 
-		if (gzSize < 1024) {
+		if (gzSize < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${gzSize} bytes) — probable 404 / error page`)
 			await unlink(gzFile)
 			failed++

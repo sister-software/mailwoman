@@ -22,6 +22,15 @@
 import type { CanonicalRow } from "./types.ts"
 
 /** Street name cores (no suffix) — proper-noun streets that often appear bare. */
+
+/** Attempts to draw a second street distinct from the first before giving up on the pair. */
+const MAX_DISTINCT_STREET_TRIES = 8
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const STREET_CORES = [
 	"Main",
 	"Oak",
@@ -131,7 +140,7 @@ export function synthesizeIntersectionRow(
 	// Ensure distinct surface forms (and not a substring of each other — alignment needs unambiguous spans).
 	let tries = 0
 
-	while ((b === a || a.includes(b) || b.includes(a)) && tries++ < 8) {
+	while ((b === a || a.includes(b) || b.includes(a)) && tries++ < MAX_DISTINCT_STREET_TRIES) {
 		b = buildStreetName(random)
 	}
 

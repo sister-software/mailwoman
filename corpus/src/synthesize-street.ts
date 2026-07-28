@@ -25,6 +25,12 @@ import type { CanonicalRow } from "./types.ts"
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
 // synthesis distribution doesn't overfit to a tiny vocabulary.
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const STREET_NAMES = [
 	"Main",
 	"Oak",

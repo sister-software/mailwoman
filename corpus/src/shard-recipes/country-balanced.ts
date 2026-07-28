@@ -37,6 +37,12 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
 // so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const COUNTRY_FORM_POOL = (() => {
 	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat() // endonyms + abbrevs + canonical (curated)
 	const names = [...CountryNames]

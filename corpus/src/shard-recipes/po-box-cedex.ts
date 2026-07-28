@@ -51,6 +51,12 @@ import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
 // corpus defaultHoldout). FR comes from the BAN-derived countrywide extract (stride-sampled — the
 // file is 2.5 GB and insee-ordered, so a head-only read would be all département 01).
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const US_TRAIN_SOURCES = [
 	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
 	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
@@ -197,7 +203,10 @@ function splitCSV(line: string): string[] {
 	return out
 }
 
-const cleanLocality = (loc: string) => loc && loc.length <= 40 && !/\d|,/.test(loc) && !/cedex/i.test(loc)
+const MAX_LOCALITY_LENGTH = 40
+
+const cleanLocality = (loc: string) =>
+	loc && loc.length <= MAX_LOCALITY_LENGTH && !/\d|,/.test(loc) && !/cedex/i.test(loc)
 
 /** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
 function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {

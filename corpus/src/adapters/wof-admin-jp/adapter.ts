@@ -33,6 +33,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/** Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain. */
+const MAX_ANCESTRY_DEPTH = 6
+
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
 
 interface PlaceRow {
@@ -55,7 +58,7 @@ function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, strin
 	const out: PlaceRow[] = []
 	let id = startID
 
-	for (let i = 0; i < 6 && id > 0; i++) {
+	for (let i = 0; i < MAX_ANCESTRY_DEPTH && id > 0; i++) {
 		const row = stmt.get(id) as PlaceRow | undefined
 
 		if (!row) break

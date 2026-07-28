@@ -26,6 +26,17 @@
 
 import type { CanonicalRow } from "./types.ts"
 
+/** Digits a box number needs before a thousands comma is plausible (`1,234`). */
+const MIN_DIGITS_FOR_COMMA_GROUPING = 4
+
+/** Digits a box number needs before a hyphen group is plausible (`12-34`). */
+const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 export interface PoBoxBaseTuple {
 	locality: string
 	region: string
@@ -101,9 +112,9 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 	if (random() > 0.1) return num
 	const variants: Array<(s: string) => string> = [
 		// Thousand-separator comma (real input: "Box 1,234")
-		(s) => (s.length >= 4 ? `${s.slice(0, -3)},${s.slice(-3)}` : s),
+		(s) => (s.length >= MIN_DIGITS_FOR_COMMA_GROUPING ? `${s.slice(0, -3)},${s.slice(-3)}` : s),
 		// Embedded dash (real input: "PMB-200")
-		(s) => (s.length >= 3 ? `${s.slice(0, -2)}-${s.slice(-2)}` : s),
+		(s) => (s.length >= MIN_DIGITS_FOR_HYPHEN_GROUPING ? `${s.slice(0, -2)}-${s.slice(-2)}` : s),
 		// Embedded spaces (real input from OCR: "1 2 3 4")
 		(s) => s.split("").join(" "),
 	]

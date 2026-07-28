@@ -39,6 +39,12 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const DEFAULT_COMMUNES = "/tmp/reg/fr-communes.tsv"
 const LICENSE = "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE"
 
