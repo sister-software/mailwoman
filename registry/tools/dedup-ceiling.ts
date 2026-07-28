@@ -302,24 +302,18 @@ export async function dedupCeiling(
 			`pairs the GBT can still reach" rather than a round F1. The GBT's corroboration-feature work (#625 revised) ` +
 			`attacks exactly that separable slice.`,
 		"",
-	]
-	lines.push(`## Caveats`)
-	lines.push("")
-	lines.push(
+		`## Caveats`,
+		"",
 		`- **Geocode-free + exact address key.** "Co-located" here is an exact normalized-address match; geocoding would ` +
 			`add near-but-not-exact neighbors (suite splits, slightly different formatting), which can only RAISE the ` +
-			`collision count. So this is a LOWER bound on the irreducible over-merge.`
-	)
-	lines.push(
+			`collision count. So this is a LOWER bound on the irreducible over-merge.`,
 		`- **Recall side under-measured.** NPPES same-NPI records almost always share an address or the org name, so the ` +
 			`recall floor looks ~1.0 here; real-world feeds with distant + name-drifted same-entity records would lower it. ` +
-			`The F1 ceiling reported tracks the PRECISION constraint, which is the binding one for the over-merge problem.`
-	)
-	lines.push(
+			`The F1 ceiling reported tracks the PRECISION constraint, which is the binding one for the over-merge problem.`,
 		`- **Token-Jaccard ≠ the model's name comparison.** A proxy for separability; the GBT uses the FS agreement ` +
-			`levels. The collision SET (sim ≥ τ + shared phone) is robust to the exact similarity metric.`
-	)
-	lines.push("")
+			`levels. The collision SET (sim ≥ τ + shared phone) is robust to the exact similarity metric.`,
+		"",
+	]
 
 	const md = lines.join("\n")
 	console.log(md)
