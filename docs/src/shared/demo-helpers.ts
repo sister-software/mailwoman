@@ -247,7 +247,7 @@ export function flattenTree(
 		}
 	}
 
-	return out.reverse()
+	return out.toReversed()
 }
 
 // ---------------------------------------------------------------------------
@@ -413,7 +413,7 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 	const bins = Array.isArray(table) ? table : table.table
 
 	if (!bins || bins.length === 0) throw new Error("createCalibrator: empty calibration table")
-	const sorted = [...bins].sort((a, b) => a.center - b.center)
+	const sorted = [...bins].toSorted((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
 	const cals = sorted.map((b) => clamp01(b.calibrated))
 	const n = centers.length

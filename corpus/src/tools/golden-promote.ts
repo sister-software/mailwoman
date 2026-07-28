@@ -259,7 +259,7 @@ export async function promoteGolden(
 	report?.(`  kept:                       ${stats.kept}`)
 	report?.(`per-country (kept):`)
 
-	for (const [c, n] of Object.entries(stats.perCountry).sort((a, b) => b[1] - a[1])) {
+	for (const [c, n] of Object.entries(stats.perCountry).toSorted((a, b) => b[1] - a[1])) {
 		report?.(`  ${c}: ${n}`)
 	}
 

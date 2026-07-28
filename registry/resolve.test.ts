@@ -49,7 +49,7 @@ describe("resolveEntities", () => {
 		expect(entities).toHaveLength(2)
 
 		const merged = entities.find((e) => e.records.length > 1)!
-		expect(merged.records.map((r) => r.id).sort()).toEqual(["1", "2"])
+		expect(merged.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 		expect(merged.cohesion).not.toBeNull()
 		expect(merged.cohesion!).toBeGreaterThan(0)
 
@@ -83,7 +83,7 @@ describe("resolveEntities", () => {
 		// weight, not the FS weight; the far-away record (3) is never blocked with them, so it stays apart.
 		const merged = resolveEntities(records, { scorer: () => 100, threshold: 1 })
 		const big = merged.entities.find((e) => e.records.length > 1)
-		expect(big?.records.map((r) => r.id).sort()).toEqual(["1", "2"])
+		expect(big?.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 	})
 
 	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {

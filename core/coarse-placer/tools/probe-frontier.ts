@@ -154,7 +154,7 @@ export async function probeFrontier(
 		per.set(cc, s)
 	}
 
-	const rows = [...per.values()].sort((a, b) => a.cc.localeCompare(b.cc))
+	const rows = [...per.values()].toSorted((a, b) => a.cc.localeCompare(b.cc))
 	const N = queries.length
 	const inClass = rows.reduce((t, r) => t + r.inClass, 0)
 	const top1 = rows.reduce((t, r) => t + r.top1Correct, 0)

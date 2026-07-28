@@ -36,5 +36,5 @@ export function cwdEnvPaths(): string[] {
 	}
 
 	// `found` is deepest-first (cwd first); reverse so cwd is applied last and wins.
-	return found.reverse()
+	return found.toReversed()
 }

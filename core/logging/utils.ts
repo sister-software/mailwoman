@@ -11,7 +11,7 @@
  */
 export function castToLoggableEntries<T extends Record<string, unknown>>(input: T) {
 	return Object.entries(input)
-		.sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+		.toSorted(([keyA], [keyB]) => keyA.localeCompare(keyB))
 		.filter(([_key, value]) => value && typeof value === "string") as [keyof T, string][]
 }
 

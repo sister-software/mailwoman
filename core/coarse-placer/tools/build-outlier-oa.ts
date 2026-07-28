@@ -165,7 +165,7 @@ export async function buildOutlierOA(
 			if (out.length >= PER) break
 		}
 
-		return out.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
+		return out.toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	}
 
 	const trainAppend: string[] = []

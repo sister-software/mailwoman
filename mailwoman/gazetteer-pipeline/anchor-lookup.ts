@@ -296,7 +296,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 	}
 
 	const lookup: Record<string, LookupRow> = {}
-	const sortedCodes = [...allCodes].sort()
+	const sortedCodes = [...allCodes].toSorted()
 	let collisions = 0
 	let zctaFilled = 0
 
@@ -356,7 +356,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 	const sourceRepr =
 		"{" +
 		[...bySource.entries()]
-			.sort((a, b) => b[1] - a[1])
+			.toSorted((a, b) => b[1] - a[1])
 			.map(([k, n]) => `'${k ?? "placeholder"}': ${n}`)
 			.join(", ") +
 		"}"

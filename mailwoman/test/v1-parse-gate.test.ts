@@ -158,7 +158,7 @@ function labelValue(tree: AddressTree, tags: readonly string[]): string {
 	return fold(
 		flatten(tree)
 			.filter((n) => tags.includes(n.tag))
-			.sort((a, b) => a.start - b.start)
+			.toSorted((a, b) => a.start - b.start)
 			.map((n) => n.value)
 			.join(" ")
 	)

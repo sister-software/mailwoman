@@ -114,7 +114,7 @@ export function createKindClassifier(
 
 		return {
 			...base,
-			alternatives: [...base.alternatives, poiAlternative].sort((a, b) => b.confidence - a.confidence),
+			alternatives: [...base.alternatives, poiAlternative].toSorted((a, b) => b.confidence - a.confidence),
 		}
 	}
 }

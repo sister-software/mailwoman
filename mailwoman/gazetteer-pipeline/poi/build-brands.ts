@@ -159,7 +159,7 @@ export function aggregateBrands(
 
 		if (total < minRows) continue
 
-		const sortedVariants = [...variants.entries()].sort(
+		const sortedVariants = [...variants.entries()].toSorted(
 			([nameA, nA], [nameB, nB]) => nB - nA || nameA.localeCompare(nameB)
 		)
 		const modalName = sortedVariants[0]![0]
@@ -172,7 +172,7 @@ export function aggregateBrands(
 			.slice(1)
 			.filter(([, n]) => n >= noiseFloor)
 			.map(([name]) => name)
-			.sort((a, b) => a.localeCompare(b))
+			.toSorted((a, b) => a.localeCompare(b))
 
 		brands.push({ wikidata, name: modalName, aliases, rows: total })
 	}

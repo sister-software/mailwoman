@@ -425,7 +425,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 				return { row, exactTier, adj }
 			})
-			.sort((a, b) => a.exactTier - b.exactTier || a.adj - b.adj)
+			.toSorted((a, b) => a.exactTier - b.exactTier || a.adj - b.adj)
 			.slice(0, limit)
 			.map(({ row, adj, exactTier }) => ({
 				id: row.id as number,
@@ -697,7 +697,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 			return candidates
 				.map((c, i) => ({ c, i, p: prominence(c) }))
-				.sort((a, b) => b.p - a.p || a.i - b.i)
+				.toSorted((a, b) => b.p - a.p || a.i - b.i)
 				.map((x) => x.c)
 		}
 

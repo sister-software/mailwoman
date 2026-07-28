@@ -292,7 +292,7 @@ export async function trainDedupGBT(
 	const calibScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(calibGbt, featurize(a, b))
 	const holdoutRecords = records.filter((r) => split.get(r.id) === "holdout")
 	const { pairs: holdoutPairs } = block(holdoutRecords, defaultBlockingKeys())
-	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).sort((p, q) => p - q)
+	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).toSorted((p, q) => p - q)
 	let recommendedThreshold = 0
 	let bestF1 = -1
 

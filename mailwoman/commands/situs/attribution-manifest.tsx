@@ -51,7 +51,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 		// selects.
 		const shardFiles = readdirSync(outDir)
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
-			.sort()
+			.toSorted()
 
 		const manifest: {
 			release: string
@@ -101,7 +101,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 		}
 
 		// Sort datasetTotals descending for readability.
-		manifest.datasetTotals = Object.fromEntries(Object.entries(manifest.datasetTotals).sort((a, b) => b[1] - a[1]))
+		manifest.datasetTotals = Object.fromEntries(Object.entries(manifest.datasetTotals).toSorted((a, b) => b[1] - a[1]))
 
 		const attributionPath = path.join(outDir, "ATTRIBUTION.json")
 		writeFileSync(attributionPath, JSON.stringify(manifest, null, 2))

@@ -149,8 +149,8 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 					"case-SENSITIVE exact: word_norm(token) == key (keys uppercase; the surface must already BE uppercase, so 'in' the word ≠ 'IN' the code). n-gram length 1 only.",
 				scan: "longest-first n-gram over whitespace words, left to right, non-overlapping",
 			},
-			entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
-			code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),
+			entries: Object.fromEntries([...entries].toSorted(([a], [b]) => a.localeCompare(b))),
+			code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 		}
 
 		mkdirSync(dirname(output), { recursive: true })

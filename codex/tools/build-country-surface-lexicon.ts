@@ -154,8 +154,8 @@ const lexicon = {
 		feature:
 			"emitted per-piece row = [country_surface, country_ambiguous] (the raw bits); confidence = 1.0 where country_surface fires.",
 	},
-	entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
-	code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),
+	entries: Object.fromEntries([...entries].toSorted(([a], [b]) => a.localeCompare(b))),
+	code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 }
 
 mkdirSync(dirname(OUTPUT), { recursive: true })

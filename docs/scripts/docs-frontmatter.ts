@@ -90,7 +90,7 @@ export async function collectDocPages(): Promise<DocPage[]> {
 	const entries = await readdir(ARTICLES_DIR, { recursive: true })
 	const pages: DocPage[] = []
 
-	for (const entry of entries.sort()) {
+	for (const entry of entries.toSorted()) {
 		const relativePath = entry.split(path.sep).join("/")
 
 		if (!relativePath.endsWith(".md") && !relativePath.endsWith(".mdx")) continue

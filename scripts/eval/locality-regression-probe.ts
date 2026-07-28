@@ -125,7 +125,7 @@ console.log(`  cand (v1.6.0) locality exact: ${candLocOk}/${scored} (${((100 * c
 console.log(`  net: ${improvements} improved, ${regressions} regressed  (Δ ${candLocOk - baseLocOk})`)
 console.log(`\n  REGRESSION failure modes (base-right → v1.6.0-wrong, ${regressions} rows):`)
 
-for (const [m, c] of Object.entries(failMode).sort((a, b) => b[1] - a[1])) {
+for (const [m, c] of Object.entries(failMode).toSorted((a, b) => b[1] - a[1])) {
 	console.log(`    ${((100 * c) / regressions).toFixed(0).padStart(3)}%  ${m}  (${c})`)
 }
 

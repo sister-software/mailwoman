@@ -269,7 +269,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 	}
 
 	// Write the consolidated MANIFEST.json (entries sorted by dept_code, codepoint order).
-	const sorted = [...entries.values()].sort((a, b) =>
+	const sorted = [...entries.values()].toSorted((a, b) =>
 		a.dept_code < b.dept_code ? -1 : a.dept_code > b.dept_code ? 1 : 0
 	)
 	await writeManifest(manifestPath, sorted)

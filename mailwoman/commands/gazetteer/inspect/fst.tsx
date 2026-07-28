@@ -53,7 +53,7 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 			console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
 			if (q.accepting.length > 0) {
-				const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)
+				const sorted = [...q.accepting].toSorted((a, b) => b.importance - a.importance)
 				console.log(`  Top by importance:`)
 
 				for (const p of sorted.slice(0, maxResults)) {
@@ -68,7 +68,7 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 			}
 
 			if (options.showContinuations && q.continuations.length > 0) {
-				const shown = q.continuations.sort((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
+				const shown = q.continuations.toSorted((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
 				console.log(`  Continuations (${q.continuations.length} total):`)
 
 				for (const c of shown) {

@@ -49,7 +49,7 @@ function stubLookup(places: StubPlace[]): MailwomanLookupLike {
 						(p.lat >= q.bbox.minLat && p.lat <= q.bbox.maxLat && p.lon >= q.bbox.minLon && p.lon <= q.bbox.maxLon)
 				)
 				.map((p) => ({ ...p, exactMatch: p.exactMatch ?? true }))
-				.sort((a, b) => b.score - a.score)
+				.toSorted((a, b) => b.score - a.score)
 				.slice(0, q.limit ?? 5)
 		}),
 	}

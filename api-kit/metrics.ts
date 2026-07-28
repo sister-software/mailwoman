@@ -69,7 +69,7 @@ export interface MetricsSnapshot {
 
 /** Current metrics snapshot — sorted-reservoir percentiles + counters. */
 export function metricsSnapshot(): MetricsSnapshot {
-	const sorted = [...latencies].sort((a, b) => a - b)
+	const sorted = [...latencies].toSorted((a, b) => a - b)
 
 	return {
 		uptime_s: Math.round((Date.now() - startedAt) / 1000),

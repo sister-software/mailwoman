@@ -118,7 +118,7 @@ describe("buildPOIDatabase", () => {
 
 		// --- dictionary round-trip: insert-on-first-sight, 0 reserved for uncategorized ---
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
-		expect(codes.map((c) => c.category).sort()).toEqual(["cafe", "museum", "restaurant"])
+		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 

@@ -215,7 +215,7 @@ for (const row of rows) {
 	const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 	const stateNode = nodes
 		.filter((n) => n.tag === "region" || n.tag === "state")
-		.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+		.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 	const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 	// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence

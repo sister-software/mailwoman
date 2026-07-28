@@ -120,7 +120,7 @@ export class PairIndexBuilder {
 
 	/** Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution. */
 	finish(): PairIndexBuildResult {
-		const sortedLengths = [...this.#wordLengths].sort((a, b) => a - b)
+		const sortedLengths = [...this.#wordLengths].toSorted((a, b) => a - b)
 		const histogram = new Map<number, number>()
 
 		for (const w of sortedLengths) {
@@ -128,7 +128,7 @@ export class PairIndexBuilder {
 		}
 
 		const counts: WordLengthBucket[] = [...histogram.entries()]
-			.sort(([a], [b]) => a - b)
+			.toSorted(([a], [b]) => a - b)
 			.map(([words, rows]) => ({ words, rows }))
 
 		const distribution: CityWordLengthDistribution =
@@ -184,7 +184,7 @@ export function applyPairIndexHoldout(
 		return { kept: [...entries], heldOut: [] }
 	}
 
-	const sorted = [...entries].sort((a, b) =>
+	const sorted = [...entries].toSorted((a, b) =>
 		a.child < b.child ? -1 : a.child > b.child ? 1 : a.parent < b.parent ? -1 : a.parent > b.parent ? 1 : 0
 	)
 

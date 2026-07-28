@@ -96,7 +96,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	}
 
 	for (const entity of entities) {
-		const sources = [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort()
+		const sources = [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].toSorted()
 		const bucket = bucketOf(sources, config)
 
 		if (!bucket) continue

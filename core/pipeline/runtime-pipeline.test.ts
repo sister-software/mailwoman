@@ -501,8 +501,8 @@ describe("runPipeline — timing budget shape", () => {
 		const resolver = fakeResolver((t) => t)
 		const result = await runPipeline("hello", { classifier, resolver })
 
-		expect(Object.keys(result.timing).sort()).toEqual(
-			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].sort()
+		expect(Object.keys(result.timing).toSorted()).toEqual(
+			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].toSorted()
 		)
 	})
 

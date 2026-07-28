@@ -630,7 +630,7 @@ function printReport(results: AssertionResult[]): void {
 	console.log("")
 	console.log("| File | Total | Neural | Neural % |")
 	console.log("|------|-------|--------|----------|")
-	const sortedFiles = [...byFile.entries()].sort((a, b) => b[1].total - a[1].total)
+	const sortedFiles = [...byFile.entries()].toSorted((a, b) => b[1].total - a[1].total)
 
 	for (const [file, s] of sortedFiles) {
 		console.log(`| ${file} | ${s.total} | ${s.neural_pass} | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`)
@@ -641,7 +641,7 @@ function printReport(results: AssertionResult[]): void {
 	console.log("")
 	console.log("| Locale | Total | Neural | Neural % |")
 	console.log("|--------|-------|--------|----------|")
-	const sortedLocales = [...byLocale.entries()].sort((a, b) => b[1].total - a[1].total)
+	const sortedLocales = [...byLocale.entries()].toSorted((a, b) => b[1].total - a[1].total)
 
 	for (const [locale, s] of sortedLocales) {
 		console.log(`| ${locale} | ${s.total} | ${s.neural_pass} | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`)

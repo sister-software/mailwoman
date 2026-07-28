@@ -108,7 +108,7 @@ function departementFiles(csvDir: string, depts: string[] | null): Map<string, s
 	const byDept = new Map<string, string>()
 	const wanted = depts ? new Set(depts.map((d) => d.toLowerCase())) : null
 
-	for (const name of readdirSync(csvDir).sort()) {
+	for (const name of readdirSync(csvDir).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -168,7 +168,7 @@ async function main(): Promise<void> {
 	let written = 0
 	let noStreet = 0
 	const BATCH = 50_000
-	const deptList = [...files.keys()].sort()
+	const deptList = [...files.keys()].toSorted()
 
 	console.error(`[ban] building ${args.country} rooftop shard from ${files.size} départements in ${args.csvDir}`)
 	out.exec("BEGIN")

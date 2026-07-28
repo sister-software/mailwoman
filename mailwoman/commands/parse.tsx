@@ -629,8 +629,8 @@ async function runBenchmark(
 	lines.push("stage              p50       p95       p99       max")
 	lines.push("─────────────────  ────────  ────────  ────────  ────────")
 
-	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).sort()) {
-		const sorted = [...ms].sort((a, b) => a - b)
+	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).toSorted()) {
+		const sorted = [...ms].toSorted((a, b) => a - b)
 		lines.push(
 			[
 				stage.padEnd(17),
@@ -641,7 +641,7 @@ async function runBenchmark(
 			].join("  ")
 		)
 	}
-	const totalsSorted = [...collected.totals].sort((a, b) => a - b)
+	const totalsSorted = [...collected.totals].toSorted((a, b) => a - b)
 	lines.push("─────────────────  ────────  ────────  ────────  ────────")
 	lines.push(
 		[

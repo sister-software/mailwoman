@@ -93,7 +93,7 @@ export function crossDatasetMap(
 	const comboCounts = new Map<string, number>()
 
 	for (const f of geojson.features) {
-		const combo = [...new Set(sourcesOf(f))].sort()
+		const combo = [...new Set(sourcesOf(f))].toSorted()
 		const bucket = combo.map(label).join(" + ") || "unlinked"
 
 		if (f.properties) {
@@ -118,7 +118,7 @@ export function crossDatasetMap(
 	report?.(`[written] ${OUT}  (${kept}${CROSS_AGENCY_ONLY ? ` of ${total} cross-AGENCY` : ""} entities)`)
 	report?.(`  source combinations:`)
 
-	for (const [combo, n] of [...comboCounts.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [combo, n] of [...comboCounts.entries()].toSorted((a, b) => b[1] - a[1])) {
 		report?.(`    ${n.toString().padStart(4)}  ${combo}`)
 	}
 	report?.(`  spanning all three agencies: ${triple}`)

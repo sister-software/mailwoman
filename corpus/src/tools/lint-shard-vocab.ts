@@ -183,7 +183,7 @@ function globParquet(dir: string): string[] {
 	return names
 		.filter((f) => f.endsWith(".parquet"))
 		.map((f) => join(dir, f))
-		.sort()
+		.toSorted()
 }
 
 /** Options for {@linkcode lintShardVocab}. */

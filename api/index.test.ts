@@ -366,7 +366,7 @@ test("POST /v1/format: a missing required field -> 400 in the api-kit envelope, 
 	// The api-kit envelope is exactly {error, detail?} — assert the raw zod validator shape leaked nowhere.
 	expect(body["success"]).toBeUndefined()
 	expect(body["issues"]).toBeUndefined()
-	expect(Object.keys(body).sort()).toEqual(["detail", "error"])
+	expect(Object.keys(body).toSorted()).toEqual(["detail", "error"])
 })
 
 // ---------------------------------------------------------------------------------------------
@@ -424,8 +424,17 @@ test("GET /openapi.json: documents all 8 native paths, and is not self-reference
 	expect(res.status).toBe(200)
 	const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> }
 	expect(doc.openapi).toBe("3.1.0")
-	expect(Object.keys(doc.paths).sort()).toEqual(
-		["/health", "/metrics", "/v1/batch", "/v1/format", "/v1/geocode", "/v1/parse", "/v1/reload", "/v1/resolve"].sort()
+	expect(Object.keys(doc.paths).toSorted()).toEqual(
+		[
+			"/health",
+			"/metrics",
+			"/v1/batch",
+			"/v1/format",
+			"/v1/geocode",
+			"/v1/parse",
+			"/v1/reload",
+			"/v1/resolve",
+		].toSorted()
 	)
 	expect(doc.paths["/openapi.json"]).toBeUndefined()
 })

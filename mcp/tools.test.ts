@@ -34,14 +34,14 @@ describe("buildToolTable", () => {
 	it("registers exactly the five expected tools", () => {
 		const table = buildToolTable(stubDeps())
 
-		expect(table.map((t) => t.name).sort()).toEqual(
+		expect(table.map((t) => t.name).toSorted()).toEqual(
 			[
 				"mailwoman_geocode",
 				"mailwoman_layer_manifest",
 				"mailwoman_overpass_export",
 				"mailwoman_parse",
 				"mailwoman_poi_search",
-			].sort()
+			].toSorted()
 		)
 	})
 

@@ -60,7 +60,7 @@ interface LieuDitTuple {
 function departementFiles(banDir: string): string[] {
 	const byDept = new Map<string, string>()
 
-	for (const name of readdirSync(banDir).sort()) {
+	for (const name of readdirSync(banDir).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -76,7 +76,7 @@ function departementFiles(banDir: string): string[] {
 		}
 	}
 
-	return [...byDept.keys()].sort().map((dept) => byDept.get(dept)!)
+	return [...byDept.keys()].toSorted().map((dept) => byDept.get(dept)!)
 }
 
 /** Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`). */

@@ -64,7 +64,7 @@ const PER_BRANCH = 4
 function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
 
-	return [...entries].sort((a, b) => b.importance - a.importance).slice(0, k)
+	return [...entries].toSorted((a, b) => b.importance - a.importance).slice(0, k)
 }
 
 /**
@@ -139,7 +139,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		}
 	}
 
-	let suggestions = [...seen.values()].sort((a, b) => b.importance - a.importance)
+	let suggestions = [...seen.values()].toSorted((a, b) => b.importance - a.importance)
 
 	if (opts.dedupeByName) {
 		suggestions = dedupeByName(suggestions)

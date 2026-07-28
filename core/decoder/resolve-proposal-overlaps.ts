@@ -56,6 +56,7 @@ function spansOverlap(a: ClassificationProposal["span"], b: ClassificationPropos
 export function resolveProposalOverlaps(proposals: readonly ClassificationProposal[]): ClassificationProposal[] {
 	if (proposals.length <= 1) return [...proposals]
 
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const ranked = [...proposals].sort((a, b) => {
 		if (b.confidence !== a.confidence) return b.confidence - a.confidence // higher confidence first
 		const lenA = a.span.end - a.span.start
@@ -75,5 +76,6 @@ export function resolveProposalOverlaps(proposals: readonly ClassificationPropos
 		}
 	}
 
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	return kept.sort((a, b) => a.span.start - b.span.start)
 }

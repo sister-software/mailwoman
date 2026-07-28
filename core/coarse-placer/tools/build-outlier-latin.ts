@@ -155,7 +155,7 @@ export async function buildOutlierLatin(
 	// dedicated Latin off-map test: {raw, country:"OTHER", group, srcCountry}
 
 	for (const cc of TRAIN_COUNTRIES) {
-		const rows = (await rowsFor(cc)).sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
+		const rows = (await rowsFor(cc)).toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
 		const nVal = Math.floor(rows.length * 0.1)
 		const nTest = Math.floor(rows.length * 0.1)
 		const val = rows.slice(0, nVal)

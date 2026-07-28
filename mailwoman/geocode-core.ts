@@ -833,7 +833,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
 	const hierarchy = allNodes
 		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
-		.sort((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
+		.toSorted((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),

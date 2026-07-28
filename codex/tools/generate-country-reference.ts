@@ -101,7 +101,7 @@ export async function generateCountryReference(
 		if (cc != null) {
 			entry.callingCode = cc
 		}
-		const currencyCodes = Object.keys(country.currencies ?? {}).sort()
+		const currencyCodes = Object.keys(country.currencies ?? {}).toSorted()
 
 		if (currencyCodes.length > 0) {
 			const code = currencyCodes[0]!
@@ -123,7 +123,7 @@ export async function generateCountryReference(
 	}
 
 	const body = Object.keys(rows)
-		.sort()
+		.toSorted()
 		.map((k) => `\t${k}: ${serialize(rows[k]!)},`)
 		.join("\n")
 

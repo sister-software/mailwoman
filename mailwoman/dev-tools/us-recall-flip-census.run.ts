@@ -92,7 +92,7 @@ for (const row of rows) {
 for (const [tag, { count, where, samples }] of flips.entries()) {
 	console.log(`\n=== US ${tag} flips (baseline hit -> candidate miss): ${count}/${rows.length} sampled ===`)
 
-	for (const [went, n] of [...where.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [went, n] of [...where.entries()].toSorted((a, b) => b[1] - a[1])) {
 		console.log(`  ${went}: ${n}`)
 	}
 

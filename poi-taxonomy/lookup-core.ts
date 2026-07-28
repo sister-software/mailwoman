@@ -113,7 +113,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			}
 		}
 
-		return [...best.values()].sort((a, b) => b.confidence - a.confidence)
+		return [...best.values()].toSorted((a, b) => b.confidence - a.confidence)
 	}
 
 	/** Fetch a category by id. */

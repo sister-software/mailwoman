@@ -149,6 +149,6 @@ const dropped = fixtures.filter((f) => f.dropped).length
 
 console.error(`converted ${written} fixtures (${written - dropped} live, ${dropped} tombstones)`)
 
-for (const [tag, count] of [...droppedTagCounts.entries()].sort((a, b) => b[1] - a[1])) {
+for (const [tag, count] of [...droppedTagCounts.entries()].toSorted((a, b) => b[1] - a[1])) {
 	console.error(`  dropped tag ${tag}: ${count} case(s)`)
 }

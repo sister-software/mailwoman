@@ -236,7 +236,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit rows in sorted-id order for deterministic JSONL.
-			const ids = [...byID.keys()].sort((a, b) => a - b)
+			const ids = [...byID.keys()].toSorted((a, b) => a - b)
 			let emitted = 0
 
 			for (const id of ids) {

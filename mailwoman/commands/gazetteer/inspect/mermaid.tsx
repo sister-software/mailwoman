@@ -44,7 +44,7 @@ const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 
 	return out
 })()
-const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).sort()
+const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).toSorted()
 
 const ArgumentsSchema = zod
 	.array(zod.string())

@@ -115,7 +115,7 @@ export class ResourceMapCache<
 	}
 
 	public async [Symbol.asyncDispose]() {
-		const resourceKeys = Array.from(super.keys()).reverse()
+		const resourceKeys = Array.from(super.keys()).toReversed()
 
 		for (const resourceKey of resourceKeys) {
 			this.close(resourceKey)

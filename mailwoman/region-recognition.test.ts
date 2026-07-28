@@ -76,7 +76,7 @@ describe("recognizeUSRegions (#642)", () => {
 	it("preserves a street + recognizes the region in a fuller address", () => {
 		const street: AddressNode = { ...loc("100 Main St"), tag: "street" as ComponentTag }
 		const t = recognizeUSRegions(tree([street, loc("Dublin"), loc("Texas")]))
-		const tags = t.roots.map(tagsOf).sort()
+		const tags = t.roots.map(tagsOf).toSorted()
 		expect(tags).toContain("region:Texas[locality:Dublin]")
 		expect(tags).toContain("street:100 Main St")
 	})

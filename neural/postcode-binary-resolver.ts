@@ -54,6 +54,7 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
  * adjacent records. Run in Node; consumed by {@link PostcodeBinaryResolver}.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const sorted = [...entries].sort((a, b) =>
 		a.postcode < b.postcode
 			? -1
@@ -65,6 +66,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 						? 1
 						: 0
 	)
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const countries = [...new Set(sorted.map((e) => e.country))].sort()
 	const countryIdx = new Map(countries.map((c, i) => [c, i]))
 	const keyWidth = sorted.reduce((m, e) => Math.max(m, e.postcode.length), 1)

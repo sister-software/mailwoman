@@ -97,7 +97,7 @@ export async function generateOfficialLanguages(
 
 	const table: Record<string, { official: string[]; regional?: string[] }> = {}
 
-	for (const territory of Object.keys(territoryInfo).sort()) {
+	for (const territory of Object.keys(territoryInfo).toSorted()) {
 		if (!/^[A-Z]{2}$/.test(territory)) continue
 		const pops = territoryInfo[territory]!.languagePopulation
 
@@ -111,7 +111,7 @@ export async function generateOfficialLanguages(
 			if (!status) continue
 			// CLDR keys can carry script subtags ("zh_Hant") — name tags use the base language.
 			const base = lang.split("_")[0]!
-			const spellings = [base, ...(spellingsOf.get(base) ?? [])].sort()
+			const spellings = [base, ...(spellingsOf.get(base) ?? [])].toSorted()
 
 			if (status === "official" || status === "de_facto_official") {
 				for (const s of spellings) {
@@ -125,10 +125,10 @@ export async function generateOfficialLanguages(
 		}
 
 		if (official.size === 0 && regional.size === 0) continue
-		table[territory] = { official: [...official].sort() }
+		table[territory] = { official: [...official].toSorted() }
 
 		if (regional.size > 0) {
-			table[territory]!.regional = [...regional].sort()
+			table[territory]!.regional = [...regional].toSorted()
 		}
 	}
 

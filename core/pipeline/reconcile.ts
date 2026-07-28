@@ -208,6 +208,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 	// Beam search over left-to-right slot inclusion. Each slot is either accepted (if non-
 	// overlapping with the beam's claimed range) or skipped. Beam pruning keeps the top
 	// `beamWidth` by running log-score.
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const slotsByStart = slots.slice().sort((a, b) => a.span.start - b.span.start)
 	let beams: Beam[] = [{ assignments: [], logScore: 0, lastEnd: -1 }]
 
@@ -469,6 +470,7 @@ function totalConcordanceLog(
 function buildTree(beam: Beam, raw: string): AddressTree {
 	const roots: AddressNode[] = beam.assignments
 		.slice()
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 		.sort((a, b) => a.span.start - b.span.start)
 		.map((slot) => ({
 			tag: slot.tag,
@@ -511,10 +513,13 @@ function spanKey(start: number, end: number): string {
 }
 
 function topN<T>(items: ReadonlyArray<T>, n: number, key: (t: T) => number): T[] {
-	return items
-		.slice()
-		.sort((a, b) => key(b) - key(a))
-		.slice(0, n)
+	return (
+		items
+			.slice()
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+			.sort((a, b) => key(b) - key(a))
+			.slice(0, n)
+	)
 }
 
 function logSafe(x: number): number {

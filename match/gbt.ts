@@ -32,7 +32,7 @@ export function buildThresholds(X: number[][]): number[][] {
 
 	for (let f = 0; f < dim; f++) {
 		const vals = X.map((r) => r[f]!)
-		const uniq = [...new Set(vals)].sort((p, q) => p - q)
+		const uniq = [...new Set(vals)].toSorted((p, q) => p - q)
 
 		if (uniq.length <= 1) {
 			out.push([])
@@ -44,7 +44,7 @@ export function buildThresholds(X: number[][]): number[][] {
 			}
 			out.push(t)
 		} else {
-			const sorted = [...vals].sort((p, q) => p - q)
+			const sorted = [...vals].toSorted((p, q) => p - q)
 			const t: number[] = []
 
 			for (let q = 1; q <= 6; q++) {

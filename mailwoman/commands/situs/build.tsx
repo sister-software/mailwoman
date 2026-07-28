@@ -296,7 +296,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		]
 
 		for (const [ds, n] of Object.entries(manifest.datasetTotals)
-			.sort((a, b) => b[1] - a[1])
+			.toSorted((a, b) => b[1] - a[1])
 			.slice(0, 8)) {
 			lines.push(`  ${ds.padEnd(28)} ${n.toLocaleString()}`)
 		}

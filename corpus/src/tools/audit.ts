@@ -98,7 +98,7 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 		if (!existsSync(splitDir)) continue
 		const files = readdirSync(splitDir)
 			.filter((f) => f.endsWith(".parquet"))
-			.sort()
+			.toSorted()
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
 		const sampled = files.filter((_, i) => i % sampleEvery === 0).slice(0, sampleCount)
@@ -168,7 +168,7 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 /** Extract the source-name prefix from a `first_source_id` value. */
 function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): string {
 	// Sort longest-first so usgov-nad beats usgov, wof-admin beats wof.
-	const sorted = [...knownPrefixes].sort((a, b) => b.length - a.length)
+	const sorted = [...knownPrefixes].toSorted((a, b) => b.length - a.length)
 
 	for (const prefix of sorted) {
 		if (sourceID.startsWith(prefix + "-") || sourceID === prefix) return prefix

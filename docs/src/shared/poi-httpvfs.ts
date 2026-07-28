@@ -183,7 +183,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			confidence: row.confidence,
 			distanceM: haversineKm(opts.center.lat, opts.center.lon, row.latitude, row.longitude) * 1000,
 		}))
-		.sort((a, b) => a.distanceM - b.distanceM)
+		.toSorted((a, b) => a.distanceM - b.distanceM)
 		.slice(0, limit)
 }
 

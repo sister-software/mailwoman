@@ -12,7 +12,7 @@ import { canonicalizeAbbreviations, getTransform, TRANSFORMS } from "./transform
 
 describe("TRANSFORMS registry", () => {
 	it("carries the seven spec-named classes plus the two Task-9 paired-punct classes", () => {
-		const ids = TRANSFORMS.map((t) => t.id).sort()
+		const ids = TRANSFORMS.map((t) => t.id).toSorted()
 
 		expect(ids).toEqual(
 			[
@@ -25,7 +25,7 @@ describe("TRANSFORMS registry", () => {
 				"trailing-punct",
 				"whitespace-jitter",
 				"wrap-in-quotes",
-			].sort()
+			].toSorted()
 		)
 	})
 

@@ -323,7 +323,7 @@ export async function trainCrossSourceGBT(
 		hyperparams
 	)
 	const holdScores = holdIdx.map((i) => ({ s: gbtScore(calib, X[i]!), y: Y[i]! }))
-	const sorted = holdScores.map((h) => h.s).sort((a, b) => a - b)
+	const sorted = holdScores.map((h) => h.s).toSorted((a, b) => a - b)
 	const totalPos = holdScores.reduce((s, h) => s + h.y, 0)
 	let recommendedThreshold = Number.POSITIVE_INFINITY
 	let barRecall = 0

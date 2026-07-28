@@ -131,7 +131,7 @@ export function sourceProvenanceMap(
 	writeFileSync(OUT, html)
 	report?.(`[written] ${OUT}  (${features.length} points)`)
 
-	for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [bucket, n] of [...counts.entries()].toSorted((a, b) => b[1] - a[1])) {
 		report?.(`  ${n.toString().padStart(5)}  ${bucket}`)
 	}
 

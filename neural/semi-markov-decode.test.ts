@@ -114,7 +114,7 @@ describe("decodeSegmentationsKBest", () => {
 		const got = decodeSegmentationsKBest(sc, 4, g, k)
 		const expected = bruteForce(4, 2)
 			.map((s) => scoreOne(s, sc, g))
-			.sort((a, b) => b - a)
+			.toSorted((a, b) => b - a)
 			.slice(0, k)
 		expect(got).toHaveLength(k)
 		got.forEach((h, i) => expect(h.score).toBeCloseTo(expected[i]!, 6))

@@ -99,7 +99,7 @@ function hypothesisStreetSurface(
 ): string {
 	const parts = hyp.segments
 		.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
-		.sort((a, b) => a.start - b.start)
+		.toSorted((a, b) => a.start - b.start)
 		.map((s) => {
 			const first = trace.tokens[s.start]
 			const last = trace.tokens[s.start + s.length - 1]

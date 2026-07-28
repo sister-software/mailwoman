@@ -305,7 +305,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	// License-set visibility (#26): loudly report the resolved license set so a build is an obvious
 	// deliberate act — especially a proprietary-weights build (did you pass --exclude-share-alike?).
-	const licenseSummary = [...licenseCounts.entries()].sort((a, b) => b[1] - a[1])
+	const licenseSummary = [...licenseCounts.entries()].toSorted((a, b) => b[1] - a[1])
 	opts.onProgress?.(
 		"manifest",
 		`license set: ${licenseSummary.map(([l, c]) => `${l}=${c}`).join(", ")}` +

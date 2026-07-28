@@ -82,7 +82,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
 		expect(rest.accepting).toHaveLength(orig.accepting.length)
-		expect(rest.accepting.map((p) => p.wofID).sort()).toEqual(orig.accepting.map((p) => p.wofID).sort())
+		expect(rest.accepting.map((p) => p.wofID).toSorted()).toEqual(orig.accepting.map((p) => p.wofID).toSorted())
 	})
 
 	it("roundtrips place entry fields exactly", () => {
@@ -109,7 +109,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 	it("roundtrips continuations", () => {
 		const orig = original.query("New")
 		const rest = restored.query("New")
-		expect(rest.continuations.map((c) => c.token).sort()).toEqual(orig.continuations.map((c) => c.token).sort())
+		expect(rest.continuations.map((c) => c.token).toSorted()).toEqual(orig.continuations.map((c) => c.token).toSorted())
 	})
 
 	it("roundtrips negative evidence (unknown tokens)", () => {
@@ -164,8 +164,8 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
 		expect(rest.accepting).toHaveLength(orig.accepting.length)
-		const origIds = orig.accepting.map((p) => p.wofID).sort()
-		const restIds = rest.accepting.map((p) => p.wofID).sort()
+		const origIds = orig.accepting.map((p) => p.wofID).toSorted()
+		const restIds = rest.accepting.map((p) => p.wofID).toSorted()
 		expect(restIds).toEqual(origIds)
 	})
 
@@ -186,8 +186,8 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 	it("continuations match after roundtrip", () => {
 		const orig = original.query("New")
 		const rest = restored.query("New")
-		const origTokens = orig.continuations.map((c) => c.token).sort()
-		const restTokens = rest.continuations.map((c) => c.token).sort()
+		const origTokens = orig.continuations.map((c) => c.token).toSorted()
+		const restTokens = rest.continuations.map((c) => c.token).toSorted()
 		expect(restTokens).toEqual(origTokens)
 	})
 

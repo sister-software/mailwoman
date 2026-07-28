@@ -284,7 +284,7 @@ function main(): number {
 	console.log(`\n=== PIP-containment vs name-match (${src}${labelArg ? " · " + labelArg : ""}) ===`)
 	console.log(line("OVERALL", overall))
 
-	for (const st of Object.keys(byState).sort()) {
+	for (const st of Object.keys(byState).toSorted()) {
 		console.log(line(st, byState[st]!))
 	}
 	console.log(`\n  rows resolved-but-polygon-missing: ${noPoly}`)

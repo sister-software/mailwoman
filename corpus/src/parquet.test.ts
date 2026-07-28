@@ -131,7 +131,7 @@ describe("rowToParquet", () => {
 
 describe("LABELED_ROW_SCHEMA", () => {
 	it("covers every PARQUET_COLUMNS entry", () => {
-		expect(Object.keys(LABELED_ROW_SCHEMA).sort()).toEqual([...PARQUET_COLUMNS].sort())
+		expect(Object.keys(LABELED_ROW_SCHEMA).toSorted()).toEqual([...PARQUET_COLUMNS].toSorted())
 	})
 
 	it("marks locale / synth_method / synth_base_id optional", () => {

@@ -107,7 +107,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
 	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
 	// re-sorted by start below.
-	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).sort(
+	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
 	)
 

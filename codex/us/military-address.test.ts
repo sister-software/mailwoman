@@ -18,15 +18,15 @@ import {
 
 describe("US_MILITARY_POST_OFFICE_CODES", () => {
 	it("carries the three USPS Pub 28 location codes", () => {
-		const codes = US_MILITARY_POST_OFFICE_CODES.map((r) => r.code).sort()
-		expect(codes).toEqual(["APO", "DPO", "FPO"].sort())
+		const codes = US_MILITARY_POST_OFFICE_CODES.map((r) => r.code).toSorted()
+		expect(codes).toEqual(["APO", "DPO", "FPO"].toSorted())
 	})
 
 	it("marks APO and FPO as armed-forces codes; DPO as diplomatic", () => {
 		const armedForces = US_MILITARY_POST_OFFICE_CODES.filter((r) => r.armedForces)
 			.map((r) => r.code)
-			.sort()
-		expect(armedForces).toEqual(["APO", "FPO"].sort())
+			.toSorted()
+		expect(armedForces).toEqual(["APO", "FPO"].toSorted())
 		const diplomatic = US_MILITARY_POST_OFFICE_CODES.filter((r) => !r.armedForces).map((r) => r.code)
 		expect(diplomatic).toEqual(["DPO"])
 	})
@@ -34,22 +34,22 @@ describe("US_MILITARY_POST_OFFICE_CODES", () => {
 
 describe("US_ARMED_FORCES_REGIONS", () => {
 	it("carries the three USPS armed-forces region codes", () => {
-		const codes = US_ARMED_FORCES_REGIONS.map((r) => r.code).sort()
-		expect(codes).toEqual(["AA", "AE", "AP"].sort())
+		const codes = US_ARMED_FORCES_REGIONS.map((r) => r.code).toSorted()
+		expect(codes).toEqual(["AA", "AE", "AP"].toSorted())
 	})
 })
 
 describe("US_MILITARY_UNIT_DESIGNATORS", () => {
 	it("carries PSC, CMR, and UNIT", () => {
-		const codes = US_MILITARY_UNIT_DESIGNATORS.map((r) => r.code).sort()
-		expect(codes).toEqual(["CMR", "PSC", "UNIT"].sort())
+		const codes = US_MILITARY_UNIT_DESIGNATORS.map((r) => r.code).toSorted()
+		expect(codes).toEqual(["CMR", "PSC", "UNIT"].toSorted())
 	})
 
 	it("marks PSC and CMR as requiring a BOX; UNIT does not require one", () => {
 		const requiresBox = US_MILITARY_UNIT_DESIGNATORS.filter((r) => r.requiresBox)
 			.map((r) => r.code)
-			.sort()
-		expect(requiresBox).toEqual(["CMR", "PSC"].sort())
+			.toSorted()
+		expect(requiresBox).toEqual(["CMR", "PSC"].toSorted())
 		const noBox = US_MILITARY_UNIT_DESIGNATORS.filter((r) => !r.requiresBox).map((r) => r.code)
 		expect(noBox).toEqual(["UNIT"])
 	})

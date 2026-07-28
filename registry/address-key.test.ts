@@ -51,6 +51,6 @@ describe("addressIDBlockingKey", () => {
 		const { pairs } = block([a, b, c], [addressIDBlockingKey()])
 		// a + b share the address-id → one candidate pair; c is alone.
 		expect(pairs).toHaveLength(1)
-		expect([pairs[0]![0].id, pairs[0]![1].id].sort()).toEqual(["1", "2"])
+		expect([pairs[0]![0].id, pairs[0]![1].id].toSorted()).toEqual(["1", "2"])
 	})
 })

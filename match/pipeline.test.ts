@@ -77,10 +77,10 @@ describe("block → score → cluster", () => {
 			.map((g) =>
 				g
 					.map((r) => r.id)
-					.sort()
+					.toSorted()
 					.join("")
 			)
-			.sort()
+			.toSorted()
 		expect(shape).toEqual(["12", "3"])
 	})
 })

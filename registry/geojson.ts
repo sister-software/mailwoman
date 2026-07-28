@@ -44,7 +44,7 @@ function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoDa
 			cohesion: entity.cohesion,
 			sourceIds: entity.records.map((r) => r.id),
 			// Distinct provenance labels the entity's records span — an entity with ≥2 is a cross-dataset link.
-			sources: [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort(),
+			sources: [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].toSorted(),
 			name: displayName(rep),
 			organization: rep.organization?.canonical ?? null,
 			address: rep.address?.formatted ?? null,

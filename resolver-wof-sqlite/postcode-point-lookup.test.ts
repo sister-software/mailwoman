@@ -80,7 +80,7 @@ describe("WOFPostcodeLookup", () => {
 		const countries = lookup
 			.lookup("75008")
 			.map((p) => p.country)
-			.sort()
+			.toSorted()
 		expect(countries).toEqual(["FR", "US"])
 	})
 })

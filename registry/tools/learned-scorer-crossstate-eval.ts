@@ -296,7 +296,7 @@ export async function scorerCrossStateEval(
 	}
 	const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 	const quantileThresholds = (scores: number[]): number[] => {
-		const sorted = [...scores].sort((p, q) => p - q)
+		const sorted = [...scores].toSorted((p, q) => p - q)
 		const ts = new Set<number>()
 
 		for (let k = 0; k <= 32; k++) {

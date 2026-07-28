@@ -147,8 +147,8 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 			source: "overture",
 		}))
 
-	const categories = [...overlay.categories, ...snapshotRecords].sort((a, b) => a.id.localeCompare(b.id))
-	const synonyms = [...overlay.synonyms].sort(
+	const categories = [...overlay.categories, ...snapshotRecords].toSorted((a, b) => a.id.localeCompare(b.id))
+	const synonyms = [...overlay.synonyms].toSorted(
 		(a, b) => a.phrase.localeCompare(b.phrase) || a.categoryID.localeCompare(b.categoryID)
 	)
 

@@ -201,7 +201,7 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 		counties.add(m[1]!)
 	}
 
-	return [...counties].sort()
+	return [...counties].toSorted()
 }
 
 /**

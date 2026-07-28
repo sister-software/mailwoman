@@ -84,7 +84,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? AND ancestor_id != ? ORDER BY ancestor_id")
 		.all(orphanID, orphanID)
 		.map((r) => (r as { ancestor_id: number }).ancestor_id)
-	expect(ancestorIds).toEqual([85_633_793, 85_688_543, 102_081_863].sort((a, b) => a - b))
+	expect(ancestorIds).toEqual([85_633_793, 85_688_543, 102_081_863].toSorted((a, b) => a - b))
 
 	// Re-run: idempotent — already-present rows are not duplicated.
 	const again = backfillAncestorsFromHierarchy(db, [dataRoot])

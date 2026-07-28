@@ -243,7 +243,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
 			// featureserver shard pattern is the primary distribution.
 			const entries = await readdir(opts.inputPath)
-			const shards = entries.filter((n) => n.endsWith(".ndjson")).sort()
+			const shards = entries.filter((n) => n.endsWith(".ndjson")).toSorted()
 
 			let emitted = 0
 			outer: for (const shard of shards) {

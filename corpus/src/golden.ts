@@ -131,7 +131,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 
 /** Validate every `.jsonl` in a golden directory. */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = (await readdir(dir)).filter((n) => extname(n) === ".jsonl").sort()
+	const files = (await readdir(dir)).filter((n) => extname(n) === ".jsonl").toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 

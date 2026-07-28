@@ -10,8 +10,8 @@ import { candidateSystemsForPostcode } from "./postcode-systems.ts"
 
 describe("candidateSystemsForPostcode", () => {
 	it("a bare 5-digit code is eligible for every numeric-postcode system (shape can't split them)", () => {
-		expect(candidateSystemsForPostcode("68161").sort()).toEqual(["de", "fr", "us"])
-		expect(candidateSystemsForPostcode("75001").sort()).toEqual(["de", "fr", "us"])
+		expect(candidateSystemsForPostcode("68161").toSorted()).toEqual(["de", "fr", "us"])
+		expect(candidateSystemsForPostcode("75001").toSorted()).toEqual(["de", "fr", "us"])
 	})
 
 	it("the German D- prefix narrows to Germany alone", () => {
@@ -37,8 +37,8 @@ describe("candidateSystemsForPostcode", () => {
 	})
 
 	it("a bare 4-digit code is eligible for both Australasian systems (shape can't split them)", () => {
-		expect(candidateSystemsForPostcode("2000").sort()).toEqual(["au", "nz"])
-		expect(candidateSystemsForPostcode("7942").sort()).toEqual(["au", "nz"])
+		expect(candidateSystemsForPostcode("2000").toSorted()).toEqual(["au", "nz"])
+		expect(candidateSystemsForPostcode("7942").toSorted()).toEqual(["au", "nz"])
 	})
 
 	it("returns empty for a shape no system recognizes", () => {

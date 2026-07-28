@@ -100,7 +100,7 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 }
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return Number.NaN
-	const s = [...xs].sort((a, b) => a - b)
+	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
@@ -139,7 +139,7 @@ const rows = db
 	.all() as unknown as Commune[]
 
 // Deterministic shuffle (no Math.random in this env) — order by id hash.
-const shuffled = [...rows].sort((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
+const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 db.close()

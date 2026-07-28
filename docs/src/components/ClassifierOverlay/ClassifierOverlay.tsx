@@ -203,7 +203,7 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 		}
 	}
 
-	return out.reverse()
+	return out.toReversed()
 }
 
 // ---------------------------------------------------------------------------

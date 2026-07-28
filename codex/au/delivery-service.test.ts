@@ -19,20 +19,20 @@ describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {
 		const noNumber = AU_DELIVERY_SERVICE_DESIGNATORS.filter((d) => !d.requiresNumber).map((d) => d.name)
 		// "With the exception of Care of Post Office, Community Mail Agent, Community Postal Agent,
 		// and Community Mail Bag, all Postal Delivery Types must have an associated number."
-		expect(noNumber.sort()).toEqual(
+		expect(noNumber.toSorted()).toEqual(
 			[
 				"CARE OF POST OFFICE",
 				"COMMUNITY MAIL AGENT",
 				"COMMUNITY MAIL BAG",
 				"COMMUNITY POSTAL AGENT",
 				"POSTE RESTANTE",
-			].sort()
+			].toSorted()
 		)
 	})
 
 	it("flags exactly the current retail products as non-legacy", () => {
 		const current = [...new Set(AU_DELIVERY_SERVICE_DESIGNATORS.filter((d) => !d.legacy).map((d) => d.abbreviation))]
-		expect(current.sort()).toEqual(["GPO BOX", "LOCKED BAG", "PO BOX", "PRIVATE BAG"].sort())
+		expect(current.toSorted()).toEqual(["GPO BOX", "LOCKED BAG", "PO BOX", "PRIVATE BAG"].toSorted())
 	})
 })
 

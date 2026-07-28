@@ -143,7 +143,7 @@ function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 			source: group[0]!.source,
 			release: group[0]!.release,
 		}))
-		.sort((a, b) => a.n - b.n)
+		.toSorted((a, b) => a.n - b.n)
 }
 
 function interpolateFromNeighbors(rows: readonly PointRow[], n: number): InterpolatedHit | null {

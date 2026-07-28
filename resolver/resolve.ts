@@ -90,6 +90,7 @@ function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLo
 	if (candidates.length === 0) return null
 
 	if (candidates.length === 1) return candidates[0]!
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
 	const [first, second] = ranked
 
@@ -738,6 +739,7 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 			.filter((a) => a.lat !== 0 || a.lon !== 0)
 			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
 			.filter((x) => x.d <= gateKm)
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((x, y) => x.d - y.d)[0]
 
 		if (reconciling) {
@@ -1456,6 +1458,7 @@ class WOFResolver implements Resolver {
 			// The within-tier key is now the backend's PROMINENCE (population + proximity, #938 units)
 			// with the posterior as the additive country pin; score stays the final tiebreak. Backends
 			// that don't populate `prominence` degrade to the additive score behavior.
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			ranked = [...candidates].sort((a, b) => {
 				const tier = Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false)
 

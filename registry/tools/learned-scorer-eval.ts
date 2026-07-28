@@ -361,7 +361,7 @@ export async function scorerPairwiseEval(
 
 		if (pos.length === 0 || neg.length === 0) return Number.NaN
 		// Mann-Whitney U via rank.
-		const sorted = [...scored].sort((p, q) => p.s - q.s)
+		const sorted = [...scored].toSorted((p, q) => p.s - q.s)
 		let rank = 1
 		let rankSum = 0
 
@@ -384,7 +384,7 @@ export async function scorerPairwiseEval(
 		return (rankSum - (pos.length * (pos.length + 1)) / 2) / (pos.length * neg.length)
 	}
 	function bestF1(scored: Array<{ s: number; y: number }>): { f1: number; precision: number; recall: number } {
-		const thresholds = [...new Set(scored.map((d) => d.s))].sort((p, q) => p - q)
+		const thresholds = [...new Set(scored.map((d) => d.s))].toSorted((p, q) => p - q)
 		let best = { f1: 0, precision: 0, recall: 0 }
 		const P = scored.filter((d) => d.y === 1).length
 

@@ -117,7 +117,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	})
 
 	it("is stable regardless of input order (sorted by child, parent bytes)", () => {
-		const reversed = [...ENTRIES].reverse()
+		const reversed = [...ENTRIES].toReversed()
 		const a = new PairIndexResolver(serializePairIndex(HEADER, ENTRIES))
 		const b = new PairIndexResolver(serializePairIndex(HEADER, reversed))
 

@@ -50,7 +50,7 @@ describe("buildAddressTree", () => {
 		for (const r of tree.roots) {
 			collect(r)
 		}
-		expect(allTags.sort()).toEqual(["house_number", "locality", "postcode", "region", "street"])
+		expect(allTags.toSorted()).toEqual(["house_number", "locality", "postcode", "region", "street"])
 	})
 
 	test("groups B-street + I-street + I-street into one street span sliced from raw", () => {
@@ -347,7 +347,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 		const tokens: DecoderToken[] = [tok("Dallas", 0, 6, "B-locality"), tok("Austin", 8, 14, "B-locality")]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
 		expect(locs).toHaveLength(2)
-		expect(locs.map((l) => l.value).sort()).toEqual(["Austin", "Dallas"])
+		expect(locs.map((l) => l.value).toSorted()).toEqual(["Austin", "Dallas"])
 	})
 
 	test("GUARD: intervening O token keeps same-tag spans distinct", () => {
@@ -401,7 +401,7 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 			tok("Porirua", 12, 19, "B-locality"),
 		]
 		const tree = buildAddressTree(raw, tokens)
-		const tags = tagsOf(tree.roots).sort()
+		const tags = tagsOf(tree.roots).toSorted()
 		expect(tags).toEqual(["dependent_locality", "locality"])
 
 		const depLocality = findByTag(tree.roots, "dependent_locality")!
@@ -437,7 +437,7 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 		}
 
 		expect(localities).toHaveLength(2)
-		expect(localities.map((l) => l.value).sort()).toEqual(["Chicago", "Springfield"])
+		expect(localities.map((l) => l.value).toSorted()).toEqual(["Chicago", "Springfield"])
 	})
 })
 

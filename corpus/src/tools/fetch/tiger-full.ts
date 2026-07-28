@@ -178,7 +178,7 @@ export async function fetchTigerFull(
 
 	if (!listingRes.ok) throw new Error(`Failed to fetch TIGER directory listing: HTTP ${listingRes.status}`)
 	const html = await listingRes.text()
-	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g) ?? [])].sort()
+	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g) ?? [])].toSorted()
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
 
@@ -206,7 +206,7 @@ export async function fetchTigerFull(
 	const failedCodes: string[] = []
 
 	// Process states in sorted FIPS order for predictable output.
-	const sortedStates = [...stateFiles.keys()].sort()
+	const sortedStates = [...stateFiles.keys()].toSorted()
 
 	for (const stateFips of sortedStates) {
 		const countyFiles = stateFiles.get(stateFips) ?? []
@@ -286,7 +286,7 @@ export async function fetchTigerFull(
 		}
 
 		// Rewrite per-state MANIFEST.json with all known-good counties (sorted for determinism).
-		const counties = [...manifest.values()].sort((a, b) => a.filename.localeCompare(b.filename))
+		const counties = [...manifest.values()].toSorted((a, b) => a.filename.localeCompare(b.filename))
 		const manifestDoc = {
 			state_fips: stateFips,
 			updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),

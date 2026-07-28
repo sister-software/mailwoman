@@ -78,14 +78,14 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "both" })
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural", "rule"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural", "rule"])
 	})
 
 	test("neural_preferred drops rule when neural is present", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "neural_preferred" })
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural"])
 	})
 
 	test("neural_preferred falls back to rule when no neural proposal", () => {
@@ -96,7 +96,7 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 			makeProposal({ component: "country", source: "merged", confidence: 0.85 }),
 		]
 		const out = registry.apply(only)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "rule"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "rule"])
 	})
 
 	test("merged-source proposals survive both preference modes (they are neither rule nor neural)", () => {
@@ -108,7 +108,7 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 			makeProposal({ component: "country", source: "merged", confidence: 0.9 }),
 		]
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural"])
 	})
 
 	test("a below-threshold preferred source does NOT trigger dropping the dispreferred one", () => {
@@ -128,7 +128,7 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "rule_preferred" })
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "rule"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "rule"])
 	})
 })
 

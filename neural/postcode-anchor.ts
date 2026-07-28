@@ -328,6 +328,7 @@ export function extractPostcodeAnchors(
 		}
 
 		// Membership: distinct countries the postcode exists in (regardless of whether we have a centroid).
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 		const countries = [...new Set(hits.map((h) => h.country))].sort()
 		const k = countries.length
 

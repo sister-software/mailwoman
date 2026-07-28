@@ -340,7 +340,7 @@ function h3CellToInt(cell: H3Cell): number {
 }
 
 function sortByDistance(rows: POIRow[], center: { latitude: number; longitude: number }): POIRow[] {
-	return [...rows].sort(
+	return [...rows].toSorted(
 		(a, b) =>
 			haversineKm(center.latitude, center.longitude, a.latitude, a.longitude) -
 			haversineKm(center.latitude, center.longitude, b.latitude, b.longitude)

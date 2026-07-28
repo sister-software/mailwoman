@@ -62,7 +62,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 		expect(q.accepting.length).toBeGreaterThanOrEqual(2)
 		const localities = q.accepting.filter((p) => p.placetype === "locality")
 		expect(localities.length).toBeGreaterThanOrEqual(2)
-		const sorted = localities.sort((a, b) => b.importance - a.importance)
+		const sorted = localities.toSorted((a, b) => b.importance - a.importance)
 		expect(sorted[0]!.importance).toBeGreaterThan(0)
 	})
 

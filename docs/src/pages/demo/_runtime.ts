@@ -301,14 +301,14 @@ export function useDemoMapRuntime({
 			const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 			const stateNode = nodes
 				.filter((n) => n.tag === "region" || n.tag === "state")
-				.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+				.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 			const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
 			const streetParts = nodes
 				.filter((n) => STREET_COMPONENT_TAGS.has(n.tag) && String(n.value ?? "").trim())
-				.sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
+				.toSorted((a, b) => (a.start ?? 0) - (b.start ?? 0))
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
 			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)

@@ -189,7 +189,7 @@ describe("buildCoincidentRoles", () => {
 		buildCoincidentRoles(db)
 		const padova = rolesFor(60)
 		expect(padova).toHaveLength(2)
-		expect(padova.map((r) => r.localityID).sort()).toEqual([61, 62])
+		expect(padova.map((r) => r.localityID).toSorted()).toEqual([61, 62])
 	})
 
 	test("is idempotent — a rebuild yields the same row count", () => {

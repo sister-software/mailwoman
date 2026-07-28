@@ -45,7 +45,7 @@ describe("PostcodeBinaryResolver", () => {
 
 	it("returns every country for a postcode shared across borders", () => {
 		const hits = resolver().lookup("75008")
-		expect(hits.map((h) => h.country).sort()).toEqual(["FR", "US"])
+		expect(hits.map((h) => h.country).toSorted()).toEqual(["FR", "US"])
 	})
 
 	it("returns coordinate-less rows so membership survives without a centroid", () => {

@@ -138,7 +138,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	progress("collect", `Collected ${canonicalToVariants.size} canonical affixes`)
 
 	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
-	const sortedCanonicals = [...canonicalToVariants.keys()].sort()
+	const sortedCanonicals = [...canonicalToVariants.keys()].toSorted()
 	const canonicalToWOFID = new Map<string, number>()
 
 	for (let i = 0; i < sortedCanonicals.length; i++) {

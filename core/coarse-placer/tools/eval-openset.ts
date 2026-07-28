@@ -374,7 +374,7 @@ export async function evalOpenSet(
 		const inVals = inmapScored.map((o) => ({ v: o.s[scoreKey], ok: o.correctRoute }))
 		const heldVals = heldoutScored.map((o) => o.s[scoreKey])
 		// Candidate thresholds: quantiles of the union of scores.
-		const all = [...inVals.map((x) => x.v), ...heldVals].sort((a, b) => a - b)
+		const all = [...inVals.map((x) => x.v), ...heldVals].toSorted((a, b) => a - b)
 		const ts: number[] = []
 
 		for (let q = 0; q <= 200; q++) {
@@ -492,7 +492,7 @@ export async function evalOpenSet(
 	const ranked = SCORES.map((k) => ({
 		k,
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),
-	})).sort((a, b) => b.honestMin - a.honestMin)
+	})).toSorted((a, b) => b.honestMin - a.honestMin)
 	const winner = ranked[0]!
 	const clears90 = winner.honestMin >= 90
 	lines.push(`## Verdict`)

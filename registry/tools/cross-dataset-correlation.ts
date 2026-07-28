@@ -307,13 +307,13 @@ export async function crossDatasetCorrelation(
 	const crossSource = entities
 		.map((e) => ({ e, sources: new Set(e.records.map(sourceOf)) }))
 		.filter((x) => x.sources.size >= 2)
-		.sort((a, b) => b.sources.size - a.sources.size || b.e.records.length - a.e.records.length)
+		.toSorted((a, b) => b.sources.size - a.sources.size || b.e.records.length - a.e.records.length)
 
 	// Source-pair co-occurrence matrix.
 	const pairCounts = new Map<string, number>()
 
 	for (const { sources } of crossSource) {
-		const list = [...sources].sort()
+		const list = [...sources].toSorted()
 
 		for (let i = 0; i < list.length; i++) {
 			for (let j = i + 1; j < list.length; j++) {
@@ -388,7 +388,7 @@ export async function crossDatasetCorrelation(
 		lines.push(`| source pair | entities linked |`)
 		lines.push(`|---|---:|`)
 
-		for (const [k, v] of [...pairCounts.entries()].sort((a, b) => b[1] - a[1])) {
+		for (const [k, v] of [...pairCounts.entries()].toSorted((a, b) => b[1] - a[1])) {
 			lines.push(`| ${k} | ${v} |`)
 		}
 		lines.push("")
@@ -406,7 +406,7 @@ export async function crossDatasetCorrelation(
 
 	for (const { e, sources } of crossSource.slice(0, 12)) {
 		const coord = e.coordinate ? `${e.coordinate.latitude.toFixed(4)}, ${e.coordinate.longitude.toFixed(4)}` : "—"
-		lines.push(`| ${e.id} | ${[...sources].sort().join(", ")} | ${repName(e)} | ${coord} |`)
+		lines.push(`| ${e.id} | ${[...sources].toSorted().join(", ")} | ${repName(e)} | ${coord} |`)
 	}
 	lines.push("")
 	lines.push(`## Reading`)

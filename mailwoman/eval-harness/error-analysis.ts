@@ -276,7 +276,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	console.log("")
 	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")
 	console.log("|-----|----------|---------|--------|----------|----------|--------------|--------|")
-	const sortedTags = [...perTag.entries()].sort((a, b) => b[1].expected - a[1].expected)
+	const sortedTags = [...perTag.entries()].toSorted((a, b) => b[1].expected - a[1].expected)
 
 	for (const [tag, s] of sortedTags) {
 		const recall = s.expected > 0 ? ((100 * s.correct) / s.expected).toFixed(1) + "%" : "—"

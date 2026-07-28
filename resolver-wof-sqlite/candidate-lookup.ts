@@ -159,6 +159,7 @@ export function rankByPrimaryPreference<R extends Pick<CandidateRow, "neg_rank" 
 		rows
 			.map((r, i) => ({ row: annotate(r), i }))
 			// Effective rank ASC; ties keep population order, then original index (stable).
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((a, b) => a.row.effectiveNegRank - b.row.effectiveNegRank || a.row.neg_rank - b.row.neg_rank || a.i - b.i)
 			.slice(0, limit)
 			.map((x) => x.row)
@@ -420,6 +421,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 					const ranked = hits
 						.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
 						.filter((h) => h.s >= FUZZY_MIN)
+						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 						.sort((a, b) => b.s - a.s)
 					const seen = new Set<string>()
 
@@ -533,6 +535,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 					return { c, i, p: c.prominence }
 				})
+				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 				.sort((a, b) => b.p - a.p || a.i - b.i)
 				.forEach((x, j) => (candidates[j] = x.c))
 		}

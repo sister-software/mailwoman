@@ -190,7 +190,7 @@ export async function buildTranslitShard(
 	report?.(`read ${totalIn} rows; ${quarantine.length} quarantined; ${buckets.size} script buckets`)
 
 	const newShards: ShardDescriptor[] = []
-	const sortedKeys = [...buckets.keys()].sort()
+	const sortedKeys = [...buckets.keys()].toSorted()
 
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!

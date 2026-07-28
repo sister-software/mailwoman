@@ -296,7 +296,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			}
 		}
 
-		return ticks.sort((a, b) => a - b)
+		return ticks.toSorted((a, b) => a - b)
 	}, [yMin, yMax, isLog])
 	const xTicks = useMemo(() => niceTicks(xMin, xMax, 8), [xMin, xMax])
 
@@ -628,7 +628,7 @@ const TrainingChartsInner: React.FC = () => {
 					metric: mk,
 					label: `${runName} / ${mk}`,
 					color: LINE_COLORS[colorIdx % LINE_COLORS.length],
-					points: [...points].sort((a, b) => a.step - b.step),
+					points: [...points].toSorted((a, b) => a.step - b.step),
 				})
 				colorIdx++
 			}

@@ -397,7 +397,7 @@ function quantile(sorted: number[], q: number): number {
 
 function computeStats(values: number[]): QuantileStats | null {
 	if (values.length === 0) return null
-	const sorted = [...values].sort((a, b) => a - b)
+	const sorted = [...values].toSorted((a, b) => a - b)
 
 	return {
 		count: sorted.length,
@@ -518,7 +518,7 @@ function printReport(report: PoiBoardReport): void {
 	console.log(`${report.totalCases} cases, ${(report.overallPassRate * 100).toFixed(1)}% overall pass rate\n`)
 	console.log("  expect kind     n     pass    rate")
 
-	for (const [kind, bucket] of Object.entries(report.byExpectKind).sort()) {
+	for (const [kind, bucket] of Object.entries(report.byExpectKind).toSorted()) {
 		console.log(
 			`  ${kind.padEnd(14)} ${String(bucket.total).padStart(4)}   ${String(bucket.pass).padStart(4)}    ${(bucket.rate * 100).toFixed(1)}%`
 		)

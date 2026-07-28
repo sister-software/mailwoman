@@ -147,7 +147,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
 		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
 		// Self-closing tags would shorten the closer list; we don't emit any, so they should match.
-		expect(openers.sort()).toEqual(closers.sort())
+		expect(openers.toSorted()).toEqual(closers.toSorted())
 	})
 
 	test("includeAlternatives=false by default (libpostal-compat preserved)", () => {

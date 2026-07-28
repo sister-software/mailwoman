@@ -137,7 +137,7 @@ function preReconcileTags(
 ): Array<{ start: number; end: number; tag: ComponentTag }> {
 	const seen = new Set<string>()
 	const out: Array<{ start: number; end: number; tag: ComponentTag }> = []
-	const ordered = classifierTopK.slice().sort((a, b) => b.score - a.score)
+	const ordered = classifierTopK.slice().toSorted((a, b) => b.score - a.score)
 
 	for (const c of ordered) {
 		const key = `${c.span.start}:${c.span.end}`

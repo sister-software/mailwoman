@@ -55,9 +55,9 @@ for (const fixture of fixtures) {
 	table.set(cls, row)
 }
 
-for (const [cls, kinds] of [...table.entries()].sort()) {
+for (const [cls, kinds] of [...table.entries()].toSorted()) {
 	const total = [...kinds.values()].reduce((a, b) => a + b, 0)
-	const parts = [...kinds.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}=${n}`)
+	const parts = [...kinds.entries()].toSorted((a, b) => b[1] - a[1]).map(([k, n]) => `${k}=${n}`)
 
 	console.log(`${cls.padEnd(14)} n=${String(total).padStart(3)}  ${parts.join("  ")}`)
 }

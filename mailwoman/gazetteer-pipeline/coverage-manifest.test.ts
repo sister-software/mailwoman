@@ -73,7 +73,7 @@ describe("byte-identity of the measured record vs the code constants (the fallba
 	test("the derived safelist equals HARD_PLACE_COUNTRY_SAFELIST exactly", () => {
 		const derived = hardCountrySafelistFromCoverage(MEASURED_COUNTRY_COVERAGE)
 
-		expect([...derived].sort()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].sort())
+		expect([...derived].toSorted()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].toSorted())
 	})
 
 	test("hardCountryFor answers identically through the constant fallback and the derived safelist, for every measured country", () => {
@@ -87,7 +87,7 @@ describe("byte-identity of the measured record vs the code constants (the fallba
 	})
 
 	test("the measured bboxes equal COUNTRY_BBOX exactly (same countries, same numbers)", () => {
-		expect(MEASURED_COUNTRY_BBOXES.map((f) => f.country).sort()).toEqual(Object.keys(COUNTRY_BBOX).sort())
+		expect(MEASURED_COUNTRY_BBOXES.map((f) => f.country).toSorted()).toEqual(Object.keys(COUNTRY_BBOX).toSorted())
 
 		for (const fact of MEASURED_COUNTRY_BBOXES) {
 			expect([fact.latMin, fact.latMax, fact.lonMin, fact.lonMax], fact.country).toEqual([
@@ -108,7 +108,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 			const manifest = readGazetteerCoverageManifest(db)
 
 			expect(manifest).toBeDefined()
-			expect([...manifest!.hardCountrySafelist].sort()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].sort())
+			expect([...manifest!.hardCountrySafelist].toSorted()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].toSorted())
 
 			// Provenance survives: the GB row carries its panel size + receipt.
 			const gb = manifest!.countryCoverage.get("GB")
@@ -163,7 +163,9 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		try {
 			expect(lookup.artifactCoverage).toBeDefined()
-			expect([...lookup.artifactCoverage!.hardCountrySafelist].sort()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].sort())
+			expect([...lookup.artifactCoverage!.hardCountrySafelist].toSorted()).toEqual(
+				[...HARD_PLACE_COUNTRY_SAFELIST].toSorted()
+			)
 		} finally {
 			lookup.close()
 		}

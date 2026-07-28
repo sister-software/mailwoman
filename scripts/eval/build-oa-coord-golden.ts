@@ -149,7 +149,7 @@ async function main(): Promise<void> {
 		if (values.zip) {
 			yield* csvRecordsFromZip(values.zip, values.entry!)
 		} else {
-			for (const path of globSync(values["csv-glob"]!).sort()) {
+			for (const path of globSync(values["csv-glob"]!).toSorted()) {
 				yield* csvRecordsFromFile(path)
 			}
 		}
@@ -208,7 +208,7 @@ async function main(): Promise<void> {
 	const rows: Record<string, unknown>[] = []
 	let i = 0
 
-	for (const key of [...buckets.keys()].sort()) {
+	for (const key of [...buckets.keys()].toSorted()) {
 		for (const r of buckets.get(key)!) {
 			const order = ORDERS[i % 3]!
 			i += 1

@@ -54,7 +54,7 @@ test("placetypeDepth: unknown / never-resolved placetypes map to 0 (sort coarses
 test("placetypeDepth: descending-depth sort yields nearest-first (deepest placetype first)", () => {
 	// The lineage walk sorts by placetypeDepth(b) - placetypeDepth(a); reproduce that ordering.
 	const mixed = ["country", "neighbourhood", "region", "locality"]
-	const nearestFirst = [...mixed].sort((a, b) => placetypeDepth(b) - placetypeDepth(a))
+	const nearestFirst = [...mixed].toSorted((a, b) => placetypeDepth(b) - placetypeDepth(a))
 	expect(nearestFirst).toEqual(["neighbourhood", "locality", "region", "country"])
 })
 

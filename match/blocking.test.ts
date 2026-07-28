@@ -15,7 +15,7 @@ interface Rec {
 	postcode?: string
 }
 
-const pairIds = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].sort().join("-")).sort()
+const pairIds = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].toSorted().join("-")).sort()
 const intersects = (a: string[], b: string[]) => a.some((k) => b.includes(k))
 
 describe("geoCellKey", () => {

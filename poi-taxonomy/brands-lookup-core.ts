@@ -82,7 +82,7 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 			}
 		}
 
-		return [...best.values()].sort(
+		return [...best.values()].toSorted(
 			(a, b) => b.brand.rows - a.brand.rows || a.brand.wikidata.localeCompare(b.brand.wikidata)
 		)
 	}

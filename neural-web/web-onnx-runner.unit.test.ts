@@ -110,7 +110,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(result.logits).toHaveLength(3)
 
 		const feeds = session.runCalls[0]!
-		expect(Object.keys(feeds).sort()).toEqual([
+		expect(Object.keys(feeds).toSorted()).toEqual([
 			"anchor_confidence",
 			"anchor_features",
 			"attention_mask",
@@ -169,7 +169,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		await runner.infer([5], undefined, { features: [[1, 0, 0, 0, 0]], confidence: [1] })
 
 		const feeds = session.runCalls[0]!
-		expect(Object.keys(feeds).sort()).toEqual(["attention_mask", "input_ids"])
+		expect(Object.keys(feeds).toSorted()).toEqual(["attention_mask", "input_ids"])
 	})
 
 	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner
@@ -224,7 +224,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		await runner.infer([5], undefined, undefined, { features: [[1, 0]], confidence: [1] })
 
 		const feeds = session.runCalls[0]!
-		expect(Object.keys(feeds).sort()).toEqual(["attention_mask", "input_ids"])
+		expect(Object.keys(feeds).toSorted()).toEqual(["attention_mask", "input_ids"])
 	})
 
 	test("locale_logits output surfaces as `localeLogits` when the graph exports it", async () => {

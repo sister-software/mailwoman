@@ -252,7 +252,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	console.log("")
 	console.log("country  cases  full-agree")
 
-	for (const [country, { cases, fullAgree }] of [...byCountry.entries()].sort()) {
+	for (const [country, { cases, fullAgree }] of [...byCountry.entries()].toSorted()) {
 		console.log(
 			`${country.padEnd(7)} ${String(cases).padStart(6)}  ${String(fullAgree).padStart(4)} (${((fullAgree / cases) * 100).toFixed(0)}%)`
 		)

@@ -84,7 +84,7 @@ describe("splitRows — locality holdout", () => {
 		expect(m.train).not.toContain("us-2")
 		expect(m.train).not.toContain("us-3")
 		expect(m.train).not.toContain("us-5")
-		const heldOut = [...m.val, ...m.test].sort()
+		const heldOut = [...m.val, ...m.test].toSorted()
 		expect(heldOut).toEqual(["us-2", "us-3", "us-5"])
 		expect(m.counts.total).toBe(6)
 	})
@@ -98,7 +98,7 @@ describe("splitRows — locality holdout", () => {
 			row("fr-5", "FR", "Auvergne-Rhône-Alpes"),
 		]
 		const m = splitRows(rows)
-		const heldOut = [...m.val, ...m.test].sort()
+		const heldOut = [...m.val, ...m.test].toSorted()
 		expect(heldOut).toEqual(["fr-2", "fr-3", "fr-4"])
 		expect(m.train).toEqual(expect.arrayContaining(["fr-1", "fr-5"]))
 	})

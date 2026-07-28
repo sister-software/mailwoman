@@ -554,8 +554,8 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 				"Unicode-Nd digit; the guarded match still consumes its span (no sub-ngram re-matching). v3.23: evidence " +
 				"beside a house number swallowed the digit into the span (P0 alnum-hn \u22120.325 lower+heal).",
 		},
-		entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
-		code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),
+		entries: Object.fromEntries([...entries].toSorted(([a], [b]) => a.localeCompare(b))),
+		code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 	}
 
 	mkdirSync(dirname(output), { recursive: true })

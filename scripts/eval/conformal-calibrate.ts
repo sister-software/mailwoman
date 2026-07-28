@@ -96,7 +96,7 @@ const values = rawValues as {
 
 function percentile(xs: number[], p: number): number {
 	if (xs.length === 0) return Number.NaN
-	const s = [...xs].sort((a, b) => a - b)
+	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
 }
@@ -118,7 +118,7 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	if (rank > n) return Infinity
 
 	// can't guarantee at this level
-	return [...calScores].sort((a, b) => a - b)[rank - 1]!
+	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
 // ---------------------------------------------------------------------------

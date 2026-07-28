@@ -19,7 +19,7 @@ const shape = (clusters: { id: string }[][]) =>
 		.map((g) =>
 			g
 				.map((r) => r.id)
-				.sort()
+				.toSorted()
 				.join("")
 		)
 		.sort()

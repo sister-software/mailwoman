@@ -21,7 +21,7 @@ const OUT_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const cases: ParityCase[] = []
 let parityFileCount = 0
 
-for (const entry of readdirSync(TEST_DIR).sort()) {
+for (const entry of readdirSync(TEST_DIR).toSorted()) {
 	if (!entry.endsWith(".test.ts")) continue
 
 	const path = join(TEST_DIR, entry)

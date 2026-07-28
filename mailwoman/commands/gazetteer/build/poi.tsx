@@ -71,7 +71,7 @@ const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		})
 
 		const countryLines = [...result.countries.entries()]
-			.sort(([a], [b]) => a.localeCompare(b))
+			.toSorted(([a], [b]) => a.localeCompare(b))
 			.map(([cc, count]) => `  ${cc} ${count.toLocaleString()}`)
 
 		return [

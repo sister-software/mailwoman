@@ -163,7 +163,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit postcode rows only, sorted by id for determinism.
-			const ids = [...byID.keys()].sort((a, b) => a - b)
+			const ids = [...byID.keys()].toSorted((a, b) => a - b)
 			let emitted = 0
 
 			for (const id of ids) {

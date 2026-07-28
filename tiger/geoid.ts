@@ -534,7 +534,7 @@ export function isGeoIDComponent<T extends GeoIDPart>(component: T, input: unkno
 /**
  * GeoID input matchers sorted by length in descending order, such that the most specific matchers are first.
  */
-const OrderedGeoIDInputMatchers = Object.values(GeoIDInputMatchers).sort((a, b) => b.length - a.length)
+const OrderedGeoIDInputMatchers = Object.values(GeoIDInputMatchers).toSorted((a, b) => b.length - a.length)
 
 /**
  * Given a block GeoID, parse it into its components.

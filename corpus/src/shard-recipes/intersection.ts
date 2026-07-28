@@ -182,7 +182,7 @@ function splitCSV(line: string): string[] {
 }
 
 /** Order-insensitive crossing key, for eval-leakage exclusion + pair dedup. */
-const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].sort().join("\u001F")
+const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].toSorted().join("\u001F")
 
 /** Load the eval's crossings so neither train nor golden ever sees them. */
 function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {

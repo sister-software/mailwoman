@@ -288,7 +288,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
 			`provenance (${STATE}, release ${options.release}):`,
 		]
-		const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
+		const sortedDatasets = [...datasetCounts.entries()].toSorted((a, b) => b[1] - a[1])
 
 		for (const [dataset, count] of sortedDatasets) {
 			lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)

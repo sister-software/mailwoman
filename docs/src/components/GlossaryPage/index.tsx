@@ -125,7 +125,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 				terms: byPrimary
 					.get(tag.key)!
 					.slice()
-					.sort((a, b) => a.term.localeCompare(b.term)),
+					.toSorted((a, b) => a.term.localeCompare(b.term)),
 			}))
 	}, [visibleTerms, tagMeta, enabled])
 

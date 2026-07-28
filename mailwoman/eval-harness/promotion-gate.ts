@@ -132,7 +132,7 @@ export function listGateSpecs(): string[] {
 
 		return readdirSync(fileURLToPath(dir))
 			.filter((file) => file.endsWith(".json"))
-			.sort()
+			.toSorted()
 	}
 
 	return []

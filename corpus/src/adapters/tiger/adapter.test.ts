@@ -101,7 +101,7 @@ describe("tiger adapter against fixture.sql", () => {
 		})
 		const rows = await loadRows()
 		const portlandVariants = rows.filter((r) => r.source_id.startsWith("tiger-pl-4159000-"))
-		expect(portlandVariants.map((r) => r.source_id).sort()).toEqual([
+		expect(portlandVariants.map((r) => r.source_id).toSorted()).toEqual([
 			"tiger-pl-4159000-locality-only",
 			"tiger-pl-4159000-with-region",
 			"tiger-pl-4159000-with-region-country",
@@ -152,7 +152,7 @@ describe("tiger adapter against fixture.sql", () => {
 		})
 		const rows = await loadRows()
 		expect(rows).toHaveLength(2)
-		expect(rows.map((r) => r.source_id).sort()).toEqual([
+		expect(rows.map((r) => r.source_id).toSorted()).toEqual([
 			"tiger-st-110099999-zipl-10001",
 			"tiger-st-110099999-zipr-10002",
 		])

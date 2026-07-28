@@ -103,7 +103,7 @@ describe("extractPostcodeAnchors", () => {
 	it("returns multiple anchors for multiple postcodes", () => {
 		const anchors = extractPostcodeAnchors("94105 ... 75001", RESOLVER)
 		expect(anchors).toHaveLength(2)
-		expect(anchors.map((a) => a.normalized).sort()).toEqual(["75001", "94105"])
+		expect(anchors.map((a) => a.normalized).toSorted()).toEqual(["75001", "94105"])
 	})
 
 	it("tags an exact hit with matchType 'exact'", () => {

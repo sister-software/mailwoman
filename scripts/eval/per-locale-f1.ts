@@ -509,7 +509,7 @@ async function main(): Promise<void> {
 	console.log(`| Tag | ${localeReports.map((r) => r.file).join(" | ")} | Δ |`)
 	console.log(`|---|${localeReports.map(() => "--:").join("|")}|--:|`)
 
-	for (const tag of [...allTags].sort()) {
+	for (const tag of [...allTags].toSorted()) {
 		const cells = localeReports.map((r) => r.perTag[tag])
 		const f1s = cells.map((c) => (c ? c.f1 : 0))
 		const delta = f1s.length > 1 ? Math.max(...f1s) - Math.min(...f1s) : 0

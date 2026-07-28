@@ -155,7 +155,7 @@ for (const m of misses) {
 console.log("\n== form-feature rates: misses vs whole eval ==")
 const all = featureCounts(rows)
 const missed = featureCounts([...new Set(misses.map((m) => m.row))])
-const features = [...new Set([...all.keys(), ...missed.keys()])].sort()
+const features = [...new Set([...all.keys(), ...missed.keys()])].toSorted()
 
 for (const f of features) {
 	const a = all.get(f) ?? 0

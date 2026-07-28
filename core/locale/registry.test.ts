@@ -21,7 +21,7 @@ describe("InMemoryLocaleRegistry — registration", () => {
 			registry
 				.list()
 				.map((p) => p.locale)
-				.sort()
+				.toSorted()
 		).toEqual(["en-US", "fr-FR"])
 	})
 

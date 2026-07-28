@@ -196,7 +196,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 			segmentSchema
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
-		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).sort()
+		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toSorted()
 
 		if (shapefiles.length === 0) {
 			throw commandError(

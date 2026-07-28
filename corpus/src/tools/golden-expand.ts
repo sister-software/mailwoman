@@ -233,7 +233,7 @@ async function loadSeeds(
 
 	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
 	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
-	const sources = Array.from(bySource.keys()).sort()
+	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []

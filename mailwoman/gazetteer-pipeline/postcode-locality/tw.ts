@@ -482,7 +482,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			} else if (polygon.wikidata) {
 				const concordant = (placesByQID.get(polygon.wikidata) ?? [])
 					.map((place) => ({ d: haversineKm(d.lat, d.lon, place.la, place.lo), place }))
-					.sort(
+					.toSorted(
 						(a, b) =>
 							Number(!DISTRICT_TIER.has(a.place.placetype)) - Number(!DISTRICT_TIER.has(b.place.placetype)) || a.d - b.d
 					)

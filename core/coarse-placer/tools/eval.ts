@@ -124,7 +124,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 	if (confLines.length > 0) {
 		console.log(`  notable confusions (≥20):`)
-		console.log(confLines.sort().join("\n"))
+		console.log(confLines.toSorted().join("\n"))
 	}
 
 	// --- Abstention on the multi-script set (off-map scripts should abstain) ---

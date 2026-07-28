@@ -211,7 +211,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 				return { row, exactTier, adjScore }
 			})
-			.sort((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
+			.toSorted((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
 			.slice(0, limit)
 			.map(({ row, adjScore, exactTier }) => ({
 				id: row.id,

@@ -109,7 +109,7 @@ export async function geocoderVsProvidedCoords(
 	geocoder.close()
 
 	// Overall + per-tier percentiles.
-	const all = results.map((r) => r.deltaM).sort((a, b) => a - b)
+	const all = results.map((r) => r.deltaM).toSorted((a, b) => a - b)
 	const byTier = new Map<string, number[]>()
 
 	for (const r of results) {
@@ -149,8 +149,8 @@ export async function geocoderVsProvidedCoords(
 	lines.push(`| tier | n | p50 | p90 |`)
 	lines.push(`|---|---:|---:|---:|`)
 
-	for (const [tier, list] of [...byTier.entries()].sort((a, b) => b[1].length - a[1].length)) {
-		const s = [...list].sort((a, b) => a - b)
+	for (const [tier, list] of [...byTier.entries()].toSorted((a, b) => b[1].length - a[1].length)) {
+		const s = [...list].toSorted((a, b) => a - b)
 		lines.push(`| ${tier} | ${list.length} | ${m(quantile(s, 0.5))} | ${m(quantile(s, 0.9))} |`)
 	}
 	lines.push("")

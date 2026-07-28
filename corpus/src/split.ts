@@ -160,7 +160,7 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 	await mkdir(outputDir, { recursive: true })
 
 	for (const name of ["train", "val", "test"] as const) {
-		const sorted = [...manifest[name]].sort()
+		const sorted = [...manifest[name]].toSorted()
 		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length > 0 ? "\n" : ""), "utf8")
 	}
 	const summary = {

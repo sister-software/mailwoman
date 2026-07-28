@@ -264,7 +264,7 @@ export const frFragmentRecipe: ShardRecipe = {
 		// Minted last so the locality pool is complete. Without these the model can satisfy every row
 		// above by flipping its default from "bare => locality" to "bare => street", which trades one
 		// broken prior for another and would show up as bare-locality collapsing on the board.
-		const pool = [...localities].sort()
+		const pool = [...localities].toSorted()
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 
 		for (let i = 0; i < wanted && pool.length > 0; i++) {

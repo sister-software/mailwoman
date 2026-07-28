@@ -186,6 +186,6 @@ describe("degenerate inputs", () => {
 	it("returns proposals sorted by start", () => {
 		const spans = proposeSpans("PO Box 19 (rear), Apt 4B", LEXICON)
 		const starts = spans.map((s) => s.start)
-		expect(starts).toEqual([...starts].sort((a, b) => a - b))
+		expect(starts).toEqual([...starts].toSorted((a, b) => a - b))
 	})
 })

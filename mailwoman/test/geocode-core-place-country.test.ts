@@ -64,7 +64,7 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 			expect(p).toBeGreaterThanOrEqual(0)
 		}
 		// US is the unambiguous winner for this address.
-		const top = entries.sort((a, b) => b[1] - a[1])[0]!
+		const top = entries.toSorted((a, b) => b[1] - a[1])[0]!
 		expect(top[0]).toBe("US")
 		expect(seen[0]?.anchorWeight).toBe(1)
 	})

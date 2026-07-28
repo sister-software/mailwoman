@@ -43,7 +43,7 @@ describe("PairIndexBuilder", () => {
 		const { entries } = b.finish()
 
 		expect(entries).toHaveLength(2)
-		expect(entries.map((e) => e.parent).sort()).toEqual(["barnstaple", "isle of wight"])
+		expect(entries.map((e) => e.parent).toSorted()).toEqual(["barnstaple", "isle of wight"])
 	})
 
 	it("skips rows with an empty CITY and counts them separately from kept rows", () => {
@@ -147,7 +147,7 @@ describe("applyPairIndexHoldout", () => {
 	})
 
 	it("is order-independent — a shuffled input holds out the same entries as the sorted input", () => {
-		const shuffled = [...bigEntries].reverse()
+		const shuffled = [...bigEntries].toReversed()
 		const a = applyPairIndexHoldout(bigEntries, 0.1, 42)
 		const b = applyPairIndexHoldout(shuffled, 0.1, 42)
 

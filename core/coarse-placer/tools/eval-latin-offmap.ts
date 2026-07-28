@@ -116,17 +116,17 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 
 	for (const k of Object.keys(by)
 		.filter((k) => k.startsWith("group:"))
-		.sort()) {
+		.toSorted()) {
 		console.log(`    ${k.slice(6).padEnd(8)} ${formatPercent(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 	}
 	console.log(`  by source country:`)
 
 	for (const k of Object.keys(by)
 		.filter((k) => k.startsWith("cc:"))
-		.sort()) {
+		.toSorted()) {
 		console.log(`    ${k.slice(3).padEnd(4)} ${formatPercent(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 	}
-	const misses = Object.entries(missTo).sort((a, b) => b[1] - a[1])
+	const misses = Object.entries(missTo).toSorted((a, b) => b[1] - a[1])
 
 	if (misses.length > 0) {
 		console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)

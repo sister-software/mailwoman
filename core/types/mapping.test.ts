@@ -45,7 +45,7 @@ test("legacyClassificationToComponentTag: internal-only classifications map to n
 })
 
 test("MAPPED_LEGACY_CLASSIFICATIONS: lists exactly the legacy tags with a component mapping", () => {
-	expect([...MAPPED_LEGACY_CLASSIFICATIONS].sort()).toEqual(
+	expect([...MAPPED_LEGACY_CLASSIFICATIONS].toSorted()).toEqual(
 		[
 			"country",
 			"dependency",
@@ -59,7 +59,7 @@ test("MAPPED_LEGACY_CLASSIFICATIONS: lists exactly the legacy tags with a compon
 			"street_suffix",
 			"unit",
 			"venue",
-		].sort()
+		].toSorted()
 	)
 })
 

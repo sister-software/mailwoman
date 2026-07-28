@@ -109,6 +109,7 @@ export function aggregateSpanLogits(
 		const norm = overlapping.length
 		const sorted = [...tagScores.entries()]
 			.map(([tag, score]) => ({ tag, score: score / norm }))
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((a, b) => b.score - a.score)
 			.slice(0, topK)
 

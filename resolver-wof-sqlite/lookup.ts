@@ -1256,6 +1256,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// every locality polygon still anchor to the closest town.
 			const anchorRow = pcRows
 				.filter((r) => merged.has(r.id))
+				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
 			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
 

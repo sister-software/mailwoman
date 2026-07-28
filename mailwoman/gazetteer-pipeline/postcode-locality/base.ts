@@ -151,7 +151,7 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 	}
 	out.delete(canonical)
 
-	return [...out].sort()
+	return [...out].toSorted()
 }
 
 /** Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`). */
@@ -215,7 +215,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const countriesJson =
 		"{" +
 		[...summary.keys()]
-			.sort()
+			.toSorted()
 			.map((c) => {
 				const s = summary.get(c)!
 

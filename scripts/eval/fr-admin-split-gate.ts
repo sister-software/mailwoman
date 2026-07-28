@@ -126,7 +126,7 @@ function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_R
 }
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return Number.NaN
-	const s = [...xs].sort((a, b) => a - b)
+	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }

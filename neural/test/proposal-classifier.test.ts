@@ -80,7 +80,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 		})
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
 		expect(proposals).toHaveLength(2)
-		expect(proposals.map((p) => p.component).sort()).toEqual(["locality", "postcode"])
+		expect(proposals.map((p) => p.component).toSorted()).toEqual(["locality", "postcode"])
 	})
 
 	test("tags every proposal with source='neural' + the configured source_id", async () => {

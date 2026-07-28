@@ -69,7 +69,7 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 
 	const visit = (node: AddressNode): void => {
 		if (node.tag === "street") {
-			const nameParts = [node, ...node.children.filter((child) => STREET_NAME_TAGS.has(child.tag))].sort(
+			const nameParts = [node, ...node.children.filter((child) => STREET_NAME_TAGS.has(child.tag))].toSorted(
 				(a, b) => a.start - b.start || a.end - b.end
 			)
 			const first = nameParts[0]
@@ -98,7 +98,7 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 		visit(root)
 	}
 
-	return spans.sort((a, b) => a.start - b.start).map(({ classification, value }) => ({ classification, value }))
+	return spans.toSorted((a, b) => a.start - b.start).map(({ classification, value }) => ({ classification, value }))
 }
 
 /**

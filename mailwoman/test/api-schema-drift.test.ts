@@ -120,8 +120,8 @@ test("GeocodeOutcomeSchema field set matches GeocodeResult (runtime backstop —
 	// already-constructed `GeocodeOutcomeSchema.shape` at runtime, so it also fires under plain `yarn
 	// vitest run` (no `tsc` required) — a second, cheaper signal for the same class of drift the
 	// compile-time pin exists to catch.
-	const schemaKeys = Object.keys(GeocodeOutcomeSchema.shape).sort()
-	const resultKeys = Object.keys(GEOCODE_RESULT_FIELD_NAMES).sort()
+	const schemaKeys = Object.keys(GeocodeOutcomeSchema.shape).toSorted()
+	const resultKeys = Object.keys(GEOCODE_RESULT_FIELD_NAMES).toSorted()
 
 	expect(schemaKeys).toEqual(resultKeys)
 })

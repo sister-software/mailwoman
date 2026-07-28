@@ -128,7 +128,7 @@ function main(): void {
 		console.log("| edge_class | n | neural | fail |")
 		console.log("| --- | --: | --: | --: |")
 
-		for (const cls of Object.keys(by).sort()) {
+		for (const cls of Object.keys(by).toSorted()) {
 			const res = by[cls]!
 			const n = res.length
 			const ne = res.filter((r) => r.neural_pass).length

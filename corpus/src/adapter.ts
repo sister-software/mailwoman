@@ -92,7 +92,7 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  * length.
  */
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
-	const sortedKeys = Object.keys(components).sort() as ComponentTag[]
+	const sortedKeys = Object.keys(components).toSorted() as ComponentTag[]
 	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\u001F")
 	const digest = createHash("sha256").update(adapterID).update("\u001E").update(payload).digest("hex")
 
@@ -110,7 +110,7 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  * ensuring each augmentation variant survives.
  */
 export function canonicalDedupKey(row: CanonicalRow): string {
-	const sortedKeys = Object.keys(row.components).sort() as ComponentTag[]
+	const sortedKeys = Object.keys(row.components).toSorted() as ComponentTag[]
 	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\u001F")
 	const rawNorm = row.raw.toLowerCase().replaceAll(/\s+/g, " ").trim()
 	const synthPart = row.synth ? `\u001E${row.synth.method}` : ""

@@ -127,7 +127,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		})
 		const street = flatten(tree.roots as never)
 			.filter((node) => STREET_TAGS.has(node.tag))
-			.sort((a, b) => a.start - b.start)
+			.toSorted((a, b) => a.start - b.start)
 			.map((node) => node.value)
 			.join(" ")
 
@@ -153,7 +153,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 	let totalHit = 0
 	let totalN = 0
 
-	for (const [klass, bucket] of [...tally].sort()) {
+	for (const [klass, bucket] of [...tally].toSorted()) {
 		totalHit += bucket.hit
 		totalN += bucket.total
 		const rate = bucket.hit / bucket.total
@@ -168,7 +168,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
 	)
 
-	for (const [klass, bucket] of [...tally].sort()) {
+	for (const [klass, bucket] of [...tally].toSorted()) {
 		if (bucket.misses.length === 0) continue
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 6) ---`)
 

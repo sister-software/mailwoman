@@ -92,7 +92,7 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 			const seq = Object.entries(row.components)
 				.map(([tag, value]) => ({ tag, idx: folded.indexOf(fold(String(value))) }))
 				.filter((entry) => entry.idx >= 0)
-				.sort((a, b) => a.idx - b.idx)
+				.toSorted((a, b) => a.idx - b.idx)
 				.map((entry) => entry.tag)
 
 			if (seq.length === 0) continue
@@ -276,7 +276,7 @@ function extractSurface(
 ): string {
 	return hypothesis.segments
 		.filter(([, , type]) => matches(type))
-		.sort((a, b) => a[0] - b[0])
+		.toSorted((a, b) => a[0] - b[0])
 		.map(([from, to]) => {
 			const firstPiece = words[from]![0]!
 			const lastWord = words[to - 1]!

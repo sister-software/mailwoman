@@ -1215,7 +1215,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	lines.push(`| state | n | neural loc | neural reg |`)
 	lines.push(`|---|--:|--:|--:|`)
 
-	for (const st of [...agg.neural.byState.keys()].sort()) {
+	for (const st of [...agg.neural.byState.keys()].toSorted()) {
 		const nn = agg.neural.byState.get(st)!
 		lines.push(`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(nn.regionMatch, nn.n)} |`)
 	}

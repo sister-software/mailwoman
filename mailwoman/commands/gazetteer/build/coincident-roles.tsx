@@ -57,7 +57,7 @@ const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, type
 						onProgress: (phase, detail) => console.error(`  [${phase}]${detail ? ` — ${detail}` : ""}`),
 					})
 					const top = Object.entries(result.byCountry)
-						.sort((a, b) => b[1] - a[1])
+						.toSorted((a, b) => b[1] - a[1])
 						.slice(0, 8)
 						.map(([cc, n]) => `${cc} ${n}`)
 						.join(", ")

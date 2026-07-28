@@ -122,14 +122,14 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			const tot = list.reduce((s, x) => s + x.n, 0) || 1
 
 			return list
-				.sort((a, b) => b.n - a.n)
+				.toSorted((a, b) => b.n - a.n)
 				.slice(0, 5)
 				.map((x) => ({ placetype: x.placetype, fraction: x.n / tot }))
 		}
 
 		const tags = new Set<string>(COMPONENT_TAGS as readonly string[])
 		const stats: PlacetypeStat[] = counts
-			.sort((a, b) => b.n - a.n)
+			.toSorted((a, b) => b.n - a.n)
 			.map((c) => ({
 				placetype: c.placetype,
 				count: c.n,
