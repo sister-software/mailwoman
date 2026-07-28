@@ -21,6 +21,9 @@ import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/
 import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
+/** Bytes per KiB, for human-readable sizes. */
+const BYTES_PER_KIB = 1024
+
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
@@ -538,7 +541,7 @@ function formatBytes(b: number): string {
 	const sign = b < 0 ? "-" : "+"
 	const abs = Math.abs(b)
 
-	if (abs < 1024) return `${sign}${abs}B`
+	if (abs < BYTES_PER_KIB) return `${sign}${abs}B`
 
 	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
 

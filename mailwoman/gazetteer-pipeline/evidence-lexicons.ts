@@ -61,6 +61,9 @@ import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
 
 /** Law 2: 1-token locality surfaces need population-backed importance ≥ this (≈11k population). */
+/** Letters at or below which a token reads as an abbreviation rather than a word. */
+const MAX_ABBREVIATION_LETTERS = 3
+
 export const ONE_TOKEN_IMPORTANCE_FLOOR = 0.25
 /** Law 3: 1-token person-name surfaces need importance ≥ this (the metropolis tier). */
 export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
@@ -447,7 +450,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	const isShortCode = (s: string): boolean => {
 		const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
-		return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
+		return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 	}
 
 	const entries = new Map<string, number>()

@@ -46,6 +46,15 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
+/**
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * even, which is what keeps repeated centroid rounding unbiased.
+ */
+/** Columns a US Census gazetteer row carries; short rows are truncated and skipped. */
+const GAZETTEER_ROW_COLUMNS = 7
+
+const ROUND_HALF_DIGIT = 5
+
 const ZCTA_SOURCE = "census-zcta-2024" // keep in sync with scripts/zcta-centroids.ts
 
 /** (lat, lon, source): source is null when the row is a placeholder (membership only). */
@@ -101,9 +110,9 @@ function pyRound(x: number, nd = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) {
+	if (first > ROUND_HALF_DIGIT) {
 		roundUp = true
-	} else if (first === 5) {
+	} else if (first === ROUND_HALF_DIGIT) {
 		if (/[1-9]/.test(rest.slice(1))) {
 			roundUp = true
 		} else {
@@ -207,7 +216,7 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 		const fields = line.split("\t").map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 
-		if (!pc || fields.length < 7) continue
+		if (!pc || fields.length < GAZETTEER_ROW_COLUMNS) continue
 		const lat = pyFloat(fields[5])
 		const lon = pyFloat(fields[6])
 

@@ -52,6 +52,30 @@ import {
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode scorerPairwiseEval}. */
+/** Groups below this size are too small for a held-out split to mean anything. */
+/** Smallest mean gap counted as a real difference rather than seed noise. */
+const MIN_MEANINGFUL_DELTA = 0.005
+
+/** Mean gap at which a win is called outright rather than leaning. */
+const CLEAR_WIN_DELTA = 0.01
+
+/** F1 gap at which a win is called outright. */
+const CLEAR_WIN_F1_DELTA = 0.02
+
+/** Z at or above which the difference is treated as strong evidence rather than suggestive. */
+const STRONG_EVIDENCE_Z = 3
+
+/** Share of NPIs assigned to train; the rest are held out for test. */
+const TRAIN_SPLIT_FRACTION = 0.67
+
+const MIN_GROUP_SIZE = 5
+
+/** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
+const TRAINING_EPOCHS = 400
+
+/** Highest k swept when scanning cluster counts. */
+const MAX_K = 32
+
 export interface ScorerPairwiseEvalOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory
@@ -133,7 +157,7 @@ export async function scorerPairwiseEval(
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) {
+		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
 		altNames.set(npi, list)
@@ -275,7 +299,7 @@ export async function scorerPairwiseEval(
 		const npiSplit = new Map<string, "train" | "test">()
 
 		for (const npi of kept) {
-			npiSplit.set(npi, rnd() < 0.67 ? "train" : "test")
+			npiSplit.set(npi, rnd() < TRAIN_SPLIT_FRACTION ? "train" : "test")
 		}
 
 		const train: Sample[] = []
@@ -301,7 +325,7 @@ export async function scorerPairwiseEval(
 		const l2 = 1e-3
 		const posWeight = train.filter((s) => s.y === 1).length / Math.max(1, train.length)
 
-		for (let epoch = 0; epoch < 400; epoch++) {
+		for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 			const gw = new Array<number>(dim).fill(0)
 			let gb = 0
 
@@ -509,12 +533,12 @@ export async function scorerPairwiseEval(
 	lines.push("")
 	// Linear vs tree: does a non-linear model extract MORE than the LR? (The probe's open question.)
 	const treeVerdict =
-		meanGbtVsLr > 0.005 && gbtBeatsLr >= SEEDS - 1
+		meanGbtVsLr > MIN_MEANINGFUL_DELTA && gbtBeatsLr >= SEEDS - 1
 			? `**The tree extends the linear gain** — GBT beats the LR by ΔAUC ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} ` +
 				`(${gbtBeatsLr}/${SEEDS} seeds), ${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)} over FS, ΔF1 ${sgn(f1DeltaGbt * 100)}${(f1DeltaGbt * 100).toFixed(1)}pp. ` +
 				`Non-linear interactions the hand-crafted features miss carry additional signal — a real GBM (XGBoost/LightGBM, ` +
 				`more NPIs, more features) is worth building.`
-			: meanGbtVsLr < -0.005
+			: meanGbtVsLr < -MIN_MEANINGFUL_DELTA
 				? `**The tree does NOT beat the linear model** (GBT − LR = ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} AUC, ` +
 					`${gbtBeatsLr}/${SEEDS} seeds; GBT − FS = ${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)}). With the over-merge interactions ` +
 					`already hand-engineered into the feature vector, a shallow tree finds little extra and slightly overfits the ` +
@@ -538,7 +562,7 @@ export async function scorerPairwiseEval(
 	}
 	lines.push("")
 	const verdict =
-		unanimous && (meanDelta > 0.01 || f1Delta > 0.02)
+		unanimous && (meanDelta > CLEAR_WIN_DELTA || f1Delta > CLEAR_WIN_F1_DELTA)
 			? `The LR beats FS **consistently** — it wins ${lrWins}/${SEEDS} seeds and lifts the operating-point F1 by ` +
 				`${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp (${pct(mean(fsF1s))}% → ${pct(mean(lrF1s))}%). The ΔAUC is ` +
 				`small (+${f4(meanDelta)}) only because FS already ranks well (${f4(mean(fsAucs))}); the gain concentrates at the ` +
@@ -547,12 +571,12 @@ export async function scorerPairwiseEval(
 				`generalization of the hand-tuned #625 levers and should extend this linear gain. Honest framing: the linear ` +
 				`headroom is modest, so the GBM's job is to *widen a real-but-small margin*, not to unlock a step change past the ` +
 				`64.7% dedup plateau on its own — the reliable secondary identifier (#625) is still the larger lever.`
-			: unanimous && zScore >= 3
+			: unanimous && zScore >= STRONG_EVIDENCE_Z
 				? `The LR beats FS by a **small but statistically robust** margin (ΔAUC +${f4(meanDelta)}, ≈${zScore.toFixed(1)}σ, ` +
 					`${lrWins}/${SEEDS} seeds; ΔF1 ${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp). The interaction features ` +
 					`carry real signal, but FS's calibrated weights already capture most of it. **Qualified greenlight for #603:** a ` +
 					`tree may extend the margin, but budget for a modest gain, not a plateau-breaker.`
-				: meanDelta < -0.005 && lrWins < SEEDS / 2
+				: meanDelta < -MIN_MEANINGFUL_DELTA && lrWins < SEEDS / 2
 					? `The LR is **worse** than FS (ΔAUC ${f4(meanDelta)}, ${lrWins}/${SEEDS} seeds) — the linear+interaction features ` +
 						`don't help on this sample. FS's calibrated weights are hard to beat here; a tree is the only remaining test ` +
 						`before committing to #603.`

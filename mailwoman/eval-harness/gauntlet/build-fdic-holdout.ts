@@ -19,6 +19,12 @@ import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
 
+/** Largest absolute latitude in WGS-84 degrees. */
+const MAX_ABS_LATITUDE = 90
+
+/** Largest absolute longitude in WGS-84 degrees. */
+const MAX_ABS_LONGITUDE = 180
+
 const API = "https://banks.data.fdic.gov/api/locations"
 const PAGE = 10_000
 const FIELDS = "ADDRESS,CITY,STALP,ZIP,LATITUDE,LONGITUDE"
@@ -34,7 +40,9 @@ interface Loc {
 
 /** Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth. */
 function plausibleUs(lat: number, lon: number): boolean {
-	return Number.isFinite(lat) && Number.isFinite(lon) && lat >= 17 && lat <= 72 && lon >= -180 && lon <= -64
+	return (
+		Number.isFinite(lat) && Number.isFinite(lon) && lat >= 17 && lat <= 72 && lon >= MAX_ABS_LONGITUDE && lon <= -64
+	)
 }
 
 async function fetchPage(offset: number): Promise<Loc[]> {

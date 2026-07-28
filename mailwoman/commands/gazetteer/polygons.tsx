@@ -37,6 +37,12 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
+/** Vertices below which a ring cannot be simplified further without collapsing it. */
+const MIN_RING_VERTICES = 3
+
+/** Vertices a closed ring needs — three corners plus the repeated closing point. */
+const MIN_CLOSED_RING_VERTICES = 4
+
 const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
 
 const OptionsSchema = zod.object({
@@ -104,7 +110,7 @@ function segDist(p: Position, a: Position, b: Position): number {
 
 /** Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints; preserves closure. */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
-	if (ring.length <= 3) return ring
+	if (ring.length <= MIN_RING_VERTICES) return ring
 	const keep = new Uint8Array(ring.length)
 	keep[0] = keep[ring.length - 1] = 1
 	const stack: Array<[number, number]> = [[0, ring.length - 1]]
@@ -136,7 +142,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 		}
 
 	// A degenerate ring (<4 pts after simplify) can't render — drop it by signalling null.
-	return out.length >= 4 ? out : null
+	return out.length >= MIN_CLOSED_RING_VERTICES ? out : null
 }
 
 /**

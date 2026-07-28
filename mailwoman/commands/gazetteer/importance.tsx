@@ -29,6 +29,15 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
+/** Permanent redirect. */
+const HTTP_MOVED_PERMANENTLY = 301
+
+/** Temporary redirect. */
+const HTTP_FOUND = 302
+
+/** Columns a Wikidata concordance row needs before it carries a usable mapping. */
+const MIN_WIKIDATA_COLUMNS = 5
+
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
 const OptionsSchema = zod.object({
@@ -41,7 +50,7 @@ export { OptionsSchema as options }
 function downloadToFile(url: string, dest: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		httpsGet(url, (res) => {
-			if (res.statusCode === 301 || res.statusCode === 302) {
+			if (res.statusCode === HTTP_MOVED_PERMANENTLY || res.statusCode === HTTP_FOUND) {
 				const location = res.headers.location
 
 				if (location) {
@@ -130,7 +139,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			if (totalRows === 1 && line.startsWith("language")) continue
 			const parts = line.split("\t")
 
-			if (parts.length < 5) continue
+			if (parts.length < MIN_WIKIDATA_COLUMNS) continue
 
 			const importance = Number(parts[3]!)
 			const wikidataID = parts[4]!

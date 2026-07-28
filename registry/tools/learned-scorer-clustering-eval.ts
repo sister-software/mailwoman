@@ -48,6 +48,21 @@ import {
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode scorerClusteringEval}. */
+/** Groups below this size are too small for a held-out split to mean anything. */
+/**
+ * Smallest mean F1 gap counted as a real difference between models rather than seed noise. Verdicts inside ±this are
+ * reported as a tie.
+ */
+const MIN_MEANINGFUL_F1_DELTA = 0.02
+
+const MIN_GROUP_SIZE = 5
+
+/** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
+const TRAINING_EPOCHS = 400
+
+/** Highest k swept when scanning cluster counts. */
+const MAX_K = 32
+
 export interface ScorerClusteringEvalOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory
@@ -175,7 +190,7 @@ export async function scorerClusteringEval(
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) {
+		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
 		altNames.set(npi, list)
@@ -295,7 +310,7 @@ export async function scorerClusteringEval(
 		let bias = 0
 		const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
-		for (let epoch = 0; epoch < 400; epoch++) {
+		for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 			const gw = new Array<number>(dim).fill(0)
 			let gb = 0
 
@@ -352,7 +367,7 @@ export async function scorerClusteringEval(
 			const sorted = [...scores].toSorted((p, q) => p - q)
 			const ts = new Set<number>()
 
-			for (let k = 0; k <= 32; k++) {
+			for (let k = 0; k <= MAX_K; k++) {
 				ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
 			}
 
@@ -454,14 +469,14 @@ export async function scorerClusteringEval(
 	)
 	lines.push("")
 	const verdict =
-		meanDGbt > 0.02 && gbtWins >= SEEDS - 1
+		meanDGbt > MIN_MEANINGFUL_F1_DELTA && gbtWins >= SEEDS - 1
 			? `**The learned scorer beats the FS baseline on the assembled clustering output** — GBT clustering F1 ` +
 				`${pct(mean(gbtF1))}% vs FS ${pct(mean(fsF1))}% (${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp mean, ${gbtWins}/${SEEDS} ` +
 				`seeds), driven by a large PRECISION gain that cuts the over-merge — the #625 problem. The pairwise gain (#640) ` +
 				`DOES translate to the entity-resolution metric. This confirms the #603 GBM as a real dedup lever and justifies the ` +
 				`production build (offline XGBoost/LightGBM → tree JSON, the \`scorer\` hook for inference). The honest next axis is ` +
 				`cross-STATE generalization (train-TX / eval-other-state) and a tuned GBM on more features.`
-			: meanDGbt < -0.02
+			: meanDGbt < -MIN_MEANINGFUL_F1_DELTA
 				? `**The learned scorer does NOT beat the FS baseline on clustering** (GBT ${pct(mean(gbtF1))}% vs FS ${pct(mean(fsF1))}%, ` +
 					`${(meanDGbt * 100).toFixed(1)}pp). The pairwise ranking gain (#640) does not survive the threshold + ` +
 					`connected-components assembly — clustering, not ranking, is the binding constraint. FS stays the baseline.`

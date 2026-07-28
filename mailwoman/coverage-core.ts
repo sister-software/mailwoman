@@ -36,6 +36,12 @@ import * as path from "node:path"
 
 import { $ } from "zx"
 
+/**
+ * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely wrap more than half the
+ * globe — the standard heuristic for splitting a bbox at ±180.
+ */
+const ANTIMERIDIAN_SPAN_DEGREES = 180
+
 export interface CoverageBuildOptions {
 	/** Comma-separated state slugs (e.g. "CA,TX") or "all" to glob the data root. */
 	states: string
@@ -180,7 +186,7 @@ function antimeridianWrapped(geojson: string): boolean {
 		}
 	}
 
-	return max - min > 180
+	return max - min > ANTIMERIDIAN_SPAN_DEGREES
 }
 
 export async function buildCoverageTiles(

@@ -50,6 +50,9 @@ import { TextSpliterator } from "spliterator"
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode trainCrossSourceGBT}. */
+/** Share of entities assigned to fit; the rest are held out. */
+const FIT_SPLIT_FRACTION = 0.8
+
 export interface TrainCrossSourceGBTOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory
@@ -308,7 +311,7 @@ export async function trainCrossSourceGBT(
 	const split = new Map<string, "fit" | "holdout">()
 
 	for (const npi of joined) {
-		split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+		split.set(npi, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
 	}
 	const fitIdx = pairs
 		.map((_, i) => i)

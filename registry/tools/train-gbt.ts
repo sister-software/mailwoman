@@ -38,6 +38,12 @@ import {
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode trainDedupGBT}. */
+/** Share of entities assigned to fit; the rest are held out. */
+const FIT_SPLIT_FRACTION = 0.8
+
+/** Groups below this size are too small for a held-out split to mean anything. */
+const MIN_GROUP_SIZE = 5
+
 export interface TrainDedupGBTOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory
@@ -174,7 +180,7 @@ export async function trainDedupGBT(
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) {
+		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
 		altNames.set(npi, list)
@@ -280,7 +286,7 @@ export async function trainDedupGBT(
 	const split = new Map<string, "fit" | "holdout">()
 
 	for (const npi of kept) {
-		split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+		split.set(npi, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
 	}
 	const fitPairs = pairs.filter(([a, b]) => split.get(a.id) === "fit" && split.get(b.id) === "fit")
 	const calibGbt = trainGBT(

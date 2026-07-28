@@ -21,6 +21,12 @@ import { mailwomanDataRoot } from "../../resolver-backend.ts"
 import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
 /** Options for {@linkcode runHoldoutLayer}. */
+/**
+ * Two-sided 95% critical value of the standard normal. The gate blocks only on a SIGNIFICANT regression, so a candidate
+ * that is ahead or within noise passes; this is the noise boundary.
+ */
+const Z_CRITICAL_95_TWO_SIDED = -1.96
+
 export interface HoldoutLayerOptions {
 	/** Candidate ONNX (required — the layer is candidate-vs-prod). */
 	candidate?: string
@@ -230,7 +236,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	console.log(`  resolved      ${String(prod.resolved).padStart(8)}     ${String(cand.resolved).padStart(8)}`)
 	console.log(`\n  z (candidate − production) @ ≤${GATE_TOL}km: ${z.toFixed(2)}`)
 	// Block ONLY on a significant regression. Candidate ahead or within noise → pass.
-	const pass = z >= -1.96
+	const pass = z >= Z_CRITICAL_95_TWO_SIDED
 	console.log(
 		`  verdict: ${pass ? "PASS (candidate not significantly worse)" : "FAIL (candidate significantly worse — do not ship)"}`
 	)

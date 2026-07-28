@@ -38,6 +38,21 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
+/** A successful response; anything else is an error page or an unfollowed redirect. */
+const HTTP_OK = 200
+
+/** Lowest 3xx status. */
+const HTTP_REDIRECT_MIN = 300
+
+/** Lowest 4xx status — the end of the redirect range. */
+const HTTP_CLIENT_ERROR_MIN = 400
+
+/** Lowest 5xx status. Server-side failures are worth retrying; client errors are not. */
+const HTTP_SERVER_ERROR_MIN = 500
+
+/** Failed GEOIDs printed before the list is truncated. */
+const MAX_LISTED_FAILURES = 20
+
 const OptionsSchema = zod.object({
 	edgesDir: zod.string().default("/tmp/tiger-edges").describe("Download destination for TIGER ZIP + SHP files"),
 	outDir: zod.string().optional().describe("Directory for per-state shard DBs. Default <data-root>/interpolation"),
@@ -211,14 +226,14 @@ function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 		const req = https.get(url, (res) => {
 			const status = res.statusCode ?? 0
 
-			if (status >= 300 && status < 400 && res.headers.location) {
+			if (status >= HTTP_REDIRECT_MIN && status < HTTP_CLIENT_ERROR_MIN && res.headers.location) {
 				if (redirectsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
 				resolve(fetchText(res.headers.location, redirectsLeft - 1))
 
 				return
 			}
 
-			if (status !== 200) {
+			if (status !== HTTP_OK) {
 				return reject(new Error(`HTTP ${status} for ${url}`))
 			}
 			const chunks: Buffer[] = []
@@ -240,7 +255,7 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
 			const status = message.match(/HTTP (\d+)/)?.[1]
-			const retryable = !status || Number(status) >= 500
+			const retryable = !status || Number(status) >= HTTP_SERVER_ERROR_MIN
 
 			if (!retryable || attempt === retries) throw error
 			const delay = attempt * 2000
@@ -259,14 +274,14 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 			const req = https.get(u, (res) => {
 				const status = res.statusCode ?? 0
 
-				if (status >= 300 && status < 400 && res.headers.location) {
+				if (status >= HTTP_REDIRECT_MIN && status < HTTP_CLIENT_ERROR_MIN && res.headers.location) {
 					res.resume()
 					follow(res.headers.location, hopsLeft - 1)
 
 					return
 				}
 
-				if (status !== 200) {
+				if (status !== HTTP_OK) {
 					res.resume()
 
 					return reject(new Error(`HTTP ${status} for ${u}`))
@@ -535,7 +550,9 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
 
 			if (failed.length) {
-				console.error(`  failed GEOIDs: ${failed.slice(0, 20).join(", ")}${failed.length > 20 ? " …" : ""}`)
+				console.error(
+					`  failed GEOIDs: ${failed.slice(0, MAX_LISTED_FAILURES).join(", ")}${failed.length > 20 ? " …" : ""}`
+				)
 			}
 			console.error("")
 		}

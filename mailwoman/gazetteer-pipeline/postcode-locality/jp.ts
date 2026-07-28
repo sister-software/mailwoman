@@ -42,6 +42,18 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 
+/**
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * even, which is what keeps repeated centroid rounding unbiased.
+ */
+/** Columns a Japan Post KEN_ALL row needs before it is usable. */
+const MIN_KEN_ALL_COLUMNS = 6
+
+/** Digits in a JIS local-government code, the first KEN_ALL field. */
+const JIS_CODE_LENGTH = 7
+
+const ROUND_HALF_DIGIT = 5
+
 const MATCH_RADIUS_KM = 15
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set
 const PLACETYPES = ["locality", "county", "localadmin", "borough"] as const
@@ -97,9 +109,9 @@ function pyRound(x: number, nd = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) {
+	if (first > ROUND_HALF_DIGIT) {
 		roundUp = true
-	} else if (first === 5) {
+	} else if (first === ROUND_HALF_DIGIT) {
 		if (/[1-9]/.test(rest.slice(1))) {
 			roundUp = true
 		} else {
@@ -168,7 +180,7 @@ function loadKenall(path: string): Map<string, string> {
 		const line = raw.replace(/[\r\n]+$/, "")
 		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))
 
-		if (f.length >= 6 && f[0]!.length === 7 && /^[0-9]+$/.test(f[0]!)) {
+		if (f.length >= MIN_KEN_ALL_COLUMNS && f[0]!.length === JIS_CODE_LENGTH && /^[0-9]+$/.test(f[0]!)) {
 			out.set(`${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`, f[5]!)
 		}
 	}

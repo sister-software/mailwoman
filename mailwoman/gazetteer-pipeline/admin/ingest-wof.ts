@@ -17,6 +17,9 @@ import FastGlob from "fast-glob"
 import { asyncParallelIterator } from "spliterator"
 
 /** The admin placetype allowlist (postalcode builds pass their own set). */
+/** Arity of a 2D bounding box: `[west, south, east, north]`. */
+const BBOX_2D_LENGTH = 4
+
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
 	"region",
@@ -78,7 +81,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 	if (typeof bboxStr === "string") {
 		const parts = bboxStr.split(",").map(Number)
 
-		if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
+		if (parts.length === BBOX_2D_LENGTH && parts.every((n) => Number.isFinite(n))) {
 			;[minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]
 		}
 	}

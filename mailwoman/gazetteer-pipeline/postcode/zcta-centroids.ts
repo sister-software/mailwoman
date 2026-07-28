@@ -32,6 +32,9 @@
 import type { DatabaseSync } from "node:sqlite"
 
 /** Provenance label for rows filled from the 2024 ZCTA Gazetteer file. */
+/** Columns a US Census gazetteer row carries; short rows are truncated and skipped. */
+const GAZETTEER_ROW_COLUMNS = 7
+
 export const ZCTA_SOURCE = "census-zcta-2024"
 
 /**
@@ -57,7 +60,7 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 		const fields = line.split("\t").map((f) => f.trim())
 		const geoid = fields[0]
 
-		if (!geoid || !/^\d{5}$/.test(geoid) || fields.length < 7) continue
+		if (!geoid || !/^\d{5}$/.test(geoid) || fields.length < GAZETTEER_ROW_COLUMNS) continue
 		const lat = Number(fields[5])
 		const lon = Number(fields[6])
 

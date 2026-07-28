@@ -47,6 +47,12 @@ import { latLngToCell } from "h3-js"
 import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode nppesDedupBenchmark}. */
+/** Groups below this size are too small for a held-out split to mean anything. */
+const MIN_GROUP_SIZE = 5
+
+/** F1 gap within which two blocking strategies are treated as equivalent. */
+const BLOCKING_PARITY_TOLERANCE = 0.015
+
 export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). Model-swap
@@ -203,7 +209,7 @@ export async function nppesDedupBenchmark(
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) {
+		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		} // cap fan-out per NPI
 		altNames.set(npi, list)
@@ -1016,7 +1022,7 @@ export async function nppesDedupBenchmark(
 			`(res ${H3_RES}) instead of the 50 m haversine radius — the deterministic, O(n) "geocode-first cell" the issue ` +
 			`suggested — gives GBT **org-name-h3 ${pct(gbtOrgH3.f1)}%** (${orgH3Count} classes), vs the haversine ` +
 			`${pct(gbtOrgCoord.f1)}% (${orgCoordCount}). ${
-				Math.abs(gbtOrgH3.f1 - gbtOrgCoord.f1) < 0.015
+				Math.abs(gbtOrgH3.f1 - gbtOrgCoord.f1) < BLOCKING_PARITY_TOLERANCE
 					? "Within noise of the haversine grain — the ~" +
 						pct(gbtOrgCoord.f1) +
 						"% coord-grain F1 is robust to the co-location method, not an artifact of the 50 m threshold."

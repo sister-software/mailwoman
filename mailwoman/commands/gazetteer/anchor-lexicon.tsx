@@ -36,6 +36,12 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
+/** Letters at or below which a token reads as an abbreviation rather than a word. */
+/** Homographs printed before the list is truncated. */
+const MAX_LISTED_HOMOGRAPHS = 12
+
+const MAX_ABBREVIATION_LETTERS = 3
+
 const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const SLOTS = ["country", "region", "po_box", "cedex", "homograph"]
 
@@ -63,7 +69,7 @@ const norm = (s: string): string => wordNorm(s).toLowerCase()
 const isShortCode = (s: string): boolean => {
 	const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
-	return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
+	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
 const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
@@ -160,7 +166,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 		return [
 			`${output}`,
 			`${entries.size} entries + ${codeEntries.size} code_entries, max_ngram=${maxNgram}`,
-			`${homographs.length} homographs: ${homographs.slice(0, 12).join(", ")}${homographs.length > 12 ? ", …" : ""}`,
+			`${homographs.length} homographs: ${homographs.slice(0, MAX_LISTED_HOMOGRAPHS).join(", ")}${homographs.length > 12 ? ", …" : ""}`,
 		]
 	})
 

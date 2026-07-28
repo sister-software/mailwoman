@@ -29,6 +29,12 @@ import { streamRows } from "@mailwoman/registry"
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode geocoderVsProvidedCoords}. */
+/** Largest absolute latitude in WGS-84 degrees. */
+const MAX_ABS_LATITUDE = 90
+
+/** Largest absolute longitude in WGS-84 degrees. */
+const MAX_ABS_LONGITUDE = 180
+
 export interface GeocoderVsProvidedCoordsOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory
@@ -49,7 +55,7 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 
 	if (!Number.isFinite(a) || !Number.isFinite(b)) return null
 
-	if (Math.abs(a!) > 90 || Math.abs(b!) > 180) return null
+	if (Math.abs(a!) > MAX_ABS_LATITUDE || Math.abs(b!) > MAX_ABS_LONGITUDE) return null
 
 	return { latitude: a!, longitude: b! }
 }
