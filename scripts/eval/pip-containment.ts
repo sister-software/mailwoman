@@ -26,7 +26,7 @@ import { parseArgs } from "node:util"
 const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
 
 function adminRoots(): string[] {
-	let matched: string[] = []
+	let matched: string[]
 
 	try {
 		matched = [...globSync(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)]

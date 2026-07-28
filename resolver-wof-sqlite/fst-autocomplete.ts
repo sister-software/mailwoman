@@ -81,7 +81,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 
 	const seen = new Map<number, AutocompleteSuggestion>()
 	const queue: BfsItem[] = []
-	let depth = 0
+	let depth: number
 
 	const match = fst.walk(normalizedTokens)
 

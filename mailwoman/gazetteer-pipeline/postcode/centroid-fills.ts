@@ -188,7 +188,7 @@ export async function fillPostcodeCentroids(
 		).n
 	const placedBefore = placed()
 	let geonamesFixed = 0
-	let parentBorrowFixed = 0
+	let parentBorrowFixed: number
 	let ancestorFixed = 0
 
 	// Pass 2: GeoNames postal — runs FIRST so the postcode's own centroid wins over the coarser parent-borrow.

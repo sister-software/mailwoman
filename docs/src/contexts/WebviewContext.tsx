@@ -67,7 +67,7 @@ function validateSerializedState(input: unknown): asserts input is NexusWebviewS
  * Should be called once on startup.
  */
 export function pluckSerializedState(): NexusWebviewState {
-	let serializedState: unknown = null
+	let serializedState: unknown
 
 	try {
 		serializedState = JSON.parse(localStorage.getItem("webview-state") || "null")

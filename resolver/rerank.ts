@@ -106,7 +106,7 @@ export async function rerankByResolution<T>(
 			ranked.push({ ...candidate, resolved: null, implausible: false })
 			continue
 		}
-		let resolved: AddressTree | null = null
+		let resolved: AddressTree | null
 
 		try {
 			resolved = await resolveTree(candidate.tree)

@@ -145,7 +145,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 				open.confidences.push(tok.confidence)
 				continue
 			}
-			open = flush(open, raw, out, attribution)
+			flush(open, raw, out, attribution)
 			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence] }
 			continue
 		}

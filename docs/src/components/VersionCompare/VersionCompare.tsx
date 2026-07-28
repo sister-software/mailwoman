@@ -79,7 +79,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 
 	for (const pn of pNodes) {
 		const spanKey = typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
-		let cn: ResultNode | null = null
+		let cn: ResultNode | null
 
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null

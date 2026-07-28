@@ -489,7 +489,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// --- collect + verify --------------------------------------------------------
 	// Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
-	let VERDICT_STATUS = 0
+	let VERDICT_STATUS: number
 
 	try {
 		const { failed } = assemblePromotionVerdict({

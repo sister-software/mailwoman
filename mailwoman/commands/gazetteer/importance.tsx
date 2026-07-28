@@ -137,7 +137,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 			if (!wikidataID || !concordances.has(wikidataID)) continue
 
-			if (isNaN(importance)) continue
+			if (Number.isNaN(importance)) continue
 
 			const existing = importanceMap.get(wikidataID) ?? 0
 

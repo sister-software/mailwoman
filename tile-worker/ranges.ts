@@ -18,7 +18,7 @@ export function parseRangeHeader(headerContent: string | null): { offset: number
 
 	const [start, end] = range!.split("-").map((num) => Number.parseInt(num, 10))
 
-	if (isNaN(start!) || isNaN(end!)) {
+	if (Number.isNaN(start!) || Number.isNaN(end!)) {
 		throw new TypeError(`Invalid Range header: ${headerContent}`)
 	}
 

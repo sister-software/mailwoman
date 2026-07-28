@@ -46,8 +46,8 @@ test.describe("docs build", () => {
 	test.setTimeout(600_000)
 
 	test("completes with no warnings or errors", async () => {
-		let stdout = ""
-		let stderr = ""
+		let stdout: string
+		let stderr: string
 		let failed = false
 
 		try {

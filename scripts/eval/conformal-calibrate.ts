@@ -386,8 +386,8 @@ async function main(): Promise<void> {
 	console.log(hr)
 	console.log(`target coverage (α=1−${(1 - alpha).toFixed(2)})                  : ${(alpha * 100).toFixed(0)}%`)
 	console.log(
-		`combined conformal threshold Q̂                       : ${isFinite(Q) ? Q.toFixed(6) : "∞"}` +
-			(isFinite(Q) ? `  (× claimed_radius = calibrated interval)` : "  (insufficient data at this α)")
+		`combined conformal threshold Q̂                       : ${Number.isFinite(Q) ? Q.toFixed(6) : "∞"}` +
+			(Number.isFinite(Q) ? `  (× claimed_radius = calibrated interval)` : "  (insufficient data at this α)")
 	)
 	console.log(
 		`empirical coverage on test split (combined)           : ${(coverage * 100).toFixed(1)}%` +
@@ -404,9 +404,10 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log("Per-tier calibration stats (ALL resolved rows, separate conformal splits):")
 	console.log("")
-	const fmtM = (v: number): string => (isNaN(v) ? "—" : v < 1000 ? `${v.toFixed(1)} m` : `${(v / 1000).toFixed(2)} km`)
-	const fmtPct = (v: number): string => (isNaN(v) ? "—" : `${(v * 100).toFixed(1)}%`)
-	const fmtQ = (v: number): string => (isFinite(v) ? v.toFixed(4) : "∞")
+	const fmtM = (v: number): string =>
+		Number.isNaN(v) ? "—" : v < 1000 ? `${v.toFixed(1)} m` : `${(v / 1000).toFixed(2)} km`
+	const fmtPct = (v: number): string => (Number.isNaN(v) ? "—" : `${(v * 100).toFixed(1)}%`)
+	const fmtQ = (v: number): string => (Number.isFinite(v) ? v.toFixed(4) : "∞")
 	console.log(
 		`  ${"tier".padEnd(14)} ${"n".padStart(5)} ${"Q̂".padStart(8)} ${"coverage".padStart(10)} ${"uncal.cov".padStart(10)} ${"median err".padStart(12)} ${"med.claimed r".padStart(14)} ${"med.cal. r".padStart(12)}`
 	)
@@ -416,8 +417,8 @@ async function main(): Promise<void> {
 
 	for (const ts of tierStats) {
 		const tc = tierConformal.find((x) => x.tier === ts.tier)!
-		const calRadM = isFinite(tc.Q) ? ts.medianClaimedM * tc.Q : Infinity
-		const calRadFmt = !isFinite(calRadM) ? "∞" : fmtM(calRadM)
+		const calRadM = Number.isFinite(tc.Q) ? ts.medianClaimedM * tc.Q : Infinity
+		const calRadFmt = !Number.isFinite(calRadM) ? "∞" : fmtM(calRadM)
 		console.log(
 			`  ${ts.tier.padEnd(14)} ${String(ts.n).padStart(5)} ${fmtQ(tc.Q).padStart(8)} ${fmtPct(tc.coverage).padStart(10)} ${fmtPct(tc.uncalCov).padStart(10)} ${fmtM(ts.medianErrorM).padStart(12)} ${fmtM(ts.medianClaimedM).padStart(14)} ${calRadFmt.padStart(12)}`
 		)
@@ -434,7 +435,7 @@ async function main(): Promise<void> {
 	console.log("")
 
 	// Line 1: overall verdict on the heuristic prior
-	if (!isFinite(Q)) {
+	if (!Number.isFinite(Q)) {
 		console.log(
 			`  The combined conformal threshold is ∞ — not enough calibration data to guarantee ${(alpha * 100).toFixed(0)}% coverage.`
 		)
@@ -442,13 +443,13 @@ async function main(): Promise<void> {
 		console.log(`  Uncalibrated (Q̂=1) coverage is ${(uncalCoverage * 100).toFixed(1)}%.`)
 	} else if (Q < 1) {
 		// The heuristic is conservative — can shrink and still cover
-		const situsVerdict = isFinite(situsTC.Q)
+		const situsVerdict = Number.isFinite(situsTC.Q)
 			? `situs floor (${SITUS_FLOOR_M} m) is ${(1 / situsTC.Q).toFixed(0)}× too large`
 			: "situs tier: insufficient rows for per-tier threshold"
 		const interpVerdict =
 			interpTC.nAll === 0
 				? "interpolation tier: 0 hits in this holdout"
-				: !isFinite(interpTC.Q)
+				: !Number.isFinite(interpTC.Q)
 					? `interpolation tier (n=${interpTC.nAll}): too few rows for per-tier ${(alpha * 100).toFixed(0)}% threshold`
 					: interpTC.Q > 1
 						? `interpolation tier: Q̂=${interpTC.Q.toFixed(3)} — uncertainty_m UNDERESTIMATES the true spread`

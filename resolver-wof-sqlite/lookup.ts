@@ -1137,7 +1137,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const cached = this.#countryWOFIdCache.get(code)
 
 		if (cached !== undefined) return cached
-		let id: number | null = null
+		let id: number | null
 
 		try {
 			const row = this.#db

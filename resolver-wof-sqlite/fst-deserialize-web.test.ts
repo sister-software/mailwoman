@@ -112,7 +112,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 
 	const bytes = new Uint8Array(totalSize)
 	const view = new DataView(bytes.buffer)
-	let pos = 0
+	let pos: number
 
 	// --- Header ---
 	bytes.set(MAGIC, 0)
