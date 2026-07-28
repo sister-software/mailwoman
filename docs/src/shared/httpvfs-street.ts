@@ -201,9 +201,12 @@ export class HTTPVFSInterpolator {
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins.
-		const best = pool.reduce((a, b) =>
-			Number(b.max_hn) - Number(b.min_hn) < Number(a.max_hn) - Number(a.min_hn) ? b : a
-		)
+		const spanOf = (row: Record<string, unknown>): number => Number(row.max_hn) - Number(row.min_hn)
+		let best = pool[0]!
+
+		for (const candidate of pool) {
+			if (spanOf(candidate) < spanOf(best)) best = candidate
+		}
 		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
 		const span = Number(best.to_hn) - Number(best.from_hn)
 		const t = span === 0 ? 0.5 : clamp01((n - Number(best.from_hn)) / span)

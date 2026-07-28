@@ -762,7 +762,11 @@ export async function nppesDedupBenchmark(
 		return { t, res, score: scoreEntities(res.entities, npiLabel) }
 	})
 	const base = sweep[0]! // threshold 0, full lever stack
-	const best = sweep.reduce((a, b) => (b.score.f1 > a.score.f1 ? b : a))
+	let best = sweep[0]!
+
+	for (const arm of sweep) {
+		if (arm.score.f1 > best.score.f1) best = arm
+	}
 	report?.(
 		`    progression @ threshold 0: ${progression.map((p) => `${(100 * p.score.f1).toFixed(1)}%`).join(" → ")} F1`
 	)

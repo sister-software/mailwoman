@@ -71,7 +71,11 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const countries = [...new Set(sorted.map((e) => e.country))].sort()
 	const countryIdx = new Map(countries.map((c, i) => [c, i]))
-	const keyWidth = sorted.reduce((m, e) => Math.max(m, e.postcode.length), 1)
+	let keyWidth = 1
+
+	for (const entry of sorted) {
+		keyWidth = Math.max(keyWidth, entry.postcode.length)
+	}
 	const recSize = keyWidth + REC_TAIL
 
 	const headerSize = 4 + 4 + 1 + countries.length * 2 + 1

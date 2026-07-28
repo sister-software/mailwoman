@@ -187,7 +187,11 @@ export class StreetInterpolator implements InterpolationLookup {
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins — the most specific claim about where this number lives.
-		const best = pool.reduce((a, b) => (b.max_hn - b.min_hn < a.max_hn - a.min_hn ? b : a))
+		let best = pool[0]!
+
+		for (const candidate of pool) {
+			if (candidate.max_hn - candidate.min_hn < best.max_hn - best.min_hn) best = candidate
+		}
 
 		const polyline = JSON.parse(best.geometry) as [number, number][]
 		const span = best.to_hn - best.from_hn

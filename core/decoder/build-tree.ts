@@ -180,7 +180,13 @@ function findParent(
 
 		if (!matches.length) continue
 
-		return matches.reduce((best, cur) => (distance(cur, span) < distance(best, span) ? cur : best))
+		let closest = matches[0]!
+
+		for (const candidate of matches) {
+			if (distance(candidate, span) < distance(closest, span)) closest = candidate
+		}
+
+		return closest
 	}
 
 	return null

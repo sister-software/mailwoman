@@ -365,10 +365,14 @@ export async function crossSourceThresholdSweep(
 	const candidateDominating = candidateArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
-	const candidateBest = candidateArms.reduce<ArmMetrics | null>(
-		(best, a) => (a.entities >= minEntities && a.crossSource > (best?.crossSource ?? -1) ? a : best),
-		null
-	)
+	// Best cross-source rate among arms that still retain enough entities to be meaningful.
+	let candidateBest: ArmMetrics | null = null
+
+	for (const arm of candidateArms) {
+		if (arm.entities >= minEntities && arm.crossSource > (candidateBest?.crossSource ?? -1)) {
+			candidateBest = arm
+		}
+	}
 
 	const rows = [fs, ...gbtArms, ...candidateArms]
 	const lines: string[] = [
