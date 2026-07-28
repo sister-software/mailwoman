@@ -608,6 +608,11 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	}
 }
 
+/* oxlint-disable max-lines, max-statements, complexity -- 782 lines / 175 statements / complexity 146,
+   down from 829 / 272 / 173 after the report, locality-matcher, and coordinate-tier splits. What remains
+   is one linear measurement script: parse the flags, run every arm over every row, aggregate. Getting it
+   under the ceilings means restructuring it into a multi-module harness — worth doing, but not behind an
+   eval gate this machine can't run ($MAILWOMAN_DATA_ROOT is absent). */
 export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promise<void> {
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity

@@ -184,6 +184,10 @@ interface MessyRow {
 }
 
 /** The #617 NPPES dedup benchmark — see the module doc. Emits the markdown report to stdout. */
+/* oxlint-disable max-lines, max-statements, complexity -- 824 lines / 261 statements / complexity 101.
+   Same shape as oa-resolver-eval: a linear benchmark (build the sample, run each lever, score, emit the
+   markdown) whose report half wants the same extraction that file got. Left whole because the report
+   reads ~40 locals and typing that seam properly is a bigger change than this pass should carry. */
 export async function nppesDedupBenchmark(
 	options: NPPESDedupBenchmarkOptions,
 	report?: (line: string) => void

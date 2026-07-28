@@ -9,6 +9,10 @@
  *   Add an entry whenever a bug is fixed; never pad it to feel "thorough" (that's curated-set capture).
  */
 
+/* oxlint-disable max-lines -- 826 lines of flat seed cases (54 entries). The length IS the number of
+   regressions guarded; splitting it by country would scramble the chronological entry numbering the
+   comments reference, and buy no legibility — nothing here is control flow. */
+
 import type { AddressKind, CaseStatus, ResolutionTier } from "../schema.ts"
 
 export interface SeedCase {

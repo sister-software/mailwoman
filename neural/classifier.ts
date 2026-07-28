@@ -614,6 +614,9 @@ export class NeuralAddressClassifier {
 	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces in the
 	 * previous duplicated copies.
 	 */
+	// Deliberately ONE function: the 2026-06 audit found three drifted copies of the previously-split
+	// version, which is why every caller now funnels through here.
+	// oxlint-disable-next-line complexity -- 104, and splitting it is what drifted last time
 	async #decode(
 		text: string,
 		opts?: ParseOpts,
