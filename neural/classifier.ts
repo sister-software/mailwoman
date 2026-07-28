@@ -644,13 +644,18 @@ export class NeuralAddressClassifier {
 		// build + choreography is the single PURE `buildSoftFeatures` (soft-features.ts) — both this
 		// decode path and the ProductionScorer feed channels identically, so there is exactly one
 		// choreography. Each channel is undefined when its source is unconfigured (no-op).
+		//
+		// The evidence-bundle channels are REGISTER-GATED (Decision A, see ParseOpts.inputMode):
+		// formatted mode withholds both lexicons so the model runs its curriculum-trained absence
+		// identity — the fed channels lift fragments but damage full-address parses.
+		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
 		const soft = buildSoftFeatures(text, pieces, {
 			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
-			streetTypeLexicon: this.cfg.streetTypeLexicon,
-			localitySurfaceLexicon: this.cfg.localitySurfaceLexicon,
+			streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
+			localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
 		})
 		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
 			ids,
@@ -1066,6 +1071,15 @@ export interface ParseOpts {
 	 * Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
 	 */
 	queryShapeBiasScale?: number
+	/**
+	 * The input register (operator Decision A, 2026-07-28; canonical docs on `@mailwoman/core/pipeline`'s `InputMode`).
+	 * `formatted` runs the evidence-bundle channels (street_type/locality_surface) deliberately OFF — the trained absence
+	 * identity, a DECLARED ablation, not a missing feed — because the bundle lifts fragments and damages full-address
+	 * parses. Default `"fragmented"` for bare library calls (today's feed-when-configured semantics); the production
+	 * pipeline always passes the mode explicitly (kind-classifier-derived when the caller didn't set one). Typed
+	 * structurally — no runtime dependency on `@mailwoman/core`.
+	 */
+	inputMode?: "fragmented" | "formatted"
 	/**
 	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases.
 	 */

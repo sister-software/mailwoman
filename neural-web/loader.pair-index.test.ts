@@ -121,6 +121,8 @@ function baseOpts(fetchImpl: typeof fetch, pairIndexURLs: readonly string[], cou
 		// Skip the sibling-lexicon fetches — irrelevant to the pair-index path under test.
 		gazetteerLexiconURL: null,
 		countryLexiconURL: null,
+		streetTypeLexiconURL: null,
+		localitySurfaceLexiconURL: null,
 		pairIndexURLs,
 		...(country !== undefined ? { country } : {}),
 		runner: { useWebGPU: false },

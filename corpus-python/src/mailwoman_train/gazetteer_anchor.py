@@ -53,6 +53,12 @@ class GazetteerLexicon:
     max_ngram: int
     entries: dict[str, int]  # word_norm lowercased → bitmask (case-insensitive)
     code_entries: dict[str, int]  # word_norm UPPERCASED → bitmask (exact, 1-gram only)
+    # v3.23 digit guard (``rules.digit_guard``): a matched span paints NOTHING when any span word or
+    # the nearest non-empty neighbor word carries a decimal digit — evidence next to a house number
+    # swallowed the digit into the span (P0 alnum-hn −0.325 lower+heal on the v385-feed base). The
+    # flag rides the lexicon so train/inference stay symmetric by construction. False on pre-v3.23
+    # artifacts (anchor/gazetteer/country lexicons unaffected).
+    digit_guard: bool = False
 
 
 def load_gazetteer_lexicon(path: str) -> GazetteerLexicon:
@@ -66,6 +72,7 @@ def load_gazetteer_lexicon(path: str) -> GazetteerLexicon:
         max_ngram=int(raw["max_ngram"]),
         entries={k: int(v) for k, v in raw["entries"].items()},
         code_entries={k: int(v) for k, v in raw["code_entries"].items()},
+        digit_guard=bool(raw.get("rules", {}).get("digit_guard", False)),
     )
 
 
@@ -117,6 +124,13 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
                 matched_n, matched_bits = n, bits
                 break
         if matched_n:
+            # Digit guard (``rules.digit_guard``): a guarded match CONSUMES its span (no sub-ngram
+            # re-matching — the TS painter mirrors this exactly) but paints nothing. Digit test is
+            # str.isdecimal ↔ TS \p{Nd} — the strict Unicode-Nd parity pair (isdigit would also
+            # accept superscripts that \p{Nd} rejects).
+            if lexicon.digit_guard and _digit_adjacent(norm_words, i, matched_n):
+                i += matched_n
+                continue
             begin = norm_words[i][0]
             end = norm_words[i + matched_n - 1][1]
             for c in range(begin, min(end, len(raw))):
@@ -126,6 +140,26 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
         else:
             i += 1
     return char_bits, n_matches
+
+
+def _has_decimal(word: str) -> bool:
+    return any(ch.isdecimal() for ch in word)
+
+
+def _digit_adjacent(norm_words: list[tuple[int, int, str]], i: int, matched_n: int) -> bool:
+    """True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit."""
+    for k in range(i, i + matched_n):
+        if _has_decimal(norm_words[k][2]):
+            return True
+    k = i - 1
+    while k >= 0 and not norm_words[k][2]:
+        k -= 1
+    if k >= 0 and _has_decimal(norm_words[k][2]):
+        return True
+    k = i + matched_n
+    while k < len(norm_words) and not norm_words[k][2]:
+        k += 1
+    return k < len(norm_words) and _has_decimal(norm_words[k][2])
 
 
 def suppress_gazetteer_near_postcode(

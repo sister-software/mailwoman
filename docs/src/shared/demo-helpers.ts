@@ -351,7 +351,9 @@ export async function runClassifyStage(
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
 		},
-		placetypePair !== undefined ? { placetypePair } : undefined
+		// Decision A endpoint default: the demo search box is a human typing fragments — the
+		// fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
+		{ inputMode: "fragmented", ...(placetypePair !== undefined ? { placetypePair } : {}) }
 	)
 	const tClassify = performance.now()
 

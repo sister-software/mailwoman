@@ -45,7 +45,7 @@ export function QueryForm({
 			<label htmlFor="mw-pipeline-input">Address</label>
 			<input
 				id="mw-pipeline-input"
-				type="text"
+				type="search"
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				disabled={disabled}

@@ -37,10 +37,16 @@ export interface ResolveTreeOutcome {
 /** The `/health` data block the engine contributes (model card, data-root inventory). */
 export type HealthData = Record<string, unknown>
 
+/**
+ * The input register (Decision A / GTM B10; canonical docs on `@mailwoman/core/pipeline`'s `InputMode` — duplicated
+ * structurally so `@mailwoman/api` stays engine-agnostic). `formatted` runs the evidence-bundle channels off.
+ */
+export type WireInputMode = "fragmented" | "formatted"
+
 export interface MailwomanAPIEngine {
-	parse?(address: string, opts: { debug: boolean }): Promise<ParseOutcome>
-	geocode?(address: string): Promise<GeocodeOutcome>
-	batch?(addresses: string[]): Promise<{ results: BatchRow[] }>
+	parse?(address: string, opts: { debug: boolean; inputMode?: WireInputMode }): Promise<ParseOutcome>
+	geocode?(address: string, opts?: { inputMode?: WireInputMode }): Promise<GeocodeOutcome>
+	batch?(addresses: string[], opts?: { inputMode?: WireInputMode }): Promise<{ results: BatchRow[] }>
 	resolveTree?(tree: AddressTree, opts: Record<string, unknown>): Promise<ResolveTreeOutcome>
 	reload?(): Promise<{ reloaded: boolean; versions: unknown }>
 	health?(): HealthData

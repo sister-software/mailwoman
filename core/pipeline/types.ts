@@ -36,6 +36,12 @@ export interface PipelineOpts {
 	locale?: LocaleTag
 	userLocation?: UserLocation
 	/**
+	 * Explicit input register (operator Decision A / GTM B10 — see {@link InputMode}). When unset the pipeline derives it
+	 * from the kind classifier's verdict via {@link deriveInputMode}. Endpoint wrappers set their register default here
+	 * (validation/batch → `"formatted"`, autocomplete/demo search → `"fragmented"`).
+	 */
+	inputMode?: InputMode
+	/**
 	 * Disable fast-path shortcuts; always run the full pipeline. Does NOT bypass the poi_query branch — that's a routing
 	 * decision (the kind classifier + `stages.poiIntent`), not a fast-path shortcut, so a `poi_query`-classified input
 	 * still takes the poi branch regardless of this flag.
@@ -136,6 +142,34 @@ export interface QueryKindResult {
 	kind: QueryKind
 	confidence: number
 	alternatives: ReadonlyArray<{ kind: QueryKind; confidence: number }>
+}
+
+/**
+ * The input register (operator Decision A, 2026-07-28 — the Option-A evidence-bundle verdict): `fragmented` is the
+ * map-search register (a human typing "belleville" or "12 rue de la paix"); `formatted` is the validation/record
+ * register (a checkout form or CRM row submitting a full postal address). The evidence-bundle channels feed ONLY in
+ * fragmented mode — three training runs showed they lift the fragment register (admin-street homonym +0.765 lower+heal)
+ * while degrading full-address parses (the flip census, `.superpowers/sdd/progress.md` 2026-07-28). Explicitly settable
+ * on every surface (CLI/API); when unset, {@link deriveInputMode} maps the kind-classifier's verdict. Endpoint defaults
+ * (GTM B10): validation/batch/CSV → formatted; autocomplete/demo search → fragmented; plain parse → derived.
+ */
+export type InputMode = "fragmented" | "formatted"
+
+/**
+ * Map a {@link QueryKind} to its {@link InputMode} register. Multi-component postal specifications
+ * (`structured_address`/`po_box`/`intersection`) are the formatted register; single-thing lookups (postcode, locality,
+ * landmark, POI, vague) are fragments. NEVER keyed on case — lowercase is the primary user register (operator
+ * doctrine).
+ */
+export function deriveInputMode(kind: QueryKind): InputMode {
+	switch (kind) {
+		case "structured_address":
+		case "po_box":
+		case "intersection":
+			return "formatted"
+		default:
+			return "fragmented"
+	}
 }
 
 /**
@@ -257,6 +291,11 @@ export interface FSTMatcherLike {
 
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
+	/**
+	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle channels deliberately OFF; the
+	 * pipeline passes an explicit mode on every parse (caller override or {@link deriveInputMode} of the kind verdict).
+	 */
+	inputMode?: InputMode
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/**

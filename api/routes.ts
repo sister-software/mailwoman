@@ -73,6 +73,10 @@ const errorContent = (description: string) => ({
 const parseQueryParams = z.object({
 	address: z.string().optional().openapi({ description: "The address to parse." }),
 	debug: z.string().optional().openapi({ description: '`"true"` to include a diagnostic report.' }),
+	input_mode: z
+		.enum(["fragmented", "formatted"])
+		.optional()
+		.openapi({ description: "Input register (Decision A): unset → derived from the input's shape." }),
 })
 
 const parseResponses = {
@@ -264,7 +268,9 @@ export function registerMailwomanAPIRoutes(
 
 		if (!address) return c.json({ error: "address is required" }, 400)
 		const debug = c.req.query("debug") === "true"
-		const outcome = await engine.parse(address, { debug })
+		const inputModeRaw = c.req.query("input_mode")
+		const inputMode = inputModeRaw === "fragmented" || inputModeRaw === "formatted" ? inputModeRaw : undefined
+		const outcome = await engine.parse(address, { debug, inputMode })
 
 		return c.json(outcome, 200)
 	})
@@ -273,11 +279,11 @@ export function registerMailwomanAPIRoutes(
 		parsePostRoute,
 		async (c) => {
 			if (!engine.parse) return c.json({ error: "parse not implemented" }, 501)
-			const { address, debug } = c.req.valid("json")
+			const { address, debug, input_mode } = c.req.valid("json")
 			const trimmed = address.trim()
 
 			if (!trimmed) return c.json({ error: "address is required" }, 400)
-			const outcome = await engine.parse(trimmed, { debug: debug ?? false })
+			const outcome = await engine.parse(trimmed, { debug: debug ?? false, inputMode: input_mode })
 
 			return c.json(outcome, 200)
 		},
@@ -292,14 +298,14 @@ export function registerMailwomanAPIRoutes(
 		geocodeRoute,
 		async (c) => {
 			if (!engine.geocode) return apiError(c, 503, "geocoder not available", GEOCODER_UNAVAILABLE_DETAIL)
-			const { address } = c.req.valid("json")
+			const { address, input_mode } = c.req.valid("json")
 			const trimmed = address.trim()
 
 			if (!trimmed) return c.json({ error: "address is required" }, 400)
 			const t0 = performance.now()
 
 			try {
-				const outcome = await engine.geocode(trimmed)
+				const outcome = await engine.geocode(trimmed, { inputMode: input_mode })
 				recordTimed(performance.now() - t0, String(outcome["resolution_tier"] ?? "admin"))
 
 				// `GeocodeOutcome` (the engine contract) is a deliberate `Record<string, unknown>` passthrough —
@@ -322,7 +328,7 @@ export function registerMailwomanAPIRoutes(
 	app.openapi(
 		batchRoute,
 		async (c) => {
-			const { addresses } = c.req.valid("json")
+			const { addresses, input_mode } = c.req.valid("json")
 
 			if (addresses.length === 0) return c.json({ results: [] }, 200)
 
@@ -337,7 +343,8 @@ export function registerMailwomanAPIRoutes(
 			const t0 = performance.now()
 
 			try {
-				const outcome = await engine.batch(addresses)
+				// Decision A endpoint default: batch rows are the record register — formatted unless overridden.
+				const outcome = await engine.batch(addresses, { inputMode: input_mode ?? "formatted" })
 				recordTimed(performance.now() - t0, "batch")
 
 				// Same wire-vs-domain cast as `/v1/geocode` above — `BatchRow`'s `GeocodeOutcome` half is a

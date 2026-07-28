@@ -143,6 +143,8 @@ async function serve(): Promise<void> {
 				shards: shards.for,
 				nationalShards: banShards.for,
 				bias,
+				// Decision A endpoint default: Photon is an autocomplete front — a human typing fragments.
+				inputMode: "fragmented",
 			})
 
 			if (result.lat == null || result.lon == null) return photonCollection([])

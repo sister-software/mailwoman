@@ -176,6 +176,29 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
+// Evidence-bundle lexicons (Option-A, v3.23): street-type is a repo file; locality-surface lives in
+// the DATA ROOT (~7 MB, never in git) — a fresh worktree without $MAILWOMAN_DATA_ROOT parses with the
+// locality channel resolving OFF (degrade-absent for a card that doesn't require it; fail-closed once
+// the bundle card ships, which is the intended loud signal).
+const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-lexicon-v3.json")
+const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v6.json")
+
+if (existsSync(SRC_STREET_TYPE_LEXICON)) {
+	linkForce(SRC_STREET_TYPE_LEXICON, resolve(PKG_DIR, "street-type-lexicon-v3.json"))
+	console.log(`linked ${PKG_DIR}/street-type-lexicon-v3.json`)
+} else {
+	console.error(`WARNING: missing ${SRC_STREET_TYPE_LEXICON} — street_type channel will resolve OFF in this worktree.`)
+}
+
+if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
+	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v6.json"))
+	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v6.json`)
+} else {
+	console.error(
+		`WARNING: missing ${SRC_LOCALITY_SURFACE_LEXICON} — locality_surface channel will resolve OFF in this worktree.`
+	)
+}
+
 const US_WOF_DB = dataRootPath("wof", "postalcode-us.db")
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-us.bin")

@@ -26,12 +26,14 @@ import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { deriveInputMode, type InputMode } from "@mailwoman/core/pipeline"
 import {
 	type ClassifierOpts,
 	hardCountryFor,
 	isBareLocalityTree,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
+import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type {
@@ -130,6 +132,7 @@ export interface GeocodeClassifier {
 			postcodeRepair?: boolean
 			normalizeCase?: boolean
 			queryShape?: QueryShape
+			inputMode?: InputMode
 			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
 		}
 	): Promise<AddressTree>
@@ -138,6 +141,12 @@ export interface GeocodeClassifier {
 export interface GeocodeDeps {
 	classifier: GeocodeClassifier
 	resolver: Resolver
+	/**
+	 * Explicit input register (Decision A / GTM B10 — canonical docs on `@mailwoman/core/pipeline`'s `InputMode`). Unset
+	 * → derived per parse from the kind classifier's verdict. Endpoint wrappers set their register default here
+	 * (`/v1/batch` + CSV → `"formatted"`, autocomplete drop-ins → `"fragmented"`).
+	 */
+	inputMode?: InputMode
 	/** Per-state shard resolver. Omit for admin-only geocoding. */
 	shards?: ShardResolver
 	/**
@@ -448,7 +457,7 @@ export class ShardProvider {
  */
 export async function parseForGeocode(
 	input: string,
-	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase">
+	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode">
 ): Promise<AddressTree> {
 	// #1002: expandAbbreviations with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp → the expanded street
 	// type). The model mis-parses undertrained FR abbreviations ("2 Bd du Palais" → house_number "2 Bd",
@@ -468,12 +477,17 @@ export async function parseForGeocode(
 	// matrix — so both bare-form and well-formed inputs are byte-stable; it earns its keep only on the ambiguous
 	// digit-span / region-abbrev cases the model isn't already confident about.
 	const queryShape = computeQueryShape(parseInput)
+	// Decision A: explicit register wins; otherwise the kind verdict decides (same derivation as the
+	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline).
+	const inputMode =
+		deps.inputMode ?? deriveInputMode(classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
 
 	return recognizeUSRegions(
 		await deps.classifier.parse(parseInput, {
 			postcodeRepair: true,
 			normalizeCase: deps.normalizeCase ?? true,
 			queryShape,
+			inputMode,
 			// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})

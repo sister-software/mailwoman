@@ -109,6 +109,8 @@ function baseOpts(pairIndexURLs: readonly string[], country?: string) {
 		tokenizerURL: TOKENIZER_URL,
 		gazetteerLexiconURL: null,
 		countryLexiconURL: null,
+		streetTypeLexiconURL: null,
+		localitySurfaceLexiconURL: null,
 		pairIndexURLs,
 		...(country !== undefined ? { country } : {}),
 		runner: { useWebGPU: false },

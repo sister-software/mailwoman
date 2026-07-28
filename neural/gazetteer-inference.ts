@@ -34,6 +34,12 @@ export interface GazetteerLexicon {
 	entries: Map<string, number>
 	/** Case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase). */
 	codeEntries: Map<string, number>
+	/**
+	 * V3.23 digit guard (`rules.digit_guard`): a matched span paints NOTHING when any span word or the nearest non-empty
+	 * neighbor word carries a decimal digit — evidence painted beside a house number swallowed the digit into the span.
+	 * Rides the lexicon so train/inference stay symmetric by construction; false on pre-v3.23 artifacts.
+	 */
+	digitGuard: boolean
 }
 
 /** Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; caller reads). */
@@ -44,6 +50,7 @@ export function parseGazetteerLexicon(raw: {
 	max_ngram: number
 	entries: Record<string, number>
 	code_entries: Record<string, number>
+	rules?: { digit_guard?: boolean }
 }): GazetteerLexicon {
 	// Loud validation (#481): a malformed lexicon previously surfaced as a crash deep inside
 	// buildGazetteerFeatures (or worse, silently zero-filled clues — the fake-affix-crash class).
@@ -73,7 +80,32 @@ export function parseGazetteerLexicon(raw: {
 		maxNgram: raw.max_ngram,
 		entries: new Map(Object.entries(raw.entries)),
 		codeEntries: new Map(Object.entries(raw.code_entries)),
+		digitGuard: raw.rules?.digit_guard === true,
 	}
+}
+
+// Strict Unicode-Nd (mirrors Python str.isdecimal — isdigit would also accept superscripts \p{Nd} rejects).
+const hasDecimal = (word: string): boolean => /\p{Nd}/u.test(word)
+
+/** True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit. */
+function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number): boolean {
+	for (let k = i; k < i + matchedN; k++) {
+		if (hasDecimal(words[k]!.text)) return true
+	}
+	let k = i - 1
+
+	while (k >= 0 && !words[k]!.text) {
+		k--
+	}
+
+	if (k >= 0 && hasDecimal(words[k]!.text)) return true
+	k = i + matchedN
+
+	while (k < words.length && !words[k]!.text) {
+		k++
+	}
+
+	return k < words.length && hasDecimal(words[k]!.text)
 }
 
 /** Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal). */
@@ -167,6 +199,12 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 		}
 
 		if (matchedN) {
+			// Digit guard: a guarded match CONSUMES its span (no sub-ngram re-matching — mirrors the
+			// Python painter exactly) but paints nothing.
+			if (lexicon.digitGuard && digitAdjacent(words, i, matchedN)) {
+				i += matchedN
+				continue
+			}
 			const begin = words[i]!.begin
 			const end = words[i + matchedN - 1]!.end
 

@@ -21,10 +21,18 @@ import { z } from "@hono/zod-openapi"
 export { APIErrorSchema } from "@mailwoman/api-kit"
 
 /** `POST /v1/parse` request body. */
+/**
+ * The input register (Decision A / GTM B10): `fragmented` = the map-search register (evidence-bundle channels feed);
+ * `formatted` = the validation/record register (channels off). Unset → the engine derives it from the input's shape.
+ * `/v1/batch` defaults to `formatted` (batch rows are the record register by nature).
+ */
+export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
+
 export const ParseRequestSchema = z
 	.object({
 		address: z.string(),
 		debug: z.boolean().optional(),
+		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("ParseRequest")
 
@@ -49,6 +57,7 @@ export const ParseOutcomeSchema = z
 export const GeocodeRequestSchema = z
 	.object({
 		address: z.string(),
+		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("GeocodeRequest")
 
@@ -116,6 +125,8 @@ export const GeocodeOutcomeSchema = z
 export const BatchRequestSchema = z
 	.object({
 		addresses: z.array(z.string()),
+		/** Register override for every row. DEFAULT `"formatted"` — batch rows are the record register by nature. */
+		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("BatchRequest")
 

@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
 	"version": "6.6.4",
-	"model_lineage": "v3.11.0-deploc-feed step-8000 (\"feed-8k\") — init_from v385 (6.6.0) step-8000, same-vocab fine-tune, `--resume none`, 8k steps (2k probe → 8k resume), LR 1.0e-5 constant. ONE escalation over the probe-2 checkpoint (v3.10.1-gb-probe2): dependent_locality training mass split across FOUR locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% of stream; combined ≈6.66%, matching probe-2's 6.6% total but at a MUCH lower max single-locale share — 20.2%→6.1% — the diversity fix for probe-2's skew costs) instead of GB alone. THREE resurrection levers, bundled (each alone is a known no-op per #456/#1100): (1) `reinit_label_rows: [B-dependent_locality, I-dependent_locality]` — mean-of-live re-init of the baked-dead classifier rows; (2) `classifier_learning_rate: 1.0e-3` — a dedicated hot Adam param group on `classifier.*` (Adam's update is scale-invariant, so only a real param group moves a baked-negative row); (3) `class_weights` B-/I-dependent_locality 0.3→1.0 (Task 4a's third suppressor: re-init + hot LR are useless under a downweight). Tokenizer v0.9.0-multisplice (73,143) UNCHANGED; every lexicon UNCHANGED; architecture identical. Weights-only vs 6.6.0.",
-	"phase": "SHIPPED (6.6.4, 2026-07-26) — bundle revision on UNCHANGED model bytes (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e): the per-locale FST gazetteers (fst-en-us/fr-fr/en-gb.bin) are REBUILT with build-time degenerate-surface curation (`mailwoman gazetteer build fst`, policy `degenerate-surface-exclusion v1.1` recorded in each artifact trailer) — bare function words (incl. the case-folded 'LA'/'OP' initialism aliases), bare street-type words, and all-function-word compositions are pruned from the bias index (the ASR-contextual-biasing 'curate the bias list' discipline; receipts + battery in PR #1332: FR street-particle 290→298, bare-street to P0 parity, golden us/fr byte-equal, gauntlet PASS ×3 layers; residual 3 rows are true homographs — the Option-A class). Also code-side in the same release: the pipeline pins the #1315 street-context gate at positiveScale 0 (D2, closed #1320 — FR admin-street-homonym at exact P0 parity). Prior record: SHIPPED (6.6.2, 2026-07-24) — bundle revision on UNCHANGED model bytes (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e, same files_md5 as 6.6.0): the en-gb overlay's pair-index-gb.bin is re-cut at δ=10 and @mailwoman/neural 7.7.0's auto probe chain activates GB dependent_locality on this shipped model (see neural-weights-en-gb/model-card.json 6.6.1 for the capability record). The 6.7.0 staged-candidate lineage is CLOSED: no checkpoint of v3.10–v3.13 passed the Gauntlet's metamorphic layer; five mechanisms falsified (starvation, encoder drift, save anomaly, comma-share, LR-hold/anneal); stop rule executed three times; the break is established in the first ≤1k steps of encoder+head co-training and is stable. Model-side redesign is unhurried research — the dep-loc capability no longer depends on it. Falsification record: docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md + .superpowers/sdd/task-8-report.md. 6.6.2 adds the en-nz overlay (pair-index-nz.bin, LINZ census, δ=10) + the identical-adjacent-segment (x,x) rule in @mailwoman/neural 7.8.0 — NZ dependent_locality live (246/246, 100% as-written; the repeated-name convention handled as registry evidence). Model bytes STILL v385/unchanged.",
+	"model_lineage": "STAGED 6.7.0-bundle: v3.23.0-bundle-guard step-4000 — the Option-A evidence bundle (5-run productionization arc v3.19→v3.23, 2026-07-28). init_from v385 (6.6.0) step-8000 on v385's OWN feed (v0.13.0-latam — the deploc probe passengers removed after the flip-census/feed attribution), + street_type[1] + locality_surface[2] evidence channels, absence curriculum + evidence-noise 0.15, four-law curated lexicons (street-type v3 / locality-surface v6) with rules.digit_guard (evidence never paints beside a Unicode-Nd digit — the guard that turned alnum-housenumber from −0.325 to +0.013 lower+heal). LR 1.0e-5 constant, 8k steps, best save 4000 (the reproducible mid-run peak; 8k over-trust decay observed in all five runs).",
+	"phase": "STAGED CANDIDATE 6.7.0-bundle (v3.23.0-bundle-guard step-4000, 2026-07-28) — the Option-A evidence bundle, cleared 17/17 through the ratified gate sheet; ships with inputMode (Decision A) + the two digit-guarded lexicon siblings. Promotion = the lockstep flip described in staged_candidate_files_md5.$comment. || Prior shipped record: SHIPPED (6.6.4, 2026-07-26) — bundle revision on UNCHANGED model bytes (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e): the per-locale FST gazetteers (fst-en-us/fr-fr/en-gb.bin) are REBUILT with build-time degenerate-surface curation (`mailwoman gazetteer build fst`, policy `degenerate-surface-exclusion v1.1` recorded in each artifact trailer) — bare function words (incl. the case-folded 'LA'/'OP' initialism aliases), bare street-type words, and all-function-word compositions are pruned from the bias index (the ASR-contextual-biasing 'curate the bias list' discipline; receipts + battery in PR #1332: FR street-particle 290→298, bare-street to P0 parity, golden us/fr byte-equal, gauntlet PASS ×3 layers; residual 3 rows are true homographs — the Option-A class). Also code-side in the same release: the pipeline pins the #1315 street-context gate at positiveScale 0 (D2, closed #1320 — FR admin-street-homonym at exact P0 parity). Prior record: SHIPPED (6.6.2, 2026-07-24) — bundle revision on UNCHANGED model bytes (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e, same files_md5 as 6.6.0): the en-gb overlay's pair-index-gb.bin is re-cut at δ=10 and @mailwoman/neural 7.7.0's auto probe chain activates GB dependent_locality on this shipped model (see neural-weights-en-gb/model-card.json 6.6.1 for the capability record). The 6.7.0 staged-candidate lineage is CLOSED: no checkpoint of v3.10–v3.13 passed the Gauntlet's metamorphic layer; five mechanisms falsified (starvation, encoder drift, save anomaly, comma-share, LR-hold/anneal); stop rule executed three times; the break is established in the first ≤1k steps of encoder+head co-training and is stable. Model-side redesign is unhurried research — the dep-loc capability no longer depends on it. Falsification record: docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md + .superpowers/sdd/task-8-report.md. 6.6.2 adds the en-nz overlay (pair-index-nz.bin, LINZ census, δ=10) + the identical-adjacent-segment (x,x) rule in @mailwoman/neural 7.8.0 — NZ dependent_locality live (246/246, 100% as-written; the repeated-name convention handled as registry evidence). Model bytes STILL v385/unchanged.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "v0.15.0-deploc (v0.14.0-gb base + synth-nz-v2 + synth-es-pedania + synth-fr-lieudit) — the FOUR-locale dependent_locality feed. synth-gb-v1 (800k rows, 32.8% B-dependent_locality) at source weight 10.0 (down from probe-2's 36.0 — the diversity fix), synth-nz-v2 at 4.0 (79.2% dep-loc density), synth-es-pedania-v1 at 5.0 (30.3% density), synth-fr-lieudit-v1 at 3.0 (100% density — every row IS a lieu-dit). overture-latam (CA/MX, 6.6.0) unchanged at weight 6.0.",
+		"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
-		"best_step": 8000,
+		"best_step": 4000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v3.11.0-deploc-feed.yaml — init_from v385 (6.6.0) step-8000, `--resume none` REQUIRED (reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it), LR 1.0e-5 constant, 8k (2k probe → 8k resume). The THREE bundled resurrection levers over 6.6.0: reinit_label_rows [B-/I-dependent_locality], classifier_learning_rate 1.0e-3 (dedicated `classifier.*` param group), class_weights B-/I-dependent_locality 0.3→1.0 — plus the FOUR-locale corpus feed above.",
+		"recipe": "v3.23.0-bundle-guard-8k.yaml — init_from v385 (6.6.0) step-8000, --resume none, LR 1.0e-5 constant, 8k. Channels: street_type (feature_dim 1) + locality_surface (feature_dim 2) painted by the SHARED painter (gazetteer_anchor.py ↔ gazetteer-inference.ts, parity fixture evidence-parity-v2.json) from the digit-guarded lexicons; evidence_curriculum true (ramped per-row zero-out, independent draws) + evidence_noise_prob 0.15 (false-evidence curriculum: rolled painted patterns / synthetic false positives, labels gold). Pre-registered gates G1-G6 in the recipe header; the candidate save is 4000 per the over-trust watch.",
 		"tokenizer_splice": "tokenizer_splice.py build-tokenizer --locales fr --per-file-cap 2000000 over OA fr/countrywide.csv (seed 42, 350k-line corpus, unigram vocab 24000) -> splice 2406 non-ASCII FR pieces into v0.7.1-nsplice (English byte-identity asserted). UNCHANGED from v240 (md5 04995524).",
 		"data_attribution": [
 			"HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training shard (800,000 rows) NEW in 6.7.0, and the `pair-index-gb.bin` placetype-pair index (`neural-weights-en-gb`, this same task). Crown copyright, attribution required.",
@@ -112,7 +112,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v3.11.0-deploc-feed step-8000 (\"feed-8k\"), STAGED not promoted. Escalates the confirmed-but-skewed probe-2 mechanism (v3.10.1-gb-probe2: first-ever decode-layer dependent_locality emissions, GB 1/69, NZ 3/246) by feeding FOUR locales at once (GB+NZ+ES+FR-lieudit) instead of GB alone, holding total dep-loc stream density constant (~6.66%) while dropping the max single-locale share 20.2%→6.1% — the fix for probe-2's golden-us/FR-fragment/val skew costs. THE WIN, measured with the placetype-pair prior ON at its calibrated δ (a sibling arc, not this one): GB dependent_locality full-pipeline recall 67/69 (97.1%) — but the three-way ablation (below) shows this is almost entirely the PRIOR's contribution, not the checkpoint's own resurrected classifier row (raw decode-layer GB emission without the prior is 0/69 for feed-8k — see the ablation table). NZ, ES, and FR-lieudit have no equivalent prior to lean on and show the checkpoint's own resurrection is weak: NZ 0/246 (STILL zero, despite being the arc's original target locale), ES 7/65 (10.8%), FR-lieudit 1/80 (1.25%). All six pre-registered guards pass at feed-8k: golden us −0.5pp / fr +1.2pp (both within-or-favorable), FR-fragment bare-locality 0.988 (PASS, beats v385's own 0.983 — feed-2k FAILS this outright at 0.665, the reason feed-8k not feed-2k is the ratified ship checkpoint), val macro_f1 +1.29pp (favorable), 6 demo presets byte-identical, error-analysis no tag >2pp (worst: street −1.5pp). DIGIT GATE REVISION (operator-ratified 2026-07-23, Teffen Ellis): the pre-registered digit bar was originally read against the v3.10/v3.10.1 GB-probe lineage's OWN prior 8k checkpoint (bare-street-hn 0.902, a same-lineage probe-run number, not a real ship baseline) — that comparison is not apples-to-apples for THIS feed-8k checkpoint, which forked from v385 (6.6.0), not from a GB-probe ancestor. The bar is RESTATED against v385's own fresh-measured baseline (0.755, same session, same board): feed-8k scores 0.868, a +11.3pp gain over the correct baseline — PASS. The 0.902 probe-anchor number is retained here as historical context only, not as the active bar. GAUNTLET: FAILS (Task 8, 2026-07-23) — see phase field above; this is the one open ship blocker. CALIBRATION: the isotonic tables carry from the v5.3.0 lineage unchanged; opt-in, default output unaffected; re-fit is a tracked follow-up.",
+	"notes": "v3.23.0-bundle-guard step-4000, STAGED not promoted (6.7.0-bundle). The evidence bundle is a FRAGMENT-REGISTER capability shipped under the operator's Decision A (2026-07-28): inputMode ∈ {fragmented, formatted} — explicit on CLI/API, per-endpoint register defaults (validation/batch → formatted, autocomplete/demo → fragmented, plain parse → shape classifier). Formatted mode runs the channels OFF (the trained absence identity) and scores the ablated column: v6.0.0-shipped-baseline PASS 17/17 (us.micro 87.1 vs shipped 86.8; fr.cedex 83.3 under the noise-honest 82.2 floor — NAMED WATCH: plateaued fine-tune forgetting, ~10/430 CA rows, re-anchors at the next from-scratch retrain). Fragment mode feeds both channels: admin-street-homonym +0.245 asis / +0.765 lower+heal (ON 0.948), bare-street +0.583 lower, particle +0.407, ALL +0.261; house-number classes guard-protected (+0.013/+0.030). Full verdict ledger: .superpowers/sdd/progress.md 2026-07-28; canary fixture data/eval/external/evidence-collision-canary.jsonl.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
@@ -222,7 +222,7 @@
 				}
 			},
 			"venue_confound_fp": {
-				"delta_star": 5.0,
+				"delta_star": 5,
 				"fp": "48/6500",
 				"fp_pct": 0.738,
 				"floor": "<= 122/6500 (the retired δ=6.0 working number)"
@@ -515,6 +515,15 @@
 			"fr_street": "+1.9 (87.5 → 89.4)",
 			"fr_po_box": "+10.6 (72.7 → 83.3)",
 			"fr_house_number": "99.3 → 99.5 (held — v1.5.0's raison d'être)"
+		},
+		"gate_2026_07_28_v3230_bundle_guard": {
+			"$comment": "The Option-A promotion battery on the STAGED 6.7.0-bundle candidate (v3.23-4k int8). G5 graded the ABLATED column (= formatted-mode production behavior under Decision A); fragment bars graded fed. Ledger + censuses: .superpowers/sdd/progress.md 2026-07-28.",
+			"g1_fragment_bars": "PASS — homonym +0.245 asis / +0.765 lower+heal; alnum-hn −0.007 asis / +0.013 lower; street-hn −0.015 / +0.030; ALL lower+heal +0.261",
+			"g2_ablation": "borderline-pass (OFF bare-locality −0.018 vs ±0.015, ≈1 fixture row; all else at/above v385 reference)",
+			"g3_invariance": "PASS — zero new violation classes vs v385",
+			"g4_gauntlet": "PASS ×3 (regression/metamorphic/held-out)",
+			"g5_golden_ablated": "PASS 17/17 (v6.0.0-shipped-baseline; fr.cedex 83.3 under the ratified 82.2 noise-honest floor — NAMED WATCH)",
+			"g6_canary": "formatted-mode clean by construction; fed-mode 4/20 flips recorded as misroute-cost input"
 		}
 	},
 	"files_md5": {
@@ -653,5 +662,43 @@
 			}
 		},
 		"$comment": "Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask OFF; maskOnF1 = the same with mask ON (recorded only for tags some codex forbiddenTags row suppresses — the loader's delta-gate consults only those). createScorer FAILS CLOSED when a conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
+	},
+	"staged_candidate_files_md5": {
+		"$comment": "The 6.7.0-bundle STAGED identity (v3.23.0 step-4000). Artifact: $MAILWOMAN_DATA_ROOT/models/quantized/model-v3230-guard-step-004000-int8.onnx. tokenizer.model UNCHANGED from shipped (v0.9.0-multisplice). At promotion: flip files_md5 to these, move staged_candidate_requires into requires, bump link-dev-weights DEFAULT_MODEL, add the two lexicons to the files role map — in ONE commit (the lockstep rule in files_md5.$comment).",
+		"model.onnx": "cb0527b54cb408d4d26ac2caba0b5a55",
+		"street-type-lexicon-v3.json": "d0194a730805f9e6a886a98e8421061a",
+		"locality-surface-lexicon-v6.json": "4023681a79d0f3f17ccdc93fb623d443"
+	},
+	"staged_candidate_requires": {
+		"$comment": "The 6.7.0-bundle ship-config (#718): the shipped requires block PLUS the two evidence channels. Channel metadata doubles as the future explain-endpoint contract (GTM B7): slots name the per-token contribution columns. inputMode=formatted runs both evidence channels deliberately OFF via ScorerOverrides (Decision A) — the mode is a declared ablation, not a missing feed, so fail-closed semantics are preserved.",
+		"anchor": {
+			"required": true
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"country": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
+		"suppress_gazetteer_near_postcode": true,
+		"street_type": {
+			"required": true,
+			"feature_dim": 1,
+			"slots": ["street_type"],
+			"lexicon": "street-type-lexicon-v3.json"
+		},
+		"locality_surface": {
+			"required": true,
+			"feature_dim": 2,
+			"slots": ["locality", "locality_homograph"],
+			"lexicon": "locality-surface-lexicon-v6.json"
+		}
 	}
 }
