@@ -512,6 +512,102 @@ export interface AggPair {
 	byState: Map<string, Agg>
 }
 
+/**
+ * Wire up the coordinate tiers this run grades, from the flags that select them.
+ *
+ * Each tier answers WHERE, never WHICH PLACE: every `neural+<tier>` arm keeps neural's admin match and replaces only
+ * the coordinate, so the delta between arms isolates exactly what the tier sharpens. `--cascade` supersedes the
+ * single-state `--address-points`/`--interpolation` flags with per-row, per-state shard selection through a
+ * ShardProvider.
+ */
+async function buildCoordinateTiers(options: OAResolverEvalOptions) {
+	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
+	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
+	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
+	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
+	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
+	// row isolates exactly what the anchor sharpens: where, not which place.
+	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
+	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
+	// the address-point hit when present (the tier's whole contribution is "where", street-level).
+	const addressPointsDb = options.addressPoints || ""
+	let addressPoints: AddressPointLookup | null = null
+
+	if (addressPointsDb) {
+		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
+	}
+	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
+	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
+	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
+	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
+	// long tail of valid-but-unlisted numbers the exact tier misses.
+	const interpolationDb = options.interpolation || ""
+	let interpolation: InterpolationLookup | null = null
+
+	if (interpolationDb) {
+		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
+	}
+	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
+	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
+	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
+	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
+	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
+	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
+	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
+	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
+	// <root>/interpolation/).
+	const cascadeOn = options.cascade ?? false
+	const dataRoot = options.dataRoot || mailwomanDataRoot()
+	let cascadeProvider: ShardProvider | null = null
+
+	if (cascadeOn) {
+		const { ShardProvider } = await import("../geocode-core.ts")
+		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+	}
+	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
+	const runAddrPt = !!addressPoints || cascadeOn
+	const runInterp = !!interpolation || cascadeOn
+	const useAnchor = options.postcodeAnchor ?? false
+	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
+	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
+	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
+	const anchorRerank = options.anchorRerank ?? false
+	let postcodeLookup: {
+		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
+		close(): void
+	} | null = null
+	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
+
+	if (useAnchor || anchorRerank) {
+		const shards = (
+			options.postcodeShards ||
+			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
+		)
+			.split(",")
+			.map((s) => s.trim())
+		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		postcodeLookup = new WOFPostcodeLookup(shards)
+		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
+	}
+
+	return {
+		addressPoints,
+		interpolation,
+		cascadeProvider,
+		dataRoot,
+		cascadeOn,
+		runAddrPt,
+		runInterp,
+		useAnchor,
+		anchorRerank,
+		postcodeLookup,
+		extractAnchors,
+	}
+}
+
 export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promise<void> {
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
@@ -630,77 +726,19 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 	}
 
-	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
-	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
-	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
-	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
-	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
-	// row isolates exactly what the anchor sharpens: where, not which place.
-	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
-	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
-	// the address-point hit when present (the tier's whole contribution is "where", street-level).
-	const addressPointsDb = options.addressPoints || ""
-	let addressPoints: AddressPointLookup | null = null
-
-	if (addressPointsDb) {
-		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
-	}
-	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
-	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
-	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
-	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
-	// long tail of valid-but-unlisted numbers the exact tier misses.
-	const interpolationDb = options.interpolation || ""
-	let interpolation: InterpolationLookup | null = null
-
-	if (interpolationDb) {
-		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
-		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
-	}
-	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
-	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
-	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
-	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
-	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
-	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
-	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
-	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
-	// <root>/interpolation/).
-	const cascadeOn = options.cascade ?? false
-	const dataRoot = options.dataRoot || mailwomanDataRoot()
-	let cascadeProvider: ShardProvider | null = null
-
-	if (cascadeOn) {
-		const { ShardProvider } = await import("../geocode-core.ts")
-		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
-		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
-	}
-	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
-	const runAddrPt = !!addressPoints || cascadeOn
-	const runInterp = !!interpolation || cascadeOn
-	const useAnchor = options.postcodeAnchor ?? false
-	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
-	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
-	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
-	const anchorRerank = options.anchorRerank ?? false
-	let postcodeLookup: {
-		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
-		close(): void
-	} | null = null
-	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
-
-	if (useAnchor || anchorRerank) {
-		const shards = (
-			options.postcodeShards ||
-			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
-		)
-			.split(",")
-			.map((s) => s.trim())
-		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		postcodeLookup = new WOFPostcodeLookup(shards)
-		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
-	}
+	const {
+		addressPoints,
+		interpolation,
+		cascadeProvider,
+		dataRoot,
+		cascadeOn,
+		runAddrPt,
+		runInterp,
+		useAnchor,
+		anchorRerank,
+		postcodeLookup,
+		extractAnchors,
+	} = await buildCoordinateTiers(options)
 	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized
 	// house-number span scores ~0.2 (single-country × house-number penalty); a genuinely ambiguous
 	// real code scores ≥0.52 (valid in ≤3 countries). The 0.5 floor keeps the latter and rejects the
