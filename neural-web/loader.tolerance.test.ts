@@ -112,6 +112,8 @@ function baseOpts(fetchImpl: typeof fetch, postcodeBinaryURLs: readonly string[]
 		// Skip the sibling-lexicon fetches — irrelevant to the postcode-tolerance path under test.
 		gazetteerLexiconURL: null,
 		countryLexiconURL: null,
+		streetTypeLexiconURL: null,
+		localitySurfaceLexiconURL: null,
 		postcodeBinaryURLs,
 		runner: { useWebGPU: false },
 		fetchImpl,

@@ -174,6 +174,18 @@ export interface LoadFromURLsOptions {
 	 */
 	countryLexiconURL?: string | null
 	/**
+	 * URL to the street-type evidence lexicon (`street-type-lexicon-v3.json`, Option-A bundle — the in-repo source is
+	 * `data/gazetteer/street-type-lexicon-v3.json`). Bundle-trained models (6.7.0-bundle+, whose ONNX declares the
+	 * `street_type_features` input) feed this in fragmented-register parses. Defaults to a sibling of `modelURL`; a fetch
+	 * miss does NOT throw (channel runs off, loud `console.error`). Pass `null` to skip.
+	 */
+	streetTypeLexiconURL?: string | null
+	/**
+	 * URL to the locality-surface evidence lexicon (`locality-surface-lexicon-v6.json`, Option-A bundle — a data-root
+	 * artifact, ~7 MB; ships as a weights-package sibling). Same contract as {@link streetTypeLexiconURL}.
+	 */
+	localitySurfaceLexiconURL?: string | null
+	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to a postcode-anchor
 	 * hit. Defaults to TRUE — it pairs with the train-time half on every gazetteer-trained bundle (v4.2.0+) and is inert
 	 * when either channel is absent.
@@ -372,6 +384,16 @@ export function defaultCountryLexiconURL(modelURL: string): string {
 	return modelURL.replace(/[^/]*$/, "country-surface-lexicon-v1.json")
 }
 
+/** Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout). */
+function defaultStreetTypeLexiconURL(modelURL: string): string {
+	return modelURL.replace(/[^/]*$/, "street-type-lexicon-v3.json")
+}
+
+/** Default location of the locality-surface evidence lexicon: a sibling of the model file. */
+function defaultLocalitySurfaceLexiconURL(modelURL: string): string {
+	return modelURL.replace(/[^/]*$/, "locality-surface-lexicon-v6.json")
+}
+
 /**
  * Convenience factory: fetch model + tokenizer, build the runner, return a classifier. The tokenizer is loaded via the
  * existing `loadFromBase64` path so this file shares zero Node-only code with `@mailwoman/neural/classifier`'s
@@ -393,13 +415,32 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
 	const countryLexiconURL =
 		opts.countryLexiconURL === null ? null : (opts.countryLexiconURL ?? defaultCountryLexiconURL(opts.modelURL))
+	const streetTypeLexiconURL =
+		opts.streetTypeLexiconURL === null
+			? null
+			: (opts.streetTypeLexiconURL ?? defaultStreetTypeLexiconURL(opts.modelURL))
+	const localitySurfaceLexiconURL =
+		opts.localitySurfaceLexiconURL === null
+			? null
+			: (opts.localitySurfaceLexiconURL ?? defaultLocalitySurfaceLexiconURL(opts.modelURL))
 
-	const [modelBytes, tokenizerBytes, labels, gazetteerLexicon, countryLexicon] = await Promise.all([
+	const [
+		modelBytes,
+		tokenizerBytes,
+		labels,
+		gazetteerLexicon,
+		countryLexicon,
+		streetTypeLexicon,
+		localitySurfaceLexicon,
+	] = await Promise.all([
 		fetchBytes(opts.modelURL, fetchImpl),
 		fetchBytes(opts.tokenizerURL, fetchImpl),
 		opts.modelCardURL ? fetchLabelsFromModelCard(opts.modelCardURL, fetchImpl) : Promise.resolve(null),
 		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
 		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
+		// The evidence lexicons share the anchor-lexicon JSON schema — the same fetch+parse applies.
+		streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
+		localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
 	])
 
 	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
@@ -443,6 +484,8 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
+		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
+		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(configPairIndex ? { placetypePair: { index: configPairIndex } } : {}),
 		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
 		...(conventions ? { addressSystemConventions: conventions } : {}),
@@ -454,6 +497,10 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		gazetteerLexiconURL,
 		countryLexicon,
 		countryLexiconURL,
+		streetTypeLexicon,
+		streetTypeLexiconURL,
+		localitySurfaceLexicon,
+		localitySurfaceLexiconURL,
 		postcodeAnchorLookup,
 	})
 
@@ -480,6 +527,10 @@ function warnOnUnfedTrainedChannels(
 		gazetteerLexiconURL: string | null
 		countryLexicon: CountryLexicon | null
 		countryLexiconURL: string | null
+		streetTypeLexicon: GazetteerLexicon | null
+		streetTypeLexiconURL: string | null
+		localitySurfaceLexicon: GazetteerLexicon | null
+		localitySurfaceLexiconURL: string | null
 		postcodeAnchorLookup: AnchorLookup | undefined
 	}
 ): void {
@@ -509,6 +560,27 @@ function warnOnUnfedTrainedChannels(
 					: " — `gazetteerLexiconURL` was explicitly disabled (null). ") +
 				" Running with zero-filled gazetteer clues: parses will be degraded (train/inference mismatch)."
 		)
+	}
+
+	for (const [input, lexicon, url, name] of [
+		["street_type_features", fed.streetTypeLexicon, fed.streetTypeLexiconURL, "street-type-lexicon-v3.json"],
+		[
+			"locality_surface_features",
+			fed.localitySurfaceLexicon,
+			fed.localitySurfaceLexiconURL,
+			"locality-surface-lexicon-v6.json",
+		],
+	] as const) {
+		if (inputNames.includes(input) && !lexicon) {
+			console.error(
+				`[mailwoman/neural-web] This model is evidence-bundle-trained (its ONNX declares \`${input}\`) ` +
+					"but no evidence lexicon was loaded" +
+					(url
+						? ` — \`${name}\` could not be fetched from ${url}. Upload the lexicon next to model.onnx.`
+						: " — the URL was explicitly disabled (null).") +
+					" Fragmented-register parses run with this channel off (the trained absence identity — degraded fragment lift, structurally valid)."
+			)
+		}
 	}
 
 	if (inputNames.includes("anchor_features") && !fed.postcodeAnchorLookup) {
