@@ -146,12 +146,16 @@ function GeocoderDemoInner({
 	)
 }
 
+/** Stable empty defaults — a fresh `{}`/`[]` per render would churn every downstream memo dep. */
+const NO_PANELS: DemoPanels = {}
+const NO_PRESETS: ReadonlyArray<Preset> = []
+
 /** The composed geocoder demo, behind a `ClientOnly` SSR boundary (the map is intrinsically a client component). */
 export function GeocoderDemo({
 	runtime,
-	panels = {},
+	panels = NO_PANELS,
 	defaultAddress = "",
-	presets = [],
+	presets = NO_PRESETS,
 	minBiasZoom = 4,
 	applyResultCamera = true,
 }: GeocoderDemoProps): ReactNode {

@@ -77,6 +77,7 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 	const selectedVersion = runtime?.selectedVersion ?? null
 	const selectedRelease = releases.find((r) => r.version === selectedVersion)
 
+	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: DemoControls calls each member (`panels.result({…})`) rather than mounting it */
 	const panels = useMemo<DemoPanels>(
 		() => ({
 			header: <AboutDemo />,
@@ -146,6 +147,8 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 			traceParse,
 		]
 	)
+
+	/* oxlint-enable react/no-unstable-nested-components */
 
 	if (!runtime) return <LoadingFallback />
 

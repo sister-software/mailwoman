@@ -126,11 +126,14 @@ function PipelineExplorerInner({ runtime, defaultAddress, presets, panels }: Pip
 	)
 }
 
+/** Stable empty default — a fresh `{}` per render would churn every downstream memo dep. */
+const NO_PANELS: NonNullable<PipelineExplorerProps["panels"]> = {}
+
 export function PipelineExplorer({
 	runtime,
 	defaultAddress = PIPELINE_DEFAULT_ADDRESS,
 	presets = PIPELINE_PRESETS,
-	panels = {},
+	panels = NO_PANELS,
 }: PipelineExplorerProps): ReactNode {
 	return (
 		<ClientOnly
