@@ -27,6 +27,21 @@ import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
+/**
+ * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12
+ * to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
+ */
+const VERSION_WIDE_STATE_COUNTERS = 4
+
+/** State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}. */
+const WIDE_STATE_ENTRY_SIZE = 16
+
+/** State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}. */
+const NARROW_STATE_ENTRY_SIZE = 12
+
+/** First format version carrying the trailing metadata block; older files simply have none. */
+const VERSION_WITH_METADATA = 3
+
 const MAGIC = Buffer.from("FST\0", "ascii")
 const VERSION = 4
 const HEADER_SIZE = 32
@@ -244,7 +259,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 	pos += stringBytes
 
 	// --- State table ---
-	const stateEntrySize = version >= 4 ? 16 : 12
+	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
@@ -255,8 +270,10 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = buf.readUInt32LE(sp)
 		const placeStart = buf.readUInt32LE(sp + 4)
-		const edgeCountForState = version >= 4 ? buf.readUInt32LE(sp + 8) : buf.readUInt16LE(sp + 8)
-		const placeCountForState = version >= 4 ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
+		const edgeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? buf.readUInt32LE(sp + 8) : buf.readUInt16LE(sp + 8)
+		const placeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
 
 		const edges = new Map<string, number>()
 
@@ -305,7 +322,7 @@ export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
 	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
 	const version = buf.readUInt16LE(4)
 
-	if (version < 3) return undefined
+	if (version < VERSION_WITH_METADATA) return undefined
 	const provenanceOffset = buf.readUInt32LE(28)
 
 	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return undefined

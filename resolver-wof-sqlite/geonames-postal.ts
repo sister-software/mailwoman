@@ -39,6 +39,12 @@ import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
 /**
+ * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank and are skipped. See the
+ * allCountries.zip readme for the field list.
+ */
+const GEONAMES_POSTAL_COLUMNS = 11
+
+/**
  * Synthetic id base for GeoNames-POSTAL rows — its own namespace above the alias fold's {@link GEONAMES_ID_BASE} (9e12)
  * allocation so all four sources (WOF, Overture, GeoNames-alias, GeoNames-postal) coexist collision-free in a combined
  * DB.
@@ -103,7 +109,7 @@ export function ingestGeonamesPostal(
 		for (const line of readFileSync(file, "utf8").split("\n")) {
 			const cols = line.split("\t")
 
-			if (cols.length < 11) continue
+			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
 			const display = cols[1]!.trim()
 			const name = normalizePostcodeName(display)
 			const lat = Number(cols[9])

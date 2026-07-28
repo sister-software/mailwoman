@@ -35,6 +35,21 @@
  */
 
 /** Typed kinds a span proposal may carry. See the module doc for the three cue families. */
+/** Token count below which an input is too short for its tail position to carry much signal. */
+const SHORT_INPUT_MAX_TOKENS = 3
+
+/** Confidence for a tail span in an input too short to clear {@link SHORT_INPUT_MAX_TOKENS}. */
+const SHORT_TAIL_CONFIDENCE = 0.45
+
+/** Digits in the first half of a ZIP+4. A hyphen compound with this shape is a postcode, not a house number. */
+const ZIP5_LENGTH = 5
+
+/**
+ * Confidence at which an ANNOTATION_SPAN is trusted enough to swallow the inner proposals it covers. Below it both
+ * readings survive and the reconciler decides.
+ */
+const CONFIDENT_ANNOTATION_MIN = 0.6
+
 export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"
@@ -236,7 +251,7 @@ function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: S
 
 	if (/^[\p{Ll}0-9]/u.test(content)) return 0.9
 
-	if (atEndOfInput && tokens.length <= 3) return 0.45
+	if (atEndOfInput && tokens.length <= SHORT_INPUT_MAX_TOKENS) return SHORT_TAIL_CONFIDENCE
 
 	return 0.75
 }
@@ -503,7 +518,7 @@ function proposeNumericReadings(
 
 		if (hyphen) {
 			// ZIP+4 shape is a postcode, not a house number — never propose a reading for it.
-			if (hyphen[1]!.length === 5) continue
+			if (hyphen[1]!.length === ZIP5_LENGTH) continue
 			const next = i + 1 < tokens.length ? tokens[i + 1] : undefined
 			const leftEnd = t.strippedStart + hyphen[1]!.length
 
@@ -577,7 +592,9 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 		...proposeNumericReadings(tokens, lexicon, nextGroup),
 	]
 
-	const confidentAnnotations = paired.filter((p) => p.kind === "ANNOTATION_SPAN" && p.confidence >= 0.6)
+	const confidentAnnotations = paired.filter(
+		(p) => p.kind === "ANNOTATION_SPAN" && p.confidence >= CONFIDENT_ANNOTATION_MIN
+	)
 	const survivors = inner.filter((p) => !confidentAnnotations.some((a) => p.start >= a.start && p.end <= a.end))
 
 	const out = [...paired, ...survivors]

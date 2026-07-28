@@ -14,6 +14,21 @@ import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
+/**
+ * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12
+ * to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
+ */
+const VERSION_WIDE_STATE_COUNTERS = 4
+
+/** State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}. */
+const WIDE_STATE_ENTRY_SIZE = 16
+
+/** State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}. */
+const NARROW_STATE_ENTRY_SIZE = 12
+
+/** First format version carrying the trailing metadata block; older files simply have none. */
+const VERSION_WITH_METADATA = 3
+
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
@@ -88,7 +103,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	pos += stringBytes
 
 	// --- State table ---
-	const stateEntrySize = version >= 4 ? 16 : 12
+	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
@@ -99,8 +114,10 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = view.getUint32(sp, true)
 		const placeStart = view.getUint32(sp + 4, true)
-		const edgeCountForState = version >= 4 ? view.getUint32(sp + 8, true) : view.getUint16(sp + 8, true)
-		const placeCountForState = version >= 4 ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
+		const edgeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? view.getUint32(sp + 8, true) : view.getUint16(sp + 8, true)
+		const placeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
 
 		const edges = new Map<string, number>()
 
@@ -151,7 +168,7 @@ export function readFSTProvenanceWeb(input: ArrayBuffer | Uint8Array): FSTProven
 	if (bytes.byteLength < HEADER_SIZE) return undefined
 	const version = view.getUint16(4, true)
 
-	if (version < 3) return undefined
+	if (version < VERSION_WITH_METADATA) return undefined
 	const provenanceOffset = view.getUint32(28, true)
 
 	if (provenanceOffset === 0 || provenanceOffset >= bytes.byteLength) return undefined

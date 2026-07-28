@@ -49,6 +49,13 @@ import {
 import { SqliteConventionSource } from "./sqlite-convention-source.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
+/**
+ * Query length at or below which the FTS window is widened. A two- or three-character query is almost always a region
+ * abbreviation, where the exact match can otherwise fall outside the window behind higher-bm25 partial hits — "NY"
+ * losing to "New York".
+ */
+const SHORT_QUERY_MAX_LENGTH = 3
+
 export interface WOFSqlitePlaceLookupOpts {
 	/**
 	 * Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`.
@@ -699,7 +706,8 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// (Cross-country abbrev collisions — "VT" is BOTH Vermont and Viterbo — still need a country/
 		// postcode signal to disambiguate; this only rescues the window-drop class, not genuine ambiguity.
 		// With a `country` hint every abbrev resolves; bare + no-context lifts 7→10/15 US states.)
-		const ftsLimit = query.text.trim().length <= 3 ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
+		const ftsLimit =
+			query.text.trim().length <= SHORT_QUERY_MAX_LENGTH ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
 		// Expand the placetype filter through the shared equivalence table (core/resolver): a
 		// `locality` query must also reach `borough` / `localadmin` rows — Brooklyn-the-borough

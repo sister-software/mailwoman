@@ -38,6 +38,19 @@ import type {
 import { deriveInputMode } from "./types.ts"
 
 /**
+ * Kind confidence required to skip the full pipeline. Set high deliberately: a short-circuit that fires on a wrong kind
+ * cannot be recovered downstream, so the cost of being wrong is a whole mis-parse, while the cost of being cautious is
+ * one extra pass.
+ */
+const SHORT_CIRCUIT_MIN_CONFIDENCE = 0.95
+
+/**
+ * Longest `locality_only` input allowed to short-circuit. Past it the query is likely carrying more than a locality
+ * name, and the full pipeline should look for what else is in there.
+ */
+const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
+
+/**
  * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
  * `@mailwoman/kind-classifier` — kept duplicated so core/pipeline has no dep on kind-classifier.
  */
@@ -206,14 +219,14 @@ async function defaultClassifyKind(
 function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: PipelineOpts): boolean {
 	if (opts?.forceFullPipeline) return false
 
-	if (kind.confidence < 0.95) return false
+	if (kind.confidence < SHORT_CIRCUIT_MIN_CONFIDENCE) return false
 
 	if (kind.kind === "postcode_only") {
 		return shape.knownFormats.some(isPostcodeFormatHit)
 	}
 
 	if (kind.kind === "locality_only") {
-		return (shape.totalLength ?? Infinity) <= 30 && shape.characterClass === "alpha"
+		return (shape.totalLength ?? Infinity) <= SHORT_CIRCUIT_MAX_LOCALITY_LENGTH && shape.characterClass === "alpha"
 	}
 
 	return false

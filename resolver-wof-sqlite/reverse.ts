@@ -35,6 +35,12 @@ import { PLACE_BBOX_TABLE } from "./fts.ts"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.ts"
 import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
 
+/** Largest absolute latitude in WGS-84 degrees. */
+const MAX_ABS_LATITUDE = 90
+
+/** Largest absolute longitude in WGS-84 degrees. */
+const MAX_ABS_LONGITUDE = 180
+
 /**
  * How the deepest returned place was confirmed:
  *
@@ -213,7 +219,12 @@ export class WOFReverseGeocoder implements Disposable {
 	 * whose `POIIntentOutcome` return type is synchronous by contract — see `poi-intent.ts`'s `deps.execute`).
 	 */
 	reverseGeocodeSync(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): ReverseGeocodeResult {
-		if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+		if (
+			!Number.isFinite(lat) ||
+			!Number.isFinite(lon) ||
+			Math.abs(lat) > MAX_ABS_LATITUDE ||
+			Math.abs(lon) > MAX_ABS_LONGITUDE
+		) {
 			throw new RangeError(`WOFReverseGeocoder.reverseGeocode: (${lat}, ${lon}) is not a WGS-84 coordinate`)
 		}
 		const maxApproximateKm = opts.maxApproximateKm ?? DEFAULT_MAX_APPROXIMATE_KM

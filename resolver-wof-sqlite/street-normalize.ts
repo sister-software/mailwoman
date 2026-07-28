@@ -25,6 +25,12 @@
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 
 /**
+ * Token count a street must exceed before its trailing pair is merged. At or below it the pair IS the whole street
+ * name, and merging would leave nothing to match on.
+ */
+const MIN_TOKENS_FOR_TAIL_MERGE = 3
+
+/**
  * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied ONLY when a street-type suffix
  * follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities ("Tenth Street", "Fifth Avenue") match
  * the shards' digit keys, WITHOUT rewriting ordinal-WORD names where the next token is not a suffix ("First National
@@ -115,7 +121,7 @@ export function normalizeStreetForKey(street: string): string {
 
 	const tailPair = mergePair(tokens.at(-2), tokens.at(-1))
 
-	if (tailPair && tokens.length > 3) {
+	if (tailPair && tokens.length > MIN_TOKENS_FOR_TAIL_MERGE) {
 		tokens.splice(-2, 2, tailPair)
 	}
 
