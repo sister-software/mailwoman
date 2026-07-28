@@ -39,6 +39,10 @@ function loadRealUsZips(path: string): string[] {
 	return zips
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const anchorAbsorptionRecipe: ShardRecipe = {
 	name: "anchor-absorption",
 	description: "Anchor-absorption counter-augmentation (#220/#723): 6-slice mix → synthesizeAnchorAbsorptionRow",

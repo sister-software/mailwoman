@@ -450,6 +450,10 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 	return errors
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const intersectionRecipe: ShardRecipe = {
 	name: "intersection",
 	description: "Real-pair intersection rows (US): TIGER 2023 EDGES crossings → audited intersection_a/b labels",

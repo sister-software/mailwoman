@@ -31,7 +31,15 @@ import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
+/**
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
 // GeoNames postal-dump columns (0-based).
@@ -108,4 +116,5 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const geonamesPostalAdapter = createGeonamesPostalAdapter()

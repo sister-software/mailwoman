@@ -136,6 +136,10 @@ export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string
 	return slots
 }
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const WOF_POSTALCODE_ADAPTER_ID = "wof-postalcode"
 
 export function createWOFPostalcodeAdapter(): CorpusAdapter {
@@ -206,4 +210,5 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const wofPostalcodeAdapter = createWOFPostalcodeAdapter()

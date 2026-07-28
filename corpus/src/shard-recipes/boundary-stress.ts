@@ -44,6 +44,10 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 	return CUM.at(-1)![0]
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const boundaryStressRecipe: ShardRecipe = {
 	name: "boundary-stress",
 	description: "Boundary-instability rows (#375): weighted template mix → synthesizeBoundaryStressRow → aligned BIO",

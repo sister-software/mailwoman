@@ -32,7 +32,15 @@ import {
 } from "../../synthesize-po-box.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
+/**
+ * License for the synthetic PO-box rows. The output is generated, but it inherits the terms of the real tuples it is
+ * derived from, so the attribution travels with it.
+ */
 export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
 export interface PoBoxInputRow extends PoBoxBaseTuple {
@@ -194,4 +202,5 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const synthPoBoxAdapter = createSynthPoBoxAdapter()

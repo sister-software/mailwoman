@@ -160,6 +160,10 @@ function shuffleInPlace<T>(arr: T[], random: () => number): void {
 	}
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frLieuditRecipe: ShardRecipe = {
 	name: "fr-lieudit",
 	description: "FR lieu-dit rows: BAN nom_ld → dependent_locality (commune → locality), lieu-dit on its own line",

@@ -38,7 +38,15 @@ import { TextSpliterator } from "spliterator"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
 interface NADRecord {
@@ -335,4 +343,5 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const usgovNADAdapter = createUsgovNADAdapter()

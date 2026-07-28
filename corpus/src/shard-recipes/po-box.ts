@@ -14,6 +14,10 @@ import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } f
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const poBoxRecipe: ShardRecipe = {
 	name: "po-box",
 	description: "PO box rows: tuples → synthesizePoBoxRow (+ optional US military/diplomatic rows)",

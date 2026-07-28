@@ -36,6 +36,10 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts
 /** Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain. */
 const MAX_ANCESTRY_DEPTH = 6
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
 
 interface PlaceRow {
@@ -176,4 +180,5 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const wofAdminJpAdapter = createWOFAdminJpAdapter()

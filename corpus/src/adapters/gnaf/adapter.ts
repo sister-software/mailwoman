@@ -34,6 +34,10 @@ import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const GNAF_ADAPTER_ID = "gnaf"
 /** Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style). */
 export const GNAF_DEFAULT_LICENSE = "CC-BY-4.0"
@@ -136,4 +140,5 @@ export function createGNAFAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const gnafAdapter = createGNAFAdapter()

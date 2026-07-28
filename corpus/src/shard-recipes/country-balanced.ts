@@ -384,6 +384,10 @@ function renderAbbrevRegion(random: () => number): {
 const HOMOGRAPH_FRAC = 0.22 // share of rows that are homograph contrast pairs
 const ABBREV_FRAC = 0.08 // share that are code-as-region negatives (cumulative with HOMOGRAPH_FRAC)
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const countryBalancedRecipe: ShardRecipe = {
 	name: "country-balanced",
 	description: "Balanced model-first country rows (#464): OA skeletons + ISO surface forms + homograph contrast pairs",

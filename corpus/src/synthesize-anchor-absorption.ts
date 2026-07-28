@@ -258,6 +258,10 @@ export function synthesizeAnchorAbsorptionRow(
 // had NO counter-slice for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
 // to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
 // trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/SLICE-H. CASE-P = 26%.
+/**
+ * Every anchor-absorption template, in one list for the shard runner to sample from. Each covers a way a venue or
+ * landmark name can swallow the street token that follows it.
+ */
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [
 	...Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),
 	...Array<AnchorAbsorptionTemplate>(15).fill("h-no-trailing-locality"),

@@ -38,7 +38,15 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 
 /**
@@ -186,4 +194,5 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const usgovHrsaFqhcAdapter = createUsgovHrsaFqhcAdapter()

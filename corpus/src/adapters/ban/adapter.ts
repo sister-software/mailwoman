@@ -39,6 +39,10 @@ import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 import { decomposeFrStreet } from "./street-decompose.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const BAN_ADAPTER_ID = "ban"
 
 /**
@@ -186,4 +190,5 @@ export function createBanAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const banAdapter = createBanAdapter()

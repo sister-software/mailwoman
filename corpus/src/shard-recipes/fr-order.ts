@@ -170,6 +170,10 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frOrderRecipe: ShardRecipe = {
 	name: "fr-order",
 	description: "French reversed-order rows (#560): real OA FR tuples rendered canonical + 4 postcode-first variants",

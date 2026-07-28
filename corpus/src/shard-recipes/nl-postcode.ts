@@ -25,6 +25,10 @@ function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const nlPostcodeRecipe: ShardRecipe = {
 	name: "nl-postcode",
 	description:

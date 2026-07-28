@@ -29,6 +29,10 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
  */
 const norm = (value: string): string => value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const noStreetLedRecipe: ShardRecipe = {
 	name: "no-street-led",
 	description: "NO street-led boundary form (#901 family): '«st» «n», «pc» «city»' — diacritic street heads",

@@ -11,6 +11,10 @@ import { stableSourceID } from "../adapter.ts"
 import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.ts"
 import { alignAndWrite, makeLcg, readTuples, type ShardRecipe } from "./scaffold.ts"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const streetRecipe: ShardRecipe = {
 	name: "street",
 	description: "Street-decomposition rows (US): tuples → synthesizeStreetRow → aligned LabeledRow",

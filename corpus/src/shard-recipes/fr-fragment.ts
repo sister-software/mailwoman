@@ -142,6 +142,10 @@ const PARTICLE = /\b(de la|de l'|du|des|de|d'|le|la|les)\b/i
 const DATEISH =
 	/\b(1[0-9]|20)\d{2}\b|\b\d{1,2}\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\b/i
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frFragmentRecipe: ShardRecipe = {
 	name: "fr-fragment",
 	description:

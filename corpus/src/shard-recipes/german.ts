@@ -119,6 +119,10 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	return tuples
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const germanRecipe: ShardRecipe = {
 	name: "german",
 	description: "German coverage rows from real OA tuples (Berlin/Saxony), both orders → synthesizeGermanRow",

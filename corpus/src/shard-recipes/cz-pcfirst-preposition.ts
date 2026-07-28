@@ -16,6 +16,10 @@
 
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const czPcFirstPrepositionRecipe: ShardRecipe = {
 	name: "cz-pcfirst-preposition",
 	description:

@@ -254,6 +254,10 @@ function renderUnit(
 	return { fmt: "venue", raw: `${v}, ${road} ${unit}, ${tail(loc, reg, pc)}`, components: { venue: v, ...full } }
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const unitRecipe: ShardRecipe = {
 	name: "unit",
 	description: "US secondary-unit rows (#451): real OA skeletons + injected USPS Pub-28 C2 unit designators",

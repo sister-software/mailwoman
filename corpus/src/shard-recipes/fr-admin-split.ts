@@ -135,6 +135,10 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	return out
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frAdminSplitRecipe: ShardRecipe = {
 	name: "fr-admin-split",
 	description: "FR admin-split rows: BAN communes → split département into `region` (+ canonical-FR preservation)",

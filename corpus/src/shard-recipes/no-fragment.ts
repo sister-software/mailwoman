@@ -53,6 +53,10 @@ const titleNO = (value: string): string =>
 		.map((w) => (w ? w[0]!.toUpperCase() + w.slice(1).toLowerCase() : w))
 		.join(" ")
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const noFragmentRecipe: ShardRecipe = {
 	name: "no-fragment",
 	description:

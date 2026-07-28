@@ -43,7 +43,15 @@ import { formatAddress, reconcileComponents } from "../../format.ts"
 import { SHARE_ALIKE_PATTERN } from "../../license.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
+/**
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
@@ -234,4 +242,5 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const openaddressesAdapter = createOpenaddressesAdapter()

@@ -384,6 +384,10 @@ function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<R
 	return { raw, components }
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const streetAffixRecipe: ShardRecipe = {
 	name: "street-affix",
 	description: "US street-affix rows: OA streets split into street_prefix/street/street_suffix (+ multilocale balance)",

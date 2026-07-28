@@ -699,6 +699,10 @@ function orderComponents(components: Record<string, string>): Record<string, str
 	return out
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const poBoxCedexRecipe: ShardRecipe = {
 	name: "po-box-cedex",
 	description: "PO box / CEDEX coverage rows (US/FR/CA/AU/NZ) — self-generated from cached OA + GeoNames pools",

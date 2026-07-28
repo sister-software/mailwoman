@@ -429,6 +429,10 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
 	return override === true && countrySource.pedaniaParts ? countrySource.pedaniaParts : countrySource.parts
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const localeRecipe: ShardRecipe = {
 	name: "locale",
 	description: "Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples, both orders → synthesizeLocaleRow",

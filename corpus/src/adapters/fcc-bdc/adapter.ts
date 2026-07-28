@@ -40,7 +40,15 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { formatAddress, reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
 /** SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord. */
@@ -185,4 +193,5 @@ export function createFccBdcAdapter(): CorpusAdapter {
 	}
 }
 
+/** The configured adapter instance registered with the corpus builder. */
 export const fccBdcAdapter = createFccBdcAdapter()
