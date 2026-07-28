@@ -53,6 +53,12 @@ const SOURCE_TOKENIZER = $public.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot
 const SOFT_FEED = config.softFeed ?? {}
 const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
 const SOURCE_COUNTRY = SOFT_FEED.countryLexicon ? resolve(repoRoot, SOFT_FEED.countryLexicon) : null
+// Option-A evidence bundle (v3.23): street-type is a small repo-committed file; locality-surface is a
+// ~7 MB data-root artifact (never in git) — note the DIFFERENT base dirs.
+const SOURCE_STREET_TYPE = SOFT_FEED.streetTypeLexicon ? resolve(repoRoot, SOFT_FEED.streetTypeLexicon) : null
+const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
+	? resolve(dataRoot, SOFT_FEED.localitySurfaceLexicon)
+	: null
 const PAIR_INDEX_BY_COUNTRY: Record<string, { source: string; delta: number }> = SOFT_FEED.pairIndexByCountry ?? {}
 
 const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
@@ -184,6 +190,24 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		await removeIfPresent(dest)
 		await copyFile(SOURCE_COUNTRY, dest)
 		process.stderr.write(`copied soft-feed → ${workspace}/country-surface-lexicon-v1.json\n`)
+	}
+
+	// Evidence-bundle lexicons (Option-A, v3.23): copied verbatim like the gazetteer/country lexicons —
+	// every locale package ships them because every locale ships the same bundle-trained base model
+	// (the card carries requires.street_type/locality_surface; withholding a sibling would fail closed).
+	for (const [source, basename, label] of [
+		[SOURCE_STREET_TYPE, "street-type-lexicon-v3.json", "softFeed.streetTypeLexicon"],
+		[SOURCE_LOCALITY_SURFACE, "locality-surface-lexicon-v6.json", "softFeed.localitySurfaceLexicon"],
+	] as const) {
+		if (!source) continue
+
+		if (!(await exists(source))) {
+			throw new Error(`Missing evidence lexicon: ${source}\nSet ${label} in release.config.json.`)
+		}
+		const dest = resolve(dir, basename)
+		await removeIfPresent(dest)
+		await copyFile(source, dest)
+		process.stderr.write(`copied soft-feed → ${workspace}/${basename}\n`)
 	}
 
 	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's

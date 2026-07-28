@@ -18,6 +18,8 @@
 		"fst-en-us.bin",
 		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
+		"locality-surface-lexicon-v6.json",
+		"street-type-lexicon-v3.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",
 		"*.ts",
