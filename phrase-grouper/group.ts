@@ -73,10 +73,8 @@ export function groupPhrasesSync(
 
 	if (!text.length) return []
 
-	const proposals: PhraseProposal[] = []
-
 	// Postcode rule consumes QueryShape directly (segment-agnostic).
-	proposals.push(...scorePostcode(shape, text))
+	const proposals: PhraseProposal[] = [...scorePostcode(shape, text)]
 
 	// Per-segment rules.
 	for (const { tokens, isFirst, isLast } of tokensPerSegment(text, shape)) {

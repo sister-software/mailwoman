@@ -186,21 +186,17 @@ export async function probeFrontier(
 		"# #822 placer-frontier probe — can the deployed placer emit the recoverable tranche?",
 		"",
 		`_Model: \`${modelDir}\` (${meta.classes.length} classes). ${N} \`City, Country\` queries (shortest`,
+		`first) across ${RECOVERABLE.length} placer-recoverable countries. prob_1 vs HARD_PLACE_COUNTRY_MIN_CONF = 0.9._`,
+		"",
+		`- in_class_set: **${pct(inClass, N)}%** (${inClass}/${N}) — false rate **${(100 * inClassFalseRate).toFixed(1)}%**`,
+		`- top1_correct (all): **${pct(top1, N)}%** (${top1}/${N})`,
+		`- top1_correct (in-set only): **${pct(top1OfInClass, inClassN)}%** (${top1OfInClass}/${inClassN})`,
+		`- median prob_1 (in-set correct): **${(median(inClassCorrectProbs) ?? 0).toFixed(3)}**`,
+		"",
+		`## Branch: ${branch}`,
+		"",
+		`Classes (${meta.classes.length}): \`${meta.classes.join(" ")}\``,
 	]
-	L.push(
-		`first) across ${RECOVERABLE.length} placer-recoverable countries. prob_1 vs HARD_PLACE_COUNTRY_MIN_CONF = 0.9._`
-	)
-	L.push("")
-	L.push(
-		`- in_class_set: **${pct(inClass, N)}%** (${inClass}/${N}) — false rate **${(100 * inClassFalseRate).toFixed(1)}%**`
-	)
-	L.push(`- top1_correct (all): **${pct(top1, N)}%** (${top1}/${N})`)
-	L.push(`- top1_correct (in-set only): **${pct(top1OfInClass, inClassN)}%** (${top1OfInClass}/${inClassN})`)
-	L.push(`- median prob_1 (in-set correct): **${(median(inClassCorrectProbs) ?? 0).toFixed(3)}**`)
-	L.push("")
-	L.push(`## Branch: ${branch}`)
-	L.push("")
-	L.push(`Classes (${meta.classes.length}): \`${meta.classes.join(" ")}\``)
 	L.push("")
 	L.push("| Country | ISO2 | in-class | n | top1-correct | median prob_1 |")
 	L.push("| --- | --- | :---: | ---: | ---: | ---: |")

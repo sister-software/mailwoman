@@ -620,10 +620,8 @@ async function runBenchmark(
 	const lines: string[] = [
 		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,
 		`input: ${JSON.stringify(input)}`,
+		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`,
 	]
-	lines.push(
-		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`
-	)
 	const pathSummary = Array.from(collected.paths.entries())
 		.map(([p, n]) => `${p}=${n}`)
 		.join(" ")

@@ -512,13 +512,14 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	let addressPoints = usShards.addressPoints
 	const interpolation = usShards.interpolation
 
-	const opts: ResolveOpts = {}
-
-	// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment graph.
-	// Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation here keeps
-	// `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would otherwise re-default
-	// ON downstream). Fixes the "Portland, ME → Messina IT" class structurally, without a prior or safelist.
-	opts.adminCoherence = deps.adminCoherence !== false
+	const opts: ResolveOpts = {
+		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
+		// graph. Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation
+		// here keeps `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would
+		// otherwise re-default ON downstream). Fixes the "Portland, ME → Messina IT" class structurally,
+		// without a prior or safelist.
+		adminCoherence: deps.adminCoherence !== false,
+	}
 
 	if (deps.defaultCountry) {
 		opts.defaultCountry = deps.defaultCountry

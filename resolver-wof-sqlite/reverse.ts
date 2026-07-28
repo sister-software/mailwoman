@@ -313,8 +313,7 @@ export class WOFReverseGeocoder implements Disposable {
 		// Hierarchy assembly via the shared ancestor walk. If the descent crossed an ancestry gap
 		// (the deepest place's recorded lineage misses the PIP root), merge the root's own chain so
 		// region/country are always present when a polygon confirmed them.
-		const byID = new Map<number, PlaceCandidate>()
-		byID.set(current.id, toPlaceCandidate(current, currentDistanceKm))
+		const byID = new Map<number, PlaceCandidate>([[current.id, toPlaceCandidate(current, currentDistanceKm)]])
 
 		for (const a of ancestorLineage(this.#admin, current.id)) {
 			if (!byID.has(a.id)) {

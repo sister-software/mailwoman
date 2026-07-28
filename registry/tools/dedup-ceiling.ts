@@ -252,35 +252,25 @@ export async function dedupCeiling(
 		"",
 		`## Co-location prevalence`,
 		"",
-	]
-	lines.push(
-		`- **${sharedAddresses}** addresses host ≥2 distinct NPIs (${pct(sharedAddresses, byAddr.size)} of ${byAddr.size} addresses).`
-	)
-	lines.push(
-		`- **${providersAtSharedAddr}** providers sit at a shared address (${pct(providersAtSharedAddr, kept)} of ${kept}).`
-	)
-	lines.push(
-		`- **${pairs}** co-located distinct-NPI pairs (the over-merge population)${pairs >= PAIR_BUDGET ? ` — capped at the ${PAIR_BUDGET} pair budget` : ""}.`
-	)
-	lines.push("")
-	lines.push(`## Name separability of co-located distinct providers`)
-	lines.push("")
-	lines.push(`| org-name Jaccard | pairs | share | meaning |`)
-	lines.push(`|---|---:|---:|---|`)
-	lines.push(
-		`| ≥ ${TAU} (collision) | ${collide} | ${pct(collide, pairs)} | ~identical names → **irreducible over-merge** |`
-	)
-	lines.push(`| ${0.3}–${TAU} | ${mid} | ${pct(mid, pairs)} | partial — separable with a good model |`)
-	lines.push(`| < 0.3 | ${separable} | ${pct(separable, pairs)} | clearly different names → separable |`)
-	lines.push("")
-	lines.push(
+		`- **${sharedAddresses}** addresses host ≥2 distinct NPIs (${pct(sharedAddresses, byAddr.size)} of ${byAddr.size} addresses).`,
+		`- **${providersAtSharedAddr}** providers sit at a shared address (${pct(providersAtSharedAddr, kept)} of ${kept}).`,
+		`- **${pairs}** co-located distinct-NPI pairs (the over-merge population)${pairs >= PAIR_BUDGET ? ` — capped at the ${PAIR_BUDGET} pair budget` : ""}.`,
+		"",
+		`## Name separability of co-located distinct providers`,
+		"",
+		`| org-name Jaccard | pairs | share | meaning |`,
+		`|---|---:|---:|---|`,
+		`| ≥ ${TAU} (collision) | ${collide} | ${pct(collide, pairs)} | ~identical names → **irreducible over-merge** |`,
+		`| ${0.3}–${TAU} | ${mid} | ${pct(mid, pairs)} | partial — separable with a good model |`,
+		`| < 0.3 | ${separable} | ${pct(separable, pairs)} | clearly different names → separable |`,
+		"",
 		`Of the ${collide} collision pairs, **${collideSharePhone}** (${pct(collideSharePhone, collide)}) also share a phone — ` +
 			`so phone (a shared institutional switchboard) does NOT separate them either; if anything it over-links. This is ` +
-			`why the benchmark found phone an unreliable secondary identifier.`
-	)
-	lines.push("")
-	lines.push(`## Splitting the collisions: NPI over-segmentation vs genuinely distinct providers`)
-	lines.push("")
+			`why the benchmark found phone an unreliable secondary identifier.`,
+		"",
+		`## Splitting the collisions: NPI over-segmentation vs genuinely distinct providers`,
+		"",
+	]
 	lines.push(
 		`A collision (same address, ~same name, often same phone) with DIFFERENT NPIs is usually one organization holding ` +
 			`multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting**, ` +

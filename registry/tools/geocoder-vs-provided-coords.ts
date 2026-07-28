@@ -143,16 +143,14 @@ export async function geocoderVsProvidedCoords(
 		"",
 		`- facilities geocoded: **${results.length}** of ${scanned} with a usable address + provided coord`,
 		`- unplaced by our geocoder: ${noPlace} · skipped (no coord / no address): ${noCoord}`,
-	]
-	lines.push(
 		`- **overall delta: p50 ${m(quantile(all, 0.5))}, p90 ${m(quantile(all, 0.9))}, p99 ${m(quantile(all, 0.99))}** ` +
-			`(max ${m(all.at(-1) ?? 0)})`
-	)
-	lines.push("")
-	lines.push(`## By resolution tier`)
-	lines.push("")
-	lines.push(`| tier | n | p50 | p90 |`)
-	lines.push(`|---|---:|---:|---:|`)
+			`(max ${m(all.at(-1) ?? 0)})`,
+		"",
+		`## By resolution tier`,
+		"",
+		`| tier | n | p50 | p90 |`,
+		`|---|---:|---:|---:|`,
+	]
 
 	for (const [tier, list] of [...byTier.entries()].toSorted((a, b) => b[1].length - a[1].length)) {
 		const s = [...list].toSorted((a, b) => a - b)

@@ -402,12 +402,10 @@ function renderReport(
 		`- **Unique tokens:** ${shard.tokens.size}`,
 		`- **Unique bigrams:** ${shard.bigrams.size}`,
 		"",
+		`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`,
+		`**Warnings:** ${warns.length} (advisory)`,
+		"",
 	]
-	lines.push(
-		`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`
-	)
-	lines.push(`**Warnings:** ${warns.length} (advisory)`)
-	lines.push("")
 
 	if (!flags.length) {
 		lines.push("No anomalies detected.")

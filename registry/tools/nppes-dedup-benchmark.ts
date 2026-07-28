@@ -885,21 +885,19 @@ export async function nppesDedupBenchmark(
 			`mailing-vs-practice variation. Matcher run BLIND to the NPI${TRAIN_EM ? ", EM-trained (label-free)" : ""}; ` +
 			`geocoded ${pct(geo / N)}% of addresses. The NPI is held-out ground truth._`,
 		"",
-	]
-	lines.push(
 		`**Headline — org-name truth (the honest grain):** the shipped ` +
 			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
 			`${pct(gbtNPI.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
 			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
 			`**NPI ${pct(gbtNPI.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
 			`(${kept.size} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +
-			`not the model changing — gold-set validated (120/120 hard pairs = same org). Details in "Three truth grains" below.`
-	)
-	lines.push("")
-	lines.push(`## The comparison-model levers (each toggled on, at the default threshold)`)
-	lines.push("")
-	lines.push(`| model | precision | recall | F1 | ΔF1 | ARI | over-merged |`)
-	lines.push(`|---|---:|---:|---:|---:|---:|---:|`)
+			`not the model changing — gold-set validated (120/120 hard pairs = same org). Details in "Three truth grains" below.`,
+		"",
+		`## The comparison-model levers (each toggled on, at the default threshold)`,
+		"",
+		`| model | precision | recall | F1 | ΔF1 | ARI | over-merged |`,
+		`|---|---:|---:|---:|---:|---:|---:|`,
+	]
 	progression.forEach((p, i) => {
 		const delta = i === 0 ? "—" : signed(100 * (p.score.f1 - progression[i - 1]!.score.f1))
 		const bold = i === progression.length - 1
