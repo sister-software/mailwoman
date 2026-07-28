@@ -141,16 +141,16 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 			console.log("Clipboard doesn't appear to be GeoJSON")
 		}
 
-		window.addEventListener("dragover", handleDragOver)
-		window.addEventListener("drop", handleDrop)
-		window.addEventListener("dragend", handleDragEnd)
-		window.addEventListener("dragstart", handleDragStart)
+		globalThis.addEventListener("dragover", handleDragOver)
+		globalThis.addEventListener("drop", handleDrop)
+		globalThis.addEventListener("dragend", handleDragEnd)
+		globalThis.addEventListener("dragstart", handleDragStart)
 
 		return () => {
-			window.removeEventListener("dragover", handleDragOver)
-			window.removeEventListener("drop", handleDrop)
-			window.removeEventListener("dragend", handleDragEnd)
-			window.removeEventListener("dragstart", handleDragStart)
+			globalThis.removeEventListener("dragover", handleDragOver)
+			globalThis.removeEventListener("drop", handleDrop)
+			globalThis.removeEventListener("dragend", handleDragEnd)
+			globalThis.removeEventListener("dragstart", handleDragStart)
 		}
 	}, [appendGeoJSON, map])
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { PathLike, Stats } from "node:fs"
+import type { Stats } from "node:fs"
 import { existsSync } from "node:fs"
 import { stat } from "node:fs/promises"
 

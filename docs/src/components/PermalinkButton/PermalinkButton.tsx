@@ -11,8 +11,8 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 	const [copied, setCopied] = useState(false)
 
 	const onClick = useCallback(async () => {
-		if (typeof window === "undefined") return
-		const url = new URL(window.location.href)
+		if (typeof globalThis.window === "undefined") return
+		const url = new URL(globalThis.location.href)
 
 		if (text) {
 			url.searchParams.set("q", text)
@@ -39,7 +39,7 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 			document.body.removeChild(ta)
 		}
 		setCopied(true)
-		window.setTimeout(() => setCopied(false), 1500)
+		globalThis.setTimeout(() => setCopied(false), 1500)
 	}, [text])
 
 	return (

@@ -117,8 +117,8 @@ export async function matcherScale(
 		report?.(`    N=${n}: ${sec(wallMs)}, ${candidatePairs} pairs → ${entities.length} entities, RSS ${mb(rssBytes)}`)
 
 		// Encourage reclamation between sizes (RSS is a shared-process high-water — see the report note).
-		if (global.gc) {
-			global.gc()
+		if (globalThis.gc) {
+			globalThis.gc()
 		}
 	}
 

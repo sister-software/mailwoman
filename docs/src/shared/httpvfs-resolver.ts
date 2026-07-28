@@ -132,7 +132,7 @@ export async function loadHTTPVFSDatabase(
 	sqljsBaseURL: string,
 	options: HTTPSVFSOptions = {}
 ): Promise<HTTPVFSWorker> {
-	const w = window as unknown as { createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
+	const w = globalThis as unknown as { createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
 
 	if (typeof w.createDbWorker !== "function") {
 		await new Promise<void>((res, rej) => {

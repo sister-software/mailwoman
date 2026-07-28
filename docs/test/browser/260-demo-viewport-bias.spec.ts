@@ -14,14 +14,14 @@ test.describe("Demo — viewport bias (#938)", () => {
 		await demo.goto()
 		// Park the map on Ohio, zoomed in past the global-view threshold.
 		await page.evaluate(() => {
-			const w = window as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
+			const w = globalThis as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
 			w.__mailwomanDemoMap?.jumpTo({ center: [-83.11, 40.1], zoom: 8 })
 		})
 		// The map loads independently of the classifier — wait until the jump has actually taken (zoom
 		// past the global-view gate) so the viewport bias is live before we submit.
 		await page.waitForFunction(
 			() => {
-				const m = (window as unknown as { __mailwomanDemoMap?: { getZoom: () => number } }).__mailwomanDemoMap
+				const m = (globalThis as unknown as { __mailwomanDemoMap?: { getZoom: () => number } }).__mailwomanDemoMap
 
 				return !!m && m.getZoom() >= 7
 			},
@@ -43,7 +43,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 	test("population still wins: 'Paris' stays in France even from a US-centered map", async ({ demo, page }) => {
 		await demo.goto()
 		await page.evaluate(() => {
-			const w = window as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
+			const w = globalThis as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
 			w.__mailwomanDemoMap?.jumpTo({ center: [-83, 42.3], zoom: 8 }) // Michigan
 		})
 		await page.waitForTimeout(500)

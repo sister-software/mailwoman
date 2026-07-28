@@ -47,8 +47,8 @@ const DashboardMap: React.FC = () => {
 
 	const handleViewStateChange = useCallback(
 		(event: ViewStateChangeEvent) => {
-			self.clearTimeout(persistenceFrameRef.current)
-			persistenceFrameRef.current = self.setTimeout(() => {
+			globalThis.clearTimeout(persistenceFrameRef.current)
+			persistenceFrameRef.current = globalThis.setTimeout(() => {
 				persistWebviewState((currentWebViewState) => ({
 					...currentWebViewState,
 					mapView: event.viewState,
@@ -90,7 +90,7 @@ const DashboardMap: React.FC = () => {
 }
 
 function exposeMapRef(ref: MapRef) {
-	Object.assign(window, { map: ref })
+	Object.assign(globalThis, { map: ref })
 }
 
 export default memo(DashboardMap)

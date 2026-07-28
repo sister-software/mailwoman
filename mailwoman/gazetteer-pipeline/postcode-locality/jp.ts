@@ -74,7 +74,7 @@ function incDecimalString(s: string): string {
  * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
  * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
-function pyRound(x: number, nd: number = 0): number {
+function pyRound(x: number, nd = 0): number {
 	if (!Number.isFinite(x)) return x
 
 	if (nd === 0) {

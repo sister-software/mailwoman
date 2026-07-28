@@ -64,7 +64,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 	// Tooltip deep-links (/glossary#some-term) race the router's hash scroll against first render;
 	// the target doesn't exist yet when Docusaurus tries to scroll. Re-run the jump after mount.
 	useEffect(() => {
-		const hash = decodeURIComponent(window.location.hash.slice(1))
+		const hash = decodeURIComponent(globalThis.location.hash.slice(1))
 
 		if (!hash) return
 		document.getElementById(hash)?.scrollIntoView()

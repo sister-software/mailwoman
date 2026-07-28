@@ -58,7 +58,7 @@ export class ResourceMapCache<
 	/**
 	 * The human-readable name of the resource.
 	 */
-	public displayName: string = "ResourceMapCache"
+	public displayName = "ResourceMapCache"
 
 	protected readonly factoryLike: F
 

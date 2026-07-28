@@ -579,8 +579,8 @@ async function runBenchmark(
 			await runOne(pipeline)
 		}
 
-		if (typeof global.gc === "function") {
-			global.gc()
+		if (typeof globalThis.gc === "function") {
+			globalThis.gc()
 		}
 		const heapBefore = process.memoryUsage().heapUsed
 

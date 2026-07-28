@@ -30,11 +30,11 @@ const CACHE_NAME = "mailwoman-db-ranges-v1"
 const DB_HOST = "public.sister.software"
 
 self.addEventListener("install", () => {
-	void self.skipWaiting()
+	void globalThis.skipWaiting()
 })
 
 self.addEventListener("activate", (event) => {
-	event.waitUntil(self.clients.claim())
+	event.waitUntil(globalThis.clients.claim())
 })
 
 self.addEventListener("message", (event) => {

@@ -98,7 +98,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 			document.body.removeChild(ta)
 		}
 		setCopied(true)
-		window.setTimeout(() => setCopied(false), 1500)
+		globalThis.setTimeout(() => setCopied(false), 1500)
 	}, [result, selected])
 
 	return (

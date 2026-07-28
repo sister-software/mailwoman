@@ -51,9 +51,9 @@ const PRESETS = EXAMPLE_ADDRESSES.map((ex) => ({ label: ex.label, value: ex.addr
 const LoadingFallback: React.FC = () => <p style={{ padding: "1rem" }}>Loading…</p>
 
 function initialAddress(): string {
-	if (typeof window === "undefined") return DEFAULT_ADDRESS
+	if (typeof globalThis.window === "undefined") return DEFAULT_ADDRESS
 
-	return new URL(window.location.href).searchParams.get("q") ?? DEFAULT_ADDRESS
+	return new URL(globalThis.location.href).searchParams.get("q") ?? DEFAULT_ADDRESS
 }
 
 /** The client-only demo body: build the real runtime, then render `<GeocoderDemo>` with docs panels. */

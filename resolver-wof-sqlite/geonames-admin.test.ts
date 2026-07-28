@@ -8,7 +8,7 @@
  *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
