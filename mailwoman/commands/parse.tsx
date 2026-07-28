@@ -29,6 +29,13 @@ export { ArgumentsSchema as args, ParseConfigSchema as options }
 
 const ParseConfigSchema = zod.object({
 	debug: zod.boolean().optional().default(false).describe("Enable verbose debugging output"),
+	inputMode: zod
+		.enum(["fragmented", "formatted"])
+		.optional()
+		.describe(
+			"Input register (Decision A): 'fragmented' feeds the evidence-bundle channels (map-search register), " +
+				"'formatted' runs them off (validation/record register). Unset → derived from the input's shape."
+		),
 	locale: zod
 		.string()
 		.regex(/^[a-z]{2}(-[A-Z]{2})?$/u, "Expected a BCP-47 tag like en-US or fr-FR")
@@ -732,11 +739,11 @@ async function runNeural(
 	if (policyOverrides.length === 0 && !options.resolve) {
 		switch (options.format) {
 			case "xml":
-				return neural.parseXML(input)
+				return neural.parseXML(input, { inputMode: options.inputMode })
 			case "tuple":
-				return JSON.stringify(await neural.parseTuples(input), null, 2)
+				return JSON.stringify(await neural.parseTuples(input, { inputMode: options.inputMode }), null, 2)
 			default:
-				return JSON.stringify(await neural.parseJSON(input), null, 2)
+				return JSON.stringify(await neural.parseJSON(input, { inputMode: options.inputMode }), null, 2)
 		}
 	}
 
@@ -765,7 +772,7 @@ async function runNeural(
 		tree = proposalsToTree(input, filtered)
 	} else {
 		// Resolve path without policy — keep containment by going through the decoder directly.
-		tree = await neural.parse(input)
+		tree = await neural.parse(input, { inputMode: options.inputMode })
 	}
 
 	if (options.resolve) {

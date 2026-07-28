@@ -43,7 +43,8 @@ async function serve(): Promise<void> {
 
 	const engine: LibpostalEngine = {
 		async parse(query) {
-			const tree = await classifier.parse(query, { postcodeRepair: true })
+			// Decision A endpoint default: libpostal consumers submit full postal addresses (the record register).
+			const tree = await classifier.parse(query, { postcodeRepair: true, inputMode: "formatted" })
 
 			// `treeToParseMatches` collapses the street-name family into one `road`-bound match and
 			// yields reading-order `{ classification, value }` pairs; the app maps them to libpostal labels.
