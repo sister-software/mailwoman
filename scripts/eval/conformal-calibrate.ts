@@ -330,9 +330,9 @@ async function main(): Promise<void> {
 
 	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on ALL resolved rows
 	const tierStats = tiers.map((t) => {
-		const rows = byTier[t]
+		const innerRows = byTier[t]
 
-		if (!rows.length)
+		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 		const claimedMeds = median(rows.map((r) => r.claimedRadiusM))
 		const errMeds = median(rows.map((r) => r.errorM))

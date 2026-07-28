@@ -91,8 +91,8 @@ function mockResolver(
 	}
 
 	return {
-		candidatesFor(span, tag) {
-			return table.get(`${span.start}:${span.end}:${tag}`) ?? []
+		candidatesFor(innerSpan, tag) {
+			return table.get(`${innerSpan.start}:${innerSpan.end}:${tag}`) ?? []
 		},
 	}
 }
@@ -109,9 +109,9 @@ function mockChain(places: ResolvedPlace[]): ParentChainLookup {
 	}
 
 	return {
-		parentsOf(place) {
+		parentsOf(innerPlace) {
 			const chain: ResolvedPlace[] = []
-			let cur: ResolvedPlace | undefined = place
+			let cur: ResolvedPlace | undefined = innerPlace
 
 			while (cur && cur.parent_id !== undefined && cur.parent_id !== null) {
 				const next = byID.get(String(cur.parent_id))

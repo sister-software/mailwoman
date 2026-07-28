@@ -245,10 +245,10 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			}
 		}
 		const yPad = (ymx - ymn) * 0.05 || 0.01
-		const yMinData = ymn - yPad
+		const innerYMinData = ymn - yPad
 		const yMaxData = ymx + yPad
 
-		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: yMinData, yMax: yMaxData, yMinData }
+		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: innerYMinData, yMax: yMaxData, innerYMinData }
 		// Log scale: the floor must come from the smallest *positive* data value, not the
 		// linearly-padded minimum — otherwise a metric that touches/approaches zero (F1 scores
 		// start near 0, val_loss can be tiny) drags the floor to ~0 and the axis spans many

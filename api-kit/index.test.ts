@@ -88,7 +88,7 @@ test("serveNode: binds, answers over real HTTP, closes cleanly", async () => {
 				fetch: app.fetch,
 				port: 0, // ephemeral
 				hostname: "127.0.0.1",
-				onListen: (info) => resolve(info.port),
+				onListen: (listened) => resolve(listened.port),
 			})
 		})
 

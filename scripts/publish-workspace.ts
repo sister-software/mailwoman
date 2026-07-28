@@ -140,15 +140,15 @@ try {
  * ship-break (exports pointing at files the `files` globs excluded) and mailwoman's historically never-shipped
  * `.d.ts`.
  */
-function verifyPublishExports(tarballPath: string) {
-	const listing = spawnSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
+function verifyPublishExports(innerTarballPath: string) {
+	const listing = spawnSync("tar", ["-tzf", innerTarballPath], { encoding: "utf8" })
 
 	if (listing.status !== 0) {
 		console.error(`publish-workspace: tar -tzf failed (exit ${listing.status})`)
 		process.exit(listing.status ?? 1)
 	}
 	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
-	const manifestRead = spawnSync("tar", ["-xzf", tarballPath, "-O", "package/package.json"], { encoding: "utf8" })
+	const manifestRead = spawnSync("tar", ["-xzf", innerTarballPath, "-O", "package/package.json"], { encoding: "utf8" })
 
 	if (manifestRead.status !== 0) {
 		console.error(`publish-workspace: could not read package.json from tarball (exit ${manifestRead.status})`)

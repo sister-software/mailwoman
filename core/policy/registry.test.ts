@@ -102,7 +102,7 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 	test("merged-source proposals survive both preference modes (they are neither rule nor neural)", () => {
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred" })
-		const proposals = [
+		const cases = [
 			makeProposal({ component: "country", source: "neural", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "merged", confidence: 0.9 }),
@@ -116,11 +116,11 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		// count as "neural present" — else rule proposals vanish with nothing to replace them.
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred", confidence_threshold: 0.8 })
-		const proposals = [
+		const cases = [
 			makeProposal({ component: "country", source: "neural", confidence: 0.5 }),
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 		]
-		const out = registry.apply(proposals)
+		const out = registry.apply(cases)
 		expect(out.map((p) => p.source)).toEqual(["rule"])
 	})
 

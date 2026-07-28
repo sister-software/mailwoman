@@ -253,7 +253,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 													{term.tags?.length ? (
 														<div className={styles.termTags}>
 															{term.tags.map((key) => {
-																const tag = tagMeta.find((candidate) => candidate.key === key)
+																const innerTag = tagMeta.find((candidate) => candidate.key === key)
 
 																return (
 																	<button

@@ -19,11 +19,11 @@ import { resolveStreet } from "./demo-helpers.ts"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "./httpvfs-street.ts"
 
 /** Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape). */
-function stubWorker(db: DatabaseSync) {
+function stubWorker(innerDb: DatabaseSync) {
 	return {
 		db: {
 			async exec(sql: string) {
-				const rows = db.prepare(sql).all() as Record<string, unknown>[]
+				const rows = innerDb.prepare(sql).all() as Record<string, unknown>[]
 
 				if (!rows.length) return []
 				const columns = Object.keys(rows[0]!)

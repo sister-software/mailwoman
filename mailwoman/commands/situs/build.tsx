@@ -198,10 +198,10 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			}
 		}
 
-		const buildOneState = (state: string): Promise<StateResult> => {
-			const dbPath = path.join(outDir, `address-points-us-${state.toLowerCase()}.db`)
+		const buildOneState = (stateCode: string): Promise<StateResult> => {
+			const dbPath = path.join(outDir, `address-points-us-${stateCode.toLowerCase()}.db`)
 
-			if (!options.force && isComplete(dbPath)) return Promise.resolve({ state, skipped: true })
+			if (!options.force && isComplete(dbPath)) return Promise.resolve({ state: stateCode, skipped: true })
 
 			return new Promise((resolve) => {
 				const argv = [
@@ -209,7 +209,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					"situs",
 					"address-points",
 					"--state",
-					state,
+					stateCode,
 					"--release",
 					options.release,
 					"--out",
@@ -228,7 +228,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				child.stdout.on("data", (d) => (out += d))
 				child.stderr.on("data", (d) => (err += d))
 				child.on("close", (code) =>
-					resolve({ state, code, seconds: Number(((Date.now() - t) / 1000).toFixed(1)), out, err })
+					resolve({ state: stateCode, code, seconds: Number(((Date.now() - t) / 1000).toFixed(1)), out, err })
 				)
 			})
 		}

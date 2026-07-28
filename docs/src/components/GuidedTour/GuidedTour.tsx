@@ -223,10 +223,10 @@ export const GuidedTour: React.FC = () => {
 	const onInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.target.value
-			setStopStates((prev) => {
-				const next = new Map(prev)
-				const existing = next.get(currentStop.id)!
-				next.set(currentStop.id, { ...existing, address: value, result: null, error: null })
+			setStopStates((innerPrev) => {
+				const innerNext = new Map(innerPrev)
+				const existing = innerNext.get(currentStop.id)!
+				innerNext.set(currentStop.id, { ...existing, address: value, result: null, error: null })
 
 				return next
 			})
