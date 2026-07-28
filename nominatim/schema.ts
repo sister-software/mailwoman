@@ -55,18 +55,22 @@ export const NominatimResultSchema = z
 /** Response body of `/search`, matching Nominatim's result array so existing clients need no change. */
 export const NominatimResultsSchema = z.array(NominatimResultSchema)
 
+/** A GeoJSON 2D bounding box, as `[west, south, east, north]`. */
+const BBox2DSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
+
+/** One feature in the `format=geojson` envelope. */
+const NominatimFeatureSchema = z.object({
+	type: z.literal("Feature"),
+	properties: z.looseObject({}),
+	geometry: z.unknown(),
+	bbox: BBox2DSchema.optional(),
+})
+
 /** The `format=geojson` envelope — nominatim's own shape (polygon-capable geometry, result fields as properties). */
 export const NominatimFeatureCollectionSchema = z
 	.object({
 		type: z.literal("FeatureCollection"),
-		features: z.array(
-			z.object({
-				type: z.literal("Feature"),
-				properties: z.looseObject({}),
-				geometry: z.unknown(),
-				bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
-			})
-		),
+		features: z.array(NominatimFeatureSchema),
 	})
 	.openapi("NominatimFeatureCollection")
 

@@ -131,7 +131,9 @@ describe("isBareLocalityTree — #912 lever 1 (placer abstention shape)", () => 
 	})
 
 	it("nested children count — a locality wrapping a house number is address-shaped", () => {
-		expect(isBareLocalityTree(tree([node("locality", "Paris", [node("house_number", "8")])]))).toBe(false)
+		const localityWithHouseNumber = node("locality", "Paris", [node("house_number", "8")])
+
+		expect(isBareLocalityTree(tree([localityWithHouseNumber]))).toBe(false)
 	})
 
 	it("no locality at all is not bare-locality (a bare postcode keeps its placer)", () => {

@@ -91,6 +91,7 @@ describe("geocode argument validation", () => {
 		}
 		let threw = false
 		let output = ""
+		const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-empty-"))
 
 		try {
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
@@ -99,10 +100,7 @@ describe("geocode argument validation", () => {
 				// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
 				// on a standard data root that now SUCCEEDS (the new contract). The error contract
 				// only survives when no default shard exists either.
-				env: childEnv({
-					MAILWOMAN_WOF_DB: undefined,
-					MAILWOMAN_DATA_ROOT: mkdtempSync(join(tmpdir(), "mw-empty-")),
-				}),
+				env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 				timeout: 15_000,
 			})
 		} catch (error: unknown) {

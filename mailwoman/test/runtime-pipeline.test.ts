@@ -65,12 +65,13 @@ describe("createRuntimePipeline — wiring", () => {
 		const pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("10118")
+
+		const sawUSZip = expect.arrayContaining([expect.objectContaining({ format: "us_zip" })])
+
 		expect(classifier.parse).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({
-				queryShape: expect.objectContaining({
-					knownFormats: expect.arrayContaining([expect.objectContaining({ format: "us_zip" })]),
-				}),
+				queryShape: expect.objectContaining({ knownFormats: sawUSZip }),
 			})
 		)
 	})

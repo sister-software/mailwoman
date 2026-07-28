@@ -130,10 +130,16 @@ export const BatchRequestSchema = z
 	})
 	.openapi("BatchRequest")
 
+/** The failure slot for one batch row. A row that throws does not fail its neighbours. */
+const BatchRowErrorSchema = z.object({ input: z.string(), error: z.string() })
+
+/** One batch row: the geocode outcome, or the failure slot that stands in for it. */
+const BatchRowSchema = z.union([GeocodeOutcomeSchema, BatchRowErrorSchema])
+
 /** `POST /v1/batch` response — one `GeocodeOutcome`, or an `{ input, error }` slot, per row (per-row isolation). */
 export const BatchResponseSchema = z
 	.object({
-		results: z.array(z.union([GeocodeOutcomeSchema, z.object({ input: z.string(), error: z.string() })])),
+		results: z.array(BatchRowSchema),
 	})
 	.openapi("BatchResponse")
 
@@ -161,9 +167,15 @@ export const ResolveResponseSchema = z
  * string>>`, single-string only, so a route handler must join array values before calling
  * `formatAddress`/`canonicalKey`.
  */
+/**
+ * One component's value. Repeatable tags (a street with two names, say) arrive as an array; the caller joins them
+ * before handing the dict to `formatAddress`, which takes single strings only.
+ */
+const ComponentValueSchema = z.union([z.string(), z.array(z.string())])
+
 export const FormatRequestSchema = z
 	.object({
-		components: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+		components: z.record(z.string(), ComponentValueSchema),
 		country: z.string(),
 		options: z.looseObject({}).optional(),
 	})

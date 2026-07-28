@@ -98,13 +98,13 @@ export class HTTPVFSAddressPointLookup {
 			`SELECT lat, lon, source, release FROM address_point WHERE ${where} LIMIT 1`
 		let rows: Record<string, unknown>[] = []
 
+		/** Run one address-point probe and hand back its rows. */
+		const probe = async (where: string): Promise<Record<string, unknown>[]> =>
+			rowsFromExec(await this.#worker.db.exec(select(where)))
+
 		if (query.postcode) {
-			rows = rowsFromExec(
-				await this.#worker.db.exec(
-					select(
-						`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
-					)
-				)
+			rows = await probe(
+				`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
 			)
 		}
 
@@ -115,12 +115,8 @@ export class HTTPVFSAddressPointLookup {
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
 					: normalizeLocalityForKey(query.locality)
-			rows = rowsFromExec(
-				await this.#worker.db.exec(
-					select(
-						`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
-					)
-				)
+			rows = await probe(
+				`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
 			)
 		}
 		const r = rows[0]
