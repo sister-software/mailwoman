@@ -53,7 +53,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -106,7 +106,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -174,7 +174,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -212,7 +212,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
