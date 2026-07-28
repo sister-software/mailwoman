@@ -10,7 +10,8 @@
  *   re-exports the normalizer so the OSM SDK is a self-contained surface.
  */
 
-import { type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+
 export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**

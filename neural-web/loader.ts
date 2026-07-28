@@ -30,6 +30,7 @@ import {
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
+
 export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"
 
 /**

@@ -12,7 +12,8 @@
  *   without opening a database — mirrors `@mailwoman/osm`'s `street-locale.ts`.
  */
 
-import { type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+
 export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**

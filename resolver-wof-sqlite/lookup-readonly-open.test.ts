@@ -42,8 +42,10 @@ vi.mock("node:sqlite", async (importOriginal) => {
 	return { ...actual, DatabaseSync: RecordingDatabaseSync }
 })
 
+// oxlint-disable-next-line import/first -- kept below the vi.mock factory it pairs with; vitest hoists the mock anyway
 import { DatabaseSync } from "node:sqlite"
 
+// oxlint-disable-next-line import/first -- see above
 import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 /** Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable. */

@@ -12,6 +12,7 @@
 
 import { $public } from "../env/index.ts"
 import { featurize } from "./featurize.ts"
+
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
 export interface CoarsePlacerArtifact {
 	/**

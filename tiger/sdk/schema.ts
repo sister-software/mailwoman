@@ -11,6 +11,7 @@
  */
 
 import { sql, type Kysely } from "kysely"
+
 export { type Generated } from "kysely"
 export interface TIGERBlockTable {
 	GEOID: string

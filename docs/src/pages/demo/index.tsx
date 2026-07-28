@@ -51,7 +51,7 @@ const PRESETS = EXAMPLE_ADDRESSES.map((ex) => ({ label: ex.label, value: ex.addr
 const LoadingFallback: React.FC = () => <p style={{ padding: "1rem" }}>Loading…</p>
 
 function initialAddress(): string {
-	if (typeof globalThis.window === "undefined") return DEFAULT_ADDRESS
+	if (globalThis.window === undefined) return DEFAULT_ADDRESS
 
 	return new URL(globalThis.location.href).searchParams.get("q") ?? DEFAULT_ADDRESS
 }

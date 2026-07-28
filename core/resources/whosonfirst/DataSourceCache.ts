@@ -9,10 +9,10 @@ import { mkdirSync } from "node:fs"
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { dirname } from "path-ts"
 
-export { tryWithBackoff } from "./backoff.ts"
-
 import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.ts"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"
+
+export { tryWithBackoff } from "./backoff.ts"
 
 export class DataSourceCache extends DisposableStack {
 	#placetypeToLanguage = new Map<WhosOnFirstPlacetype, Map<Alpha3bLanguageCode, PlacetypeDataSource>>()

@@ -39,6 +39,8 @@ import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sql
 import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
+import type { DualRole, MailwomanLookupLike } from "./resources"
+
 /**
  * The candidate columns this reader probes — a typed projection of the shared {@link CandidateTable}.
  */
@@ -56,8 +58,6 @@ type CandidateProbeRow = Pick<
 	| "max_lon"
 	| "neg_rank"
 >
-
-import type { DualRole, MailwomanLookupLike } from "./resources"
 
 const POPULATION_BOOST = 4
 const POPULATION_SCALE_LOG10 = 6

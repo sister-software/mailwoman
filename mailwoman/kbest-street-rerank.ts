@@ -54,6 +54,7 @@ import {
 	type StreetEvidenceScope,
 	type StreetLocalityEvidence,
 } from "@mailwoman/resolver"
+
 export { foldStreetSurface } from "@mailwoman/resolver"
 const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 	"street",

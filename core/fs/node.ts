@@ -5,10 +5,11 @@
  */
 
 import type { Stats } from "node:fs"
-export { existsSync } from "node:fs"
 import { stat } from "node:fs/promises"
 
 import type { PathBuilderLike } from "path-ts"
+
+export { existsSync } from "node:fs"
 
 /**
  * Attempts to stat a file or directory.

@@ -26,9 +26,10 @@ import path from "node:path"
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import type { GlossaryData, GlossaryPluginOptions, GlossaryTerm } from "docusaurus-plugin-glossary"
-export { type GlossaryPluginOptions } from "docusaurus-plugin-glossary"
 import baseGlossaryPlugin from "docusaurus-plugin-glossary"
 import { load as parseYAML } from "js-yaml"
+
+export { type GlossaryPluginOptions } from "docusaurus-plugin-glossary"
 
 /** A glossary term carrying the `tags` extension this wrapper enforces. */
 export interface TaggedGlossaryTerm extends GlossaryTerm {

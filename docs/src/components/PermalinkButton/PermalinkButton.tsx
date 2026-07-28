@@ -11,7 +11,7 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 	const [copied, setCopied] = useState(false)
 
 	const onClick = useCallback(async () => {
-		if (typeof globalThis.window === "undefined") return
+		if (globalThis.window === undefined) return
 		const url = new URL(globalThis.location.href)
 
 		if (text) {

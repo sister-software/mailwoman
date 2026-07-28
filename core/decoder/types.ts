@@ -27,6 +27,7 @@
  */
 
 import type { BIOLabel, ComponentTag } from "../types/component.ts"
+
 export { type BIOLabel, type ComponentTag } from "../types/component.ts"
 
 /**
