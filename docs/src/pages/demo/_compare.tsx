@@ -87,9 +87,9 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 						: "unknown"
 				)
 				setClassifier(cls as unknown as MailwomanClassifierLike)
-			} catch {
+			} catch (caught) {
 				if (cancelled) return
-				setError(error instanceof Error ? error.message : String(error))
+				setError(caught instanceof Error ? caught.message : String(caught))
 			} finally {
 				if (!cancelled) {
 					setLoading(false)
@@ -147,9 +147,9 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 					fstActive: false,
 					timing: { shape: cShapeTime, classify: cClassifyTime },
 				})
-			} catch {
+			} catch (caught) {
 				if (cancelled) return
-				setError(error instanceof Error ? error.message : String(error))
+				setError(caught instanceof Error ? caught.message : String(caught))
 			}
 		})()
 
