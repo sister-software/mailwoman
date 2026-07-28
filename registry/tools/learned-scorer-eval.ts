@@ -51,8 +51,6 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode scorerPairwiseEval}. */
-/** Groups below this size are too small for a held-out split to mean anything. */
 /** Smallest mean gap counted as a real difference rather than seed noise. */
 const MIN_MEANINGFUL_DELTA = 0.005
 
@@ -68,6 +66,7 @@ const STRONG_EVIDENCE_Z = 3
 /** Share of NPIs assigned to train; the rest are held out for test. */
 const TRAIN_SPLIT_FRACTION = 0.67
 
+/** Groups below this size are too small for a held-out split to mean anything. */
 const MIN_GROUP_SIZE = 5
 
 /** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
@@ -76,6 +75,7 @@ const TRAINING_EPOCHS = 400
 /** Highest k swept when scanning cluster counts. */
 const MAX_K = 32
 
+/** Options for {@linkcode scorerPairwiseEval}. */
 export interface ScorerPairwiseEvalOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory

@@ -36,10 +36,10 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-/** Letters at or below which a token reads as an abbreviation rather than a word. */
 /** Homographs printed before the list is truncated. */
 const MAX_LISTED_HOMOGRAPHS = 12
 
+/** Letters at or below which a token reads as an abbreviation rather than a word. */
 const MAX_ABBREVIATION_LETTERS = 3
 
 const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }

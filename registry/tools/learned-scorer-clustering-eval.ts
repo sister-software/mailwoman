@@ -47,14 +47,13 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode scorerClusteringEval}. */
-/** Groups below this size are too small for a held-out split to mean anything. */
 /**
  * Smallest mean F1 gap counted as a real difference between models rather than seed noise. Verdicts inside ±this are
  * reported as a tie.
  */
 const MIN_MEANINGFUL_F1_DELTA = 0.02
 
+/** Groups below this size are too small for a held-out split to mean anything. */
 const MIN_GROUP_SIZE = 5
 
 /** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
@@ -63,6 +62,7 @@ const TRAINING_EPOCHS = 400
 /** Highest k swept when scanning cluster counts. */
 const MAX_K = 32
 
+/** Options for {@linkcode scorerClusteringEval}. */
 export interface ScorerClusteringEvalOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory

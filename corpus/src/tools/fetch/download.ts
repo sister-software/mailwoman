@@ -12,7 +12,6 @@ import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 
-/** The option base every `mailwoman corpus fetch <source>` module extends. */
 /** Rate limited — retryable, the server is asking us to back off. */
 const HTTP_TOO_MANY_REQUESTS = 429
 
@@ -22,6 +21,7 @@ const HTTP_SERVER_ERROR_MIN = 500
 /** Highest 5xx status. */
 const HTTP_SERVER_ERROR_MAX = 599
 
+/** The option base every `mailwoman corpus fetch <source>` module extends. */
 export interface BaseFetchOptions {
 	/** Destination root for downloaded source data. Each source writes its own subdirectory. */
 	outRoot: string

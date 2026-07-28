@@ -12,7 +12,6 @@
 
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
-/** Landmark vocabulary — phrases that suggest a vague-location description rather than an address. */
 /**
  * Longest input still plausible as a bare venue or landmark name. Beyond it the query is carrying an address as well,
  * and belongs to the structured-address scorer.
@@ -49,6 +48,7 @@ const LONG_VENUE_PHRASE_MAX_WORDS = 6
  */
 const ALPHANUMERIC_POSTCODE_MIN_LENGTH = 15
 
+/** Landmark vocabulary — phrases that suggest a vague-location description rather than an address. */
 const LANDMARK_LEADERS = [
 	"behind",
 	"near",

@@ -16,10 +16,10 @@
  *   preserve it so the ported behavior is byte-identical and the browser graph stays clean.
  */
 
-/** Mean km per degree of latitude (WGS84 average). */
 /** Segments used to approximate a circle as a polygon ring. */
 const CIRCLE_SEGMENTS = 64
 
+/** Mean km per degree of latitude (WGS84 average). */
 const KM_PER_DEG_LAT = 111.32
 
 /** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */

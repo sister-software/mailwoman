@@ -29,6 +29,9 @@ import type { Tagged } from "type-fest"
 
 import type { CanadianProvinceCode } from "./province.ts"
 
+/** Characters in a Canadian postal code once spaces are stripped: `A1A1A1`. */
+const POSTAL_CODE_LENGTH = 6
+
 /**
  * A Canadian postal code: `A1A 1A1`. Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit
  * pattern, conventionally written with a single space after the third. Unlike the other systems' bare five digits, the
@@ -39,9 +42,6 @@ import type { CanadianProvinceCode } from "./province.ts"
  * @title Postal Code
  * @pattern ^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$
  */
-/** Characters in a Canadian postal code once spaces are stripped: `A1A1A1`. */
-const POSTAL_CODE_LENGTH = 6
-
 export type PostalCode = Tagged<string, "CaPostalCode">
 
 /**

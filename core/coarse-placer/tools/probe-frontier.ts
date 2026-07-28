@@ -26,13 +26,13 @@ import { corePackagePath } from "../../utils/repo.ts"
 import { median } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 
-/** Options for {@linkcode probeFrontier}. */
 /** False-positive rate above which the in-class frontier is judged to have degraded. */
 const MAX_IN_CLASS_FALSE_RATE = 0.05
 
 /** Top-1 accuracy below which the in-class frontier is judged to have degraded. */
 const MIN_IN_CLASS_TOP1 = 0.8
 
+/** Options for {@linkcode probeFrontier}. */
 export interface ProbeFrontierOptions {
 	/**
 	 * Model artifact dir. Default: the DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the

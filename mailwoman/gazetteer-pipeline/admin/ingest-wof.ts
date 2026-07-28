@@ -16,10 +16,10 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import FastGlob from "fast-glob"
 import { asyncParallelIterator } from "spliterator"
 
-/** The admin placetype allowlist (postalcode builds pass their own set). */
 /** Arity of a 2D bounding box: `[west, south, east, north]`. */
 const BBOX_2D_LENGTH = 4
 
+/** The admin placetype allowlist (postalcode builds pass their own set). */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
 	"region",

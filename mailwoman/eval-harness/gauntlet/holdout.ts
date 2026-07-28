@@ -20,13 +20,13 @@ import { TextSpliterator } from "spliterator"
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
 import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
-/** Options for {@linkcode runHoldoutLayer}. */
 /**
  * Two-sided 95% critical value of the standard normal. The gate blocks only on a SIGNIFICANT regression, so a candidate
  * that is ahead or within noise passes; this is the noise boundary.
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
 
+/** Options for {@linkcode runHoldoutLayer}. */
 export interface HoldoutLayerOptions {
 	/** Candidate ONNX (required — the layer is candidate-vs-prod). */
 	candidate?: string

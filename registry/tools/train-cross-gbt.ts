@@ -49,10 +49,10 @@ import { TextSpliterator } from "spliterator"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode trainCrossSourceGBT}. */
 /** Share of entities assigned to fit; the rest are held out. */
 const FIT_SPLIT_FRACTION = 0.8
 
+/** Options for {@linkcode trainCrossSourceGBT}. */
 export interface TrainCrossSourceGBTOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory

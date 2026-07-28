@@ -14,10 +14,10 @@
  *   runtime) drive the process exit code — parse works without a data root, gazetteer, or POI layer.
  */
 
-/** A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired. */
 /** Bytes per MB, for human-readable sizes. Decimal rather than binary, matching how disk sizes are quoted. */
 const BYTES_PER_MB = 1_000_000
 
+/** A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired. */
 export const CheckStatus = {
 	OK: "ok",
 	Missing: "missing",

@@ -22,10 +22,10 @@ import * as path from "node:path"
 import { dataRootPath } from "../../utils/data-root.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
-/** Options for {@linkcode quantizeCoarsePlacer}. */
 /** Largest magnitude representable in the symmetric int8 range the weights quantize into. */
 const INT8_MAX = 127
 
+/** Options for {@linkcode quantizeCoarsePlacer}. */
 export interface QuantizeCoarsePlacerOptions {
 	/** Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
 	in?: string

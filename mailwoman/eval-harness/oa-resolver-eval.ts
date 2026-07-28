@@ -177,7 +177,6 @@ interface Resolved {
 	lon: number
 }
 
-/** Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific). */
 /** Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any. */
 function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
@@ -208,6 +207,7 @@ function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | 
 	return null
 }
 
+/** Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific). */
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {

@@ -24,10 +24,10 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
-/** Options for {@linkcode buildOutlierExposure}. */
 /** Share of a bucket that must be off-map before it is treated as an exposure case rather than noise. */
 const OFFMAP_DOMINANCE = 0.6
 
+/** Options for {@linkcode buildOutlierExposure}. */
 export interface BuildOutlierExposureOptions {
 	/** Names sampled per off-map language. Default 2500. */
 	perLang?: number

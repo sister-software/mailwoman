@@ -33,10 +33,10 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-/** Options for {@linkcode crossDatasetMap}. */
 /** Distinct agencies a combination needs before it is plotted as a cross-agency cluster. */
 const MIN_DISTINCT_AGENCIES = 3
 
+/** Options for {@linkcode crossDatasetMap}. */
 export interface CrossDatasetMapOptions {
 	/**
 	 * The `cross-dataset-links` GeoJSON. Default

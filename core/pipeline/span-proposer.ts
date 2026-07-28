@@ -34,7 +34,6 @@
  *   (see `neural/span-proposer-lexicon.ts`).
  */
 
-/** Typed kinds a span proposal may carry. See the module doc for the three cue families. */
 /** Token count below which an input is too short for its tail position to carry much signal. */
 const SHORT_INPUT_MAX_TOKENS = 3
 
@@ -50,6 +49,7 @@ const ZIP5_LENGTH = 5
  */
 const CONFIDENT_ANNOTATION_MIN = 0.6
 
+/** Typed kinds a span proposal may carry. See the module doc for the three cue families. */
 export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"

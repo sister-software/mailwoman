@@ -13,10 +13,10 @@ import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwom
 
 import type { NominatimAddressDetails, NominatimResult } from "./engine.ts"
 
-/** A GeoJSON `FeatureCollection` — the `format=geojson` envelope. */
 /** Arity of a 2D bounding box, as Nominatim reports it. */
 const BBOX_2D_LENGTH = 4
 
+/** A GeoJSON `FeatureCollection` — the `format=geojson` envelope. */
 export interface NominatimFeatureCollection {
 	type: "FeatureCollection"
 	features: Array<{

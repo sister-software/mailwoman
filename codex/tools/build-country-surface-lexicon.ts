@@ -46,10 +46,10 @@ import { dirname, resolve } from "node:path"
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
 
-/** Letters at or below which a token reads as an abbreviation rather than a word. */
 /** Ambiguous entries printed before the list is truncated. */
 const MAX_LISTED_AMBIGUOUS = 12
 
+/** Letters at or below which a token reads as an abbreviation rather than a word. */
 const MAX_ABBREVIATION_LETTERS = 3
 
 const BIT = { country_surface: 1, country_ambiguous: 2 }

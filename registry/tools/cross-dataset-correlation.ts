@@ -36,10 +36,10 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode crossDatasetCorrelation}. */
 /** Distinct sources an entity needs to count toward the triple-corroborated tally. */
 const MIN_TRIPLE_SOURCES = 3
 
+/** Options for {@linkcode crossDatasetCorrelation}. */
 export interface CrossDatasetCorrelationOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory

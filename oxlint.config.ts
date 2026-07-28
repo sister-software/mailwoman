@@ -22,7 +22,11 @@ const config = createOxlintConfig({
 	unnamedThresholds: true,
 	// Exported and SCREAMING_CASE module-level constants carry a JSDoc block saying what the value
 	// means and where it came from — provenance, not a restatement of the identifier.
-	constantDocs: true,
+	constantDocs: {
+		// Pastel command modules must export these, and the framework gives each its meaning — the
+		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
+		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
+	},
 	ignorePatterns: [
 		...DefaultIgnorePatterns,
 		".pi",

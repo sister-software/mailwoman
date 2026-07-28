@@ -19,7 +19,6 @@ import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
 
-/** Largest absolute latitude in WGS-84 degrees. */
 /** Southern edge of the US including Puerto Rico and Hawaii. */
 const MIN_US_LATITUDE = 17
 
@@ -32,6 +31,7 @@ const MIN_US_LONGITUDE = -180
 /** Eastern edge of the US including Maine and the Virgin Islands. */
 const MAX_US_LONGITUDE = -64
 
+/** Largest absolute latitude in WGS-84 degrees. */
 const MAX_ABS_LATITUDE = 90
 
 /** Largest absolute longitude in WGS-84 degrees. */

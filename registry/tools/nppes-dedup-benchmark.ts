@@ -46,13 +46,13 @@ import { latLngToCell } from "h3-js"
 
 import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode nppesDedupBenchmark}. */
 /** Groups below this size are too small for a held-out split to mean anything. */
 const MIN_GROUP_SIZE = 5
 
 /** F1 gap within which two blocking strategies are treated as equivalent. */
 const BLOCKING_PARITY_TOLERANCE = 0.015
 
+/** Options for {@linkcode nppesDedupBenchmark}. */
 export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). Model-swap

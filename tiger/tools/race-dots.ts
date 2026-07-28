@@ -26,10 +26,10 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** Options for {@linkcode raceDots}. */
 /** Attempts to place a dot inside its polygon by rejection sampling before giving up on it. */
 const MAX_PLACEMENT_TRIES = 60
 
+/** Options for {@linkcode raceDots}. */
 export interface RaceDotsOptions {
 	/** TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`. */
 	db?: string

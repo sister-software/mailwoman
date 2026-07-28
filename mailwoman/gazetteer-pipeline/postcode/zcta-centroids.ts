@@ -31,10 +31,10 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-/** Provenance label for rows filled from the 2024 ZCTA Gazetteer file. */
 /** Columns a US Census gazetteer row carries; short rows are truncated and skipped. */
 const GAZETTEER_ROW_COLUMNS = 7
 
+/** Provenance label for rows filled from the 2024 ZCTA Gazetteer file. */
 export const ZCTA_SOURCE = "census-zcta-2024"
 
 /**

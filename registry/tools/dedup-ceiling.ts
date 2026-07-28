@@ -35,10 +35,10 @@ import { writeFileSync } from "node:fs"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-/** Options for {@linkcode dedupCeiling}. */
 /** Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated. */
 const WEAK_SIMILARITY_MIN = 0.3
 
+/** Options for {@linkcode dedupCeiling}. */
 export interface DedupCeilingOptions {
 	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string

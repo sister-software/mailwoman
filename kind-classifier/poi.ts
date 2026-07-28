@@ -27,7 +27,6 @@ export interface POIPhraseMatch {
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
-	/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
 	/**
 	 * Absent = "category" (the pre-brand shape) — optional so pre-7.3 POIPhraseLookup implementors stay
 	 * source-compatible.
@@ -40,6 +39,7 @@ export interface POIPhraseMatch {
 /** Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss. */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
+/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
 export interface POISubjectMatch {
 	match: POIPhraseMatch
 	/** The matched subject text as it appeared in the query. */

@@ -43,13 +43,13 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
  * even, which is what keeps repeated centroid rounding unbiased.
  */
 const ROUND_HALF_DIGIT = 5
 
+/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1

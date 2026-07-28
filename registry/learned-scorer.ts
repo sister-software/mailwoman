@@ -34,7 +34,6 @@ import {
 
 import type { SourceRecord } from "./types.ts"
 
-/** Inputs shared by the featurizer + the scorer factory. */
 /**
  * Similarity at which two official names count as the same organisation. Set high because the feature is a near-exact
  * agreement signal, not a fuzzy one — the fuzzy comparison is a separate feature and this one exists to distinguish
@@ -42,6 +41,7 @@ import type { SourceRecord } from "./types.ts"
  */
 const OFFICIAL_NAME_AGREEMENT = 0.93
 
+/** Inputs shared by the featurizer + the scorer factory. */
 export interface LearnedFeatureConfig {
 	/**
 	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial: true,

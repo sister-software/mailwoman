@@ -18,13 +18,13 @@
  *       trains offline once and ships as a data file.
  */
 
-/** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */
 /** Distinct values at or below which every split point is tried exactly rather than by quantile. */
 const MAX_EXACT_SPLIT_VALUES = 5
 
 /** Quantile split points evaluated for a continuous feature. */
 const QUANTILE_SPLIT_COUNT = 6
 
+/** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))

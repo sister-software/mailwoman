@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-/**
- * Literal type for a tile coord array.
- */
 /** Parts in a `z/x/y` tile coordinate. */
 const TILE_COORD_PARTS = 3
 
+/**
+ * Literal type for a tile coord array.
+ */
 export type TileCoords = [zoom: number, xCoord: number, yCoord: number]
 
 export function parseTileCoordParams({ z, x, y }: Record<string, string | undefined>): TileCoords | null {
