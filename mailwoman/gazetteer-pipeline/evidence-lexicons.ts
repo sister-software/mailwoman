@@ -12,17 +12,33 @@
  *   code_entries + rules) so the Python painter (`gazetteer_anchor.py`) and the future TS painter
  *   consume them identically — train and inference share one computation.
  *
- *   THE THREE-LAW SELECTIVITY (each law bought with a falsified training run, v3.16→v3.18):
+ *   THE FOUR-LAW SELECTIVITY (laws 1–3 each bought with a falsified training run, v3.16→v3.18; law
+ *   4 + the hygiene clauses bought with the v3.19.0 golden-US collapse — the flip census in
+ *   `.superpowers/sdd/progress.md` 2026-07-28):
  *
- *   1. Degenerate exclusion — bare function words, bare street-type words, and all-function-word
- *      compositions are never evidence (the shipped FST curation policy applied to training
- *      evidence; unselective evidence trained into pure damage — bare-locality −0.180).
+ *   1. Degenerate exclusion — bare function words, bare street-type words, bare DIRECTIONALS
+ *      (libpostal `directionals.txt` — the v3.19 gap: US neighbourhoods literally named
+ *      "Northeast"/"East" painted locality evidence onto street directionals, truncating "3rd Ave
+ *      East" to "3rd"), and all-function-word compositions are never evidence (unselective evidence
+ *      trained into pure damage — bare-locality −0.180).
  *   2. Prominence floor — 1-token locality surfaces need population-backed importance ≥ 0.25
  *      (≈11k population): hamlet-long-tail surfaces fire on ordinary street text and are noise.
  *   3. Person-name tier — 1-token surfaces in libpostal given_names/surnames/personal_titles need
  *      importance ≥ 0.45: French given names are prominent-place homographs ("Rue Joseph[paint]
  *      Gagnier" started a phantom locality mid-street), while paris/lyon/nancy — also in the name
  *      lists — clear the metropolis tier.
+ *   4. Region-vocabulary exclusion — surfaces that are US state names/abbreviations are region
+ *      vocabulary, never locality evidence (v3.19: homograph-flagged state-name surfaces taught a
+ *      locality-evidence→REGION rotation — "Washington, DC" parsed region="Washington"
+ *      locality=null; "Missouri Break Ln, WY" region="Missouri"; "Frannie, Wyoming" lost its
+ *      locality). Washington-the-city rows parse correctly WITHOUT evidence — withholding beats
+ *      corrupting. Scoped to US while US is the only covered country with single-word region names
+ *      colliding this way; revisit per-country at each locale fold.
+ *
+ *   ALT-NAME SUB-PHRASE HYGIENE (also v3.19 tuition): a names-table alias whose folded form is a
+ *   contiguous sub-phrase of its own primary name ("East" ⊂ "East Nashville", "Washington" ⊂
+ *   "Mount Washington") adds ambiguity and zero discrimination — rejected. Genuine nicknames
+ *   survive.
  *
  *   The locality lexicon's v4 register change (operator doctrine 2026-07-27): NEIGHBOURHOOD
  *   surfaces fold in as single-token evidence — a web user types "montmartre" as a fragment, never
@@ -38,6 +54,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 
@@ -64,6 +81,79 @@ export function painterFold(surface: string): string[] {
 		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.map((w) => w.toLowerCase())
+}
+
+/**
+ * Evidence-side supplemental degenerate surfaces (the `SUPPLEMENTAL_DEGENERATE_SURFACES` pattern from `fst.ts`, scoped
+ * to the evidence-lexicon policy). Each entry carries its receipt — a v3.19.0 flip-census row where the surface,
+ * admitted through a WOF data-noise carrier, painted evidence that broke a golden parse:
+ *
+ * - `school` — WOF neighbourhood 85872377 / locality 1226662441 named "School" (pop-row 4019, parent-vouched); "MAPLEHILL
+ *   SCHOOL, E HILL ROAD, PLAINFIELD, VT" parsed locality="School".
+ * - `state` — WOF alias rows pairing alt-name "State" with places primary-named "Manor" (85879785 et al., not a
+ *   sub-phrase so hygiene passes it); "05857 State Rte 14, VT" truncated street to "Rte 14".
+ */
+export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["school", "state"]
+
+/**
+ * Law-1 directional closure (v5): whole surfaces from libpostal `directionals.txt` per curation language. Loaded
+ * separately from `loadDegenerateSurfaces` ON PURPOSE — that loader is the shipped FST curation policy
+ * (degenerate-surface-exclusion v1.1, baked into FST artifact trailers); evidence-lexicon curation extends it without
+ * moving the FST policy.
+ */
+export function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Set<string> {
+	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
+	const surfaces = new Set<string>()
+
+	for (const lang of CURATION_LANGUAGES) {
+		const path = join(dictionariesDir, lang, "directionals.txt")
+
+		if (!existsSync(path)) continue
+
+		for (const line of readFileSync(path, "utf8").split("\n")) {
+			for (const surface of line.split("|")) {
+				const tokens = fold(surface)
+
+				if (tokens.length > 0) surfaces.add(tokens.join(" "))
+			}
+		}
+	}
+
+	return surfaces
+}
+
+/**
+ * Law-4 region vocabulary (v5): US state names + abbreviations, painter-folded. Per-country scoping lives at the call
+ * site — the set only applies when the build covers the country whose region vocabulary it is.
+ */
+export function loadUSRegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
+	const surfaces = new Set<string>()
+
+	for (const s of [...US_STATE_ABBREVIATIONS, ...US_STATE_NAMES]) {
+		const tokens = fold(s)
+
+		if (tokens.length > 0) surfaces.add(tokens.join(" "))
+	}
+
+	return surfaces
+}
+
+/**
+ * Alt-name sub-phrase hygiene (v5): is `alt` a contiguous token subsequence of `primary` (both painter-folded)?
+ * Equality doesn't count — re-adding the primary through the names table is harmless.
+ */
+export function isSubPhraseAlias(alt: readonly string[], primary: readonly string[]): boolean {
+	if (alt.length === 0 || alt.length >= primary.length) return false
+
+	outer: for (let start = 0; start + alt.length <= primary.length; start++) {
+		for (let i = 0; i < alt.length; i++) {
+			if (primary[start + i] !== alt[i]) continue outer
+		}
+
+		return true
+	}
+
+	return false
 }
 
 /** Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles). */
@@ -121,7 +211,7 @@ export interface BuildLocalitySurfaceLexiconOpts {
 	placetypes?: string[]
 	/** WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`). */
 	dbPath?: string
-	/** Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v4.json`). */
+	/** Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v5.json`). */
 	output?: string
 	onProgress?: (line: string) => void
 }
@@ -131,6 +221,10 @@ export interface BuiltLexicon {
 	entries: number
 	homographs: number
 	skippedDegenerate: number
+	/** Law 4 (v5): surfaces refused as region vocabulary. */
+	skippedRegionVocabulary: number
+	/** Alt-name sub-phrase hygiene (v5): names-table aliases refused as sub-phrases of their primary. */
+	skippedSubPhrase: number
 	skippedProminence: number
 	maxNgram: number
 }
@@ -139,12 +233,20 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const output = opts.output ?? join(String(dataRootPath("gazetteer")), "locality-surface-lexicon-v4.json")
+	const output = opts.output ?? join(String(dataRootPath("gazetteer")), "locality-surface-lexicon-v5.json")
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("loading curation + ambiguity + person-name inputs…")
 	// Painter-fold the curation sets so they compare against painter-folded entry keys.
 	const { surfaces: degenerate, stopwordTokens } = loadDegenerateSurfaces(undefined, painterFold)
+
+	// Law-1 directional closure (v5): union the directionals in WITHOUT touching the shared FST policy set.
+	for (const s of loadDirectionalSurfaces()) degenerate.add(s)
+
+	for (const s of EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES) degenerate.add(painterFold(s).join(" "))
+
+	// Law 4 (v5): region vocabulary, scoped to the countries this build covers.
+	const regionVocabulary = countries.includes("US") ? loadUSRegionVocabulary() : new Set<string>()
 	const countryCounts = computeSurfaceCountryCounts(dbPath)
 	const personNames = loadPersonNameSurfaces()
 
@@ -187,6 +289,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const oneTokenMaxImportance = new Map<string, { own: number; parent: number }>()
 	let maxNgram = 1
 	let skippedDegenerate = 0
+	let skippedRegionVocabulary = 0
 	let skippedProminence = 0
 
 	const add = (surface: string, placeID: number): void => {
@@ -200,6 +303,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		// Law 1 (+ the letters-required clause: WOF carries numeric alias surfaces like "12").
 		if (degenerate.has(key) || tokens.every((t) => stopwordTokens.has(t)) || !/\p{L}/u.test(key)) {
 			skippedDegenerate++
+
+			return
+		}
+
+		// Law 4: region vocabulary is never locality evidence.
+		if (regionVocabulary.has(key)) {
+			skippedRegionVocabulary++
 
 			return
 		}
@@ -224,11 +334,21 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		add(row.name, row.id)
 	}
 	const alts = db.prepare(
-		`SELECT n.id AS id, n.name AS name FROM names n JOIN spr s ON s.id = n.id
+		`SELECT n.id AS id, n.name AS name, s.name AS primary_name FROM names n JOIN spr s ON s.id = n.id
 		 WHERE s.is_current = 1 AND s.country IN (${ph(countries)}) AND s.placetype IN (${ph(placetypes)})`
 	)
+	let skippedSubPhrase = 0
 
-	for (const row of alts.iterate(...countries, ...placetypes) as Iterable<{ id: number; name: string }>) {
+	for (const row of alts.iterate(...countries, ...placetypes) as Iterable<{
+		id: number
+		name: string
+		primary_name: string
+	}>) {
+		// Sub-phrase hygiene: "East" as an alias of "East Nashville" is ambiguity without discrimination.
+		if (isSubPhraseAlias(painterFold(row.name), painterFold(row.primary_name))) {
+			skippedSubPhrase++
+			continue
+		}
 		add(row.name, row.id)
 	}
 	db.close()
@@ -244,11 +364,11 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 
 	const homographs = [...entries.values()].filter((b) => b & LOCALITY_BIT.locality_homograph).length
 	const lexicon = {
-		version: 4,
+		version: 5,
 		generated_by:
-			`mailwoman gazetteer build locality-surface-lexicon (three-law selectivity: degenerate exclusion + ` +
-			`prominence ${ONE_TOKEN_IMPORTANCE_FLOOR} + person-name ${PERSON_NAME_IMPORTANCE_FLOOR}; ` +
-			`countries=[${countries}] placetypes=[${placetypes}])`,
+			`mailwoman gazetteer build locality-surface-lexicon (four-law selectivity: degenerate+directional exclusion + ` +
+			`prominence ${ONE_TOKEN_IMPORTANCE_FLOOR} + person-name ${PERSON_NAME_IMPORTANCE_FLOOR} + ` +
+			`region-vocabulary + alt-subphrase hygiene; countries=[${countries}] placetypes=[${placetypes}])`,
 		feature_dim: 2,
 		slots: ["locality", "locality_homograph"],
 		bits: LOCALITY_BIT,
@@ -273,6 +393,8 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		entries: entries.size,
 		homographs,
 		skippedDegenerate,
+		skippedRegionVocabulary,
+		skippedSubPhrase,
 		skippedProminence,
 		maxNgram,
 	}
@@ -283,7 +405,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 // ---------------------------------------------------------------------------
 
 export interface BuildStreetTypeLexiconOpts {
-	/** Output path (default `<repo>/data/gazetteer/street-type-lexicon-v1.json` — small, committed). */
+	/** Output path (default `<repo>/data/gazetteer/street-type-lexicon-v2.json` — small, committed). */
 	output?: string
 }
 
@@ -292,6 +414,12 @@ export interface BuildStreetTypeLexiconOpts {
  * are case-insensitive regardless of length — "rue" is 3 letters and must match lowercase; short abbreviation variants
  * (r, av, ST) are case-SENSITIVE uppercase `code_entries` so they never fire on lowercase prose (the anchor-lexicon
  * short-code discipline).
+ *
+ * V2 (the v3.19.0 flip-census fix, family F1): `code_entries` that are ALSO US state/territory abbreviations (CT/KY/
+ * MT/PR/WY — Court/Key/Mount/Prairie/Way) are dropped. In US mail the state reading dominates ("MOUNTAIN WAY WY 82601",
+ * "SUSIE CT WY 83101" — both lost their region to street-code evidence on the state token); a suffix abbreviated as one
+ * of these is rare enough that withholding evidence costs ~nothing. Directional codes (N/S/E/W/NE/ NW/SE/SW) stay even
+ * where one collides with a state (NE) — directional evidence is common and showed zero census flips.
  */
 export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = {}): Promise<BuiltLexicon> {
 	const [{ CA_DIRECTIONALS, CA_STREET_TYPES_EN, CA_STREET_TYPES_FR }, de, fr, gb, us] = await Promise.all([
@@ -301,7 +429,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		import("@mailwoman/codex/gb"),
 		import("@mailwoman/codex/us"),
 	])
-	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v1.json"))
+	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v2.json"))
 
 	const wordNorm = (s: string): string =>
 		s
@@ -366,9 +494,19 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 
 	for (const d of Object.keys(CA_DIRECTIONALS)) addAbbrev(d)
 
+	// V2 / family F1: state-abbreviation homograph codes never paint (see the docstring). Directionals exempt.
+	const DIRECTIONAL_CODES = new Set(["N", "S", "E", "W", "NE", "NW", "SE", "SW"])
+	let droppedStateCodes = 0
+
+	for (const code of US_STATE_ABBREVIATIONS) {
+		if (!DIRECTIONAL_CODES.has(code) && codeEntries.delete(code)) droppedStateCodes++
+	}
+
 	const lexicon = {
-		version: 1,
-		generated_by: "mailwoman gazetteer build street-type-lexicon (source: @mailwoman/codex fr/us/gb/de/ca)",
+		version: 2,
+		generated_by:
+			`mailwoman gazetteer build street-type-lexicon (source: @mailwoman/codex fr/us/gb/de/ca; ` +
+			`v2: ${droppedStateCodes} US-state-homograph codes withheld)`,
 		feature_dim: 1,
 		slots: ["street_type"],
 		bits: { street_type: 1 },
@@ -395,6 +533,8 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		entries: entries.size + codeEntries.size,
 		homographs: 0,
 		skippedDegenerate: 0,
+		skippedRegionVocabulary: droppedStateCodes,
+		skippedSubPhrase: 0,
 		skippedProminence: 0,
 		maxNgram,
 	}

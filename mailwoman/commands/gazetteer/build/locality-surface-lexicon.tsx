@@ -21,7 +21,7 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe("Comma-separated child placetypes (default locality,localadmin,neighbourhood)"),
 	db: zod.string().optional().describe("WOF admin DB (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)"),
-	output: zod.string().optional().describe("Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v4.json)"),
+	output: zod.string().optional().describe("Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v5.json)"),
 })
 
 export { OptionsSchema as options }
@@ -37,7 +37,7 @@ const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof OptionsSchem
 			onProgress: (line) => console.error(line),
 		})
 
-		return `${built.path} — ${built.entries} entries (${built.homographs} homograph-flagged; ${built.skippedDegenerate} degenerate + ${built.skippedProminence} sub-prominence skipped), max_ngram=${built.maxNgram}`
+		return `${built.path} — ${built.entries} entries (${built.homographs} homograph-flagged; ${built.skippedDegenerate} degenerate + ${built.skippedRegionVocabulary} region-vocab + ${built.skippedSubPhrase} alt-subphrase + ${built.skippedProminence} sub-prominence skipped), max_ngram=${built.maxNgram}`
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

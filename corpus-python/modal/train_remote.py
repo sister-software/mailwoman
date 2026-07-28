@@ -3243,6 +3243,8 @@ def sync_evidence_bundle():
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v2.json {VOL_MOUNT}/gazetteer/ {R}",
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v3.json {VOL_MOUNT}/gazetteer/ {R}",
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v4.json {VOL_MOUNT}/gazetteer/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v5.json {VOL_MOUNT}/gazetteer/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/street-type-lexicon-v2.json {VOL_MOUNT}/gazetteer/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
@@ -3281,6 +3283,7 @@ def grade_evidence_bundle(
     zero: str = "both",
     run: str = "v3160-evidence-bundle",
     lexicon: str = "locality-surface-lexicon-v1.json",
+    street_lexicon: str = "street-type-lexicon-v1.json",
     show_flips: str = "",
     case: str = "asis",
     heal: bool = False,
@@ -3323,7 +3326,7 @@ def grade_evidence_bundle(
 
     gaz = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json")
     ctry = load_country_lexicon(f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json")
-    street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json")
+    street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/{street_lexicon}")
     locality = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/{lexicon}")
     anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
 
@@ -3346,9 +3349,18 @@ def grade_evidence_bundle(
             input_ids=torch.tensor([feats["input_ids"][:n]]),
             attention_mask=torch.tensor([feats["attention_mask"][:n]]),
         )
+        # Model-capability-aware feeding: a channel is fed only when THIS model carries it — the
+        # v385 reference row (no bundle channels) grades through the SAME instrument without raising.
+        has = {
+            "anchor": getattr(model, "use_postcode_anchor", False),
+            "gazetteer": getattr(model, "use_gazetteer_anchor", False),
+            "country": getattr(model, "use_country_anchor", False),
+            "street_type": getattr(model, "use_street_type_anchor", False),
+            "locality_surface": getattr(model, "use_locality_surface_anchor", False),
+        }
         for ch in ("anchor", "gazetteer", "country", "street_type", "locality_surface"):
             fk, ckk = f"{ch}_features", f"{ch}_confidence"
-            if fk in feats:
+            if fk in feats and has[ch]:
                 zero = zero_bundle and ch in BUNDLE
                 fv = [[0.0] * len(feats[fk][0])] * n if zero else feats[fk][:n]
                 cv = [0.0] * n if zero else feats[ckk][:n]
