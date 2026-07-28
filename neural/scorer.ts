@@ -111,7 +111,7 @@ function defaultCountryLexicon(locale: string | undefined): string | undefined {
  * locality-surface lexicon (13 MB, never in git) resolves from the weights package only.
  */
 function defaultStreetTypeLexicon(locale: string | undefined): string | undefined {
-	const repoDefault = "data/gazetteer/street-type-lexicon-v2.json"
+	const repoDefault = "data/gazetteer/street-type-lexicon-v3.json"
 
 	if (existsSync(repoDefault)) return repoDefault
 

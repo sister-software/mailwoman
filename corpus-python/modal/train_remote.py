@@ -3245,6 +3245,8 @@ def sync_evidence_bundle():
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v4.json {VOL_MOUNT}/gazetteer/ {R}",
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v5.json {VOL_MOUNT}/gazetteer/ {R}",
         f"rclone copy :s3:{BUCKET}/gazetteer/street-type-lexicon-v2.json {VOL_MOUNT}/gazetteer/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v6.json {VOL_MOUNT}/gazetteer/ {R}",
+        f"rclone copy :s3:{BUCKET}/gazetteer/street-type-lexicon-v3.json {VOL_MOUNT}/gazetteer/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")

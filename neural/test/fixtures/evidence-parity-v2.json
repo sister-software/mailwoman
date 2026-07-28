@@ -19,6 +19,9 @@
 			"R": 1,
 			"AV": 1,
 			"ST": 1
+		},
+		"rules": {
+			"digit_guard": true
 		}
 	},
 	"locality_lexicon": {
@@ -38,7 +41,10 @@
 			"la grange park": 1,
 			"belleville": 3
 		},
-		"code_entries": {}
+		"code_entries": {},
+		"rules": {
+			"digit_guard": true
+		}
 	},
 	"cases": [
 		{
@@ -81,8 +87,8 @@
 				}
 			],
 			"street": {
-				"features": [[0.0], [1.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
-				"confidence": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 			},
 			"locality": {
 				"features": [
@@ -142,8 +148,8 @@
 				}
 			],
 			"street": {
-				"features": [[0.0], [1.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
-				"confidence": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 			},
 			"locality": {
 				"features": [
@@ -587,6 +593,188 @@
 					[1.0, 1.0]
 				],
 				"confidence": [0.0, 0.0, 1.0]
+			}
+		},
+		{
+			"raw": "Springfield 62704",
+			"pieces": [
+				{
+					"piece": "▁Spring",
+					"start": 0,
+					"end": 6
+				},
+				{
+					"piece": "field",
+					"start": 6,
+					"end": 11
+				},
+				{
+					"piece": "▁6",
+					"start": 11,
+					"end": 13
+				},
+				{
+					"piece": "270",
+					"start": 13,
+					"end": 16
+				},
+				{
+					"piece": "4",
+					"start": 16,
+					"end": 17
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0]
+			}
+		},
+		{
+			"raw": "12b rue du Springfield",
+			"pieces": [
+				{
+					"piece": "▁12",
+					"start": 0,
+					"end": 2
+				},
+				{
+					"piece": "b",
+					"start": 2,
+					"end": 3
+				},
+				{
+					"piece": "▁rue",
+					"start": 3,
+					"end": 7
+				},
+				{
+					"piece": "▁du",
+					"start": 7,
+					"end": 10
+				},
+				{
+					"piece": "▁Spring",
+					"start": 10,
+					"end": 17
+				},
+				{
+					"piece": "field",
+					"start": 17,
+					"end": 22
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[1.0, 1.0],
+					[1.0, 1.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0]
+			}
+		},
+		{
+			"raw": "Boulevard 7 des Capucines",
+			"pieces": [
+				{
+					"piece": "▁Boulevard",
+					"start": 0,
+					"end": 9
+				},
+				{
+					"piece": "▁7",
+					"start": 9,
+					"end": 11
+				},
+				{
+					"piece": "▁des",
+					"start": 11,
+					"end": 15
+				},
+				{
+					"piece": "▁Capucines",
+					"start": 15,
+					"end": 25
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0]
+			}
+		},
+		{
+			"raw": "Ancien Chemin 3 de Rennes",
+			"pieces": [
+				{
+					"piece": "▁Ancien",
+					"start": 0,
+					"end": 6
+				},
+				{
+					"piece": "▁Chemin",
+					"start": 6,
+					"end": 13
+				},
+				{
+					"piece": "▁3",
+					"start": 13,
+					"end": 15
+				},
+				{
+					"piece": "▁de",
+					"start": 15,
+					"end": 18
+				},
+				{
+					"piece": "▁R",
+					"start": 18,
+					"end": 20
+				},
+				{
+					"piece": "ennes",
+					"start": 20,
+					"end": 25
+				}
+			],
+			"street": {
+				"features": [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			},
+			"locality": {
+				"features": [
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[0.0, 0.0],
+					[1.0, 0.0],
+					[1.0, 0.0]
+				],
+				"confidence": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0]
 			}
 		}
 	]

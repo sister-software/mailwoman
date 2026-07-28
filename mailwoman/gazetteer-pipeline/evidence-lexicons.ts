@@ -211,7 +211,7 @@ export interface BuildLocalitySurfaceLexiconOpts {
 	placetypes?: string[]
 	/** WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`). */
 	dbPath?: string
-	/** Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v5.json`). */
+	/** Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v6.json`). */
 	output?: string
 	onProgress?: (line: string) => void
 }
@@ -233,7 +233,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const output = opts.output ?? join(String(dataRootPath("gazetteer")), "locality-surface-lexicon-v5.json")
+	const output = opts.output ?? join(String(dataRootPath("gazetteer")), "locality-surface-lexicon-v6.json")
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("loading curation + ambiguity + person-name inputs…")
@@ -364,7 +364,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 
 	const homographs = [...entries.values()].filter((b) => b & LOCALITY_BIT.locality_homograph).length
 	const lexicon = {
-		version: 5,
+		version: 6,
 		generated_by:
 			`mailwoman gazetteer build locality-surface-lexicon (four-law selectivity: degenerate+directional exclusion + ` +
 			`prominence ${ONE_TOKEN_IMPORTANCE_FLOOR} + person-name ${PERSON_NAME_IMPORTANCE_FLOOR} + ` +
@@ -380,6 +380,11 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 			entries: "case-insensitive; key = normalizeTokens(surface).join(' ')",
 			code_entries: "unused for this channel (no case-sensitive short codes)",
 			scan: "longest-first n-gram over whitespace words, left to right, non-overlapping",
+			digit_guard: true,
+			digit_guard_semantics:
+				"a matched span paints NOTHING when any span word or the nearest non-empty neighbor word carries a " +
+				"Unicode-Nd digit; the guarded match still consumes its span (no sub-ngram re-matching). v3.23: evidence " +
+				"beside a house number swallowed the digit into the span (P0 alnum-hn \u22120.325 lower+heal).",
 		},
 		entries: Object.fromEntries(entries),
 		code_entries: {},
@@ -405,7 +410,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 // ---------------------------------------------------------------------------
 
 export interface BuildStreetTypeLexiconOpts {
-	/** Output path (default `<repo>/data/gazetteer/street-type-lexicon-v2.json` — small, committed). */
+	/** Output path (default `<repo>/data/gazetteer/street-type-lexicon-v3.json` — small, committed). */
 	output?: string
 }
 
@@ -429,7 +434,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		import("@mailwoman/codex/gb"),
 		import("@mailwoman/codex/us"),
 	])
-	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v2.json"))
+	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v3.json"))
 
 	const wordNorm = (s: string): string =>
 		s
@@ -503,7 +508,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	}
 
 	const lexicon = {
-		version: 2,
+		version: 3,
 		generated_by:
 			`mailwoman gazetteer build street-type-lexicon (source: @mailwoman/codex fr/us/gb/de/ca; ` +
 			`v2: ${droppedStateCodes} US-state-homograph codes withheld)`,
@@ -520,6 +525,11 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 				"case-SENSITIVE exact: word_norm(token) == key (keys uppercase; the surface must already BE " +
 				"uppercase). n-gram length 1 only.",
 			scan: "longest-first n-gram over whitespace words, left to right, non-overlapping",
+			digit_guard: true,
+			digit_guard_semantics:
+				"a matched span paints NOTHING when any span word or the nearest non-empty neighbor word carries a " +
+				"Unicode-Nd digit; the guarded match still consumes its span (no sub-ngram re-matching). v3.23: evidence " +
+				"beside a house number swallowed the digit into the span (P0 alnum-hn \u22120.325 lower+heal).",
 		},
 		entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
 		code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),

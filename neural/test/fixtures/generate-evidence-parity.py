@@ -23,7 +23,7 @@ from mailwoman_train.gazetteer_anchor import GazetteerLexicon, realign_gazetteer
 from mailwoman_train.tokenizer import Tokenizer
 
 FIXTURE_DIR = Path(__file__).parent
-OUT = FIXTURE_DIR / "evidence-parity-v1.json"
+OUT = FIXTURE_DIR / "evidence-parity-v2.json"
 
 STREET_LEXICON = {
     "feature_dim": 1,
@@ -39,6 +39,7 @@ STREET_LEXICON = {
         "ancien chemin": 1,  # multi-token, longest-first
     },
     "code_entries": {"R": 1, "AV": 1, "ST": 1},
+    "rules": {"digit_guard": True},
 }
 
 LOCALITY_LEXICON = {
@@ -56,6 +57,7 @@ LOCALITY_LEXICON = {
         "belleville": 3,
     },
     "code_entries": {},
+    "rules": {"digit_guard": True},
 }
 
 PROBES = [
@@ -72,6 +74,11 @@ PROBES = [
     "Springfield",
     "nothing to see here",
     "Chemin de Belleville",
+    # Digit-guard probes (v3.23): matched spans beside/containing digits must paint NOTHING.
+    "Springfield 62704",  # trailing digit neighbor guards the locality match
+    "12b rue du Springfield",  # alnum house number guards "rue"; "Springfield" (neighbor "du") still paints
+    "Boulevard 7 des Capucines",  # digit inside the neighborhood of both matches
+    "Ancien Chemin 3 de Rennes",  # digit splits the 2-gram; guarded 1-gram consumption semantics
 ]
 
 
@@ -83,6 +90,7 @@ def to_lexicon(raw: dict) -> GazetteerLexicon:
         max_ngram=raw["max_ngram"],
         entries=raw["entries"],
         code_entries=raw["code_entries"],
+        digit_guard=bool(raw.get("rules", {}).get("digit_guard", False)),
     )
 
 

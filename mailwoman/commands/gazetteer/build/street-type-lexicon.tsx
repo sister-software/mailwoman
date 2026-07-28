@@ -14,7 +14,7 @@ import zod from "zod"
 import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
-	output: zod.string().optional().describe("Output path (default <repo>/data/gazetteer/street-type-lexicon-v2.json)"),
+	output: zod.string().optional().describe("Output path (default <repo>/data/gazetteer/street-type-lexicon-v3.json)"),
 })
 
 export { OptionsSchema as options }

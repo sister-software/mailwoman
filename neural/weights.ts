@@ -113,11 +113,11 @@ export interface ResolvedWeights {
 	 */
 	countryLexiconPath?: string
 	/**
-	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2) — `street-type-lexicon-v2.json`. Server tier only;
+	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2) — `street-type-lexicon-v3.json`. Server tier only;
 	 * ships at the promote whose model requires the bundle channels.
 	 */
 	streetTypeLexiconPath?: string
-	/** Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v5.json`. */
+	/** Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v6.json`. */
 	localitySurfaceLexiconPath?: string
 	/**
 	 * Path to the per-locale FST gazetteer (`fst-<locale>.bin`) shipped beside the resolved model. `undefined` when the
@@ -295,10 +295,10 @@ function resolveFromPackageDir(
 		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
 	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
 	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them).
-	const streetTypeCandidate = resolve(packageDir, "street-type-lexicon-v2.json")
+	const streetTypeCandidate = resolve(packageDir, "street-type-lexicon-v3.json")
 	const streetTypeLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(streetTypeCandidate) ? streetTypeCandidate : undefined
-	const localitySurfaceCandidate = resolve(packageDir, "locality-surface-lexicon-v5.json")
+	const localitySurfaceCandidate = resolve(packageDir, "locality-surface-lexicon-v6.json")
 	const localitySurfaceLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
 

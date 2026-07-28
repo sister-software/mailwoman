@@ -129,6 +129,7 @@ describe("street-type lexicon build", () => {
 		const j = JSON.parse(readFileSync(tmp, "utf8"))
 
 		// "rue" must match lowercase (the FR probe class); "R" only as an uppercase code.
+		expect(j.rules.digit_guard).toBe(true)
 		expect(j.entries.rue).toBe(1)
 		expect(j.code_entries.R).toBe(1)
 		expect(j.entries.r).toBeUndefined()
