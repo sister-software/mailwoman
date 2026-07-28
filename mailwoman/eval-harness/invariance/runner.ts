@@ -226,11 +226,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			const transform = getTransform(transformId) // throws loudly on an unknown id — fixture typo guard.
 			let transformedText: string | null
 
-			if (transformId === "idempotence") {
-				transformedText = row.raw
-			} else {
-				transformedText = transform.apply(row.raw)
-			}
+			transformedText = transformId === "idempotence" ? row.raw : transform.apply(row.raw)
 
 			if (transformedText == null) {
 				skipped.push({ rowId: row.id, transformId, reason: "transform not applicable to this raw" })

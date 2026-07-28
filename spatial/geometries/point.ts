@@ -249,6 +249,8 @@ export class GeoPoint implements PointLiteral {
 	constructor(input: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	constructor(input?: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox) {
 		if (isCoordPairLiteral(input)) {
+			// oxlint-disable-next-line unicorn/prefer-ternary -- the if/else narrows `input` to the 2-tuple
+			// that inferGeoJSONCoordOrder requires; a ternary does not carry that narrowing through.
 			if (input.length === 2) {
 				this.coordinates = inferGeoJSONCoordOrder(input)
 			} else {

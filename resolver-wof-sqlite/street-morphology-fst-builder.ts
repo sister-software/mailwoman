@@ -96,6 +96,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
 
+	// oxlint-disable-next-line unicorn/prefer-ternary -- the else branch is a multi-line directory scan
 	if (opts.locales && opts.locales.length) {
 		locales = opts.locales
 	} else {

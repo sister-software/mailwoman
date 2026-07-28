@@ -918,11 +918,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 
 			if (query.parentID !== undefined) {
-				if (row.parent_id === query.parentID) {
-					score += this.#weights.directChildBoost
-				} else {
-					score += this.#weights.descendantBoost
-				}
+				score += row.parent_id === query.parentID ? this.#weights.directChildBoost : this.#weights.descendantBoost
 			}
 			const extraLen = Math.max(0, row.name.length - queryLen - 3)
 			score -= (this.#weights.lengthPenaltyWeight * extraLen) / 10

@@ -237,11 +237,7 @@ export class NeuralAddressClassifier {
 		this.decodeMode = cfg.decode ?? "viterbi"
 		const structural = buildBIOTransitionMask(this.labels)
 
-		if (cfg.transitions) {
-			this.transitions = addMatrices(structural, cfg.transitions)
-		} else {
-			this.transitions = structural
-		}
+		this.transitions = cfg.transitions ? addMatrices(structural, cfg.transitions) : structural
 		this.startTransitions = cfg.startTransitions ?? buildBIOStartMask(this.labels)
 		this.endTransitions = cfg.endTransitions ?? buildBIOEndMask(this.labels)
 	}

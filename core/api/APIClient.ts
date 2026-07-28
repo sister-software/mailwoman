@@ -78,6 +78,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			...config.axios,
 		})
 
+		// oxlint-disable-next-line unicorn/prefer-ternary -- the branches are multi-line client constructions
 		if (config.caching) {
 			this.axios = setupCache(axiosInstance, {
 				debug: (msg) => {
