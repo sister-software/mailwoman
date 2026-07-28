@@ -163,6 +163,7 @@ function stripAnsiSpinner(stdout: string): string {
 
 if (!hasWOFDb) {
 	describe.skip("--resolve end-to-end", () => {
+		// oxlint-disable-next-line vitest/expect-expect -- a visible placeholder reporting the absent WOF DB, not a test
 		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB)`, () => {})
 	})
 }

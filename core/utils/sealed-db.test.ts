@@ -63,7 +63,8 @@ describe("openBuiltDatabase", () => {
 	it("allows a write open of an UNsealed database (builder staging)", () => {
 		const path = makeDB()
 		const db = openBuiltDatabase(path, { write: true })
-		db.exec("INSERT INTO t (v) VALUES ('y')")
+
+		expect(() => db.exec("INSERT INTO t (v) VALUES ('y')")).not.toThrow()
 		db.close()
 	})
 })

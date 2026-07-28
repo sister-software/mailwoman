@@ -44,5 +44,9 @@ export default {
 		"guard-for-in": "error",
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
+		// Several suites assert through helpers that throw rather than calling `expect` inline —
+		// `expectProposal` in the phrase-grouper catalogue, `assertDownstreamOffsetsSurvive` in the
+		// tokenizer suite. Without this the rule reads those tests as asserting nothing.
+		"vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expect*", "assert*"] }],
 	},
 }

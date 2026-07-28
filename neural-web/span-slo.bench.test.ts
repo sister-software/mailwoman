@@ -47,5 +47,11 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		console.log(`  v301 (spans)    : ${b.ms.toFixed(2)} ms/infer  spans=${b.spans}`)
 		console.log(`  delta           : ${(b.ms - a.ms).toFixed(2)} ms (${((100 * (b.ms - a.ms)) / a.ms).toFixed(1)}%)`)
 		console.log(`  NOTE: v301 unflattens spans on EVERY infer here — the full cost, not logits-only.\n`)
+
+		// Timing is reported rather than asserted, being machine-dependent. What the comparison is
+		// actually for — that v264 emits no span scores and v301 does — is an invariant, and was
+		// going unchecked.
+		expect(a.spans).toBe(false)
+		expect(b.spans).toBe(true)
 	}, 300_000)
 })
