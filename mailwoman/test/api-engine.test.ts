@@ -39,6 +39,7 @@ import { createServeEngine } from "../api-engine.ts"
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))
 const hasStack = existsSync(wofPath) && existsSync(txSitus)
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)
 
 /** `/v1/parse` needs only the model weights (Task 2) — gate its own tests independently of the WOF/TX stack above. */
@@ -49,6 +50,7 @@ function weightsPresent(): boolean {
 		return false
 	}
 }
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfWeights = describe.skipIf(!weightsPresent())
 
 let app: ReturnType<typeof createMailwomanAPI>

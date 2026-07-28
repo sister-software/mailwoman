@@ -71,6 +71,7 @@ describe("--default-country schema validation", () => {
 })
 
 // End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const run = (address: string, extra: string[] = []) =>
