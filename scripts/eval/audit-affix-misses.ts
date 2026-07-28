@@ -23,6 +23,9 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
+/** Longest suffix still likely an abbreviation when it carries no trailing period. */
+const MAX_ABBREVIATED_SUFFIX = 4
+
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
@@ -80,7 +83,7 @@ function formFeatures(row: { raw: string; components: Record<string, string> }):
 	}
 
 	if (suffix) {
-		f.push(suffix.length <= 4 && !suffix.endsWith(".") ? "suffix-abbr" : "suffix-full")
+		f.push(suffix.length <= MAX_ABBREVIATED_SUFFIX && !suffix.endsWith(".") ? "suffix-abbr" : "suffix-full")
 
 		if (!COMMON_SUFFIXES.has(suffix.toLowerCase().replace(/\.$/, ""))) {
 			f.push("suffix-RARE")

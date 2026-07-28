@@ -27,6 +27,12 @@ import { median } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 
 /** Options for {@linkcode probeFrontier}. */
+/** False-positive rate above which the in-class frontier is judged to have degraded. */
+const MAX_IN_CLASS_FALSE_RATE = 0.05
+
+/** Top-1 accuracy below which the in-class frontier is judged to have degraded. */
+const MIN_IN_CLASS_TOP1 = 0.8
+
 export interface ProbeFrontierOptions {
 	/**
 	 * Model artifact dir. Default: the DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the
@@ -167,9 +173,9 @@ export async function probeFrontier(
 	const inClassN = rows.reduce((t, r) => t + r.inClass, 0)
 
 	const branch =
-		inClassFalseRate > 0.05
+		inClassFalseRate > MAX_IN_CLASS_FALSE_RATE
 			? "DATA GAP — class set does not cover the recoverable tranche; defer to a class-set-widening retrain."
-			: top1OfInClass / Math.max(1, inClassN) < 0.8
+			: top1OfInClass / Math.max(1, inClassN) < MIN_IN_CLASS_TOP1
 				? "LOW-QUALITY SIGNAL — in-set top1 < 80%; lowering the threshold would hard-filter wrong guesses. Defer."
 				: (median(inClassCorrectProbs) ?? 0) < HARD_PLACE_COUNTRY_MIN_CONF
 					? "UNDER-CONFIDENT — in-set + top1 ≥ 80% but median prob_1 < 0.9; the M2 mass rule is the CPU fix (default-off)."

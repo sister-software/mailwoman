@@ -23,6 +23,9 @@ import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+/** Artifact examples collected before the list is truncated. */
+const MAX_LISTED_ARTIFACTS = 12
+
 const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
 
 function adminRoots(): string[] {
@@ -275,7 +278,7 @@ function main(): number {
 			inc(overall, "pip")
 			inc(byState[st]!, "pip")
 
-			if (!nameOk && artifactExamples.length < 12) {
+			if (!nameOk && artifactExamples.length < MAX_LISTED_ARTIFACTS) {
 				artifactExamples.push(`  "${r.input}"  gold="${pyStr(r.expectedLoc)}"  resolved="${pyStr(r.neuralLoc)}"`)
 			}
 		}

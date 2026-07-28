@@ -36,6 +36,9 @@ import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
 /** Options for {@linkcode dedupCeiling}. */
+/** Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated. */
+const WEAK_SIMILARITY_MIN = 0.3
+
 export interface DedupCeilingOptions {
 	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
 	sources?: string
@@ -217,7 +220,7 @@ export async function dedupCeiling(
 					} else if (!sameTax) {
 						collideDistinct++
 					}
-				} else if (sim >= 0.3) {
+				} else if (sim >= WEAK_SIMILARITY_MIN) {
 					mid++
 				} else {
 					separable++

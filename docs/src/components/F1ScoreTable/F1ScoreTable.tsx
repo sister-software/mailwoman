@@ -21,6 +21,12 @@ import styles from "./styles.module.css"
 // Data types
 // ---------------------------------------------------------------------------
 
+/** F1 percentage at or above which a cell is shaded as strong. Presentation only. */
+const HIGH_F1_PERCENT = 80
+
+/** F1 percentage at or above which a cell is shaded as middling; below it, weak. */
+const MID_F1_PERCENT = 30
+
 interface F1Row {
 	/** Human-readable tag label (e.g. "us.street"). */
 	tag: string
@@ -218,9 +224,9 @@ const F1_DATA: F1Row[] = [
 function scoreClass(value: number | null): string {
 	if (value == null) return styles.cellNA
 
-	if (value >= 80) return styles.cellHigh
+	if (value >= HIGH_F1_PERCENT) return styles.cellHigh
 
-	if (value >= 30) return styles.cellMid
+	if (value >= MID_F1_PERCENT) return styles.cellMid
 
 	return styles.cellLow
 }

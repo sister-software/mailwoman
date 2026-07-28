@@ -37,6 +37,9 @@ import {
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
 /** Options for {@linkcode crossDatasetCorrelation}. */
+/** Distinct sources an entity needs to count toward the triple-corroborated tally. */
+const MIN_TRIPLE_SOURCES = 3
+
 export interface CrossDatasetCorrelationOptions {
 	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
 	createGeocoder: EvalGeocoderFactory
@@ -393,7 +396,7 @@ export async function crossDatasetCorrelation(
 		}
 		lines.push("")
 	}
-	const triple = crossSource.filter((x) => x.sources.size >= 3).length
+	const triple = crossSource.filter((x) => x.sources.size >= MIN_TRIPLE_SOURCES).length
 
 	if (triple) {
 		lines.push(`Of those, **${triple}** span all three sources.`)

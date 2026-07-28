@@ -19,6 +19,18 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /** Options for {@linkcode convertTXHHSC}. */
+/** Texas bounding box, used to reject rows whose coordinates landed in the wrong state. */
+const TX_MIN_LATITUDE = 25
+
+/** See {@link TX_MIN_LATITUDE}. */
+const TX_MAX_LATITUDE = 37
+
+/** See {@link TX_MIN_LATITUDE}. */
+const TX_MIN_LONGITUDE = -107
+
+/** See {@link TX_MIN_LATITUDE}. */
+const TX_MAX_LONGITUDE = -93
+
 export interface TXHHSCConvertOptions {
 	/** The TX HHSC nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`. */
 	src?: string
@@ -64,7 +76,7 @@ export function convertTXHHSC(
 		const lon = Number(m[2])
 
 		// Sanity: TX bounding box (rejects swapped/garbage coords).
-		if (lat < 25 || lat > 37 || lon > -93 || lon < -107) {
+		if (lat < TX_MIN_LATITUDE || lat > TX_MAX_LATITUDE || lon > TX_MAX_LONGITUDE || lon < TX_MIN_LONGITUDE) {
 			skipped++
 			continue
 		}

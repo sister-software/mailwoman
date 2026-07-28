@@ -31,6 +31,9 @@ import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+/** Longest predicted region string still plausibly a code rather than a spelled-out name. */
+const MAX_REGION_CODE_LENGTH = 4
+
 const { values: rawStringArgs } = parseArgs({
 	options: {
 		"anchor-lookup": { type: "string" },
@@ -285,7 +288,7 @@ async function main() {
 				else if (
 					goldRegion.length > predRegion.length &&
 					norm(goldRegion).endsWith(norm(predRegion)) &&
-					predRegion.length <= 4
+					predRegion.length <= MAX_REGION_CODE_LENGTH
 				) {
 					diacriticBroken++
 				}

@@ -19,6 +19,15 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "../featurize.ts"
 
+/** Lowest calibration temperature swept. */
+const MIN_TEMPERATURE = 0.5
+
+/** Highest calibration temperature swept — just past 4 so the endpoint is included despite float drift. */
+const MAX_TEMPERATURE = 4.01
+
+/** Temperature sweep granularity. */
+const TEMPERATURE_STEP = 0.1
+
 interface Sample {
 	x: Int32Array
 	y: number
@@ -211,7 +220,7 @@ export async function trainCoarsePlacer(
 	let bestT = 1
 	let bestNLL = Infinity
 
-	for (let T = 0.5; T <= 4.01; T += 0.1) {
+	for (let T = MIN_TEMPERATURE; T <= MAX_TEMPERATURE; T += TEMPERATURE_STEP) {
 		const nll = valNLL(T)
 
 		if (nll < bestNLL) {

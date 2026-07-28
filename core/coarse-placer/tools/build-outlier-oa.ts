@@ -36,6 +36,9 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
+/** Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from. */
+const MIN_OUTLIER_LENGTH = 6
+
 interface OaTestRow {
 	raw: string
 	country: string
@@ -158,7 +161,7 @@ export async function buildOutlierOA(
 			}
 			const raw = assemble(row)
 
-			if (!raw || raw.length < 6 || seen.has(raw)) continue
+			if (!raw || raw.length < MIN_OUTLIER_LENGTH || seen.has(raw)) continue
 			seen.add(raw)
 			out.push(raw)
 

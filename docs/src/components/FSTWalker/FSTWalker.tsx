@@ -32,6 +32,12 @@ import styles from "./styles.module.css"
 // ---------------------------------------------------------------------------
 
 /** A single step in the FST walk — one token consumed, one state transition. */
+/** Importance at or above which an FST node is drawn as high. Presentation only. */
+const HIGH_IMPORTANCE_MIN = 0.7
+
+/** Importance at or above which an FST node is drawn as medium; below it, low. */
+const MID_IMPORTANCE_MIN = 0.3
+
 interface WalkStep {
 	/** The normalized token consumed at this step. */
 	token: string
@@ -94,9 +100,9 @@ function fmtImportance(imp: number): string {
 
 /** Importance tier for color coding. */
 function importanceTier(imp: number): "high" | "mid" | "low" {
-	if (imp >= 0.7) return "high"
+	if (imp >= HIGH_IMPORTANCE_MIN) return "high"
 
-	if (imp >= 0.3) return "mid"
+	if (imp >= MID_IMPORTANCE_MIN) return "mid"
 
 	return "low"
 }

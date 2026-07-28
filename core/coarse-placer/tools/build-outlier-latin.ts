@@ -30,6 +30,9 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
+/** Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from. */
+const MIN_OUTLIER_LENGTH = 6
+
 interface LatinTestRow {
 	raw: string
 	country: string
@@ -140,7 +143,7 @@ export async function buildOutlierLatin(
 		for (const r of res.getRowObjects()) {
 			const raw = assemble(r)
 
-			if (!raw || seen.has(raw) || raw.length < 6) continue
+			if (!raw || seen.has(raw) || raw.length < MIN_OUTLIER_LENGTH) continue
 			seen.add(raw)
 			out.push(raw)
 		}

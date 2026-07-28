@@ -34,6 +34,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
 /** Options for {@linkcode crossDatasetMap}. */
+/** Distinct agencies a combination needs before it is plotted as a cross-agency cluster. */
+const MIN_DISTINCT_AGENCIES = 3
+
 export interface CrossDatasetMapOptions {
 	/**
 	 * The `cross-dataset-links` GeoJSON. Default
@@ -100,7 +103,7 @@ export function crossDatasetMap(
 			f.properties["bucket"] = bucket
 		}
 
-		if (new Set(combo.map(agencyOf)).size >= 3) {
+		if (new Set(combo.map(agencyOf)).size >= MIN_DISTINCT_AGENCIES) {
 			triple++
 		}
 		comboCounts.set(bucket, (comboCounts.get(bucket) ?? 0) + 1)

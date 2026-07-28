@@ -23,6 +23,9 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
 /** Options for {@linkcode quantizeCoarsePlacer}. */
+/** Largest magnitude representable in the symmetric int8 range the weights quantize into. */
+const INT8_MAX = 127
+
 export interface QuantizeCoarsePlacerOptions {
 	/** Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
 	in?: string
@@ -78,9 +81,9 @@ export async function quantizeCoarsePlacer(
 		for (let i = 0; i < dim; i++) {
 			let q = Math.round(w[base + i]! / scale)
 
-			if (q > 127) {
+			if (q > INT8_MAX) {
 				q = 127
-			} else if (q < -127) {
+			} else if (q < -INT8_MAX) {
 				q = -127
 			} // symmetric range; avoid -128 so |q|≤127
 			int8[base + i] = q

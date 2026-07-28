@@ -14,6 +14,9 @@
 
 import type { VectorSourceSpecification } from "maplibre-gl"
 
+/** Segments used to approximate a circle as a polygon ring. */
+const CIRCLE_SEGMENTS = 64
+
 export const TILE_WORKER_URL = "https://tiles.sister.software"
 export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
 
@@ -41,7 +44,7 @@ export function approxCircleGeometry(
 	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
 	const ring: number[][] = []
 
-	for (let i = 0; i <= 64; i++) {
+	for (let i = 0; i <= CIRCLE_SEGMENTS; i++) {
 		const theta = (2 * Math.PI * i) / 64
 		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
 	}

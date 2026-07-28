@@ -18,6 +18,12 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
+/** Confusions below this count are individually uninteresting and are summarised instead. */
+const MIN_CONFUSION_COUNT = 20
+
+/** Off-map misses printed before the list is truncated. */
+const MAX_LISTED_MISSES = 8
+
 interface TestRow {
 	raw: string
 	country: string
@@ -116,7 +122,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 	for (const t of meta.classes) {
 		for (const [pred, n] of Object.entries(confusion[t] ?? {})) {
-			if (pred !== t && n >= 20) {
+			if (pred !== t && n >= MIN_CONFUSION_COUNT) {
 				confLines.push(`    ${t}→${pred}: ${n}`)
 			}
 		}
@@ -154,7 +160,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 				if (handled(p)) {
 					offOk++
-				} else if (offMiss.length < 8) {
+				} else if (offMiss.length < MAX_LISTED_MISSES) {
 					offMiss.push(
 						`    ${r.script}/${r.country} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 30)}»`
 					)

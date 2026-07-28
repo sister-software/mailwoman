@@ -47,6 +47,9 @@ import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
 
 /** Letters at or below which a token reads as an abbreviation rather than a word. */
+/** Ambiguous entries printed before the list is truncated. */
+const MAX_LISTED_AMBIGUOUS = 12
+
 const MAX_ABBREVIATION_LETTERS = 3
 
 const BIT = { country_surface: 1, country_ambiguous: 2 }
@@ -165,5 +168,5 @@ mkdirSync(dirname(OUTPUT), { recursive: true })
 writeFileSync(OUTPUT, JSON.stringify(lexicon, null, 1) + "\n")
 process.stderr.write(
 	`wrote ${OUTPUT}: ${entries.size} entries + ${codeEntries.size} code_entries, ` +
-		`max_ngram=${maxNgram}, ${ambiguousEntries.length} ambiguous: ${ambiguousEntries.slice(0, 12).join(", ")}${ambiguousEntries.length > 12 ? ", …" : ""}\n`
+		`max_ngram=${maxNgram}, ${ambiguousEntries.length} ambiguous: ${ambiguousEntries.slice(0, MAX_LISTED_AMBIGUOUS).join(", ")}${ambiguousEntries.length > MAX_LISTED_AMBIGUOUS ? ", …" : ""}\n`
 )

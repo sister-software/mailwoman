@@ -26,6 +26,9 @@ import { parseArgs } from "node:util"
 import { chromium, type Page } from "@playwright/test"
 
 // oxlint-disable-next-line sister-software/no-process-globals
+/** Lowest 4xx status — at or above it the page failed to render. */
+const HTTP_CLIENT_ERROR_MIN = 400
+
 const BASE = process.env.MAILWOMAN_DOCS_URL ?? "http://localhost:7770"
 const SCREENSHOT_DIR = "/tmp/mailwoman-docs"
 
@@ -112,7 +115,7 @@ async function cmdCheck(path: string) {
 	const result = await checkRoute(path)
 	reportRoute(path, result)
 
-	if (result.status >= 400 || result.errors.length || result.soft404) {
+	if (result.status >= HTTP_CLIENT_ERROR_MIN || result.errors.length || result.soft404) {
 		process.exit(1)
 	}
 }
@@ -127,7 +130,7 @@ async function cmdSmoke() {
 			const result = await checkRoute(r)
 			reportRoute(r, result)
 
-			if (result.status >= 400 || result.errors.length || result.soft404) {
+			if (result.status >= HTTP_CLIENT_ERROR_MIN || result.errors.length || result.soft404) {
 				fail++
 			}
 		} catch (error) {

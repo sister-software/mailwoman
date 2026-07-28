@@ -61,6 +61,9 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 
+/** Cells a markdown table row needs before it carries a version/date/status triple. */
+const MIN_TABLE_CELLS = 3
+
 const repoRoot = repoRootPath()
 
 /** Escape a version string for use as a literal inside a RegExp (the dots are the concern). */
@@ -155,7 +158,7 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 			.slice(1, -1)
 			.map((cell) => cell.trim())
 
-		if (cells.length < 3) continue
+		if (cells.length < MIN_TABLE_CELLS) continue
 
 		const versionCell = cells[0]!.replaceAll("**", "")
 		const lineageCell = cells[2]!

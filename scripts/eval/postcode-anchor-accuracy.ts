@@ -24,6 +24,9 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
+/** Distance within which a postcode anchor counts as correct, in kilometres. */
+const ANCHOR_TOLERANCE_KM = 25
+
 interface Args {
 	evalPath: string
 	country: string
@@ -118,7 +121,7 @@ function main(): void {
 		`  p50 ${pct(distances, 50).toFixed(1)}  p90 ${pct(distances, 90).toFixed(1)}  p99 ${pct(distances, 99).toFixed(1)}  max ${(distances.at(-1) ?? Number.NaN).toFixed(1)}`
 	)
 	const within10 = distances.filter((d) => d <= 10).length
-	const within25 = distances.filter((d) => d <= 25).length
+	const within25 = distances.filter((d) => d <= ANCHOR_TOLERANCE_KM).length
 	console.log(
 		`  within 10km: ${((100 * within10) / placed).toFixed(1)}%   within 25km: ${((100 * within25) / placed).toFixed(1)}%`
 	)

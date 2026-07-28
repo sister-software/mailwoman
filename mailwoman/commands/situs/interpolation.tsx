@@ -551,7 +551,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 			if (failed.length) {
 				console.error(
-					`  failed GEOIDs: ${failed.slice(0, MAX_LISTED_FAILURES).join(", ")}${failed.length > 20 ? " …" : ""}`
+					`  failed GEOIDs: ${failed.slice(0, MAX_LISTED_FAILURES).join(", ")}${failed.length > MAX_LISTED_FAILURES ? " …" : ""}`
 				)
 			}
 			console.error("")

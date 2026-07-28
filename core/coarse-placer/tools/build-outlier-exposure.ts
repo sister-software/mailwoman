@@ -25,6 +25,9 @@ import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
 /** Options for {@linkcode buildOutlierExposure}. */
+/** Share of a bucket that must be off-map before it is treated as an exposure case rather than noise. */
+const OFFMAP_DOMINANCE = 0.6
+
 export interface BuildOutlierExposureOptions {
 	/** Names sampled per off-map language. Default 2500. */
 	perLang?: number
@@ -97,7 +100,7 @@ function isOffMapScript(s: string): boolean {
 		}
 	}
 
-	return total > 0 && off / total > 0.6
+	return total > 0 && off / total > OFFMAP_DOMINANCE
 }
 
 // Mimic a real off-map ADDRESS: a pure-script place name isn't what we see at inference (those carry

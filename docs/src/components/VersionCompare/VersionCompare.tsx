@@ -21,6 +21,9 @@ import styles from "./styles.module.css"
 // Types
 // ---------------------------------------------------------------------------
 
+/** Score delta below which two versions are shown as equivalent rather than as a change. */
+const NEGLIGIBLE_DELTA = 0.01
+
 export interface VersionCompareProps {
 	/** The primary (left) parse result. */
 	primary: DemoResult
@@ -168,7 +171,7 @@ const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKin
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
 	const abs = Math.abs(delta)
 
-	if (abs < 0.01) return <span className={styles.deltaNeutral}>≈</span>
+	if (abs < NEGLIGIBLE_DELTA) return <span className={styles.deltaNeutral}>≈</span>
 	const sign = delta >= 0 ? "+" : "−"
 	const cls = delta >= 0 ? styles.deltaUp : styles.deltaDown
 

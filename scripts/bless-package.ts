@@ -14,6 +14,9 @@ import { parseArgs } from "node:util"
 
 import { $ } from "zx"
 
+/** OTP entry attempts before giving up — npm codes expire in about 30 seconds. */
+const MAX_OTP_ATTEMPTS = 3
+
 const { values: flags, positionals: dirs } = parseArgs({
 	options: {
 		otp: { type: "string" }, // seed code for first write op
@@ -47,7 +50,7 @@ async function nextOTP(): Promise<string> {
 // on EOTP/invalid, prompt for a fresh code and retry.
 async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<void> {
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch continues to the next attempt on an OTP error
-	for (let attempt = 0; attempt < 3; attempt++) {
+	for (let attempt = 0; attempt < MAX_OTP_ATTEMPTS; attempt++) {
 		let otpArgs: string[] = []
 
 		if (attempt === 0 && pendingOTP) {

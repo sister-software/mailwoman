@@ -25,6 +25,24 @@ import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────
 
+/** Residual bands the chart colours against, in the loss units plotted. Presentation only. */
+const RESIDUAL_TIGHT = 1.5
+
+/** See {@link RESIDUAL_TIGHT}. */
+const RESIDUAL_MODERATE = 3
+
+/** See {@link RESIDUAL_TIGHT}. */
+const RESIDUAL_LOOSE = 7
+
+/** Magnitude below which a tick is rendered in scientific notation rather than as a decimal. */
+const SCIENTIFIC_NOTATION_BELOW = 0.001
+
+/** Magnitude below which a tick keeps one decimal place; above it the value is abbreviated. */
+const COMPACT_NOTATION_ABOVE = 10_000
+
+/** Pixel radius within which the cursor snaps to a data point. */
+const MAX_HOVER_DISTANCE_PX = 40
+
 const TRACKIO_BASE = "https://sister-software-mailwoman-trackio.hf.space"
 const PROJECT = "mailwoman"
 const POLL_INTERVAL_MS = 30_000
@@ -146,11 +164,11 @@ function niceTicks(min: number, max: number, count: number): number[] {
 	const residual = roughStep / magnitude
 	let niceStep: number
 
-	if (residual <= 1.5) {
+	if (residual <= RESIDUAL_TIGHT) {
 		niceStep = 1 * magnitude
-	} else if (residual <= 3) {
+	} else if (residual <= RESIDUAL_MODERATE) {
 		niceStep = 2 * magnitude
-	} else if (residual <= 7) {
+	} else if (residual <= RESIDUAL_LOOSE) {
 		niceStep = 5 * magnitude
 	} else {
 		niceStep = 10 * magnitude
@@ -170,13 +188,13 @@ function niceTicks(min: number, max: number, count: number): number[] {
 function formatValue(v: number): string {
 	if (v === 0) return "0"
 
-	if (Math.abs(v) < 0.001) return v.toExponential(2)
+	if (Math.abs(v) < SCIENTIFIC_NOTATION_BELOW) return v.toExponential(2)
 
 	if (Math.abs(v) < 1) return v.toFixed(4)
 
 	if (Math.abs(v) < 100) return v.toFixed(3)
 
-	if (Math.abs(v) < 10_000) return v.toFixed(1)
+	if (Math.abs(v) < COMPACT_NOTATION_ABOVE) return v.toFixed(1)
 
 	return v.toExponential(2)
 }
@@ -331,7 +349,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 					const py = yScale(p.value)
 					const dist = Math.abs(mx - px) + Math.abs(my - py) * 2
 
-					if (dist < bestDist && dist < 40) {
+					if (dist < bestDist && dist < MAX_HOVER_DISTANCE_PX) {
 						bestDist = dist
 						// Convert viewBox coords to wrapper-relative CSS pixels
 						const sx = (px / SVG_WIDTH) * svgRect.width + (svgRect.left - wrapperRect.left)

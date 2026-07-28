@@ -41,6 +41,9 @@ import type { ClassificationRecord } from "mailwoman"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+/** Percentage-point collision reduction the split must deliver to be judged effective. */
+const MIN_COLLISION_REDUCTION = 5
+
 const { values: rawValues } = parseArgs({
 	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
 	strict: false,
@@ -256,7 +259,7 @@ const row = (label: string, a: StratumAgg): string => {
 const collReduction =
 	mean(collAgg.dropped) > 0 ? (100 * (mean(collAgg.dropped) - mean(collAgg.split))) / mean(collAgg.dropped) : 0
 const verdict =
-	collReduction >= 5
+	collReduction >= MIN_COLLISION_REDUCTION
 		? `✅ LEVER REAL — collision SPLIT-vs-DROPPED reduction ${collReduction.toFixed(1)}% ≥ 5%. The resolver uses the région tag. Retrain premise holds.`
 		: `❌ LEVER FALSE — collision reduction ${collReduction.toFixed(1)}% < 5%. The resolver lands the same place without the région. STOP — no retrain fixes this.`
 

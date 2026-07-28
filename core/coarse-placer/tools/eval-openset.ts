@@ -38,6 +38,12 @@ import { repoRootPath } from "../../utils/repo.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 import { COARSE_CLASSES, featurize } from "../featurize.ts"
 
+/** Steps in the threshold sweep; finer than the reporting precision so the knee is not missed. */
+const QUANTILE_SWEEP_STEPS = 200
+
+/** Percentage both held-out catch and in-map accuracy must clear for an operating point to qualify. */
+const TARGET_PERCENT = 90
+
 type ScoreKey = "maxprob" | "p_inmap" | "energy" | "maxlogit" | "maha"
 
 interface DataRow {
@@ -377,7 +383,7 @@ export async function evalOpenSet(
 		const all = [...inVals.map((x) => x.v), ...heldVals].toSorted((a, b) => a - b)
 		const ts: number[] = []
 
-		for (let q = 0; q <= 200; q++) {
+		for (let q = 0; q <= QUANTILE_SWEEP_STEPS; q++) {
 			ts.push(all[Math.min(all.length - 1, Math.floor((q / 200) * (all.length - 1)))]!)
 		}
 		const uniq = [...new Set(ts)]
@@ -412,11 +418,11 @@ export async function evalOpenSet(
 				balanced = { val: m, pt: p }
 			}
 
-			if (p.heldCaught >= 90 && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) {
+			if (p.heldCaught >= TARGET_PERCENT && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) {
 				atHeld90 = p
 			}
 
-			if (p.inMapAcc >= 90 && (!atIn90 || p.heldCaught > atIn90.heldCaught)) {
+			if (p.inMapAcc >= TARGET_PERCENT && (!atIn90 || p.heldCaught > atIn90.heldCaught)) {
 				atIn90 = p
 			}
 		}
@@ -494,7 +500,7 @@ export async function evalOpenSet(
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),
 	})).toSorted((a, b) => b.honestMin - a.honestMin)
 	const winner = ranked[0]!
-	const clears90 = winner.honestMin >= 90
+	const clears90 = winner.honestMin >= TARGET_PERCENT
 	lines.push(`## Verdict`)
 	lines.push("")
 	lines.push(

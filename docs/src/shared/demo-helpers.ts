@@ -21,6 +21,12 @@ import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookup
 // Types
 // ---------------------------------------------------------------------------
 
+/** WOF hierarchy rank of a locality. */
+const WOF_RANK_LOCALITY = 5
+
+/** WOF hierarchy rank of a region, one step up from a locality. */
+const WOF_RANK_REGION = 4
+
 export interface ReleaseInfo {
 	version: string
 	label: string
@@ -596,7 +602,7 @@ export async function runCascade(
 	// across countries. When the top pin is a postcode whose country differs from the resolved
 	// locality's, the locality wins the pin; the postcode stays in the list.
 	const top = collected[0]!
-	const localityEntry = collected.find((c) => c.rank === 5 || c.rank === 4)
+	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)
 
 	let pinOrder = collected
 

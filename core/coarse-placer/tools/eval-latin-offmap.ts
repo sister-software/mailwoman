@@ -21,6 +21,9 @@ import { repoRootPath } from "../../utils/repo.ts"
 import { formatPercent } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
+/** Samples a bucket needs before its off-map rate is reported rather than folded into the tail. */
+const MIN_REPORTABLE_SAMPLES = 8
+
 interface OffMapRow {
 	raw: string
 	country: string
@@ -105,7 +108,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 		} else {
 			missTo[p.country!] = (missTo[p.country!] ?? 0) + 1
 
-			if (samples.length < 8) {
+			if (samples.length < MIN_REPORTABLE_SAMPLES) {
 				samples.push(`    ${r.srcCountry} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 38)}»`)
 			}
 		}

@@ -53,7 +53,12 @@ interface Loc {
 /** Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth. */
 function plausibleUs(lat: number, lon: number): boolean {
 	return (
-		Number.isFinite(lat) && Number.isFinite(lon) && lat >= 17 && lat <= 72 && lon >= MAX_ABS_LONGITUDE && lon <= -64
+		Number.isFinite(lat) &&
+		Number.isFinite(lon) &&
+		lat >= MIN_US_LATITUDE &&
+		lat <= MAX_US_LATITUDE &&
+		lon >= MIN_US_LONGITUDE &&
+		lon <= MAX_US_LONGITUDE
 	)
 }
 

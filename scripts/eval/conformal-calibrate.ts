@@ -57,6 +57,12 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+/** How far empirical coverage may sit from the nominal level and still count as calibrated. */
+const COVERAGE_TOLERANCE = 0.03
+
+/** Interval-width ratio above which the calibrated radius is reported as inflated rather than tight. */
+const INFLATED_INTERVAL_RATIO = 1.1
+
 const { values: rawValues } = parseArgs({
 	options: {
 		"address-points": { type: "string" },
@@ -394,7 +400,7 @@ async function main(): Promise<void> {
 	console.log(
 		`empirical coverage on test split (combined)           : ${(coverage * 100).toFixed(1)}%` +
 			`  (${covered}/${testRows.length})` +
-			(Math.abs(coverage - alpha) <= 0.03
+			(Math.abs(coverage - alpha) <= COVERAGE_TOLERANCE
 				? "  ✓ within 3pp of target"
 				: `  ✗ ${((coverage - alpha) * 100).toFixed(1)}pp off target`)
 	)
@@ -461,7 +467,7 @@ async function main(): Promise<void> {
 		console.log(
 			`  Uncalibrated coverage ${(uncalCoverage * 100).toFixed(1)}% (as-is) already beats ${(alpha * 100).toFixed(0)}% by a large margin; the conformal correction mainly tightens the reported interval.`
 		)
-	} else if (Q > 1.1) {
+	} else if (Q > INFLATED_INTERVAL_RATIO) {
 		// The heuristic underestimates the spread
 		console.log(
 			`  Combined Q̂ = ${Q.toFixed(4)} > 1: the heuristic radius UNDERESTIMATES the true spread — multiply by ${Q.toFixed(2)}× for ${(alpha * 100).toFixed(0)}% coverage.`
