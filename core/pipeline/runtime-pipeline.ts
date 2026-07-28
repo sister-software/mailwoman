@@ -75,11 +75,13 @@ function isPostcodeFormat(format: string): boolean {
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
-// #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved).
-// The placer already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob
-// can still be split across neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the
-// hard filter to the cases the model is sure of (FI/PL routinely score ~1.0) and leaves the ambiguous
-// ones on the soft path. Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
+/**
+ * #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved). The placer
+ * already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob can still be split across
+ * neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the hard filter to the cases the model is sure
+ * of (FI/PL routinely score ~1.0) and leaves the ambiguous ones on the soft path. Deliberately strict — a wrong hard
+ * country is the #244 M2 misroute failure.
+ */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**

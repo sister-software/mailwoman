@@ -160,7 +160,7 @@ function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD
 removeIfPresent(resolve(PKG_DIR, "model.onnx"))
 removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
 
-// --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----
+/** --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----. */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
@@ -178,11 +178,13 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
-// `pair-index-nz.bin` (NZ arc, #1277) has no committed source (it's derived from the LINZ-derived
-// OpenAddresses NZ countrywide CSV) — build it in place via the compiled `gazetteer pair-index`
-// CLI, the same command `scripts/copy-weights.ts` runs at publish time
-// (softFeed.pairIndexByCountry.nz). Skips with a warning (not a hard failure) so a worktree
-// without the source CSV can still link the lexicons. Freshness-guarded per the module doc above.
+/**
+ * `pair-index-nz.bin` (NZ arc, #1277) has no committed source (it's derived from the LINZ-derived OpenAddresses NZ
+ * countrywide CSV) — build it in place via the compiled `gazetteer pair-index` CLI, the same command
+ * `scripts/copy-weights.ts` runs at publish time (softFeed.pairIndexByCountry.nz). Skips with a warning (not a hard
+ * failure) so a worktree without the source CSV can still link the lexicons. Freshness-guarded per the module doc
+ * above.
+ */
 const NZ_SOURCE_CSV = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-nz.bin")
@@ -260,12 +262,13 @@ if (pairIndexIsFresh) {
 	console.log(`built ${PAIR_INDEX_BIN_DEST}`)
 }
 
-// Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general
-// artifact ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build
-// street-morphology`) so `resolveWeights` surfaces `streetMorphologyPath` in dev and the
-// street-context gate (#1315) deserializes the artifact instead of rebuilding from dictionaries.
-// Missing is non-fatal — the runtime loader's dictionary-build fallback covers it. (en-nz ships no
-// per-locale FST, but the morphology artifact is locale-general, so it ships here too.)
+/**
+ * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
+ * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
+ * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
+ * it. (en-nz ships no per-locale FST, but the morphology artifact is locale-general, so it ships here too.)
+ */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 

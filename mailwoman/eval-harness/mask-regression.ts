@@ -86,17 +86,20 @@ interface LocaleEvalSpec {
 	files: string[]
 }
 
-// Same eval specs as the manifest generator. FR uses the dedicated street-prefix slice
-// (`fr-street-prefix-real.jsonl`, the #719 reproduction) so the essential affix capability is
-// measurable — on the broad golden FR set the unfolded `street_prefix` F1 is dominated by absent-gold
-// rows and would under-measure the very capability this gate protects.
+/**
+ * Same eval specs as the manifest generator. FR uses the dedicated street-prefix slice (`fr-street-prefix-real.jsonl`,
+ * the #719 reproduction) so the essential affix capability is measurable — on the broad golden FR set the unfolded
+ * `street_prefix` F1 is dominated by absent-gold rows and would under-measure the very capability this gate protects.
+ */
 const LOCALES: LocaleEvalSpec[] = [
 	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
 	{ system: "fr", files: ["data/eval/external/fr-street-prefix-real.jsonl"] },
 ]
 
-// The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts /
-// capability-manifest.ts). Every tag here gets a mask-off↔mask-on delta computed.
+/**
+ * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
+ * tag here gets a mask-off↔mask-on delta computed.
+ */
 const TAGS = [
 	"street_prefix",
 	"street",

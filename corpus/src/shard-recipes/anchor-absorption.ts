@@ -21,8 +21,10 @@ import { alignRow } from "../align.ts"
 import { synthesizeAnchorAbsorptionRow } from "../synthesize-anchor-absorption.ts"
 import { makeLcg, type ShardRecipe } from "./scaffold.ts"
 
-// The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through
-// the data-root helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.
+/**
+ * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through the data-root
+ * helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.
+ */
 const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 /** The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list). */

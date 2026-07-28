@@ -18,8 +18,10 @@ import { spawn } from "node:child_process"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-const CELL_DEG = 0.003 // ~330m grid cell
-const DENSIFY_KM = 0.02 // interpolate a vertex every ~20m along each segment
+/** ~330m grid cell. */
+const CELL_DEG = 0.003
+/** Interpolate a vertex every ~20m along each segment. */
+const DENSIFY_KM = 0.02
 
 interface Vertex {
 	name: string

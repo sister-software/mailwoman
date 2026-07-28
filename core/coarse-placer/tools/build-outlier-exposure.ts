@@ -43,7 +43,7 @@ export interface BuildOutlierExposureResult {
 	total: number
 }
 
-// Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
+/** Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW). */
 const OFF_MAP_LANGS = [
 	"rus",
 	"ukr",

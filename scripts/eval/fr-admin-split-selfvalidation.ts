@@ -51,7 +51,7 @@ const { values: rawValues } = parseArgs({
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
-// --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------
+/** --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------. */
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
 	locality: 5,
@@ -109,9 +109,10 @@ const pct = (xs: number[], p: number): number => {
 }
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
 
-// --- args ----------------------------------------------------------------------------------------
+/** --- args ----------------------------------------------------------------------------------------. */
 const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
-const N = Number(values["n"] || "200") // per stratum
+/** Per stratum. */
+const N = Number(values["n"] || "200")
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------
 const db = new DatabaseSync(DB, { readOnly: true })
@@ -153,9 +154,11 @@ const backend = new WOFSqlitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend as never)
 const resolveOpts = { defaultCountry: "FR" }
 
-// Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't
-// found: the country centroid. Makes the three states comparable on ONE error metric (resolved
-// point if found, else country-centroid) instead of averaging over different resolved subsets.
+/**
+ * Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't found: the country
+ * centroid. Makes the three states comparable on ONE error metric (resolved point if found, else country-centroid)
+ * instead of averaging over different resolved subsets.
+ */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 type State = "dropped" | "merged" | "split"
 async function resolveState(c: Commune, state: State): Promise<{ km: number; resolved: boolean }> {

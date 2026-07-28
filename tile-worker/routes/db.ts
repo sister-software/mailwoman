@@ -12,7 +12,7 @@ import { parseRangeHeader } from "../ranges.ts"
 import { WorkerRoute } from "../routing.ts"
 import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.ts"
 
-//#region Database Retrieval
+/** #region Database Retrieval. */
 const DB_ROUTE_PATTERN = "/db/:databaseName([a-z0-9_\\-]+).:fileExtension([a-z0-9]+)"
 
 /** Serves a SQLite artifact from R2 for the browser's httpvfs reader, which range-requests into it. */

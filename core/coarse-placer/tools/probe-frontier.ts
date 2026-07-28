@@ -53,9 +53,10 @@ export interface ProbeFrontierResult {
 	markdown: string
 }
 
-const HARD_PLACE_COUNTRY_MIN_CONF = 0.9 // mirrors core/pipeline/runtime-pipeline.ts
+/** Mirrors core/pipeline/runtime-pipeline.ts. */
+const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-// The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them).
+/** The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them). */
 const RECOVERABLE = [
 	"AO",
 	"AR",

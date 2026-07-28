@@ -34,9 +34,12 @@ import type { GauntletLayerOptions } from "./regression.ts"
 /** Shortest span body worth mutating — below it a perturbation changes the token entirely. */
 const MIN_MUTABLE_BODY_LENGTH = 5
 
-const INV_EPSILON_KM = 0.001 // 1m — same address, identical resolution expected.
-const DIR_NEAR_KM = 5 // dropping the postcode may lose the rooftop, but must still land in the right area.
-const BAND_NEAR_KM = 5 // a corrupted surface may shift the parse, but must stay within the tolerance band.
+/** 1m — same address, identical resolution expected. */
+const INV_EPSILON_KM = 0.001
+/** Dropping the postcode may lose the rooftop, but must still land in the right area. */
+const DIR_NEAR_KM = 5
+/** A corrupted surface may shift the parse, but must stay within the tolerance band. */
+const BAND_NEAR_KM = 5
 
 interface Base {
 	input: string
@@ -253,19 +256,20 @@ const BAND: Perturbation[] = [
  * xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into false comfort — the
  * Pelias-pass-list trap, inverted.
  */
-// Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
-// retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
-// the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
-// A NEW deterministic INV break belongs here with a tracked note, never silently gated.
-// The #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was NOT the
-// FR gazetteer (street_norm expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into
-// house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1 `expandAbbreviations` in the geocode
-// path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately untouched). Keep the
-// anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never silently gated.
-// comma-drop (#1101 delimiter-free invariant): the FR "Rue du Chevaleret" base loses rooftop resolution
-// when its comma is stripped (address_point → admin tier, coord → null) — the comma-free parsing gap the
-// punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until
-// that augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
+/**
+ * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
+ * retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
+ * the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
+ * A NEW deterministic INV break belongs here with a tracked note, never silently gated. The #1002 FR `Boulevard→Bd`
+ * xfail was removed 2026-07-06 with its fix: the root cause was NOT the FR gazetteer (street_norm expands `bd` fine)
+ * but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1
+ * `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately
+ * untouched). Keep the anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never
+ * silently gated. comma-drop (#1101 delimiter-free invariant): the FR "Rue du Chevaleret" base loses rooftop resolution
+ * when its comma is stripped (address_point → admin tier, coord → null) — the comma-free parsing gap the
+ * punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until that
+ * augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
+ */
 const KNOWN_INV_XFAIL = new Map<string, string>([
 	// The FR comma-free rooftop loss. Its US twin ("1600 Pennsylvania Ave NW Washington DC") had the SAME
 	// #1101 failure on the shipped model (v6.4.0), but the punct-drop augmentation (v3.8.x,
@@ -280,9 +284,11 @@ const KNOWN_INV_XFAIL = new Map<string, string>([
  * outside the band. Tracked (visible, non-blocking) rather than hidden or gated. See the input-robustness coverage
  * matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
  */
-// All measured anchor-OFF/gazetteer-OFF (the harness default; the weights package ships no anchor artifacts). The
-// gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
-// may hold with the retrieval channels ON — tracked here as the anchor-off floor, not a claim about production.
+/**
+ * All measured anchor-OFF/gazetteer-OFF (the harness default; the weights package ships no anchor artifacts). The
+ * gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
+ * may hold with the retrieval channels ON — tracked here as the anchor-off floor, not a claim about production.
+ */
 const KNOWN_BAND_XFAIL = new Map<string, string>([
 	// House-number spelling is neither normalized nor trained — the expected miss (input-robustness matrix).
 	["num-house|100 Centre Street, New York, NY", "untrained: house-number spelling (input-robustness matrix)"],

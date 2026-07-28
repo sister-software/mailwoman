@@ -41,7 +41,8 @@ const uniform = (low: number, high: number) => low + (high - low) * random()
 const WIDTH = 80
 const HEIGHT = 12
 
-const MAGENTA = "\u001B[38;5;199m" // brand #ff00b0
+/** Brand #ff00b0. */
+const MAGENTA = "\u001B[38;5;199m"
 const DIM = "\u001B[38;5;245m"
 const GREEN = "\u001B[38;5;114m"
 const RESET = "\u001B[0m"

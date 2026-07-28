@@ -50,8 +50,10 @@ export interface HoldoutLayerOptions {
 	weightsCacheRoot?: string
 }
 
-const TOLS = [0.1, 0.5, 5] as const // rooftop / street / locality (km)
-const GATE_TOL = 5 // the z-test runs at the locality bucket (the dominant resolvable tier)
+/** Rooftop / street / locality (km) */
+const TOLS = [0.1, 0.5, 5] as const
+/** The z-test runs at the locality bucket (the dominant resolvable tier) */
+const GATE_TOL = 5
 
 interface Sample {
 	query: string

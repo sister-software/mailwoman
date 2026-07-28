@@ -22,7 +22,7 @@ function linkForce(src: string, dest: string): void {
 	renameSync(tmp, dest)
 }
 
-// Model + tokenizer: same source as the en-us workspace uses ($MAILWOMAN_DEV_MODEL env override supported).
+/** Model + tokenizer: same source as the en-us workspace uses ($MAILWOMAN_DEV_MODEL env override supported). */
 const SRC_MODEL =
 	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
 const SRC_TOKENIZER =
@@ -35,7 +35,7 @@ console.log(`linked model.onnx ← ${SRC_MODEL}`)
 linkForce(SRC_TOKENIZER, TOKENIZER_DEST)
 console.log(`linked tokenizer.model ← ${SRC_TOKENIZER}`)
 
-// Soft-feed lexicons: same sources as en-us (codex-generated repo files)
+/** Soft-feed lexicons: same sources as en-us (codex-generated repo files) */
 const SRC_GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const SRC_COUNTRY = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 const SRC_CARD = repoRootPath("neural-weights-en-us", "model-card.json")

@@ -137,7 +137,8 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
-const ALT_NAME_KEYS = new Set(["wof:label"]) // plus name:* / label:* props, gathered below
+/** Plus name:* / label:* props, gathered below. */
+const ALT_NAME_KEYS = new Set(["wof:label"])
 
 /** WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical. */
 function aliasesFor(props: Record<string, unknown>, canonical: string): string[] {

@@ -38,7 +38,8 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
-const DEFAULT_LICENSE = "Licence Ouverte 2.0" // matches the `ban` adapter's Tier-B election for BAN data
+/** Matches the `ban` adapter's Tier-B election for BAN data. */
+const DEFAULT_LICENSE = "Licence Ouverte 2.0"
 
 /** One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds. */
 interface LieuDitTuple {

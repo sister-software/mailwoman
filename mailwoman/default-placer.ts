@@ -24,7 +24,7 @@ export type PlaceCountryFn = (normalizedText: string) => {
 	posterior?: Record<string, number>
 }
 
-// Abstention threshold for the default prior — the open-set rule's flat-optimum operating point (#244 M2).
+/** Abstention threshold for the default prior — the open-set rule's flat-optimum operating point (#244 M2). */
 const DEFAULT_ABSTAIN_BELOW = 0.9
 
 let cached: Promise<PlaceCountryFn | null> | null = null

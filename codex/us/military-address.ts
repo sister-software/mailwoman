@@ -108,8 +108,10 @@ export interface USMilitaryUnitMatch {
 	box?: string
 }
 
-// Unit-line regex: PSC/CMR/UNIT <id> [BOX <box>]
-// Identifiers are numeric; box numbers are alphanumeric. UNIT may stand without BOX.
+/**
+ * Unit-line regex: PSC/CMR/UNIT <id> [BOX <box>] Identifiers are numeric; box numbers are alphanumeric. UNIT may stand
+ * without BOX.
+ */
 const UNIT_LINE_RE = /^\s*(psc|cmr|unit)\s+(\d+)(?:\s+box\s+([\dA-Za-z]+))?\s*$/i
 
 /**
@@ -161,14 +163,13 @@ export interface USMilitaryCityMatch {
 	zip: string
 }
 
-// City-line regex: APO/FPO/DPO <region> <zip>
-// USPS military ZIP assignment per Pub 28 and the Armed Forces zip code list:
-//   - AA (Americas): 340xx range
-//   - AE (Europe/ME/Africa/Canada): 09xxx range
-//   - AP (Pacific): 962xx-966xx range
-// The regex accepts any 5-digit or 9-digit ZIP code in combination with a valid region code —
-// validating the specific numeric range for each region is left to the caller (region+ZIP
-// co-validation is operational policy, not structural syntax).
+/**
+ * City-line regex: APO/FPO/DPO <region> <zip> USPS military ZIP assignment per Pub 28 and the Armed Forces zip code
+ * list: - AA (Americas): 340xx range - AE (Europe/ME/Africa/Canada): 09xxx range - AP (Pacific): 962xx-966xx range The
+ * regex accepts any 5-digit or 9-digit ZIP code in combination with a valid region code — validating the specific
+ * numeric range for each region is left to the caller (region+ZIP co-validation is operational policy, not structural
+ * syntax).
+ */
 const CITY_LINE_RE = /^\s*(apo|fpo|dpo)\s+(aa|ae|ap)\s+(\d{5}(?:-\d{4})?)\s*$/i
 
 /**

@@ -31,12 +31,14 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 
 const repoRoot = repoRootPath()
-// The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load
-// at runtime MUST be packed here — otherwise `npm install` pulls it from the REGISTRY (the published,
-// possibly-stale version), and the smoke tests new-source-CLI against an old-registry dependency. That
-// exact skew shipped a red main after the v5.0.0 acronym rename: `mailwoman` imported the renamed
-// `createWOFResolver`, but `@mailwoman/resolver` wasn't packed, so npm resolved the pre-rename 4.16.2 and
-// the CLI crashed on a missing export. Packing the closure makes the test source-coherent (new-vs-new).
+/**
+ * The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load at runtime MUST
+ * be packed here — otherwise `npm install` pulls it from the REGISTRY (the published, possibly-stale version), and the
+ * smoke tests new-source-CLI against an old-registry dependency. That exact skew shipped a red main after the v5.0.0
+ * acronym rename: `mailwoman` imported the renamed `createWOFResolver`, but `@mailwoman/resolver` wasn't packed, so npm
+ * resolved the pre-rename 4.16.2 and the CLI crashed on a missing export. Packing the closure makes the test
+ * source-coherent (new-vs-new).
+ */
 const WORKSPACES: Record<string, string> = {
 	"@mailwoman/core": "core",
 	"@mailwoman/spatial": "spatial",
@@ -105,7 +107,7 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/mcp": "mcp",
 }
 
-// Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap).
+/** Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap). */
 const IMPORT_CHECK = [
 	"@mailwoman/annotations",
 	"@mailwoman/timezone-lookup",
@@ -121,10 +123,12 @@ const IMPORT_CHECK = [
 	"@mailwoman/react",
 ]
 
-// Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep
-// guard the closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or
-// also packed by this script), else its `@mailwoman/*` dep resolves from the registry and skews the test.
-// `@mailwoman/core` qualifies: zero `@mailwoman/*` runtime deps.
+/**
+ * Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep guard the
+ * closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or also packed by this
+ * script), else its `@mailwoman/*` dep resolves from the registry and skews the test. `@mailwoman/core` qualifies: zero
+ * `@mailwoman/*` runtime deps.
+ */
 const STANDALONE_LEAVES = ["@mailwoman/core"]
 
 /** The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count. */

@@ -55,7 +55,8 @@ const JIS_CODE_LENGTH = 7
 const ROUND_HALF_DIGIT = 5
 
 const MATCH_RADIUS_KM = 15
-const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set
+/** Extra non-containing candidates kept for the soft-score set. */
+const NEARBY_KEEP = 2
 const PLACETYPES = ["locality", "county", "localadmin", "borough"] as const
 const SUFFIX = /(shi|ku|cho|machi|gun|ken|fu|to|son|mura|ward|si|gu|dong|eup|myeon|ri)$/
 

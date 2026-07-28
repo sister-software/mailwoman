@@ -48,7 +48,7 @@ export const GEONAMES_ADAPTER_ID = "geonames"
  */
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
-// GeoNames main-table column indices (0-based; see the export README).
+/** GeoNames main-table column indices (0-based; see the export README). */
 const COL = {
 	geonameid: 0,
 	name: 1,
@@ -59,7 +59,7 @@ const COL = {
 	admin1: 10,
 } as const
 
-// Populated-place feature codes that are NOT current real places — skip them.
+/** Populated-place feature codes that are NOT current real places — skip them. */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
 /** Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent. */

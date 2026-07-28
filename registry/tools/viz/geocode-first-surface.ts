@@ -61,14 +61,14 @@ interface Level {
 	maxKm?: number
 }
 
-// registry/resolve.ts → NAME_LEVELS
+/** Registry/resolve.ts → NAME_LEVELS. */
 const NAME_LEVELS: Level[] = [
 	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
 
-// match/distance.ts → DEFAULT_DISTANCE_LEVELS
+/** Match/distance.ts → DEFAULT_DISTANCE_LEVELS. */
 const DISTANCE_LEVELS: Level[] = [
 	{ label: "same-building", maxKm: 0.05, m: 0.7, u: 0.001 },
 	{ label: "same-block", maxKm: 0.5, m: 0.2, u: 0.02 },

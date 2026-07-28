@@ -136,13 +136,17 @@ const STATE_FIPS: Record<string, string> = {
 	WY: "56",
 }
 
-// Repo-relative anchor for the cached county-population ranking (resolves cleanly in both source +
-// compiled trees via the core repo-root builder).
+/**
+ * Repo-relative anchor for the cached county-population ranking (resolves cleanly in both source + compiled trees via
+ * the core repo-root builder).
+ */
 const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
-// The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
-// `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this
-// process was started from, so dev + published installs both resolve correctly.
+/**
+ * The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
+ * `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this process was
+ * started from, so dev + published installs both resolve correctly.
+ */
 const CLI_ENTRY = scriptEntryPath()
 const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")

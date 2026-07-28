@@ -31,9 +31,11 @@ import { commandError, type CommandComponent, useCommandTask } from "../../../cl
 
 const BATCH_SIZE = availableParallelism()
 
-// Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass
-// e.g. `--interpolator viridis` and we map it to `interpolateViridis`. Categorical
-// scales (`scheme*`) are deliberately excluded — they're string[]s, not (t)=>string.
+/**
+ * Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass e.g. `--interpolator viridis` and we
+ * map it to `interpolateViridis`. Categorical scales (`scheme*`) are deliberately excluded — they're string[]s, not
+ * (t)=>string.
+ */
 const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 	const out: Record<string, InterpolateColorCallback> = {}
 

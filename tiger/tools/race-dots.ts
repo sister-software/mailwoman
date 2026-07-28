@@ -51,7 +51,7 @@ export interface RaceDotsResult {
 	totals: Record<string, number>
 }
 
-// The eight P2 categories (columns in pl_block) that partition each block's population.
+/** The eight P2 categories (columns in pl_block) that partition each block's population. */
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const
 
 type Ring = number[][]

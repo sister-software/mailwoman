@@ -51,17 +51,20 @@ const TEST_FRAC = 0.1
 
 const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"]
 
-// #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn
-// from the Overture per-country addresses theme (the same source build-eu-eval-set.ts uses). They
-// were previously OTHER outlier exposure (PL/PT/CZ) or simply unrepresentable; here they become
-// first-class in-map countries so the soft country prior can pin them.
+/**
+ * #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn from the Overture
+ * per-country addresses theme (the same source build-eu-eval-set.ts uses). They were previously OTHER outlier exposure
+ * (PL/PT/CZ) or simply unrepresentable; here they become first-class in-map countries so the soft country prior can pin
+ * them.
+ */
 const NEW_EU = ["AT", "BE", "CH", "CZ", "DK", "EE", "FI", "HR", "LT", "LU", "LV", "NO", "PL", "PT", "SI", "SK"]
-// #743 in-map dilution fix: DE/ES/IT/NL are already in COUNTRIES (corpus format), but the eu-eval
-// sets + every NEW_EU country are Overture format. Without an Overture sample of their OWN, their
-// Overture-format eval rows scatter to the Overture-trained neighbours (measured: only 63% of ES
-// eval rows routed ES, ~26% leaked to CH/PT/HR/IT/FR/CZ). SUPPLEMENT their corpus rows with an
-// Overture sample so each owns its own format shape; the format then stops being discriminative and
-// the model falls back to the linguistic n-grams. GB excluded — its Overture parquet is empty.
+/**
+ * #743 in-map dilution fix: DE/ES/IT/NL are already in COUNTRIES (corpus format), but the eu-eval sets + every NEW_EU
+ * country are Overture format. Without an Overture sample of their OWN, their Overture-format eval rows scatter to the
+ * Overture-trained neighbours (measured: only 63% of ES eval rows routed ES, ~26% leaked to CH/PT/HR/IT/FR/CZ).
+ * SUPPLEMENT their corpus rows with an Overture sample so each owns its own format shape; the format then stops being
+ * discriminative and the model falls back to the linguistic n-grams. GB excluded — its Overture parquet is empty.
+ */
 const IN_MAP_EU = ["DE", "ES", "IT", "NL"]
 
 // #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme.

@@ -400,7 +400,7 @@ function normalize(s: string): string {
 	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
-// Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+/** Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out. */
 const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_number", "venue"])
 
 function validate(seed: Seed, candidate: Candidate): boolean {

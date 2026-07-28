@@ -30,8 +30,10 @@ export const US_PO_BOX_DESIGNATORS = [
 
 export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 
-// Matches a leading PO-box designator + its identifier. Allows "P.O. Box", "PO BOX", "Post Office
-// Box", "Box 12-A", etc. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+/**
+ * Matches a leading PO-box designator + its identifier. Allows "P.O. Box", "PO BOX", "Post Office Box", "Box 12-A",
+ * etc. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+ */
 const PO_BOX_RE =
 	/^\s*(?:(p\.?\s*o\.?\s*box)|(post\s+office\s+box)|(firm\s+caller)|(caller)|(drawer)|(lockbox)|(box))\s*#?\s*([\dA-Za-z][\dA-Za-z-]*)\s*$/i
 

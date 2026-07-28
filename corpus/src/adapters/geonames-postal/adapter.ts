@@ -42,7 +42,7 @@ export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
  */
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
-// GeoNames postal-dump columns (0-based).
+/** GeoNames postal-dump columns (0-based). */
 const COL = { country: 0, postcode: 1, place: 2, admin1Name: 3 } as const
 
 export function createGeonamesPostalAdapter(): CorpusAdapter {

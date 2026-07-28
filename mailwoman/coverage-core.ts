@@ -116,7 +116,7 @@ interface StateShard {
 	interp: string | null
 }
 
-// The zoom at which each H3 resolution becomes the active fog granularity (hex edge ≈ tile detail there).
+/** The zoom at which each H3 resolution becomes the active fog granularity (hex edge ≈ tile detail there). */
 const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9: 10, 10: 12, 11: 14 }
 
 /** Resolve the shard set + matching interpolation shards. */

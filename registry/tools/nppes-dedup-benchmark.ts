@@ -95,7 +95,7 @@ export interface NPPESDedupBenchmarkOptions {
 	outMd?: string
 }
 
-// NPPES column names (verbatim from the file headers).
+/** NPPES column names (verbatim from the file headers). */
 const C = {
 	npi: "NPI",
 	entityType: "Entity Type Code",
@@ -124,9 +124,11 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
-// Org-name similarity for the org-name entity-truth (the gold-set rule: same address + same org name
-// ⇒ same entity, even when NPPES doesn't flag the subpart). Strip corporate-form + articles, keep
-// domain words (the distinguishing signal).
+/**
+ * Org-name similarity for the org-name entity-truth (the gold-set rule: same address + same org name ⇒ same entity,
+ * even when NPPES doesn't flag the subpart). Strip corporate-form + articles, keep domain words (the distinguishing
+ * signal).
+ */
 const ORG_STOP = new Set([
 	"llc",
 	"inc",
@@ -163,7 +165,8 @@ function orgJaccard(a: Set<string>, b: Set<string>): number {
 
 	return inter / (a.size + b.size - inter)
 }
-const ORG_TAU = 0.7 // gold-set threshold
+/** Gold-set threshold. */
+const ORG_TAU = 0.7
 
 /**
  * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityID` the site-level entity-level

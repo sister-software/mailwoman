@@ -89,8 +89,10 @@ const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
-const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation) // ["N","E","S","W","NE","NW","SE","SW"]
-const INJECT_PREFIX_PROB = 0.3 // fraction of prefix-less streets that get a synthetic directional
+/** ["N","E","S","W","NE","NW","SE","SW"]. */
+const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation)
+/** Fraction of prefix-less streets that get a synthetic directional. */
+const INJECT_PREFIX_PROB = 0.3
 
 /** A real US skeleton tuple read from a cached OA zip. */
 interface USTuple {

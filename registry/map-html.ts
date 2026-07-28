@@ -71,8 +71,10 @@ export interface MapHTMLOptions {
 
 /** Categorical palette (reused for buckets; cycles if there are more buckets than entries). */
 const PALETTE = ["#2f9e44", "#f08c00", "#1971c2", "#e8590c", "#9c36b5", "#0c8599", "#e03131", "#5c940d"]
-const SINGLE_COLOR = "#3388ff" // single-source entity
-const CROSS_COLOR = "#e8590c" // cross-dataset link (≥2 sources)
+/** Single-source entity. */
+const SINGLE_COLOR = "#3388ff"
+/** Cross-dataset link (≥2 sources) */
+const CROSS_COLOR = "#e8590c"
 
 /**
  * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough — a record value

@@ -55,8 +55,10 @@ const MAX_ABBREVIATION_LETTERS = 3
 const BIT = { country_surface: 1, country_ambiguous: 2 }
 const SLOTS = ["country_surface", "country_ambiguous"]
 
-// Committed output path (a codex-derived artifact, like export-country-surfaces.ts — no argv, so the
-// no-process-globals lint policy holds; codex stays zero-runtime-dep).
+/**
+ * Committed output path (a codex-derived artifact, like export-country-surfaces.ts — no argv, so the no-process-globals
+ * lint policy holds; codex stays zero-runtime-dep).
+ */
 const OUTPUT = resolve(import.meta.dirname, "../../data/gazetteer/country-surface-lexicon-v1.json")
 
 /**
@@ -87,9 +89,11 @@ const isShortCode = (s: string): boolean => {
 const usStateNames = new Set(US_STATE_NAMES.map((n) => n.toLowerCase()))
 const usStateAbbrevs = new Set<string>(US_STATE_ABBREVIATIONS as readonly string[])
 
-// Curated common-word country surfaces — single tokens that appear far more often as ordinary
-// street/venue/locality words than as a trailing country. A SOFT flag (the model still decides), the
-// model-first analogue of Pelias's blacklist (north/south/east/west/street/city/king). Tunable.
+/**
+ * Curated common-word country surfaces — single tokens that appear far more often as ordinary street/venue/locality
+ * words than as a trailing country. A SOFT flag (the model still decides), the model-first analogue of Pelias's
+ * blacklist (north/south/east/west/street/city/king). Tunable.
+ */
 const COMMON_WORD_AMBIGUOUS = new Set(["america", "england", "britain", "turkey", "chad", "jordan", "jersey", "guinea"])
 
 const isAmbiguousName = (lowerKey: string): boolean => usStateNames.has(lowerKey) || COMMON_WORD_AMBIGUOUS.has(lowerKey)

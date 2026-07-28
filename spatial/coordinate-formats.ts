@@ -166,7 +166,7 @@ export function sunTimes(
 	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
 }
 
-// MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
+/** MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering. */
 const UTM_A = 6_378_137
 const UTM_F = 1 / 298.257223563
 const UTM_K0 = 0.9996

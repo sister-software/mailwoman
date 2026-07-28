@@ -77,9 +77,11 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-// Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture
-// address coverage in this release, so they're absent — interpolation-only states. VI (territory)
-// included for completeness; harmless if the parser's region→slug map skips it.
+/**
+ * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in
+ * this release, so they're absent — interpolation-only states. VI (territory) included for completeness; harmless if
+ * the parser's region→slug map skips it.
+ */
 const STATES_BY_COVERAGE = [
 	"CA",
 	"FL",

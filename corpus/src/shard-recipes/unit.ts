@@ -50,8 +50,10 @@ interface UnitSource {
 	region: string
 }
 
-// OA REGION is empty for US per-state extracts — the region is implied by the file. Train sources are
-// every NON-Vermont state cached; eval is Vermont only (the corpus holdout).
+/**
+ * OA REGION is empty for US per-state extracts — the region is implied by the file. Train sources are every NON-Vermont
+ * state cached; eval is Vermont only (the corpus holdout).
+ */
 const TRAIN_SOURCES: readonly UnitSource[] = [
 	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
 	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
@@ -63,9 +65,11 @@ const TRAIN_SOURCES: readonly UnitSource[] = [
 ]
 const EVAL_SOURCE: UnitSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 
-// USPS Pub-28 C2 designators that take a secondary identifier ("Apt 4B"). Weighted toward the common
-// ones the v0-parity arena failed on (Apt/Ste/Unit/Fl/Rm). Standalone designators (Basement, Lobby,
-// Penthouse) are emitted occasionally with no id.
+/**
+ * USPS Pub-28 C2 designators that take a secondary identifier ("Apt 4B"). Weighted toward the common ones the v0-parity
+ * arena failed on (Apt/Ste/Unit/Fl/Rm). Standalone designators (Basement, Lobby, Penthouse) are emitted occasionally
+ * with no id.
+ */
 const ID_DESIGNATORS: readonly USUnitDesignator[] = [
 	"APARTMENT",
 	"SUITE",
@@ -86,7 +90,8 @@ const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 	"UPPER",
 	"LOWER",
 ]
-const ID_WEIGHT = 0.85 // 85% id-bearing designators, 15% standalone
+/** 85% id-bearing designators, 15% standalone. */
+const ID_WEIGHT = 0.85
 const SYNTH_IDS: readonly string[] = ["4B", "200", "12", "3", "A", "101", "5", "2A", "310", "B", "7", "1500", "404"]
 
 /** A real US tuple read out of a cached OA zip (number/street/city/postcode + the bare OA unit id). */

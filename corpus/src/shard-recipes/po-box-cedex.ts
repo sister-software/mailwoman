@@ -72,33 +72,46 @@ const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
 const GEONAMES_POSTAL_AU = { zip: "/tmp/geonames-cache/AU-postal.zip", txt: "AU.txt" }
 const GEONAMES_POSTAL_NZ = { zip: "/tmp/geonames-cache/NZ-postal.zip", txt: "NZ.txt" }
 
-// ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────
+/** ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────. */
 const T: Record<string, LocaleTemplate> = Object.fromEntries(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 // US: the corpus en-US leaders carry the common mass; the codex-only USPS Pub-28 designators
 // (Caller/Drawer/Lockbox — firm-holdout and rural forms) ride at low weight. "Box" is in both.
-const US_LEADERS_COMMON = T["en-US"]!.leaders // PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box
-const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"] // codex US_PO_BOX_DESIGNATORS tail
+/** PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box. */
+const US_LEADERS_COMMON = T["en-US"]!.leaders
+/** Codex US_PO_BOX_DESIGNATORS tail. */
+const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"]
 // "#" EXCLUDED (v4.4.0 probe finding): bare "#N" is a secondary-unit designator per USPS Pub 28 and
 // the shipped unit lever labels it `unit` — the corpus template's po_box reading CONTRADICTS a
 // shipped convention. PMB stays — a genuine commercial-mail-receiving designator, no unit collision.
-const US_PMB_LEADERS = T["en-US"]!.pmb!.filter((l) => l !== "#") // PMB
-const FR_LEADERS = T["fr-FR"]!.leaders // BP, B.P., Boîte Postale, BP.
-const CA_FR_LEADERS = T["fr-CA"]!.leaders // CP, C.P., Case Postale, BP, B.P.
-const CA_EN_LEADERS = T["en-CA"]!.leaders // PO Box, P.O. Box, POB, Post Office Box
-// AU (#517): codex/au is the vocabulary truth. Current designators (live auspost.com.au pages) at
-// full weight; the AMAS-legacy rural/community tail rides at the same 10% rare-dial as the US
-// Caller/Drawer tail. Every emitted phrase must round-trip the codex matcher (makeAuNzPoBoxPhrase).
+/** PMB. */
+const US_PMB_LEADERS = T["en-US"]!.pmb!.filter((l) => l !== "#")
+/** BP, B.P., Boîte Postale, BP. */
+const FR_LEADERS = T["fr-FR"]!.leaders
+/** CP, C.P., Case Postale, BP, B.P. */
+const CA_FR_LEADERS = T["fr-CA"]!.leaders
+/** PO Box, P.O. Box, POB, Post Office Box. */
+const CA_EN_LEADERS = T["en-CA"]!.leaders
+/**
+ * AU (#517): codex/au is the vocabulary truth. Current designators (live auspost.com.au pages) at full weight; the
+ * AMAS-legacy rural/community tail rides at the same 10% rare-dial as the US Caller/Drawer tail. Every emitted phrase
+ * must round-trip the codex matcher (makeAuNzPoBoxPhrase).
+ */
 const AU_LEADERS_CURRENT = ["PO Box", "P.O. Box", "Post Office Box", "GPO Box", "Locked Bag", "Private Bag"]
-const AU_LEADERS_LEGACY = ["RMB", "RSD", "CMB"] // codex legacy: true (recognize-only forms)
-// NZ (#517): the ADV358 box/bag types that carry an identifier. CMB rides rare (its "CMB B99"
-// identifier shape is alpha-led, covered by makeAuNzPoBoxPhrase). Counter Delivery / Poste Restante
-// are identifier-less counter services — no number to learn, excluded from synthesis.
+/** Codex legacy: true (recognize-only forms) */
+const AU_LEADERS_LEGACY = ["RMB", "RSD", "CMB"]
+/**
+ * NZ (#517): the ADV358 box/bag types that carry an identifier. CMB rides rare (its "CMB B99" identifier shape is
+ * alpha-led, covered by makeAuNzPoBoxPhrase). Counter Delivery / Poste Restante are identifier-less counter services —
+ * no number to learn, excluded from synthesis.
+ */
 const NZ_LEADERS_COMMON = ["PO Box", "Private Bag"]
 const NZ_LEADERS_RARE = ["CMB"]
 
-// Canadian postcode synthesis: valid first letters per province from the codex FSA prior, interior
-// letters per the codex pattern (excludes the visually ambiguous D F I O Q U). The LDU digits are
-// random — the SHAPE is the training signal, not the (unknowable) live assignment.
+/**
+ * Canadian postcode synthesis: valid first letters per province from the codex FSA prior, interior letters per the
+ * codex pattern (excludes the visually ambiguous D F I O Q U). The LDU digits are random — the SHAPE is the training
+ * signal, not the (unknowable) live assignment.
+ */
 const QC_FSA_LETTERS = Object.entries(FSA_LETTER_TO_PROVINCE)
 	.filter(([, p]) => p === "QC")
 	.map(([l]) => l) // G H J
@@ -107,8 +120,10 @@ const ON_FSA_LETTERS = Object.entries(FSA_LETTER_TO_PROVINCE)
 	.map(([l]) => l) // K L M N P
 const CA_INTERIOR_LETTERS = "ABCEGHJKLMNPRSTVWXYZ"
 
-// Class mix — po_box mass leans US (the production arena), cedex gets a real block, and the CA-fr
-// class exists because the #511 Montréal rows ("Case Postale 200, H3A 1B9 Montréal, QC") fail today.
+/**
+ * Class mix — po_box mass leans US (the production arena), cedex gets a real block, and the CA-fr class exists because
+ * the #511 Montréal rows ("Case Postale 200, H3A 1B9 Montréal, QC") fail today.
+ */
 const CLASS_MIX: ReadonlyArray<[string, number]> = [
 	["po-box-us", 0.27],
 	["po-box-us-military", 0.05], // #517: CMR/PSC/Unit + Box, APO/FPO/DPO + AA/AE/AP — the arena's 0/3 class
@@ -390,8 +405,10 @@ function caseDial(random: () => number, s: string): string {
 	return s.toLowerCase()
 }
 
-// Leaders the codex PO_BOX_RE genuinely covers (everything en-US except "POB"; PMB/"#" are the
-// corpus's CMRA forms, outside USPS Pub-28 §29). Used to scope the isPOBox round-trip assertion.
+/**
+ * Leaders the codex PO_BOX_RE genuinely covers (everything en-US except "POB"; PMB/"#" are the corpus's CMRA forms,
+ * outside USPS Pub-28 §29). Used to scope the isPOBox round-trip assertion.
+ */
 const CODEX_COVERED_LEADERS = new Set(
 	["PO Box", "P.O. Box", "P.O.Box", "PO BOX", "Post Office Box", "Box", ...US_LEADERS_RARE].map((l) => l.toLowerCase())
 )

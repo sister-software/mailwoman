@@ -204,11 +204,13 @@ export interface ResolvedHit {
 	uncertaintyM?: number
 }
 
-// All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain.
-// R2 + Cloudflare gives a stable clean URL, raw byte ranges (no gzip mangling), configurable CORS,
-// low RTT, and free egress — the combination GitHub Pages (force-gzips ranges) and HF (per-request
-// presigned redirect) couldn't. The DBs are range-loaded via sql.js-httpvfs from here; the rest is
-// one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL swap.
+/**
+ * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain. R2 + Cloudflare gives a
+ * stable clean URL, raw byte ranges (no gzip mangling), configurable CORS, low RTT, and free egress — the combination
+ * GitHub Pages (force-gzips ranges) and HF (per-request presigned redirect) couldn't. The DBs are range-loaded via
+ * sql.js-httpvfs from here; the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
+ * swap.
+ */
 const ASSET_BASE_URL = "https://public.sister.software/mailwoman/"
 
 export function assetURL(locale: string, version: string, filename: string): string {

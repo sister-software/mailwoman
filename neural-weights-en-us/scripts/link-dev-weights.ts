@@ -47,17 +47,21 @@ import { resolve } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
-// --- current default (npm v5.9.0 = demo defaultVersion v5.9.0) --------------
-// 6.5.0 ships the v381-punct-fix-full (step-8000) int8 model + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED since
-// 6.1.0; only the model moved — the no-fragment digit-ownership shard + the #1101 punct-drop augmentation). Bump these two
-// paths on each ship; the expected md5s live in model-card.json `files_md5` (single source — see the header).
+/**
+ * --- current default (npm v5.9.0 = demo defaultVersion v5.9.0) -------------- 6.5.0 ships the v381-punct-fix-full
+ * (step-8000) int8 model + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED since 6.1.0; only the model moved —
+ * the no-fragment digit-ownership shard + the #1101 punct-drop augmentation). Bump these two paths on each ship; the
+ * expected md5s live in model-card.json `files_md5` (single source — see the header).
+ */
 const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
 const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 
 const PKG_DIR = repoRootPath("neural-weights-en-us")
 
-// The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4
-// re-verifies against the published tarball — so dev symlinks, the card, and npm agree.
+/**
+ * The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4 re-verifies against the
+ * published tarball — so dev symlinks, the card, and npm agree.
+ */
 const CARD = JSON.parse(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
 	files_md5?: Record<string, string>
 }
@@ -71,8 +75,10 @@ if (!DEFAULT_MODEL_MD5 || !DEFAULT_TOKENIZER_MD5) {
 	process.exit(1)
 }
 
-// An explicit override means the caller is deliberately experimenting with a
-// non-default model — skip the hash assertion in that case (but warn loudly).
+/**
+ * An explicit override means the caller is deliberately experimenting with a non-default model — skip the hash
+ * assertion in that case (but warn loudly).
+ */
 const MODEL_OVERRIDDEN = !!$public.MAILWOMAN_DEV_MODEL
 const TOKENIZER_OVERRIDDEN = !!$public.MAILWOMAN_DEV_TOKENIZER
 
@@ -147,18 +153,17 @@ if (!TOKENIZER_OVERRIDDEN) {
 	console.error("  (tokenizer override active — skipping #397 default-hash check)")
 }
 
-// --- soft-feed siblings (the fresh-worktree anchor-OFF gap; mirrors en-gb's script) ------
-//
-// Historically this script linked only model+tokenizer, leaving `anchor-lexicon-v1.json` /
-// `country-surface-lexicon-v1.json` / `postcode-us.bin` absent in a fresh worktree — the CLI
-// then parses anchor-OFF/gazetteer-OFF/country-OFF with only stderr warnings (train/inference
-// mismatch, visibly degraded parses: the 2026-07-23 CI unit-leg failure was "Paris, TX"
-// resolving to Paris FRANCE on the self-hosted runners' fresh checkouts for exactly this
-// reason). The two lexicons are checked-in repo files (`data/gazetteer/…` — the same source
-// `release.config.json`'s `softFeed.*` names and `scripts/copy-weights.ts` copies at publish
-// time); `postcode-us.bin` is derived from the WOF US postcode shard, built in place via the
-// compiled `gazetteer postcode-binary` CLI (skip-if-exists — it rebuilds in seconds, and the
-// shard is versionless on disk, unlike en-gb's md5-guarded pair index).
+/**
+ * --- soft-feed siblings (the fresh-worktree anchor-OFF gap; mirrors en-gb's script) ------ Historically this script
+ * linked only model+tokenizer, leaving `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` / `postcode-us.bin`
+ * absent in a fresh worktree — the CLI then parses anchor-OFF/gazetteer-OFF/country-OFF with only stderr warnings
+ * (train/inference mismatch, visibly degraded parses: the 2026-07-23 CI unit-leg failure was "Paris, TX" resolving to
+ * Paris FRANCE on the self-hosted runners' fresh checkouts for exactly this reason). The two lexicons are checked-in
+ * repo files (`data/gazetteer/…` — the same source `release.config.json`'s `softFeed.*` names and
+ * `scripts/copy-weights.ts` copies at publish time); `postcode-us.bin` is derived from the WOF US postcode shard, built
+ * in place via the compiled `gazetteer postcode-binary` CLI (skip-if-exists — it rebuilds in seconds, and the shard is
+ * versionless on disk, unlike en-gb's md5-guarded pair index).
+ */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
@@ -227,10 +232,12 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
-// Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
-// ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath`
-// in dev and the runtime pipeline can auto-wire the gazetteer + street-context gate. The publish
-// flow stages the real binary (release-sequenced).
+/**
+ * Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath` in dev and the
+ * runtime pipeline can auto-wire the gazetteer + street-context gate. The publish flow stages the real binary
+ * (release-sequenced).
+ */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
 const FST_DEST = resolve(PKG_DIR, "fst-en-us.bin")
 
@@ -241,11 +248,13 @@ if (existsSync(FST_SRC)) {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
 
-// Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general
-// artifact ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build
-// street-morphology`) so `resolveWeights` surfaces `streetMorphologyPath` in dev and the
-// street-context gate (#1315) deserializes the artifact instead of rebuilding from dictionaries.
-// Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+/**
+ * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
+ * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
+ * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
+ * it.
+ */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 

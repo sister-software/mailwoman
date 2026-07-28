@@ -82,22 +82,22 @@ interface LocaleEvalSpec {
 	files: string[]
 }
 
-// One eval spec per locale that has an eval set. The eval rows carry split street parts so the
-// affix capability (`street_prefix`/`street_suffix`) is measurable — the whole point of the
-// manifest (the folded `per-locale-f1.ts` joins the three street parts and cannot see it).
-//
-// FR uses the dedicated street-prefix slice (`fr-street-prefix-real.jsonl`, the #719 reproduction),
-// NOT the broad golden dev set, for the essential tags: golden FR carries only ~7 `street_prefix`
-// rows against ~1535 without it, so the unfolded `street_prefix` F1 there is dominated by absent-gold
-// rows (measured 5.3) — it would UNDER-certify the very capability the gate exists to protect. On the
-// purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the figure the #719 fix cites),
-// which is the honest capability number the loader must guard.
+/**
+ * One eval spec per locale that has an eval set. The eval rows carry split street parts so the affix capability
+ * (`street_prefix`/`street_suffix`) is measurable — the whole point of the manifest (the folded `per-locale-f1.ts`
+ * joins the three street parts and cannot see it). FR uses the dedicated street-prefix slice
+ * (`fr-street-prefix-real.jsonl`, the #719 reproduction), NOT the broad golden dev set, for the essential tags: golden
+ * FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded `street_prefix` F1 there is
+ * dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability the gate exists to protect.
+ * On the purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the figure the #719 fix cites), which is
+ * the honest capability number the loader must guard.
+ */
 const LOCALES: LocaleEvalSpec[] = [
 	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
 	{ system: "fr", files: ["data/eval/external/fr-street-prefix-real.jsonl"] },
 ]
 
-// The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
+/** The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts). */
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -117,9 +117,11 @@ const TAGS = [
 	"subregion",
 ] as const
 
-// The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta-gate
-// reads, so the ONLY tags that NEED a paired `maskOnF1`. Derived from the codex so a new forbid row
-// automatically widens the manifest the next time it's regenerated.
+/**
+ * The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta-gate reads, so the ONLY
+ * tags that NEED a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
+ * next time it's regenerated.
+ */
 const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )

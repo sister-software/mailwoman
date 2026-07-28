@@ -47,8 +47,10 @@ const MAX_LISTED_EXAMPLES = 20
 
 const SEP = ""
 
-// Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure
-// modes surface that the current numbers miss.
+/**
+ * Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure modes surface that the current
+ * numbers miss.
+ */
 const CORPUS_CONFIDENCE_FLOOR = 0.66
 const SHARD_MIN_COUNT = 50
 const CORPUS_MIN_COUNT = 200

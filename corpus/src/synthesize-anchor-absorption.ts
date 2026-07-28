@@ -84,8 +84,10 @@ function houseNum(random: () => number, realZips: ReadonlyArray<string>): string
 	return String(1 + Math.floor(random() * 9999))
 }
 
-// Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear
-// in `raw` for alignRow; these are plain ASCII tokens that align cleanly.
+/**
+ * Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear in `raw` for
+ * alignRow; these are plain ASCII tokens that align cleanly.
+ */
 const STREET_NAMES = [
 	"Main",
 	"Oak",
@@ -117,10 +119,12 @@ const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
 	{ locality: "Rochester", region: "NY", postcode: "14606" },
 	{ locality: "Sacramento", region: "CA", postcode: "95823" },
 ]
-// US rural states where the leading-postcode "{ZIP} {Street}, {STATE}" form (no trailing ZIP) is real —
-// the VT/rural format the #723 override broke and Probe A0 eroded.
+/**
+ * US rural states where the leading-postcode "{ZIP} {Street}, {STATE}" form (no trailing ZIP) is real — the VT/rural
+ * format the #723 override broke and Probe A0 eroded.
+ */
 const RURAL_REGIONS = ["VT", "ND", "SD", "NH", "ME", "MT", "WY"]
-// DE leading-postcode tuples: "{postcode} {locality}, {street} {house}".
+/** DE leading-postcode tuples: "{postcode} {locality}, {street} {house}". */
 const DE_TUPLES = [
 	{ postcode: "10115", locality: "Berlin", street: "Hauptstraße" },
 	{ postcode: "80331", locality: "München", street: "Sendlinger Straße" },
@@ -129,7 +133,7 @@ const DE_TUPLES = [
 	{ postcode: "01067", locality: "Dresden", street: "Prager Straße" },
 ]
 const HOUSE_NUMS = ["5", "12", "27", "100", "212", "1450", "8"]
-// Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp.
+/** Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp. */
 const FAKE_ZIPS = ["00000", "99998", "99997", "00001", "99996"]
 
 /** Build one anchor-absorption counter-augmentation row. */

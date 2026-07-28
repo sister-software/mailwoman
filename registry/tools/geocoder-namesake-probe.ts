@@ -23,7 +23,7 @@ export interface GeocoderNamesakeProbeOptions {
 	createGeocoder: EvalGeocoderFactory
 }
 
-// TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for.
+/** TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for. */
 const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: string }> = [
 	{ city: "Paris", zip: "75460", tx: [33.66, -95.55], namesake: "Paris, France (48.85, 2.35)" },
 	{ city: "Athens", zip: "75751", tx: [32.2, -95.85], namesake: "Athens, Greece (37.98, 23.72)" },
@@ -35,7 +35,7 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
 	{ city: "Odessa", zip: "79761", tx: [31.85, -102.37], namesake: "Odessa, Ukraine (46.48, 30.72)" },
 ]
 
-// Texas bounding box (generous).
+/** Texas bounding box (generous). */
 const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
 const inTexas = (lat: number, lon: number) =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax

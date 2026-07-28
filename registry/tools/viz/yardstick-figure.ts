@@ -52,12 +52,12 @@ const GRAINS: Grain[] = [
 	},
 ]
 
-// F1 per (model, grain), in %.
+/** F1 per (model, grain), in %. */
 const F1: Record<string, [number, number, number, number]> = {
 	GBT: [53.6, 55.3, 60.7, 68.1], // shipped default
 	FS: [45.1, 42.7, 52.3, 60.3], // FS full stack baseline
 }
-// Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT.
+/** Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT. */
 const OVERMERGE: Record<string, [number, number, number, number]> = {
 	GBT: [109, 208, 92, 76],
 	FS: [144, 253, 129, 114],

@@ -50,7 +50,8 @@ const COUNTRY_FORM_POOL = (() => {
 	// all ~249 ISO canonical English names (breadth)
 	return { surface, names }
 })()
-const COUNTRY_ABSENT_PROB = 0.3 // negatives: rows with NO country token → teach golden precision
+/** Negatives: rows with NO country token → teach golden precision. */
+const COUNTRY_ABSENT_PROB = 0.3
 
 /** A cached OpenAddresses extract + the implied iso2/region/render-order. */
 interface CountrySource {
@@ -61,8 +62,10 @@ interface CountrySource {
 	order: string
 }
 
-// Multi-locale OA sources. region = implied admin where the extract is single-region (US states, DE
-// Saxony); countrywide extracts (FR/IT/NL) read region from the CSV when present.
+/**
+ * Multi-locale OA sources. region = implied admin where the extract is single-region (US states, DE Saxony);
+ * countrywide extracts (FR/IT/NL) read region from the CSV when present.
+ */
 const SOURCES: readonly CountrySource[] = [
 	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", iso2: "US", region: "IA", order: "us" },
 	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", iso2: "US", region: "IL", order: "us" },
@@ -75,7 +78,7 @@ const SOURCES: readonly CountrySource[] = [
 	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
 	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
 ]
-// Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained.
+/** Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained. */
 const EVAL_SOURCES: readonly CountrySource[] = [
 	{ zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", iso2: "US", region: "VT", order: "us" },
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
@@ -381,8 +384,10 @@ function renderAbbrevRegion(random: () => number): {
 	}
 }
 
-const HOMOGRAPH_FRAC = 0.22 // share of rows that are homograph contrast pairs
-const ABBREV_FRAC = 0.08 // share that are code-as-region negatives (cumulative with HOMOGRAPH_FRAC)
+/** Share of rows that are homograph contrast pairs. */
+const HOMOGRAPH_FRAC = 0.22
+/** Share that are code-as-region negatives (cumulative with HOMOGRAPH_FRAC) */
+const ABBREV_FRAC = 0.08
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

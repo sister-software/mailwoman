@@ -15,10 +15,14 @@ import { MailwomanBaseTileSetID } from "./theme.ts"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
 
-const POP_START = 12.5 // zoom where buildings start rising
-const POP_END = 13 // zoom where they reach full height (Protomaps fully loaded here)
-const ROOF_GAP = 0.1 // meters: tiny lift so the band clears the roof (kills z-fight)
-const ROOF_CAP = 1 // meters: band thickness
+/** Zoom where buildings start rising. */
+const POP_START = 12.5
+/** Zoom where they reach full height (Protomaps fully loaded here) */
+const POP_END = 13
+/** Meters: tiny lift so the band clears the roof (kills z-fight) */
+const ROOF_GAP = 0.1
+/** Meters: band thickness. */
+const ROOF_CAP = 1
 
 const buildingHeight = (offset = 0): ExpressionSpecification => [
 	"+",

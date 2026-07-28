@@ -33,14 +33,18 @@ const { values: rawValues } = parseArgs({
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { "warn-only"?: boolean }
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
-// The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads,
-// not what the publisher believes it wrote.
+/**
+ * The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads, not what the
+ * publisher believes it wrote.
+ */
 const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
 
-// Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" —
-// the version-parity workflow runs it WITHOUT installing; a @mailwoman/core import here crashed
-// every CI run with ERR_MODULE_NOT_FOUND while local runs silently resolved via repo node_modules,
-// which is how the 2026-07-2x dailies were red without anyone seeing a version comparison at all).
+/**
+ * Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" — the version-parity
+ * workflow runs it WITHOUT installing; a @mailwoman/core import here crashed every CI run with ERR_MODULE_NOT_FOUND
+ * while local runs silently resolved via repo node_modules, which is how the 2026-07-2x dailies were red without anyone
+ * seeing a version comparison at all).
+ */
 const REPO_ROOT = resolve(import.meta.dirname, "..")
 const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "articles", "releases.mdx")
 const MODEL_CARD_PATH = resolve(REPO_ROOT, "neural-weights-en-us", "model-card.json")

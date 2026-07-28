@@ -60,8 +60,10 @@ import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-
 /** Shortest romanised stem still specific enough to match a Taiwanese place name. */
 const MIN_ENGLISH_STEM_LENGTH = 3
 
-const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set (JP/KR precedent)
-const FALLBACK_RADIUS_KM = 20 // no-polygon fallback: name+proximity net around the official center
+/** Extra non-containing candidates kept for the soft-score set (JP/KR precedent) */
+const NEARBY_KEEP = 2
+/** No-polygon fallback: name+proximity net around the official center. */
+const FALLBACK_RADIUS_KM = 20
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
  * `localadmin`, `locality` (county-administered townships/cities), AND `neighbourhood` (the Kaohsiung/Taichung inner

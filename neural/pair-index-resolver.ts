@@ -47,7 +47,8 @@ import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 /** Tags addressable by the single-byte index the pair table packs into. */
 const MAX_TAGS_PER_BYTE = 256
 
-const MAGIC = 0x31_58_49_50 // "PIX1" little-endian (P=0x50 I=0x49 X=0x58 1=0x31)
+/** "PIX1" little-endian (P=0x50 I=0x49 X=0x58 1=0x31) */
+const MAGIC = 0x31_58_49_50
 const KNOWN_SCHEMA_VERSION = 1
 
 export interface PairIndexEntry {

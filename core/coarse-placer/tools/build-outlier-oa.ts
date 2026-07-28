@@ -66,14 +66,16 @@ export interface BuildOutlierOAResult {
 	heldoutCountries: number
 }
 
-// The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts)
+/** The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts) */
 const IN_MAP = new Set(["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"])
 
-// Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips
-// plausibly carry; the actual TRAIN/HELDOUT set is intersected with what's on disk at runtime. HELDOUT
-// families are the generalization probe (the model never sees a single row from them).
-// Off-map families, intersected at runtime with what OA's europe+asia zips actually carry (verified
-// on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
+/**
+ * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry;
+ * the actual TRAIN/HELDOUT set is intersected with what's on disk at runtime. HELDOUT families are the generalization
+ * probe (the model never sees a single row from them). Off-map families, intersected at runtime with what OA's
+ * europe+asia zips actually carry (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro
+ * sa se sg si sk).
+ */
 const FAMILIES: Record<string, string[]> = {
 	slavic_latin: ["PL", "CZ", "SK", "SI"],
 	romance_offmap: ["PT", "RO"],
@@ -86,8 +88,10 @@ const FAMILIES: Record<string, string[]> = {
 	oceania: ["AU", "NZ", "NC"],
 	middle_east: ["AE", "IL", "KW", "QA", "SA"],
 }
-// Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row
-// from — Baltic (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+/**
+ * Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row from — Baltic
+ * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+ */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
 /** Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin. */

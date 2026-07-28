@@ -73,9 +73,11 @@ import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 const MD5_HEX_LENGTH = 32
 
 const PKG_DIR = repoRootPath("neural-weights-en-gb")
-// In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this
-// pair identical to neural-weights-en-us/scripts/link-dev-weights.ts's DEFAULT_MODEL /
-// DEFAULT_TOKENIZER on every ship. The guard below fails loud on any future miss.
+/**
+ * In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this pair identical to
+ * neural-weights-en-us/scripts/link-dev-weights.ts's DEFAULT_MODEL / DEFAULT_TOKENIZER on every ship. The guard below
+ * fails loud on any future miss.
+ */
 const SRC_MODEL =
 	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
 const SRC_TOKENIZER =
@@ -222,10 +224,11 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 
 // --- soft-feed siblings (the fresh-worktree anchor-OFF gap) -----------------------------
 
-// The gazetteer + country soft-feed lexicons are checked-in repo files — symlink straight
-// from `data/gazetteer/` (the same source `release.config.json`'s `softFeed.gazetteerLexicon` /
-// `softFeed.countryLexicon` name, and what `scripts/copy-weights.ts` copies verbatim at
-// publish time).
+/**
+ * The gazetteer + country soft-feed lexicons are checked-in repo files — symlink straight from `data/gazetteer/` (the
+ * same source `release.config.json`'s `softFeed.gazetteerLexicon` / `softFeed.countryLexicon` name, and what
+ * `scripts/copy-weights.ts` copies verbatim at publish time).
+ */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
@@ -243,11 +246,12 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
-// `postcode-gb.bin` has no committed source (it's derived from the WOF GB postcode shard),
-// so build it in place with the compiled `gazetteer postcode-binary` CLI — the same command
-// `scripts/copy-weights.ts` runs per-locale at publish time. Requires `yarn compile` to have
-// run first (mailwoman/out/cli.js must exist); skips with a warning (not a hard failure) so a
-// worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
+/**
+ * `postcode-gb.bin` has no committed source (it's derived from the WOF GB postcode shard), so build it in place with
+ * the compiled `gazetteer postcode-binary` CLI — the same command `scripts/copy-weights.ts` runs per-locale at publish
+ * time. Requires `yarn compile` to have run first (mailwoman/out/cli.js must exist); skips with a warning (not a hard
+ * failure) so a worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
+ */
 const GB_WOF_DB = dataRootPath("wof", "postalcode-gb.db")
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
@@ -274,21 +278,19 @@ if (!existsSync(CLI)) {
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
-// `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's
-// derived from the HM Land Registry PPD tuples CSV) — build it the same way, via the compiled
-// `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the Task-7-CALIBRATED value baked into
-// the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header comment for
-// the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed,
-// not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard
-// failure) so a worktree without the PPD source CSV can still link everything else.
-//
-// UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds), the PPD tuples CSV is
-// ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min). `weights.test.ts`
-// invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING
-// UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact
-// is verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a
-// bumped delta or a changed PPD snapshot silently ship a byte-identical-looking but out-of-date
-// artifact into every test run.
+/**
+ * `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's derived from the HM Land
+ * Registry PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA`
+ * mirrors the Task-7-CALIBRATED value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this
+ * file's header comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule
+ * executed, not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a
+ * worktree without the PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard,
+ * rebuilds in seconds), the PPD tuples CSV is ~25.6M rows — a cold build takes several minutes (measured 2026-07-22:
+ * ~4-5 min). `weights.test.ts` invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so
+ * REBUILDING UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact is
+ * verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a bumped delta or a
+ * changed PPD snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
+ */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
 const PAIR_INDEX_DELTA = 10
@@ -385,10 +387,12 @@ if (pairIndexIsFresh) {
 	console.log(`built ${PAIR_INDEX_BIN_DEST}`)
 }
 
-// Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
-// ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath`
-// in dev and the runtime pipeline can auto-wire the gazetteer + street-context gate. The publish
-// flow stages the real binary (release-sequenced).
+/**
+ * Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath` in dev and the
+ * runtime pipeline can auto-wire the gazetteer + street-context gate. The publish flow stages the real binary
+ * (release-sequenced).
+ */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-gb.bin")
 const FST_DEST = resolve(PKG_DIR, "fst-en-gb.bin")
 
@@ -399,11 +403,13 @@ if (existsSync(FST_SRC)) {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
 
-// Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general
-// artifact ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build
-// street-morphology`) so `resolveWeights` surfaces `streetMorphologyPath` in dev and the
-// street-context gate (#1315) deserializes the artifact instead of rebuilding from dictionaries.
-// Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+/**
+ * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
+ * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
+ * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
+ * it.
+ */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 

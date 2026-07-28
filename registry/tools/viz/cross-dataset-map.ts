@@ -57,10 +57,12 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 const label = (s: string) => SOURCE_LABELS[s] ?? s
 
-// Which AGENCY each source belongs to. The two FCC datasets (RHC posted-services + commitments) are
-// ONE agency — so an NPPES↔FCC or FCC↔TX link is cross-AGENCY, but an RHC↔commitments link is not.
-// `--cross-agency-only` keeps just the entities whose sources span >1 agency: the harder, more
-// striking "no shared key ACROSS agencies" slice (most of the raw links are FCC-internal).
+/**
+ * Which AGENCY each source belongs to. The two FCC datasets (RHC posted-services + commitments) are ONE agency — so an
+ * NPPES↔FCC or FCC↔TX link is cross-AGENCY, but an RHC↔commitments link is not. `--cross-agency-only` keeps just the
+ * entities whose sources span >1 agency: the harder, more striking "no shared key ACROSS agencies" slice (most of the
+ * raw links are FCC-internal).
+ */
 const SOURCE_AGENCY: Record<string, string> = {
 	nppes: "CMS",
 	"fcc-rhc": "FCC",

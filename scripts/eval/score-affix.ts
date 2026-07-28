@@ -55,14 +55,18 @@ const TAGS = [
 	"cedex",
 ] as const
 
-// A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
-// else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
+/**
+ * A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference, else the
+ * zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
+ */
 const GAZ = values["gazetteer-lexicon"] || ""
 const suppressGaz = values["suppress-gaz-near-postcode"] ?? false
 
-// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels
-// (anchor + gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a
-// country-channel model (v6.2.0+). Takes precedence over the explicit --model path.
+/**
+ * PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels (anchor +
+ * gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a country-channel
+ * model (v6.2.0+). Takes precedence over the explicit --model path.
+ */
 const WEIGHTS_CACHE = values["weights-cache"] || ""
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })

@@ -55,7 +55,8 @@ const GAZETTEER_ROW_COLUMNS = 7
 
 const ROUND_HALF_DIGIT = 5
 
-const ZCTA_SOURCE = "census-zcta-2024" // keep in sync with scripts/zcta-centroids.ts
+/** Keep in sync with scripts/zcta-centroids.ts. */
+const ZCTA_SOURCE = "census-zcta-2024"
 
 /** (lat, lon, source): source is null when the row is a placeholder (membership only). */
 type Centroid = [number, number, string | null]

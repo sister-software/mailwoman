@@ -57,19 +57,19 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-// Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
-// `oa-resolver-eval` runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs
-// `anchor_features`/`gazetteer_features`) were trained WITH these channels live, so honest inference
-// must feed them. The lookup is keyed by the input's own postcode — always available at eval time.
-//
-// Why this is a DEFAULT, not opt-in (the bug this file used to have): when these are omitted, the
-// ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
-// out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
-// (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0,
-// region↔locality flip — while the morphology tags (street/house_number/venue) that don't lean on
-// the anchor channel survive. The result LOOKS like a per-version model regression but is purely a
-// harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater identically without the feed and recover
-// identically with it. Pass `--no-anchor` to deliberately measure the anchor-off (zero-feed) path.
+/**
+ * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
+ * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs `anchor_features`/`gazetteer_features`)
+ * were trained WITH these channels live, so honest inference must feed them. The lookup is keyed by the input's own
+ * postcode — always available at eval time. Why this is a DEFAULT, not opt-in (the bug this file used to have): when
+ * these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
+ * out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
+ * (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0, region↔locality flip
+ * — while the morphology tags (street/house_number/venue) that don't lean on the anchor channel survive. The result
+ * LOOKS like a per-version model regression but is purely a harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater
+ * identically without the feed and recover identically with it. Pass `--no-anchor` to deliberately measure the
+ * anchor-off (zero-feed) path.
+ */
 const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 

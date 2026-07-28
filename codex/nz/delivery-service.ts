@@ -139,8 +139,10 @@ const IDENTIFIER_RULES = new Map<NzDeliveryServiceMatchTypeName, NzIdentifierRul
 	["Private Box", NZ_PRIVATE_BOX_ALIAS.identifier],
 ])
 
-// One anchored regex per type. The identifier shape follows ADV358 (alphanumeric, no spaces or
-// separators — `24999`, `B99`); the identifier-less counter services take no tail at all.
+/**
+ * One anchored regex per type. The identifier shape follows ADV358 (alphanumeric, no spaces or separators — `24999`,
+ * `B99`); the identifier-less counter services take no tail at all.
+ */
 const MATCHERS: ReadonlyArray<{ type: NzDeliveryServiceMatchTypeName; re: RegExp }> = TYPE_PATTERNS.map(
 	([type, src]) => {
 		const rule = IDENTIFIER_RULES.get(type)!

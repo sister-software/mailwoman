@@ -53,7 +53,7 @@ const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
-// Cooper Center "Racial Dot Map" palette, by `pl_block`/P2 category.
+/** Cooper Center "Racial Dot Map" palette, by `pl_block`/P2 category. */
 const CATEGORY_COLOR: Record<string, string> = {
 	white: "#1f78b4", // blue
 	black: "#33a02c", // green

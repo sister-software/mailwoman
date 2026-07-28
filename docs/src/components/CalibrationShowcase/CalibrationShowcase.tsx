@@ -58,8 +58,10 @@ export interface CalibrationShowcaseProps {
 }
 
 // Palette via theme vars where possible; fixed hexes for the two data series so the legend reads.
-const RAW_COLOR = "#e8833a" // amber — the un-calibrated softmax score
-const CAL_COLOR = "#2e8b8b" // teal — after isotonic calibration
+/** Amber — the un-calibrated softmax score. */
+const RAW_COLOR = "#e8833a"
+/** Teal — after isotonic calibration. */
+const CAL_COLOR = "#2e8b8b"
 
 export default function CalibrationShowcase({
 	version = "v4.13.0",

@@ -50,9 +50,10 @@ import { sealDatabase } from "@mailwoman/core/utils"
  */
 const ROUND_HALF_DIGIT = 5
 
-const MATCH_RADIUS_KM = 20 // KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net
+/** KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net. */
+const MATCH_RADIUS_KM = 20
 const HANGUL = /[가-힣]/
-// Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc.
+/** Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc. */
 const SUFFIX = /(특별자치도|특별자치시|광역시|특별시|면|동|읍|시|군|구|리)$/
 
 /** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */

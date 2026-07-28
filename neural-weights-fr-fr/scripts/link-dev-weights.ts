@@ -67,7 +67,7 @@ function removeIfPresent(dest: string): void {
 removeIfPresent(resolve(PKG_DIR, "model.onnx"))
 removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
 
-// --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------
+/** --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------. */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
@@ -113,10 +113,12 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
-// Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
-// ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath`
-// in dev and the runtime pipeline can auto-wire the gazetteer + street-context gate. The publish
-// flow stages the real binary (release-sequenced).
+/**
+ * Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath` in dev and the
+ * runtime pipeline can auto-wire the gazetteer + street-context gate. The publish flow stages the real binary
+ * (release-sequenced).
+ */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-fr-fr.bin")
 const FST_DEST = resolve(PKG_DIR, "fst-fr-fr.bin")
 
@@ -127,11 +129,13 @@ if (existsSync(FST_SRC)) {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
 
-// Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general
-// artifact ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build
-// street-morphology`) so `resolveWeights` surfaces `streetMorphologyPath` in dev and the
-// street-context gate (#1315) deserializes the artifact instead of rebuilding from dictionaries.
-// Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+/**
+ * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
+ * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
+ * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
+ * it.
+ */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 

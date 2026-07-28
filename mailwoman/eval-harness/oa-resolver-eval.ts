@@ -292,10 +292,12 @@ const normName = (s: string | undefined): string => {
 		.trim()
 }
 
-// Resolved region names are the gazetteer's CANONICAL full names ("California", "District of
-// Columbia"); OA's expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so
-// region-match compares like-for-like. Embedded inline (not imported from @mailwoman/corpus, which
-// has no exports map → fragile subpath import for a standalone script).
+/**
+ * Resolved region names are the gazetteer's CANONICAL full names ("California", "District of Columbia"); OA's
+ * expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so region-match compares like-for-like.
+ * Embedded inline (not imported from @mailwoman/corpus, which has no exports map → fragile subpath import for a
+ * standalone script).
+ */
 const STATE_NAME_TO_ABBR: Record<string, string> = {
 	alabama: "AL",
 	alaska: "AK",

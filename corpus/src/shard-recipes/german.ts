@@ -31,9 +31,11 @@ interface GermanSource {
 	region: string
 }
 
-// `region` is the Bundesland the source covers. OA's REGION column is empty for DE, but the region is
-// implied by the per-state file — the international order needs it for the "City, Region Postcode" tail
-// (v0.9.3 / #327). berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
+/**
+ * `region` is the Bundesland the source covers. OA's REGION column is empty for DE, but the region is implied by the
+ * per-state file — the international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327). berlin.csv →
+ * Berlin (a city-state, region==locality); sn/statewide → Sachsen.
+ */
 const SOURCES: GermanSource[] = [
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
 	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },

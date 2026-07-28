@@ -51,7 +51,7 @@ interface PlacetypeStat {
 	trained: boolean
 }
 
-// WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones).
+/** WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones). */
 const PLACETYPE_TO_TAG: Record<string, string> = {
 	country: "country",
 	region: "region",

@@ -35,16 +35,18 @@ const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
-// P.L. 94-171 (2020) pipe-delimited field offsets (0-based).
-// Geographic header: …|SUMLEV(2)|…|LOGRECNO(7)|GEOID(8)|GEOCODE(9)|… — GEOCODE is the bare 15-char
-// block FIPS (matches TIGER GEOID20); SUMLEV 750 = tabulation block.
+/**
+ * P.L. 94-171 (2020) pipe-delimited field offsets (0-based). Geographic header:
+ * …|SUMLEV(2)|…|LOGRECNO(7)|GEOID(8)|GEOCODE(9)|… — GEOCODE is the bare 15-char block FIPS (matches TIGER GEOID20);
+ * SUMLEV 750 = tabulation block.
+ */
 const GEO_SUMLEV = 2
 const GEO_LOGRECNO = 7
 const GEO_GEOCODE = 9
-// Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76.
+/** Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76. */
 const SEG_LOGRECNO = 4
 const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
-// The eight P2 categories that partition the total (P0020001), in `pl_block` column order.
+/** The eight P2 categories that partition the total (P0020001), in `pl_block` column order. */
 const CATEGORY_INDEX = {
 	pop_total: P2(1),
 	hispanic: P2(2), // Hispanic or Latino (any race)

@@ -54,8 +54,10 @@ export interface DedupCeilingOptions {
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
-// Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which
-// carry the distinguishing signal between two co-located providers.
+/**
+ * Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which carry the
+ * distinguishing signal between two co-located providers.
+ */
 const STOP = new Set([
 	"llc",
 	"inc",

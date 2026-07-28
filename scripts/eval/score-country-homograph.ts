@@ -40,15 +40,19 @@ const values = rawValues as {
 }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-// Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
-// candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
+/**
+ * Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its candidate-tag
+ * clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
+ */
 const GAZ = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
 const file = (values["file"] || "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
-// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels
-// (anchor + gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a
-// country-channel model (v6.2.0+), which is exactly what this country probe must feed. Precedence over --model.
+/**
+ * PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels (anchor +
+ * gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a country-channel
+ * model (v6.2.0+), which is exactly what this country probe must feed. Precedence over --model.
+ */
 const WEIGHTS_CACHE = values["weights-cache"] || ""
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })

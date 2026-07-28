@@ -144,8 +144,10 @@ export interface AuLevelDesignatorMatch {
 	identifier?: string
 }
 
-// One regex per level code. Multi-word variants ("LOWER GROUND", "GROUND FLOOR") are matched
-// before their shorter constituents by ordering the variant list longest-first within each code.
+/**
+ * One regex per level code. Multi-word variants ("LOWER GROUND", "GROUND FLOOR") are matched before their shorter
+ * constituents by ordering the variant list longest-first within each code.
+ */
 const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = (() => {
 	const rows: Array<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = []
 

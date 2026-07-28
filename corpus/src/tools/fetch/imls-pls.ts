@@ -39,8 +39,7 @@ const BYTES_PER_KIB = 1024
 
 const execFileAsync = promisify(execFile)
 
-// The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05).
-// If IMLS publishes a newer year, update this URL.
+/** The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05). If IMLS publishes a newer year, update this URL. */
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
 const SLUG = "usgov-imls-pls"
 
