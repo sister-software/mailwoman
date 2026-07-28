@@ -498,7 +498,7 @@ const TrainingChartsInner: React.FC = () => {
 				// Auto-select first N runs (max 4)
 				const toSelect = runList.slice(0, 4).map((r) => r.name)
 				setSelectedRuns(new Set(toSelect))
-			} catch (error) {
+			} catch (caught) {
 				if (cancelled) return
 				setError(error instanceof Error ? error.message : String(error))
 			} finally {

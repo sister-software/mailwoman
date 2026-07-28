@@ -21,7 +21,7 @@ import { buildRegressionDB } from "../../eval-harness/gauntlet/build-regression-
 
 export const description = "Build the Gauntlet data artifacts (fdic-holdout, regression-db)"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod.enum(["fdic-holdout", "regression-db"]).describe(
 		argument({
 			name: "artifact",
@@ -32,9 +32,9 @@ export const args = zod.tuple([
 
 const OptionsSchema = zod.object({})
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
-const EvalGauntletBuild: CommandComponent<typeof OptionsSchema, typeof args> = ({ args }) => {
+const EvalGauntletBuild: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		switch (args[0]) {
 			case "fdic-holdout":

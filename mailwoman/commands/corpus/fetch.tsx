@@ -27,7 +27,7 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod
 		.enum([
 			"ban",
@@ -73,7 +73,7 @@ const OptionsSchema = zod.object({
 	dryRun: zod.boolean().default(false).describe("tiger-full: print planned downloads without fetching"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
 type Options = zod.infer<typeof OptionsSchema>
 
@@ -125,7 +125,7 @@ function runSource(source: FetchSourceID, options: Options): Promise<FetchSummar
 	}
 }
 
-const CorpusFetch: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const CorpusFetch: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(
 		() => runSource(args[0], options),
 		(summary) => (summary.failed > 0 ? 1 : 0)

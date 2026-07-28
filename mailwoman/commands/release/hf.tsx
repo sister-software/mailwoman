@@ -16,7 +16,7 @@ import zod from "zod"
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { publishReleaseToHF } from "../../release-tools/publish-hf.ts"
 
-export const args = zod.array(
+const ArgsSchema = zod.array(
 	zod.string().describe(
 		argument({
 			name: "version",
@@ -69,9 +69,9 @@ const OptionsSchema = zod.object({
 	wofHot: zod.string().optional().describe("RETIRED 2026-06-20 (slim wof-hot.db) — accepted and ignored"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
-const ReleaseHF: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const ReleaseHF: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(() => publishReleaseToHF({ ...options, version: args[0] }))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

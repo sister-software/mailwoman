@@ -20,7 +20,7 @@ import zod from "zod"
 
 import { type Check, CheckList, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
-export const args = zod.array(
+const ArgsSchema = zod.array(
 	zod.string().describe(
 		argument({
 			name: "admin-db",
@@ -36,9 +36,12 @@ const OptionsSchema = zod.object({
 		.describe("Rebuild the relation from the current spr/ancestors (default). --no-drop appends instead"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
-const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({
+	options,
+	args,
+}) => {
 	const state = useCommandTask(
 		async () => {
 			if (!args.length) throw new Error("expected at least one <admin-db> path")
