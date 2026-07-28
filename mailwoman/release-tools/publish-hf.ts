@@ -95,6 +95,8 @@ export interface PublishHFOptions {
 	fsts?: string
 	gazetteerLexicon?: string
 	countryLexicon?: string
+	streetTypeLexicon?: string
+	localitySurfaceLexicon?: string
 	polygons?: string
 	setDefault?: boolean
 	/** Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail. */
@@ -259,6 +261,21 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		fail(`country lexicon ${countryLexicon} missing/empty`)
 	}
 
+	// Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type-lexicon-v3.json +
+	// locality-surface-lexicon-v6.json. REQUIRED for bundle-trained models (ONNX declares
+	// street_type_features/locality_surface_features + the card requires them); the browser loader
+	// fetches them beside model.onnx and degrades LOUDLY (channel-off fragment parses) on a 404.
+	const streetTypeLexicon = args.streetTypeLexicon || null
+
+	if (streetTypeLexicon && (!existsSync(streetTypeLexicon) || statSync(streetTypeLexicon).size === 0)) {
+		fail(`street-type lexicon ${streetTypeLexicon} missing/empty`)
+	}
+	const localitySurfaceLexicon = args.localitySurfaceLexicon || null
+
+	if (localitySurfaceLexicon && (!existsSync(localitySurfaceLexicon) || statSync(localitySurfaceLexicon).size === 0)) {
+		fail(`locality-surface lexicon ${localitySurfaceLexicon} missing/empty`)
+	}
+
 	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
@@ -321,6 +338,18 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		const dst = `${BUCKET_PATH}/${remoteBase}/country-surface-lexicon-v1.json`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", countryLexicon, dst])
+	}
+
+	if (streetTypeLexicon) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/street-type-lexicon-v3.json`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", streetTypeLexicon, dst])
+	}
+
+	if (localitySurfaceLexicon) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/locality-surface-lexicon-v6.json`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", localitySurfaceLexicon, dst])
 	}
 
 	if (polygonsDb) {
