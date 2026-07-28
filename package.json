@@ -120,6 +120,7 @@
 	"resolutions": {
 		"@sister.software/oxfmt-config": "portal:../universe/oxfmt-config",
 		"@sister.software/oxlint-config": "portal:../universe/oxlint-config",
+		"@sister.software/tsconfig": "portal:../universe/tsconfig",
 		"adm-zip": "0.6.0",
 		"http-proxy-middleware@^2.0.9": "2.0.10",
 		"serialize-javascript": "^7.0.5",

@@ -3,7 +3,7 @@
 	// (composite:false, noEmit) — invoked explicitly via `tsc -p scripts/tsconfig.json`
 	// (and in CI) so `scripts/` stops being the one untyped corner where rot
 	// accumulates. Scoped to .ts/.tsx (the repo bans .mjs — zero remain as of 2026-07-07).
-	"extends": "@sister.software/tsconfig",
+	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
 		"noEmit": true,
 		"erasableSyntaxOnly": true,

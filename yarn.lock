@@ -6950,12 +6950,11 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@sister.software/tsconfig@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@sister.software/tsconfig@npm:9.3.0"
-  checksum: 10/f920f128709efe65bd6116b2b72fd59a0702c5b3f93cdc6e8de84a881ac3b0a8e7524803777f9d64095186c12ed778d247cfb6e2835c19231982812f7b02640e
+"@sister.software/tsconfig@portal:../universe/tsconfig::locator=%40mailwoman%2Funiverse%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@sister.software/tsconfig@portal:../universe/tsconfig::locator=%40mailwoman%2Funiverse%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@slorber/remark-comment@npm:^1.0.0":
   version: 1.0.0
