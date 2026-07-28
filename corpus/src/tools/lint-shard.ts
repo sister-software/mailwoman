@@ -392,16 +392,17 @@ function renderReport(
 	const errors = flags.filter((f) => f.severity === "error")
 	const warns = flags.filter((f) => f.severity === "warn")
 	const verdict = !errors.length ? "**PASS** ✓" : "**FLAGGED** ⚠"
-	const lines: string[] = []
-	lines.push(`# Corpus Lint: ${verdict}`)
-	lines.push("")
-	lines.push(`- **Shard:** \`${opts.shardPath}\``)
-	lines.push(`- **Corpus stats:** \`${opts.statsPath}\``)
-	lines.push(`- **Rules:** \`${opts.rulesPath}\``)
-	lines.push(`- **Shard rows:** ${shard.rowCount}`)
-	lines.push(`- **Unique tokens:** ${shard.tokens.size}`)
-	lines.push(`- **Unique bigrams:** ${shard.bigrams.size}`)
-	lines.push("")
+	const lines: string[] = [
+		`# Corpus Lint: ${verdict}`,
+		"",
+		`- **Shard:** \`${opts.shardPath}\``,
+		`- **Corpus stats:** \`${opts.statsPath}\``,
+		`- **Rules:** \`${opts.rulesPath}\``,
+		`- **Shard rows:** ${shard.rowCount}`,
+		`- **Unique tokens:** ${shard.tokens.size}`,
+		`- **Unique bigrams:** ${shard.bigrams.size}`,
+		"",
+	]
 	lines.push(
 		`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`
 	)

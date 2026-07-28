@@ -172,9 +172,7 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 	const eligibleTotal = counts.enrolled + counts["eligible-not-enrolled"]
 	const enrolledRate = eligibleTotal > 0 ? (100 * counts.enrolled) / eligibleTotal : 0
 
-	const lines: string[] = []
-	lines.push(`# ${title}`)
-	lines.push("")
+	const lines: string[] = [`# ${title}`, ""]
 
 	if (options.scopeNote) {
 		lines.push(`_${options.scopeNote}_`)

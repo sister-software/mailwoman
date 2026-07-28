@@ -26,7 +26,7 @@ let db: DatabaseSync
 // One GeoNames row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass, fcode, country, cc2,
 // admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
 function row(over: Record<number, string>): string {
-	const f = Array(19).fill("")
+	const f = new Array(19).fill("")
 
 	for (const [i, v] of Object.entries(over)) {
 		f[Number(i)] = v

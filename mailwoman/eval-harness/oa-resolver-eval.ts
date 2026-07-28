@@ -1125,15 +1125,16 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
 	const pct = (x: number, n: number): string => (n ? `${((100 * x) / n).toFixed(1)}%` : "—")
 	const p = (xs: number[], q: number): string => percentile(xs, q)?.toFixed(1) ?? "—"
-	const lines: string[] = []
-	lines.push(`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`)
-	lines.push("")
-	lines.push(`Model: ${options.model || "(shipped weights)"} | WOF shards: ${wofPaths.length}`)
-	lines.push("")
-	lines.push(`## Resolver eval — neural parser through the WOF resolver`)
-	lines.push("")
-	lines.push(`| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |`)
-	lines.push(`|---|--:|--:|--:|--:|--:|--:|`)
+	const lines: string[] = [
+		`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`,
+		"",
+		`Model: ${options.model || "(shipped weights)"} | WOF shards: ${wofPaths.length}`,
+		"",
+		`## Resolver eval — neural parser through the WOF resolver`,
+		"",
+		`| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |`,
+		`|---|--:|--:|--:|--:|--:|--:|`,
+	]
 	const overallRow = (label: string, a: Agg): string =>
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))

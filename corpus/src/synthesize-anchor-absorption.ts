@@ -267,11 +267,11 @@ export function synthesizeAnchorAbsorptionRow(
  * landmark name can swallow the street token that follows it.
  */
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [
-	...Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),
-	...Array<AnchorAbsorptionTemplate>(15).fill("h-no-trailing-locality"),
-	...Array<AnchorAbsorptionTemplate>(13).fill("p-us-rural"),
-	...Array<AnchorAbsorptionTemplate>(13).fill("p-de"),
-	...Array<AnchorAbsorptionTemplate>(8).fill("anchor-fp"),
-	...Array<AnchorAbsorptionTemplate>(14).fill("locale-ambig"),
-	...Array<AnchorAbsorptionTemplate>(12).fill("standard"),
+	...new Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),
+	...new Array<AnchorAbsorptionTemplate>(15).fill("h-no-trailing-locality"),
+	...new Array<AnchorAbsorptionTemplate>(13).fill("p-us-rural"),
+	...new Array<AnchorAbsorptionTemplate>(13).fill("p-de"),
+	...new Array<AnchorAbsorptionTemplate>(8).fill("anchor-fp"),
+	...new Array<AnchorAbsorptionTemplate>(14).fill("locale-ambig"),
+	...new Array<AnchorAbsorptionTemplate>(12).fill("standard"),
 ]

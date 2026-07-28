@@ -371,18 +371,17 @@ export async function crossSourceThresholdSweep(
 	)
 
 	const rows = [fs, ...gbtArms, ...candidateArms]
-	const lines: string[] = []
-	lines.push(`# #655 — cross-source threshold sweep: can a re-thresholded GBT beat FS?`)
-	lines.push("")
-	lines.push(
+	const lines: string[] = [
+		`# #655 — cross-source threshold sweep: can a re-thresholded GBT beat FS?`,
+		"",
 		`_TX-scoped, ≤${CAP} rows/source (NPPES org + TX HHSC nursing = eligibility-ish; FCC-RHC = funding), ` +
 			`geocoded once then resolved per arm. **Phone-corrob** = of the cross-source entities whose records carry ` +
 			`a phone in ≥2 different sources, the fraction where those phones MATCH — a label-free precision proxy ` +
-			`(phone is not the join key). Higher cross-source + higher phone-corrob = better._`
-	)
-	lines.push("")
-	lines.push(`| arm | threshold | total entities | cross-source links | triple-source | phone-corrob (of checkable) |`)
-	lines.push(`|---|---:|---:|---:|---:|---|`)
+			`(phone is not the join key). Higher cross-source + higher phone-corrob = better._`,
+		"",
+		`| arm | threshold | total entities | cross-source links | triple-source | phone-corrob (of checkable) |`,
+		`|---|---:|---:|---:|---:|---|`,
+	]
 
 	for (const r of rows) {
 		lines.push(

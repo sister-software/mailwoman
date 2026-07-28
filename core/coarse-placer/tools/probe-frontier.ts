@@ -182,10 +182,11 @@ export async function probeFrontier(
 					? "UNDER-CONFIDENT — in-set + top1 ≥ 80% but median prob_1 < 0.9; the M2 mass rule is the CPU fix (default-off)."
 					: "NO CHANGE — in-set, confident, correct; the recoverable countries already clear the bar."
 
-	const L: string[] = []
-	L.push("# #822 placer-frontier probe — can the deployed placer emit the recoverable tranche?")
-	L.push("")
-	L.push(`_Model: \`${modelDir}\` (${meta.classes.length} classes). ${N} \`City, Country\` queries (shortest`)
+	const L: string[] = [
+		"# #822 placer-frontier probe — can the deployed placer emit the recoverable tranche?",
+		"",
+		`_Model: \`${modelDir}\` (${meta.classes.length} classes). ${N} \`City, Country\` queries (shortest`,
+	]
 	L.push(
 		`first) across ${RECOVERABLE.length} placer-recoverable countries. prob_1 vs HARD_PLACE_COUNTRY_MIN_CONF = 0.9._`
 	)

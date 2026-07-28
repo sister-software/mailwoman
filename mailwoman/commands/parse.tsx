@@ -617,9 +617,10 @@ async function runBenchmark(
 			)
 		: await collect(createRuntimePipeline({ classifier, poiQueryKind: options.poi }))
 
-	const lines: string[] = []
-	lines.push(`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`)
-	lines.push(`input: ${JSON.stringify(input)}`)
+	const lines: string[] = [
+		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,
+		`input: ${JSON.stringify(input)}`,
+	]
 	lines.push(
 		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`
 	)

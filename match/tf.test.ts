@@ -16,7 +16,7 @@ const EXACT_DIFF: ComparisonLevel[] = [
 ]
 
 // A column dominated by "Smith", with a single rare "Vijayan".
-const NAMES = [...Array(900).fill("Smith"), ...Array(99).fill("Jones"), "Vijayan"]
+const NAMES = [...new Array(900).fill("Smith"), ...new Array(99).fill("Jones"), "Vijayan"]
 
 describe("buildTermFrequencyTable", () => {
 	const table = buildTermFrequencyTable(NAMES)

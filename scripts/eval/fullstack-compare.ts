@@ -319,11 +319,12 @@ async function main(): Promise<void> {
 	}
 
 	// Markdown report
-	const md: string[] = []
-	md.push("# Full-stack capability probe — both-fail cases\n")
-	md.push("Cases where BOTH the v0 rule parser AND the neural model fail, fired at free OSM-backed")
-	md.push("full-stack geocoders (Photon = open-source Pelias peer; Nominatim = OSM). Lenient match.")
-	md.push("Not a fair head-to-head — a capability ceiling: what a gazetteer stack can recover.\n")
+	const md: string[] = [
+		"# Full-stack capability probe — both-fail cases\n",
+		"Cases where BOTH the v0 rule parser AND the neural model fail, fired at free OSM-backed",
+		"full-stack geocoders (Photon = open-source Pelias peer; Nominatim = OSM). Lenient match.",
+		"Not a fair head-to-head — a capability ceiling: what a gazetteer stack can recover.\n",
+	]
 	const tot = results.length
 	const pSolved = results.filter((r) => r.photonScore.hits === r.photonScore.total && r.photonScore.total > 0).length
 	const nSolved = results.filter(

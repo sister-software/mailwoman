@@ -450,16 +450,15 @@ export async function evalOpenSet(
 	// Report.
 	// ---------------------------------------------------------------------------
 	const f = (x: number | null | undefined): string => (x == null ? "—" : x.toFixed(1))
-	const lines: string[] = []
-	lines.push(`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`)
-	lines.push("")
-	lines.push(
+	const lines: string[] = [
+		`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`,
+		"",
 		`_Frozen shipped model (\`${path.basename(modelDir)}\`), NO retrain. In-map test ${inmapTest.length} rows ` +
 			`(11 countries); off-map HELDOUT ${heldout.length} rows (never-trained families: baltic/oceania/middle-east). ` +
 			`Mahalanobis fit on ≤${fitPerClass}/class in-map train logits. The 11-way routing is fixed; each score only ` +
-			`changes the reject decision._`
-	)
-	lines.push("")
+			`changes the reject decision._`,
+		"",
+	]
 	function atStr(p: ParetoPoint | null): string {
 		if (!p) return "— (unreachable)"
 

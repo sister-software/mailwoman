@@ -345,9 +345,7 @@ function geocodeToSchemaOrg(result: GeocodeResult): SchemaOrgPlace {
 // ---------------------------------------------------------------------------
 
 function formatText(result: GeocodeResult): string {
-	const lines: string[] = []
-	lines.push(`input:            ${result.input}`)
-	lines.push(`resolution_tier:  ${result.resolution_tier}`)
+	const lines: string[] = [`input:            ${result.input}`, `resolution_tier:  ${result.resolution_tier}`]
 
 	if (result.lat != null && result.lon != null) {
 		lines.push(`coordinate:       ${result.lat.toFixed(6)}, ${result.lon.toFixed(6)}`)

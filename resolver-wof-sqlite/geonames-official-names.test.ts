@@ -26,7 +26,7 @@ let altDir: string
 
 /** One GeoNames main-dump row (19 tab-separated columns). */
 function mainRow(over: Record<number, string>): string {
-	const f = Array(19).fill("")
+	const f = new Array(19).fill("")
 
 	for (const [i, v] of Object.entries(over)) {
 		f[Number(i)] = v

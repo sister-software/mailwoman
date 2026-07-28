@@ -97,8 +97,7 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 		const result = await geocoder.reverseGeocode(lat, lon)
 
 		if (options.format === "text") {
-			const lines: string[] = []
-			lines.push(`containment: ${result.containment}`)
+			const lines: string[] = [`containment: ${result.containment}`]
 
 			if (!result.hierarchy.length) {
 				lines.push("(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)")
