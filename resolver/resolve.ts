@@ -941,6 +941,7 @@ function revertResolverDecoration(node: AddressNode): void {
 		"resolution_quality",
 		"postcode_city_mismatch",
 	]) {
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 		delete meta[key]
 	}
 	node.metadata = meta

@@ -120,6 +120,7 @@ export class NutsLookup {
 /** Build an `Annotator` filling `AnnotationSet.nuts` for EU coordinates (abstains elsewhere). */
 export function makeNutsAnnotator(lookup: NutsLookup): Annotator {
 	return ({ lat, lon }): Partial<AnnotationSet> => {
+		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 		const nuts = lookup.find(lat, lon)
 
 		return nuts ? { nuts } : {}

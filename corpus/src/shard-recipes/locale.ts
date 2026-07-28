@@ -263,6 +263,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 		})) {
 			if (header === null) {
 				header = cells.map((h) => h.trim().toLowerCase())
+				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				const ix = (name: string): number => header!.indexOf(name)
 				// `cnigRaw` (ES pedanía only): the RAW CNIG header has no NUMBER/STREET/CITY/DISTRICT/REGION/POSTCODE
 				// at all — `numero`/`nombre_via`/`poblacion`/`municipio`/`comunidad_autonoma`/`cod_postal` instead.

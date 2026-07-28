@@ -96,6 +96,7 @@ export function resetMetricsForTest(): void {
 	writeIdx = 0
 
 	for (const key of Object.keys(tierCounts)) {
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 		delete tierCounts[key]
 	}
 

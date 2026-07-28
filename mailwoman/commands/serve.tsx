@@ -72,6 +72,7 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 			let remaining = alive.length
 
 			for (const worker of alive) {
+				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				worker.once("exit", () => {
 					remaining--
 

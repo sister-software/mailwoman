@@ -159,6 +159,7 @@ export class URLRoutePattern<I extends URLPatternPathnameInit | string = string>
 				normalizedParamValue +
 				pathname.slice(paramPatternIndex + paramPattern.length)
 
+			// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 			delete remainingParams[paramName]
 		}
 

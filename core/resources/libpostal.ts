@@ -107,6 +107,7 @@ export async function prepareLocaleIndex(
 
 	for await (const batch of fileEntries) {
 		await Promise.all(
+			// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 			batch.map(async ({ filePath, languageCode }) => {
 				const lines = TextSpliterator.fromAsync(filePath)
 
@@ -127,6 +128,7 @@ export async function prepareLocaleIndex(
 
 	for await (const batch of internalFileEntries) {
 		await Promise.all(
+			// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 			batch.map(async ({ filePath, languageCode }) => {
 				const lines = TextSpliterator.fromAsync(filePath)
 

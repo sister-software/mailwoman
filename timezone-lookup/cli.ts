@@ -44,6 +44,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 	const lookup = new TimezoneLookup({ databasePath: values.db })
+	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	const tzid = lookup.find(lat, lon)
 	console.log(JSON.stringify({ timezone: tzid, offsetSec: tzid ? offsetSecForTimezone(tzid) : null }))
 	lookup.close()

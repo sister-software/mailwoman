@@ -494,6 +494,7 @@ export async function expandGolden(
 
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) {
+							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 							delete goldenCandidate.components[tag]
 						}
 						outRows.push(goldenCandidate)

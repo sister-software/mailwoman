@@ -104,6 +104,7 @@ export class TimezoneLookup {
 /** Build an `Annotator` that fills `AnnotationSet.timezone` (name + current offset) from a lookup. */
 export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 	return ({ lat, lon, date }): Partial<AnnotationSet> => {
+		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 		const name = lookup.find(lat, lon)
 
 		if (!name) return {}

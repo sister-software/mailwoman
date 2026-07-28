@@ -44,6 +44,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 	const lookup = new NutsLookup({ databasePath: values.db })
+	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	console.log(JSON.stringify({ nuts: lookup.find(lat, lon) }))
 	lookup.close()
 }
