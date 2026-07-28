@@ -68,6 +68,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
 
 import type { ShardProvider } from "../geocode-core.ts"
+import { renderOaResolverReport } from "./oa-resolver-report.ts"
 
 /**
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
@@ -391,6 +392,126 @@ function regionMatches(resolvedName: string | undefined, expected: string | unde
 }
 
 /** Run the OpenAddresses real-point resolver eval. Markdown report on stdout (+ optional `outMd`). */
+/**
+ * The locality-credit predicate: does the resolved place count as OA's expected locality?
+ *
+ * Two allowances, both provenance-first (no hardcoded name lists), both able only to ADD credit to an already-correct
+ * place: WOF alias names (Butte ↔ Butte-Silver Bow, Saint ↔ St. Johnsbury) and gold's regional qualifiers when they
+ * match the place's OWN ancestry (#386: `Plauen Vogtl` → Plauen, whose county is Vogtlandkreis). Different WOF ids
+ * carry disjoint name sets, so Saint Albans never matches St. Johnsbury.
+ *
+ * The admin shard is opened read-only and both lookups are cached behind a near-miss, so the cost is negligible. The
+ * handle lives as long as the eval — the process exit closes it.
+ */
+function buildLocalityMatcher(adminShardPath: string) {
+	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
+	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
+	// single canonical name. This credits forms WOF records as the SAME place (Butte ↔
+	// Butte-Silver Bow, Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) WITHOUT loosening genuine
+	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
+	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
+	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
+	const adminDb = new DatabaseSync(adminShardPath, { readOnly: true })
+	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
+	const altCache = new Map<number, Set<string>>()
+	const altNamesFor = (id: number): Set<string> => {
+		let set = altCache.get(id)
+
+		if (!set) {
+			set = new Set<string>()
+
+			for (const r of namesStmt.all(id) as { name: string }[]) {
+				const n = normName(r.name)
+
+				if (n) {
+					set.add(n)
+				}
+			}
+			altCache.set(id, set)
+		}
+
+		return set
+	}
+	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
+	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
+	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
+	// reads a miss. Rather than a hardcoded suffix blacklist (a provenance-first violation), credit
+	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
+	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
+	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under
+	// normName (Cyrillic/CJK are stripped), so the token set is latin-only without a language filter.
+	const ancestorNamesStmt = adminDb.prepare(
+		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
+			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
+	)
+	const ancestorTokCache = new Map<number, Set<string>>()
+	const ancestorTokensFor = (id: number): Set<string> => {
+		let set = ancestorTokCache.get(id)
+
+		if (!set) {
+			set = new Set<string>()
+
+			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
+				for (const t of normName(r.name).split(" "))
+					if (t.length >= MIN_DISTINCTIVE_TOKEN_LENGTH) {
+						set.add(t)
+					}
+			}
+			ancestorTokCache.set(id, set)
+		}
+
+		return set
+	}
+	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
+		if (!expected || !locNode) return false
+		const e = normName(expected)
+
+		if (!e) return false
+
+		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
+		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when EVERY trailing qualifier is an
+		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
+		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.
+		const base = normName(locNode.name)
+
+		if (base && e.startsWith(base + " ")) {
+			const quals = e
+				.slice(base.length + 1)
+				.split(" ")
+				.filter(Boolean)
+			const anc = ancestorTokensFor(locNode.id)
+
+			if (quals.length && quals.every((q) => q.length >= MIN_QUALIFIER_LENGTH && [...anc].some((a) => a.startsWith(q))))
+				return true
+		}
+
+		return false
+	}
+
+	return localityMatches
+}
+
+/**
+ * One arm's counters. `errs` is the raw per-row coordinate error list (km) the percentiles are taken over — kept whole
+ * rather than streamed, because the report needs p50/p90/p99 from the same sample.
+ */
+export interface Agg {
+	n: number
+	localityMatch: number
+	regionMatch: number
+	resolved: number
+	errs: number[]
+}
+
+/**
+ * An arm's headline plus its per-state breakdown. Per-state aggregation keeps a single dense state (Cook County /
+ * Chicago) from dominating the headline.
+ */
+export interface AggPair {
+	overall: Agg
+	byState: Map<string, Agg>
+}
+
 export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promise<void> {
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
@@ -477,89 +598,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	}
 	const resolver = createWOFResolver(backend as never)
 
-	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
-	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
-	// single canonical name. This credits forms WOF records as the SAME place (Butte ↔
-	// Butte-Silver Bow, Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) WITHOUT loosening genuine
-	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
-	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
-	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
-	const adminDb = new DatabaseSync(wofPaths[0]!, { readOnly: true })
-	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
-	const altCache = new Map<number, Set<string>>()
-	const altNamesFor = (id: number): Set<string> => {
-		let set = altCache.get(id)
-
-		if (!set) {
-			set = new Set<string>()
-
-			for (const r of namesStmt.all(id) as { name: string }[]) {
-				const n = normName(r.name)
-
-				if (n) {
-					set.add(n)
-				}
-			}
-			altCache.set(id, set)
-		}
-
-		return set
-	}
-	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
-	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
-	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
-	// reads a miss. Rather than a hardcoded suffix blacklist (a provenance-first violation), credit
-	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
-	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
-	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under
-	// normName (Cyrillic/CJK are stripped), so the token set is latin-only without a language filter.
-	const ancestorNamesStmt = adminDb.prepare(
-		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
-			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
-	)
-	const ancestorTokCache = new Map<number, Set<string>>()
-	const ancestorTokensFor = (id: number): Set<string> => {
-		let set = ancestorTokCache.get(id)
-
-		if (!set) {
-			set = new Set<string>()
-
-			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
-				for (const t of normName(r.name).split(" "))
-					if (t.length >= MIN_DISTINCTIVE_TOKEN_LENGTH) {
-						set.add(t)
-					}
-			}
-			ancestorTokCache.set(id, set)
-		}
-
-		return set
-	}
-	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
-		if (!expected || !locNode) return false
-		const e = normName(expected)
-
-		if (!e) return false
-
-		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
-		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when EVERY trailing qualifier is an
-		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
-		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.
-		const base = normName(locNode.name)
-
-		if (base && e.startsWith(base + " ")) {
-			const quals = e
-				.slice(base.length + 1)
-				.split(" ")
-				.filter(Boolean)
-			const anc = ancestorTokensFor(locNode.id)
-
-			if (quals.length && quals.every((q) => q.length >= MIN_QUALIFIER_LENGTH && [...anc].some((a) => a.startsWith(q))))
-				return true
-		}
-
-		return false
-	}
+	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
 	// #690/#895: normalizeCase is tri-state so a gate leg can PIN either side of the library default
 	// (default-ON at the classifier since #895). `--normalize-case` pins ON, `--raw-case` pins OFF,
@@ -718,14 +757,6 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		return best?.posterior
 	}
 
-	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.
-	interface Agg {
-		n: number
-		localityMatch: number
-		regionMatch: number
-		resolved: number
-		errs: number[]
-	}
 	const newAgg = (): Agg => ({ n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] })
 	const bump = (a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
@@ -1123,128 +1154,29 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	}
 
 	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
-	const pct = (x: number, n: number): string => (n ? `${((100 * x) / n).toFixed(1)}%` : "—")
-	const p = (xs: number[], q: number): string => percentile(xs, q)?.toFixed(1) ?? "—"
-	const lines: string[] = [
-		`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`,
-		"",
-		`Model: ${options.model || "(shipped weights)"} | WOF shards: ${wofPaths.length}`,
-		"",
-		`## Resolver eval — neural parser through the WOF resolver`,
-		"",
-		`| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |`,
-		`|---|--:|--:|--:|--:|--:|--:|`,
-	]
-	const overallRow = (label: string, a: Agg): string =>
-		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
-	lines.push(overallRow("**neural**", agg.neural.overall))
-
-	if (runAssembled) {
-		lines.push(overallRow("assembled", assembledAgg.overall))
-	}
-
-	if (useAnchor) {
-		lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
-	}
-
-	if (runAddrPt) {
-		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
-		lines.push("")
-		lines.push(
-			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
-		)
-	}
-
-	if (runInterp) {
-		lines.push(
-			overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall)
-		)
-		lines.push("")
-		lines.push(
-			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
-		)
-
-		if (cascadeOn) {
-			const Nc = neuralInterpAgg.overall.n
-			const adminTier = Math.max(0, Nc - addressPointHits - interpHits)
-			const cerrs = neuralInterpAgg.overall.errs
-			const within = (m: number): string =>
-				`${((100 * cerrs.filter((e) => e <= m / 1000).length) / Math.max(1, cerrs.length)).toFixed(1)}%`
-			lines.push("")
-			lines.push(
-				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${pct(addressPointHits, Nc)}, interpolated ${pct(interpHits, Nc)}, admin ${pct(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
-			)
-		}
-
-		if (diagInterp) {
-			const N = neuralInterpAgg.overall.n
-			lines.push("")
-			lines.push(`### interp coverage diagnostic`)
-			lines.push(
-				`- parsed street+house_number+postcode (precondition): ${interpPrecond}/${N} (${((100 * interpPrecond) / Math.max(1, N)).toFixed(1)}%)`
-			)
-			lines.push(
-				`- precondition met + exact missed + interp MISS (genuine find() miss = shard/normalization gap): ${interpFullParseMiss}`
-			)
-			lines.push(
-				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
-			)
-			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?"). Cumulative % of
-			// ALL rows within each radius — the within-100m DoD metric + the shape of the tail.
-			const ierrs = neuralInterpAgg.overall.errs
-			lines.push("")
-			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
-
-			for (const m of [10, 25, 50, 100, 200, 500, 1000, 5000]) {
-				const within = ierrs.filter((e) => e <= m / 1000).length
-				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
-			}
-
-			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
-			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
-			if (diagMisses.length) {
-				writeFileSync("/tmp/interp-misses.txt", diagMisses.join("\n"))
-				lines.push("")
-				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
-				lines.push("sample (house_number | street | postcode ← input):")
-
-				for (const m of diagMisses.slice(0, 12)) {
-					lines.push(`  - ${m}`)
-				}
-			}
-		}
-	}
-
-	if (runAssembled) {
-		const N = agg.neural.overall.n
-		lines.push("")
-		lines.push(`### Assembled-pipeline coordinate check`)
-		lines.push("")
-		lines.push(
-			"`assembled` is the pipeline through the same neural+resolver (comparability check vs `neural`). The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
-		)
-		lines.push("")
-		lines.push(`- neural: ${pct(neuralPrecond, N)} · assembled: ${pct(asmPrecond, N)} (of ${N} rows)`)
-	}
-	lines.push("")
-	lines.push(`## Neural per-state (locality-match)`)
-	lines.push("")
-	lines.push(`| state | n | neural loc | neural reg |`)
-	lines.push(`|---|--:|--:|--:|`)
-
-	for (const st of [...agg.neural.byState.keys()].toSorted()) {
-		const nn = agg.neural.byState.get(st)!
-		lines.push(`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(nn.regionMatch, nn.n)} |`)
-	}
-	lines.push("")
-	lines.push(
-		`Coord error for **neural** is the ADMIN-CENTROID tier (locality/region centroid → OA's real` +
-			` address point); a city centroid is legitimately tens of km from edge addresses, so the admin-MATCH` +
-			` rate is the headline there, not the coord. **neural+anchor** swaps in the postcode anchor's own` +
-			` centroid for the coordinate (admin match unchanged) — the finer postcode tier between admin-centroid` +
-			` and street-level (TIGER), which will own the sub-km tier later.`
-	)
-	const report = lines.join("\n")
+	const report = renderOaResolverReport({
+		agg,
+		assembledAgg,
+		neuralAnchorAgg,
+		neuralAddrPtAgg,
+		neuralInterpAgg,
+		addressPointHits,
+		interpHits,
+		interpPrecond,
+		interpFullParseMiss,
+		neuralPrecond,
+		asmPrecond,
+		diagMisses,
+		rows,
+		wofPaths,
+		runAssembled,
+		runAddrPt,
+		runInterp,
+		useAnchor,
+		diagInterp,
+		cascadeOn,
+		options,
+	})
 	console.log(report)
 
 	if (options.outMd || "") {
