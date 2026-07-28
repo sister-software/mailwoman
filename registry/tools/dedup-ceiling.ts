@@ -270,55 +270,39 @@ export async function dedupCeiling(
 		"",
 		`## Splitting the collisions: NPI over-segmentation vs genuinely distinct providers`,
 		"",
-	]
-	lines.push(
 		`A collision (same address, ~same name, often same phone) with DIFFERENT NPIs is usually one organization holding ` +
 			`multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting**, ` +
-			`not a model error. NPPES's own fields separate the two cases:`
-	)
-	lines.push("")
-	lines.push(`| collision pair is… | pairs | share of collisions | merging it is… |`)
-	lines.push(`|---|---:|---:|---|`)
-	lines.push(
-		`| same authorized official | ${collideSameAuth} | ${pct(collideSameAuth, collide)} | **correct** — one org, many NPIs (NPI over-segments) |`
-	)
-	lines.push(
-		`| different official AND different specialty | ${collideDistinct} | ${pct(collideDistinct, collide)} | a **genuine** distinct co-located provider — true over-merge |`
-	)
-	lines.push(
-		`| (remainder: different official, same specialty) | ${collide - collideSameAuth - collideDistinct} | ${pct(collide - collideSameAuth - collideDistinct, collide)} | ambiguous — needs adjudication |`
-	)
-	lines.push("")
-	lines.push(`## The ceiling`)
-	lines.push("")
-	lines.push(
+			`not a model error. NPPES's own fields separate the two cases:`,
+		"",
+		`| collision pair is… | pairs | share of collisions | merging it is… |`,
+		`|---|---:|---:|---|`,
+		`| same authorized official | ${collideSameAuth} | ${pct(collideSameAuth, collide)} | **correct** — one org, many NPIs (NPI over-segments) |`,
+		`| different official AND different specialty | ${collideDistinct} | ${pct(collideDistinct, collide)} | a **genuine** distinct co-located provider — true over-merge |`,
+		`| (remainder: different official, same specialty) | ${collide - collideSameAuth - collideDistinct} | ${pct(collide - collideSameAuth - collideDistinct, collide)} | ambiguous — needs adjudication |`,
+		"",
+		`## The ceiling`,
+		"",
 		`The raw collision rate is **${pct(collide, pairs)}** of co-located distinct-NPI pairs — but only **${pct(collideDistinct, pairs)}** ` +
 			`of co-located pairs are *genuinely* distinct providers indistinguishable by name (different official + specialty). ` +
 			`Most collisions are **NPI over-segmentation** (${pct(collideSameAuth, collide)} share an authorized official), where ` +
-			`a merge is correct and NPI-truth penalizes it wrongly.`
-	)
-	lines.push("")
-	lines.push(`**This is the answer to "how good is good enough," and it has two parts:**`)
-	lines.push(
+			`a merge is correct and NPI-truth penalizes it wrongly.`,
+		"",
+		`**This is the answer to "how good is good enough," and it has two parts:**`,
 		`1. Measured against **NPI-as-truth**, F1 is capped well below 0.85 — ~${pct(collide, pairs)} of co-located pairs are ` +
 			`unseparable, and NPI-truth scores most of them as errors even though merging is correct. The round **0.85 target ` +
-			`is unreachable under this yardstick and should be dropped.**`
-	)
-	lines.push(
+			`is unreachable under this yardstick and should be dropped.**`,
 		`2. The *real* irreducible over-merge — genuinely distinct co-located providers with identical names — is only ` +
 			`~**${pct(collideDistinct, pairs)}** of the co-located population. Against an **entity-level truth** (subpart-aware), ` +
 			`the achievable ceiling is much higher. But that ceiling can only be MEASURED with an entity-level / adjudicated ` +
 			`gold set — NPI-truth alone can't tell a correct subpart-merge from a true over-merge. **This is why the gold set ` +
-			`(the "second comparison") is necessary, not optional.**`
-	)
-	lines.push("")
-	lines.push(
+			`(the "second comparison") is necessary, not optional.**`,
+		"",
 		`Recommendation: drop 0.85. Set the bar against a subpart-aware / adjudicated entity truth, report NPI-level AND ` +
 			`entity-level side by side, and target "separate the ~${pct(collideDistinct, pairs)} genuinely-distinct co-located ` +
 			`pairs the GBT can still reach" rather than a round F1. The GBT's corroboration-feature work (#625 revised) ` +
-			`attacks exactly that separable slice.`
-	)
-	lines.push("")
+			`attacks exactly that separable slice.`,
+		"",
+	]
 	lines.push(`## Caveats`)
 	lines.push("")
 	lines.push(

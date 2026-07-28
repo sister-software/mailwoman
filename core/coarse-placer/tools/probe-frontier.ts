@@ -196,10 +196,10 @@ export async function probeFrontier(
 		`## Branch: ${branch}`,
 		"",
 		`Classes (${meta.classes.length}): \`${meta.classes.join(" ")}\``,
+		"",
+		"| Country | ISO2 | in-class | n | top1-correct | median prob_1 |",
+		"| --- | --- | :---: | ---: | ---: | ---: |",
 	]
-	L.push("")
-	L.push("| Country | ISO2 | in-class | n | top1-correct | median prob_1 |")
-	L.push("| --- | --- | :---: | ---: | ---: | ---: |")
 
 	for (const r of rows) {
 		L.push(
