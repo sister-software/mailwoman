@@ -12,6 +12,7 @@
 
 import type { LocaleProfile } from "../locale.ts"
 
+/** French locale profile — postcode before locality, and the CEDEX line handled as its own component. */
 export const frFR: LocaleProfile = {
 	locale: "fr-FR",
 	ruleClassifiers: [

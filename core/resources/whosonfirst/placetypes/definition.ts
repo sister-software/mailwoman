@@ -97,6 +97,7 @@ export interface PlacetypeDefinition {
 	parent?: string[]
 }
 
+/** Namespace prefix on Who's On First property keys (`wof:id`, `wof:placetype`). */
 export const WOFPrefix = "wof:"
 export type WOFPrefix = typeof WOFPrefix
 

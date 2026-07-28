@@ -154,6 +154,7 @@ export async function createPOIBrandIndex(db: Kysely<POIDatabase>): Promise<void
 		.execute()
 }
 
+/** FTS5 virtual table backing POI name search in poi.db. */
 export const POI_FTS_TABLE = "poi_search"
 
 /** FTS5 stays raw SQL by project rule (Kysely can't express virtual tables). Content-keyed by name_key. */

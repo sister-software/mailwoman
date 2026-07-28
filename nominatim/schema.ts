@@ -52,6 +52,7 @@ export const NominatimResultSchema = z
 	.loose()
 	.openapi("NominatimResult")
 
+/** Response body of `/search`, matching Nominatim's result array so existing clients need no change. */
 export const NominatimResultsSchema = z.array(NominatimResultSchema)
 
 /** The `format=geojson` envelope — nominatim's own shape (polygon-capable geometry, result fields as properties). */

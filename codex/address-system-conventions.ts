@@ -36,6 +36,10 @@ export interface AddressSystemConventions {
 	readonly postcodePattern?: RegExp
 }
 
+/**
+ * Per-address-system ordering and formatting conventions — which component leads a line, whether the postcode precedes
+ * the locality, and so on. Keyed by address system rather than country, since several share one.
+ */
 export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSystemConventions>> = {
 	/**
 	 * France (La Poste / AFNOR NF Z 10-011): the street TYPE is a LEADING particle of the street name ("Rue de Rivoli",

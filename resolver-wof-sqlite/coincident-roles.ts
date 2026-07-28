@@ -42,6 +42,10 @@ import type { DatabaseSync } from "node:sqlite"
 
 import { haversineKm } from "@mailwoman/spatial"
 
+/**
+ * Table of places that hold more than one admin role — a locality that is also its county seat. Written by the
+ * gazetteer build, read by the resolver when a coincident locality has to be chosen.
+ */
 export const COINCIDENT_ROLES_TABLE = "coincident_roles"
 
 /** A place that plays multiple admin roles — one row of the relation, keyed by `admin_id`. */

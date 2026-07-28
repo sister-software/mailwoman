@@ -176,6 +176,10 @@ export const OSMNodeTag = {
 
 export type OSMNodeTag = (typeof OSMNodeTag)[keyof typeof OSMNodeTag]
 
+/**
+ * OSM node tags that disqualify a node from being treated as residential — a node carrying one of these is
+ * infrastructure or commercial, whatever else it claims.
+ */
 export const ForbiddenResidentialOSMNodeTags: ReadonlySet<OSMNodeTag> = new Set<OSMNodeTag>([
 	OSMNodeTag.Shop,
 	OSMNodeTag.Brand,

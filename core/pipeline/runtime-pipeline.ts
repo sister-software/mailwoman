@@ -82,25 +82,24 @@ const COARSE_PLACER_ANCHOR_WEIGHT = 1
 // ones on the soft path. Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-// #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering
-// is a PURE WIN — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter
-// "miss → unresolved" is rare and almost always a genuine non-match, not a coverage gap. A confident
-// placement OUTSIDE this set stays on the SOFT prior, so the low-coverage tail (FI/PL/…) keeps its
-// recall until its gazetteer is filled (#193) — the win for covered countries, no recall regression
-// for the rest (DeepSeek-advised, 2026-06-22).
-//
-// FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer
-// artifacts that predate the coverage manifest. Facts about the artifact live IN the artifact — the
-// candidate gazetteer's `country_coverage` table carries the per-country promote-gate verdicts + the
-// measured rates (the numbers that used to be trivia in this comment), and a loaded artifact's
-// derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence over this
-// constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
-// (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence:
-// per-call `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures ungated to grow the
-// list) → the loaded artifact's manifest → this constant.
-// Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE: US/FR/DE 100, ES 99.8,
-// NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote (2026-07-06,
-// OSM panels, night 34); AU with the #244 placer class (2026-07-06).
+/**
+ * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering is a PURE WIN —
+ * measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
+ * almost always a genuine non-match, not a coverage gap. A confident placement OUTSIDE this set stays on the SOFT
+ * prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193) — the win for covered
+ * countries, no recall regression for the rest (DeepSeek-advised, 2026-06-22).
+ *
+ * FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer artifacts that predate
+ * the coverage manifest. Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
+ * table carries the per-country promote-gate verdicts + the measured rates (the numbers that used to be trivia in this
+ * comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence
+ * over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
+ * (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence: per-call
+ * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures ungated to grow the list) → the loaded artifact's
+ * manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE: US/FR/DE 100,
+ * ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote (2026-07-06, OSM
+ * panels, night 34); AU with the #244 placer class (2026-07-06).
+ */
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"US",
 	"ES",

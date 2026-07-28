@@ -102,4 +102,5 @@ export function getAllAliases(): ReadonlyArray<VariantAlias> {
 	return TABLE.aliases
 }
 
+/** Version of the bundled variant-alias table, for cache keys and diagnostics. */
 export const VARIANT_ALIAS_VERSION = TABLE.version

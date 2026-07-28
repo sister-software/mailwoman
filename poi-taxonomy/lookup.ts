@@ -75,4 +75,5 @@ export function resolveOvertureCategories(seedID: string): string[] {
 	return CORE.resolveOvertureCategories(seedID)
 }
 
+/** Version of the bundled POI category taxonomy, for cache keys and diagnostics. */
 export const POI_TAXONOMY_VERSION = TABLE.version

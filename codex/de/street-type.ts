@@ -28,6 +28,10 @@
 /** Shortest token still plausible as a German street-type suffix (`weg`). */
 const MIN_STREET_TYPE_LENGTH = 3
 
+/**
+ * German street-type suffixes mapped to their surface variants, including the compounded forms that attach directly to
+ * the name (`-strasse`, `-str.`).
+ */
 export const DE_STREET_TYPE_VARIANTS = {
 	Straße: ["Str.", "Str", "Strasse"],
 	Weg: [],

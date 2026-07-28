@@ -33,8 +33,10 @@ export const LibpostalComponentSchema = z
 	})
 	.openapi("LibpostalComponent")
 
+/** Response body of `/parse`, matching libpostal's own shape so existing clients need no change. */
 export const ParseResponseSchema = z.array(LibpostalComponentSchema)
 
+/** Response body of `/expand` — the expanded address permutations, as libpostal returns them. */
 export const ExpandResponseSchema = z
 	.object({
 		expansions: z.array(z.string()),

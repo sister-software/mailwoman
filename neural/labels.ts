@@ -58,6 +58,7 @@ export const STAGE2_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 	...STAGE2_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),
 ])
 
+/** Tags stage 3 adds on top of stage 2 — the fine-grained subdivisions the later curriculum introduces. */
 export const STAGE3_FINE_TAGS = [
 	"street_prefix",
 	"street_suffix",
@@ -67,8 +68,10 @@ export const STAGE3_FINE_TAGS = [
 	"intersection_b",
 ] as const
 
+/** The full stage-3 tag set: everything stage 2 emitted, plus the fine tags. */
 export const STAGE3_TAGS = [...STAGE2_TAGS, ...STAGE3_FINE_TAGS] as const
 
+/** Stage-3 tags expanded into BIO labels, which is the form the decoder scores against. */
 export const STAGE3_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 	"O" as BIOLabel,
 	...STAGE3_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),

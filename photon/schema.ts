@@ -35,8 +35,10 @@ export const PhotonPropertiesSchema = z
 	.loose()
 	.openapi("PhotonProperties")
 
+/** One Photon result feature — GeoJSON geometry plus Photon's property block. */
 export const PhotonFeatureSchema = featureSchema(PhotonPropertiesSchema).openapi("PhotonFeature")
 
+/** Response body of `/api`, a GeoJSON FeatureCollection as Photon returns it. */
 export const PhotonFeatureCollectionSchema =
 	featureCollectionSchema(PhotonFeatureSchema).openapi("PhotonFeatureCollection")
 

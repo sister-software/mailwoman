@@ -10,6 +10,7 @@
 
 import type { LocaleProfile } from "../locale.ts"
 
+/** US English locale profile — the component ordering, casing and separators the formatter renders with. */
 export const enUS: LocaleProfile = {
 	locale: "en-US",
 	ruleClassifiers: [

@@ -19,6 +19,7 @@ import {
 	PlacetypeRoleOrder,
 } from "./definition.ts"
 
+/** Upstream Who's On First placetypes repository the local definitions are generated from. */
 export const PLACETYPES_REPO_SOURCE = {
 	url: "https://github.com/whosonfirst/whosonfirst-placetypes.git",
 	owner: "whosonfirst",

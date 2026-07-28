@@ -51,6 +51,10 @@ export interface WebONNXRunnerOpts {
 	wasmPathsRoot?: string
 }
 
+/**
+ * Sequence length the web runtime pads to when the model was exported with a fixed input shape. WebGPU requires static
+ * shapes, so a fixed length is the portable default.
+ */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /** Apply `wasmPathsRoot` once at module init. Safe to call multiple times. */

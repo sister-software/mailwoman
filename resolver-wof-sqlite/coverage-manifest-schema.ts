@@ -71,6 +71,7 @@ export interface GazetteerCoverageDatabase {
 
 /** Table names the lookup probes (existence-gated, so a candidate.db built before the manifest is byte-stable). */
 export const COUNTRY_COVERAGE_TABLE = "country_coverage"
+/** Table of per-country bounding boxes, used to reject a placement that fell outside its own country. */
 export const COUNTRY_BBOX_TABLE = "country_bbox"
 
 /** Create `country_coverage` — a handful of small PK-probed rows, the WITHOUT ROWID sweet spot. */

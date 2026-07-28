@@ -43,6 +43,7 @@ export const DirectionalNames = [
 
 export type DirectionalName = (typeof DirectionalNames)[number]
 
+/** Surface forms a US directional can take (`N`, `N.`, `North`), for both parsing and formatting. */
 export const DirectionalNameVariations = [
 	...DirectionalNames,
 	// Without spaces (the common US street form: "Northeast Main St")…

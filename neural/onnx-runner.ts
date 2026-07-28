@@ -23,6 +23,7 @@ import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
 
 /** Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims). */
 export const STREET_TYPE_FEATURE_DIM = 1
+/** Channel width of the locality-surface evidence feature. Must match the trained model's input shape. */
 export const LOCALITY_SURFACE_FEATURE_DIM = 2
 
 export interface ONNXRunnerOpts {

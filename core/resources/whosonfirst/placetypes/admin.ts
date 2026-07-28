@@ -36,6 +36,10 @@ export interface WOFBaseProperties {
 	"edtf:cessation"?: string
 }
 
+/**
+ * Name kinds Who's On First records per language, in descending preference — a preferred name wins over a variant,
+ * which wins over a colloquial one.
+ */
 export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
 export type WOFNameKind = (typeof WOFNameKinds)[number]
 export type LanguageSpecificKey = `name:${Alpha3bLanguageCode}_x_${WOFNameKind}`

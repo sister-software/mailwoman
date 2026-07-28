@@ -70,6 +70,10 @@ export const repoRootPath = createPathResolver<RepoRootAlias>(RepoRootAbsolutePa
  * the JS without any post-install copy step.
  */
 const CorePackageAbsolutePath = resolve(__dirname, "..", __isCompiledTree ? ".." : "")
+/**
+ * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves the same in source and compiled trees.
+ * See the `__isCompiledTree` note in this file before reaching across that boundary.
+ */
 export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
 
 /**

@@ -69,5 +69,7 @@ export function getAllBrands(): ReadonlyArray<BrandRecord> {
 	return CORE.getAllBrands()
 }
 
+/** Version of the bundled POI brand table, for cache keys and diagnostics. */
 export const POI_BRAND_TABLE_VERSION = TABLE.version
+/** Source layer the brand table was derived from, recorded so a consumer can tell which snapshot it has. */
 export const POI_BRAND_SOURCE_LAYER: POIBrandSourceLayer = TABLE.sourceLayer

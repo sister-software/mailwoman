@@ -567,6 +567,10 @@ export interface ResolveOpts {
  */
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 
+/**
+ * Placetype equivalences applied when a backend does not supply its own. A `locality` query must also reach `borough`
+ * and `localadmin` rows — Brooklyn is a borough, and a strict filter made it unreachable.
+ */
 export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	country: "country",
 	region: "region",
