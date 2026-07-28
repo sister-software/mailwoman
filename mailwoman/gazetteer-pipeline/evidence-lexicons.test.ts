@@ -200,6 +200,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		for (const s of ["east", "west", "north", "south", "northeast", "southwest"]) {
 			expect(j.entries[s], s).toBeUndefined()
 		}
+
 		// Family F2 — region vocabulary (the evidence→REGION rotation rows):
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "north dakota"]) {
 			expect(j.entries[s], s).toBeUndefined()
@@ -207,6 +208,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		// WOF data-noise carriers with census receipts (the evidence supplemental-degenerate set):
 		expect(j.entries.school).toBeUndefined()
 		expect(j.entries.state).toBeUndefined()
+
 		// The lexicon still carries the ordinary locality surfaces the census rows NEED. (Not casper/
 		// powell: Casper WY is a GIVEN-NAME homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
 		// the law-2 floor — both were absent from v4 too; their census flips were family-F1 street-code

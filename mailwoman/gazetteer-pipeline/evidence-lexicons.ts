@@ -117,7 +117,9 @@ export function loadDirectionalSurfaces(fold: (surface: string) => string[] = pa
 			for (const surface of line.split("|")) {
 				const tokens = fold(surface)
 
-				if (tokens.length > 0) surfaces.add(tokens.join(" "))
+				if (tokens.length) {
+					surfaces.add(tokens.join(" "))
+				}
 			}
 		}
 	}
@@ -135,7 +137,9 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
 	for (const s of [...US_STATE_ABBREVIATIONS, ...US_STATE_NAMES]) {
 		const tokens = fold(s)
 
-		if (tokens.length > 0) surfaces.add(tokens.join(" "))
+		if (tokens.length) {
+			surfaces.add(tokens.join(" "))
+		}
 	}
 
 	return surfaces
@@ -146,7 +150,7 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
  * Equality doesn't count — re-adding the primary through the names table is harmless.
  */
 export function isSubPhraseAlias(alt: readonly string[], primary: readonly string[]): boolean {
-	if (alt.length === 0 || alt.length >= primary.length) return false
+	if (!alt.length || alt.length >= primary.length) return false
 
 	outer: for (let start = 0; start + alt.length <= primary.length; start++) {
 		for (let i = 0; i < alt.length; i++) {
@@ -246,9 +250,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const { surfaces: degenerate, stopwordTokens } = loadDegenerateSurfaces(undefined, painterFold)
 
 	// Law-1 directional closure (v5): union the directionals in WITHOUT touching the shared FST policy set.
-	for (const s of loadDirectionalSurfaces()) degenerate.add(s)
+	for (const s of loadDirectionalSurfaces()) {
+		degenerate.add(s)
+	}
 
-	for (const s of EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES) degenerate.add(painterFold(s).join(" "))
+	for (const s of EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES) {
+		degenerate.add(painterFold(s).join(" "))
+	}
 
 	// Law 4 (v5): region vocabulary, scoped to the countries this build covers.
 	const regionVocabulary = countries.includes("US") ? loadUSRegionVocabulary() : new Set<string>()
@@ -530,7 +538,9 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	let droppedStateCodes = 0
 
 	for (const code of US_STATE_ABBREVIATIONS) {
-		if (!DIRECTIONAL_CODES.has(code) && codeEntries.delete(code)) droppedStateCodes++
+		if (!DIRECTIONAL_CODES.has(code) && codeEntries.delete(code)) {
+			droppedStateCodes++
+		}
 	}
 
 	const lexicon = {

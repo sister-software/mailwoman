@@ -155,6 +155,44 @@ function stageBinaryList(spec: string | undefined, label: string): string[] {
 	return paths
 }
 
+/**
+ * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty. `null` when the flag was not passed —
+ * every caller of this is an artifact a locale MAY ship, not one it must.
+ */
+function stageOptionalBinary(spec: string | undefined, label: string): string | null {
+	const localPath = spec || null
+
+	if (localPath && (!existsSync(localPath) || !statSync(localPath).size)) {
+		fail(`${label} ${localPath} missing/empty`)
+	}
+
+	return localPath
+}
+
+/**
+ * Phase 1: every REQUIRED_FILES entry must be present and non-empty before a single byte is uploaded. The last point at
+ * which a bad release can be stopped for free — after this the bucket has partial state.
+ */
+function verifyRequiredFiles(args: PublishHFOptions): void {
+	for (const f of REQUIRED_FILES) {
+		const localPath = args[OPTION_TO_FIELD[f.option]]
+
+		if (!localPath) {
+			fail(`--${f.option} (${f.description}) is required`)
+		}
+
+		if (!existsSync(localPath)) {
+			fail(`${localPath} does not exist`)
+		}
+		const size = statSync(localPath).size
+
+		if (size === 0) {
+			fail(`${localPath} is empty`)
+		}
+		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
+	}
+}
+
 export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> {
 	if (!args.version) {
 		fail("version argument required (e.g. mailwoman release hf v5.9.0 …)")
@@ -180,38 +218,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
 		.join("-")
 	const fstRemoteName = `fst-${bcp47}.bin`
-	const fstPath = args.fst
-
-	if (fstPath) {
-		if (!existsSync(fstPath)) {
-			fail(`${fstPath} does not exist`)
-		}
-
-		if (!statSync(fstPath).size) {
-			fail(`${fstPath} is empty`)
-		}
-	}
+	const fstPath = stageOptionalBinary(args.fst, "FST gazetteer")
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
 	// --- Phase 1: verify all local files exist ---
-	for (const f of REQUIRED_FILES) {
-		const localPath = args[OPTION_TO_FIELD[f.option]]
-
-		if (!localPath) {
-			fail(`--${f.option} (${f.description}) is required`)
-		}
-
-		if (!existsSync(localPath)) {
-			fail(`${localPath} does not exist`)
-		}
-		const size = statSync(localPath).size
-
-		if (size === 0) {
-			fail(`${localPath} is empty`)
-		}
-		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
-	}
+	verifyRequiredFiles(args)
 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
 	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename; the demo
@@ -235,44 +247,24 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
-	const gazetteerLexicon = args.gazetteerLexicon || null
-
-	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || !statSync(gazetteerLexicon).size)) {
-		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
-	}
+	const gazetteerLexicon = stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
 
 	// country-surface-lexicon-v1.json (#1104). REQUIRED for country-channel models (v6.2.0+, ONNX
 	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
-	const countryLexicon = args.countryLexicon || null
-
-	if (countryLexicon && (!existsSync(countryLexicon) || !statSync(countryLexicon).size)) {
-		fail(`country lexicon ${countryLexicon} missing/empty`)
-	}
+	const countryLexicon = stageOptionalBinary(args.countryLexicon, "country lexicon")
 
 	// Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type-lexicon-v3.json +
 	// locality-surface-lexicon-v6.json. REQUIRED for bundle-trained models (ONNX declares
 	// street_type_features/locality_surface_features + the card requires them); the browser loader
 	// fetches them beside model.onnx and degrades LOUDLY (channel-off fragment parses) on a 404.
-	const streetTypeLexicon = args.streetTypeLexicon || null
-
-	if (streetTypeLexicon && (!existsSync(streetTypeLexicon) || statSync(streetTypeLexicon).size === 0)) {
-		fail(`street-type lexicon ${streetTypeLexicon} missing/empty`)
-	}
-	const localitySurfaceLexicon = args.localitySurfaceLexicon || null
-
-	if (localitySurfaceLexicon && (!existsSync(localitySurfaceLexicon) || statSync(localitySurfaceLexicon).size === 0)) {
-		fail(`locality-surface lexicon ${localitySurfaceLexicon} missing/empty`)
-	}
+	const streetTypeLexicon = stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
+	const localitySurfaceLexicon = stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
 
 	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
-	const polygonsDb = args.polygons || null
-
-	if (polygonsDb && (!existsSync(polygonsDb) || !statSync(polygonsDb).size)) {
-		fail(`polygon DB ${polygonsDb} missing/empty`)
-	}
+	const polygonsDb = stageOptionalBinary(args.polygons, "polygon DB")
 
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`

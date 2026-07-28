@@ -18,7 +18,7 @@ import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
 import { reconcileSpans } from "./reconcile.ts"
 import { aggregateSpanLogits } from "./span-logit-aggregation.ts"
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
+import { WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -35,7 +35,6 @@ import type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "./types.ts"
-import { deriveInputMode } from "./types.ts"
 
 /**
  * Kind confidence required to skip the full pipeline. Set high deliberately: a short-circuit that fires on a wrong kind

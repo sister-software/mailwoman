@@ -28,6 +28,7 @@ export { APIErrorSchema } from "@mailwoman/api-kit"
  */
 export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
 
+/** `POST /v1/parse` request body. */
 export const ParseRequestSchema = z
 	.object({
 		address: z.string(),

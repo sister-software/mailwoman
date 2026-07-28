@@ -26,8 +26,9 @@ import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { deriveInputMode, type InputMode } from "@mailwoman/core/pipeline"
 import {
+	deriveInputMode,
+	type InputMode,
 	type ClassifierOpts,
 	hardCountryFor,
 	isBareLocalityTree,
