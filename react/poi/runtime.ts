@@ -68,6 +68,7 @@ export const POI_PRESETS = [
 	{ label: "Applebee's (brand)", value: "applebee's near Chicago" },
 ] as const
 
+/** Query the POI explorer opens on — the first preset, so the two stay in step. */
 export const POI_DEFAULT_TEXT = POI_PRESETS[0].value
 
 /** `742 m` under 1 km, `1.9 km` past it — matches the demo's distance captions. */

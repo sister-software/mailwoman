@@ -26,6 +26,7 @@ import type { CircleLayerSpecification, VectorSourceSpecification } from "@mapli
 
 import { TileSetSourceID } from "../styles/sources.ts"
 
+/** Tile set id for the dot-density race layer, one dot per N people (see `tiger/tools/race-dots.ts`). */
 export const RaceDotsTileSetID = TileSetSourceID("race-dots-la")
 
 /** The single source-layer the race-dots PMTiles ships (tippecanoe `-l dots`). */

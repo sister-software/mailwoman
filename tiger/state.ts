@@ -344,6 +344,7 @@ export const StateAbbreviation = {
 
 export type StateAbbreviation = (typeof StateAbbreviation)[keyof typeof StateAbbreviation]
 
+/** Postal abbreviations for US territories, kept apart from the states so callers can include or exclude them. */
 export const TerritoryAbbreviation = {
 	"American Samoa": "AS",
 	"Johnston Atoll": "JA",
@@ -364,6 +365,7 @@ export type TerritoryAbbreviation = (typeof TerritoryAbbreviation)[keyof typeof 
  */
 export type AdminLevel1Abbreviation = StateAbbreviation | TerritoryAbbreviation
 
+/** Every admin-level-1 postal abbreviation — the fifty states, DC, and the territories together. */
 export const AdminLevel1Abbreviation = {
 	...StateAbbreviation,
 	...TerritoryAbbreviation,

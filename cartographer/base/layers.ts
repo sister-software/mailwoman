@@ -12,6 +12,7 @@ import { LayerID } from "../styles/layers.ts"
 import { BuildingLayers } from "./buildings.ts"
 import { HillshadeTileSetID } from "./terrain.ts"
 
+/** Layer id for the hillshade raster, referenced by style definitions that draw terrain beneath the base map. */
 export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
 
 /**
@@ -24,6 +25,7 @@ const labelLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: 
 const labelLayerIDs = new Set(labelLayers.map((layer) => layer.id))
 const nonLabelLayers = allBaseLayers.filter((layer) => !labelLayerIDs.has(layer.id))
 
+/** The base map's layer stack, in draw order — terrain, then land cover, then water, then boundaries. */
 export const BaseLayers: LayerSpecification[] = [
 	...nonLabelLayers,
 	{

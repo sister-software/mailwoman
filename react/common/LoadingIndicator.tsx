@@ -36,6 +36,7 @@ const SIZE_CLASS: Record<NonNullable<LoadingIndicatorProps["size"]>, string> = {
 	large: "mw-spinner--large",
 }
 
+/** Spinner, pulse or staged progress, depending on how long the caller expects to wait. */
 export const LoadingIndicator = memo<LoadingIndicatorProps>(function LoadingIndicator({
 	mode = "spinner",
 	label,

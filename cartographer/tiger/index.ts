@@ -8,9 +8,12 @@ import { HillsLayerID } from "../base/layers.ts"
 import type { LayerSpecificationListInput } from "../styles/layers.ts"
 import { TileSetSourceID } from "../styles/sources.ts"
 
+/** Tile set id for US Census tract polygons. */
 export const TIGERTractsTileSetID = TileSetSourceID("tiger-tracts")
+/** Tile set id for US Census block polygons — finer than tracts, and correspondingly heavier. */
 export const TIGERBlocksTileSetID = TileSetSourceID("tiger-blocks")
 
+/** Layer definitions drawing the TIGER tract and block tile sets. */
 export const TIGERLayers: LayerSpecificationListInput[] = [
 	{
 		afterID: HillsLayerID,
