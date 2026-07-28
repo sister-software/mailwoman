@@ -134,6 +134,27 @@ interface ReleaseManifest {
 	defaultVersion?: string
 }
 
+/**
+ * Resolve one comma-separated `--<artifact>` flag into a verified path list. Every listed file must exist and be
+ * non-empty — a staged-but-truncated binary is a silent 404 at runtime, so it fails here instead.
+ */
+function stageBinaryList(spec: string | undefined, label: string): string[] {
+	const paths = spec
+		? spec
+				.split(",")
+				.map((s: string) => s.trim())
+				.filter(Boolean)
+		: []
+
+	for (const localPath of paths) {
+		if (!existsSync(localPath) || !statSync(localPath).size) {
+			fail(`${label} ${localPath} missing/empty`)
+		}
+	}
+
+	return paths
+}
+
 export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> {
 	if (!args.version) {
 		fail("version argument required (e.g. mailwoman release hf v5.9.0 …)")
@@ -195,53 +216,20 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
 	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename; the demo
 	// fetches them when the release's `hasAnchor` flag is set.
-	const postcodeBins = args.postcodes
-		? args.postcodes
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter(Boolean)
-		: []
-
-	for (const localPath of postcodeBins) {
-		if (!existsSync(localPath) || !statSync(localPath).size) {
-			fail(`postcode binary ${localPath} missing/empty`)
-		}
-	}
+	const postcodeBins = stageBinaryList(args.postcodes, "postcode binary")
 
 	// Optional placetype-pair-index binaries (placetype-pair-prior arc, Task 8): comma-separated
 	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
 	// postcodeBins exactly, but this artifact never falls back to a base package (see
 	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.
-	const pairIndexBins = args.pairIndexes
-		? args.pairIndexes
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter(Boolean)
-		: []
-
-	for (const localPath of pairIndexBins) {
-		if (!existsSync(localPath) || !statSync(localPath).size) {
-			fail(`pair-index binary ${localPath} missing/empty`)
-		}
-	}
+	const pairIndexBins = stageBinaryList(args.pairIndexes, "pair-index binary")
 
 	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution): comma-separated
 	// --fsts paths (e.g. fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin). Uploaded flat under the version dir
 	// by their LOWERCASE npm basename — this is what publish.yml fetches into each weights workspace so
 	// the published tarball carries its `fst-<locale>.bin` (files-guard requires it). Distinct from the
 	// singular --fst above, which stages the demo's BCP-47-cased `fst-en-US.bin`. en-nz ships no FST.
-	const fstBins = args.fsts
-		? args.fsts
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter(Boolean)
-		: []
-
-	for (const localPath of fstBins) {
-		if (!existsSync(localPath) || !statSync(localPath).size) {
-			fail(`FST binary ${localPath} missing/empty`)
-		}
-	}
+	const fstBins = stageBinaryList(args.fsts, "FST binary")
 
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares

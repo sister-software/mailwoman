@@ -207,6 +207,43 @@ interface HoldoutRow {
 // Main
 // ---------------------------------------------------------------------------
 
+/**
+ * Build the parse → resolve cascade this calibration measures. Mirrors `oa-resolver-eval.ts`'s construction exactly —
+ * the whole point of a conformal threshold is that it was fitted against the same stack that will later apply it, so
+ * the two must not drift.
+ */
+async function buildCascade(paths: {
+	modelPath: string
+	tokenizerPath: string
+	modelCardPath: string
+	wofPaths: string[]
+	addressPointsDb: string
+	interpolationDb: string
+}) {
+	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const modelCard = JSON.parse(readFileSync(paths.modelCardPath, "utf8")) as { labels: string[] }
+	const [tokenizer, runner] = await Promise.all([
+		MailwomanTokenizer.loadFromFile(paths.tokenizerPath),
+		ONNXRunner.create(paths.modelPath),
+	])
+	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
+
+	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
+		await import("@mailwoman/resolver-wof-sqlite")
+	const backend = new WOFSqlitePlaceLookup({
+		databasePath: paths.wofPaths.length === 1 ? paths.wofPaths[0]! : paths.wofPaths,
+	})
+
+	return {
+		neural,
+		resolver: createWOFResolver(backend as never),
+		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDb),
+		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDb }),
+	}
+}
+
 async function main(): Promise<void> {
 	const holdoutPath = values["holdout"] || "/tmp/ood-truth.jsonl"
 	const addressPointsDb = values["address-points"] || "/tmp/tx-situs.db"
@@ -234,26 +271,14 @@ async function main(): Promise<void> {
 	console.error(`[conformal-calibrate] situs: ${addressPointsDb}  interp: ${interpolationDb}`)
 	console.error(`[conformal-calibrate] model: ${modelPath}`)
 
-	// --- build parser (mirror oa-resolver-eval.ts exactly) ---
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(modelCardPath, "utf8")) as { labels: string[] }
-	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(tokenizerPath),
-		ONNXRunner.create(modelPath),
-	])
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
-
-	// --- build resolver with BOTH street-level shards ---
-	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
-		await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WOFSqlitePlaceLookup({
-		databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
+	const { neural, resolver, addressPoints, interpolation } = await buildCascade({
+		modelPath,
+		tokenizerPath,
+		modelCardPath,
+		wofPaths,
+		addressPointsDb,
+		interpolationDb,
 	})
-	const resolver = createWOFResolver(backend as never)
-	const addressPoints = new AddressPointSqliteLookup(addressPointsDb)
-	const interpolation = new StreetInterpolator({ dbPath: interpolationDb })
 
 	// --- run the cascade ---
 	interface Row {
