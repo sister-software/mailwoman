@@ -166,8 +166,6 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		if (isAsyncDisposable(storedCache)) {
 			await storedCache[Symbol.asyncDispose]()
 		}
-
-		return
 	}
 
 	public override toString() {

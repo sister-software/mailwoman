@@ -108,8 +108,6 @@ export const NexusStateProvider: React.FC<NexusStateProviderProps> = ({ initialW
 			validateSerializedState(value)
 		} catch (error) {
 			console.warn("Failed to persist serialized state", error)
-
-			return
 		}
 
 		// vscode.setState(value)

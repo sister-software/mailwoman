@@ -1261,10 +1261,12 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
 			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
 
-			if (anchor && (top.id as number) !== anchorRow!.id) {
-				if (haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM) {
-					top.mismatch = true
-				}
+			if (
+				anchor &&
+				(top.id as number) !== anchorRow!.id &&
+				haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM
+			) {
+				top.mismatch = true
 			}
 		}
 

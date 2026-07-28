@@ -83,12 +83,16 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 
 		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode; a scoped MISS falls back to the
 		// unscoped probe (index incompleteness in the scope column is not evidence of absence — positive-evidence rule).
-		if (scope?.locality && this.#byNameLocality) {
-			if (this.#byNameLocality.get(norm, foldStreetSurface(scope.locality)) !== undefined) return true
+		if (
+			scope?.locality &&
+			this.#byNameLocality &&
+			this.#byNameLocality.get(norm, foldStreetSurface(scope.locality)) !== undefined
+		) {
+			return true
 		}
 
-		if (scope?.postcode && this.#byNamePostcode) {
-			if (this.#byNamePostcode.get(norm, scope.postcode) !== undefined) return true
+		if (scope?.postcode && this.#byNamePostcode && this.#byNamePostcode.get(norm, scope.postcode) !== undefined) {
+			return true
 		}
 
 		return this.#byName.get(norm) !== undefined

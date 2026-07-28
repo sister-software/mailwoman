@@ -112,8 +112,6 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		} catch (error: unknown) {
 			const e = error as Record<string, unknown>
 			updateStep(4, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
-
-			return
 		}
 	})
 
