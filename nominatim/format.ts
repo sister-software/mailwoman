@@ -14,6 +14,9 @@ import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwom
 import type { NominatimAddressDetails, NominatimResult } from "./engine.ts"
 
 /** A GeoJSON `FeatureCollection` — the `format=geojson` envelope. */
+/** Arity of a 2D bounding box, as Nominatim reports it. */
+const BBOX_2D_LENGTH = 4
+
 export interface NominatimFeatureCollection {
 	type: "FeatureCollection"
 	features: Array<{
@@ -42,7 +45,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 			geometry: geojson ?? { type: "Point", coordinates: [Number(lon), Number(lat)] },
 		}
 
-		if (boundingbox?.length === 4) {
+		if (boundingbox?.length === BBOX_2D_LENGTH) {
 			// boundingbox is [south, north, west, east]; GeoJSON bbox is [west, south, east, north].
 			feature.bbox = [Number(boundingbox[2]), Number(boundingbox[0]), Number(boundingbox[3]), Number(boundingbox[1])]
 		}

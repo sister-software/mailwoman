@@ -44,6 +44,9 @@ export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"
  * construct only the one matching index — is superseded; the `country` load-option survives as an optional
  * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
  */
+/** Absent asset — a soft-feed sibling that was never published, not a failure. */
+const HTTP_NOT_FOUND = 404
+
 export interface LoadedPairIndex {
 	/** URL the binary was fetched from. */
 	url: string
@@ -650,7 +653,7 @@ async function fetchLabelsFromModelCard(url: string, fetchImpl: typeof fetch): P
 	const res = await fetchImpl(url)
 
 	if (!res.ok) {
-		if (res.status === 404) return null
+		if (res.status === HTTP_NOT_FOUND) return null
 		throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`)
 	}
 	const parsed = (await res.json()) as { labels?: unknown }

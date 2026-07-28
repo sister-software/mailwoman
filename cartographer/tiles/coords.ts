@@ -7,12 +7,15 @@
 /**
  * Literal type for a tile coord array.
  */
+/** Parts in a `z/x/y` tile coordinate. */
+const TILE_COORD_PARTS = 3
+
 export type TileCoords = [zoom: number, xCoord: number, yCoord: number]
 
 export function parseTileCoordParams({ z, x, y }: Record<string, string | undefined>): TileCoords | null {
 	const coords = [z, x, y].map((n) => Number.parseInt(n!, 10)).filter((n) => !Number.isNaN(n))
 
-	if (coords.length !== 3) return null
+	if (coords.length !== TILE_COORD_PARTS) return null
 
 	return coords as TileCoords
 }

@@ -19,6 +19,12 @@
  */
 
 /** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */
+/** Distinct values at or below which every split point is tried exactly rather than by quantile. */
+const MAX_EXACT_SPLIT_VALUES = 5
+
+/** Quantile split points evaluated for a continuous feature. */
+const QUANTILE_SPLIT_COUNT = 6
+
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
@@ -36,7 +42,7 @@ export function buildThresholds(X: number[][]): number[][] {
 
 		if (uniq.length <= 1) {
 			out.push([])
-		} else if (uniq.length <= 5) {
+		} else if (uniq.length <= MAX_EXACT_SPLIT_VALUES) {
 			const t: number[] = []
 
 			for (let k = 0; k < uniq.length - 1; k++) {
@@ -47,7 +53,7 @@ export function buildThresholds(X: number[][]): number[][] {
 			const sorted = [...vals].toSorted((p, q) => p - q)
 			const t: number[] = []
 
-			for (let q = 1; q <= 6; q++) {
+			for (let q = 1; q <= QUANTILE_SPLIT_COUNT; q++) {
 				t.push(sorted[Math.floor((q / 7) * (sorted.length - 1))]!)
 			}
 			out.push([...new Set(t)])

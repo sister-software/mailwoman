@@ -16,6 +16,18 @@ import type { AnnotationSet, Annotator, Nuts } from "@mailwoman/annotations"
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
  */
+/**
+ * NUTS code lengths by level. The code is hierarchical and fixed-width per level — a two-letter country prefix plus one
+ * digit per level — so the length IS the level.
+ */
+const NUTS_1_LENGTH = 3
+
+/** See {@link NUTS_1_LENGTH}. */
+const NUTS_2_LENGTH = 4
+
+/** See {@link NUTS_1_LENGTH}. */
+const NUTS_3_LENGTH = 5
+
 export type MultiPolygonCoords = number[][][][]
 
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
@@ -54,15 +66,15 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 export function nutsFromID(id: string): Nuts {
 	const nuts: Nuts = {}
 
-	if (id.length >= 3) {
+	if (id.length >= NUTS_1_LENGTH) {
 		nuts.level1 = id.slice(0, 3)
 	}
 
-	if (id.length >= 4) {
+	if (id.length >= NUTS_2_LENGTH) {
 		nuts.level2 = id.slice(0, 4)
 	}
 
-	if (id.length >= 5) {
+	if (id.length >= NUTS_3_LENGTH) {
 		nuts.level3 = id.slice(0, 5)
 	}
 
