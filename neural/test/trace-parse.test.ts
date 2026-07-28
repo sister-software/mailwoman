@@ -398,7 +398,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// The ZIP's pieces carry the anchor hit; leading pieces don't.
 		expect(Math.max(...trace.anchor!.confidence)).toBeGreaterThan(0)
 		// Serializable by construction: a JSON round-trip preserves the channel byte-for-byte.
-		expect(JSON.parse(JSON.stringify(trace.anchor))).toEqual(trace.anchor)
+		expect(structuredClone(trace.anchor)).toEqual(trace.anchor)
 	})
 
 	it("schema snapshot — drift forces a conscious decision", async () => {

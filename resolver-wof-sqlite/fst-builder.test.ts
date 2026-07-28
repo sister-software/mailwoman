@@ -11,8 +11,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import { buildFSTFromWOF } from "./fst-builder.ts"
 import type { FSTMatcher } from "./fst-matcher.ts"
-import type { BuildFSTResult } from "./fst-types.ts"
-import type { FSTProvenance } from "./fst-types.ts"
+import type { BuildFSTResult, FSTProvenance } from "./fst-types.ts"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)

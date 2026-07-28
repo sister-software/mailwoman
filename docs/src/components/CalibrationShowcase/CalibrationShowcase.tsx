@@ -82,7 +82,7 @@ export default function CalibrationShowcase({
 				if (!cancelled) {
 					setData(json)
 				}
-			} catch (caught) {
+			} catch {
 				if (!cancelled) {
 					setError(error instanceof Error ? error.message : String(error))
 				}

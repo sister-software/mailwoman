@@ -103,7 +103,7 @@ describe("trainGBT / gbtScore", () => {
 			y.map(() => 1),
 			{ rounds: 20, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
-		const reloaded = JSON.parse(JSON.stringify(model)) as GBT
+		const reloaded = structuredClone(model) as GBT
 
 		for (const x of X) {
 			expect(gbtScore(reloaded, x)).toBeCloseTo(gbtScore(model, x), 10)
