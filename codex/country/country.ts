@@ -11,7 +11,8 @@
  *   the other codex matchers (street-suffix, directional, po-box).
  */
 
-import { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "./codes.ts"
+import { Alpha3ToCountryRecord, CountryISO2 } from "./codes.ts"
+export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "./codes.ts"
 import type { CountryName } from "./names.ts"
 
 /**
@@ -121,6 +122,3 @@ export function isCountryToken(token: unknown): boolean {
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []
 }
-
-export { Alpha3ToCountryRecord, CountryISO2 }
-export type { CountryISO3, CountryName }

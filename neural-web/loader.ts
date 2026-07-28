@@ -30,8 +30,7 @@ import {
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
-
-export type { WebONNXRunnerDiagnostics }
+export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"
 
 /**
  * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader retained it.

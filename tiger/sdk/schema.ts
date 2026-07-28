@@ -10,9 +10,8 @@
  *   back with `JSON.parse`).
  */
 
-import { sql, type Generated, type Kysely } from "kysely"
-
-/** Kysely row type for `tabblock20`. Geometry is a GeoJSON string. */
+import { sql, type Kysely } from "kysely"
+export { type Generated } from "kysely"
 export interface TIGERBlockTable {
 	GEOID: string
 	state_code: string
@@ -75,7 +74,6 @@ export interface TIGERDatabase {
 }
 
 /** Marker so callers can opt into `Generated` columns later without importing kysely here. */
-export type { Generated }
 
 /**
  * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take effect on an empty DB,

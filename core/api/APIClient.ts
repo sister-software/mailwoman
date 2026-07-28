@@ -5,6 +5,7 @@
  */
 
 import { ConsoleLogger, type IRuntimeLogger } from "@mailwoman/core/logging"
+export { type IRuntimeLogger } from "@mailwoman/core/logging"
 import { isAsyncDisposable } from "async-init"
 import Axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type CreateAxiosDefaults } from "axios"
 import {
@@ -15,8 +16,6 @@ import {
 } from "axios-cache-interceptor"
 
 import { delegateAxiosError } from "./responses.ts"
-
-export type { IRuntimeLogger }
 
 /**
  * Configuration for an API client.

@@ -5,7 +5,7 @@
  */
 
 import type { Stats } from "node:fs"
-import { existsSync } from "node:fs"
+export { existsSync } from "node:fs"
 import { stat } from "node:fs/promises"
 
 import type { PathBuilderLike } from "path-ts"
@@ -34,5 +34,3 @@ export async function isDirectory(path: PathBuilderLike): Promise<boolean> {
 			throw error
 		})
 }
-
-export { existsSync }

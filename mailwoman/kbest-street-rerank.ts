@@ -49,14 +49,12 @@ import {
 	type SemiCRFTransitions,
 } from "@mailwoman/neural"
 import {
-	foldStreetSurface,
 	pickByStreetEvidence,
 	type StreetCandidate,
 	type StreetEvidenceScope,
 	type StreetLocalityEvidence,
 } from "@mailwoman/resolver"
-
-/** The segment-type strings that make up a street surface (the STREET family). */
+export { foldStreetSurface } from "@mailwoman/resolver"
 const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 	"street",
 	"street_prefix",
@@ -243,5 +241,3 @@ export async function rerankByStreetEvidence(
 
 	return { tree, moved: pick.moved, rank: pick.index, streetSurface: pick.candidate.streetSurface }
 }
-
-export { foldStreetSurface }

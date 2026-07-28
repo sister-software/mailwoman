@@ -12,9 +12,8 @@
  *   without opening a database — mirrors `@mailwoman/osm`'s `street-locale.ts`.
  */
 
-import { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
-
-export { normalizeStreetForKeyLocale, type StreetLocale }
+import { type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale a BAN shard was built with. FR-only: BAN is the French

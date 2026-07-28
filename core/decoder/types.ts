@@ -27,8 +27,7 @@
  */
 
 import type { BIOLabel, ComponentTag } from "../types/component.ts"
-
-export type { BIOLabel, ComponentTag }
+export { type BIOLabel, type ComponentTag } from "../types/component.ts"
 
 /**
  * A single token emitted by the model, paired with its predicted label and confidence.

@@ -11,9 +11,8 @@
  */
 
 import { $public } from "../env/index.ts"
-import { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
-
-/** Serialized model: metadata in JSON, the dense `weights` (row-major [class][feature]) alongside. */
+import { featurize } from "./featurize.ts"
+export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
 export interface CoarsePlacerArtifact {
 	/**
 	 * The coarse placer's classes (the country/region codes it routes to).
@@ -308,5 +307,3 @@ export async function loadCoarsePlacer(
 ): Promise<CoarsePlacer> {
 	return new CoarsePlacer({ ...metaJson, weights }, opts)
 }
-
-export { COARSE_CLASSES, FEATURE_DIM, featurize }
