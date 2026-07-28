@@ -275,7 +275,7 @@ function extractSurface(
 	matches: (type: string) => boolean
 ): string {
 	return hypothesis.segments
-		.filter(([, , type]) => matches(type))
+		.filter((segment) => matches(segment[2]))
 		.toSorted((a, b) => a[0] - b[0])
 		.map(([from, to]) => {
 			const firstPiece = words[from]![0]!

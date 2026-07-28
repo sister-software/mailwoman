@@ -320,7 +320,8 @@ export class ONNXRunner {
 
 		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
 		const data = logitsTensor.data as Float32Array
-		const [, , numLabels] = logitsTensor.dims as readonly [number, number, number]
+		// dims are [batch, sequence, labels].
+		const numLabels = (logitsTensor.dims as readonly [number, number, number])[2]
 
 		const logits: number[][] = []
 
@@ -346,7 +347,10 @@ export class ONNXRunner {
 
 		if (spanTensor) {
 			const spanData = spanTensor.data as Float32Array
-			const [, , spanLen, numTypes] = spanTensor.dims as readonly [number, number, number, number]
+			// dims are [batch, sequence, span, type].
+			const spanDims = spanTensor.dims as readonly [number, number, number, number]
+			const spanLen = spanDims[2]
+			const numTypes = spanDims[3]
 			maxSpan = spanLen
 			spanScores = []
 

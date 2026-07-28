@@ -48,7 +48,14 @@ export async function extractPPDTuples(
 	write("NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE")
 
 	for await (const cells of input) {
-		const [, , , postcode, , , , paon, saon, street, locality, town, , county] = cells
+		// HM Land Registry Price Paid Data column order (see the PPD FAQ for the full field list).
+		const postcode = cells[3]
+		const paon = cells[7]
+		const saon = cells[8]
+		const street = cells[9]
+		const locality = cells[10]
+		const town = cells[11]
+		const county = cells[13]
 
 		if (saon) {
 			stats.skippedSAON++
