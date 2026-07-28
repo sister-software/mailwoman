@@ -342,6 +342,9 @@ class TrainConfig:
     # (the retrieval-ablation training the RAG over-trust literature prescribes). The ablation gate
     # (evidence-zeroed parse ≥ baseline on unaffected spans) is the corresponding eval-side check.
     evidence_curriculum: bool = False
+    # v3.21.0 false-evidence noise rate (per row per bundle channel; see train.perturb_evidence_noise).
+    # 0.0 = off — the v3.16→v3.20 recipes reproduce byte-identically.
+    evidence_noise_prob: float = 0.0
     # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
     # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
     # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts

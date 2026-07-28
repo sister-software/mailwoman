@@ -111,6 +111,50 @@ def perturb_gazetteer_confidence(conf: torch.Tensor, step: int, max_steps: int) 
     return perturb_anchor_confidence(conf, step, max_steps)
 
 
+def perturb_evidence_noise(
+    features: torch.Tensor, conf: torch.Tensor, step: int, max_steps: int, p_noise: float
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """FALSE-evidence curriculum (v3.21.0) — the collision-robustness leg the absence curriculum lacks.
+
+    The v3.19/v3.20 golden-US verdicts showed the ramped zero-out teaches presence/ABSENCE robustness
+    but never shows the model false presence: a real street-type word inside a street NAME ("Cider
+    Mill Rd") or a locality surface on a non-locality token still commands the parse, because in
+    training painted evidence was (near-)always truthful. With probability ``p_noise`` per row per
+    channel, this corrupts the painting while LABELS stay gold, so the gradient itself teaches
+    evidence-as-hint:
+
+    - rows that carry evidence: roll the (features, confidence) pair by a random offset along the
+      sequence — a real painted pattern lands on wrong tokens (the collision shape);
+    - evidence-free rows: paint a synthetic 1-token hit (all feature bits set, confidence 1) at a
+      random position — a false positive on a clean row.
+
+    Same schedule as the anchor curriculum (untouched until 25% of max_steps, ramp to 50%, hold) so
+    the clue's basin builds before the noise argues with it.
+    """
+    if p_noise <= 0.0:
+        return features, conf
+    start = ANCHOR_CURRICULUM_START_FRAC * max_steps
+    if step < start:
+        return features, conf
+    ramp = min(1.0, (step - start) / max(1.0, (ANCHOR_CURRICULUM_RAMP_FRAC - ANCHOR_CURRICULUM_START_FRAC) * max_steps))
+    bsz, seq = conf.shape
+    noised = torch.rand(bsz, device=conf.device) < p_noise * ramp
+    if not bool(noised.any()):
+        return features, conf
+    features = features.clone()
+    conf = conf.clone()
+    for i in torch.nonzero(noised).flatten().tolist():
+        if bool((conf[i] > 0).any()):
+            shift = int(torch.randint(1, seq, (1,), device=conf.device))
+            features[i] = torch.roll(features[i], shift, dims=0)
+            conf[i] = torch.roll(conf[i], shift, dims=0)
+        else:
+            pos = int(torch.randint(0, seq, (1,), device=conf.device))
+            features[i, pos] = 1.0
+            conf[i, pos] = 1.0
+    return features, conf
+
+
 def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> LambdaLR:
     def lr_lambda(step: int) -> float:
         if step < warmup_steps:
@@ -756,6 +800,16 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 # channel over-trusts without it. Per-channel independent draws, so the model also
                 # sees each channel alone (the bundle must inform, never become a joint crutch).
                 if getattr(cfg.train, "evidence_curriculum", False):
+                    # False-evidence noise FIRST (v3.21.0, see perturb_evidence_noise) — then the
+                    # absence zero-out draws over the noised batch; the rates compose independently.
+                    noise_p = float(getattr(cfg.train, "evidence_noise_prob", 0.0))
+                    if noise_p > 0.0:
+                        for prefix in ("street_type", "locality_surface"):
+                            fk, ck = f"{prefix}_features", f"{prefix}_confidence"
+                            if fk in tb and ck in tb:
+                                tb[fk], tb[ck] = perturb_evidence_noise(
+                                    tb[fk], tb[ck], step, cfg.train.max_steps, noise_p
+                                )
                     for key in ("street_type_confidence", "locality_surface_confidence"):
                         if key in tb:
                             tb[key] = perturb_gazetteer_confidence(tb[key], step, cfg.train.max_steps)
