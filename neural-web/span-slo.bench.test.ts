@@ -13,7 +13,7 @@
 import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { WebONNXRunner } from "./web-onnx-runner.ts"
 
