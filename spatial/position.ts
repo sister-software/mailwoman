@@ -9,6 +9,18 @@
 import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { GeoPoint, type GeoPointInput } from "@mailwoman/spatial"
 
+/** Southern limit of latitude in WGS84 degrees. Outside it a value cannot be a latitude. */
+const LATITUDE_MIN = -90
+
+/** Northern limit of latitude in WGS84 degrees. */
+const LATITUDE_MAX = 90
+
+/** Arity of a `[lon, lat]` coordinate tuple. */
+const COORD_PAIR_LENGTH = 2
+
+/** Arity of a `[lon, lat, elevation]` coordinate tuple. */
+const COORD_TRIPLE_LENGTH = 3
+
 /**
  * An ordered pair of coordinates in the form of [longitude, latitude].
  *
@@ -71,8 +83,8 @@ export function orderGeoJSONToCoordPair([longitude, latitude]: Coordinates2D): [
  */
 export function inferGeoJSONCoordOrder([coordA, coordB]: [number, number]): Coordinates2D {
 	// Latitude values typically range from -90 to 90
-	const isCoordALat = coordA >= -90 && coordA <= 90
-	const isCoordBLat = coordB >= -90 && coordB <= 90
+	const isCoordALat = coordA >= LATITUDE_MIN && coordA <= LATITUDE_MAX
+	const isCoordBLat = coordB >= LATITUDE_MIN && coordB <= LATITUDE_MAX
 
 	if (isCoordALat && !isCoordBLat) {
 		// coordA is latitude, coordB is longitude
@@ -146,7 +158,7 @@ export interface InternalPointCoordinates {
 export function isCoordPairLiteral(input: unknown): input is [number, number] | [number, number, number] {
 	if (!Array.isArray(input)) return false
 
-	if (input.length !== 2 && input.length !== 3) return false
+	if (input.length !== COORD_PAIR_LENGTH && input.length !== COORD_TRIPLE_LENGTH) return false
 
 	return input.every((coord) => typeof coord === "number")
 }

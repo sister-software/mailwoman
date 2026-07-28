@@ -10,6 +10,12 @@ import type { PolygonLiteral, SolidPolygonPath } from "./geometries/polygon.ts"
 import { clampLatitude, wrapLongitude } from "./position.ts"
 import { CoordinateProjection } from "./projection.ts"
 
+/** Arity of a 2D bounding box: `[west, south, east, north]`. */
+const BBOX_2D_LENGTH = 4
+
+/** Arity of a 3D bounding box: `[west, south, minElevation, east, north, maxElevation]`. */
+const BBOX_3D_LENGTH = 6
+
 //#region Bounding Box Literals
 
 /**
@@ -116,7 +122,7 @@ export type BBox3DLiteral = [
  * @category Bounding Box
  */
 export function is2DBBox(input: unknown): input is BBox2DLiteral {
-	return Array.isArray(input) && input.length === 4
+	return Array.isArray(input) && input.length === BBOX_2D_LENGTH
 }
 
 /**
@@ -128,7 +134,7 @@ export function is2DBBox(input: unknown): input is BBox2DLiteral {
  * @category Bounding Box
  */
 export function is3DBBox(input: unknown): input is BBox3DLiteral {
-	return Array.isArray(input) && input.length === 6
+	return Array.isArray(input) && input.length === BBOX_3D_LENGTH
 }
 
 /**
@@ -138,7 +144,7 @@ export function is3DBBox(input: unknown): input is BBox3DLiteral {
  * @category Bounding Box
  */
 export function isBBox(input: unknown): input is BBox2DLiteral | BBox3DLiteral {
-	return Array.isArray(input) && (input.length === 4 || input.length === 6)
+	return Array.isArray(input) && (input.length === BBOX_2D_LENGTH || input.length === BBOX_3D_LENGTH)
 }
 
 /**

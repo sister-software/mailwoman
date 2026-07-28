@@ -17,6 +17,31 @@
  */
 
 /**
+ * Highest ASCII code point. Above it the input is accented or non-Latin, where case conversion is locale-sensitive and
+ * can change length (`ß`→`SS`, Turkish dotted/dotless I) — which would break the token-offset invariant the caller
+ * relies on, so those inputs are left alone entirely.
+ */
+const ASCII_MAX = 127
+
+/** Code point of `A`. */
+const ASCII_UPPER_A = 65
+
+/** Code point of `Z`. */
+const ASCII_UPPER_Z = 90
+
+/** Code point of `a`. */
+const ASCII_LOWER_A = 97
+
+/** Code point of `z`. */
+const ASCII_LOWER_Z = 122
+
+/**
+ * Cased letters an input needs before it counts as uniformly-cased rather than shouting punctuation or a stray token.
+ * The floor exists so a digit- or punctuation-only input is not treated as a whole shouting address.
+ */
+const MIN_CASED_LETTERS = 3
+
+/**
  * True when `text` is PURE-ASCII ALL-CAPS: it has cased ASCII letters and ZERO lowercase, and NO non-ASCII characters.
  * The pure-ASCII requirement is deliberate — title-casing accented/non-Latin text is locale-sensitive and can change
  * length (`ß`→`SS`, Turkish dotted/dotless I), which would break the token-offset invariant the caller relies on. So
@@ -29,18 +54,18 @@ export function isAllCapsInput(text: string): boolean {
 	for (let i = 0; i < text.length; i++) {
 		const c = text.charCodeAt(i)
 
-		if (c > 127) return false
+		if (c > ASCII_MAX) return false
 
 		// any non-ASCII (accented/non-Latin) → leave it alone
-		if (c >= 97 && c <= 122) return false
+		if (c >= ASCII_LOWER_A && c <= ASCII_LOWER_Z) return false
 
 		// any [a-z] → mixed case, leave it alone
-		if (c >= 65 && c <= 90) {
+		if (c >= ASCII_UPPER_A && c <= ASCII_UPPER_Z) {
 			upper++
 		}
 	}
 
-	return upper >= 3
+	return upper >= MIN_CASED_LETTERS
 }
 
 /**
@@ -70,18 +95,18 @@ export function isAllLowerInput(text: string): boolean {
 	for (let i = 0; i < text.length; i++) {
 		const c = text.charCodeAt(i)
 
-		if (c > 127) return false
+		if (c > ASCII_MAX) return false
 
 		// any non-ASCII (accented/non-Latin) → leave it alone
-		if (c >= 65 && c <= 90) return false
+		if (c >= ASCII_UPPER_A && c <= ASCII_UPPER_Z) return false
 
 		// any [A-Z] → mixed case, leave it alone
-		if (c >= 97 && c <= 122) {
+		if (c >= ASCII_LOWER_A && c <= ASCII_LOWER_Z) {
 			lower++
 		}
 	}
 
-	return lower >= 3
+	return lower >= MIN_CASED_LETTERS
 }
 
 /**

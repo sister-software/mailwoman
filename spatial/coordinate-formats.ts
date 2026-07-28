@@ -11,6 +11,15 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
+/** Bits packed into each base-32 geohash character. */
+const GEOHASH_BITS_PER_CHAR = 5
+
+/** Southern limit of the MGRS lettered bands. Below it MGRS is undefined and the UPS grid applies instead. */
+const MGRS_LAT_MIN = -80
+
+/** Northern limit of the MGRS lettered bands. Band X is extended to 84°, so there is no 84–90° band. */
+const MGRS_LAT_MAX = 84
+
 const toRad = (d: number): number => (d * Math.PI) / 180
 const toDeg = (r: number): number => (r * 180) / Math.PI
 
@@ -95,7 +104,7 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 		}
 		evenBit = !evenBit
 
-		if (++bit === 5) {
+		if (++bit === GEOHASH_BITS_PER_CHAR) {
 			hash += GEOHASH_BASE32[bits]
 			bit = 0
 			bits = 0
@@ -205,7 +214,7 @@ const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
  * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside MGRS bands (±80°/84°).
  */
 export function toMGRS(lat: number, lon: number): string {
-	if (lat < -80 || lat > 84) return ""
+	if (lat < MGRS_LAT_MIN || lat > MGRS_LAT_MAX) return ""
 	const band = MGRS_LAT_BANDS[Math.floor((lat + 80) / 8)]!
 	const { zone, easting, northing } = latLonToUtm(lat, lon)
 	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100_000) - 1]!
