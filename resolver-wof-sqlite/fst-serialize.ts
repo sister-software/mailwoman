@@ -42,14 +42,34 @@ const NARROW_STATE_ENTRY_SIZE = 12
 /** First format version carrying the trailing metadata block; older files simply have none. */
 const VERSION_WITH_METADATA = 3
 
+/** File magic. A reader rejects anything not starting with these four bytes before parsing further. */
 const MAGIC = Buffer.from("FST\0", "ascii")
+
+/** Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed. */
 const VERSION = 4
+
+/** Fixed header size in bytes: magic, version, and the section offsets that follow it. */
 const HEADER_SIZE = 32
+
+/** State-table entry: edge offset, place offset, and the two 32-bit counters (v4 widths). */
 const STATE_ENTRY_SIZE = 16
+
+/** Edge-table entry: the transition label and the target state index. */
 const EDGE_ENTRY_SIZE = 8
+
+/** Place-table entry: the place id, its placetype, coordinates, and importance. */
 const PLACE_ENTRY_SIZE = 56
+
+/**
+ * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end, since the specific end of
+ * the chain is what disambiguates and the country end is recoverable anyway.
+ */
 const MAX_CHAIN_LEN = 8
 
+/**
+ * Placetypes in hierarchy order, largest first. The index into this array is what gets written into a place entry, so
+ * REORDERING IT BREAKS EVERY EXISTING FILE — append instead, and bump the version.
+ */
 const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",
 	"region",

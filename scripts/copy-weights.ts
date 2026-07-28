@@ -47,11 +47,19 @@ const repoRoot = repoRootPath()
 
 const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
 const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
+/** Model binary to copy into each weights workspace before packing. */
 const SOURCE_MODEL = $public.MAILWOMAN_PUBLISH_MODEL ?? resolve(dataRoot, config.weights.model)
+/** Tokenizer binary to copy into each weights workspace before packing. */
 const SOURCE_TOKENIZER = $public.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot, config.weights.tokenizer)
 
+/**
+ * Soft-feed artifact paths from the release config. Absent entries simply mean the locale ships without that sibling,
+ * which is a supported (lean) install rather than an error.
+ */
 const SOFT_FEED = config.softFeed ?? {}
+/** Anchor lexicon source, or null when this release ships without one. */
 const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
+/** Country-surface lexicon source, or null when this release ships without one. */
 const SOURCE_COUNTRY = SOFT_FEED.countryLexicon ? resolve(repoRoot, SOFT_FEED.countryLexicon) : null
 // Option-A evidence bundle (v3.23): street-type is a small repo-committed file; locality-surface is a
 // ~7 MB data-root artifact (never in git) — note the DIFFERENT base dirs.
@@ -59,8 +67,11 @@ const SOURCE_STREET_TYPE = SOFT_FEED.streetTypeLexicon ? resolve(repoRoot, SOFT_
 const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
 	? resolve(dataRoot, SOFT_FEED.localitySurfaceLexicon)
 	: null
+
+/** Per-country pair-index sources and their deltas, keyed by country code. */
 const PAIR_INDEX_BY_COUNTRY: Record<string, { source: string; delta: number }> = SOFT_FEED.pairIndexByCountry ?? {}
 
+/** Weights workspaces to materialize, derived from the release config's locale list. */
 const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
 
 async function exists(path: PathLike) {

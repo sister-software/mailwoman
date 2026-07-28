@@ -54,8 +54,10 @@ import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
  * expected md5s live in model-card.json `files_md5` (single source — see the header).
  */
 const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
+/** Tokenizer the workspace links when `$MAILWOMAN_DEV_TOKENIZER` is unset. */
 const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 
+/** Workspace root the artifacts are linked into. Everything below resolves against it. */
 const PKG_DIR = repoRootPath("neural-weights-en-us")
 
 /**
@@ -65,7 +67,12 @@ const PKG_DIR = repoRootPath("neural-weights-en-us")
 const CARD = JSON.parse(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
 	files_md5?: Record<string, string>
 }
+/**
+ * Expected model digest from the model card, checked so a stale or truncated link is caught here rather than at
+ * inference.
+ */
 const DEFAULT_MODEL_MD5 = CARD.files_md5?.["model.onnx"]
+/** Expected tokenizer digest from the model card; see {@link DEFAULT_MODEL_MD5}. */
 const DEFAULT_TOKENIZER_MD5 = CARD.files_md5?.["tokenizer.model"]
 
 if (!DEFAULT_MODEL_MD5 || !DEFAULT_TOKENIZER_MD5) {
@@ -80,9 +87,12 @@ if (!DEFAULT_MODEL_MD5 || !DEFAULT_TOKENIZER_MD5) {
  * assertion in that case (but warn loudly).
  */
 const MODEL_OVERRIDDEN = !!$public.MAILWOMAN_DEV_MODEL
+/** Whether the tokenizer came from the environment rather than the card, which relaxes the digest check. */
 const TOKENIZER_OVERRIDDEN = !!$public.MAILWOMAN_DEV_TOKENIZER
 
+/** Model actually linked — the environment override if set, otherwise the card's default. */
 const SRC_MODEL = $public.MAILWOMAN_DEV_MODEL || DEFAULT_MODEL
+/** Tokenizer actually linked — the environment override if set, otherwise the card's default. */
 const SRC_TOKENIZER = $public.MAILWOMAN_DEV_TOKENIZER || DEFAULT_TOKENIZER
 
 if (!existsSync(SRC_MODEL)) {
@@ -114,7 +124,9 @@ function linkForce(src: string, dest: string): void {
 	renameSync(tmp, dest)
 }
 
+/** Where `model.onnx` is linked. `@mailwoman/neural` auto-resolves this path. */
 const MODEL_DEST = resolve(PKG_DIR, "model.onnx")
+/** Where `tokenizer.model` is linked. `@mailwoman/neural` auto-resolves this path. */
 const TOKENIZER_DEST = resolve(PKG_DIR, "tokenizer.model")
 
 linkForce(SRC_MODEL, MODEL_DEST)
@@ -165,6 +177,7 @@ if (!TOKENIZER_OVERRIDDEN) {
  * versionless on disk, unlike en-gb's md5-guarded pair index).
  */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
+/** Country-surface lexicon generated into the repo by the codex build. */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
@@ -204,8 +217,11 @@ if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
 	)
 }
 
+/** WOF postcode database the postcode binary is built from. */
 const US_WOF_DB = dataRootPath("wof", "postalcode-us.db")
+/** Compiled CLI used to run the build steps below. Requires `yarn compile` to have run. */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
+/** Where the postcode binary is written — a soft-feed sibling, absent in a lean install. */
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-us.bin")
 
 if (existsSync(POSTCODE_BIN_DEST)) {
@@ -239,6 +255,7 @@ if (existsSync(POSTCODE_BIN_DEST)) {
  * (release-sequenced).
  */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
+/** Where the locale FST is written — a soft-feed sibling, absent in a lean install. */
 const FST_DEST = resolve(PKG_DIR, "fst-en-us.bin")
 
 if (existsSync(FST_SRC)) {
@@ -256,6 +273,7 @@ if (existsSync(FST_SRC)) {
  * it.
  */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
+/** Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install. */
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
