@@ -226,7 +226,17 @@ describe("runPipeline — stage composition", () => {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+			// Decision A: the pipeline passes an explicit register on every parse. The default kind
+			// classifier (no fast-path) reads structured_address → formatted; an explicit
+			// PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
+			inputMode: "formatted",
 		})
+	})
+
+	it("threads an explicit PipelineOpts.inputMode to classifier.parse (Decision A)", async () => {
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
+		await runPipeline("belleville", { classifier }, { inputMode: "fragmented" })
+		expect(classifier.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ inputMode: "fragmented" }))
 	})
 
 	it("threads PipelineOpts.normalizeCase to classifier.parse (#690)", async () => {
