@@ -19,6 +19,7 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 
@@ -99,7 +100,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		cacheRoot: options.weightsCacheRoot,
 	})
 
-	let fstStreetMorphology: import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined
+	let fstStreetMorphology: FSTMatcher | undefined
 
 	if (options.streetMorphology) {
 		// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root

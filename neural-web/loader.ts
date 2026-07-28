@@ -72,7 +72,7 @@ export interface LoadResult {
 	 * consumers (the demo's anchor-centroid map fallback) can reuse the SAME artifact the model channel feeds from — WOF
 	 * ships placeholder (0,0) for ~22% of US postcodes; this lookup has a real centroid for every covered ZIP.
 	 */
-	postcodeAnchorLookup?: import("@mailwoman/neural").AnchorLookup
+	postcodeAnchorLookup?: AnchorLookup
 	/**
 	 * Every placetype-pair index that fetched + parsed, each with its header country and a live resolver — see
 	 * {@link LoadedPairIndex}. Empty when `pairIndexURLs` was omitted or every fetch failed. Exposed so consumers (the

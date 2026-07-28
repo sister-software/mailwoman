@@ -12,6 +12,7 @@ import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
 import type React from "react"
@@ -306,9 +307,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
-async function tryBuildFST(
-	options: zod.infer<typeof ParseConfigSchema>
-): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
+async function tryBuildFST(options: zod.infer<typeof ParseConfigSchema>): Promise<FSTMatcher | undefined> {
 	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined

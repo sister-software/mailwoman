@@ -61,9 +61,13 @@ import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, mailwomanDataRoot, percentile } from "@mailwoman/core/utils"
+import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
+import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
+
+import type { ShardProvider } from "../geocode-core.ts"
 
 /**
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
@@ -421,7 +425,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
 	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
-	const overrides: import("@mailwoman/neural/scorer").ScorerOverrides = {
+	const overrides: ScorerOverrides = {
 		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
 		...(anchorOff ? { anchor: false } : {}),
 	}
@@ -597,7 +601,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
 	const addressPointsDb = options.addressPoints || ""
-	let addressPoints: import("@mailwoman/resolver").AddressPointLookup | null = null
+	let addressPoints: AddressPointLookup | null = null
 
 	if (addressPointsDb) {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
@@ -609,7 +613,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
 	// long tail of valid-but-unlisted numbers the exact tier misses.
 	const interpolationDb = options.interpolation || ""
-	let interpolation: import("@mailwoman/resolver").InterpolationLookup | null = null
+	let interpolation: InterpolationLookup | null = null
 
 	if (interpolationDb) {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
@@ -626,7 +630,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
 	const dataRoot = options.dataRoot || mailwomanDataRoot()
-	let cascadeProvider: import("../geocode-core.ts").ShardProvider | null = null
+	let cascadeProvider: ShardProvider | null = null
 
 	if (cascadeOn) {
 		const { ShardProvider } = await import("../geocode-core.ts")
