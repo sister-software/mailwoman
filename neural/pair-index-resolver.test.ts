@@ -208,6 +208,6 @@ describe("peekPairIndexHeader", () => {
 		const truncated = bytes.subarray(0, pairCountOffset + 4)
 
 		expect(peekPairIndexHeader(truncated)).toEqual(HEADER)
-		expect(() => new PairIndexResolver(truncated)).toThrow()
+		expect(() => new PairIndexResolver(truncated)).toThrow(/Offset is outside the bounds/)
 	})
 })

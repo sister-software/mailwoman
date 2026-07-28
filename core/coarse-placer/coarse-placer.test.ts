@@ -115,8 +115,8 @@ describe("dequantizeInt8Weights", () => {
 	})
 
 	test("rejects length / scale-count mismatch", () => {
-		expect(() => dequantizeInt8Weights(new Int8Array(8), [1], 2, 4)).toThrow()
-		expect(() => dequantizeInt8Weights(new Int8Array(7), [1, 1], 2, 4)).toThrow()
+		expect(() => dequantizeInt8Weights(new Int8Array(8), [1], 2, 4)).toThrow(/dequantize:/)
+		expect(() => dequantizeInt8Weights(new Int8Array(7), [1, 1], 2, 4)).toThrow(/dequantize:/)
 	})
 })
 

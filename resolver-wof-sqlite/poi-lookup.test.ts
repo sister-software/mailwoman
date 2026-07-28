@@ -460,6 +460,6 @@ describe("POILookup", () => {
 	test("Disposable: Symbol.dispose closes the lookup", () => {
 		const lk = new POILookup({ databasePath: dbPath })
 		lk[Symbol.dispose]()
-		expect(() => lk.search({ name: "Pier 39" })).toThrow()
+		expect(() => lk.search({ name: "Pier 39" })).toThrow(/statement has been finalized/)
 	})
 })

@@ -127,6 +127,6 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	})
 
 	test("throws on empty candidate list", () => {
-		expect(() => pickByStreetEvidence([], mockEvidence([]))).toThrow()
+		expect(() => pickByStreetEvidence([], mockEvidence([]))).toThrow(/no candidates/)
 	})
 })

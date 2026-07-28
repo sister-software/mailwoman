@@ -416,7 +416,7 @@ describe("runPipeline — abort signal", () => {
 	it("throws AbortError when signal is already aborted before the call", async () => {
 		const controller = new AbortController()
 		controller.abort()
-		await expect(runPipeline("hello", {}, { signal: controller.signal })).rejects.toThrow()
+		await expect(runPipeline("hello", {}, { signal: controller.signal })).rejects.toThrow(/abort/i)
 	})
 
 	it("aborts between normalize and queryShape if signaled", async () => {
@@ -429,9 +429,9 @@ describe("runPipeline — abort signal", () => {
 			return { raw, normalized: raw }
 		})
 
-		await expect(
-			runPipeline("hello", { normalize, computeQueryShape }, { signal: controller.signal })
-		).rejects.toThrow()
+		await expect(runPipeline("hello", { normalize, computeQueryShape }, { signal: controller.signal })).rejects.toThrow(
+			/abort/i
+		)
 		expect(normalize).toHaveBeenCalled()
 		expect(computeQueryShape).not.toHaveBeenCalled()
 	})
@@ -448,7 +448,7 @@ describe("runPipeline — abort signal", () => {
 
 		await expect(
 			runPipeline("hello", { classifyKind, classifier, resolver }, { signal: controller.signal })
-		).rejects.toThrow()
+		).rejects.toThrow(/abort/i)
 		expect(classifier.parse).not.toHaveBeenCalled()
 		expect(resolver.resolveTree).not.toHaveBeenCalled()
 	})
@@ -464,7 +464,9 @@ describe("runPipeline — abort signal", () => {
 		}
 		const resolver = fakeResolver((t) => t)
 
-		await expect(runPipeline("hello", { classifier, resolver }, { signal: controller.signal })).rejects.toThrow()
+		await expect(runPipeline("hello", { classifier, resolver }, { signal: controller.signal })).rejects.toThrow(
+			/abort/i
+		)
 		expect(classifier.parse).toHaveBeenCalled()
 		expect(resolver.resolveTree).not.toHaveBeenCalled()
 	})

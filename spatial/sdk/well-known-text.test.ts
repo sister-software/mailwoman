@@ -82,7 +82,7 @@ test("wellKnownGeometryToGeoJSON: parses an EWKB buffer back into the source geo
 })
 
 test("wellKnownGeometryToGeoJSON: throws on malformed WKT", () => {
-	expect(() => wellKnownGeometryToGeoJSON("NOT A GEOMETRY")).toThrow()
+	expect(() => wellKnownGeometryToGeoJSON("NOT A GEOMETRY")).toThrow(Error)
 })
 
 test("geometryToWKT: serializes GeoJSON back to its canonical WKT string", () => {

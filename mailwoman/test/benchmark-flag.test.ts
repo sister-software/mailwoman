@@ -14,6 +14,7 @@ import { promisify } from "node:util"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
+import { ZodError } from "zod"
 
 import { options as parseOptions } from "../commands/parse.tsx"
 
@@ -33,13 +34,13 @@ describe("--benchmark schema", () => {
 	})
 
 	test("rejects out-of-range values", () => {
-		expect(() => parseOptions.parse({ benchmark: 0 })).toThrow()
-		expect(() => parseOptions.parse({ benchmark: -1 })).toThrow()
-		expect(() => parseOptions.parse({ benchmark: 10_001 })).toThrow()
+		expect(() => parseOptions.parse({ benchmark: 0 })).toThrow(ZodError)
+		expect(() => parseOptions.parse({ benchmark: -1 })).toThrow(ZodError)
+		expect(() => parseOptions.parse({ benchmark: 10_001 })).toThrow(ZodError)
 	})
 
 	test("rejects non-integers", () => {
-		expect(() => parseOptions.parse({ benchmark: 1.5 })).toThrow()
+		expect(() => parseOptions.parse({ benchmark: 1.5 })).toThrow(ZodError)
 	})
 
 	test("benchmark is optional", () => {

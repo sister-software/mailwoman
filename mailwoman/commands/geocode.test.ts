@@ -65,7 +65,7 @@ describe("geocode argument validation", () => {
 				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 				timeout: 10_000,
 			})
-		).toThrow()
+		).toThrow(/Command failed/)
 	})
 
 	test("empty address string exits 1", () => {
@@ -80,7 +80,7 @@ describe("geocode argument validation", () => {
 				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 				timeout: 10_000,
 			})
-		).toThrow()
+		).toThrow(/Command failed/)
 	})
 
 	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", () => {
