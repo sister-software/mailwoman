@@ -65,8 +65,8 @@ async function main() {
 				wof: { type: "string" },
 			},
 		}).values
-	} catch (e) {
-		console.error(`unknown arg: ${e instanceof Error ? e.message : e}`)
+	} catch (error) {
+		console.error(`unknown arg: ${error instanceof Error ? error.message : error}`)
 		process.exit(1)
 	}
 
@@ -135,7 +135,7 @@ async function main() {
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
 		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |
 		const row = evalOut.stdout.split("\n").find((l) => l.startsWith("| **neural** |")) ?? ""
-		const cols = row.split("|").map((c) => c.replace(/ /g, ""))
+		const cols = row.split("|").map((c) => c.replaceAll(/ /g, ""))
 		const loc = cols[2] ?? ""
 		const reg = cols[3] ?? ""
 		const p50 = cols[5] ?? ""

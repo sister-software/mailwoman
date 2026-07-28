@@ -76,9 +76,13 @@ export function normalizeReleasesManifest(raw: {
 	}
 }
 
-export type ParsedNode = { tag: string; value?: unknown; confidence?: number }
+export interface ParsedNode {
+	tag: string
+	value?: unknown
+	confidence?: number
+}
 
-export type TreeNode = {
+export interface TreeNode {
 	tag?: string
 	value?: unknown
 	confidence?: number
@@ -204,7 +208,7 @@ const US_STATE_ABBREV: Record<string, string> = {
 	PR: "Puerto Rico",
 }
 
-export const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+export const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 
 /**
  * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French département) before
@@ -229,7 +233,7 @@ export function flattenTree(
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
 	const stack = [...(roots as TreeNode[])]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (typeof n.tag === "string") {

@@ -29,7 +29,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 		super(nodes)
 
 		this.#first = nodes[0] ?? null
-		this.#last = nodes[nodes.length - 1] ?? null
+		this.#last = nodes.at(-1) ?? null
 	}
 
 	/**
@@ -46,10 +46,10 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	 * Add a node to the sequence.
 	 */
 	public override add(...nodes: T[]): this {
-		if (!nodes.length) return this
+		if (nodes.length === 0) return this
 
 		for (const node of nodes) {
-			if (typeof node === "undefined" || node === null) {
+			if (node === undefined || node === null) {
 				throw new Error("Attempted to add an undefined or null node to a sequence.")
 			}
 
@@ -60,7 +60,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 			this.#first = nodes[0]!
 		}
 
-		this.#last = nodes[nodes.length - 1]!
+		this.#last = nodes.at(-1)!
 
 		return this
 	}
@@ -69,7 +69,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	 * Delete a node from the sequence.
 	 */
 	public override delete(node: T): boolean {
-		if (typeof node === "undefined" || node === null) {
+		if (node === undefined || node === null) {
 			throw new Error("Attempted to delete an undefined or null node from a sequence.")
 		}
 
@@ -104,7 +104,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 		}
 
 		this.#first = currentEntries[0] ?? null
-		this.#last = currentEntries[currentEntries.length - 1] ?? null
+		this.#last = currentEntries.at(-1) ?? null
 
 		return this
 	}

@@ -17,10 +17,10 @@ import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 export function foldName(name: string): string {
 	return name
 		.normalize("NFD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
 		.trim()
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 }
 
 /** Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed. */

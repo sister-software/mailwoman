@@ -96,7 +96,7 @@ function splitCSV(line: string): string[] {
  * reversed-order rendering to be meaningful).
  */
 function readTuples(limit: number): FrTuple[] {
-	const maxLines = Math.max(limit * 8, 40000) + 1
+	const maxLines = Math.max(limit * 8, 40_000) + 1
 	const r = spawnSync("bash", ["-c", `unzip -p "${SOURCE.zip}" "${SOURCE.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
@@ -182,7 +182,7 @@ export const frOrderRecipe: ShardRecipe = {
 		const reversedFraction = opts.reversedFraction ?? 0.5
 
 		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
-		const poolLimit = Math.max(count * 8, 40000)
+		const poolLimit = Math.max(count * 8, 40_000)
 		const pool = readTuples(poolLimit)
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 

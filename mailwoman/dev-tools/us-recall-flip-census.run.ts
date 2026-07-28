@@ -15,7 +15,7 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-const fold = (v: string) => v.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const [candidateRoot, sampleArg] = cliArguments()
 
 if (!candidateRoot) throw new Error("usage: us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]")

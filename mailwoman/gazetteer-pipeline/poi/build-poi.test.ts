@@ -130,7 +130,7 @@ describe("buildPOIDatabase", () => {
 			.where("category_id", "=", cafeID)
 			.where("country", "=", "US")
 			.execute()
-		expect(group.length).toBe(5)
+		expect(group).toHaveLength(5)
 		const clusterCell = group[0]!.h3_cell
 		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true) // all 5 jittered into one res-9 cell
 
@@ -162,7 +162,7 @@ describe("buildPOIDatabase", () => {
 		// --- coverage rows exist at res 6 ---
 		expect(result.coverageCells).toBeGreaterThan(0)
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
-		expect(coverageRows.length).toBe(result.coverageCells)
+		expect(coverageRows).toHaveLength(result.coverageCells)
 		expect(coverageRows.every((c) => c.observed_rows > 0 && c.completeness === 1)).toBe(true)
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(30)

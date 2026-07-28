@@ -102,7 +102,7 @@ export const caseLower: Augmentation = (row) => {
 /** Drop commas from `raw`. Components unchanged (they didn't carry commas). */
 export const dropCommas: Augmentation = (row) => {
 	if (!row.raw.includes(",")) return null
-	const newRaw = row.raw.replace(/,/g, "").replace(/\s+/g, " ").trim()
+	const newRaw = row.raw.replaceAll(/,/g, "").replaceAll(/\s+/g, " ").trim()
 
 	return withAugmentation(row, "drop-commas", newRaw, { ...row.components })
 }
@@ -115,12 +115,12 @@ export const dropCommas: Augmentation = (row) => {
  */
 export const doubleSpace: Augmentation = (row) => {
 	if (!/ /.test(row.raw)) return null
-	const newRaw = row.raw.replace(/ /g, "  ")
+	const newRaw = row.raw.replaceAll(/ /g, "  ")
 	const newComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
 		if (v) {
-			newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+			newComponents[k as ComponentTag] = v.replaceAll(/ /g, "  ")
 		}
 	}
 
@@ -147,7 +147,7 @@ export const accentStrip: Augmentation = (row) => {
 }
 
 function stripAccents(s: string): string {
-	return s.normalize("NFD").replace(/\p{M}/gu, "")
+	return s.normalize("NFD").replaceAll(/\p{M}/gu, "")
 }
 
 // --- typo injection (#530) -------------------------------------------------
@@ -212,7 +212,7 @@ function mulberry32(seed: number): () => number {
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
 
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 }
 
@@ -356,7 +356,7 @@ export const stateExpand: Augmentation = (row) => {
 	const re = new RegExp(`\\b${region}\\b`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(new RegExp(`\\b${region}\\b`, "g"), full)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${region}\\b`, "g"), full)
 	const newComponents: ComponentDict = { ...row.components, region: full }
 
 	return withAugmentation(row, "state-expand", newRaw, newComponents)
@@ -374,7 +374,7 @@ export const stateAbbreviate: Augmentation = (row) => {
 	const re = new RegExp(`\\b${region}\\b`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(new RegExp(`\\b${region}\\b`, "g"), abbr)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${region}\\b`, "g"), abbr)
 	const newComponents: ComponentDict = { ...row.components, region: abbr }
 
 	return withAugmentation(row, "state-abbreviate", newRaw, newComponents)
@@ -406,11 +406,11 @@ export const directionalExpand: Augmentation = (row) => {
 		const v = newComponents[tag]
 
 		if (!v) continue
-		const replaced = v.replace(/\b(N|S|E|W|NE|NW|SE|SW)\b/g, (m) => DIRECTIONAL_ABBR_TO_FULL[m] ?? m)
+		const replaced = v.replaceAll(/\b(N|S|E|W|NE|NW|SE|SW)\b/g, (m) => DIRECTIONAL_ABBR_TO_FULL[m] ?? m)
 
 		if (replaced !== v) {
 			newComponents[tag] = replaced
-			newRaw = newRaw.replace(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
+			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
 			changed = true
 		}
 	}
@@ -432,14 +432,14 @@ export const directionalAbbreviate: Augmentation = (row) => {
 		const v = newComponents[tag]
 
 		if (!v) continue
-		const replaced = v.replace(
+		const replaced = v.replaceAll(
 			/\b(North|South|East|West|Northeast|Northwest|Southeast|Southwest)\b/g,
 			(m) => DIRECTIONAL_FULL_TO_ABBR[m] ?? m
 		)
 
 		if (replaced !== v) {
 			newComponents[tag] = replaced
-			newRaw = newRaw.replace(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
+			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
 			changed = true
 		}
 	}
@@ -477,7 +477,7 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
 	if (newStreet === street) return null
 
 	const newComponents: ComponentDict = { ...row.components, street: newStreet }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
 
 	if (newRaw === row.raw) return null
 
@@ -510,7 +510,7 @@ export const streetSuffixExpand: Augmentation = (row) => {
 	if (newStreet === street) return null
 
 	const newComponents: ComponentDict = { ...row.components, street: newStreet }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
 
 	if (newRaw === row.raw) return null
 
@@ -545,7 +545,7 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
 	if (newUnit === unit) return null
 
 	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
 
 	if (newRaw === row.raw) return null
 
@@ -576,7 +576,7 @@ export const unitDesignatorExpand: Augmentation = (row) => {
 	if (newUnit === unit) return null
 
 	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
 
 	if (newRaw === row.raw) return null
 
@@ -613,7 +613,7 @@ export const particleStrip: Augmentation = (row) => {
 	const re = new RegExp(`\\s+${escapeRegex(particle)}\\s+`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(re, " ").replace(/\s+/g, " ").trim()
+	const newRaw = row.raw.replace(re, " ").replaceAll(/\s+/g, " ").trim()
 
 	return withAugmentation(row, "particle-strip", newRaw, newComponents)
 }
@@ -690,7 +690,7 @@ export function* synthesizeRow(
 }
 
 function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+	return s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 // ===========================================================================

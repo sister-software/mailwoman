@@ -309,7 +309,7 @@ function renderRow(
  * tuples that carry a POSTCODE.
  */
 function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
-	const maxLines = Math.max(limit * 8, 20000) + 1
+	const maxLines = Math.max(limit * 8, 20_000) + 1
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
@@ -391,7 +391,7 @@ export const streetAffixRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Legacy build-street-affix-shard.mjs seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 50000
+		const count = opts.count ?? 50_000
 		const source = opts.sourceName ?? "synth-affix"
 		const multilocaleCount = opts.multilocaleCount ?? 0
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES

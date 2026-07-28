@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type RasterDEMSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
+import type { RasterDEMSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 
 import { TileSetSourceID } from "../styles/sources.ts"
 

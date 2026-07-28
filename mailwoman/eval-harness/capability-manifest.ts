@@ -325,7 +325,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		const original = readFileSync(paths.modelCard, "utf8")
 		const lastBrace = original.lastIndexOf("}")
 
-		if (lastBrace < 0) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
+		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
 		if (JSON.parse(original).capabilities !== undefined) {
 			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.

@@ -35,7 +35,7 @@ interface DevRow {
 	span_tags: string[]
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /** Score fragment-dev; narrates the separator metrics and returns them for programmatic use. */
 export async function runFragmentDev(options: FragmentDevOptions): Promise<{
@@ -100,7 +100,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		}
 	}
 
-	const spanExact = sample.length ? spanHits / sample.length : 0
+	const spanExact = sample.length > 0 ? spanHits / sample.length : 0
 	const tagAccuracy = tagTotal ? tagHits / tagTotal : 0
 	const trailingNumberToPostcode = numberRows ? numberAsPostcode / numberRows : 0
 

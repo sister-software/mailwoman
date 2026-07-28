@@ -107,7 +107,7 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
  * existing source_id separator vocabulary and downstream consumers split on `-`.
  */
 export function normalizeNameKey(rawKey: string): string {
-	return rawKey.replace(/[:_]/g, "-")
+	return rawKey.replaceAll(/[:_]/g, "-")
 }
 
 /** Result of parsing a single GeoJSON file. `null` means "skip this row" (any reason). */

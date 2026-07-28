@@ -1,7 +1,7 @@
 import CodeBlock from "@theme/CodeBlock"
 import { Fragment, useCallback, useState } from "react"
 
-import { DemoResult } from "../../shared/resources.tsx"
+import type { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
@@ -205,7 +205,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 								🏛️ <strong>Dual-role place.</strong> {selected.name} also resolves as{" "}
 								{result.dualRoles.map((r, i) => (
 									<Fragment key={`${r.role}-${r.id}`}>
-										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replace(/-/g, " ")})
+										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replaceAll(/-/g, " ")})
 									</Fragment>
 								))}
 								.

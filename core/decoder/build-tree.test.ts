@@ -77,7 +77,7 @@ describe("buildAddressTree", () => {
 
 	test("nests locality under region; region is the only root", () => {
 		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
-		expect(tree.roots.length).toBe(1)
+		expect(tree.roots).toHaveLength(1)
 		expect(tree.roots[0]!.tag).toBe("region")
 		expect(tree.roots[0]!.children.map((c) => c.tag)).toEqual(["locality"])
 	})
@@ -299,7 +299,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 			tok("MN", 12, 14, "B-region"),
 		]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
-		expect(locs.length).toBe(1)
+		expect(locs).toHaveLength(1)
 		expect(locs[0]!.value).toBe("Saint Paul")
 		expect(locs[0]!.start).toBe(0)
 		expect(locs[0]!.end).toBe(10)
@@ -318,7 +318,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 			tok("MN", 12, 14, "B-region"),
 		]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
-		expect(locs.length).toBe(1)
+		expect(locs).toHaveLength(1)
 		expect(locs[0]!.value).toBe("Saint Paul")
 	})
 
@@ -337,7 +337,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 			tok("05478", 32, 37, "B-postcode"),
 		]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
-		expect(locs.length).toBe(1)
+		expect(locs).toHaveLength(1)
 		expect(locs[0]!.value).toBe("Saint Albans")
 	})
 
@@ -346,7 +346,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 		const raw = "Dallas, Austin"
 		const tokens: DecoderToken[] = [tok("Dallas", 0, 6, "B-locality"), tok("Austin", 8, 14, "B-locality")]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
-		expect(locs.length).toBe(2)
+		expect(locs).toHaveLength(2)
 		expect(locs.map((l) => l.value).sort()).toEqual(["Austin", "Dallas"])
 	})
 
@@ -358,14 +358,14 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 			tok("Austin", 9, 15, "B-locality"),
 		]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
-		expect(locs.length).toBe(2)
+		expect(locs).toHaveLength(2)
 	})
 
 	test("merged span confidence is the mean across all folded tokens", () => {
 		const raw = "Saint Paul"
 		const tokens: DecoderToken[] = [tok("Saint", 0, 5, "B-locality", 0.9), tok("Paul", 6, 10, "B-locality", 0.5)]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
-		expect(locs.length).toBe(1)
+		expect(locs).toHaveLength(1)
 		expect(locs[0]!.confidence).toBeCloseTo(0.7, 5)
 	})
 })
@@ -436,7 +436,7 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 			walk(r)
 		}
 
-		expect(localities.length).toBe(2)
+		expect(localities).toHaveLength(2)
 		expect(localities.map((l) => l.value).sort()).toEqual(["Chicago", "Springfield"])
 	})
 })

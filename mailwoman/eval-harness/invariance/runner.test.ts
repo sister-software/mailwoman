@@ -71,7 +71,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.exitCode).toBe(0)
 		expect(result.counts.lost).toBe(0)
 		expect(result.counts.degraded).toBe(0)
-		expect(result.outcomes.length).toBe(3) // one per declared transform
+		expect(result.outcomes).toHaveLength(3) // one per declared transform
 	})
 
 	it("fails (nonzero exit) on any LOST pair", async () => {

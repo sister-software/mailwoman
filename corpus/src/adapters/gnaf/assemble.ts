@@ -58,7 +58,7 @@ export interface GNAFAssembleResult {
 export function titlecase(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/(^|[\s'\-/])([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase())
+		.replaceAll(/(^|[\s'\-/])([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase())
 		.trim()
 }
 

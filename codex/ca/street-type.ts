@@ -90,8 +90,8 @@ function foldToken(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z]/g, "")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z]/g, "")
 }
 
 /** The English + French street-type vocabularies, both folded, for one position-agnostic lookup. */

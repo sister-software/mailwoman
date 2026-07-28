@@ -82,7 +82,7 @@ export async function renderPlotlyHTMLToPNG(
 	await page.screenshot({ path: resolve(options.outPNG), fullPage: true })
 	await browser.close()
 
-	if (errors.length) {
+	if (errors.length > 0) {
 		report?.(`[render] ${errors.length} console error(s):`)
 
 		for (const e of errors.slice(0, 8)) {

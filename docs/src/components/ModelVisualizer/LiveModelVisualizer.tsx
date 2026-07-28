@@ -32,10 +32,10 @@ export function LiveModelVisualizer(): React.JSX.Element {
 
 		try {
 			setTrace(await classifier.traceParse(text, { addressSystemConventions: "auto" }))
-		} catch (err) {
+		} catch (error) {
 			// ORT's WASM backend can throw non-Errors (abort codes as numbers/strings) — String() keeps
 			// the failure visible instead of storing undefined and rendering nothing.
-			setError(err instanceof Error ? err.message : String(err))
+			setError(error instanceof Error ? error.message : String(error))
 		} finally {
 			setPending(false)
 		}

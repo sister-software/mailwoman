@@ -185,7 +185,7 @@ export class Span extends Graph<Span> {
 	 * Returns the coverage of the span, i.e. the number of characters covered by the span and its children.
 	 */
 	public get coverage(): number {
-		if (this.children.size) {
+		if (this.children.size > 0) {
 			return (
 				Iterator
 					// ---
@@ -221,7 +221,7 @@ export class Span extends Graph<Span> {
 			}
 		}
 
-		languages.displayName = displayNames.size ? Array.from(displayNames).join(", ") : undefined
+		languages.displayName = displayNames.size > 0 ? Array.from(displayNames).join(", ") : undefined
 
 		return languages
 	}

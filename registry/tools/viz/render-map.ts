@@ -50,7 +50,7 @@ export async function renderServedMapToPNG(
 
 	await page.goto(options.url, { waitUntil: "networkidle", timeout: 30_000 })
 	// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
-	await page.waitForTimeout(4_000)
+	await page.waitForTimeout(4000)
 	await page.screenshot({ path: options.outPNG })
 	await browser.close()
 

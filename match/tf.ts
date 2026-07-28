@@ -30,7 +30,7 @@ export interface TermFrequencyTable {
 	readonly distinct: number
 }
 
-const defaultNormalize = (value: string): string => value.trim().toLowerCase().replace(/\s+/g, " ")
+const defaultNormalize = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, " ")
 
 /**
  * Build a {@link TermFrequencyTable} from an iterable of values (e.g. every `given` name in the dataset). Values are

@@ -61,7 +61,7 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 	// Browser-embedded widgets need CORS or their cross-origin XHR is blocked before the request completes (#1017).
 	// GET-only — photon has no mutating routes, so unlike libpostal's CORS there is no POST in the methods list.
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash (photon's

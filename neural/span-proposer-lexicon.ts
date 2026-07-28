@@ -65,7 +65,7 @@ function phraseToPattern(phrase: string): string {
 						.split("")
 						.map((ch) => `${ch}\\.?`)
 						.join("\\s*")
-				: word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+				: word.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 		)
 		.join("\\s+")
 }

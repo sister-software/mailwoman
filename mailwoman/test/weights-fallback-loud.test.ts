@@ -81,7 +81,7 @@ async function runCLI(
 
 /** Strip ANSI/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout. */
 function parseStdoutJSON(stdout: string): unknown {
-	const cleaned = stdout.replace(/\[[0-9;]*[a-zA-Z]/gu, "").trim()
+	const cleaned = stdout.replaceAll(/\[[0-9;]*[a-zA-Z]/gu, "").trim()
 	const start = cleaned.search(/[{[]/u)
 
 	if (start < 0) throw new Error(`No JSON payload in stdout:\n${stdout}`)

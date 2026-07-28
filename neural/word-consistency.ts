@@ -116,7 +116,7 @@ function labelType(label: string): string {
 	if (label === "O") return "O"
 	const dash = label.indexOf("-")
 
-	return dash >= 0 ? label.slice(dash + 1) : label
+	return dash !== -1 ? label.slice(dash + 1) : label
 }
 
 /**
@@ -164,7 +164,7 @@ export function enforceWordConsistency(
 	const words: number[][] = []
 	let cur: number[] = []
 	const flush = (): void => {
-		if (cur.length) {
+		if (cur.length > 0) {
 			words.push(cur)
 		}
 		cur = []

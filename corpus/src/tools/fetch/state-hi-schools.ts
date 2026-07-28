@@ -173,8 +173,8 @@ export async function fetchStateHISchools(
 			headers: { "Accept-Encoding": "gzip, br" },
 			report,
 		})
-	} catch (err) {
-		report?.(`  ✗ Download failed (${(err as Error).message})`)
+	} catch (error) {
+		report?.(`  ✗ Download failed (${(error as Error).message})`)
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}

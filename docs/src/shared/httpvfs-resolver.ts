@@ -59,14 +59,14 @@ type CandidateProbeRow = Pick<
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
-const POPULATION_BOOST = 4.0
-const POPULATION_SCALE_LOG10 = 6.0
+const POPULATION_BOOST = 4
+const POPULATION_SCALE_LOG10 = 6
 
-const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 /**
  * Escape a string literal for inline SQL (we inline rather than bind — avoids param-marshaling over Comlink).
  */
-const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
+const sqlStr = (s: string): string => `'${s.replaceAll(/'/g, "''")}'`
 
 /**
  * Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the
@@ -78,10 +78,10 @@ function sanitizeFTS(text: string): string {
 	const trimmed = text.trim()
 	const prefix = trimmed.endsWith("*")
 	const cleaned = trimmed
-		.replace(/[*]/g, " ")
-		.replace(/["'()^:{}[\]~]/g, " ")
+		.replaceAll(/[*]/g, " ")
+		.replaceAll(/["'()^:{}[\]~]/g, " ")
 		.replaceAll(ALIAS_SEPARATOR, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 	if (!cleaned) return ""
@@ -158,7 +158,7 @@ export async function loadHTTPVFSDatabase(
 			[
 				{
 					from: "inline",
-					config: { serverMode: "full", url, requestChunkSize: options.requestChunkSize ?? 65536 },
+					config: { serverMode: "full", url, requestChunkSize: options.requestChunkSize ?? 65_536 },
 				},
 			],
 			`${sqljsBaseURL}/sqlite.worker.js`,
@@ -181,8 +181,8 @@ export async function loadHTTPVFSDatabase(
 
 	try {
 		return await open(dbURL)
-	} catch (err) {
-		if (!/malformed|not a database|disk image/i.test(String(err))) throw err
+	} catch (error) {
+		if (!/malformed|not a database|disk image/i.test(String(error))) throw error
 		const sep = dbURL.includes("?") ? "&" : "?"
 
 		return open(`${dbURL}${sep}cb=${Date.now()}`)
@@ -369,7 +369,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
 			)
 
-			if (types.length) {
+			if (types.length > 0) {
 				conds.push(`spr.placetype IN (${types.map(sqlStr).join(",")})`)
 			}
 		}
@@ -673,8 +673,8 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		// population order when no bias is passed. `score` = -neg_rank = log10(population + 1). Constants
 		// MUST match resolver-wof-sqlite/candidate-lookup.ts (the #861 server↔demo parity contract).
 		if (query.bias && query.bias.length > 0) {
-			const BIAS_BOOST = 4.0
-			const POP_BOOST = 4.0
+			const BIAS_BOOST = 4
+			const POP_BOOST = 4
 			const POP_SCALE_LOG10 = 6
 			const PROX_SCALE_KM = 30
 			const prominence = (c: (typeof candidates)[number]): number => {

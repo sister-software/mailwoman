@@ -15,8 +15,8 @@ const meta: Meta<typeof CandidatePicker> = {
 		selectedIndex: 0,
 		onSelect: () => {},
 		candidates: [
-			{ id: 85977539, name: "New York", placetype: "locality", lat: 40.71, lon: -74.0, score: 0.82 },
-			{ id: 101715829, name: "New York", placetype: "region", lat: 43.0, lon: -75.0, score: 0.55 },
+			{ id: 85_977_539, name: "New York", placetype: "locality", lat: 40.71, lon: -74, score: 0.82 },
+			{ id: 101_715_829, name: "New York", placetype: "region", lat: 43, lon: -75, score: 0.55 },
 			{ id: 1234, name: "New York Mills", placetype: "locality", lat: 43.1, lon: -75.3, score: 0.31 },
 		],
 	},

@@ -93,9 +93,9 @@ function buildDB(): DatabaseSync {
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
 	// id 90 is the DE country polygon (the convention key); 3 is the small Saxon town "Plauen".
-	spr.run(90, 0, "Germany", "country", "DE", 51.0, 10.0, 47.0, 55.0, 6.0, 15.0)
-	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
-	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
+	spr.run(90, 0, "Germany", "country", "DE", 51, 10, 47, 55, 6, 15)
+	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12, 12.3)
+	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0, 1)
 
 	return db
 }

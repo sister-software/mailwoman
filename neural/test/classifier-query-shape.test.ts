@@ -37,7 +37,7 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(numLabels).fill(0)
 
-		if (t === boostIdx && labelIdx >= 0) {
+		if (t === boostIdx && labelIdx !== -1) {
 			row[labelIdx] = boostMagnitude
 		}
 		matrix.push(row)
@@ -114,7 +114,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 
 		for (let t = 0; t < numTokens; t++) {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
-			row[localityIdx] = 5.0
+			row[localityIdx] = 5
 			logits.push(row)
 		}
 
@@ -127,7 +127,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		}
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
-		const tree = await classifier.parse(text, { queryShape: shape, queryShapeBiasScale: 1.0 })
+		const tree = await classifier.parse(text, { queryShape: shape, queryShapeBiasScale: 1 })
 
 		// The encoder's confident locality call wins — postcode bias is too small to overcome it.
 		const allTags = collectTags(tree.roots)

@@ -17,8 +17,8 @@
  *   layer that sits in front of this.
  */
 
-import type { ComparisonLevel } from "@mailwoman/match"
 import {
+	type ComparisonLevel,
 	type BlockingKey,
 	type FellegiSunterModel,
 	type GBT,
@@ -55,14 +55,14 @@ import type { ResolvedEntity, SourceRecord } from "./types.ts"
 export function addressFrequencyKey(raw: string): string {
 	return raw
 		.toUpperCase()
-		.replace(/[^A-Z0-9]+/g, " ")
+		.replaceAll(/[^A-Z0-9]+/g, " ")
 		.trim()
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 }
 
 /** Default tiered levels for a name-like text field. `m`/`u` are EM-estimable seeds. */
 const NAME_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.8, u: 0.01 },
+	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
@@ -71,7 +71,7 @@ const NAME_LEVELS: ComparisonLevel[] = [
  * Exact-vs-different levels for a normalized phone. A shared line is strong, rarely-coincidental evidence.
  */
 const PHONE_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.6, u: 0.002 },
+	{ label: "exact", minSimilarity: 1, m: 0.6, u: 0.002 },
 	{ label: "different", minSimilarity: 0, m: 0.4, u: 0.998 },
 ]
 
@@ -81,7 +81,7 @@ const PHONE_LEVELS: ComparisonLevel[] = [
  * share a specialty far more often than a phone line (dermatologists cluster in dermatology buildings).
  */
 const CODE_SET_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.75, u: 0.08 },
+	{ label: "exact", minSimilarity: 1, m: 0.75, u: 0.08 },
 	{ label: "different", minSimilarity: 0, m: 0.25, u: 0.92 },
 ]
 
@@ -97,7 +97,7 @@ function codeSetOverlap(a: string, b: string): number {
 /** Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions). */
 function normalizePhone(raw: string | null | undefined): string | null {
 	if (!raw) return null
-	const digits = raw.replace(/\D+/g, "")
+	const digits = raw.replaceAll(/\D+/g, "")
 
 	return digits.length >= 10 ? digits.slice(-10) : digits || null
 }

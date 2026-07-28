@@ -121,8 +121,8 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 					reason: `components not reachable in raw: ${unreachable.join(", ")}`,
 				})
 			}
-		} catch (err) {
-			issues.push({ file: path, line: i + 1, reason: (err as Error).message })
+		} catch (error) {
+			issues.push({ file: path, line: i + 1, reason: (error as Error).message })
 		}
 	}
 

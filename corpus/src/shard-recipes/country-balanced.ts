@@ -122,7 +122,7 @@ function splitCSV(line: string): string[] {
 function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	// countrywide extracts (FR/IT/NL) are GB-scale — cap the bytes with `head` (read ~8 lines per wanted
 	// tuple to survive dedup/skips) so the toString stays under V8's string limit.
-	const maxLines = Math.max(limit * 8, 20000) + 1
+	const maxLines = Math.max(limit * 8, 20_000) + 1
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",

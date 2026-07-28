@@ -39,7 +39,7 @@ describe("Phase 0 §8 — JP forward-compat", () => {
 	})
 
 	test("ja-JP defines no rule classifiers (neural-only locale is expressible)", () => {
-		expect(jaJP.ruleClassifiers.length).toBe(0)
+		expect(jaJP.ruleClassifiers).toHaveLength(0)
 	})
 
 	test("PolicyRegistry can install rule_only defaults for JP-only tags without throwing", () => {

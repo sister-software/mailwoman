@@ -138,13 +138,13 @@ export class ONNXRunner {
 				executionProviders: this.executionProviders,
 				graphOptimizationLevel: "all",
 			})
-		} catch (err) {
-			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw err
+		} catch (error) {
+			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw error
 
 			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
 			console.warn(
 				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
-					`(${(err as Error).message.split("\n")[0]}); falling back to CPU.`
+					`(${(error as Error).message.split("\n")[0]}); falling back to CPU.`
 			)
 
 			return ort.InferenceSession.create(bytes, { executionProviders: ["cpu"], graphOptimizationLevel: "all" })

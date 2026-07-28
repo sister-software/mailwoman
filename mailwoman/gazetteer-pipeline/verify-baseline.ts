@@ -217,6 +217,6 @@ export const DEFAULT_VERIFY_BASELINE: VerifyBaseline = {
 		ZM: ["country"],
 		ZW: ["country"],
 	},
-	minRows: 3962560,
+	minRows: 3_962_560,
 	minCountries: 244,
 }

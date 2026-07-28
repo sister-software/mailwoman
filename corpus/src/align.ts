@@ -234,7 +234,7 @@ function locateSpan(args: {
 	while (true) {
 		const idx = haystack.indexOf(needle, from)
 
-		if (idx < 0) break
+		if (idx === -1) break
 		const end = idx + needle.length
 
 		if (!overlapsClaimed(idx, end, claimed)) {

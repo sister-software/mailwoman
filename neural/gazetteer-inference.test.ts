@@ -40,7 +40,7 @@ function paintedWords(raw: string): Record<string, number> {
 	const out: Record<string, number> = {}
 
 	for (const m of raw.matchAll(/\S+/g)) {
-		const word = m[0].replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
+		const word = m[0].replaceAll(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
 
 		for (let c = m.index; c < m.index + m[0].length; c++) {
 			if (/[A-Za-z0-9]/.test(raw[c]!)) {

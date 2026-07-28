@@ -268,8 +268,8 @@ const normName = (s: string | undefined): string => {
 	const x = s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "") // drop diacritics
-		.replace(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
+		.replaceAll(/[\u0300-\u036F]/g, "") // drop diacritics
+		.replaceAll(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
 		.trim()
 	const toks = x
 		.split(" ")
@@ -278,8 +278,8 @@ const normName = (s: string | undefined): string => {
 
 	return toks
 		.join(" ")
-		.replace(/\bmc (\w)/g, "mc$1")
-		.replace(/\s+/g, " ")
+		.replaceAll(/\bmc (\w)/g, "mc$1")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 

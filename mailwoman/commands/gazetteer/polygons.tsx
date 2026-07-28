@@ -109,7 +109,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 	keep[0] = keep[ring.length - 1] = 1
 	const stack: Array<[number, number]> = [[0, ring.length - 1]]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const [lo, hi] = stack.pop()!
 		let maxD = -1
 		let idx = -1
@@ -149,13 +149,13 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	if (geom.type === "Polygon") {
 		const rings = ringSet(geom.coordinates as LinearRing[])
 
-		return rings.length ? { type: "Polygon", coordinates: rings } : null
+		return rings.length > 0 ? { type: "Polygon", coordinates: rings } : null
 	}
 
 	if (geom.type === "MultiPolygon") {
 		const polys = (geom.coordinates as LinearRing[][]).map((p) => ringSet(p)).filter((rings) => rings.length)
 
-		return polys.length ? { type: "MultiPolygon", coordinates: polys } : null
+		return polys.length > 0 ? { type: "MultiPolygon", coordinates: polys } : null
 	}
 
 	return null // Points / lines: no polygon to draw.

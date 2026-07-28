@@ -37,12 +37,12 @@ export interface WOFWasmPlaceLookupOpts {
  * over "West New York") without steamrolling a clearly-better text match, because exact-name tiering is consulted
  * FIRST.
  */
-const POPULATION_BOOST = 4.0
-const POPULATION_SCALE_LOG10 = 6.0
+const POPULATION_BOOST = 4
+const POPULATION_SCALE_LOG10 = 6
 
 /** Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace. */
 function normalizeName(s: string): string {
-	return s.toLowerCase().trim().replace(/\s+/g, " ")
+	return s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 }
 
 export class WOFWasmPlaceLookup implements PlaceLookup {
@@ -323,10 +323,10 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 		// #920 name law (postcode-typed queries): delete intra-token punctuation and fuse.
 		if (opts?.fuseTokens) {
-			const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
 			if (!body) continue
-			out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
 			continue
 		}
 
@@ -335,10 +335,10 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
 
 		for (let i = 0; i < parts.length; i++) {
-			const body = parts[i]!.replace(/\*/g, "")
+			const body = parts[i]!.replaceAll(/\*/g, "")
 
 			if (!body) continue
-			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
 		}
 	}
 

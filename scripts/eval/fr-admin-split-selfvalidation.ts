@@ -32,7 +32,7 @@
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -99,12 +99,12 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	return best
 }
 const pct = (xs: number[], p: number): number => {
-	if (xs.length === 0) return NaN
+	if (xs.length === 0) return Number.NaN
 	const s = [...xs].sort((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
-const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
+const mean = (xs: number[]): number => (xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
 
 // --- args ----------------------------------------------------------------------------------------
 const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
@@ -139,7 +139,7 @@ const rows = db
 	.all() as unknown as Commune[]
 
 // Deterministic shuffle (no Math.random in this env) — order by id hash.
-const shuffled = [...rows].sort((a, b) => ((a.id * 2654435761) % 1e9) - ((b.id * 2654435761) % 1e9))
+const shuffled = [...rows].sort((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 db.close()

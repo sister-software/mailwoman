@@ -53,7 +53,7 @@ function estimateNFCMap(input: string, output: string): number[] {
 			while (inIdx < input.length) {
 				const nextCp = input.codePointAt(inIdx)!
 
-				if (nextCp >= 0x0300 && nextCp <= 0x036f) {
+				if (nextCp >= 0x03_00 && nextCp <= 0x036f) {
 					inIdx += nextCp > 0xffff ? 2 : 1
 				} else {
 					break

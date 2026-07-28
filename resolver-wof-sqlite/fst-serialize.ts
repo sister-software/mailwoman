@@ -279,7 +279,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 			}
 			const rawImportance = isV2
 				? buf.readFloatLE(pp + 12)
-				: Math.min(1.0, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
+				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 			places[pi] = {
 				wofID: buf.readUInt32LE(pp),
 				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",

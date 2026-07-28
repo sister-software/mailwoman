@@ -93,7 +93,7 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
 	if (altNames === null || altNames === "" || !normalizedQuery) return false
-	const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+	const norm = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 
 	if (altNames.includes(ALIAS_SEPARATOR)) {
 		return altNames.split(ALIAS_SEPARATOR).some((alias) => norm(alias) === normalizedQuery)

@@ -61,15 +61,15 @@ export function normalizeAddressToken(input: string): string {
 		input
 			.normalize("NFKD")
 			// strip combining marks (U+0300–U+036F) left by NFKD decomposition, so "é" → "e"
-			.replace(/[̀-ͯ]/g, "")
+			.replaceAll(/[̀-ͯ]/g, "")
 			.toLowerCase()
 			// apostrophes are intra-word (possessives, "O'Brien") — delete so the token stays whole
-			.replace(/['’`]/g, "")
+			.replaceAll(/['’`]/g, "")
 			// connective punctuation becomes a space rather than vanishing (so "A&B" → "a b", not "ab")
-			.replace(/[&+/]/g, " ")
+			.replaceAll(/[&+/]/g, " ")
 			// everything else non-alphanumeric (keep spaces) is noise
-			.replace(/[^a-z0-9\s]/g, " ")
-			.replace(/\s+/g, " ")
+			.replaceAll(/[^a-z0-9\s]/g, " ")
+			.replaceAll(/\s+/g, " ")
 			.trim()
 	)
 }

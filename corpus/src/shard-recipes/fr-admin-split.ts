@@ -139,7 +139,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Legacy build-fr-admin-split-shard.mjs seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 60000
+		const count = opts.count ?? 60_000
 		const source = opts.sourceName ?? "synth-fr-admin-split"
 		const communesPath = opts.communes ?? DEFAULT_COMMUNES
 

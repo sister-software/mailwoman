@@ -92,7 +92,7 @@ export function checkConnectivity(
  */
 export async function delegateAxiosError(error: unknown): Promise<unknown> {
 	{
-		if (!isAxiosError(error)) return Promise.reject(error)
+		if (!isAxiosError(error)) throw error
 
 		const { response, code: networkErrorCode } = error
 
@@ -125,11 +125,11 @@ export async function delegateAxiosError(error: unknown): Promise<unknown> {
 			case AxiosError.ERR_CANCELED:
 			case AxiosError.ECONNABORTED:
 			case AxiosError.ETIMEDOUT:
-				return Promise.resolve()
+				return
 			default:
 				ConsoleLogger.warn(`Unhandled network error: ${networkErrorCode}`)
 		}
 
-		return Promise.reject(error)
+		throw error
 	}
 }

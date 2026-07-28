@@ -19,8 +19,8 @@ const norm = (s: string): string =>
 	s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[^a-z0-9 ]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[^a-z0-9 ]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 /** A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments). */
@@ -52,7 +52,7 @@ const PLACES: ResolvedPlace[] = [
 		placetype: "locality",
 		country: "PL",
 		lat: 51.53,
-		lon: 20.0,
+		lon: 20,
 		score: 5,
 		exactMatch: true,
 	},

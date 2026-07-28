@@ -21,7 +21,7 @@ describe("detectLocale — caller hint precedence", () => {
 	it("caller hint wins at confidence 1.0 with source=caller", () => {
 		const r = detectLocaleSync(input("anything"), shape({ characterClass: "cjk" }), { hint: "fr-FR" })
 		expect(r.locale).toBe("fr-FR")
-		expect(r.confidence).toBe(1.0)
+		expect(r.confidence).toBe(1)
 		expect(r.source).toBe("caller")
 	})
 

@@ -7,7 +7,7 @@
 import * as fs from "node:fs/promises"
 
 import FastGlob from "fast-glob"
-import { PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
 import { takeInParallel } from "../../collections.ts"
 import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"

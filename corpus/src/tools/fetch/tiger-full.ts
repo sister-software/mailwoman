@@ -136,7 +136,7 @@ type CountyResult =
 /** Download one county ZIP (size sanity check + sha256). */
 async function downloadCounty(url: string, dest: string): Promise<CountyResult> {
 	const filename = basename(dest)
-	const status = await streamDownload(url, dest, { timeoutMs: 600_000, retries: 3, retryDelayMs: 5_000 })
+	const status = await streamDownload(url, dest, { timeoutMs: 600_000, retries: 3, retryDelayMs: 5000 })
 
 	if (status < 200 || status >= 300) {
 		return { ok: false, filename, reason: `HTTP ${status}` }

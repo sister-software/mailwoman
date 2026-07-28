@@ -60,7 +60,7 @@ export function createNominatimApp(engine: NominatimEngine, options: NominatimAp
 	// Browser-embedded geocoder clients need CORS or their cross-origin XHR is blocked before completing (#1017).
 	// GET-only — nominatim has no mutating routes, so unlike libpostal's CORS there is no POST in the methods list.
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: a malformed query or an engine fault must never crash the process into a stack-trace 500 — the

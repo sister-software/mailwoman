@@ -56,7 +56,7 @@ function categorize(source: string): { bucket: string; publisher: string } {
 	if (source === "overture:NAD") return { bucket: "National Address Database", publisher: "NAD (federal)" }
 
 	if (source.startsWith("overture:OpenAddresses")) {
-		const publisher = source.split("/").slice(-1)[0] || "OpenAddresses"
+		const publisher = source.split("/").at(-1) || "OpenAddresses"
 
 		return { bucket: "OpenAddresses", publisher: `OpenAddresses · ${publisher}` }
 	}
@@ -64,6 +64,10 @@ function categorize(source: string): { bucket: string; publisher: string } {
 	return { bucket: source, publisher: source }
 }
 
+// Must stay a type alias. Rows come back from the driver as `Record<string, SQLOutputValue>[]` and
+// are asserted to `Row[]`; an object type alias carries an implicit index signature that makes that
+// assertion legal, an interface does not.
+// oxlint-disable-next-line typescript/consistent-type-definitions -- needs the implicit index signature
 type Row = { lat: number; lon: number; source: string; number: string | null; street_raw: string | null }
 
 /** Render the per-state address-point provenance map — see the module doc. */

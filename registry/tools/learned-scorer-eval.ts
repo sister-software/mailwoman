@@ -95,9 +95,9 @@ function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
 	return () => {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 
@@ -359,7 +359,7 @@ export async function scorerPairwiseEval(
 		const pos = scored.filter((d) => d.y === 1)
 		const neg = scored.filter((d) => d.y === 0)
 
-		if (!pos.length || !neg.length) return NaN
+		if (pos.length === 0 || neg.length === 0) return Number.NaN
 		// Mann-Whitney U via rank.
 		const sorted = [...scored].sort((p, q) => p.s - q.s)
 		let rank = 1

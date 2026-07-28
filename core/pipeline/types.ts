@@ -408,9 +408,7 @@ export interface RuntimePipelineStages {
 	resolverBackend?: ResolverBackend
 }
 
-export interface PipelineTiming {
-	[stage: string]: number // ms
-}
+export type PipelineTiming = Record<string, number>
 
 /** Result of one `runPipeline` call. */
 export interface PipelineResult {

@@ -47,7 +47,7 @@ export function deriveSchemaName(path: string): string {
 		.replace(/^whosonfirst-data-/u, "")
 		.replace(/-latest\.db$/u, "")
 		.replace(/\.db$/u, "")
-		.replace(/[^a-zA-Z0-9_]/g, "_")
+		.replaceAll(/[^a-zA-Z0-9_]/g, "_")
 
 	if (!stem) {
 		throw new Error(`deriveSchemaName: could not derive a SQL schema name from path ${JSON.stringify(path)}`)

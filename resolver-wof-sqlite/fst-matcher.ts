@@ -142,7 +142,7 @@ export function normalizeTokens(text: string): string[] {
 	return text
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[\p{P}\p{S}]/gu, "")
+		.replaceAll(/[\p{P}\p{S}]/gu, "")
 		.split(/\s+/)
 		.filter((t) => t.length > 0)
 }

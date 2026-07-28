@@ -65,7 +65,7 @@ describe("corpus types", () => {
 			tokens: ["▁Pa", "ri", "s"],
 			labels,
 		}
-		expect(row.tokens.length).toBe(row.labels.length)
+		expect(row.tokens).toHaveLength(row.labels.length)
 		expect(row.labels[0]).toBe(BIO_LABELS[0])
 	})
 

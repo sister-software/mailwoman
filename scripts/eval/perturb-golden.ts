@@ -44,11 +44,11 @@ interface GoldenRow {
 
 /** Collapse the space between a trailing region + postcode, e.g. "OR 97214" → "OR97214". */
 function glue(raw: string): string {
-	return raw.replace(/\b([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\b/g, "$1$2")
+	return raw.replaceAll(/\b([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\b/g, "$1$2")
 }
 
 const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
-	{ name: "delimiter-strip", apply: (r) => r.replace(/,/g, "") },
+	{ name: "delimiter-strip", apply: (r) => r.replaceAll(/,/g, "") },
 	{ name: "lowercase", apply: (r) => r.toLowerCase() },
 	{ name: "glue", apply: glue },
 ]

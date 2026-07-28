@@ -124,7 +124,7 @@ const DEFAULTS = {
 	kSpan: 3,
 	kTag: 3,
 	kResolver: 5,
-	concordanceWeight: 1.0,
+	concordanceWeight: 1,
 	beamWidth: 16,
 	runnersUp: 3,
 }

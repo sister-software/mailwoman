@@ -24,7 +24,7 @@ describe("normalizeJpPostalCode", () => {
 		expect(normalizeJpPostalCode("100-000")).toBeNull() // six digits
 		expect(normalizeJpPostalCode("10000012")).toBeNull() // eight digits
 		expect(normalizeJpPostalCode("SW1A 1AA")).toBeNull()
-		expect(normalizeJpPostalCode(1000001)).toBeNull()
+		expect(normalizeJpPostalCode(1_000_001)).toBeNull()
 	})
 })
 

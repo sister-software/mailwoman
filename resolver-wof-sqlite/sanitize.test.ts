@@ -52,7 +52,7 @@ afterEach(() => {
 describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 	test("exact-match (no trailing *) still works (phrase)", async () => {
 		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
-		expect(r.length).toBe(1)
+		expect(r).toHaveLength(1)
 		expect(r[0]?.name).toBe("62701")
 	})
 
@@ -84,7 +84,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 		expect(r).toEqual([])
 		// But bare `Pari*` matches Paris.
 		const justPrefix = await lookup.findPlace({ text: "Pari*", placetype: "locality" })
-		expect(justPrefix.length).toBe(1)
+		expect(justPrefix).toHaveLength(1)
 		expect(justPrefix[0]?.name).toBe("Paris")
 	})
 })
@@ -95,7 +95,7 @@ describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regress
 		// FTS5 tokenizes the name on whitespace (after stripping punctuation by the unicode61
 		// tokenizer), so `St` matches `St.` and `Petersburg` matches `Petersburg`.
 		const r = await lookup.findPlace({ text: "St. (Petersburg)", placetype: "locality" })
-		expect(r.length).toBe(1)
+		expect(r).toHaveLength(1)
 		expect(r[0]?.name).toBe("St. Petersburg")
 	})
 
@@ -117,21 +117,21 @@ describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode q
 		// because pre-splice models never emitted hyphen-preserved span values (#945).
 		const r = await lookup.findPlace({ text: "Thiron-Gardais", placetype: "locality" })
 
-		expect(r.length).toBe(1)
+		expect(r).toHaveLength(1)
 		expect(r[0]?.name).toBe("Thiron-Gardais")
 	})
 
 	test("apostrophe + hyphen combined — `Penne-d'Agenais` resolves", async () => {
 		const r = await lookup.findPlace({ text: "Penne-d'Agenais", placetype: "locality" })
 
-		expect(r.length).toBe(1)
+		expect(r).toHaveLength(1)
 		expect(r[0]?.name).toBe("Penne-d'Agenais")
 	})
 
 	test("trailing `*` applies to the final split part — `Thiron-Gard*` prefix-matches", async () => {
 		const r = await lookup.findPlace({ text: "Thiron-Gard*", placetype: "locality" })
 
-		expect(r.length).toBe(1)
+		expect(r).toHaveLength(1)
 		expect(r[0]?.name).toBe("Thiron-Gardais")
 	})
 
@@ -142,7 +142,7 @@ describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode q
 		// geonames-postal name law was built against, so pin it explicitly.
 		const r = await lookup.findPlace({ text: "62-701", placetype: "postalcode" })
 
-		expect(r.length).toBe(1)
+		expect(r).toHaveLength(1)
 		expect(r[0]?.name).toBe("62701")
 	})
 })

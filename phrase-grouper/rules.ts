@@ -785,7 +785,7 @@ export function scoreVenuePhrase(
 
 		if (markerWeight > 0 || (hasHyphenCompound && run.length >= 2)) {
 			const startTok = run[0]!
-			const endTok = run[run.length - 1]!
+			const endTok = run.at(-1)!
 			const confidence = markerWeight > 0 ? markerWeight : 0.65
 			out.push({
 				span: makeSection(text, startTok.start, endTok.end),
@@ -799,7 +799,7 @@ export function scoreVenuePhrase(
 
 			if (!hasStreet && !hasLeadingNum && !hasUnit) {
 				const startTok = run[0]!
-				const endTok = run[run.length - 1]!
+				const endTok = run.at(-1)!
 				out.push({
 					span: makeSection(text, startTok.start, endTok.end),
 					kindHypothesis: "VENUE_PHRASE",

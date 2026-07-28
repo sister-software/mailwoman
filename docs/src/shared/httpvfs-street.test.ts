@@ -43,7 +43,7 @@ function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 	return d
 }
 afterEach(() => {
-	while (openDbs.length) {
+	while (openDbs.length > 0) {
 		openDbs.pop()!.close()
 	}
 })

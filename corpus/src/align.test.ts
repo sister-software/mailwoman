@@ -140,7 +140,7 @@ describe("alignRow — verbatim matches", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		expect(result.row.tokens).toHaveLength(result.row.labels.length)
 	})
 })
 
@@ -269,7 +269,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 
 		if (result.kind !== "labeled") return
 		// Token path untouched.
-		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		expect(result.row.tokens).toHaveLength(result.row.labels.length)
 		// Span triple: parallel, sorted by start, each slice round-trips to the component surface.
 		expect(result.row.span_tags).toEqual(["house_number", "street", "locality", "region", "postcode"])
 		expect(result.row.span_starts).toEqual([0, 5, 26, 38, 41])
@@ -336,8 +336,8 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 
 			if (result.kind !== "labeled") continue
 			const { span_starts, span_ends, span_tags } = result.row
-			expect(span_starts!.length).toBe(span_ends!.length)
-			expect(span_starts!.length).toBe(span_tags!.length)
+			expect(span_starts!).toHaveLength(span_ends!.length)
+			expect(span_starts!).toHaveLength(span_tags!.length)
 
 			for (let i = 1; i < span_starts!.length; i++) {
 				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted AND non-overlapping

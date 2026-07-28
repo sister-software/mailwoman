@@ -41,7 +41,7 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 
 	for (const [t, c] of CUM) if (x <= c) return t
 
-	return CUM[CUM.length - 1]![0]
+	return CUM.at(-1)![0]
 }
 
 export const boundaryStressRecipe: ShardRecipe = {
@@ -51,7 +51,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Emit PRNG: the legacy build-boundary-stress-shard.mjs seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 20000
+		const count = opts.count ?? 20_000
 		let emitted = 0
 		let skipped = 0
 

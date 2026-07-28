@@ -51,8 +51,8 @@ async function main() {
 				tokenizer: { type: "string" },
 			},
 		}).values
-	} catch (e) {
-		console.error(`unknown arg: ${e instanceof Error ? e.message : e}`)
+	} catch (error) {
+		console.error(`unknown arg: ${error instanceof Error ? error.message : error}`)
 		process.exit(1)
 	}
 
@@ -106,7 +106,7 @@ async function main() {
 		let md: string
 
 		try {
-			md = readFileSync(join(out, `${name}.md`), "utf-8")
+			md = readFileSync(join(out, `${name}.md`), "utf8")
 		} catch {
 			return ""
 		}

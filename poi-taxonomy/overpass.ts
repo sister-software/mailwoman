@@ -46,7 +46,7 @@ function escapeQL(value: string): string {
 
 /** Escape regex metacharacters — the `~` operator's value is a regex, not a literal. */
 function escapeQLRegex(value: string): string {
-	return escapeQL(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+	return escapeQL(value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 }
 
 export interface EmitOverpassOpts {

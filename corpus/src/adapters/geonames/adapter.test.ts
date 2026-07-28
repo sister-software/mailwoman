@@ -114,7 +114,7 @@ describe("geonames adapter", () => {
 		])
 		const rows = await collect(p)
 		expect(rows.every((r) => r.components.locality === "Burlington")).toBe(true)
-		expect(rows.length).toBe(2) // only Burlington, two variants
+		expect(rows).toHaveLength(2) // only Burlington, two variants
 	})
 
 	it("honors the country filter and the row limit", async () => {

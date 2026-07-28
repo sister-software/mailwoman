@@ -60,7 +60,7 @@ function isPostcodeFormat(format: string): boolean {
  * whole-string country guess is a broader, softer signal than a postcode that pins the country, so it blends more
  * gently with the candidate score.
  */
-const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
+const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 // #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved).
 // The placer already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob
@@ -180,7 +180,7 @@ async function defaultDetectLocale(
 
 	return {
 		locale,
-		confidence: opts?.hint ? 1.0 : 0.0,
+		confidence: opts?.hint ? 1 : 0,
 		alternatives: [],
 		source: opts?.hint ? "caller" : "detected",
 	}
@@ -194,7 +194,7 @@ async function defaultClassifyKind(
 ): Promise<QueryKindResult> {
 	return {
 		kind: "structured_address",
-		confidence: 0.0,
+		confidence: 0,
 		alternatives: [],
 	}
 }

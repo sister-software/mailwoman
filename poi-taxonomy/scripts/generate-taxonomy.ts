@@ -98,7 +98,7 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 		const pathText = line
 			.slice(semi + 1)
 			.trim()
-			.replace(/^\[|\]$/g, "")
+			.replaceAll(/^\[|\]$/g, "")
 		const path = pathText.split(",").map((p) => p.trim())
 
 		if (!code || path.length === 0 || path.some((p) => !p)) {

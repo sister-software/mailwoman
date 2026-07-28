@@ -64,7 +64,7 @@ function geomForID(wofID: number): Geometry {
 
 		if (existsSync(fp)) {
 			try {
-				geom = (JSON.parse(readFileSync(fp, "utf-8")).geometry as Geometry) ?? null
+				geom = (JSON.parse(readFileSync(fp, "utf8")).geometry as Geometry) ?? null
 			} catch {
 				geom = null
 			}
@@ -152,7 +152,7 @@ function pyFixed(x: number, d: number): string {
 		roundUp = true
 	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
-		roundUp = parseInt(lastKept, 10) % 2 === 1
+		roundUp = Number.parseInt(lastKept, 10) % 2 === 1
 	}
 	let digits = intPart! + keep
 
@@ -164,7 +164,7 @@ function pyFixed(x: number, d: number): string {
 			if (arr[i] === "9") {
 				arr[i] = "0"
 			} else {
-				arr[i] = String(parseInt(arr[i]!, 10) + 1)
+				arr[i] = String(Number.parseInt(arr[i]!, 10) + 1)
 				break
 			}
 		}
@@ -243,7 +243,7 @@ function main(): number {
 		return 2
 	}
 
-	const rows: ResolvedRow[] = JSON.parse(readFileSync(src, "utf-8"))
+	const rows: ResolvedRow[] = JSON.parse(readFileSync(src, "utf8"))
 	const overall: Counter = {}
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []

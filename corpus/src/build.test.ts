@@ -84,7 +84,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		await reader.close()
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")
-		expect(firstRow!.tokens.length).toBe(firstRow!.labels.length)
+		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)
 	})
 
 	it("routes rows whose components.region is held out to val/test", async () => {

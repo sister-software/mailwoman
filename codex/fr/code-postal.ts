@@ -76,7 +76,7 @@ export function departementOfCodePostal(codePostal: unknown): DepartementCode | 
 
 	if (cp.startsWith("20")) {
 		// Corsica: prefix 20 covers both départements; the numeric value splits them.
-		return Number(cp) < 20200 ? "2A" : "2B"
+		return Number(cp) < 20_200 ? "2A" : "2B"
 	}
 
 	if (cp.startsWith("97") || cp.startsWith("98")) {

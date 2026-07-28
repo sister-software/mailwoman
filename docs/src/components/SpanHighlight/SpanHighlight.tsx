@@ -9,7 +9,10 @@ export interface SpanHighlightProps {
 	nodes: ResultNode[]
 }
 
-type Segment = { text: string; node: ResultNode | null }
+interface Segment {
+	text: string
+	node: ResultNode | null
+}
 
 /** ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync. */
 function tier(confidence?: number): "high" | "mid" | "low" {

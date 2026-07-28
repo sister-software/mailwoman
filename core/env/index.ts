@@ -1,4 +1,4 @@
-import { z } from "zod"
+import type { z } from "zod"
 
 import { loadEnvFile } from "./load.ts"
 import { cwdPathBuilder } from "./paths.ts"

@@ -21,7 +21,7 @@ const MESSINA = {
 	name: "Messina",
 	placetype: "region",
 	country: "IT",
-	lat: 38.0,
+	lat: 38,
 	lon: 14.9,
 	score: 9,
 	exactMatch: true,
@@ -32,7 +32,7 @@ const MAINE = {
 	placetype: "region",
 	country: "US",
 	lat: 45.3,
-	lon: -69.0,
+	lon: -69,
 	score: 7,
 	exactMatch: true,
 }
@@ -99,7 +99,7 @@ const augustaMeTree = (hint: boolean): AddressTree => ({
 function localityOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "locality") return n

@@ -52,7 +52,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 		const result = await runner.infer(tokenIds)
 
 		expect(result.numLabels).toBeGreaterThan(0)
-		expect(result.logits.length).toBe(tokenIds.length)
+		expect(result.logits).toHaveLength(tokenIds.length)
 		expect(result.logits[0]?.length).toBe(result.numLabels)
 
 		// Logits should be finite numbers (no NaN/Infinity from a misconfigured runtime).
@@ -90,7 +90,7 @@ function collectTags(nodes: Array<{ tag: string; children?: unknown[] }>): Set<s
 	const out = new Set<string>()
 	const stack = [...nodes]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 		out.add(n.tag)
 

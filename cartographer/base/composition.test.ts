@@ -189,8 +189,8 @@ test("Composer: two instances from the shared BaseLayers have independent layer 
 	const a = new StyleSpecificationComposer({ sources: {} })
 	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })
-	expect(b.layers.length).toBe(baseCount) // b built a full list, not a corrupted remnant
-	expect(a.layers.length).toBe(baseCount) // a's list wasn't mutated by b's construction
+	expect(b.layers).toHaveLength(baseCount) // b built a full list, not a corrupted remnant
+	expect(a.layers).toHaveLength(baseCount) // a's list wasn't mutated by b's construction
 })
 
 //#endregion

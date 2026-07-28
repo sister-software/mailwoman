@@ -233,13 +233,13 @@ function mapGeocodeEarth(props: Props | undefined): Rec {
 
 async function fetchJSON(url: string, headers: Record<string, string> = {}): Promise<unknown> {
 	try {
-		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) })
+		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) })
 
 		if (!res.ok) return { __error: `HTTP ${res.status}` }
 
 		return await res.json()
-	} catch (err) {
-		return { __error: (err as Error).message }
+	} catch (error) {
+		return { __error: (error as Error).message }
 	}
 }
 

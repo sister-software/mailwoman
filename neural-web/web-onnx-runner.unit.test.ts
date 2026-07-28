@@ -107,7 +107,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 		// Pre-fix this rejected with ORT's `input 'gazetteer_features' is missing in 'feeds'`.
 		const result = await runner.infer([5, 6, 7])
-		expect(result.logits.length).toBe(3)
+		expect(result.logits).toHaveLength(3)
 
 		const feeds = session.runCalls[0]!
 		expect(Object.keys(feeds).sort()).toEqual([
@@ -189,7 +189,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 		// Pre-wiring this rejected with ORT's `input 'country_features' is missing in 'feeds'` (the v263 browser break).
 		const result = await runner.infer([5, 6, 7])
-		expect(result.logits.length).toBe(3)
+		expect(result.logits).toHaveLength(3)
 
 		const feeds = session.runCalls[0]!
 		expect(feeds.country_features!.dims).toEqual([1, SEQ, COUNTRY_FEATURE_DIM])

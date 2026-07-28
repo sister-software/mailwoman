@@ -50,7 +50,7 @@ describe("titleCaseInput", () => {
 		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
 		expect(titleCaseInput("ELKHART TX")).toBe("Elkhart TX")
 		const caps = "214 JONES RD, ELKHART, TX 75839"
-		expect(titleCaseInput(caps).length).toBe(caps.length) // offsets survive
+		expect(titleCaseInput(caps)).toHaveLength(caps.length) // offsets survive
 	})
 })
 
@@ -84,7 +84,7 @@ describe("restoreLowerInput (#829)", () => {
 		expect(restoreLowerInput("washington dc")).toBe("Washington DC")
 		expect(restoreLowerInput("1012 lg amsterdam")).toBe("1012 LG Amsterdam")
 		const lower = "1600 pennsylvania ave nw, washington dc"
-		expect(restoreLowerInput(lower).length).toBe(lower.length) // offsets survive
+		expect(restoreLowerInput(lower)).toHaveLength(lower.length) // offsets survive
 	})
 })
 

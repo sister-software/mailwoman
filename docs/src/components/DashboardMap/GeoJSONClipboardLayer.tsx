@@ -6,7 +6,7 @@
 
 import { ResourceError } from "@mailwoman/core/errors"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { Feature, FeatureCollection } from "geojson"
+import type { Feature, FeatureCollection } from "geojson"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useRef, useState } from "react"

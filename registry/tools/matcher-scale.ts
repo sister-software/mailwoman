@@ -37,9 +37,9 @@ function lcg(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 
@@ -86,7 +86,7 @@ export async function matcherScale(
 	options: MatcherScaleOptions = {},
 	report?: (line: string) => void
 ): Promise<{ markdown: string }> {
-	const SIZES = options.sizes?.length ? options.sizes : [10000, 50000, 100000, 250000, 500000]
+	const SIZES = options.sizes?.length ? options.sizes : [10_000, 50_000, 100_000, 250_000, 500_000]
 	const DUP = options.dup ?? 3 // avg records per distinct place
 	const EM = options.em ?? false
 	const OUT_MD = options.outMd || ""
@@ -145,7 +145,7 @@ export async function matcherScale(
 	lines.push("")
 	lines.push(`## Reading`)
 	lines.push("")
-	const last = rows[rows.length - 1]!
+	const last = rows.at(-1)!
 	lines.push(
 		`The matcher resolves **${last.records.toLocaleString()} records in ${sec(last.wallMs)}** in a single Node ` +
 			`process — block → Fellegi-Sunter → union-find clustering, no external service. Geo-cell + canonical-key ` +

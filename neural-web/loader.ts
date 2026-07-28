@@ -243,7 +243,7 @@ async function loadPostcodeAnchorLookup(
 	)
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
-	return lookups.length ? mergeAnchorLookups(lookups) : undefined
+	return lookups.length > 0 ? mergeAnchorLookups(lookups) : undefined
 }
 
 /** Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. */
@@ -682,7 +682,7 @@ async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Uint8Ar
  * than imported because both browser and Node need it and adding a dep for ~5 lines is silly.
  */
 function toBase64(bytes: Uint8Array): string {
-	const chunkSize = 0x8000
+	const chunkSize = 0x80_00
 	let binary = ""
 
 	for (let i = 0; i < bytes.length; i += chunkSize) {

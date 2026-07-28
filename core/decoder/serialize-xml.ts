@@ -63,7 +63,7 @@ export interface SerializeXMLOpts {
 }
 
 function escapeXml(s: string): string {
-	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+	return s.replaceAll(/&/g, "&amp;").replaceAll(/</g, "&lt;").replaceAll(/>/g, "&gt;").replaceAll(/"/g, "&quot;")
 }
 
 function srcAttrValue(node: AddressNode): string | null {

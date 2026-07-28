@@ -80,9 +80,9 @@ export default function CalibrationShowcase({
 				if (!cancelled) {
 					setData(json)
 				}
-			} catch (e) {
+			} catch (error) {
 				if (!cancelled) {
-					setError(e instanceof Error ? e.message : String(e))
+					setError(error instanceof Error ? error.message : String(error))
 				}
 			}
 		})()
@@ -159,7 +159,7 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 	const maxN = Math.max(1, ...raw.concat(cal).map((b) => b.n))
 	const r = (n: number) => 2 + 9 * Math.sqrt(n / maxN)
 
-	const ticks = [0.4, 0.6, 0.8, 1.0]
+	const ticks = [0.4, 0.6, 0.8, 1]
 
 	return (
 		<figure style={{ margin: 0 }}>
@@ -249,7 +249,7 @@ function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.React
 
 	const line = (sel: (p: AbstentionPoint) => number) => points.map((p) => `${x(p.threshold)},${y(sel(p))}`).join(" ")
 
-	const yTicks = [0, 0.25, 0.5, 0.75, 1.0]
+	const yTicks = [0, 0.25, 0.5, 0.75, 1]
 
 	return (
 		<figure style={{ margin: 0 }}>

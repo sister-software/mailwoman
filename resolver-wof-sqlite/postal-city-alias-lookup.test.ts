@@ -34,11 +34,11 @@ async function buildAliasDB(): Promise<DatabaseSync> {
 		"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?,?,?,?,?,?,?)"
 	)
 	// The alias signal: 37013 is filed as "Antioch" but geographically sits in Nashville.
-	ins.run("37013", "Antioch", "Nashville", 47389, 1, "overture:US", "2026-04")
+	ins.run("37013", "Antioch", "Nashville", 47_389, 1, "overture:US", "2026-04")
 	// A second postcode, another alias (Woodbridge → Prince William County).
-	ins.run("22191", "Woodbridge", "Prince William County", 30975, 1, "overture:US", "2026-04")
+	ins.run("22191", "Woodbridge", "Prince William County", 30_975, 1, "overture:US", "2026-04")
 	// A non-divergent row (postal name == geo name) — must NEVER surface as an alias.
-	ins.run("90210", "Beverly Hills", "Beverly Hills", 12000, 0, "overture:US", "2026-04")
+	ins.run("90210", "Beverly Hills", "Beverly Hills", 12_000, 0, "overture:US", "2026-04")
 
 	return db
 }
@@ -59,12 +59,12 @@ function buildMainDB(): DatabaseSync {
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
-	spr.run(1, 0, "Nashville", "locality", "US", 36.16, -86.78, 36.0, 36.4, -87.0, -86.5)
+	spr.run(1, 0, "Nashville", "locality", "US", 36.16, -86.78, 36, 36.4, -87, -86.5)
 	// Antioch, CA — a same-named distractor ~3000 km away the bare name-match would otherwise win.
-	spr.run(2, 0, "Antioch", "locality", "US", 38.0, -121.8, 37.9, 38.1, -121.9, -121.7)
+	spr.run(2, 0, "Antioch", "locality", "US", 38, -121.8, 37.9, 38.1, -121.9, -121.7)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
 	// 37013's centroid sits in Nashville (containing); the parsed name "Antioch" does NOT match it.
-	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0.0, 1)
+	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0, 1)
 
 	return db
 }
@@ -79,7 +79,7 @@ describe("WOFPostalCityAliasLookup (#475 reader)", () => {
 	it("returns the divergent alias for a known postcode", async () => {
 		const aliases = await reader.getDivergentAliases("37013")
 		expect(aliases).toHaveLength(1)
-		expect(aliases[0]).toMatchObject({ postalCity: "Antioch", geoLocality: "Nashville", n: 47389 })
+		expect(aliases[0]).toMatchObject({ postalCity: "Antioch", geoLocality: "Nashville", n: 47_389 })
 	})
 
 	it("excludes non-divergent rows (postal name == geo name)", async () => {

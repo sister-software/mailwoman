@@ -39,7 +39,7 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 		message: string,
 		...urnSegments: string[]
 	): ResourceError<S> {
-		return new ResourceError(statusCode, urnSegments.length ? urnSegments.join(":") : "unknown", message)
+		return new ResourceError(statusCode, urnSegments.length > 0 ? urnSegments.join(":") : "unknown", message)
 	}
 
 	/**
@@ -79,7 +79,7 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 						status = error.status
 						break
 					case "string":
-						status = parseInt(error.status, 10) || this.DefaultStatus
+						status = Number.parseInt(error.status, 10) || this.DefaultStatus
 						break
 				}
 			}

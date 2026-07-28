@@ -55,7 +55,7 @@ export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
-	const compact = raw.trim().toUpperCase().replace(/\s+/g, "")
+	const compact = raw.trim().toUpperCase().replaceAll(/\s+/g, "")
 
 	if (compact.length !== 6) return null
 	const spaced = `${compact.slice(0, 3)} ${compact.slice(3)}`

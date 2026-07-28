@@ -84,7 +84,7 @@ const STREET_TYPE_SET: ReadonlySet<string> = new Set(GB_STREET_TYPES)
  */
 export function isBritishStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
-	const t = token.toLowerCase().replace(/[^a-z]/g, "")
+	const t = token.toLowerCase().replaceAll(/[^a-z]/g, "")
 
 	return t.length > 0 && STREET_TYPE_SET.has(t)
 }

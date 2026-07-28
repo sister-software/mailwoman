@@ -75,7 +75,7 @@ export function exactKey<R>(
 	extract: (record: R) => string | null | undefined,
 	opts: { prefix?: number; normalize?: (value: string) => string } = {}
 ): BlockingKey<R> {
-	const normalize = opts.normalize ?? ((v: string) => v.trim().toLowerCase().replace(/\s+/g, " "))
+	const normalize = opts.normalize ?? ((v: string) => v.trim().toLowerCase().replaceAll(/\s+/g, " "))
 
 	return (record) => {
 		const value = extract(record)

@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { createContext, SetStateAction, useCallback, useContext } from "react"
+import type { SetStateAction } from "react"
+import { createContext, useCallback, useContext } from "react"
 import type { ViewState } from "react-map-gl"
 
 export interface NexusWebviewState {

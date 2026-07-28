@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	type ExpressionSpecification,
-	type FillExtrusionLayerSpecification,
-	type LayerSpecification,
+import type {
+	ExpressionSpecification,
+	FillExtrusionLayerSpecification,
+	LayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { LayerID } from "../styles/layers.ts"

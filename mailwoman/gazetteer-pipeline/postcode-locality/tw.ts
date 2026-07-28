@@ -58,7 +58,7 @@ import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set (JP/KR precedent)
-const FALLBACK_RADIUS_KM = 20.0 // no-polygon fallback: name+proximity net around the official center
+const FALLBACK_RADIUS_KM = 20 // no-polygon fallback: name+proximity net around the official center
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
  * `localadmin`, `locality` (county-administered townships/cities), AND `neighbourhood` (the Kaohsiung/Taichung inner
@@ -78,8 +78,8 @@ const COUNTY_PREFIX_LENGTH = 3
 export function normHan(s: string): string {
 	return s
 		.normalize("NFC")
-		.replace(/臺/g, "台")
-		.replace(/[\s　-]/g, "")
+		.replaceAll(/臺/g, "台")
+		.replaceAll(/[\s　-]/g, "")
 }
 
 /**
@@ -90,11 +90,11 @@ export function normEn(s: string): string {
 	return (
 		s
 			.normalize("NFKD")
-			.replace(/\p{M}/gu, "")
+			.replaceAll(/\p{M}/gu, "")
 			.toLowerCase()
 			// `qu`/`xiang`/`zhen` are the romanized 區/鄉/鎮 suffixes WOF sometimes carries ("Zhongzheng Qu").
-			.replace(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
-			.replace(/[\s'’-]/g, "")
+			.replaceAll(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
+			.replaceAll(/[\s'’-]/g, "")
 	)
 }
 
@@ -104,7 +104,7 @@ function toRad(deg: number): number {
 
 /** Haversine distance in km (asin form — same as the JP/KR builders). */
 function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371.0
+	const R = 6371
 	const p1 = toRad(aLat)
 	const p2 = toRad(cLat)
 	const dp = toRad(cLat - aLat)
@@ -629,6 +629,6 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	console.log(
 		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +
 			`${rows.length} rows -> ${args.output}` +
-			(unmatched.length ? `\n  unmatched: ${unmatched.join(", ")}` : "")
+			(unmatched.length > 0 ? `\n  unmatched: ${unmatched.join(", ")}` : "")
 	)
 }

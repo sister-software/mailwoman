@@ -25,7 +25,8 @@
 import path from "node:path"
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
-import baseGlossaryPlugin, { GlossaryData, GlossaryPluginOptions, GlossaryTerm } from "docusaurus-plugin-glossary"
+import type { GlossaryData, GlossaryPluginOptions, GlossaryTerm } from "docusaurus-plugin-glossary"
+import baseGlossaryPlugin from "docusaurus-plugin-glossary"
 import { load as parseYAML } from "js-yaml"
 
 /** A glossary term carrying the `tags` extension this wrapper enforces. */
@@ -49,12 +50,13 @@ export interface GlossaryBacklink {
 }
 
 /** Per-term backlinks, keyed by the term's `term` string. */
-export interface GlossaryBacklinks {
-	[term: string]: {
+export type GlossaryBacklinks = Record<
+	string,
+	{
 		refs: GlossaryBacklink[]
 		total: number
 	}
-}
+>
 
 interface TagRegistryEntry {
 	label?: string
@@ -124,10 +126,10 @@ function referencesPhrase(text: string, textLower: string, needle: string, commo
 function stripUnlinkableMarkdown(source: string): string {
 	return source
 		.replace(/^---\n[\s\S]*?\n---/, "") // frontmatter
-		.replace(/```[\s\S]*?```/g, " ") // fenced code
-		.replace(/`[^`\n]*`/g, " ") // inline code
-		.replace(/^import\s.*$/gm, " ") // MDX imports
-		.replace(/^#{1,6}\s.*$/gm, " ") // headings (skipped by the auto-linker)
+		.replaceAll(/```[\s\S]*?```/g, " ") // fenced code
+		.replaceAll(/`[^`\n]*`/g, " ") // inline code
+		.replaceAll(/^import\s.*$/gm, " ") // MDX imports
+		.replaceAll(/^#{1,6}\s.*$/gm, " ") // headings (skipped by the auto-linker)
 }
 
 export default function mailwomanGlossaryPlugin(context: LoadContext, options: GlossaryPluginOptions): Plugin {

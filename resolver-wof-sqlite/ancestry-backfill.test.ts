@@ -52,12 +52,12 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// A multi-parent locality (parent_id=-4 in real WOF) — only-self ancestry, must be repaired.
-	const orphanID = 85977539
+	const orphanID = 85_977_539
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(orphanID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(orphanID, orphanID) // self only
 	// A country (top-level) with only-self ancestry — must be skipped, not queried for geojson.
-	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'country')").run(85633793)
-	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(85633793, 85633793)
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'country')").run(85_633_793)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(85_633_793, 85_633_793)
 
 	// Source geojson with a populated wof:hierarchy (region + country), even though parent_id is -4.
 	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
@@ -68,8 +68,8 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 			properties: {
 				"wof:parent_id": -4,
 				"wof:hierarchy": [
-					{ locality_id: orphanID, region_id: 85688543, country_id: 85633793 },
-					{ locality_id: orphanID, region_id: 85688543, county_id: 102081863 },
+					{ locality_id: orphanID, region_id: 85_688_543, country_id: 85_633_793 },
+					{ locality_id: orphanID, region_id: 85_688_543, county_id: 102_081_863 },
 				],
 			},
 		})
@@ -84,7 +84,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? AND ancestor_id != ? ORDER BY ancestor_id")
 		.all(orphanID, orphanID)
 		.map((r) => (r as { ancestor_id: number }).ancestor_id)
-	expect(ancestorIds).toEqual([85633793, 85688543, 102081863].sort((a, b) => a - b))
+	expect(ancestorIds).toEqual([85_633_793, 85_688_543, 102_081_863].sort((a, b) => a - b))
 
 	// Re-run: idempotent — already-present rows are not duplicated.
 	const again = backfillAncestorsFromHierarchy(db, [dataRoot])

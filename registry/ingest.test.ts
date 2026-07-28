@@ -79,9 +79,9 @@ describe("ingestRows", () => {
 		components: {},
 		canonicalKey: raw
 			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, " ")
+			.replaceAll(/[^a-z0-9]+/g, " ")
 			.trim()
-			.replace(/\s+/g, "|"),
+			.replaceAll(/\s+/g, "|"),
 		formatted: raw,
 		geocode: { coordinate: { latitude: 45.5, longitude: -122.6 }, tier: "address_point", uncertaintyMeters: 1 },
 	})

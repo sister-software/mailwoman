@@ -100,7 +100,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -121,7 +121,7 @@ function toRad(deg: number): number {
 
 /** Haversine great-circle distance in km — ported from the Python `haversine` (asin form). */
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6371.0
+	const R = 6371
 	const p1 = toRad(lat1)
 	const p2 = toRad(lat2)
 	const dp = toRad(lat2 - lat1)
@@ -429,7 +429,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		const chosen: Array<{ d: number; idx: number; isc: number }> = []
 
 		if (containingIdx !== null) {
-			chosen.push({ d: 0.0, idx: containingIdx, isc: 1 })
+			chosen.push({ d: 0, idx: containingIdx, isc: 1 })
 			nContained++
 		}
 

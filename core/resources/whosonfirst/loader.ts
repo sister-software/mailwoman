@@ -5,7 +5,7 @@
  */
 
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
-import { TextNormalizer } from "@mailwoman/core/tokenization"
+import type { TextNormalizer } from "@mailwoman/core/tokenization"
 import FastGlob, { type Entry } from "fast-glob"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -122,7 +122,7 @@ export class WOFPlacenameCache extends ResourceMapCache<string, DisposableSet<Al
 			for await (const line of lines) {
 				const row = line.trim()
 
-				if (!row.length) continue
+				if (row.length === 0) continue
 				const firstCharacter = row[0]
 
 				// Skip comments.

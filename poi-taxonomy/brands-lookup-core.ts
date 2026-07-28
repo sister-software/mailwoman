@@ -78,7 +78,7 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 
 		for (const entry of entries) {
 			if (!best.has(entry.brand.wikidata)) {
-				best.set(entry.brand.wikidata, { brand: entry.brand, matchedPhrase: entry.phrase, confidence: 1.0 })
+				best.set(entry.brand.wikidata, { brand: entry.brand, matchedPhrase: entry.phrase, confidence: 1 })
 			}
 		}
 

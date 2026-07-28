@@ -285,7 +285,7 @@ export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix
 
 	if (!trimmed) return null
 	const parts = trimmed.split(/\s+/)
-	const last = parts[parts.length - 1]!
+	const last = parts.at(-1)!
 	const canonical = US_STREET_SUFFIX_LOOKUP.get(last.toLowerCase())
 
 	if (!canonical) return null

@@ -59,7 +59,7 @@ function segmentMatches(glob: string, segment: string): boolean {
 		if (piece === "") continue
 		const found = segment.indexOf(piece, at)
 
-		if (found < 0) return false
+		if (found === -1) return false
 
 		// A literal after the leading `*` may start anywhere; a leading literal must anchor at 0.
 		if (i === 0 && found !== 0) return false
@@ -67,7 +67,7 @@ function segmentMatches(glob: string, segment: string): boolean {
 	}
 
 	// A trailing literal must anchor the end ("*.json" matches "a.json", not "a.json.bak").
-	const last = pieces[pieces.length - 1]!
+	const last = pieces.at(-1)!
 
 	return last === "" || segment.endsWith(last)
 }

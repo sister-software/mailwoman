@@ -301,8 +301,8 @@ async function materializePairIndex(workspace: string, dir: string) {
 async function removeIfPresent(path: PathLike) {
 	try {
 		await unlink(path)
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error
 	}
 }
 

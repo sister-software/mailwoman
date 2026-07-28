@@ -77,14 +77,15 @@ export function metricsSnapshot(): MetricsSnapshot {
 			total,
 			errors,
 			tiers: { ...tierCounts },
-			latency_ms: sorted.length
-				? {
-						p50: percentile(sorted, 0.5),
-						p90: percentile(sorted, 0.9),
-						p99: percentile(sorted, 0.99),
-						max: Math.round(sorted[sorted.length - 1]! * 100) / 100,
-					}
-				: null,
+			latency_ms:
+				sorted.length > 0
+					? {
+							p50: percentile(sorted, 0.5),
+							p90: percentile(sorted, 0.9),
+							p99: percentile(sorted, 0.99),
+							max: Math.round(sorted.at(-1)! * 100) / 100,
+						}
+					: null,
 			latency_samples: sorted.length,
 		},
 	}

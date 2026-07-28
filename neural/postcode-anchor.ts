@@ -140,7 +140,7 @@ export function editDistance1Variants(s: string): string[] {
  * and strip the German `D-` courtesy prefix (the shards store `68161`, not `D-68161`).
  */
 export function normalizePostcode(raw: string): string {
-	let s = raw.trim().toUpperCase().replace(/\s+/g, " ")
+	let s = raw.trim().toUpperCase().replaceAll(/\s+/g, " ")
 
 	if (/^D-\d{5}$/.test(s)) {
 		s = s.slice(2)
@@ -235,7 +235,7 @@ const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk",
  * `it`, `nl`).
  */
 function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boolean {
-	const t = token.toLowerCase().replace(/[^\p{L}]/gu, "")
+	const t = token.toLowerCase().replaceAll(/[^\p{L}]/gu, "")
 
 	if (t.length < 2) return false
 

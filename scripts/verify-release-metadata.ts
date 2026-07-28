@@ -65,7 +65,7 @@ const repoRoot = repoRootPath()
 
 /** Escape a version string for use as a literal inside a RegExp (the dots are the concern). */
 function escapeRegExp(literal: string): string {
-	return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+	return literal.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 /** A word-boundary matcher for an exact version token (so `6.5.0` does not match `6.5.01`). */

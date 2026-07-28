@@ -61,15 +61,15 @@ function seedFixture(path: string): void {
 	db.prepare(
 		`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, -1, 0)`
-	).run(101715829, 85688489, "Paris", "locality", "US", 33.66, -95.55)
-	db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`).run(101715829, "und", "Paris")
+	).run(101_715_829, 85_688_489, "Paris", "locality", "US", 33.66, -95.55)
+	db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`).run(101_715_829, "und", "Paris")
 	db.close()
 }
 
 /** The readOnly option recorded for the main-shard open of `path` (asserts exactly one such open). */
 function readOnlyForOpenOf(path: string): boolean | undefined {
 	const opens = spy.opens.filter((o) => o.path === path)
-	expect(opens.length).toBe(1)
+	expect(opens).toHaveLength(1)
 
 	return opens[0]!.readOnly
 }

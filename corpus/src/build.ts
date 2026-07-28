@@ -245,12 +245,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 				try {
 					result = alignRow(r)
-				} catch (err) {
+				} catch (error) {
 					// Last-resort robustness (2026-06-12): no single row may crash a multi-hour build.
 					// alignRow's targeted paths normalize/quarantine known issues with specific reasons;
 					// this catches any UNKNOWN throw (e.g. assertSpanInvariants on an unforeseen span
 					// shape) → quarantine + continue. A spike in `align-threw` reasons is a finding.
-					writeQuarantine(r, `align-threw:${(err as Error).message.slice(0, 160)}`)
+					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
 					quarantined++
 					continue
 				}

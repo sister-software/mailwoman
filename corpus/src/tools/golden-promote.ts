@@ -75,7 +75,7 @@ export interface PromoteGoldenOptions {
 // ── Filters ───────────────────────────────────────────────────────────────
 
 function normalize(s: string): string {
-	return s.toLowerCase().replace(/\s+/g, " ").trim()
+	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
 /**
@@ -118,7 +118,7 @@ function isSuspicious(entry: GoldenEntry): boolean {
 	const raw = entry.raw
 
 	// eslint-disable-next-line no-control-regex
-	if (/[\x00-\x1f\x7f]/.test(raw)) return true
+	if (/[\x00-\x1F\x7F]/.test(raw)) return true
 	const openBrackets = (raw.match(/[[({<]/g) ?? []).length
 	const closeBrackets = (raw.match(/[\])}>]/g) ?? []).length
 

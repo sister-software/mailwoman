@@ -22,7 +22,7 @@ const GEOFABRIK_BASE = "https://download.geofabrik.de"
  * `europe/germany`. Pass the path WITHOUT the `-latest.osm.pbf` suffix.
  */
 export function geofabrikURL(regionPath: string): string {
-	const clean = regionPath.replace(/^\/+|\/+$/g, "")
+	const clean = regionPath.replaceAll(/^\/+|\/+$/g, "")
 
 	return `${GEOFABRIK_BASE}/${clean}-latest.osm.pbf`
 }

@@ -4,6 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+/* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
+   members (`"UTF8"`), not text-encoding identifiers; see the note in parquet.ts. */
+
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -304,7 +307,7 @@ describe("writeShards", () => {
 		// Confirm each shard is a real readable .parquet
 		for (const shard of trainShards) {
 			const back = await readParquet(shard.path)
-			expect(back.length).toBe(shard.rows)
+			expect(back).toHaveLength(shard.rows)
 		}
 	})
 

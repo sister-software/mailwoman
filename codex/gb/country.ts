@@ -44,7 +44,7 @@ export function isUkCountryCode(input: unknown): input is UkCountryCode {
 function foldName(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 

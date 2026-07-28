@@ -108,7 +108,7 @@ describe("synth-po-box adapter", () => {
 				houseNumber: "100",
 			},
 		])
-		const adapter = createSynthPoBoxAdapter({ seed: 99, pmbRatio: 1.0 })
+		const adapter = createSynthPoBoxAdapter({ seed: 99, pmbRatio: 1 })
 		const rows = await collect(path, adapter)
 		expect(rows[0]!.components.street).toBe("Main St")
 		expect(rows[0]!.components.house_number).toBe("100")
@@ -146,7 +146,7 @@ describe("synth-po-box adapter", () => {
 
 	it("militaryRatio emits a US military/diplomatic PO-box row per input (#517)", async () => {
 		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
-		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1.0 })
+		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1 })
 		const rows = await collect(path, adapter)
 		// One standard po_box row + one self-contained military row.
 		expect(rows).toHaveLength(2)
@@ -177,7 +177,7 @@ describe("synth-po-box adapter", () => {
 
 	it("military rows are US-only — suppressed under a non-US country filter", async () => {
 		const path = writeFixture([{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" }])
-		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1.0 })
+		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {

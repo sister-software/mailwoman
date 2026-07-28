@@ -150,7 +150,7 @@ function defaultPickNumber(random: () => number): string {
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
 
 	// 1000-9999
-	return String(10000 + Math.floor(random() * 90000)) // 10000-99999
+	return String(10_000 + Math.floor(random() * 90_000)) // 10000-99999
 }
 
 /**
@@ -163,7 +163,7 @@ export function synthesizePoBoxRow(
 ): SynthesizedPoBoxRow | null {
 	const random = opts.random ?? Math.random
 	const pickNumber = opts.pickNumber ?? defaultPickNumber
-	const pmbRatio = opts.pmbRatio ?? 0.0
+	const pmbRatio = opts.pmbRatio ?? 0
 
 	const locale = countryToLocale(base.country)
 	const tpl = LEADERS_BY_LOCALE.get(locale)

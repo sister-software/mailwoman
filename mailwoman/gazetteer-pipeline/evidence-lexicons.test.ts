@@ -64,8 +64,8 @@ describe("three-law selectivity — pure units", () => {
 		expect(clearsProminenceFloor("joseph", 0.1, personNames, 0.9)).toBe(false)
 		expect(clearsProminenceFloor("joseph", PERSON_NAME_IMPORTANCE_FLOOR, personNames, 0)).toBe(true)
 		// Non-name neighbourhoods DO inherit parent prominence (the Montmartre-class fix).
-		expect(clearsProminenceFloor("belleville", 0.0, personNames, 0.9)).toBe(true)
-		expect(clearsProminenceFloor("obscureplace", 0.0, personNames, 0.1)).toBe(false)
+		expect(clearsProminenceFloor("belleville", 0, personNames, 0.9)).toBe(true)
+		expect(clearsProminenceFloor("obscureplace", 0, personNames, 0.1)).toBe(false)
 	})
 
 	it("law 1: the degenerate set carries the shipped-index victims", () => {

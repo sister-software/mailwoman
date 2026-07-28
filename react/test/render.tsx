@@ -8,7 +8,7 @@
  *   components are small and `@vitest/browser/context` provides the querying + interaction API.
  */
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 

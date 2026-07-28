@@ -29,7 +29,7 @@ async function fixtureDB(): Promise<DatabaseSync> {
 	ins.run(2, 1, "Testregion", "region", "TL", 1.5, 1.5, 1, 1, 2, 2)
 	ins.run(3, 2, "Testtown", "locality", "TL", 1.5, 1.5, 1.4, 1.4, 1.6, 1.6)
 	// The US spot-check target (VT→Vermont) — every real admin DB carries US.
-	ins.run(85688763, -1, "Vermont", "region", "US", 44.0, -72.7, 42.7, -73.4, 45.0, -71.5)
+	ins.run(85_688_763, -1, "Vermont", "region", "US", 44, -72.7, 42.7, -73.4, 45, -71.5)
 	enrichAdmin(db)
 	await buildFTS(db)
 

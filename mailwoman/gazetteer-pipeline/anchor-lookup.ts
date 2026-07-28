@@ -108,7 +108,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -140,7 +140,7 @@ function fiveDigit(name: string | null | undefined): string | null {
 }
 
 function placed(lat: number, lon: number): boolean {
-	return lat !== 0.0 || lon !== 0.0
+	return lat !== 0 || lon !== 0
 }
 
 /** DE/FR postcodes → centroid from postalcode-intl.db (inline lat/lon). */
@@ -205,7 +205,7 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		const fields = line.split("\t").map((f) => f.trim())
-		const pc = fields.length ? fiveDigit(fields[0]) : null
+		const pc = fields.length > 0 ? fiveDigit(fields[0]) : null
 
 		if (!pc || fields.length < 7) continue
 		const lat = pyFloat(fields[5])
@@ -306,15 +306,15 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		const posterior: Record<string, number> = {}
 
 		for (const c of members) {
-			posterior[c] = 1.0 / k
+			posterior[c] = 1 / k
 		}
 
 		if (k > 1) {
 			collisions++
 		}
 		// centroid: first source (DE→FR→US) with a non-zero centroid; never overwritten by ZCTA.
-		let lat = 0.0
-		let lon = 0.0
+		let lat = 0
+		let lon = 0
 		let source: string | null = null
 
 		for (const [, d] of sources) {

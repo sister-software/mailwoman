@@ -72,11 +72,11 @@ function callingCode(country: MledozeCountry): number | undefined {
 
 const serialize = (o: CountryReferenceEntry): string =>
 	JSON.stringify(o, null, 0)
-		.replace(/"isoCode"/g, "isoCode")
-		.replace(/"callingCode"/g, "callingCode")
-		.replace(/"currency"/g, "currency")
-		.replace(/"name"/g, "name")
-		.replace(/"symbol"/g, "symbol")
+		.replaceAll(/"isoCode"/g, "isoCode")
+		.replaceAll(/"callingCode"/g, "callingCode")
+		.replaceAll(/"currency"/g, "currency")
+		.replaceAll(/"name"/g, "name")
+		.replaceAll(/"symbol"/g, "symbol")
 
 /** Fetch mledoze/countries and regenerate the committed `COUNTRY_REFERENCE` table. */
 export async function generateCountryReference(
@@ -103,7 +103,7 @@ export async function generateCountryReference(
 		}
 		const currencyCodes = Object.keys(country.currencies ?? {}).sort()
 
-		if (currencyCodes.length) {
+		if (currencyCodes.length > 0) {
 			const code = currencyCodes[0]!
 			const info = country.currencies![code] ?? {}
 			entry.currency = { isoCode: code }
@@ -117,7 +117,7 @@ export async function generateCountryReference(
 			}
 		}
 
-		if (Object.keys(entry).length) {
+		if (Object.keys(entry).length > 0) {
 			rows[alpha2] = entry
 		}
 	}

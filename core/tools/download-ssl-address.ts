@@ -85,9 +85,9 @@ export async function downloadSSLAddress(
 			try {
 				await fetchCountry(cc, outDir)
 				report?.(`  ✓ ${cc}`)
-			} catch (err) {
+			} catch (error) {
 				failures++
-				report?.(`  ✗ ${cc}: ${(err as Error).message}`)
+				report?.(`  ✗ ${cc}: ${(error as Error).message}`)
 			}
 		}
 	})

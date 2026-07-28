@@ -8,8 +8,17 @@
  *   `unknown` because the real runtimes carry far more surface than these hooks touch.
  */
 
-import type { CategoryRecord, POILiveSearch, POIRuntime, TaxonomyLookup } from "../index.ts"
-import type { DemoMapStyle, DemoRuntime, ParseResult, PipelineRuntime, Suggestion } from "../index.ts"
+import type {
+	CategoryRecord,
+	POILiveSearch,
+	POIRuntime,
+	TaxonomyLookup,
+	DemoMapStyle,
+	DemoRuntime,
+	ParseResult,
+	PipelineRuntime,
+	Suggestion,
+} from "../index.ts"
 import type { ResolvedMapPlace } from "../map/place-render.ts"
 
 const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } as unknown as CategoryRecord
@@ -155,13 +164,13 @@ export function makeFakeParseResult(input = "350 5th Ave, New York, NY 10118"): 
 		],
 		kindResult: { kind: "structured_address", confidence: 0.95, alternatives: [] },
 		timing: { shape: 0.4, classify: 12.1, resolve: 4.2 },
-		resolved: { id: 85977539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 },
+		resolved: { id: 85_977_539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 },
 		candidates: [
-			{ id: 85977539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 },
-			{ id: 101715829, name: "New York", placetype: "region", lat: 43.0, lon: -75.0, score: 0.55 },
+			{ id: 85_977_539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 },
+			{ id: 101_715_829, name: "New York", placetype: "region", lat: 43, lon: -75, score: 0.55 },
 		],
 		fstActive: true,
-		fstProvenance: { builtAt: "2026-07-01T00:00:00Z", stateCount: 51, placeCount: 94000, importanceMatches: 12000 },
+		fstProvenance: { builtAt: "2026-07-01T00:00:00Z", stateCount: 51, placeCount: 94_000, importanceMatches: 12_000 },
 	}
 }
 

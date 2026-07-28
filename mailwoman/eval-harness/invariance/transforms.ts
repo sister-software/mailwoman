@@ -30,7 +30,7 @@ export interface Transform {
 function commaDrop(raw: string): string | null {
 	if (!raw.includes(",")) return null
 
-	return raw.replace(/,/g, "").replace(/\s+/g, " ").trim()
+	return raw.replaceAll(/,/g, "").replaceAll(/\s+/g, " ").trim()
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ function lowercase(raw: string): string | null {
 function whitespaceJitter(raw: string): string | null {
 	if (!raw.includes(" ")) return null
 
-	return raw.replace(/ /g, "  ")
+	return raw.replaceAll(/ /g, "  ")
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -78,7 +78,7 @@ const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 export function painterFold(surface: string): string[] {
 	return surface
 		.split(/\s+/)
-		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.map((w) => w.toLowerCase())
 }
@@ -173,7 +173,9 @@ export function loadPersonNameSurfaces(): Set<string> {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)
 
-				if (tokens.length === 1) names.add(tokens[0]!)
+				if (tokens.length === 1) {
+					names.add(tokens[0]!)
+				}
 			}
 		}
 	}
@@ -257,7 +259,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	for (const row of popStmt.iterate() as Iterable<{ id: number; population: number }>) {
 		if (row.population > 0) {
 			// The FST builder's population→importance formula — one scale across every artifact.
-			importanceByID.set(row.id, Math.min(1.0, Math.log2(1 + row.population / 1000) / 14))
+			importanceByID.set(row.id, Math.min(1, Math.log2(1 + row.population / 1000) / 14))
 		}
 	}
 
@@ -439,11 +441,11 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	const wordNorm = (s: string): string =>
 		s
 			.split(/\s+/)
-			.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+			.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 			.filter(Boolean)
 			.join(" ")
 	const isShortCode = (s: string): boolean => {
-		const letters = s.replace(/[^\p{L}]/gu, "")
+		const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
 		return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
 	}
@@ -455,7 +457,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	const addCanonical = (surface: string): void => {
 		const key = wordNorm(surface).toLowerCase()
 
-		if (!key || key.replace(/[^\p{L}\p{N}]/gu, "").length < 2) return
+		if (!key || key.replaceAll(/[^\p{L}\p{N}]/gu, "").length < 2) return
 		maxNgram = Math.max(maxNgram, key.split(" ").length)
 		entries.set(key, 1)
 	}
@@ -467,7 +469,9 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		if (isShortCode(s)) {
 			const key = wordNorm(s).toUpperCase()
 
-			if (key) codeEntries.set(key, 1)
+			if (key) {
+				codeEntries.set(key, 1)
+			}
 
 			return
 		}
@@ -476,28 +480,47 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 
 	for (const [canonical, abbrevs] of Object.entries(fr.FR_VOIE_TYPES)) {
 		addCanonical(canonical)
-		for (const a of abbrevs) addAbbrev(a)
+
+		for (const a of abbrevs) {
+			addAbbrev(a)
+		}
 	}
 
 	for (const [canonical, variants] of Object.entries(us.US_STREET_SUFFIX_VARIANTS)) {
 		addCanonical(canonical)
-		for (const v of variants) addAbbrev(v)
+
+		for (const v of variants) {
+			addAbbrev(v)
+		}
 	}
 
-	for (const t of gb.GB_STREET_TYPES) addCanonical(t)
+	for (const t of gb.GB_STREET_TYPES) {
+		addCanonical(t)
+	}
 
 	for (const [canonical, variants] of Object.entries(de.DE_STREET_TYPE_VARIANTS)) {
 		addCanonical(canonical)
-		for (const v of variants) addAbbrev(v)
+
+		for (const v of variants) {
+			addAbbrev(v)
+		}
 	}
 
-	for (const suffix of de.DE_STREET_SUFFIXES) addCanonical(suffix)
+	for (const suffix of de.DE_STREET_SUFFIXES) {
+		addCanonical(suffix)
+	}
 
-	for (const t of CA_STREET_TYPES_EN) addCanonical(t)
+	for (const t of CA_STREET_TYPES_EN) {
+		addCanonical(t)
+	}
 
-	for (const t of CA_STREET_TYPES_FR) addCanonical(t)
+	for (const t of CA_STREET_TYPES_FR) {
+		addCanonical(t)
+	}
 
-	for (const d of Object.keys(CA_DIRECTIONALS)) addAbbrev(d)
+	for (const d of Object.keys(CA_DIRECTIONALS)) {
+		addAbbrev(d)
+	}
 
 	// V2 / family F1: state-abbreviation homograph codes never paint (see the docstring). Directionals exempt.
 	const DIRECTIONAL_CODES = new Set(["N", "S", "E", "W", "NE", "NW", "SE", "SW"])

@@ -157,7 +157,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 function diffConfidence(c: number | undefined, p: number | undefined): number | null {
 	if (c == null || p == null) return null
 
-	return parseFloat((c - p).toFixed(3))
+	return Number.parseFloat((c - p).toFixed(3))
 }
 
 // ---------------------------------------------------------------------------

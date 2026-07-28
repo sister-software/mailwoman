@@ -117,11 +117,11 @@ function foldRomaji(s: string): string {
 	const lowered = s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
+		.replaceAll(/[\u0300-\u036F]/g, "")
 	// Strip an appended type-suffix only when a separator (hyphen / space / middle dot) precedes it.
 	const desuffixed = lowered.replace(/[-\s·][\s]*(to|do|fu|ken)$/, "")
 
-	return desuffixed.replace(/[^a-z]/g, "")
+	return desuffixed.replaceAll(/[^a-z]/g, "")
 }
 
 /**

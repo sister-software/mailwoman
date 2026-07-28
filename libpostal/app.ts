@@ -67,7 +67,7 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 	const app = new OpenAPIHono()
 
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire contract).

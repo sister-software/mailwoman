@@ -57,7 +57,7 @@ export const UK_POSTCODE_PATTERN = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i
 export function normalizeUkPostcode(raw: unknown): Postcode | null {
 	if (typeof raw !== "string") return null
 	// Drop all whitespace, uppercase, then re-insert the single canonical space before the inward 3.
-	const compact = raw.replace(/\s+/g, "").toUpperCase()
+	const compact = raw.replaceAll(/\s+/g, "").toUpperCase()
 
 	if (compact.length < 5) return null
 	const spaced = `${compact.slice(0, -3)} ${compact.slice(-3)}`

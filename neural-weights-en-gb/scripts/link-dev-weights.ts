@@ -339,8 +339,8 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				)
 			}
 		}
-	} catch (err) {
-		console.log(`pair-index-gb.bin header unreadable (${(err as Error).message}) — rebuilding.`)
+	} catch (error) {
+		console.log(`pair-index-gb.bin header unreadable (${(error as Error).message}) — rebuilding.`)
 	}
 }
 

@@ -58,7 +58,7 @@ function parseArgs(): Args {
 }
 
 function pct(sorted: number[], p: number): number {
-	if (sorted.length === 0) return NaN
+	if (sorted.length === 0) return Number.NaN
 	const i = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))
 
 	return sorted[i]!
@@ -115,7 +115,7 @@ function main(): void {
 	)
 	console.log(`distance to true address (placed only), km:`)
 	console.log(
-		`  p50 ${pct(distances, 50).toFixed(1)}  p90 ${pct(distances, 90).toFixed(1)}  p99 ${pct(distances, 99).toFixed(1)}  max ${(distances[distances.length - 1] ?? NaN).toFixed(1)}`
+		`  p50 ${pct(distances, 50).toFixed(1)}  p90 ${pct(distances, 90).toFixed(1)}  p99 ${pct(distances, 99).toFixed(1)}  max ${(distances.at(-1) ?? Number.NaN).toFixed(1)}`
 	)
 	const within10 = distances.filter((d) => d <= 10).length
 	const within25 = distances.filter((d) => d <= 25).length

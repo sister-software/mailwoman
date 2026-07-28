@@ -164,7 +164,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			const popRows = popStmt.all() as unknown as PopulationRow[]
 
 			for (const row of popRows) {
-				const normalized = row.population > 0 ? Math.min(1.0, Math.log2(1 + row.population / 1000) / 14) : 0
+				const normalized = row.population > 0 ? Math.min(1, Math.log2(1 + row.population / 1000) / 14) : 0
 				importanceMap.set(row.id, normalized)
 			}
 		} catch {

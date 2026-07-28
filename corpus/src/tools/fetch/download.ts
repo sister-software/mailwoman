@@ -49,7 +49,7 @@ export interface DownloadOptions {
  * or once retries are exhausted. Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
-	const { url, dest, timeoutMs = 600_000, retries = 0, retryDelayMs = 5_000, headers, report } = options
+	const { url, dest, timeoutMs = 600_000, retries = 0, retryDelayMs = 5000, headers, report } = options
 	let lastError: unknown
 
 	for (let attempt = 0; attempt <= retries; attempt++) {

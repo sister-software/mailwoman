@@ -90,7 +90,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 					// Parse embedded city/state/zip from the trailing portion of the address.
 					// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
-					const addrSingleLine = rawAddress.replace(/\n/g, ", ")
+					const addrSingleLine = rawAddress.replaceAll(/\n/g, ", ")
 					const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
 
 					if (!cszMatch) continue

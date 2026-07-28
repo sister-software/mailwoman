@@ -172,7 +172,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 			setLabel(j, OUTSIDE)
 		}
 
-		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
+		for (let j = overlap.at(-1)! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
 			setLabel(j, OUTSIDE)
 		}
 	}

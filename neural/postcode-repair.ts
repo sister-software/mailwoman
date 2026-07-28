@@ -193,12 +193,12 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// where the postcode sits at the end with nothing to trim).
 		const trailing: number[] = []
 
-		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
+		for (let j = overlap.at(-1)! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
 			trailing.push(j)
 		}
 
 		if (trailing.length > 0) {
-			const after = trailing[trailing.length - 1]! + 1
+			const after = trailing.at(-1)! + 1
 			const connectsToCity = after < tokens.length && tagOf(tokens[after]!.label) === "locality"
 
 			if (connectsToCity) {

@@ -200,9 +200,9 @@ let candidateWorkerPromise: Promise<POIHTTPVFSWorker> | undefined
  */
 function loadCandidateWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 	if (!candidateWorkerPromise) {
-		candidateWorkerPromise = loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL).catch((err: unknown) => {
+		candidateWorkerPromise = loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL).catch((error: unknown) => {
 			candidateWorkerPromise = undefined
-			throw err
+			throw error
 		})
 	}
 
@@ -226,7 +226,7 @@ export interface AnchorCenter {
 function splitAnchor(text: string): { localityText: string; regionText?: string } {
 	const commaIndex = text.indexOf(",")
 
-	if (commaIndex >= 0) {
+	if (commaIndex !== -1) {
 		return { localityText: text.slice(0, commaIndex).trim(), regionText: text.slice(commaIndex + 1).trim() }
 	}
 

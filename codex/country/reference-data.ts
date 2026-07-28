@@ -29,7 +29,7 @@ export const COUNTRY_REFERENCE: Record<string, CountryReference> = {
 	AT: { callingCode: 43, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
 	AU: { callingCode: 61, currency: { isoCode: "AUD", name: "Australian dollar", symbol: "$" } },
 	AW: { callingCode: 297, currency: { isoCode: "AWG", name: "Aruban florin", symbol: "ƒ" } },
-	AX: { callingCode: 35818, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
+	AX: { callingCode: 35_818, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
 	AZ: { callingCode: 994, currency: { isoCode: "AZN", name: "Azerbaijani manat", symbol: "₼" } },
 	BA: { callingCode: 387, currency: { isoCode: "BAM", name: "Bosnia and Herzegovina convertible mark", symbol: "KM" } },
 	BB: { callingCode: 1, currency: { isoCode: "BBD", name: "Barbadian dollar", symbol: "$" } },

@@ -25,7 +25,7 @@ describe("isZipCode", () => {
 	it("rejects non-ZIP strings", () => {
 		expect(isZipCode("9021")).toBe(false)
 		expect(isZipCode("ABCDE")).toBe(false)
-		expect(isZipCode(90210)).toBe(false)
+		expect(isZipCode(90_210)).toBe(false)
 	})
 })
 

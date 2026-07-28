@@ -54,14 +54,14 @@ export { OptionsSchema as options }
 const wordNorm = (s: string): string =>
 	s
 		.split(/\s+/)
-		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.join(" ")
 /** Normalize a surface for the case-insensitive map. */
 const norm = (s: string): string => wordNorm(s).toLowerCase()
 /** Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching. */
 const isShortCode = (s: string): boolean => {
-	const letters = s.replace(/[^\p{L}]/gu, "")
+	const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
 	return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
 }

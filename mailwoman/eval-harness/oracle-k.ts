@@ -62,7 +62,7 @@ export interface OracleKOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
 /** Smoothed empirical segment-type transition table from gold component orderings. */
@@ -95,13 +95,13 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 				.sort((a, b) => a.idx - b.idx)
 				.map((entry) => entry.tag)
 
-			if (!seq.length) continue
+			if (seq.length === 0) continue
 			bump("START", seq[0]!)
 
 			for (let i = 1; i < seq.length; i++) {
 				bump(seq[i - 1]!, seq[i]!)
 			}
-			bump(seq[seq.length - 1]!, "END")
+			bump(seq.at(-1)!, "END")
 		}
 	}
 
@@ -162,7 +162,7 @@ export function segmentDecodeKBest(
 	const words: number[][] = []
 	let current: number[] = []
 	const flush = (): void => {
-		if (current.length) {
+		if (current.length > 0) {
 			words.push(current)
 		}
 		current = []
@@ -214,7 +214,10 @@ export function segmentDecodeKBest(
 	const oScore = (wordIndex: number): number =>
 		words[wordIndex]!.reduce((sum, pieceIndex) => sum + (logProbs[pieceIndex]![oIndex] ?? -50), 0)
 
-	type Entry = { score: number; segments: Array<[number, number, string]> }
+	interface Entry {
+		score: number
+		segments: Array<[number, number, string]>
+	}
 	const dp: Array<Map<string, Entry[]>> = Array.from({ length: wordCount + 1 }, () => new Map())
 	dp[0]!.set("START", [{ score: 0, segments: [] }])
 	const push = (column: Map<string, Entry[]>, key: string, entry: Entry): void => {
@@ -278,7 +281,7 @@ function extractSurface(
 			const firstPiece = words[from]![0]!
 			const lastWord = words[to - 1]!
 
-			return trace.text.slice(trace.tokens[firstPiece]!.start, trace.tokens[lastWord[lastWord.length - 1]!]!.end)
+			return trace.text.slice(trace.tokens[firstPiece]!.start, trace.tokens[lastWord.at(-1)!]!.end)
 		})
 		.join(" ")
 }
@@ -315,7 +318,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		const baseByTag = new Map<string, string[]>()
 		const stack = [...tree.roots]
 
-		while (stack.length) {
+		while (stack.length > 0) {
 			const node = stack.pop()!
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
 			stack.push(...node.children)
@@ -377,7 +380,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			readings[`${label}.oracle_at_${k}`] = tally.oracleK / tally.total
 		}
 
-		if (!Object.keys(readings).length) {
+		if (Object.keys(readings).length === 0) {
 			throw new Error(
 				`--assert-baseline ${options.assertBaseline} was requested but this run scored 0 fixtures. ` +
 					`The profile cannot vouch for metrics that weren't measured.`

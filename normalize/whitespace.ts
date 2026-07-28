@@ -62,7 +62,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 		}
 
 		// Collapse \r\n into one
-		if (ch === "\n" && out[out.length - 1] === "\r") {
+		if (ch === "\n" && out.at(-1) === "\r") {
 			// Already handled in CR branch above by emitting both; skip combiner check
 		}
 		out.push(ch)

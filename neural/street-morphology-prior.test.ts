@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type FSTMatcherLike, type FSTMatchLike, type FSTPlaceEntryLike } from "./fst-prior.ts"
+import type { FSTMatcherLike, FSTMatchLike, FSTPlaceEntryLike } from "./fst-prior.ts"
 import { STAGE3_BIO_LABELS } from "./labels.ts"
 import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.ts"
 
@@ -25,7 +25,7 @@ function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
 	for (const surface of affixSurfaces) {
 		states.set(surface, {
 			id: nextID++,
-			entries: [{ wofID: 1_900_000_000 + nextID, placetype: "street_affix", importance: 1.0 }],
+			entries: [{ wofID: 1_900_000_000 + nextID, placetype: "street_affix", importance: 1 }],
 		})
 	}
 
@@ -122,13 +122,13 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 		const fst = mockAffixFST(["avenue"])
 		const pieces = makePieces("elm avenue")
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
-			maxAffixBias: 5.0,
-			maxNeighbourStreetBias: 4.0,
-			dependentLocalityPenalty: 7.0,
+			maxAffixBias: 5,
+			maxNeighbourStreetBias: 4,
+			dependentLocalityPenalty: 7,
 		})
 
-		expect(matrix[1]![labelCol("B-street_prefix")]!).toBe(5.0)
-		expect(matrix[0]![labelCol("B-street")]!).toBe(4.0)
-		expect(matrix[0]![labelCol("B-dependent_locality")]!).toBe(-7.0)
+		expect(matrix[1]![labelCol("B-street_prefix")]!).toBe(5)
+		expect(matrix[0]![labelCol("B-street")]!).toBe(4)
+		expect(matrix[0]![labelCol("B-dependent_locality")]!).toBe(-7)
 	})
 })

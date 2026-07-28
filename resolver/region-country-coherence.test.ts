@@ -32,8 +32,8 @@ const QUEBEC: RegionPlace = {
 	abbrev: "QC",
 	placetype: "region",
 	country: "CA",
-	lat: 52.0,
-	lon: -72.0,
+	lat: 52,
+	lon: -72,
 	score: 9,
 	exactMatch: true,
 }
@@ -43,8 +43,8 @@ const ONTARIO: RegionPlace = {
 	abbrev: "ON",
 	placetype: "region",
 	country: "CA",
-	lat: 50.0,
-	lon: -85.0,
+	lat: 50,
+	lon: -85,
 	score: 9,
 	exactMatch: true,
 }
@@ -54,8 +54,8 @@ const ILLINOIS: RegionPlace = {
 	abbrev: "IL",
 	placetype: "region",
 	country: "US",
-	lat: 40.0,
-	lon: -89.0,
+	lat: 40,
+	lon: -89,
 	score: 9,
 	exactMatch: true,
 }
@@ -66,7 +66,7 @@ const MAINE: RegionPlace = {
 	placetype: "region",
 	country: "US",
 	lat: 45.3,
-	lon: -69.0,
+	lon: -69,
 	score: 9,
 	exactMatch: true,
 }
@@ -189,7 +189,7 @@ const regionLocalityTree = (city: string, region: string): AddressTree => ({
 function localityOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "locality") return n
@@ -202,7 +202,7 @@ function localityOf(tree: AddressTree): AddressNode | undefined {
 function regionOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "region") return n

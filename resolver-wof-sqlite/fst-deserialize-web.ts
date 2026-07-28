@@ -123,7 +123,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 			}
 			const rawImportance = isV2
 				? view.getFloat32(pp + 12, true)
-				: Math.min(1.0, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)
+				: Math.min(1, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)
 
 			places[pi] = {
 				wofID: view.getUint32(pp, true),

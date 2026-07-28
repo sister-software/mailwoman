@@ -100,7 +100,11 @@ export class LayerToggleControl implements IControl {
 
 		// Bucket every layer into a group (catch-all → "Other"). Skip mailwoman-bbox + marker
 		// layers — they're transient resolver output, not part of the basemap.
-		type Bucket = { name: string; layerIds: string[]; visible: boolean }
+		interface Bucket {
+			name: string
+			layerIds: string[]
+			visible: boolean
+		}
 		const buckets = new Map<string, Bucket>()
 
 		for (const layer of style.layers) {

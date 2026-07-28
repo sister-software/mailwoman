@@ -26,7 +26,7 @@ describe("usgov-nad adapter", () => {
 	it("yields the expected count from the fixture (drops 3 invalid rows)", async () => {
 		// fixture.ndjson has 12 rows: 9 valid, 3 dropped (empty Post_City, bad state ZZ, empty Zip_Code).
 		const rows = await collect()
-		expect(rows.length).toBe(9)
+		expect(rows).toHaveLength(9)
 	})
 
 	it("composes a 4-component address with venue when LandmkName is set", async () => {
@@ -127,7 +127,7 @@ describe("usgov-nad adapter", () => {
 
 	it("honors opts.limit (soft cap)", async () => {
 		const rows = await collect(undefined, { limit: 3 })
-		expect(rows.length).toBe(3)
+		expect(rows).toHaveLength(3)
 	})
 
 	it("rejects non-US country filter", async () => {

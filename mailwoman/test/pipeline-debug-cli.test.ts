@@ -30,7 +30,7 @@ function extractJSON(stdout: string): unknown {
 	const objStart = cleaned.indexOf("{")
 	const objEnd = cleaned.lastIndexOf("}")
 
-	if (objStart < 0 || objEnd < objStart) {
+	if (objStart === -1 || objEnd < objStart) {
 		throw new Error(`No JSON object in stdout:\n${stdout}`)
 	}
 

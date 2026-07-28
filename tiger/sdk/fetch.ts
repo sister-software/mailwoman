@@ -268,7 +268,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 		let inserted = 0
 		let batch: Row[] = []
 		const flush = async () => {
-			if (!batch.length) return
+			if (batch.length === 0) return
 			const rows = batch
 			batch = []
 			await insertBatch(rows)

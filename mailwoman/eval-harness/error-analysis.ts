@@ -35,7 +35,7 @@ import { resolve } from "node:path"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
@@ -152,7 +152,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	let total = 0
 
 	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
-	type TagStats = {
+	interface TagStats {
 		expected: number
 		correct: number
 		missed: number

@@ -133,7 +133,7 @@ class SqliteConnection implements DatabaseConnection {
 
 		const args = Array.isArray(parameters) ? parameters : []
 
-		if (stmt.columns().length) {
+		if (stmt.columns().length > 0) {
 			const rows = stmt.all(...args) as O[]
 
 			return Promise.resolve({ rows })

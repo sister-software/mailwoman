@@ -33,7 +33,10 @@ interface FixturePlace {
 	parentChain: number[]
 }
 
-type FSTNodeInternal = { edges: Map<string, number>; places: FixtureEntry[] }
+interface FSTNodeInternal {
+	edges: Map<string, number>
+	places: FixtureEntry[]
+}
 type FixtureEntry = FixturePlace & { lat: number; lon: number }
 
 /** Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder. */
@@ -69,18 +72,36 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 }
 
 const FIXTURE_PLACES: FixturePlace[] = [
-	{ wofID: 85977539, placetype: "locality", name: "New York City", importance: 0.9, parentChain: [85688543, 85633793] },
-	{ wofID: 85688543, placetype: "region", name: "New York", importance: 0.75, parentChain: [85633793] },
-	{ wofID: 85935903, placetype: "locality", name: "New Orleans", importance: 0.6, parentChain: [85688481, 85633793] },
 	{
-		wofID: 85922583,
+		wofID: 85_977_539,
+		placetype: "locality",
+		name: "New York City",
+		importance: 0.9,
+		parentChain: [85_688_543, 85_633_793],
+	},
+	{ wofID: 85_688_543, placetype: "region", name: "New York", importance: 0.75, parentChain: [85_633_793] },
+	{
+		wofID: 85_935_903,
+		placetype: "locality",
+		name: "New Orleans",
+		importance: 0.6,
+		parentChain: [85_688_481, 85_633_793],
+	},
+	{
+		wofID: 85_922_583,
 		placetype: "locality",
 		name: "San Francisco",
 		importance: 0.85,
-		parentChain: [102087579, 85633793],
+		parentChain: [102_087_579, 85_633_793],
 	},
-	{ wofID: 85919487, placetype: "locality", name: "San Jose", importance: 0.5, parentChain: [102087579, 85633793] },
-	{ wofID: 85633793, placetype: "country", name: "United States", importance: 0.99, parentChain: [] },
+	{
+		wofID: 85_919_487,
+		placetype: "locality",
+		name: "San Jose",
+		importance: 0.5,
+		parentChain: [102_087_579, 85_633_793],
+	},
+	{ wofID: 85_633_793, placetype: "country", name: "United States", importance: 0.99, parentChain: [] },
 ]
 
 let fixtureMatcher: FSTMatcher
@@ -144,7 +165,7 @@ describe("autocomplete — in-memory fixture", () => {
 
 	it("returns no suggestions for an unknown prefix", () => {
 		const result = autocomplete(fixtureMatcher, "Xyzzyplugh")
-		expect(result.suggestions.length).toBe(0)
+		expect(result.suggestions).toHaveLength(0)
 	})
 
 	it("ranks by importance (prominent places first)", () => {
@@ -214,7 +235,7 @@ describe("runAutocomplete — disk round-trip", () => {
 
 	it("round-trips importance and wofID through serialization", async () => {
 		const entries = await runAutocomplete("United", { fstPath: fixtureBinPath, limit: 5 })
-		const us = entries.find((e) => e.wofID === 85633793)
+		const us = entries.find((e) => e.wofID === 85_633_793)
 		expect(us).toBeDefined()
 		// Float32 round-trip may introduce tiny epsilon; check within tolerance.
 		expect(us!.importance).toBeCloseTo(0.99, 1)

@@ -10,7 +10,7 @@
 export type TileCoords = [zoom: number, xCoord: number, yCoord: number]
 
 export function parseTileCoordParams({ z, x, y }: Record<string, string | undefined>): TileCoords | null {
-	const coords = [z, x, y].map((n) => parseInt(n!, 10)).filter((n) => !isNaN(n))
+	const coords = [z, x, y].map((n) => Number.parseInt(n!, 10)).filter((n) => !isNaN(n))
 
 	if (coords.length !== 3) return null
 

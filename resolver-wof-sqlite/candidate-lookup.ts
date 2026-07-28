@@ -92,7 +92,7 @@ const FUZZY_MIN = 0.34
  *    ("Los Angeles" over La, Ghana — gap 1.6; "Las Vegas" over Vegas, Cuba — gap 2.4) while a near-tie coincidental
  *    collision defers to the primary (Cancún over Changchun — gap 0.7).
  */
-const PRIMARY_PREFERENCE_LOG10 = 1.0
+const PRIMARY_PREFERENCE_LOG10 = 1
 
 /**
  * Over-fetch cap for {@link rankByPrimaryPreference}: the candidate rows for one `name_key` (all same-name places
@@ -286,7 +286,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// form at build (the GeoNames fold normalizes '624 66' → '62466'), so a postcode-typed query
 		// strips internal whitespace before keying. Postcode-only — locality names keep their spaces.
 		if ([query.placetype].flat().includes("postalcode")) {
-			text = text.replace(/\s+/g, "")
+			text = text.replaceAll(/\s+/g, "")
 		}
 		const nameKey = normalizeLocalityForKey(text)
 
@@ -493,8 +493,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// lookup.ts's DEFAULT_WEIGHTS (biasBoost 4, populationBoost 4, populationScaleLog10 6,
 		// proximityScaleKm 100) — the #861 server↔demo parity contract; keep them in lockstep.
 		if (query.bias && query.bias.length > 0) {
-			const BIAS_BOOST = 4.0
-			const POP_BOOST = 4.0
+			const BIAS_BOOST = 4
+			const POP_BOOST = 4
 			const POP_SCALE_LOG10 = 6
 			// SHARPER than lookup.ts's 100 km on purpose: this backend's `score` is log-population ALONE
 			// (no bm25 document term), so the population signal is weaker relative to the bias and the

@@ -78,7 +78,7 @@ function parseConfig(configPath: string): ParsedConfig | null {
 		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
 
 		if (m) {
-			weights[m[1]!] = parseFloat(m[2]!)
+			weights[m[1]!] = Number.parseFloat(m[2]!)
 		}
 	}
 
@@ -254,7 +254,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	>
 	numeric.sort((a, b) => b.effectiveSamplePct - a.effectiveSamplePct)
 
-	if (numeric.length >= 1) {
+	if (numeric.length > 0) {
 		const top = numeric[0]!
 		const next = numeric[1]?.effectiveSamplePct ?? 0
 

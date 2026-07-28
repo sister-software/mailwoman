@@ -144,7 +144,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 			`    ${c.padEnd(6)} ${rf.toFixed(1)}% → ${ri.toFixed(1)}%  (Δ ${(ri - rf >= 0 ? "+" : "") + (ri - rf).toFixed(1)}pp, n=${f.n})`
 		)
 	}
-	const pass = Math.abs(accI - accF) <= 1.0
+	const pass = Math.abs(accI - accF) <= 1
 	console.log(`  gate: ${pass ? "PASS (within 1pp)" : "FAIL (>1pp drop)"}`)
 
 	return { n: N, accFp32: accF, accInt8: accI, pass }

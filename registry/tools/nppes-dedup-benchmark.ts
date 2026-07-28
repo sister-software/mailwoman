@@ -142,7 +142,7 @@ const orgTokens = (s: string): Set<string> =>
 	new Set(
 		s
 			.toLowerCase()
-			.replace(/[^a-z0-9 ]/g, " ")
+			.replaceAll(/[^a-z0-9 ]/g, " ")
 			.split(/\s+/)
 			.filter((t) => t && !ORG_STOP.has(t))
 	)
@@ -648,7 +648,7 @@ export async function nppesDedupBenchmark(
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
-	type LeverConfig = {
+	interface LeverConfig {
 		addressFrequency?: typeof addressFrequency | false
 		collapseSpatial?: boolean
 		discriminators?: string[]
@@ -732,7 +732,7 @@ export async function nppesDedupBenchmark(
 		return { ...l, res, score: scoreEntities(res.entities, npiLabel) }
 	})
 	const baseline = progression[0]! // no levers — the prior-prior behaviour
-	const bestLever = progression[progression.length - 1]! // the full lever stack
+	const bestLever = progression.at(-1)! // the full lever stack
 
 	// The SHIPPED out-of-box default (#86): no lever config at all → resolveEntities auto-computes an
 	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
@@ -947,7 +947,7 @@ export async function nppesDedupBenchmark(
 	lines.push("")
 	lines.push(`- records: ${N} · true entities (NPIs): ${kept.size} · recovered clusters: ${base.score.clusters}`)
 	lines.push(
-		`- candidate pairs blocked: ${base.res.candidatePairs}${base.res.droppedBlocks.length ? ` · oversized blocks skipped: ${base.res.droppedBlocks.length}` : ""}`
+		`- candidate pairs blocked: ${base.res.candidatePairs}${base.res.droppedBlocks.length > 0 ? ` · oversized blocks skipped: ${base.res.droppedBlocks.length}` : ""}`
 	)
 	lines.push(
 		`- **Over-merge (precision):** ${base.score.overMergedClusters} clusters fuse ≥2 distinct NPIs (largest fuses ` +

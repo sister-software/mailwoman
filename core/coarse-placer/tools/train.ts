@@ -92,8 +92,8 @@ export async function trainCoarsePlacer(
 	// NOTE(phase4b): deliberately NOT `SeededRandom.shuffle` — that's mulberry32; this LCG stream is
 	// what every shipped model was trained on, and swapping the RNG changes the shuffle order (a
 	// silent retrain-reproducibility break).
-	let rng = 1234567
-	const rand = (): number => (rng = (Math.imul(rng, 1103515245) + 12345) & 0x7fffffff) / 0x7fffffff
+	let rng = 1_234_567
+	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7fffffff) / 0x7fffffff
 	function shuffle(arr: Sample[]): void {
 		for (let i = arr.length - 1; i > 0; i--) {
 			const j = Math.floor(rand() * (i + 1))

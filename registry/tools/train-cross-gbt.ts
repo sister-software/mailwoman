@@ -97,9 +97,9 @@ function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
 	return () => {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 

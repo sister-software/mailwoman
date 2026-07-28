@@ -23,4 +23,4 @@ export function TileSetSourceID<T extends string>(value: T): TileSetSourceID<T> 
 /**
  * Vector source specifications for each tileset.
  */
-export type TileSetSourceRecord = { [T in TileSetSourceID]: SourceSpecification }
+export type TileSetSourceRecord = Record<TileSetSourceID, SourceSpecification>

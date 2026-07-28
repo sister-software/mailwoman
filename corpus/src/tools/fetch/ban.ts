@@ -212,8 +212,8 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 				headers: { "Accept-Encoding": "gzip, br" },
 				report,
 			})
-		} catch (err) {
-			report?.(`  ✗ download failed: ${url} (${(err as Error).message})`)
+		} catch (error) {
+			report?.(`  ✗ download failed: ${url} (${(error as Error).message})`)
 			failed++
 			failedCodes.push(code)
 			continue
@@ -233,8 +233,8 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		// Decompress in-place; delete the .gz.
 		try {
 			await writeFile(csvFile, gunzipSync(await readFile(gzFile)))
-		} catch (err) {
-			report?.(`  ✗ decompress failed: ${(err as Error).message}`)
+		} catch (error) {
+			report?.(`  ✗ decompress failed: ${(error as Error).message}`)
 			await unlink(gzFile)
 			failed++
 			failedCodes.push(code)

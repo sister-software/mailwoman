@@ -215,13 +215,13 @@ const PARIS_FIXTURE: FixtureNode[] = [
 		edges: [],
 		places: [
 			{
-				wofID: 101748479,
+				wofID: 101_748_479,
 				placetype: "locality",
 				name: "Paris",
 				importance: 0.95,
 				lat: 48.8566,
 				lon: 2.3522,
-				parentChain: [85633147, 85632343],
+				parentChain: [85_633_147, 85_632_343],
 			},
 		],
 	},
@@ -256,7 +256,7 @@ describe("deserializeFSTWeb", () => {
 		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 		const place = matcher.accepting(matcher.walk(["paris"])!.stateID)[0]!
 
-		expect(place.wofID).toBe(101748479)
+		expect(place.wofID).toBe(101_748_479)
 		expect(place.placetype).toBe("locality")
 		expect(place.name).toBe("Paris")
 		expect(place.importance).toBeCloseTo(0.95, 5)
@@ -268,7 +268,7 @@ describe("deserializeFSTWeb", () => {
 		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 		const place = matcher.accepting(1)[0]!
 
-		expect(place.parentChain).toEqual([85633147, 85632343])
+		expect(place.parentChain).toEqual([85_633_147, 85_632_343])
 	})
 
 	test("placetypeIdx decodes via PLACETYPE_ORDER (region, not locality)", () => {

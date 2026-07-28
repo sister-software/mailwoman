@@ -369,8 +369,8 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				}
 			}
 		}
-	} catch (err) {
-		console.error(`  WARN: read failed for ${part.path ?? part.zip}: ${(err as Error).message}`)
+	} catch (error) {
+		console.error(`  WARN: read failed for ${part.path ?? part.zip}: ${(error as Error).message}`)
 
 		return []
 	}

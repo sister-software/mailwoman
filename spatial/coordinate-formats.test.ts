@@ -40,10 +40,10 @@ test("toGeohash: precision-9, deterministic, DC prefix", () => {
 
 test("toMercator: EPSG:3857 projection in range", () => {
 	const { x, y } = toMercator(LAT, LON)
-	expect(x).toBeGreaterThan(-8576000)
-	expect(x).toBeLessThan(-8575000)
-	expect(y).toBeGreaterThan(4690000)
-	expect(y).toBeLessThan(4730000)
+	expect(x).toBeGreaterThan(-8_576_000)
+	expect(x).toBeLessThan(-8_575_000)
+	expect(y).toBeGreaterThan(4_690_000)
+	expect(y).toBeLessThan(4_730_000)
 })
 
 test("qiblaBearing: from DC the Kaaba is ~58° (ENE)", () => {

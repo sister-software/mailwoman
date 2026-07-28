@@ -18,7 +18,7 @@ import type * as zod from "zod"
 /**
  * Type-helper to infer the positional arguments of a command.
  */
-export type PositionalArguments<T extends zod.ZodTypeAny> = {
+export interface PositionalArguments<T extends zod.ZodTypeAny> {
 	args: zod.infer<T>
 }
 
@@ -30,10 +30,10 @@ export type PositionalCommandComponent<T extends zod.ZodTypeAny> = React.FC<Posi
 /**
  * Type-helper to infer the options of a command.
  */
-export type CommandProps<
+export interface CommandProps<
 	OptionProps extends zod.ZodObject,
 	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
-> = {
+> {
 	options: zod.infer<OptionProps>
 	args: PositionalProps extends zod.ZodTypeAny ? zod.infer<PositionalProps> : unknown[]
 }

@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs"
 import { readJSONL, writeJSONL } from "@mailwoman/core/utils"
 
 import { createServeEngine } from "../api-engine.ts"
-import { type ParityCase } from "./parity-extract.ts"
+import type { ParityCase } from "./parity-extract.ts"
 
 const PARITY_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const SYNTHETIC_PATH = "mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"

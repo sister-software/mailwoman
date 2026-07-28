@@ -44,7 +44,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 
-const MATCH_RADIUS_KM = 20.0 // KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net
+const MATCH_RADIUS_KM = 20 // KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net
 const HANGUL = /[가-힣]/
 // Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc.
 const SUFFIX = /(특별자치도|특별자치시|광역시|특별시|면|동|읍|시|군|구|리)$/
@@ -106,7 +106,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -137,7 +137,7 @@ function pyFloat(s: string | undefined): number | null {
 }
 
 function norm(s: string | null | undefined): string {
-	return (s || "").normalize("NFKC").replace(/[\s-]/g, "").toLowerCase()
+	return (s || "").normalize("NFKC").replaceAll(/[\s-]/g, "").toLowerCase()
 }
 
 function bare(s: string | null | undefined): string {
@@ -151,7 +151,7 @@ function toRad(deg: number): number {
 
 /** Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form). */
 function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371.0
+	const R = 6371
 	const p1 = toRad(aLat)
 	const p2 = toRad(cLat)
 	const dp = toRad(cLat - aLat)
@@ -343,7 +343,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		.execute()
 
 	dists.sort((a, b) => a - b)
-	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0.0)
+	const p = (q: number): number => (dists.length > 0 ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
 	const total = postal.size
 
 	await kdb.schema

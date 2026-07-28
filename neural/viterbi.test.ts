@@ -100,8 +100,8 @@ describe("viterbi — basic", () => {
 		// Naive argmax: O, I-locality (invalid)
 		// Viterbi: B-locality, I-locality (valid + globally best)
 		const emissions = [
-			[0.45, 0.4, 0.1, 0.05, 0.0], // O, B-loc, I-loc, B-reg, I-reg
-			[0.1, 0.2, 0.65, 0.05, 0.0],
+			[0.45, 0.4, 0.1, 0.05, 0], // O, B-loc, I-loc, B-reg, I-reg
+			[0.1, 0.2, 0.65, 0.05, 0],
 		]
 		const path = viterbi({
 			emissions,
@@ -263,7 +263,7 @@ describe("perTokenArgmax", () => {
 	})
 
 	it("handles ties by picking the first", () => {
-		expect(perTokenArgmax([[0.5, 0.5, 0.0]])).toEqual([0])
+		expect(perTokenArgmax([[0.5, 0.5, 0]])).toEqual([0])
 	})
 })
 

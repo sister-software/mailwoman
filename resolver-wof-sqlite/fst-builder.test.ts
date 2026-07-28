@@ -37,7 +37,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 	}, 60_000)
 
 	it("builds a non-trivial FST", () => {
-		expect(result.stateCount).toBeGreaterThan(10000)
+		expect(result.stateCount).toBeGreaterThan(10_000)
 		expect(result.placeCount).toBeGreaterThan(1000)
 	})
 
@@ -51,10 +51,10 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 
 	it("finds NYC with correct parent chain", () => {
 		const q = matcher.query("New York")
-		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofID === 85977539)
+		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofID === 85_977_539)
 		expect(nyc).toBeDefined()
-		expect(nyc!.wofID).toBe(85977539)
-		expect(nyc!.parentChain).toContain(85688543)
+		expect(nyc!.wofID).toBe(85_977_539)
+		expect(nyc!.parentChain).toContain(85_688_543)
 	})
 
 	it("finds 'Portland' with multiple localities", () => {

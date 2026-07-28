@@ -144,7 +144,7 @@ const ParseConfigSchema = zod.object({
 		.number()
 		.int()
 		.min(1)
-		.max(10000)
+		.max(10_000)
 		.optional()
 		.describe(
 			"Run the pipeline N times against the input and emit per-stage p50/p95/p99 + total wall + heap delta. " +
@@ -262,7 +262,7 @@ function ParseTask({
 export function localeToCountry(locale: string | undefined): string | undefined {
 	if (!locale) return undefined
 	const parts = locale.split("-")
-	const region = parts.length > 1 ? parts[parts.length - 1] : undefined
+	const region = parts.length > 1 ? parts.at(-1) : undefined
 
 	return region && /^[A-Za-z]{2}$/.test(region) ? region.toUpperCase() : undefined
 }
@@ -637,7 +637,7 @@ async function runBenchmark(
 				formatMs(percentile(sorted, 50)).padStart(8),
 				formatMs(percentile(sorted, 95)).padStart(8),
 				formatMs(percentile(sorted, 99)).padStart(8),
-				formatMs(sorted[sorted.length - 1] ?? 0).padStart(8),
+				formatMs(sorted.at(-1) ?? 0).padStart(8),
 			].join("  ")
 		)
 	}
@@ -649,7 +649,7 @@ async function runBenchmark(
 			formatMs(percentile(totalsSorted, 50)).padStart(8),
 			formatMs(percentile(totalsSorted, 95)).padStart(8),
 			formatMs(percentile(totalsSorted, 99)).padStart(8),
-			formatMs(totalsSorted[totalsSorted.length - 1] ?? 0).padStart(8),
+			formatMs(totalsSorted.at(-1) ?? 0).padStart(8),
 		].join("  ")
 	)
 	lines.push("")

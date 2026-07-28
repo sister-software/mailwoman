@@ -150,7 +150,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 	const { stats, country } = state.result
 	const pct = (f: number) => `${Math.round(f * 100)}%`
 	const distStr = (d: Array<{ placetype: string; fraction: number }>) =>
-		d.length ? d.map((x) => `${x.placetype} ${pct(x.fraction)}`).join(", ") : "—"
+		d.length > 0 ? d.map((x) => `${x.placetype} ${pct(x.fraction)}`).join(", ") : "—"
 
 	return (
 		<Box flexDirection="column">

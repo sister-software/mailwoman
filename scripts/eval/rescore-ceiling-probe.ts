@@ -48,11 +48,14 @@ const LOCALES: [string, string][] = [
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
 
-type N9 = { placeID?: string; children?: unknown[] }
+interface N9 {
+	placeID?: string
+	children?: unknown[]
+}
 const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
 
 const pctile = (xs: number[], p: number): number => {
-	if (!xs.length) return NaN
+	if (xs.length === 0) return Number.NaN
 	const s = [...xs].sort((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
@@ -127,7 +130,7 @@ async function main() {
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
 						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))
 
-					if (dists.length) {
+					if (dists.length > 0) {
 						sT1.push(dists[0]!)
 						sB5.push(Math.min(...dists))
 					}

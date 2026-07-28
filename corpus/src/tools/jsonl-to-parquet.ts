@@ -128,7 +128,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 
 /** Escape a path for single-quoted SQL string literals. */
 function sqlString(value: string): string {
-	return value.replace(/'/g, "''")
+	return value.replaceAll(/'/g, "''")
 }
 
 /** Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard. */
@@ -136,7 +136,7 @@ export async function jsonlToParquet(
 	options: JSONLToParquetOptions,
 	report?: (line: string) => void
 ): Promise<JSONLToParquetSummary> {
-	const rowGroupSize = options.rowGroupSize ?? 50000
+	const rowGroupSize = options.rowGroupSize ?? 50_000
 
 	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {
 		throw new Error(`rowGroupSize must be a positive integer (got ${JSON.stringify(rowGroupSize)})`)

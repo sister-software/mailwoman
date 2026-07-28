@@ -66,7 +66,7 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		// US is the unambiguous winner for this address.
 		const top = entries.sort((a, b) => b[1] - a[1])[0]!
 		expect(top[0]).toBe("US")
-		expect(seen[0]?.anchorWeight).toBe(1.0)
+		expect(seen[0]?.anchorWeight).toBe(1)
 	})
 
 	test("a confident in-map guess injects an anchorPosterior + weight", async () => {
@@ -78,7 +78,7 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 			placeCountry,
 		})
 		expect(placeCountry).toHaveBeenCalledWith("12 rue de la Paix, Paris")
-		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.94 }, anchorWeight: 1.0 })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.94 }, anchorWeight: 1 })
 	})
 
 	test("an explicit defaultCountry flows alongside the injected posterior", async () => {

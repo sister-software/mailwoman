@@ -42,7 +42,7 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 	})
 	it("stays SOFT (undefined) for a confident but NON-safelisted country — the low-coverage tail", () => {
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("FI")).toBe(false)
-		expect(hardCountryFor("FI", 1.0, {}, ON, undefined)).toBeUndefined()
+		expect(hardCountryFor("FI", 1, {}, ON, undefined)).toBeUndefined()
 	})
 	it("stays SOFT below the confidence bar even when safelisted", () => {
 		expect(hardCountryFor("ES", 0.5, {}, ON, undefined)).toBeUndefined()
@@ -85,7 +85,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 			{
 				classifier: fakeClassifier(fakeTree("probe input")),
 				resolver,
-				placeCountry: () => ({ country: opts.placed, confidence: 1.0 }),
+				placeCountry: () => ({ country: opts.placed, confidence: 1 }),
 			},
 			{
 				hardPlaceCountry: true,
@@ -156,7 +156,7 @@ describe("runPipeline — defaults", () => {
 		const result = await runPipeline("hello", {}, { locale: "en-US" })
 		expect(result.locale.locale).toBe("en-US")
 		expect(result.locale.source).toBe("caller")
-		expect(result.locale.confidence).toBe(1.0)
+		expect(result.locale.confidence).toBe(1)
 	})
 
 	it("records per-stage timing", async () => {
@@ -662,7 +662,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		expect(placeCountry).toHaveBeenCalledOnce()
 		expect(seen[0]).toMatchObject({
 			anchorPosterior: { FR: 0.94 },
-			anchorWeight: 1.0,
+			anchorWeight: 1,
 		})
 	})
 
@@ -672,7 +672,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		// resolver break the tie with its own evidence instead of committing to FR.
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
 		await runPipeline("Birmingham", { resolver, placeCountry })
-		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1.0 })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1 })
 	})
 
 	it("preserves the caller's resolveOpts fields while injecting the posterior", async () => {
@@ -702,10 +702,10 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		await runPipeline(
 			"75002",
 			{ resolver, placeCountry },
-			{ resolveOpts: { anchorPosterior: { GB: 1.0 }, anchorWeight: 2.0 } }
+			{ resolveOpts: { anchorPosterior: { GB: 1 }, anchorWeight: 2 } }
 		)
 		// Caller's posterior wins; the coarse-placer is a no-op here.
-		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1.0 }, anchorWeight: 2.0 })
+		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1 }, anchorWeight: 2 })
 	})
 
 	it("respects a caller-supplied anchorWeight while injecting the placer's posterior", async () => {
@@ -738,6 +738,6 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 			placeCountry,
 		})
 		expect(result.path).toBe("fast-path")
-		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1.0 })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1 })
 	})
 })

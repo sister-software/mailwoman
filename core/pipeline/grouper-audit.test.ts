@@ -97,7 +97,7 @@ describe("grouper-audit pass", () => {
 
 		const result = await runPipeline("Portland, OR", stages, {})
 		const localities = result.tree.roots.filter((n) => n.tag === "locality")
-		expect(localities.length).toBe(1)
+		expect(localities).toHaveLength(1)
 		expect(localities[0]!.source).toBeUndefined()
 	})
 
@@ -152,8 +152,8 @@ describe("grouper-audit pass", () => {
 
 		const result = await runPipeline("400 Broad St, Seattle, WA 98109", stages, {})
 		const auditNodes = result.tree.roots.filter((n) => n.source === "grouper-audit")
-		expect(auditNodes.length).toBe(0)
-		expect(result.tree.roots.length).toBe(1)
+		expect(auditNodes).toHaveLength(0)
+		expect(result.tree.roots).toHaveLength(1)
 		expect(result.tree.roots[0]!.tag).toBe("region")
 	})
 
@@ -223,7 +223,7 @@ describe("grouper-audit pass", () => {
 				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
 			}
 			const out = grouperAudit(treeWithCity, props, treeWithCity.raw)
-			expect(out.roots.filter((n) => n.tag === "locality").length).toBe(2)
+			expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(2)
 		})
 	})
 
@@ -244,6 +244,6 @@ describe("grouper-audit pass", () => {
 		})
 
 		const result = await runPipeline("NY-NY", stages, {})
-		expect(result.tree.roots.length).toBe(0)
+		expect(result.tree.roots).toHaveLength(0)
 	})
 })

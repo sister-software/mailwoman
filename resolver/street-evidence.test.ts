@@ -72,7 +72,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	test("FIX: moves off a wrong rank-1 to the in-index sibling", () => {
 		// rank-1 "Puget" (not a street) loses to rank-3 "Chemin Puget Terrein" (in index), within margin.
 		const evidence = mockEvidence(["Chemin Puget Terrein"])
-		const cands = [cand("Puget", 5.0), cand("Puget Terrein", 4.9), cand("Chemin Puget Terrein", 4.6)]
+		const cands = [cand("Puget", 5), cand("Puget Terrein", 4.9), cand("Chemin Puget Terrein", 4.6)]
 		const pick = pickByStreetEvidence(cands, evidence)
 		expect(pick.index).toBe(2)
 		expect(pick.moved).toBe(true)
@@ -82,7 +82,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	test("G1: does NOT credit a truncated pure-type sibling even though it exists in the index", () => {
 		// "rue" IS in the index but is pure type vocab → skipped; gold "Rue Guarnieri" is the real pick.
 		const evidence = mockEvidence(["rue", "Rue Guarnieri"])
-		const cands = [cand("rue", 5.0), cand("Rue Guarnieri", 4.5)]
+		const cands = [cand("rue", 5), cand("Rue Guarnieri", 4.5)]
 		const pick = pickByStreetEvidence(cands, evidence)
 		expect(pick.index).toBe(1)
 		expect(pick.candidate.streetSurface).toBe("Rue Guarnieri")
@@ -91,7 +91,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	test("G2: does NOT promote an in-index candidate beyond the margin cap", () => {
 		// Gold "Rue Paul Marzin" exists but sits 4.6 below rank-1 (> 2.5 cap) → keep rank-1 (fail-open).
 		const evidence = mockEvidence(["Rue Paul Marzin"])
-		const cands = [cand("Paul", 6.0), cand("Rue Paul Marzin", 1.4)]
+		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 1.4)]
 		const pick = pickByStreetEvidence(cands, evidence)
 		expect(pick.index).toBe(0)
 		expect(pick.moved).toBe(false)
@@ -99,7 +99,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 
 	test("G2: DOES promote when the in-index candidate is within the margin cap", () => {
 		const evidence = mockEvidence(["Rue Paul Marzin"])
-		const cands = [cand("Paul", 6.0), cand("Rue Paul Marzin", 4.0)] // 2.0 gap ≤ 2.5
+		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 4)] // 2.0 gap ≤ 2.5
 		const pick = pickByStreetEvidence(cands, evidence)
 		expect(pick.index).toBe(1)
 		expect(pick.moved).toBe(true)
@@ -120,7 +120,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 
 	test("custom marginCap is honored", () => {
 		const evidence = mockEvidence(["Rue Paul Marzin"])
-		const cands = [cand("Paul", 6.0), cand("Rue Paul Marzin", 1.4)]
+		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 1.4)]
 		// With a wide cap the deep candidate is now eligible.
 		const pick = pickByStreetEvidence(cands, evidence, { marginCap: 10 })
 		expect(pick.index).toBe(1)

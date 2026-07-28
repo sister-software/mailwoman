@@ -195,7 +195,7 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	lengthPenaltyWeight: 0.1,
 	proximityBoost: 0.8,
 	proximityScaleKm: 100,
-	biasBoost: 4.0,
+	biasBoost: 4,
 	// populationBoost is intentionally large — empirical tuning against real WOF showed BM25 gaps
 	// of 1.5-3.0 between famous places and tiny same-name peers (because the famous ones have
 	// hundreds of alt-name entries that hurt their FTS document score). To consistently surface
@@ -206,7 +206,7 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	// Note: this resolver uses `place_population` directly. The separate `place_importance` table
 	// (Wikipedia-derived) is consumed by the FST layer, not here. See
 	// docs/articles/concepts/importance-vs-population.md for the two-signal contract.
-	populationBoost: 4.0,
+	populationBoost: 4,
 	populationScaleLog10: 6,
 	// Exact name/alias match outranks partial match before the weighted sum (incl. population) is
 	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
@@ -277,8 +277,8 @@ function cfNormalize(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "") // combining diacritical marks
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[\u0300-\u036F]/g, "") // combining diacritical marks
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 
@@ -416,7 +416,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
 			for (const s of shards.slice(1)) {
-				this.#db.exec(`ATTACH DATABASE '${s.path.replace(/'/g, "''")}' AS ${s.schemaName}`)
+				this.#db.exec(`ATTACH DATABASE '${s.path.replaceAll(/'/g, "''")}' AS ${s.schemaName}`)
 			}
 		}
 
@@ -550,7 +550,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			/^\d{4}\s?[A-Za-z]{2}$/.test(query.text.trim())
 		) {
 			const trimmed = query.text.trim()
-			const joined = trimmed.replace(/\s+/g, "")
+			const joined = trimmed.replaceAll(/\s+/g, "")
 
 			if (joined !== trimmed) {
 				const full = await this.findPlace({ ...query, text: joined })
@@ -883,7 +883,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				ORDER BY COALESCE(${PLACE_POPULATION_TABLE}.population, 0) DESC
 				LIMIT ?
 			`)
-			const popParams = params.slice(0, params.length - 3) // drop the two boost params + ftsLimit
+			const popParams = params.slice(0, -3) // drop the two boost params + ftsLimit
 			const seen = new Set(rawRows.map((r) => r.id))
 
 			for (const row of popStmt.all(...popParams, POPULATION_FETCH_LIMIT) as unknown as RawSearchRow[]) {
@@ -1048,7 +1048,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
 				// nothing, so the alias sub-tier still decides there. Population orders within each
 				// sub-tier as before.
-				const norm = (v: string): string => v.toLowerCase().trim().replace(/\s+/g, " ")
+				const norm = (v: string): string => v.toLowerCase().trim().replaceAll(/\s+/g, " ")
 				const needle = norm(query.text)
 				// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
 				// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
@@ -1093,13 +1093,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 					return b.score - a.score
 				})
 
-				return Promise.resolve(candidates.slice(0, limit))
+				return candidates.slice(0, limit)
 			}
 		}
 
 		candidates.sort((a, b) => b.score - a.score)
 
-		return Promise.resolve(candidates.slice(0, limit))
+		return candidates.slice(0, limit)
 	}
 
 	#isLocalityQuery(query: FindPlaceQuery): boolean {
@@ -1345,7 +1345,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 					`SELECT wof_id AS id, name, alt_names FROM ${schemaName}.place_search WHERE wof_id IN (${placeholders})`
 				)
 				.all(...ids) as Array<{ id: number; name: string | null; alt_names: string | null }>
-			const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+			const norm = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 			const needle = norm(trimmed)
 
 			for (const r of rows) {
@@ -1475,10 +1475,10 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		// #920 name law (postcode-typed queries ONLY): delete intra-token punctuation and FUSE the
 		// remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
 		if (opts?.fuseTokens) {
-			const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
 			if (!body) continue
-			out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
 			continue
 		}
 
@@ -1492,11 +1492,11 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		if (parts.length === 0) continue
 
 		for (let i = 0; i < parts.length; i++) {
-			const body = parts[i]!.replace(/\*/g, "")
+			const body = parts[i]!.replaceAll(/\*/g, "")
 
 			if (!body) continue
 			// The caller's trailing `*` applies to the FINAL part ("Thiron-Gard*" → "Thiron" Gard*).
-			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
 		}
 	}
 

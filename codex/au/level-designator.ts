@@ -152,7 +152,7 @@ const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean
 	for (const { code, requiresNumber } of AU_LEVEL_DESIGNATORS) {
 		const variants = [...AU_LEVEL_DESIGNATOR_VARIANTS[code]]
 			.sort((a, b) => b.length - a.length)
-			.map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, String.raw`\s+`))
+			.map((v) => v.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&").replaceAll(/\s+/g, String.raw`\s+`))
 		const alts = variants.join("|")
 		// Identifier: optional alphanumeric (B2, 12, G). requiresNumber=true → identifier required.
 		const tail = requiresNumber

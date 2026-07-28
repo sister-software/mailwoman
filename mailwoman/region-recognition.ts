@@ -166,7 +166,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const comma = node.value.lastIndexOf(",")
 
-	if (comma < 0) return null
+	if (comma === -1) return null
 	const head = node.value.slice(0, comma).trim()
 	const tail = node.value.slice(comma + 1).trim()
 	const slug = usStateSlug(tail)

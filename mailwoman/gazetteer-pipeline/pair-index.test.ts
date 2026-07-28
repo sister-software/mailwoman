@@ -115,7 +115,7 @@ describe("nearestRankPercentile", () => {
 })
 
 describe("applyPairIndexHoldout", () => {
-	const bigEntries = Array.from({ length: 1_000 }, (_, i) => ({
+	const bigEntries = Array.from({ length: 1000 }, (_, i) => ({
 		child: `child-${String(i).padStart(4, "0")}`,
 		parent: "parent",
 		tag: "dependent_locality" as const,
@@ -125,7 +125,7 @@ describe("applyPairIndexHoldout", () => {
 		const { kept, heldOut } = applyPairIndexHoldout(bigEntries, 0, 42)
 
 		expect(heldOut).toHaveLength(0)
-		expect(kept).toHaveLength(1_000)
+		expect(kept).toHaveLength(1000)
 	})
 
 	it("withholds round(fraction * n) entries and keeps the rest, covering every entry exactly once", () => {
@@ -136,7 +136,7 @@ describe("applyPairIndexHoldout", () => {
 
 		// Every original entry is in exactly one of the two buckets — no entry duplicated or dropped.
 		const seen = new Set([...kept, ...heldOut].map((e) => `${e.child}:${e.parent}`))
-		expect(seen.size).toBe(1_000)
+		expect(seen.size).toBe(1000)
 	})
 
 	it("is deterministic for a given (fraction, seed) — same holdout set on repeat calls", () => {
@@ -164,7 +164,7 @@ describe("applyPairIndexHoldout", () => {
 	it("clamps fraction to [0, 1] rather than throwing on an out-of-range input", () => {
 		const { kept, heldOut } = applyPairIndexHoldout(bigEntries, 1.5, 42)
 
-		expect(heldOut).toHaveLength(1_000)
+		expect(heldOut).toHaveLength(1000)
 		expect(kept).toHaveLength(0)
 	})
 

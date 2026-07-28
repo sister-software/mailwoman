@@ -357,8 +357,8 @@ async function main(): Promise<void> {
 	const args = parseArgs()
 	console.error("--- per-locale-f1.ts ---")
 	console.error("Golden dir:", args.goldenDir)
-	console.error("Files:     ", args.files.join(", "))
-	console.error("Model:     ", args.modelPath ?? "(default weights)")
+	console.error("Files:", args.files.join(", "))
+	console.error("Model:", args.modelPath ?? "(default weights)")
 
 	let neural: NeuralAddressClassifier
 
@@ -433,8 +433,8 @@ async function main(): Promise<void> {
 				.split("\n")
 				.filter(Boolean)
 				.map((l) => JSON.parse(l))
-		} catch (err) {
-			console.error(`  skip ${file}: ${(err as Error).message}`)
+		} catch (error) {
+			console.error(`  skip ${file}: ${(error as Error).message}`)
 			continue
 		}
 		const preds: Array<Record<string, string>> = []

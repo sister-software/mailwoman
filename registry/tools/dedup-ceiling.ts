@@ -74,7 +74,7 @@ function orgTokens(s: string): Set<string> {
 	return new Set(
 		s
 			.toLowerCase()
-			.replace(/[^a-z0-9 ]/g, " ")
+			.replaceAll(/[^a-z0-9 ]/g, " ")
 			.split(/\s+/)
 			.filter((t) => t && !STOP.has(t))
 	)
@@ -91,7 +91,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 	return inter / (a.size + b.size - inter)
 }
 const normPhone = (p?: string): string => {
-	const d = (p ?? "").replace(/\D/g, "")
+	const d = (p ?? "").replaceAll(/\D/g, "")
 
 	return d.length >= 10 ? d.slice(-10) : ""
 }
@@ -114,7 +114,7 @@ export async function dedupCeiling(
 	report?: (line: string) => void
 ): Promise<{ markdown: string; pairs: number; collide: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const CAP = options.cap ?? 50000
+	const CAP = options.cap ?? 50_000
 	const STATE = (options.state || "TX").toUpperCase()
 	const TAU = options.tau ?? 0.7
 	const OUT_MD = options.outMd || ""

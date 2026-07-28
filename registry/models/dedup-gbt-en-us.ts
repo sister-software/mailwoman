@@ -21,7 +21,7 @@ export const DEDUP_GBT_META = {
 	state: "TX",
 	npis: 3000,
 	records: 8602,
-	pairs: 618872,
+	pairs: 618_872,
 	posRate: 0.0102,
 	costNegative: 1,
 	hyperparams: {
@@ -32,8 +32,8 @@ export const DEDUP_GBT_META = {
 	},
 	recommendedThreshold: 2.8324,
 	features: 20,
-	addressFrequencyDistinct: 3317267,
-	addressFrequencyTotal: 9260504,
+	addressFrequencyDistinct: 3_317_267,
+	addressFrequencyTotal: 9_260_504,
 } as const
 
 // prettier-ignore

@@ -30,7 +30,7 @@ test.describe("Demo — production functional smoke @smoke", () => {
 		expect(lat, `resolved lat ${lat} should be at the White House`).toBeGreaterThan(38.85)
 		expect(lat).toBeLessThan(38.95)
 		expect(lon).toBeGreaterThan(-77.1)
-		expect(lon).toBeLessThan(-77.0)
+		expect(lon).toBeLessThan(-77)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()
 	})

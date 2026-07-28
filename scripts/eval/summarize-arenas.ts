@@ -50,7 +50,7 @@ function pyFixed(x: number, d: number): string {
 		roundUp = true
 	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
-		roundUp = parseInt(lastKept, 10) % 2 === 1
+		roundUp = Number.parseInt(lastKept, 10) % 2 === 1
 	}
 	let digits = intPart! + keep
 
@@ -62,7 +62,7 @@ function pyFixed(x: number, d: number): string {
 			if (arr[i] === "9") {
 				arr[i] = "0"
 			} else {
-				arr[i] = String(parseInt(arr[i]!, 10) + 1)
+				arr[i] = String(Number.parseInt(arr[i]!, 10) + 1)
 				break
 			}
 		}
@@ -94,13 +94,13 @@ function main(): void {
 		let res: Result[]
 
 		try {
-			res = JSON.parse(readFileSync(`${outDir}/${a}.results.json`, "utf-8"))
-		} catch (e) {
-			if ((e as NodeJS.ErrnoException).code === "ENOENT") {
+			res = JSON.parse(readFileSync(`${outDir}/${a}.results.json`, "utf8"))
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				console.log(`| ${a} | (no results) |`)
 				continue
 			}
-			throw e
+			throw error
 		}
 		loaded[a] = res
 		const n = res.length
@@ -113,7 +113,7 @@ function main(): void {
 	if ("postal" in loaded) {
 		const ec: Record<string, string> = {}
 
-		for (const line of readFileSync(postalSrc, "utf-8").split("\n")) {
+		for (const line of readFileSync(postalSrc, "utf8").split("\n")) {
 			if (!line) continue
 			const row = JSON.parse(line)
 			ec[row.input] = row.edge_class ?? "?"

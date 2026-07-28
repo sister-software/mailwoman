@@ -408,8 +408,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		label: args.label,
 		description: args.description,
 		modelSize: args.modelSize ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
-		tokenizerVocab: 48000,
-		steps: args.steps ?? 100000,
+		tokenizerVocab: 48_000,
+		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
 		hasWOFDb: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the

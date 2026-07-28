@@ -126,7 +126,10 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const tree = JSON.parse(stripAnsiSpinner(result.stdout))
 		expect(tree).toHaveProperty("raw")
 		expect(tree).toHaveProperty("roots")
-		type TreeNode = { alternatives?: unknown[]; children?: TreeNode[] }
+		interface TreeNode {
+			alternatives?: unknown[]
+			children?: TreeNode[]
+		}
 		const findAlternatives = (nodes: TreeNode[]): boolean =>
 			nodes.some(
 				(n) =>

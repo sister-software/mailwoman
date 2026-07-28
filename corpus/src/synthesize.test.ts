@@ -91,7 +91,7 @@ describe("universal augmentations", () => {
 		// Substring invariant: every component value must appear in raw.
 		for (const v of Object.values(out.components)) {
 			if (v) {
-				expect(out.raw.includes(v)).toBe(true)
+				expect(out.raw).toContain(v)
 			}
 		}
 	})
@@ -674,7 +674,7 @@ describe("composeAdversarialRow", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		expect(result.row.tokens).toHaveLength(result.row.labels.length)
 
 		for (const label of result.row.labels) {
 			expect(BIO_LABELS).toContain(label)
@@ -922,8 +922,8 @@ describe("composeAdversarialRow", () => {
 
 			if (result.kind !== "labeled") continue
 			const { raw, span_starts, span_ends, span_tags } = result.row
-			expect(span_starts!.length).toBe(span_ends!.length)
-			expect(span_starts!.length).toBe(span_tags!.length)
+			expect(span_starts!).toHaveLength(span_ends!.length)
+			expect(span_starts!).toHaveLength(span_tags!.length)
 
 			for (let i = 0; i < span_starts!.length; i++) {
 				expect(span_starts![i]!).toBeGreaterThanOrEqual(0)
@@ -1010,7 +1010,7 @@ describe("typoInject (#530)", () => {
 		expect(out!.raw).toContain(out!.components[tag]!)
 		// changed, and same length (a transpose or a single-char substitution)
 		expect(out!.components[tag]).not.toBe(row.components[tag])
-		expect(out!.components[tag]!.length).toBe(row.components[tag]!.length)
+		expect(out!.components[tag]!).toHaveLength(row.components[tag]!.length)
 	})
 
 	it("is deterministic — the same source_id yields the same typo (reproducible corpus)", () => {

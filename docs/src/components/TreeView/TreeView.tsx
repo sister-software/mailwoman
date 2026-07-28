@@ -35,7 +35,9 @@ function renderNode(node: TreeNode, path: string): React.ReactNode {
 				) : null}
 				{typeof node.confidence === "number" ? <span className={styles.conf}>{node.confidence.toFixed(2)}</span> : null}
 			</span>
-			{kids.length ? <ul className={styles.children}>{kids.map((c, i) => renderNode(c, `${path}.${i}`))}</ul> : null}
+			{kids.length > 0 ? (
+				<ul className={styles.children}>{kids.map((c, i) => renderNode(c, `${path}.${i}`))}</ul>
+			) : null}
 		</li>
 	)
 }

@@ -95,7 +95,7 @@ const values = rawValues as {
 // ---------------------------------------------------------------------------
 
 function percentile(xs: number[], p: number): number {
-	if (xs.length === 0) return NaN
+	if (xs.length === 0) return Number.NaN
 	const s = [...xs].sort((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
@@ -127,10 +127,10 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
-	let state = (seed * 2654435761 + 1) & 0xffffffff
+	let state = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 
 	for (let i = out.length - 1; i > 0; i--) {
-		state = (state * 1103515245 + 12345) & 0x7fffffff
+		state = (state * 1_103_515_245 + 12_345) & 0x7f_ff_ff_ff
 		const j = state % (i + 1)
 		;[out[i], out[j]] = [out[j]!, out[i]!]
 	}
@@ -326,7 +326,8 @@ async function main(): Promise<void> {
 	const tierStats = tiers.map((t) => {
 		const rows = byTier[t]
 
-		if (rows.length === 0) return { tier: t, n: 0, medianClaimedM: NaN, medianCalibratedM: NaN, medianErrorM: NaN }
+		if (rows.length === 0)
+			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 		const claimedMeds = median(rows.map((r) => r.claimedRadiusM))
 		const errMeds = median(rows.map((r) => r.errorM))
 
@@ -355,9 +356,10 @@ async function main(): Promise<void> {
 		const testT = shuffledTier.slice(nCalT)
 		const calScoresT = calT.map((r) => r.errorM / r.claimedRadiusM)
 		const QT = conformalThreshold(calScoresT, alpha)
-		const covT = testT.length > 0 ? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length : NaN
+		const covT =
+			testT.length > 0 ? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length : Number.NaN
 		const uncalCovT =
-			allRows.length > 0 ? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length : NaN
+			allRows.length > 0 ? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length : Number.NaN
 
 		return {
 			tier: t,

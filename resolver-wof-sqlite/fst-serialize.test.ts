@@ -22,19 +22,19 @@ function buildSyntheticFST(): FSTMatcher {
 			edges: new Map(),
 			places: [
 				{
-					wofID: 85977539,
+					wofID: 85_977_539,
 					placetype: "locality",
 					name: "New York City",
-					parentChain: [85688543, 85633793],
+					parentChain: [85_688_543, 85_633_793],
 					importance: 0.95,
 					lat: 40.7128,
 					lon: -74.006,
 				},
 				{
-					wofID: 85688543,
+					wofID: 85_688_543,
 					placetype: "region",
 					name: "New York",
-					parentChain: [85633793],
+					parentChain: [85_633_793],
 					importance: 0.85,
 					lat: 42.1657,
 					lon: -74.9481,
@@ -45,10 +45,10 @@ function buildSyntheticFST(): FSTMatcher {
 			edges: new Map(),
 			places: [
 				{
-					wofID: 85688735,
+					wofID: 85_688_735,
 					placetype: "locality",
 					name: "Portland",
-					parentChain: [85688513, 85633793],
+					parentChain: [85_688_513, 85_633_793],
 					importance: 0.72,
 					lat: 45.5152,
 					lon: -122.6784,
@@ -81,7 +81,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 	it("roundtrips 'New York' query", () => {
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 		expect(rest.accepting.map((p) => p.wofID).sort()).toEqual(orig.accepting.map((p) => p.wofID).sort())
 	})
 
@@ -102,7 +102,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 	it("roundtrips 'Portland' query", () => {
 		const orig = original.query("Portland")
 		const rest = restored.query("Portland")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 		expect(rest.accepting[0]!.wofID).toBe(orig.accepting[0]!.wofID)
 	})
 
@@ -163,7 +163,7 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 	it("'New York' produces identical interpretations", () => {
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 		const origIds = orig.accepting.map((p) => p.wofID).sort()
 		const restIds = rest.accepting.map((p) => p.wofID).sort()
 		expect(restIds).toEqual(origIds)
@@ -171,16 +171,16 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 
 	it("NYC parent chain survives roundtrip", () => {
 		const rest = restored.query("New York")
-		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.wofID === 85977539)
+		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.wofID === 85_977_539)
 		expect(nyc).toBeDefined()
-		expect(nyc!.wofID).toBe(85977539)
-		expect(nyc!.parentChain).toContain(85688543)
+		expect(nyc!.wofID).toBe(85_977_539)
+		expect(nyc!.parentChain).toContain(85_688_543)
 	})
 
 	it("'Portland' produces identical localities", () => {
 		const orig = original.query("Portland")
 		const rest = restored.query("Portland")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 	})
 
 	it("continuations match after roundtrip", () => {
@@ -195,7 +195,7 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		const orig = original.query("Buffalo Health Clinic")
 		const rest = restored.query("Buffalo Health Clinic")
 		expect(rest.path).toEqual(orig.path)
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 	})
 
 	it("binary size is reasonable", () => {

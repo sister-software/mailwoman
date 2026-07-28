@@ -15,7 +15,7 @@ test("enrichAdmin adds region abbreviations (VT→Vermont) and builds place_abbr
 	await createUnifiedSchema(db)
 	db.prepare(
 		"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, 0, 0, 1, 0, 0, 0, 0, 0)"
-	).run(85688763, -1, "Vermont", "region", "US")
+	).run(85_688_763, -1, "Vermont", "region", "US")
 
 	const r = enrichAdmin(db) // default specsDir = the packaged chromium-i18n ssl-address specs
 
@@ -39,7 +39,7 @@ test("enrichAdmin is idempotent — a re-run doesn't duplicate abbr rows", async
 	await createUnifiedSchema(db)
 	db.prepare(
 		"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, 0, 0, 1, 0, 0, 0, 0, 0)"
-	).run(85688763, -1, "Vermont", "region", "US")
+	).run(85_688_763, -1, "Vermont", "region", "US")
 
 	const first = enrichAdmin(db)
 	const second = enrichAdmin(db)

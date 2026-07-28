@@ -53,7 +53,7 @@ const F1_DATA: F1Row[] = [
 		v420: 64.9,
 		v430: 93.6,
 		v440: 93.6,
-		v500: 98.0,
+		v500: 98,
 	},
 	{
 		tag: "street_suffix",
@@ -96,7 +96,7 @@ const F1_DATA: F1Row[] = [
 		v420: 90.6,
 		v430: 92.1,
 		v440: 92.1,
-		v500: 97.0,
+		v500: 97,
 	},
 	{
 		tag: "country",
@@ -151,7 +151,7 @@ const F1_DATA: F1Row[] = [
 		v420: 97.3,
 		v430: 97.8,
 		v440: 98.3,
-		v500: 95.0,
+		v500: 95,
 	},
 	{
 		tag: "us.micro",
@@ -180,7 +180,7 @@ const F1_DATA: F1Row[] = [
 		eval: "golden dev",
 		tooltip:
 			"F1 on French house number extraction from the golden development set. Improved significantly in v4.3.0 (91.0 → 97.7) thanks to the conventions mask.",
-		v410: 91.0,
+		v410: 91,
 		v420: 94.6,
 		v430: 97.7,
 		v440: 97.2,
@@ -205,7 +205,7 @@ const F1_DATA: F1Row[] = [
 		v410: 90.6,
 		v420: 90.9,
 		v430: 90.1,
-		v440: 91.0,
+		v440: 91,
 		v500: 91.1,
 	},
 ]

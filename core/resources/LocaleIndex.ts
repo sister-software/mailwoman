@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { TextNormalizer } from "../tokenization/normalizer.ts"
+import type { TextNormalizer } from "../tokenization/normalizer.ts"
 import type { Displayable } from "./debugging.ts"
 
 /**

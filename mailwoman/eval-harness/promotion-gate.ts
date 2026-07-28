@@ -523,7 +523,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		`\nledger (#885): on promote, append this run —\n` +
 			`  node mailwoman/out/cli.js eval ledger-append \\\n` +
 			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
-			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
+			`    --run-id ${LABEL.replaceAll(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${EFF_CARD}`
 	)
 

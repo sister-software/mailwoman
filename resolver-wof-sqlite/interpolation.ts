@@ -252,7 +252,7 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 		}
 		remaining -= leg
 	}
-	const [lon, lat] = polyline[polyline.length - 1]!
+	const [lon, lat] = polyline.at(-1)!
 
 	return [lon, lat, total]
 }

@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFileSync } from "node:fs"
-import { mkdtempSync } from "node:fs"
+import { readFileSync, mkdtempSync } from "node:fs"
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 import { tmpdir } from "node:os"

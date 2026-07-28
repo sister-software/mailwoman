@@ -16,10 +16,10 @@ import type { PathBuilderLike } from "path-ts"
  * @throws If the path exists but cannot be statted for some reason other than non-existence.
  */
 export function tryStat(pathBuilderLike: PathBuilderLike): Promise<Stats | null> {
-	return stat(pathBuilderLike.toString()).catch((err) => {
-		if (err.code === "ENOENT") return null
+	return stat(pathBuilderLike.toString()).catch((error) => {
+		if (error.code === "ENOENT") return null
 
-		throw err
+		throw error
 	})
 }
 
@@ -29,9 +29,9 @@ export function tryStat(pathBuilderLike: PathBuilderLike): Promise<Stats | null>
 export async function isDirectory(path: PathBuilderLike): Promise<boolean> {
 	return tryStat(path)
 		.then((stats) => stats?.isDirectory() ?? false)
-		.catch((err) => {
-			if (err.code === "ENOENT") return false
-			throw err
+		.catch((error) => {
+			if (error.code === "ENOENT") return false
+			throw error
 		})
 }
 

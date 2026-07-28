@@ -74,8 +74,8 @@ export function buildSpanProposalPriors(
 ): number[][] {
 	const T = tokens.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 5.0
-	const annotationBiasScale = opts.annotationBiasScale ?? 12.0
+	const biasScale = opts.biasScale ?? 5
+	const annotationBiasScale = opts.annotationBiasScale ?? 12
 	const annotationFloor = opts.annotationConfidenceFloor ?? 0.6
 
 	const matrix: number[][] = []

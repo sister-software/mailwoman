@@ -51,7 +51,7 @@ export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
  * `"11-041"` → `"11041"`, `"AD500"` → `"AD500"`.
  */
 export function normalizePostcodeName(raw: string): string {
-	return raw.replace(/[^\p{L}\p{N}]/gu, "")
+	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "")
 }
 
 export interface GeonamesPostalIngestResult {

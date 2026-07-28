@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ResultNode } from "../../shared/resources.tsx"
+import type { ResultNode } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 

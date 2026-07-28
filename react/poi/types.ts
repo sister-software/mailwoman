@@ -9,8 +9,7 @@
  *   package's browser graph (it lives in the docs site, which knows where the layer is served).
  */
 
-import type { POIPhraseLookup, QueryKindResult } from "@mailwoman/kind-classifier"
-import type { createKindClassifier } from "@mailwoman/kind-classifier"
+import type { POIPhraseLookup, QueryKindResult, createKindClassifier } from "@mailwoman/kind-classifier"
 import type { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
 export type TaxonomyLookup = ReturnType<typeof createPOITaxonomyLookup>

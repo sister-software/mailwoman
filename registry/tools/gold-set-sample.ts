@@ -63,7 +63,7 @@ function orgTokens(s: string): Set<string> {
 	return new Set(
 		s
 			.toLowerCase()
-			.replace(/[^a-z0-9 ]/g, " ")
+			.replaceAll(/[^a-z0-9 ]/g, " ")
 			.split(/\s+/)
 			.filter((t) => t && !STOP.has(t))
 	)
@@ -112,7 +112,7 @@ export async function goldSetSample(
 	report?: (line: string) => void
 ): Promise<{ hardPairs: number; sampled: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const CAP = options.cap ?? 200000
+	const CAP = options.cap ?? 200_000
 	const STATE = (options.state || "TX").toUpperCase()
 	const TAU = options.tau ?? 0.7
 	const N = options.n ?? 300

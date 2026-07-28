@@ -81,8 +81,8 @@ describe("decodeAsTuples (order-preserving)", () => {
 		]
 		const tree = buildAddressTree(raw, tokens)
 		const tuples = decodeAsTuples(tree)
-		expect(tuples.filter(([t]) => t === "locality").length).toBe(2)
-		expect(tuples.filter(([t]) => t === "region").length).toBe(2)
+		expect(tuples.filter(([t]) => t === "locality")).toHaveLength(2)
+		expect(tuples.filter(([t]) => t === "region")).toHaveLength(2)
 	})
 })
 
@@ -137,8 +137,8 @@ describe("decodeAsXML (nested mixed-content)", () => {
 	test("opts: pretty=false emits a single line", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
 		const xml = decodeAsXML(tree, { pretty: false })
-		expect(xml.includes("\n")).toBe(false)
-		expect(xml.includes("\t")).toBe(false)
+		expect(xml).not.toContain("\n")
+		expect(xml).not.toContain("	")
 	})
 
 	test("well-formed: every opened tag closes", () => {
@@ -156,8 +156,8 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const tree = buildAddressTree(raw, tokens)
 		const root = tree.roots[0]!
 		root.alternatives = [
-			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
-			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
+			{ id: 101_727_113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
+			{ id: 101_728_010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
 		]
 		const xml = decodeAsXML(tree)
 		expect(xml).not.toContain("<alternative")
@@ -170,8 +170,8 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const tree = buildAddressTree(raw, tokens)
 		const root = tree.roots[0]!
 		root.alternatives = [
-			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
-			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
+			{ id: 101_727_113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
+			{ id: 101_728_010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
 		]
 		const xml = decodeAsXML(tree, { includeAlternatives: true })
 		expect(xml).toContain("<alternative")

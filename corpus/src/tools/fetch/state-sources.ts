@@ -106,8 +106,8 @@ export async function fetchStateSources(
 				headers: { "Accept-Encoding": "gzip, br" },
 				report,
 			}))
-		} catch (err) {
-			report?.(`  ✗ download failed for ${url}: ${(err as Error).message}`)
+		} catch (error) {
+			report?.(`  ✗ download failed for ${url}: ${(error as Error).message}`)
 			failed++
 			failedCodes.push(slug)
 			continue

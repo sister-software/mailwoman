@@ -33,7 +33,7 @@ export function toDMS(lat: number, lon: number): { lat: string; lon: string } {
 	return { lat: dmsComponent(lat, ["N", "S"]), lon: dmsComponent(lon, ["E", "W"]) }
 }
 
-const WEB_MERCATOR_R = 6378137
+const WEB_MERCATOR_R = 6_378_137
 
 /** Web Mercator (EPSG:3857) projection of a coordinate. */
 export function toMercator(lat: number, lon: number): { x: number; y: number } {
@@ -123,8 +123,8 @@ export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	return out.slice(0, pairs * 2).join("")
 }
 
-const J2000 = 2451545.0
-const unixEpochJulian = 2440587.5
+const J2000 = 2451545
+const unixEpochJulian = 2_440_587.5
 
 /**
  * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds, via the standard sunrise equation.
@@ -136,7 +136,7 @@ export function sunTimes(
 	lon: number,
 	date: Date = new Date()
 ): { rise?: number; set?: number; noon: number } {
-	const julian = date.getTime() / 86400000 + unixEpochJulian
+	const julian = date.getTime() / 86_400_000 + unixEpochJulian
 	const n = Math.round(julian - J2000 - 0.0009 + lon / 360)
 	const meanSolarTime = n + 0.0009 - lon / 360
 	const M = (357.5291 + 0.98560028 * meanSolarTime) % 360
@@ -148,7 +148,7 @@ export function sunTimes(
 	const latR = toRad(lat)
 	const cosH =
 		(Math.sin(toRad(-0.833)) - Math.sin(latR) * Math.sin(declination)) / (Math.cos(latR) * Math.cos(declination))
-	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86400)
+	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86_400)
 	const noon = toEpoch(transit)
 
 	if (cosH >= 1 || cosH <= -1) return { noon }
@@ -158,7 +158,7 @@ export function sunTimes(
 }
 
 // MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
-const UTM_A = 6378137.0
+const UTM_A = 6_378_137.0
 const UTM_F = 1 / 298.257223563
 const UTM_K0 = 0.9996
 const UTM_E2 = UTM_F * (2 - UTM_F)
@@ -180,7 +180,7 @@ function latLonToUtm(lat: number, lon: number): { zone: number; easting: number;
 			((35 * UTM_E2 ** 3) / 3072) * Math.sin(6 * phi))
 	const easting =
 		UTM_K0 * N * (A + ((1 - T + C) * A ** 3) / 6 + ((5 - 18 * T + T ** 2 + 72 * C - 58 * UTM_EP2) * A ** 5) / 120) +
-		500000
+		500_000
 	let northing =
 		UTM_K0 *
 		(M +
@@ -191,7 +191,7 @@ function latLonToUtm(lat: number, lon: number): { zone: number; easting: number;
 					((61 - 58 * T + T ** 2 + 600 * C - 330 * UTM_EP2) * A ** 6) / 720))
 
 	if (lat < 0) {
-		northing += 10000000
+		northing += 10_000_000
 	}
 
 	return { zone, easting, northing }
@@ -208,15 +208,15 @@ export function toMGRS(lat: number, lon: number): string {
 	if (lat < -80 || lat > 84) return ""
 	const band = MGRS_LAT_BANDS[Math.floor((lat + 80) / 8)]!
 	const { zone, easting, northing } = latLonToUtm(lat, lon)
-	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100000) - 1]!
-	let row = Math.floor(northing / 100000) % 20
+	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100_000) - 1]!
+	let row = Math.floor(northing / 100_000) % 20
 
 	if (zone % 2 === 0) {
 		row = (row + 5) % 20
 	}
 	const rowLetter = MGRS_ROW_LETTERS[row]!
-	const e = String(Math.floor(easting % 100000)).padStart(5, "0")
-	const n = String(Math.floor(northing % 100000)).padStart(5, "0")
+	const e = String(Math.floor(easting % 100_000)).padStart(5, "0")
+	const n = String(Math.floor(northing % 100_000)).padStart(5, "0")
 
 	return `${zone}${band}${colLetter}${rowLetter}${e}${n}`
 }

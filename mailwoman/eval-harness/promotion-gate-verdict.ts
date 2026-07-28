@@ -59,7 +59,7 @@ export function arenaColumn(md: string, arena: string, column: string): number |
 
 	const idx = cells(header).indexOf(column)
 
-	if (idx < 0) return undefined
+	if (idx === -1) return undefined
 
 	const m = cells(row)[idx]?.match(/([\d.]+)%/)
 

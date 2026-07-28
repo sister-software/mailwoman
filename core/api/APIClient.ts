@@ -102,7 +102,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		this.axios.interceptors.response.use(undefined, delegateAxiosError)
 
-		this.#requestInterval = typeof config.requestsPerMinute === "number" ? 60000 / config.requestsPerMinute : 0
+		this.#requestInterval = typeof config.requestsPerMinute === "number" ? 60_000 / config.requestsPerMinute : 0
 
 		if (this.#requestInterval) {
 			this.axios.interceptors.response.use(this.updateCooldownAfterResponse)
@@ -166,7 +166,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			await storedCache[Symbol.asyncDispose]()
 		}
 
-		return Promise.resolve()
+		return
 	}
 
 	public override toString() {

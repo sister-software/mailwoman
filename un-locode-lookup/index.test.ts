@@ -30,7 +30,7 @@ function fixtureDB(): DatabaseSync {
 	db.exec("CREATE TABLE un_locode (country TEXT, location TEXT, name TEXT, nameNorm TEXT, lat REAL, lon REAL)")
 	const ins = db.prepare("INSERT INTO un_locode VALUES (?,?,?,?,?,?)")
 	ins.run("NL", "RTM", "Rotterdam", "rotterdam", 51.92, 4.48)
-	ins.run("US", "NYC", "New York", "new york", 40.7, -74.0)
+	ins.run("US", "NYC", "New York", "new york", 40.7, -74)
 
 	return db
 }

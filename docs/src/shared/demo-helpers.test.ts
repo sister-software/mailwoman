@@ -24,7 +24,7 @@ interface StubPlace extends Hit {
 	nameKeys?: string[]
 }
 
-const AT_BBOX = { minLat: 46.4, maxLat: 49.0, minLon: 9.5, maxLon: 17.2 }
+const AT_BBOX = { minLat: 46.4, maxLat: 49, minLon: 9.5, maxLon: 17.2 }
 
 /**
  * A candidate-table-shaped stub: exact normalized-name match (candidate rows are always `exactMatch`), score-ordered
@@ -55,7 +55,12 @@ function stubLookup(places: StubPlace[]): MailwomanLookupLike {
 	}
 }
 
-type TreeNode = { tag: string; value: string; confidence: number; children: TreeNode[] }
+interface TreeNode {
+	tag: string
+	value: string
+	confidence: number
+	children: TreeNode[]
+}
 
 const node = (tag: string, value: string, children: TreeNode[] = []): TreeNode => ({
 	tag,
@@ -131,7 +136,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		// locality wins the pin; the postcode stays in the hit list.
 		const lookup = stubLookup([
 			{ id: 30, name: "10115", placetype: "postalcode", country: "DE", lat: 52.53, lon: 13.38, score: 2 },
-			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74.0, score: 9 },
+			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74, score: 9 },
 		])
 		const hits = await runCascade(
 			lookup,

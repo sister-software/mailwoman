@@ -31,8 +31,8 @@ const SP_FAR = {
 	name: "Saint-Pierre",
 	placetype: "locality",
 	country: "FR",
-	lat: 44.0,
-	lon: 5.0,
+	lat: 44,
+	lon: 5,
 	score: 8,
 	exactMatch: true,
 } // ~600 km from PC
@@ -133,7 +133,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 		const loc = out.roots.find((n) => n.tag === "locality")!
 
 		expect(loc.placeID).toBe("wof:1") // the far one — untouched without the lever
-		expect(loc.lat).toBeCloseTo(44.0)
+		expect(loc.lat).toBeCloseTo(44)
 	})
 
 	it("no-ops when no postcode resolved (no anchor to disambiguate against)", async () => {

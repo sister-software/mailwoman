@@ -89,7 +89,7 @@ function composeRaw(house: string, street: string, postcode: string, locality: s
 		parts.push(cityPart)
 	}
 
-	return parts.join(", ").replace(/\s+/g, " ").trim()
+	return parts.join(", ").replaceAll(/\s+/g, " ").trim()
 }
 
 export function createBanAdapter(): CorpusAdapter {

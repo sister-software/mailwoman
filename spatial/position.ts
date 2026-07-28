@@ -6,7 +6,7 @@
  *   This file contains types and utilities for working with geographic positions.
  */
 
-import { type LatLngLiteral } from "@googlemaps/google-maps-services-js"
+import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { GeoPoint, type GeoPointInput } from "@mailwoman/spatial"
 
 /**
@@ -120,7 +120,7 @@ export type Coordinates3D = [
 /**
  * A record of internal coordinates, typically used by the US Census.
  */
-export type InternalPointCoordinates = {
+export interface InternalPointCoordinates {
 	/**
 	 * Internal Longitude (X) Coordinates
 	 *
@@ -229,7 +229,7 @@ export type EarthRadiusUnit = "km" | "miles" | "meters"
 const RADII = {
 	km: 6371,
 	miles: 3958.8,
-	meters: 6371000,
+	meters: 6_371_000,
 } as const satisfies Record<EarthRadiusUnit, number>
 
 /**
@@ -260,7 +260,7 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 	const p1 = GeoPoint.from(point1)
 	const p2 = GeoPoint.from(point2)
 
-	if (!p1 || !p2) return NaN
+	if (!p1 || !p2) return Number.NaN
 
 	return greatCircle(p1.latitude, p1.longitude, p2.latitude, p2.longitude, unit)
 }

@@ -71,8 +71,8 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 
 		try {
 			inputsParsed = InputsSchema.parse(JSON.parse(options.inputs))
-		} catch (err) {
-			throw commandError(`invalid --inputs JSON: ${(err as Error).message}`)
+		} catch (error) {
+			throw commandError(`invalid --inputs JSON: ${(error as Error).message}`)
 		}
 
 		const adapterInputs: Record<string, AdapterOptions> = Object.fromEntries(

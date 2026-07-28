@@ -82,8 +82,8 @@ export async function runAutocomplete(
 
 	try {
 		buf = readFileSync(fstPath)
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error)
 		throw commandError(`Failed to read FST binary at ${fstPath}: ${msg}`)
 	}
 
@@ -96,8 +96,8 @@ export async function runAutocomplete(
 
 	try {
 		matcher = deserializeFST(buf)
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error)
 		throw commandError(`Malformed FST binary at ${fstPath}: ${msg}`)
 	}
 

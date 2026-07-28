@@ -157,7 +157,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
  * shard's full street name matches.
  */
 // The 8 USPS cardinals/intercardinals (abbrev or name) — @codex/us owns the canonical table (#215).
-const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replace(/\./g, ""))
+const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replaceAll(/\./g, ""))
 
 /**
  * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence, depth-first), scope by the
@@ -363,10 +363,10 @@ const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
 function foldVoieTokens(s: string): string[] {
 	return s
 		.normalize("NFKD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
-		.replace(/[.,'’]/g, "")
-		.replace(/-/g, " ")
+		.replaceAll(/[.,'’]/g, "")
+		.replaceAll(/-/g, " ")
 		.split(/\s+/)
 		.filter(Boolean)
 }
@@ -574,8 +574,8 @@ function foldName(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[^a-z0-9 ]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[^a-z0-9 ]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 
@@ -655,7 +655,7 @@ async function recoverPostcodeNode(
 ): Promise<void> {
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {
@@ -1181,7 +1181,7 @@ class WOFResolver implements Resolver {
 			postcode: firstPostcodeValue(tree.roots),
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
-			anchorWeight: opts.anchorWeight ?? 2.0,
+			anchorWeight: opts.anchorWeight ?? 2,
 			hardCountry: opts.hardCountry,
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or

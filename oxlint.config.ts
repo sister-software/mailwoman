@@ -17,6 +17,12 @@ const config = createOxlintConfig({
 	// Left off here to match the repo's prior behavior.
 	headers: false,
 	restrictProcessGlobals: true,
+	// A number used as a comparison threshold needs a name; data tables (bbox rows, codepoint
+	// ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
+	unnamedThresholds: true,
+	// Exported and SCREAMING_CASE module-level constants carry a JSDoc block saying what the value
+	// means and where it came from — provenance, not a restatement of the identifier.
+	constantDocs: true,
 	ignorePatterns: [
 		...DefaultIgnorePatterns,
 		".pi",

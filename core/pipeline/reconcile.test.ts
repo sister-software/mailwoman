@@ -307,7 +307,7 @@ describe("kryptonite catalogue — Paris, Texas (post-reconcile picks Paris-TX o
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const fra = place(1, "France", "country", "FR", 46, 2)
 	const tx = place(2, "Texas", "region", "US", 31, -100, 0)
-	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, /* score */ 1.0)
+	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, /* score */ 1)
 	const parisTX = place(11, "Paris", "locality", "US", 33.66, -95.55, 2, /* score */ 0.5)
 	const resolver = mockResolver([
 		[0, 5, "locality", [parisFR, parisTX]],
@@ -355,7 +355,7 @@ describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks th
 	const rus = place(1, "Russia", "country", "RU", 61, 105)
 	const fl = place(2, "Florida", "region", "US", 28, -82, 0)
 	const stPete = place(10, "Saint Petersburg", "locality", "US", 27.77, -82.64, 2, 0.6)
-	const petersburgRU = place(11, "Saint Petersburg", "locality", "RU", 59.93, 30.35, 1, 1.0)
+	const petersburgRU = place(11, "Saint Petersburg", "locality", "RU", 59.93, 30.35, 1, 1)
 	const resolver = mockResolver([
 		[0, 16, "locality", [stPete]],
 		[6, 16, "locality", [petersburgRU]],
@@ -406,7 +406,7 @@ describe("kryptonite catalogue — Buffalo Buffalo (post-reconcile keeps both as
 	]
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const ny = place(1, "New York", "region", "US", 43, -75, 0)
-	const buffaloNY = place(10, "Buffalo", "locality", "US", 42.88, -78.87, 1, 1.0)
+	const buffaloNY = place(10, "Buffalo", "locality", "US", 42.88, -78.87, 1, 1)
 	const resolver = mockResolver([
 		[0, 15, "locality", [buffaloNY]],
 		[0, 7, "locality", [buffaloNY]],
@@ -527,7 +527,7 @@ describe("reconcile — concordance hard veto", () => {
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const fra = place(1, "France", "country", "FR", 46, 2)
 	const tx = place(2, "Texas", "region", "US", 31, -100, 0)
-	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, 1.0)
+	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, 1)
 	const resolver = mockResolver([
 		[0, 5, "locality", [parisFR]],
 		[7, 12, "region", [tx]],
@@ -590,8 +590,8 @@ describe("reconcile — score breakdown surfaces each factor", () => {
 		const { phrase, classifier, resolver: res, concordance, total } = result.scoreBreakdown
 		expect(phrase).toBeCloseTo(0.9)
 		expect(classifier).toBeCloseTo(0.8)
-		expect(res).toBeCloseTo(1.0)
-		expect(concordance).toBeCloseTo(1.0)
+		expect(res).toBeCloseTo(1)
+		expect(concordance).toBeCloseTo(1)
 		expect(total).toBeCloseTo(phrase * classifier * res * concordance, 5)
 	})
 })

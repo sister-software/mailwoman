@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type GeoFeature, type MultiPolygonLiteral } from "@mailwoman/spatial"
+import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import { TIGERProperty, type TIGERPropertyRecord } from "./constants.ts"
+import type { TIGERProperty } from "./constants.ts"
+import { type TIGERPropertyRecord } from "./constants.ts"
 import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "./geoid.ts"
 
 /**

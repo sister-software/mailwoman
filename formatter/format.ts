@@ -25,8 +25,7 @@
 
 import addressFormatter from "@fragaria/address-formatter"
 import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
-import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ClassificationMap, VisibleClassification, ComponentTag } from "@mailwoman/core/types"
 
 /** Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace. */
 function slotPattern(slot: string): RegExp {
@@ -162,9 +161,9 @@ export function formatAddress(components: ComponentDict, country: string, opts: 
 		raw = injectDependentLocalityLine(raw, components.locality, components.dependent_locality)
 	}
 
-	const trimmed = raw.replace(/\s+$/g, "")
+	const trimmed = raw.replaceAll(/\s+$/g, "")
 
-	return opts.separator !== undefined ? trimmed.replace(/\n+/g, opts.separator) : trimmed
+	return opts.separator !== undefined ? trimmed.replaceAll(/\n+/g, opts.separator) : trimmed
 }
 
 /**
@@ -240,7 +239,7 @@ export function formatFromClassificationMap(
 	const unitParts: string[] = []
 
 	for (const [classification, values] of map) {
-		const value = values.filter(Boolean).join(" ").replace(/\s+/g, " ").trim()
+		const value = values.filter(Boolean).join(" ").replaceAll(/\s+/g, " ").trim()
 
 		if (!value) continue
 
@@ -256,7 +255,7 @@ export function formatFromClassificationMap(
 		}
 	}
 
-	if (unitParts.length) {
+	if (unitParts.length > 0) {
 		components.unit = unitParts.join(" ")
 	}
 
@@ -270,12 +269,12 @@ export function formatFromClassificationMap(
  * value is the original input.
  */
 export function reconcileComponents(components: ComponentDict, raw: string): ComponentDict {
-	const haystack = raw.toLowerCase().replace(/\s+/g, " ")
+	const haystack = raw.toLowerCase().replaceAll(/\s+/g, " ")
 	const out: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(components)) {
 		if (!v) continue
-		const needle = v.toLowerCase().replace(/\s+/g, " ")
+		const needle = v.toLowerCase().replaceAll(/\s+/g, " ")
 
 		if (haystack.includes(needle)) {
 			out[k as ComponentTag] = v
@@ -396,7 +395,7 @@ function composeRoad(components: ComponentDict): string {
 		parts.push(components.unit)
 	}
 
-	return parts.join(" ").replace(/\s+/g, " ").trim()
+	return parts.join(" ").replaceAll(/\s+/g, " ").trim()
 }
 
 /**
@@ -407,7 +406,7 @@ function composePostcode(components: ComponentDict): string {
 	const base = components.postcode?.trim() ?? ""
 	const cedex = components.cedex?.trim() ?? ""
 
-	if (base && cedex) return `${base} ${cedex}`.replace(/\s+/g, " ")
+	if (base && cedex) return `${base} ${cedex}`.replaceAll(/\s+/g, " ")
 
 	return base || cedex
 }

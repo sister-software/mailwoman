@@ -40,18 +40,18 @@ describe("normalizeStreetForKey", () => {
 
 	it("does not collapse a bare directional-only name", () => {
 		// "N" alone is a (weird but real) street name — single tokens are never expanded.
-		expect(normalizeStreetForKey("N")).toEqual("n")
+		expect(normalizeStreetForKey("N")).toBe("n")
 	})
 
 	it("keeps numbered streets as digits and folds case/punct/diacritics", () => {
-		expect(normalizeStreetForKey("5th Ave")).toEqual("5th avenue")
-		expect(normalizeStreetForKey("  CALLE   José.  ")).toEqual("calle jose")
+		expect(normalizeStreetForKey("5th Ave")).toBe("5th avenue")
+		expect(normalizeStreetForKey("  CALLE   José.  ")).toBe("calle jose")
 	})
 
 	it("folds a spelled ordinal before a street suffix to digit form (#723)", () => {
 		expect(normalizeStreetForKey("Tenth St")).toEqual(normalizeStreetForKey("10th Street"))
 		expect(normalizeStreetForKey("Fifth Avenue")).toEqual(normalizeStreetForKey("5th Ave"))
-		expect(normalizeStreetForKey("Twentieth St")).toEqual("20th street")
+		expect(normalizeStreetForKey("Twentieth St")).toBe("20th street")
 	})
 
 	it("does NOT fold an ordinal WORD that is not followed by a street suffix", () => {
@@ -67,8 +67,8 @@ describe("normalizeStreetForKey", () => {
 
 describe("normalizeLocalityForKey", () => {
 	it("folds without street semantics", () => {
-		expect(normalizeLocalityForKey("St. Albans")).toEqual("st albans")
-		expect(normalizeLocalityForKey("Montréal")).toEqual("montreal")
+		expect(normalizeLocalityForKey("St. Albans")).toBe("st albans")
+		expect(normalizeLocalityForKey("Montréal")).toBe("montreal")
 	})
 })
 
@@ -76,25 +76,25 @@ describe("canonicalizeRouteKey", () => {
 	it("folds TIGER and E911/Overture route spellings to the same key", () => {
 		// TIGER "State Rte 100" → normalizeStreetForKey → "state route 100" already; the E911
 		// spelling needs the designator fold to meet it.
-		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toEqual("state route 100")
-		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toEqual("state route 100")
-		expect(canonicalizeRouteKey(normalizeStreetForKey("US Hwy 5"))).toEqual("us route 5")
-		expect(canonicalizeRouteKey(normalizeStreetForKey("US ROUTE 5"))).toEqual("us route 5")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toBe("state route 100")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toBe("state route 100")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("US Hwy 5"))).toBe("us route 5")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("US ROUTE 5"))).toBe("us route 5")
 	})
 
 	it("keeps the post-designator tail (letter suffixes, trailing directionals)", () => {
-		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 22A"))).toEqual("state route 22a")
-		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 22A"))).toEqual("state route 22a")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 22A"))).toBe("state route 22a")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 22A"))).toBe("state route 22a")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("US Hwy 5 S"))).toEqual(
 			canonicalizeRouteKey(normalizeStreetForKey("US ROUTE 5 S"))
 		)
 	})
 
 	it("never folds non-route names", () => {
-		expect(canonicalizeRouteKey(normalizeStreetForKey("State Street"))).toEqual("state street")
-		expect(canonicalizeRouteKey(normalizeStreetForKey("Old Route 100"))).toEqual("old route 100")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("State Street"))).toBe("state street")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("Old Route 100"))).toBe("old route 100")
 		// Bare "Route N" stays unfolded — the designator (US vs state) is unknown.
-		expect(canonicalizeRouteKey(normalizeStreetForKey("Route 100"))).toEqual("route 100")
+		expect(canonicalizeRouteKey(normalizeStreetForKey("Route 100"))).toBe("route 100")
 	})
 })
 

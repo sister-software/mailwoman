@@ -10,11 +10,14 @@ import { agreementPattern, estimateParameters } from "./em.ts"
 import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.ts"
 
 const TWO_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.9, u: 0.1 },
+	{ label: "exact", minSimilarity: 1, m: 0.9, u: 0.1 },
 	{ label: "different", minSimilarity: 0, m: 0.1, u: 0.9 },
 ]
 
-type Person = { given?: string; family?: string }
+interface Person {
+	given?: string
+	family?: string
+}
 
 function buildModel(lambda: number): FellegiSunterModel<Person> {
 	return {

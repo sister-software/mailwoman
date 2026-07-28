@@ -105,9 +105,9 @@ describe("geocode argument validation", () => {
 				}),
 				timeout: 15_000,
 			})
-		} catch (err: unknown) {
+		} catch (error: unknown) {
 			threw = true
-			const execErr = err as { stderr?: string; stdout?: string }
+			const execErr = error as { stderr?: string; stdout?: string }
 			// Pastel renders errors to stdout (as a React component); stderr may be empty.
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 		}

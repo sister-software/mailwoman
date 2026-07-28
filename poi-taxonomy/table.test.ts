@@ -52,7 +52,7 @@ describe("createPOITaxonomyLookup", () => {
 	it("gates locale-restricted synonyms like the node entry does", () => {
 		const lookup = createPOITaxonomyLookup(TWO_CATEGORY_TABLE)
 
-		expect(lookup.lookupPOICategory("hospice", "en-GB")[0]?.confidence).toBe(1.0)
+		expect(lookup.lookupPOICategory("hospice", "en-GB")[0]?.confidence).toBe(1)
 		expect(lookup.lookupPOICategory("hospice", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookup.lookupPOICategory("hospice", "fr-FR")).toEqual([])
 		expect(lookup.lookupPOICategory("hospice")).toEqual([])
@@ -131,7 +131,7 @@ describe("createPOIBrandLookup", () => {
 		const lookup = createPOIBrandLookup(TWO_BRAND_TABLE)
 
 		expect(lookup.lookupPOIBrand("Chevron")[0]?.brand.wikidata).toBe("Q1")
-		expect(lookup.lookupPOIBrand("chevron")[0]?.confidence).toBe(1.0)
+		expect(lookup.lookupPOIBrand("chevron")[0]?.confidence).toBe(1)
 	})
 
 	it("matches an alias variant", () => {

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
 import {
-	Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha2LanguageCode,
@@ -40,9 +40,7 @@ export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "shor
 export type WOFNameKind = (typeof WOFNameKinds)[number]
 export type LanguageSpecificKey = `name:${Alpha3bLanguageCode}_x_${WOFNameKind}`
 
-export type WOFLanguageProperties = {
-	[key in LanguageSpecificKey]?: string | string[]
-}
+export type WOFLanguageProperties = Partial<Record<LanguageSpecificKey, string | string[]>>
 
 export type WOFProperties = WOFBaseProperties & WOFLanguageProperties
 

@@ -27,7 +27,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 	let iterationResult = await iterator.next()
 
-	while ((!iterationResult.done || results.size) && !abortSignal?.aborted) {
+	while ((!iterationResult.done || results.size > 0) && !abortSignal?.aborted) {
 		for (const [key, result] of results) {
 			yield result
 
@@ -87,7 +87,7 @@ export async function* takeAsync<T>(collection: AsyncIterable<T>, batchSize: num
 		}
 	}
 
-	if (buffer.length !== 0) {
+	if (buffer.length > 0) {
 		yield buffer
 	}
 }

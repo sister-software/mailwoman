@@ -240,8 +240,10 @@ function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"])
 
 	try {
 		return deserializeFST(readFileSync(fstPath))
-	} catch (err) {
-		console.warn(`[mailwoman] failed to load weights FST at ${fstPath}: ${(err as Error).message} — parsing without it`)
+	} catch (error) {
+		console.warn(
+			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
+		)
 
 		return undefined
 	}
@@ -266,8 +268,8 @@ function autoLoadStreetMorphology(classifier: CreateRuntimePipelineOpts["classif
 			...(artifactPath ? { artifactPath } : {}),
 			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
 		}).matcher
-	} catch (err) {
-		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(err as Error).message} — gate off`)
+	} catch (error) {
+		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — gate off`)
 
 		return undefined
 	}

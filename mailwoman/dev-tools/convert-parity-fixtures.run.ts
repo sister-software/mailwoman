@@ -19,7 +19,7 @@ import type { Classification } from "@mailwoman/core"
 import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
 import { readJSONL, writeJSONL } from "@mailwoman/core/utils"
 
-import { type ParityCase } from "./parity-extract.ts"
+import type { ParityCase } from "./parity-extract.ts"
 
 const IN_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const OUT_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"

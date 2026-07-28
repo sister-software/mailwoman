@@ -44,7 +44,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 		await demo.goto()
 		await page.evaluate(() => {
 			const w = window as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
-			w.__mailwomanDemoMap?.jumpTo({ center: [-83.0, 42.3], zoom: 8 }) // Michigan
+			w.__mailwomanDemoMap?.jumpTo({ center: [-83, 42.3], zoom: 8 }) // Michigan
 		})
 		await page.waitForTimeout(500)
 		await demo.setAddress("Paris")
@@ -54,7 +54,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
 		expect(lat, `Paris must stay in France (48.8) regardless of a US view, got ${lat},${lon}`).toBeGreaterThan(48.5)
 		expect(lat).toBeLessThan(49.1)
-		expect(lon).toBeGreaterThan(2.0)
+		expect(lon).toBeGreaterThan(2)
 		expect(lon).toBeLessThan(2.7)
 		demo.console.assertNoFailEvents()
 	})

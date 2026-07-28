@@ -23,7 +23,7 @@ import { type ReactNode, useCallback, useRef } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import { ClientOnly } from "../common/ClientOnly.tsx"
-import { type Preset } from "../common/PresetChips.tsx"
+import type { Preset } from "../common/PresetChips.tsx"
 import { DemoControls } from "./DemoControls.tsx"
 import { DemoMap } from "./DemoMap.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"

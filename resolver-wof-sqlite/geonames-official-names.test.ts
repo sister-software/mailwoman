@@ -135,7 +135,7 @@ test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", 
 
 	const rows = db.prepare(`SELECT name, language, privateuse, official FROM names ORDER BY name`).all() as Row[]
 
-	expect(rows.length).toBe(5)
+	expect(rows).toHaveLength(5)
 
 	for (const r of rows) {
 		expect(r.language).toBe("")

@@ -246,7 +246,7 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 			ts.isCallExpression(node) &&
 			ts.isIdentifier(node.expression) &&
 			node.expression.text === "assert" &&
-			node.arguments.length >= 1
+			node.arguments.length > 0
 		) {
 			const inputArg = node.arguments[0]
 
@@ -301,8 +301,8 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 		try {
 			const assertions = extractAssertions(filePath)
 			all.push(...assertions)
-		} catch (err) {
-			console.error(`[harness] WARN: failed to extract from ${entry}: ${(err as Error).message}`)
+		} catch (error) {
+			console.error(`[harness] WARN: failed to extract from ${entry}: ${(error as Error).message}`)
 		}
 	}
 
@@ -539,8 +539,8 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 
 			try {
 				row = JSON.parse(line)
-			} catch (err) {
-				console.error(`[harness] WARN: bad JSON in ${entry}: ${(err as Error).message}`)
+			} catch (error) {
+				console.error(`[harness] WARN: bad JSON in ${entry}: ${(error as Error).message}`)
 				continue
 			}
 			out.push({
@@ -671,10 +671,10 @@ function printReport(results: AssertionResult[]): void {
 async function main(): Promise<void> {
 	const args = parseArgs()
 	console.error("--- harness-neural.ts ---")
-	console.error("Tests dir:        ", args.testsDir)
-	console.error("Falsehoods dir:   ", args.falsehoodsDir ?? "(none)")
-	console.error("Model:            ", args.modelPath ?? "(default — package resolve)")
-	console.error("Morphology:       ", args.morphologyEnabled ? "enabled" : "disabled")
+	console.error("Tests dir:", args.testsDir)
+	console.error("Falsehoods dir:", args.falsehoodsDir ?? "(none)")
+	console.error("Model:", args.modelPath ?? "(default — package resolve)")
+	console.error("Morphology:", args.morphologyEnabled ? "enabled" : "disabled")
 
 	console.error("Extracting assertions...")
 	const fromTests = discoverAssertions(args.testsDir)
@@ -772,8 +772,8 @@ async function main(): Promise<void> {
 
 		try {
 			results.push(await runAssertion(a, neural, parseOpts, pipeline))
-		} catch (err) {
-			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(err as Error).message}`)
+		} catch (error) {
+			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(error as Error).message}`)
 		}
 
 		if (i % 50 === 0) {

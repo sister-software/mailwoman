@@ -58,8 +58,8 @@ function foldName(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 

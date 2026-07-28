@@ -136,7 +136,7 @@ const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 // County population ranking
 // ---------------------------------------------------------------------------
 
-type CountyRecord = {
+interface CountyRecord {
 	stateFips: string
 	countyFips: string
 	geoid: string
@@ -236,12 +236,12 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 			await _downloadOnce(url, dest)
 
 			return
-		} catch (err) {
-			const message = err instanceof Error ? err.message : String(err)
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error)
 			const status = message.match(/HTTP (\d+)/)?.[1]
 			const retryable = !status || Number(status) >= 500
 
-			if (!retryable || attempt === retries) throw err
+			if (!retryable || attempt === retries) throw error
 			const delay = attempt * 2000
 			console.error(`  [retry ${attempt}/${retries}] ${path.basename(dest)}: ${message} — waiting ${delay}ms`)
 			await new Promise((r) => setTimeout(r, delay))
@@ -301,7 +301,11 @@ function extractEdgesZip(zipPath: string, destDir: string): void {
 // Parallel download pool
 // ---------------------------------------------------------------------------
 
-type DownloadTask = { geoid: string; zipURL: string; zipPath: string }
+interface DownloadTask {
+	geoid: string
+	zipURL: string
+	zipPath: string
+}
 
 /** Download and unpack a list of county ZIPs with capped parallelism. */
 async function downloadParallel(
@@ -332,8 +336,10 @@ async function downloadParallel(
 					extractEdgesZip(task.zipPath, edgesDir)
 					skipped++
 					continue
-				} catch (err) {
-					console.error(`  [warn] re-extract failed for ${task.geoid}: ${err instanceof Error ? err.message : err}`)
+				} catch (error) {
+					console.error(
+						`  [warn] re-extract failed for ${task.geoid}: ${error instanceof Error ? error.message : error}`
+					)
 				}
 			}
 
@@ -341,8 +347,8 @@ async function downloadParallel(
 				await downloadFile(task.zipURL, task.zipPath)
 				extractEdgesZip(task.zipPath, edgesDir)
 				downloaded++
-			} catch (err) {
-				console.error(`  [fail] ${task.geoid}: ${err instanceof Error ? err.message : err}`)
+			} catch (error) {
+				console.error(`  [fail] ${task.geoid}: ${error instanceof Error ? error.message : error}`)
 				failed.push(task.geoid)
 			}
 		}
@@ -357,7 +363,11 @@ async function downloadParallel(
 // Shard build (per state)
 // ---------------------------------------------------------------------------
 
-type ShardBuildResult = { wallMs: number; segments: number; counties: number }
+interface ShardBuildResult {
+	wallMs: number
+	segments: number
+	counties: number
+}
 
 /**
  * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's stdout, or `null`
@@ -438,7 +448,13 @@ function buildStateShard(
 	return { wallMs, segments, counties }
 }
 
-type StateResult = { state: string; counties: number; segments: number; wallMs: number; skipped?: boolean }
+interface StateResult {
+	state: string
+	counties: number
+	segments: number
+	wallMs: number
+	skipped?: boolean
+}
 
 const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {

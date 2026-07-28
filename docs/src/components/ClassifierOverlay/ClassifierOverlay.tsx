@@ -175,7 +175,7 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
 	const stack = [...(roots as TreeNodeLike[])]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (typeof n.tag === "string") {

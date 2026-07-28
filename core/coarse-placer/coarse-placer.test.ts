@@ -26,8 +26,8 @@ function seededWeights(classCount: number, dim: number, seed: number): Float32Ar
 	let s = seed >>> 0
 
 	for (let i = 0; i < w.length; i++) {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
-		w[i] = (s / 0xffffffff - 0.5) * 0.1
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
+		w[i] = (s / 0xff_ff_ff_ff - 0.5) * 0.1
 	}
 
 	return w
@@ -123,7 +123,7 @@ describe("dequantizeInt8Weights", () => {
 describe("CoarsePlacer.fromArtifactDir", () => {
 	const classes = ["AA", "BB", "CC"]
 	const bias = [0.1, -0.2, 0.05]
-	const weights = seededWeights(classes.length, FEATURE_DIM, 12345)
+	const weights = seededWeights(classes.length, FEATURE_DIM, 12_345)
 	const { fp32Dir, int8Dir } = writeArtifacts(classes, FEATURE_DIM, weights, bias)
 	const samples = ["123 Main St", "10 Rue de la Paix", "1-2-3 Chiyoda Tokyo", "Calle Mayor 7"]
 

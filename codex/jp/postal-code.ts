@@ -47,7 +47,7 @@ export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
 export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
 	// Drop the 〒 mark and all whitespace, then keep only the digits.
-	const digits = raw.replace(/〒/g, "").replace(/\s+/g, "").replace(/-/g, "")
+	const digits = raw.replaceAll(/〒/g, "").replaceAll(/\s+/g, "").replaceAll(/-/g, "")
 
 	if (!/^\d{7}$/.test(digits)) return null
 

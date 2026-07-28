@@ -378,10 +378,10 @@ function toHit(
  */
 function sanitizePOINameQuery(text: string): string {
 	return text
-		.replace(/["*:]/g, "")
+		.replaceAll(/["*:]/g, "")
 		.trim()
 		.split(/\s+/u)
 		.filter(Boolean)
-		.map((token) => `"${token.replace(/"/g, '""')}"`)
+		.map((token) => `"${token.replaceAll(/"/g, '""')}"`)
 		.join(" ")
 }

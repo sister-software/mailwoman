@@ -55,8 +55,8 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 			const parsed = await runtime.runParse(text, { onStage: setParseStage })
 			setSelectedCandidateIndex(0)
 			setResult(parsed)
-		} catch (err) {
-			setParseError(err instanceof Error ? err.message : String(err))
+		} catch (error) {
+			setParseError(error instanceof Error ? error.message : String(error))
 		} finally {
 			setBusy(false)
 			setParseStage(-1)

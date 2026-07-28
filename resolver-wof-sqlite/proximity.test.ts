@@ -27,7 +27,7 @@ interface FixturePlace {
 const FIXTURE: FixturePlace[] = [
 	// Paris, FR
 	{
-		id: 101751119,
+		id: 101_751_119,
 		name: "Paris",
 		placetype: "locality",
 		country: "FR",
@@ -37,7 +37,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 	// Paris, TX (small US town)
 	{
-		id: 101715829,
+		id: 101_715_829,
 		name: "Paris",
 		placetype: "locality",
 		country: "US",
@@ -47,7 +47,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 	// Tokyo, JP
 	{
-		id: 1108794869,
+		id: 1_108_794_869,
 		name: "Tokyo",
 		placetype: "locality",
 		country: "JP",
@@ -57,7 +57,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 	// London, GB
 	{
-		id: 101750367,
+		id: 101_750_367,
 		name: "London",
 		placetype: "locality",
 		country: "GB",
@@ -213,14 +213,14 @@ describe("findPlace — bbox filter", () => {
 			placetype: "locality",
 			bbox: { minLat: 30, maxLat: 50, minLon: -100, maxLon: 5 },
 		})
-		expect(candidates.length).toBe(2)
+		expect(candidates).toHaveLength(2)
 	})
 })
 
 describe("findPlace — backwards compat", () => {
 	test("queries without near/bbox still work (no R*Tree JOIN)", async () => {
 		const candidates = await lookup.findPlace({ text: "London", placetype: "locality" })
-		expect(candidates.length).toBe(1)
+		expect(candidates).toHaveLength(1)
 		expect(candidates[0]?.country).toBe("GB")
 		expect(candidates[0]?.distanceKm).toBeUndefined()
 	})
@@ -246,7 +246,7 @@ describe("findPlace — backwards compat", () => {
 				bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 },
 			})
 			// Without the bbox filter (silently dropped) all Parises are returned.
-			expect(all.length).toBe(2)
+			expect(all).toHaveLength(2)
 
 			// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree because the
 			// haversine math runs on each row's centroid columns.

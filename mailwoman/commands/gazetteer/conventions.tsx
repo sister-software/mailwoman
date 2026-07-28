@@ -93,7 +93,7 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 			}
 	}
 
-	if (errors.length) throw commandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
+	if (errors.length > 0) throw commandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
 const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options }) => {

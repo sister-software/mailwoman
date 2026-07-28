@@ -199,7 +199,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 			for (const row of popRows) {
 				if (row.population > 0) {
-					const pseudoImportance = Math.min(1.0, Math.log2(1 + row.population / 1000) / 14)
+					const pseudoImportance = Math.min(1, Math.log2(1 + row.population / 1000) / 14)
 					fallbackInsert.run(row.id, pseudoImportance)
 					fallbackCount++
 				}

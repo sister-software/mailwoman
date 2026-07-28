@@ -5,7 +5,7 @@
  */
 
 import { layers } from "@protomaps/basemaps"
-import { type LayerSpecification } from "maplibre-gl"
+import type { LayerSpecification } from "maplibre-gl"
 
 import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.ts"
 import { LayerID } from "../styles/layers.ts"

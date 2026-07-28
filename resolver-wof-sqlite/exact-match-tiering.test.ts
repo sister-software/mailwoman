@@ -165,7 +165,7 @@ describe("findPlace — exact-match tiering", () => {
 			buildFTS: true,
 		})
 		const results = await lookup.findPlace({ text: "Springfield", placetype: "region", country: "US" })
-		expect(results.length).toBe(2)
+		expect(results).toHaveLength(2)
 		expect(results[0]!.id).toBe(11) // higher population wins within the exact tier
 	})
 
@@ -230,7 +230,7 @@ describe("findPlace — exact-match tiering", () => {
 	// prominence sort follows the hint. Soft only: both candidates still return.
 	test("bias re-ranks a cross-country postcode tie; absent bias = population order", async () => {
 		const db = buildDB([
-			{ id: 31, name: "48026", country: "IT", lat: 44.37, lon: 12.03, placetype: "postalcode", population: 12000 },
+			{ id: 31, name: "48026", country: "IT", lat: 44.37, lon: 12.03, placetype: "postalcode", population: 12_000 },
 			{ id: 32, name: "48026", country: "US", lat: 42.54, lon: -82.95, placetype: "postalcode", population: 900 },
 		])
 		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
@@ -264,7 +264,7 @@ describe("findPlace — exact-match tiering", () => {
 			buildFTS: true,
 		})
 		const results = await lookup.findPlace({ text: "OR", placetype: "region", country: "US" })
-		expect(results.length).toBe(1)
+		expect(results).toHaveLength(1)
 		expect(results[0]!.name).toBe("Oregon")
 	})
 

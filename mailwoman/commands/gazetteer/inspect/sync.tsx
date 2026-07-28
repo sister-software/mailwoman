@@ -105,7 +105,7 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 		return <Text>Fetching repo list...</Text>
 	}
 
-	if (!repos.length) {
+	if (repos.length === 0) {
 		return <Text>No repositories found</Text>
 	}
 

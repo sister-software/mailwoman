@@ -36,9 +36,9 @@ function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
-	spr.run(90, 0, "Germany", "country", "DE", 51.0, 10.0, 47.0, 55.0, 6.0, 15.0)
-	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
-	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
+	spr.run(90, 0, "Germany", "country", "DE", 51, 10, 47, 55, 6, 15)
+	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12, 12.3)
+	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0, 1)
 	const ins = db.prepare(`INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)`)
 
 	for (const c of conventions) {
@@ -60,7 +60,7 @@ describe("SqliteConventionSource", () => {
 	it("reads + parses a convention by WOF id, and returns undefined for a miss", () => {
 		const src = new SqliteConventionSource(db, "main")
 		expect(src.get(90)).toEqual({ scoringWeights: { pc: 0.9 } })
-		expect(src.get(12345)).toBeUndefined()
+		expect(src.get(12_345)).toBeUndefined()
 	})
 
 	it("memoizes (a second get for the same id does not re-query)", () => {

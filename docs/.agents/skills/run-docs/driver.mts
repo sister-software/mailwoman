@@ -56,7 +56,7 @@ function url(path: string | URL) {
 }
 
 async function cmdScreenshot(path: string, outArg?: string) {
-	const out = resolve(outArg ?? `${SCREENSHOT_DIR}/${path.replace(/[/]+/g, "_") || "root"}.png`)
+	const out = resolve(outArg ?? `${SCREENSHOT_DIR}/${path.replaceAll(/[/]+/g, "_") || "root"}.png`)
 	await mkdir(dirname(out), { recursive: true })
 	const result = await withPage(async (page) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
@@ -112,7 +112,7 @@ async function cmdCheck(path: string) {
 	const result = await checkRoute(path)
 	reportRoute(path, result)
 
-	if (result.status >= 400 || result.errors.length || result.soft404) {
+	if (result.status >= 400 || result.errors.length > 0 || result.soft404) {
 		process.exit(1)
 	}
 }
@@ -127,16 +127,16 @@ async function cmdSmoke() {
 			const result = await checkRoute(r)
 			reportRoute(r, result)
 
-			if (result.status >= 400 || result.errors.length || result.soft404) {
+			if (result.status >= 400 || result.errors.length > 0 || result.soft404) {
 				fail++
 			}
-		} catch (e) {
+		} catch (error) {
 			fail++
 
-			if (e instanceof Error) {
-				console.log(`check ${r}: THREW ${e.message.split("\n")[0]}`)
+			if (error instanceof Error) {
+				console.log(`check ${r}: THREW ${error.message.split("\n")[0]}`)
 			} else {
-				console.log(`check ${r}: THREW ${String(e).split("\n")[0]}`)
+				console.log(`check ${r}: THREW ${String(error).split("\n")[0]}`)
 			}
 		}
 	}
@@ -176,7 +176,7 @@ if (values.smoke) {
 } else if (values.eval) {
 	const [path, ...jsParts] = positionals
 
-	if (!path || !jsParts.length) {
+	if (!path || jsParts.length === 0) {
 		console.error(`eval requires a path and JS code\nsee header of ${import.meta.url} for usage`)
 		process.exit(2)
 	}

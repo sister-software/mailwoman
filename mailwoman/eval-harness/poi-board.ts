@@ -296,8 +296,8 @@ export interface QuantileStats {
  */
 export const POI_BOARD_FLOORS = {
 	overall: 0.9,
-	abstain: 1.0,
-	address: 1.0,
+	abstain: 1,
+	address: 1,
 } as const
 
 /** One graded floor line — printed on every run, and the breach unit `--enforce` keys its exit code off. */
@@ -383,7 +383,7 @@ export interface PoiBoardRunResult {
 }
 
 function quantile(sorted: number[], q: number): number {
-	if (sorted.length === 0) return NaN
+	if (sorted.length === 0) return Number.NaN
 
 	if (sorted.length === 1) return sorted[0]!
 	const idx = q * (sorted.length - 1)
@@ -404,7 +404,7 @@ function computeStats(values: number[]): QuantileStats | null {
 		min: sorted[0]!,
 		p50: quantile(sorted, 0.5),
 		p95: quantile(sorted, 0.95),
-		max: sorted[sorted.length - 1]!,
+		max: sorted.at(-1)!,
 	}
 }
 

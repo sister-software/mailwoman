@@ -145,7 +145,7 @@ export async function* fetchRedistricting(
 
 	if (!abbr) throw new Error(`Unknown state FIPS "${state}"`)
 	const stateName = StateName[abbr as keyof typeof StateName]
-	const dirName = stateName.replace(/ /g, "_")
+	const dirName = stateName.replaceAll(/ /g, "_")
 	const fileAbbr = abbr.toLowerCase()
 
 	const cacheDir = join(dataRoot, "census", "redistricting", String(vintage), state)
@@ -196,7 +196,7 @@ export async function* fetchRedistricting(
 		let inserted = 0
 		let batch: PLBlockTable[] = []
 		const flush = async () => {
-			if (!batch.length) return
+			if (batch.length === 0) return
 			const rows = batch
 			batch = []
 			await kdb.insertInto("pl_block").values(rows).execute()

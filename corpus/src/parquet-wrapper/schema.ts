@@ -22,14 +22,12 @@ import type { FieldDefinition } from "@dsnp/parquetjs/dist/lib/declare.js"
 import { LRUCache } from "lru-cache"
 
 /** A Parquet record-like object, i.e. a record with string keys and JSON-serializable values. */
-export type ParquetRecordLike = {
+export interface ParquetRecordLike {
 	[key: string]: unknown | undefined
 }
 
 /** Typed Parquet schema definition. */
-export type ParquetSchemaDefinition<T = ParquetRecordLike> = {
-	[field in Extract<keyof T, string>]: FieldDefinition
-}
+export type ParquetSchemaDefinition<T = ParquetRecordLike> = Record<Extract<keyof T, string>, FieldDefinition>
 
 /** Typed Parquet schema. */
 export class ParquetSchema<T> extends BaseParquetSchema {

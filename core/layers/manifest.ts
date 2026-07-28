@@ -119,7 +119,7 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
  * bound-variable ceiling — a continental-scale build's res-6 coverage cell count blows past that limit in a single
  * `.values()` call (found 2026-07-19).
  */
-export const COVERAGE_INSERT_BATCH = 5_000
+export const COVERAGE_INSERT_BATCH = 5000
 
 /**
  * Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine), chunked to stay under SQLite's

@@ -35,7 +35,7 @@ interface FixtureEntry {
 	ids: number[]
 }
 
-const fixture: FixtureEntry[] = JSON.parse(readFileSync(FIXTURE_PATH, "utf-8"))
+const fixture: FixtureEntry[] = JSON.parse(readFileSync(FIXTURE_PATH, "utf8"))
 
 describe("MailwomanTokenizer — Python parity", () => {
 	test.each(fixture)("pieces+ids match Python for $raw", async ({ raw, pieces: expectedPieces, ids: expectedIds }) => {

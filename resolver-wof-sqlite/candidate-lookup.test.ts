@@ -161,7 +161,7 @@ describe("WOFCandidateTableLookup", () => {
 				text: "Moscow",
 				placetype: "locality",
 				limit: 5,
-				bias: [{ lat: 46.73, lon: -117.0, weight: 1 }],
+				bias: [{ lat: 46.73, lon: -117, weight: 1 }],
 			})
 			expect(idahoView[0]!.country).toBe("US")
 			expect(idahoView[0]!.lat).toBeCloseTo(46.73, 1)
@@ -432,8 +432,8 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 	})
 
 	test("with no primary in the set, population order is untouched", () => {
-		const ranked = rankByPrimaryPreference([row(-6.0, 0, 1), row(-4.0, 0, 2)], 5)
-		expect(ranked.map((r) => r.neg_rank)).toEqual([-6.0, -4.0]) // unchanged
+		const ranked = rankByPrimaryPreference([row(-6, 0, 1), row(-4, 0, 2)], 5)
+		expect(ranked.map((r) => r.neg_rank)).toEqual([-6, -4]) // unchanged
 		expect(ranked.every((r) => !r.demoted)).toBe(true)
 		expect(ranked.every((r) => r.effectiveNegRank === r.neg_rank)).toBe(true)
 	})

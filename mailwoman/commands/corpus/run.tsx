@@ -44,7 +44,7 @@ const RunConfigSchema = zod.object({
 		.int()
 		.positive()
 		.optional()
-		.default(1_000)
+		.default(1000)
 		.describe("Yield count between progress ticks (smaller = chattier, larger = quieter)"),
 })
 

@@ -60,10 +60,10 @@ export function buildStreetMorphologyEmissionPriors(
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 1.0
-	const maxAffixBias = opts.maxAffixBias ?? 3.0
-	const maxNeighbourStreetBias = opts.maxNeighbourStreetBias ?? 2.0
-	const dependentLocalityPenalty = opts.dependentLocalityPenalty ?? 2.0
+	const biasScale = opts.biasScale ?? 1
+	const maxAffixBias = opts.maxAffixBias ?? 3
+	const maxNeighbourStreetBias = opts.maxNeighbourStreetBias ?? 2
+	const dependentLocalityPenalty = opts.dependentLocalityPenalty ?? 2
 
 	const matrix: number[][] = []
 

@@ -133,7 +133,7 @@ const STATES_BY_COVERAGE = [
 	"VI",
 ]
 
-type StateResult = {
+interface StateResult {
 	state: string
 	skipped?: boolean
 	code?: number | null
@@ -142,7 +142,12 @@ type StateResult = {
 	err?: string
 }
 
-type StateManifestEntry = { ok: boolean; points?: number; seconds?: number; datasets?: Record<string, number> }
+interface StateManifestEntry {
+	ok: boolean
+	points?: number
+	seconds?: number
+	datasets?: Record<string, number>
+}
 
 const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -271,7 +276,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 			for (const m of text.matchAll(/overture:(\S+)\s+([\d,]+) rows/g)) {
 				const ds = m[1]!,
-					n = Number(m[2]!.replace(/,/g, ""))
+					n = Number(m[2]!.replaceAll(/,/g, ""))
 				datasets[ds] = n
 				manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + n
 			}
@@ -283,7 +288,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			writeFileSync(attributionPath, JSON.stringify(manifest, null, 2))
 		}
 
-		const mins = ((Date.now() - t0) / 60000).toFixed(1)
+		const mins = ((Date.now() - t0) / 60_000).toFixed(1)
 		const lines = [
 			`situs: ${outDir}`,
 			`built ${built} · skipped ${skipped} · failed ${failed} · ${totalRows.toLocaleString()} total points · ${mins} min`,

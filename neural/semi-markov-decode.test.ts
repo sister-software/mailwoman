@@ -32,9 +32,9 @@ function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	let s = seed
 
 	const next = (): number => {
-		s = (s * 1103515245 + 12345) % 2147483648
+		s = (s * 1_103_515_245 + 12_345) % 2_147_483_648
 
-		return (s / 2147483648) * 4 - 2
+		return (s / 2_147_483_648) * 4 - 2
 	}
 
 	return Array.from({ length: seqLen }, () =>
@@ -151,7 +151,7 @@ describe("decodeSegmentationsKBest", () => {
 		for (const h of decodeSegmentationsKBest(sc, 6, grammar({ maxSpan: 3 }), 3)) {
 			for (const s of h.segments)
 				if (s.typeID === 0) {
-					expect(s.length).toBe(1)
+					expect(s).toHaveLength(1)
 				}
 		}
 	})
@@ -164,7 +164,7 @@ describe("decodeSegmentationsKBest", () => {
 		// Grammar says 1; the tensor offers 3. Nothing longer than 1 may be emitted.
 		for (const h of decodeSegmentationsKBest(scores(4, 3, 17), 4, grammar({ maxSpan: 1 }), 4)) {
 			for (const s of h.segments) {
-				expect(s.length).toBe(1)
+				expect(s).toHaveLength(1)
 			}
 		}
 	})

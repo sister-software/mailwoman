@@ -63,7 +63,7 @@ interface Level {
 
 // registry/resolve.ts → NAME_LEVELS
 const NAME_LEVELS: Level[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.8, u: 0.01 },
+	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
@@ -85,14 +85,14 @@ const probabilityFromWeight = (w: number) => 1 / (1 + 2 ** -w)
 function nameWeight(sim: number): number {
 	for (const lvl of NAME_LEVELS) if (sim >= (lvl.minSimilarity ?? 0)) return levelWeight(lvl)
 
-	return levelWeight(NAME_LEVELS[NAME_LEVELS.length - 1]!)
+	return levelWeight(NAME_LEVELS.at(-1)!)
 }
 
 /** Assign a distance (km) to its agreement-level weight (levels ordered near→far). */
 function distanceWeight(km: number): number {
 	for (const lvl of DISTANCE_LEVELS) if (km <= (lvl.maxKm ?? Infinity)) return levelWeight(lvl)
 
-	return levelWeight(DISTANCE_LEVELS[DISTANCE_LEVELS.length - 1]!)
+	return levelWeight(DISTANCE_LEVELS.at(-1)!)
 }
 
 /** Emit the geocode-first decision-surface Plotly HTML — see the module doc. */
@@ -145,7 +145,7 @@ export function geocodeFirstSurface(
 		{
 			label: "Springfield General — IL vs MA",
 			detail: "identical name, ~1500 km apart",
-			sim: 1.0,
+			sim: 1,
 			km: 15, // plotted on the far plateau (real distance ~1500 km; clamped into view)
 		},
 		{
@@ -178,7 +178,7 @@ export function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>")
+	const safe = JSON.stringify(data).replaceAll(/<\/script>/gi, "<\\/script>")
 
 	const html = `<!doctype html><html><head><meta charset="utf-8"/>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>

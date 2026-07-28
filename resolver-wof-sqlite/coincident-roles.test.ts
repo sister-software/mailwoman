@@ -62,7 +62,7 @@ const FIXTURE: FixtureRow[] = [
 	// Brandenburg — NOT dual-role: same-name town ~75 km W of the region centroid → beyond the relative
 	// tolerance (region bbox ⌀ ~313 km → 15 % ≈ 47 km). Mirrors the real gazetteer, where Brandenburg
 	// is correctly absent from the 128.
-	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13.0, d: 1.2 },
+	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13, d: 1.2 },
 	{
 		id: 31,
 		name: "Brandenburg",

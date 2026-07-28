@@ -138,7 +138,7 @@ export class PairIndexBuilder {
 						p50: nearestRankPercentile(sortedLengths, 50),
 						p90: nearestRankPercentile(sortedLengths, 90),
 						p99: nearestRankPercentile(sortedLengths, 99),
-						max: sortedLengths[sortedLengths.length - 1]!,
+						max: sortedLengths.at(-1)!,
 						counts,
 					}
 				: { totalRows: 0, p50: 0, p90: 0, p99: 0, max: 0, counts: [] }

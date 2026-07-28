@@ -252,7 +252,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 				shutdownTimer = setTimeout(() => {
 					child.kill("SIGKILL")
 					rej(new Error(`mailwoman-mcp did not exit within the shutdown window; stderr:\n${stderr}`))
-				}, 5_000)
+				}, 5000)
 			}),
 		]).finally(() => clearTimeout(shutdownTimer))
 
@@ -387,11 +387,11 @@ try {
 	}
 
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
-} catch (err: unknown) {
-	const e = err as { stdout?: string; stderr?: string; message?: string }
+} catch (error: unknown) {
+	const e = error as { stdout?: string; stderr?: string; message?: string }
 	console.error("\n[smoke] ❌ FAILED — a published package does not clean-install/run:")
 	console.error(
-		e.stdout ? `${e.message}\n--- stdout ---\n${e.stdout}\n--- stderr ---\n${e.stderr}` : (e.message ?? err)
+		e.stdout ? `${e.message}\n--- stdout ---\n${e.stdout}\n--- stderr ---\n${e.stderr}` : (e.message ?? error)
 	)
 	process.exitCode = 1
 } finally {

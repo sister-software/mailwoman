@@ -324,9 +324,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				const result = await oneGeocode(deps, input, inputMode)
 				recordTimed(performance.now() - t0, result.resolution_tier)
 				results[i] = result as unknown as GeocodeOutcome
-			} catch (err) {
+			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
-				results[i] = { input, error: err instanceof Error ? err.message : String(err) }
+				results[i] = { input, error: error instanceof Error ? error.message : String(error) }
 			}
 		}
 
@@ -368,9 +368,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const outcome: ResolveTreeOutcome = { tree: resolved }
 
 			return outcome
-		} catch (err) {
+		} catch (error) {
 			recordTimed(performance.now() - t0, "error")
-			throw err
+			throw error
 		}
 	}
 

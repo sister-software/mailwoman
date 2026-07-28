@@ -143,7 +143,7 @@ export function lookupDirectionalAbbreviation(input: unknown): DirectionalAbbrev
 
 	return (
 		DirectionalToAbbreviationMap.get(input) ||
-		DirectionalToAbbreviationMap.get(input.trim().toUpperCase().replace(/\s+/g, " ")) ||
+		DirectionalToAbbreviationMap.get(input.trim().toUpperCase().replaceAll(/\s+/g, " ")) ||
 		null
 	)
 }
@@ -207,7 +207,7 @@ export function renderDirectional(
 	form: "abbr" | "full",
 	reference: string
 ): string {
-	const target = form === "abbr" ? match.abbreviation : match.canonical.replace(/\s+/g, "")
+	const target = form === "abbr" ? match.abbreviation : match.canonical.replaceAll(/\s+/g, "")
 
 	return matchCase(target, reference)
 }

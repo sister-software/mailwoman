@@ -39,11 +39,11 @@ describe("lookupPOICategory", () => {
 	})
 
 	it("gates locale-restricted synonyms like variant-aliases does", () => {
-		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1.0)
+		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1)
 		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookupPOICategory("chemist", "fr-FR")).toEqual([])
 		// Ungated synonyms match any locale at full confidence.
-		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1.0)
+		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1)
 	})
 
 	it("returns [] for unknown phrases", () => {
@@ -119,7 +119,7 @@ describe("resolveOvertureCategories", () => {
 describe("lookup without a locale", () => {
 	it("hides locale-gated synonyms and keeps ungated ones", () => {
 		expect(lookupPOICategory("chemist")).toEqual([])
-		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1.0)
+		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1)
 	})
 })
 

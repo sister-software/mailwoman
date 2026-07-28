@@ -369,7 +369,7 @@ function makeAnthropicProvider(model: string): LlmProvider {
 
 function parseCandidates(text: string): Candidate[] {
 	// Strip markdown fences the model sometimes wraps around JSON
-	const cleaned = text.replace(/^```(?:json)?\n?|\n?```$/g, "").trim()
+	const cleaned = text.replaceAll(/^```(?:json)?\n?|\n?```$/g, "").trim()
 
 	try {
 		const parsed = JSON.parse(cleaned) as unknown
@@ -394,7 +394,7 @@ function parseCandidates(text: string): Candidate[] {
 // ── Validator ─────────────────────────────────────────────────────────────
 
 function normalize(s: string): string {
-	return s.toLowerCase().replace(/\s+/g, " ").trim()
+	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
 // Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
@@ -446,7 +446,7 @@ export async function expandGolden(
 	const model = options.model ?? (providerName === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat")
 	const concurrencyLimit = options.concurrency ?? 4
 	const includeSources = options.includeSources ? new Set(options.includeSources.split(",").map((s) => s.trim())) : null
-	const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+	const ts = new Date().toISOString().replaceAll(/[:.]/g, "-").slice(0, 19)
 	const outputPath = options.output ?? `data/eval/golden/candidates/expand-${ts}.jsonl`
 
 	const provider = providerName === "anthropic" ? makeAnthropicProvider(model) : makeDeepseekProvider(model)
@@ -499,9 +499,9 @@ export async function expandGolden(
 						dropped++
 					}
 				}
-			} catch (err) {
+			} catch (error) {
 				errored++
-				report?.(`  ✗ seed ${seed.source_id}: ${(err as Error).message}`)
+				report?.(`  ✗ seed ${seed.source_id}: ${(error as Error).message}`)
 			}
 
 			if ((i + 1) % 10 === 0) {

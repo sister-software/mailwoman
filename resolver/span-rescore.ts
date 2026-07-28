@@ -85,8 +85,8 @@ const norm = (s: string): string =>
 	s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[^a-z0-9 ]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[^a-z0-9 ]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 interface RawTok {
@@ -124,7 +124,7 @@ export function postcodeCodeSubset(postcode: string): string {
 export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.placeID) return true
@@ -152,7 +152,7 @@ function confidentRanges(
 	const out: Array<[number, number]> = []
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (

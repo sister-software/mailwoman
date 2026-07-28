@@ -29,8 +29,8 @@ import type { PostcodePlace } from "./postcode-anchor.ts"
 
 const MAGIC = 0x31_42_43_50 // "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
 const REC_TAIL = 5 // countryIdx(1) + latQ(2) + lonQ(2)
-const LAT_Q = 32767 / 90
-const LON_Q = 32767 / 180
+const LAT_Q = 32_767 / 90
+const LON_Q = 32_767 / 180
 
 export interface PostcodeBinaryEntry {
 	postcode: string
@@ -91,9 +91,9 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 		encodeKey(e.postcode, keyWidth, buf, o)
 		o += keyWidth
 		buf[o++] = countryIdx.get(e.country)!
-		view.setInt16(o, Math.max(-32767, Math.min(32767, Math.round(e.lat * LAT_Q))), true)
+		view.setInt16(o, Math.max(-32_767, Math.min(32_767, Math.round(e.lat * LAT_Q))), true)
 		o += 2
-		view.setInt16(o, Math.max(-32767, Math.min(32767, Math.round(e.lon * LON_Q))), true)
+		view.setInt16(o, Math.max(-32_767, Math.min(32_767, Math.round(e.lon * LON_Q))), true)
 		o += 2
 	}
 

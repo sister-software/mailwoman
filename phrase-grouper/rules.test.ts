@@ -360,7 +360,7 @@ test("scoreVenuePhrase: a hyphenated compound inside a 2+ capitalized run fires 
 		{ body: "Mont-Blanc Estates", start: 0, end: 18, kind: "VENUE_PHRASE", confidence: 0.65 },
 	])
 	// (smoke) Coca-Cola Tower still emits a venue proposal.
-	expect(out.length).toBe(1)
+	expect(out).toHaveLength(1)
 })
 
 test("scoreVenuePhrase: venue-by-exclusion fires only in the first segment for a plain capitalized run", () => {

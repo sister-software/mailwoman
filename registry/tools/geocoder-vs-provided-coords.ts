@@ -56,7 +56,7 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 
 // The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)`
 // — byte-identical semantics (floor index, clamped); `?? NaN` preserves the empty-sample behavior.
-const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? NaN
+const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /** Geocoder validation against provided coordinates (#619) — see the module doc. Emits the report to stdout. */
 export async function geocoderVsProvidedCoords(
@@ -141,7 +141,7 @@ export async function geocoderVsProvidedCoords(
 	lines.push(`- unplaced by our geocoder: ${noPlace} · skipped (no coord / no address): ${noCoord}`)
 	lines.push(
 		`- **overall delta: p50 ${m(quantile(all, 0.5))}, p90 ${m(quantile(all, 0.9))}, p99 ${m(quantile(all, 0.99))}** ` +
-			`(max ${m(all[all.length - 1] ?? 0)})`
+			`(max ${m(all.at(-1) ?? 0)})`
 	)
 	lines.push("")
 	lines.push(`## By resolution tier`)

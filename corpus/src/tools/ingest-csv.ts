@@ -68,7 +68,7 @@ function stripQuotes(field: string): string {
 	const trimmed = field.trim()
 
 	if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
-		return trimmed.slice(1, -1).replace(/""/g, '"')
+		return trimmed.slice(1, -1).replaceAll(/""/g, '"')
 	}
 
 	return trimmed
@@ -82,10 +82,10 @@ function normalizeColumnName(raw: string): string {
 	return (
 		raw
 			.trim()
-			.replace(/^"+|"+$/g, "")
+			.replaceAll(/^"+|"+$/g, "")
 			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "_")
-			.replace(/^_|_$/g, "") || "unnamed"
+			.replaceAll(/[^a-z0-9]+/g, "_")
+			.replaceAll(/^_|_$/g, "") || "unnamed"
 	)
 }
 
@@ -116,7 +116,7 @@ function normalizeField(raw: string): string | null {
 	let s = raw.trim()
 
 	if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
-		s = s.slice(1, -1).replace(/""/g, '"')
+		s = s.slice(1, -1).replaceAll(/""/g, '"')
 	}
 
 	// Normalize common null-like values
@@ -292,14 +292,14 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 				insertStmt.run(...row)
 			}
 			db.exec("COMMIT")
-		} catch (err) {
+		} catch (error) {
 			db.exec("ROLLBACK")
-			throw err
+			throw error
 		}
 	}
 
 	const batch: SQLInputValue[][] = []
-	const BATCH_SIZE = 10000
+	const BATCH_SIZE = 10_000
 
 	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 		lineNum++
@@ -318,9 +318,9 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			if (v === null) return null
 			const col = columns[i]
 
-			if (col?.type === "INTEGER" && /^-?\d+$/.test(v)) return parseInt(v, 10)
+			if (col?.type === "INTEGER" && /^-?\d+$/.test(v)) return Number.parseInt(v, 10)
 
-			if (col?.type === "REAL" && /^-?\d+\.?\d+$/.test(v)) return parseFloat(v)
+			if (col?.type === "REAL" && /^-?\d+\.?\d+$/.test(v)) return Number.parseFloat(v)
 
 			return v
 		})
@@ -338,7 +338,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			imported += batch.length
 			batch.length = 0
 
-			if (imported % 100000 === 0) {
+			if (imported % 100_000 === 0) {
 				process.stderr.write(`  ${(imported / 1_000_000).toFixed(1)}M rows...\n`)
 			}
 		}
@@ -409,7 +409,7 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 
 	await runIngest({
 		inputPath: options.input,
-		tableName: options.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
+		tableName: options.table ?? csvName.replaceAll(/[^a-zA-Z0-9_]/g, "_"),
 		outputPath: options.output ?? join(dirname(options.input), csvName + ".db"),
 		sampleSize: options.sample ?? 100,
 		separator: options.separator ?? ",",

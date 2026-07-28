@@ -89,7 +89,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		// "“" and "”" (U+201C/U+201D) are each 3 UTF-8 bytes on this vocab (no direct token) — two runs of three
 		// consecutive <0xHH> pieces, split by the real "A" piece between them.
 		const runPieces = pieces.filter((p) => /^<0x[0-9A-Fa-f]{2}>$/.test(p.piece))
-		expect(runPieces.length).toBe(6)
+		expect(runPieces).toHaveLength(6)
 
 		const openRun = runPieces.slice(0, 3)
 		const closeRun = runPieces.slice(3, 6)

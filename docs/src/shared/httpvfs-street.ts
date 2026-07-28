@@ -35,7 +35,7 @@ export interface HTTPVFSDB {
 /**
  * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over Comlink).
  */
-const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
+const sqlStr = (s: string): string => `'${s.replaceAll(/'/g, "''")}'`
 
 /** Sql.js exec result → row objects. */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
@@ -264,7 +264,7 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 		}
 		remaining -= leg
 	}
-	const [lon, lat] = polyline[polyline.length - 1]!
+	const [lon, lat] = polyline.at(-1)!
 
 	return [lon, lat, total]
 }

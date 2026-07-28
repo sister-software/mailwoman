@@ -36,8 +36,7 @@ import { globSync, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
-import { pyJSONDumps } from "@mailwoman/core/utils"
-import { SeededRandom } from "@mailwoman/core/utils"
+import { pyJSONDumps, SeededRandom } from "@mailwoman/core/utils"
 
 import { csvRecordsFromFile, csvRecordsFromZip } from "./lib/zip-csv.ts"
 

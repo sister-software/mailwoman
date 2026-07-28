@@ -18,7 +18,7 @@ describe("normalizePLZ", () => {
 	it("returns null for non-PLZ input", () => {
 		expect(normalizePLZ("8033")).toBeNull()
 		expect(normalizePLZ("SW1A 1AA")).toBeNull()
-		expect(normalizePLZ(68161)).toBeNull()
+		expect(normalizePLZ(68_161)).toBeNull()
 	})
 })
 

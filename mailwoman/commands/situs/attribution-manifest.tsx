@@ -36,7 +36,12 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-type StateLedger = { ok: boolean; error?: string; points?: number; datasets?: Record<string, number> }
+interface StateLedger {
+	ok: boolean
+	error?: string
+	points?: number
+	datasets?: Record<string, number>
+}
 
 const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {

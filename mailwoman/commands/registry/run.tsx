@@ -194,8 +194,8 @@ export function loadMapping(
 
 		try {
 			provided = JSON.parse(text) as Partial<ColumnMapping>
-		} catch (err) {
-			throw commandError(`--mapping is neither a readable file nor valid JSON: ${(err as Error).message}`)
+		} catch (error) {
+			throw commandError(`--mapping is neither a readable file nor valid JSON: ${(error as Error).message}`)
 		}
 	}
 
@@ -354,8 +354,8 @@ export function loadSources(option: string): MultiSourceSpec[] {
 
 	try {
 		parsed = JSON.parse(text)
-	} catch (err) {
-		throw commandError(`--sources is neither a readable file nor valid JSON: ${(err as Error).message}`)
+	} catch (error) {
+		throw commandError(`--sources is neither a readable file nor valid JSON: ${(error as Error).message}`)
 	}
 
 	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {
@@ -441,7 +441,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
 			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
 
-			if (!eligibilitySources.length || !fundingSources.length) {
+			if (eligibilitySources.length === 0 || fundingSources.length === 0) {
 				throw commandError(
 					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
 						"(at least one of each)."
@@ -511,7 +511,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 		const summary =
 			`registry: ${rows.length} rows → ${records.length} records (${geocoded} geocoded) → ` +
 			`${result.entities.length} entities ` +
-			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
+			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length > 0 ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
 
 		const written = writeOutputs(geojson, options)
 

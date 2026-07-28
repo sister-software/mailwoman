@@ -113,7 +113,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 			// Ashley (US, IL) — admin-us ships a jpn alt: アシュリー (id 1108979833).
 			const candidates = await lookup.findPlace({ text: "アシュリー", placetype: "locality", limit: 10 })
 			expect(candidates.length).toBeGreaterThan(0)
-			const ashley = candidates.find((c) => c.id === 1108979833)
+			const ashley = candidates.find((c) => c.id === 1_108_979_833)
 			expect(ashley).toBeDefined()
 			expect(ashley!.name).toBe("Ashley")
 		})
@@ -123,7 +123,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 		test("parentID narrows children to direct + transitive descendants", async () => {
 			// Pick the first Springfield candidate, then look up children of its parent.
 			const springfields = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 1 })
-			expect(springfields.length).toBe(1)
+			expect(springfields).toHaveLength(1)
 			const parentID = springfields[0]!.parent_id
 			expect(parentID).toBeDefined()
 

@@ -12,13 +12,13 @@ import regenerate from "regenerate"
  */
 const CombiningDiacriticalPattern = regenerate()
 	.add(0x200d) // ZERO WIDTH JOINER (U+200D)
-	.addRange(0x0300, 0x036f) // Combining Diacritical Marks
+	.addRange(0x03_00, 0x036f) // Combining Diacritical Marks
 	.addRange(0x1ab0, 0x1aff) // Combining Diacritical Marks Extended
 	.addRange(0x1dc0, 0x1dff) // Combining Diacritical Marks Supplement
 	.addRange(0x20d0, 0x20ff) // Combining Diacritical Marks for Symbols
 	.addRange(0xfe00, 0xfe0f) // Variation Selectors
 	.addRange(0xfe20, 0xfe2f) // Combining Half Marks
-	.add(0x3099) // Combining Dakuten
+	.add(0x30_99) // Combining Dakuten
 	.add(0x309a) // Combining Handakuten
 	.toRegExp("g")
 
@@ -84,11 +84,11 @@ export class TextNormalizer implements TextNormalizerInit {
 		}
 
 		if (this.removeHyphen) {
-			input = input.replace(/-/g, " ")
+			input = input.replaceAll(/-/g, " ")
 		}
 
 		if (this.removeSpaces) {
-			input = input.replace(/ /g, "")
+			input = input.replaceAll(/ /g, "")
 		}
 
 		return input

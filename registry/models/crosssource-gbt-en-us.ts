@@ -19,7 +19,7 @@ export const CROSS_SOURCE_GBT_META = {
 	state: "TX",
 	npis: 1954,
 	records: 3908,
-	pairs: 175200,
+	pairs: 175_200,
 	posRate: 0.0109,
 	precisionBar: 0.95,
 	holdoutBarRecall: 1,

@@ -81,7 +81,7 @@ export function stripAdminSuffix(name: string): string {
 	if (typeof name !== "string" || name.length === 0) return name
 
 	if (name === "北海道") return name
-	const last = name[name.length - 1]!
+	const last = name.at(-1)!
 
 	return ADMIN_SUFFIX_SET.has(last) ? name.slice(0, -1) : name
 }

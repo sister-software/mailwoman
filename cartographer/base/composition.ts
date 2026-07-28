@@ -12,7 +12,7 @@ import {
 	type LayerSpecificationListInput,
 	type LayerSpecificationListItem,
 } from "../styles/layers.ts"
-import { type TileSetSourceRecord } from "../styles/sources.ts"
+import type { TileSetSourceRecord } from "../styles/sources.ts"
 import { BaseLayers } from "./layers.ts"
 import { createTerrainDEMSource, HillshadeTileSetID } from "./terrain.ts"
 

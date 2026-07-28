@@ -12,7 +12,7 @@ describe("expandAbbreviations — en-US", () => {
 	it("expands street suffixes (St → Street)", () => {
 		const r = expandAbbreviations("350 5th St")
 		expect(r.text).toBe("350 5th Street")
-		expect(r.expansions.length).toBe(1)
+		expect(r.expansions).toHaveLength(1)
 		expect(r.expansions[0]?.from).toBe("St")
 		expect(r.expansions[0]?.to).toBe("Street")
 	})
@@ -31,13 +31,13 @@ describe("expandAbbreviations — en-US", () => {
 	it("expands multiple abbreviations in one string", () => {
 		const r = expandAbbreviations("1600 Pennsylvania Ave NW")
 		expect(r.text).toBe("1600 Pennsylvania Avenue Northwest")
-		expect(r.expansions.length).toBe(2)
+		expect(r.expansions).toHaveLength(2)
 	})
 
 	it("preserves non-abbreviation tokens", () => {
 		const r = expandAbbreviations("350 5th Avenue")
 		expect(r.text).toBe("350 5th Avenue")
-		expect(r.expansions.length).toBe(0)
+		expect(r.expansions).toHaveLength(0)
 	})
 
 	it("preserves punctuation between tokens", () => {
@@ -62,7 +62,7 @@ describe("expandAbbreviations — fr-FR", () => {
 	it("expands French street abbreviations", () => {
 		const r = expandAbbreviations("8 R République", "fr-FR")
 		expect(r.text).toBe("8 Rue République")
-		expect(r.expansions.length).toBe(1)
+		expect(r.expansions).toHaveLength(1)
 	})
 
 	it("expands Bd → Boulevard", () => {
@@ -75,12 +75,12 @@ describe("expandAbbreviations — no-ops", () => {
 	it("leaves unknown words alone", () => {
 		const r = expandAbbreviations("Bonjour Mailwoman")
 		expect(r.text).toBe("Bonjour Mailwoman")
-		expect(r.expansions.length).toBe(0)
+		expect(r.expansions).toHaveLength(0)
 	})
 
 	it("handles empty input", () => {
 		const r = expandAbbreviations("")
 		expect(r.text).toBe("")
-		expect(r.expansions.length).toBe(0)
+		expect(r.expansions).toHaveLength(0)
 	})
 })

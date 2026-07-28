@@ -161,7 +161,7 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 
 	for (const name of ["train", "val", "test"] as const) {
 		const sorted = [...manifest[name]].sort()
-		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length ? "\n" : ""), "utf8")
+		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length > 0 ? "\n" : ""), "utf8")
 	}
 	const summary = {
 		corpus_version: manifest.corpus_version,

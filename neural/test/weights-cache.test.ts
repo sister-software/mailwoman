@@ -70,7 +70,7 @@ describe("resolveWeights cache fallback", () => {
 
 	test("the not-found error names the probed cache path", () => {
 		expect(() => resolveWeights({ locale: LOCALE, cacheRoot })).toThrow(
-			new RegExp(join(cacheRoot, "node_modules", PACKAGE_NAME).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+			new RegExp(join(cacheRoot, "node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 		)
 	})
 

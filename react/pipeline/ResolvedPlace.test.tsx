@@ -9,7 +9,7 @@ import { expect, test } from "vitest"
 import { renderComponent } from "../test/render.tsx"
 import { ResolvedPlace } from "./ResolvedPlace.tsx"
 
-const PLACE = { id: 85977539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 }
+const PLACE = { id: 85_977_539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 }
 
 test("ResolvedPlace lists the place's fields", () => {
 	const { container } = renderComponent(<ResolvedPlace place={PLACE} />)

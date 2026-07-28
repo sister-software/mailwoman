@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
+import type { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import { Fragment, memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import { IControl, MapInstance } from "react-map-gl/maplibre"
+import type { IControl, MapInstance } from "react-map-gl/maplibre"
 
 import styles from "./_debug.module.css"
 
@@ -135,7 +135,7 @@ export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 							</div>
 						) : null}
 						<strong>{layerID}</strong>
-						{entries.length ? (
+						{entries.length > 0 ? (
 							<dl className={styles.featureProperties}>
 								{entries.map(([key, value]) => (
 									<Fragment key={key}>

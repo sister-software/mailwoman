@@ -22,7 +22,7 @@ const MESSINA = {
 	name: "Messina",
 	placetype: "region",
 	country: "IT",
-	lat: 38.0,
+	lat: 38,
 	lon: 14.9,
 	score: 9,
 	exactMatch: true,
@@ -33,7 +33,7 @@ const MAINE = {
 	placetype: "region",
 	country: "US",
 	lat: 45.3,
-	lon: -69.0,
+	lon: -69,
 	score: 7,
 	exactMatch: true,
 }
@@ -100,7 +100,7 @@ const portlandMeTree = (): AddressTree => ({
 function localityOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "locality") return n
@@ -113,7 +113,7 @@ function localityOf(tree: AddressTree): AddressNode | undefined {
 function regionOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "region") return n
@@ -165,7 +165,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	it("ignores fuzzy (non-exact) region candidates — a Portland under Missouri must NOT match the token 'ME'", async () => {
 		// Place a Portland under Missouri (the fuzzy runner-up). Since MISSOURI.exactMatch is false, the
 		// pass must not consider it, so no re-pick to Missouri.
-		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37.0, lon: -93.0 }
+		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37, lon: -93 }
 		const resolver = createWOFResolver(makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: true })
 		const loc = localityOf(out)
@@ -190,7 +190,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			name: "Georgia",
 			placetype: "country",
 			country: "GE",
-			lat: 42.0,
+			lat: 42,
 			lon: 43.5,
 			score: 8,
 			exactMatch: true,

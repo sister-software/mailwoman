@@ -205,15 +205,15 @@ function canonicalizeFragment(
 ): { canonical: string; designations: string[] } {
 	const normalized = fragment
 		.normalize("NFKD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
 		// connective punctuation joins words rather than vanishing: "AT&T" → "at and t"
-		.replace(/&/g, " and ")
-		.replace(/\+/g, " and ")
+		.replaceAll(/&/g, " and ")
+		.replaceAll(/\+/g, " and ")
 		// periods + apostrophes are intra-token, so remove (not space): "S.A." → "sa", "Macy's" → "macys"
-		.replace(/[.'’]/g, "")
-		.replace(/[^a-z0-9\s]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[.'’]/g, "")
+		.replaceAll(/[^a-z0-9\s]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 		.replace(/^the\s+/, "")
 
@@ -255,7 +255,7 @@ export function canonicalizeOrganizationName(
 
 	const result: OrganizationName = { raw, canonical, designations }
 
-	if (dbaParts.length) {
+	if (dbaParts.length > 0) {
 		const dba = canonicalizeFragment(dbaParts.join(" "), designationSet).canonical
 
 		if (dba) {

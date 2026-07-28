@@ -48,7 +48,7 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
 
-		if (t === boostIdx && labelIdx >= 0) {
+		if (t === boostIdx && labelIdx !== -1) {
 			row[labelIdx] = magnitude
 		}
 		matrix.push(row)
@@ -121,7 +121,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const tokenizer = await loadTokenizer()
 		// A minimal PairIndexLike double — one real GB pair, hit under any key form.
 		const index = {
-			delta: 6.0,
+			delta: 6,
 			probe: (child: string, parent: string) =>
 				child === "moelfre" && parent === "abergele" ? ("dependent_locality" as const) : undefined,
 		}
@@ -179,7 +179,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
 		const shape: QueryShapeLike = {
-			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 1.0 }],
+			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 1 }],
 		}
 		const traced = await classifier.traceParse(text, { queryShape: shape, spanProposer: false })
 

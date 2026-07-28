@@ -38,7 +38,7 @@ describe("corpus run schema validation", () => {
 		expect(() => runOptions.parse({ input: "x" })).toThrow()
 		const parsed = runOptions.parse({ input: "x", output: "y" })
 		expect(parsed.corpusVersion).toBe("0.1.0-dev")
-		expect(parsed.progressEvery).toBe(1_000)
+		expect(parsed.progressEvery).toBe(1000)
 	})
 })
 

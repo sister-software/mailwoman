@@ -43,7 +43,7 @@ export interface CompareResult {
 function normVal(v: unknown): string {
 	if (typeof v !== "string") return ""
 
-	return v.trim().toLowerCase().replace(/\s+/g, " ")
+	return v.trim().toLowerCase().replaceAll(/\s+/g, " ")
 }
 
 /**

@@ -50,7 +50,7 @@ export function detectLocaleSync(
 		// Caller's hint wins. Detector results surface as alternatives.
 		return {
 			locale: opts.hint,
-			confidence: 1.0,
+			confidence: 1,
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "caller",
 		}

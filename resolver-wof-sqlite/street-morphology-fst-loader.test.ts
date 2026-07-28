@@ -103,7 +103,7 @@ describe("loadStreetMorphologyFST", () => {
 		})
 
 		expect(loaded.source).toBe("built")
-		expect(warnings.length).toBe(1)
+		expect(warnings).toHaveLength(1)
 		expect(warnings[0]).toContain(corruptPath)
 		expect(loaded.matcher.query("rue").accepting.length).toBeGreaterThan(0)
 	})

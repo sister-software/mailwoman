@@ -102,7 +102,7 @@ export function buildCountryFeatures(
 		const surface = bits & COUNTRY_SURFACE_BIT ? 1 : 0
 		const ambiguous = bits & COUNTRY_AMBIGUOUS_BIT ? 1 : 0
 		features.push([surface, ambiguous])
-		confidence.push(surface ? 1.0 : 0)
+		confidence.push(surface ? 1 : 0)
 	}
 
 	return { features, confidence }

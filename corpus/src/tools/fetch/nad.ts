@@ -148,9 +148,9 @@ async function fetchChunk(
 
 			try {
 				pageResults[slot]!.rows = await fetchPage(s, e, pageSize)
-			} catch (err) {
-				pageResults[slot]!.error = err as Error
-				report?.(`    ✗ page ${s}-${e}: ${(err as Error).message}`)
+			} catch (error) {
+				pageResults[slot]!.error = error as Error
+				report?.(`    ✗ page ${s}-${e}: ${(error as Error).message}`)
 			}
 		}
 	})
@@ -177,7 +177,7 @@ async function fetchChunk(
 
 async function featureserverMode(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const chunkSize = options.chunkSize ?? 100_000
-	const pageSize = options.pageSize ?? 5_000
+	const pageSize = options.pageSize ?? 5000
 	const concurrency = options.concurrency ?? 4
 	const startOID = options.startOID ?? 1
 

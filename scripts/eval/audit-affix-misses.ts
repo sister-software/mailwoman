@@ -87,7 +87,7 @@ function formFeatures(row: { raw: string; components: Record<string, string> }):
 		}
 	}
 
-	if (/\b[A-Z]{3,}\b/.test(row.raw.replace(/\b(USA|APO|FPO)\b/g, ""))) {
+	if (/\b[A-Z]{3,}\b/.test(row.raw.replaceAll(/\b(USA|APO|FPO)\b/g, ""))) {
 		f.push("CAPS")
 	}
 

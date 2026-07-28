@@ -100,9 +100,9 @@ function tagClass(tag: string): string {
 function norm(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.replaceAll(/[^\p{L}\p{N}]+/gu, " ")
 		.trim()
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 }
 
 /**

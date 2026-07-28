@@ -97,9 +97,9 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			let confidence: number
 
 			if (!entry.locales) {
-				confidence = 1.0
+				confidence = 1
 			} else if (locale && entry.locales.includes(locale)) {
-				confidence = 1.0
+				confidence = 1
 			} else if (language && entry.locales.some((l) => l.split(/[-_]/)[0] === language)) {
 				confidence = 0.5
 			} else {

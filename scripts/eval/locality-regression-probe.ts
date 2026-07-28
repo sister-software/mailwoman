@@ -38,9 +38,9 @@ const N = Number(args.n)
 
 for (const k of ["baseline", "candidate", "tokenizer"] as const) if (!args[k]) throw new Error(`--${k} required`)
 
-const norm = (s?: string) => (s ?? "").toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim()
+const norm = (s?: string) => (s ?? "").toLowerCase().replaceAll(/[.,]/g, "").replaceAll(/\s+/g, " ").trim()
 const wordIncludes = (hay: string, needle: string) =>
-	needle.length > 0 && new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
+	needle.length > 0 && new RegExp(`\\b${needle.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
 
 // All street-family text the candidate emitted (folded), for the "did street eat it" test.
 const streetFamily = (p: Record<string, string>) =>
@@ -129,7 +129,7 @@ for (const [m, c] of Object.entries(failMode).sort((a, b) => b[1] - a[1])) {
 	console.log(`    ${((100 * c) / regressions).toFixed(0).padStart(3)}%  ${m}  (${c})`)
 }
 
-if (examples.length) {
+if (examples.length > 0) {
 	console.log(`\n  examples:\n${examples.join("\n")}`)
 }
 console.log()

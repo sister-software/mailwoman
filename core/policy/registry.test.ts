@@ -173,7 +173,7 @@ describe("InMemoryPolicyRegistry — pass-through behavior", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		const input = [makeProposal({ component: "country", source: "neural" })]
 		const out = registry.apply(input)
-		expect(input.length).toBe(1)
-		expect(out.length).toBe(0)
+		expect(input).toHaveLength(1)
+		expect(out).toHaveLength(0)
 	})
 })

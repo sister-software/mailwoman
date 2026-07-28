@@ -33,14 +33,14 @@ describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () =>
 	})
 
 	it("a DE-only code byte-matches Python", () => {
-		const v = anchorFeatureVector({ DE: 1.0 }, 49.4848, 8.4668)
-		const expected = [0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0.549831, 0.047038]
+		const v = anchorFeatureVector({ DE: 1 }, 49.4848, 8.4668)
+		const expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0.549831, 0.047038]
 		expected.forEach((e, i) => expect(v[i]!).toBeCloseTo(e, 5))
 	})
 
 	it("renormalizes over the in-set mass (ignores out-of-set countries)", () => {
 		const v = anchorFeatureVector({ DE: 0.5, ZZ: 0.5 }, 0, 0) // ZZ not in the locale set
-		expect(v[LOCALE_ORDER.indexOf("DE")]!).toBeCloseTo(1.0, 6) // DE renormalized to full mass
+		expect(v[LOCALE_ORDER.indexOf("DE")]!).toBeCloseTo(1, 6) // DE renormalized to full mass
 	})
 })
 

@@ -185,7 +185,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			// Fixed importance: street affixes are structurally unambiguous (Avenue is almost never
 			// anything but street-typing). The morphology prior caps bias separately; this value
 			// just feeds the cap formula `importance * cap`.
-			importance: 1.0,
+			importance: 1,
 			lat: 0,
 			lon: 0,
 		}

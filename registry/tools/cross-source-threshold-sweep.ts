@@ -130,7 +130,7 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 /** Last-10-digit phone key (drops formatting / country code). */
 const normPhone = (p?: string | null): string => {
 	if (!p) return ""
-	const d = p.replace(/\D/g, "")
+	const d = p.replaceAll(/\D/g, "")
 
 	return d.length >= 10 ? d.slice(-10) : ""
 }

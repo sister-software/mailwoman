@@ -44,18 +44,18 @@ function buildDB(): DatabaseSync {
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
 	// Regions (US states + DC + a territory) — parent is the US country node (id 1).
-	spr.run(1, 0, "United States", "country", "US", 39.8, -98.6, 18.0, 72.0, -180.0, -66.0)
-	spr.run(10, 1, "Vermont", "region", "US", 44.0, -72.7, 42.7, 45.0, -73.4, -71.5)
-	spr.run(11, 1, "Iowa", "region", "US", 42.0, -93.5, 40.4, 43.5, -96.6, -90.1)
-	spr.run(12, 1, "California", "region", "US", 36.7, -119.4, 32.5, 42.0, -124.4, -114.1)
-	spr.run(13, 1, "District of Columbia", "region", "US", 38.9, -77.0, 38.8, 39.0, -77.1, -76.9)
+	spr.run(1, 0, "United States", "country", "US", 39.8, -98.6, 18, 72, -180, -66)
+	spr.run(10, 1, "Vermont", "region", "US", 44, -72.7, 42.7, 45, -73.4, -71.5)
+	spr.run(11, 1, "Iowa", "region", "US", 42, -93.5, 40.4, 43.5, -96.6, -90.1)
+	spr.run(12, 1, "California", "region", "US", 36.7, -119.4, 32.5, 42, -124.4, -114.1)
+	spr.run(13, 1, "District of Columbia", "region", "US", 38.9, -77, 38.8, 39, -77.1, -76.9)
 	spr.run(14, 1, "Puerto Rico", "region", "US", 18.2, -66.5, 17.9, 18.5, -67.3, -65.2)
 	// Counties — in US WOF a locality's direct parent is a county, NOT the region (the gap the
 	// ancestry backfill bridges).
-	spr.run(20, 10, "Franklin County", "county", "US", 44.9, -72.9, 44.7, 45.0, -73.1, -72.5)
-	spr.run(21, 11, "O'Brien County", "county", "US", 43.1, -95.6, 43.0, 43.3, -95.9, -95.4)
+	spr.run(20, 10, "Franklin County", "county", "US", 44.9, -72.9, 44.7, 45, -73.1, -72.5)
+	spr.run(21, 11, "O'Brien County", "county", "US", 43.1, -95.6, 43, 43.3, -95.9, -95.4)
 	// Two same-named localities — the bug's signature.
-	spr.run(30, 20, "Sheldon", "locality", "US", 44.9, -72.95, 44.85, 44.95, -73.0, -72.9) // Vermont (small)
+	spr.run(30, 20, "Sheldon", "locality", "US", 44.9, -72.95, 44.85, 44.95, -73, -72.9) // Vermont (small)
 	spr.run(31, 21, "Sheldon", "locality", "US", 43.18, -95.85, 43.15, 43.2, -95.9, -95.8) // Iowa (larger)
 	const pop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	pop.run(30, 932) // Sheldon, VT

@@ -92,7 +92,7 @@ export function createMailwomanAPI(engine: MailwomanAPIEngine, options: Mailwoma
 	// Browser-embedded clients need CORS or their cross-origin XHR (including the mutating `/v1/*` preflight) is
 	// blocked before it completes (#1017). GET+POST, unlike the read-only drop-ins (photon, nominatim).
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: an engine fault answers the native envelope, never a crash. `detail` carries the raw message —

@@ -61,7 +61,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 
 	const missing = REQUIRED_ENV.filter((v) => !$private[v])
 
-	if (missing.length) {
+	if (missing.length > 0) {
 		throw commandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
 	}
 

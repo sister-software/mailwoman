@@ -6934,23 +6934,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@sister.software/oxfmt-config@npm:9.3.0"
+"@sister.software/oxfmt-config@portal:../universe/oxfmt-config::locator=%40mailwoman%2Funiverse%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@sister.software/oxfmt-config@portal:../universe/oxfmt-config::locator=%40mailwoman%2Funiverse%40workspace%3A."
   peerDependencies:
-    oxfmt: 0.56.0
-  checksum: 10/fed032d078e32797574421d9ee4d74a960720530f14328d6f40612569b2c0bc4bf059531683100bc316cbc0a6e31e045f11bec9c6c2a3b6680f24005a82d8f06
+    oxfmt: ">=0.60.0 <1"
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@sister.software/oxlint-config@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@sister.software/oxlint-config@npm:9.3.0"
+"@sister.software/oxlint-config@portal:../universe/oxlint-config::locator=%40mailwoman%2Funiverse%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@sister.software/oxlint-config@portal:../universe/oxlint-config::locator=%40mailwoman%2Funiverse%40workspace%3A."
   peerDependencies:
-    oxlint: ^1.71.0
-  checksum: 10/8654671bfa58777bd9a6e04e38022ffd2ca6e49a29825e938367853c53f7ea540d4360de51797ed4076c67e35998781f29162d32b029aa24b8f1667607c7acb5
+    oxlint: ">=1.75.0 <2"
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@sister.software/tsconfig@npm:^9.3.0":
   version: 9.3.0

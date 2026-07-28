@@ -58,10 +58,10 @@ export interface StreetEvidenceScope {
 export function foldStreetSurface(surface: string): string {
 	return surface
 		.normalize("NFD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
-		.replace(/['’‐-―-]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/['’‐-―-]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 

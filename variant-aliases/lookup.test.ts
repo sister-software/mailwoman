@@ -12,7 +12,7 @@ describe("lookupVariantAliases", () => {
 	it("exact locale match — Australian 'servo' in en-AU", () => {
 		const r = lookupVariantAliases("servo", "en-AU")
 		expect(r).toHaveLength(1)
-		expect(r[0]!.confidence).toBe(1.0)
+		expect(r[0]!.confidence).toBe(1)
 		expect(r[0]!.alias.kind).toBe("amenity")
 
 		if (r[0]!.alias.kind === "amenity") {
@@ -23,7 +23,7 @@ describe("lookupVariantAliases", () => {
 	it("language match — 'servo' in en-NZ matches both en-AU and en-NZ", () => {
 		const r = lookupVariantAliases("servo", "en-NZ")
 		expect(r).toHaveLength(1)
-		expect(r[0]!.confidence).toBe(1.0)
+		expect(r[0]!.confidence).toBe(1)
 	})
 
 	it("language fallback — 'servo' in en-IE matches en-AU at lower confidence", () => {
@@ -62,9 +62,9 @@ describe("lookupVariantAliases", () => {
 	})
 
 	it("multi-locale variant — 'petrol station' in en-AU, en-GB, en-ZA all match", () => {
-		expect(lookupVariantAliases("petrol station", "en-AU")[0]!.confidence).toBe(1.0)
-		expect(lookupVariantAliases("petrol station", "en-GB")[0]!.confidence).toBe(1.0)
-		expect(lookupVariantAliases("petrol station", "en-ZA")[0]!.confidence).toBe(1.0)
+		expect(lookupVariantAliases("petrol station", "en-AU")[0]!.confidence).toBe(1)
+		expect(lookupVariantAliases("petrol station", "en-GB")[0]!.confidence).toBe(1)
+		expect(lookupVariantAliases("petrol station", "en-ZA")[0]!.confidence).toBe(1)
 	})
 
 	it("PFK in Quebec → KFC", () => {

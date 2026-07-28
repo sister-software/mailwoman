@@ -153,9 +153,9 @@ export function buildFSTEmissionPriors(
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 1.0
+	const biasScale = opts.biasScale ?? 1
 	const seenWOFIDs = new Set<number>()
-	const maxBias = opts.maxBias ?? 3.0
+	const maxBias = opts.maxBias ?? 3
 	const suppressionScale = opts.suppressionScale ?? 1.5
 	// Default `suppression` (#1142, measured 2026-07-18): scaling ONLY the street-suppression term by
 	// match length is a broad win (US golden +35, admin-street-homonym fragments +50, bare-locality −2),
@@ -366,7 +366,7 @@ export function normalizeFSTToken(s: string): string {
 	const cleaned = s
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[\p{P}\p{S}]/gu, "")
+		.replaceAll(/[\p{P}\p{S}]/gu, "")
 
 	return cleaned.length > 0 ? cleaned : ""
 }
@@ -414,7 +414,7 @@ function streetContextScale(
 	streetTypeFlags: boolean[] | null,
 	houseNumberFlags: boolean[] | null
 ): number {
-	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1.0
+	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1
 
 	const prev = adjacentNonEmptyIndex(groups, startIdx, -1)
 
@@ -428,7 +428,7 @@ function streetContextScale(
 		return streetContext.positiveScale ?? 0.25
 	}
 
-	return 1.0
+	return 1
 }
 
 function applyBias(
@@ -453,9 +453,9 @@ function applyBias(
 	// street-suppression term (safe for the bare-fragment regime where the positive bias earns its keep);
 	// `both` also scales the positive locality bias; `off` disables. Locale-general — no word list.
 	const matchLen = groups.length
-	const lengthScale = matchLen >= 3 ? 1.0 : matchLen === 2 ? 0.7 : 0.25
-	const posScale = lengthMode === "both" ? lengthScale : 1.0
-	const supScale = lengthMode === "off" ? 1.0 : lengthScale
+	const lengthScale = matchLen >= 3 ? 1 : matchLen === 2 ? 0.7 : 0.25
+	const posScale = lengthMode === "both" ? lengthScale : 1
+	const supScale = lengthMode === "off" ? 1 : lengthScale
 
 	for (const entry of entries) {
 		if (seenWOFIDs.has(entry.wofID)) continue

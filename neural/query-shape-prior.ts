@@ -103,7 +103,7 @@ export function buildEmissionPriors(
 ): number[][] {
 	const T = tokens.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 1.0
+	const biasScale = opts.biasScale ?? 1
 	const matrix: number[][] = []
 
 	for (let t = 0; t < T; t++) {
@@ -195,7 +195,7 @@ function applyScopedLocalityBias(
 }
 
 /** Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton. */
-const SCOPED_LOCALITY_BIAS = 2.0
+const SCOPED_LOCALITY_BIAS = 2
 
 function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end

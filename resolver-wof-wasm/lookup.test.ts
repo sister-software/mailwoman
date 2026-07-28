@@ -141,7 +141,7 @@ describe("WOFWasmPlaceLookup", () => {
 				placetype: "locality",
 				relationshipType: "capital-seat",
 			})
-			expect(lookup.coincidentLocalitiesFor(99999)).toHaveLength(0)
+			expect(lookup.coincidentLocalitiesFor(99_999)).toHaveLength(0)
 		} finally {
 			lookup.close()
 		}
@@ -186,7 +186,7 @@ describe("WOFWasmPlaceLookup", () => {
 
 		try {
 			const matches = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
-			expect(matches.length).toBe(1)
+			expect(matches).toHaveLength(1)
 			expect(matches[0]?.name).toBe("62701")
 		} finally {
 			lookup.close()

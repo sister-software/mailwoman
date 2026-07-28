@@ -6,7 +6,7 @@
 
 import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import { GeoIDPart } from "./geoid.ts"
+import type { GeoIDPart } from "./geoid.ts"
 import type { TIGERTabulatedBlockProperties } from "./tabulation-block.ts"
 
 //#region FIPS Codes

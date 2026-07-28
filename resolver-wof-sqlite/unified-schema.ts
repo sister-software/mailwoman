@@ -12,7 +12,7 @@
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
 
-import { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 

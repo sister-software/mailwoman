@@ -343,7 +343,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	const size = statSync(outputFile).size
 
-	if (size < 10240) {
+	if (size < 10_240) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)
 
 		return fail(country)

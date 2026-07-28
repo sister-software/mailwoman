@@ -82,7 +82,7 @@ test("POST /parse accepts a JSON body (native now — the express CLI never moun
 		body: JSON.stringify({ query: "1600 pennsylvania ave" }),
 	})
 	expect(res.status).toBe(200)
-	expect(((await res.json()) as unknown[]).length).toBe(2)
+	expect((await res.json()) as unknown[]).toHaveLength(2)
 })
 
 test("parse without a query answers the exact legacy 400 body", async () => {

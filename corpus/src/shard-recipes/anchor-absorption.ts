@@ -47,7 +47,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 		// Emit PRNG: the legacy build-anchor-absorption-shard.mjs seeded an LCG (lcg(opts.seed)).
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-anchor-absorption"
-		const count = opts.count ?? 50000
+		const count = opts.count ?? 50_000
 		const realZips = loadRealUsZips(ANCHOR_LOOKUP)
 		console.error(`Loaded ${realZips.length} real US ZIPs from the anchor lookup (the leading-5-digit source).`)
 

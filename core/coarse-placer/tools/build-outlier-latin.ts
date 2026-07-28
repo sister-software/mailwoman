@@ -76,7 +76,7 @@ function levelValues(al: unknown): string[] {
 		out.push(m[1]!)
 	}
 
-	if (!out.length) {
+	if (out.length === 0) {
 		for (const m of s.matchAll(/"value":\s*"([^"]*)"/g)) {
 			out.push(m[1]!)
 		}
@@ -91,7 +91,7 @@ function assemble(r: Record<string, unknown>): string | null {
 	const street = (r.street ?? "").toString().trim()
 	const pc = (r.postcode ?? "").toString().trim()
 	const levels = levelValues(r.address_levels)
-	const locality = (r.postal_city ? String(r.postal_city) : "") || levels[levels.length - 1] || levels[0] || ""
+	const locality = (r.postal_city ? String(r.postal_city) : "") || levels.at(-1) || levels[0] || ""
 
 	if (!street && !locality) return null // nothing distinctive
 	const head = [num, street].filter(Boolean).join(" ")
@@ -129,8 +129,8 @@ export async function buildOutlierLatin(
 			res = await duck.runAndReadAll(
 				`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
 			)
-		} catch (e) {
-			report?.(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+		} catch (error) {
+			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
 
 			return []
 		}

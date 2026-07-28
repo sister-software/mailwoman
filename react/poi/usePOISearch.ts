@@ -70,8 +70,8 @@ function buildOverpass(
 
 	try {
 		return { overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTag: category.osmTag } : {}) }
-	} catch (err) {
-		return { overpassError: err instanceof Error ? err.message : String(err) }
+	} catch (error) {
+		return { overpassError: error instanceof Error ? error.message : String(error) }
 	}
 }
 

@@ -60,7 +60,7 @@ const run = (cmd: string, args: string[], cwd: string): string =>
 	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
 
 /** SPDX restricts the SPDXID charset to letters, numbers, `.` and `-`; npm emits `_` from package names. */
-const sanitizeSPDXID = (id: string): string => (typeof id === "string" ? id.replace(/[^a-zA-Z0-9.-]/g, "-") : id)
+const sanitizeSPDXID = (id: string): string => (typeof id === "string" ? id.replaceAll(/[^a-zA-Z0-9.-]/g, "-") : id)
 
 interface SPDXDocument {
 	creationInfo: { created: string }

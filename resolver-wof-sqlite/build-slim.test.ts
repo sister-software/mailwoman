@@ -170,7 +170,7 @@ describe("buildSlimWOFDatabase", () => {
 				.prepare(`SELECT id, population FROM place_population ORDER BY population DESC LIMIT 3`)
 				.all() as Array<{ id: number; population: number }>
 			expect(rows[0]?.id).toBe(100) // US country, biggest population
-			expect(rows[0]?.population).toBe(331000000)
+			expect(rows[0]?.population).toBe(331_000_000)
 		} finally {
 			slim.close()
 		}

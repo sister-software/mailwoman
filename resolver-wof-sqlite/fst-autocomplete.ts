@@ -17,7 +17,8 @@
  *       needs; without it "new yor" returns nothing useful. (#587)
  */
 
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
+import type { FSTMatcher } from "./fst-matcher.ts"
+import { normalizeTokens } from "./fst-matcher.ts"
 import type { PlaceEntry } from "./fst-types.ts"
 
 export interface AutocompleteResult {
@@ -98,7 +99,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	} else {
 		// PARTIAL last token — walk the complete prefix, complete the partial by prefix-filtering edges.
 		const complete = normalizedTokens.slice(0, -1)
-		const partial = normalizedTokens[normalizedTokens.length - 1]!
+		const partial = normalizedTokens.at(-1)!
 		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateID ?? undefined)
 
 		if (prefixState === undefined) {

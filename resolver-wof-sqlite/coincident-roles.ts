@@ -180,9 +180,9 @@ export function buildCoincidentRoles(
 			byCountry[c.country] = (byCountry[c.country] ?? 0) + 1
 		}
 		db.exec("COMMIT")
-	} catch (err) {
+	} catch (error) {
 		db.exec("ROLLBACK")
-		throw err
+		throw error
 	}
 	db.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON ${COINCIDENT_ROLES_TABLE} (admin_id)`)
 

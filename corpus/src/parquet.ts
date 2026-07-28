@@ -92,6 +92,10 @@ export const PARQUET_COLUMNS = [
 	"synth_base_id",
 ] as const
 
+/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member,
+   not a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition,
+   and the rule has no way to tell the two apart. */
+
 /**
  * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8 columns capture
  * tokens/labels arrays. Compression is per-column SNAPPY.

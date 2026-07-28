@@ -112,7 +112,7 @@ describe("buildFSTEmissionPriors", () => {
 		const fst = mockFST(new Map([["portland", [{ wofID: 1, placetype: "locality", importance: 0.72 }]]]))
 		const pieces = makePieces("Portland")
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.72 * 3.0, 2)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.72 * 3, 2)
 		expect(matrix[0]![labelCol("B-street")]).toBeLessThan(0)
 	})
 
@@ -132,9 +132,9 @@ describe("buildFSTEmissionPriors", () => {
 		const pieces = makePieces("New York")
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 
-		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3.0, 2)
-		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3.0, 2)
-		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(0.85 * 3.0, 2)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3, 2)
+		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3, 2)
+		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(0.85 * 3, 2)
 		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(matrix[0]![labelCol("B-region")]!)
 	})
 
@@ -162,8 +162,8 @@ describe("buildFSTEmissionPriors", () => {
 			{ piece: "field", start: 6, end: 11 },
 		]
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.45 * 3.0, 2)
-		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.45 * 3.0, 2)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.45 * 3, 2)
+		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.45 * 3, 2)
 	})
 
 	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder (post Fix-1 adjudication)", () => {
@@ -185,10 +185,10 @@ describe("buildFSTEmissionPriors", () => {
 			{ piece: "▁DC", start: 12, end: 14 },
 		]
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3.0, 2)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3, 2)
 		// The comma (piece 1) is now part of the "Washington" word group — it gets the SAME bias as an
 		// I-locality continuation piece, not a zero row.
-		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.85 * 3.0, 2)
+		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.85 * 3, 2)
 		// "DC" never matches this mock FST ("washington" is the only indexed path) — untouched.
 		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
 	})
@@ -201,16 +201,16 @@ describe("buildFSTEmissionPriors", () => {
 		const pieces = makePieces("Sweeney")
 		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS) // default: suppression
 		// positive locality bias unscaled (importance * maxBias)
-		expect(supp[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0, 2)
+		expect(supp[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3, 2)
 		// street suppression scaled to 0.25 of the -1.5 default
 		expect(supp[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
 
 		// `off` gives the full flat suppression (-1.5); `both` also scales the positive bias.
 		const off = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { importanceLengthScaleMode: "off" })
 		expect(off[0]![labelCol("B-street")]).toBeCloseTo(-1.5, 2)
-		expect(off[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0, 2)
+		expect(off[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3, 2)
 		const both = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { importanceLengthScaleMode: "both" })
-		expect(both[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3.0 * 0.25, 2)
+		expect(both[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3 * 0.25, 2)
 	})
 })
 
@@ -237,7 +237,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.25, 2)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 		// Suppression path untouched by the gate: 1-token match → -1.5 × 0.25 (#1173).
 		expect(gated[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
 		// "Blvd" itself never matches the gazetteer — its row stays zero.
@@ -249,7 +249,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
-		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.25, 2)
+		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
 	it("house-number left ('500 Washington') scales the positive bias — 'the house number is the license' (#1143)", () => {
@@ -257,7 +257,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
-		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.25, 2)
+		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
 	it("multi-token match with street adjacency ('New York Ave') scales the positive bias on the whole span", () => {
@@ -265,8 +265,8 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3.0 * 0.25, 2)
-		expect(gated[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3.0 * 0.25, 2)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
+		expect(gated[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
 	})
 
 	it("'Washington' alone → full boost, BYTE-IDENTICAL to the ungated run (default-safe asymmetry)", () => {
@@ -276,7 +276,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 			streetContext: { fst: morphology() },
 		})
 		expect(gated).toEqual(ungated)
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0, 2)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
 	it("'Washington DC' → adjacent region, gate silent → full boost, byte-identical to ungated", () => {
@@ -286,7 +286,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 			streetContext: { fst: morphology() },
 		})
 		expect(gated).toEqual(ungated)
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0, 2)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
 	it("no street context anywhere in the parse → whole matrix byte-identical to ungated", () => {
@@ -303,7 +303,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology(), positiveScale: 0.15 },
 		})
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3.0 * 0.15, 2)
+		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.15, 2)
 	})
 })
 

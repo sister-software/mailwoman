@@ -21,9 +21,9 @@ function seededRandom(seed: number): () => number {
 	let s = seed
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 

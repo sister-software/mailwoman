@@ -12,7 +12,7 @@ import { aggregateSpanLogits, type SpanBounds, type TokenPiece } from "./span-lo
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"]
 
 // Helper: build logits where one label is dominant (high value) for a token.
-function dominantLogits(numLabels: number, dominantIdx: number, dominantValue = 5.0, otherValue = -1.0): number[] {
+function dominantLogits(numLabels: number, dominantIdx: number, dominantValue = 5, otherValue = -1): number[] {
 	return Array.from({ length: numLabels }, (_, i) => (i === dominantIdx ? dominantValue : otherValue))
 }
 
@@ -73,7 +73,7 @@ describe("aggregateSpanLogits", () => {
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 1, labels: LABELS })
 
-		expect(candidates.length).toBe(2)
+		expect(candidates).toHaveLength(2)
 		expect(candidates[0]!.tag).toBe("locality")
 		expect(candidates[1]!.tag).toBe("region")
 	})

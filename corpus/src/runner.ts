@@ -105,7 +105,7 @@ export interface AdapterRunManifest {
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
-	const progressEvery = opts.progressEvery ?? 1_000
+	const progressEvery = opts.progressEvery ?? 1000
 
 	const adapterDir = join(outputDir, adapter.id)
 	await mkdir(adapterDir, { recursive: true })

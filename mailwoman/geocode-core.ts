@@ -255,7 +255,7 @@ export interface GeocodeDeps {
  * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a whole-string country
  * guess is broader/softer than a postcode anchor (2.0), so it blends gently.
  */
-const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
+const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
  * #928: distinctive postcode FORMATS that unambiguously indicate a country — a stronger country signal than the
@@ -560,13 +560,13 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 		if (pcCountry) {
 			placedCountry = pcCountry
-			opts.anchorPosterior = { [pcCountry]: 1.0 }
+			opts.anchorPosterior = { [pcCountry]: 1 }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
 			// Safelist precedence (survey candidate #2): per-call override (the eval instrument) → the loaded
 			// gazetteer artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
 			const hardCountry = hardCountryFor(
 				pcCountry,
-				1.0,
+				1,
 				opts,
 				deps.hardPlaceCountry ?? true,
 				deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist
@@ -791,7 +791,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// resolver's hit is the FULL code, not the 4-digit-stem fallback (the stem is area-class — the
 		// lookup ladder can coarsen to it, and a stem hit must NOT outrank the locality).
 		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
-		const alnum = (s: string): string => s.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+		const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
 		const pc6Exact =
 			pcNode !== undefined &&
 			/^\d{4}\s?[A-Z]{2}$/i.test(pcNode.value.trim()) &&

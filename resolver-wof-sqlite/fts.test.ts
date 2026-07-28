@@ -180,13 +180,13 @@ describe("buildPlaceSearchFTS", () => {
 		const rows = db
 			.prepare(`SELECT wof_id FROM ${PLACE_SEARCH_TABLE} WHERE ${PLACE_SEARCH_TABLE} MATCH ?`)
 			.all('"Paris"') as { wof_id: number }[]
-		expect(rows.length).toBe(1)
+		expect(rows).toHaveLength(1)
 		expect(rows[0]?.wof_id).toBe(1)
 
 		const altRows = db
 			.prepare(`SELECT wof_id FROM ${PLACE_SEARCH_TABLE} WHERE ${PLACE_SEARCH_TABLE} MATCH ?`)
 			.all('"パリ"') as { wof_id: number }[]
-		expect(altRows.length).toBe(1)
+		expect(altRows).toHaveLength(1)
 		expect(altRows[0]?.wof_id).toBe(1)
 
 		db.close()
@@ -265,7 +265,7 @@ describe("buildPlaceSearchFTS", () => {
 			| undefined
 		expect(hit?.wof_id).toBe(1000)
 		// Also confirm the bbox row landed in the R*Tree.
-		const bboxHit = db.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ?`).all(40.0, 40.0) as {
+		const bboxHit = db.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ?`).all(40, 40) as {
 			id: number
 		}[]
 		expect(bboxHit.map((h) => h.id)).toContain(1000)

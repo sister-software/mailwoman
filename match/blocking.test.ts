@@ -8,7 +8,12 @@ import { describe, expect, it } from "vitest"
 
 import { type LatLon, block, conjunction, exactKey, geoCellKey } from "./blocking.ts"
 
-type Rec = { id: string; coord?: LatLon; canonical?: string; postcode?: string }
+interface Rec {
+	id: string
+	coord?: LatLon
+	canonical?: string
+	postcode?: string
+}
 
 const pairIds = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].sort().join("-")).sort()
 const intersects = (a: string[], b: string[]) => a.some((k) => b.includes(k))
@@ -18,7 +23,7 @@ describe("geoCellKey", () => {
 
 	it("produces no key for a missing or non-finite coordinate", () => {
 		expect(key({ id: "x" })).toEqual([])
-		expect(key({ id: "x", coord: { latitude: NaN, longitude: 0 } })).toEqual([])
+		expect(key({ id: "x", coord: { latitude: Number.NaN, longitude: 0 } })).toEqual([])
 	})
 
 	it("co-locates two nearby coordinates", () => {

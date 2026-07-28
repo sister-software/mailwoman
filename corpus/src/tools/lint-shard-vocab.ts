@@ -114,7 +114,7 @@ function dominant(counter: Map<string, number>): [string, number, number] {
 		}
 	}
 
-	if (total === 0) return ["", 0, 0.0]
+	if (total === 0) return ["", 0, 0]
 
 	return [bestTag, total, bestCount / total]
 }
@@ -167,7 +167,7 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
 	const rows = result.getRowObjects() as Array<{ source: unknown }>
 
-	return rows.length ? String(rows[0]!.source) : ""
+	return rows.length > 0 ? String(rows[0]!.source) : ""
 }
 
 /** Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`. */
@@ -220,7 +220,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
 	const threshold = options.threshold ?? 0.7
 	const minCount = options.minCount ?? 50
-	const fraction = options.fraction ?? 1.0
+	const fraction = options.fraction ?? 1
 
 	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -257,11 +257,11 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 	let parts = globParquet(trainDir)
 
-	if (!parts.length) {
+	if (parts.length === 0) {
 		throw new Error("no base parts found")
 	}
 
-	if (fraction < 1.0) {
+	if (fraction < 1) {
 		const bysrc = new Map<string, string[]>()
 
 		for (const p of parts) {
@@ -334,7 +334,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	]
 
 	for (const [label, rows] of sections) {
-		if (!rows.length) continue
+		if (rows.length === 0) continue
 		rows.sort((a, b) => b[4] - a[4] || b[3] - a[3])
 		console.log(`\n${label.startsWith("CONTRA") ? "⚠️ " : "· "}${rows.length} ${label}:`)
 
@@ -343,7 +343,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 		}
 	}
 
-	if (!flagged.length) {
+	if (flagged.length === 0) {
 		console.log(
 			`\n✅ NO real contradictions (country-scoped, threshold ${pct(threshold)}, support ${minCount}) — shard base-consistent`
 		)

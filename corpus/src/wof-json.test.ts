@@ -35,7 +35,7 @@ test("extractNameVariants: lifts the first non-empty string from each name:* arr
 		"name:eng_x_preferred": ["Saint Petersburg"],
 		"name:rus_x_preferred": ["Санкт-Петербург"],
 		"wof:name": "St Petersburg", // not a name:* key → ignored
-		population: 5000000, // unrelated key → ignored
+		population: 5_000_000, // unrelated key → ignored
 	})
 	expect(out.get("name:eng_x_preferred")).toBe("Saint Petersburg")
 	expect(out.get("name:rus_x_preferred")).toBe("Санкт-Петербург")

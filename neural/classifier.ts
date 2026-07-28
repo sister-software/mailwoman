@@ -332,10 +332,10 @@ export class NeuralAddressClassifier {
 		if (resolved.semiCrfTransitionsPath) {
 			try {
 				semiCrfGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCrfTransitionsPath, "utf8")))
-			} catch (err) {
+			} catch (error) {
 				console.error(
 					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCrfTransitionsPath} — ` +
-						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(err as Error).message}`
+						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(error as Error).message}`
 				)
 			}
 		}
@@ -362,8 +362,8 @@ export class NeuralAddressClassifier {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
 					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
 					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(error as Error).message}`)
 			}
 		}
 
@@ -381,8 +381,8 @@ export class NeuralAddressClassifier {
 		if (resolved.gazetteerLexiconPath) {
 			try {
 				gazetteerLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(error as Error).message}`)
 			}
 		}
 
@@ -403,8 +403,8 @@ export class NeuralAddressClassifier {
 		if (resolved.countryLexiconPath) {
 			try {
 				countryLexicon = parseCountryLexicon(JSON.parse(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(error as Error).message}`)
 			}
 		}
 
@@ -424,8 +424,11 @@ export class NeuralAddressClassifier {
 		if (resolved.streetTypeLexiconPath) {
 			try {
 				streetTypeLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("street_type", `failed to parse ${resolved.streetTypeLexiconPath}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel(
+					"street_type",
+					`failed to parse ${resolved.streetTypeLexiconPath}: ${(error as Error).message}`
+				)
 			}
 		}
 		let localitySurfaceLexicon: GazetteerLexicon | undefined
@@ -435,10 +438,10 @@ export class NeuralAddressClassifier {
 				localitySurfaceLexicon = parseGazetteerLexicon(
 					JSON.parse(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
 				)
-			} catch (err) {
+			} catch (error) {
 				warnUnfedChannel(
 					"locality_surface",
-					`failed to parse ${resolved.localitySurfaceLexiconPath}: ${(err as Error).message}`
+					`failed to parse ${resolved.localitySurfaceLexiconPath}: ${(error as Error).message}`
 				)
 			}
 		}
@@ -473,9 +476,9 @@ export class NeuralAddressClassifier {
 							`skipping the placetype-pair prior default.`
 					)
 				}
-			} catch (err) {
+			} catch (error) {
 				console.error(
-					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.pairIndexPath}: ${(err as Error).message}`
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.pairIndexPath}: ${(error as Error).message}`
 				)
 			}
 		}
@@ -720,7 +723,7 @@ export class NeuralAddressClassifier {
 
 		const queryShapePrior = opts?.queryShape
 			? buildEmissionPriors(opts.queryShape, pieces, this.labels, {
-					biasScale: opts.queryShapeBiasScale ?? 1.0,
+					biasScale: opts.queryShapeBiasScale ?? 1,
 					inputText: text,
 				})
 			: undefined
@@ -730,7 +733,7 @@ export class NeuralAddressClassifier {
 
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
-					biasScale: opts.fstBiasScale ?? 1.0,
+					biasScale: opts.fstBiasScale ?? 1,
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
@@ -835,7 +838,7 @@ export class NeuralAddressClassifier {
 			? placetypePairResult.transitionAdjustments.flatMap((adj) => {
 					const toLabel = this.labels.indexOf(adj.toLabel)
 
-					return toLabel >= 0 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
+					return toLabel !== -1 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
 				})
 			: undefined
 
@@ -861,11 +864,11 @@ export class NeuralAddressClassifier {
 				const b = this.labels.indexOf(`B-${tag}`)
 				const i = this.labels.indexOf(`I-${tag}`)
 
-				if (b >= 0) {
+				if (b !== -1) {
 					forbidden.add(b)
 				}
 
-				if (i >= 0) {
+				if (i !== -1) {
 					forbidden.add(i)
 				}
 			}

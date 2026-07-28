@@ -15,19 +15,19 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
 
 	if (norm === "hospital") {
-		return [{ kind: "category", categoryID: "hospital", matchedPhrase: "hospital", confidence: 1.0 }]
+		return [{ kind: "category", categoryID: "hospital", matchedPhrase: "hospital", confidence: 1 }]
 	}
 
 	if (norm === "drinking fountain") {
-		return [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1.0 }]
+		return [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1 }]
 	}
 
 	if (norm === "walk in clinic") {
-		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1.0 }]
+		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1 }]
 	}
 
 	if (norm === "chevron") {
-		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1.0 }]
+		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1 }]
 	}
 
 	return []
@@ -78,7 +78,7 @@ describe("matchPOISubject", () => {
 			categoryID: "Chevron",
 			wikidata: "Q319642",
 			matchedPhrase: "chevron",
-			confidence: 1.0,
+			confidence: 1,
 		})
 		expect(m?.remainder).toBe("Houston TX")
 	})

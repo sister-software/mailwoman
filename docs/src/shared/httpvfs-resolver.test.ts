@@ -66,7 +66,7 @@ function makeDB(withSideIndex: boolean): DatabaseSync {
 	return d
 }
 afterEach(() => {
-	while (openDbs.length) {
+	while (openDbs.length > 0) {
 		openDbs.pop()!.close()
 	}
 })
@@ -85,7 +85,7 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
-		expect(hits[0]!.lat).toBeCloseTo(38.0, 1)
+		expect(hits[0]!.lat).toBeCloseTo(38, 1)
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {

@@ -122,8 +122,8 @@ export function levenshteinSimilarity(a: string, b: string): number {
  * Case- and whitespace-insensitive. Empty input scores 0.
  */
 export function nameSimilarity(a: string, b: string): number {
-	const x = a.trim().toLowerCase().replace(/\s+/g, " ")
-	const y = b.trim().toLowerCase().replace(/\s+/g, " ")
+	const x = a.trim().toLowerCase().replaceAll(/\s+/g, " ")
+	const y = b.trim().toLowerCase().replaceAll(/\s+/g, " ")
 
 	if (!x || !y) return 0
 

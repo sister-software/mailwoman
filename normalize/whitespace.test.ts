@@ -65,7 +65,7 @@ describe("collapseWhitespace", () => {
 		const r = collapseWhitespace("ABC.")
 		expect(r.text).toBe("ABC")
 		expect(r.map).toEqual([0, 1, 2]) // the trailing '.' at index 3 is sliced off
-		expect(r.map.length).toBe(r.text.length)
+		expect(r.map).toHaveLength(r.text.length)
 	})
 
 	it("offsetMap points to first whitespace in collapsed run", () => {
@@ -76,7 +76,7 @@ describe("collapseWhitespace", () => {
 		expect(r.map[0]).toBe(0) // '3' → 0
 		expect(r.map[3]).toBe(3) // ' ' → first space at 3
 		expect(r.map[4]).toBe(5) // '5' → 5 (skipped second space at 4)
-		expect(r.map[r.map.length - 1]).toBe(11) // 'e' → 11
+		expect(r.map.at(-1)).toBe(11) // 'e' → 11
 	})
 
 	it("offsetMap correctness after trim", () => {
@@ -90,7 +90,7 @@ describe("collapseWhitespace", () => {
 
 		for (const inp of inputs) {
 			const r = collapseWhitespace(inp)
-			expect(r.map.length).toBe(r.text.length)
+			expect(r.map).toHaveLength(r.text.length)
 		}
 	})
 })

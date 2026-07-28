@@ -30,10 +30,10 @@ test("pointInMultiPolygon: inside vs outside a unit square", () => {
 
 test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	// Tokyo has no DST: always +9h.
-	expect(offsetSecForTimezone("Asia/Tokyo", new Date("2026-06-15T00:00:00Z"))).toBe(32400)
+	expect(offsetSecForTimezone("Asia/Tokyo", new Date("2026-06-15T00:00:00Z"))).toBe(32_400)
 	// New York: EST (-5h) in January, EDT (-4h) in July.
-	expect(offsetSecForTimezone("America/New_York", new Date("2026-01-15T12:00:00Z"))).toBe(-18000)
-	expect(offsetSecForTimezone("America/New_York", new Date("2026-07-15T12:00:00Z"))).toBe(-14400)
+	expect(offsetSecForTimezone("America/New_York", new Date("2026-01-15T12:00:00Z"))).toBe(-18_000)
+	expect(offsetSecForTimezone("America/New_York", new Date("2026-07-15T12:00:00Z"))).toBe(-14_400)
 	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
 })
 

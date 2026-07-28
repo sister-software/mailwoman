@@ -51,9 +51,9 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
  * — the constant in core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
-	{ country: "US", hardFilterSafe: true, hardResolveRate: 1.0, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "FR", hardFilterSafe: true, hardResolveRate: 1.0, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "DE", hardFilterSafe: true, hardResolveRate: 1.0, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{ country: "US", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{ country: "FR", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{ country: "DE", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "ES", hardFilterSafe: true, hardResolveRate: 0.998, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "NL", hardFilterSafe: true, hardResolveRate: 0.973, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "IT", hardFilterSafe: true, hardResolveRate: 0.968, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },

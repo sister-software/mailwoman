@@ -39,9 +39,9 @@ const N = Number(args.n)
 
 for (const k of ["baseline", "candidate", "tokenizer"] as const) if (!args[k]) throw new Error(`--${k} required`)
 
-const norm = (s?: string) => (s ?? "").toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim()
+const norm = (s?: string) => (s ?? "").toLowerCase().replaceAll(/[.,]/g, "").replaceAll(/\s+/g, " ").trim()
 const wordIncludes = (hay: string, needle: string) =>
-	needle.length > 0 && new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
+	needle.length > 0 && new RegExp(`\\b${needle.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
 
 const load = (modelPath: string) =>
 	NeuralAddressClassifier.loadFromWeights({

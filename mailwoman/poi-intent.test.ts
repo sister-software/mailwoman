@@ -29,13 +29,13 @@ describe("poiTaxonomyLookup adapter", () => {
 	it("maps taxonomy matches into POIPhraseMatch shape", () => {
 		const hits = poiTaxonomyLookup("drinking fountain", "en-US")
 		expect(hits[0]?.categoryID).toBe("drinking_water")
-		expect(hits[0]?.confidence).toBe(1.0)
+		expect(hits[0]?.confidence).toBe(1)
 		expect(hits[0]?.kind).toBe("category")
 	})
 
 	it("falls through to the brand table on a category miss (exact brand name)", () => {
 		const hits = poiTaxonomyLookup("chevron", "en-US")
-		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", confidence: 1.0 })
+		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", confidence: 1 })
 	})
 
 	it("chains through variant-aliases for locale-gated brand slang, resolving a QID", () => {

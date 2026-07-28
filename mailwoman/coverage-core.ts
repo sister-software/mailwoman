@@ -117,7 +117,7 @@ const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9
 function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
 	const files = readdirSync(opts.dataRoot).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
-	const bySlug = new Map(files.map((f) => [f.replace(/^address-points-us-|\.db$/g, ""), f]))
+	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
 	const slugs =
 		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
 

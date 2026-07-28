@@ -43,7 +43,7 @@ function cellFor(latitude: number, longitude: number): number {
 }
 
 function nameKeyFor(name: string): string {
-	return name.toLowerCase().replace(/[^a-z0-9]/g, "")
+	return name.toLowerCase().replaceAll(/[^a-z0-9]/g, "")
 }
 
 interface FixtureRow {
@@ -323,7 +323,7 @@ describe("POILookup", () => {
 		try {
 			const hits = lk.search({ name: "Cafe", center: SPRINGFIELD })
 			// Every "Cafe"-named row matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
-			expect(hits[0]!.distanceM).toBeLessThanOrEqual(hits[hits.length - 1]!.distanceM!)
+			expect(hits[0]!.distanceM).toBeLessThanOrEqual(hits.at(-1)!.distanceM!)
 		} finally {
 			lk[Symbol.dispose]()
 		}

@@ -133,7 +133,7 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
  * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped form.
  */
 function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
-	const stripped = pc.replace(/[\s-]/g, "")
+	const stripped = pc.replaceAll(/[\s-]/g, "")
 	const variants = [pc]
 
 	if (stripped && stripped !== pc) {

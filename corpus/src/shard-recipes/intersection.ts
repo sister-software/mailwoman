@@ -144,7 +144,7 @@ function weightedPick<T extends { w: number }>(items: readonly T[], random: () =
 		if (r <= 0) return item
 	}
 
-	return items[items.length - 1]!
+	return items.at(-1)!
 }
 
 /** Minimal RFC-4180-ish splitter (handles quoted fields) — same as the affix builder. */
@@ -182,7 +182,7 @@ function splitCSV(line: string): string[] {
 }
 
 /** Order-insensitive crossing key, for eval-leakage exclusion + pair dedup. */
-const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].sort().join("\x1f")
+const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].sort().join("\x1F")
 
 /** Load the eval's crossings so neither train nor golden ever sees them. */
 function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
@@ -440,7 +440,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 				errors.push(`illegal uncovered word "${word}"`)
 			}
 		}
-		const punctOnly = segment.replace(/[\p{L}\p{N}]+/gu, "")
+		const punctOnly = segment.replaceAll(/[\p{L}\p{N}]+/gu, "")
 
 		if (!CONNECTOR_PUNCT_RE.test(punctOnly)) {
 			errors.push(`illegal uncovered punctuation in "${segment}"`)
@@ -458,7 +458,7 @@ export const intersectionRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Legacy build-intersection-shard.mjs seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 40000
+		const count = opts.count ?? 40_000
 		const source = opts.sourceName ?? "synth-intersection"
 		const edgesDir = opts.edgesDir ?? "/tmp/tiger-edges"
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES

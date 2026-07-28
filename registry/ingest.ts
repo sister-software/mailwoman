@@ -102,7 +102,7 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 	const tok = (h: string) =>
 		` ${h
 			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, " ")
+			.replaceAll(/[^a-z0-9]+/g, " ")
 			.trim()} `
 	const mapping: ColumnMapping = {}
 	const name: string[] = []
@@ -142,11 +142,11 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 		}
 	}
 
-	if (name.length) {
+	if (name.length > 0) {
 		mapping.name = name.length === 1 ? name[0]! : name
 	}
 
-	if (address.length) {
+	if (address.length > 0) {
 		mapping.address = address
 	}
 

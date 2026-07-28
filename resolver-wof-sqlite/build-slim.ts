@@ -273,7 +273,7 @@ async function copyFromSource(
 	copyFileSync(inputPath, scratchPath)
 
 	try {
-		out.exec(`ATTACH DATABASE '${scratchPath.replace(/'/g, "''")}' AS src;`)
+		out.exec(`ATTACH DATABASE '${scratchPath.replaceAll(/'/g, "''")}' AS src;`)
 
 		try {
 			// Does this shard carry the pre-built population aux table? The admin source does; a bare

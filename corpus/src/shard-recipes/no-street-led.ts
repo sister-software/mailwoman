@@ -27,7 +27,7 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
  * check would never match the board's reserved `tømmerlien` and the split would leak silently. Diacritic street heads
  * (…vegen/…veien with ø/å/æ) are the whole point of this shard's boundary; folding them away is not an option.
  */
-const norm = (value: string): string => value.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim()
+const norm = (value: string): string => value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 export const noStreetLedRecipe: ShardRecipe = {
 	name: "no-street-led",
@@ -65,7 +65,7 @@ export const noStreetLedRecipe: ShardRecipe = {
 				.filter((line) => line && !line.startsWith("#"))
 		)
 
-		if (!excluded.size) throw new Error(`no-street-led: --exclude-surfaces "${excludePath}" listed no surfaces`)
+		if (excluded.size === 0) throw new Error(`no-street-led: --exclude-surfaces "${excludePath}" listed no surfaces`)
 
 		let read = 0
 		let emitted = 0

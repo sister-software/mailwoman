@@ -81,7 +81,7 @@ export function lookupVariantAliases(text: string, locale: string): AliasLookupR
 
 	for (const alias of candidates) {
 		if (alias.locales.includes(locale)) {
-			results.push({ alias, confidence: 1.0 })
+			results.push({ alias, confidence: 1 })
 			continue
 		}
 		// Relaxed match: any locale in `locales` that shares the same language part.

@@ -14,7 +14,7 @@ export interface SplashScreenProps extends React.HTMLAttributes<HTMLDivElement> 
 	graceTime?: number
 }
 
-export const SplashScreen = memo<SplashScreenProps>(({ children = "Loading...", graceTime = 2_000 }) => {
+export const SplashScreen = memo<SplashScreenProps>(({ children = "Loading...", graceTime = 2000 }) => {
 	const [visible, setVisible] = useState(false)
 
 	const content = typeof children === "string" ? <div className="loading-pulsar">{children}</div> : children

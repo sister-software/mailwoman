@@ -36,10 +36,10 @@ const TABLE: CalibrationTable = {
 	method: "test",
 	bins: 4,
 	table: [
-		{ lo: 0.0, hi: 0.25, center: 0.125, calibrated: 0.1 },
+		{ lo: 0, hi: 0.25, center: 0.125, calibrated: 0.1 },
 		{ lo: 0.25, hi: 0.5, center: 0.375, calibrated: 0.2 },
 		{ lo: 0.5, hi: 0.75, center: 0.625, calibrated: 0.6 },
-		{ lo: 0.75, hi: 1.0, center: 0.875, calibrated: 0.95 },
+		{ lo: 0.75, hi: 1, center: 0.875, calibrated: 0.95 },
 	],
 }
 

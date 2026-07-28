@@ -367,7 +367,7 @@ function pickBoxNumber(random: () => number): string {
 
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
 
-	return String(10000 + Math.floor(random() * 90000))
+	return String(10_000 + Math.floor(random() * 90_000))
 }
 
 /** Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower. */
@@ -697,7 +697,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 	options: [{ flag: "--golden", description: "Emit the leakage-safe holdout variant ({raw, components, country})" }],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 50000
+		const count = opts.count ?? 50_000
 		const source = opts.sourceName ?? "synth-po-box-cedex"
 
 		// US pool: VT only for golden, non-VT for train (the established geographic holdout).
@@ -712,7 +712,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 			}
 		}
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
-		const frAll = readFrTuples(80000)
+		const frAll = readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		console.error(`  ${FR_SOURCE.csv}: ${frAll.length} tuples (${frPool.length} after holdout split)`)
 		const qcAll = readCaLocalities("10")
@@ -749,7 +749,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				if (r < acc) return name
 			}
 
-			return CLASS_MIX[CLASS_MIX.length - 1]![0]
+			return CLASS_MIX.at(-1)![0]
 		}
 
 		let emitted = 0

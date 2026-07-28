@@ -72,9 +72,9 @@ export function loadStreetMorphologyFST(opts: LoadStreetMorphologyFSTOpts = {}):
 			const provenance = readFSTProvenance(buf)
 
 			return { matcher, source: "artifact", path: artifactPath, ...(provenance ? { provenance } : {}) }
-		} catch (err) {
+		} catch (error) {
 			warn(
-				`street-morphology artifact at ${artifactPath} unreadable (${(err as Error).message}) — falling back to the dictionary build`
+				`street-morphology artifact at ${artifactPath} unreadable (${(error as Error).message}) — falling back to the dictionary build`
 			)
 		}
 	}

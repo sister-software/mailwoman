@@ -67,10 +67,10 @@ const SPELLED_ORDINAL_TO_DIGIT = new Map<string, string>([
 function fold(input: string): string {
 	return input
 		.normalize("NFKD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
-		.replace(/[.,'’]/g, "")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[.,'’]/g, "")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 
@@ -113,14 +113,14 @@ export function normalizeStreetForKey(street: string): string {
 		tokens[0] = first
 	}
 
-	const tailPair = mergePair(tokens[tokens.length - 2], tokens[tokens.length - 1])
+	const tailPair = mergePair(tokens.at(-2), tokens.at(-1))
 
 	if (tailPair && tokens.length > 3) {
-		tokens.splice(tokens.length - 2, 2, tailPair)
+		tokens.splice(-2, 2, tailPair)
 	}
 
 	if (tokens.length > 2) {
-		const last = edgeDirectional(tokens[tokens.length - 1]!)
+		const last = edgeDirectional(tokens.at(-1)!)
 
 		if (last) {
 			tokens[tokens.length - 1] = last
@@ -196,7 +196,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
 	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
 	// per-locale type/Saint map can see.
-	const tokens = fold(street).replace(/ß/g, "ss").replace(/-/g, " ").split(/\s+/).filter(Boolean)
+	const tokens = fold(street).replaceAll(/ß/g, "ss").replaceAll(/-/g, " ").split(/\s+/).filter(Boolean)
 
 	if (tokens.length === 0) return ""
 

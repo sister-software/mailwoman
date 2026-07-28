@@ -66,7 +66,7 @@ test("forward: always carries osm_key/osm_value/type (client TypeErrors without 
 test("forward: fills the full admin ladder from resolved ancestry (parity with /reverse)", () => {
 	const props = photonForwardProperties({
 		lat: 38.9,
-		lon: -77.0,
+		lon: -77,
 		country: { name: "United States", code: "US" },
 		places: [
 			{ tag: "locality", name: "Washington" },

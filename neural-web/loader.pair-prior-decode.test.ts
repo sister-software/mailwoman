@@ -52,7 +52,7 @@ const GB_INDEX = "https://cdn.example/mailwoman/v10/pair-index-gb.bin"
 function col(label: string): number {
 	const idx = STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
 
-	if (idx < 0) throw new Error(`fixture label ${label} missing from STAGE2_BIO_LABELS`)
+	if (idx === -1) throw new Error(`fixture label ${label} missing from STAGE2_BIO_LABELS`)
 
 	return idx
 }

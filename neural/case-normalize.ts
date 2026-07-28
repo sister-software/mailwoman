@@ -54,7 +54,7 @@ export function isAllCapsInput(text: string): boolean {
  * (≥3-letter locality/name recovery: PALESTINE→Palestine, ELKHART→Elkhart) is untouched.
  */
 export function titleCaseInput(text: string): string {
-	return text.replace(/[A-Za-z]+/g, (w) => (w.length <= 2 ? w : w[0]!.toUpperCase() + w.slice(1).toLowerCase()))
+	return text.replaceAll(/[A-Za-z]+/g, (w) => (w.length <= 2 ? w : w[0]!.toUpperCase() + w.slice(1).toLowerCase()))
 }
 
 /**
@@ -95,7 +95,7 @@ export function isAllLowerInput(text: string): boolean {
  * Pennsylvania Ave NW, Washington DC`, the exact mixed-case form that parses `region:DC`.
  */
 export function restoreLowerInput(text: string): string {
-	return text.replace(/[A-Za-z]+/g, (w) =>
+	return text.replaceAll(/[A-Za-z]+/g, (w) =>
 		w.length <= 2 ? w.toUpperCase() : w[0]!.toUpperCase() + w.slice(1).toLowerCase()
 	)
 }

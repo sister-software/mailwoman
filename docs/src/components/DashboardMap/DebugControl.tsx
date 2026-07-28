@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
+import type { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import { memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import { IControl, MapInstance, useControl, useMap } from "react-map-gl/maplibre"
+import type { IControl, MapInstance } from "react-map-gl/maplibre"
+import { useControl, useMap } from "react-map-gl/maplibre"
 
 class DebugControlBase implements IControl {
 	public readonly container: HTMLElement

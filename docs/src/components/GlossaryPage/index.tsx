@@ -34,11 +34,11 @@ interface GlossaryPageProps {
 
 /** Upstream anchor scheme — must not change or remark tooltip links break. */
 function termAnchor(term: TaggedGlossaryTerm): string {
-	return term.id || term.term.toLowerCase().replace(/\s+/g, "-")
+	return term.id || term.term.toLowerCase().replaceAll(/\s+/g, "-")
 }
 
 function relatedAnchor(related: string): string {
-	return related.toLowerCase().replace(/\s+/g, "-")
+	return related.toLowerCase().replaceAll(/\s+/g, "-")
 }
 
 export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: GlossaryPageProps): React.JSX.Element {
@@ -132,7 +132,8 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 	// TOC: a back-to-top "Glossary" entry, then categories (level 2) with their visible terms
 	// nested beneath (level 3). TOCItems renders `value` as HTML, so entity-escape the strings.
 	const toc = useMemo(() => {
-		const escapeHTML = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+		const escapeHTML = (value: string) =>
+			value.replaceAll(/&/g, "&amp;").replaceAll(/</g, "&lt;").replaceAll(/>/g, "&gt;")
 
 		return [
 			{ value: "Glossary", id: TOP_ANCHOR, level: 2 },

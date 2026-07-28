@@ -90,54 +90,54 @@ class FakeResolverBackend implements ResolverBackend {
 }
 
 const FIXTURE_PLACES: ResolvedPlace[] = [
-	{ id: 85633147, name: "United States", placetype: "country", country: "US", lat: 39.5, lon: -98.0, score: 10 },
-	{ id: 85633723, name: "France", placetype: "country", country: "FR", lat: 46.5, lon: 2.5, score: 10 },
+	{ id: 85_633_147, name: "United States", placetype: "country", country: "US", lat: 39.5, lon: -98, score: 10 },
+	{ id: 85_633_723, name: "France", placetype: "country", country: "FR", lat: 46.5, lon: 2.5, score: 10 },
 	{
-		id: 85688489,
+		id: 85_688_489,
 		name: "Texas",
 		placetype: "region",
 		country: "US",
-		parent_id: 85633147,
-		lat: 31.0,
-		lon: -100.0,
+		parent_id: 85_633_147,
+		lat: 31,
+		lon: -100,
 		score: 9,
 	},
 	{
-		id: 85688541,
+		id: 85_688_541,
 		name: "Illinois",
 		placetype: "region",
 		country: "US",
-		parent_id: 85633147,
-		lat: 40.0,
-		lon: -89.0,
+		parent_id: 85_633_147,
+		lat: 40,
+		lon: -89,
 		score: 9,
 	},
 	{
-		id: 101715829,
+		id: 101_715_829,
 		name: "Paris",
 		placetype: "locality",
 		country: "US",
-		parent_id: 85688489,
+		parent_id: 85_688_489,
 		lat: 33.66,
 		lon: -95.55,
 		score: 8,
 	},
 	{
-		id: 101727113,
+		id: 101_727_113,
 		name: "Springfield",
 		placetype: "locality",
 		country: "US",
-		parent_id: 85688541,
+		parent_id: 85_688_541,
 		lat: 39.78,
 		lon: -89.65,
 		score: 8,
 	},
 	{
-		id: 101729437,
+		id: 101_729_437,
 		name: "Springfield",
 		placetype: "locality",
 		country: "US",
-		parent_id: 85688543, // Massachusetts — not in this fixture as a region
+		parent_id: 85_688_543, // Massachusetts — not in this fixture as a region
 		lat: 42.1,
 		lon: -72.59,
 		score: 8,
@@ -157,8 +157,8 @@ describe("resolveTree", () => {
 			value: "Texas",
 			source: "resolver",
 			sourceID: "region:85688489",
-			lat: 31.0,
-			lon: -100.0,
+			lat: 31,
+			lon: -100,
 			placeID: "wof:85688489",
 		})
 	})
@@ -237,7 +237,7 @@ describe("resolveTree", () => {
 		expect(backend.calls[1]).toMatchObject({
 			text: "Springfield",
 			placetype: "locality",
-			parentID: 85688541,
+			parentID: 85_688_541,
 		})
 		// And the resolved locality is the IL Springfield, not the MA one.
 		expect(result.roots[0]?.children[0]?.placeID).toBe("wof:101727113")
@@ -247,7 +247,7 @@ describe("resolveTree", () => {
 		// Two same-name localities; the foreign one scores higher (the population-first collision #743 is about).
 		const places: ResolvedPlace[] = [
 			{ id: 1, name: "Pori", placetype: "locality", country: "FI", lat: 61.48, lon: 21.79, score: 8 },
-			{ id: 2, name: "Pori", placetype: "locality", country: "US", lat: 40.0, lon: -90.0, score: 9 },
+			{ id: 2, name: "Pori", placetype: "locality", country: "US", lat: 40, lon: -90, score: 9 },
 		]
 		const backend = new FakeResolverBackend(places)
 		const resolver = createWOFResolver(backend)
@@ -390,31 +390,31 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	const AMBIG_PLACES: ResolvedPlace[] = [
 		// Three Springfields: same name, different states. The Springfield-class ambiguity.
 		{
-			id: 101727113,
+			id: 101_727_113,
 			name: "Springfield",
 			placetype: "locality",
 			country: "US",
-			parent_id: 85688541,
+			parent_id: 85_688_541,
 			lat: 39.78,
 			lon: -89.65,
 			score: 8,
 		},
 		{
-			id: 101728010,
+			id: 101_728_010,
 			name: "Springfield",
 			placetype: "locality",
 			country: "US",
-			parent_id: 85688547,
+			parent_id: 85_688_547,
 			lat: 37.21,
 			lon: -93.29,
 			score: 7,
 		},
 		{
-			id: 101729887,
+			id: 101_729_887,
 			name: "Springfield",
 			placetype: "locality",
 			country: "US",
-			parent_id: 85688549,
+			parent_id: 85_688_549,
 			lat: 42.1,
 			lon: -72.59,
 			score: 6,
@@ -437,8 +437,8 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(root.alternatives).toBeDefined()
 		const alts = root.alternatives as ResolvedPlace[]
 		expect(alts).toHaveLength(2)
-		expect(alts[0]?.id).toBe(101728010) // MO Springfield
-		expect(alts[1]?.id).toBe(101729887) // MA Springfield
+		expect(alts[0]?.id).toBe(101_728_010) // MO Springfield
+		expect(alts[1]?.id).toBe(101_729_887) // MA Springfield
 	})
 
 	test("alternatives is absent (not just empty) when only one candidate", async () => {
@@ -487,7 +487,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		// With a DE country posterior, the +weight*posterior boost pulls the German Berlin to the top.
 		const on = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
-			anchorPosterior: { DE: 1.0 },
+			anchorPosterior: { DE: 1 },
 		})
 		expect(on.roots[0]!.placeID).toBe("wof:2")
 		// The displaced US Berlin survives as the top alternative.
@@ -501,7 +501,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		]
 		const input = tree("Berlin", [node("locality", "Berlin", 0, 6)])
 		const on = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
-			anchorPosterior: { US: 1.0 },
+			anchorPosterior: { US: 1 },
 		})
 		expect(on.roots[0]!.placeID).toBe("wof:1") // US already top, boost keeps it there
 	})
@@ -516,7 +516,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		// breaks the tie at the region.
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Vermontia", placetype: "region", country: "IT", lat: 42.4, lon: 12.1, score: 8 },
-			{ id: 2, name: "Vermontia", placetype: "region", country: "US", lat: 44.0, lon: -72.7, score: 7 },
+			{ id: 2, name: "Vermontia", placetype: "region", country: "US", lat: 44, lon: -72.7, score: 7 },
 		]
 		const input = tree("Vermontia", [node("region", "Vermontia", 0, 9)])
 
@@ -526,7 +526,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		// With a US country posterior, the +weight*posterior boost pulls the US region to the top.
 		const on = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input, {
-			anchorPosterior: { US: 1.0 },
+			anchorPosterior: { US: 1 },
 		})
 		expect(on.roots[0]!.placeID).toBe("wof:2")
 		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1) // displaced IT survives
@@ -554,7 +554,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		]
 		const input = tree("land", [node("region", "land", 0, 4)])
 		const on = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input, {
-			anchorPosterior: { US: 1.0 },
+			anchorPosterior: { US: 1 },
 		})
 		expect(on.roots[0]!.placeID).toBe("wof:1") // US exact wins: tier primary, then US posterior
 	})
@@ -567,7 +567,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("region span resolves to a macroregion fallback when no exact region exists (#718)", async () => {
 		// Only a macroregion matches "Veneto" — the region-only filter would have returned nothing.
 		const places: ResolvedPlace[] = [
-			{ id: 404227501, name: "Veneto", placetype: "macroregion", country: "IT", lat: 45.65, lon: 11.86, score: 9 },
+			{ id: 404_227_501, name: "Veneto", placetype: "macroregion", country: "IT", lat: 45.65, lon: 11.86, score: 9 },
 		]
 		const input = tree("Veneto", [node("region", "Veneto", 0, 6)])
 		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
@@ -596,7 +596,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	test("county/subregion span resolves to a macrocounty fallback (#718)", async () => {
 		// `subregion` maps to `county` via DEFAULT_PLACETYPE_MAP; a DE Regierungsbezirk is a macrocounty.
 		const places: ResolvedPlace[] = [
-			{ id: 404227567, name: "Oberbayern", placetype: "macrocounty", country: "DE", lat: 48, lon: 11.5, score: 8 },
+			{ id: 404_227_567, name: "Oberbayern", placetype: "macrocounty", country: "DE", lat: 48, lon: 11.5, score: 8 },
 		]
 		const input = tree("Oberbayern", [node("subregion", "Oberbayern", 0, 10)])
 		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "DE" })
@@ -609,7 +609,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		// The locality equivalence group's borough/localadmin are genuine peers (Brooklyn-the-borough),
 		// NOT macro fallbacks — they must resolve normally with no resolution_quality annotation.
 		const places: ResolvedPlace[] = [
-			{ id: 421205765, name: "Brooklyn", placetype: "borough", country: "US", lat: 40.65, lon: -73.95, score: 8 },
+			{ id: 421_205_765, name: "Brooklyn", placetype: "borough", country: "US", lat: 40.65, lon: -73.95, score: 8 },
 		]
 		const input = tree("Brooklyn", [node("locality", "Brooklyn", 0, 8)])
 		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "US" })
@@ -633,7 +633,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			country: "DE",
 			parent_id: 900,
 			lat: 52.4,
-			lon: 13.0,
+			lon: 13,
 			score: 9,
 		},
 	]
@@ -791,10 +791,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	// chain onto metadata.ancestors. Off by default → byte-stable.
 	const LINEAGE = new Map<number, Ancestor[]>([
 		[
-			101727113,
+			101_727_113,
 			[
-				{ id: 85688541, placetype: "region", name: "Illinois" },
-				{ id: 85633147, placetype: "country", name: "United States" },
+				{ id: 85_688_541, placetype: "region", name: "Illinois" },
+				{ id: 85_633_147, placetype: "country", name: "United States" },
 			],
 		],
 	])
@@ -808,8 +808,8 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const locality = result.roots[0]?.children[0]
 		expect(locality?.placeID).toBe("wof:101727113")
 		expect(locality?.metadata?.["ancestors"]).toEqual([
-			{ id: 85688541, placetype: "region", name: "Illinois" },
-			{ id: 85633147, placetype: "country", name: "United States" },
+			{ id: 85_688_541, placetype: "region", name: "Illinois" },
+			{ id: 85_633_147, placetype: "country", name: "United States" },
 		])
 	})
 
@@ -1040,9 +1040,9 @@ function fakeStreetCentroids(
 	const key = (s: string, c: string) =>
 		`${s
 			.toLowerCase()
-			.replace(/['’]/g, "")
-			.replace(/-/g, " ")
-			.replace(/\s+/g, " ")
+			.replaceAll(/['’]/g, "")
+			.replaceAll(/-/g, " ")
+			.replaceAll(/\s+/g, " ")
 			.trim()}|${c.toLowerCase().trim()}`
 	const map = new Map(entries.map((e) => [key(e.street, e.commune), e]))
 
@@ -1064,7 +1064,7 @@ const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (count
 function streetTier(t: AddressTree): AddressNode | undefined {
 	const stack = [...t.roots]
 
-	while (stack.length) {
+	while (stack.length > 0) {
 		const n = stack.pop()!
 
 		if (n.tag === "street" && n.metadata?.["resolution_tier"] === "street") return n

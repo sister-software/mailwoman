@@ -165,7 +165,7 @@ export function buildTrailingLocalityPriors(
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
-	const bias = opts.bias ?? 6.0
+	const bias = opts.bias ?? 6
 	const streetPenalty = opts.streetPenalty ?? 1.5
 	const maxSpanGroups = opts.maxSpanGroups ?? 3
 
@@ -248,7 +248,7 @@ export function buildTrailingLocalityPriors(
 	const spanFirstPiece = words[span.startWord]!.group.pieceIndices[0]!
 	const prevPieces = words[span.startWord - 1]!.group.pieceIndices
 
-	for (let pi = prevPieces[prevPieces.length - 1]!; pi < spanFirstPiece; pi++) {
+	for (let pi = prevPieces.at(-1)!; pi < spanFirstPiece; pi++) {
 		if (pieces[pi]!.piece.includes(",")) return matrix
 	}
 

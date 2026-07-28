@@ -38,9 +38,9 @@ export function makeLcg(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 
@@ -60,7 +60,7 @@ export function makeMulberry32(seed: number): () => number {
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
 
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 }
 

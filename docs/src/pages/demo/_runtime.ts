@@ -222,7 +222,7 @@ export function useDemoMapRuntime({
 				setGeoBiasActive(true)
 			},
 			() => setGeoBiasActive(false),
-			{ maximumAge: 600_000, timeout: 8_000 }
+			{ maximumAge: 600_000, timeout: 8000 }
 		)
 	}, [])
 
@@ -334,8 +334,8 @@ export function useDemoMapRuntime({
 							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
 						)
 					}
-				} catch (streetErr) {
-					console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", streetErr)
+				} catch (error) {
+					console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", error)
 				}
 			}
 
@@ -519,8 +519,8 @@ export function useDemoMapRuntime({
 							}
 							const geom = await (await polygonDBRef.current).get(placeID)
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
-						} catch (err) {
-							console.error("Crisp polygon unavailable; falling back to bbox", err)
+						} catch (error) {
+							console.error("Crisp polygon unavailable; falling back to bbox", error)
 							setPolygonCache((prev) => new Map(prev).set(placeID, null))
 							polygonDBRef.current = null
 						} finally {

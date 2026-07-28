@@ -18,7 +18,7 @@ describe("normalizeCaPostalCode", () => {
 		expect(normalizeCaPostalCode("K1A 0B")).toBeNull() // too short
 		expect(normalizeCaPostalCode("D1A 0B1")).toBeNull() // D never opens a postcode
 		expect(normalizeCaPostalCode("75008")).toBeNull() // a French code postal
-		expect(normalizeCaPostalCode(12345)).toBeNull()
+		expect(normalizeCaPostalCode(12_345)).toBeNull()
 	})
 })
 

@@ -74,7 +74,7 @@ describe("isImplausibleResolution", () => {
 	})
 
 	test("a region-only (US state) resolution is plausible — a legitimate coarse geocode", () => {
-		const t = tree([node({ tag: "region", value: "Texas", lat: 31.0, lon: -100.0, placeID: "wof:tx" })], "Texas 76013")
+		const t = tree([node({ tag: "region", value: "Texas", lat: 31, lon: -100, placeID: "wof:tx" })], "Texas 76013")
 
 		expect(isImplausibleResolution(t).implausible).toBe(false)
 	})

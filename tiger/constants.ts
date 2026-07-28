@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { TIGERClassCode } from "./class-code.ts"
-import { TIGERFunctionalStatus } from "./functional-status.ts"
+import type { TIGERClassCode } from "./class-code.ts"
+import type { TIGERFunctionalStatus } from "./functional-status.ts"
+import type { GeoIDPart } from "./geoid.ts"
 import {
 	type FIPSBlockCode,
 	type FIPSBlockGroupCode,
@@ -14,10 +15,9 @@ import {
 	type FIPSCountySubDivisionCode,
 	type FIPSPlaceCode,
 	type FIPSTractCode,
-	GeoIDPart,
 } from "./geoid.ts"
-import { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
-import { FIPSStateCode } from "./state.ts"
+import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
+import type { FIPSStateCode } from "./state.ts"
 
 /**
  * A code indicating the classification of the block, i.e. urban or rural.

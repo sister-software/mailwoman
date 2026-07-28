@@ -11,12 +11,7 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import type { Context } from "hono"
 
-import {
-	type PhotonEngine,
-	type PhotonFeatureCollection,
-	type PhotonReverseParams,
-	type PhotonSearchParams,
-} from "./engine.ts"
+import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "./engine.ts"
 import { photonToSchemaOrg } from "./projection.ts"
 import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "./schema.ts"
 

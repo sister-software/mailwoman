@@ -38,7 +38,7 @@ interface FixtureEntry {
 
 describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (10k corpus rows)", () => {
 	test("byte-for-byte pieces+ids equality across every fixture entry", async () => {
-		const fixture: FixtureEntry[] = JSON.parse(readFileSync(LARGE_FIXTURE_PATH, "utf-8"))
+		const fixture: FixtureEntry[] = JSON.parse(readFileSync(LARGE_FIXTURE_PATH, "utf8"))
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
 
 		let divergences = 0
@@ -71,7 +71,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 	})
 
 	test("offset reconstruction is correct on the supported subset (no byte-fallback, no ZWJ)", async () => {
-		const fixture: FixtureEntry[] = JSON.parse(readFileSync(LARGE_FIXTURE_PATH, "utf-8"))
+		const fixture: FixtureEntry[] = JSON.parse(readFileSync(LARGE_FIXTURE_PATH, "utf8"))
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
 
 		// Documented unsupported cases in tokenizer.ts: byte-fallback pieces (`<0xHH>`) and inputs

@@ -141,8 +141,8 @@ export async function buildOutlierOA(
 				// number both resolve. Pull a generous superset, dedup+cap in JS.
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
-		} catch (e) {
-			report?.(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+		} catch (error) {
+			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
 
 			return []
 		}

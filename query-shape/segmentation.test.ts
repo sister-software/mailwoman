@@ -44,8 +44,8 @@ describe("segment", () => {
 
 	it("returns one segment for a comma-free input", () => {
 		const segs = segment("350 5th Ave New York NY 10118")
-		expect(segs.length).toBe(1)
-		expect(segs[0].separator).toBe(null)
+		expect(segs).toHaveLength(1)
+		expect(segs[0].separator).toBeNull()
 	})
 
 	it("returns empty for empty input", () => {

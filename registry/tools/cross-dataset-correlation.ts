@@ -384,7 +384,7 @@ export async function crossDatasetCorrelation(
 	lines.push(`**${crossSource.length}** entities resolve across ≥2 sources.`)
 	lines.push("")
 
-	if (pairCounts.size) {
+	if (pairCounts.size > 0) {
 		lines.push(`| source pair | entities linked |`)
 		lines.push(`|---|---:|`)
 

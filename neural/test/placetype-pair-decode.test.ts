@@ -43,13 +43,7 @@ function col(label: string): number {
 }
 
 /** A minimal `PairIndexLike` resolving exactly one (child, parent) pair, at the real artifact's delta (6.0). */
-function fixedPairIndex(
-	child: string,
-	parent: string,
-	tag: string,
-	delta = 6.0,
-	transitionBeta?: number
-): PairIndexLike {
+function fixedPairIndex(child: string, parent: string, tag: string, delta = 6, transitionBeta?: number): PairIndexLike {
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
@@ -202,7 +196,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 		})
 		const withBeta = await classifier.traceParse("Shoreditch London", {
 			spanProposer: false,
-			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6.0, 5) },
+			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6, 5) },
 		})
 
 		// The child span flips whole — entry bonus at the first piece, BIO continuation follows.
@@ -219,7 +213,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 		// And the flip lands in the tree the user sees.
 		const json = await classifier.parseJSON("Shoreditch London", {
 			spanProposer: false,
-			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6.0, 5) },
+			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6, 5) },
 		})
 		expect(json.dependent_locality).toBe("Shoreditch")
 	})

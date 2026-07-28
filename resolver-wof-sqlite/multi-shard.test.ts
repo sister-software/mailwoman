@@ -94,13 +94,13 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		try {
 			// Locality query → admin shard
 			const localities = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
-			expect(localities.length).toBe(1)
+			expect(localities).toHaveLength(1)
 			expect(localities[0]?.placetype).toBe("locality")
 			expect(localities[0]?.id).toBe(101)
 
 			// Postcode query → postalcode shard
 			const postcodes = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
-			expect(postcodes.length).toBe(1)
+			expect(postcodes).toHaveLength(1)
 			expect(postcodes[0]?.placetype).toBe("postalcode")
 			expect(postcodes[0]?.id).toBe(201)
 		} finally {
@@ -122,7 +122,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 			// Even though the filename derives `wherever_they_put_postcodes`, the override gave it
 			// a `pc` schema name with explicit `postalcode` routing.
 			const postcodes = await lookup.findPlace({ text: "90210", placetype: "postalcode" })
-			expect(postcodes.length).toBe(1)
+			expect(postcodes).toHaveLength(1)
 			expect(postcodes[0]?.name).toBe("90210")
 		} finally {
 			lookup.close()
@@ -164,7 +164,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		try {
 			// No placetype → main only. "62701" won't match (it's in postcode shard); Springfield will.
 			const r = await lookup.findPlace({ text: "Springfield" })
-			expect(r.length).toBe(1)
+			expect(r).toHaveLength(1)
 			expect(r[0]?.placetype).toBe("locality")
 		} finally {
 			lookup.close()

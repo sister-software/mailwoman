@@ -12,9 +12,9 @@ function seededRandom(seed: number): () => number {
 	let s = seed
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 
@@ -85,7 +85,7 @@ describe("synthesizeStreetRow", () => {
 	it("raw string is the assembled address", () => {
 		const r = synthesizeStreetRow(
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
-			{ random: seededRandom(42), includeHouseNumberProb: 0.0 }
+			{ random: seededRandom(42), includeHouseNumberProb: 0 }
 		)
 		expect(r!.raw).toContain("Burlington")
 		expect(r!.raw).toContain("VT")

@@ -91,7 +91,7 @@ export async function buildDataset(
 	options: BuildDatasetOptions = {},
 	report?: (line: string) => void
 ): Promise<BuildDatasetResult> {
-	const PER = options.perCountry ?? 50000
+	const PER = options.perCountry ?? 50_000
 	const OUT_DIR = options.data || repoRootPath("data", "coarse-placer")
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
@@ -171,8 +171,8 @@ export async function buildDataset(
 
 		try {
 			res = await duck.runAndReadAll(q)
-		} catch (e) {
-			report?.(`  ${country}: SKIPPED — ${(e as Error).message}`)
+		} catch (error) {
+			report?.(`  ${country}: SKIPPED — ${(error as Error).message}`)
 			continue
 		}
 		const seen = new Set<string>()

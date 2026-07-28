@@ -128,11 +128,11 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	}
 	const misses = Object.entries(missTo).sort((a, b) => b[1] - a[1])
 
-	if (misses.length) {
+	if (misses.length > 0) {
 		console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)
 	}
 
-	if (samples.length) {
+	if (samples.length > 0) {
 		console.log(`  sample misplacements:\n${samples.join("\n")}`)
 	}
 

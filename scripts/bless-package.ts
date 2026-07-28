@@ -27,7 +27,7 @@ const { values: flags, positionals: dirs } = parseArgs({
 	allowPositionals: true,
 })
 
-if (!dirs.length) {
+if (dirs.length === 0) {
 	console.error(
 		"usage: node ./bless-package.ts <dir...> [--otp 123456] [--version x.y.z] [--file workflow.yml] [--env name]"
 	)
@@ -60,22 +60,26 @@ async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<vo
 			await run(otpArgs)
 
 			return
-		} catch (err: unknown) {
-			const msg = err instanceof Error ? err.message : String(err)
+		} catch (error: unknown) {
+			const msg = error instanceof Error ? error.message : String(error)
 
 			if (/EOTP|one-time|invalid otp/i.test(msg)) {
 				console.error("⚠ OTP needed/invalid — retry")
 				continue
 			}
 
-			throw err
+			throw error
 		}
 	}
 
 	throw new Error("OTP attempts exhausted")
 }
 
-type Pkg = { name: string; version: string; repository?: string | { url?: string } }
+interface Pkg {
+	name: string
+	version: string
+	repository?: string | { url?: string }
+}
 
 async function readPkg(dir: string): Promise<Pkg> {
 	return JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"))
@@ -116,7 +120,7 @@ async function packAndPublish(dir: string): Promise<void> {
 		return
 	}
 
-	const tgz = `/tmp/${pkg.name.replace(/[@/]/g, "-")}.tgz`
+	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
 	await $({ cwd: dir })`yarn pack -o ${tgz}`
 
 	if (flags["dry-run"]) {
@@ -163,8 +167,8 @@ async function trust(dir: string): Promise<void> {
 	try {
 		await $`npm ${args}`
 		console.log(`• ${pkg.name}: trusted publisher configured`)
-	} catch (err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error)
 
 		if (/already|exists|configured/i.test(msg)) {
 			console.log(`• ${pkg.name}: trusted publisher already configured — skip`)
@@ -198,8 +202,8 @@ main()
 		rl.close()
 		process.exit(0)
 	})
-	.catch((e) => {
-		console.error(e)
+	.catch((error) => {
+		console.error(error)
 		rl.close()
 		process.exit(1)
 	})

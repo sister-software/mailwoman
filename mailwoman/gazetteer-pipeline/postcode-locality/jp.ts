@@ -42,7 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 
-const MATCH_RADIUS_KM = 15.0
+const MATCH_RADIUS_KM = 15
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set
 const PLACETYPES = ["locality", "county", "localadmin", "borough"] as const
 const SUFFIX = /(shi|ku|cho|machi|gun|ken|fu|to|son|mura|ward|si|gu|dong|eup|myeon|ri)$/
@@ -104,7 +104,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -130,7 +130,7 @@ function pyFloat(s: string | undefined): number | null {
 }
 
 function norm(s: string): string {
-	return s.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[\s-]/g, "")
+	return s.normalize("NFKD").replaceAll(/\p{M}/gu, "").toLowerCase().replaceAll(/[\s-]/g, "")
 }
 
 /**
@@ -150,7 +150,7 @@ function toRad(deg: number): number {
 
 /** Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form). */
 function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371.0
+	const R = 6371
 	const p1 = toRad(aLat)
 	const p2 = toRad(cLat)
 	const dp = toRad(cLat - aLat)

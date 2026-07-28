@@ -35,8 +35,8 @@ import { WOFWasmPlaceLookup } from "./lookup.ts"
 
 const HOT_DB_PATH = $public.MAILWOMAN_WOF_HOT_DB
 
-const BROOKLYN_BOROUGH = 421205765
-const NEW_YORK_LOCALITY = 85977539
+const BROOKLYN_BOROUGH = 421_205_765
+const NEW_YORK_LOCALITY = 85_977_539
 
 describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_HOT_DB)", () => {
 	let wasmLookup: WOFWasmPlaceLookup

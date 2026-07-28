@@ -134,6 +134,6 @@ describe("LocaleProfile — bundled profiles", () => {
 		registry.register(enUS)
 		registry.register(frFR)
 		registry.register(jaJP)
-		expect(registry.list().length).toBe(3)
+		expect(registry.list()).toHaveLength(3)
 	})
 })

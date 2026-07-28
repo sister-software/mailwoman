@@ -64,7 +64,7 @@ export type WhosOnFirstPlacetype =
 	| "venue"
 	| "wing"
 
-export type PlacetypeLocalizationRecord = {
+export interface PlacetypeLocalizationRecord {
 	[languageCode: string]: string | undefined
 }
 
@@ -130,6 +130,6 @@ export function normalizePlacetypeDefinition(
 /**
  * A record of placetype definitions, keyed by Placetype id.
  */
-export type PlacetypeDefinitionRecord = {
+export interface PlacetypeDefinitionRecord {
 	[id: number]: Omit<PlacetypeDefinition, "id"> | undefined
 }

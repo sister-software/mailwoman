@@ -281,7 +281,7 @@ export function buildGazetteerFeatures(
 			}
 		}
 		features.push(bits ? bitsToRow(bits, lexicon) : zero())
-		confidence.push(bits ? 1.0 : 0)
+		confidence.push(bits ? 1 : 0)
 	}
 
 	return { features, confidence }

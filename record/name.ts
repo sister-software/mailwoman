@@ -194,21 +194,21 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	// 1. Extract a parenthetical "(Jim)" or quoted "Jim" nickname, then strip it out.
 	let working = input
-		.replace(/\s*\(([^)]+)\)\s*/g, (_m, n: string) => {
+		.replaceAll(/\s*\(([^)]+)\)\s*/g, (_m, n: string) => {
 			if (!result.nickname) {
 				result.nickname = n.trim()
 			}
 
 			return " "
 		})
-		.replace(/\s*"([^"]+)"\s*/g, (_m, n: string) => {
+		.replaceAll(/\s*"([^"]+)"\s*/g, (_m, n: string) => {
 			if (!result.nickname) {
 				result.nickname = n.trim()
 			}
 
 			return " "
 		})
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 	// 2. Resolve a single comma: "Last, First" inversion, unless the tail is a known suffix
@@ -226,7 +226,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	const tokens = working.split(/\s+/).filter(Boolean)
 
-	if (tokens.length === 0) return Object.keys(result).length ? result : null
+	if (tokens.length === 0) return Object.keys(result).length > 0 ? result : null
 
 	// 3. Leading titles → prefix.
 	const prefixParts: string[] = []
@@ -235,18 +235,18 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		prefixParts.push(tokens.shift()!)
 	}
 
-	if (prefixParts.length) {
+	if (prefixParts.length > 0) {
 		result.prefix = prefixParts.join(" ")
 	}
 
 	// 4. Trailing suffixes → suffix (a single name token must remain).
 	const suffixParts: string[] = []
 
-	while (tokens.length > 1 && SUFFIXES.has(norm(tokens[tokens.length - 1]!))) {
+	while (tokens.length > 1 && SUFFIXES.has(norm(tokens.at(-1)!))) {
 		suffixParts.unshift(tokens.pop()!)
 	}
 
-	if (suffixParts.length) {
+	if (suffixParts.length > 0) {
 		result.suffix = isPresent(result.suffix) ? `${suffixParts.join(" ")} ${result.suffix}` : suffixParts.join(" ")
 	}
 
@@ -275,7 +275,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.family = tokens.slice(i).join(" ")
 		const before = tokens.slice(0, particleStart)
 
-		if (before.length) {
+		if (before.length > 0) {
 			result.given = before[0]
 		}
 
@@ -293,7 +293,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		return result
 	}
 	result.given = tokens[0]
-	result.family = tokens[tokens.length - 1]
+	result.family = tokens.at(-1)
 
 	if (tokens.length > 2) {
 		result.middle = tokens.slice(1, -1).join(" ")

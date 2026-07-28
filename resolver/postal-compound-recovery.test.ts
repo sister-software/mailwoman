@@ -22,8 +22,8 @@ const norm = (s: string): string =>
 	s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[^a-z0-9 ]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[^a-z0-9 ]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 /** The SI shape: the village + its bare-code postcode row (the #920 name law — codes stored bare). */
@@ -45,8 +45,8 @@ const PLACES: ResolvedPlace[] = [
 		name: "Kožljek",
 		placetype: "locality",
 		country: "HR",
-		lat: 42.0,
-		lon: 18.0,
+		lat: 42,
+		lon: 18,
 		score: 10,
 		exactMatch: true,
 	},
@@ -103,7 +103,7 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: false })
 		const resolved = out.roots.filter((n) => n.placeID)
 
-		expect(resolved.length).toBe(0)
+		expect(resolved).toHaveLength(0)
 	})
 
 	it("DEFAULT (flag ON since the 2026-07-03 promote): the compound recovers without opting in", async () => {
@@ -161,7 +161,7 @@ describe("postal-compound recovery (#942)", () => {
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc).toBeUndefined() // nothing synthesized
-		expect(out.roots.filter((n) => n.placeID).length).toBe(1)
+		expect(out.roots.filter((n) => n.placeID)).toHaveLength(1)
 	})
 
 	it("flag ON: street tokens stay blocked — no 'Ave, France' resurrection", async () => {
@@ -177,7 +177,7 @@ describe("postal-compound recovery (#942)", () => {
 		}
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 
-		expect(out.roots.filter((n) => n.placeID).length).toBe(0)
+		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
 	})
 
 	it("gate rejects a cross-border same-named decoy (unscoped)", async () => {
@@ -216,7 +216,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 		)
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
 
-		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID).length).toBe(0)
+		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID)).toHaveLength(0)
 	})
 
 	it("never cross-promotes without a postcode present (no ungated wandering)", async () => {
@@ -230,6 +230,6 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 		}
 		const out = await resolver.resolveTree(tree, { defaultCountry: "US" })
 
-		expect(out.roots.filter((n) => n.placeID).length).toBe(0)
+		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
 	})
 })

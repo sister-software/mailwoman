@@ -73,7 +73,7 @@ export interface ParityEvalOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function loadFixtures(path: string): ParityFixture[] {
 	return readFileSync(path, "utf8")
@@ -241,7 +241,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	for (const { label } of PARITY_FLOORS) {
 		const { examples } = precision.get(label)!
 
-		if (!examples.length) continue
+		if (examples.length === 0) continue
 		console.log(`\n  --- ${label}: emitted where the gold has none (first ${examples.length}) ---`)
 
 		for (const example of examples) {

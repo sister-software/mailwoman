@@ -125,7 +125,7 @@ for (const row of rows) {
 	}
 }
 
-console.log(`# country homograph baseline — ${(values["model"] || "")!.split("/").slice(-1)[0]} · n=${rows.length}`)
+console.log(`# country homograph baseline — ${(values["model"] || "")!.split("/").at(-1)} · n=${rows.length}`)
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
 
@@ -152,10 +152,10 @@ if (jsonOut) {
 console.log(`\nover-fire (region/locality tagged as country): ${overfire}`)
 console.log(`missed country (gold country, none emitted): ${missedCountry}`)
 
-if (overfireCases.length) {
+if (overfireCases.length > 0) {
 	console.log("\n-- over-fire cases --\n" + overfireCases.join("\n"))
 }
 
-if (missedCases.length) {
+if (missedCases.length > 0) {
 	console.log("\n-- missed-country cases --\n" + missedCases.join("\n"))
 }

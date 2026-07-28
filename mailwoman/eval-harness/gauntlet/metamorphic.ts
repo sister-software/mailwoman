@@ -225,14 +225,14 @@ interface Perturbation {
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
 	{ name: "upper", f: (s) => s.toUpperCase() },
-	{ name: "ws", f: (s) => s.replace(/ /g, "  ") },
+	{ name: "ws", f: (s) => s.replaceAll(/ /g, "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
-	{ name: "comma-tight", f: (s) => s.replace(/, /g, ",") }, // surface-form: drop the space after a comma
+	{ name: "comma-tight", f: (s) => s.replaceAll(/, /g, ",") }, // surface-form: drop the space after a comma
 	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still
 	// space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix
 	// half (punctuation-drop training augmentation) closes any deterministic failure this surfaces; a
 	// failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
-	{ name: "comma-drop", f: (s) => s.replace(/,/g, "") },
+	{ name: "comma-drop", f: (s) => s.replaceAll(/,/g, "") },
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
 
@@ -295,8 +295,8 @@ const KNOWN_BAND_XFAIL = new Map<string, string>([
 const dropPostcode = (s: string) =>
 	s
 		.replace(/\b\d{5}\b/, "")
-		.replace(/\s*,\s*,/g, ",")
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s*,\s*,/g, ",")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 interface Tally {
@@ -462,7 +462,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	if (fails.length) {
+	if (fails.length > 0) {
 		console.log(`\nNEW violations (gate-failing):`)
 
 		for (const f of fails) {
@@ -470,7 +470,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	if (xfails.length) {
+	if (xfails.length > 0) {
 		console.log(`\nknown xfails (tracked, non-blocking):`)
 
 		for (const f of xfails) {
@@ -478,7 +478,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	if (newlyPassing.length) {
+	if (newlyPassing.length > 0) {
 		console.log(`\n⚠ xfails that now PASS — remove from the KNOWN_*_XFAIL map:`)
 
 		for (const [key, issue] of newlyPassing) {

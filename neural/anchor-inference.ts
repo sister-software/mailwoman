@@ -47,7 +47,7 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 	for (const [country, weight] of Object.entries(posterior)) {
 		const idx = LOCALE_ORDER.indexOf(country.toUpperCase() as (typeof LOCALE_ORDER)[number])
 
-		if (idx >= 0) {
+		if (idx !== -1) {
 			vec[idx] = weight
 			total += weight
 		}
@@ -117,7 +117,7 @@ export function buildAnchorFeatures(
 				if (c < text.length && !/\s/.test(text[c]!)) {
 					if (c >= spanBegin && c < spanEnd) {
 						features[i] = vec
-						confidence[i] = 1.0
+						confidence[i] = 1
 					}
 					break // first non-whitespace char of the piece decides (mirrors realign_anchor_to_pieces)
 				}

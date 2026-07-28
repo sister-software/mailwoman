@@ -47,11 +47,11 @@ function locate(raw: string, value: string, from: number): [number, number] | nu
 		// case-insensitive fallback (v0 may upper/lower-case components)
 		const lower = raw.toLowerCase().indexOf(value.toLowerCase(), from)
 
-		if (lower < 0) {
+		if (lower === -1) {
 			// last resort: search from the start (value may appear before the cursor)
 			const any = raw.toLowerCase().indexOf(value.toLowerCase())
 
-			if (any < 0) return null
+			if (any === -1) return null
 			i = any
 		} else {
 			i = lower
@@ -85,7 +85,7 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 		const ia = raw.toLowerCase().indexOf(a.value.toLowerCase())
 		const ib = raw.toLowerCase().indexOf(b.value.toLowerCase())
 
-		return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib)
+		return (ia === -1 ? 1e9 : ia) - (ib === -1 ? 1e9 : ib)
 	})
 	let cursor = 0
 

@@ -192,7 +192,7 @@ function randomHouseNumber(random: () => number): string {
 
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
 
-	return String(10000 + Math.floor(random() * 89999))
+	return String(10_000 + Math.floor(random() * 89_999))
 }
 
 /**

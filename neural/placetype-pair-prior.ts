@@ -294,7 +294,7 @@ const ANCHORED_CHILD_MAX_WORDS = 4
  * calibrated per-country delta from the artifact header, 5.0 for GB as of the 2026-07-22 calibration; see task-7
  * sweep), so this is a defensive fallback, not a tuned value.
  */
-const DEFAULT_DELTA = 1.0
+const DEFAULT_DELTA = 1
 
 /**
  * Structural-marker words: a candidate window immediately followed by one of these is the HEAD of a street/venue name,
@@ -711,7 +711,7 @@ function resolveAnchorParentEnd(
 	for (let i = 0; i < nonEmptyGroups.length; i++) {
 		const group = nonEmptyGroups[i]!
 		const start = pieces[group.pieceIndices[0]!]!.start
-		const end = pieces[group.pieceIndices[group.pieceIndices.length - 1]!]!.end
+		const end = pieces[group.pieceIndices.at(-1)!]!.end
 
 		if (start < anchor.end && anchor.start < end) return i - 1
 	}

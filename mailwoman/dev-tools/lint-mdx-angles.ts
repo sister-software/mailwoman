@@ -71,7 +71,7 @@ function violations(file: string): string[] {
 		}
 
 		if (fenced) continue
-		const stripped = line.replace(/`[^`]*`/g, "")
+		const stripped = line.replaceAll(/`[^`]*`/g, "")
 
 		if (RAW_ANGLE.test(stripped)) {
 			hits.push(`${i + 1}:${line}`)

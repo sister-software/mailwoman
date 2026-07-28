@@ -75,7 +75,7 @@ export const DE_STREET_SUFFIXES = [
  */
 export function isGermanStreetToken(token: unknown): boolean {
 	if (typeof token !== "string") return false
-	const t = token.toLowerCase().replace(/[^a-zà-ÿß]/g, "")
+	const t = token.toLowerCase().replaceAll(/[^a-zà-ÿß]/g, "")
 
 	if (t.length < 3) return false
 

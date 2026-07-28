@@ -44,7 +44,7 @@ export const nlPostcodeRecipe: ShardRecipe = {
 			const rawPostcode = String(t.postcode ?? "")
 				.trim()
 				.toUpperCase()
-				.replace(/\s+/g, "")
+				.replaceAll(/\s+/g, "")
 
 			if (!street || !city || !number || !/^\d{4}[A-Z]{2}$/.test(rawPostcode)) {
 				skipped++
