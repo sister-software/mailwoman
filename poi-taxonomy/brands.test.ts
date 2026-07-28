@@ -17,7 +17,7 @@ describe("lookupPOIBrand", () => {
 	})
 
 	it("matches a known alias variant", () => {
-		const [target] = getAllBrands().filter((b) => b.aliases.length > 0)
+		const target = getAllBrands().find((b) => b.aliases.length)
 		expect(target, "expected at least one committed brand with aliases").toBeDefined()
 
 		const alias = target!.aliases[0]!

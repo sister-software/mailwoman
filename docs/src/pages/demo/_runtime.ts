@@ -298,7 +298,7 @@ export function useDemoMapRuntime({
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+			const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
 			const stateNode = nodes
 				.filter((n) => n.tag === "region" || n.tag === "state")
 				.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
@@ -328,7 +328,7 @@ export function useDemoMapRuntime({
 							streetValue,
 							String(houseNumberNode.value),
 							postcodeNode?.value ? String(postcodeNode.value) : undefined,
-							localityNodes[0]?.value ? String(localityNodes[0].value) : undefined,
+							localityNode?.value ? String(localityNode.value) : undefined,
 							street.situs,
 							street.interp,
 							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT

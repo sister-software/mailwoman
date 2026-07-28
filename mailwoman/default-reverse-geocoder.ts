@@ -44,7 +44,7 @@ export function loadDefaultReverseGeocoder(): Promise<WOFReverseGeocoderType | n
 	if (!cached) {
 		cached = (async (): Promise<WOFReverseGeocoderType | null> => {
 			try {
-				const adminDBPath = wofShardPaths().filter(existsSync)[0]
+				const adminDBPath = wofShardPaths().find(existsSync)
 
 				if (!adminDBPath) return null
 				const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
