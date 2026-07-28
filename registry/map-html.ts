@@ -80,12 +80,12 @@ const CROSS_COLOR = "#e8590c" // cross-dataset link (≥2 sources)
  * breakout impossible.
  */
 function safeJSONForScript(value: unknown): string {
-	return JSON.stringify(value).replaceAll(/</g, "\\u003c").replaceAll(/>/g, "\\u003e").replaceAll(/&/g, "\\u0026")
+	return JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
 }
 
 /** Escape text for the HTML document body (title/heading), not the inlined script. */
 function escapeHTML(text: string): string {
-	return text.replaceAll(/&/g, "&amp;").replaceAll(/</g, "&lt;").replaceAll(/>/g, "&gt;").replaceAll(/"/g, "&quot;")
+	return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
 }
 
 function sourceCount(props: EntityGeoData): number {

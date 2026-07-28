@@ -85,14 +85,14 @@ function isOffMapScript(s: string): boolean {
 
 		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue // punct/space/digits
 		total++
-		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x24f)
+		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x2_4f)
 		const cjk =
-			(cp >= 0x30_40 && cp <= 0x30ff) ||
-			(cp >= 0x4e00 && cp <= 0x9f_ff) ||
-			(cp >= 0xac_00 && cp <= 0xd7af) ||
-			(cp >= 0x34_00 && cp <= 0x4dbf)
+			(cp >= 0x30_40 && cp <= 0x30_ff) ||
+			(cp >= 0x4e_00 && cp <= 0x9f_ff) ||
+			(cp >= 0xac_00 && cp <= 0xd7_af) ||
+			(cp >= 0x34_00 && cp <= 0x4d_bf)
 
-		if (!latin && !cjk && cp > 0x2ff) {
+		if (!latin && !cjk && cp > 0x2_ff) {
 			off++
 		}
 	}

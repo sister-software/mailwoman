@@ -68,7 +68,7 @@ function stripQuotes(field: string): string {
 	const trimmed = field.trim()
 
 	if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
-		return trimmed.slice(1, -1).replaceAll(/""/g, '"')
+		return trimmed.slice(1, -1).replaceAll('""', '"')
 	}
 
 	return trimmed
@@ -116,7 +116,7 @@ function normalizeField(raw: string): string | null {
 	let s = raw.trim()
 
 	if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
-		s = s.slice(1, -1).replaceAll(/""/g, '"')
+		s = s.slice(1, -1).replaceAll('""', '"')
 	}
 
 	// Normalize common null-like values

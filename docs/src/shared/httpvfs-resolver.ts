@@ -66,7 +66,7 @@ const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g
 /**
  * Escape a string literal for inline SQL (we inline rather than bind — avoids param-marshaling over Comlink).
  */
-const sqlStr = (s: string): string => `'${s.replaceAll(/'/g, "''")}'`
+const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
 /**
  * Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the

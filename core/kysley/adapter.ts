@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { Kysely } from "kysely"
-import { DialectAdapterBase, type MigrationLockOptions } from "kysely"
+import { type Kysely, DialectAdapterBase, type MigrationLockOptions } from "kysely"
 
 export class SqliteAdapter extends DialectAdapterBase {
 	override get supportsTransactionalDdl(): boolean {

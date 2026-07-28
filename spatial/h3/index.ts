@@ -41,7 +41,7 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
 	//     aa 84 5a 18 ac 6b
 
 	// Extract the cell address without the resolution
-	const h3CellShortBigInt = cellBigInt & 0xfffffffffffffn
+	const h3CellShortBigInt = cellBigInt & 0xf_ff_ff_ff_ff_ff_ffn
 
 	const h3CellShortHex = h3CellShortBigInt.toString(16)
 

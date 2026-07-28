@@ -189,7 +189,7 @@ async function main(): Promise<void> {
 			args.release,
 			// #727 phase-4c name-existence key: the contract fold of the display name, quotes stripped (a rare CSV
 			// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
-			foldStreetSurface(row.street_raw.replaceAll(/"/g, ""))
+			foldStreetSurface(row.street_raw.replaceAll('"', ""))
 		)
 		written++
 

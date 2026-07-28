@@ -6,13 +6,13 @@
 
 import type { GeometryLiteral, MultiPolygonLiteral } from "@mailwoman/spatial"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk"
-import type { FIPSStateCode } from "@mailwoman/tiger"
-import {
-	type FIPSBlockGeoID,
-	type FIPSTractCode,
-	type TIGERBlockFeature,
-	type TIGERBlockFeatureCollection,
-	type TIGERTabulatedBlockProperties,
+import type {
+	FIPSStateCode,
+	FIPSBlockGeoID,
+	FIPSTractCode,
+	TIGERBlockFeature,
+	TIGERBlockFeatureCollection,
+	TIGERTabulatedBlockProperties,
 } from "@mailwoman/tiger"
 
 export interface StateBlockIntersectionCriteria {

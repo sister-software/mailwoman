@@ -1041,7 +1041,7 @@ function fakeStreetCentroids(
 		`${s
 			.toLowerCase()
 			.replaceAll(/['’]/g, "")
-			.replaceAll(/-/g, " ")
+			.replaceAll("-", " ")
 			.replaceAll(/\s+/g, " ")
 			.trim()}|${c.toLowerCase().trim()}`
 	const map = new Map(entries.map((e) => [key(e.street, e.commune), e]))

@@ -93,7 +93,7 @@ export async function trainCoarsePlacer(
 	// what every shipped model was trained on, and swapping the RNG changes the shuffle order (a
 	// silent retrain-reproducibility break).
 	let rng = 1_234_567
-	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7fffffff) / 0x7fffffff
+	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7f_ff_ff_ff) / 0x7f_ff_ff_ff
 	function shuffle(arr: Sample[]): void {
 		for (let i = arr.length - 1; i > 0; i--) {
 			const j = Math.floor(rand() * (i + 1))

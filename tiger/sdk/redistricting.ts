@@ -145,7 +145,7 @@ export async function* fetchRedistricting(
 
 	if (!abbr) throw new Error(`Unknown state FIPS "${state}"`)
 	const stateName = StateName[abbr as keyof typeof StateName]
-	const dirName = stateName.replaceAll(/ /g, "_")
+	const dirName = stateName.replaceAll(" ", "_")
 	const fileAbbr = abbr.toLowerCase()
 
 	const cacheDir = join(dataRoot, "census", "redistricting", String(vintage), state)

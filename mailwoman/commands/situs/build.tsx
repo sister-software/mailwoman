@@ -276,7 +276,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 			for (const m of text.matchAll(/overture:(\S+)\s+([\d,]+) rows/g)) {
 				const ds = m[1]!,
-					n = Number(m[2]!.replaceAll(/,/g, ""))
+					n = Number(m[2]!.replaceAll(",", ""))
 				datasets[ds] = n
 				manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + n
 			}

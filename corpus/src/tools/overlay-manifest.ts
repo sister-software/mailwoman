@@ -53,7 +53,7 @@ interface BaseManifest {
 
 /** Escape a path for single-quoted SQL string literals. */
 function sqlString(value: string): string {
-	return value.replaceAll(/'/g, "''")
+	return value.replaceAll("'", "''")
 }
 
 async function descriptor(

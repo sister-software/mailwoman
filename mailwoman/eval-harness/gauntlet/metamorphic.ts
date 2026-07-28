@@ -225,14 +225,14 @@ interface Perturbation {
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
 	{ name: "upper", f: (s) => s.toUpperCase() },
-	{ name: "ws", f: (s) => s.replaceAll(/ /g, "  ") },
+	{ name: "ws", f: (s) => s.replaceAll(" ", "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
-	{ name: "comma-tight", f: (s) => s.replaceAll(/, /g, ",") }, // surface-form: drop the space after a comma
+	{ name: "comma-tight", f: (s) => s.replaceAll(", ", ",") }, // surface-form: drop the space after a comma
 	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still
 	// space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix
 	// half (punctuation-drop training augmentation) closes any deterministic failure this surfaces; a
 	// failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
-	{ name: "comma-drop", f: (s) => s.replaceAll(/,/g, "") },
+	{ name: "comma-drop", f: (s) => s.replaceAll(",", "") },
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
 

@@ -208,8 +208,8 @@ function canonicalizeFragment(
 		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
 		// connective punctuation joins words rather than vanishing: "AT&T" → "at and t"
-		.replaceAll(/&/g, " and ")
-		.replaceAll(/\+/g, " and ")
+		.replaceAll("&", " and ")
+		.replaceAll("+", " and ")
 		// periods + apostrophes are intra-token, so remove (not space): "S.A." → "sa", "Macy's" → "macys"
 		.replaceAll(/[.'’]/g, "")
 		.replaceAll(/[^a-z0-9\s]/g, " ")

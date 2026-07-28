@@ -83,7 +83,7 @@ const MODELS = [
 	{ key: "FS", label: "FS full stack", color: "#9ca3af", width: 2, dash: "5 4" },
 ]
 
-const esc = (s: string) => s.replaceAll(/&/g, "&amp;").replaceAll(/</g, "&lt;").replaceAll(/>/g, "&gt;")
+const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
 /** Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc. */
 export function yardstickFigure(

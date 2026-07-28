@@ -10,30 +10,30 @@ import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from 
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
-	[0x30_40, 0x30ff], // Hiragana + Katakana
-	[0x31f0, 0x31_ff], // Katakana phonetic extensions
-	[0x34_00, 0x4dbf], // CJK Unified Ideographs Extension A
-	[0x4e00, 0x9f_ff], // CJK Unified Ideographs
+	[0x30_40, 0x30_ff], // Hiragana + Katakana
+	[0x31_f0, 0x31_ff], // Katakana phonetic extensions
+	[0x34_00, 0x4d_bf], // CJK Unified Ideographs Extension A
+	[0x4e_00, 0x9f_ff], // CJK Unified Ideographs
 	[0xa0_00, 0xa4_cf], // Yi
-	[0xac00, 0xd7af], // Hangul Syllables
+	[0xac_00, 0xd7_af], // Hangul Syllables
 	[0xf9_00, 0xfa_ff], // CJK Compatibility Ideographs
-	[0xff00, 0xffef], // Halfwidth + Fullwidth forms
-	[0x2_00_00, 0x2a6df], // CJK Unified Ideographs Extension B
+	[0xff_00, 0xff_ef], // Halfwidth + Fullwidth forms
+	[0x2_00_00, 0x2_a6_df], // CJK Unified Ideographs Extension B
 ]
 
 const CYRILLIC_RANGES: ReadonlyArray<[number, number]> = [
-	[0x04_00, 0x04ff],
-	[0x05_00, 0x052f], // Cyrillic Supplement
-	[0x2de0, 0x2d_ff], // Cyrillic Extended-A
-	[0xa640, 0xa69f], // Cyrillic Extended-B
+	[0x04_00, 0x04_ff],
+	[0x05_00, 0x05_2f], // Cyrillic Supplement
+	[0x2d_e0, 0x2d_ff], // Cyrillic Extended-A
+	[0xa6_40, 0xa6_9f], // Cyrillic Extended-B
 ]
 
 const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
-	[0x06_00, 0x06ff],
-	[0x07_50, 0x077f], // Arabic Supplement
-	[0x08a0, 0x08_ff], // Arabic Extended-A
-	[0xfb_50, 0xfdff], // Arabic Presentation Forms-A
-	[0xfe70, 0xfe_ff], // Arabic Presentation Forms-B
+	[0x06_00, 0x06_ff],
+	[0x07_50, 0x07_7f], // Arabic Supplement
+	[0x08_a0, 0x08_ff], // Arabic Extended-A
+	[0xfb_50, 0xfd_ff], // Arabic Presentation Forms-A
+	[0xfe_70, 0xfe_ff], // Arabic Presentation Forms-B
 ]
 
 function inRange(cp: number, ranges: ReadonlyArray<[number, number]>): boolean {
@@ -76,7 +76,7 @@ const PUNCT_CODEPOINTS = new Set<number>([
 	0x00_a1, // ¡
 	0x00_bf, // ¿
 	0x20_1c, // “
-	0x201d, // ”
+	0x20_1d, // ”
 	0x20_13, // –
 	0x20_14, // —
 	0x30_01, // 、 (CJK comma)
@@ -102,7 +102,7 @@ export function classifyCodepoint(cp: number): CodepointClass {
 	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a)) return "alpha"
 
 	// Latin-1 letters with diacritics + Latin Extended-A/B
-	if ((cp >= 0x00c0 && cp <= 0x024f) || (cp >= 0x1e_00 && cp <= 0x1eff)) return "alpha"
+	if ((cp >= 0x00_c0 && cp <= 0x02_4f) || (cp >= 0x1e_00 && cp <= 0x1e_ff)) return "alpha"
 
 	if (cp === 0x20 || cp === 0x09 || cp === 0x0a || cp === 0x0d || cp === 0xa0) return "whitespace"
 
@@ -262,7 +262,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 
 		while (cur < N) {
 			const ncp = text.codePointAt(cur)!
-			const nstep = ncp > 0xffff ? 2 : 1
+			const nstep = ncp > 0xff_ff ? 2 : 1
 			const ncls = classifyCodepoint(ncp)
 
 			if (ncls === "whitespace" || ncls === "punct") break

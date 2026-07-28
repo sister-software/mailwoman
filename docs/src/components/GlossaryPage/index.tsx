@@ -132,8 +132,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 	// TOC: a back-to-top "Glossary" entry, then categories (level 2) with their visible terms
 	// nested beneath (level 3). TOCItems renders `value` as HTML, so entity-escape the strings.
 	const toc = useMemo(() => {
-		const escapeHTML = (value: string) =>
-			value.replaceAll(/&/g, "&amp;").replaceAll(/</g, "&lt;").replaceAll(/>/g, "&gt;")
+		const escapeHTML = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
 		return [
 			{ value: "Glossary", id: TOP_ANCHOR, level: 2 },

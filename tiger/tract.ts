@@ -6,8 +6,7 @@
 
 import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import type { TIGERProperty } from "./constants.ts"
-import { type TIGERPropertyRecord } from "./constants.ts"
+import type { TIGERProperty, TIGERPropertyRecord } from "./constants.ts"
 import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "./geoid.ts"
 
 /**

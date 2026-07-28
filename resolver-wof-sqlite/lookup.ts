@@ -416,7 +416,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
 			for (const s of shards.slice(1)) {
-				this.#db.exec(`ATTACH DATABASE '${s.path.replaceAll(/'/g, "''")}' AS ${s.schemaName}`)
+				this.#db.exec(`ATTACH DATABASE '${s.path.replaceAll("'", "''")}' AS ${s.schemaName}`)
 			}
 		}
 
@@ -1478,7 +1478,7 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
 			if (!body) continue
-			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
 			continue
 		}
 
@@ -1492,11 +1492,11 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		if (parts.length === 0) continue
 
 		for (let i = 0; i < parts.length; i++) {
-			const body = parts[i]!.replaceAll(/\*/g, "")
+			const body = parts[i]!.replaceAll("*", "")
 
 			if (!body) continue
 			// The caller's trailing `*` applies to the FINAL part ("Thiron-Gard*" → "Thiron" Gard*).
-			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
 		}
 	}
 

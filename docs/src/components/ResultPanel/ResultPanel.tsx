@@ -205,7 +205,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 								🏛️ <strong>Dual-role place.</strong> {selected.name} also resolves as{" "}
 								{result.dualRoles.map((r, i) => (
 									<Fragment key={`${r.role}-${r.id}`}>
-										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replaceAll(/-/g, " ")})
+										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replaceAll("-", " ")})
 									</Fragment>
 								))}
 								.

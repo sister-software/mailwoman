@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
 import {
+	type Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha2LanguageCode,

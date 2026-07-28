@@ -49,7 +49,7 @@ export async function ingestOvertureDivisions(
 	 */
 	idBase: number = OVERTURE_ID_BASE
 ): Promise<number> {
-	const inlist = countries.map((c) => `'${c.replaceAll(/'/g, "''")}'`).join(",")
+	const inlist = countries.map((c) => `'${c.replaceAll("'", "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
 	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
 	// #1015: the real boundary EXTENT lives in the sibling `type=division_area` (the polygon). The `type=division`

@@ -128,7 +128,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 
 /** Escape a path for single-quoted SQL string literals. */
 function sqlString(value: string): string {
-	return value.replaceAll(/'/g, "''")
+	return value.replaceAll("'", "''")
 }
 
 /** Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard. */

@@ -198,7 +198,7 @@ export async function fillPostcodeCentroids(
 	}
 
 	if (opts.adminPath && existsSync(opts.adminPath)) {
-		db.exec(`ATTACH '${opts.adminPath.replaceAll(/'/g, "''")}' AS adm`)
+		db.exec(`ATTACH '${opts.adminPath.replaceAll("'", "''")}' AS adm`)
 
 		try {
 			// Pass 3: borrow the parent locality's centroid. A single correlated UPDATE keeps the WOF id

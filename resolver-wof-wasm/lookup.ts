@@ -326,7 +326,7 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
 			if (!body) continue
-			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
 			continue
 		}
 
@@ -335,10 +335,10 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
 
 		for (let i = 0; i < parts.length; i++) {
-			const body = parts[i]!.replaceAll(/\*/g, "")
+			const body = parts[i]!.replaceAll("*", "")
 
 			if (!body) continue
-			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll(/"/g, '""')}"`)
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
 		}
 	}
 

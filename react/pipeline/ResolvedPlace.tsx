@@ -39,7 +39,7 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 					🏛️ <strong>Dual-role place.</strong> {place.name} also resolves as{" "}
 					{dualRoles.map((role, i) => (
 						<Fragment key={`${role.role}-${role.id}`}>
-							{i > 0 ? ", " : ""}a <strong>{role.role}</strong> ({role.relationshipType.replaceAll(/-/g, " ")})
+							{i > 0 ? ", " : ""}a <strong>{role.role}</strong> ({role.relationshipType.replaceAll("-", " ")})
 						</Fragment>
 					))}
 					.

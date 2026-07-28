@@ -102,7 +102,7 @@ export const caseLower: Augmentation = (row) => {
 /** Drop commas from `raw`. Components unchanged (they didn't carry commas). */
 export const dropCommas: Augmentation = (row) => {
 	if (!row.raw.includes(",")) return null
-	const newRaw = row.raw.replaceAll(/,/g, "").replaceAll(/\s+/g, " ").trim()
+	const newRaw = row.raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 
 	return withAugmentation(row, "drop-commas", newRaw, { ...row.components })
 }
@@ -115,12 +115,12 @@ export const dropCommas: Augmentation = (row) => {
  */
 export const doubleSpace: Augmentation = (row) => {
 	if (!/ /.test(row.raw)) return null
-	const newRaw = row.raw.replaceAll(/ /g, "  ")
+	const newRaw = row.raw.replaceAll(" ", "  ")
 	const newComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
 		if (v) {
-			newComponents[k as ComponentTag] = v.replaceAll(/ /g, "  ")
+			newComponents[k as ComponentTag] = v.replaceAll(" ", "  ")
 		}
 	}
 
@@ -208,7 +208,7 @@ function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
 
 	return () => {
-		a = (a + 0x6d2b79f5) | 0
+		a = (a + 0x6d_2b_79_f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
 

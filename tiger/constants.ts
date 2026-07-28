@@ -6,15 +6,15 @@
 
 import type { TIGERClassCode } from "./class-code.ts"
 import type { TIGERFunctionalStatus } from "./functional-status.ts"
-import type { GeoIDPart } from "./geoid.ts"
-import {
-	type FIPSBlockCode,
-	type FIPSBlockGroupCode,
-	type FIPSCongressionalDistrictCode,
-	type FIPSCountyCode,
-	type FIPSCountySubDivisionCode,
-	type FIPSPlaceCode,
-	type FIPSTractCode,
+import type {
+	GeoIDPart,
+	FIPSBlockCode,
+	FIPSBlockGroupCode,
+	FIPSCongressionalDistrictCode,
+	FIPSCountyCode,
+	FIPSCountySubDivisionCode,
+	FIPSPlaceCode,
+	FIPSTractCode,
 } from "./geoid.ts"
 import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
 import type { FIPSStateCode } from "./state.ts"

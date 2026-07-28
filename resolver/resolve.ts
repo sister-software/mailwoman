@@ -157,7 +157,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
  * shard's full street name matches.
  */
 // The 8 USPS cardinals/intercardinals (abbrev or name) — @codex/us owns the canonical table (#215).
-const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replaceAll(/\./g, ""))
+const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replaceAll(".", ""))
 
 /**
  * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence, depth-first), scope by the
@@ -366,7 +366,7 @@ function foldVoieTokens(s: string): string[] {
 		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
 		.replaceAll(/[.,'’]/g, "")
-		.replaceAll(/-/g, " ")
+		.replaceAll("-", " ")
 		.split(/\s+/)
 		.filter(Boolean)
 }

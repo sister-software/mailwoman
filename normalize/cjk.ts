@@ -38,9 +38,9 @@ export interface CjkResult {
 	stripped: number
 }
 
-const FULLWIDTH_START = 0xff01 // ！
-const FULLWIDTH_END = 0xff5e // ～
-const FULLWIDTH_TO_ASCII = 0xfee0 // U+FFxx − 0xFEE0 = U+00xx
+const FULLWIDTH_START = 0xff_01 // ！
+const FULLWIDTH_END = 0xff_5e // ～
+const FULLWIDTH_TO_ASCII = 0xfe_e0 // U+FFxx − 0xFEE0 = U+00xx
 const IDEOGRAPHIC_SPACE = 0x30_00
 const POSTAL_MARK = 0x30_12 // 〒
 

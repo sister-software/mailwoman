@@ -116,7 +116,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	const props = feature.properties
 
 	const rawID = typeof feature.id === "number" ? feature.id : props["wof:id"]
-	const id = typeof rawID === "number" ? rawID : typeof rawID === "string" ? Number(rawID) : NaN
+	const id = typeof rawID === "number" ? rawID : typeof rawID === "string" ? Number(rawID) : Number.NaN
 
 	if (!Number.isFinite(id)) return null
 

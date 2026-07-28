@@ -118,7 +118,7 @@ function isSuspicious(entry: GoldenEntry): boolean {
 	const raw = entry.raw
 
 	// eslint-disable-next-line no-control-regex
-	if (/[\x00-\x1F\x7F]/.test(raw)) return true
+	if (/[\u0000-\u001F\u007F]/.test(raw)) return true
 	const openBrackets = (raw.match(/[[({<]/g) ?? []).length
 	const closeBrackets = (raw.match(/[\])}>]/g) ?? []).length
 

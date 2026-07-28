@@ -26,7 +26,7 @@ function mulberry32(seed: number): () => number {
 	let state = seed >>> 0
 
 	return () => {
-		state = (state + 0x6d2b79f5) >>> 0
+		state = (state + 0x6d_2b_79_f5) >>> 0
 		let t = state
 		t = Math.imul(t ^ (t >>> 15), t | 1)
 		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
@@ -41,10 +41,10 @@ const uniform = (low: number, high: number) => low + (high - low) * random()
 const WIDTH = 80
 const HEIGHT = 12
 
-const MAGENTA = "\u001b[38;5;199m" // brand #ff00b0
-const DIM = "\u001b[38;5;245m"
-const GREEN = "\u001b[38;5;114m"
-const RESET = "\u001b[0m"
+const MAGENTA = "\u001B[38;5;199m" // brand #ff00b0
+const DIM = "\u001B[38;5;245m"
+const GREEN = "\u001B[38;5;114m"
+const RESET = "\u001B[0m"
 
 type CastEvent = [timestamp: number, kind: "o", data: string]
 

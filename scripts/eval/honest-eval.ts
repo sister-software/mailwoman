@@ -135,7 +135,7 @@ async function main() {
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
 		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |
 		const row = evalOut.stdout.split("\n").find((l) => l.startsWith("| **neural** |")) ?? ""
-		const cols = row.split("|").map((c) => c.replaceAll(/ /g, ""))
+		const cols = row.split("|").map((c) => c.replaceAll(" ", ""))
 		const loc = cols[2] ?? ""
 		const reg = cols[3] ?? ""
 		const p50 = cols[5] ?? ""

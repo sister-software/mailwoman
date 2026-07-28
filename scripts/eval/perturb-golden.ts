@@ -48,7 +48,7 @@ function glue(raw: string): string {
 }
 
 const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
-	{ name: "delimiter-strip", apply: (r) => r.replaceAll(/,/g, "") },
+	{ name: "delimiter-strip", apply: (r) => r.replaceAll(",", "") },
 	{ name: "lowercase", apply: (r) => r.toLowerCase() },
 	{ name: "glue", apply: glue },
 ]

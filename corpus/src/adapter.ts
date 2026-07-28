@@ -93,8 +93,8 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  */
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
 	const sortedKeys = Object.keys(components).sort() as ComponentTag[]
-	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\x1F")
-	const digest = createHash("sha256").update(adapterID).update("\x1E").update(payload).digest("hex")
+	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\u001F")
+	const digest = createHash("sha256").update(adapterID).update("\u001E").update(payload).digest("hex")
 
 	return `${adapterID}-${digest.slice(0, 12)}`
 }
@@ -111,11 +111,11 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  */
 export function canonicalDedupKey(row: CanonicalRow): string {
 	const sortedKeys = Object.keys(row.components).sort() as ComponentTag[]
-	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\x1F")
+	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\u001F")
 	const rawNorm = row.raw.toLowerCase().replaceAll(/\s+/g, " ").trim()
-	const synthPart = row.synth ? `\x1E${row.synth.method}` : ""
+	const synthPart = row.synth ? `\u001E${row.synth.method}` : ""
 
-	return `${row.country}\x1E${rawNorm}\x1E${compPart}${synthPart}`
+	return `${row.country}\u001E${rawNorm}\u001E${compPart}${synthPart}`
 }
 
 /**

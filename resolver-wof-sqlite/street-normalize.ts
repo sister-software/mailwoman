@@ -196,7 +196,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
 	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
 	// per-locale type/Saint map can see.
-	const tokens = fold(street).replaceAll(/ß/g, "ss").replaceAll(/-/g, " ").split(/\s+/).filter(Boolean)
+	const tokens = fold(street).replaceAll("ß", "ss").replaceAll("-", " ").split(/\s+/).filter(Boolean)
 
 	if (tokens.length === 0) return ""
 

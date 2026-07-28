@@ -63,7 +63,7 @@ export function stripBIO(label: string): string {
 
 /** Replace the SentencePiece space sentinel (`▁`, U+2581) with a visible open-box marker. */
 export function pieceDisplay(piece: string): string {
-	return piece.replaceAll(/▁/g, "␣")
+	return piece.replaceAll("▁", "␣")
 }
 
 /** Indices where two index-aligned label sequences disagree. */

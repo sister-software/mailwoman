@@ -6,8 +6,7 @@
 
 import type { TileCoords, TileJSON } from "@mailwoman/cartographer"
 import { ResourceError } from "@mailwoman/core/errors"
-import type { TileType } from "pmtiles"
-import { PMTiles, type RangeResponse, ResolvedValueCache } from "pmtiles"
+import { type TileType, PMTiles, type RangeResponse, ResolvedValueCache } from "pmtiles"
 
 import { decompressPMTileBuffer } from "./compression.ts"
 import { TileTypeFileExtensionMap, TileTypeToContentType } from "./files.ts"

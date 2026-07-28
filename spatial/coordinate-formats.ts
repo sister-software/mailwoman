@@ -123,7 +123,7 @@ export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	return out.slice(0, pairs * 2).join("")
 }
 
-const J2000 = 2451545
+const J2000 = 2_451_545
 const unixEpochJulian = 2_440_587.5
 
 /**
@@ -158,7 +158,7 @@ export function sunTimes(
 }
 
 // MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
-const UTM_A = 6_378_137.0
+const UTM_A = 6_378_137
 const UTM_F = 1 / 298.257223563
 const UTM_K0 = 0.9996
 const UTM_E2 = UTM_F * (2 - UTM_F)

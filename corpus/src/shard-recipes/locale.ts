@@ -485,7 +485,7 @@ export const localeRecipe: ShardRecipe = {
 		for (let pi = 0; pi < parts.length; pi++) {
 			// A reservoir PRNG per part, seeded but independent of the emit loop's `random`, so the sample is
 			// reproducible without perturbing the synth/order draws.
-			const reservoirRng = makeMulberry32((opts.seed ^ (0x9e3779b9 * (pi + 1))) >>> 0)
+			const reservoirRng = makeMulberry32((opts.seed ^ (0x9e_37_79_b9 * (pi + 1))) >>> 0)
 			const effectivePart = applyDistrictAsLocalityOverride(parts[pi]!, districtAsLocalityOverride)
 			const t = await readTuples(effectivePart, reservoirRng)
 

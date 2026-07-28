@@ -78,7 +78,7 @@ const COUNTY_PREFIX_LENGTH = 3
 export function normHan(s: string): string {
 	return s
 		.normalize("NFC")
-		.replaceAll(/臺/g, "台")
+		.replaceAll("臺", "台")
 		.replaceAll(/[\s　-]/g, "")
 }
 
