@@ -253,7 +253,7 @@ function readFrTuples(limit: number): FrTuple[] {
 		{ maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" }
 	)
 
-	if (r.status !== 0 && r.stdout.length === 0) {
+	if (r.status !== 0 && !r.stdout.length) {
 		console.error(`  WARN: unzip failed for ${FR_SOURCE.zip}`)
 
 		return []
@@ -727,14 +727,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		console.error(`  GeoNames postal: AU ${auAll.length}→${auPool.length}, NZ ${nzAll.length}→${nzPool.length}`)
 
-		if (
-			usPool.length === 0 ||
-			frPool.length === 0 ||
-			qcPool.length === 0 ||
-			onPool.length === 0 ||
-			auPool.length === 0 ||
-			nzPool.length === 0
-		) {
+		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length) {
 			throw new Error(
 				"A base pool is empty — check /tmp/oa-cache and /tmp/geonames-cache (CA.zip, AU-postal.zip, NZ-postal.zip)."
 			)

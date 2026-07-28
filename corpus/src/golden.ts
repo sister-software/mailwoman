@@ -55,7 +55,7 @@ export interface GoldenReport {
 export function parseGoldenLine(line: string): GoldenEntry {
 	const obj = JSON.parse(line) as Partial<GoldenEntry> & Record<string, unknown>
 
-	if (typeof obj.raw !== "string" || obj.raw.length === 0) {
+	if (typeof obj.raw !== "string" || !obj.raw.length) {
 		throw new Error("missing/empty raw")
 	}
 
@@ -71,7 +71,7 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	for (const [k, v] of Object.entries(components)) {
 		if (!TAG_SET.has(k)) throw new Error(`unknown ComponentTag: ${k}`)
 
-		if (typeof v !== "string" || v.length === 0) {
+		if (typeof v !== "string" || !v.length) {
 			throw new Error(`components.${k} must be a non-empty string`)
 		}
 	}
@@ -114,7 +114,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 			const entry = parseGoldenLine(line)
 			const unreachable = unreachableComponents(entry)
 
-			if (unreachable.length > 0) {
+			if (unreachable.length) {
 				issues.push({
 					file: path,
 					line: i + 1,

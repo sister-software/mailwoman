@@ -254,7 +254,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	>
 	numeric.sort((a, b) => b.effectiveSamplePct - a.effectiveSamplePct)
 
-	if (numeric.length > 0) {
+	if (numeric.length) {
 		const top = numeric[0]!
 		const next = numeric[1]?.effectiveSamplePct ?? 0
 
@@ -323,7 +323,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 		}
 		const missingWeights = rows.filter((r) => r.weight === "—" && r.shards > 0)
 
-		if (missingWeights.length > 0 && configPath) {
+		if (missingWeights.length && configPath) {
 			console.error(
 				`⚠ Sources present in corpus but absent from config.source_weights ` +
 					`(loader will skip them): ${missingWeights.map((r) => r.source).join(", ")}`
@@ -331,7 +331,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 		}
 		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.shards === 0)
 
-		if (orphanWeights.length > 0) {
+		if (orphanWeights.length) {
 			console.error(
 				`⚠ Sources weighted in config but no shards found in corpus ` +
 					`(no-op weights): ${orphanWeights.map((r) => r.source).join(", ")}`

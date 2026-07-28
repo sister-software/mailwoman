@@ -160,7 +160,7 @@ export function toMapHTML(
 
 		return { ...f, properties: { ...f.properties, _color: colorFor(f.properties) } }
 	})
-	const bbox = features.length > 0 ? [[minLng, minLat] as const, [maxLng, maxLat] as const] : null
+	const bbox = features.length ? [[minLng, minLat] as const, [maxLng, maxLat] as const] : null
 
 	// The full MapLibre style: the Protomaps basemap layers (generated here) over the house basemap-v4
 	// vector source, plus our inlined entities source + a circle layer keyed off the precomputed color.
@@ -251,7 +251,7 @@ export function toMapHTML(
 <body>
 <div id="map"></div>
 <div class="mw-panel mw-title"><h1>${escapeHTML(title)}</h1><div class="muted">${summary}</div></div>
-${features.length > 0 ? `<div class="mw-panel mw-legend">${legendRows}</div>` : `<div class="mw-empty"><div class="mw-panel"><h1>${escapeHTML(title)}</h1><div class="muted">No geocoded entities to display.</div></div></div>`}
+${features.length ? `<div class="mw-panel mw-legend">${legendRows}</div>` : `<div class="mw-empty"><div class="mw-panel"><h1>${escapeHTML(title)}</h1><div class="muted">No geocoded entities to display.</div></div></div>`}
 <script
 	src="https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js"
 	integrity="${MAPLIBRE_JS_SRI}"

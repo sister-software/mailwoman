@@ -297,7 +297,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const add = (surface: string, placeID: number): void => {
 		const tokens = painterFold(surface)
 
-		if (tokens.length === 0) return
+		if (!tokens.length) return
 		const key = tokens.join(" ")
 		// The homograph scan is FST-fold-keyed (it feeds the FST builder too) — fold separately for the join.
 		const fstKey = normalizeTokens(surface).join(" ")

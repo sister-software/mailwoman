@@ -119,7 +119,7 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	if (!/[A-Z]/.test(text)) return 0
 
 	// Reject if any known postcode format hit exists.
-	if (shape.knownFormats.length > 0) return 0
+	if (shape.knownFormats.length) return 0
 
 	// Reject if it looks like a multi-segment structured address (City, ST ZIP).
 	const segCount = shape.segments?.length ?? 1
@@ -216,7 +216,7 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 
 	if (shape.characterClass !== "alpha") return 0
 
-	if (shape.knownFormats.length > 0) return 0
+	if (shape.knownFormats.length) return 0
 	// Locality-only inputs typically have 1-3 segments (e.g. "New York" is 1 segment, "Paris, FR" is 2).
 	// We allow up to 2 segments before deciding it's structured.
 	const segCount = shape.segments?.length ?? 1

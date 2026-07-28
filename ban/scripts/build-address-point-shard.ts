@@ -148,7 +148,7 @@ async function main(): Promise<void> {
 	const source = `ban:${args.country}`
 	const files = departementFiles(args.csvDir, args.depts)
 
-	if (files.size === 0) throw new Error(`no BAN département dumps found in ${args.csvDir}`)
+	if (!files.size) throw new Error(`no BAN département dumps found in ${args.csvDir}`)
 	const tmp = `${args.output}.building-${process.pid}.db`
 
 	mkdirSync(dirname(args.output), { recursive: true })

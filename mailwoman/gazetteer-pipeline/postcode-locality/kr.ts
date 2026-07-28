@@ -106,7 +106,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -302,7 +302,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	for (const [pc, [place, admin1, lat, lon]] of postal) {
 		const nb = nearby(lat, lon)
 
-		if (nb.length === 0) continue
+		if (!nb.length) continue
 		resolved++
 		const { d: d0, pid: pid0 } = nb[0]! // point-nearest
 		dists.push(d0)
@@ -343,7 +343,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		.execute()
 
 	dists.sort((a, b) => a - b)
-	const p = (q: number): number => (dists.length > 0 ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
+	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
 	const total = postal.size
 
 	await kdb.schema

@@ -178,10 +178,9 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		}
 		// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
 		// lower() matches case-insensitively against our normalised allow-list.
-		const datasetFilter =
-			allowedDatasets.size > 0
-				? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
-				: ""
+		const datasetFilter = allowedDatasets.size
+			? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
+			: ""
 
 		const db = new DatabaseSync(tmpOut)
 		// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
@@ -294,7 +293,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
 		}
 
-		if (allowedDatasets.size > 0) {
+		if (allowedDatasets.size) {
 			// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
 			// Run a secondary count (cheap: parquet predicate pushdown on a single column) for the
 			// total-minus-kept so the operator can see how much the filter dropped.

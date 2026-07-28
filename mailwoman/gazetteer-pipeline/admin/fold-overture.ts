@@ -157,7 +157,7 @@ export async function ingestOvertureDivisions(
 				const seen = new Set([name])
 
 				for (const [lang, alias] of Object.entries(common)) {
-					if (typeof alias === "string" && alias.length > 0 && !seen.has(alias) && isLatin(alias)) {
+					if (typeof alias === "string" && alias.length && !seen.has(alias) && isLatin(alias)) {
 						seen.add(alias)
 						namesInsert.run(nid, alias, subtype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
 					}

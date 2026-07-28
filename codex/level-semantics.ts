@@ -434,7 +434,7 @@ const LEVEL_DESIGNATOR_LOOKUP_BY_FAMILY: ReadonlyMap<
 		const lookup = new Map<string, LevelDesignatorRow>()
 
 		for (const row of rows) {
-			if (row.variants.length === 0) {
+			if (!row.variants.length) {
 				throw new Error(`[codex/level-semantics] family "${family}" designator "${row.code}" has no variants`)
 			}
 

@@ -77,7 +77,7 @@ export function estimateParameters<R>(
 	let iterations = 0
 	let converged = false
 
-	if (patterns.length === 0) {
+	if (!patterns.length) {
 		return { model, lambda, iterations, converged }
 	}
 

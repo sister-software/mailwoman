@@ -116,7 +116,7 @@ interface StagedProgressProps {
 }
 
 const StagedProgress = memo<StagedProgressProps>(({ steps, activeStep }) => {
-	if (!steps || steps.length === 0) return null
+	if (!steps || !steps.length) return null
 
 	return (
 		<ul className={styles.stagedList}>

@@ -383,7 +383,7 @@ function renderReport(
 ): string {
 	const errors = flags.filter((f) => f.severity === "error")
 	const warns = flags.filter((f) => f.severity === "warn")
-	const verdict = errors.length === 0 ? "**PASS** ✓" : "**FLAGGED** ⚠"
+	const verdict = !errors.length ? "**PASS** ✓" : "**FLAGGED** ⚠"
 	const lines: string[] = []
 	lines.push(`# Corpus Lint: ${verdict}`)
 	lines.push("")
@@ -400,7 +400,7 @@ function renderReport(
 	lines.push(`**Warnings:** ${warns.length} (advisory)`)
 	lines.push("")
 
-	if (flags.length === 0) {
+	if (!flags.length) {
 		lines.push("No anomalies detected.")
 
 		return lines.join("\n")

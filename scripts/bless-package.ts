@@ -27,7 +27,7 @@ const { values: flags, positionals: dirs } = parseArgs({
 	allowPositionals: true,
 })
 
-if (dirs.length === 0) {
+if (!dirs.length) {
 	console.error(
 		"usage: node ./bless-package.ts <dir...> [--otp 123456] [--version x.y.z] [--file workflow.yml] [--env name]"
 	)

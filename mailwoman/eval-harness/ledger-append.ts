@@ -111,11 +111,11 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 			.map(([k]) => k)
 		const unexcepted = failing.filter((k) => !exceptions.includes(k))
 
-		if (unexcepted.length > 0) {
+		if (unexcepted.length) {
 			console.error(
 				`✗ refusing to ledger a ${verdict.verdict} verdict — the ledger records shipped/shippable runs.\n` +
 					`  failing checks: ${failing.join(", ")}\n` +
-					`  (only ${exceptions.length > 0 ? exceptions.join(", ") : "none"} are operator-excepted; ` +
+					`  (only ${exceptions.length ? exceptions.join(", ") : "none"} are operator-excepted; ` +
 					`name each adjudicated miss via --operator-exception)`
 			)
 

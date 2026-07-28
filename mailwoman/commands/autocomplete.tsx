@@ -113,11 +113,11 @@ export async function runAutocomplete(
 }
 
 function formatSuggestions(entries: AutocompleteEntry[]): string {
-	if (entries.length === 0) return "(no completions)"
+	if (!entries.length) return "(no completions)"
 
 	return entries
 		.map((e, i) => {
-			const completion = e.completionTokens.length > 0 ? ` [+${e.completionTokens.join(" ")}]` : ""
+			const completion = e.completionTokens.length ? ` [+${e.completionTokens.join(" ")}]` : ""
 			const imp = e.importance.toFixed(4)
 
 			return `${String(i + 1).padStart(2)}. ${e.name}${completion}  (${e.placetype}, wof:${e.wofID}, imp:${imp})`

@@ -44,7 +44,7 @@ export function renderComponent(ui: ReactElement): RenderResult {
 export async function cleanup(): Promise<void> {
 	const trees = mounted.splice(0)
 
-	if (trees.length === 0) return
+	if (!trees.length) return
 
 	// Drain any trailing async update INSIDE act() so a still-pending debounce/promise settles in-scope
 	// rather than firing unwrapped in the gap before unmount.

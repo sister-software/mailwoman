@@ -284,7 +284,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
 	const candidateDb = resolveCandidateDBPath()
 
-	if (paths.length === 0 && !candidateDb) {
+	if (!paths.length && !candidateDb) {
 		console.error("createServeEngine: no WOF DBs found — set MAILWOMAN_WOF_DB or MAILWOMAN_CANDIDATE_DB")
 
 		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }

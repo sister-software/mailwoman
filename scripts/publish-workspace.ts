@@ -157,7 +157,7 @@ function verifyPublishExports(tarballPath: string) {
 	const manifest = JSON.parse(manifestRead.stdout)
 	const offenders = collectExportTargets(manifest.exports ?? {}).filter((target) => !shipped.has(target))
 
-	if (offenders.length > 0) {
+	if (offenders.length) {
 		console.error(`publish-workspace: UNRESOLVABLE PUBLISH MAP for ${manifest.name} — refusing to publish:`)
 
 		for (const line of offenders) {

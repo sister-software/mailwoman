@@ -255,7 +255,7 @@ export function canonicalizeOrganizationName(
 
 	const result: OrganizationName = { raw, canonical, designations }
 
-	if (dbaParts.length > 0) {
+	if (dbaParts.length) {
 		const dba = canonicalizeFragment(dbaParts.join(" "), designationSet).canonical
 
 		if (dba) {

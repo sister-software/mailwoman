@@ -213,7 +213,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	let excludedCount = 0
 
 	function isDegenerate(tokens: string[]): boolean {
-		if (tokens.length === 0) return false
+		if (!tokens.length) return false
 
 		if (excludeSurfaces?.has(tokens.join(" "))) return true
 
@@ -228,7 +228,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	const surfaceCountryCounts = opts.surfaceCountryCounts
 
 	function insertName(tokens: string[], entry: PlaceEntry): boolean {
-		if (tokens.length === 0) return false
+		if (!tokens.length) return false
 
 		if (isDegenerate(tokens)) {
 			excludedCount++
@@ -291,7 +291,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			if (altName === row.name) continue
 			const altTokens = normalizeTokens(altName)
 
-			if (altTokens.length > 0 && altTokens.join(" ") !== primaryTokens.join(" ") && insertName(altTokens, entry)) {
+			if (altTokens.length && altTokens.join(" ") !== primaryTokens.join(" ") && insertName(altTokens, entry)) {
 				insertCount++
 			}
 		}

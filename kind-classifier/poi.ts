@@ -82,7 +82,7 @@ export function matchPOISubject(
 
 	const whole = lookup(trimmed, locale)
 
-	if (whole.length > 0) {
+	if (whole.length) {
 		return { match: whole[0]!, subject: trimmed, remainder: "" }
 	}
 
@@ -96,7 +96,7 @@ export function matchPOISubject(
 
 		const hits = lookup(subject, locale)
 
-		if (hits.length === 0) continue
+		if (!hits.length) continue
 
 		const remainder = trimmed.slice(separator.index + separator[0].length).trim()
 

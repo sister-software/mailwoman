@@ -165,7 +165,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 			const counts = new Map<string, number>()
 
 			for (const term of glossary.terms as TaggedGlossaryTerm[]) {
-				if (!term.tags || term.tags.length === 0) {
+				if (!term.tags || !term.tags.length) {
 					problems.push(`"${term.term}" has no tags`)
 					continue
 				}
@@ -179,7 +179,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 				}
 			}
 
-			if (problems.length > 0) {
+			if (problems.length) {
 				throw new Error(
 					`[mailwoman-glossary] Every glossary term needs tags registered in tags.yml:\n  - ${problems.join("\n  - ")}`
 				)

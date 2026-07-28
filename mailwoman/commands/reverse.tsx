@@ -94,7 +94,7 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 			const lines: string[] = []
 			lines.push(`containment: ${result.containment}`)
 
-			if (result.hierarchy.length === 0) {
+			if (!result.hierarchy.length) {
 				lines.push("(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)")
 			} else {
 				for (const place of result.hierarchy) {

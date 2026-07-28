@@ -147,7 +147,7 @@ export function usePlaceAutocomplete({
 
 	const onInputKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLInputElement>) => {
-			if (suggestions.length === 0) return
+			if (!suggestions.length) return
 
 			switch (event.key) {
 				case "ArrowDown":

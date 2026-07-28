@@ -432,7 +432,7 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 
 	if (labels === undefined) return undefined
 
-	if (!Array.isArray(labels) || labels.length === 0 || !labels.every((l) => typeof l === "string")) {
+	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`labels\` field — ` +
 				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`
@@ -681,7 +681,7 @@ export function readCrfTransitions(crfPath: string | undefined): CrfTransitions 
 
 	if (!Array.isArray(transitions) || !Array.isArray(start) || !Array.isArray(end)) return undefined
 
-	if (transitions.length === 0 || start.length === 0 || end.length === 0) return undefined
+	if (!transitions.length || !start.length || !end.length) return undefined
 
 	return {
 		transitions: transitions as number[][],

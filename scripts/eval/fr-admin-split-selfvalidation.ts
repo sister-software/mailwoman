@@ -99,12 +99,12 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	return best
 }
 const pct = (xs: number[], p: number): number => {
-	if (xs.length === 0) return Number.NaN
+	if (!xs.length) return Number.NaN
 	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
-const mean = (xs: number[]): number => (xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
+const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
 
 // --- args ----------------------------------------------------------------------------------------
 const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")

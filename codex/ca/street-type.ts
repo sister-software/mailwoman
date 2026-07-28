@@ -152,7 +152,7 @@ export function isCanadianDirectional(token: unknown): boolean {
 	if (typeof token !== "string") return false
 	const t = foldToken(token)
 
-	if (t.length === 0) return false
+	if (!t.length) return false
 
 	if (t in CA_DIRECTIONALS) return true
 

@@ -186,7 +186,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
 
 						yield {
 							raw,

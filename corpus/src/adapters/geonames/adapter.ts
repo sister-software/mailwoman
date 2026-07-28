@@ -159,7 +159,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 						if (opts.limit !== undefined && emitted >= opts.limit) break
 						const aligned = reconcileComponents(v.comp, v.raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
 						const sourceID = geonameid
 							? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`
 							: stableSourceID(GEONAMES_ADAPTER_ID, aligned)

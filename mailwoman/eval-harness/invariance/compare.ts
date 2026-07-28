@@ -60,7 +60,7 @@ export function compareComponents(
 	// LOST — the transformed parse is empty (or all-blank) while the original had components at all.
 	// "unresolvable-shaped": a fully collapsed decode, the parse-level analog of a resolver falling back
 	// to an admin-only tier with no coordinate.
-	if (transformedKeys.length === 0 && originalKeys.length > 0) {
+	if (!transformedKeys.length && originalKeys.length) {
 		return { verdict: "LOST", diff: ["transformed parse is empty"] }
 	}
 
@@ -102,5 +102,5 @@ export function compareComponents(
 		}
 	}
 
-	return diff.length > 0 ? { verdict: "DEGRADED", diff } : { verdict: "INVARIANT", diff: [] }
+	return diff.length ? { verdict: "DEGRADED", diff } : { verdict: "INVARIANT", diff: [] }
 }

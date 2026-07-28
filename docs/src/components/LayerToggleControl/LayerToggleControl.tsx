@@ -60,7 +60,7 @@ export class LayerToggleControl implements IControl {
 			if (!this.map?.isStyleLoaded()) return
 			const layers = this.map.getStyle()?.layers ?? []
 
-			if (layers.length === 0) return
+			if (!layers.length) return
 			this.render()
 		}
 		map.on("styledata", this.styleListener)

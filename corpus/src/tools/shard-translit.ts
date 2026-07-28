@@ -201,7 +201,7 @@ export async function buildTranslitShard(
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}
 
-	if (quarantine.length > 0) {
+	if (quarantine.length) {
 		const qPath = join(corpusDir, "quarantine-transliteration.tsv")
 		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)

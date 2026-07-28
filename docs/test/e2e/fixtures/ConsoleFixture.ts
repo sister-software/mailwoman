@@ -69,7 +69,7 @@ export class ConsoleFixture {
 	assertNoFailEvents(): void {
 		const failures = listFailures(this.events.map((e) => e.text))
 
-		if (failures.length === 0) return
+		if (!failures.length) return
 		const lines = failures.map((f, i) => `  ${i + 1}. ${f}`).join("\n")
 		throw new Error(`Captured ${failures.length} console/page error(s):\n${lines}`)
 	}

@@ -78,13 +78,13 @@ export interface BuildStreetMorphologyFSTResult {
 function parseLine(line: string): { canonical: string; variants: string[] } | null {
 	const trimmed = line.trim()
 
-	if (trimmed.length === 0 || trimmed.startsWith("#")) return null
+	if (!trimmed.length || trimmed.startsWith("#")) return null
 	const parts = trimmed
 		.split("|")
 		.map((s) => s.trim())
 		.filter((s) => s.length > 0)
 
-	if (parts.length === 0) return null
+	if (!parts.length) return null
 
 	return { canonical: parts[0]!, variants: parts }
 }
@@ -96,7 +96,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
 
-	if (opts.locales && opts.locales.length > 0) {
+	if (opts.locales && opts.locales.length) {
 		locales = opts.locales
 	} else {
 		locales = readdirSync(opts.dictionariesDir).filter((entry) => {
@@ -150,7 +150,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
-		if (tokens.length === 0) return
+		if (!tokens.length) return
 		let stateID = 0
 
 		for (const t of tokens) {
@@ -193,7 +193,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 		for (const variant of variants) {
 			const tokens = normalizeTokens(variant)
 
-			if (tokens.length === 0) continue
+			if (!tokens.length) continue
 			// Filter out collision-prone short surface forms — see `minVariantLength` docstring.
 			// We measure against the joined token form (no spaces) since FST keys are token sequences.
 			const joined = tokens.join("")

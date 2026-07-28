@@ -246,7 +246,7 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 			ts.isCallExpression(node) &&
 			ts.isIdentifier(node.expression) &&
 			node.expression.text === "assert" &&
-			node.arguments.length > 0
+			node.arguments.length
 		) {
 			const inputArg = node.arguments[0]
 
@@ -363,7 +363,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 		}
 	}
 
-	if (streetParts.length > 0) {
+	if (streetParts.length) {
 		out.street = [streetParts.join(" ")]
 	}
 
@@ -651,7 +651,7 @@ function printReport(results: AssertionResult[]): void {
 	// First 20 failures — the regression cluster the harness exists to surface.
 	const failures = results.filter((r) => !r.neural_pass).slice(0, 20)
 
-	if (failures.length > 0) {
+	if (failures.length) {
 		console.log(`## Failures (sample of first ${failures.length})`)
 		console.log("")
 

@@ -232,7 +232,7 @@ const failuresByCheck: [name: string, failures: string[]][] = [
 let failureCount = 0
 
 for (const [name, failures] of failuresByCheck) {
-	if (failures.length === 0) {
+	if (!failures.length) {
 		console.log(`✓ ${name}`)
 		continue
 	}

@@ -160,7 +160,7 @@ export function backfillAncestorsFromHierarchy(
 		const props = (gj?.["properties"] ?? null) as Record<string, unknown> | null
 		const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
 
-		if (!hierarchy || hierarchy.length === 0) {
+		if (!hierarchy || !hierarchy.length) {
 			if (!gj) {
 				noGeojson++
 			}

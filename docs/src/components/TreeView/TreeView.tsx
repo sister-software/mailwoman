@@ -35,9 +35,7 @@ function renderNode(node: TreeNode, path: string): React.ReactNode {
 				) : null}
 				{typeof node.confidence === "number" ? <span className={styles.conf}>{node.confidence.toFixed(2)}</span> : null}
 			</span>
-			{kids.length > 0 ? (
-				<ul className={styles.children}>{kids.map((c, i) => renderNode(c, `${path}.${i}`))}</ul>
-			) : null}
+			{kids.length ? <ul className={styles.children}>{kids.map((c, i) => renderNode(c, `${path}.${i}`))}</ul> : null}
 		</li>
 	)
 }
@@ -51,7 +49,7 @@ function renderNode(node: TreeNode, path: string): React.ReactNode {
 export const TreeView: React.FC<TreeViewProps> = ({ tree }) => {
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots
 
-	if (!Array.isArray(roots) || roots.length === 0) return null
+	if (!Array.isArray(roots) || !roots.length) return null
 
 	return (
 		<ul className={`${styles.children} ${styles.treeView}`}>

@@ -1064,7 +1064,7 @@ const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (count
 function streetTier(t: AddressTree): AddressNode | undefined {
 	const stack = [...t.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "street" && n.metadata?.["resolution_tier"] === "street") return n

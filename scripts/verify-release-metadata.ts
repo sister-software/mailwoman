@@ -213,7 +213,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 		const newerRows = rows.slice(currentIndex, vIndex)
 		const nonCodeOnly = newerRows.filter((row) => !/unchanged/i.test(row.lineageCell))
 
-		if (nonCodeOnly.length === 0) {
+		if (!nonCodeOnly.length) {
 			return {
 				surface,
 				ok: true,
@@ -309,7 +309,7 @@ async function main() {
 
 	const failures = results.filter((result) => !result.ok)
 
-	if (failures.length > 0) {
+	if (failures.length) {
 		console.error(
 			`\nverify-release-metadata FAILED: ${failures.length} surface(s) stale for model ${version}. ` +
 				`Fix the item(s) above (each surface is independent), commit, then re-dispatch the publish.`

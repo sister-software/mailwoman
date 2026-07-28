@@ -123,7 +123,7 @@ for (const parityCase of cases) {
 	// A case whose gold is ENTIRELY unmappable tombstones; a partially-mappable one keeps its
 	// mapped gold (dropping e.g. `unit_designator` must not discard the case's house_number/street
 	// expectations — the AU unit patterns are campaign targets).
-	if (Object.keys(expect).length === 0) {
+	if (!Object.keys(expect).length) {
 		fixtures.push({ ...fixture, dropped: `unmapped legacy tags: ${unmapped.join(", ")}` })
 
 		continue
@@ -136,7 +136,7 @@ for (const parityCase of cases) {
 		out.alternatives = alternatives
 	}
 
-	if (unmapped.length > 0) {
+	if (unmapped.length) {
 		out.droppedTags = unmapped
 	}
 

@@ -153,7 +153,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 	// Only convert when there's a sibling city to nest — the unambiguous "City, State" shape. A LONE
 	// state-name locality ("Washington", "Florida") is genuinely a city in this context as often as a
 	// state, so leave it untouched rather than risk a mis-fire.
-	if (region.children.length === 0) return afterSplit
+	if (!region.children.length) return afterSplit
 	out.push(region)
 
 	return out
@@ -190,7 +190,7 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 
 /** Recursively correct a node's children. */
 function correctNode(node: AddressNode): AddressNode {
-	if (node.children.length > 0) {
+	if (node.children.length) {
 		node.children = correctSiblings(node.children).map(correctNode)
 	}
 

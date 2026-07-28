@@ -203,7 +203,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 
 	// In log mode, we map y through log10 and work in log-space.
 	const { xMin, xMax, yMin, yMax, yMinData } = useMemo(() => {
-		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0 }
+		if (!allPoints.length) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0 }
 		let xmn = Infinity,
 			xmx = -Infinity,
 			ymn = Infinity,
@@ -303,7 +303,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 	// Generate polyline points strings once per series
 	const polyPoints = useMemo(() => {
 		return series.map((s) => {
-			if (s.points.length === 0) return ""
+			if (!s.points.length) return ""
 
 			return s.points.map((p) => `${xScale(p.step).toFixed(1)},${yScale(p.value).toFixed(1)}`).join(" ")
 		})
@@ -346,7 +346,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 		[series, xScale, yScale, onHover, containerRef]
 	)
 
-	if (allPoints.length === 0) {
+	if (!allPoints.length) {
 		return (
 			<svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className={styles.chartSVG}>
 				<text x={SVG_WIDTH / 2} y={SVG_HEIGHT / 2} textAnchor="middle" fill="#9ca3af" fontSize="14">
@@ -498,7 +498,7 @@ const TrainingChartsInner: React.FC = () => {
 
 	// When selected runs change, discover metrics and fetch data
 	useEffect(() => {
-		if (selectedRuns.size === 0) return
+		if (!selectedRuns.size) return
 
 		let cancelled = false
 		const newAvailable = new Set<string>()
@@ -577,7 +577,7 @@ const TrainingChartsInner: React.FC = () => {
 
 		// Poll every POLL_INTERVAL_MS
 		pollRef.current = setInterval(async () => {
-			if (selectedRuns.size === 0) return
+			if (!selectedRuns.size) return
 
 			const newData = new Map(metricData)
 
@@ -622,7 +622,7 @@ const TrainingChartsInner: React.FC = () => {
 			for (const mk of selectedMetrics) {
 				const points = runData.get(mk)
 
-				if (!points || points.length === 0) continue
+				if (!points || !points.length) continue
 				series.push({
 					run: runName,
 					metric: mk,
@@ -704,7 +704,7 @@ const TrainingChartsInner: React.FC = () => {
 		)
 	}
 
-	if (runs.length === 0) {
+	if (!runs.length) {
 		return (
 			<div className={styles.container}>
 				<div className={styles.title}>Training metrics</div>
@@ -744,7 +744,7 @@ const TrainingChartsInner: React.FC = () => {
 				</div>
 
 				{/* Metric selector */}
-				{visibleMetrics.length > 0 ? (
+				{visibleMetrics.length ? (
 					<div className={styles.controlGroup}>
 						<span className={styles.controlLabel}>Metrics ({selectedMetrics.size})</span>
 						<div className={styles.metricCheckboxes}>
@@ -812,7 +812,7 @@ const TrainingChartsInner: React.FC = () => {
 			</div>
 
 			{/* Legend */}
-			{chartSeries.length > 0 ? (
+			{chartSeries.length ? (
 				<div className={styles.legend}>
 					{chartSeries.map((s) => (
 						<div key={`${s.run}:${s.metric}`} className={styles.legendItem}>
@@ -821,9 +821,9 @@ const TrainingChartsInner: React.FC = () => {
 						</div>
 					))}
 				</div>
-			) : selectedRuns.size === 0 ? (
+			) : !selectedRuns.size ? (
 				<div className={styles.status}>Select at least one run to display metrics.</div>
-			) : selectedMetrics.size === 0 ? (
+			) : !selectedMetrics.size ? (
 				<div className={styles.status}>Select at least one metric to chart.</div>
 			) : (
 				<div className={styles.status}>No metric data available for the selected runs.</div>

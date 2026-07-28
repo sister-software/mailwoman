@@ -174,7 +174,7 @@ export class POILookup implements Disposable {
 			return this.#searchByName(query.name, limit, query.center)
 		}
 
-		if (query.categoryID || (query.categoryIDs && query.categoryIDs.length > 0) || query.brandWikidata) {
+		if (query.categoryID || (query.categoryIDs && query.categoryIDs.length) || query.brandWikidata) {
 			if (!query.center) {
 				throw new Error("POILookup.search: category/brand search requires a `center`")
 			}
@@ -227,7 +227,7 @@ export class POILookup implements Disposable {
 		}
 
 		// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss, not a throw.
-		if (categoryIds.length === 0) return []
+		if (!categoryIds.length) return []
 
 		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
 		const seenCells = new Set<string>()
@@ -281,7 +281,7 @@ export class POILookup implements Disposable {
 			uniqueKeys.push(hit.name_key)
 		}
 
-		if (uniqueKeys.length === 0) return []
+		if (!uniqueKeys.length) return []
 
 		const hydrated = this.#hydrateByNameKeys(uniqueKeys)
 		const rowsByKey = new Map<string, POIRow[]>()

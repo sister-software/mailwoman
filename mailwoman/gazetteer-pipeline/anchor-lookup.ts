@@ -108,7 +108,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -205,7 +205,7 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		const fields = line.split("\t").map((f) => f.trim())
-		const pc = fields.length > 0 ? fiveDigit(fields[0]) : null
+		const pc = fields.length ? fiveDigit(fields[0]) : null
 
 		if (!pc || fields.length < 7) continue
 		const lat = pyFloat(fields[5])

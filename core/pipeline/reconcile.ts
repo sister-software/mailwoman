@@ -201,7 +201,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 
 	const slots = buildSlots(inputs, opts)
 
-	if (slots.length === 0) {
+	if (!slots.length) {
 		return emptyParseTree(inputs.raw)
 	}
 
@@ -243,7 +243,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 	// Drop the empty beam if there's at least one non-empty competitor (the empty beam scores 0,
 	// which would otherwise dominate when all real candidates have very low log-scores).
 	const populated = beams.filter((b) => b.assignments.length > 0)
-	const ordered = populated.length > 0 ? populated : beams
+	const ordered = populated.length ? populated : beams
 
 	const top = ordered[0]!
 	const runners = ordered.slice(1, 1 + opts.runnersUp)
@@ -317,7 +317,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 				? inputs.resolverCandidates.candidatesFor(tagC.span, tagC.tag).slice(0, opts.kResolver)
 				: []
 
-			if (places.length === 0) {
+			if (!places.length) {
 				slots.push({
 					span: phrase.span,
 					phraseConf: phrase.confidence,
@@ -354,7 +354,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 function wordCountOf(raw: string, span: { start: number; end: number }): number {
 	const text = raw.slice(span.start, span.end).trim()
 
-	if (text.length === 0) return 1
+	if (!text.length) return 1
 
 	return text.split(/\s+/).length
 }
@@ -397,7 +397,7 @@ function concordanceDeltaFor(
 		const chain = chainOf.parentsOf(child.place!)
 		pairs++
 
-		if (chain.length === 0) {
+		if (!chain.length) {
 			neutrals++
 			continue
 		}
@@ -538,7 +538,7 @@ function normalizeResolverScore(score: number): number {
 }
 
 function softmax(scores: number[]): number[] {
-	if (scores.length === 0) return []
+	if (!scores.length) return []
 	const max = Math.max(...scores)
 	const exps = scores.map((s) => Math.exp(s - max))
 	const sum = exps.reduce((a, b) => a + b, 0)

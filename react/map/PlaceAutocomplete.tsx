@@ -44,7 +44,7 @@ export function PlaceAutocomplete({
 	optionId,
 	caption = "Did you mean:",
 }: PlaceAutocompleteProps): ReactNode {
-	if (suggestions.length === 0) return null
+	if (!suggestions.length) return null
 
 	return (
 		<div className="mw-demo-suggest" id={listboxId} role="listbox" aria-label="Place suggestions">

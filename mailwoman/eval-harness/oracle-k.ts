@@ -95,7 +95,7 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 				.toSorted((a, b) => a.idx - b.idx)
 				.map((entry) => entry.tag)
 
-			if (seq.length === 0) continue
+			if (!seq.length) continue
 			bump("START", seq[0]!)
 
 			for (let i = 1; i < seq.length; i++) {
@@ -162,7 +162,7 @@ export function segmentDecodeKBest(
 	const words: number[][] = []
 	let current: number[] = []
 	const flush = (): void => {
-		if (current.length > 0) {
+		if (current.length) {
 			words.push(current)
 		}
 		current = []
@@ -318,7 +318,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		const baseByTag = new Map<string, string[]>()
 		const stack = [...tree.roots]
 
-		while (stack.length > 0) {
+		while (stack.length) {
 			const node = stack.pop()!
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
 			stack.push(...node.children)
@@ -380,7 +380,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			readings[`${label}.oracle_at_${k}`] = tally.oracleK / tally.total
 		}
 
-		if (Object.keys(readings).length === 0) {
+		if (!Object.keys(readings).length) {
 			throw new Error(
 				`--assert-baseline ${options.assertBaseline} was requested but this run scored 0 fixtures. ` +
 					`The profile cannot vouch for metrics that weren't measured.`

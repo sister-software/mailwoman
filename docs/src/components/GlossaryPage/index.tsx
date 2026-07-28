@@ -196,7 +196,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 							</div>
 						</header>
 
-						{sections.length === 0 ? (
+						{!sections.length ? (
 							<div className={styles.noResults}>
 								<p>
 									No terms match{search.trim() ? ` "${search.trim()}"` : ""}

@@ -49,7 +49,7 @@ export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: Mo
 	const emissionWidth = matrix[0]?.length ?? 0
 	const rowLabels = trace.labels.slice(0, emissionWidth)
 
-	if (trace.pieces.length === 0) {
+	if (!trace.pieces.length) {
 		return <div className={styles.empty}>Empty input — nothing to trace.</div>
 	}
 

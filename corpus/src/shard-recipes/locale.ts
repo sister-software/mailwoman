@@ -494,7 +494,7 @@ export const localeRecipe: ShardRecipe = {
 			} // NOT pool.push(...t) — spreading huge arrays overflows the stack
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error(`No ${country} tuples found — are the source CSVs/zips present? (see COUNTRY_SOURCES)`)
 		}
 

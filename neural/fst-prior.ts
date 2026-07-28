@@ -176,7 +176,7 @@ export function buildFSTEmissionPriors(
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 
-	if (wordGroups.length === 0) return matrix
+	if (!wordGroups.length) return matrix
 
 	// Street-context gate precompute (#1142) — O(words), only when the morphology FST was passed in.
 	// `streetTypeFlags[i]` = word-group i is a street-type token per the morphology FST;
@@ -368,7 +368,7 @@ export function normalizeFSTToken(s: string): string {
 		.toLowerCase()
 		.replaceAll(/[\p{P}\p{S}]/gu, "")
 
-	return cleaned.length > 0 ? cleaned : ""
+	return cleaned.length ? cleaned : ""
 }
 
 /**
@@ -471,7 +471,7 @@ function applyBias(
 		}
 	}
 
-	if (seenTags.size === 0) return
+	if (!seenTags.size) return
 
 	const allPieceIndices: number[] = []
 

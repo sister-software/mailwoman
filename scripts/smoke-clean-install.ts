@@ -310,7 +310,7 @@ function assertClosureComplete() {
 		}
 	}
 
-	if (missing.size > 0) {
+	if (missing.size) {
 		const edges = [...missing].map(([dep, users]) => `  ${dep} <- ${users.join(", ")}`).join("\n")
 
 		throw new Error(`[smoke] WORKSPACES closure incomplete — add these to the pack set:\n${edges}`)

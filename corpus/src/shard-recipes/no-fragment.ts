@@ -101,7 +101,7 @@ export const noFragmentRecipe: ShardRecipe = {
 				.filter((line) => line && !line.startsWith("#"))
 		)
 
-		if (excluded.size === 0) throw new Error(`no-fragment: --exclude-surfaces "${excludePath}" listed no surfaces`)
+		if (!excluded.size) throw new Error(`no-fragment: --exclude-surfaces "${excludePath}" listed no surfaces`)
 
 		const bareStreetProb = opts.bareProb ?? 0.3
 		const counterProb = opts.counterProb ?? 0.3
@@ -171,11 +171,11 @@ export const noFragmentRecipe: ShardRecipe = {
 			// localities (so "bare -> street" is not free), half bare postcodes (so the model does not
 			// stop emitting postcode to win the digit — board 3's bare-pc must hold).
 			if (random() < counterProb) {
-				if (random() < 0.5 && localities.size > 0) {
+				if (random() < 0.5 && localities.size) {
 					const loc = [...localities][Math.floor(random() * localities.size)]!
 
 					emit(loc, { locality: loc }, "counter-bare-locality")
-				} else if (postcodes.size > 0) {
+				} else if (postcodes.size) {
 					const pc = [...postcodes][Math.floor(random() * postcodes.size)]!
 
 					emit(pc, { postcode: pc }, "counter-bare-postcode")

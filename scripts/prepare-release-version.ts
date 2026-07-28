@@ -84,7 +84,7 @@ const releaseItConfig = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.j
 }
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
-if (!Array.isArray(workspaces) || workspaces.length === 0) {
+if (!Array.isArray(workspaces) || !workspaces.length) {
 	fail(".release-it.json workspace list is empty")
 }
 

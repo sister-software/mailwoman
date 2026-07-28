@@ -87,7 +87,7 @@ function lcg(seed: number): () => number {
 
 /** Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates. */
 function uniqueQuantiles(sorted: number[], n: number): number[] {
-	if (sorted.length === 0) return [0]
+	if (!sorted.length) return [0]
 	const ts = new Set<number>()
 
 	for (let k = 0; k <= n; k++) {

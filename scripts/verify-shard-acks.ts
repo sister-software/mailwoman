@@ -140,7 +140,7 @@ function main(): void {
 	console.log(`- **Flagged + UNACKNOWLEDGED:** ${unacknowledged.length}`)
 	console.log("")
 
-	if (args.verbose && acknowledged.length > 0) {
+	if (args.verbose && acknowledged.length) {
 		console.log(`## Acknowledged flagged shards (${acknowledged.length})`)
 		console.log("")
 
@@ -151,7 +151,7 @@ function main(): void {
 		console.log("")
 	}
 
-	if (unacknowledged.length > 0) {
+	if (unacknowledged.length) {
 		console.log(`## ❌ UNACKNOWLEDGED FLAGGED SHARDS (${unacknowledged.length})`)
 		console.log("")
 		console.log("These shards have lint flags but no `lint_acknowledged: true`. Training will be blocked. Either:")

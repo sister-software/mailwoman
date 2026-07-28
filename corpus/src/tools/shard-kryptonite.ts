@@ -91,7 +91,7 @@ export async function buildKryptoniteShard(
 			`quarantined ${quarantine.length}`
 	)
 
-	if (quarantine.length > 0) {
+	if (quarantine.length) {
 		const qPath = join(options.outDir, `corpus-v${corpusVersion}`, "quarantine-kryptonite.tsv")
 		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")
 		report?.(`quarantine log → ${qPath}`)

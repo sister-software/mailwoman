@@ -75,7 +75,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	const maxExpansionDepth = opts.maxExpansionDepth ?? 2
 	const normalizedTokens = normalizeTokens(query)
 
-	if (normalizedTokens.length === 0) {
+	if (!normalizedTokens.length) {
 		return { query, normalizedTokens: [], depth: 0, suggestions: [] }
 	}
 
@@ -100,7 +100,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		// PARTIAL last token — walk the complete prefix, complete the partial by prefix-filtering edges.
 		const complete = normalizedTokens.slice(0, -1)
 		const partial = normalizedTokens.at(-1)!
-		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateID ?? undefined)
+		const prefixState = !complete.length ? 0 : (fst.walk(complete)?.stateID ?? undefined)
 
 		if (prefixState === undefined) {
 			return { query, normalizedTokens, depth: 0, suggestions: [] }
@@ -123,7 +123,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	// branch contributes only its top PER_BRANCH places: a state like "new london" has dozens of
 	// accepting entries and would otherwise blow the budget before the BFS ever reaches "new york"
 	// (the "new" state has 311 continuations). Per-branch capping keeps the search broad. (#587)
-	while (queue.length > 0 && seen.size < maxSuggestions * 4) {
+	while (queue.length && seen.size < maxSuggestions * 4) {
 		const item = queue.shift()!
 
 		if (item.depth > maxExpansionDepth) continue

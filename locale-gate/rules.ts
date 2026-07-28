@@ -51,7 +51,7 @@ export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
 	// with the highest confidence + most-specific country mapping.
 	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= 0.9)
 
-	if (unambiguous.length > 0) {
+	if (unambiguous.length) {
 		// Pick the first unambiguous hit (callers typically have one postcode per address).
 		const hit = unambiguous[0]!
 

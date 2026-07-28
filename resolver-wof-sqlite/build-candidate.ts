@@ -303,14 +303,14 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
-	if (ccodes.size > 0) {
+	if (ccodes.size) {
 		await kdb
 			.insertInto("country_codes")
 			.values([...ccodes].map(([code, id]) => ({ id, code })))
 			.execute()
 	}
 
-	if (ptcodes.size > 0) {
+	if (ptcodes.size) {
 		await kdb
 			.insertInto("placetype_codes")
 			.values([...ptcodes].map(([placetype, id]) => ({ id, placetype })))

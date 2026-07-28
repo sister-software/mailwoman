@@ -69,7 +69,7 @@ function orgTokens(s: string): Set<string> {
 	)
 }
 function jaccard(a: Set<string>, b: Set<string>): number {
-	if (a.size === 0 || b.size === 0) return 0
+	if (!a.size || !b.size) return 0
 	let inter = 0
 
 	for (const t of a)

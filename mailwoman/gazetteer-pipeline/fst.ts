@@ -116,7 +116,7 @@ export function loadDegenerateSurfaces(
 				for (const surface of surfacesOfLine(line)) {
 					const tokens = fold(surface)
 
-					if (tokens.length === 0) continue
+					if (!tokens.length) continue
 					surfaces.add(tokens.join(" "))
 
 					// Compositional clause sources from stopwords ONLY — single-token entries, so
@@ -132,7 +132,7 @@ export function loadDegenerateSurfaces(
 	for (const s of SUPPLEMENTAL_DEGENERATE_SURFACES) {
 		const tokens = fold(s)
 
-		if (tokens.length === 0) continue
+		if (!tokens.length) continue
 		surfaces.add(tokens.join(" "))
 
 		if (tokens.length === 1) {

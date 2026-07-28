@@ -90,7 +90,7 @@ function collectTags(nodes: Array<{ tag: string; children?: unknown[] }>): Set<s
 	const out = new Set<string>()
 	const stack = [...nodes]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		out.add(n.tag)
 

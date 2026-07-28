@@ -47,7 +47,7 @@ export function* take<T>(collection: Iterable<T>, batchSize: number): Iterable<T
 		}
 	}
 
-	if (batch.length > 0) {
+	if (batch.length) {
 		yield batch
 	}
 }

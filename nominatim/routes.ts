@@ -42,7 +42,7 @@ function parseBool(raw: unknown): boolean {
 }
 
 function asString(raw: unknown): string | undefined {
-	return typeof raw === "string" && raw.length > 0 ? raw : undefined
+	return typeof raw === "string" && raw.length ? raw : undefined
 }
 
 /**

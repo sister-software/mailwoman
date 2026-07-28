@@ -125,8 +125,9 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		...(postcodeRepair ? { postcodeRepair: true } : {}),
 		...(options.wordConsistency ? { enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT } : {}),
 	}
-	const parseOpts =
-		Object.keys(repairOpts).length > 0 ? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1]) : undefined
+	const parseOpts = Object.keys(repairOpts).length
+		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
+		: undefined
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
 	// conventions channels the model was trained against (per the model-card `requires` block) so a
 	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer

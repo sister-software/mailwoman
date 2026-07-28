@@ -354,7 +354,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 		// Fail closed: declared-required but the lookup is missing or parsed empty → the model would be
 		// fed zeros (the anchor-off identity) and silently go OOD. That's the #566/#685 trap.
-		if (anchorRequired && !(postcodeAnchorLookup && postcodeAnchorLookup.size > 0)) {
+		if (anchorRequired && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
 			const reason = postcodeAnchorLookup
 				? `parsed lookup is EMPTY (size 0)`
 				: `lookup not found (tried ${anchorSource?.path ?? DEFAULT_ANCHOR_LOOKUP} + weights-package sibling)`

@@ -45,17 +45,16 @@ export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions):
 	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
 	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))
 	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
-	const placesIngested =
-		opts.countries.length > 0
-			? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
-					alternateDir,
-					adminForCountries: opts.adminForCountries,
-				})
-			: 0
+	const placesIngested = opts.countries.length
+		? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
+				alternateDir,
+				adminForCountries: opts.adminForCountries,
+			})
+		: 0
 
 	let postalIngested = 0
 
-	if (opts.postalCountries && opts.postalCountries.length > 0) {
+	if (opts.postalCountries && opts.postalCountries.length) {
 		const postalDir = opts.postalDir ?? String(dataRootPath("geonames-postal"))
 		postalIngested = ingestGeonamesPostal(db, [...opts.postalCountries], postalDir).inserted
 	}

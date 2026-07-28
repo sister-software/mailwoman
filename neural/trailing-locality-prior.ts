@@ -125,7 +125,7 @@ function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
  * ADMIN-placetype entry (the R1 "place match" definition), else null.
  */
 function matchAdminEntries(fst: FSTMatcherLike, tokens: string[]): FSTPlaceEntryLike[] | null {
-	if (tokens.length === 0) return null
+	if (!tokens.length) return null
 
 	let current = fst.walk([tokens[0]!])
 
@@ -142,7 +142,7 @@ function matchAdminEntries(fst: FSTMatcherLike, tokens: string[]): FSTPlaceEntry
 
 	const entries = fst.accepting(current.stateID).filter((e) => ADMIN_PLACETYPES.has(e.placetype))
 
-	return entries.length > 0 ? entries : null
+	return entries.length ? entries : null
 }
 
 /** Index of the first non-particle word at or left of `fromWord`, or -1. (R2 particle transparency.) */

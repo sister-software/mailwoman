@@ -128,7 +128,7 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 	let currentTag: string | null = null
 	let currentTokens: string[] = []
 	const flush = () => {
-		if (currentTag && currentTokens.length > 0 && !(currentTag in out)) {
+		if (currentTag && currentTokens.length && !(currentTag in out)) {
 			out[currentTag] = currentTokens.join(" ").trim()
 		}
 		currentTag = null
@@ -454,7 +454,7 @@ export async function expandGolden(
 
 	const seeds = await loadSeeds(corpusPath, count, includeSources, report)
 
-	if (seeds.length === 0) {
+	if (!seeds.length) {
 		throw new Error("no seeds loaded — corpus path or filter is wrong")
 	}
 
@@ -517,7 +517,7 @@ export async function expandGolden(
 	report?.(`candidates kept:  ${kept}`)
 	report?.(`candidates dropped (validator): ${dropped}`)
 	report?.(`seeds with errors: ${errored}`)
-	report?.(`yield: ${seeds.length > 0 ? ((kept / (seeds.length * variants)) * 100).toFixed(1) : "0"}%`)
+	report?.(`yield: ${seeds.length ? ((kept / (seeds.length * variants)) * 100).toFixed(1) : "0"}%`)
 	report?.(`output:           ${outputPath}`)
 
 	return { seedsProcessed: seeds.length, kept, dropped, errored, outputPath }

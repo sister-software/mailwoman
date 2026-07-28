@@ -13,7 +13,7 @@
 
 /** Nearest-rank percentile over an unsorted sample; `null` on an empty sample. `p` in [0, 100]. */
 export function percentile(xs: readonly number[], p: number): number | null {
-	if (xs.length === 0) return null
+	if (!xs.length) return null
 	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!

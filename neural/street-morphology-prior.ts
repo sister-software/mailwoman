@@ -94,7 +94,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 
-	if (wordGroups.length === 0) return matrix
+	if (!wordGroups.length) return matrix
 
 	// Track which word-group indices are matched as affixes (and which spans they cover) so the
 	// second pass can locate neighbours without re-walking the FST.
@@ -179,7 +179,7 @@ export function buildStreetMorphologyEmissionPriors(
 		}
 	}
 
-	if (affixMatches.length === 0) return matrix
+	if (!affixMatches.length) return matrix
 
 	// Pass 2 — for each affix match, identify the immediately-adjacent word groups (skipping
 	// empty/punctuation groups) on either side and bias them toward street, away from

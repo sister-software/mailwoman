@@ -25,7 +25,7 @@ function stubWorker(db: DatabaseSync) {
 			async exec(sql: string) {
 				const rows = db.prepare(sql).all() as Record<string, unknown>[]
 
-				if (rows.length === 0) return []
+				if (!rows.length) return []
 				const columns = Object.keys(rows[0]!)
 
 				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
@@ -43,7 +43,7 @@ function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 	return d
 }
 afterEach(() => {
-	while (openDbs.length > 0) {
+	while (openDbs.length) {
 		openDbs.pop()!.close()
 	}
 })

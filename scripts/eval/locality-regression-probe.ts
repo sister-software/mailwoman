@@ -129,7 +129,7 @@ for (const [m, c] of Object.entries(failMode).toSorted((a, b) => b[1] - a[1])) {
 	console.log(`    ${((100 * c) / regressions).toFixed(0).padStart(3)}%  ${m}  (${c})`)
 }
 
-if (examples.length > 0) {
+if (examples.length) {
 	console.log(`\n  examples:\n${examples.join("\n")}`)
 }
 console.log()

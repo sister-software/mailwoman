@@ -280,7 +280,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 	report?.(`skipped:  ${skipped} (already present + sha matched)`)
 	report?.(`failed:   ${failed}`)
 
-	if (failedCodes.length > 0) {
+	if (failedCodes.length) {
 		report?.(`failed codes: ${failedCodes.join(" ")}`)
 	}
 

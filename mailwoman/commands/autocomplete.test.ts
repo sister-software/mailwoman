@@ -47,7 +47,7 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 	for (const entry of entries) {
 		const tokens = normalizeTokens(entry.name)
 
-		if (tokens.length === 0) continue
+		if (!tokens.length) continue
 		let stateID = 0
 
 		for (const t of tokens) {

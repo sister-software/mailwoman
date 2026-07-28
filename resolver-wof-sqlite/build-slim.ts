@@ -135,7 +135,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	// Skip empties up front; require every remaining path to exist.
 	const inputs = opts.inputs.filter((p) => p.length > 0)
 
-	if (inputs.length === 0) throw new Error("no input WOF dbs provided")
+	if (!inputs.length) throw new Error("no input WOF dbs provided")
 
 	for (const input of inputs) {
 		if (!existsSync(input)) throw new Error(`input WOF db not found: ${input}`)

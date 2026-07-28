@@ -144,7 +144,7 @@ function flatten(tree: AddressTree): AddressTree["roots"] {
 	const out: AddressTree["roots"] = []
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		out.push(n)
 		stack.push(...n.children)
@@ -261,7 +261,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
 
-				return { hit, total: scored.length, rate: scored.length > 0 ? hit / scored.length : 1 }
+				return { hit, total: scored.length, rate: scored.length ? hit / scored.length : 1 }
 			}
 
 			for (const label of ["street", "house_number", "postcode"]) {
@@ -273,7 +273,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 			const both = rows.filter((r) => r.both)
 			const streetPass = both.filter((r) => r.hasStreet && !r.streetFail)
 			const streetPassWithin1km = streetPass.filter((r) => r.delta! <= 1).length
-			const acceptRate = streetPass.length > 0 ? streetPassWithin1km / streetPass.length : 1
+			const acceptRate = streetPass.length ? streetPassWithin1km / streetPass.length : 1
 
 			// ---- P2. Guard false positives on the coordinate-safe structured set ----
 			const safeStructured = both.filter((r) => r.delta! <= 5 && r.kind === "structured_address")

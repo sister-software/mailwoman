@@ -55,7 +55,7 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
  * postcode-shaped spans an address contains.
  */
 export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
-	if (typeof postcode !== "string" || postcode.length === 0) return []
+	if (typeof postcode !== "string" || !postcode.length) return []
 	const out: SystemCode[] = []
 
 	for (const [system, accepts] of SYSTEM_ACCEPTS) {

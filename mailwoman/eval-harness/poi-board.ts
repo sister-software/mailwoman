@@ -172,7 +172,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 
 	const results = poiOutcome.results ?? []
 
-	if (results.length === 0) {
+	if (!results.length) {
 		return {
 			id: fixture.id,
 			query: fixture.query,
@@ -254,7 +254,7 @@ async function loadResolver(options: PoiBoardOptions): Promise<{ resolver: Resol
 				existsSync(p)
 			)
 
-	if (!options.candidateDb && wofPaths.length === 0) {
+	if (!options.candidateDb && !wofPaths.length) {
 		console.error(
 			"note: no WOF resolver configured — anchor localities will not resolve to coordinates, so anchored " +
 				"category/brand cases will abstain anchor_required. Set --resolve-db/--candidate-db to fix."
@@ -383,7 +383,7 @@ export interface PoiBoardRunResult {
 }
 
 function quantile(sorted: number[], q: number): number {
-	if (sorted.length === 0) return Number.NaN
+	if (!sorted.length) return Number.NaN
 
 	if (sorted.length === 1) return sorted[0]!
 	const idx = q * (sorted.length - 1)
@@ -396,7 +396,7 @@ function quantile(sorted: number[], q: number): number {
 }
 
 function computeStats(values: number[]): QuantileStats | null {
-	if (values.length === 0) return null
+	if (!values.length) return null
 	const sorted = [...values].toSorted((a, b) => a - b)
 
 	return {
@@ -420,7 +420,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 		.filter(Boolean)
 		.map((line) => JSON.parse(line) as PoiBoardFixture)
 
-	if (fixtures.length === 0) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
+	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 
 	const db = options.db ?? dataRootPath("poi", "poi.db")
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
@@ -462,7 +462,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 						gersIDPresent++
 					}
 
-					if (r.ancestry && r.ancestry.length > 0) {
+					if (r.ancestry && r.ancestry.length) {
 						ancestryPresent++
 					}
 				}
@@ -489,7 +489,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 	}
 
 	const totalPass = cases.filter((c) => c.pass).length
-	const overallPassRate = cases.length > 0 ? totalPass / cases.length : 0
+	const overallPassRate = cases.length ? totalPass / cases.length : 0
 
 	const report: PoiBoardReport = {
 		generatedAt: new Date().toISOString(),
@@ -552,7 +552,7 @@ function printReport(report: PoiBoardReport): void {
 
 	const failures = report.cases.filter((c) => !c.pass)
 
-	if (failures.length > 0) {
+	if (failures.length) {
 		console.log(`\n--- ${failures.length} failing cases ---`)
 
 		for (const f of failures) {

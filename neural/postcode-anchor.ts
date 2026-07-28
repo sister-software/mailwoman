@@ -297,7 +297,7 @@ export function extractPostcodeAnchors(
 
 		// Exact first; then the GB outward fallback (structural, not a guess); then edit-distance-1.
 		let hits = resolver.lookup(normalized)
-		let matchType: PostcodeAnchor["matchType"] = hits.length > 0 ? "exact" : "none"
+		let matchType: PostcodeAnchor["matchType"] = hits.length ? "exact" : "none"
 
 		if (matchType === "none") {
 			const outward = gbOutwardCode(normalized)
@@ -305,7 +305,7 @@ export function extractPostcodeAnchors(
 			if (outward) {
 				const outwardHits = resolver.lookup(outward)
 
-				if (outwardHits.length > 0) {
+				if (outwardHits.length) {
 					hits = outwardHits
 					matchType = "outward"
 				}
@@ -321,7 +321,7 @@ export function extractPostcodeAnchors(
 				}
 			}
 
-			if (fuzzyHits.length > 0) {
+			if (fuzzyHits.length) {
 				hits = fuzzyHits
 				matchType = "fuzzy"
 			}
@@ -352,10 +352,9 @@ export function extractPostcodeAnchors(
 		// Gate the street-word check to the systems this code plausibly belongs to: its gazetteer
 		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
 		// format-shape candidates from codex (for a code in no gazetteer; its confidence is 0 anyway).
-		const systems =
-			countries.length > 0
-				? new Set(countries.map((c) => c.toLowerCase()))
-				: new Set<string>(candidateSystemsForPostcode(normalized))
+		const systems = countries.length
+			? new Set(countries.map((c) => c.toLowerCase()))
+			: new Set<string>(candidateSystemsForPostcode(normalized))
 		const position = positionFactor(text, match.start, normalized, systems)
 		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1) * position
 

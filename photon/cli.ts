@@ -95,7 +95,7 @@ async function serve(): Promise<void> {
 	// is required" — a stranger's first `npx @mailwoman/photon serve` must say exactly what data is
 	// missing and the one command that fixes it. Kept in sync with the docs' hosted-artifact layout
 	// (mailwoman.sister.software/docs/switching/photon — the maintained pointer).
-	if (!candidateDb && wofPaths.length === 0) {
+	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			[
 				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
@@ -189,7 +189,7 @@ async function serve(): Promise<void> {
 			if (!reverseGeo) return photonCollection([])
 			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
 
-			if (hierarchy.length === 0) return photonCollection([])
+			if (!hierarchy.length) return photonCollection([])
 			const deepest = hierarchy[0]!
 			// #1014: carry osm_key/osm_value/type (from the deepest placetype) so /reverse matches /api's schema —
 			// no Photon client should dereference an undefined osm_key on a reverse result either.

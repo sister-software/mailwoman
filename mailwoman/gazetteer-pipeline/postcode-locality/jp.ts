@@ -104,7 +104,7 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = true
 		} else {
 			// exact half → round to even
-			const lastKept = keep.length > 0 ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
+			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
 			roundUp = lastKept % 2 === 1
 		}
 	}
@@ -211,7 +211,7 @@ export interface PostcodeLocalityJPOptions {
 export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): Promise<void> {
 	const postal = args.country === "JP" ? loadKenall(args.postalNames) : new Map<string, string>()
 
-	if (postal.size === 0) {
+	if (!postal.size) {
 		console.error(`no postal names loaded for ${args.country} (only KEN_ALL/JP wired so far)`)
 		process.exit(1)
 	}
@@ -285,7 +285,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		const [lat, lon] = points.get(pc)!
 		const cands = nearby(lat, lon)
 
-		if (cands.length === 0) continue
+		if (!cands.length) continue
 		const hit = cands.find((c) => nameMatches(c.nm, muni))
 
 		if (hit) {

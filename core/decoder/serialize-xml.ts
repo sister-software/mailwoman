@@ -113,12 +113,12 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 
 	// Multi-role node (#413): a city-state span tagged `region` that also plays `locality` lists every
 	// role it holds, primary first — `roles="region locality"`. Emitted only when extra roles exist.
-	if (node.interpretations && node.interpretations.length > 0) {
+	if (node.interpretations && node.interpretations.length) {
 		const roles = [node.tag, ...node.interpretations.map((i) => i.tag)]
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)
 	}
 
-	return parts.length === 0 ? "" : " " + parts.join(" ")
+	return !parts.length ? "" : " " + parts.join(" ")
 }
 
 interface AlternativeLike {
@@ -131,7 +131,7 @@ interface AlternativeLike {
 }
 
 function serializeAlternatives(node: AddressNode, indent: string): string {
-	if (!node.alternatives || node.alternatives.length === 0) return ""
+	if (!node.alternatives || !node.alternatives.length) return ""
 	const lines = node.alternatives.map((raw) => {
 		const alt = raw as AlternativeLike
 		const place = `wof:${alt.id}`

@@ -30,7 +30,7 @@ export { OptionsSchema as options }
 
 const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		if (args.length === 0) throw commandError("pass at least one query")
+		if (!args.length) throw commandError("pass at least one query")
 		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
 		const maxResults = Number.parseInt(options.max ?? "10", 10)
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
@@ -52,13 +52,13 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 			console.log(`"${query}" → path: [${q.path.map((t) => `"${t}"`).join(", ")}]`)
 			console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
-			if (q.accepting.length > 0) {
+			if (q.accepting.length) {
 				const sorted = [...q.accepting].toSorted((a, b) => b.importance - a.importance)
 				console.log(`  Top by importance:`)
 
 				for (const p of sorted.slice(0, maxResults)) {
 					const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
-					const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
+					const chain = p.parentChain.length ? ` chain=[${p.parentChain.join("→")}]` : ""
 					console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
 				}
 
@@ -67,7 +67,7 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 				}
 			}
 
-			if (options.showContinuations && q.continuations.length > 0) {
+			if (options.showContinuations && q.continuations.length) {
 				const shown = q.continuations.toSorted((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
 				console.log(`  Continuations (${q.continuations.length} total):`)
 

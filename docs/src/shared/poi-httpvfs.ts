@@ -48,7 +48,7 @@ export async function loadPOIWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWor
 
 /** Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported. */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || res.length === 0) return []
+	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
 
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
@@ -125,7 +125,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
 	const categoryIds = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
-	if (categoryIds.length === 0) return []
+	if (!categoryIds.length) return []
 	const categoryIdList = categoryIds.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell

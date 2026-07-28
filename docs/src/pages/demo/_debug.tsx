@@ -135,7 +135,7 @@ export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 							</div>
 						) : null}
 						<strong>{layerID}</strong>
-						{entries.length > 0 ? (
+						{entries.length ? (
 							<dl className={styles.featureProperties}>
 								{entries.map(([key, value]) => (
 									<Fragment key={key}>

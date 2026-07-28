@@ -39,7 +39,7 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 		message: string,
 		...urnSegments: string[]
 	): ResourceError<S> {
-		return new ResourceError(statusCode, urnSegments.length > 0 ? urnSegments.join(":") : "unknown", message)
+		return new ResourceError(statusCode, urnSegments.length ? urnSegments.join(":") : "unknown", message)
 	}
 
 	/**

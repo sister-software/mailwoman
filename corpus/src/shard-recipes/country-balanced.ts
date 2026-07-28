@@ -403,7 +403,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 			}
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No tuples — are the cached OA zips present in /tmp/oa-cache?")
 		}
 

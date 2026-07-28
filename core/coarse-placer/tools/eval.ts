@@ -122,7 +122,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		}
 	}
 
-	if (confLines.length > 0) {
+	if (confLines.length) {
 		console.log(`  notable confusions (≥20):`)
 		console.log(confLines.toSorted().join("\n"))
 	}
@@ -175,7 +175,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			`  ON-map scripts (latin/cjk) wrongly OTHER-or-abstain: ${missOk}/${missN} (${((100 * missOk) / Math.max(1, missN)).toFixed(0)}%) ← want LOW`
 		)
 
-		if (offMiss.length > 0) {
+		if (offMiss.length) {
 			console.log(`  off-map still mis-placed (the Latin-off-map residual — needs full off-map addresses, M3):`)
 			console.log(offMiss.join("\n"))
 		}

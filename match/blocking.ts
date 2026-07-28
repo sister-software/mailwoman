@@ -101,7 +101,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 		for (const key of keys) {
 			const parts = key(record)
 
-			if (parts.length === 0) return []
+			if (!parts.length) return []
 			combos = combos.flatMap((prefix) => parts.map((part) => (prefix ? `${prefix}&${part}` : part)))
 		}
 

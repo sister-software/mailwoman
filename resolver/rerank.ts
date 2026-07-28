@@ -94,7 +94,7 @@ export async function rerankByResolution<T>(
 	resolveTree: ResolveTree,
 	opts: RerankOpts = {}
 ): Promise<RerankResult<T>> {
-	if (candidates.length === 0) throw new Error("rerankByResolution: candidates must not be empty")
+	if (!candidates.length) throw new Error("rerankByResolution: candidates must not be empty")
 	const maxResolve = Math.max(1, Math.min(opts.maxResolve ?? 5, candidates.length))
 	const ranked: Array<RerankedCandidate<T>> = []
 

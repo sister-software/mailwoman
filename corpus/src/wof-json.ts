@@ -88,7 +88,7 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 		if (!key.startsWith("name:")) continue
 		const candidate = Array.isArray(value)
 			? value.find((v): v is string => typeof v === "string" && v.trim().length > 0)
-			: typeof value === "string" && value.trim().length > 0
+			: typeof value === "string" && value.trim().length
 				? value
 				: undefined
 

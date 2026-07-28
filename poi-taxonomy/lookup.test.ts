@@ -107,7 +107,7 @@ describe("resolveOvertureCategories", () => {
 		for (const category of getAllCategories()) {
 			const leaves = resolveOvertureCategories(category.id)
 
-			if (category.overtureCategories && category.overtureCategories.length > 0) {
+			if (category.overtureCategories && category.overtureCategories.length) {
 				expect(leaves).toEqual([...category.overtureCategories])
 			} else {
 				expect(leaves).toEqual([category.id])

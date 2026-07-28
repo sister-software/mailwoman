@@ -124,7 +124,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 	const matches = collectMatches(text)
 	const tokens = input.map((t) => ({ ...t }))
 
-	if (matches.length === 0) return { tokens, changed: 0 }
+	if (!matches.length) return { tokens, changed: 0 }
 
 	let changed = 0
 	const setLabel = (i: number, label: DecoderToken["label"]): void => {
@@ -146,7 +146,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 			}
 		}
 
-		if (overlap.length === 0) continue
+		if (!overlap.length) continue
 
 		const hasUnit = overlap.some((i) => isUnitLabel(tokens[i]!.label))
 

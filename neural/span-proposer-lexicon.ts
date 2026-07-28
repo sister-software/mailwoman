@@ -122,10 +122,9 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	// Longest-first so "GPO Box" beats "Box", "Private Bag" beats "Bag".
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const alternatives = [...deliveryPhrases].sort((a, b) => b.length - a.length).map(phraseToPattern)
-	const deliveryService =
-		alternatives.length > 0
-			? new RegExp(String.raw`\b(?:${alternatives.join("|")})\s*#?\s*([A-Za-z]?\d[\dA-Za-z-]*)\b`, "gi")
-			: undefined
+	const deliveryService = alternatives.length
+		? new RegExp(String.raw`\b(?:${alternatives.join("|")})\s*#?\s*([A-Za-z]?\d[\dA-Za-z-]*)\b`, "gi")
+		: undefined
 
 	return {
 		systems: sys,

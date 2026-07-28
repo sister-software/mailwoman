@@ -13,7 +13,7 @@ const MASK_SENTINEL_FLOOR = -1e8
 
 /** Numerically-stable softmax over one logit row. */
 export function softmaxRow(row: number[]): number[] {
-	if (row.length === 0) return []
+	if (!row.length) return []
 	const max = Math.max(...row)
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)

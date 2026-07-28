@@ -56,7 +56,7 @@ function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 			.filter(Boolean)
 	)
 
-	return allow.size > 0 ? allow : undefined
+	return allow.size ? allow : undefined
 }
 
 const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
@@ -105,7 +105,7 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 		return <Text>Fetching repo list...</Text>
 	}
 
-	if (repos.length === 0) {
+	if (!repos.length) {
 		return <Text>No repositories found</Text>
 	}
 

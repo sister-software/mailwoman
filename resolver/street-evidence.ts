@@ -111,7 +111,7 @@ const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 export function isPureTypeVocabulary(foldedSurface: string): boolean {
 	const tokens = foldedSurface.split(" ").filter(Boolean)
 
-	if (tokens.length === 0) return true
+	if (!tokens.length) return true
 
 	return tokens.every((t) => FR_STREET_TYPE_WORDS.has(t))
 }
@@ -164,7 +164,7 @@ export function pickByStreetEvidence<T>(
 ): StreetEvidencePick<T> {
 	const marginCap = opts.marginCap ?? 2.5
 
-	if (candidates.length === 0) {
+	if (!candidates.length) {
 		throw new Error("pickByStreetEvidence: no candidates")
 	}
 	const rank1 = candidates[0]!

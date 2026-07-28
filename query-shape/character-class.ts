@@ -181,7 +181,7 @@ export function classifyToken(text: string): TokenCharacterClass {
 
 /** Fold per-token classes into the whole-input character class. */
 export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClass {
-	if (tokens.length === 0) return "alpha"
+	if (!tokens.length) return "alpha"
 
 	let hasDigit = false
 	let hasAlpha = false

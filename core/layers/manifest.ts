@@ -126,7 +126,7 @@ export const COVERAGE_INSERT_BATCH = 5000
  * bound-variable limit.
  */
 export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cells: CoverageCell[]): Promise<void> {
-	if (cells.length === 0) return
+	if (!cells.length) return
 
 	for (let i = 0; i < cells.length; i += COVERAGE_INSERT_BATCH) {
 		const batch = cells.slice(i, i + COVERAGE_INSERT_BATCH)

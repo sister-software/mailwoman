@@ -215,7 +215,7 @@ export async function evalOpenSet(
 
 	// Accumulate per-class means.
 	for (const [country, raws] of byClass) {
-		if (raws.length === 0) continue
+		if (!raws.length) continue
 		const mu = new Float64Array(nIn)
 
 		for (const raw of raws) {

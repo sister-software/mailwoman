@@ -226,7 +226,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	const tokens = working.split(/\s+/).filter(Boolean)
 
-	if (tokens.length === 0) return Object.keys(result).length > 0 ? result : null
+	if (!tokens.length) return Object.keys(result).length ? result : null
 
 	// 3. Leading titles → prefix.
 	const prefixParts: string[] = []
@@ -235,7 +235,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		prefixParts.push(tokens.shift()!)
 	}
 
-	if (prefixParts.length > 0) {
+	if (prefixParts.length) {
 		result.prefix = prefixParts.join(" ")
 	}
 
@@ -246,11 +246,11 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		suffixParts.unshift(tokens.pop()!)
 	}
 
-	if (suffixParts.length > 0) {
+	if (suffixParts.length) {
 		result.suffix = isPresent(result.suffix) ? `${suffixParts.join(" ")} ${result.suffix}` : suffixParts.join(" ")
 	}
 
-	if (tokens.length === 0) return result
+	if (!tokens.length) return result
 
 	// 5. Locate the surname particle run; everything from it onward is the (particled) surname.
 	let particleStart = -1
@@ -275,7 +275,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.family = tokens.slice(i).join(" ")
 		const before = tokens.slice(0, particleStart)
 
-		if (before.length > 0) {
+		if (before.length) {
 			result.given = before[0]
 		}
 

@@ -118,7 +118,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			limit: intent.limit,
 		})
 
-		if (buildLocalCategory && results.length === 0) {
+		if (buildLocalCategory && !results.length) {
 			return { type: "abstain", reason: "requires_build_local_layer" }
 		}
 
@@ -143,7 +143,7 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
 	if (!reverseGeocode) return result
 	const ancestry = reverseGeocode(result.latitude, result.longitude)
 
-	return ancestry && ancestry.length > 0 ? { ...result, ancestry } : result
+	return ancestry && ancestry.length ? { ...result, ancestry } : result
 }
 
 /**

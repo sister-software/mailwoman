@@ -155,7 +155,7 @@ export async function prepareLocaleIndex(
 		)
 	}
 
-	if (index.size === 0 && !inserted) {
+	if (!index.size && !inserted) {
 		throw new Error(
 			`No index matches found for ${filename} in ${libPostalDataDirectory} for languages ${languageCodes}`
 		)

@@ -192,7 +192,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 							<dt>score</dt>
 							<dd>{selected.score.toFixed(3)}</dd>
 						</dl>
-						{result.dualRoles && result.dualRoles.length > 0 ? (
+						{result.dualRoles && result.dualRoles.length ? (
 							<p
 								style={{
 									margin: "0.5rem 0 0",

@@ -220,7 +220,7 @@ function locateSpan(args: {
 }): { start: number; end: number } | undefined {
 	const { haystack, needle, claimed, maxEditDistance } = args
 
-	if (needle.length === 0) return undefined
+	if (!needle.length) return undefined
 
 	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
 	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"

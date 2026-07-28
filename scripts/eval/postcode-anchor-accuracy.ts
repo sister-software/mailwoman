@@ -58,7 +58,7 @@ function parseArgs(): Args {
 }
 
 function pct(sorted: number[], p: number): number {
-	if (sorted.length === 0) return Number.NaN
+	if (!sorted.length) return Number.NaN
 	const i = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))
 
 	return sorted[i]!
@@ -86,7 +86,7 @@ function main(): void {
 
 		const hits = lookup.lookup(String(postcode)).filter((h) => h.country === country)
 
-		if (hits.length === 0) {
+		if (!hits.length) {
 			notInGazetteer++
 			continue
 		}

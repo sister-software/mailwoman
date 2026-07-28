@@ -462,7 +462,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	if (fails.length > 0) {
+	if (fails.length) {
 		console.log(`\nNEW violations (gate-failing):`)
 
 		for (const f of fails) {
@@ -470,7 +470,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	if (xfails.length > 0) {
+	if (xfails.length) {
 		console.log(`\nknown xfails (tracked, non-blocking):`)
 
 		for (const f of xfails) {
@@ -478,7 +478,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	if (newlyPassing.length > 0) {
+	if (newlyPassing.length) {
 		console.log(`\n⚠ xfails that now PASS — remove from the KNOWN_*_XFAIL map:`)
 
 		for (const [key, issue] of newlyPassing) {

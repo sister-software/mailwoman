@@ -101,7 +101,7 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 			.replaceAll(/^\[|\]$/g, "")
 		const path = pathText.split(",").map((p) => p.trim())
 
-		if (!code || path.length === 0 || path.some((p) => !p)) {
+		if (!code || !path.length || path.some((p) => !p)) {
 			throw new Error(
 				`generate-taxonomy: malformed CSV row ${i + 1}: code ${JSON.stringify(code)} path ${JSON.stringify(pathText)}`
 			)

@@ -392,7 +392,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		}
 	}
 
-	if (errors.length > 0) return errors
+	if (errors.length) return errors
 
 	const compCount = Object.keys(components).length
 
@@ -503,7 +503,7 @@ export const intersectionRecipe: ShardRecipe = {
 			console.error(`  ${county.fips} (${county.state}, ${county.regime}): ${crossings.length} crossings, ${kept} kept`)
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error(`No crossings found — are the TIGER EDGES shapefiles present in ${edgesDir}?`)
 		}
 
@@ -566,7 +566,7 @@ export const intersectionRecipe: ShardRecipe = {
 			}
 			const violations = auditRow(aligned.row, components)
 
-			if (violations.length > 0) {
+			if (violations.length) {
 				auditErrors.push({ raw, violations })
 				continue
 			}
@@ -608,7 +608,7 @@ export const intersectionRecipe: ShardRecipe = {
 				`  audit: ${auditErrors.length} violation(s)`
 		)
 
-		if (auditErrors.length > 0) {
+		if (auditErrors.length) {
 			throw new Error(`AUDIT FAILED — first violation: ${JSON.stringify(auditErrors[0])}`)
 		}
 

@@ -70,7 +70,7 @@ const num = (s: string | undefined): number | undefined => (s == null ? undefine
 
 const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		if (options.list || args.length === 0) {
+		if (options.list || !args.length) {
 			return [
 				"recipes:",
 				...listShardRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),

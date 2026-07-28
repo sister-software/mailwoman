@@ -108,7 +108,7 @@ async function buildEngine() {
 		const candidateDb = resolveCandidateDBPath()
 		const paths = wofPaths()
 
-		if (candidateDb || paths.length > 0) {
+		if (candidateDb || paths.length) {
 			try {
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 				const backend = createResolverBackend(resolverMod, { wofPaths: paths })

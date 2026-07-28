@@ -253,7 +253,7 @@ export async function fetchTigerFull(
 
 		if (dryRun) continue
 
-		if (pending.length === 0) continue
+		if (!pending.length) continue
 
 		// --- Download pending files with bounded parallelism + rate-limit spacing ---
 		const results: CountyResult[] = new Array(pending.length)

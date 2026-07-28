@@ -83,7 +83,7 @@ function departementFiles(banDir: string): string[] {
 async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 	const files = departementFiles(banDir)
 
-	if (files.length === 0) {
+	if (!files.length) {
 		throw new Error(
 			`No BAN adresses-<dept>.csv files found in ${banDir} — fetch BAN first (\`mailwoman corpus fetch ban\`).`
 		)
@@ -187,7 +187,7 @@ export const frLieuditRecipe: ShardRecipe = {
 
 		const pool = await readLieuDitPool(banDir)
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 

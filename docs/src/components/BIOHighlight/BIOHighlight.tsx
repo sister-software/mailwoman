@@ -135,7 +135,7 @@ export const BIOHighlight: React.FC<BIOHighlightProps> = ({ input, nodes }) => {
 			n.end <= input.length
 	)
 
-	if (spans.length === 0) return null
+	if (!spans.length) return null
 
 	const words = tokenizeWords(input)
 	const bioWords = assignBIOLabels(words, spans)

@@ -243,7 +243,7 @@ async function loadPostcodeAnchorLookup(
 	)
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
-	return lookups.length > 0 ? mergeAnchorLookups(lookups) : undefined
+	return lookups.length ? mergeAnchorLookups(lookups) : undefined
 }
 
 /** Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. */
@@ -358,7 +358,7 @@ export function resolvePairIndexForText(
 	text: string,
 	opts?: { country?: string }
 ): PlacetypePairPriorOpts | undefined {
-	if (pairIndexes.length === 0) return undefined
+	if (!pairIndexes.length) return undefined
 	const country = opts?.country != null ? resolvePairGateCountry(opts.country) : detectPairIndexCountry(text)
 	const match = pairIndexes.find((index) => index.country === country)
 
@@ -468,7 +468,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	// Omitted country = no config default → the byte-stable no-prior decode when nothing is selected per parse.
 	let configPairIndex: PairIndexResolver | undefined
 
-	if (opts.country != null && pairIndexes.length > 0) {
+	if (opts.country != null && pairIndexes.length) {
 		const pinnedCountry = resolvePairGateCountry(opts.country)
 		const pinned = pairIndexes.find((index) => index.country === pinnedCountry)
 
@@ -658,7 +658,7 @@ async function fetchLabelsFromModelCard(url: string, fetchImpl: typeof fetch): P
 
 	if (labels === undefined) return null
 
-	if (!Array.isArray(labels) || labels.length === 0 || !labels.every((l) => typeof l === "string")) {
+	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
 			`model-card at ${url} has a malformed \`labels\` field — ` +
 				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`

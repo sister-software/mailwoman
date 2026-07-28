@@ -29,7 +29,7 @@ function releaseWorkspaces(): string[] {
 	const releaseIt = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
 	const ws = releaseIt?.plugins?.["@release-it-plugins/workspaces"]?.workspaces
 
-	if (!Array.isArray(ws) || ws.length === 0) {
+	if (!Array.isArray(ws) || !ws.length) {
 		throw new Error("could not read the workspaces array from .release-it.json")
 	}
 

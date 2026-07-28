@@ -167,7 +167,7 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
 	const rows = result.getRowObjects() as Array<{ source: unknown }>
 
-	return rows.length > 0 ? String(rows[0]!.source) : ""
+	return rows.length ? String(rows[0]!.source) : ""
 }
 
 /** Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`. */
@@ -257,7 +257,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 	let parts = globParquet(trainDir)
 
-	if (parts.length === 0) {
+	if (!parts.length) {
 		throw new Error("no base parts found")
 	}
 
@@ -334,7 +334,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	]
 
 	for (const [label, rows] of sections) {
-		if (rows.length === 0) continue
+		if (!rows.length) continue
 		rows.sort((a, b) => b[4] - a[4] || b[3] - a[3])
 		console.log(`\n${label.startsWith("CONTRA") ? "⚠️ " : "· "}${rows.length} ${label}:`)
 
@@ -343,7 +343,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 		}
 	}
 
-	if (flagged.length === 0) {
+	if (!flagged.length) {
 		console.log(
 			`\n✅ NO real contradictions (country-scoped, threshold ${pct(threshold)}, support ${minCount}) — shard base-consistent`
 		)

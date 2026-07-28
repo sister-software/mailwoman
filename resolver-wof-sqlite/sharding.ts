@@ -99,7 +99,7 @@ const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
 export function resolveShards(input: string | ReadonlyArray<string | ShardConfig>): ResolvedShard[] {
 	const list = typeof input === "string" ? [input] : input
 
-	if (list.length === 0) throw new Error("resolveShards: at least one shard is required")
+	if (!list.length) throw new Error("resolveShards: at least one shard is required")
 
 	const seen = new Set<string>()
 	const out: ResolvedShard[] = []
@@ -179,7 +179,7 @@ export function pickShardsForPlacetype(shards: ResolvedShard[], placetype: strin
 		}
 	}
 
-	return matches.length > 0 ? matches : [shards[0]!]
+	return matches.length ? matches : [shards[0]!]
 }
 
 export function pickShardForPlacetype(
@@ -223,7 +223,7 @@ export function pickShardForPlacetype(
 		}
 	}
 
-	if (matches.length === 0) return shards[0]!
+	if (!matches.length) return shards[0]!
 
 	if (opts?.country && opts.countriesBySchema) {
 		for (const s of matches) {

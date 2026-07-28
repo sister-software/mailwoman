@@ -59,7 +59,7 @@ export function parseGazetteerLexicon(raw: {
 		throw new Error(`gazetteer lexicon: feature_dim must be a positive number, got ${raw?.feature_dim}`)
 	}
 
-	if (!Array.isArray(raw.slots) || raw.slots.length === 0) {
+	if (!Array.isArray(raw.slots) || !raw.slots.length) {
 		throw new Error("gazetteer lexicon: slots must be a non-empty array")
 	}
 

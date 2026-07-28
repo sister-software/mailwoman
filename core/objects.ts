@@ -147,7 +147,7 @@ export function omitNullable<T extends object>(input: T): NonNullableObject<T> {
 		if (isRecordLike(currentValue)) {
 			const childResult = omitNullable(currentValue)
 
-			if (Object.keys(childResult).length > 0) {
+			if (Object.keys(childResult).length) {
 				result[key] = childResult
 			}
 		} else if (Array.isArray(currentValue)) {
@@ -155,7 +155,7 @@ export function omitNullable<T extends object>(input: T): NonNullableObject<T> {
 				.map((entryValue) => (isRecordLike(entryValue) ? omitNullable(entryValue) : entryValue))
 				.filter((val) => val != null)
 
-			if (arr.length > 0) {
+			if (arr.length) {
 				result[key] = arr
 			}
 		} else if (currentValue !== null) {

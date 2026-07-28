@@ -41,7 +41,7 @@ function fixtureBanDir(files: Record<string, string[]>): string {
 }
 
 afterEach(() => {
-	while (dirs.length > 0) {
+	while (dirs.length) {
 		rmSync(dirs.pop()!, { recursive: true, force: true })
 	}
 })

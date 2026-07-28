@@ -74,7 +74,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 		phase("hierarchy-backfill", "multi-parent -4 places")
 		const geojsonRoots = discoverAdminDataRoots(opts.dataDir)
 
-		if (geojsonRoots.length === 0) {
+		if (!geojsonRoots.length) {
 			phase(
 				"hierarchy-backfill",
 				`WARNING: no */data geojson roots under ${opts.dataDir} — orphans like NYC stay unreachable`

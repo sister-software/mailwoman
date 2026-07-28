@@ -198,7 +198,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 
 		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toSorted()
 
-		if (shapefiles.length === 0) {
+		if (!shapefiles.length) {
 			throw commandError(
 				`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
 			)

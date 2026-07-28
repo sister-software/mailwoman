@@ -34,7 +34,7 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 				<dt>score</dt>
 				<dd>{place.score.toFixed(3)}</dd>
 			</dl>
-			{dualRoles && dualRoles.length > 0 ? (
+			{dualRoles && dualRoles.length ? (
 				<p className="mw-resolved__dual">
 					🏛️ <strong>Dual-role place.</strong> {place.name} also resolves as{" "}
 					{dualRoles.map((role, i) => (

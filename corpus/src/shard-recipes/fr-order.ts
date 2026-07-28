@@ -186,7 +186,7 @@ export const frOrderRecipe: ShardRecipe = {
 		const pool = readTuples(poolLimit)
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No FR tuples found — is /tmp/oa-cache/fr__countrywide.zip present?")
 		}
 

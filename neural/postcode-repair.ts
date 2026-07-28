@@ -134,7 +134,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	const matches = collectMatches(text)
 	const tokens = input.map((t) => ({ ...t }))
 
-	if (matches.length === 0) return { tokens, changed: 0 }
+	if (!matches.length) return { tokens, changed: 0 }
 
 	let changed = 0
 	const setLabel = (i: number, label: DecoderToken["label"]): void => {
@@ -156,7 +156,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 			}
 		}
 
-		if (overlap.length === 0) continue
+		if (!overlap.length) continue
 
 		const hasPostcode = overlap.some((i) => isPostcodeLabel(tokens[i]!.label))
 
@@ -197,7 +197,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 			trailing.push(j)
 		}
 
-		if (trailing.length > 0) {
+		if (trailing.length) {
 			const after = trailing.at(-1)! + 1
 			const connectsToCity = after < tokens.length && tagOf(tokens[after]!.label) === "locality"
 

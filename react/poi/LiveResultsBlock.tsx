@@ -45,7 +45,7 @@ export function LiveResultsBlock({ subjectLabel, anchor, state, onSearch }: Live
 			) : state.status === "error" ? (
 				<p className="mw-error">{state.message}</p>
 			) : state.status === "success" ? (
-				state.hits.length === 0 ? (
+				!state.hits.length ? (
 					<p className="mw-muted">
 						No {subjectLabel.toLowerCase()} results near {state.centerName}.
 					</p>

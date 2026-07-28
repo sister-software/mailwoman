@@ -142,11 +142,11 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 		}
 	}
 
-	if (name.length > 0) {
+	if (name.length) {
 		mapping.name = name.length === 1 ? name[0]! : name
 	}
 
-	if (address.length > 0) {
+	if (address.length) {
 		mapping.address = address
 	}
 

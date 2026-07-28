@@ -152,7 +152,7 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 		if (!OA_GRADABLE.has(predTag)) return null
 		const goldVals = row.gold.filter(([t]) => t === predTag).map(([, v]) => v)
 
-		if (goldVals.length === 0) return null
+		if (!goldVals.length) return null
 
 		// OA row lacks this tag entirely → unlabelable
 		return goldVals.some((g) => valueMatch(predValue, g))
@@ -160,7 +160,7 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 	const cls = tagClass(predTag)
 	const goldVals = row.gold.filter(([t]) => tagClass(t) === cls).map(([, v]) => v)
 
-	if (goldVals.length === 0) return false
+	if (!goldVals.length) return false
 
 	// hallucinated tag the address doesn't have
 	return goldVals.some((g) => valueMatch(predValue, g))

@@ -155,7 +155,7 @@ function readMailwomanVersion(): string {
 function checkCompiled(): void {
 	const missing = CLIENT_SURFACES.filter((surface) => !existsSync(emitterCLIPath(surface)))
 
-	if (missing.length > 0) {
+	if (missing.length) {
 		fail(
 			`out/cli.js missing for: ${missing.join(", ")} — run \`yarn compile\` first (client generation reads the compiled openapi emitters, not source)`
 		)

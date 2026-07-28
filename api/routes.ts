@@ -330,7 +330,7 @@ export function registerMailwomanAPIRoutes(
 		async (c) => {
 			const { addresses, input_mode } = c.req.valid("json")
 
-			if (addresses.length === 0) return c.json({ results: [] }, 200)
+			if (!addresses.length) return c.json({ results: [] }, 200)
 
 			if (addresses.length > batchMax) {
 				return c.json({ error: `batch too large: ${addresses.length} > ${batchMax}` }, 413)

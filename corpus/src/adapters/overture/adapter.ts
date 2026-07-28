@@ -129,7 +129,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 
 				const aligned = reconcileComponents(components, raw)
 
-				if (Object.keys(aligned).length === 0) continue
+				if (!Object.keys(aligned).length) continue
 
 				yield {
 					raw,

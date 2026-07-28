@@ -59,7 +59,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const put = (key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 
-		if (folded.length > 0 && !out.has(folded)) {
+		if (folded.length && !out.has(folded)) {
 			out.set(folded, match)
 		}
 	}

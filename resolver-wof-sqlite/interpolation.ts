@@ -175,15 +175,15 @@ export class StreetInterpolator implements InterpolationLookup {
 			if (postcodes.size > 1) return null
 		}
 
-		if (rows.length === 0) return null
+		if (!rows.length) return null
 
 		// Parity preference: exact side first, then 'mixed' (matches either), then the
 		// opposite side as a flagged fallback.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
-		const preferred = exact.length > 0 ? exact : mixed
-		const pool = preferred.length > 0 ? preferred : rows
+		const preferred = exact.length ? exact : mixed
+		const pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins — the most specific claim about where this number lives.

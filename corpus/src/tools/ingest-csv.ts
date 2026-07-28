@@ -345,7 +345,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	}
 
 	// Flush remaining
-	if (batch.length > 0) {
+	if (batch.length) {
 		doInsert()
 		imported += batch.length
 	}

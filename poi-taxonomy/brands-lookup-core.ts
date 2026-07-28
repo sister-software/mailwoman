@@ -72,7 +72,7 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 
 		const entries = byPhrase.get(norm)
 
-		if (!entries || entries.length === 0) return []
+		if (!entries || !entries.length) return []
 
 		const best = new Map<string, BrandMatch>()
 

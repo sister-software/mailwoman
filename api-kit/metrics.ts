@@ -46,7 +46,7 @@ export function recordTimed(latencyMs: number, tier: string): void {
 }
 
 function percentile(sorted: number[], p: number): number {
-	if (sorted.length === 0) return 0
+	if (!sorted.length) return 0
 	const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))
 
 	return Math.round(sorted[idx]! * 100) / 100
@@ -77,15 +77,14 @@ export function metricsSnapshot(): MetricsSnapshot {
 			total,
 			errors,
 			tiers: { ...tierCounts },
-			latency_ms:
-				sorted.length > 0
-					? {
-							p50: percentile(sorted, 0.5),
-							p90: percentile(sorted, 0.9),
-							p99: percentile(sorted, 0.99),
-							max: Math.round(sorted.at(-1)! * 100) / 100,
-						}
-					: null,
+			latency_ms: sorted.length
+				? {
+						p50: percentile(sorted, 0.5),
+						p90: percentile(sorted, 0.9),
+						p99: percentile(sorted, 0.99),
+						max: Math.round(sorted.at(-1)! * 100) / 100,
+					}
+				: null,
 			latency_samples: sorted.length,
 		},
 	}

@@ -146,7 +146,7 @@ export interface FormatAddressOptions {
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
 	const ocComponents = toOpenCageComponents(components, country)
 
-	if (Object.keys(ocComponents).length === 0) return ""
+	if (!Object.keys(ocComponents).length) return ""
 
 	let raw = addressFormatter.format(ocComponents, {
 		abbreviate: opts.abbreviate ?? false,
@@ -255,7 +255,7 @@ export function formatFromClassificationMap(
 		}
 	}
 
-	if (unitParts.length > 0) {
+	if (unitParts.length) {
 		components.unit = unitParts.join(" ")
 	}
 
@@ -355,7 +355,7 @@ export function toOpenCageComponents(components: ComponentDict, country: string)
 	// otherwise the template renders the bare code ("US") as a fallback line, which no caller wants.
 	const cc = country.trim().toLowerCase()
 
-	if (cc && Object.keys(out).length > 0) {
+	if (cc && Object.keys(out).length) {
 		out.country_code = cc
 	}
 

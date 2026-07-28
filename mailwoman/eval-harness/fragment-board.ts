@@ -90,7 +90,7 @@ function flatten(nodes: ReadonlyArray<{ tag: string; value: string; start: numbe
 	const out: Array<{ tag: string; value: string; start: number }> = []
 	const stack = [...nodes]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop() as { tag: string; value: string; start: number; children?: never[] }
 		out.push(node)
 		stack.push(...((node.children ?? []) as never[]))
@@ -106,7 +106,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		.map((line) => JSON.parse(line) as FragmentFixture)
 		.filter((fixture) => !options.klass || fixture.klass === options.klass)
 
-	if (fixtures.length === 0) throw new Error(`fragment board: no fixtures matched (klass=${options.klass ?? "*"})`)
+	if (!fixtures.length) throw new Error(`fragment board: no fixtures matched (klass=${options.klass ?? "*"})`)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
@@ -169,7 +169,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 	)
 
 	for (const [klass, bucket] of [...tally].toSorted()) {
-		if (bucket.misses.length === 0) continue
+		if (!bucket.misses.length) continue
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 6) ---`)
 
 		for (const miss of bucket.misses.slice(0, 6)) {

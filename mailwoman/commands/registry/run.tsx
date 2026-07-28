@@ -441,7 +441,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
 			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
 
-			if (eligibilitySources.length === 0 || fundingSources.length === 0) {
+			if (!eligibilitySources.length || !fundingSources.length) {
 				throw commandError(
 					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
 						"(at least one of each)."
@@ -511,7 +511,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 		const summary =
 			`registry: ${rows.length} rows → ${records.length} records (${geocoded} geocoded) → ` +
 			`${result.entities.length} entities ` +
-			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length > 0 ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
+			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
 
 		const written = writeOutputs(geojson, options)
 
@@ -534,7 +534,7 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 
 		const csv = args?.[0]
 
-		if (!csv || csv.trim().length === 0) {
+		if (!csv || !csv.trim().length) {
 			throw commandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
 					"e.g. mailwoman registry contacts.csv --out entities.geojson"

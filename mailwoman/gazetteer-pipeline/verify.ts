@@ -72,10 +72,9 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 		checks.push({
 			check: "node-census",
 			ok: missing.length === 0,
-			detail:
-				missing.length === 0
-					? `${Object.keys(baseline.requiredNodes).length} countries complete`
-					: `missing: ${missing.join(" ")}`,
+			detail: !missing.length
+				? `${Object.keys(baseline.requiredNodes).length} countries complete`
+				: `missing: ${missing.join(" ")}`,
 		})
 	}
 
@@ -149,8 +148,7 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 		checks.push({
 			check: "bbox-extents",
 			ok: bad.length === 0,
-			detail:
-				bad.length === 0 ? "spot countries carry real region extents" : `degenerate region bboxes: ${bad.join(" ")}`,
+			detail: !bad.length ? "spot countries carry real region extents" : `degenerate region bboxes: ${bad.join(" ")}`,
 		})
 	}
 

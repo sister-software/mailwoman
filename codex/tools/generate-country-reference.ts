@@ -103,7 +103,7 @@ export async function generateCountryReference(
 		}
 		const currencyCodes = Object.keys(country.currencies ?? {}).toSorted()
 
-		if (currencyCodes.length > 0) {
+		if (currencyCodes.length) {
 			const code = currencyCodes[0]!
 			const info = country.currencies![code] ?? {}
 			entry.currency = { isoCode: code }
@@ -117,7 +117,7 @@ export async function generateCountryReference(
 			}
 		}
 
-		if (Object.keys(entry).length > 0) {
+		if (Object.keys(entry).length) {
 			rows[alpha2] = entry
 		}
 	}

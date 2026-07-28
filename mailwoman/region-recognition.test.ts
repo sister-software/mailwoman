@@ -23,7 +23,7 @@ const tree = (roots: AddressNode[]): AddressTree => ({
 	system: "western",
 })
 const tagsOf = (n: AddressNode): string =>
-	`${n.tag}:${n.value}${n.children.length > 0 ? `[${n.children.map(tagsOf).join(",")}]` : ""}`
+	`${n.tag}:${n.value}${n.children.length ? `[${n.children.map(tagsOf).join(",")}]` : ""}`
 
 describe("usStateSlug", () => {
 	it("recognizes full names and 2-letter abbreviations, case/space-insensitive", () => {

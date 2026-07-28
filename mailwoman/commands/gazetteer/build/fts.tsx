@@ -40,7 +40,7 @@ export { OptionsSchema as options }
 const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			if (args.length === 0) throw new Error("expected at least one <wof-db> path")
+			if (!args.length) throw new Error("expected at least one <wof-db> path")
 			const checks: Check[] = []
 
 			for (const path of args) {

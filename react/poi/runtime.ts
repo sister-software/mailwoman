@@ -38,7 +38,7 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 	const lexicon: POIPhraseLookup = (phrase, locale) => {
 		const categoryHits = lookup.lookupPOICategory(phrase, locale)
 
-		if (categoryHits.length > 0) {
+		if (categoryHits.length) {
 			return categoryHits.map((match) => ({
 				kind: "category",
 				categoryID: match.category.id,

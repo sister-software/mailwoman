@@ -115,7 +115,7 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 	let sawLocality = false
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop()!
 
 		if (node.tag === "locality") {
@@ -486,7 +486,7 @@ export async function runPipeline(
 			{ labels, text: normalized.normalized }
 		)
 
-		if (classifierTopK.length > 0) {
+		if (classifierTopK.length) {
 			// Concordance axes (#478): when the caller wires a backend, one bounded pre-fetch
 			// activates the resolver-candidate + parent-chain scoring the reconciler already
 			// implements. Absent backend = classifier-only reconcile (byte-stable).
@@ -535,7 +535,7 @@ export async function runPipeline(
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
-	if (phraseProposals.length > 0 && tree.roots.length >= 0) {
+	if (phraseProposals.length && tree.roots.length >= 0) {
 		const tAudit = performance.now()
 		tree = grouperAudit(tree, phraseProposals, normalized.normalized, auditClassifierTopK)
 		timing["grouper-audit"] = performance.now() - tAudit
@@ -692,7 +692,7 @@ export function grouperAudit(
 	text: string,
 	classifierTopK?: ClassifierCandidate[]
 ): AddressTree {
-	if (proposals.length === 0) return tree
+	if (!proposals.length) return tree
 
 	const roots = [...tree.roots]
 

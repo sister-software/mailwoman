@@ -40,7 +40,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 			n.end <= input.length
 	)
 
-	if (spans.length === 0) return null
+	if (!spans.length) return null
 
 	// Per-character owner = the most specific (shortest) span covering it. Robust to any parent/child
 	// span nesting the tree hands us — the leaf always wins, so every character renders once.

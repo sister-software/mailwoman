@@ -41,7 +41,7 @@ export { OptionsSchema as options }
 const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			if (args.length === 0) throw new Error("expected at least one <admin-db> path")
+			if (!args.length) throw new Error("expected at least one <admin-db> path")
 			const checks: Check[] = []
 
 			for (const path of args) {

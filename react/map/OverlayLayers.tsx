@@ -25,7 +25,7 @@ export interface OverlayLayersProps {
 
 /** Render each overlay as one `<Source>` and its `<Layer>`s, honoring the `visible` flag via `visibility`. */
 export function OverlayLayers({ overlays }: OverlayLayersProps): ReactNode {
-	if (!overlays || overlays.length === 0) return null
+	if (!overlays || !overlays.length) return null
 
 	return (
 		<>

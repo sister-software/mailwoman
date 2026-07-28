@@ -125,12 +125,12 @@ function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_R
 	return best
 }
 const pct = (xs: number[], p: number): number => {
-	if (xs.length === 0) return Number.NaN
+	if (!xs.length) return Number.NaN
 	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
-const mean = (xs: number[]): number => (xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
+const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
 const norm = (s: string | undefined): string =>
 	(s ?? "")
 		.normalize("NFKD")
@@ -335,8 +335,8 @@ async function main() {
 		coord_p90_km: +pct(errs, 90).toFixed(2),
 		// RESOLVED-ONLY coordinate: the quality WHERE the address resolves, separated from the
 		// unresolved penalty (which pins to FR_CENTROID and is meaningless for non-FR locales).
-		coord_p50_resolved_km: resolvedErrs.length > 0 ? +pct(resolvedErrs, 50).toFixed(2) : null,
-		coord_p90_resolved_km: resolvedErrs.length > 0 ? +pct(resolvedErrs, 90).toFixed(2) : null,
+		coord_p50_resolved_km: resolvedErrs.length ? +pct(resolvedErrs, 50).toFixed(2) : null,
+		coord_p90_resolved_km: resolvedErrs.length ? +pct(resolvedErrs, 90).toFixed(2) : null,
 		resolve_rate: +(resolved / n).toFixed(4),
 		region_emit_rate: hasGoldRegion ? +(regionEmitted / hasGoldRegion).toFixed(4) : null,
 		region_correct_rate: hasGoldRegion ? +(regionCorrect / hasGoldRegion).toFixed(4) : null,

@@ -71,7 +71,7 @@ const SpinnerRing = memo<{ size: NonNullable<LoadingIndicatorProps["size"]> }>(f
 })
 
 const StagedProgress = memo<{ steps?: string[]; activeStep: number }>(function StagedProgress({ steps, activeStep }) {
-	if (!steps || steps.length === 0) return null
+	if (!steps || !steps.length) return null
 
 	return (
 		<ul className="mw-staged">

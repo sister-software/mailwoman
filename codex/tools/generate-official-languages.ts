@@ -124,10 +124,10 @@ export async function generateOfficialLanguages(
 			}
 		}
 
-		if (official.size === 0 && regional.size === 0) continue
+		if (!official.size && !regional.size) continue
 		table[territory] = { official: [...official].toSorted() }
 
-		if (regional.size > 0) {
+		if (regional.size) {
 			table[territory]!.regional = [...regional].toSorted()
 		}
 	}

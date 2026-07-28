@@ -88,7 +88,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 		const entries = byPhrase.get(norm)
 
-		if (!entries || entries.length === 0) return []
+		if (!entries || !entries.length) return []
 
 		const language = locale?.split(/[-_]/)[0]
 		const best = new Map<string, CategoryMatch>()
@@ -142,7 +142,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 		if (!category) return []
 
-		return category.overtureCategories && category.overtureCategories.length > 0
+		return category.overtureCategories && category.overtureCategories.length
 			? [...category.overtureCategories]
 			: [category.id]
 	}

@@ -143,7 +143,7 @@ function spliceStreetTree(
 	const streetSegs = hyp.segments.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
 
 	// No street in the winning hypothesis → nothing to splice; the argmax tree stands.
-	if (streetSegs.length === 0) {
+	if (!streetSegs.length) {
 		return buildAddressTree(trace.text, tokens)
 	}
 
@@ -213,7 +213,7 @@ export async function rerankByStreetEvidence(
 
 	const hyps = decodeSegmentationsKBest(trace.spanScores, trace.tokens.length, grammar, opts.k ?? 5)
 
-	if (hyps.length === 0) {
+	if (!hyps.length) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
 	}
 

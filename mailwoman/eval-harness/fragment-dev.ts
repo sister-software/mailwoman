@@ -100,7 +100,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		}
 	}
 
-	const spanExact = sample.length > 0 ? spanHits / sample.length : 0
+	const spanExact = sample.length ? spanHits / sample.length : 0
 	const tagAccuracy = tagTotal ? tagHits / tagTotal : 0
 	const trailingNumberToPostcode = numberRows ? numberAsPostcode / numberRows : 0
 

@@ -149,7 +149,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 
 	// Walk the FST token by token, collecting step results
 	const walkSteps = useMemo((): WalkStep[] => {
-		if (!fstMatcher || tokens.length === 0) return []
+		if (!fstMatcher || !tokens.length) return []
 
 		const steps: WalkStep[] = []
 
@@ -234,7 +234,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	// Render: no tokens
 	// -------------------------------------------------------------------
 
-	if (tokens.length === 0) {
+	if (!tokens.length) {
 		return (
 			<div className={styles.fstWalker}>
 				<div className={styles.header}>
@@ -307,7 +307,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 							)}
 
 							{/* Places at accepting state */}
-							{places && places.length > 0 ? (
+							{places && places.length ? (
 								<div className={styles.placesPanel}>
 									<div className={styles.placesHeader}>
 										{places.length} place{places.length !== 1 ? "s" : ""} at depth {step.result!.depth}
@@ -323,7 +323,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 			</div>
 
 			{/* Continuations from final valid state */}
-			{continuations && continuations.length > 0 ? (
+			{continuations && continuations.length ? (
 				<div className={styles.continuationsPanel}>
 					<div className={styles.continuationsHeader}>Valid continuations ({continuations.length})</div>
 					<div className={styles.continuationsList}>

@@ -46,7 +46,7 @@ function pyFixed(x: number, d: number): string {
 		roundUp = true
 	} else if (rest[0]! < "5") {
 		roundUp = false
-	} else if (rest.slice(1).replace(/0+$/, "").length > 0) {
+	} else if (rest.slice(1).replace(/0+$/, "").length) {
 		roundUp = true
 	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")

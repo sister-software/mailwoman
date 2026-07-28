@@ -170,7 +170,7 @@ async function fetchChunk(
 			lines.push(JSON.stringify(row))
 		}
 	}
-	await writeFile(chunkPath, lines.length === 0 ? "" : lines.join("\n") + "\n")
+	await writeFile(chunkPath, !lines.length ? "" : lines.join("\n") + "\n")
 
 	return { recordCount: lines.length, errors }
 }

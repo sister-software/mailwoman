@@ -60,7 +60,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 
 	const supersededBy = props["wof:superseded_by"]
 
-	if (supersededBy && supersededBy.length > 0) return null
+	if (supersededBy && supersededBy.length) return null
 
 	const placetype = props["wof:placetype"]
 
@@ -99,7 +99,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 		const vals = Array.isArray(value) ? value : [value]
 
 		for (const v of vals) {
-			if (typeof v === "string" && v.length > 0) {
+			if (typeof v === "string" && v.length) {
 				names.push({ name: v, language: lang, privateuse, official })
 			}
 		}

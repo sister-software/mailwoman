@@ -107,7 +107,7 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 	for (const { code } of AU_LEVEL_DESIGNATORS) {
 		const variants = AU_LEVEL_DESIGNATOR_VARIANTS[code]
 
-		if (!variants || variants.length === 0) {
+		if (!variants || !variants.length) {
 			throw new Error(`[codex/au/level-designator] code "${code}" has no variants in AU_LEVEL_DESIGNATOR_VARIANTS`)
 		}
 

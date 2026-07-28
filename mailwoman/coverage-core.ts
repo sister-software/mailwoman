@@ -240,7 +240,7 @@ export async function buildCoverageTiles(
 	// vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
 
-	if (segIdx.length > 0) {
+	if (segIdx.length) {
 		const segAgg = segIdx
 			.map(
 				(i) =>

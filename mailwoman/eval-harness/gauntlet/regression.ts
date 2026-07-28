@@ -140,10 +140,10 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		if (c.status === "pass") {
 			gated++
 
-			if (issues.length > 0) {
+			if (issues.length) {
 				fails.push(`  ✗ ${c.id} "${c.input}": ${issues.join("; ")}`)
 			}
-		} else if (issues.length > 0) {
+		} else if (issues.length) {
 			tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
 		} else {
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)
@@ -159,7 +159,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		console.log(f)
 	}
 
-	if (tracked.length > 0) {
+	if (tracked.length) {
 		console.log(`\ntracked (known_fail / improvement_target, non-blocking):`)
 
 		for (const t of tracked) {
@@ -167,7 +167,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	if (newlyPassing.length > 0) {
+	if (newlyPassing.length) {
 		console.log(`\n⚠ tracked cases that now PASS — promote to status=pass:`)
 
 		for (const p of newlyPassing) {

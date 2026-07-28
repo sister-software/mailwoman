@@ -74,7 +74,7 @@ export function lookupVariantAliases(text: string, locale: string): AliasLookupR
 
 	const candidates = INDEX.get(norm)
 
-	if (!candidates || candidates.length === 0) return []
+	if (!candidates || !candidates.length) return []
 
 	const language = locale.split(/[-_]/)[0]
 	const results: AliasLookupResult[] = []

@@ -115,7 +115,7 @@ export async function writeGazetteerCoverageManifest(
 	await createCountryCoverageTable(db)
 	await createCountryBBoxTable(db)
 
-	if (facts.coverage.length > 0) {
+	if (facts.coverage.length) {
 		await db
 			.insertInto(COUNTRY_COVERAGE_TABLE)
 			.values(
@@ -131,7 +131,7 @@ export async function writeGazetteerCoverageManifest(
 			.execute()
 	}
 
-	if (facts.bboxes.length > 0) {
+	if (facts.bboxes.length) {
 		await db
 			.insertInto(COUNTRY_BBOX_TABLE)
 			.values(

@@ -243,7 +243,7 @@ export const typoInject: Augmentation = (row) => {
 		([, v]) => v && ALPHA_NAME.test(v) && occurs(v) === 1 && !values.some((o) => o !== v && o.includes(v))
 	)
 
-	if (eligible.length === 0) return null
+	if (!eligible.length) return null
 	const [tag, value] = eligible[Math.floor(rng() * eligible.length)]!
 	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
 	const positions: number[] = []
@@ -253,7 +253,7 @@ export const typoInject: Augmentation = (row) => {
 			positions.push(i)
 		}
 
-	if (positions.length === 0) return null
+	if (!positions.length) return null
 	const i = positions[Math.floor(rng() * positions.length)]!
 	const ch = value[i]!
 	let typed: string
@@ -814,7 +814,7 @@ export function composeAdversarialRow(
 
 	const venueTokens = tokenizer.tokenize(venueTrimmed)
 
-	if (venueTokens.length === 0) {
+	if (!venueTokens.length) {
 		return { kind: "quarantined", row: { row: address, reason: "venue-no-tokens" } }
 	}
 

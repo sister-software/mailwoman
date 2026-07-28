@@ -210,7 +210,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 		}
 	}
 
-	if (streetParts.length > 0) {
+	if (streetParts.length) {
 		out.street = streetParts.join(" ")
 	}
 	const xs: string[] = []
@@ -223,7 +223,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 		xs.push(flat.intersection_b)
 	}
 
-	if (xs.length > 0) {
+	if (xs.length) {
 		out.street = [out.street, ...xs].filter(Boolean).join(" ")
 	}
 
@@ -343,7 +343,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 		n: rows.length,
 		exactMatch: exact,
 		exactRate: exact / Math.max(rows.length, 1),
-		macroF1: tags.size > 0 ? f1Sum / tags.size : 0,
+		macroF1: tags.size ? f1Sum / tags.size : 0,
 		microF1,
 		perTag,
 	}

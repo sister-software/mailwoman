@@ -367,7 +367,7 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size > 0)) {
+		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
 			warnUnfedChannel(
 				"anchor",
 				resolved.anchorLookupPath
@@ -518,7 +518,7 @@ export class NeuralAddressClassifier {
 
 	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
-		if (text.length === 0) return { raw: text, roots: [] }
+		if (!text.length) return { raw: text, roots: [] }
 		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
 		// Detection-gated (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
 		// path had run it since #713 while the pipeline factory + raw classifier defaulted off); `false`
@@ -539,7 +539,7 @@ export class NeuralAddressClassifier {
 	 * pre-repair) — they are the model's emissions, not the decode's opinions.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
-		if (text.length === 0) {
+		if (!text.length) {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
 		const { tokens, logits, pieces } = await this.#decode(text, opts)
@@ -563,7 +563,7 @@ export class NeuralAddressClassifier {
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]
 
-		if (text.length === 0) {
+		if (!text.length) {
 			// Mirror #decode's contract on the degenerate input: systemSource still reflects the
 			// RESOLVED conventions mode (opts over config), and every prior kind gets its
 			// participation record (applied: false — nothing can fire on zero pieces).
@@ -800,7 +800,7 @@ export class NeuralAddressClassifier {
 		const proposerCfg = (opts?.spanProposer ?? true) ? configured : undefined
 		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
 
-		if (spanProposals.length > 0) {
+		if (spanProposals.length) {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
 		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
@@ -873,7 +873,7 @@ export class NeuralAddressClassifier {
 				}
 			}
 
-			if (forbidden.size > 0) {
+			if (forbidden.size) {
 				conventionsMaskApplied = true
 				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
 			}
@@ -968,7 +968,7 @@ export class NeuralAddressClassifier {
 			// per-piece projection — a merged span's label lands on every piece it covers, keeping
 			// before/after index-aligned with `pieces` per the TraceRepair contract.
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
-			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
+			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length ? { blockedSpans } : undefined)
 
 			if (traceRepairs) {
 				recordRepair("spanBridge", before, labelsPerPiece(tokens))
@@ -1038,7 +1038,7 @@ export class NeuralAddressClassifier {
 	 * labels.ts for the contract.
 	 */
 	private assertEmissionWidth(logits: readonly number[][]): void {
-		if (logits.length === 0) return
+		if (!logits.length) return
 		const width = logits[0]!.length
 
 		if (width > this.labels.length) {

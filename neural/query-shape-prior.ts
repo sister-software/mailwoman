@@ -117,7 +117,7 @@ export function buildEmissionPriors(
 		labelToCol.set(labels[k]!, k)
 	}
 
-	if (shape.knownFormats.length === 0 && !shape.regionAbbreviations?.length) {
+	if (!shape.knownFormats.length && !shape.regionAbbreviations?.length) {
 		return matrix
 	}
 
@@ -183,7 +183,7 @@ function applyScopedLocalityBias(
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
 		// Guard 3: the doubleton shape — a short leading name, not a sentence.
-		if (candidates.length === 0 || candidates.length > 4) continue
+		if (!candidates.length || candidates.length > 4) continue
 
 		for (let i = 0; i < candidates.length; i++) {
 			const col = i === 0 ? bLocCol : iLocCol
@@ -203,7 +203,7 @@ function overlaps(a: { start: number; end: number }, b: { start: number; end: nu
 
 /** Element-wise add two matrices of equal shape. Returns a new matrix. */
 export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
-	if (priors.length === 0) return emissions.map((row) => row.slice())
+	if (!priors.length) return emissions.map((row) => row.slice())
 	const out: number[][] = []
 
 	for (let t = 0; t < emissions.length; t++) {

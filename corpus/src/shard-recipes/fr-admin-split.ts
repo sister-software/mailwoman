@@ -146,7 +146,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 		const pool = await readCommunes(communesPath)
 		console.error(`  ${communesPath}: ${pool.length} communes with derived département`)
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No communes — build the TSV from BAN first (see the recipe header).")
 		}
 

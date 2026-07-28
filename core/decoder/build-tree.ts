@@ -178,7 +178,7 @@ function findParent(
 	for (const parentTag of candidates) {
 		const matches = all.filter((s) => s !== span && s.tag === parentTag)
 
-		if (matches.length === 0) continue
+		if (!matches.length) continue
 
 		return matches.reduce((best, cur) => (distance(cur, span) < distance(best, span) ? cur : best))
 	}

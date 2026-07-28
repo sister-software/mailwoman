@@ -137,7 +137,7 @@ async function serve(): Promise<void> {
 
 	// #1009: fail FRIENDLY before the resolver's internal shard error — same message shape as
 	// @mailwoman/photon's pre-flight (kept in lockstep; docs/switching pages are the maintained pointer).
-	if (!candidateDb && wofPaths.length === 0) {
+	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			[
 				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
@@ -273,7 +273,7 @@ async function serve(): Promise<void> {
 			if (!reverseGeo) return null
 			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
 
-			if (hierarchy.length === 0) return null
+			if (!hierarchy.length) return null
 			const address: NominatimAddressDetails = {}
 
 			for (const place of hierarchy) {

@@ -152,10 +152,10 @@ if (jsonOut) {
 console.log(`\nover-fire (region/locality tagged as country): ${overfire}`)
 console.log(`missed country (gold country, none emitted): ${missedCountry}`)
 
-if (overfireCases.length > 0) {
+if (overfireCases.length) {
 	console.log("\n-- over-fire cases --\n" + overfireCases.join("\n"))
 }
 
-if (missedCases.length > 0) {
+if (missedCases.length) {
 	console.log("\n-- missed-country cases --\n" + missedCases.join("\n"))
 }

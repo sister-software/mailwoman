@@ -196,7 +196,7 @@ export async function* fetchRedistricting(
 		let inserted = 0
 		let batch: PLBlockTable[] = []
 		const flush = async () => {
-			if (batch.length === 0) return
+			if (!batch.length) return
 			const rows = batch
 			batch = []
 			await kdb.insertInto("pl_block").values(rows).execute()

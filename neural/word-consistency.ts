@@ -164,7 +164,7 @@ export function enforceWordConsistency(
 	const words: number[][] = []
 	let cur: number[] = []
 	const flush = (): void => {
-		if (cur.length > 0) {
+		if (cur.length) {
 			words.push(cur)
 		}
 		cur = []

@@ -65,7 +65,7 @@ export const noStreetLedRecipe: ShardRecipe = {
 				.filter((line) => line && !line.startsWith("#"))
 		)
 
-		if (excluded.size === 0) throw new Error(`no-street-led: --exclude-surfaces "${excludePath}" listed no surfaces`)
+		if (!excluded.size) throw new Error(`no-street-led: --exclude-surfaces "${excludePath}" listed no surfaces`)
 
 		let read = 0
 		let emitted = 0

@@ -329,7 +329,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 	const violations = outcomes.filter((o) => o.verdict !== "INVARIANT")
 
-	if (violations.length > 0) {
+	if (violations.length) {
 		report(`\nviolations:`)
 
 		for (const v of violations) {
@@ -351,7 +351,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		}
 	}
 
-	if (skipped.length > 0) {
+	if (skipped.length) {
 		report(`\nskipped (transform declared but not applicable — check the fixture):`)
 
 		for (const s of skipped) {

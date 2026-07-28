@@ -112,7 +112,7 @@ async function cmdCheck(path: string) {
 	const result = await checkRoute(path)
 	reportRoute(path, result)
 
-	if (result.status >= 400 || result.errors.length > 0 || result.soft404) {
+	if (result.status >= 400 || result.errors.length || result.soft404) {
 		process.exit(1)
 	}
 }
@@ -127,7 +127,7 @@ async function cmdSmoke() {
 			const result = await checkRoute(r)
 			reportRoute(r, result)
 
-			if (result.status >= 400 || result.errors.length > 0 || result.soft404) {
+			if (result.status >= 400 || result.errors.length || result.soft404) {
 				fail++
 			}
 		} catch (error) {
@@ -176,7 +176,7 @@ if (values.smoke) {
 } else if (values.eval) {
 	const [path, ...jsParts] = positionals
 
-	if (!path || jsParts.length === 0) {
+	if (!path || !jsParts.length) {
 		console.error(`eval requires a path and JS code\nsee header of ${import.meta.url} for usage`)
 		process.exit(2)
 	}

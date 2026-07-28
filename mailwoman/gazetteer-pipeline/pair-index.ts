@@ -64,7 +64,7 @@ export interface PairIndexBuildResult {
  * hide the empty-input bug from the caller.
  */
 export function nearestRankPercentile(sortedAscending: readonly number[], p: number): number {
-	if (sortedAscending.length === 0) {
+	if (!sortedAscending.length) {
 		throw new Error("nearestRankPercentile: empty input")
 	}
 
@@ -131,17 +131,16 @@ export class PairIndexBuilder {
 			.toSorted(([a], [b]) => a - b)
 			.map(([words, rows]) => ({ words, rows }))
 
-		const distribution: CityWordLengthDistribution =
-			sortedLengths.length > 0
-				? {
-						totalRows: sortedLengths.length,
-						p50: nearestRankPercentile(sortedLengths, 50),
-						p90: nearestRankPercentile(sortedLengths, 90),
-						p99: nearestRankPercentile(sortedLengths, 99),
-						max: sortedLengths.at(-1)!,
-						counts,
-					}
-				: { totalRows: 0, p50: 0, p90: 0, p99: 0, max: 0, counts: [] }
+		const distribution: CityWordLengthDistribution = sortedLengths.length
+			? {
+					totalRows: sortedLengths.length,
+					p50: nearestRankPercentile(sortedLengths, 50),
+					p90: nearestRankPercentile(sortedLengths, 90),
+					p99: nearestRankPercentile(sortedLengths, 99),
+					max: sortedLengths.at(-1)!,
+					counts,
+				}
+			: { totalRows: 0, p50: 0, p90: 0, p99: 0, max: 0, counts: [] }
 
 		return {
 			entries: [...this.#seen.values()],
@@ -180,7 +179,7 @@ export function applyPairIndexHoldout(
 ): PairIndexHoldoutResult {
 	const clamped = Math.min(1, Math.max(0, fraction))
 
-	if (clamped === 0 || entries.length === 0) {
+	if (clamped === 0 || !entries.length) {
 		return { kept: [...entries], heldOut: [] }
 	}
 

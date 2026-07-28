@@ -181,7 +181,7 @@ export async function buildOutlierOA(
 			if (IN_MAP.has(cc)) continue
 			const rows = await rowsFor(cc)
 
-			if (rows.length === 0) continue
+			if (!rows.length) continue
 
 			if (heldout) {
 				for (const raw of rows) {

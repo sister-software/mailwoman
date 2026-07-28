@@ -92,7 +92,7 @@ function sanitizeFTS(text: string): string {
 
 /** Sql.js exec result → row objects. */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || res.length === 0) return []
+	if (!res || !res.length) return []
 	const { columns, values } = res[0]
 
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
@@ -369,7 +369,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
 			)
 
-			if (types.length > 0) {
+			if (types.length) {
 				conds.push(`spr.placetype IN (${types.map(sqlStr).join(",")})`)
 			}
 		}
@@ -599,7 +599,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			filters.push(`country_id = ${cid}`)
 		}
 
-		if (requestedPlacetypes.length > 0) {
+		if (requestedPlacetypes.length) {
 			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
 			// localadmin). Placetypes without a group entry — `postalcode`, `country`, `county` — pass
 			// through unchanged; the global candidate table carries rows for all of them.
@@ -607,7 +607,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				.map((t) => placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
 
-			if (ids.length === 0) return []
+			if (!ids.length) return []
 			filters.push(`placetype_id IN (${ids.join(",")})`)
 		}
 
@@ -629,7 +629,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 		let rows = await probe(nameKey)
 
-		if (rows.length === 0) {
+		if (!rows.length) {
 			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD", "Odense S", "Hart b.Graz").
 			// Tried ONLY on an exact miss; the cascade's region bbox disambiguates any base-name ambiguity.
@@ -672,7 +672,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		// (population + nearness in one additive scale) so an in-view namesake wins a tie. Byte-identical to
 		// population order when no bias is passed. `score` = -neg_rank = log10(population + 1). Constants
 		// MUST match resolver-wof-sqlite/candidate-lookup.ts (the #861 server↔demo parity contract).
-		if (query.bias && query.bias.length > 0) {
+		if (query.bias && query.bias.length) {
 			const BIAS_BOOST = 4
 			const POP_BOOST = 4
 			const POP_SCALE_LOG10 = 6
@@ -711,7 +711,7 @@ export function makeHTTPVFSPolygonLookup(worker: HTTPVFSWorker) {
 		async get(id: number): Promise<unknown | null> {
 			const rows = rowsFromExec(await worker.db.exec(`SELECT geom FROM polygons WHERE id = ${Number(id)}`))
 
-			if (rows.length === 0) return null
+			if (!rows.length) return null
 
 			try {
 				return JSON.parse(String(rows[0].geom))

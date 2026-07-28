@@ -76,7 +76,7 @@ function levelValues(al: unknown): string[] {
 		out.push(m[1]!)
 	}
 
-	if (out.length === 0) {
+	if (!out.length) {
 		for (const m of s.matchAll(/"value":\s*"([^"]*)"/g)) {
 			out.push(m[1]!)
 		}

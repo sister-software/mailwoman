@@ -478,7 +478,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					.filter((s) => s in STATE_FIPS)
 			: Object.keys(STATE_FIPS)
 
-		if (TARGET_STATES.length === 0) {
+		if (!TARGET_STATES.length) {
 			throw commandError("No valid states specified. Check --states values against the STATE_FIPS map.")
 		}
 
@@ -534,7 +534,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
 			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
 
-			if (failed.length > 0) {
+			if (failed.length) {
 				console.error(`  failed GEOIDs: ${failed.slice(0, 20).join(", ")}${failed.length > 20 ? " …" : ""}`)
 			}
 			console.error("")
@@ -556,7 +556,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			return readdirSync(EDGES_DIR).some((f) => pattern.test(f))
 		})
 
-		if (availableStates.length === 0) {
+		if (!availableStates.length) {
 			throw commandError("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
 		}
 		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)

@@ -110,7 +110,7 @@ const missing = Object.entries({
 	.filter(([, p]) => !existsSync(p))
 	.map(([k, p]) => `  ${k}: ${p}`)
 
-if (missing.length > 0) {
+if (missing.length) {
 	console.error(
 		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
 			"  Stage a demo release (yarn start/build in docs/ — the demo-assets plugin stages the artifacts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
@@ -168,13 +168,12 @@ const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin
 	.map((f) => path.join(STAGE, f))
 	.filter((p) => existsSync(p))
 
-if (postcodeBinaries.length === 0) {
+if (!postcodeBinaries.length) {
 	console.warn(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
 }
-const anchorLookup =
-	postcodeBinaries.length > 0
-		? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
-		: undefined
+const anchorLookup = postcodeBinaries.length
+	? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
+	: undefined
 
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 const classifier = new NeuralAddressClassifier({
@@ -231,7 +230,7 @@ for (const row of rows) {
 	// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.
 	let anchorCentroid = false
 
-	if (hits.length === 0 && postcodeNode?.value && anchorLookup) {
+	if (!hits.length && postcodeNode?.value && anchorLookup) {
 		const anchorHit = anchorLookup.get(String(postcodeNode.value).toUpperCase())
 
 		if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {

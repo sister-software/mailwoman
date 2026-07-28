@@ -147,7 +147,7 @@ const orgTokens = (s: string): Set<string> =>
 			.filter((t) => t && !ORG_STOP.has(t))
 	)
 function orgJaccard(a: Set<string>, b: Set<string>): number {
-	if (a.size === 0 || b.size === 0) return 0
+	if (!a.size || !b.size) return 0
 	let inter = 0
 
 	for (const t of a)
@@ -947,7 +947,7 @@ export async function nppesDedupBenchmark(
 	lines.push("")
 	lines.push(`- records: ${N} · true entities (NPIs): ${kept.size} · recovered clusters: ${base.score.clusters}`)
 	lines.push(
-		`- candidate pairs blocked: ${base.res.candidatePairs}${base.res.droppedBlocks.length > 0 ? ` · oversized blocks skipped: ${base.res.droppedBlocks.length}` : ""}`
+		`- candidate pairs blocked: ${base.res.candidatePairs}${base.res.droppedBlocks.length ? ` · oversized blocks skipped: ${base.res.droppedBlocks.length}` : ""}`
 	)
 	lines.push(
 		`- **Over-merge (precision):** ${base.score.overMergedClusters} clusters fuse ≥2 distinct NPIs (largest fuses ` +

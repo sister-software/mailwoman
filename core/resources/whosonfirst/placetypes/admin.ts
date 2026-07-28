@@ -143,12 +143,12 @@ export function pluckPlacetypeSpec({
 		latitude: typeof latitude === "number" ? latitude : undefined,
 		longitude: typeof longitude === "number" ? longitude : undefined,
 		population,
-		concordances: concordances && Object.keys(concordances).length > 0 ? concordances : undefined,
+		concordances: concordances && Object.keys(concordances).length ? concordances : undefined,
 		isCurrent,
 		isDeprecated: !!edtfDeprecated,
 		isCeased: !!edtfCessation,
-		isSuperseded: !!(superseded_by && superseded_by.length > 0),
-		isSuperseding: !!(supersedes && supersedes.length > 0),
+		isSuperseded: !!(superseded_by && superseded_by.length),
+		isSuperseding: !!(supersedes && supersedes.length),
 		lastmodified: typeof lastmodified === "number" ? lastmodified : undefined,
 	}
 }

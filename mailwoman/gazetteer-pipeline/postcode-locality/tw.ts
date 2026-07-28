@@ -262,7 +262,7 @@ interface AdminPlace {
 export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
 	const districts = loadPostalDistricts(args.postalXml)
 
-	if (districts.length === 0) {
+	if (!districts.length) {
 		console.error(`no postal districts parsed from ${args.postalXml}`)
 		process.exit(1)
 	}
@@ -629,6 +629,6 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	console.log(
 		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +
 			`${rows.length} rows -> ${args.output}` +
-			(unmatched.length > 0 ? `\n  unmatched: ${unmatched.join(", ")}` : "")
+			(unmatched.length ? `\n  unmatched: ${unmatched.join(", ")}` : "")
 	)
 }

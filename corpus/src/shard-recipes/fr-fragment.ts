@@ -174,7 +174,7 @@ export const frFragmentRecipe: ShardRecipe = {
 				.filter((line) => line && !line.startsWith("#"))
 		)
 
-		if (excluded.size === 0) throw new Error(`fr-fragment: --exclude-surfaces "${excludePath}" listed no surfaces`)
+		if (!excluded.size) throw new Error(`fr-fragment: --exclude-surfaces "${excludePath}" listed no surfaces`)
 
 		const hnProb = opts.hnProb ?? 0.35
 		const bareLocalityProb = opts.bareProb ?? 0.25
@@ -267,7 +267,7 @@ export const frFragmentRecipe: ShardRecipe = {
 		const pool = [...localities].toSorted()
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 
-		for (let i = 0; i < wanted && pool.length > 0; i++) {
+		for (let i = 0; i < wanted && pool.length; i++) {
 			// BAN gives `locality_base` normalized; restore the casing the fragment board also
 			// reconstructs, so train and eval show the model the same shape of French.
 			const name = frTitleCase(pool[Math.floor(random() * pool.length)]!)

@@ -65,7 +65,7 @@ export async function buildFDICHoldout(): Promise<void> {
 	for (let offset = 0; ; offset += PAGE) {
 		const rows = await fetchPage(offset)
 
-		if (rows.length === 0) break
+		if (!rows.length) break
 		total += rows.length
 
 		for (const r of rows) {

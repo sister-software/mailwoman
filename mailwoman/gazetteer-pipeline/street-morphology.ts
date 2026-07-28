@@ -66,7 +66,7 @@ export function buildStreetMorphologyArtifact(
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 	const result = buildStreetMorphologyFST({
 		dictionariesDir,
-		...(opts.locales && opts.locales.length > 0 ? { locales: opts.locales } : {}),
+		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
 		...(opts.minVariantLength !== undefined ? { minVariantLength: opts.minVariantLength } : {}),
 		onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 	})

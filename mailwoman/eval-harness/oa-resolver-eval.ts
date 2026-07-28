@@ -173,7 +173,7 @@ interface Resolved {
 function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		const ap = n.metadata?.address_point as { lat: number; lon: number } | undefined
 
@@ -188,7 +188,7 @@ function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | 
 function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		const ip = n.metadata?.interpolated_point as { lat: number; lon: number } | undefined
 
@@ -539,7 +539,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				.filter(Boolean)
 			const anc = ancestorTokensFor(locNode.id)
 
-			if (quals.length > 0 && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
+			if (quals.length && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
 		}
 
 		return false
@@ -667,7 +667,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (a.confidence < anchorMinConf) continue
 			const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
 
-			if (placed.length === 0) continue
+			if (!placed.length) continue
 			// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
 			// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
 			// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
@@ -692,7 +692,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		let best: { posterior: Record<string, number>; conf: number } | null = null
 
 		for (const a of extractAnchors(input, postcodeLookup)) {
-			if (a.candidates.length === 0) continue
+			if (!a.candidates.length) continue
 
 			if (!best || a.confidence > best.conf) {
 				best = { posterior: a.posterior, conf: a.confidence }
@@ -999,7 +999,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				let pc: string | undefined
 				const stk = [...nDecorated.roots]
 
-				while (stk.length > 0) {
+				while (stk.length) {
 					const n = stk.pop()!
 
 					if (n.tag === "street" && !s && n.value.trim()) {
@@ -1185,7 +1185,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
 			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
-			if (diagMisses.length > 0) {
+			if (diagMisses.length) {
 				writeFileSync("/tmp/interp-misses.txt", diagMisses.join("\n"))
 				lines.push("")
 				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)

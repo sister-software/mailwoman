@@ -170,7 +170,7 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 			: wofShardPaths()
 	).filter((p: string) => existsSync(p))
 
-	if (paths.length === 0) {
+	if (!paths.length) {
 		throw commandError(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
@@ -287,7 +287,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			shards,
 			...(nationalShards ? { nationalShards } : {}),
 			parsedTree,
-			...(bias.length > 0 ? { bias } : {}),
+			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
@@ -371,7 +371,7 @@ function formatText(result: GeocodeResult): string {
 		lines.push(`postcode:         ${result.postcode}`)
 	}
 
-	if (result.hierarchy.length > 0) {
+	if (result.hierarchy.length) {
 		lines.push("hierarchy:")
 
 		for (const h of result.hierarchy) {
@@ -392,7 +392,7 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
-		if (!input || input.trim().length === 0) {
+		if (!input || !input.trim().length) {
 			throw commandError(
 				'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 			)

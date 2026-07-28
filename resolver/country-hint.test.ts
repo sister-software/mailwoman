@@ -99,7 +99,7 @@ const augustaMeTree = (hint: boolean): AddressTree => ({
 function localityOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "locality") return n

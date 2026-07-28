@@ -120,7 +120,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 			}
 		}
 
-		if (locales.length === 0) {
+		if (!locales.length) {
 			locales.push(
 				{ country: "US", db: join(wof, "postalcode-us.db") },
 				{ country: "NL", db: join(wof, "postalcode-intl.db") },

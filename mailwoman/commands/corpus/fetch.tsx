@@ -139,7 +139,7 @@ const CorpusFetch: CommandComponent<typeof OptionsSchema, typeof args> = ({ opti
 		return (
 			<Text color={failed > 0 ? "red" : "green"}>
 				{args[0]}: fetched {fetched}, skipped {skipped}, failed {failed}
-				{failedCodes.length > 0 ? ` (${failedCodes.join(" ")})` : ""}
+				{failedCodes.length ? ` (${failedCodes.join(" ")})` : ""}
 			</Text>
 		)
 	}

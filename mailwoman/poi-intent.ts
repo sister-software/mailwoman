@@ -35,7 +35,7 @@ import { lookupVariantAliases } from "@mailwoman/variant-aliases"
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	const categoryHits = lookupPOICategory(phrase, locale)
 
-	if (categoryHits.length > 0) {
+	if (categoryHits.length) {
 		return categoryHits.map((m) => ({
 			kind: "category",
 			categoryID: m.category.id,
@@ -46,7 +46,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 
 	const brandHits = lookupPOIBrand(phrase)
 
-	if (brandHits.length > 0) {
+	if (brandHits.length) {
 		return brandHits.map(
 			(m): POIPhraseMatch => ({
 				kind: "brand",

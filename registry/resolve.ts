@@ -397,7 +397,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	let scoringModel = model
 
-	if (config.trainEM && pairs.length > 0) {
+	if (config.trainEM && pairs.length) {
 		const patterns = pairs.map(([a, b]) => agreementPattern(model.comparisons, a, b))
 		scoringModel = estimateParameters(model, patterns).model
 	}

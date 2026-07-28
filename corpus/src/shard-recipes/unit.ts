@@ -265,7 +265,7 @@ export const unitRecipe: ShardRecipe = {
 			}
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No US tuples found — are the cached OA zips present in /tmp/oa-cache?")
 		}
 

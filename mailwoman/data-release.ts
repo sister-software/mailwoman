@@ -34,7 +34,7 @@ export function readReleaseManifest(dataRoot: string): DataReleaseManifest | nul
 			}
 		}
 
-		return Object.keys(out).length > 0 ? out : null
+		return Object.keys(out).length ? out : null
 	} catch {
 		return null
 	}

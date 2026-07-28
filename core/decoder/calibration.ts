@@ -52,7 +52,7 @@ export type Calibrator = (rawConfidence: number) => number
 export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
 
-	if (!bins || bins.length === 0) {
+	if (!bins || !bins.length) {
 		throw new Error("createCalibrator: empty calibration table")
 	}
 	// Sort by center and extract parallel arrays for interpolation.

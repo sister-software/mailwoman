@@ -368,7 +368,7 @@ function asContractDB(kdb: DatabaseClient<POIDatabase>): DatabaseClient<LayerCon
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
 	const progress = opts.onProgress ?? (() => {})
 
-	if (!opts.rows && (!opts.parquetPaths || opts.parquetPaths.length === 0)) {
+	if (!opts.rows && (!opts.parquetPaths || !opts.parquetPaths.length)) {
 		throw new Error("buildPOIDatabase: pass either `rows` (test/injected source) or `parquetPaths` (from ingestPlaces)")
 	}
 
@@ -465,7 +465,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	db.exec("COMMIT")
 	progress("load", `${inserted.toLocaleString()} staged, ${skipped.toLocaleString()} skipped (non-finite coords)`)
 
-	if (categoryCodes.size > 0) {
+	if (categoryCodes.size) {
 		await kdb
 			.insertInto("poi_category_codes")
 			.values([...categoryCodes].map(([category, id]) => ({ id, category })))

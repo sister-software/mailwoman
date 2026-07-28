@@ -597,7 +597,7 @@ function buildSegmentWindows(
 ): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
-	if (nonEmptyGroups.length === 0) return windows
+	if (!nonEmptyGroups.length) return windows
 
 	let segStart = 0
 
@@ -698,7 +698,7 @@ function resolveAnchorParentEnd(
 
 	const matches = collectMatches(inputText)
 
-	if (matches.length === 0) return lastPos
+	if (!matches.length) return lastPos
 
 	let anchor = matches[0]!
 
@@ -821,7 +821,7 @@ function applyWindowBias(
 		matrix[pi]![col] = Math.max(matrix[pi]![col]!, bias)
 	}
 
-	if (transitionBeta === undefined || window.pieceIndices.length === 0) return
+	if (transitionBeta === undefined || !window.pieceIndices.length) return
 
 	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
 

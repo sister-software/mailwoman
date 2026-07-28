@@ -84,7 +84,7 @@ export function buildSpanProposalPriors(
 		matrix.push(new Array<number>(L).fill(0))
 	}
 
-	if (proposals.length === 0) return matrix
+	if (!proposals.length) return matrix
 
 	const labelToCol = new Map<string, number>()
 

@@ -95,7 +95,7 @@ export function lintMDXAngles(
 		filesChecked++
 		const hits = violations(f)
 
-		if (hits.length > 0) {
+		if (hits.length) {
 			report?.(`✗ ${f} — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):`)
 
 			for (const h of hits.slice(0, 5)) {
@@ -105,7 +105,7 @@ export function lintMDXAngles(
 		}
 	}
 
-	if (findings.length > 0) {
+	if (findings.length) {
 		report?.("")
 		report?.("Fix: backtick the expression, spell it out, or escape the brace/angle.")
 	}

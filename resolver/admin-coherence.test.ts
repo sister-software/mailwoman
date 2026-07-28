@@ -100,7 +100,7 @@ const portlandMeTree = (): AddressTree => ({
 function localityOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "locality") return n
@@ -113,7 +113,7 @@ function localityOf(tree: AddressTree): AddressNode | undefined {
 function regionOf(tree: AddressTree): AddressNode | undefined {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "region") return n

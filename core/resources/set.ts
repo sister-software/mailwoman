@@ -46,7 +46,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	 * Add a node to the sequence.
 	 */
 	public override add(...nodes: T[]): this {
-		if (nodes.length === 0) return this
+		if (!nodes.length) return this
 
 		for (const node of nodes) {
 			if (node === undefined || node === null) {
@@ -77,7 +77,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 
 		if (!deleted) return false
 
-		if (this.size === 0) {
+		if (!this.size) {
 			this.#first = null
 			this.#last = null
 		} else if (this.#first === node) {

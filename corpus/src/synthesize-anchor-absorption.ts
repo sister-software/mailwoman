@@ -131,7 +131,7 @@ export function synthesizeAnchorAbsorptionRow(
 	opts: AnchorAbsorptionSynthesisOpts = {}
 ): SynthesizedAnchorAbsorptionRow {
 	const random = opts.random ?? Math.random
-	const realZips = opts.realZips && opts.realZips.length > 0 ? opts.realZips : US_TUPLES.map((t) => t.postcode)
+	const realZips = opts.realZips && opts.realZips.length ? opts.realZips : US_TUPLES.map((t) => t.postcode)
 	const template = opts.forceTemplate ?? pick(ALL_TEMPLATES, random)
 	const street = `${pick(STREET_NAMES, random)} ${pick(STREET_TYPES, random)}`
 

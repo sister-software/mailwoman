@@ -95,7 +95,7 @@ const values = rawValues as {
 // ---------------------------------------------------------------------------
 
 function percentile(xs: number[], p: number): number {
-	if (xs.length === 0) return Number.NaN
+	if (!xs.length) return Number.NaN
 	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
@@ -156,7 +156,7 @@ interface StreetHit {
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "street") {
@@ -326,7 +326,7 @@ async function main(): Promise<void> {
 	const tierStats = tiers.map((t) => {
 		const rows = byTier[t]
 
-		if (rows.length === 0)
+		if (!rows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 		const claimedMeds = median(rows.map((r) => r.claimedRadiusM))
 		const errMeds = median(rows.map((r) => r.errorM))
@@ -356,10 +356,12 @@ async function main(): Promise<void> {
 		const testT = shuffledTier.slice(nCalT)
 		const calScoresT = calT.map((r) => r.errorM / r.claimedRadiusM)
 		const QT = conformalThreshold(calScoresT, alpha)
-		const covT =
-			testT.length > 0 ? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length : Number.NaN
-		const uncalCovT =
-			allRows.length > 0 ? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length : Number.NaN
+		const covT = testT.length
+			? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length
+			: Number.NaN
+		const uncalCovT = allRows.length
+			? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length
+			: Number.NaN
 
 		return {
 			tier: t,

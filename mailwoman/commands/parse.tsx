@@ -181,7 +181,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
 		options.benchmark === undefined &&
-		!(options.policy && options.policy.length > 0) &&
+		!(options.policy && options.policy.length) &&
 		!options.neural &&
 		!options.noNeural &&
 		!options.model &&
@@ -212,7 +212,7 @@ function ParseTask({
 		const input = args[0]!
 
 		if (options.benchmark !== undefined) {
-			if ((options.policy && options.policy.length > 0) || options.neural) {
+			if ((options.policy && options.policy.length) || options.neural) {
 				throw commandError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --policy / --neural)"
 				)
@@ -222,7 +222,7 @@ function ParseTask({
 		}
 
 		// --policy implies the neural proposal/policy path.
-		if (options.policy && options.policy.length > 0) {
+		if (options.policy && options.policy.length) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
 			return runNeural(input, options, policyOverrides)
@@ -518,7 +518,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 const BENCHMARK_WARMUP_ITERATIONS = 5
 
 function percentile(sortedAsc: ReadonlyArray<number>, p: number): number {
-	if (sortedAsc.length === 0) return 0
+	if (!sortedAsc.length) return 0
 	const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length))
 
 	return sortedAsc[idx]!
@@ -736,7 +736,7 @@ async function runNeural(
 
 	// Fast path: no policy AND no resolve → preserve containment nesting via NeuralAddressClassifier
 	// 's direct projection helpers (returns the serialized string in one call).
-	if (policyOverrides.length === 0 && !options.resolve) {
+	if (!policyOverrides.length && !options.resolve) {
 		switch (options.format) {
 			case "xml":
 				return neural.parseXML(input, { inputMode: options.inputMode })
@@ -750,7 +750,7 @@ async function runNeural(
 	// Slow paths build the tree explicitly so we can resolve / re-project before serialization.
 	let tree: AddressTree
 
-	if (policyOverrides.length > 0) {
+	if (policyOverrides.length) {
 		// Policy path: containment nesting is lost — see proposals-to-tree.ts for why.
 		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
 		// Without rule classifiers in the CLI loop, the registry's default rule_only would drop every

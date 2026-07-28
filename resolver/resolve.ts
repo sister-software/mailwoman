@@ -87,7 +87,7 @@ interface ResolutionState {
  * population AND distance) ABSTAINS rather than guess.
  */
 function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
-	if (candidates.length === 0) return null
+	if (!candidates.length) return null
 
 	if (candidates.length === 1) return candidates[0]!
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
@@ -106,10 +106,10 @@ function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLo
 function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	const stack = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
-		if (n.tag === "postcode" && n.value.trim().length > 0) return n.value.trim()
+		if (n.tag === "postcode" && n.value.trim().length) return n.value.trim()
 		stack.push(...n.children)
 	}
 
@@ -130,7 +130,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 	const parts: AddressNode[] = []
 	const stack = [streetNode]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
@@ -182,7 +182,7 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup, bbo
 	let postcode: string | undefined
 	const stack = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "street" && !street) {
@@ -254,7 +254,7 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, r
 	let postcode: string | undefined
 	const stack = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "street" && !street) {
@@ -414,7 +414,7 @@ function applyStreetCentroid(
 	const resolvedCountries: string[] = [] // countries the tree actually resolved to — a post-resolution country hint
 	const stack = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "house_number") {
@@ -460,7 +460,7 @@ function applyStreetCentroid(
 	}
 	const lookups = countries.map((c) => provider(c)).filter((l): l is StreetCentroidLookup => l != null)
 
-	if (lookups.length === 0) return
+	if (!lookups.length) return
 
 	const rawSegments = raw
 		.split(",")
@@ -489,7 +489,7 @@ function applyStreetCentroid(
 		}
 	}
 
-	if (thoroughfares.length === 0) return
+	if (!thoroughfares.length) return
 
 	// Commune candidates: non-voie parsed admin values, then non-voie raw segments (a truncated/garbled parse loses the
 	// commune — "Rue de la République, Marseille" parses `locality="e"` — so the raw "Marseille" is the recovery).
@@ -656,7 +656,7 @@ async function recoverPostcodeNode(
 ): Promise<void> {
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {
@@ -709,7 +709,7 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 	let anchor: { lat: number; lon: number } | null = null
 	const findAnchor: AddressNode[] = [...roots]
 
-	while (findAnchor.length > 0) {
+	while (findAnchor.length) {
 		const n = findAnchor.pop()!
 
 		if (n.tag === "postcode" && isResolvedWithCoord(n)) {
@@ -723,7 +723,7 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop()!
 		stack.push(...node.children)
 
@@ -785,7 +785,7 @@ async function applyAdminCoherence(roots: readonly AddressNode[], backend: Resol
 			regionHere &&
 			(node.tag === "locality" || node.tag === "dependent_locality") &&
 			!isResolvedWithCoord(node) &&
-			node.value.trim().length > 0
+			node.value.trim().length
 		) {
 			await reconcileAdminPair(regionHere, node, backend)
 		}
@@ -970,7 +970,7 @@ function revertResolverDecoration(node: AddressNode): void {
  */
 async function applyExplicitCountryCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
 	const visit = async (node: AddressNode, countryToken: AddressNode | null, regionAbove: boolean): Promise<void> => {
-		const countryHere = node.tag === "country" && node.value.trim().length > 0 ? node : countryToken
+		const countryHere = node.tag === "country" && node.value.trim().length ? node : countryToken
 		const regionHere = regionAbove || node.tag === "region" || node.tag === "subregion"
 
 		// Fire only when the explicit country is the locality's NEAREST admin context (no region/subregion between).
@@ -1076,7 +1076,7 @@ async function applyRegionCountryCoherence(
 			regionHere &&
 			!isResolvedWithCoord(regionHere) &&
 			(node.tag === "locality" || node.tag === "dependent_locality") &&
-			node.value.trim().length > 0
+			node.value.trim().length
 		) {
 			await reconcileRegionCountry(regionHere, node, backend, defaultCountry)
 		}
@@ -1309,7 +1309,7 @@ class WOFResolver implements Resolver {
 		}
 		let resolved: ResolvedPlace | null = null
 
-		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length > 0) {
+		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length) {
 			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 
 			if (picked) {
@@ -1357,7 +1357,7 @@ class WOFResolver implements Resolver {
 		// Proximity bias (viewport center, user location, …) — a SOFT re-rank the backend folds into
 		// its exact-tier prominence; never a filter, so recall is untouched. This is how an ambiguous
 		// bare postcode ("48026") follows the map view instead of a global population coin-flip.
-		if (state.bias && state.bias.length > 0) {
+		if (state.bias && state.bias.length) {
 			query.bias = state.bias
 		}
 
@@ -1410,7 +1410,7 @@ class WOFResolver implements Resolver {
 			// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
 			// prefer a parent-scoped hit but never sacrifice recall. The country constraint is kept, so
 			// this still can't wander to a foreign place. Same logical resolution → no extra budget.
-			if (candidates.length === 0 && state.parentFallback && query.parentID !== undefined) {
+			if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
 				delete query.parentID
 				candidates = await this.#backend.findPlace(query)
 			}
@@ -1420,7 +1420,7 @@ class WOFResolver implements Resolver {
 			return null
 		}
 
-		if (candidates.length === 0) return null
+		if (!candidates.length) return null
 		// Postcode-anchor re-rank (#369): when a country posterior is supplied (from the address's
 		// postcode), boost candidates by `anchorWeight * posterior[candidate.country]` and re-sort, so a
 		// postcode that pins the country pulls the right-country place over a higher-BM25 foreign namesake
@@ -1553,7 +1553,7 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}
 
-	if (alternatives.length > 0) {
+	if (alternatives.length) {
 		node.alternatives = alternatives
 	}
 }

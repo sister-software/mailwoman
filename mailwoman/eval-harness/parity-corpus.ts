@@ -241,7 +241,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	for (const { label } of PARITY_FLOORS) {
 		const { examples } = precision.get(label)!
 
-		if (examples.length === 0) continue
+		if (!examples.length) continue
 		console.log(`\n  --- ${label}: emitted where the gold has none (first ${examples.length}) ---`)
 
 		for (const example of examples) {
@@ -264,7 +264,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		for (const { label } of PARITY_FLOORS) {
 			const list = tallies.get(label)!.failing.slice(0, failing)
 
-			if (list.length === 0) continue
+			if (!list.length) continue
 			console.log("")
 			console.log(`first ${list.length} disagreements — ${label}:`)
 

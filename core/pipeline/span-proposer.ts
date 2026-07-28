@@ -188,7 +188,7 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 		}
 	}
 
-	return stack.length > 0 ? null : out
+	return stack.length ? null : out
 }
 
 /** Same-character quote pairing ("…"): consecutive occurrences pair up; an odd count is unbalanced. */
@@ -224,7 +224,7 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
 function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: SpanProposerLexicon): number {
 	const tokens = content.split(/\s+/).filter(Boolean)
 
-	if (tokens.length === 0) return 0
+	if (!tokens.length) return 0
 
 	if (tokens.length === 2) {
 		const lead = tokens[0]!.toLowerCase().replace(/\.$/, "")
@@ -566,7 +566,7 @@ function proposeNumericReadings(
  * QUOTED_SPANs is NOT suppressed (quotes wrap names, not asides).
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
-	if (text.length === 0) return []
+	if (!text.length) return []
 	let groupCounter = 0
 	const nextGroup = (): number => groupCounter++
 

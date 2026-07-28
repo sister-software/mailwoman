@@ -359,7 +359,7 @@ export async function scorerPairwiseEval(
 		const pos = scored.filter((d) => d.y === 1)
 		const neg = scored.filter((d) => d.y === 0)
 
-		if (pos.length === 0 || neg.length === 0) return Number.NaN
+		if (!pos.length || !neg.length) return Number.NaN
 		// Mann-Whitney U via rank.
 		const sorted = [...scored].toSorted((p, q) => p.s - q.s)
 		let rank = 1

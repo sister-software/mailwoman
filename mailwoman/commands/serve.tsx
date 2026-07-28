@@ -66,7 +66,7 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 		const forward = (signal: NodeJS.Signals) => {
 			const alive = Object.values(cluster.workers ?? {}).filter(Boolean) as Worker[]
 
-			if (alive.length === 0) {
+			if (!alive.length) {
 				process.exit(0)
 			}
 			let remaining = alive.length

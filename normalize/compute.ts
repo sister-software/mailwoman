@@ -68,7 +68,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	if (opts?.expandAbbreviations) {
 		const r = expandAbbreviations(text, opts.locale)
 
-		if (r.expansions.length > 0) {
+		if (r.expansions.length) {
 			text = r.text
 			map = composeMaps(map, r.map)
 

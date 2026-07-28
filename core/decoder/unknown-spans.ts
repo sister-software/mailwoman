@@ -37,7 +37,7 @@ function coveredMask(tree: AddressTree): Uint8Array {
 	const covered = new Uint8Array(len)
 	const stack: AddressNode[] = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		const lo = Math.max(0, n.start)
 		const hi = Math.min(len, n.end)

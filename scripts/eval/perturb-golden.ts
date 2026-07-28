@@ -83,7 +83,7 @@ function main(): void {
 					expected[tag] = [val]
 				}
 
-			if (Object.keys(expected).length === 0) continue
+			if (!Object.keys(expected).length) continue
 
 			for (const p of PERTURBATIONS) {
 				const input = p.apply(row.raw)

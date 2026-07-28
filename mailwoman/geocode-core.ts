@@ -311,7 +311,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionResolverName: string | null = null
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop()!
 
 		if (node.tag === "region" && !regionValue) {
@@ -524,7 +524,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		opts.defaultCountry = deps.defaultCountry
 	}
 
-	if (deps.bias && deps.bias.length > 0) {
+	if (deps.bias && deps.bias.length) {
 		opts.bias = deps.bias
 	}
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
@@ -665,7 +665,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			}
 		}
 
-		if (hints.length > 0) {
+		if (hints.length) {
 			opts.streetCountryHints = hints
 		}
 	}
@@ -709,7 +709,7 @@ function assembleStreetName(streetNode: AddressNode): string {
 	const parts: AddressNode[] = []
 	const stack = [streetNode]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {

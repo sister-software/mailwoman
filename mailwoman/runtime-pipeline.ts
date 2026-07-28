@@ -68,7 +68,7 @@ function buildSyncReverseGeocode(
 		try {
 			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)
 
-			if (hierarchy.length === 0) return undefined
+			if (!hierarchy.length) return undefined
 
 			return hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
 		} catch {

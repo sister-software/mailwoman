@@ -39,7 +39,7 @@ const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
 /** Sql.js exec result → row objects. */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || res.length === 0) return []
+	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
 
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
@@ -108,7 +108,7 @@ export class HTTPVFSAddressPointLookup {
 			)
 		}
 
-		if (rows.length === 0 && query.locality) {
+		if (!rows.length && query.locality) {
 			// FR shards fold arrondissement communes to the base city on both sides (the node class +
 			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
 			const localityKey =
@@ -194,14 +194,14 @@ export class HTTPVFSInterpolator {
 			if (new Set(rows.map((r) => String(r.postcode ?? ""))).size > 1) return null
 		}
 
-		if (rows.length === 0) return null
+		if (!rows.length) return null
 
 		// Parity preference: exact side → 'mixed' → opposite side (flagged). Mirrors StreetInterpolator.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
-		const preferred = exact.length > 0 ? exact : mixed
-		const pool = preferred.length > 0 ? preferred : rows
+		const preferred = exact.length ? exact : mixed
+		const pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins.

@@ -147,7 +147,7 @@ export const germanRecipe: ShardRecipe = {
 			} // NOT pool.push(...t) — spreading ~840K args overflows the stack
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No German tuples found — are the cached zips present in /tmp/oa-cache?")
 		}
 

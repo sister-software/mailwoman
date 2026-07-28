@@ -68,7 +68,7 @@ function representativePoint(
 				: null
 	) as number[][] | null
 
-	if (!ring || ring.length === 0) return null
+	if (!ring || !ring.length) return null
 
 	// Average the exterior-ring vertices (dropping the duplicated closing vertex). For a single
 	// building footprint this lands a few metres inside the roof — fine for the rooftop tier.

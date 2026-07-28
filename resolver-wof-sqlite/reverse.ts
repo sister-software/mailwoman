@@ -348,7 +348,7 @@ export class WOFReverseGeocoder implements Disposable {
 		]
 		const params: Array<number | string> = [lat, lat, lon, lon]
 
-		if (opts.placetypes && opts.placetypes.length > 0) {
+		if (opts.placetypes && opts.placetypes.length) {
 			where.push(`spr.placetype IN (${opts.placetypes.map(() => "?").join(", ")})`)
 			params.push(...opts.placetypes)
 		}

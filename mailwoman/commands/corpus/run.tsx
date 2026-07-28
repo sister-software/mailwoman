@@ -67,7 +67,7 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
-			const hint = ids.length === 0 ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
+			const hint = !ids.length ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
 			throw commandError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
 		}
 

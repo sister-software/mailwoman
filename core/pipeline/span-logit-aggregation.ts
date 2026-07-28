@@ -85,7 +85,7 @@ export function aggregateSpanLogits(
 			overlapping.push(t)
 		}
 
-		if (overlapping.length === 0) continue
+		if (!overlapping.length) continue
 
 		// Aggregate softmax probabilities per component tag (strip BIO prefix).
 		const tagScores = new Map<string, number>()

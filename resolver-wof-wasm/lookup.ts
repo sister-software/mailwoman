@@ -122,7 +122,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// uses — the two backends can't drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
 
-		if (placetypes && placetypes.length > 0) {
+		if (placetypes && placetypes.length) {
 			conditions.push(`spr.placetype IN (${placetypes.map(() => "?").join(",")})`)
 			params.push(...placetypes)
 		}
@@ -256,7 +256,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1`
 			)
 
-			if (exists.length > 0) {
+			if (exists.length) {
 				const rows = this.#db.selectObjects(
 					`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
 						s.latitude AS lat, s.longitude AS lon, cr.relationship_type AS relationshipType,

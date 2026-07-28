@@ -166,7 +166,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 			fail(`${fstPath} does not exist`)
 		}
 
-		if (statSync(fstPath).size === 0) {
+		if (!statSync(fstPath).size) {
 			fail(`${fstPath} is empty`)
 		}
 	}
@@ -203,7 +203,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		: []
 
 	for (const localPath of postcodeBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) {
+		if (!existsSync(localPath) || !statSync(localPath).size) {
 			fail(`postcode binary ${localPath} missing/empty`)
 		}
 	}
@@ -220,7 +220,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		: []
 
 	for (const localPath of pairIndexBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) {
+		if (!existsSync(localPath) || !statSync(localPath).size) {
 			fail(`pair-index binary ${localPath} missing/empty`)
 		}
 	}
@@ -238,7 +238,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		: []
 
 	for (const localPath of fstBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) {
+		if (!existsSync(localPath) || !statSync(localPath).size) {
 			fail(`FST binary ${localPath} missing/empty`)
 		}
 	}
@@ -249,7 +249,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
 	const gazetteerLexicon = args.gazetteerLexicon || null
 
-	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
+	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || !statSync(gazetteerLexicon).size)) {
 		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
 	}
 
@@ -257,7 +257,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
 	const countryLexicon = args.countryLexicon || null
 
-	if (countryLexicon && (!existsSync(countryLexicon) || statSync(countryLexicon).size === 0)) {
+	if (countryLexicon && (!existsSync(countryLexicon) || !statSync(countryLexicon).size)) {
 		fail(`country lexicon ${countryLexicon} missing/empty`)
 	}
 
@@ -282,7 +282,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
 	const polygonsDb = args.polygons || null
 
-	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {
+	if (polygonsDb && (!existsSync(polygonsDb) || !statSync(polygonsDb).size)) {
 		fail(`polygon DB ${polygonsDb} missing/empty`)
 	}
 

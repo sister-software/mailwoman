@@ -34,7 +34,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  *   the spans honest). A comma between same-tag spans is a list/separator, never the inside of a surface form.
  */
 function bridgeable(gap: string): boolean {
-	if (gap.length === 0 || gap.length > 3) return false
+	if (!gap.length || gap.length > 3) return false
 
 	if (!/^[.\-/'\u2019\s]*$/.test(gap)) return false
 

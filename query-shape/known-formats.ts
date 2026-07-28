@@ -100,7 +100,7 @@ export function detectKnownFormats(text: string, tokens: ReadonlyArray<TokenClas
 }
 
 function detectPoBox(text: string, tokens: ReadonlyArray<TokenClass>): KnownFormatHit | null {
-	if (tokens.length === 0) return null
+	if (!tokens.length) return null
 
 	// Find a leader token + optional "Box" + numeric/alphanumeric.
 	for (let i = 0; i < tokens.length; i++) {

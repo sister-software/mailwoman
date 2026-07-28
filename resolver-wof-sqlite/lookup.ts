@@ -303,7 +303,7 @@ export function trigramJaccard(a: string, b: string): number {
 	const A = trigrams(a)
 	const B = trigrams(b)
 
-	if (A.size === 0 || B.size === 0) return 0
+	if (!A.size || !B.size) return 0
 	let inter = 0
 
 	for (const x of A)
@@ -534,7 +534,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		if (outcome.length > 0) return outcome
+		if (outcome.length) return outcome
 
 		// #924: NL postcode retry ladder. The WOF NL postalcode repo stores full codes UNSPACED
 		// ('1012LG') plus 4-digit stems ('1012'), while Dutch addresses carry the spaced form
@@ -555,7 +555,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			if (joined !== trimmed) {
 				const full = await this.findPlace({ ...query, text: joined })
 
-				if (full.length > 0) return full
+				if (full.length) return full
 			}
 			const stem = trimmed.slice(0, 4)
 
@@ -768,7 +768,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: SQLInputValue[] = [ftsQuery]
 
-		if (placetypes && placetypes.length > 0) {
+		if (placetypes && placetypes.length) {
 			where.push(`spr.placetype IN (${placetypes.map(() => "?").join(", ")})`)
 			params.push(...placetypes)
 		}
@@ -899,7 +899,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// start from a higher-is-better baseline.
 			let score = -row.rank
 
-			if (placetypes && placetypes.length > 0 && placetypes.includes(row.placetype as WOFPlacetype)) {
+			if (placetypes && placetypes.length && placetypes.includes(row.placetype as WOFPlacetype)) {
 				score += this.#weights.placetypeMatchBoost
 			}
 
@@ -1020,7 +1020,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// Runs even for a SINGLE candidate so `exactMatch` is stamped consistently (parity with the
 		// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
 		// demo cascade / #369 re-rank read.
-		if (this.#weights.exactMatchTiering && candidates.length > 0) {
+		if (this.#weights.exactMatchTiering && candidates.length) {
 			const exactIds = this.#exactMatchIds(
 				sch,
 				candidates.map((c) => c.id as number),
@@ -1034,7 +1034,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				c.exactMatch = exactIds.has(c.id as number)
 			}
 
-			if (exactIds.size > 0) {
+			if (exactIds.size) {
 				// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
 				// only breaks population ties. Exactness saturates text relevance, and the bm25
 				// residue inside `score` is length-noise (see the fetch-site comment), so letting it
@@ -1176,7 +1176,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			)
 			.all(...pcParams) as unknown as Array<{ id: number; aliases: string | null; dist: number; containing: number }>
 
-		if (pcRows.length === 0) return null
+		if (!pcRows.length) return null
 
 		const limit = query.limit ?? 10
 		// Name-match candidates via the normal FTS path (postcode cleared → no recursion).
@@ -1229,10 +1229,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			// (#475). `postalAliasByGeo` is empty unless the opt-in reader was supplied, so when off this
 			// reduces to the original `info?.aliases ?? []` and the score is unchanged.
 			const wofAliases = info?.aliases ?? []
-			const aliases =
-				postalAliasByGeo.size > 0
-					? [...wofAliases, ...(postalAliasByGeo.get(cfNormalize(cand.name)) ?? [])]
-					: wofAliases
+			const aliases = postalAliasByGeo.size
+				? [...wofAliases, ...(postalAliasByGeo.get(cfNormalize(cand.name)) ?? [])]
+				: wofAliases
 			const sName = softNameScore(query.text, cand.name, aliases)
 			const sPop = cand.population && cand.population > 0 ? Math.min(1, Math.log10(1 + cand.population) / 6) : 0
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
@@ -1276,7 +1275,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 	/** Fetch locality spr rows (from main) for the postcode-injected candidate ids the FTS set missed. */
 	#fetchLocalitiesByID(ids: number[]): PlaceCandidate[] {
-		if (ids.length === 0) return []
+		if (!ids.length) return []
 		const hasPop = this.#hasPopulationIndex.get("main") === true
 		const popSelect = hasPop ? `pp.population AS population` : `NULL AS population`
 		const popJoin = hasPop ? `LEFT JOIN main.${PLACE_POPULATION_TABLE} pp ON pp.id = s.id` : ""
@@ -1321,7 +1320,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const out = new Set<number>()
 		const trimmed = text.trim()
 
-		if (ids.length === 0 || !trimmed) return out
+		if (!ids.length || !trimmed) return out
 		const placeholders = ids.map(() => "?").join(", ")
 
 		try {
@@ -1384,7 +1383,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const out = new Set<number>()
 		const trimmed = text.trim()
 
-		if (ids.length === 0 || !trimmed) return out
+		if (!ids.length || !trimmed) return out
 		const placeholders = ids.map(() => "?").join(", ")
 
 		try {
@@ -1490,7 +1489,7 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		// masked for years because pre-splice tokenizers never emitted hyphen-preserved values).
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
 
-		if (parts.length === 0) continue
+		if (!parts.length) continue
 
 		for (let i = 0; i < parts.length; i++) {
 			const body = parts[i]!.replaceAll("*", "")

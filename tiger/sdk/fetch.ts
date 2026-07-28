@@ -227,7 +227,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	// Source units: one (per-state) for block/place; one per county for addrfeat.
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]
 
-	if (level === "addrfeat" && geoCodes.length === 0) {
+	if (level === "addrfeat" && !geoCodes.length) {
 		throw new Error(`No ADDRFEAT counties found for state ${state} vintage ${vintage}`)
 	}
 
@@ -268,7 +268,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 		let inserted = 0
 		let batch: Row[] = []
 		const flush = async () => {
-			if (batch.length === 0) return
+			if (!batch.length) return
 			const rows = batch
 			batch = []
 			await insertBatch(rows)

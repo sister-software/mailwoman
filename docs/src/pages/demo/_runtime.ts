@@ -392,7 +392,7 @@ export function useDemoMapRuntime({
 			const tResolve = performance.now()
 
 			// Anchor-centroid fallback (postcode-only dead ends): synthesize an approximate hit from postcode-*.bin.
-			if (cascadeHits.length === 0 && postcodeNode?.value && assets?.anchorLookup) {
+			if (!cascadeHits.length && postcodeNode?.value && assets?.anchorLookup) {
 				const anchorHit = assets.anchorLookup.get(String(postcodeNode.value).toUpperCase())
 
 				if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {

@@ -175,7 +175,7 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
 	const stack = [...(roots as TreeNodeLike[])]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (typeof n.tag === "string") {
@@ -283,7 +283,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 							{dimmed ? <span className={styles.inactiveTag}>inactive</span> : null}
 						</div>
 						<p className={styles.stageCardDesc}>{stage.description}</p>
-						{stage.sourceMatches.length > 0 ? (
+						{stage.sourceMatches.length ? (
 							<div className={styles.stageCardSources}>
 								<span className={styles.sourcesLabel}>Node source:</span>
 								{stage.sourceMatches.map((s) => (
@@ -388,7 +388,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 									)}
 								</td>
 								<td className={styles.originCell}>
-									{contributions.length === 0 ? (
+									{!contributions.length ? (
 										<span className={styles.unknownOrigin}>unknown</span>
 									) : (
 										contributions.map((c, ci) => (
@@ -445,7 +445,7 @@ export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 		return <StaticLegend fstActive={fstActive} />
 	}
 
-	if (!tree || nodes.length === 0) {
+	if (!tree || !nodes.length) {
 		return (
 			<div className={styles.empty}>
 				<p>Parse an address to see classifier origin information.</p>

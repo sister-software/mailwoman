@@ -124,7 +124,7 @@ export function postcodeCodeSubset(postcode: string): string {
 export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.placeID) return true
@@ -152,7 +152,7 @@ function confidentRanges(
 	const out: Array<[number, number]> = []
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (

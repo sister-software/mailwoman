@@ -307,7 +307,7 @@ export async function maskRegressionGate(
 		report(`\nWrote per-tag delta table → ${JSON_OUT}`)
 	}
 
-	if (violations.length > 0) {
+	if (violations.length) {
 		report(
 			`\n✗ FAIL — ${violations.length} tag(s) regress more than ${thresholdPp.toFixed(1)}pp under the conventions mask:`
 		)

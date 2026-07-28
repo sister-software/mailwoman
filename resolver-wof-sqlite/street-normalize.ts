@@ -81,7 +81,7 @@ function fold(input: string): string {
 export function normalizeStreetForKey(street: string): string {
 	const tokens = fold(street).split(" ")
 
-	if (tokens.length === 0) return ""
+	if (!tokens.length) return ""
 
 	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
 	// "10th street", #723). Gated on the next token being a suffix so ordinal-WORD names are untouched.
@@ -198,7 +198,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// per-locale type/Saint map can see.
 	const tokens = fold(street).replaceAll("ß", "ss").replaceAll("-", " ").split(/\s+/).filter(Boolean)
 
-	if (tokens.length === 0) return ""
+	if (!tokens.length) return ""
 
 	switch (locale) {
 		case "fr":

@@ -233,7 +233,7 @@ export function flattenTree(
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
 	const stack = [...(roots as TreeNode[])]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (typeof n.tag === "string") {
@@ -383,7 +383,7 @@ export async function resolveDualRoles(
 	try {
 		const roles = await lookup.coincidentRolesFor(primaryHit.id)
 
-		return roles.length > 0 ? roles : undefined
+		return roles.length ? roles : undefined
 	} catch {
 		// relation absent / query failed → no dual-role badge
 		return undefined
@@ -412,7 +412,7 @@ interface CalibrationBin {
 export function createCalibrator(table: { table: CalibrationBin[] } | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
 
-	if (!bins || bins.length === 0) throw new Error("createCalibrator: empty calibration table")
+	if (!bins || !bins.length) throw new Error("createCalibrator: empty calibration table")
 	const sorted = [...bins].toSorted((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
 	const cals = sorted.map((b) => clamp01(b.calibrated))
@@ -524,7 +524,7 @@ export async function runCascade(
 	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
 	const resolved = (await resolver.resolveTree(tree as never, {
 		adminCoherence: true,
-		...(bias && bias.length > 0 ? { bias } : {}),
+		...(bias && bias.length ? { bias } : {}),
 	})) as unknown as {
 		roots: ResolvedTreeNode[]
 	}
@@ -584,7 +584,7 @@ export async function runCascade(
 		visit(root)
 	}
 
-	if (collected.length === 0) {
+	if (!collected.length) {
 		// Nothing in the tree resolved (span-rescore included) — the old cascade's last resort.
 		return usable(await lookup.findPlace({ text: rawText, limit: 5 }))
 	}

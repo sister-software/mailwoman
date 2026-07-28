@@ -342,7 +342,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				.map((t) => this.#placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
 
-			if (ids.length === 0) return []
+			if (!ids.length) return []
 			filters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
 			filterParams.push(...ids)
 		}
@@ -391,7 +391,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
-			if (rows.length === 0) {
+			if (!rows.length) {
 				// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 				// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
 				// miss; the cascade's region bbox disambiguates any base-name ambiguity.
@@ -413,7 +413,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
 			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
 			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
-			if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
+			if (!rows.length && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
 				const match = ftsTrigramQuery(nameKey)
 
 				if (match) {
@@ -444,7 +444,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// Region-scope fallback: if scoping to the parent region found nothing across the whole cascade, retry
 		// unscoped so a place with no in-region row (missing ancestry, or a country/non-region parent) still
 		// resolves exactly as it does today. Only when a region scope was actually applied.
-		if (rows.length === 0 && regionParentID !== undefined) {
+		if (!rows.length && regionParentID !== undefined) {
 			rows = cascade(undefined)
 		}
 
@@ -494,7 +494,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// log10(population + 1), so popTerm is the server formula read straight off it. Constants MIRROR
 		// lookup.ts's DEFAULT_WEIGHTS (biasBoost 4, populationBoost 4, populationScaleLog10 6,
 		// proximityScaleKm 100) — the #861 server↔demo parity contract; keep them in lockstep.
-		if (query.bias && query.bias.length > 0) {
+		if (query.bias && query.bias.length) {
 			const BIAS_BOOST = 4
 			const POP_BOOST = 4
 			const POP_SCALE_LOG10 = 6
