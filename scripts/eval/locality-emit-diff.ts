@@ -62,8 +62,8 @@ async function main() {
 	const opts = { defaultCountry: cc }
 	const didResolve = async (tree: unknown): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree as never, opts)
-		const has = (_n: { placeID?: string; children: unknown[] }): boolean =>
-			!!n.placeID?.startsWith("wof:") || (n.children as { placeID?: string; children: unknown[] }[]).some(has)
+		const has = (node: { placeID?: string; children: unknown[] }): boolean =>
+			!!node.placeID?.startsWith("wof:") || (node.children as { placeID?: string; children: unknown[] }[]).some(has)
 
 		return (r.roots as { placeID?: string; children: unknown[] }[]).some(has)
 	}
