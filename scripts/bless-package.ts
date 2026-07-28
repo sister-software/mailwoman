@@ -46,6 +46,7 @@ async function nextOTP(): Promise<string> {
 // Run an npm write op. attempt 0 leans on the grace window (or seeded otp);
 // on EOTP/invalid, prompt for a fresh code and retry.
 async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<void> {
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch continues to the next attempt on an OTP error
 	for (let attempt = 0; attempt < 3; attempt++) {
 		let otpArgs: string[] = []
 

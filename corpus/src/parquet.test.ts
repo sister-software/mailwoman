@@ -54,6 +54,7 @@ async function readParquet(path: string): Promise<ParquetRow[]> {
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
 
+	// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `row` is reassigned by the assignment inside the condition
 	while ((row = (await cursor.next()) as ParquetRow | null)) {
 		out.push(row)
 	}

@@ -14,7 +14,7 @@ import {
 } from "@mailwoman/core/resources/languages"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { tryWithBackoff } from "./DataSourceCache.ts"
+import { tryWithBackoff } from "./backoff.ts"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"
 
 export interface PlacetypeDataSourceOptions<

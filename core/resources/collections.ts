@@ -27,6 +27,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 	let iterationResult = await iterator.next()
 
+	// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `abortSignal.aborted` is flipped by the controller, not by this loop
 	while ((!iterationResult.done || results.size > 0) && !abortSignal?.aborted) {
 		for (const [key, result] of results) {
 			yield result

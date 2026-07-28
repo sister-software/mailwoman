@@ -11,7 +11,7 @@ import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
 
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "../bbox.ts"
-import { type H3Cell, shortenH3Cell } from "../h3/index.ts"
+import { type H3Cell, shortenH3Cell } from "../h3/cell.ts"
 import { type GeoObjectLiteral, GeometryType } from "../objects.ts"
 import {
 	type InternalPointCoordinates,

@@ -125,6 +125,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 		for (const map of [entries, codeEntries]) {
 			for (const [key, bits] of map) {
 				if (bits & BIT.country && bits & BIT.region) {
+					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union, not a mistyped logical or
 					map.set(key, bits | BIT.homograph)
 				}
 			}

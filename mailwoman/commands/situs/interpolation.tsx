@@ -231,6 +231,7 @@ function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 
 /** Download a URL to a local file path, with retry on 5xx / network errors. */
 async function downloadFile(url: string, dest: string, retries = 3): Promise<void> {
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch falls through to the next attempt when the error is retryable
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
 			await _downloadOnce(url, dest)
