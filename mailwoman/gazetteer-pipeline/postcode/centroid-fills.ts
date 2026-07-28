@@ -188,7 +188,6 @@ export async function fillPostcodeCentroids(
 		).n
 	const placedBefore = placed()
 	let geonamesFixed = 0
-	let parentBorrowFixed = 0
 	let ancestorFixed = 0
 
 	// Pass 2: GeoNames postal — runs FIRST so the postcode's own centroid wins over the coarser parent-borrow.
@@ -235,7 +234,7 @@ export async function fillPostcodeCentroids(
 		}
 	}
 	const placedAfter = placed()
-	parentBorrowFixed = placedAfter - placedBefore - geonamesFixed - ancestorFixed
+	const parentBorrowFixed = placedAfter - placedBefore - geonamesFixed - ancestorFixed
 	const total = (
 		db.prepare(`SELECT COUNT(*) n FROM spr WHERE placetype='postalcode' AND is_current!=0`).get() as { n: number }
 	).n

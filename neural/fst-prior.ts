@@ -174,6 +174,7 @@ export function buildFSTEmissionPriors(
 	// and it leaves the positive locality bias untouched so the bare-fragment regime is safe. Scaling the
 	// positive term too (`both`) measured strictly worse (US +26, FR −9). See docs/…/the-meaning-of-zero.
 	const lengthMode: ImportanceLengthScaleMode = opts.importanceLengthScaleMode ?? "suppression"
+	const tuning: BiasTuning = { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode }
 	const matrix: number[][] = []
 
 	for (let t = 0; t < T; t++) {
@@ -216,11 +217,7 @@ export function buildFSTEmissionPriors(
 				labelToCol,
 				fst.accepting(match.stateID),
 				[group],
-				biasScale,
-				maxBias,
-				suppressionScale,
-				seenWOFIDs,
-				lengthMode,
+				tuning,
 				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags)
 			)
 		}
@@ -243,11 +240,7 @@ export function buildFSTEmissionPriors(
 					labelToCol,
 					fst.accepting(next.stateID),
 					matchedGroups,
-					biasScale,
-					maxBias,
-					suppressionScale,
-					seenWOFIDs,
-					lengthMode,
+					tuning,
 					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags)
 				)
 			}
@@ -443,18 +436,28 @@ function streetContextScale(
 	return 1
 }
 
+/**
+ * The per-run bias knobs — fixed for the whole of one `buildFSTEmissionPriors` call, so they travel as one bundle
+ * rather than five positional arguments. `seenWOFIDs` is deliberately shared, not copied: it is the run-wide dedupe set
+ * that keeps one WOF place from biasing the matrix twice.
+ */
+interface BiasTuning {
+	biasScale: number
+	maxBias: number
+	suppressionScale: number
+	seenWOFIDs: Set<number>
+	lengthMode: ImportanceLengthScaleMode
+}
+
 function applyBias(
 	matrix: number[][],
 	labelToCol: Map<string, number>,
 	entries: ReadonlyArray<FSTPlaceEntryLike>,
 	groups: WordGroup[],
-	biasScale: number,
-	maxBias: number,
-	suppressionScale: number,
-	seenWOFIDs: Set<number>,
-	lengthMode: ImportanceLengthScaleMode,
+	tuning: BiasTuning,
 	contextScale: number
 ): void {
+	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode } = tuning
 	const seenTags = new Map<string, number>()
 
 	// Match-length scaling (#1142). A single-token place match ("Sweeney", "Tower", "Rome") is weak

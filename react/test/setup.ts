@@ -16,8 +16,10 @@ import "../.storybook/preview-tokens.css"
 import { installActWrappers } from "./act.ts"
 import { cleanup } from "./render.tsx"
 
+const actGlobal = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+
 // React's act() checks this flag; browser mode doesn't set it for us.
-;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+actGlobal.IS_REACT_ACT_ENVIRONMENT = true
 
 // Make `userEvent.*` and `vi.waitFor` act-aware for every test, in one place — no per-test wrapping.
 installActWrappers()

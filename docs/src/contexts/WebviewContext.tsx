@@ -5,7 +5,7 @@
  */
 
 import type { SetStateAction } from "react"
-import { createContext, useCallback, useContext } from "react"
+import { createContext, useCallback, useContext, useMemo } from "react"
 import type { ViewState } from "react-map-gl"
 
 export interface NexusWebviewState {
@@ -113,10 +113,10 @@ export const NexusStateProvider: React.FC<NexusStateProviderProps> = ({ initialW
 		// vscode.setState(value)
 	}, [])
 
-	const value = {
-		persistWebviewState,
-		initialWebviewState,
-	}
+	const value = useMemo(
+		() => ({ persistWebviewState, initialWebviewState }),
+		[persistWebviewState, initialWebviewState]
+	)
 
 	return (
 		<>

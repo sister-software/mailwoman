@@ -29,6 +29,8 @@ import { chromium, type Page } from "@playwright/test"
 /** Lowest 4xx status — at or above it the page failed to render. */
 const HTTP_CLIENT_ERROR_MIN = 400
 
+// oxlint-disable-next-line sister-software/no-process-globals -- a standalone skill driver, run outside the repo's env helpers
+// oxlint-disable-next-line sister-software/no-process-globals -- a standalone skill driver, run outside the repo's env helpers
 const BASE = process.env.MAILWOMAN_DOCS_URL ?? "http://localhost:7770"
 const SCREENSHOT_DIR = "/tmp/mailwoman-docs"
 

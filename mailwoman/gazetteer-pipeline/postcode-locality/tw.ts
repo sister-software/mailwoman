@@ -539,19 +539,14 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					tierCounts.region_fallback++
 					const dist = haversineKm(d.lat, d.lon, region.la, region.lo)
 					rows.push([d.postcode, "TW", region.pid, region.nm, aliases, Math.round(dist * 1000) / 1000, 1])
-					const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
+				}
 
-					if (weak) {
-						rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
-					}
-				} else {
-					const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
+				// The weak candidate rides along either way — recorded non-containing so the resolver's
+				// soft score treats it as proximity evidence, never as an authoritative containment.
+				const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
 
-					if (weak) {
-						// Weak candidate only — recorded non-containing so the resolver's soft score treats it
-						// as proximity evidence, never as an authoritative containment.
-						rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
-					}
+				if (weak) {
+					rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
 				}
 				continue
 			}
