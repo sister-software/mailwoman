@@ -53,6 +53,12 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  # onnxruntime-node's postinstall downloads OPTIONAL GPU-provider binaries from Microsoft's Akamai
+  # CDN — the CPU libs the runners actually use are bundled in the npm tarball. That CDN edge is
+  # intermittently unreachable from the lab runners (2026-07-28: three CI rounds died on it —
+  # ETIMEDOUT IPv4 + ENETUNREACH IPv6). Skip the download entirely: deterministic installs, no GPU
+  # inference on CI to miss it.
+  ONNXRUNTIME_NODE_INSTALL: skip
 
 concurrency:
   group: docs-${{ github.workflow }}-${{ github.ref }}
