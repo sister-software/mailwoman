@@ -87,6 +87,37 @@ const US_REGION_NAMES: ReadonlySet<string> = new Set([
  * Split a segment body into whitespace-separated tokens. Offsets are absolute into the original input (caller supplies
  * the segment's `start` offset).
  */
+/**
+ * Digit count above which a pure-numeric token stops being unambiguously a house number. 1-4 digits are clearly
+ * NUMERIC; 5 and up collide with postcodes, so the proposal is emitted at neutral confidence and the reconciler
+ * decides.
+ */
+const MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS = 4
+
+/** Confidence for a pure-numeric token short enough to be unambiguous. */
+const UNAMBIGUOUS_NUMERIC_CONFIDENCE = 0.95
+
+/** Token count at which a run reads as a venue name in its own right rather than a stray pair. */
+const VENUE_RUN_MIN_TOKENS = 3
+
+/** Confidence for a venue run too short to clear {@link VENUE_RUN_MIN_TOKENS}. */
+const SHORT_VENUE_RUN_CONFIDENCE = 0.5
+
+/**
+ * Confidence added to a place-name run by its token count. Longer runs are less likely to be a coincidental adjacency,
+ * so they earn more — the curve flattens past four tokens.
+ */
+const PLACE_RUN_LENGTH_BONUS: ReadonlyMap<number, number> = new Map([
+	[2, 0.15],
+	[3, 0.12],
+])
+
+/** Bonus applied to place-name runs at or beyond {@link VENUE_RUN_MIN_TOKENS} + 1 tokens. */
+const LONG_PLACE_RUN_BONUS = 0.08
+
+/** Penalty for a US region NAME appearing away from the tail, where it is more likely a locality. */
+const NON_TAIL_REGION_NAME_PENALTY = 0.2
+
 export function tokenizeSegment(segmentBody: string, segmentStart: number): SegmentToken[] {
 	const tokens: SegmentToken[] = []
 	let i = 0
@@ -442,7 +473,8 @@ export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string):
 		const len = t.body.length
 		// 1-4 digit pure-numerics are clearly NUMERIC (house number). 5+ are ambiguous with POSTCODE
 		// — emit anyway at lower confidence so the reconciler sees both options.
-		const confidence = len <= 4 ? 0.95 : NEUTRAL_PROPOSAL_CONFIDENCE
+		const confidence =
+			len <= MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS ? UNAMBIGUOUS_NUMERIC_CONFIDENCE : NEUTRAL_PROPOSAL_CONFIDENCE
 		out.push({
 			span: makeSection(text, t.start, t.end),
 			kindHypothesis: "NUMERIC",
@@ -721,11 +753,11 @@ export function scoreLocalityPhrase(
 			const spanText = text.slice(startTok.start, endTok.end)
 			const isRegionName = len === 1 && US_REGION_NAMES.has(spanText.toLowerCase())
 			const atTail = i + len - 1 === tokens.length - 1
-			const lenBonus = len === 2 ? 0.15 : len === 3 ? 0.12 : len >= 4 ? 0.08 : 0
+			const lenBonus = PLACE_RUN_LENGTH_BONUS.get(len) ?? (len > VENUE_RUN_MIN_TOKENS ? LONG_PLACE_RUN_BONUS : 0)
 			let confidence = NEUTRAL_PROPOSAL_CONFIDENCE + lenBonus
 
 			if (isRegionName && !atTail) {
-				confidence -= 0.2
+				confidence -= NON_TAIL_REGION_NAME_PENALTY
 			}
 
 			if (atTail && segmentIsLast) {
@@ -803,7 +835,7 @@ export function scoreVenuePhrase(
 				out.push({
 					span: makeSection(text, startTok.start, endTok.end),
 					kindHypothesis: "VENUE_PHRASE",
-					confidence: run.length >= 3 ? NEUTRAL_PROPOSAL_CONFIDENCE : 0.5,
+					confidence: run.length >= VENUE_RUN_MIN_TOKENS ? NEUTRAL_PROPOSAL_CONFIDENCE : SHORT_VENUE_RUN_CONFIDENCE,
 				})
 			}
 		}

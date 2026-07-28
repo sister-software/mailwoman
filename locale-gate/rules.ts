@@ -12,6 +12,12 @@
 
 import type { QueryShapeLike } from "./types.ts"
 
+/**
+ * Confidence at or above which a known-format hit counts as unambiguous. Ambiguous hits — a bare 5-digit run, which
+ * reads as US, FR and DE alike — arrive at 0.6, so this cleanly separates them.
+ */
+const UNAMBIGUOUS_FORMAT_CONFIDENCE = 0.9
+
 export interface LocaleCandidate {
 	locale: string
 	confidence: number
@@ -49,7 +55,7 @@ export function scoreByScript(shape: QueryShapeLike): LocaleCandidate | null {
 export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
 	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them, pick the one
 	// with the highest confidence + most-specific country mapping.
-	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= 0.9)
+	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= UNAMBIGUOUS_FORMAT_CONFIDENCE)
 
 	if (unambiguous.length) {
 		// Pick the first unambiguous hit (callers typically have one postcode per address).

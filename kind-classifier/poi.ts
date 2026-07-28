@@ -11,6 +11,12 @@
 
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
+/**
+ * Comma-segment ceiling for a POI-led query. Past it the input is a venue plus a full address (`X, 350 5th Ave, New
+ * York, NY`), which the structured-address scorer should claim instead.
+ */
+const MAX_POI_SEGMENTS = 3
+
 /** One lexicon hit for a candidate subject phrase. */
 export interface POIPhraseMatch {
 	/**
@@ -128,7 +134,7 @@ export function createScorePOIQuery(
 
 		const segCount = shape.segments?.length ?? 1
 
-		if (segCount > 3) return 0
+		if (segCount > MAX_POI_SEGMENTS) return 0
 
 		return 0.9 * matched.match.confidence
 	}
