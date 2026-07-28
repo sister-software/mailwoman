@@ -118,7 +118,9 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		expect(frLat!).toBeGreaterThan(45)
 		// The point of the test: the scope changed the resolved place.
 		expect(usLat).not.toBe(frLat)
-	})
+		// Two FULL CLI geocodes back-to-back (weights load ×2 + resolver DBs) — ~8s healthy, and the
+		// global 15s budget grazes on a loaded runner (CI flake 2026-07-28). Own budget, not a global bump.
+	}, 60_000)
 
 	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
 		// The #833 class: with coherence ON (the default), "Paris, TX" under `--default-country none`
