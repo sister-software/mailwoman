@@ -231,6 +231,19 @@ export function segmentDecodeKBest(
 		column.set(key, list)
 	}
 
+	/** Extend `entry` by the span [i, j) under every candidate type, stopping at the first impossible one. */
+	const pushSpanExtensions = (i: number, j: number, lastType: string, entry: Hypothesis): void => {
+		for (const type of types) {
+			const score = spanScore(i, j, type)
+
+			if (score === -Infinity) break
+			push(dp[j]!, type, {
+				score: entry.score + score + logTransition(lastType, type),
+				segments: [...entry.segments, [i, j, type]],
+			})
+		}
+	}
+
 	for (let i = 0; i < wordCount; i++) {
 		for (const [lastType, entries] of dp[i]!) {
 			for (const entry of entries) {
@@ -239,15 +252,7 @@ export function segmentDecodeKBest(
 				if (isPunctuationWord[i]) continue
 
 				for (let j = i + 1; j <= Math.min(wordCount, i + MAX_SEGMENT_WORDS); j++) {
-					for (const type of types) {
-						const score = spanScore(i, j, type)
-
-						if (score === -Infinity) break
-						push(dp[j]!, type, {
-							score: entry.score + score + logTransition(lastType, type),
-							segments: [...entry.segments, [i, j, type]],
-						})
-					}
+					pushSpanExtensions(i, j, lastType, entry)
 
 					if (isPunctuationWord[j - 1]) break
 				}

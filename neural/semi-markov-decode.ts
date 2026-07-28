@@ -152,18 +152,23 @@ export function decodeSegmentationsKBest(
 
 			if (!perLength) continue
 
+			// Extend every partial path ending at `i` by the segment [i, j), once per candidate type.
+			const extend = (lastType: number, entry: SegmentationHypothesis): void => {
+				for (let t = 0; t < numTypes; t++) {
+					// O segments are length 1 by construction.
+					if (t === O_TYPE_ID && spanLen !== 1) continue
+					const segScore = perLength[t] ?? NEG_INF
+					const trans = lastType === -1 ? grammar.startTransitions[t]! : grammar.transitions[lastType]![t]!
+					push(dp[j]!, t, {
+						score: entry.score + segScore + trans,
+						segments: [...entry.segments, { start: i, length: spanLen, typeID: t }],
+					})
+				}
+			}
+
 			for (const [lastType, entries] of dp[i]!) {
 				for (const entry of entries) {
-					for (let t = 0; t < numTypes; t++) {
-						// O segments are length 1 by construction.
-						if (t === O_TYPE_ID && spanLen !== 1) continue
-						const segScore = perLength[t] ?? NEG_INF
-						const trans = lastType === -1 ? grammar.startTransitions[t]! : grammar.transitions[lastType]![t]!
-						push(dp[j]!, t, {
-							score: entry.score + segScore + trans,
-							segments: [...entry.segments, { start: i, length: spanLen, typeID: t }],
-						})
-					}
+					extend(lastType, entry)
 				}
 			}
 		}
