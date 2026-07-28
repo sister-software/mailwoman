@@ -17,6 +17,7 @@ import styles from "./styles.module.css"
  */
 // Order matters: first match wins. Labels go first so road-label / earth-label / address-label
 // don't get pulled into the Roads / Landuse buckets.
+/** Patterns grouping map layers into the toggles shown in the control, so related layers switch together. */
 export const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "Labels", match: /(?:_label|^places_|^address_label|^country)/ },
 	{ name: "Background", match: /^background/ },

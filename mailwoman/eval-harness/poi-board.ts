@@ -44,6 +44,7 @@ import { createRuntimePipeline } from "mailwoman"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
 
+/** Fixture set backing the POI query board. */
 export const POI_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/poi-board.jsonl"
 
 export interface PoiBoardResultsExpect {

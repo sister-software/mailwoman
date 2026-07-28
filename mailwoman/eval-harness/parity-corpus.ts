@@ -33,6 +33,7 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 /** Examples a parity bucket needs before its rate is stable enough to compare across versions. */
 const MIN_BUCKET_EXAMPLES = 8
 
+/** Parity corpus — the cases rescued from the legacy golden set, used to compare versions. */
 export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /** The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`. */

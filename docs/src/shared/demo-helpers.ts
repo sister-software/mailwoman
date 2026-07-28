@@ -101,8 +101,10 @@ export interface TreeNode {
 // Constants
 // ---------------------------------------------------------------------------
 
+/** Locale the demo opens on. */
 export const DEFAULT_LOCALE = "en-us"
 
+/** Address the demo opens on — it exercises house number, street, directional, locality and region in one line. */
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**

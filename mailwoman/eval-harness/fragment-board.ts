@@ -36,6 +36,7 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
+/** Fixture set backing the fragment board — bare-street and partial-address probes. */
 export const FRAGMENT_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/ban-fragments-fr.jsonl"
 
 /** Tags that together form the street phrase under the board's label policy. */

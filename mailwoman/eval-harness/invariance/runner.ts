@@ -34,6 +34,7 @@ import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
 // (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
 // resolves against the CWD the CLI is invoked from (the repo root), not `import.meta.dirname`.
+/** Suite the invariance runner loads when no path is given. */
 export const DEFAULT_SUITE_PATH = "mailwoman/eval-harness/invariance/suite.jsonl"
 
 // -------------------------------------------------------------------------------------------------

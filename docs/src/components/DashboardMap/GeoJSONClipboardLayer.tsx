@@ -12,6 +12,7 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useRef, useState } from "react"
 import { Layer, Source, useMap } from "react-map-gl/maplibre"
 
+/** Renders GeoJSON pasted into the map, for inspecting a feature collection without a round trip. */
 export const GeoJSONClipboardLayer: React.FC = memo(() => {
 	const [featureCollections, setSources] = useState<FeatureCollection[]>([])
 	const featureCollectionGeometryTypes = useRef<WeakMap<FeatureCollection, Set<Feature["geometry"]["type"]>>>(

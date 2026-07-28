@@ -17,7 +17,9 @@ import type { VectorSourceSpecification } from "maplibre-gl"
 /** Segments used to approximate a circle as a polygon ring. */
 const CIRCLE_SEGMENTS = 64
 
+/** Origin of the tile worker serving basemap and overlay tiles. CORS-restricted to localhost and the docs domains. */
 export const TILE_WORKER_URL = "https://tiles.sister.software"
+/** TileJSON the map reads before requesting basemap tiles. */
 export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
 
 /**

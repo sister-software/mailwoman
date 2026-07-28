@@ -14,6 +14,7 @@ export interface SplashScreenProps extends React.HTMLAttributes<HTMLDivElement> 
 	graceTime?: number
 }
 
+/** First-paint splash shown while the demo's WASM runtime and gazetteer shards load. */
 export const SplashScreen = memo<SplashScreenProps>(({ children = "Loading...", graceTime = 2000 }) => {
 	const [visible, setVisible] = useState(false)
 

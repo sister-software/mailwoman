@@ -58,6 +58,10 @@ export const CURATION_LANGUAGES = [
 	"hu",
 ] as const
 
+/**
+ * Identifies which exclusion policy built an FST. Stamped into the artifact so a stale index built under an older
+ * policy is detectable rather than silently mixed with a new one.
+ */
 export const EXCLUSION_POLICY_ID =
 	"degenerate-surface-exclusion v1.1 (libpostal stopwords+street_types, 17 langs, + supplemental)"
 

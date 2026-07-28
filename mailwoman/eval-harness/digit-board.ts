@@ -49,6 +49,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { wilson } from "./fragment-board.ts"
 
+/** Fixture set backing the digit board — house-number and postcode ambiguity probes. */
 export const DIGIT_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/no-digits.jsonl"
 
 export interface DigitFixture {

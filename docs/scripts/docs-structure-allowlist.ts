@@ -21,6 +21,10 @@ export interface OrphanAllowance {
 	reason: string
 }
 
+/**
+ * Titles allowed to appear on more than one page. Each entry needs a reason — the check exists to catch accidental
+ * duplicates, and an unexplained allowance defeats it.
+ */
 export const allowedDuplicateTitles: DuplicateTitleAllowance[] = [
 	{
 		title: "Retrospectives",
@@ -29,6 +33,7 @@ export const allowedDuplicateTitles: DuplicateTitleAllowance[] = [
 	},
 ]
 
+/** Pages allowed to sit outside the sidebar tree, e.g. ones reached only by direct link. */
 export const allowedOrphans: OrphanAllowance[] = [
 	{
 		id: "sotm-2026-talk-proposal",

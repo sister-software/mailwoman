@@ -27,6 +27,7 @@ export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
 const ArgumentsSchema = zod.array(zod.string().describe("Prefix string to complete"))
 
+/** Config accepted by `mailwoman autocomplete`, validated before the server starts so a bad flag fails fast. */
 export const AutocompleteConfigSchema = zod.object({
 	limit: zod.coerce
 		.number()

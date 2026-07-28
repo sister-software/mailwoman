@@ -22,6 +22,10 @@
  *   downstream knows to distrust it.
  */
 
+/**
+ * Tags whose change under a transform counts as a real failure. A shifted venue or unit is tolerable; a shifted house
+ * number, street, locality or region is not.
+ */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"

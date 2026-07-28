@@ -51,4 +51,8 @@ const seam = geocodeAddressVia({
 	country: cfg.country,
 })
 
+/**
+ * Per-item handler the worker pool invokes. Bound to this worker's seam and mapping at module load, so each item costs
+ * only the geocode itself.
+ */
 export const handleItem = makeGeocodeHandler(seam, mapping)

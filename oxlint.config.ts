@@ -20,9 +20,13 @@ const config = createOxlintConfig({
 	// A number used as a comparison threshold needs a name; data tables (bbox rows, codepoint
 	// ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
 	unnamedThresholds: true,
-	// Exported and SCREAMING_CASE module-level constants carry a JSDoc block saying what the value
-	// means and where it came from — provenance, not a restatement of the identifier.
+	// Exported module-level constants carry a JSDoc block saying what the value means and where it came
+	// from — provenance, not a restatement of the identifier. Scoped to EXPORTED only: on the local
+	// SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`,
+	// `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader
+	// more than the missing comment did. Public surface is where a reader has no other context.
 	constantDocs: {
+		scope: "exported",
 		// Pastel command modules must export these, and the framework gives each its meaning — the
 		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],

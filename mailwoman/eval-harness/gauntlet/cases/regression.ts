@@ -34,6 +34,7 @@ export interface SeedCase {
 	note?: string
 }
 
+/** Seed cases for the regression leg — each is a parse that broke once, kept so it cannot break again. */
 export const REGRESSION_CASES: SeedCase[] = [
 	{
 		// Entry #1 — the FR OSM rooftop tier + the v1.9.4 parse fix, guarded via the WITH-postcode demo form.

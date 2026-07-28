@@ -15,6 +15,7 @@ export interface DocsSectionDef {
 	label: string
 }
 
+/** Top-level documentation sections, in the order they appear in the sub-header. */
 export const DOCS_SECTIONS: readonly DocsSectionDef[] = [
 	{ id: "startHere", label: "Start here" },
 	{ id: "use", label: "Use Mailwoman" },

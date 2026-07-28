@@ -249,6 +249,10 @@ function identity(raw: string): string | null {
 // registry
 // -------------------------------------------------------------------------------------------------
 
+/**
+ * Metamorphic transforms applied to an input. Each one must leave the parse unchanged, so a differing result is a bug
+ * rather than a disagreement.
+ */
 export const TRANSFORMS: readonly Transform[] = [
 	{
 		id: "comma-drop",
