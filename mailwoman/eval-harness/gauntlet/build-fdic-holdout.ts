@@ -89,7 +89,9 @@ export async function buildFDICHoldout(): Promise<void> {
 		)
 	}
 
-	await new Promise<void>((resolvePromise) => sink.end(resolvePromise))
+	await new Promise<void>((resolvePromise) => {
+		sink.end(resolvePromise)
+	})
 
 	if (existsSync(OUT)) {
 		renameSync(OUT, `${OUT}.prev`)

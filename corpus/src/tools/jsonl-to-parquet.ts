@@ -168,7 +168,9 @@ export async function jsonlToParquet(
 			stage.write(line + "\n")
 			rows++
 		}
-		await new Promise<void>((resolve, reject) => stage.end((err?: Error | null) => (err ? reject(err) : resolve())))
+		await new Promise<void>((resolve, reject) => {
+			stage.end((err?: Error | null) => (err ? reject(err) : resolve()))
+		})
 
 		report?.(`Read ${rows} rows from ${options.input}`)
 

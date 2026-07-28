@@ -69,7 +69,9 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 
 			if (!item) return
 
-			const data = await new Promise<string>((resolve) => item.getAsString(resolve))
+			const data = await new Promise<string>((resolve) => {
+				item.getAsString(resolve)
+			})
 
 			if (!data) {
 				console.log("No clipboard data")

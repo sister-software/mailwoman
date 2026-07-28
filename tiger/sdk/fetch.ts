@@ -305,7 +305,9 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			)
 			let stderr = ""
 			child.stderr.on("data", (d) => (stderr += d))
-			const exited = new Promise<number>((resolve) => child.on("close", (code) => resolve(code ?? 0)))
+			const exited = new Promise<number>((resolve) => {
+				child.on("close", (code) => resolve(code ?? 0))
+			})
 
 			// GeoJSONSeq is line-delimited; keep the per-line `JSON.parse` in a try/catch so a malformed
 			// record is tolerated (skipped), not thrown.

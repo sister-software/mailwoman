@@ -101,7 +101,9 @@ export async function runPPDExtract(inputPath: string, outputPath: string): Prom
 	const out = createWriteStream(outputPath, { encoding: "utf8" })
 	const stats = await extractPPDTuples(rows, (line) => out.write(line + "\n"))
 
-	await new Promise<void>((res) => out.end(res))
+	await new Promise<void>((res) => {
+		out.end(res)
+	})
 
 	return stats
 }

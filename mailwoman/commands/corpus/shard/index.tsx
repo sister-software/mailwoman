@@ -125,7 +125,9 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		}
 		const stats = await recipe.run(opts, write)
 		stream.end()
-		await new Promise<void>((res) => stream.on("finish", () => res()))
+		await new Promise<void>((res) => {
+			stream.on("finish", () => res())
+		})
 
 		return [
 			`recipe: ${name}`,

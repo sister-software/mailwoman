@@ -193,7 +193,9 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 		out.write(JSON.stringify(t) + "\n")
 		byState[t.region] = (byState[t.region] ?? 0) + 1
 	}
-	await new Promise<void>((res) => out.end(res))
+	await new Promise<void>((res) => {
+		out.end(res)
+	})
 	progress(`wrote ${reservoir.length.toLocaleString()} tuples → ${opts.out}`)
 
 	return { written: reservoir.length, seen, heldOut, byState }

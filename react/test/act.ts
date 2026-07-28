@@ -55,7 +55,9 @@ async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 
 /** One drained macrotask tick — lets a fire-and-forget handler's trailing microtasks flush inside act(). */
 function nextTick(): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, 0))
+	return new Promise((resolve) => {
+		setTimeout(resolve, 0)
+	})
 }
 
 /**
@@ -123,7 +125,9 @@ async function actWaitFor<T>(
 			// follow-on) can leave a promise in flight. Drain one more tick INSIDE act so that trailing
 			// setState settles in-scope instead of firing during the caller's `await` resume gap.
 			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0))
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0)
+				})
 			})
 
 			return value
@@ -136,7 +140,9 @@ async function actWaitFor<T>(
 		// All waiting happens inside act(): the pending updates for this round settle in-scope, and the
 		// fresh act completes so the next effect in a chain gets flushed before the next check.
 		await act(async () => {
-			await new Promise((resolve) => setTimeout(resolve, interval))
+			await new Promise((resolve) => {
+				setTimeout(resolve, interval)
+			})
 		})
 	}
 }
@@ -161,7 +167,9 @@ function wrapWaitFor(): void {
  */
 export async function actDelay(ms = 0): Promise<void> {
 	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, ms))
+		await new Promise((resolve) => {
+			setTimeout(resolve, ms)
+		})
 	})
 }
 

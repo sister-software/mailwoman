@@ -79,7 +79,10 @@ function parseArgs(): Args {
 }
 
 type Rec = Record<string, string>
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const sleep = (ms: number) =>
+	new Promise((r) => {
+		setTimeout(r, ms)
+	})
 const norm = (s: string | undefined) => (s ?? "").toLowerCase().trim()
 
 /** Lenient: did the stack produce a value matching expected (substring either way), per tag? */

@@ -412,7 +412,9 @@ export async function buildCoverageTiles(
 		)
 	}
 
-	await new Promise<void>((resolve, reject) => sink.end((err?: Error | null) => (err ? reject(err) : resolve())))
+	await new Promise<void>((resolve, reject) => {
+		sink.end((err?: Error | null) => (err ? reject(err) : resolve()))
+	})
 
 	// --- tippecanoe → PMTiles ---
 	onProgress("tile", `tiling ${featureCount.toLocaleString()} features → pmtiles…`)

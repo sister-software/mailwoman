@@ -61,7 +61,9 @@ try {
 		}
 
 		if (Date.now() > deadline) throw new Error("nominatim serve did not become ready within 180s")
-		await new Promise((resolve) => setTimeout(resolve, 1000))
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000)
+		})
 	}
 
 	const rows: string[] = []

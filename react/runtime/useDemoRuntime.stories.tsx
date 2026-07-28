@@ -32,7 +32,10 @@ const MANIFEST: DemoManifest<StoryRelease> = {
 	],
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const sleep = (ms: number) =>
+	new Promise((resolve) => {
+		setTimeout(resolve, ms)
+	})
 
 function makeLoaders(delayMs: number, fail: boolean) {
 	const loadManifest = async (): Promise<DemoManifest<StoryRelease>> => {

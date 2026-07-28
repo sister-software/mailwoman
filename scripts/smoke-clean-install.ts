@@ -181,10 +181,12 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 
 	// Failure channels the handshake races against, so a missing/crashing bin fails FAST instead of hanging:
 	// `error` (spawn ENOENT — the bin path doesn't exist), `exit` (crashed before answering), the overall timeout.
-	const exited = new Promise<number | null>((res) => child.on("exit", (code) => res(code)))
-	const failed = new Promise<never>((_, rej) =>
+	const exited = new Promise<number | null>((res) => {
+		child.on("exit", (code) => res(code))
+	})
+	const failed = new Promise<never>((_, rej) => {
 		child.on("error", (err) => rej(new Error(`mailwoman-mcp failed to spawn (${binPath}): ${(err as Error).message}`)))
-	)
+	})
 	let overallTimer: NodeJS.Timeout | undefined
 	const timedOut = new Promise<never>((_, rej) => {
 		overallTimer = setTimeout(() => {
@@ -198,7 +200,12 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 			new Promise<{ result?: { tools?: unknown[] }; error?: unknown }>((res, rej) => {
 				const existing = responses.get(id)
 
-				if (existing) return res(existing)
+				if (existing) {
+					res(existing)
+
+					return
+				}
+
 				waiters.set(id, res)
 				exited.then((code) =>
 					rej(new Error(`mailwoman-mcp exited (code ${code}) before responding to id ${id}; stderr:\n${stderr}`))

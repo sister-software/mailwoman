@@ -245,7 +245,9 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 			if (!retryable || attempt === retries) throw error
 			const delay = attempt * 2000
 			console.error(`  [retry ${attempt}/${retries}] ${path.basename(dest)}: ${message} — waiting ${delay}ms`)
-			await new Promise((r) => setTimeout(r, delay))
+			await new Promise((r) => {
+				setTimeout(r, delay)
+			})
 		}
 	}
 }

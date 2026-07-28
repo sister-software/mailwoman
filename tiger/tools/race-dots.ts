@@ -183,7 +183,9 @@ export async function raceDots(
 	}
 
 	out.end()
-	await new Promise<void>((resolve) => out.on("finish", () => resolve()))
+	await new Promise<void>((resolve) => {
+		out.on("finish", () => resolve())
+	})
 	report?.(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
 
 	for (const [cat, n] of [...totals.entries()].toSorted((a, b) => b[1] - a[1])) {
