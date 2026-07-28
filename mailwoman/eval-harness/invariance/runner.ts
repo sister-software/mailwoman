@@ -224,9 +224,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 		for (const transformId of row.transforms) {
 			const transform = getTransform(transformId) // throws loudly on an unknown id — fixture typo guard.
-			let transformedText: string | null
-
-			transformedText = transformId === "idempotence" ? row.raw : transform.apply(row.raw)
+			const transformedText: string | null = transformId === "idempotence" ? row.raw : transform.apply(row.raw)
 
 			if (transformedText == null) {
 				skipped.push({ rowId: row.id, transformId, reason: "transform not applicable to this raw" })

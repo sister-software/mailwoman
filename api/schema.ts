@@ -162,17 +162,17 @@ export const ResolveResponseSchema = z
 	.openapi("ResolveResponse")
 
 /**
- * `POST /v1/format` request body. `components` accepts `string | string[]` per key on the wire — a handler-side
- * concern, not this schema's: `@mailwoman/formatter`'s `ComponentDict` (`format.ts`) is `Partial<Record<ComponentTag,
- * string>>`, single-string only, so a route handler must join array values before calling
- * `formatAddress`/`canonicalKey`.
- */
-/**
  * One component's value. Repeatable tags (a street with two names, say) arrive as an array; the caller joins them
  * before handing the dict to `formatAddress`, which takes single strings only.
  */
 const ComponentValueSchema = z.union([z.string(), z.array(z.string())])
 
+/**
+ * `POST /v1/format` request body. `components` accepts `string | string[]` per key on the wire — a handler-side
+ * concern, not this schema's: `@mailwoman/formatter`'s `ComponentDict` (`format.ts`) is `Partial<Record<ComponentTag,
+ * string>>`, single-string only, so a route handler must join array values before calling
+ * `formatAddress`/`canonicalKey`.
+ */
 export const FormatRequestSchema = z
 	.object({
 		components: z.record(z.string(), ComponentValueSchema),

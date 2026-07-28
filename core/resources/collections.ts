@@ -48,6 +48,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 		const entry = iterationResult.value
 
+		// oxlint-disable-next-line promise/always-return -- the handle tracks completion, not a value
 		const futureResult = callback(entry).then((result) => {
 			runningTasks.delete(entry)
 
