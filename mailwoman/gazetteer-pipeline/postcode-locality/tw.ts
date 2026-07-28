@@ -57,6 +57,9 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 
+/** Shortest romanised stem still specific enough to match a Taiwanese place name. */
+const MIN_ENGLISH_STEM_LENGTH = 3
+
 const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set (JP/KR precedent)
 const FALLBACK_RADIUS_KM = 20 // no-polygon fallback: name+proximity net around the official center
 /**
@@ -434,7 +437,8 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			p.hanNames.has(districtHan) || (stemHan.length >= 2 && p.hanNames.has(stemHan))
 		// The Overture en name is per-polygon, so the closure is (re)bound after the polygon resolves.
 		let enStem = ""
-		const nameMatches = (p: AdminPlace): boolean => hanMatches(p) || (enStem.length >= 3 && p.engNames.has(enStem))
+		const nameMatches = (p: AdminPlace): boolean =>
+			hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
 
 		// 1. The district polygon: name match (full Chinese form), disambiguated by whether it contains
 		//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official

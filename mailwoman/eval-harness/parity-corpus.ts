@@ -30,6 +30,9 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
  * corpus stays reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints
  * which corpus + how many tombstones it skipped, so the denominator is never silent.
  */
+/** Examples a parity bucket needs before its rate is stable enough to compare across versions. */
+const MIN_BUCKET_EXAMPLES = 8
+
 export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /** The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`. */
@@ -156,7 +159,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			if (emitted) {
 				bucket.spurious++
 
-				if (bucket.examples.length < 8) {
+				if (bucket.examples.length < MIN_BUCKET_EXAMPLES) {
 					bucket.examples.push(`${JSON.stringify(fixture.input)} -> ${label}=${JSON.stringify(emitted)}`)
 				}
 			}

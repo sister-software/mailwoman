@@ -166,7 +166,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 		return [
 			`${output}`,
 			`${entries.size} entries + ${codeEntries.size} code_entries, max_ngram=${maxNgram}`,
-			`${homographs.length} homographs: ${homographs.slice(0, MAX_LISTED_HOMOGRAPHS).join(", ")}${homographs.length > 12 ? ", …" : ""}`,
+			`${homographs.length} homographs: ${homographs.slice(0, MAX_LISTED_HOMOGRAPHS).join(", ")}${homographs.length > MAX_LISTED_HOMOGRAPHS ? ", …" : ""}`,
 		]
 	})
 

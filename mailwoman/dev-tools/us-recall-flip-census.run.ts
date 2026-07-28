@@ -15,6 +15,9 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
+/** Samples a bucket needs before its flip rate is worth reporting rather than noise. */
+const MIN_REPORTABLE_SAMPLES = 4
+
 const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const [candidateRoot, sampleArg] = cliArguments()
 
@@ -81,7 +84,7 @@ for (const row of rows) {
 			entry.count++
 			entry.where.set(went, (entry.where.get(went) ?? 0) + 1)
 
-			if (entry.samples.length < 4) {
+			if (entry.samples.length < MIN_REPORTABLE_SAMPLES) {
 				entry.samples.push(`${JSON.stringify(row.raw)} gold ${tag}=${JSON.stringify(gold)} -> ${went}`)
 			}
 			flips.set(tag, entry)

@@ -27,6 +27,9 @@ import { DatabaseSync } from "node:sqlite"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /** Options for {@linkcode raceDots}. */
+/** Attempts to place a dot inside its polygon by rejection sampling before giving up on it. */
+const MAX_PLACEMENT_TRIES = 60
+
 export interface RaceDotsOptions {
 	/** TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`. */
 	db?: string
@@ -111,7 +114,7 @@ export async function raceDots(
 		}
 		const [minX, minY, maxX, maxY] = bbox(poly)
 
-		for (let tries = 0; tries < 60; tries++) {
+		for (let tries = 0; tries < MAX_PLACEMENT_TRIES; tries++) {
 			const x = minX + Math.random() * (maxX - minX)
 			const y = minY + Math.random() * (maxY - minY)
 			const pt = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [x, y] }, properties: {} }

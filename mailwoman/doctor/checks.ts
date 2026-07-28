@@ -15,6 +15,9 @@
  */
 
 /** A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired. */
+/** Bytes per MB, for human-readable sizes. Decimal rather than binary, matching how disk sizes are quoted. */
+const BYTES_PER_MB = 1_000_000
+
 export const CheckStatus = {
 	OK: "ok",
 	Missing: "missing",
@@ -90,7 +93,7 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 
 /** Bytes → a compact `12.3 MB` / `640 KB` / `12 B` string. */
 export function formatBytes(bytes: number): string {
-	if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`
+	if (bytes >= BYTES_PER_MB) return `${(bytes / 1_000_000).toFixed(1)} MB`
 
 	if (bytes >= 1000) return `${(bytes / 1000).toFixed(0)} KB`
 

@@ -22,6 +22,9 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
+/** Row count below which a trained placetype is flagged as thin relative to its peers. */
+const UNDERTRAINED_PLACETYPE_COUNT = 200_000
+
 const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("WOF admin DB. Default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db"),
 	country: zod
@@ -166,7 +169,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			<Text> </Text>
 			<Text dimColor>Ancestor chains (rare/esoteric types):</Text>
 			{stats
-				.filter((s) => s.count < 200_000 && s.trained)
+				.filter((s) => s.count < UNDERTRAINED_PLACETYPE_COUNT && s.trained)
 				.map((s) => (
 					<Text key={`anc-${s.placetype}`}>
 						{"  "}

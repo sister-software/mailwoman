@@ -69,6 +69,15 @@ import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
  * off, tri-states are the paired on/off flags the gate legs pin (`adminCoherence`/`noAdminCoherence`).
  */
+/** Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals. */
+const MIN_DISTINCTIVE_TOKEN_LENGTH = 4
+
+/** Shortest qualifier still meaningful when comparing an address's trailing parts. */
+const MIN_QUALIFIER_LENGTH = 3
+
+/** Misses retained for diagnostics before the harness stops accumulating, to bound memory on a full run. */
+const MAX_DIAGNOSTIC_MISSES = 5000
+
 export interface OAResolverEvalOptions {
 	/** #722 baseline: ablate to anchor-only (gazetteer + conventions OFF). */
 	ablateToAnchor?: boolean
@@ -511,7 +520,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
 				for (const t of normName(r.name).split(" "))
-					if (t.length >= 4) {
+					if (t.length >= MIN_DISTINCTIVE_TOKEN_LENGTH) {
 						set.add(t)
 					}
 			}
@@ -539,7 +548,8 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				.filter(Boolean)
 			const anc = ancestorTokensFor(locNode.id)
 
-			if (quals.length && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
+			if (quals.length && quals.every((q) => q.length >= MIN_QUALIFIER_LENGTH && [...anc].some((a) => a.startsWith(q))))
+				return true
 		}
 
 		return false
@@ -1024,7 +1034,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				if (precond && !exact && !interp) {
 					interpFullParseMiss++
 
-					if (diagMisses.length < 5000) {
+					if (diagMisses.length < MAX_DIAGNOSTIC_MISSES) {
 						diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
 					}
 				}
