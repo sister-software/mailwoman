@@ -46,6 +46,93 @@ export interface GeonamesIngestProgress {
 	skipped: boolean
 }
 
+/** One spelling's language attribution, as reconciled across every alternate-names row that carries it. */
+interface V2Alias {
+	language: string
+	privateuse: string
+	official: number
+}
+
+/**
+ * Parse a country's alternateNamesV2 file into `geonameid -> spelling -> attribution`, restricted to the populated
+ * places (`P`) present in `lines`.
+ */
+function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map<number, Map<string, V2Alias>> {
+	const wanted = new Set<number>()
+
+	for (const line of lines) {
+		const f = line.split("\t")
+
+		if (f[6] === "P") {
+			wanted.add(Number(f[0]))
+		}
+	}
+	const v2 = new Map<number, Map<string, V2Alias>>()
+
+	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
+	// 6 isColloquial, 7 isHistoric, 8 from, 9 to.
+	//
+	// Two passes, because historic-ness is a fact about the NAME, not the row: GeoNames splits one
+	// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) AND as (no-language,
+	// isHistoric=1, to=1973). Officialness must see the flags from EVERY row for the spelling, or the
+	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
+	// Do NOT gate on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
+	// is unflagged; FI has 1,746 flags across the whole dump).
+	const v2Lines = readFileSync(v2File, "utf8").split("\n")
+	const historicNames = new Set<string>()
+
+	for (const line of v2Lines) {
+		if (!line) continue
+		const f = line.split("\t")
+
+		if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
+			const alt = (f[3] ?? "").trim()
+
+			if (alt && wanted.has(Number(f[1]))) {
+				historicNames.add(`${f[1]}|${alt}`)
+			}
+		}
+	}
+
+	for (const line of v2Lines) {
+		if (!line) continue
+		const f = line.split("\t")
+		const gid = Number(f[1])
+
+		if (!wanted.has(gid)) continue
+		const lang = f[2] ?? ""
+
+		// ISO 639 codes are 2-3 letters; GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
+		if (!/^[a-z]{2,3}$/.test(lang)) continue
+		const alt = (f[3] ?? "").trim()
+
+		if (!alt) continue
+		const preferred = f[4] === "1"
+		const official = !historicNames.has(`${gid}|${alt}`) && isOfficialLanguage(cc, lang) ? 1 : 0
+		let byName = v2.get(gid)
+
+		if (!byName) {
+			v2.set(gid, (byName = new Map()))
+		}
+		const prev = byName.get(alt)
+
+		if (!prev) {
+			byName.set(alt, { language: lang, privateuse: preferred ? "preferred" : "", official })
+		} else {
+			if (official && !prev.official) {
+				prev.language = lang
+				prev.official = 1
+			}
+
+			if (preferred && !prev.privateuse) {
+				prev.privateuse = "preferred"
+			}
+		}
+	}
+
+	return v2
+}
+
 /**
  * Fold the GeoNames `P`-class places (+ their Latin alt-names) for `countries` into `db`'s `spr` / `names` /
  * `place_population` tables. Returns the total places ingested.
@@ -136,81 +223,7 @@ export function ingestGeonamesAliases(
 		// dump repeats one spelling under several languages ("Åbo" sv/da/no); the merged tag is official /
 		// preferred if ANY qualifying row is.
 		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
-		let v2: Map<number, Map<string, { language: string; privateuse: string; official: number }>> | undefined
-
-		if (v2File && existsSync(v2File)) {
-			const wanted = new Set<number>()
-
-			for (const line of lines) {
-				const f = line.split("\t")
-
-				if (f[6] === "P") {
-					wanted.add(Number(f[0]))
-				}
-			}
-			v2 = new Map()
-
-			// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
-			// 6 isColloquial, 7 isHistoric, 8 from, 9 to.
-			//
-			// Two passes, because historic-ness is a fact about the NAME, not the row: GeoNames splits one
-			// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) AND as (no-language,
-			// isHistoric=1, to=1973). Officialness must see the flags from EVERY row for the spelling, or the
-			// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
-			// Do NOT gate on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
-			// is unflagged; FI has 1,746 flags across the whole dump).
-			const v2Lines = readFileSync(v2File, "utf8").split("\n")
-			const historicNames = new Set<string>()
-
-			for (const line of v2Lines) {
-				if (!line) continue
-				const f = line.split("\t")
-
-				if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
-					const alt = (f[3] ?? "").trim()
-
-					if (alt && wanted.has(Number(f[1]))) {
-						historicNames.add(`${f[1]}|${alt}`)
-					}
-				}
-			}
-
-			for (const line of v2Lines) {
-				if (!line) continue
-				const f = line.split("\t")
-				const gid = Number(f[1])
-
-				if (!wanted.has(gid)) continue
-				const lang = f[2] ?? ""
-
-				// ISO 639 codes are 2-3 letters; GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
-				if (!/^[a-z]{2,3}$/.test(lang)) continue
-				const alt = (f[3] ?? "").trim()
-
-				if (!alt) continue
-				const preferred = f[4] === "1"
-				const official = !historicNames.has(`${gid}|${alt}`) && isOfficialLanguage(cc, lang) ? 1 : 0
-				let byName = v2.get(gid)
-
-				if (!byName) {
-					v2.set(gid, (byName = new Map()))
-				}
-				const prev = byName.get(alt)
-
-				if (!prev) {
-					byName.set(alt, { language: lang, privateuse: preferred ? "preferred" : "", official })
-				} else {
-					if (official && !prev.official) {
-						prev.language = lang
-						prev.official = 1
-					}
-
-					if (preferred && !prev.privateuse) {
-						prev.privateuse = "preferred"
-					}
-				}
-			}
-		}
+		const v2 = v2File && existsSync(v2File) ? parseAlternateNamesV2(v2File, cc, lines) : undefined
 
 		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
 		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).

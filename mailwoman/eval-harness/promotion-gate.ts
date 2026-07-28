@@ -139,49 +139,24 @@ export function listGateSpecs(): string[] {
 }
 
 /**
- * Run the full promotion-gate battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
- * held, 1 = any miss, 2 = usage / lore-guard refusal.
+ * The three pre-flight guards, run before any battery: the tokenizer must be comparable to the card's, `core/out` must
+ * not be stale, and every graded artifact's md5 + dynamic-quant fingerprint is recorded to `provenance.txt`. Returns an
+ * exit code to propagate, or `null` when the run may proceed.
+ *
+ * A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run false-FAILed (us.postcode
+ * 86.9) because it graded a stale/mislabeled artifact — the real model scored 97.5 under every config.
  */
-export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
-	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash redirects did.
-	$.verbose = false
-
-	const MODEL = options.model ?? ""
-	const INT8 = options.int8 ?? ""
-	const GATE = options.gate ? resolveGateSpecPath(options.gate) : ""
-	let OUT_DIR = options.outDir ?? ""
-	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const CARD = options.card ?? "neural-weights-en-us/model-card.json"
-	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
-	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-
-	// PACKAGE-SHAPED (#718-safe): when --weights-cache is set, the graded artifact + its tokenizer/card
-	// are the cache's own siblings. The metric probes load it via loadFromWeights (feeding anchor +
-	// gazetteer + COUNTRY — the only in-distribution grade for a country-channel model); the
-	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
-	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
-	const WC = options.weightsCache ?? ""
-	const WC_MODEL = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model.onnx") : ""
-	const EFF_TOK = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/tokenizer.model") : TOK
-	const EFF_CARD = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model-card.json") : CARD
-
-	if (!GATE || (!MODEL && !WC)) {
-		console.error("✗ --gate and one of --model / --weights-cache required")
-
-		return 2
-	}
-
-	const gate = JSON.parse(readFileSync(GATE, "utf8")) as GateSpec
-	const LABEL = gate.label
-	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
-
-	if (!OUT_DIR) {
-		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
-	}
-	mkdirSync(OUT_DIR, { recursive: true })
-
+async function runLoreGuards(env: {
+	WC: string
+	WC_MODEL: string
+	MODEL: string
+	INT8: string
+	TOK: string
+	OUT_DIR: string
+	card: ModelCard
+}): Promise<number | null> {
+	const { WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
 	// --- lore guard: tokenizer comparability -----------------------------------
-	const card = JSON.parse(readFileSync(EFF_CARD, "utf8")) as ModelCard
 	const CARD_TOK = card.training.tokenizer_version
 
 	// Skipped for --weights-cache: loadFromWeights pairs the package's own tokenizer + card internally,
@@ -270,6 +245,56 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			}
 		}
 	}
+
+	return null
+}
+
+/**
+ * Run the full promotion-gate battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
+ * held, 1 = any miss, 2 = usage / lore-guard refusal.
+ */
+export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
+	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash redirects did.
+	$.verbose = false
+
+	const MODEL = options.model ?? ""
+	const INT8 = options.int8 ?? ""
+	const GATE = options.gate ? resolveGateSpecPath(options.gate) : ""
+	let OUT_DIR = options.outDir ?? ""
+	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const CARD = options.card ?? "neural-weights-en-us/model-card.json"
+	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
+	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
+
+	// PACKAGE-SHAPED (#718-safe): when --weights-cache is set, the graded artifact + its tokenizer/card
+	// are the cache's own siblings. The metric probes load it via loadFromWeights (feeding anchor +
+	// gazetteer + COUNTRY — the only in-distribution grade for a country-channel model); the
+	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
+	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
+	const WC = options.weightsCache ?? ""
+	const WC_MODEL = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model.onnx") : ""
+	const EFF_TOK = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/tokenizer.model") : TOK
+	const EFF_CARD = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model-card.json") : CARD
+
+	if (!GATE || (!MODEL && !WC)) {
+		console.error("✗ --gate and one of --model / --weights-cache required")
+
+		return 2
+	}
+
+	const gate = JSON.parse(readFileSync(GATE, "utf8")) as GateSpec
+	const LABEL = gate.label
+	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
+
+	if (!OUT_DIR) {
+		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
+	}
+	mkdirSync(OUT_DIR, { recursive: true })
+
+	const card = JSON.parse(readFileSync(EFF_CARD, "utf8")) as ModelCard
+	const guardExit = await runLoreGuards({ WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card })
+
+	if (guardExit !== null) return guardExit
 
 	const GAZ_ARGS: string[] = []
 

@@ -264,26 +264,14 @@ interface AdminPlace {
 	engNames: Set<string>
 }
 
-export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
-	const districts = loadPostalDistricts(args.postalXml)
-
-	if (!districts.length) {
-		console.error(`no postal districts parsed from ${args.postalXml}`)
-		process.exit(1)
-	}
-	const polygons = loadDistrictPolygons(args.divisions)
-	const polygonsByName = new Map<string, DivisionPolygon[]>()
-
-	for (const p of polygons) {
-		const bucket = polygonsByName.get(p.nameHan)
-
-		if (bucket) {
-			bucket.push(p)
-		} else {
-			polygonsByName.set(p.nameHan, [p])
-		}
-	}
-
+/**
+ * Everything the district match needs out of the WOF admin database, indexed once: the place rows with their
+ * Chinese/romanized name forms, the region tier (the 22 直轄市/縣/市 that back the containing-city fallback), the Wikidata
+ * concordance bridge, and a 0.5°-cell proximity grid behind `nearby`.
+ *
+ * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
+ */
+function loadAdminIndexes(args: { adminDb: string }) {
 	const admin = new DatabaseSync(args.adminDb)
 	const ph = PLACETYPES.map(() => "?").join(",")
 	const places = new Map<number, AdminPlace>()
@@ -411,6 +399,31 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 		return out
 	}
+
+	return { places, regionsByHan, placesByQID, nearby }
+}
+
+export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
+	const districts = loadPostalDistricts(args.postalXml)
+
+	if (!districts.length) {
+		console.error(`no postal districts parsed from ${args.postalXml}`)
+		process.exit(1)
+	}
+	const polygons = loadDistrictPolygons(args.divisions)
+	const polygonsByName = new Map<string, DivisionPolygon[]>()
+
+	for (const p of polygons) {
+		const bucket = polygonsByName.get(p.nameHan)
+
+		if (bucket) {
+			bucket.push(p)
+		} else {
+			polygonsByName.set(p.nameHan, [p])
+		}
+	}
+
+	const { places, regionsByHan, placesByQID, nearby } = loadAdminIndexes(args)
 
 	const buildPath = `${args.output}.building`
 	rmSync(buildPath, { force: true })
