@@ -170,10 +170,10 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	// --- String table ---
 	let strOffset = 0
 
-	for (let i = 0; i < encodedStrings.length; i++) {
+	for (const encoded of encodedStrings) {
 		buf.writeUInt32LE(strOffset, pos)
 		pos += 4
-		strOffset += encodedStrings[i]!.length
+		strOffset += encoded.length
 	}
 	buf.writeUInt32LE(strOffset, pos)
 	pos += 4

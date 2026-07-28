@@ -341,9 +341,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			let best: TooltipDatum | null = null
 			let bestDist = Infinity
 
-			for (let si = 0; si < series.length; si++) {
-				const s = series[si]
-
+			for (const s of series) {
 				for (const p of s.points) {
 					const px = xScale(p.step)
 					const py = yScale(p.value)

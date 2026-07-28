@@ -16,6 +16,7 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 	let hasSingle = false
 	let prevSpace = false
 
+	// oxlint-disable-next-line typescript/prefer-for-of -- for…of yields code POINTS; this walks code units
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]
 

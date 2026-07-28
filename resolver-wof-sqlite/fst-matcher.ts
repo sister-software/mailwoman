@@ -39,11 +39,11 @@ export class FSTMatcher {
 	walk(tokens: string[]): FSTMatchResult | null {
 		let stateID = 0
 
-		for (let i = 0; i < tokens.length; i++) {
+		for (const token of tokens) {
 			const node = this.nodes[stateID]
 
 			if (!node) return null
-			const next = node.edges.get(tokens[i]!)
+			const next = node.edges.get(token)
 
 			if (next === undefined) return null
 			stateID = next

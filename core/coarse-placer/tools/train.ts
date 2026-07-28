@@ -117,8 +117,8 @@ export async function trainCoarsePlacer(
 			let s = b[c]!
 			const base = c * D
 
-			for (let k = 0; k < x.length; k++) {
-				s += W[base + x[k]!]!
+			for (const featureIndex of x) {
+				s += W[base + featureIndex]!
 			}
 			logits[c] = s
 		}
@@ -176,8 +176,8 @@ export async function trainCoarsePlacer(
 				b[c] = b[c]! - lr * g
 				const base = c * D
 
-				for (let k = 0; k < x.length; k++) {
-					const idx = base + x[k]!
+				for (const featureIndex of x) {
+					const idx = base + featureIndex
 					W[idx] = W[idx]! - lr * (g + l2 * W[idx]!)
 				}
 			}
@@ -196,8 +196,8 @@ export async function trainCoarsePlacer(
 				let s = b[c]!
 				const base = c * D
 
-				for (let k = 0; k < x.length; k++) {
-					s += W[base + x[k]!]!
+				for (const featureIndex of x) {
+					s += W[base + featureIndex]!
 				}
 				logits[c] = s / T
 			}
