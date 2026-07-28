@@ -23,6 +23,7 @@ import type {
 	AddressClassifier,
 	ClassifierOpts,
 	FSTMatcherLike,
+	InputMode,
 	LocaleHint,
 	LocaleTag,
 	NormalizedInputLite,
@@ -34,6 +35,7 @@ import type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "./types.ts"
+import { deriveInputMode } from "./types.ts"
 
 /**
  * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
@@ -526,7 +528,9 @@ export async function runPipeline(
 			stages.fst,
 			opts?.normalizeCase,
 			opts?.placetypePair,
-			stages.streetMorphology
+			stages.streetMorphology,
+			// Decision A: explicit caller register wins; otherwise the kind verdict decides. NEVER case-keyed.
+			opts?.inputMode ?? deriveInputMode(kind.kind)
 		)
 		timing["token-classify"] = performance.now() - tClassify
 	}
@@ -584,7 +588,8 @@ async function safeClassify(
 	fst?: FSTMatcherLike,
 	normalizeCase?: boolean,
 	placetypePair?: PlacetypePairPassthrough,
-	streetMorphology?: FSTMatcherLike
+	streetMorphology?: FSTMatcherLike,
+	inputMode?: InputMode
 ): Promise<AddressTree> {
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
@@ -596,6 +601,7 @@ async function safeClassify(
 		// no-prior decode), so the classifier's `opts?.placetypePair ?? cfg.placetypePair` resolution is unchanged when absent.
 		return await classifier.parse(text, {
 			queryShape,
+			inputMode,
 			fst,
 			postcodeRepair: true,
 			normalizeCase,
