@@ -371,9 +371,16 @@ export function resolvePairIndexForText(
  * anchor-lexicon-v1.json side by side).
  */
 export function defaultGazetteerLexiconURL(modelURL: string): string {
-	// Swap the final path segment — string surgery rather than `new URL()` so relative model URLs
-	// ("/static/mailwoman/model.onnx") stay relative.
-	return modelURL.replace(/[^/]*$/, "anchor-lexicon-v1.json")
+	return siblingURL(modelURL, "anchor-lexicon-v1.json")
+}
+
+/**
+ * Swap the final path segment — string surgery rather than `new URL()` so relative model URLs
+ * ("/static/mailwoman/model.onnx") stay relative, and index arithmetic rather than a regex so the URL length can't
+ * degrade matching (CodeQL js/polynomial-redos).
+ */
+function siblingURL(modelURL: string, basename: string): string {
+	return modelURL.slice(0, modelURL.lastIndexOf("/") + 1) + basename
 }
 
 /**
@@ -381,17 +388,17 @@ export function defaultGazetteerLexiconURL(modelURL: string): string {
  * file — the release bundle lays it out beside anchor-lexicon-v1.json.
  */
 export function defaultCountryLexiconURL(modelURL: string): string {
-	return modelURL.replace(/[^/]*$/, "country-surface-lexicon-v1.json")
+	return siblingURL(modelURL, "country-surface-lexicon-v1.json")
 }
 
 /** Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout). */
 function defaultStreetTypeLexiconURL(modelURL: string): string {
-	return modelURL.replace(/[^/]*$/, "street-type-lexicon-v3.json")
+	return siblingURL(modelURL, "street-type-lexicon-v3.json")
 }
 
 /** Default location of the locality-surface evidence lexicon: a sibling of the model file. */
 function defaultLocalitySurfaceLexiconURL(modelURL: string): string {
-	return modelURL.replace(/[^/]*$/, "locality-surface-lexicon-v6.json")
+	return siblingURL(modelURL, "locality-surface-lexicon-v6.json")
 }
 
 /**
