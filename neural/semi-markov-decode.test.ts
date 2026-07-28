@@ -97,7 +97,9 @@ describe("decodeSegmentationsKBest", () => {
 		let best = all[0]!
 
 		for (const candidate of all) {
-			if (scoreOne(candidate, sc, g) > scoreOne(best, sc, g)) best = candidate
+			if (scoreOne(candidate, sc, g) > scoreOne(best, sc, g)) {
+				best = candidate
+			}
 		}
 		expect(got.score).toBeCloseTo(scoreOne(best, sc, g), 6)
 		expect(got.segments.map((s) => [s.start, s.length, s.typeID])).toEqual(best)

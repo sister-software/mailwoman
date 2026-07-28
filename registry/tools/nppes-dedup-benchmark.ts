@@ -765,7 +765,9 @@ export async function nppesDedupBenchmark(
 	let best = sweep[0]!
 
 	for (const arm of sweep) {
-		if (arm.score.f1 > best.score.f1) best = arm
+		if (arm.score.f1 > best.score.f1) {
+			best = arm
+		}
 	}
 	report?.(
 		`    progression @ threshold 0: ${progression.map((p) => `${(100 * p.score.f1).toFixed(1)}%`).join(" → ")} F1`

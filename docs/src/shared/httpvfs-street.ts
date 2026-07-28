@@ -205,7 +205,9 @@ export class HTTPVFSInterpolator {
 		let best = pool[0]!
 
 		for (const candidate of pool) {
-			if (spanOf(candidate) < spanOf(best)) best = candidate
+			if (spanOf(candidate) < spanOf(best)) {
+				best = candidate
+			}
 		}
 		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
 		const span = Number(best.to_hn) - Number(best.from_hn)

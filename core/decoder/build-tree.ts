@@ -183,7 +183,9 @@ function findParent(
 		let closest = matches[0]!
 
 		for (const candidate of matches) {
-			if (distance(candidate, span) < distance(closest, span)) closest = candidate
+			if (distance(candidate, span) < distance(closest, span)) {
+				closest = candidate
+			}
 		}
 
 		return closest

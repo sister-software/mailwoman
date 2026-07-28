@@ -418,8 +418,9 @@ export async function crossSourceThresholdSweep(
 			`phone-corrob ${pct(fs.phoneCorrob, fs.phoneCheckable)} (${fs.phoneCorrob}/${fs.phoneCheckable}).`
 	)
 
+	lines.push("")
+
 	if (!dominating) {
-		lines.push("")
 		lines.push(
 			`**No GBT threshold dominates FS** — none matches FS's ${fs.crossSource} cross-source links at ≥ its ` +
 				`${pct(fs.phoneCorrob, fs.phoneCheckable)} phone-corrob without over-merging (entity count collapsing below ` +
@@ -430,7 +431,6 @@ export async function crossSourceThresholdSweep(
 				`retrain (option 2), gated on cross-source labels, is the only lever. See #655.`
 		)
 	} else {
-		lines.push("")
 		lines.push(
 			`**GBT @ ${dominating.threshold} dominates FS**: ${dominating.crossSource} links (vs ${fs.crossSource}) at ` +
 				`${pct(dominating.phoneCorrob, dominating.phoneCheckable)} phone-corrob (vs ${pct(fs.phoneCorrob, fs.phoneCheckable)}), ` +
