@@ -143,7 +143,12 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 
 	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
 	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		const line = raw.replace(/^/, "").trim()
+		// Strip the RFC-8142 record separator (U+001E) GDAL's GeoJSONSeq MAY prefix records with —
+		// `.trim()` does NOT remove it (not whitespace), so an RS-framed record would fail JSON.parse
+		// and be silently skipped (all of them — an empty index). The strip had degraded to the no-op
+		// `replace(/^/, "")` (CodeQL js/identity-replacement, alert #13): harmless only because GDAL
+		// defaults to newline framing.
+		const line = (raw.charCodeAt(0) === 0x1e ? raw.slice(1) : raw).trim()
 
 		if (!line) continue
 		let f: { properties?: { name?: string }; geometry?: { type?: string; coordinates?: number[][] } }
