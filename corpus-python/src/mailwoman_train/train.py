@@ -974,7 +974,9 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             "model": asdict(cfg.model),
                             "train": asdict(cfg.train),
                         },
-                        "vocab_size": tokenizer.vocab_size,
+                        # Char mode has no SP tokenizer; 2 is build_model's dummy SP-table width
+                        # (the model's own config carries char_vocab_size).
+                        "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
                     }
                     ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
                     print(f"  [save] checkpoint → {ck}")
@@ -986,7 +988,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 "model": asdict(cfg.model),
                 "train": asdict(cfg.train),
             },
-            "vocab_size": tokenizer.vocab_size,
+            "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
         }
         save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
     finally:
