@@ -56,6 +56,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
+import { haversineKm } from "@mailwoman/spatial"
 
 /**
  * Shortest romanised stem still specific enough to match a Taiwanese place name.
@@ -117,19 +118,6 @@ export function normEn(s: string): string {
 
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
-}
-
-/**
- * Haversine distance in km (asin form — same as the JP/KR builders).
- */
-function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371
-	const p1 = toRad(aLat)
-	const p2 = toRad(cLat)
-	const dp = toRad(cLat - aLat)
-	const dl = toRad(dLon - bLon)
-
-	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
 /**

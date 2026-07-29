@@ -42,6 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
+import { haversineKm } from "@mailwoman/spatial"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -131,20 +132,6 @@ function pyRound(x: number, nd = 0): number {
  */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
-}
-
-/**
- * Haversine great-circle distance in km — ported from the Python `haversine` (asin form).
- */
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6371
-	const p1 = toRad(lat1)
-	const p2 = toRad(lat2)
-	const dp = toRad(lat2 - lat1)
-	const dl = toRad(lon2 - lon1)
-	const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2
-
-	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
 /**

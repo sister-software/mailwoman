@@ -43,6 +43,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
+import { haversineKm } from "@mailwoman/spatial"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -170,19 +171,6 @@ function bare(s: string | null | undefined): string {
  */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
-}
-
-/**
- * Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form).
- */
-function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371
-	const p1 = toRad(aLat)
-	const p2 = toRad(cLat)
-	const dp = toRad(cLat - aLat)
-	const dl = toRad(dLon - bLon)
-
-	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
 /**
