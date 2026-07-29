@@ -18,6 +18,7 @@ import {
 	buildStreetTypeLexicon,
 	clearsProminenceFloor,
 	isSubPhraseAlias,
+	loadDERegionVocabulary,
 	loadDirectionalSurfaces,
 	loadPersonNameSurfaces,
 	loadUSRegionVocabulary,
@@ -107,6 +108,35 @@ describe("three-law selectivity — pure units", () => {
 		// Not a blanket word ban — ordinary locality surfaces stay out.
 		expect(region.has("fargo")).toBe(false)
 		expect(region.has("springfield")).toBe(false)
+	})
+
+	it("law 4 (v7): DE region vocabulary excludes the territorial Länder but keeps the city-states", () => {
+		const region = loadDERegionVocabulary()
+
+		// The 13 territorial-state names — native, exonym, and the everyday aliases — are region
+		// vocabulary ("bayern" as locality evidence teaches the v3.19 rotation class).
+		for (const s of [
+			"bayern",
+			"bavaria",
+			"sachsen",
+			"saxony",
+			"nrw",
+			"nordrhein-westfalen",
+			"thüringen",
+			"baden-württemberg",
+		]) {
+			expect(region.has(s), s).toBe(true)
+		}
+
+		// The city-states stay OUT of the exclusion: Land and Stadt are one coextensive place and
+		// the locality reading dominates user text ("10115 berlin").
+		for (const s of ["berlin", "hamburg", "bremen"]) {
+			expect(region.has(s), s).toBe(false)
+		}
+
+		// Not a blanket word ban — ordinary DE locality surfaces stay out.
+		expect(region.has("münchen")).toBe(false)
+		expect(region.has("leipzig")).toBe(false)
 	})
 
 	it("alt-name sub-phrase hygiene (v5): sub-phrases rejected, real nicknames kept", () => {
