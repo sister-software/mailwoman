@@ -71,6 +71,18 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     if "street_type_features" in batch:
         tb["street_type_features"] = torch.tensor(batch["street_type_features"], dtype=torch.float32, device=device)
         tb["street_type_confidence"] = torch.tensor(batch["street_type_confidence"], dtype=torch.float32, device=device)
+    # Locality-surface channel (v3.16.0): same presence contract — only when a locality-surface lexicon
+    # is set. MISSING from v3.16.0 through v3.24.0 (#1349): the loader painted the features, collate
+    # emitted them, and this function dropped them — the forward's zero-fill ran on every batch, so the
+    # shipped bundle model's locality channel is frozen at xavier init. test_train_channels.py now
+    # asserts collate/_to_tensor_batch key parity so a future channel cannot silently vanish here.
+    if "locality_surface_features" in batch:
+        tb["locality_surface_features"] = torch.tensor(
+            batch["locality_surface_features"], dtype=torch.float32, device=device
+        )
+        tb["locality_surface_confidence"] = torch.tensor(
+            batch["locality_surface_confidence"], dtype=torch.float32, device=device
+        )
     return tb
 
 
