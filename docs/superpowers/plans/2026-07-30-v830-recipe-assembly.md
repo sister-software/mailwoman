@@ -23,19 +23,45 @@ at the current geometry (~29M params, 128 seq) with the full feed:
 Baseline = **v385's feed verbatim** (`v0.13.0-latam`, its source weights, its augment probs) —
 the composition every golden floor was cut against — **plus**:
 
-| Addition                                                       | Status                   | Case                                                                                                                                                                |
-| -------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Evidence-channel painting (street v3 / locality-surface v6→v7) | proven (v3.22–24)        | the bundle native from step 0                                                                                                                                       |
-| Ordinal-street augmentation 0.3                                | proven (v3.24)           | the num-ordinal invariant                                                                                                                                           |
-| Absence + false-evidence curricula                             | proven                   | anti-over-trust, from step 0                                                                                                                                        |
-| DE country fold → locality lexicon **v7**                      | new increment            | the deliberately-deferred fold; built + gated exactly like v5/v6 (four laws + digit guard; DE has 67k neighbourhoods — the parent-vouch path gets its third locale) |
-| synth-po-box-cedex at the **v385 share** (1.5)                 | reverts the replay boost | from-scratch re-learns the class natively; the boost was fine-tune medicine                                                                                         |
+| Addition                                                       | Status                                                                     | Case                                                                                                                                                                |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence-channel painting (street v3 / locality-surface v6→v7) | street proven; locality UNTRAINED-TO-DATE (#1349 — see the addendum below) | the bundle native from step 0                                                                                                                                       |
+| Ordinal-street augmentation 0.3                                | proven (v3.24)                                                             | the num-ordinal invariant                                                                                                                                           |
+| Absence + false-evidence curricula                             | proven                                                                     | anti-over-trust, from step 0                                                                                                                                        |
+| DE country fold → locality lexicon **v7**                      | new increment                                                              | the deliberately-deferred fold; built + gated exactly like v5/v6 (four laws + digit guard; DE has 67k neighbourhoods — the parent-vouch path gets its third locale) |
+| synth-po-box-cedex at the **v385 share** (1.5)                 | reverts the replay boost                                                   | from-scratch re-learns the class natively; the boost was fine-tune medicine                                                                                         |
 
 **Deploc passengers stay out** (synth-gb 10.0 / nz / es-pedania / fr-lieudit, punct_drop 0.6).
 Each re-enters only with its own promotion case — the v3.22 feed attribution is the receipt
 (GB street-boundary transfer, CA po-box dilution). The fragment classes those shards fed are
 covered by the bundle channels now; if a G1 bare-locality bar misses, es-pedania/fr-lieudit are
 the named first re-entrants (the v3.22 pre-registration's own contingency).
+
+### Addendum 2026-07-29 — the #1349 reframe (locality channel never trained)
+
+Found after this memo merged: `_to_tensor_batch` never converted the locality_surface tensors, so
+**every bundle-era run (v3.16 → the shipped v3.24) trained the locality channel on zeros** — the
+shipped projection is frozen at xavier init (receipts on #1349: token embedding exactly 0/384;
+projection absmax = the xavier bound). The trainer fix + a structural key-parity test landed in
+#1350. What this changes here:
+
+- **The locality channel's receipts are re-attributed, not voided.** The measured behavior
+  (v3.16 damage classes, the fed-register heals) came from a CONSISTENT RANDOM MARKER — real
+  painted features through a frozen random projection. Per-channel ablation on the shipped
+  checkpoint: locality-fed is −0.058 net in asis but **+0.035 net in the lowercase user register
+  (homonym +0.270)** — the marker's existence helps where the case cue is dead; prod's
+  street-context gate masks most of the asis damage (bare-locality −0.355 ungated).
+- **The three-law selectivity receipts survive as PAINTING HYGIENE** (they made a blind marker
+  net-positive by restricting it to discriminative hits), not as evidence of trained-channel
+  behavior. Keep the laws in the v7 lexicon build unchanged.
+- **This run is the locality channel's FIRST actual training.** Pre-registered expectations must
+  not cite the fine-tune heals as trained-channel evidence. Floor: the trained channel must beat
+  the accidental marker's own readings (homonym-lower +0.270 fed-vs-zeroed is the number to beat);
+  target: the bare-locality damage class (the marker's cost) goes to ~0 under the now-actually-
+  reaching-the-channel absence/false-evidence curricula.
+- **Risk note for G-gates:** the shipped reference (6.7.0) carries the marker's lowercase homonym
+  behavior; a properly-trained channel plausibly clears it, but if the homonym-lower bar sits
+  exactly at the marker's accidental gain, read the miss against THIS addendum before iterating.
 
 ## D3 — tokenizer
 
