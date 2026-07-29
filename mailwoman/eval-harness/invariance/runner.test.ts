@@ -155,7 +155,9 @@ describe("runInvarianceSuite", () => {
 		const baselineParse: ParseFn = async (): Promise<Record<string, string>> => ({
 			house_number: "1",
 			street: "Fake St",
-		}) // baseline holds
+		})
+
+		// baseline holds
 
 		const result = await runInvarianceSuite({ rows: [brokenRow], parse: candidateParse, baselineParse })
 

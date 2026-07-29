@@ -25,10 +25,14 @@ import { repoRootPath } from "@mailwoman/core/utils"
 
 const run = promisify(execFile)
 
-/** How many `tsc` invocations to keep in flight. Each is single-threaded and mostly CPU-bound. */
+/**
+ * How many `tsc` invocations to keep in flight. Each is single-threaded and mostly CPU-bound.
+ */
 const CONCURRENCY = Math.max(2, Math.min(8, cpus().length - 2))
 
-/** One workspace's result: its name, and the diagnostic lines `tsc` produced. */
+/**
+ * One workspace's result: its name, and the diagnostic lines `tsc` produced.
+ */
 interface Result {
 	workspace: string
 	errors: string[]
@@ -54,6 +58,7 @@ async function check(workspace: string, repoRoot: string): Promise<Result> {
 
 const repoRoot = String(repoRootPath())
 const entries = await readdir(repoRoot, { withFileTypes: true })
+
 const workspaces = entries
 	.filter((entry) => entry.isDirectory() && existsSync(join(repoRoot, entry.name, "tsconfig.test.json")))
 	.map((entry) => entry.name)

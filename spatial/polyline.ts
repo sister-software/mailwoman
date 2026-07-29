@@ -50,6 +50,7 @@ export function pointAlong(
 
 		return [lon, lat, 0]
 	}
+
 	let remaining = t * total
 
 	for (let i = 0; i < legs.length; i++) {
@@ -62,8 +63,10 @@ export function pointAlong(
 
 			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
 		}
+
 		remaining -= leg
 	}
+
 	const [lon, lat] = polyline.at(-1)!
 
 	return [lon, lat, total]

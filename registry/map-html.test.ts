@@ -63,6 +63,7 @@ describe("toMapHTML", () => {
 		const html = toMapHTML(
 			fc([point(0, 0, { entityID: "x", recordCount: 1, name: "</script><script>alert(1)", sources: ["x"] })])
 		)
+
 		expect(html).not.toContain("</script><script>alert(1)")
 		expect(html).toContain("\\u003c/script")
 	})

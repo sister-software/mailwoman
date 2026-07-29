@@ -32,12 +32,16 @@ export interface ShardRow {
 	tokens?: string[]
 }
 
-/** A recipe's `run` surface, as the tests drive it. */
+/**
+ * A recipe's `run` surface, as the tests drive it.
+ */
 export interface ShardRecipe<TStats> {
 	run(options: never, emit: (line: string) => void): Promise<TStats>
 }
 
-/** Write the tuple + reserved-surface inputs a recipe reads, into a fresh temp directory. */
+/**
+ * Write the tuple + reserved-surface inputs a recipe reads, into a fresh temp directory.
+ */
 export function scratch(prefix: string, tuples: object[], surfaces: string[]): { input: string; exclude: string } {
 	const dir = mkdtempSync(join(tmpdir(), `${prefix}-`))
 	const input = join(dir, "tuples.jsonl")

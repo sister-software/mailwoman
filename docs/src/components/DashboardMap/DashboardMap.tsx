@@ -48,7 +48,9 @@ const DashboardMap: React.FC = () => {
 
 	const handleViewStateChange = useCallback(
 		(event: ViewStateChangeEvent) => {
-			if (persistenceFrameRef.current !== null) globalThis.clearTimeout(persistenceFrameRef.current)
+			if (persistenceFrameRef.current !== null) {
+				globalThis.clearTimeout(persistenceFrameRef.current)
+			}
 
 			persistenceFrameRef.current = globalThis.setTimeout(() => {
 				persistWebviewState((currentWebViewState) => ({

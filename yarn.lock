@@ -5037,9 +5037,9 @@ __metadata:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
     "@inkjs/ui": "npm:^2.0.0"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
-    "@sister.software/oxfmt-config": "npm:^10.0.0"
-    "@sister.software/oxlint-config": "npm:^10.0.0"
-    "@sister.software/tsconfig": "npm:^10.0.0"
+    "@sister.software/oxfmt-config": "npm:^11.0.0"
+    "@sister.software/oxlint-config": "npm:^11.0.0"
+    "@sister.software/tsconfig": "npm:^11.0.0"
     "@types/geojson": "npm:^7946.0.16"
     "@types/node": "npm:^26.1.1"
     "@types/pluralize": "npm:^0.0.33"
@@ -6936,28 +6936,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@sister.software/oxfmt-config@npm:10.0.0"
+"@sister.software/oxfmt-config@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@sister.software/oxfmt-config@npm:11.0.0"
   peerDependencies:
     oxfmt: ">=0.60.0 <1"
-  checksum: 10/38e0dc9ab35545c79d802618451598e4343a52f6c03331027aa13ab88034deea1b52260a0c5ae2fd98a35a4958b00f61518910cf62e7c30e72d8be20058f342e
+  checksum: 10/647747fefa8294792046dfd05987a72f2f15000ebd3309eddbf8aae80dc15483f903639a75528e4bfa43d27cd60a804ec9baaece9963f77f64563c944414ed2c
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@sister.software/oxlint-config@npm:10.0.0"
+"@sister.software/oxlint-config@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@sister.software/oxlint-config@npm:11.0.0"
   peerDependencies:
     oxlint: ">=1.75.0 <2"
-  checksum: 10/6dcce90e3ba15036eea6581b878085a9009e144ad82362be04e3d1310d87a9688d5b09bffe82b64e7f383cde926661e8cc244ed31bab925313309524c49bae20
+  checksum: 10/787f467aa545936fda61897b9d55664c69d531ec2d8482f969d12ff56af4a906b80653b258abcac8f3990c20a6f01f5d3ee8dabaa2de6014984b86af84435e7b
   languageName: node
   linkType: hard
 
-"@sister.software/tsconfig@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@sister.software/tsconfig@npm:10.0.0"
-  checksum: 10/db794404d4005751d895f08fcf9bb1912ac0e8410b63d4226d297e0a307ea22467a98873c33cd0d1fad723f0e158b3b65e6326247d9ed98761480a6178cb2aee
+"@sister.software/tsconfig@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@sister.software/tsconfig@npm:11.0.0"
+  checksum: 10/97a6ed5681c4e9dff03cb97ba7704348c2232cbef8130442c7a477fea0ea24911f5ae483f05e994e55afcd36b26f8534c9b87dceb95a78e9ab35be0a539081b2
   languageName: node
   linkType: hard
 
