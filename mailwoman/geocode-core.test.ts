@@ -12,6 +12,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import type { Resolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -19,6 +20,7 @@ import {
 	countryFromPostcodeFormat,
 	extractGeocodeResult,
 	type GeocodeClassifier,
+	type GeocodeDeps,
 	parseForGeocode,
 } from "./geocode-core.ts"
 
@@ -408,38 +410,35 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 })
 
 describe("the Decision-A retry rider (retryAlternateRegister)", () => {
-	const zeroHitResult = { lat: null, lon: null, candidates: [], hierarchy: [] }
-
-	function riderDeps(parses: Array<{ inputMode?: string }>, resolveHits: boolean[]) {
+	function riderDeps(
+		parses: Array<{ inputMode?: string }>,
+		resolveHits: boolean[]
+	): Pick<GeocodeDeps, "classifier" | "resolver"> {
 		let call = 0
-		const classifier = {
-			parse: async (_text: string, opts?: { inputMode?: "fragmented" | "formatted" }) => {
+
+		const classifier: GeocodeClassifier = {
+			parse: async (text, opts) => {
 				parses.push({ inputMode: opts?.inputMode })
 
-				return { raw: _text, roots: [] }
+				return { raw: text, roots: [] }
 			},
 		}
-		const resolver = {
-			resolveTree: async (tree: unknown) => {
+
+		const resolver: Resolver = {
+			resolveTree: async (tree) => {
 				const hit = resolveHits[call++] ?? false
 
+				// A hit carries its coordinate ON the node — that's what extractGeocodeResult reads.
 				return hit
 					? {
-							roots: [
-								{
-									tag: "locality",
-									value: "Testville",
-									children: [],
-									placeID: "wof:1",
-									metadata: { lat: 1, lon: 2 },
-								},
-							],
+							raw: tree.raw,
+							roots: [node({ tag: "locality", value: "Testville", lat: 1, lon: 2, placeID: "wof:1" })],
 						}
-					: { roots: [] }
+					: { raw: tree.raw, roots: [] }
 			},
 		}
 
-		return { classifier, resolver } as never
+		return { classifier, resolver }
 	}
 
 	it("zero-hit in a derived register retries ONCE in the alternative register", async () => {
@@ -454,16 +453,19 @@ describe("the Decision-A retry rider (retryAlternateRegister)", () => {
 
 	it("an explicit register is never second-guessed", async () => {
 		const parses: Array<{ inputMode?: string }> = []
-		await geocodeAddress("Fragmentville", { ...riderDeps(parses, [false, false]), inputMode: "fragmented" } as never)
+		await geocodeAddress("Fragmentville", { ...riderDeps(parses, [false, false]), inputMode: "fragmented" })
+
 		expect(parses).toHaveLength(1)
 	})
 
 	it("retryAlternateRegister: false pins single-pass", async () => {
 		const parses: Array<{ inputMode?: string }> = []
+
 		await geocodeAddress("Fragmentville", {
 			...riderDeps(parses, [false, false]),
 			retryAlternateRegister: false,
-		} as never)
+		})
+
 		expect(parses).toHaveLength(1)
 	})
 })
