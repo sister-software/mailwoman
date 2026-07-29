@@ -106,6 +106,7 @@ function main(): void {
 	}
 
 	writeFileSync(OUT, out.join("\n") + "\n")
+
 	console.log(`wrote ${out.length} perturbed cases (${PERTURBATIONS.map((p) => p.name).join(", ")}) → ${OUT}`)
 }
 

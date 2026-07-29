@@ -351,6 +351,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 async function main(): Promise<void> {
 	const args = parseArgs()
+
 	console.error("--- per-locale-f1.ts ---")
 	console.error("Golden dir:", args.goldenDir)
 	console.error("Files:", args.files.join(", "))
@@ -365,6 +366,7 @@ async function main(): Promise<void> {
 	// over the explicit --model path.
 	if (args.weightsCache) {
 		console.error(`Weights:    package-shaped from ${args.weightsCache} (loadFromWeights cacheRoot)`)
+
 		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
 		// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
@@ -397,12 +399,14 @@ async function main(): Promise<void> {
 			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
 				? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
 				: undefined
+
 		console.error(
 			`Anchor:     ${postcodeAnchorLookup ? `${anchorLookupPath} (${postcodeAnchorLookup.size} codes)` : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${anchorLookupPath})`}`
 		)
 		console.error(
 			`Gazetteer:  ${gazetteerLexicon ? gazetteerLexiconPath : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${gazetteerLexiconPath})`}`
 		)
+
 		neural = new NeuralAddressClassifier({
 			tokenizer,
 			runner,
@@ -431,6 +435,7 @@ async function main(): Promise<void> {
 				.map((l) => JSON.parse(l))
 		} catch (error) {
 			console.error(`  skip ${file}: ${(error as Error).message}`)
+
 			continue
 		}
 		const preds: Array<Record<string, string>> = []
@@ -470,6 +475,7 @@ async function main(): Promise<void> {
 		}
 		const rep = scoreFile(basename(file, ".jsonl"), rows, preds)
 		reports.push(rep)
+
 		console.error(
 			`  ${file}: n=${rep.n} macroF1=${(100 * rep.macroF1).toFixed(1)}% in ${((performance.now() - t0) / 1000).toFixed(1)}s`
 		)
@@ -489,6 +495,7 @@ async function main(): Promise<void> {
 			`| ${r.file} | ${r.n} | ${(100 * r.macroF1).toFixed(1)}% | ${(100 * r.microF1).toFixed(1)}% | ${(100 * r.exactRate).toFixed(1)}% |`
 		)
 	}
+
 	console.log("")
 	console.log(`**Cross-locale macro-F1 spread (interference signal):** ${(100 * spread).toFixed(1)}pp`)
 	console.log("")
@@ -501,6 +508,7 @@ async function main(): Promise<void> {
 			allTags.add(k)
 		}
 	}
+
 	console.log("## Per-tag F1 by locale\n")
 	console.log(`| Tag | ${localeReports.map((r) => r.file).join(" | ")} | Δ |`)
 	console.log(`|---|${localeReports.map(() => "--:").join("|")}|--:|`)
@@ -509,14 +517,17 @@ async function main(): Promise<void> {
 		const cells = localeReports.map((r) => r.perTag[tag])
 		const f1s = cells.map((c) => (c ? c.f1 : 0))
 		const delta = f1s.length > 1 ? Math.max(...f1s) - Math.min(...f1s) : 0
+
 		console.log(
 			`| ${tag} | ${cells.map((c) => (c ? (100 * c.f1).toFixed(1) + "%" : "—")).join(" | ")} | ${(100 * delta).toFixed(1)}pp |`
 		)
 	}
+
 	console.log("")
 
 	if (args.outJson) {
 		writeFileSync(args.outJson, JSON.stringify({ reports, spread }, null, 2))
+
 		console.error(`Wrote ${args.outJson}`)
 	}
 }

@@ -75,6 +75,7 @@ try {
 	}
 
 	writeFileSync(OUT_PATH, rows.join("\n") + "\n")
+
 	console.error(
 		`captured ${rows.length} /search responses (${withHouseNumber.length} house-number parity cases available)`
 	)

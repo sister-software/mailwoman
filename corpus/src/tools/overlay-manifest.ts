@@ -136,6 +136,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	const out = join(args.newDir, "MANIFEST.json")
 	writeFileSync(out, JSON.stringify(manifest, null, 1) + "\n")
+
 	console.log(`wrote ${out}`)
 	console.log(`  shards: ${manifest.shards.length} (${kept.length} base kept, +1 ${args.source})`)
 	console.log(`  counts: ${JSON.stringify(manifest.counts)}  total: ${manifest.total_rows}`)

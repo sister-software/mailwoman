@@ -62,6 +62,7 @@ export async function alignCanonicalShard(args: AlignShardOptions): Promise<void
 	await new Promise<void>((res) => {
 		outStream.end(res)
 	})
+
 	console.error(
 		`align-canonical-shard: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +
 			`  quarantine reasons: ${JSON.stringify(quarantineReasons)}`

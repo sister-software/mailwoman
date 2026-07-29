@@ -142,6 +142,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 			return 1
 		}
 		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): ${failing.join(", ")}.`
+
 		console.error(`! ledgering a FAIL verdict under operator exception: ${failing.join(", ")}`)
 	}
 
@@ -173,6 +174,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 
 		if (!mapped) {
 			console.error(`! unmapped verdict key ${key} — add it to KEY_MAP; skipping`)
+
 			continue
 		}
 		const [group, name] = mapped
@@ -222,6 +224,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 	writeFileSync(tmp, JSON.stringify(ledger, null, "\t") + "\n")
 	JSON.parse(readFileSync(tmp, "utf8")) // self-check before the swap
 	renameSync(tmp, ledgerPath)
+
 	console.log(`✓ appended ${row.model_version} (${row.run_id}) → ${ledgerPath} [${ledger.runs.length} runs]`)
 
 	return 0

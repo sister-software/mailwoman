@@ -503,6 +503,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			if (!t) continue
 			const heldStr = `${t.held}/${t.checks} held`
 			const notes = [t.fails ? `${t.fails} FAIL` : "", t.xfail ? `${t.xfail} xfail` : ""].filter(Boolean).join(", ")
+
 			console.log(`  ${set}[${p.name}]`.padEnd(22) + `${heldStr}${notes ? ` (${notes})` : ""}`)
 		}
 	}
@@ -533,6 +534,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 	// The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size
+
 	console.log(
 		`\nverdict: ${pass ? "PASS" : "FAIL"}${pass && trackedTotal ? ` (with ${trackedTotal} tracked xfails)` : ""}`
 	)

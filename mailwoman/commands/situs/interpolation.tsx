@@ -175,6 +175,7 @@ interface CountyRecord {
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
+
 	const url =
 		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
 	const csv = await fetchText(url)
@@ -221,6 +222,7 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	const records = await fetchAndBuildRanking()
 	mkdirSync(path.dirname(RANKED_FILE), { recursive: true })
 	writeFileSync(RANKED_FILE, JSON.stringify(records, null, 2))
+
 	console.error(`Saved county ranking → ${RANKED_FILE} (${records.length} counties)`)
 
 	return records
@@ -271,7 +273,9 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 
 			if (!retryable || attempt === retries) throw error
 			const delay = attempt * 2000
+
 			console.error(`  [retry ${attempt}/${retries}] ${path.basename(dest)}: ${message} — waiting ${delay}ms`)
+
 			await new Promise((r) => {
 				setTimeout(r, delay)
 			})
@@ -377,6 +381,7 @@ async function downloadParallel(
 				downloaded++
 			} catch (error) {
 				console.error(`  [fail] ${task.geoid}: ${error instanceof Error ? error.message : error}`)
+
 				failed.push(task.geoid)
 			}
 		}
@@ -515,6 +520,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (FORCE) {
 			console.error("force:       true (re-building existing shards)")
 		}
+
 		console.error("")
 
 		mkdirSync(EDGES_DIR, { recursive: true })
@@ -522,7 +528,9 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// ── Step 1: load county population ranking ─────────────────────────────
 		console.error("Step 1: county population ranking")
+
 		const allCounties = await loadRankedCounties()
+
 		console.error(`  ${allCounties.length} counties in ranking`)
 
 		// Filter to target states only
@@ -534,6 +542,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		if (topN !== null) {
 			counties = counties.slice(0, topN)
+
 			console.error(`  capped to top ${topN} counties by population`)
 		}
 
@@ -543,6 +552,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 		// ── Step 2: download ZIPs ──────────────────────────────────────────────
 		if (!BUILD_ONLY) {
 			console.error(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
+
 			const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
 			const tasks: DownloadTask[] = counties.map((c) => {
 				const geoid = c.geoid // 5-digit: stateFips + countyFips
@@ -555,6 +565,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				}
 			})
 			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
+
 			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
 
 			if (failed.length) {
@@ -562,6 +573,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					`  failed GEOIDs: ${failed.slice(0, MAX_LISTED_FAILURES).join(", ")}${failed.length > MAX_LISTED_FAILURES ? " …" : ""}`
 				)
 			}
+
 			console.error("")
 		}
 
@@ -573,6 +585,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
 		console.error("Step 3: building per-state shards")
+
 		// States from our target list that have at least one downloaded county SHP
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]
@@ -584,6 +597,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (!availableStates.length) {
 			throw commandError("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
 		}
+
 		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)
 		console.error("")
 
@@ -598,6 +612,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		for (const abbr of availableStates) {
 			console.error(`Building ${abbr}…`)
+
 			const result = buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
 
 			if (result === null) {
@@ -614,6 +629,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 				wallMs: result.wallMs,
 			})
 			const elapsed = (result.wallMs / 1000).toFixed(1)
+
 			console.error(
 				`  ${abbr}: ${result.counties} counties, ${result.segments.toLocaleString()} segment-sides, ${elapsed}s`
 			)

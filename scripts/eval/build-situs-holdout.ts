@@ -67,6 +67,7 @@ for (const r of rows) {
 }
 db.close()
 writeFileSync(out, lines.join("\n") + "\n")
+
 console.log(
 	`${region || a.shard}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`
 )

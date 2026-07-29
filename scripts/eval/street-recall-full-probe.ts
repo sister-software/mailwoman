@@ -94,6 +94,7 @@ for (const row of rows) {
 }
 
 const pct = (n: number) => `${((100 * n) / full).toFixed(1)}%`
+
 console.log(
 	`\n== street-recall-full probe — base ${args.baseline} vs cand ${args.candidate} (${full} full-address rows) ==`
 )

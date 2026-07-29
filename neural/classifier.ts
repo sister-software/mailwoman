@@ -1297,6 +1297,7 @@ function warnUnfedChannel(
 ): void {
 	if (warnedUnfedChannels.has(channel)) return
 	warnedUnfedChannels.add(channel)
+
 	console.error(
 		`[mailwoman/neural] loadFromWeights: model-card declares the ${channel} channel REQUIRED but ${detail} — ` +
 			`running ${channel}-OFF, parses degraded (train/inference mismatch). Ship the ${channel} artifact in the ` +

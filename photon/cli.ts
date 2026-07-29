@@ -89,6 +89,7 @@ async function serve(): Promise<void> {
 	// wrong gazetteer without a word).
 	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
 		console.error(`✗ --candidate-db not found: ${values["candidate-db"]}`)
+
 		process.exit(1)
 	}
 	const candidateDb =
@@ -116,6 +117,7 @@ async function serve(): Promise<void> {
 				"  Docs: https://mailwoman.sister.software/docs/switching/photon",
 			].join("\n")
 		)
+
 		process.exit(1)
 	}
 
@@ -254,6 +256,7 @@ function openapi(): void {
 	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
 		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
 		console.error("Usage: mailwoman-photon openapi [--flavor 3.1|3.0] [--out <path>]")
+
 		process.exit(1)
 	}
 

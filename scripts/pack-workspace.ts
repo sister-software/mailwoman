@@ -38,6 +38,7 @@ export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
 		const resolved = resolve(dirname(target), linkDest)
 		unlinkSync(target)
 		copyFileSync(resolved, target)
+
 		console.error(`pack-workspace: dereferenced ${entry} ← ${resolved}`)
 	}
 }

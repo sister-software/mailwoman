@@ -58,6 +58,7 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 		console.error(
 			`▸ publish ${candidateDb} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
 		)
+
 		const r = publishGazetteer({
 			candidateDb,
 			version,

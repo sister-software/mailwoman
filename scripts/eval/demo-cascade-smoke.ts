@@ -115,6 +115,7 @@ if (missing.length) {
 		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
 			"  Stage a demo release (yarn start/build in docs/ — the demo-assets plugin stages the artifacts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
 	)
+
 	process.exit(2)
 }
 
@@ -124,6 +125,7 @@ try {
 	rows = parseSmokeRows(readFileSync(FILE, "utf8"), FILE)
 } catch (error) {
 	console.error(`✗ ${(error as Error).message}`)
+
 	process.exit(2)
 }
 
@@ -271,6 +273,7 @@ console.log(`db: ${DB}`)
 console.log("")
 console.log("| # | input | expected | actual | result |")
 console.log("| - | ----- | -------- | ------ | ------ |")
+
 results.forEach((r, i) => {
 	const exp = r.expected.anchor_centroid
 		? "anchor centroid"
@@ -280,8 +283,10 @@ results.forEach((r, i) => {
 			? "anchor centroid"
 			: `${r.actual.id} (${r.actual.name}, ${r.actual.placetype})`
 		: "NO HIT"
+
 	console.log(`| ${i + 1} | ${r.input} | ${exp} | ${act} | ${r.pass ? "PASS" : "FAIL"} |`)
 })
+
 console.log("")
 console.log(`**${passCount}/${results.length} pass (${passRate}%)**`)
 
@@ -296,5 +301,6 @@ if (JSON_OUT) {
 		summary: { total: results.length, pass: passCount, fail: results.length - passCount, pass_rate_pct: passRate },
 	}
 	writeFileSync(JSON_OUT, JSON.stringify(sidecar, null, "\t"))
+
 	console.log(`\nsidecar: ${JSON_OUT}`)
 }

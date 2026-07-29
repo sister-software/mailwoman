@@ -312,6 +312,7 @@ async function main() {
 	}
 
 	const version = readModelVersion(options.cardPath)
+
 	console.log(`verify-release-metadata: shipped MODEL version (from model card) = ${version}\n`)
 
 	const results: SurfaceResult[] = [
@@ -335,6 +336,7 @@ async function main() {
 			`\nverify-release-metadata FAILED: ${failures.length} surface(s) stale for model ${version}. ` +
 				`Fix the item(s) above (each surface is independent), commit, then re-dispatch the publish.`
 		)
+
 		process.exitCode = 1
 
 		return

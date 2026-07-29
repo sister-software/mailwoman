@@ -207,6 +207,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
 			)
 		}
+
 		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
 		mkdirSync(dirname(finalOut), { recursive: true })
@@ -306,6 +307,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 					sides++
 				}
 			}
+
 			console.error(`  ${countyFips}: done (${sides} sides so far)`)
 		}
 		db.exec("COMMIT")

@@ -43,6 +43,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		}
 		const a = await bench(V264)
 		const b = await bench(V301)
+
 		console.log(`\n  v264 (no spans) : ${a.ms.toFixed(2)} ms/infer  spans=${a.spans}`)
 		console.log(`  v301 (spans)    : ${b.ms.toFixed(2)} ms/infer  spans=${b.spans}`)
 		console.log(`  delta           : ${(b.ms - a.ms).toFixed(2)} ms (${((100 * (b.ms - a.ms)) / a.ms).toFixed(1)}%)`)

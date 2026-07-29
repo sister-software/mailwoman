@@ -206,6 +206,7 @@ export const frOrderRecipe: ShardRecipe = {
 		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
 		const poolLimit = Math.max(count * 8, 40_000)
 		const pool = readTuples(poolLimit)
+
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 
 		if (!pool.length) {

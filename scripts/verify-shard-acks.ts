@@ -92,6 +92,7 @@ function parseArgs(): Args {
 
 	if (!out.manifestPath) {
 		console.error("Usage: verify-shard-acks.ts --manifest <MANIFEST.json> [--verbose]")
+
 		process.exit(2)
 	}
 
@@ -146,8 +147,10 @@ function main(): void {
 
 		for (const s of acknowledged) {
 			const note = s.lint_ack_note ? ` — _${s.lint_ack_note}_` : ""
+
 			console.log(`- \`${s.path}\` (${s.lint_flags} flags)${note}`)
 		}
+
 		console.log("")
 	}
 
@@ -164,8 +167,10 @@ function main(): void {
 		for (const s of unacknowledged) {
 			console.log(`- \`${s.path}\` (${s.lint_flags} flag(s), source=${s.first_source_id ?? "?"})`)
 		}
+
 		console.log("")
 		console.error(`VERIFY FAILED: ${unacknowledged.length} unacknowledged flagged shard(s).`)
+
 		process.exit(1)
 	}
 

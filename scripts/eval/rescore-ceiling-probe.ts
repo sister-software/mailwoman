@@ -76,6 +76,7 @@ async function main() {
 	})
 
 	console.log(`loc | n   res  unres | swap needsK emitUnres covGap | swapKm p50/p90 (top1·best5)`)
+
 	const T = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 	// FALSIFIER accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
 	// resolution to truth, over the swap cases. top1 = resolver's ranked choice; best5 = the ceiling
@@ -86,6 +87,7 @@ async function main() {
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) {
 			console.log(`${cc}: golden missing — skipped`)
+
 			continue
 		}
 		const rows = readFileSync(file, "utf8")
@@ -144,6 +146,7 @@ async function main() {
 		const swapKm = sT1.length
 			? `${pctile(sT1, 50).toFixed(1)}/${pctile(sT1, 90).toFixed(0)} · ${pctile(sB5, 50).toFixed(1)}/${pctile(sB5, 90).toFixed(0)} (n${sT1.length})`
 			: "—"
+
 		console.log(
 			`${cc.padEnd(3)} | ${String(s.n).padEnd(3)} ${String(s.res).padEnd(3)}  ${String(s.unres).padEnd(4)} | ${String(s.swap).padEnd(3)}  ${String(s.needsK).padEnd(5)}  ${String(s.emitUn).padEnd(8)}  ${String(s.cov).padEnd(2)} | ${swapKm}`
 		)
@@ -155,6 +158,7 @@ async function main() {
 		swapBest5.push(...sB5)
 	}
 	const recoverable = T.swap + T.needsK
+
 	console.log(`ALL | n=${T.n} res=${T.res} unres=${T.unres}`)
 	console.log(
 		`\n#370 CEILING: of ${T.unres} unresolved → recoverable (gold-in-gazetteer) = ${recoverable} ` +
@@ -162,6 +166,7 @@ async function main() {
 			`              emitted-but-unresolved (resolver-side) = ${T.emitUn}\n` +
 			`              coverage-gap (rescore can't help)      = ${T.cov} (${((100 * T.cov) / Math.max(T.unres, 1)).toFixed(0)}%)`
 	)
+
 	// FALSIFIER VERDICT (DeepSeek-specified): does the gold-locality swap recover a REAL coordinate?
 	const t1p50 = pctile(swapTop1, 50),
 		t1p90 = pctile(swapTop1, 90),
@@ -174,6 +179,7 @@ async function main() {
 			: b5p50 < 10
 				? "PASS (best-5 only) — the right candidate is in the top 5 but ranking misses it; the rescore NEEDS the postcode-anchor disambiguation, not just the name swap"
 				: "FAIL — gold name resolves far from truth (same-name-collision mirage / #685 trap); a bare span-rescore would chase label-F1, not coordinates"
+
 	console.log(
 		`\n#370 FALSIFIER (swap-case gold→truth great-circle, n=${swapTop1.length}):\n` +
 			`   top-1 (resolver-ranked, postcode-disambiguated): p50 ${t1p50.toFixed(1)} km · p90 ${t1p90.toFixed(0)} km\n` +

@@ -216,8 +216,11 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 		return { pass: false, exitCode: 2 }
 	}
+
 	console.error(`[gauntlet/holdout] drawing ${N} fresh ${src.label} addresses…`)
+
 	const sample = await draw(src, N)
+
 	console.error(`[gauntlet/holdout] scoring production vs candidate on the SAME ${sample.length} addresses…`)
 
 	// A splice/multisplice candidate (--tokenizer or --weights-cache) swaps the vocab, so production must ALSO run
@@ -248,15 +251,19 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 	console.log(`\n=== Gauntlet · held-out fresh draw (${src.label}, n=${n}) ===`)
 	console.log(`  tolerance     production   candidate`)
+
 	TOLS.forEach((t, i) => {
 		console.log(
 			`  ≤${String(t).padEnd(5)}km   ${String(prod.hits[i]).padStart(8)}     ${String(cand.hits[i]).padStart(8)}`
 		)
 	})
+
 	console.log(`  resolved      ${String(prod.resolved).padStart(8)}     ${String(cand.resolved).padStart(8)}`)
 	console.log(`\n  z (candidate − production) @ ≤${GATE_TOL}km: ${z.toFixed(2)}`)
+
 	// Block ONLY on a significant regression. Candidate ahead or within noise → pass.
 	const pass = z >= Z_CRITICAL_95_TWO_SIDED
+
 	console.log(
 		`  verdict: ${pass ? "PASS (candidate not significantly worse)" : "FAIL (candidate significantly worse — do not ship)"}`
 	)

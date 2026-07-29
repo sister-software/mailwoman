@@ -744,6 +744,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		tier: "server",
 		...(ablateToAnchor || anchorOff ? { overrides } : {}),
 	})
+
 	console.error(
 		ablateToAnchor
 			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
@@ -1271,16 +1272,19 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 	if (collectErrors) {
 		writeFileSync(options.errorsJson || "", JSON.stringify(errorRows, null, 2))
+
 		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJson || ""}`)
 	}
 
 	if (collectRows) {
 		writeFileSync(options.outRows || "", JSON.stringify(outRows))
+
 		console.error(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
 	}
 
 	if (collectResolvedDump) {
 		writeFileSync(options.outResolved || "", JSON.stringify(resolvedRows))
+
 		console.error(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
@@ -1313,6 +1317,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 	if (options.outMd || "") {
 		writeFileSync(options.outMd || "", report + "\n")
+
 		console.error(`wrote markdown → ${options.outMd || ""}`)
 	}
 
@@ -1327,6 +1332,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
 		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
+
 		console.error(`wrote json → ${options.outJson || ""}`)
 	}
 

@@ -121,6 +121,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader")
 		const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
+
 		console.log(
 			`street-morphology bias ON (${loaded.source === "artifact" ? `sealed artifact ${loaded.path}` : "per-process dictionary build"}${loaded.provenance ? `: ${loaded.provenance.placeCount} canonical affixes, ${loaded.provenance.nameInsertions} variant insertions` : ""})`
 		)
@@ -218,6 +219,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	}
 
 	const corpusName = (options.fixturesPath ?? PARITY_FIXTURES_PATH).split("/").pop()
+
 	console.log(
 		`parity corpus: ${corpusName} — ${live.length} live fixtures (${fixtures.length - live.length} tombstones skipped)`
 	)
@@ -234,6 +236,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		if (!ok) {
 			pass = false
 		}
+
 		console.log(
 			`${label.padEnd(13)} ${`${hit}/${total}`.padStart(8)}  ${rate.toFixed(4).padStart(7)}  ${floor.toFixed(2).padStart(5)}  ${ok ? "PASS" : "FAIL"}`
 		)
@@ -250,6 +253,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const { spurious, absent } = precision.get(label)!
 
 		if (!absent) continue
+
 		console.log(
 			`${label.padEnd(13)} ${`${spurious}/${absent}`.padStart(8)}  ${(spurious / absent).toFixed(4).padStart(7)}   emitted where gold has none`
 		)
@@ -259,6 +263,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const { examples } = precision.get(label)!
 
 		if (!examples.length) continue
+
 		console.log(`\n  --- ${label}: emitted where the gold has none (first ${examples.length}) ---`)
 
 		for (const example of examples) {
@@ -282,6 +287,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			const list = tallies.get(label)!.failing.slice(0, failing)
 
 			if (!list.length) continue
+
 			console.log("")
 			console.log(`first ${list.length} disagreements — ${label}:`)
 

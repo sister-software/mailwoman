@@ -120,6 +120,7 @@ async function main(): Promise<void> {
 	const BATCH = 50_000
 
 	console.error(`[osm] building ${args.country}/${args.slug} rooftop shard from ${args.pbf}`)
+
 	out.exec("BEGIN")
 
 	for await (const rec of extractAddrPoints(args.pbf)) {
@@ -180,6 +181,7 @@ async function main(): Promise<void> {
 	out.exec("COMMIT")
 
 	console.error(`[osm] indexing…`)
+
 	await createAddressPointIndexes(kdb)
 	out.exec("ANALYZE")
 	await kdb.destroy()

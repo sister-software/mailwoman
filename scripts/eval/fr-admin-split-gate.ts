@@ -350,11 +350,14 @@ async function main() {
 		diacritic_broken: diacriticBroken,
 		gold_region_rows: hasGoldRegion,
 	}
+
 	console.log(JSON.stringify(summary, null, 2))
+
 	const outPath = stringArgs["out"] || ""
 
 	if (outPath) {
 		writeFileSync(outPath, JSON.stringify(summary, null, 2))
+
 		console.error(`wrote ${outPath}`)
 	}
 
@@ -363,6 +366,7 @@ async function main() {
 
 	if (dumpPath) {
 		writeFileSync(dumpPath, rowRecords.map((r) => JSON.stringify(r)).join("\n") + "\n")
+
 		console.error(`wrote per-row dump: ${dumpPath} (${rowRecords.length} rows)`)
 	}
 }

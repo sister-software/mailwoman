@@ -39,6 +39,7 @@ $.verbose = false
 // Match the bash trap: on SIGINT/SIGTERM, log a line and exit 130.
 function onSignal(): void {
 	console.log("[wrapper] received signal, exiting")
+
 	process.exit(130)
 }
 
@@ -66,11 +67,13 @@ let attempt = 0
 // First attempt — fresh start unless --resume is already in the passed args.
 if (!EXTRA_ARGS.includes("--resume")) {
 	console.log("[wrapper] attempt 1: fresh start")
+
 	const exit = await runTraining(false)
 	attempt = 1
 
 	if (exit === 0) {
 		console.log("[wrapper] training completed successfully on attempt 1")
+
 		process.exit(0)
 	}
 
@@ -79,17 +82,22 @@ if (!EXTRA_ARGS.includes("--resume")) {
 
 while (attempt < MAX_ATTEMPTS) {
 	attempt += 1
+
 	console.log(`[wrapper] attempt ${attempt}: resume=auto`)
+
 	const exit = await runTraining(true)
 
 	if (exit === 0) {
 		console.log(`[wrapper] training completed successfully on attempt ${attempt}`)
+
 		process.exit(0)
 	}
 
 	console.log(`[wrapper] attempt ${attempt} exited with ${exit}; sleeping 15s then resuming`)
+
 	await sleep("15s")
 }
 
 console.log(`[wrapper] MAX_ATTEMPTS=${MAX_ATTEMPTS} reached, giving up`)
+
 process.exit(1)

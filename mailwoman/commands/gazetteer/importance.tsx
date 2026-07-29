@@ -98,6 +98,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
+
 		let concordances: Map<string, number[]>
 
 		try {
@@ -110,6 +111,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				existing.push(row.id)
 				concordances.set(row.other_id, existing)
 			}
+
 			console.error(`  ${concordances.size} unique Wikidata IDs from ${rows.length} concordance rows`)
 		} catch {
 			throw commandError("No concordances table found. Run `mailwoman gazetteer build admin` first.")
@@ -125,13 +127,16 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				console.error(`  Using cached TSV: ${gzPath}`)
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)
+
 				await downloadToFile(IMPORTANCE_URL, gzPath)
+
 				console.error(`  Downloaded to ${gzPath}`)
 			}
 		}
 
 		// Step 3: Stream-parse TSV, filtering to matching Wikidata IDs
 		console.error("Parsing Wikipedia importance TSV...")
+
 		const importanceMap = new Map<string, number>()
 		let totalRows = 0
 
@@ -165,6 +170,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// Step 4: Build place_importance table
 		console.error("Building place_importance table...")
+
 		await kdb.schema.dropTable("place_importance").ifExists().execute()
 		await kdb.schema
 			.createTable("place_importance")
@@ -204,6 +210,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// Step 5: Population fallback for places without Wikipedia data
 		console.error("Adding population fallback for unmatched places...")
+
 		let fallbackCount = 0
 
 		try {

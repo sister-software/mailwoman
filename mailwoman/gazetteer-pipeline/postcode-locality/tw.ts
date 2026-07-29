@@ -444,6 +444,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 	if (!districts.length) {
 		console.error(`no postal districts parsed from ${args.postalXml}`)
+
 		process.exit(1)
 	}
 	const polygons = loadDistrictPolygons(args.divisions)
@@ -668,6 +669,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
 	db.exec("VACUUM")
@@ -676,6 +678,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	renameSync(buildPath, args.output)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
+
 	console.log(
 		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +
 			`${rows.length} rows -> ${args.output}` +

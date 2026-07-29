@@ -31,9 +31,11 @@ const { values, positionals } = parseArgs({
 if (positionals[0] === "build") {
 	if (!values.geojson || !values.out) {
 		console.error("Usage: mailwoman-timezone build --geojson <path> --out <db>")
+
 		process.exit(1)
 	}
 	const { features } = buildTimezoneDB(values.geojson, values.out)
+
 	console.error(`built ${values.out} (${features} features)`)
 } else {
 	const lat = Number(positionals[0])
@@ -41,11 +43,14 @@ if (positionals[0] === "build") {
 
 	if (!values.db || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 		console.error("Usage: mailwoman-timezone --db <db> -- <lat> <lon>")
+
 		process.exit(1)
 	}
 	const lookup = new TimezoneLookup({ databasePath: values.db })
 	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	const tzid = lookup.find(lat, lon)
+
 	console.log(JSON.stringify({ timezone: tzid, offsetSec: tzid ? offsetSecForTimezone(tzid) : null }))
+
 	lookup.close()
 }

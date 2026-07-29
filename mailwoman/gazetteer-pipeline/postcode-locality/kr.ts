@@ -414,6 +414,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
 	db.exec("VACUUM")

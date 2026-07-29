@@ -52,9 +52,11 @@ const GazetteerBuildPOIBrands: CommandComponent<typeof OptionsSchema> = ({ optio
 		const dominance = options.dominance ? Number.parseFloat(options.dominance) : DEFAULT_DOMINANCE
 
 		console.error(`▸ reading ${dbPath}`)
+
 		const table = await buildBrandTable({ dbPath, minRows, dominance })
 
 		console.error(`▸ writing ${out}`)
+
 		writeBrandTable(table, out)
 		execFileSync("yarn", ["oxfmt", out])
 

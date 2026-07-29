@@ -349,15 +349,18 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
 		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
+
 		const acc = await readGeonames(geonames, new Set(countries))
 		const byCc = new Map<string, number>()
 
 		for (const a of acc.values()) {
 			byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
 		}
+
 		console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
 
 		const rows = await buildShard(acc, out, normalizeLocalityForKey)
+
 		console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
 
 		const lines = [
@@ -369,14 +372,19 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 			if (!existsSync(foldInto)) {
 				throw commandError(`Missing --fold-into candidate DB: ${foldInto}`)
 			}
+
 			console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+
 			const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
+
 			console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
+
 			lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
 		} else {
 			console.error(
 				`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
 			)
+
 			lines.push(`shard only — feed it to build-candidate via --postcodes for the canonical rebuild`)
 		}
 

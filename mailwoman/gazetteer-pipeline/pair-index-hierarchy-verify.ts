@@ -165,6 +165,7 @@ function main(): void {
 
 	const fail = (msg: string): void => {
 		failures++
+
 		console.log(`  FAIL: ${msg}`)
 	}
 

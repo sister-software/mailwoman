@@ -159,6 +159,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
 			`)
 			const secs = ((Date.now() - started) / 1000).toFixed(0)
+
 			console.error(`[ingest] ${cc} -> ${dest} (${secs}s)`)
 		}
 
@@ -188,6 +189,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 						)
 				) TO '${dest}' (FORMAT JSON)
 			`)
+
 			console.error(`[corpus-jsonl] ${cc} -> ${dest}`)
 		}
 
@@ -255,6 +257,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 
 			if (probe) {
 				probes.push(probe)
+
 				console.error(
 					`[probe] ${cc}: ${probe.rows} rows · postcode ${probe.fill_pct.postcode}% · ` +
 						`postal_city ${probe.fill_pct.postal_city}% · OA-lineage ${probe.oa_lineage_pct}%`
@@ -266,6 +269,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 
 		writeFileSync(path.join(outDir, "fill-rates.json"), JSON.stringify({ release, probes }, null, "\t"))
 		writeFileSync(path.join(outDir, "fill-rates.md"), renderMarkdown(release, probes))
+
 		console.error(`[done] report -> ${path.join(outDir, "fill-rates.{json,md}")}`)
 
 		db.closeSync()

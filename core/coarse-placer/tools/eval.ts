@@ -113,6 +113,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			buckets[b]!.ok++
 		}
 	}
+
 	console.log(`coarse-placer eval — test n=${test.length}`)
 	console.log(`  overall accuracy: ${((100 * correct) / test.length).toFixed(2)}%  (abstain threshold ${abstain})`)
 	console.log(`  per-class recall:`)
@@ -135,6 +136,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		const conf = (i + 0.5) / 10
 		ece += (bk.n / N) * Math.abs(acc - conf)
 	}
+
 	console.log(`  ECE (10-bucket): ${ece.toFixed(4)}`)
 
 	// Top confusions
@@ -193,6 +195,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 				} // a latin/cjk in-map input mis-routed to OTHER = a false abstention
 			}
 		}
+
 		console.log(`\nmulti-script off-map handling (n=${ms.length}):`)
 		console.log(
 			`  OFF-map scripts (Cyrillic/Arabic/Thai/…) routed to OTHER-or-abstain: ${offOk}/${offN} (${((100 * offOk) / Math.max(1, offN)).toFixed(0)}%) ← want HIGH`

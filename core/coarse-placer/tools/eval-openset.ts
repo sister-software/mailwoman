@@ -543,6 +543,7 @@ export async function evalOpenSet(
 	lines.push("")
 
 	const md = lines.join("\n")
+
 	console.log(md)
 
 	if (options.outMd) {

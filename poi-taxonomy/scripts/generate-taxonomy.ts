@@ -212,12 +212,14 @@ async function main(): Promise<void> {
 		if (!res.ok) throw new Error(`generate-taxonomy: fetch ${OVERTURE_CATEGORIES_URL} → HTTP ${res.status}`)
 
 		writeFileSync(paths.csv, await res.text())
+
 		console.log(`fetched snapshot → ${paths.csv}`)
 	}
 
 	const table = generateTaxonomyTable()
 
 	writeFileSync(paths.out, serializeTaxonomyTable(table))
+
 	console.log(
 		`wrote ${paths.out}: ${table.categories.length} categories (${table.synonyms.length} synonyms), Overture ${table.overtureRelease}`
 	)

@@ -38,15 +38,18 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
  */
 export async function runInvarianceCommand(options: InvarianceCommandOptions): Promise<number> {
 	const rows = loadSuite(options.suite)
+
 	console.error(`[invariance] loaded ${rows.length} rows from ${options.suite ?? "the shipped suite.jsonl"}`)
 
 	console.error(`[invariance] loading candidate model…`)
+
 	const parse = await buildParseFn(options)
 
 	let baselineParse: Awaited<ReturnType<typeof buildParseFn>> | undefined
 
 	if (options.baselineWeightsCache || options.baseline) {
 		console.error(`[invariance] loading baseline model (regression mode)…`)
+
 		baselineParse = await buildParseFn({
 			weightsCache: options.baselineWeightsCache,
 			model: options.baselineWeightsCache ? undefined : options.baseline,

@@ -553,6 +553,7 @@ export function useDemoMapRuntime({
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
 						} catch (error) {
 							console.error("Crisp polygon unavailable; falling back to bbox", error)
+
 							setPolygonCache((prev) => new Map(prev).set(placeID, null))
 							polygonDBRef.current = null
 						} finally {

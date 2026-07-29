@@ -36,6 +36,7 @@ if (!dirs.length) {
 	console.error(
 		"usage: node ./bless-package.ts <dir...> [--otp 123456] [--version x.y.z] [--file workflow.yml] [--env name]"
 	)
+
 	process.exit(1)
 }
 
@@ -71,6 +72,7 @@ async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<vo
 
 			if (/EOTP|one-time|invalid otp/i.test(msg)) {
 				console.error("⚠ OTP needed/invalid — retry")
+
 				continue
 			}
 
@@ -172,6 +174,7 @@ async function trust(dir: string): Promise<void> {
 	// on it — if it can't auth here, print the exact command to run by hand in an interactive shell.
 	try {
 		await $`npm ${args}`
+
 		console.log(`• ${pkg.name}: trusted publisher configured`)
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error)
@@ -181,6 +184,7 @@ async function trust(dir: string): Promise<void> {
 
 			return
 		}
+
 		console.warn(`⚠ ${pkg.name}: trust not set (needs interactive 2FA). Run by hand:`)
 		console.warn(`    npm ${args.join(" ")}`)
 	}
@@ -189,7 +193,9 @@ async function trust(dir: string): Promise<void> {
 async function main(): Promise<void> {
 	for (const dir of dirs) {
 		const d = path.resolve(dir)
+
 		console.log(`\n=== ${dir} ===`)
+
 		await packAndPublish(d)
 
 		// `npm trust` needs interactive browser 2FA, which can't run here — `--no-trust` skips it so the
@@ -210,6 +216,7 @@ main()
 	})
 	.catch((error) => {
 		console.error(error)
+
 		rl.close()
 		process.exit(1)
 	})

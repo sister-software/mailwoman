@@ -145,6 +145,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	const N = test.length
 	const accF = (100 * okF) / N
 	const accI = (100 * okI) / N
+
 	console.log(`coarse-placer int8 vs fp32 — test n=${N} (abstain ${abstainBelow})`)
 	console.log(
 		`  overall accuracy:  fp32 ${accF.toFixed(2)}%   int8 ${accI.toFixed(2)}%   Δ ${(accI - accF >= 0 ? "+" : "") + (accI - accF).toFixed(2)}pp`
@@ -160,11 +161,13 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 		if (!f) continue
 		const rf = (100 * f.ok) / f.n
 		const ri = (100 * i.ok) / i.n
+
 		console.log(
 			`    ${c.padEnd(6)} ${rf.toFixed(1)}% → ${ri.toFixed(1)}%  (Δ ${(ri - rf >= 0 ? "+" : "") + (ri - rf).toFixed(1)}pp, n=${f.n})`
 		)
 	}
 	const pass = Math.abs(accI - accF) <= 1
+
 	console.log(`  gate: ${pass ? "PASS (within 1pp)" : "FAIL (>1pp drop)"}`)
 
 	return { n: N, accFp32: accF, accInt8: accI, pass }

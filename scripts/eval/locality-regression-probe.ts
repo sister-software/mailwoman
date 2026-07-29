@@ -119,6 +119,7 @@ for (const row of rows) {
 }
 
 const scored = rows.filter((r) => norm(r.components.locality)).length
+
 console.log(`\n== locality-regression probe — v1.5.1 base vs v1.6.0, US golden (${scored} rows w/ gold locality) ==\n`)
 console.log(`  base (v1.5.1) locality exact: ${baseLocOk}/${scored} (${((100 * baseLocOk) / scored).toFixed(1)}%)`)
 console.log(`  cand (v1.6.0) locality exact: ${candLocOk}/${scored} (${((100 * candLocOk) / scored).toFixed(1)}%)`)
@@ -132,4 +133,5 @@ for (const [m, c] of Object.entries(failMode).toSorted((a, b) => b[1] - a[1])) {
 if (examples.length) {
 	console.log(`\n  examples:\n${examples.join("\n")}`)
 }
+
 console.log()

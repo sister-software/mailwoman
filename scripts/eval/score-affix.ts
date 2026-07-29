@@ -123,10 +123,12 @@ for (const row of rows) {
 		}
 	}
 }
+
 console.log(
 	`# affix per-tag (unfolded) — ${(values["model"] || "")!.split("/").slice(-2).join("/")} · n=${rows.length}`
 )
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
+
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 
 for (const t of TAGS) {
@@ -135,6 +137,7 @@ for (const t of TAGS) {
 	const r = tp + fn ? tp / (tp + fn) : 0
 	const f1 = p + r ? (2 * p * r) / (p + r) : 0
 	sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
+
 	console.log(
 		`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`
 	)

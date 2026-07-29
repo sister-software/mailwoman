@@ -429,6 +429,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 
 		for (const s of sources) {
 			const t = readTuples(s, perSource)
+
 			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
 
 			for (const x of t) {

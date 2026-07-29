@@ -106,6 +106,7 @@ const tmp = mkdtempSync(join(tmpdir(), "mw-sbom-"))
 
 try {
 	console.log(`[sbom] packing mailwoman@${version} from the registry…`)
+
 	run("npm", ["pack", `mailwoman@${version}`, "--silent"], tmp)
 	run("tar", ["xzf", `mailwoman-${version}.tgz`], tmp)
 
@@ -120,11 +121,13 @@ try {
 	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
 
 	console.log("[sbom] installing the production dependency closure…")
+
 	run("npm", ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], pkgDir)
 
 	execFileSync("mkdir", ["-p", outDir])
 
 	console.log("[sbom] generating SPDX 2.3…")
+
 	const spdx = normalizeSPDX(
 		JSON.parse(run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir))
 	)
@@ -132,13 +135,16 @@ try {
 	writeFileSync(spdxPath, `${JSON.stringify(spdx, null, 2)}\n`)
 
 	console.log("[sbom] generating CycloneDX 1.5…")
+
 	const cdx = JSON.parse(
 		run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
 	)
 	const cdxPath = join(outDir, `mailwoman-${version}.cdx.json`)
 	writeFileSync(cdxPath, `${JSON.stringify(cdx, null, 2)}\n`)
 
-	const spdxPkgs = (spdx.packages?.length ?? 0) - 1 // minus the root component
+	const spdxPkgs = (spdx.packages?.length ?? 0) - 1
+
+	// minus the root component
 	console.log(
 		`\n[sbom] ✅ wrote SBOMs for mailwoman@${version} (${spdxPkgs} dependencies)\n` +
 			`         ${spdxPath.replace(`${repoRoot}/`, "")}\n` +

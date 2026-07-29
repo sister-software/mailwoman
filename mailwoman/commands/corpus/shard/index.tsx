@@ -121,6 +121,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		}
 
 		console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
+
 		const stream = createWriteStream(options.output, { encoding: "utf8" })
 		const write = (line: string): void => {
 			stream.write(line)

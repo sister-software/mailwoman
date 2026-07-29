@@ -242,6 +242,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 		for (const spec of LOCALES) {
 			const rows = loadRows(spec.files)
+
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 			// mask-OFF: conventions disabled. createScorer warns (declared-required override) — expected.
@@ -294,6 +295,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			for (const t of FORBIDDEN_TAGS) {
 				if (perTag[t]) {
 					const delta = (perTag[t]!.maskOffF1 - (perTag[t]!.maskOnF1 ?? 0)).toFixed(1)
+
 					console.error(`  forbid-tag ${t}: maskOff ${off[t]} maskOn ${on[t]}  Δ=${delta}pp`)
 				}
 			}
@@ -363,6 +365,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		const before = original.slice(0, lastBrace).replace(/\s*$/, "")
 		const after = original.slice(lastBrace) // the final "}\n"
 		writeFileSync(paths.modelCard, `${before},\n\t"capabilities": ${block.trimStart()}\n${after}`)
+
 		console.error(`\nSurgically inserted the \`capabilities\` block into ${paths.modelCard}`)
 	} else {
 		console.error("\n(dry run — pass --write to patch the model card)")

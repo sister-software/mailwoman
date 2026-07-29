@@ -187,6 +187,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 	const pass = fails.length === 0
+
 	console.log(`\nverdict: ${pass ? "PASS" : "FAIL"}`)
 
 	return { pass }

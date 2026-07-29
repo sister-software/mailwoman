@@ -85,6 +85,7 @@ if (!DEFAULT_MODEL_MD5 || !DEFAULT_TOKENIZER_MD5) {
 	console.error(
 		"ERROR (#397 guard): model-card.json has no files_md5.{model.onnx,tokenizer.model} — cannot verify the dev pin."
 	)
+
 	process.exit(1)
 }
 
@@ -110,12 +111,14 @@ const SRC_TOKENIZER = $public.MAILWOMAN_DEV_TOKENIZER || DEFAULT_TOKENIZER
 if (!existsSync(SRC_MODEL)) {
 	console.error(`missing source model: ${SRC_MODEL}`)
 	console.error("set MAILWOMAN_DEV_MODEL to override")
+
 	process.exit(1)
 }
 
 if (!existsSync(SRC_TOKENIZER)) {
 	console.error(`missing source tokenizer: ${SRC_TOKENIZER}`)
 	console.error("set MAILWOMAN_DEV_TOKENIZER to override")
+
 	process.exit(1)
 }
 
@@ -165,6 +168,7 @@ function assertMd5(label: string, path: string, expected: string): void {
 		console.error("  The dev symlink has drifted from the deployed default. Either the")
 		console.error("  artifact moved, or releases.json defaultVersion changed without a")
 		console.error(`  matching bump to DEFAULT_${label.toUpperCase()}_MD5 in this script.`)
+
 		process.exit(1)
 	}
 }
@@ -200,6 +204,7 @@ const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-l
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
@@ -207,6 +212,7 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
@@ -221,6 +227,7 @@ const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface
 
 if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 	linkForce(SRC_STREET_TYPE_LEXICON, resolve(PKG_DIR, "street-type-lexicon-v3.json"))
+
 	console.log(`linked ${PKG_DIR}/street-type-lexicon-v3.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_STREET_TYPE_LEXICON} — street_type channel will resolve OFF in this worktree.`)
@@ -228,6 +235,7 @@ if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 
 if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
 	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v6.json"))
+
 	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v6.json`)
 } else {
 	console.error(
@@ -267,8 +275,10 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 
 	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
 		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
+
 		process.exit(1)
 	}
+
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
@@ -286,6 +296,7 @@ const FST_DEST = resolve(PKG_DIR, "fst-en-us.bin")
 
 if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
+
 	console.log(`linked fst-en-us.bin ← ${FST_SRC}`)
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
@@ -306,6 +317,7 @@ const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {
 	console.error(

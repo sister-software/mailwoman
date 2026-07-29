@@ -47,10 +47,12 @@ const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 		if (options.skipIngest) {
 			console.error(`▸ skipping ingest — reading already-materialized Parquet for ${countries.join(",")} @ ${release}`)
+
 			const outDir = dataRootPath("overture", release, "places")
 			parquetPaths = countries.map((cc) => `${outDir}/places-${cc.toLowerCase()}.parquet`)
 		} else {
 			console.error(`▸ ingest: Overture places @ ${release} (${countries.join(",")})`)
+
 			const ingest = await ingestPlaces({
 				release,
 				countries,
@@ -61,6 +63,7 @@ const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		}
 
 		console.error(`▸ build: ${out}`)
+
 		const result = await buildPOIDatabase({
 			parquetPaths,
 			out,

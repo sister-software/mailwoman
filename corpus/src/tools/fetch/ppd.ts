@@ -125,5 +125,6 @@ runIfScript(import.meta, async () => {
 		},
 	})
 	const stats = await runPPDExtract(values.input!, values.output!)
+
 	console.log(`[ppd] ${JSON.stringify(stats)}`)
 })

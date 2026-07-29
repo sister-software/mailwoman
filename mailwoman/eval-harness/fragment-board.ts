@@ -167,22 +167,26 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		totalN += bucket.total
 		const rate = bucket.hit / bucket.total
 		const ci = wilson(bucket.hit, bucket.total)
+
 		console.log(
 			`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${rate.toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
 		)
 	}
 
 	const overall = wilson(totalHit, totalN)
+
 	console.log(
 		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
 	)
 
 	for (const [klass, bucket] of [...tally].toSorted()) {
 		if (!bucket.misses.length) continue
+
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 6) ---`)
 
 		for (const miss of bucket.misses.slice(0, 6)) {
 			const want = miss.expect_no_street ? "(no street)" : (miss.expect.street ?? []).join(" ")
+
 			console.log(`    ${JSON.stringify(miss.input)}`)
 			console.log(`        want=${JSON.stringify(want)}  got=${JSON.stringify((miss as never as { got: string }).got)}`)
 		}

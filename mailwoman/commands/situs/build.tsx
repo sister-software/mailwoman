@@ -259,12 +259,14 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		for await (const r of asyncParallelIterator(states, concurrency, buildOneState)) {
 			if (r.skipped) {
 				console.error(`[skip] ${r.state} — complete (use --force to rebuild)`)
+
 				skipped++
 				continue
 			}
 
 			if (r.code !== 0) {
 				console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripAnsi(r.err || "").slice(-600)}`)
+
 				manifest.states[r.state] = { ok: false }
 				failed++
 				continue
@@ -285,7 +287,9 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			manifest.states[r.state] = { ok: true, points: pts, seconds: r.seconds, datasets }
 			totalRows += pts
 			built++
+
 			console.error(`[ok]   ${r.state} — ${pts.toLocaleString()} points (${r.seconds}s)`)
+
 			manifest.builtAt = new Date(t0).toISOString().slice(0, 10)
 			writeFileSync(attributionPath, JSON.stringify(manifest, null, 2))
 		}

@@ -497,6 +497,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	#warnUnknownStrategy(name: string): void {
 		if (this.#warnedUnknownStrategies.has(name)) return
 		this.#warnedUnknownStrategies.add(name)
+
 		console.warn(
 			`WOFSqlitePlaceLookup: a convention names strategy "${name}", which this build does not register ` +
 				`(known: ${[...this.#strategies.keys()].join(", ")}). Skipping it. If the convention asset was built ` +

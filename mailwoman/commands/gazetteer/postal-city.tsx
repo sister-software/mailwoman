@@ -59,6 +59,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// postcode → containing locality_id (the geo-locality the postcode sits in).
 		console.error(`▸ loading postcode → locality from ${postcodeLocalityDB}`)
+
 		const pcl = new DatabaseSync(postcodeLocalityDB, { readOnly: true })
 		const pcToLocality = new Map<string, number>()
 
@@ -74,6 +75,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
 		console.error(`▸ loading candidate coordinates from ${candidateDb}`)
+
 		const sprToPlace = new Map<number, { name: string; lat: number; lon: number }>()
 
 		for (const r of db
@@ -86,6 +88,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// Divergent postal-city edges.
 		console.error(`▸ loading divergent postal-city edges from ${aliasDB}`)
+
 		const alias = new DatabaseSync(aliasDB, { readOnly: true })
 		const edges = alias
 			.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")

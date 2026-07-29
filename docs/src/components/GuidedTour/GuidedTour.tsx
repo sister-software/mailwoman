@@ -179,6 +179,7 @@ export const GuidedTour: React.FC = () => {
 				})
 			} catch (error) {
 				console.error("Tour parse error", error)
+
 				const message = error instanceof Error ? error.message : String(error)
 				setStopStates((prev) => {
 					const next = new Map(prev)

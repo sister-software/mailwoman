@@ -173,6 +173,7 @@ async function main(): Promise<void> {
 	const deptList = [...files.keys()].toSorted()
 
 	console.error(`[ban] building ${args.country} rooftop shard from ${files.size} départements in ${args.csvDir}`)
+
 	out.exec("BEGIN")
 
 	for (const dept of deptList) {
@@ -218,11 +219,13 @@ async function main(): Promise<void> {
 				}
 			}
 		}
+
 		console.error(`[ban]   dept ${dept}: ${written.toLocaleString()} cumulative`)
 	}
 	out.exec("COMMIT")
 
 	console.error(`[ban] indexing…`)
+
 	await createAddressPointIndexes(kdb)
 	out.exec("ANALYZE")
 	await kdb.destroy()
@@ -269,6 +272,7 @@ async function main(): Promise<void> {
 				2
 			) + "\n"
 		)
+
 		console.error(`[ban] wrote ${attributionPath}`)
 	}
 

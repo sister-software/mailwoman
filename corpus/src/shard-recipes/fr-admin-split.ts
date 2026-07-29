@@ -160,6 +160,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 		const communesPath = opts.communes ?? DEFAULT_COMMUNES
 
 		const pool = await readCommunes(communesPath)
+
 		console.error(`  ${communesPath}: ${pool.length} communes with derived département`)
 
 		if (!pool.length) {

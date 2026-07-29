@@ -145,6 +145,7 @@ if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 		if (trailingCard.files_md5?.["model.onnx"] === localCard.files_md5["model.onnx"]) {
 			demoOK = true
 			demoNote = `${cardModelVersion} — demo trails on a bundle revision with IDENTICAL model bytes (model.onnx md5 match); acceptable until the demo repoint (#1278)`
+
 			console.log(
 				`  note: demo defaultVersion ${demoDefault} trails card ${cardModelVersion} but model.onnx bytes are identical — bundle-only revision, parity holds`
 			)
@@ -178,6 +179,7 @@ for (const check of checks) {
 	if (!check.ok) {
 		failed = true
 	}
+
 	console.log(`${mark} ${check.name}: ${check.value}${check.ok ? "" : ` (expected ${check.expected})`}`)
 }
 
@@ -186,6 +188,7 @@ if (failed && !warnOnly) {
 		`\nVersion parity FAILED — a surface trails npm ${npmLatest}. Repoint the demo (mailwoman-release Step 5) ` +
 			`and/or update the releases.mdx (current) row. See #894 / #203.`
 	)
+
 	process.exit(1)
 }
 

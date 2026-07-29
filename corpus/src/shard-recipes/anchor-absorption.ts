@@ -57,6 +57,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 		const source = opts.sourceName ?? "synth-anchor-absorption"
 		const count = opts.count ?? 50_000
 		const realZips = loadRealUsZips(ANCHOR_LOOKUP)
+
 		console.error(`Loaded ${realZips.length} real US ZIPs from the anchor lookup (the leading-5-digit source).`)
 
 		let written = 0
@@ -86,6 +87,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 			written++
 			byTemplate[synth.template] = (byTemplate[synth.template] ?? 0) + 1
 		}
+
 		console.error(`\nwrote ${written} rows (${quarantined} quarantined)`)
 		console.error("  by slice:", JSON.stringify(byTemplate))
 

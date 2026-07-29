@@ -238,10 +238,12 @@ let failureCount = 0
 for (const [name, failures] of failuresByCheck) {
 	if (!failures.length) {
 		console.log(`✓ ${name}`)
+
 		continue
 	}
 
 	failureCount += failures.length
+
 	console.error(`✗ ${name} (${failures.length}):`)
 
 	for (const failure of failures) {
@@ -256,6 +258,7 @@ const publishedTitles = new Set(published.map((page) => page.frontmatter.get("ti
 for (const allowance of allowedOrphans) {
 	if (!publishedIDs.has(allowance.id)) {
 		failureCount += 1
+
 		console.error(`✗ stale allowlist entry: orphan \`${allowance.id}\` no longer exists — remove it`)
 	}
 }
@@ -263,6 +266,7 @@ for (const allowance of allowedOrphans) {
 for (const allowance of allowedDuplicateTitles) {
 	if (!publishedTitles.has(allowance.title)) {
 		failureCount += 1
+
 		console.error(`✗ stale allowlist entry: duplicate title \`${allowance.title}\` no longer exists — remove it`)
 	}
 }
@@ -272,6 +276,7 @@ if (failureCount > 0) {
 		`\nDocs structure check FAILED (${failureCount} finding${failureCount === 1 ? "" : "s"}). ` +
 			`Policy: docs/articles/contributing-docs.mdx · allowlist: docs/scripts/docs-structure-allowlist.ts`
 	)
+
 	process.exit(1)
 }
 

@@ -95,6 +95,7 @@ for i in range(n):
 
 export function buildCorpusStats(args: CorpusStatsOptions): void {
 	const shardPaths = discoverShards(args.shardsArg)
+
 	console.error(`Discovered ${shardPaths.length} parquet shard(s)`)
 
 	const tokenStats = new Map<string, Map<string, number>>()
@@ -103,6 +104,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 
 	for (const path of shardPaths) {
 		console.error(`Reading ${path}...`)
+
 		const rows = streamShardRows(path, args.limitPerShard)
 		totalRows += rows.length
 
@@ -136,6 +138,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 				}
 			}
 		}
+
 		console.error(
 			`  ${rows.length} rows; running totals: ${tokenStats.size} unique tokens, ${bigramStats.size} unique bigrams`
 		)
@@ -158,6 +161,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 			prunedBigrams++
 		}
 	}
+
 	console.error(`Pruned ${prunedBigrams} singleton bigrams; ${bigramStats.size} remain`)
 
 	const out = {
@@ -177,6 +181,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 
 	writeFileSync(args.outputPath, JSON.stringify(out))
 	const sizeMB = (Buffer.byteLength(JSON.stringify(out)) / 1024 / 1024).toFixed(1)
+
 	console.error(
 		`Wrote ${args.outputPath} (${sizeMB} MB) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`
 	)

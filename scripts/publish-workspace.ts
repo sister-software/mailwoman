@@ -57,6 +57,7 @@ const dryRun = $public.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
 
 if (!workspacePath) {
 	console.error("publish-workspace.ts: RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE unset")
+
 	process.exit(2)
 }
 
@@ -65,6 +66,7 @@ const isWeightsWorkspace = workspacePath.startsWith("./neural-weights-")
 
 if (SKIP_WEIGHTS && isWeightsWorkspace) {
 	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
+
 	process.exit(0)
 }
 
@@ -83,6 +85,7 @@ try {
 	// Step 1: pack with the derived publish map injected (shared helper — same path the CI
 	// smoke test uses, so what we test is what we ship).
 	console.error(`publish-workspace: packing ${workspacePath} with injected publish exports`)
+
 	packWorkspaceForPublish(cwd, tarballPath)
 
 	// Step 2: verify the tarball is consumer-resolvable (every concrete exports target is shipped).
@@ -122,6 +125,7 @@ try {
 		console.error(
 			`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`
 		)
+
 		process.exit(0)
 	}
 
@@ -145,6 +149,7 @@ function verifyPublishExports(innerTarballPath: string) {
 
 	if (listing.status !== 0) {
 		console.error(`publish-workspace: tar -tzf failed (exit ${listing.status})`)
+
 		process.exit(listing.status ?? 1)
 	}
 	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
@@ -152,6 +157,7 @@ function verifyPublishExports(innerTarballPath: string) {
 
 	if (manifestRead.status !== 0) {
 		console.error(`publish-workspace: could not read package.json from tarball (exit ${manifestRead.status})`)
+
 		process.exit(manifestRead.status ?? 1)
 	}
 	const manifest = JSON.parse(manifestRead.stdout)
@@ -165,6 +171,7 @@ function verifyPublishExports(innerTarballPath: string) {
 		}
 		process.exit(1)
 	}
+
 	console.error(
 		`publish-workspace: exports verified for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets shipped)`
 	)

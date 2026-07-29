@@ -238,12 +238,14 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 			agg.splitBeatsDroppedBy2km++
 		}
 	}
+
 	console.error(`  ${label}: n=${agg.n} resolve-rate(d/m/s)=${agg.res.dropped}/${agg.res.merged}/${agg.res.split}`)
 
 	return agg
 }
 
 console.error(`[fr-split] collision=${collision.length} unique=${unique.length} (from ${rows.length} FR communes)`)
+
 const collAgg = await runStratum("collision", collision)
 const uniqAgg = await runStratum("unique", unique)
 
@@ -292,6 +294,8 @@ const outPath = values["out"] || ""
 if (outPath) {
 	const { writeFileSync } = await import("node:fs")
 	writeFileSync(outPath, out)
+
 	console.error(`[fr-split] wrote ${outPath}`)
 }
+
 console.log(out)

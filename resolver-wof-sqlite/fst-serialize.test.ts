@@ -200,7 +200,9 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 
 	it("binary size is reasonable", () => {
 		const mb = buf.length / (1024 * 1024)
+
 		console.log(`  FST binary: ${mb.toFixed(2)} MB (${buf.length} bytes)`)
+
 		expect(mb).toBeLessThan(30)
 		expect(mb).toBeGreaterThan(1)
 	})

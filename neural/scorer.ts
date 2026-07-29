@@ -293,6 +293,7 @@ function assertConventionsRespectCapabilities(modelCardPath: string, tier: strin
 		// No certified capabilities → nothing to protect. Old cards still load (warn ONCE per process).
 		if (!warnedNoCapabilities) {
 			warnedNoCapabilities = true
+
 			console.error(
 				`[createScorer] model-card has no \`capabilities\` block — the conventions capability-gate ` +
 					`(#718/#719) is SKIPPED. Regenerate the card via \`mailwoman eval capability-manifest\` to ` +
@@ -579,5 +580,6 @@ function fail(strict: boolean, message: string, ErrorClass: new (message: string
 	const full = `[createScorer] ${message}`
 
 	if (strict) throw new ErrorClass(full)
+
 	console.error(`${full}\n[createScorer] strict=false — continuing despite the violation.`)
 }

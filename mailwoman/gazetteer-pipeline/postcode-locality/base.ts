@@ -282,6 +282,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
 	db.exec("VACUUM")
@@ -292,6 +293,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		"{" +
 		[...summary.entries()].map(([c, s]) => `'${c}': {'rows': ${s.rows}, 'containing': ${s.containing}}`).join(", ") +
 		"}"
+
 	console.log(`finalized ${output}: integrity=ok, countries=${summaryRepr}`)
 }
 
@@ -310,6 +312,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	const { country, adminRepo, postcodeDB, output, radiusKm, maxCandidates } = args
 
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
+
 	const locs: Locality[] = []
 
 	for (const fp of geojsonFiles(join(adminRepo!, "data"))) {
@@ -353,6 +356,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 			// ignore unreadable / malformed files (Python's bare except: pass)
 		}
 	}
+
 	console.log(`  ${locs.length} localities`)
 
 	// Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set; `bgrid`
@@ -380,6 +384,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
 	con.close()
+
 	console.log(`  ${postcodes.length} ${country} postcode centroids`)
 
 	const out = new DatabaseSync(output)
@@ -477,9 +482,11 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		.on("postcode_locality")
 		.columns(["postcode", "country"])
 		.execute()
+
 	console.log(
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
 	)
+
 	out.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(output)

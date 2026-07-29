@@ -178,6 +178,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 
 	for (const [klass, bucket] of [...tally].toSorted()) {
 		if (!bucket.misses.length) continue
+
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 5) ---`)
 
 		for (const miss of bucket.misses.slice(0, 5)) {

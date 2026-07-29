@@ -173,7 +173,9 @@ let draining = false
 const shutdown = () => {
 	if (draining) return
 	draining = true
+
 	console.error("[mailwoman] draining")
+
 	void handle.close().finally(() => process.exit(0))
 }
 

@@ -137,6 +137,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 		for (const { country, db } of locales) {
 			if (!existsSync(db)) {
 				console.error(`skip ${country}: missing ${db}`)
+
 				continue
 			}
 			const conn = new DatabaseSync(db, { readOnly: true })
@@ -162,6 +163,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 			writeFileSync(outPath, bytes)
 			written++
 			const placed = entries.filter((e) => e.lat !== 0 || e.lon !== 0).length
+
 			console.error(
 				`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
 			)

@@ -425,6 +425,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		}
 
 		if (!verdict.ok) throw new BaselineDeviationError(verdict)
+
 		console.log(`✓ ${formatVerdict(verdict)} (profile: ${options.assertBaseline})`)
 		console.log("")
 	}
@@ -436,6 +437,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 	for (const { label } of PARITY_FLOORS) {
 		const tally = tallies.get(label)!
 		const rate = (value: number): string => (tally.total ? (value / tally.total).toFixed(3) : "—")
+
 		console.log(
 			`${label.padEnd(14)} ${String(tally.total).padStart(3)}   ${rate(tally.base).padStart(7)}  ${rate(tally.top1).padStart(6)}  ${rate(tally.oracle5).padStart(8)}  ${rate(tally.oracleK).padStart(8)}`
 		)

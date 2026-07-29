@@ -88,6 +88,7 @@ async function main() {
 		if (cli["bridge-gaps"]) {
 			modelArgs.push("--bridge-gaps")
 		}
+
 		console.log(`Model: ${model}`)
 	} else {
 		console.log("Model: (default shipped weights)")
@@ -95,6 +96,7 @@ async function main() {
 
 	// 1. (re)generate the perturbation arena from golden v0.1.2.
 	console.log("== regenerating perturbation arena ==")
+
 	const perturbed =
 		await $`node scripts/eval/perturb-golden.ts --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
 
@@ -115,9 +117,11 @@ async function main() {
 	// Harness writes its progress to <name>.stderr; we tail the last 40 summary lines off stdout.
 	const runArena = async (name: string, dir: string): Promise<void> => {
 		console.log(`== arena: ${name} ==`)
+
 		const r =
 			await $`node scripts/eval/harness-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
+
 		console.log(r.stdout.split("\n").slice(-40).join("\n"))
 	}
 
@@ -127,7 +131,9 @@ async function main() {
 
 	console.log("")
 	console.log("== arena summary + postal edge-class breakdown ==")
+
 	const summary = await $`node scripts/eval/summarize-arenas.ts ${outDir} data/eval/external/postal-cases.jsonl`
+
 	console.log(summary.stdout.trimEnd())
 
 	if (summary.stderr.trim()) {

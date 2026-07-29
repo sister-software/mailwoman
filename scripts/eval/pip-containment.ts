@@ -296,6 +296,7 @@ function main(): number {
 	for (const st of Object.keys(byState).toSorted()) {
 		console.log(line(st, byState[st]!))
 	}
+
 	console.log(`\n  rows resolved-but-polygon-missing: ${noPoly}`)
 	console.log(`\nMETRIC-ARTIFACT cases (name-match FAILED but gold point IS inside the resolved locality):`)
 
@@ -316,6 +317,7 @@ function main(): number {
 			no_polygon: noPoly,
 		}
 		writeFileSync(jsonOut, JSON.stringify(summary, null, 2))
+
 		console.error(`\nwrote summary → ${jsonOut}`)
 	}
 

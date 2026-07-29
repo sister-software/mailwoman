@@ -39,6 +39,7 @@ for (const page of await collectDocPages()) {
 
 	if (!match) {
 		console.error(`warning: ${page.relativePath} has a non-ISO review-by value (\`${reviewBy}\`) — skipping`)
+
 		continue
 	}
 
@@ -62,6 +63,7 @@ if (stalePages.length) {
 
 	for (const page of stalePages) {
 		const ownerNote = page.owner ? ` (source of truth: ${page.owner})` : ""
+
 		console.log(`- [ ] \`docs/articles/${page.relativePath}\` — review-by ${page.reviewBy}${ownerNote}`)
 	}
 

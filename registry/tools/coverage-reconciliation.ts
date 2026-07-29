@@ -231,6 +231,7 @@ export async function coverageReconciliation(
 			`finding**. At full scale the anti-join tightens, but it is STILL only a set of candidates.`,
 		spotCheckLimit: 15,
 	})
+
 	console.log(md)
 
 	if (OUT_MD) {

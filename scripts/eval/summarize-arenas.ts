@@ -90,6 +90,7 @@ function main(): void {
 
 	console.log("| arena | n | neural | fail | tree-valid |")
 	console.log("| --- | --: | --: | --: | --: |")
+
 	const loaded: Record<string, Result[]> = {}
 
 	for (const a of arenas) {
@@ -100,6 +101,7 @@ function main(): void {
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				console.log(`| ${a} | (no results) |`)
+
 				continue
 			}
 			throw error
@@ -108,6 +110,7 @@ function main(): void {
 		const n = res.length
 		const ne = res.filter((r) => r.neural_pass).length
 		const treeOk = res.filter((r) => r.neural_tree_valid).length
+
 		console.log(`| ${a} | ${n} | ${pct(ne, n)} | ${pct(n - ne, n)} | ${pct(treeOk, n)} |`)
 	}
 
@@ -126,6 +129,7 @@ function main(): void {
 			const cls = ec[r.input] ?? "?"
 			;(by[cls] ??= []).push(r)
 		}
+
 		console.log("\n### postal arena by edge_class")
 		console.log("| edge_class | n | neural | fail |")
 		console.log("| --- | --: | --: | --: |")
@@ -134,6 +138,7 @@ function main(): void {
 			const res = by[cls]!
 			const n = res.length
 			const ne = res.filter((r) => r.neural_pass).length
+
 			console.log(`| ${cls} | ${n} | ${pct(ne, n)} | ${pct(n - ne, n)} |`)
 		}
 	}

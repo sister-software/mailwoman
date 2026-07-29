@@ -67,6 +67,7 @@ async function main() {
 		}).values
 	} catch (error) {
 		console.error(`unknown arg: ${error instanceof Error ? error.message : error}`)
+
 		process.exit(1)
 	}
 
@@ -116,6 +117,7 @@ async function main() {
 		}
 	}
 	const US_N = (readFileSync(US_SLICE, "utf8").match(/\n/g) || []).length
+
 	console.error(`US held-out slice (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
 
 	/**
@@ -159,6 +161,7 @@ async function main() {
 	}
 
 	console.error(`== honest eval (label=${LABEL}, wof=${WOF}) ==`)
+
 	const US_ROW = await runLocale("US/VT held-out", US_SLICE, "US", `honest-us-${LABEL}`)
 
 	// --- emit the per-locale table ---
@@ -179,6 +182,7 @@ async function main() {
 
 	if (OUT) {
 		writeFileSync(OUT, emit + "\n")
+
 		console.error(`wrote → ${OUT}`)
 	} else {
 		console.log(emit)

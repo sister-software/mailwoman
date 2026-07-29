@@ -190,6 +190,7 @@ export async function geocoderVsProvidedCoords(
 	lines.push("")
 
 	const md = lines.join("\n")
+
 	console.log(md)
 
 	if (OUT_MD) {

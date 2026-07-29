@@ -286,6 +286,7 @@ async function main(): Promise<void> {
 	let nNoStreetHit = 0
 
 	console.error("[conformal-calibrate] running cascade …")
+
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 	const resolveOpts = { defaultCountry: "US", addressPoints, interpolation }
 
@@ -313,6 +314,7 @@ async function main(): Promise<void> {
 	}
 
 	const nResolved = resolved.length
+
 	console.error(
 		`[conformal-calibrate] street-level hits: ${nResolved}/${nTotal}` +
 			`  (${((100 * nResolved) / Math.max(1, nTotal)).toFixed(1)}%)` +
@@ -321,6 +323,7 @@ async function main(): Promise<void> {
 
 	if (nResolved === 0) {
 		console.error("ERROR: zero street-level hits — nothing to calibrate")
+
 		process.exit(1)
 	}
 
@@ -405,6 +408,7 @@ async function main(): Promise<void> {
 
 	// --- print report ---
 	const hr = "─".repeat(72)
+
 	console.log("")
 	console.log("Conformal-prediction confidence wrapper — street-level coordinate tier  (#374)")
 	console.log(hr)
@@ -435,10 +439,12 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log("Per-tier calibration stats (ALL resolved rows, separate conformal splits):")
 	console.log("")
+
 	const fmtM = (v: number): string =>
 		Number.isNaN(v) ? "—" : v < 1000 ? `${v.toFixed(1)} m` : `${(v / 1000).toFixed(2)} km`
 	const fmtPct = (v: number): string => (Number.isNaN(v) ? "—" : `${(v * 100).toFixed(1)}%`)
 	const fmtQ = (v: number): string => (Number.isFinite(v) ? v.toFixed(4) : "∞")
+
 	console.log(
 		`  ${"tier".padEnd(14)} ${"n".padStart(5)} ${"Q̂".padStart(8)} ${"coverage".padStart(10)} ${"uncal.cov".padStart(10)} ${"median err".padStart(12)} ${"med.claimed r".padStart(14)} ${"med.cal. r".padStart(12)}`
 	)
@@ -450,10 +456,12 @@ async function main(): Promise<void> {
 		const tc = tierConformal.find((x) => x.tier === ts.tier)!
 		const calRadM = Number.isFinite(tc.Q) ? ts.medianClaimedM * tc.Q : Infinity
 		const calRadFmt = !Number.isFinite(calRadM) ? "∞" : fmtM(calRadM)
+
 		console.log(
 			`  ${ts.tier.padEnd(14)} ${String(ts.n).padStart(5)} ${fmtQ(tc.Q).padStart(8)} ${fmtPct(tc.coverage).padStart(10)} ${fmtPct(tc.uncalCov).padStart(10)} ${fmtM(ts.medianErrorM).padStart(12)} ${fmtM(ts.medianClaimedM).padStart(14)} ${calRadFmt.padStart(12)}`
 		)
 	}
+
 	console.log("")
 	console.log(hr)
 
@@ -461,6 +469,7 @@ async function main(): Promise<void> {
 	// Characterise the dominant tier (address_point here; interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
+
 	console.log("")
 	console.log("CALIBRATION SUMMARY")
 	console.log("")
@@ -485,6 +494,7 @@ async function main(): Promise<void> {
 					: interpTC.Q > 1
 						? `interpolation tier: Q̂=${interpTC.Q.toFixed(3)} — uncertainty_m UNDERESTIMATES the true spread`
 						: `interpolation tier: Q̂=${interpTC.Q.toFixed(3)} — uncertainty_m is conservative`
+
 		console.log(`  Combined Q̂ = ${Q.toFixed(6)} ≪ 1: the heuristic prior is HIGHLY CONSERVATIVE — ${situsVerdict}.`)
 		console.log(`  ${interpVerdict}.`)
 		console.log(
@@ -507,6 +517,7 @@ async function main(): Promise<void> {
 		)
 		console.log(`  The raw uncertainty_m / situs floor is a reliable confidence bound to ship.`)
 	}
+
 	console.log("")
 }
 

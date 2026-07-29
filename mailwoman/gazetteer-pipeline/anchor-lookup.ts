@@ -389,6 +389,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 			.join(", ") +
 		"}"
 	const total = Object.keys(lookup).length
+
 	console.log(
 		`${total.toLocaleString("en-US")} postcodes → ${args.output}  ` +
 			`(DE ${byCountry["DE"]!.toLocaleString("en-US")}, FR ${byCountry["FR"]!.toLocaleString("en-US")}, ` +

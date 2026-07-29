@@ -495,6 +495,7 @@ export function lintCorpusShard(
 	]
 
 	const rendered = renderReport({ shardPath: options.shardPath, statsPath: options.statsPath, rulesPath }, shard, flags)
+
 	console.log(rendered)
 
 	if (options.outMd) {

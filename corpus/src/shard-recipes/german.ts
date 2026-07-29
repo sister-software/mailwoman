@@ -150,6 +150,7 @@ export const germanRecipe: ShardRecipe = {
 
 		for (const s of SOURCES) {
 			const t = readGermanTuples(s)
+
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
 			for (const x of t) {

@@ -282,6 +282,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 
 			for (const label of ["street", "house_number", "postcode"]) {
 				const a = agreement(label)
+
 				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-gating)`)
 			}
 

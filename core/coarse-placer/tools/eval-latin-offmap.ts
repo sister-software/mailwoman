@@ -127,6 +127,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 			}
 		}
 	}
+
 	console.log(`Latin off-map handling — model ${path.basename(modelDir)} (abstain ${abstain}, n=${n})`)
 	console.log(`  OVERALL handled (OTHER-or-abstain): ${ok}/${n} (${formatPercent(ok, n)})  ← want ≥90%`)
 	console.log(`  by group:`)
@@ -136,6 +137,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 		.toSorted()) {
 		console.log(`    ${k.slice(6).padEnd(8)} ${formatPercent(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 	}
+
 	console.log(`  by source country:`)
 
 	for (const k of Object.keys(by)

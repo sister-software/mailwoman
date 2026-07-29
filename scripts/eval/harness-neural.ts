@@ -176,6 +176,7 @@ function parseArgs(): Args {
 
 	if (!out.testsDir) {
 		console.error("Usage: scripts/eval/harness-neural.ts --tests <dir> [--out-json <path>] [...]")
+
 		process.exit(1)
 	}
 
@@ -529,6 +530,7 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 				row = JSON.parse(line)
 			} catch (error) {
 				console.error(`[harness] WARN: bad JSON in ${entry}: ${(error as Error).message}`)
+
 				continue
 			}
 			out.push({
@@ -603,6 +605,7 @@ function printReport(results: AssertionResult[]): void {
 		const asmPass = results.filter((r) => r.assembled_pass).length
 		const asmGainedVsNeural = results.filter((r) => r.assembled_pass && !r.neural_pass).length
 		const asmLostVsNeural = results.filter((r) => !r.assembled_pass && r.neural_pass).length
+
 		console.log("## Assembled pipeline (#478 — `runPipeline`, the gate)")
 		console.log("")
 		console.log(`| Metric | Count | Rate |`)
@@ -616,22 +619,26 @@ function printReport(results: AssertionResult[]): void {
 	console.log("")
 	console.log("| File | Total | Neural | Neural % |")
 	console.log("|------|-------|--------|----------|")
+
 	const sortedFiles = [...byFile.entries()].toSorted((a, b) => b[1].total - a[1].total)
 
 	for (const [file, s] of sortedFiles) {
 		console.log(`| ${file} | ${s.total} | ${s.neural_pass} | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`)
 	}
+
 	console.log("")
 
 	console.log("## Per-locale")
 	console.log("")
 	console.log("| Locale | Total | Neural | Neural % |")
 	console.log("|--------|-------|--------|----------|")
+
 	const sortedLocales = [...byLocale.entries()].toSorted((a, b) => b[1].total - a[1].total)
 
 	for (const [locale, s] of sortedLocales) {
 		console.log(`| ${locale} | ${s.total} | ${s.neural_pass} | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`)
 	}
+
 	console.log("")
 
 	// First 20 failures — the regression cluster the harness exists to surface.
@@ -646,6 +653,7 @@ function printReport(results: AssertionResult[]): void {
 			console.log(`  - expected: \`${JSON.stringify(r.expected[0])}\``)
 			console.log(`  - neural: \`${JSON.stringify(r.neural_actual)}\``)
 		}
+
 		console.log("")
 	}
 }
@@ -654,6 +662,7 @@ function printReport(results: AssertionResult[]): void {
 
 async function main(): Promise<void> {
 	const args = parseArgs()
+
 	console.error("--- harness-neural.ts ---")
 	console.error("Tests dir:", args.testsDir)
 	console.error("Falsehoods dir:", args.falsehoodsDir ?? "(none)")
@@ -661,12 +670,15 @@ async function main(): Promise<void> {
 	console.error("Morphology:", args.morphologyEnabled ? "enabled" : "disabled")
 
 	console.error("Extracting assertions...")
+
 	const fromTests = discoverAssertions(args.testsDir)
 	const fromFalsehoods = args.falsehoodsDir ? loadFalsehoods(args.falsehoodsDir) : []
 	const all = [...fromTests, ...fromFalsehoods]
+
 	console.error(`  ${fromTests.length} from tests, ${fromFalsehoods.length} from falsehoods, ${all.length} total`)
 
 	console.error("Loading neural classifier...")
+
 	let neural: NeuralAddressClassifier
 
 	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
@@ -707,6 +719,7 @@ async function main(): Promise<void> {
 
 	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
+
 		adminFST = deserializeFST(readFileSync(args.adminFSTPath))
 	}
 
@@ -715,12 +728,14 @@ async function main(): Promise<void> {
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
+
 			morphologyFST = deserializeFST(readFileSync(args.morphologyBinPath))
 		} else {
 			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
 			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
 			const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
 			morphologyFST = loaded.matcher
+
 			console.error(
 				loaded.source === "artifact"
 					? `Loaded morphology FST from sealed artifact ${loaded.path}`
@@ -747,6 +762,7 @@ async function main(): Promise<void> {
 	}
 
 	console.error("Running harness...")
+
 	const t0 = performance.now()
 	const results: AssertionResult[] = []
 	let i = 0
@@ -762,15 +778,18 @@ async function main(): Promise<void> {
 
 		if (i % 50 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
+
 			console.error(`  ${i}/${all.length} (${elapsed.toFixed(1)}s)`)
 		}
 	}
+
 	console.error(`Done in ${((performance.now() - t0) / 1000).toFixed(1)}s`)
 
 	printReport(results)
 
 	if (args.outJson) {
 		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
+
 		console.error(`Wrote ${results.length} results to ${args.outJson}`)
 	}
 }

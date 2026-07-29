@@ -132,9 +132,11 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	}
 
 	const golden = loadGolden(options.golden)
+
 	console.error(`Loaded ${golden.length} golden entries`)
 
 	console.error("Loading model...")
+
 	const repairOpts = {
 		...(postcodeRepair ? { postcodeRepair: true } : {}),
 		...(options.wordConsistency ? { enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT } : {}),
@@ -188,6 +190,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	}
 
 	console.error("Running eval...")
+
 	const t0 = performance.now()
 
 	for (const entry of golden) {
@@ -262,6 +265,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 		if (total % 500 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
+
 			console.error(`  ${total}/${golden.length} (${elapsed.toFixed(1)}s)`)
 		}
 	}
@@ -291,14 +295,17 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	console.log("")
 	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")
 	console.log("|-----|----------|---------|--------|----------|----------|--------------|--------|")
+
 	const sortedTags = [...perTag.entries()].toSorted((a, b) => b[1].expected - a[1].expected)
 
 	for (const [tag, s] of sortedTags) {
 		const recall = s.expected > 0 ? ((100 * s.correct) / s.expected).toFixed(1) + "%" : "—"
+
 		console.log(
 			`| ${tag} | ${s.expected} | ${s.correct} | ${s.missed} | ${s.boundary} | ${s.confused} | ${s.hallucinated} | ${recall} |`
 		)
 	}
+
 	console.log("")
 
 	for (const [name, stats] of [
@@ -308,12 +315,14 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		["Hallucinated tags", hallucinated],
 	] as const) {
 		if (stats.total === 0) continue
+
 		console.log(`## ${name} (${stats.total})`)
 		console.log("")
 
 		for (const ex of stats.examples.slice(0, 5)) {
 			console.log(`- \`${ex.raw}\` — ${ex.detail}`)
 		}
+
 		console.log("")
 	}
 

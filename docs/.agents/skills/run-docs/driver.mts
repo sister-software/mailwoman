@@ -71,6 +71,7 @@ async function cmdScreenshot(path: string, outArg?: string) {
 
 		return { status: resp?.status() ?? 0, title: await page.title() }
 	})
+
 	console.log(`screenshot ${path} → ${out} (HTTP ${result.status}, "${result.title}")`)
 }
 
@@ -108,6 +109,7 @@ function reportRoute(path: string, result: RouteResult) {
 	if (result.soft404) {
 		flags.push("SOFT-404")
 	}
+
 	console.log(`check ${path}: ${flags.join(", ")}`)
 
 	for (const e of result.errors) {
@@ -159,6 +161,7 @@ async function cmdEval(path: string, js: string) {
 
 		return await page.evaluate(`(async () => { ${js} })()`)
 	})
+
 	console.log(JSON.stringify(result, null, 2))
 }
 
@@ -185,11 +188,13 @@ if (values.smoke) {
 
 	if (!path || !jsParts.length) {
 		console.error(`eval requires a path and JS code\nsee header of ${import.meta.url} for usage`)
+
 		process.exit(2)
 	}
 	const js = jsParts.join(" ")
 	await cmdEval(path, js)
 } else {
 	console.error(`no command provided\nsee header of ${import.meta.url} for usage`)
+
 	process.exit(2)
 }

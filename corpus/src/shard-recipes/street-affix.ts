@@ -428,6 +428,7 @@ export const streetAffixRecipe: ShardRecipe = {
 
 		for (const s of sources) {
 			const t = readTuples(s)
+
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
 			for (const x of t) {
@@ -516,6 +517,7 @@ export const streetAffixRecipe: ShardRecipe = {
 
 			for (const s of mlSources) {
 				const t = readBalanceTuples(s, perSource)
+
 				console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
 
 				for (const x of t) {

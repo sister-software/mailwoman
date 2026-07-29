@@ -137,6 +137,7 @@ function fail(message: string): never {
  */
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
 	console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)
+
 	const r = spawnSync(cmd, args, { stdio: "inherit", env: childEnv(), cwd: options.cwd })
 
 	if (r.error) {

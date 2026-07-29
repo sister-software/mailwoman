@@ -45,4 +45,5 @@ for (const input of inputs) {
 }
 
 writeJSONL(OUT_PATH, rows)
+
 console.error(`captured ${rows.length} /v1/parse outcomes`)

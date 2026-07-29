@@ -72,6 +72,7 @@ function parseArgs(): Args {
 
 	if (!out.harnessPath) {
 		console.error("--harness <harness.json> required")
+
 		process.exit(1)
 	}
 
@@ -260,6 +261,7 @@ async function main(): Promise<void> {
 	const args = parseArgs()
 	const harness = JSON.parse(readFileSync(args.harnessPath, "utf8")) as HarnessRow[]
 	const bothFail = harness.filter((r) => !r.v0_pass && !r.neural_pass)
+
 	console.error(`Both-fail cases: ${bothFail.length}`)
 	console.error(`Geocoders: Photon, Nominatim${args.geocodeEarthKey ? ", geocode.earth(Pelias)" : ""}`)
 
@@ -318,6 +320,7 @@ async function main(): Promise<void> {
 			...(geocodeEarth ? { geocodeEarth, geocodeEarthScore: score(geocodeEarth) } : {}),
 		}
 		results.push(row)
+
 		console.error(`  [${i + 1}/${bothFail.length}] ${c.input}`)
 		console.error(
 			`       photon ${row.photonScore.hits}/${row.photonScore.total}  nominatim ${row.nominatimScore.hits}/${row.nominatimScore.total}`
@@ -371,6 +374,7 @@ async function main(): Promise<void> {
 	if (args.outJson) {
 		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
 	}
+
 	console.log(mdText)
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }

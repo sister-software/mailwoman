@@ -228,6 +228,7 @@ export async function probeFrontier(
 	}
 
 	const md = L.join("\n")
+
 	console.log(md.split("\n").slice(0, 12).join("\n"))
 	console.log("…")
 

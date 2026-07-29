@@ -301,19 +301,24 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 	if (configPath) {
 		console.log(`Config:        ${configPath}`)
 	}
+
 	console.log(
 		`Total shards:  ${stats.totalShards}${stats.totalFiles !== stats.totalShards ? ` (${stats.totalFiles} files on disk)` : ""}`
 	)
 	console.log("")
+
 	const trainStats = stats.bySplit["train"]
 
 	if (trainStats) {
 		const total = Object.values(trainStats).reduce((a, b) => a + b, 0)
+
 		console.log(`Train split: ${total} shards`)
 		console.log("")
+
 		const headers = ["source", "shards", "shard %", "weight", "eff. sample %"]
 		const widths = [22, 8, 10, 8, 14]
 		const fmtRow = (cells: string[]) => cells.map((c, i) => c.padEnd(widths[i]!)).join("  ")
+
 		console.log(fmtRow(headers))
 		console.log(fmtRow(widths.map((w) => "─".repeat(w))))
 
@@ -328,12 +333,15 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 				])
 			)
 		}
+
 		console.log("")
+
 		const dominator = rows.find((r) => r.overweightFactor !== undefined)
 
 		if (dominator) {
 			const factor = dominator.overweightFactor
 			const factorStr = factor === Infinity ? "∞" : factor?.toFixed(1)
+
 			console.error(
 				`⚠ Concentration: ${dominator.source} would sample ${formatPct(dominator.effectiveSamplePct)} ` +
 					`of training rows (${factorStr}× the next-highest). ` +

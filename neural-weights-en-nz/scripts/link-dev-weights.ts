@@ -96,6 +96,7 @@ function removeIfPresent(dest: string): void {
 		return
 	}
 	unlinkSync(dest)
+
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
 }
 
@@ -132,6 +133,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	const hash = await md5File(path)
 	const filename = path.split(/[/\\]/).pop() || path
 	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+
 	console.log(`md5(${path}): computed and cached in sidecar`)
 
 	return hash
@@ -178,6 +180,7 @@ const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-l
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
@@ -185,6 +188,7 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
@@ -227,6 +231,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 			// delta match (the "missing source, can't build" branch below would fire anyway if this were
 			// stale and needed a rebuild).
 			pairIndexIsFresh = true
+
 			console.log(
 				`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
 			)
@@ -235,6 +240,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 
 			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
 				pairIndexIsFresh = true
+
 				console.log(`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + source md5 match)`)
 			} else {
 				console.log(
@@ -279,8 +285,10 @@ if (pairIndexIsFresh) {
 
 	if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
 		console.error(`ERROR: failed to build ${PAIR_INDEX_BIN_DEST} (exit ${result.status})`)
+
 		process.exit(1)
 	}
+
 	console.log(`built ${PAIR_INDEX_BIN_DEST}`)
 }
 
@@ -299,6 +307,7 @@ const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {
 	console.error(

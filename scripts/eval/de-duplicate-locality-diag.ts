@@ -146,6 +146,7 @@ async function main(): Promise<void> {
 	}
 
 	const pct = (b: { ok: number; n: number }): string => (b.n ? ((100 * b.ok) / b.n).toFixed(1) : "0.0") + "%"
+
 	console.log(`# DE intl locality-parse — duplicate (locality==region) vs distinct`)
 	console.log(``)
 	console.log(`| bucket | n | locality-parse correct |`)

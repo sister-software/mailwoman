@@ -279,6 +279,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 	copyFileSync(sourcePath, destPath)
 	const sizeMB = (sourceSize / 1024 / 1024).toFixed(1)
+
 	console.log(`[demo-assets] ${label}: synced (${sizeMB} MB)`)
 
 	return true
@@ -360,6 +361,7 @@ export function stagePairIndexes(destDir: string): boolean {
 
 		if (!pkgDir) {
 			console.warn(`[demo-assets] pair-index: ${pkg} not resolvable — ${file} not staged`)
+
 			continue
 		}
 		const src = resolve(pkgDir, file)
@@ -369,6 +371,7 @@ export function stagePairIndexes(destDir: string): boolean {
 				`[demo-assets] pair-index: ${file} missing at ${src} — not staged ` +
 					`(run ${pkg}'s scripts/link-dev-weights.ts to build it; the demo tolerates its absence — that country's pair prior stays OFF).`
 			)
+
 			continue
 		}
 		const dest = resolve(destDir, file)
@@ -426,6 +429,7 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?
 	`
 
 	console.log(`[demo-assets] FST: building from ${wofDB}`)
+
 	const result = spawnSync("node", ["--input-type=module", "-e", script], {
 		cwd: opts.repoRoot,
 		stdio: ["pipe", "inherit", "inherit"],

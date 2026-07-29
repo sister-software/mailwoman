@@ -334,6 +334,7 @@ export async function dedupCeiling(
 	]
 
 	const md = lines.join("\n")
+
 	console.log(md)
 
 	if (OUT_MD) {

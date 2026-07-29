@@ -128,6 +128,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 			// The old runner spawned each layer, so a crash was an isolated non-zero exit. Preserve that:
 			// print the failure and count the layer as FAIL rather than aborting the combined verdict.
 			console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
+
 			results.push({ name: layer === "holdout" ? "held-out" : layer, pass: false })
 		}
 	}
@@ -139,6 +140,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	for (const r of results) {
 		console.log(`  ${r.pass ? "✓ PASS" : "✗ FAIL"}  ${r.name}`)
 	}
+
 	console.log(`\nVERDICT: ${allPass ? "PASS — clear to ship" : "FAIL — do not ship"}`)
 
 	return { exitCode: allPass ? 0 : 1 }

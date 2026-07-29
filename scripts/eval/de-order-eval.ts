@@ -53,6 +53,7 @@ async function main() {
 		}).values
 	} catch (error) {
 		console.error(`unknown arg: ${error instanceof Error ? error.message : error}`)
+
 		process.exit(1)
 	}
 
@@ -78,6 +79,7 @@ async function main() {
 
 	if (!model || !card) {
 		console.error("need --model and --card")
+
 		process.exit(1)
 	}
 
@@ -122,16 +124,27 @@ async function main() {
 	}
 
 	console.log("== DE native, anchor ON ==")
+
 	await run(deNative, true, "DE", "de-native-on")
+
 	console.log("== DE native, anchor OFF ==")
+
 	await run(deNative, false, "DE", "de-native-off")
+
 	console.log("== DE intl,   anchor ON ==")
+
 	await run(deIntl, true, "DE", "de-intl-on")
+
 	console.log("== DE intl,   anchor OFF ==")
+
 	await run(deIntl, false, "DE", "de-intl-off")
+
 	console.log("== US (anchor ON) ==")
+
 	await run("data/eval/external/openaddresses-us-sample.jsonl", true, "US", "us-on")
+
 	console.log("== FR (anchor ON) ==")
+
 	await run("data/eval/external/openaddresses-fr-sample.jsonl", true, "FR", "fr-on")
 
 	console.log("")

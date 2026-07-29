@@ -70,6 +70,7 @@ export async function geocoderNamesakeProbe(
 
 			if (g.lat === null || g.lon === null) {
 				console.log(`  ✗ "${variant}"  → UNPLACED`)
+
 				continue
 			}
 			const ok = inTexas(g.lat, g.lon)
@@ -78,6 +79,7 @@ export async function geocoderNamesakeProbe(
 			if (!ok) {
 				wrongRegion++
 			}
+
 			console.log(
 				`  ${ok ? "✓" : "✗ WRONG-REGION"}  "${variant}"  → ${g.lat.toFixed(3)},${g.lon.toFixed(3)} ` +
 					`[${g.resolution_tier ?? "?"}]  ${km > 100 ? `${km.toFixed(0)}km off TX (cf ${c.namesake})` : `${(km * 1000).toFixed(0)}m off`}`
@@ -85,6 +87,7 @@ export async function geocoderNamesakeProbe(
 		}
 	}
 	geocoder.close()
+
 	console.log(`\n  ${wrongRegion}/${total} variants resolved OUTSIDE Texas (wrong-region).`)
 
 	return { wrongRegion, total }

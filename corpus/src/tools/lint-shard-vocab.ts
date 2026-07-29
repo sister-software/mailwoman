@@ -291,6 +291,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 		}
 	}
 	const shardVocab = new Set(shardTags.keys())
+
 	console.log(`shard: ${shardRows.length} rows, ${shardVocab.size} unique tokens`)
 
 	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source slice (still big)
@@ -325,6 +326,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 		}
 		parts = sliced
 	}
+
 	console.log(`base ${baseVersion}: scanning ${parts.length} parts (fraction=${pyFloat(fraction)}), COUNTRY-scoped`)
 
 	// 3. tally each shard token's base tag, SCOPED to the country the shard uses it in
@@ -376,6 +378,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	for (const [label, rows] of sections) {
 		if (!rows.length) continue
 		rows.sort((a, b) => b[4] - a[4] || b[3] - a[3])
+
 		console.log(`\n${label.startsWith("CONTRA") ? "⚠️ " : "· "}${rows.length} ${label}:`)
 
 		for (const [w, sTag, bTag, bFrac, bTotal] of rows) {

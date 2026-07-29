@@ -125,6 +125,7 @@ export async function buildFDICHoldout(): Promise<void> {
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
 			written++
 		}
+
 		console.error(
 			`[fdic] offset ${offset.toLocaleString()} → ${written.toLocaleString()} written, ${dropped.toLocaleString()} dropped`
 		)

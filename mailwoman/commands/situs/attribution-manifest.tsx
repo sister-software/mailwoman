@@ -94,6 +94,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 				}
 				manifest.states[slug] = { ok: true, points, datasets }
 				manifest.totalPoints += points
+
 				console.error(`${slug.padEnd(8)} ${points.toLocaleString().padStart(12)} points · ${rows.length} sources`)
 			} finally {
 				db.close()

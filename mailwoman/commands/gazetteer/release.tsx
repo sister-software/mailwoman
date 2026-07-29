@@ -65,7 +65,9 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 
 		if (options.fold) {
 			const foldOut = adminIn.replace(/\.db$/, "-geonames.db")
+
 			console.error(`▸ fold (${countries.join(",")}) → ${foldOut}`)
+
 			const f = await foldGeonamesIntoAdmin({
 				adminIn,
 				adminOut: foldOut,
@@ -79,7 +81,9 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 		}
 
 		const shards = resolvePostcodeShards(undefined, root)
+
 		console.error(`▸ build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+
 		const r = await buildCandidate({
 			adminDb,
 			out,
@@ -96,7 +100,9 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 		if (options.publish) {
 			const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 			const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
+
 			console.error(`▸ publish → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`)
+
 			const p = publishGazetteer({
 				candidateDb: out,
 				version,

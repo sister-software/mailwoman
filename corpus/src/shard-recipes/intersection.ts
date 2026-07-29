@@ -479,6 +479,7 @@ export const intersectionRecipe: ShardRecipe = {
 		const edgesDir = opts.edgesDir ?? "/tmp/tiger-edges"
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES
 		const exclusions = readEvalExclusions()
+
 		console.error(`  eval exclusions: ${exclusions.nodes.size} nodes, ${exclusions.pairs.size} pairs`)
 
 		const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -516,6 +517,7 @@ export const intersectionRecipe: ShardRecipe = {
 				pool.push(c)
 				kept++
 			}
+
 			console.error(`  ${county.fips} (${county.state}, ${county.regime}): ${crossings.length} crossings, ${kept} kept`)
 		}
 
@@ -616,6 +618,7 @@ export const intersectionRecipe: ShardRecipe = {
 			samples,
 		}
 		writeFileSync(opts.output.replace(/\.jsonl$/, ".report.json"), JSON.stringify(report, null, "\t"))
+
 		console.error(
 			`Done: emitted ${emitted} rows (skipped ${skipped}) from ${usedCrossings.size}/${pool.length} real crossings. → ${opts.output}\n` +
 				`  forms: ${JSON.stringify(formCounts)}\n` +

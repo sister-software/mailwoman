@@ -197,6 +197,7 @@ function verifyRequiredFiles(args: PublishHFOptions): void {
 		if (size === 0) {
 			fail(`${localPath} is empty`)
 		}
+
 		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
 	}
 }
@@ -281,21 +282,27 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		// Existence already enforced in Phase 1's guard loop, so this flag is present.
 		const localPath = args[OPTION_TO_FIELD[f.option]]!
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
 	for (const localPath of postcodeBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
 	for (const localPath of pairIndexBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
@@ -304,7 +311,9 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	for (const localPath of fstBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
@@ -312,37 +321,49 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// the lowercase --fsts above; the demo fetcher expects `fst-en-US.bin`.
 	if (fstPath) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", fstPath, dst])
 	}
 
 	if (gazetteerLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
 	}
 
 	if (countryLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/country-surface-lexicon-v1.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", countryLexicon, dst])
 	}
 
 	if (streetTypeLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/street-type-lexicon-v3.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", streetTypeLexicon, dst])
 	}
 
 	if (localitySurfaceLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/locality-surface-lexicon-v6.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localitySurfaceLexicon, dst])
 	}
 
 	if (polygonsDb) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", polygonsDb, dst])
 	}
 
@@ -356,6 +377,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		if (!ok) {
 			fail(`${f.remoteName} unreachable at ${url}`)
 		}
+
 		console.error(`  ✓ ${url}`)
 	}
 
@@ -367,6 +389,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		if (!fstOK) {
 			fail(`${fstRemoteName} unreachable at ${fstURL}`)
 		}
+
 		console.error(`  ✓ ${fstURL}`)
 	}
 
@@ -379,6 +402,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		if (!ok) {
 			fail(`${remoteName} unreachable at ${url}`)
 		}
+
 		console.error(`  ✓ ${url}`)
 	}
 
@@ -424,6 +448,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)
 	writeFileSync(tmpReleases, JSON.stringify(releases, null, 2))
 	run("hf", ["buckets", "cp", tmpReleases, `${BUCKET_PATH}/${args.locale}/releases.json`])
+
 	console.error(`  ✓ releases.json updated, defaultVersion=${releases.defaultVersion}`)
 
 	console.error(`\n✓ ${args.version} (${args.locale}) published successfully.`)

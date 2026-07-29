@@ -45,6 +45,7 @@ const repoRoot = resolve(import.meta.dirname, "..")
 
 function fail(message: string): never {
 	console.error(`prepare-release-version: ${message}`)
+
 	process.exit(1)
 }
 

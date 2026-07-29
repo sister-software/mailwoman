@@ -161,6 +161,7 @@ async function main(): Promise<void> {
 	const BATCH = 50_000
 
 	console.error(`[ban] deriving ${args.country} street-centroid tier from ${args.source}`)
+
 	out.exec("BEGIN")
 
 	for (const row of agg.iterate() as Iterable<{
@@ -210,6 +211,7 @@ async function main(): Promise<void> {
 	src.close()
 
 	console.error(`[ban] indexing…`)
+
 	await createStreetCentroidIndexes(kdb)
 	out.exec("ANALYZE")
 	await kdb.destroy()
@@ -263,6 +265,7 @@ async function main(): Promise<void> {
 			2
 		) + "\n"
 	)
+
 	console.error(`[ban] wrote ${attributionPath}`)
 
 	console.error(

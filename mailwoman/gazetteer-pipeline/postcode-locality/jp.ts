@@ -246,6 +246,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	if (!postal.size) {
 		console.error(`no postal names loaded for ${args.country} (only KEN_ALL/JP wired so far)`)
+
 		process.exit(1)
 	}
 	const points = loadGeonamesPoints(args.geonames)
@@ -381,12 +382,14 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
 	db.exec("VACUUM")
 	db.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
+
 	console.log(
 		`${args.country}: ${keys.length.toLocaleString("en-US")} postcodes (KEN_ALL∩GeoNames), ` +
 			`${matched.toLocaleString("en-US")} name-matched (${matchRate}), ` +

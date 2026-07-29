@@ -68,6 +68,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
 		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)
+
 		const instance = await DuckDBInstance.create()
 		const duck = await instance.connect()
 		const result = await duck.runAndReadAll(`
@@ -91,6 +92,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 		}[]
 
 		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
+
 		const db = new DatabaseSync(out)
 		db.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests

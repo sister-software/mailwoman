@@ -102,4 +102,5 @@ const header = { version: 2, width: WIDTH, height: HEIGHT, title: "mailwoman par
 const lines = [JSON.stringify(header), ...events.map((event) => JSON.stringify(event))]
 
 writeFileSync("cast.json", `${lines.join("\n")}\n`)
+
 console.log(`wrote cast.json: ${events.length} events, ${events.at(-1)?.[0]}s`)

@@ -62,6 +62,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 
 	// Confirm the parquet columns first (the ingest output extracts ST_X/ST_Y → lat/lon).
 	const desc = await conn.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${PARQUET}') LIMIT 1`)
+
 	console.error(
 		"columns:",
 		desc
@@ -99,6 +100,7 @@ GROUP BY b.pc
 `
 	const res = await conn.runAndReadAll(sql)
 	const rows = res.getRowObjects() as Array<{ postcode: string; lat: number; lon: number; n: bigint }>
+
 	console.error(`extracted ${rows.length} ${CC} postcode centroids from Overture`)
 
 	// Emit the spr table the WOFPostcodeLookup query consumes:
@@ -135,5 +137,6 @@ CREATE TABLE spr (
 	out.exec("COMMIT")
 	out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)
 	out.close()
+
 	console.error(`wrote ${rows.length} rows → ${OUT_DB}`)
 }

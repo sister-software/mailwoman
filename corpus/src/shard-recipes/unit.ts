@@ -298,6 +298,7 @@ export const unitRecipe: ShardRecipe = {
 
 		for (const s of sources) {
 			const t = readTuples(s)
+
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
 			for (const x of t) {

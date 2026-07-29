@@ -66,6 +66,7 @@ function removeIfPresent(dest: string): void {
 		return
 	}
 	unlinkSync(dest)
+
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
 }
 
@@ -83,6 +84,7 @@ const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-l
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
@@ -90,6 +92,7 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
@@ -127,8 +130,10 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 
 	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
 		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
+
 		process.exit(1)
 	}
+
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
@@ -146,6 +151,7 @@ const FST_DEST = resolve(PKG_DIR, "fst-fr-fr.bin")
 
 if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
+
 	console.log(`linked fst-fr-fr.bin ← ${FST_SRC}`)
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
@@ -166,6 +172,7 @@ const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {
 	console.error(

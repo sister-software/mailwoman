@@ -104,9 +104,11 @@ export function ingestGeonamesPostal(
 
 		if (!existsSync(file)) {
 			missing.push(cc)
+
 			console.error(
 				`  GeoNames postal ${cc}: ${file} missing — download from download.geonames.org/export/zip/${cc}.zip; skipped`
 			)
+
 			continue
 		}
 		// Group member settlement points per NORMALIZED code; remember one display form.
@@ -155,6 +157,7 @@ export function ingestGeonamesPostal(
 		}
 		db.exec("COMMIT")
 		byCountry[cc] = members.size
+
 		console.error(`  GeoNames postal ${cc}: ${members.size.toLocaleString()} distinct codes (medoid centroids)`)
 	}
 

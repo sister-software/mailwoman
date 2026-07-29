@@ -68,6 +68,7 @@ export async function ingestOvertureDivisions(
 	await con.run("SET memory_limit='4GB'; SET threads=4;")
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
+
 	const result = await con.runAndReadAll(`
 		WITH area AS (
 			SELECT division_id,
@@ -93,6 +94,7 @@ export async function ingestOvertureDivisions(
 			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL
 	`)
 	const rows = result.getRowObjects() as Array<Record<string, unknown>>
+
 	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
 
 	// GERS string id → synthetic int, sequential and unique within this run.

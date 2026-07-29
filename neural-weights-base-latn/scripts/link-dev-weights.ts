@@ -45,8 +45,11 @@ const MODEL_DEST = resolve(PKG_DIR, "model.onnx")
 const TOKENIZER_DEST = resolve(PKG_DIR, "tokenizer.model")
 
 linkForce(SRC_MODEL, MODEL_DEST)
+
 console.log(`linked model.onnx ← ${SRC_MODEL}`)
+
 linkForce(SRC_TOKENIZER, TOKENIZER_DEST)
+
 console.log(`linked tokenizer.model ← ${SRC_TOKENIZER}`)
 
 /**
@@ -79,9 +82,11 @@ for (const [src, name] of [
 ] as const) {
 	if (!existsSync(src)) {
 		console.error(`MISSING ${src}`)
+
 		continue
 	}
 	const dest = resolve(PKG_DIR, name)
 	linkForce(src, dest)
+
 	console.log(`linked ${name} ← ${src}`)
 }

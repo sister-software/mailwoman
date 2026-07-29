@@ -154,6 +154,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			return res.ok ? normalizeReleasesManifest(await res.json()) : null
 		} catch (error) {
 			console.error("Failed to load releases manifest", error)
+
 			throw error
 		}
 	}, [])
@@ -168,6 +169,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				return await loadDemoAssets(release, ctx, sqljsBaseURL)
 			} catch (error) {
 				console.error("Error loading resources", error)
+
 				throw error
 			}
 		},

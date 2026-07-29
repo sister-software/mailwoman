@@ -271,7 +271,9 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			}
 		}
 		db.exec("COMMIT")
+
 		console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
+
 		await createAddressPointIndexes(kdb)
 		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 		const stats = db

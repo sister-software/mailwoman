@@ -72,10 +72,12 @@ export async function buildRegressionDB(): Promise<void> {
 	}
 
 	console.log(`[gauntlet] built ${output} — ${REGRESSION_CASES.length} cases`)
+
 	const kinds = new Map<string, number>()
 
 	for (const c of REGRESSION_CASES) {
 		kinds.set(`${c.country}/${c.addressKind}`, (kinds.get(`${c.country}/${c.addressKind}`) ?? 0) + 1)
 	}
+
 	console.log(`[gauntlet] coverage by kind: ${[...kinds].map(([k, n]) => `${k}=${n}`).join("  ")}`)
 }

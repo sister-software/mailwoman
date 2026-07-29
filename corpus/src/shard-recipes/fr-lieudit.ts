@@ -117,8 +117,10 @@ async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 			})
 			deptCount++
 		}
+
 		console.error(`  ${path}: ${deptCount.toLocaleString()} clean lieu-dit rows`)
 	}
+
 	console.error(
 		`  scanned ${scanned.toLocaleString()} BAN rows across ${files.length} départements → pool=${pool.length.toLocaleString()}`
 	)

@@ -767,6 +767,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
 			const t = readUsTuples(s)
+
 			console.error(`  ${s.csv}: ${t.length} tuples`)
 
 			for (const x of t) {
@@ -776,17 +777,22 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
 		const frAll = readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
+
 		console.error(`  ${FR_SOURCE.csv}: ${frAll.length} tuples (${frPool.length} after holdout split)`)
+
 		const qcAll = readCaLocalities("10")
 		const onAll = readCaLocalities("08")
 		const qcPool = qcAll.filter((l) => isHoldoutLocality(l) === opts.golden)
 		const onPool = onAll.filter((l) => isHoldoutLocality(l) === opts.golden)
+
 		console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
+
 		// AU/NZ pools: same stable locality-hash holdout as FR/CA.
 		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AuTuple[]
 		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NzTuple[]
 		const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
+
 		console.error(`  GeoNames postal: AU ${auAll.length}→${auPool.length}, NZ ${nzAll.length}→${nzPool.length}`)
 
 		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length) {

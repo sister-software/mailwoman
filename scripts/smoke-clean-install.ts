@@ -327,7 +327,9 @@ function assertClosureComplete() {
 
 try {
 	assertClosureComplete()
+
 	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
+
 	const deps: Record<string, string> = {}
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
@@ -344,10 +346,13 @@ try {
 	)
 
 	console.log("[smoke] npm install (tarballs only — no hoisting)…")
+
 	run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], proj)
 
 	const cli = join(proj, "node_modules", "mailwoman", "out", "cli.js")
+
 	console.log("[smoke] mailwoman --help (loads every command module)…")
+
 	const help = run("node", [cli, "--help"], proj)
 
 	for (const c of ["parse", "geocode", "autocomplete", "reverse", "wof", "corpus", "registry"]) {
@@ -355,6 +360,7 @@ try {
 	}
 
 	console.log("[smoke] mailwoman parse (exercises bundled core/data dictionaries)…")
+
 	const out = run("node", [cli, "parse", "350 5th Ave, New York, NY 10118"], proj)
 
 	if (!out.includes("New York") || !out.includes("10118"))
@@ -367,7 +373,9 @@ try {
 	}
 
 	console.log("[smoke] mailwoman-mcp bin: JSON-RPC initialize + tools/list over stdio…")
+
 	const toolCount = await checkMCPBin(proj)
+
 	console.log(`[smoke]   → ${toolCount} tools listed, bin shut down cleanly`)
 
 	// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the WHOLE `mailwoman`
@@ -381,7 +389,9 @@ try {
 	// registry version (the source-skew this file's header warns about).
 	for (const leaf of STANDALONE_LEAVES) {
 		const leafDir = WORKSPACES[leaf]!
+
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
+
 		const solo = join(tmp, `solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
 		writeFileSync(
@@ -404,10 +414,12 @@ try {
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
 } catch (error: unknown) {
 	const e = error as { stdout?: string; stderr?: string; message?: string }
+
 	console.error("\n[smoke] ❌ FAILED — a published package does not clean-install/run:")
 	console.error(
 		e.stdout ? `${e.message}\n--- stdout ---\n${e.stdout}\n--- stderr ---\n${e.stderr}` : (e.message ?? error)
 	)
+
 	process.exitCode = 1
 } finally {
 	rmSync(tmp, { recursive: true, force: true })

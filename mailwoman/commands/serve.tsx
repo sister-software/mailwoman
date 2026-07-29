@@ -215,6 +215,7 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 				draining = true
 
 				console.error(`[serve] worker ${process.pid} draining`)
+
 				void handle?.close().finally(() => process.exit(0))
 			}
 

@@ -339,6 +339,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	const runBattery = async (m: string, tag: string): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
+
 		// Package-shaped (#718): the metric probes (which support --weights-cache) load ALL channels —
 		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = WC_MODEL when WC.
@@ -426,6 +427,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	} else {
 		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, msg + "\n")
+
 		console.error(msg)
 	}
 
@@ -498,6 +500,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	if (CONV_MODE) {
 		console.log("== mask-regression gate (#718) ==")
+
 		const maskLines: string[] = []
 
 		try {
@@ -544,6 +547,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		VERDICT_STATUS = failed ? 1 : 0
 	} catch (error) {
 		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
+
 		VERDICT_STATUS = 1
 	}
 

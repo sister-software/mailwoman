@@ -159,7 +159,9 @@ for (const m of misses) {
 	)
 	console.log(`    ${m.row.raw}`)
 }
+
 console.log("\n== form-feature rates: misses vs whole eval ==")
+
 const all = featureCounts(rows)
 const missed = featureCounts([...new Set(misses.map((m) => m.row))])
 const features = [...new Set([...all.keys(), ...missed.keys()])].toSorted()
@@ -167,10 +169,12 @@ const features = [...new Set([...all.keys(), ...missed.keys()])].toSorted()
 for (const f of features) {
 	const a = all.get(f) ?? 0
 	const m = missed.get(f) ?? 0
+
 	console.log(
 		`${f.padEnd(18)} misses ${String(m).padStart(2)} / eval ${String(a).padStart(2)}  (${a ? Math.round((100 * m) / a) : 0}% of carriers missed)`
 	)
 }
+
 console.log(
 	"\nShard variation surface (build-street-affix-shard.mjs): abbr/full per affix (50/50), Title-case ONLY, 4 layouts (full/bare/street-only/venue), comma-tailed. NOT varied: ALL-CAPS, periods ('S.'/'Dr.'), rare suffixes beyond the parse source's natural mix."
 )

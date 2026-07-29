@@ -101,6 +101,7 @@ export async function buildGauntletDeps(
 
 	if (existsSync(effModel)) {
 		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
+
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
 		// #1024: the transparency stamp exposed a config↔card drift once (release.config.json still pointed at

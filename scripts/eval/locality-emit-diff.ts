@@ -97,10 +97,12 @@ async function main() {
 			candLostThatBaseHad++
 		}
 		const flag = br && !cr ? " <<< base resolved, cand DIDN'T" : ""
+
 		console.log(
 			`gold=${(row.components.locality ?? "").padEnd(22)} | v180="${bl}"[${br ? "R" : "-"}]  v190="${cl}"[${cr ? "R" : "-"}]${flag}`
 		)
 	}
+
 	console.log(
 		`\n${cc}: n=${rows.length} | locality differs v180≠v190: ${diff} (${((100 * diff) / rows.length).toFixed(0)}%)`
 	)

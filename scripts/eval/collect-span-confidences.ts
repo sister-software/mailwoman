@@ -250,6 +250,7 @@ async function main(): Promise<void> {
 	const meanConf = records.reduce((a, r) => a + r.conf, 0) / n
 	const byOa = records.filter((r) => r.source === "oa")
 	const byCorpus = records.filter((r) => r.source === "corpus")
+
 	console.error(`\nwrote ${n} gradable spans → ${outPath}  (${unlabelable} unlabelable skipped)`)
 	console.error(
 		`  overall: acc=${acc.toFixed(4)}  meanConf=${meanConf.toFixed(4)}  gap(conf-acc)=${(meanConf - acc).toFixed(4)}`

@@ -567,6 +567,7 @@ function printReport(report: PoiBoardReport): void {
 
 	if (report.nearestKmStats) {
 		const s = report.nearestKmStats
+
 		console.log(
 			`\nnearest-distance distribution (km, results-cases with ≥1 result, n=${s.count}): min ${s.min.toFixed(2)}  p50 ${s.p50.toFixed(2)}  p95 ${s.p95.toFixed(2)}  max ${s.max.toFixed(2)}`
 		)
@@ -576,6 +577,7 @@ function printReport(report: PoiBoardReport): void {
 
 	for (const line of report.floors.lines) {
 		const mark = line.met ? "✓" : "✗"
+
 		console.log(
 			`  ${mark} ${line.label.padEnd(14)} ${(line.observed * 100).toFixed(1)}% (${line.fraction})  floor ${(line.floor * 100).toFixed(0)}%`
 		)
