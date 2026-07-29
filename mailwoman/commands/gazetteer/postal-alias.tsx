@@ -67,8 +67,10 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
 		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)
+
 		const instance = await DuckDBInstance.create()
 		const duck = await instance.connect()
+
 		const result = await duck.runAndReadAll(`
 			SELECT
 				trim(postcode) AS postcode,
@@ -82,6 +84,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 			GROUP BY 1, 2, 3
 			HAVING count(*) >= ${minCount}
 		`)
+
 		const rows = result.getRowObjects() as {
 			postcode: string
 			postal_city: string
@@ -90,6 +93,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 		}[]
 
 		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
+
 		const db = new DatabaseSync(out)
 		db.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
@@ -98,15 +102,18 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal-city-alias-schema")
 		const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
 		await createPostalCityAliasTable(kdb)
+
 		const insert = db.prepare(
 			"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)"
 		)
+
 		db.exec("BEGIN")
 		let divergent = 0
 
 		for (const r of rows) {
 			const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
 			divergent += isDivergent
+
 			insert.run(
 				r.postcode,
 				r.postal_city,
@@ -117,6 +124,7 @@ const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options 
 				String(options.release)
 			)
 		}
+
 		db.exec("COMMIT")
 		// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
 		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")

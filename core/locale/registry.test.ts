@@ -14,11 +14,12 @@ describe("InMemoryLocaleRegistry — registration", () => {
 
 		expect(registry.get("en-US")).toBe(enUS)
 		expect(registry.get("fr-FR")).toBe(frFR)
+
 		expect(
 			registry
 				.list()
 				.map((p) => p.locale)
-				.sort()
+				.toSorted()
 		).toEqual(["en-US", "fr-FR"])
 	})
 
@@ -46,6 +47,7 @@ describe("InMemoryLocaleRegistry — registration", () => {
 describe("InMemoryLocaleRegistry — validation", () => {
 	test("rejects an unknown ComponentTag in componentsSupported", () => {
 		const registry = new InMemoryLocaleRegistry()
+
 		expect(() =>
 			registry.register({
 				locale: "xx-XX",
@@ -59,6 +61,7 @@ describe("InMemoryLocaleRegistry — validation", () => {
 
 	test("rejects an empty locale tag", () => {
 		const registry = new InMemoryLocaleRegistry()
+
 		expect(() =>
 			registry.register({
 				locale: "",
@@ -71,6 +74,7 @@ describe("InMemoryLocaleRegistry — validation", () => {
 
 	test("rejects a policy override outside componentsSupported", () => {
 		const registry = new InMemoryLocaleRegistry()
+
 		expect(() =>
 			registry.register({
 				locale: "en-US",
@@ -104,6 +108,7 @@ describe("LocaleProfile — bundled profiles", () => {
 		for (const tag of expected) {
 			expect(enUS.componentsSupported).toContain(tag)
 		}
+
 		expect(enUS.ruleClassifiers.length).toBeGreaterThan(0)
 	})
 
@@ -131,6 +136,6 @@ describe("LocaleProfile — bundled profiles", () => {
 		registry.register(enUS)
 		registry.register(frFR)
 		registry.register(jaJP)
-		expect(registry.list().length).toBe(3)
+		expect(registry.list()).toHaveLength(3)
 	})
 })

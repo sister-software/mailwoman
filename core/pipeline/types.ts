@@ -18,7 +18,9 @@ import type { Section } from "../types/classifier.ts"
 
 export type LocaleTag = string
 
-/** Optional user-location signal for Stage 6 resolver scoring. */
+/**
+ * Optional user-location signal for Stage 6 resolver scoring.
+ */
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
 
 /**
@@ -30,10 +32,18 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
  */
 export type PlacetypePairPassthrough = object | false
 
-/** Common opts threaded through every stage. */
+/**
+ * Common opts threaded through every stage.
+ */
 export interface PipelineOpts {
 	locale?: LocaleTag
 	userLocation?: UserLocation
+	/**
+	 * Explicit input register (operator Decision A / GTM B10 — see {@link InputMode}). When unset the pipeline derives it
+	 * from the kind classifier's verdict via {@link deriveInputMode}. Endpoint wrappers set their register default here
+	 * (validation/batch → `"formatted"`, autocomplete/demo search → `"fragmented"`).
+	 */
+	inputMode?: InputMode
 	/**
 	 * Disable fast-path shortcuts; always run the full pipeline. Does NOT bypass the poi_query branch — that's a routing
 	 * decision (the kind classifier + `stages.poiIntent`), not a fast-path shortcut, so a `poi_query`-classified input
@@ -53,7 +63,9 @@ export interface PipelineOpts {
 	 * docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	 */
 	jointReconcile?: boolean
-	/** Hard cap on lookups the resolver may issue; passed through. */
+	/**
+	 * Hard cap on lookups the resolver may issue; passed through.
+	 */
 	resolveOpts?: ResolveOpts
 	/**
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
@@ -93,14 +105,18 @@ export interface PipelineOpts {
 	signal?: AbortSignal
 }
 
-/** Minimal structural shape `NormalizedInput` must satisfy. Compatible with @mailwoman/normalize. */
+/**
+ * Minimal structural shape `NormalizedInput` must satisfy. Compatible with @mailwoman/normalize.
+ */
 export interface NormalizedInputLite {
 	raw: string
 	normalized: string
 	appliedLocale?: string
 }
 
-/** Minimal structural shape `QueryShape` must satisfy. Compatible with @mailwoman/query-shape. */
+/**
+ * Minimal structural shape `QueryShape` must satisfy. Compatible with @mailwoman/query-shape.
+ */
 export interface QueryShapeLite {
 	knownFormats: ReadonlyArray<{
 		format: string
@@ -112,7 +128,9 @@ export interface QueryShapeLite {
 	totalLength?: number
 }
 
-/** Detected (or asserted) locale + alternatives. */
+/**
+ * Detected (or asserted) locale + alternatives.
+ */
 export interface LocaleHint {
 	locale: LocaleTag
 	confidence: number
@@ -120,7 +138,9 @@ export interface LocaleHint {
 	source: "caller" | "detected" | "ensemble"
 }
 
-/** Kind classifier output. */
+/**
+ * Kind classifier output.
+ */
 export type QueryKind =
 	| "postcode_only"
 	| "locality_only"
@@ -138,6 +158,34 @@ export interface QueryKindResult {
 }
 
 /**
+ * The input register (operator Decision A, 2026-07-28 — the Option-A evidence-bundle verdict): `fragmented` is the
+ * map-search register (a human typing "belleville" or "12 rue de la paix"); `formatted` is the validation/record
+ * register (a checkout form or CRM row submitting a full postal address). The evidence-bundle channels feed ONLY in
+ * fragmented mode — three training runs showed they lift the fragment register (admin-street homonym +0.765 lower+heal)
+ * while degrading full-address parses (the flip census, `.superpowers/sdd/progress.md` 2026-07-28). Explicitly settable
+ * on every surface (CLI/API); when unset, {@link deriveInputMode} maps the kind-classifier's verdict. Endpoint defaults
+ * (GTM B10): validation/batch/CSV → formatted; autocomplete/demo search → fragmented; plain parse → derived.
+ */
+export type InputMode = "fragmented" | "formatted"
+
+/**
+ * Map a {@link QueryKind} to its {@link InputMode} register. Multi-component postal specifications
+ * (`structured_address`/`po_box`/`intersection`) are the formatted register; single-thing lookups (postcode, locality,
+ * landmark, POI, vague) are fragments. NEVER keyed on case — lowercase is the primary user register (operator
+ * doctrine).
+ */
+export function deriveInputMode(kind: QueryKind): InputMode {
+	switch (kind) {
+		case "structured_address":
+		case "po_box":
+		case "intersection":
+			return "formatted"
+		default:
+			return "fragmented"
+	}
+}
+
+/**
  * The structured POI intent — the pluggable boundary between detection (kind classifier), the executors (Plan 3's
  * poi.db SQL compiler), and the export formats (OverpassQL emitter). Category ids are `@mailwoman/poi-taxonomy` ids
  * carried as plain strings — core stays lexicon-free; the branded type lives with the data package. Spec §3.2:
@@ -148,18 +196,24 @@ export interface POIIntent {
 		| { kind: "category"; categoryID: string; matched: string }
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }
-	/** Spatial anchor: the split-off remainder text and its parse, when the query carried one. */
+	/**
+	 * Spatial anchor: the split-off remainder text and its parse, when the query carried one.
+	 */
 	anchor?: {
 		text?: string
 		tree?: AddressTree
-		/** Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved. */
+		/**
+		 * Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved.
+		 */
 		biasPoint?: { latitude: number; longitude: number }
 		radiusM?: number
 	}
 	limit?: number
 }
 
-/** One executed POI search result (spec §3.4; produced by the executor, absent pre-execution). */
+/**
+ * One executed POI search result (spec §3.4; produced by the executor, absent pre-execution).
+ */
 export interface POIResult {
 	name: string | null
 	categoryID: string | null
@@ -168,7 +222,9 @@ export interface POIResult {
 	longitude: number
 	country: string
 	confidence: number
-	/** Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule). */
+	/**
+	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule).
+	 */
 	gersID: string | null
 	/**
 	 * Read-time WOF ancestry, deepest-first — the paid-down half of the poiQueryKind register row's debt. Attached by the
@@ -256,6 +312,11 @@ export interface FSTMatcherLike {
 
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
+	/**
+	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle channels deliberately OFF; the
+	 * pipeline passes an explicit mode on every parse (caller override or {@link deriveInputMode} of the kind verdict).
+	 */
+	inputMode?: InputMode
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/**
@@ -265,9 +326,13 @@ export interface ClassifierOpts {
 	 * `classifier.parse` for measured, opt-in use.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
-	/** Magnitude overrides for the morphology emission prior — the pipeline always passes the zeroed pair. */
+	/**
+	 * Magnitude overrides for the morphology emission prior — the pipeline always passes the zeroed pair.
+	 */
 	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number }
-	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
+	/**
+	 * Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels.
+	 */
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance data is partly
@@ -368,11 +433,11 @@ export interface RuntimePipelineStages {
 	resolverBackend?: ResolverBackend
 }
 
-export interface PipelineTiming {
-	[stage: string]: number // ms
-}
+export type PipelineTiming = Record<string, number>
 
-/** Result of one `runPipeline` call. */
+/**
+ * Result of one `runPipeline` call.
+ */
 export interface PipelineResult {
 	input: string
 	normalized: NormalizedInputLite
@@ -386,9 +451,13 @@ export interface PipelineResult {
 	 */
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
-	/** Present only when the poi-intent stage produced an outcome (path === "poi"). */
+	/**
+	 * Present only when the poi-intent stage produced an outcome (path === "poi").
+	 */
 	poiIntent?: POIIntentOutcome
 	timing: PipelineTiming
-	/** Which path the coordinator took. `"fast-path"` skipped stages 3-5; `"poi"` took the intent branch. */
+	/**
+	 * Which path the coordinator took. `"fast-path"` skipped stages 3-5; `"poi"` took the intent branch.
+	 */
 	path: "fast-path" | "full" | "poi"
 }

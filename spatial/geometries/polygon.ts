@@ -129,6 +129,7 @@ export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> e
 	 */
 	coordinates: P[][]
 }
+
 /**
  * Predicate for checking if a GeoJSON object is a `MultiPolygon` geometry.
  */
@@ -173,6 +174,10 @@ export const OSMNodeTag = {
 
 export type OSMNodeTag = (typeof OSMNodeTag)[keyof typeof OSMNodeTag]
 
+/**
+ * OSM node tags that disqualify a node from being treated as residential — a node carrying one of these is
+ * infrastructure or commercial, whatever else it claims.
+ */
 export const ForbiddenResidentialOSMNodeTags: ReadonlySet<OSMNodeTag> = new Set<OSMNodeTag>([
 	OSMNodeTag.Shop,
 	OSMNodeTag.Brand,

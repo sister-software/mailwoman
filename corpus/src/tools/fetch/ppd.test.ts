@@ -15,6 +15,7 @@ const row = (
 		town: "LONDON",
 		county: "GREATER LONDON",
 	}
+
 	const r = { ...base, ...over }
 
 	return [
@@ -50,14 +51,17 @@ describe("extractPPDTuples", () => {
 		expect(lines[0]).toBe("NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE")
 		expect(lines[1]).toBe('14,"Beulah Hill",,"London","Greater London",SE19 3NF')
 	})
+
 	it("fills CITY only when locality differs from town", async () => {
 		const { lines } = await run([
 			row({ locality: "PLAISTOW", town: "BROMLEY" }),
 			row({ locality: "LONDON", town: "LONDON" }),
 		])
+
 		expect(lines[1]).toBe('14,"Beulah Hill","Plaistow","Bromley","Greater London",SE19 3NF')
 		expect(lines[2]).toBe('14,"Beulah Hill",,"London","Greater London",SE19 3NF')
 	})
+
 	it("skips SAON rows, name-PAON rows, and missing street/postcode, counting each", async () => {
 		const { lines, stats } = await run([
 			row({ saon: "FLAT 2" }),
@@ -66,9 +70,11 @@ describe("extractPPDTuples", () => {
 			row({ postcode: "" }),
 			row({}),
 		])
+
 		expect(lines).toHaveLength(2) // header + 1 kept
 		expect(stats).toMatchObject({ kept: 1, skippedSAON: 1, skippedPAON: 1, skippedNoStreet: 1, skippedNoPostcode: 1 })
 	})
+
 	it("normalizes PAON ranges", async () => {
 		const { lines } = await run([row({ paon: "4 - 6" })])
 		expect(lines[1]!.startsWith("4-6,")).toBe(true)

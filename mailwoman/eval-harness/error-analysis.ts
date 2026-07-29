@@ -34,7 +34,7 @@ import { resolve } from "node:path"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
@@ -50,24 +50,38 @@ interface CategoryStats {
 	examples: Array<{ raw: string; detail: string }>
 }
 
-/** Options for {@linkcode evalErrorAnalysis}. */
+/**
+ * Options for {@linkcode evalErrorAnalysis}.
+ */
 export interface ErrorAnalysisOptions {
-	/** Golden eval-set dir (`us.jsonl` / `fr.jsonl` / `adversarial.jsonl`). */
+	/**
+	 * Golden eval-set dir (`us.jsonl` / `fr.jsonl` / `adversarial.jsonl`).
+	 */
 	golden?: string
-	/** Candidate ONNX (requires `tokenizer` + `modelCard`). Omit for the shipped dev weights. */
+	/**
+	 * Candidate ONNX (requires `tokenizer` + `modelCard`). Omit for the shipped dev weights.
+	 */
 	model?: string
-	/** Candidate tokenizer path. */
+	/**
+	 * Candidate tokenizer path.
+	 */
 	tokenizer?: string
-	/** Candidate model-card path. */
+	/**
+	 * Candidate model-card path.
+	 */
 	modelCard?: string
-	/** Parse with postcode repair enabled. */
+	/**
+	 * Parse with postcode repair enabled.
+	 */
 	postcodeRepair?: boolean
 	/**
 	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15). Off by default so
 	 * pre-flip baselines stay reproducible; pass it to grade the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
-	/** STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true. */
+	/**
+	 * STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true.
+	 */
 	strict?: boolean
 }
 
@@ -117,15 +131,20 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	}
 
 	const golden = loadGolden(options.golden)
+
 	console.error(`Loaded ${golden.length} golden entries`)
 
 	console.error("Loading model...")
+
 	const repairOpts = {
 		...(postcodeRepair ? { postcodeRepair: true } : {}),
 		...(options.wordConsistency ? { enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT } : {}),
 	}
-	const parseOpts =
-		Object.keys(repairOpts).length > 0 ? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1]) : undefined
+
+	const parseOpts = Object.keys(repairOpts).length
+		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
+		: undefined
+
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
 	// conventions channels the model was trained against (per the model-card `requires` block) so a
 	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer
@@ -136,6 +155,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 		throw new Error("createScorer needs model + tokenizer + model-card; resolveWeights returned incomplete paths")
+
 	const classifier = await createScorer({
 		modelPath: resolved.modelPath,
 		tokenizerPath: resolved.tokenizerPath,
@@ -151,7 +171,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	let total = 0
 
 	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
-	type TagStats = {
+	interface TagStats {
 		expected: number
 		correct: number
 		missed: number
@@ -159,7 +179,9 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		confused: number
 		hallucinated: number
 	}
+
 	const perTag = new Map<string, TagStats>()
+
 	function tagStat(tag: string): TagStats {
 		let s = perTag.get(tag)
 
@@ -172,6 +194,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	}
 
 	console.error("Running eval...")
+
 	const t0 = performance.now()
 
 	for (const entry of golden) {
@@ -184,15 +207,18 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 		for (const [tag, value] of Object.entries(expected)) {
 			const predValue = predicted[tag as keyof typeof predicted]
+
 			tagStat(tag).expected++
 
 			if (!predValue) {
 				missed.total++
+
 				tagStat(tag).missed++
 
 				if (missed.examples.length < 10) {
 					missed.examples.push({ raw: entry.raw, detail: `missing ${tag}="${value}"` })
 				}
+
 				allCorrect = false
 			} else if (predValue !== value) {
 				const predNorm = String(predValue).toLowerCase().trim()
@@ -200,6 +226,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 				if (predNorm.includes(expNorm) || expNorm.includes(predNorm)) {
 					boundaryErrors.total++
+
 					tagStat(tag).boundary++
 
 					if (boundaryErrors.examples.length < 10) {
@@ -210,6 +237,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 					}
 				} else {
 					confused.total++
+
 					tagStat(tag).confused++
 
 					if (confused.examples.length < 10) {
@@ -219,6 +247,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 						})
 					}
 				}
+
 				allCorrect = false
 			} else {
 				tagStat(tag).correct++
@@ -228,6 +257,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		for (const [tag] of Object.entries(predicted)) {
 			if (!(tag in expected)) {
 				hallucinated.total++
+
 				tagStat(tag).hallucinated++
 
 				if (hallucinated.examples.length < 10) {
@@ -236,6 +266,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 						detail: `hallucinated ${tag}="${predicted[tag as keyof typeof predicted]}"`,
 					})
 				}
+
 				allCorrect = false
 			}
 		}
@@ -246,6 +277,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 		if (total % 500 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
+
 			console.error(`  ${total}/${golden.length} (${elapsed.toFixed(1)}s)`)
 		}
 	}
@@ -275,14 +307,17 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	console.log("")
 	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")
 	console.log("|-----|----------|---------|--------|----------|----------|--------------|--------|")
-	const sortedTags = [...perTag.entries()].sort((a, b) => b[1].expected - a[1].expected)
+
+	const sortedTags = [...perTag.entries()].toSorted((a, b) => b[1].expected - a[1].expected)
 
 	for (const [tag, s] of sortedTags) {
 		const recall = s.expected > 0 ? ((100 * s.correct) / s.expected).toFixed(1) + "%" : "—"
+
 		console.log(
 			`| ${tag} | ${s.expected} | ${s.correct} | ${s.missed} | ${s.boundary} | ${s.confused} | ${s.hallucinated} | ${recall} |`
 		)
 	}
+
 	console.log("")
 
 	for (const [name, stats] of [
@@ -292,12 +327,14 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		["Hallucinated tags", hallucinated],
 	] as const) {
 		if (stats.total === 0) continue
+
 		console.log(`## ${name} (${stats.total})`)
 		console.log("")
 
 		for (const ex of stats.examples.slice(0, 5)) {
 			console.log(`- \`${ex.raw}\` — ${ex.detail}`)
 		}
+
 		console.log("")
 	}
 

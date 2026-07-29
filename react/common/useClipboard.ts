@@ -9,7 +9,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
-/** Best-effort clipboard write: async Clipboard API first, hidden-textarea `execCommand` fallback. */
+/**
+ * Best-effort clipboard write: async Clipboard API first, hidden-textarea `execCommand` fallback.
+ */
 async function writeToClipboard(value: string): Promise<void> {
 	try {
 		await navigator.clipboard.writeText(value)
@@ -40,7 +42,9 @@ export interface UseClipboard {
 	copy: (value: string) => Promise<void>
 }
 
-/** @param resetMs - How long the `copied` flag stays true after a successful copy. */
+/**
+ * @param resetMs - How long the `copied` flag stays true after a successful copy.
+ */
 export function useClipboard(resetMs = 1500): UseClipboard {
 	const [copied, setCopied] = useState(false)
 	const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -63,6 +67,7 @@ export function useClipboard(resetMs = 1500): UseClipboard {
 			if (timer.current) {
 				clearTimeout(timer.current)
 			}
+
 			timer.current = setTimeout(() => setCopied(false), resetMs)
 		},
 		[resetMs]

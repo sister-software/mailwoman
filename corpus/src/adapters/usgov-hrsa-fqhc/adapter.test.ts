@@ -20,6 +20,7 @@ let scratch: string
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-usgov-hrsa-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -41,6 +42,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		// 10 fixture rows minus 2 (empty Site Name on row 9, invalid state "ZZ" on row 10).
 		expect(m.yielded).toBe(8)
 		const rows = await loadRows()
@@ -58,9 +60,11 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00001")
 		expect(row).toBeDefined()
+
 		expect(row!.components).toMatchObject({
 			venue: "Buffalo Health Center Inc.",
 			house_number: "123",
@@ -78,6 +82,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00001")!
 		expect(row.raw).toBe("Buffalo Health Center Inc., 123 Main St, Buffalo, NY 14201")
@@ -90,6 +95,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00001")!
 		// Alignment downstream must place the venue's "Buffalo" under B-venue and the
@@ -111,6 +117,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00002")!
 		expect(row.components.street).toBe("SE Hawthorne Blvd Suite 200")
@@ -123,6 +130,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00007")!
 		expect(row.components.house_number).toBeUndefined()
@@ -136,6 +144,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00008")!
 		expect(row.components.house_number).toBe("40-12")
@@ -149,6 +158,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00010")).toBeUndefined()
 	})
@@ -160,6 +170,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00009")).toBeUndefined()
 	})
@@ -182,6 +193,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(m.yielded).toBe(3)
 		expect(m.written).toBe(3)
 	})
@@ -193,13 +205,16 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, USGOV_HRSA_FQHC_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

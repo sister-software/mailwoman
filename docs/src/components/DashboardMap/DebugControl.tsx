@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
+import type { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import { memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import { IControl, MapInstance, useControl, useMap } from "react-map-gl/maplibre"
+import type { IControl, MapInstance } from "react-map-gl/maplibre"
+import { useControl, useMap } from "react-map-gl/maplibre"
 
 class DebugControlBase implements IControl {
 	public readonly container: HTMLElement
@@ -29,6 +30,9 @@ class DebugControlBase implements IControl {
 	}
 }
 
+/**
+ * Map overlay exposing tile and layer state, for diagnosing a render without opening devtools.
+ */
 export const DebugControl: React.FC = memo(() => {
 	const [_pointerPosition, setPointerPosition] = useState<Point>()
 	const [pointerCoords, setPointerCoords] = useState<LngLat>()
@@ -45,6 +49,7 @@ export const DebugControl: React.FC = memo(() => {
 		const handleMouseMove = (event: MapLayerMouseEvent) => {
 			const nextPointerPosition = event.point
 			const nextPointerCoords = event.lngLat.wrap()
+
 			const nextFeatureTargets = event.target
 				.queryRenderedFeatures(nextPointerPosition, {
 					filter: ["!=", ["get", "pmap:kind"], "earth"],
@@ -68,6 +73,7 @@ export const DebugControl: React.FC = memo(() => {
 		<>
 			{featureTargets?.map((feature, index) => {
 				const layerID = feature.layer.id
+
 				const properties: string =
 					"pmap:kind" in feature.properties ? feature.properties.name : JSON.stringify(feature.properties, null, 2)
 

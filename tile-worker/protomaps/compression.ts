@@ -14,5 +14,6 @@ export const decompressPMTileBuffer: DecompressFunc = async (buf, compression) =
 
 		return new Response(result).arrayBuffer()
 	}
-	throw Error("Compression method not supported")
+
+	throw new Error("Compression method not supported")
 }

@@ -52,6 +52,7 @@ describe("usgov-nppes adapter", () => {
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.country).toBe("US")
@@ -72,6 +73,7 @@ describe("usgov-nppes adapter", () => {
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.country).toBe("US")
@@ -84,12 +86,14 @@ describe("usgov-nppes adapter", () => {
 			"1000000003,1,,DOE,JOHN,999 NOWHERE LN,,,OR,",
 			"1000000004,2,ACME CORP,,,100 REAL ST,,REALTOWN,CA,90210"
 		)
+
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.components.venue).toBe("ACME CORP")
 	})
@@ -102,11 +106,13 @@ describe("usgov-nppes adapter", () => {
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(0)
 	})
 
 	it("rejects non-US country filter", async () => {
 		const a = createUsgovNPPESAdapter()
+
 		await expect(
 			(async () => {
 				for await (const _ of a.rows({ inputPath: "/dev/null", country: "FR" }));
@@ -126,12 +132,14 @@ describe("usgov-nppes adapter", () => {
 			"1000000002,2,B CORP,,,2 B ST,,CITYB,CA,90002",
 			"1000000003,2,C CORP,,,3 C ST,,CITYC,CA,90003"
 		)
+
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
 		for await (const r of a.rows({ inputPath: p, limit: 2 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(2)
 	})
 })

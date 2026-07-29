@@ -45,6 +45,7 @@
 		"@mailwoman/react": "workspace:^",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
 		"classnames": "^2.5.1",
 		"clsx": "^2.1.1",

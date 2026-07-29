@@ -60,13 +60,17 @@ const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 	FR: "France",
 }
 
-/** BCP-47 locale defaulting for the corpus row's `locale` field. Defaulted by country. */
+/**
+ * BCP-47 locale defaulting for the corpus row's `locale` field. Defaulted by country.
+ */
 const LOCALE_BY_COUNTRY: Record<string, string> = {
 	US: "en-US",
 	FR: "fr-FR",
 }
 
-/** Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip. */
+/**
+ * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
+ */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
 		case "country":
@@ -92,10 +96,14 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 }
 
 interface VariantSpec {
-	/** Hierarchy-variant id appended to `source_id`. */
+	/**
+	 * Hierarchy-variant id appended to `source_id`.
+	 */
 	suffix: string
 
-	/** Component tag → display string the adapter will hand to the runner. */
+	/**
+	 * Component tag → display string the adapter will hand to the runner.
+	 */
 	components: Partial<Record<ComponentTag, string>>
 }
 
@@ -201,6 +209,10 @@ export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string
 	return slots
 }
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
 
 /**
@@ -235,7 +247,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit rows in sorted-id order for deterministic JSONL.
-			const ids = [...byID.keys()].sort((a, b) => a - b)
+			const ids = [...byID.keys()].toSorted((a, b) => a - b)
 			let emitted = 0
 
 			for (const id of ids) {
@@ -255,7 +267,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
 
 						yield {
 							raw,
@@ -267,6 +279,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: "CC0-1.0",
 						}
+
 						emitted++
 					}
 				}
@@ -275,5 +288,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 	}
 }
 
-/** Single shared instance, suitable for `defaultAdapterRegistry`. */
+/**
+ * Single shared instance, suitable for `defaultAdapterRegistry`.
+ */
 export const wofAdminAdapter = createWOFAdminAdapter()

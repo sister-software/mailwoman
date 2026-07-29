@@ -11,7 +11,7 @@ project is going — locale tiers, workstreams, standing invariants — see
 [Current scope & roadmap](./plan/SCOPE.mdx); the Archive's plan directory is history, not the
 roadmap.
 
-:::info[Verified as of 2026-07-27 — model 6.6.4 (npm 8.1.0)]
+:::info[Verified as of 2026-07-29 — model 6.7.0 (npm 8.2.0)]
 The current npm release is **8.1.0** (`npm view mailwoman version`) — model bytes unchanged (**v385**,
 model version **6.6.4**): the static-index release, shipping the per-locale FST gazetteers rebuilt with
 build-time degenerate-surface curation plus the sealed street-morphology artifact. **8.0.0** before it
@@ -26,7 +26,14 @@ four HTTP surfaces — the native `mailwoman serve` plus the photon/nominatim/li
 shared Hono stack, the express server deleted with no shim). See [Releases & capabilities](./releases.mdx)
 for the rows.
 
-**The current model is v385** (`v3.8.5-latam-8k`, model 6.6.0) — a fine-tune off **v381** with **one**
+**The current model is the 6.7.0-bundle** (`v3.24.0-bundle-ordinal` step-4000) — the Option-A
+retrieval-augmented evidence bundle: a fine-tune off **v385** on v385's own feed adding two learned
+input channels (`street_type` + `locality_surface`), painted at train AND inference from four-law
+curated, digit-guarded lexicons, trained under absence + false-evidence curricula with
+ordinal-street augmentation. The channels feed only in the **fragmented** register (`inputMode`,
+Decision A) and only with street context — the formatted/record register runs the trained absence
+identity and holds the full v6.0.0-shipped-baseline floor set (17/17). Its base v385
+(`v3.8.5-latam-8k`, model 6.6.0) was a fine-tune off **v381** with **one**
 change: a dedicated `overture-latam` shard (CA + MX Overture-Addresses rows) with +CA/+MX in
 `country_weights`, adding the first genuinely-new locale coverage (MX locality 74.0→82.7). Its base v381
 (`v3.8.1-punct-fix-full`) was the two-change fine-tune off v310 — the `synth-no-fragment` digit-ownership

@@ -13,6 +13,7 @@
 
 export { DemoMap } from "./DemoMap.tsx"
 export type { DemoMapExtraProps, DemoMapProps, DemoMapStyle } from "./DemoMap.tsx"
+
 export type {
 	DemoBackend,
 	DemoCompareContext,
@@ -63,10 +64,12 @@ export type { UseCompareState } from "./useCompareState.ts"
 export { useDemoGeocode } from "./useDemoGeocode.ts"
 export type { UseDemoGeocode, UseDemoGeocodeOptions } from "./useDemoGeocode.ts"
 export { usePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
+
 export type {
 	AutocompleteInputProps,
 	UsePlaceAutocomplete,
 	UsePlaceAutocompleteOptions,
 } from "./usePlaceAutocomplete.ts"
+
 export { VersionPicker } from "./VersionPicker.tsx"
 export type { VersionPickerProps } from "./VersionPicker.tsx"

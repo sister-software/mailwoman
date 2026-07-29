@@ -6,7 +6,9 @@
 // spread: TX/GA/WA urban + MT rural.
 import { expect, test } from "#e2e"
 
-const TOL = 0.006 // ~600 m
+const TOL = 0.006
+
+// ~600 m
 
 const CASES: Array<{ state: string; address: string; lat: number; lon: number }> = [
 	{ state: "TX", address: "1502 A Cage Street, Houston, TX 77020", lat: 29.7747, lon: -95.335 },

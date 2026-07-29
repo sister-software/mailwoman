@@ -50,18 +50,21 @@ const PRESETS = EXAMPLE_ADDRESSES.map((ex) => ({ label: ex.label, value: ex.addr
 const LoadingFallback: React.FC = () => <p style={{ padding: "1rem" }}>Loading…</p>
 
 function initialAddress(): string {
-	if (typeof window === "undefined") return DEFAULT_ADDRESS
+	if (globalThis.window === undefined) return DEFAULT_ADDRESS
 
-	return new URL(window.location.href).searchParams.get("q") ?? DEFAULT_ADDRESS
+	return new URL(globalThis.location.href).searchParams.get("q") ?? DEFAULT_ADDRESS
 }
 
-/** The client-only demo body: build the real runtime, then render `<GeocoderDemo>` with docs panels. */
+/**
+ * The client-only demo body: build the real runtime, then render `<GeocoderDemo>` with docs panels.
+ */
 const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean }> = ({
 	initialCenter,
 	debugDefault = false,
 }) => {
 	const { baseURL } = useSiteConfig()
 	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
+
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = useDemoMapRuntime({
 		sqljsBaseURL,
 		baseURL,
@@ -76,6 +79,7 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 	const selectedVersion = runtime?.selectedVersion ?? null
 	const selectedRelease = releases.find((r) => r.version === selectedVersion)
 
+	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: DemoControls calls each member (`panels.result({…})`) rather than mounting it */
 	const panels = useMemo<DemoPanels>(
 		() => ({
 			header: <AboutDemo />,
@@ -145,6 +149,8 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 			traceParse,
 		]
 	)
+
+	/* oxlint-enable react/no-unstable-nested-components */
 
 	if (!runtime) return <LoadingFallback />
 

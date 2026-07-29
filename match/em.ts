@@ -28,26 +28,42 @@ import type { Comparison, FellegiSunterModel } from "./fellegi-sunter.ts"
  */
 const EPSILON = 1e-9
 
-/** Reduce a record pair to its agreement pattern — the per-comparison level index (`-1` = missing). */
+/**
+ * Reduce a record pair to its agreement pattern — the per-comparison level index (`-1` = missing).
+ */
 export function agreementPattern<R>(comparisons: Comparison<R>[], a: R, b: R): number[] {
 	return comparisons.map((comparison) => comparison.assess(a, b))
 }
 
-/** Options for {@link estimateParameters}. */
+/**
+ * Options for {@link estimateParameters}.
+ */
 export interface EmOptions {
-	/** Hard iteration cap. Default 100. */
+	/**
+	 * Hard iteration cap. Default 100.
+	 */
 	maxIterations?: number
-	/** Convergence tolerance on the largest parameter change between iterations. Default 1e-6. */
+	/**
+	 * Convergence tolerance on the largest parameter change between iterations. Default 1e-6.
+	 */
 	tolerance?: number
-	/** Starting prior match rate. Defaults to the model's `lambda`. */
+	/**
+	 * Starting prior match rate. Defaults to the model's `lambda`.
+	 */
 	initialLambda?: number
 }
 
-/** The fitted model plus convergence diagnostics. */
+/**
+ * The fitted model plus convergence diagnostics.
+ */
 export interface EmResult<R> {
-	/** The input model with every level's `m`/`u` and the prior `lambda` re-estimated. */
+	/**
+	 * The input model with every level's `m`/`u` and the prior `lambda` re-estimated.
+	 */
 	model: FellegiSunterModel<R>
-	/** The estimated prior match rate. */
+	/**
+	 * The estimated prior match rate.
+	 */
 	lambda: number
 	iterations: number
 	converged: boolean
@@ -76,7 +92,7 @@ export function estimateParameters<R>(
 	let iterations = 0
 	let converged = false
 
-	if (patterns.length === 0) {
+	if (!patterns.length) {
 		return { model, lambda, iterations, converged }
 	}
 
@@ -99,6 +115,7 @@ export function estimateParameters<R>(
 				matchLikelihood *= m[i]![level]!
 				nonMatchLikelihood *= u[i]![level]!
 			}
+
 			const total = matchLikelihood + nonMatchLikelihood
 			const g = total > 0 ? matchLikelihood / total : 0
 			responsibilitySum += g
@@ -125,8 +142,10 @@ export function estimateParameters<R>(
 			for (let l = 0; l < levels; l++) {
 				const newM =
 					mDenominator[i]! > 0 ? (mNumerator[i]![l]! + EPSILON) / (mDenominator[i]! + EPSILON * levels) : m[i]![l]!
+
 				const newU =
 					uDenominator[i]! > 0 ? (uNumerator[i]![l]! + EPSILON) / (uDenominator[i]! + EPSILON * levels) : u[i]![l]!
+
 				maxDelta = Math.max(maxDelta, Math.abs(newM - m[i]![l]!), Math.abs(newU - u[i]![l]!))
 				m[i]![l] = newM
 				u[i]![l] = newU
@@ -135,7 +154,9 @@ export function estimateParameters<R>(
 
 		if (maxDelta < tolerance) {
 			converged = true
+
 			iterations++
+
 			break
 		}
 	}

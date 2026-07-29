@@ -71,60 +71,92 @@ import {
 	TILE_WORKER_URL,
 } from "./_map-helpers.ts"
 
-/** Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`. */
+/**
+ * Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`.
+ */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
 
-/** Spans that together make up the street name — assembled in source order for the situs/interp query. */
+/**
+ * Spans that together make up the street name — assembled in source order for the situs/interp query.
+ */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
-/** The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp. */
+/**
+ * The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp.
+ */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
 	interp: HTTPVFSInterpolator | undefined
 }
 
-/** Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`. */
+/**
+ * Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`.
+ */
 interface CandidateExtras {
 	bbox?: ResolvedHit["bbox"]
 	tier?: "address_point" | "interpolated"
 	uncertaintyM?: number
 }
 
-/** Device-location proximity-bias control (the "📍 Use my location" button state + toggle). */
+/**
+ * Device-location proximity-bias control (the "📍 Use my location" button state + toggle).
+ */
 export interface GeoBiasControl {
-	/** Whether a device location is currently applied as a soft bias. */
+	/**
+	 * Whether a device location is currently applied as a soft bias.
+	 */
 	active: boolean
-	/** Toggle the device-location bias on/off (prompts for geolocation when turning on). */
+	/**
+	 * Toggle the device-location bias on/off (prompts for geolocation when turning on).
+	 */
 	toggle: () => void
 }
 
 export interface UseDemoMapRuntime {
-	/** The composed runtime `<GeocoderDemo>` consumes, or `null` until the basemap style has loaded. */
+	/**
+	 * The composed runtime `<GeocoderDemo>` consumes, or `null` until the basemap style has loaded.
+	 */
 	runtime: DemoRuntime | null
-	/** The selectable releases (for the host compare panel that loads its own second classifier). */
+	/**
+	 * The selectable releases (for the host compare panel that loads its own second classifier).
+	 */
 	releases: ReleaseInfo[]
-	/** Whether the CPU/WASM backend is forced (threaded into the host compare classifier load). */
+	/**
+	 * Whether the CPU/WASM backend is forced (threaded into the host compare classifier load).
+	 */
 	forceWASM: boolean
-	/** The device-location proximity-bias control (the demo's "Use my location" row). */
+	/**
+	 * The device-location proximity-bias control (the demo's "Use my location" row).
+	 */
 	geoBias: GeoBiasControl
-	/** The version's isotonic calibrator (raw softmax → calibrated probability), or `null` if none loaded. */
+	/**
+	 * The version's isotonic calibrator (raw softmax → calibrated probability), or `null` if none loaded.
+	 */
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
 	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer). Resolves `null` when the
 	 * classifier bundle predates the `traceParse` seam or the trace fails. Feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
-	/** Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle). */
+	/**
+	 * Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle).
+	 */
 	supportsTrace: boolean
 }
 
 export interface UseDemoMapRuntimeOptions {
-	/** Same-origin base for the sql.js-httpvfs worker + wasm (e.g. `/mailwoman/sqljs`). */
+	/**
+	 * Same-origin base for the sql.js-httpvfs worker + wasm (e.g. `/mailwoman/sqljs`).
+	 */
 	sqljsBaseURL: string
-	/** Site base URL (for the range-cache service worker registration). */
+	/**
+	 * Site base URL (for the range-cache service worker registration).
+	 */
 	baseURL: string
-	/** Initial map center as `[lon, lat]` (the host's browser-geolocation result). */
+	/**
+	 * Initial map center as `[lon, lat]` (the host's browser-geolocation result).
+	 */
 	initialCenter: Coordinates2D
 }
 
@@ -215,13 +247,14 @@ export function useDemoMapRuntime({
 		}
 
 		if (typeof navigator === "undefined" || !navigator.geolocation) return
+
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
 				geoBiasRef.current = { lat: pos.coords.latitude, lon: pos.coords.longitude }
 				setGeoBiasActive(true)
 			},
 			() => setGeoBiasActive(false),
-			{ maximumAge: 600_000, timeout: 8_000 }
+			{ maximumAge: 600_000, timeout: 8000 }
 		)
 	}, [])
 
@@ -258,6 +291,7 @@ export function useDemoMapRuntime({
 
 						return { situs: new HTTPVFSAddressPointLookup(situsW, { streetLocale: slug as "fr" }), interp: undefined }
 					}
+
 					const [situsW, interpW] = await Promise.all([
 						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
 						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
@@ -265,6 +299,7 @@ export function useDemoMapRuntime({
 
 					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }
 				})()
+
 				p.catch(() => streetLookupsRef.current.delete(slug))
 				streetLookupsRef.current.set(slug, p)
 			}
@@ -297,20 +332,25 @@ export function useDemoMapRuntime({
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+			const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
+
 			const stateNode = nodes
 				.filter((n) => n.tag === "region" || n.tag === "state")
-				.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+				.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+
 			const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
+
 			const streetParts = nodes
 				.filter((n) => STREET_COMPONENT_TAGS.has(n.tag) && String(n.value ?? "").trim())
-				.sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
+				.toSorted((a, b) => (a.start ?? 0) - (b.start ?? 0))
+
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
 			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+
 			const streetSlug =
 				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
 					? stateSlug
@@ -327,14 +367,14 @@ export function useDemoMapRuntime({
 							streetValue,
 							String(houseNumberNode.value),
 							postcodeNode?.value ? String(postcodeNode.value) : undefined,
-							localityNodes[0]?.value ? String(localityNodes[0].value) : undefined,
+							localityNode?.value ? String(localityNode.value) : undefined,
 							street.situs,
 							street.interp,
 							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
 						)
 					}
-				} catch (streetErr) {
-					console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", streetErr)
+				} catch (error) {
+					console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", error)
 				}
 			}
 
@@ -367,6 +407,7 @@ export function useDemoMapRuntime({
 			if (release?.hasPolygons && version && !polygonDBRef.current) {
 				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
 				polygonDBRef.current = loading
+
 				loading.catch(() => {
 					if (polygonDBRef.current === loading) {
 						polygonDBRef.current = null
@@ -391,7 +432,7 @@ export function useDemoMapRuntime({
 			const tResolve = performance.now()
 
 			// Anchor-centroid fallback (postcode-only dead ends): synthesize an approximate hit from postcode-*.bin.
-			if (cascadeHits.length === 0 && postcodeNode?.value && assets?.anchorLookup) {
+			if (!cascadeHits.length && postcodeNode?.value && assets?.anchorLookup) {
 				const anchorHit = assets.anchorLookup.get(String(postcodeNode.value).toUpperCase())
 
 				if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
@@ -414,6 +455,7 @@ export function useDemoMapRuntime({
 				lon: c.lon,
 				score: c.score,
 			}))
+
 			// Stash the map-render extras (bbox) keyed by the candidate object.
 			cascadeHits.forEach((c, i) => {
 				extrasRef.current.set(candidates[i]!, { bbox: c.bbox })
@@ -434,10 +476,12 @@ export function useDemoMapRuntime({
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				}
+
 				extrasRef.current.set(streetCandidate, {
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				})
+
 				candidates.unshift(streetCandidate)
 			}
 
@@ -474,6 +518,7 @@ export function useDemoMapRuntime({
 
 		try {
 			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
+
 			const res = fstAutocomplete(fst as unknown as Parameters<typeof fstAutocomplete>[0], query, {
 				maxSuggestions: 6,
 				dedupeByName: true,
@@ -489,6 +534,7 @@ export function useDemoMapRuntime({
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
 			const extras = extrasRef.current.get(candidate) ?? {}
+
 			const place: ResolvedMapPlace = {
 				...candidate,
 				bbox: extras.bbox,
@@ -516,10 +562,12 @@ export function useDemoMapRuntime({
 							if (!polygonDBRef.current) {
 								polygonDBRef.current = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
 							}
+
 							const geom = await (await polygonDBRef.current).get(placeID)
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
-						} catch (err) {
-							console.error("Crisp polygon unavailable; falling back to bbox", err)
+						} catch (error) {
+							console.error("Crisp polygon unavailable; falling back to bbox", error)
+
 							setPolygonCache((prev) => new Map(prev).set(placeID, null))
 							polygonDBRef.current = null
 						} finally {

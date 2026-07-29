@@ -47,9 +47,11 @@ describe("inferMapping", () => {
 			"Physical Address Zipcode",
 			"Facility Phone Number",
 		])
+
 		expect(m.id).toBe("Facility ID")
 		expect(m.organization).toBe("Facility Name")
 		expect(m.phone).toBe("Facility Phone Number")
+
 		expect(m.address).toEqual([
 			"Physical Address",
 			"Physical Address CITY",
@@ -76,9 +78,9 @@ describe("ingestRows", () => {
 		components: {},
 		canonicalKey: raw
 			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, " ")
+			.replaceAll(/[^a-z0-9]+/g, " ")
 			.trim()
-			.replace(/\s+/g, "|"),
+			.replaceAll(/\s+/g, "|"),
 		formatted: raw,
 		geocode: { coordinate: { latitude: 45.5, longitude: -122.6 }, tier: "address_point", uncertaintyMeters: 1 },
 	})
@@ -130,12 +132,14 @@ describe("ingestRows", () => {
 
 describe("streamRows (lazy delimited ingest)", () => {
 	const dirs: string[] = []
+
 	const tmp = (): string => {
 		const d = mkdtempSync(join(tmpdir(), "mw-stream-"))
 		dirs.push(d)
 
 		return d
 	}
+
 	afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
 
 	it("infers the delimiter from the extension", () => {
@@ -147,15 +151,18 @@ describe("streamRows (lazy delimited ingest)", () => {
 
 	it("streams a TSV as header-keyed rows, preserving the original header names", async () => {
 		const file = join(tmp(), "f.tsv")
+
 		writeFileSync(
 			file,
 			"Facility Name\tPhysical Address\tCITY\nAVIR\t214 Jones Rd\tElkhart\nFoo Clinic\t1 Main St\tPalestine\n"
 		)
+
 		const rows: Record<string, string>[] = []
 
 		for await (const r of streamRows(file)) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(2)
 		expect(Object.keys(rows[0]!)).toEqual(["Facility Name", "Physical Address", "CITY"])
 		expect(rows[0]!["Facility Name"]).toBe("AVIR")
@@ -173,6 +180,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		for await (const r of streamRows(file)) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		expect(rows[0]).toEqual({ npi: "123", org: "", last: "", first: "", state: "NE" })
 	})
@@ -187,6 +195,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		for await (const r of streamRows(file)) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(2)
 		expect(rows[0]).toEqual({ npi: "123", org: "Acme, LLC", city: "Portland" })
 		expect(rows[1]).toEqual({ npi: "456", org: 'Multi\nLine "Quoted" Org', city: "Seattle" })
@@ -200,6 +209,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		for await (const r of streamRows(file)) {
 			rows.push(r)
 		}
+
 		expect(rows).toEqual([{ npi: "123", state: "NE" }])
 	})
 
@@ -213,6 +223,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 
 			if (count === 1) break // abandon the generator early → finally must close the handle
 		}
+
 		expect(count).toBe(1)
 		// Re-stream the same file fully — succeeds because the prior handle was released.
 		const all: Record<string, string>[] = []
@@ -220,6 +231,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		for await (const r of streamRows(file)) {
 			all.push(r)
 		}
+
 		expect(all).toHaveLength(3)
 	})
 
@@ -267,6 +279,7 @@ describe("geocodeAddressVia", () => {
 
 	it("parseAndGeocode variant: one combined call wires the same PostalAddress + coordinate", async () => {
 		let calls = 0
+
 		const geocoded = geocodeAddressVia({
 			parseAndGeocode: async () => {
 				calls++

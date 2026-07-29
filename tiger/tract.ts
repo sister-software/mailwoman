@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type GeoFeature, type MultiPolygonLiteral } from "@mailwoman/spatial"
+import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import { TIGERProperty, type TIGERPropertyRecord } from "./constants.ts"
+import type { TIGERProperty, TIGERPropertyRecord } from "./constants.ts"
 import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "./geoid.ts"
 
 /**

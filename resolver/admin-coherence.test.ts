@@ -21,21 +21,23 @@ const MESSINA = {
 	name: "Messina",
 	placetype: "region",
 	country: "IT",
-	lat: 38.0,
+	lat: 38,
 	lon: 14.9,
 	score: 9,
 	exactMatch: true,
 }
+
 const MAINE = {
 	id: 20,
 	name: "Maine",
 	placetype: "region",
 	country: "US",
 	lat: 45.3,
-	lon: -69.0,
+	lon: -69,
 	score: 7,
 	exactMatch: true,
 }
+
 // A loose fuzzy runner-up ("ME" surfaces M-states) — must be ignored (not an exact match).
 const MISSOURI = {
 	id: 30,
@@ -47,6 +49,7 @@ const MISSOURI = {
 	score: 6,
 	exactMatch: false,
 }
+
 // Portland lives under Maine (parent_id 20), not under Messina.
 const PORTLAND_ME: ResolvedPlace = {
 	id: 21,
@@ -60,7 +63,9 @@ const PORTLAND_ME: ResolvedPlace = {
 	exactMatch: true,
 }
 
-/** Backend filtered by name-substring + placetype + country + `parentID` (descendant scope via parent_id). */
+/**
+ * Backend filtered by name-substring + placetype + country + `parentID` (descendant scope via parent_id).
+ */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {
@@ -82,6 +87,7 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	children: [],
 	...over,
 })
+
 // region(ME) → locality(Portland), the shape recognizeUSRegions produces for "Portland, ME".
 const portlandMeTree = (): AddressTree => ({
 	raw: "Portland, ME",
@@ -164,7 +170,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	it("ignores fuzzy (non-exact) region candidates — a Portland under Missouri must NOT match the token 'ME'", async () => {
 		// Place a Portland under Missouri (the fuzzy runner-up). Since MISSOURI.exactMatch is false, the
 		// pass must not consider it, so no re-pick to Missouri.
-		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37.0, lon: -93.0 }
+		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37, lon: -93 }
 		const resolver = createWOFResolver(makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: true })
 		const loc = localityOf(out)
@@ -184,16 +190,18 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 9,
 			exactMatch: true,
 		}
+
 		const georgiaCountry = {
 			id: 50,
 			name: "Georgia",
 			placetype: "country",
 			country: "GE",
-			lat: 42.0,
+			lat: 42,
 			lon: 43.5,
 			score: 8,
 			exactMatch: true,
 		}
+
 		const tbilisi: ResolvedPlace = {
 			id: 51,
 			name: "Tbilisi",
@@ -205,6 +213,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 7,
 			exactMatch: true,
 		}
+
 		const atlanta: ResolvedPlace = {
 			id: 41,
 			name: "Atlanta",
@@ -216,6 +225,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 9,
 			exactMatch: true,
 		}
+
 		const tree = (city: string): AddressTree => ({
 			raw: `${city}, Georgia`,
 			roots: [
@@ -228,6 +238,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 				}),
 			],
 		})
+
 		const resolver = createWOFResolver(makeBackend([usGeorgia, georgiaCountry, tbilisi, atlanta]))
 
 		// Tbilisi has no descendant under the US state → fall through to Georgia the country.
@@ -255,6 +266,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 9,
 			exactMatch: true,
 		}
+
 		const tbilisiOrphan: ResolvedPlace = {
 			id: 51,
 			name: "Tbilisi",
@@ -266,6 +278,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 7,
 			exactMatch: true,
 		}
+
 		const tree = (): AddressTree => ({
 			raw: "Tbilisi, Georgia",
 			roots: [
@@ -278,6 +291,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 				}),
 			],
 		})
+
 		const resolver = createWOFResolver(makeBackend([usGeorgia, tbilisiOrphan]))
 		const out = await resolver.resolveTree(tree(), { adminCoherence: true })
 
@@ -310,6 +324,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 9,
 			exactMatch: true,
 		}
+
 		const atlanta: ResolvedPlace = {
 			id: 41,
 			name: "Atlanta",
@@ -321,6 +336,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			score: 9,
 			exactMatch: true,
 		}
+
 		const tree: AddressTree = {
 			raw: "Atlanta, Georgia",
 			roots: [
@@ -333,6 +349,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 				}),
 			],
 		}
+
 		const resolver = createWOFResolver(makeBackend([usGeorgia, atlanta]))
 		const out = await resolver.resolveTree(tree, { adminCoherence: true })
 

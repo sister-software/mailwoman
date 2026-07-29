@@ -65,7 +65,11 @@ export interface NeuralRunner {
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		evidence?: {
+			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		}
 	): Promise<InferResult>
 }
 
@@ -93,9 +97,13 @@ export interface NeuralAddressClassifierConfig {
 	 * is used.
 	 */
 	transitions?: number[][]
-	/** Optional learned start-of-sequence transition scores per label. */
+	/**
+	 * Optional learned start-of-sequence transition scores per label.
+	 */
 	startTransitions?: number[]
-	/** Optional learned end-of-sequence transition scores per label. */
+	/**
+	 * Optional learned end-of-sequence transition scores per label.
+	 */
 	endTransitions?: number[]
 	/**
 	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
@@ -141,6 +149,16 @@ export interface NeuralAddressClassifierConfig {
 	 * NOT zeroed by `suppressGazetteerNearPostcode`.
 	 */
 	countryLexicon?: CountryLexicon
+	/**
+	 * Optional street-type evidence lexicon (Option-A bundle, Phase 2). When set, `parse` paints per-piece street-type
+	 * clues and feeds them to the runner — for bundle-trained models (exported with the
+	 * `street_type_features`/`street_type_confidence` ONNX inputs). Same JSON schema + parser as the gazetteer lexicon.
+	 */
+	streetTypeLexicon?: GazetteerLexicon
+	/**
+	 * Optional locality-surface evidence lexicon (Option-A bundle) — `locality_surface_*` ONNX inputs.
+	 */
+	localitySurfaceLexicon?: GazetteerLexicon
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces adjacent to a
 	 * postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`). Targets the region-clue→postcode
@@ -204,7 +222,9 @@ export interface NeuralAddressClassifierConfig {
  * Config for the Stage 2.7 span-proposer integration (see `NeuralAddressClassifierConfig.spanProposer`).
  */
 export interface SpanProposerConfig extends SpanProposalPriorOpts {
-	/** Codex-backed designator vocabulary (`buildCodexSpanLexicon`). */
+	/**
+	 * Codex-backed designator vocabulary (`buildCodexSpanLexicon`).
+	 */
 	lexicon: SpanProposerLexicon
 }
 
@@ -212,7 +232,9 @@ export class NeuralAddressClassifier {
 	private readonly labels: readonly string[]
 	private readonly decodeMode: "viterbi" | "argmax"
 	private readonly transitions: number[][]
-	/** Lazily-built default Stage 2.7 config (codex lexicon, frozen scales) — see `cfg.spanProposer`. */
+	/**
+	 * Lazily-built default Stage 2.7 config (codex lexicon, frozen scales) — see `cfg.spanProposer`.
+	 */
 	#defaultProposerCfg: SpanProposerConfig | undefined
 	private readonly startTransitions: number[]
 	private readonly endTransitions: number[]
@@ -224,11 +246,7 @@ export class NeuralAddressClassifier {
 		this.decodeMode = cfg.decode ?? "viterbi"
 		const structural = buildBIOTransitionMask(this.labels)
 
-		if (cfg.transitions) {
-			this.transitions = addMatrices(structural, cfg.transitions)
-		} else {
-			this.transitions = structural
-		}
+		this.transitions = cfg.transitions ? addMatrices(structural, cfg.transitions) : structural
 		this.startTransitions = cfg.startTransitions ?? buildBIOStartMask(this.labels)
 		this.endTransitions = cfg.endTransitions ?? buildBIOEndMask(this.labels)
 	}
@@ -308,6 +326,7 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "./pair-index-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
+
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
 		const crf = readCrfTransitions(resolved.crfTransitionsPath)
@@ -319,13 +338,14 @@ export class NeuralAddressClassifier {
 		if (resolved.semiCrfTransitionsPath) {
 			try {
 				semiCrfGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCrfTransitionsPath, "utf8")))
-			} catch (err) {
+			} catch (error) {
 				console.error(
 					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCrfTransitionsPath} — ` +
-						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(err as Error).message}`
+						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(error as Error).message}`
 				)
 			}
 		}
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
@@ -349,12 +369,12 @@ export class NeuralAddressClassifier {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
 					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
 					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(error as Error).message}`)
 			}
 		}
 
-		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size > 0)) {
+		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
 			warnUnfedChannel(
 				"anchor",
 				resolved.anchorLookupPath
@@ -368,8 +388,8 @@ export class NeuralAddressClassifier {
 		if (resolved.gazetteerLexiconPath) {
 			try {
 				gazetteerLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(error as Error).message}`)
 			}
 		}
 
@@ -390,8 +410,8 @@ export class NeuralAddressClassifier {
 		if (resolved.countryLexiconPath) {
 			try {
 				countryLexicon = parseCountryLexicon(JSON.parse(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
-			} catch (err) {
-				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(err as Error).message}`)
+			} catch (error) {
+				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(error as Error).message}`)
 			}
 		}
 
@@ -402,6 +422,36 @@ export class NeuralAddressClassifier {
 					? `lexicon at ${resolved.countryLexiconPath} could not be parsed`
 					: `no country-surface-lexicon-v1.json found in the weights package`
 			)
+		}
+
+		// Evidence-bundle lexicons (Option-A, Phase 2): same soft-feed pattern; degrade-absent for every
+		// pre-bundle package. `requires`-declared enforcement arrives with the first bundle-trained card.
+		let streetTypeLexicon: GazetteerLexicon | undefined
+
+		if (resolved.streetTypeLexiconPath) {
+			try {
+				streetTypeLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8")))
+			} catch (error) {
+				warnUnfedChannel(
+					"street_type",
+					`failed to parse ${resolved.streetTypeLexiconPath}: ${(error as Error).message}`
+				)
+			}
+		}
+
+		let localitySurfaceLexicon: GazetteerLexicon | undefined
+
+		if (resolved.localitySurfaceLexiconPath) {
+			try {
+				localitySurfaceLexicon = parseGazetteerLexicon(
+					JSON.parse(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
+				)
+			} catch (error) {
+				warnUnfedChannel(
+					"locality_surface",
+					`failed to parse ${resolved.localitySurfaceLexiconPath}: ${(error as Error).message}`
+				)
+			}
 		}
 
 		// Placetype-pair index sibling (placetype-pair-prior arc, Task 5): construct a PairIndexResolver
@@ -434,9 +484,9 @@ export class NeuralAddressClassifier {
 							`skipping the placetype-pair prior default.`
 					)
 				}
-			} catch (err) {
+			} catch (error) {
 				console.error(
-					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.pairIndexPath}: ${(err as Error).message}`
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.pairIndexPath}: ${(error as Error).message}`
 				)
 			}
 		}
@@ -457,6 +507,8 @@ export class NeuralAddressClassifier {
 			...(semiCrfGrammar ? { semiCrfGrammar } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+			...(streetTypeLexicon ? { streetTypeLexicon } : {}),
+			...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
@@ -472,9 +524,11 @@ export class NeuralAddressClassifier {
 		})
 	}
 
-	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
+	/**
+	 * Tokenize → infer → Viterbi (or argmax) → decoder tree.
+	 */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
-		if (text.length === 0) return { raw: text, roots: [] }
+		if (!text.length) return { raw: text, roots: [] }
 		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
 		// Detection-gated (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
 		// path had run it since #713 while the pipeline factory + raw classifier defaulted off); `false`
@@ -495,9 +549,10 @@ export class NeuralAddressClassifier {
 	 * pre-repair) — they are the model's emissions, not the decode's opinions.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
-		if (text.length === 0) {
+		if (!text.length) {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
+
 		const { tokens, logits, pieces } = await this.#decode(text, opts)
 
 		return {
@@ -519,7 +574,7 @@ export class NeuralAddressClassifier {
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]
 
-		if (text.length === 0) {
+		if (!text.length) {
 			// Mirror #decode's contract on the degenerate input: systemSource still reflects the
 			// RESOLVED conventions mode (opts over config), and every prior kind gets its
 			// participation record (applied: false — nothing can fire on zero pieces).
@@ -541,6 +596,7 @@ export class NeuralAddressClassifier {
 				tokens: [],
 			}
 		}
+
 		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
 		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
 
@@ -574,6 +630,9 @@ export class NeuralAddressClassifier {
 	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces in the
 	 * previous duplicated copies.
 	 */
+	// Deliberately ONE function: the 2026-06 audit found three drifted copies of the previously-split
+	// version, which is why every caller now funnels through here.
+	// oxlint-disable-next-line complexity -- 104, and splitting it is what drifted last time
 	async #decode(
 		text: string,
 		opts?: ParseOpts,
@@ -582,7 +641,9 @@ export class NeuralAddressClassifier {
 		tokens: DecoderToken[]
 		logits: number[][]
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
-		/** Present iff `trace` — the retained intermediates `traceParse` assembles. */
+		/**
+		 * Present iff `trace` — the retained intermediates `traceParse` assembles.
+		 */
 		trace?: {
 			anchor?: SoftFeatureChannel
 			gazetteer?: SoftFeatureChannel
@@ -603,17 +664,29 @@ export class NeuralAddressClassifier {
 		// build + choreography is the single PURE `buildSoftFeatures` (soft-features.ts) — both this
 		// decode path and the ProductionScorer feed channels identically, so there is exactly one
 		// choreography. Each channel is undefined when its source is unconfigured (no-op).
+		//
+		// The evidence-bundle channels are REGISTER-GATED (Decision A, see ParseOpts.inputMode):
+		// formatted mode withholds both lexicons so the model runs its curriculum-trained absence
+		// identity — the fed channels lift fragments but damage full-address parses.
+		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
+
 		const soft = buildSoftFeatures(text, pieces, {
 			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+			streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
+			localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
 		})
+
 		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
 			ids,
 			soft.anchor,
 			soft.gazetteer,
-			soft.country
+			soft.country,
+			soft.streetType || soft.localitySurface
+				? { streetType: soft.streetType, localitySurface: soft.localitySurface }
+				: undefined
 		)
 
 		this.assertEmissionWidth(logits)
@@ -624,12 +697,14 @@ export class NeuralAddressClassifier {
 		// arguments are never built for a plain parse).
 		const tracePriors: TracePrior[] | null = trace ? [] : null
 		const traceRepairs: TraceRepair[] | null = trace ? [] : null
+
 		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
 			if (!traceRepairs) return
 
 			if (before.length === after.length && before.every((label, i) => label === after[i])) return
 			traceRepairs.push({ pass, before, after })
 		}
+
 		// TraceRepair before/after are PER-PIECE (index-aligned with `pieces`). Token-count-preserving
 		// passes can read labels 1:1, but the span bridge MERGES fragments (dropping later tokens), so
 		// labels are projected back onto pieces via char offsets: each piece carries the label of the
@@ -647,6 +722,7 @@ export class NeuralAddressClassifier {
 				return (tok && tok.start <= p.start && p.start < tok.end ? tok.label : "O") as string
 			})
 		}
+
 		// `applied` reports EFFECT (see TracePrior): a composed prior counts only if any cell is nonzero.
 		const matrixHasBias = (m: readonly (readonly number[])[]): boolean => m.some((row) => row.some((v) => v !== 0))
 
@@ -654,6 +730,7 @@ export class NeuralAddressClassifier {
 		// system, or the model's own locale-head detection under a high confidence bar. Null = no
 		// constraints; the parse below is byte-identical to the pre-conventions path.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
+
 		// The resolved system code drives the conventions row below (the `forbiddenTags` emission mask +
 		// the `postcodePattern` snap-repair). null when conventions are off → no system, no constraints
 		// (byte-stable). "auto" reads the model's locale head; a pinned SystemCode wins.
@@ -663,23 +740,26 @@ export class NeuralAddressClassifier {
 				: conventionsOpt === "auto"
 					? (detectAddressSystem(localeLogits)?.system ?? null)
 					: conventionsOpt
+
 		const conventions = conventionsForSystem(detectedSystem)
+
 		const systemSource: "off" | "auto" | "pinned" =
 			conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned"
 
 		const queryShapePrior = opts?.queryShape
 			? buildEmissionPriors(opts.queryShape, pieces, this.labels, {
-					biasScale: opts.queryShapeBiasScale ?? 1.0,
+					biasScale: opts.queryShapeBiasScale ?? 1,
 					inputText: text,
 				})
 			: undefined
+
 		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
 		tracePriors?.push({ kind: "queryShape", applied: queryShapePrior !== undefined && matrixHasBias(queryShapePrior) })
 
 		const fstPrior = opts?.fst
 			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
-					biasScale: opts.fstBiasScale ?? 1.0,
+					biasScale: opts.fstBiasScale ?? 1,
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
@@ -701,6 +781,7 @@ export class NeuralAddressClassifier {
 		if (fstPrior) {
 			emissions = addEmissionMatrix(emissions, fstPrior)
 		}
+
 		tracePriors?.push({ kind: "fst", applied: fstPrior !== undefined && matrixHasBias(fstPrior) })
 
 		const morphologyPrior = opts?.fstStreetMorphology
@@ -715,6 +796,7 @@ export class NeuralAddressClassifier {
 		if (morphologyPrior) {
 			emissions = addEmissionMatrix(emissions, morphologyPrior)
 		}
+
 		tracePriors?.push({
 			kind: "streetMorphology",
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
@@ -733,6 +815,7 @@ export class NeuralAddressClassifier {
 		if (trailingLocalityPrior) {
 			emissions = addEmissionMatrix(emissions, trailingLocalityPrior)
 		}
+
 		tracePriors?.push({
 			kind: "trailingLocality",
 			applied: trailingLocalityPrior !== undefined && matrixHasBias(trailingLocalityPrior),
@@ -746,9 +829,10 @@ export class NeuralAddressClassifier {
 		const proposerCfg = (opts?.spanProposer ?? true) ? configured : undefined
 		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
 
-		if (spanProposals.length > 0) {
+		if (spanProposals.length) {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
+
 		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
@@ -763,6 +847,7 @@ export class NeuralAddressClassifier {
 		// Trace-only out-record: which probe-chain path fired (segment vs anchored vs window) — see
 		// PlacetypePairProbeTrace. Only allocated when tracing, like the tracePriors list itself.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
+
 		const placetypePairResult = placetypePairOpt
 			? buildPlacetypePairPriors(
 					{ ...placetypePairOpt, inputText: text, probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace },
@@ -770,6 +855,7 @@ export class NeuralAddressClassifier {
 					this.labels
 				)
 			: undefined
+
 		const placetypePairPrior = placetypePairResult?.matrix
 
 		if (placetypePairPrior) {
@@ -784,7 +870,7 @@ export class NeuralAddressClassifier {
 			? placetypePairResult.transitionAdjustments.flatMap((adj) => {
 					const toLabel = this.labels.indexOf(adj.toLabel)
 
-					return toLabel >= 0 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
+					return toLabel !== -1 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
 				})
 			: undefined
 
@@ -810,20 +896,21 @@ export class NeuralAddressClassifier {
 				const b = this.labels.indexOf(`B-${tag}`)
 				const i = this.labels.indexOf(`I-${tag}`)
 
-				if (b >= 0) {
+				if (b !== -1) {
 					forbidden.add(b)
 				}
 
-				if (i >= 0) {
+				if (i !== -1) {
 					forbidden.add(i)
 				}
 			}
 
-			if (forbidden.size > 0) {
+			if (forbidden.size) {
 				conventionsMaskApplied = true
 				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
 			}
 		}
+
 		tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
 
 		let labelIndices =
@@ -914,7 +1001,7 @@ export class NeuralAddressClassifier {
 			// per-piece projection — a merged span's label lands on every piece it covers, keeping
 			// before/after index-aligned with `pieces` per the TraceRepair contract.
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
-			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
+			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length ? { blockedSpans } : undefined)
 
 			if (traceRepairs) {
 				recordRepair("spanBridge", before, labelsPerPiece(tokens))
@@ -984,7 +1071,7 @@ export class NeuralAddressClassifier {
 	 * labels.ts for the contract.
 	 */
 	private assertEmissionWidth(logits: readonly number[][]): void {
-		if (logits.length === 0) return
+		if (!logits.length) return
 		const width = logits[0]!.length
 
 		if (width > this.labels.length) {
@@ -997,7 +1084,9 @@ export class NeuralAddressClassifier {
 	}
 }
 
-/** Result of `parseWithLogits` — tree + raw material for per-span logit aggregation. */
+/**
+ * Result of `parseWithLogits` — tree + raw material for per-span logit aggregation.
+ */
 export interface ParseWithLogitsResult {
 	tree: AddressTree
 	logits: number[][]
@@ -1020,6 +1109,15 @@ export interface ParseOpts {
 	 * Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
 	 */
 	queryShapeBiasScale?: number
+	/**
+	 * The input register (operator Decision A, 2026-07-28; canonical docs on `@mailwoman/core/pipeline`'s `InputMode`).
+	 * `formatted` runs the evidence-bundle channels (street_type/locality_surface) deliberately OFF — the trained absence
+	 * identity, a DECLARED ablation, not a missing feed — because the bundle lifts fragments and damages full-address
+	 * parses. Default `"fragmented"` for bare library calls (today's feed-when-configured semantics); the production
+	 * pipeline always passes the mode explicitly (kind-classifier-derived when the caller didn't set one). Typed
+	 * structurally — no runtime dependency on `@mailwoman/core`.
+	 */
+	inputMode?: "fragmented" | "formatted"
 	/**
 	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases.
 	 */
@@ -1062,7 +1160,9 @@ export interface ParseOpts {
 	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
-	/** Override bias magnitudes for the morphology prior. */
+	/**
+	 * Override bias magnitudes for the morphology prior.
+	 */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 	/**
 	 * Trailing-locality prior (comma-free "street + trailing city" — fork B). Geometry-gated: fires only on a trailing
@@ -1119,7 +1219,9 @@ export interface ParseOpts {
 	 * `data/eval/calibration/isotonic-<locale>-<version>.json`.
 	 */
 	calibrate?: Calibrator
-	/** Per-parse override of the config-level `bridgePunctuationGaps` (see that doc). */
+	/**
+	 * Per-parse override of the config-level `bridgePunctuationGaps` (see that doc).
+	 */
 	bridgePunctuationGaps?: boolean
 	/**
 	 * Per-parse switch for the config-level `spanProposer` (see that doc). `false` disables the configured proposer for
@@ -1209,9 +1311,14 @@ export interface ParseOpts {
  * exists to surface).
  */
 const warnedUnfedChannels = new Set<string>()
-function warnUnfedChannel(channel: "anchor" | "gazetteer" | "country", detail: string): void {
+
+function warnUnfedChannel(
+	channel: "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface",
+	detail: string
+): void {
 	if (warnedUnfedChannels.has(channel)) return
 	warnedUnfedChannels.add(channel)
+
 	console.error(
 		`[mailwoman/neural] loadFromWeights: model-card declares the ${channel} channel REQUIRED but ${detail} — ` +
 			`running ${channel}-OFF, parses degraded (train/inference mismatch). Ship the ${channel} artifact in the ` +
@@ -1229,17 +1336,21 @@ function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
 			maxIdx = i
 		}
 	}
+
 	let sumExp = 0
 
 	for (const v of row) {
 		sumExp += Math.exp(v - maxVal)
 	}
+
 	const conf = 1 / sumExp
 
 	return { idx: maxIdx, conf }
 }
 
-/** Element-wise add two square matrices. Used to compose the structural mask + learned transitions. */
+/**
+ * Element-wise add two square matrices. Used to compose the structural mask + learned transitions.
+ */
 function addMatrices(a: number[][], b: number[][]): number[][] {
 	const n = a.length
 	const out: number[][] = []
@@ -1250,6 +1361,7 @@ function addMatrices(a: number[][], b: number[][]): number[][] {
 		for (let j = 0; j < n; j++) {
 			row[j] = a[i]![j]! + b[i]![j]!
 		}
+
 		out.push(row)
 	}
 

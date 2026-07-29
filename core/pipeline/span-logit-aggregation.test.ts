@@ -9,7 +9,7 @@ import { aggregateSpanLogits, type SpanBounds, type TokenPiece } from "./span-lo
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"]
 
 // Helper: build logits where one label is dominant (high value) for a token.
-function dominantLogits(numLabels: number, dominantIdx: number, dominantValue = 5.0, otherValue = -1.0): number[] {
+function dominantLogits(numLabels: number, dominantIdx: number, dominantValue = 5, otherValue = -1): number[] {
 	return Array.from({ length: numLabels }, (_, i) => (i === dominantIdx ? dominantValue : otherValue))
 }
 
@@ -20,10 +20,12 @@ describe("aggregateSpanLogits", () => {
 			{ start: 0, end: 5 },
 			{ start: 5, end: 10 },
 		]
+
 		const logits = [
 			dominantLogits(5, 1), // B-locality dominant
 			dominantLogits(5, 2), // I-locality dominant
 		]
+
 		const spans: SpanBounds[] = [{ start: 0, end: 10 }]
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 3, labels: LABELS })
@@ -40,10 +42,12 @@ describe("aggregateSpanLogits", () => {
 			{ start: 0, end: 3 },
 			{ start: 3, end: 6 },
 		]
+
 		const logits = [
 			dominantLogits(5, 3), // B-region
 			dominantLogits(5, 4), // I-region
 		]
+
 		const spans: SpanBounds[] = [{ start: 0, end: 6 }]
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 2, labels: LABELS })
@@ -59,10 +63,12 @@ describe("aggregateSpanLogits", () => {
 			{ start: 0, end: 5 },
 			{ start: 6, end: 11 },
 		]
+
 		const logits = [
 			dominantLogits(5, 1), // B-locality
 			dominantLogits(5, 3), // B-region
 		]
+
 		const spans: SpanBounds[] = [
 			{ start: 0, end: 5 },
 			{ start: 6, end: 11 },
@@ -70,7 +76,7 @@ describe("aggregateSpanLogits", () => {
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 1, labels: LABELS })
 
-		expect(candidates.length).toBe(2)
+		expect(candidates).toHaveLength(2)
 		expect(candidates[0]!.tag).toBe("locality")
 		expect(candidates[1]!.tag).toBe("region")
 	})
@@ -83,8 +89,9 @@ describe("aggregateSpanLogits", () => {
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 3, labels: LABELS })
 
-		const oCandidate = candidates.find((c) => c.tag === "O")
-		expect(oCandidate).toBeUndefined()
+		// "O" is not a ComponentTag, so this could never have matched — the aggregator dropping the O
+		// label is exactly what makes every candidate's tag typed in the first place.
+		expect(candidates.map((c) => String(c.tag))).not.toContain("O")
 	})
 
 	it("normalizes by token count so longer spans don't auto-dominate", () => {
@@ -95,12 +102,14 @@ describe("aggregateSpanLogits", () => {
 			{ start: 6, end: 9 },
 			{ start: 10, end: 13 },
 		]
+
 		const logits = [
 			dominantLogits(5, 1), // B-locality
 			dominantLogits(5, 2), // I-locality
 			dominantLogits(5, 2), // I-locality
 			dominantLogits(5, 1), // B-locality
 		]
+
 		const spans: SpanBounds[] = [
 			{ start: 0, end: 9 }, // 3 tokens
 			{ start: 10, end: 13 }, // 1 token

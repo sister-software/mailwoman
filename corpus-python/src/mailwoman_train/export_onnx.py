@@ -59,6 +59,10 @@ def export_to_onnx(
     # feed the country-surface clues. Shipped on top of anchor+gaz (the production ship-config).
     has_country = bool(getattr(model_cpu, "use_country_anchor", False))
     country_dim = int(getattr(model_cpu, "country_feature_dim", 0))
+    has_street_type = bool(getattr(model_cpu, "use_street_type_anchor", False))
+    street_type_dim = int(getattr(model_cpu, "street_type_feature_dim", 0))
+    has_locality_surface = bool(getattr(model_cpu, "use_locality_surface_anchor", False))
+    locality_surface_dim = int(getattr(model_cpu, "locality_surface_feature_dim", 0))
     # Locale head (#511 Tier A / conventions layer): when the model carries the PR3 self-conditioning
     # head, export its pooled posterior as a SECOND output ("locale_logits", shape [batch, num_locales],
     # labels.LOCALE_COUNTRIES order). Consumers fetch outputs by name, so this is backward-compatible;
@@ -177,6 +181,53 @@ def export_to_onnx(
                 outs.append(out.span_scores)
             return tuple(outs) if len(outs) > 1 else outs[0]
 
+    class _LogitsOnlyBundle(nn.Module):
+        """The full evidence-bundle export (Option-A Phase 2): anchor + gazetteer + country +
+        street_type + locality_surface — the only supported bundle combination (the v3.18-confirmed
+        recipe's ship shape)."""
+
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.inner = inner
+            self.with_locale = False
+            self.with_spans = False
+
+        def forward(
+            self,
+            input_ids: torch.Tensor,
+            attention_mask: torch.Tensor,
+            anchor_features: torch.Tensor,
+            anchor_confidence: torch.Tensor,
+            gazetteer_features: torch.Tensor,
+            gazetteer_confidence: torch.Tensor,
+            country_features: torch.Tensor,
+            country_confidence: torch.Tensor,
+            street_type_features: torch.Tensor,
+            street_type_confidence: torch.Tensor,
+            locality_surface_features: torch.Tensor,
+            locality_surface_confidence: torch.Tensor,
+        ) -> torch.Tensor:
+            out = self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                anchor_features=anchor_features,
+                anchor_confidence=anchor_confidence,
+                gazetteer_features=gazetteer_features,
+                gazetteer_confidence=gazetteer_confidence,
+                country_features=country_features,
+                country_confidence=country_confidence,
+                street_type_features=street_type_features,
+                street_type_confidence=street_type_confidence,
+                locality_surface_features=locality_surface_features,
+                locality_surface_confidence=locality_surface_confidence,
+            )
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
+
     class _LogitsOnlyGaz(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
@@ -229,7 +280,63 @@ def export_to_onnx(
             "(the production ship-config); got has_anchor="
             f"{has_anchor}, has_gaz={has_gaz}, has_country={has_country}."
         )
-    if has_anchor and has_gaz and has_country:
+    # Evidence-bundle gate (Option-A): the bundle exports ONLY as the full v3.18-confirmed shape —
+    # BOTH channels, on top of anchor+gaz+country. Any other combination would ship a model whose
+    # ONNX silently drops a trained channel (the #566/#685 OOD trap) — fail loud instead.
+    has_bundle = has_street_type or has_locality_surface
+    if has_bundle and not (has_street_type and has_locality_surface and has_anchor and has_gaz and has_country):
+        raise NotImplementedError(
+            "the evidence bundle is only exportable as BOTH channels on top of anchor+gazetteer+country "
+            f"(got street_type={has_street_type}, locality_surface={has_locality_surface}, "
+            f"anchor={has_anchor}, gaz={has_gaz}, country={has_country})."
+        )
+    if has_bundle:
+        street_type_args = (
+            torch.zeros((dummy_batch, max_length, street_type_dim), dtype=torch.float32),
+            torch.zeros((dummy_batch, max_length), dtype=torch.float32),
+        )
+        locality_surface_args = (
+            torch.zeros((dummy_batch, max_length, locality_surface_dim), dtype=torch.float32),
+            torch.zeros((dummy_batch, max_length), dtype=torch.float32),
+        )
+        export_model = _LogitsOnlyBundle(model_cpu).eval()
+        args = (
+            dummy_ids,
+            dummy_mask,
+            *anchor_args,
+            *gaz_args,
+            *country_args,
+            *street_type_args,
+            *locality_surface_args,
+        )
+        input_names = [
+            "input_ids",
+            "attention_mask",
+            "anchor_features",
+            "anchor_confidence",
+            "gazetteer_features",
+            "gazetteer_confidence",
+            "country_features",
+            "country_confidence",
+            "street_type_features",
+            "street_type_confidence",
+            "locality_surface_features",
+            "locality_surface_confidence",
+        ]
+        dynamic_shapes = {
+            **base_dynamic,
+            "anchor_features": {0: "batch", 1: "sequence"},
+            "anchor_confidence": {0: "batch", 1: "sequence"},
+            "gazetteer_features": {0: "batch", 1: "sequence"},
+            "gazetteer_confidence": {0: "batch", 1: "sequence"},
+            "country_features": {0: "batch", 1: "sequence"},
+            "country_confidence": {0: "batch", 1: "sequence"},
+            "street_type_features": {0: "batch", 1: "sequence"},
+            "street_type_confidence": {0: "batch", 1: "sequence"},
+            "locality_surface_features": {0: "batch", 1: "sequence"},
+            "locality_surface_confidence": {0: "batch", 1: "sequence"},
+        }
+    elif has_anchor and has_gaz and has_country:
         export_model = _LogitsOnlyAnchorGazCountry(model_cpu).eval()
         args = (dummy_ids, dummy_mask, *anchor_args, *gaz_args, *country_args)
         input_names = [

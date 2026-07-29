@@ -14,9 +14,12 @@ import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 
 const meta: Meta<typeof PlaceAutocomplete> = { title: "Map/Panels/PlaceAutocomplete", component: PlaceAutocomplete }
 export default meta
+
 type Story = StoryObj<typeof PlaceAutocomplete>
 
-/** Three fake suggestions; the first is highlighted, hover to move it. */
+/**
+ * Three fake suggestions; the first is highlighted, hover to move it.
+ */
 export const WithSuggestions: Story = {
 	render: () => {
 		const [active, setActive] = useState(0)
@@ -34,7 +37,9 @@ export const WithSuggestions: Story = {
 	},
 }
 
-/** No suggestions → the listbox renders nothing. */
+/**
+ * No suggestions → the listbox renders nothing.
+ */
 export const Empty: Story = {
 	render: () => (
 		<>

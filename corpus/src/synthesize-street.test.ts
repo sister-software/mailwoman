@@ -9,9 +9,9 @@ function seededRandom(seed: number): () => number {
 	let s = seed
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 
@@ -21,6 +21,7 @@ describe("synthesizeStreetRow", () => {
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
 			{ random: seededRandom(1) }
 		)
+
 		expect(row).not.toBeNull()
 		expect(row!.locale).toBe("en-US")
 		expect(row!.components.locality).toBe("Burlington")
@@ -55,6 +56,7 @@ describe("synthesizeStreetRow", () => {
 				hasSuffix++
 			}
 		}
+
 		// At least some should have prefix (directional sampling = ~13/18) and most should have suffix
 		expect(hasPrefix).toBeGreaterThan(5)
 		expect(hasSuffix).toBeGreaterThan(30)
@@ -74,6 +76,7 @@ describe("synthesizeStreetRow", () => {
 				withHN++
 			}
 		}
+
 		// Default 0.85 — allow noise
 		expect(withHN).toBeGreaterThan(70)
 		expect(withHN).toBeLessThan(95)
@@ -82,8 +85,9 @@ describe("synthesizeStreetRow", () => {
 	it("raw string is the assembled address", () => {
 		const r = synthesizeStreetRow(
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
-			{ random: seededRandom(42), includeHouseNumberProb: 0.0 }
+			{ random: seededRandom(42), includeHouseNumberProb: 0 }
 		)
+
 		expect(r!.raw).toContain("Burlington")
 		expect(r!.raw).toContain("VT")
 		expect(r!.raw).toContain("05401")
@@ -96,6 +100,7 @@ describe("synthesizeStreetRow", () => {
 			{ locality: "Paris", region: "Île-de-France", postcode: "75001", country: "FR" },
 			{ random: seededRandom(1) }
 		)
+
 		expect(r).toBeNull()
 	})
 })

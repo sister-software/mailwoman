@@ -84,6 +84,10 @@ class EncodedExample:
     # ``(max_length,)`` confidence, or None when no street-type lexicon is set.
     street_type_features: list[list[float]] | None = None
     street_type_confidence: list[float] | None = None
+    # Locality-surface channel (v3.16.0 evidence bundle). Per-piece ``(max_length, 2)`` clue +
+    # ``(max_length,)`` confidence, or None when no locality-surface lexicon is set.
+    locality_surface_features: list[list[float]] | None = None
+    locality_surface_confidence: list[float] | None = None
 
 
 def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
@@ -446,6 +450,7 @@ def iter_rows(
     augment_case_prob: float = 0.0,
     augment_punct_drop_prob: float = 0.0,
     augment_upper_case_prob: float = 0.0,
+    augment_ordinal_prob: float = 0.0,
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
@@ -502,6 +507,7 @@ def iter_rows(
         or augment_case_prob > 0
         or augment_punct_drop_prob > 0
         or augment_upper_case_prob > 0
+        or augment_ordinal_prob > 0
     )
 
     def _emit(row: dict) -> Iterator[dict]:
@@ -518,6 +524,7 @@ def iter_rows(
                 augment_case_prob,
                 augment_punct_drop_prob,
                 augment_upper_case_prob,
+                augment_ordinal_prob,
             ):
                 if affix_relabel_lexicon is not None:
                     augmented = {**augmented, "labels": list(augmented["labels"])}
@@ -586,6 +593,12 @@ def iter_encoded(
         from .gazetteer_anchor import load_gazetteer_lexicon
 
         street_type_lexicon = load_gazetteer_lexicon(cfg_data.street_type_lexicon_path)
+    # Locality-surface lexicon (v3.16.0): same JSON schema → same loader.
+    locality_surface_lexicon = None
+    if getattr(cfg_data, "locality_surface_lexicon_path", None):
+        from .gazetteer_anchor import load_gazetteer_lexicon
+
+        locality_surface_lexicon = load_gazetteer_lexicon(cfg_data.locality_surface_lexicon_path)
     affix_relabel_lexicon = None
     if getattr(cfg_data, "affix_relabel_lexicon_path", None):
         affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
@@ -604,6 +617,7 @@ def iter_encoded(
         augment_case_prob=getattr(cfg_data, "augment_case_prob", 0.0),
         augment_punct_drop_prob=getattr(cfg_data, "augment_punct_drop_prob", 0.0),
         augment_upper_case_prob=getattr(cfg_data, "augment_upper_case_prob", 0.0),
+        augment_ordinal_prob=getattr(cfg_data, "augment_ordinal_prob", 0.0),
         affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code
@@ -634,6 +648,7 @@ def iter_encoded(
             gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
             country_lexicon=country_lexicon,
             street_type_lexicon=street_type_lexicon,
+            locality_surface_lexicon=locality_surface_lexicon,
             # v0.5.0 char-offset labels (#519): rows from a span-schema shard train FROM the
             # spans (encode_row builds the per-char label array from them; the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
@@ -660,6 +675,8 @@ def iter_encoded(
             country_confidence=enc.get("country_confidence"),
             street_type_features=enc.get("street_type_features"),
             street_type_confidence=enc.get("street_type_confidence"),
+            locality_surface_features=enc.get("locality_surface_features"),
+            locality_surface_confidence=enc.get("locality_surface_confidence"),
         )
 
 
@@ -689,6 +706,10 @@ def collate(batch: list[EncodedExample]) -> dict:
     if batch and batch[0].street_type_features is not None:
         out["street_type_features"] = [ex.street_type_features for ex in batch]
         out["street_type_confidence"] = [ex.street_type_confidence for ex in batch]
+    # Locality-surface channel (v3.16.0): same presence contract.
+    if batch and batch[0].locality_surface_features is not None:
+        out["locality_surface_features"] = [ex.locality_surface_features for ex in batch]
+        out["locality_surface_confidence"] = [ex.locality_surface_confidence for ex in batch]
     return out
 
 

@@ -33,6 +33,9 @@ import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { deriveInputMode } from "@mailwoman/core/pipeline"
+import { classifyKindSync } from "@mailwoman/kind-classifier"
+import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 
 import { readReleaseManifest } from "./data-release.ts"
@@ -46,10 +49,14 @@ import {
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
 
-/** Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`). */
+/**
+ * Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
+ */
 const DATA_ROOT = mailwomanDataRoot()
 
-/** The classifier/resolver/shard bundle `geocode`/`batch`/`resolveTree`/`reload` close over. */
+/**
+ * The classifier/resolver/shard bundle `geocode`/`batch`/`resolveTree`/`reload` close over.
+ */
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
 	resolver: Resolver
@@ -57,7 +64,9 @@ interface GeocodeDepsBundle {
 	defaultCountry?: string
 }
 
-/** Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional shards). */
+/**
+ * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional shards).
+ */
 function wofPaths(): string[] {
 	const env = $public.MAILWOMAN_WOF_DB
 
@@ -114,6 +123,7 @@ function readModelCard(): Record<string, unknown> | null {
 	} catch {
 		/* package not resolvable from here — fall through */
 	}
+
 	candidates.push("neural-weights-en-us/model-card.json")
 
 	for (const p of candidates) {
@@ -171,18 +181,27 @@ function buildHealthData(): HealthData {
 	}
 }
 
-/** One geocode call over the shared deps. Ported from `GeocodeRouter`'s `oneGeocode`. */
-function oneGeocode(deps: GeocodeDepsBundle, address: string): Promise<GeocodeResult> {
+/**
+ * One geocode call over the shared deps. Ported from `GeocodeRouter`'s `oneGeocode`.
+ */
+function oneGeocode(
+	deps: GeocodeDepsBundle,
+	address: string,
+	inputMode?: "fragmented" | "formatted"
+): Promise<GeocodeResult> {
 	return geocodeAddress(address, {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
 		shards: deps.shards.for,
 		defaultCountry: deps.defaultCountry,
 		interpCalibration: INTERP_RADIUS_CALIBRATION,
+		inputMode,
 	})
 }
 
-/** Pull the street node's resolution tier (if any) for the metric. Ported verbatim from `GeocodeRouter`. */
+/**
+ * Pull the street node's resolution tier (if any) for the metric. Ported verbatim from `GeocodeRouter`.
+ */
 function collectStreetTier(
 	node: AddressTree["roots"][number]
 ): Array<"address_point" | "interpolated" | "street" | "admin"> {
@@ -203,7 +222,9 @@ function collectStreetTier(
 	return out
 }
 
-/** {@link createServeEngine}'s return value. */
+/**
+ * {@link createServeEngine}'s return value.
+ */
 export interface ServeEngine {
 	engine: MailwomanAPIEngine
 	preflight: { ok: true } | { ok: false; message: string }
@@ -231,8 +252,16 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 		const parseClassifier = classifier
+
 		parse = async (address, opts) => {
-			const tree = await parseClassifier.parse(address, { postcodeRepair: true })
+			// Decision A: explicit wire register wins; unset → the kind classifier decides (same derivation
+			// as the runtime pipeline / geocode-core — /v1/parse is the "plain parse" endpoint class).
+			const shape = computeQueryShape(address)
+
+			const inputMode =
+				opts.inputMode ?? deriveInputMode(classifyKindSync({ raw: address, normalized: address }, shape).kind)
+
+			const tree = await parseClassifier.parse(address, { postcodeRepair: true, inputMode })
 
 			return {
 				input: address,
@@ -270,7 +299,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
 	const candidateDb = resolveCandidateDBPath()
 
-	if (paths.length === 0 && !candidateDb) {
+	if (!paths.length && !candidateDb) {
 		console.error("createServeEngine: no WOF DBs found — set MAILWOMAN_WOF_DB or MAILWOMAN_CANDIDATE_DB")
 
 		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
@@ -284,8 +313,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra
 	// here. Ported from `GeocodeRouter`'s `singleHandler`. The cast mirrors `@mailwoman/api/routes.ts`'s established
 	// "documented wire shape looser than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
-	const geocode: MailwomanAPIEngine["geocode"] = async (address) =>
-		(await oneGeocode(deps, address)) as unknown as GeocodeOutcome
+	const geocode: MailwomanAPIEngine["geocode"] = async (address, opts) =>
+		(await oneGeocode(deps, address, opts?.inputMode)) as unknown as GeocodeOutcome
 
 	// Sequential loop — results land in input order; a thrown row is isolated to its own
 	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
@@ -296,7 +325,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// and `node:sqlite` reads are synchronous. The pool bought nothing but the appearance of tuning, so
 	// it's a plain loop now. To actually parallelize, cross a thread boundary — see
 	// `mailwoman/geocode-stream.ts`. Receipts: `docs/articles/plan/reference/performance.mdx`.
-	const batch: MailwomanAPIEngine["batch"] = async (addresses) => {
+	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
+		// Decision A endpoint default: batch rows are the record register.
+		const inputMode = opts?.inputMode ?? "formatted"
 		const inputs = addresses.map((a) => a.trim())
 		const results: BatchRow[] = new Array<BatchRow>(inputs.length)
 
@@ -305,12 +336,12 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const t0 = performance.now()
 
 			try {
-				const result = await oneGeocode(deps, input)
+				const result = await oneGeocode(deps, input, inputMode)
 				recordTimed(performance.now() - t0, result.resolution_tier)
 				results[i] = result as unknown as GeocodeOutcome
-			} catch (err) {
+			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
-				results[i] = { input, error: err instanceof Error ? err.message : String(err) }
+				results[i] = { input, error: error instanceof Error ? error.message : String(error) }
 			}
 		}
 
@@ -327,6 +358,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		try {
 			const slug = regionSlugFromTree(tree)
 			const { addressPoints, interpolation } = deps.shards.for(slug)
+
 			const opts: ResolveOpts = {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
@@ -344,6 +376,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 						}
 					: {}),
 			}
+
 			const resolved = await deps.resolver.resolveTree(tree, opts)
 			// Best-effort tier metric: read the street node's stamped tier (matches the geocode path).
 			const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
@@ -352,9 +385,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const outcome: ResolveTreeOutcome = { tree: resolved }
 
 			return outcome
-		} catch (err) {
+		} catch (error) {
 			recordTimed(performance.now() - t0, "error")
-			throw err
+			throw error
 		}
 	}
 

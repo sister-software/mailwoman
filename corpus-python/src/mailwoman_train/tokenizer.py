@@ -80,7 +80,12 @@ class Tokenizer:
 
     def encode_with_spans(self, raw: str) -> list[PieceSpan]:
         """Encode raw text and return one ``PieceSpan`` per sub-token with char offsets."""
-        proto = self.sp.encode(raw, out_type="immutable_proto")
+        try:
+            proto = self.sp.encode(raw, out_type="immutable_proto")
+        except ValueError:
+            # sentencepiece ≥0.2.2 renamed the proto out_type (Modal's pinned image keeps the old
+            # spelling; local dev venvs track newer). Identical pieces/offsets either way.
+            proto = self.sp.encode(raw, out_type="proto")
         # Build a byte→char index for the original raw string so we can map proto byte offsets.
         raw_bytes = raw.encode("utf-8")
         # ``byte_to_char[i]`` is the char index of the codepoint that owns byte ``i`` (start byte).
@@ -433,6 +438,7 @@ def encode_row(
     gazetteer_choreography: bool = False,
     country_lexicon=None,
     street_type_lexicon=None,
+    locality_surface_lexicon=None,
     span_starts: Sequence[int] | None = None,
     span_ends: Sequence[int] | None = None,
     span_tags: Sequence[str] | None = None,
@@ -560,4 +566,19 @@ def encode_row(
             sconfs = sconfs + [0.0] * pad_needed
         out["street_type_features"] = sfeats
         out["street_type_confidence"] = sconfs
+
+    if locality_surface_lexicon is not None:
+        # Locality-surface channel (v3.16.0 evidence bundle): per-piece [locality, locality_homograph]
+        # painted from the RAW SURFACE. Same lexicon schema as the gazetteer → same generic realign.
+        from .gazetteer_anchor import realign_gazetteer_to_pieces
+
+        lfeats, lconfs = realign_gazetteer_to_pieces(raw, list(spans), locality_surface_lexicon)
+        lfeats = lfeats[:max_length]
+        lconfs = lconfs[:max_length]
+        lzero = [0.0] * locality_surface_lexicon.feature_dim
+        if pad_needed > 0:
+            lfeats = lfeats + [lzero] * pad_needed
+            lconfs = lconfs + [0.0] * pad_needed
+        out["locality_surface_features"] = lfeats
+        out["locality_surface_confidence"] = lconfs
     return out

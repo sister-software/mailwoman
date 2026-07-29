@@ -25,6 +25,7 @@ const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"borough",
 	"neighbourhood",
 ]
+
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
 
@@ -65,6 +66,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	// Phase 1: Load all matching SPR rows.
 	progress("spr", `Loading places for countries=[${countries}], placetypes=[${placetypes}]`)
 	const placeholders = (arr: string[]) => arr.map(() => "?").join(",")
+
 	const sprStmt = db.prepare(
 		`SELECT id, name, placetype, parent_id, latitude, longitude
 		 FROM spr
@@ -72,6 +74,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		   AND country IN (${placeholders(countries)})
 		   AND placetype IN (${placeholders(placetypes)})`
 	)
+
 	const sprRows = sprStmt.all(...countries, ...placetypes) as unknown as SprRow[]
 	progress("spr", `Loaded ${sprRows.length} places`)
 
@@ -154,6 +157,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		for (const row of impRows) {
 			importanceMap.set(row.id, row.importance)
 		}
+
 		progress("importance", `Loaded ${importanceMap.size} importance scores`)
 	} catch {
 		progress("importance", "No place_importance table — falling back to population")
@@ -163,7 +167,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			const popRows = popStmt.all() as unknown as PopulationRow[]
 
 			for (const row of popRows) {
-				const normalized = row.population > 0 ? Math.min(1.0, Math.log2(1 + row.population / 1000) / 14) : 0
+				const normalized = row.population > 0 ? Math.min(1, Math.log2(1 + row.population / 1000) / 14) : 0
 				importanceMap.set(row.id, normalized)
 			}
 		} catch {
@@ -181,11 +185,13 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	for (let i = 0; i < placeIds.length; i += 500) {
 		const chunk = placeIds.slice(i, i + 500)
 		const idPlaceholders = chunk.map(() => "?").join(",")
+
 		const nameStmt = allLanguages
 			? db.prepare(`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders})`)
 			: db.prepare(
 					`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders}) AND language IN (${languages.map(() => "?").join(",")})`
 				)
+
 		const nameRows = (allLanguages
 			? nameStmt.all(...chunk)
 			: nameStmt.all(...chunk, ...languages)) as unknown as NameRow[]
@@ -196,9 +202,11 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			if (!existing.includes(row.name)) {
 				existing.push(row.name)
 			}
+
 			namesByPlace.set(row.id, existing)
 		}
 	}
+
 	progress("names", `Loaded names for ${namesByPlace.size} places`)
 
 	// Phase 5: Build the trie.
@@ -212,7 +220,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	let excludedCount = 0
 
 	function isDegenerate(tokens: string[]): boolean {
-		if (tokens.length === 0) return false
+		if (!tokens.length) return false
 
 		if (excludeSurfaces?.has(tokens.join(" "))) return true
 
@@ -227,13 +235,14 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	const surfaceCountryCounts = opts.surfaceCountryCounts
 
 	function insertName(tokens: string[], entry: PlaceEntry): boolean {
-		if (tokens.length === 0) return false
+		if (!tokens.length) return false
 
 		if (isDegenerate(tokens)) {
 			excludedCount++
 
 			return false
 		}
+
 		let stateID = 0
 
 		for (const t of tokens) {
@@ -245,8 +254,10 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
+
 			stateID = next
 		}
+
 		// Deduplicate: don't add the same wofID twice at the same state.
 		const existing = nodes[stateID]!.places
 
@@ -266,6 +277,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 
 	for (const row of sprRows) {
 		const parentChain = resolveParentChain(row.id)
+
 		const entry: PlaceEntry = {
 			wofID: row.id,
 			placetype: row.placetype as PlacetypeID,
@@ -290,13 +302,14 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			if (altName === row.name) continue
 			const altTokens = normalizeTokens(altName)
 
-			if (altTokens.length > 0 && altTokens.join(" ") !== primaryTokens.join(" ") && insertName(altTokens, entry)) {
+			if (altTokens.length && altTokens.join(" ") !== primaryTokens.join(" ") && insertName(altTokens, entry)) {
 				insertCount++
 			}
 		}
 	}
 
 	db.close()
+
 	progress(
 		"done",
 		`Built trie: ${nodes.length} states, ${insertCount} name insertions` +
@@ -305,6 +318,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
+
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries,

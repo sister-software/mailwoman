@@ -61,9 +61,7 @@ export type WhosOnFirstPlacetype =
 	| "venue"
 	| "wing"
 
-export type PlacetypeLocalizationRecord = {
-	[languageCode: string]: string | undefined
-}
+export type PlacetypeLocalizationRecord = Record<string, string | undefined>
 
 export interface PlacetypeDefinition {
 	/**
@@ -96,7 +94,11 @@ export interface PlacetypeDefinition {
 	parent?: string[]
 }
 
+/**
+ * Namespace prefix on Who's On First property keys (`wof:id`, `wof:placetype`).
+ */
 export const WOFPrefix = "wof:"
+
 export type WOFPrefix = typeof WOFPrefix
 
 /**
@@ -127,6 +129,4 @@ export function normalizePlacetypeDefinition(
 /**
  * A record of placetype definitions, keyed by Placetype id.
  */
-export type PlacetypeDefinitionRecord = {
-	[id: number]: Omit<PlacetypeDefinition, "id"> | undefined
-}
+export type PlacetypeDefinitionRecord = Record<number, Omit<PlacetypeDefinition, "id"> | undefined>

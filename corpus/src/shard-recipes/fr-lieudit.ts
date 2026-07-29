@@ -37,9 +37,14 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
-const DEFAULT_LICENSE = "Licence Ouverte 2.0" // matches the `ban` adapter's Tier-B election for BAN data
+/**
+ * Matches the `ban` adapter's Tier-B election for BAN data.
+ */
+const DEFAULT_LICENSE = "Licence Ouverte 2.0"
 
-/** One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds. */
+/**
+ * One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds.
+ */
 interface LieuDitTuple {
 	numero: string
 	rep: string | null
@@ -59,7 +64,7 @@ interface LieuDitTuple {
 function departementFiles(banDir: string): string[] {
 	const byDept = new Map<string, string>()
 
-	for (const name of readdirSync(banDir).sort()) {
+	for (const name of readdirSync(banDir).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -75,14 +80,16 @@ function departementFiles(banDir: string): string[] {
 		}
 	}
 
-	return [...byDept.keys()].sort().map((dept) => byDept.get(dept)!)
+	return [...byDept.keys()].toSorted().map((dept) => byDept.get(dept)!)
 }
 
-/** Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`). */
+/**
+ * Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`).
+ */
 async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 	const files = departementFiles(banDir)
 
-	if (files.length === 0) {
+	if (!files.length) {
 		throw new Error(
 			`No BAN adresses-<dept>.csv files found in ${banDir} — fetch BAN first (\`mailwoman corpus fetch ban\`).`
 		)
@@ -107,10 +114,13 @@ async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 				locality: rec.city,
 				dependentLocality: rec.lieuDit,
 			})
+
 			deptCount++
 		}
+
 		console.error(`  ${path}: ${deptCount.toLocaleString()} clean lieu-dit rows`)
 	}
+
 	console.error(
 		`  scanned ${scanned.toLocaleString()} BAN rows across ${files.length} départements → pool=${pool.length.toLocaleString()}`
 	)
@@ -118,7 +128,9 @@ async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 	return pool
 }
 
-/** `house_number` = `numero` + folded `rep` ("10 bis"), matching the `ban` adapter's own composition. */
+/**
+ * `house_number` = `numero` + folded `rep` ("10 bis"), matching the `ban` adapter's own composition.
+ */
 function composeHouseNumber(numero: string, rep: string | null): string {
 	return rep ? `${numero} ${rep}` : numero
 }
@@ -141,6 +153,7 @@ function composeRaw(
 	if (streetLine) {
 		lines.push(streetLine)
 	}
+
 	lines.push(dependentLocality)
 	const cityLine = [postcode, locality].filter(Boolean).join(" ").trim()
 
@@ -151,7 +164,9 @@ function composeRaw(
 	return lines.join("\n")
 }
 
-/** Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement. */
+/**
+ * Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement.
+ */
 function shuffleInPlace<T>(arr: T[], random: () => number): void {
 	for (let i = arr.length - 1; i > 0; i--) {
 		const j = Math.floor(random() * (i + 1))
@@ -159,6 +174,10 @@ function shuffleInPlace<T>(arr: T[], random: () => number): void {
 	}
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frLieuditRecipe: ShardRecipe = {
 	name: "fr-lieudit",
 	description: "FR lieu-dit rows: BAN nom_ld → dependent_locality (commune → locality), lieu-dit on its own line",
@@ -186,7 +205,7 @@ export const frLieuditRecipe: ShardRecipe = {
 
 		const pool = await readLieuDitPool(banDir)
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 
@@ -223,6 +242,7 @@ export const frLieuditRecipe: ShardRecipe = {
 
 			if (!raw) {
 				skipped++
+
 				continue
 			}
 
@@ -236,6 +256,7 @@ export const frLieuditRecipe: ShardRecipe = {
 				const form = forms[Math.floor(random() * forms.length)]!
 				raw = `${raw}, ${form}`
 				components.country = form
+
 				countryAppended++
 			}
 
@@ -246,6 +267,7 @@ export const frLieuditRecipe: ShardRecipe = {
 				locality: t.locality,
 				postcode: t.postcode ?? undefined,
 			})
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -256,13 +278,17 @@ export const frLieuditRecipe: ShardRecipe = {
 				corpus_version: "",
 				license: DEFAULT_LICENSE,
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: source, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

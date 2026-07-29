@@ -31,6 +31,7 @@ import { createScorer } from "../scorer.ts"
 const MODEL =
 	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
+
 const TOKENIZER = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
@@ -54,9 +55,11 @@ describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () =
 	// Save/restore the live FR conventions row — the gate reads the shared in-memory codex table, so a
 	// synthetic forbid mutates it for the duration of one test and must be reverted.
 	let savedFr: AddressSystemConventions | undefined
+
 	beforeEach(() => {
 		savedFr = ADDRESS_SYSTEM_CONVENTIONS.fr
 	})
+
 	afterEach(() => {
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = savedFr
 	})
@@ -75,6 +78,7 @@ describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () =
 			...savedFr,
 			forbiddenTags: ["street_prefix", "street_suffix"],
 		}
+
 		await expect(createScorer(baseOpts)).rejects.toThrow(
 			/conventions forbids `street_prefix` for system `fr`.*certified to emit it.*#718\/#719/s
 		)
@@ -89,6 +93,7 @@ describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () =
 			...savedFr,
 			forbiddenTags: ["street_prefix"],
 		}
+
 		await expect(createScorer({ ...baseOpts, tier: "pocket", overrides: { gazetteer: false } })).rejects.toThrow(
 			/tier `pocket`.*maskOff F1 \d/s
 		)

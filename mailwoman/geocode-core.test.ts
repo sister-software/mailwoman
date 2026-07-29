@@ -99,6 +99,7 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 			raw: "berlin",
 			roots: [node({ tag: "locality", value: "Berlin", lat: 52.5, lon: 13.4, placeID: "wof:101909779" })],
 		}
+
 		expect(extractGeocodeResult("berlin", tree).countryCode).toBeNull()
 	})
 
@@ -107,6 +108,7 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 			raw: "berlin",
 			roots: [node({ tag: "locality", value: "Berlin", lat: 52.5, lon: 13.4, placeID: "wof:101909779" })],
 		}
+
 		expect(extractGeocodeResult("berlin", tree).hierarchy[0]?.name).toBe("Berlin")
 	})
 })
@@ -131,8 +133,11 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 				}),
 			],
 		}
+
 		const r = extractGeocodeResult("springfield", tree)
-		expect(r.candidates).toHaveLength(3) // self + 2 alternatives
+		expect(r.candidates).toHaveLength(3)
+
+		// self + 2 alternatives
 		expect(r.candidates[0]).toMatchObject({
 			name: "Springfield",
 			tag: "locality",
@@ -140,6 +145,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 			countryCode: "US",
 			placeID: "wof:100",
 		})
+
 		expect(r.candidates[1]).toMatchObject({ name: "Springfield", lat: 42.11, countryCode: "US", placeID: "wof:201" })
 		expect(r.candidates[2]).toMatchObject({ lat: 39.77, placeID: "wof:202" })
 	})
@@ -171,6 +177,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 				}),
 			],
 		}
+
 		const r = extractGeocodeResult("springfield", tree)
 		expect(r.candidates).toHaveLength(2) // primary + the distinct MA one; the coincident township is dropped
 		expect(r.candidates.map((c) => c.placeID)).toEqual(["wof:100", "wof:201"])
@@ -190,6 +197,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 				}),
 			],
 		}
+
 		expect(extractGeocodeResult("berlin", tree).candidates).toHaveLength(1)
 	})
 })
@@ -260,6 +268,7 @@ describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
 			raw: "berlin",
 			roots: [node({ tag: "locality", value: "Berlin", lat: 52.5, lon: 13.4 })],
 		}
+
 		const r = extractGeocodeResult("berlin", tree)
 		expect(r.house_number).toBeNull()
 		expect(r.street).toBeNull()
@@ -305,6 +314,7 @@ describe("extractGeocodeResult — street-tier locality from the register commun
 
 	it("does not override a locality hierarchy entry the walk already resolved", () => {
 		const tree = streetTierTree()
+
 		tree.roots.push(
 			node({
 				tag: "locality",
@@ -315,6 +325,7 @@ describe("extractGeocodeResult — street-tier locality from the register commun
 				metadata: { resolver_name: "Bordeaux" },
 			})
 		)
+
 		const r = extractGeocodeResult("Rue Sainte-Catherine, Bordeaux", tree)
 		expect(r.hierarchy.filter((h) => h.tag === "locality")).toHaveLength(1) // no duplicate
 		expect(r.hierarchy[0]?.placeID).toBe("wof:117496") // the resolved entry wins
@@ -325,6 +336,7 @@ describe("extractGeocodeResult — street-tier locality from the register commun
 			raw: "berlin",
 			roots: [node({ tag: "locality", value: "Berlin", lat: 52.5, lon: 13.4 })],
 		}
+
 		const r = extractGeocodeResult("berlin", tree)
 		expect(r.locality).toBe("Berlin")
 		expect(r.hierarchy).toHaveLength(1)
@@ -341,6 +353,7 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 	 */
 	function recordingClassifier(): { classifier: GeocodeClassifier; calls: Array<{ text: string; opts?: ParseOpts }> } {
 		const calls: Array<{ text: string; opts?: ParseOpts }> = []
+
 		const classifier: GeocodeClassifier = {
 			parse(text, opts) {
 				calls.push({ text, opts })

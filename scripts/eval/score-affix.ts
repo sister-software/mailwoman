@@ -26,6 +26,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	conventions?: string
@@ -37,9 +38,11 @@ const values = rawValues as {
 	"suppress-gaz-near-postcode"?: boolean
 	"weights-cache"?: string
 }
+
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const file = (values["file"] || "data/eval/external/street-affix-real.jsonl")!
+
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -55,19 +58,25 @@ const TAGS = [
 	"cedex",
 ] as const
 
-// A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
-// else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
+/**
+ * A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference, else the
+ * zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
+ */
 const GAZ = values["gazetteer-lexicon"] || ""
 const suppressGaz = values["suppress-gaz-near-postcode"] ?? false
 
-// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels
-// (anchor + gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a
-// country-channel model (v6.2.0+). Takes precedence over the explicit --model path.
+/**
+ * PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels (anchor +
+ * gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a country-channel
+ * model (v6.2.0+). Takes precedence over the explicit --model path.
+ */
 const WEIGHTS_CACHE = values["weights-cache"] || ""
+
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 	: await (async () => {
 			const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+
 			const [tokenizer, runner] = await Promise.all([
 				MailwomanTokenizer.loadFromFile(TOK),
 				ONNXRunner.create((values["model"] || "")!),
@@ -91,6 +100,7 @@ const rows = readFileSync(file, "utf8")
 	.split("\n")
 	.filter(Boolean)
 	.map((l) => JSON.parse(l))
+
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
@@ -119,10 +129,12 @@ for (const row of rows) {
 		}
 	}
 }
+
 console.log(
 	`# affix per-tag (unfolded) — ${(values["model"] || "")!.split("/").slice(-2).join("/")} · n=${rows.length}`
 )
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
+
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 
 for (const t of TAGS) {
@@ -131,10 +143,12 @@ for (const t of TAGS) {
 	const r = tp + fn ? tp / (tp + fn) : 0
 	const f1 = p + r ? (2 * p * r) / (p + r) : 0
 	sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
+
 	console.log(
 		`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`
 	)
 }
+
 // JSON sidecar (--json <path>): the machine-readable contract the gate verdict reads — the
 // markdown above is presentation. Codex-review follow-up: regex-parsing scorer tables was the
 // gate's one brittle joint.

@@ -11,11 +11,17 @@ import type { KnownFormat, KnownFormatHit, TokenClass } from "./types.ts"
  */
 interface FormatPattern {
 	format: KnownFormat
-	/** Pattern matched against a single token's body, or against a 2-token joined body. */
+	/**
+	 * Pattern matched against a single token's body, or against a 2-token joined body.
+	 */
 	pattern: RegExp
-	/** Tokens per match (1 or 2). */
+	/**
+	 * Tokens per match (1 or 2).
+	 */
 	tokenSpan: 1 | 2
-	/** Base confidence when no locale context. Ambiguous patterns score lower. */
+	/**
+	 * Base confidence when no locale context. Ambiguous patterns score lower.
+	 */
 	confidence: number
 }
 
@@ -97,7 +103,7 @@ export function detectKnownFormats(text: string, tokens: ReadonlyArray<TokenClas
 }
 
 function detectPoBox(text: string, tokens: ReadonlyArray<TokenClass>): KnownFormatHit | null {
-	if (tokens.length === 0) return null
+	if (!tokens.length) return null
 
 	// Find a leader token + optional "Box" + numeric/alphanumeric.
 	for (let i = 0; i < tokens.length; i++) {
@@ -120,6 +126,7 @@ function detectPoBox(text: string, tokens: ReadonlyArray<TokenClass>): KnownForm
 
 			if (PO_BOX_LEADERS.has(tjBody)) {
 				last = j
+
 				continue
 			}
 
@@ -127,8 +134,10 @@ function detectPoBox(text: string, tokens: ReadonlyArray<TokenClass>): KnownForm
 			if (tj.class === "digit" || tj.class === "mixed") {
 				last = j
 				foundNumber = true
+
 				break
 			}
+
 			break
 		}
 

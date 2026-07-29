@@ -9,9 +9,10 @@
  *   back with `JSON.parse`).
  */
 
-import { sql, type Generated, type Kysely } from "kysely"
+import { sql, type Kysely } from "kysely"
 
-/** Kysely row type for `tabblock20`. Geometry is a GeoJSON string. */
+export { type Generated } from "kysely"
+
 export interface TIGERBlockTable {
 	GEOID: string
 	state_code: string
@@ -46,7 +47,9 @@ export interface PLBlockTable {
 	multi: number
 }
 
-/** Kysely row type for `tiger_streets` (ADDRFEAT — named street segments + ZIPs, per county). */
+/**
+ * Kysely row type for `tiger_streets` (ADDRFEAT — named street segments + ZIPs, per county).
+ */
 export interface TIGERStreetTable {
 	linearid: string
 	fullname: string
@@ -55,7 +58,9 @@ export interface TIGERStreetTable {
 	statefp: string
 }
 
-/** Kysely row type for `tiger_places` (PLACE — incorporated/census places, per state). */
+/**
+ * Kysely row type for `tiger_places` (PLACE — incorporated/census places, per state).
+ */
 export interface TIGERPlaceTable {
 	geoid: string
 	name: string
@@ -65,7 +70,9 @@ export interface TIGERPlaceTable {
 	classfp: string | null
 }
 
-/** The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`. */
+/**
+ * The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`.
+ */
 export interface TIGERDatabase {
 	tabblock20: TIGERBlockTable
 	pl_block: PLBlockTable
@@ -73,8 +80,9 @@ export interface TIGERDatabase {
 	tiger_places: TIGERPlaceTable
 }
 
-/** Marker so callers can opt into `Generated` columns later without importing kysely here. */
-export type { Generated }
+/**
+ * Marker so callers can opt into `Generated` columns later without importing kysely here.
+ */
 
 /**
  * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take effect on an empty DB,
@@ -138,18 +146,21 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 	// No index on GEOID alone — it's the PRIMARY KEY, which already carries a unique index. The prior
 	// schema's idx_tabblock20_geoid duplicated that for nothing (double insert cost, double footprint).
 	await db.schema.createIndex("idx_tabblock20_state_code").ifNotExists().on("tabblock20").column("state_code").execute()
+
 	await db.schema
 		.createIndex("idx_tabblock20_state_county")
 		.ifNotExists()
 		.on("tabblock20")
 		.columns(["state_code", "county_code"])
 		.execute()
+
 	await db.schema
 		.createIndex("idx_tabblock20_state_county_tract")
 		.ifNotExists()
 		.on("tabblock20")
 		.columns(["state_code", "county_code", "tract_code"])
 		.execute()
+
 	await db.schema.createIndex("idx_tabblock20_population").ifNotExists().on("tabblock20").column("population").execute()
 
 	await db.schema
@@ -179,7 +190,9 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("zipr", "text")
 		.addColumn("statefp", "text", (c) => c.notNull())
 		.execute()
+
 	await db.schema.createIndex("idx_tiger_streets_statefp").ifNotExists().on("tiger_streets").column("statefp").execute()
+
 	await db.schema
 		.createIndex("idx_tiger_streets_linearid")
 		.ifNotExists()
@@ -197,6 +210,7 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("namelsad", "text")
 		.addColumn("classfp", "text")
 		.execute()
+
 	await db.schema.createIndex("idx_tiger_places_statefp").ifNotExists().on("tiger_places").column("statefp").execute()
 	await db.schema.createIndex("idx_tiger_places_geoid").ifNotExists().on("tiger_places").column("geoid").execute()
 }

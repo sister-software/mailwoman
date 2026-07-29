@@ -9,7 +9,7 @@
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "../decoder/types.ts"
-import type { GazetteerArtifactCoverage, Resolver } from "../resolver/types.ts"
+import type { GazetteerArtifactCoverage, Resolver, ResolveOpts } from "../resolver/types.ts"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
 import type {
@@ -35,25 +35,31 @@ function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
 
 describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", () => {
 	const ON = true
+
 	it("returns the country when confident AND safelisted (the pure-win case)", () => {
 		expect(hardCountryFor("ES", 0.99, {}, ON, undefined)).toBe("ES")
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("ES")).toBe(true)
 	})
+
 	it("stays SOFT (undefined) for a confident but NON-safelisted country — the low-coverage tail", () => {
 		expect(HARD_PLACE_COUNTRY_SAFELIST.has("FI")).toBe(false)
-		expect(hardCountryFor("FI", 1.0, {}, ON, undefined)).toBeUndefined()
+		expect(hardCountryFor("FI", 1, {}, ON, undefined)).toBeUndefined()
 	})
+
 	it("stays SOFT below the confidence bar even when safelisted", () => {
 		expect(hardCountryFor("ES", 0.5, {}, ON, undefined)).toBeUndefined()
 	})
+
 	it("is OFF when hardPlaceCountry is false/undefined", () => {
 		expect(hardCountryFor("ES", 0.99, {}, false, undefined)).toBeUndefined()
 		expect(hardCountryFor("ES", 0.99, {}, undefined, undefined)).toBeUndefined()
 	})
+
 	it("never overwrites a caller's own hardCountry / defaultCountry", () => {
 		expect(hardCountryFor("ES", 0.99, { defaultCountry: "US" }, ON, undefined)).toBeUndefined()
 		expect(hardCountryFor("ES", 0.99, { hardCountry: "US" }, ON, undefined)).toBeUndefined()
 	})
+
 	it("honours a safelist override (how the eval measures ungated to grow the list)", () => {
 		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
 		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
@@ -61,7 +67,9 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 })
 
 describe("runPipeline — artifact-manifest safelist precedence (survey candidate #2)", () => {
-	/** A resolver whose loaded gazetteer artifact declares its own coverage manifest. */
+	/**
+	 * A resolver whose loaded gazetteer artifact declares its own coverage manifest.
+	 */
 	const artifactWith = (safelist: string[]): GazetteerArtifactCoverage => ({
 		countryCoverage: new Map(),
 		countryBBoxes: new Map(),
@@ -73,24 +81,26 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 		artifact?: GazetteerArtifactCoverage
 		override?: ReadonlySet<string>
 	}): Promise<string | undefined> => {
-		const resolveTree = vi.fn(async (tree: AddressTree) => tree)
+		const resolveTree = vi.fn(async (tree: AddressTree, _opts?: ResolveOpts) => tree)
 		const resolver: Resolver = { resolveTree }
 
 		if (opts.artifact) {
 			resolver.artifactCoverage = opts.artifact
 		}
+
 		await runPipeline(
 			"probe input",
 			{
 				classifier: fakeClassifier(fakeTree("probe input")),
 				resolver,
-				placeCountry: () => ({ country: opts.placed, confidence: 1.0 }),
+				placeCountry: () => ({ country: opts.placed, confidence: 1 }),
 			},
 			{
 				hardPlaceCountry: true,
 				...(opts.override ? { hardCountrySafelist: opts.override } : {}),
 			}
 		)
+
 		const resolveOpts = resolveTree.mock.calls[0]?.[1] as { hardCountry?: string } | undefined
 
 		return resolveOpts?.hardCountry
@@ -118,6 +128,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 describe("isBareLocalityTree — #912 lever 1 (placer abstention shape)", () => {
 	const node = (tag: string, value: string, children: AddressNode[] = []): AddressNode =>
 		({ tag, value, children }) as unknown as AddressNode
+
 	const tree = (roots: AddressNode[]): AddressTree => ({ raw: "", roots })
 
 	it("a single bare locality is bare", () => {
@@ -130,7 +141,9 @@ describe("isBareLocalityTree — #912 lever 1 (placer abstention shape)", () => 
 	})
 
 	it("nested children count — a locality wrapping a house number is address-shaped", () => {
-		expect(isBareLocalityTree(tree([node("locality", "Paris", [node("house_number", "8")])]))).toBe(false)
+		const localityWithHouseNumber = node("locality", "Paris", [node("house_number", "8")])
+
+		expect(isBareLocalityTree(tree([localityWithHouseNumber]))).toBe(false)
 	})
 
 	it("no locality at all is not bare-locality (a bare postcode keeps its placer)", () => {
@@ -155,7 +168,7 @@ describe("runPipeline — defaults", () => {
 		const result = await runPipeline("hello", {}, { locale: "en-US" })
 		expect(result.locale.locale).toBe("en-US")
 		expect(result.locale.source).toBe("caller")
-		expect(result.locale.confidence).toBe(1.0)
+		expect(result.locale.confidence).toBe(1)
 	})
 
 	it("records per-stage timing", async () => {
@@ -216,16 +229,29 @@ describe("runPipeline — stage composition", () => {
 		const shape: QueryShapeLite = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.9 }],
 		}
+
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("10118")) }
+
 		await runPipeline("10118", {
 			computeQueryShape: () => shape,
 			classifier,
 		})
+
 		expect(classifier.parse).toHaveBeenCalledWith("10118", {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+			// Decision A: the pipeline passes an explicit register on every parse. The default kind
+			// classifier (no fast-path) reads structured_address → formatted; an explicit
+			// PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
+			inputMode: "formatted",
 		})
+	})
+
+	it("threads an explicit PipelineOpts.inputMode to classifier.parse (Decision A)", async () => {
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
+		await runPipeline("belleville", { classifier }, { inputMode: "fragmented" })
+		expect(classifier.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ inputMode: "fragmented" }))
 	})
 
 	it("threads PipelineOpts.normalizeCase to classifier.parse (#690)", async () => {
@@ -265,6 +291,7 @@ describe("runPipeline — fast-path routing", () => {
 	it("fast-paths postcode_only inputs with matching shape", async () => {
 		const classifier = fakeClassifier(fakeTree("10118"))
 		const resolver = fakeResolver((t) => t)
+
 		const stages: RuntimePipelineStages = {
 			computeQueryShape: () => postcodeShape,
 			classifyKind: async () => postcodeOnlyKind,
@@ -287,11 +314,13 @@ describe("runPipeline — fast-path routing", () => {
 			totalLength: 5,
 			characterClass: "alpha",
 		}
+
 		const localityKind: QueryKindResult = {
 			kind: "locality_only",
 			confidence: 0.96,
 			alternatives: [],
 		}
+
 		const classifier = fakeClassifier(fakeTree("Paris"))
 		const resolver = fakeResolver((t) => t)
 
@@ -301,6 +330,7 @@ describe("runPipeline — fast-path routing", () => {
 			classifier,
 			resolver,
 		})
+
 		expect(result.path).toBe("fast-path")
 		expect(classifier.parse).not.toHaveBeenCalled()
 		expect(result.tree.roots[0]?.tag).toBe("locality")
@@ -309,6 +339,7 @@ describe("runPipeline — fast-path routing", () => {
 	it("forceFullPipeline disables fast-path", async () => {
 		const classifier = fakeClassifier(fakeTree("10118"))
 		const resolver = fakeResolver((t) => t)
+
 		const stages: RuntimePipelineStages = {
 			computeQueryShape: () => postcodeShape,
 			classifyKind: async () => postcodeOnlyKind,
@@ -324,6 +355,7 @@ describe("runPipeline — fast-path routing", () => {
 	it("does not fast-path when kind confidence is below threshold", async () => {
 		const classifier = fakeClassifier(fakeTree("10118"))
 		const resolver = fakeResolver((t) => t)
+
 		const stages: RuntimePipelineStages = {
 			computeQueryShape: () => postcodeShape,
 			classifyKind: async () => ({ ...postcodeOnlyKind, confidence: 0.5 }),
@@ -339,6 +371,7 @@ describe("runPipeline — fast-path routing", () => {
 	it("does not fast-path when kind says postcode but shape has no postcode hit", async () => {
 		const classifier = fakeClassifier(fakeTree("hello"))
 		const resolver = fakeResolver((t) => t)
+
 		const stages: RuntimePipelineStages = {
 			computeQueryShape: () => ({ knownFormats: [], totalLength: 5, characterClass: "alpha" }),
 			classifyKind: async () => postcodeOnlyKind,
@@ -356,6 +389,7 @@ describe("runPipeline — fast-path routing", () => {
 		// classifier ship, the fast-path tree from QueryShape is useful standalone — a consumer who
 		// just wants the parsed structure for "10118" shouldn't be forced to pay for the classifier.
 		const classifier = fakeClassifier(fakeTree("10118"))
+
 		const stages: RuntimePipelineStages = {
 			computeQueryShape: () => postcodeShape,
 			classifyKind: async () => postcodeOnlyKind,
@@ -376,6 +410,7 @@ describe("runPipeline — graceful degradation", () => {
 				throw new Error("classifier boom")
 			}),
 		}
+
 		const resolver = fakeResolver((t) => ({
 			...t,
 			roots: [...t.roots, { tag: "country" as const, value: "US", start: 0, end: 2, confidence: 1, children: [] }],
@@ -390,6 +425,7 @@ describe("runPipeline — graceful degradation", () => {
 		const classifier = fakeClassifier(
 			fakeTree("hello", [{ tag: "country", value: "US", start: 0, end: 2, confidence: 1, children: [] }])
 		)
+
 		const resolver: Resolver = {
 			resolveTree: vi.fn(async () => {
 				throw new Error("resolver boom")
@@ -405,12 +441,13 @@ describe("runPipeline — abort signal", () => {
 	it("throws AbortError when signal is already aborted before the call", async () => {
 		const controller = new AbortController()
 		controller.abort()
-		await expect(runPipeline("hello", {}, { signal: controller.signal })).rejects.toThrow()
+		await expect(runPipeline("hello", {}, { signal: controller.signal })).rejects.toThrow(/abort/i)
 	})
 
 	it("aborts between normalize and queryShape if signaled", async () => {
 		const controller = new AbortController()
 		const computeQueryShape = vi.fn(() => ({ knownFormats: [] }))
+
 		const normalize = vi.fn((raw: string) => {
 			// Abort during normalize — coordinator catches it on the next checkpoint (before queryShape).
 			controller.abort()
@@ -418,9 +455,10 @@ describe("runPipeline — abort signal", () => {
 			return { raw, normalized: raw }
 		})
 
-		await expect(
-			runPipeline("hello", { normalize, computeQueryShape }, { signal: controller.signal })
-		).rejects.toThrow()
+		await expect(runPipeline("hello", { normalize, computeQueryShape }, { signal: controller.signal })).rejects.toThrow(
+			/abort/i
+		)
+
 		expect(normalize).toHaveBeenCalled()
 		expect(computeQueryShape).not.toHaveBeenCalled()
 	})
@@ -429,6 +467,7 @@ describe("runPipeline — abort signal", () => {
 		const controller = new AbortController()
 		const classifier = fakeClassifier(fakeTree("hello"))
 		const resolver = fakeResolver((t) => t)
+
 		const classifyKind = vi.fn(async () => {
 			controller.abort()
 
@@ -437,13 +476,15 @@ describe("runPipeline — abort signal", () => {
 
 		await expect(
 			runPipeline("hello", { classifyKind, classifier, resolver }, { signal: controller.signal })
-		).rejects.toThrow()
+		).rejects.toThrow(/abort/i)
+
 		expect(classifier.parse).not.toHaveBeenCalled()
 		expect(resolver.resolveTree).not.toHaveBeenCalled()
 	})
 
 	it("aborts between classifier and resolver if signaled", async () => {
 		const controller = new AbortController()
+
 		const classifier: AddressClassifier = {
 			parse: vi.fn(async (text) => {
 				controller.abort()
@@ -451,9 +492,13 @@ describe("runPipeline — abort signal", () => {
 				return fakeTree(text)
 			}),
 		}
+
 		const resolver = fakeResolver((t) => t)
 
-		await expect(runPipeline("hello", { classifier, resolver }, { signal: controller.signal })).rejects.toThrow()
+		await expect(runPipeline("hello", { classifier, resolver }, { signal: controller.signal })).rejects.toThrow(
+			/abort/i
+		)
+
 		expect(classifier.parse).toHaveBeenCalled()
 		expect(resolver.resolveTree).not.toHaveBeenCalled()
 	})
@@ -479,6 +524,7 @@ describe("runPipeline — timing budget shape", () => {
 		totalLength: 5,
 		characterClass: "numeric",
 	}
+
 	const postcodeOnlyKind: QueryKindResult = {
 		kind: "postcode_only",
 		confidence: 0.97,
@@ -490,14 +536,15 @@ describe("runPipeline — timing budget shape", () => {
 		const resolver = fakeResolver((t) => t)
 		const result = await runPipeline("hello", { classifier, resolver })
 
-		expect(Object.keys(result.timing).sort()).toEqual(
-			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].sort()
+		expect(Object.keys(result.timing).toSorted()).toEqual(
+			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].toSorted()
 		)
 	})
 
 	it("fast-path with resolver wired: omits token-classify, includes resolve", async () => {
 		const classifier = fakeClassifier(fakeTree("10118"))
 		const resolver = fakeResolver((t) => t)
+
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
 			classifyKind: async () => postcodeOnlyKind,
@@ -552,6 +599,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 		const detectLocale = vi.fn(async () => {
 			throw new Error("locale detector exploded")
 		})
+
 		await expect(runPipeline("hello", { detectLocale })).rejects.toThrow("locale detector exploded")
 	})
 
@@ -559,6 +607,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 		const classifyKind = vi.fn(async () => {
 			throw new Error("kind classifier exploded")
 		})
+
 		await expect(runPipeline("hello", { classifyKind })).rejects.toThrow("kind classifier exploded")
 	})
 
@@ -566,6 +615,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 		const normalize = vi.fn(() => {
 			throw new Error("normalize exploded")
 		})
+
 		await expect(runPipeline("hello", { normalize })).rejects.toThrow("normalize exploded")
 	})
 
@@ -573,6 +623,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 		const computeQueryShape = vi.fn(() => {
 			throw new Error("queryShape exploded")
 		})
+
 		await expect(runPipeline("hello", { computeQueryShape })).rejects.toThrow("queryShape exploded")
 	})
 
@@ -584,6 +635,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 			totalLength: 5,
 			characterClass: "numeric",
 		}
+
 		const resolver: Resolver = {
 			resolveTree: vi.fn(async () => {
 				throw new Error("resolver exploded")
@@ -612,6 +664,7 @@ describe("runPipeline — locale + opts threading", () => {
 				source: "caller",
 			})
 		)
+
 		await runPipeline("hello", { detectLocale }, { locale: "fr-FR" })
 		expect(detectLocale).toHaveBeenCalledWith(expect.anything(), expect.anything(), { hint: "fr-FR" })
 	})
@@ -626,6 +679,7 @@ describe("runPipeline — locale + opts threading", () => {
 describe("runPipeline — coarse-placer soft prior (#244)", () => {
 	function captureResolveOpts() {
 		const seen: Array<unknown> = []
+
 		const resolver: Resolver = {
 			resolveTree: vi.fn(async (t, opts) => {
 				seen.push(opts)
@@ -649,9 +703,10 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.94 }))
 		await runPipeline("12 rue de la Paix, Paris", { resolver, placeCountry })
 		expect(placeCountry).toHaveBeenCalledOnce()
+
 		expect(seen[0]).toMatchObject({
 			anchorPosterior: { FR: 0.94 },
-			anchorWeight: 1.0,
+			anchorWeight: 1,
 		})
 	})
 
@@ -661,7 +716,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		// resolver break the tie with its own evidence instead of committing to FR.
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
 		await runPipeline("Birmingham", { resolver, placeCountry })
-		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1.0 })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1 })
 	})
 
 	it("preserves the caller's resolveOpts fields while injecting the posterior", async () => {
@@ -688,13 +743,15 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 	it("defers to a caller-supplied anchorPosterior (a stronger postcode anchor) — never overwrites", async () => {
 		const { resolver, seen } = captureResolveOpts()
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.94 }))
+
 		await runPipeline(
 			"75002",
 			{ resolver, placeCountry },
-			{ resolveOpts: { anchorPosterior: { GB: 1.0 }, anchorWeight: 2.0 } }
+			{ resolveOpts: { anchorPosterior: { GB: 1 }, anchorWeight: 2 } }
 		)
+
 		// Caller's posterior wins; the coarse-placer is a no-op here.
-		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1.0 }, anchorWeight: 2.0 })
+		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1 }, anchorWeight: 2 })
 	})
 
 	it("respects a caller-supplied anchorWeight while injecting the placer's posterior", async () => {
@@ -715,18 +772,21 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 	it("flows the posterior on the fast-path too (postcode_only)", async () => {
 		const { resolver, seen } = captureResolveOpts()
 		const placeCountry = vi.fn(() => ({ country: "US", confidence: 0.96 }))
+
 		const postcodeShape: QueryShapeLite = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
 			characterClass: "numeric",
 		}
+
 		const result = await runPipeline("10118", {
 			computeQueryShape: () => postcodeShape,
 			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
 			resolver,
 			placeCountry,
 		})
+
 		expect(result.path).toBe("fast-path")
-		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1.0 })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1 })
 	})
 })

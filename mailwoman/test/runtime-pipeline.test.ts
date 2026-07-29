@@ -64,12 +64,13 @@ describe("createRuntimePipeline — wiring", () => {
 		const pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("10118")
+
+		const sawUSZip = expect.arrayContaining([expect.objectContaining({ format: "us_zip" })])
+
 		expect(classifier.parse).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({
-				queryShape: expect.objectContaining({
-					knownFormats: expect.arrayContaining([expect.objectContaining({ format: "us_zip" })]),
-				}),
+				queryShape: expect.objectContaining({ knownFormats: sawUSZip }),
 			})
 		)
 	})
@@ -104,11 +105,13 @@ describe("createRuntimePipeline — wiring", () => {
 
 	it("kind classifier override is respected", async () => {
 		const classifier = fakeClassifier()
+
 		const customKind = vi.fn(async () => ({
 			kind: "structured_address" as const,
 			confidence: 0,
 			alternatives: [],
 		}))
+
 		const pipeline = createRuntimePipeline({ classifier, classifyKind: customKind })
 
 		await pipeline("350 5th Ave, NYC")
@@ -122,6 +125,7 @@ describe("createRuntimePipeline — wiring", () => {
 			alternatives: [],
 			source: "detected" as const,
 		}))
+
 		const pipeline = createRuntimePipeline({ detectLocale: customDetect })
 
 		const result = await pipeline("8 rue Lafayette")
@@ -200,6 +204,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 			confidence: 0.5,
 			alternatives: [],
 		}))
+
 		const pipeline = createRuntimePipeline({ classifyKind: customKind })
 		const result = await pipeline("Paris") // default would say locality_only
 		expect(customKind).toHaveBeenCalled()

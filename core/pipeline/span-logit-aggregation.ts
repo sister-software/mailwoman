@@ -84,7 +84,7 @@ export function aggregateSpanLogits(
 			overlapping.push(t)
 		}
 
-		if (overlapping.length === 0) continue
+		if (!overlapping.length) continue
 
 		// Aggregate softmax probabilities per component tag (strip BIO prefix).
 		const tagScores = new Map<string, number>()
@@ -106,8 +106,10 @@ export function aggregateSpanLogits(
 
 		// Normalize by number of overlapping tokens so longer spans don't auto-win.
 		const norm = overlapping.length
+
 		const sorted = [...tagScores.entries()]
 			.map(([tag, score]) => ({ tag, score: score / norm }))
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((a, b) => b.score - a.score)
 			.slice(0, topK)
 
@@ -135,7 +137,9 @@ function stripBIOPrefix(label: string): string {
 	return label.slice(dash + 1)
 }
 
-/** Numerically stable softmax over a row of logits. */
+/**
+ * Numerically stable softmax over a row of logits.
+ */
 function softmax(row: readonly number[]): number[] {
 	let max = row[0]!
 
@@ -143,6 +147,7 @@ function softmax(row: readonly number[]): number[] {
 		if (row[i]! > max) {
 			max = row[i]!
 		}
+
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)
 

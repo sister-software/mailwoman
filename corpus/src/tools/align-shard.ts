@@ -52,6 +52,7 @@ export async function alignCanonicalShard(args: AlignShardOptions): Promise<void
 
 		if (result.kind === "labeled") {
 			outStream.write(JSON.stringify(result.row) + "\n")
+
 			labeled++
 		} else {
 			quarantined++
@@ -59,7 +60,11 @@ export async function alignCanonicalShard(args: AlignShardOptions): Promise<void
 			quarantineReasons[r] = (quarantineReasons[r] ?? 0) + 1
 		}
 	}
-	await new Promise<void>((res) => outStream.end(res))
+
+	await new Promise<void>((res) => {
+		outStream.end(res)
+	})
+
 	console.error(
 		`align-canonical-shard: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +
 			`  quarantine reasons: ${JSON.stringify(quarantineReasons)}`

@@ -91,11 +91,13 @@ function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(finalPath + sfx, { force: true })
 	}
+
 	renameSync(tmpPath, finalPath)
 
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(tmpPath + sfx, { force: true })
 	}
+
 	rmSync(aside, { force: true })
 }
 
@@ -111,6 +113,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
 			throw commandError("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
 		}
+
 		const STATE = options.state.toUpperCase()
 		const PARQUET = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const finalOut = options.out ?? dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`)
@@ -129,6 +132,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 				"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."
 			)
 		}
+
 		let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
 
 		try {
@@ -136,6 +140,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		} catch {
 			throw commandError("@duckdb/node-api is not installed — `situs address-points` is a maintainer-only data command")
 		}
+
 		const { ADDRESS_POINT_COLUMNS, createAddressPointTable, createAddressPointIndexes } = pointSchema
 		const { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } = streetNormalize
 
@@ -165,22 +170,24 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (options.threads && /^\d+$/.test(options.threads)) {
 			await duck.run(`SET threads TO ${options.threads}`)
 		}
+
 		// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
 		// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
 		let countyFilter = ""
 
 		if (options.countyFips) {
 			await duck.run("INSTALL spatial; LOAD spatial;")
+
 			countyFilter = `AND ST_Contains(
 							(SELECT geom FROM ST_Read('${options.countyBoundary}') WHERE GEOID = '${options.countyFips}'),
 							ST_Point(lon, lat))`
 		}
+
 		// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
 		// lower() matches case-insensitively against our normalised allow-list.
-		const datasetFilter =
-			allowedDatasets.size > 0
-				? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
-				: ""
+		const datasetFilter = allowedDatasets.size
+			? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
+			: ""
 
 		const db = new DatabaseSync(tmpOut)
 		// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
@@ -212,6 +219,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 					.map((p) => `'${p.trim()}'`)
 					.join(", ")
 			: ""
+
 		const streamSQL = OA_MODE
 			? `SELECT
 							NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
@@ -232,6 +240,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 							AND nullif(trim(number), '') IS NOT NULL
 							${countyFilter}
 							${datasetFilter}`
+
 		const stream = await duck.stream(streamSQL)
 		// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 		const colNames = stream.columnNames()
@@ -254,6 +263,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 
 				if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue // OA rows can carry empty coords
 				const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
+
 				insert.run(
 					streetNorm,
 					canonicalizeRouteKey(streetNorm),
@@ -267,13 +277,18 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
 					OA_MODE ? "openaddresses-latest" : String(options.release)
 				)
+
 				kept++
 			}
 		}
+
 		db.exec("COMMIT")
+
 		console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
+
 		await createAddressPointIndexes(kdb)
 		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+
 		const stats = db
 			.prepare(
 				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
@@ -287,13 +302,14 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
 			`provenance (${STATE}, release ${options.release}):`,
 		]
-		const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
+
+		const sortedDatasets = [...datasetCounts.entries()].toSorted((a, b) => b[1] - a[1])
 
 		for (const [dataset, count] of sortedDatasets) {
 			lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
 		}
 
-		if (allowedDatasets.size > 0) {
+		if (allowedDatasets.size) {
 			// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
 			// Run a secondary count (cheap: parquet predicate pushdown on a single column) for the
 			// total-minus-kept so the operator can see how much the filter dropped.
@@ -305,9 +321,11 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 							AND nullif(trim(number), '') IS NOT NULL
 							${countyFilter}
 					`)
+
 			const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
 			const keptCount = totalReturned
 			const droppedCount = totalUnfiltered - keptCount
+
 			lines.push(
 				`license-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
 			)

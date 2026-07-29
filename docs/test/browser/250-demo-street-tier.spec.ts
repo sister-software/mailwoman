@@ -19,9 +19,13 @@
 import { expect, test } from "#e2e"
 
 const WHITE_HOUSE = { lat: 38.8977, lon: -77.0365 }
-const DC_SITUS_BYTES = 119_889_920 // the full shard — a byte-ranged lookup must transfer a tiny fraction
+const DC_SITUS_BYTES = 119_889_920
 
-/** Rough metres between two lat/lons (equirectangular; fine at city scale). */
+// the full shard — a byte-ranged lookup must transfer a tiny fraction
+
+/**
+ * Rough metres between two lat/lons (equirectangular; fine at city scale).
+ */
 function metresBetween(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
 	const R = 6_371_000
 	const dLat = ((b.lat - a.lat) * Math.PI) / 180
@@ -62,6 +66,7 @@ test.describe("Demo — street tier (#377)", () => {
 	}) => {
 		let situsBytes = 0
 		let rangeReads = 0
+
 		page.on("response", (res) => {
 			if (!res.url().includes("/street/us/dc/situs.db")) return
 
@@ -73,6 +78,7 @@ test.describe("Demo — street tier (#377)", () => {
 			if (res.status() === 206) {
 				rangeReads++
 			}
+
 			situsBytes += Number(res.headers()["content-length"] ?? 0)
 		})
 

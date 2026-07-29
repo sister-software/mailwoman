@@ -10,9 +10,10 @@
  */
 
 import { $public } from "../env/index.ts"
-import { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
+import { featurize } from "./featurize.ts"
 
-/** Serialized model: metadata in JSON, the dense `weights` (row-major [class][feature]) alongside. */
+export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
+
 export interface CoarsePlacerArtifact {
 	/**
 	 * The coarse placer's classes (the country/region codes it routes to).
@@ -46,7 +47,9 @@ export interface CoarsePlacerMeta {
 	temperature: number
 	bias: number[]
 	quantization?: "int8-per-row"
-	/** Per-class dequantization scale; present iff `quantization === "int8-per-row"`. */
+	/**
+	 * Per-class dequantization scale; present iff `quantization === "int8-per-row"`.
+	 */
 	scales?: number[]
 }
 
@@ -81,17 +84,25 @@ export function dequantizeInt8Weights(
 }
 
 export interface CoarsePrediction {
-	/** The predicted class, or `null` when the model abstained (confidence below the threshold). */
+	/**
+	 * The predicted class, or `null` when the model abstained (confidence below the threshold).
+	 */
 	country: string | null
-	/** Calibrated probability of the top class (the abstention signal). */
+	/**
+	 * Calibrated probability of the top class (the abstention signal).
+	 */
 	confidence: number
 	abstained: boolean
-	/** The full calibrated class distribution. */
+	/**
+	 * The full calibrated class distribution.
+	 */
 	probs: Record<string, number>
 }
 
 export interface CoarsePlacerOpts {
-	/** Abstain when the calibrated top-class confidence is below this (default 0.5). */
+	/**
+	 * Abstain when the calibrated top-class confidence is below this (default 0.5).
+	 */
 	abstainBelow?: number
 	/**
 	 * Open-set reject rule (#244 M2). When `true`, the ABSTAIN decision uses the total IN-MAP probability mass `1 -
@@ -188,8 +199,10 @@ export class CoarsePlacer {
 			for (const i of feats) {
 				s += this.#weights[base + i]!
 			}
+
 			logits[c] = s / this.#temp
 		}
+
 		// Numerically-stable softmax.
 		let maxLogit = -Infinity
 
@@ -197,6 +210,7 @@ export class CoarsePlacer {
 			if (logits[c]! > maxLogit) {
 				maxLogit = logits[c]!
 			}
+
 		let sum = 0
 		const probs = new Float32Array(C)
 
@@ -205,6 +219,7 @@ export class CoarsePlacer {
 			probs[c] = e
 			sum += e
 		}
+
 		let topIdx = 0
 		let topProb = -1
 		let otherProb = 0
@@ -292,14 +307,16 @@ export function inMapPosterior(
 
 	// The argmax always survives (it is ≥ every other marginal; if even it fell below the floor the
 	// prediction would have abstained upstream) — but guard anyway so the posterior is never empty.
-	if (Object.keys(posterior).length === 0) {
+	if (!Object.keys(posterior).length) {
 		posterior[prediction.country] = prediction.confidence
 	}
 
 	return posterior
 }
 
-/** Load a coarse-placer from a JSON metadata file + a sibling `.weights.bin` (Float32). */
+/**
+ * Load a coarse-placer from a JSON metadata file + a sibling `.weights.bin` (Float32).
+ */
 export async function loadCoarsePlacer(
 	metaJson: { classes: string[]; featureDim: number; temperature: number; bias: number[] },
 	weights: Float32Array,
@@ -307,5 +324,3 @@ export async function loadCoarsePlacer(
 ): Promise<CoarsePlacer> {
 	return new CoarsePlacer({ ...metaJson, weights }, opts)
 }
-
-export { COARSE_CLASSES, FEATURE_DIM, featurize }

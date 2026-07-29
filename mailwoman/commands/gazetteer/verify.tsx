@@ -32,7 +32,9 @@ const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) =>
 	const state = useCommandTask(
 		async () => {
 			const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
+
 			console.error(`Verifying ${dbPath}...`)
+
 			const db = new DatabaseSync(dbPath, { readOnly: true })
 			const structural = verifyAdmin(db, loadDefaultBaseline())
 			db.close()

@@ -44,7 +44,9 @@ interface BuildArgs {
 	pbf: string
 	release: string
 	output: string
-	/** #250: recover the street for no-`addr:street` points from the nearest named highway. */
+	/**
+	 * #250: recover the street for no-`addr:street` points from the nearest named highway.
+	 */
 	recover: boolean
 	recoverRadiusKm: number
 }
@@ -94,6 +96,7 @@ async function main(): Promise<void> {
 			`[osm] recovery index: ${recoveryIndex.size.toLocaleString()} highway vertices (radius ${args.recoverRadiusKm * 1000}m)`
 		)
 	}
+
 	const tmp = `${args.output}.tmp-${process.pid}`
 
 	mkdirSync(dirname(args.output), { recursive: true })
@@ -117,6 +120,7 @@ async function main(): Promise<void> {
 	const BATCH = 50_000
 
 	console.error(`[osm] building ${args.country}/${args.slug} rooftop shard from ${args.pbf}`)
+
 	out.exec("BEGIN")
 
 	for await (const rec of extractAddrPoints(args.pbf)) {
@@ -124,8 +128,10 @@ async function main(): Promise<void> {
 
 		if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) {
 			badCoord++
+
 			continue
 		}
+
 		// #250: a point with no addr:street recovers its street from the nearest named highway (when --recover).
 		let street = rec.street
 		let rowSource = source
@@ -135,19 +141,25 @@ async function main(): Promise<void> {
 
 			if (!hit) {
 				noStreet++
+
 				continue
 			}
+
 			street = hit.name
 			rowSource = recoverSource
+
 			recovered++
 		}
+
 		const streetNorm = normalizeStreetForKeyLocale(street, locale)
 		const number = rec.housenumber.trim().toLowerCase()
 
 		if (!streetNorm || !number) {
 			noStreet++
+
 			continue
 		}
+
 		// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
 		// locality_norm, street_raw, lat, lon, source, release.
 		insert.run(
@@ -163,6 +175,7 @@ async function main(): Promise<void> {
 			rowSource,
 			args.release
 		)
+
 		written++
 
 		if (written % BATCH === 0) {
@@ -174,9 +187,11 @@ async function main(): Promise<void> {
 			}
 		}
 	}
+
 	out.exec("COMMIT")
 
 	console.error(`[osm] indexing…`)
+
 	await createAddressPointIndexes(kdb)
 	out.exec("ANALYZE")
 	await kdb.destroy()
@@ -185,6 +200,7 @@ async function main(): Promise<void> {
 	if (existsSync(args.output)) {
 		renameSync(args.output, `${args.output}.prev`)
 	}
+
 	renameSync(tmp, args.output)
 
 	if (existsSync(`${args.output}.prev`)) {

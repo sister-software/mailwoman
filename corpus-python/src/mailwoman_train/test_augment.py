@@ -701,3 +701,47 @@ def test_augment_row_upper_case_prob_yields_uppercased_copy():
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=0.0, upper_case_prob=1.0))
     assert results[0] is row
     assert any(r["raw"] == "350 5TH AVE NW" for r in results)
+
+
+class TestOrdinalStreetSwap:
+    """The 8.2.0 metamorphic catch: "5th" ↔ "Fifth" equivalence, street-family labels only."""
+
+    def _row(self):
+        return {
+            "raw": "350 Fifth Ave, New York, NY",
+            "tokens": ["350", "Fifth", "Ave,", "New", "York,", "NY"],
+            "labels": ["B-house_number", "B-street", "B-street_suffix", "B-locality", "I-locality", "B-region"],
+        }
+
+    def test_swaps_word_ordinal_to_digit_on_street_label(self):
+        import random
+
+        from .augment import augment_row
+
+        rows = list(augment_row(self._row(), random.Random(7), 0.0, 0.0, ordinal_prob=1.0))
+        augmented = [r for r in rows[1:] if "5th" in r["raw"]]
+        assert augmented, "expected a 5th-form augmented copy"
+        assert augmented[0]["raw"] == "350 5th Ave, New York, NY"
+        assert augmented[0]["labels"] == self._row()["labels"]
+
+    def test_never_touches_non_street_ordinals(self):
+        import random
+
+        from .augment import augment_row
+
+        row = {
+            "raw": "Apt 5th 12 Main St",
+            "tokens": ["Apt", "5th", "12", "Main", "St"],
+            "labels": ["B-unit", "I-unit", "B-house_number", "B-street", "B-street_suffix"],
+        }
+        rows = list(augment_row(row, random.Random(7), 0.0, 0.0, ordinal_prob=1.0))
+        assert all("Fifth" not in r["raw"] for r in rows)
+
+    def test_prob_zero_is_byte_identical_stream(self):
+        import random
+
+        from .augment import augment_row
+
+        a = list(augment_row(self._row(), random.Random(3), 0.3, 0.3))
+        b = list(augment_row(self._row(), random.Random(3), 0.3, 0.3, ordinal_prob=0.0))
+        assert a == b

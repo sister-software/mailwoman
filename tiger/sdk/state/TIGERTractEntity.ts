@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { AdminLevel1Code, type FIPSCountyCode, type FIPSTractCode } from "@mailwoman/tiger"
+import type { AdminLevel1Code, FIPSCountyCode, FIPSTractCode } from "@mailwoman/tiger"
 
 /**
  * @internal

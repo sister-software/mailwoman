@@ -53,6 +53,12 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  # onnxruntime-node's postinstall downloads OPTIONAL GPU-provider binaries from Microsoft's Akamai
+  # CDN — the CPU libs the runners actually use are bundled in the npm tarball. That CDN edge is
+  # intermittently unreachable from the lab runners (2026-07-28: three CI rounds died on it —
+  # ETIMEDOUT IPv4 + ENETUNREACH IPv6). Skip the download entirely: deterministic installs, no GPU
+  # inference on CI to miss it.
+  ONNXRUNTIME_NODE_INSTALL: skip
 
 concurrency:
   group: docs-${{ github.workflow }}-${{ github.ref }}
@@ -64,7 +70,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -97,7 +103,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       # Fast structural gate (docs-architecture cleanup, Phase 4): frontmatter vocabulary +
       # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins

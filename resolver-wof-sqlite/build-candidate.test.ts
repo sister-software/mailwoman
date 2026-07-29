@@ -30,9 +30,12 @@ const ALIAS_SEP = "\u{E000}"
 
 let scratch: string
 
-/** A minimal admin WOF with the tables `buildCandidateTable` reads. */
+/**
+ * A minimal admin WOF with the tables `buildCandidateTable` reads.
+ */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -76,12 +79,16 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (201, 101, 'region');
 		INSERT INTO ancestors VALUES (202, 101, 'region');
 	`)
+
 	db.close()
 }
 
-/** A postcode shard: `spr` with placetype='postalcode'. One real-coord ZIP + one placeholder 0,0. */
+/**
+ * A postcode shard: `spr` with placetype='postalcode'. One real-coord ZIP + one placeholder 0,0.
+ */
 function buildFixturePostcodes(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -94,6 +101,7 @@ function buildFixturePostcodes(path: string): void {
 		-- placeholder 0,0 coords → dropped by the latitude!=0 AND longitude!=0 filter (the White House 20500 case)
 		INSERT INTO spr VALUES (20500, '20500', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, -1, 0);
 	`)
+
 	db.close()
 }
 
@@ -108,7 +116,9 @@ interface CandRow {
 	is_primary: number
 }
 
-/** Resolve a normalized key the way the query side does — join the code maps back to strings. */
+/**
+ * Resolve a normalized key the way the query side does — join the code maps back to strings.
+ */
 function probe(db: DatabaseSync, key: string): CandRow[] {
 	return db
 		.prepare(
@@ -147,12 +157,12 @@ describe("buildCandidateTable", () => {
 			const [chi] = probe(db, normalizeLocalityForKey("Chicago"))
 			expect(chi).toBeDefined()
 			// Denormalized: the row carries everything the resolver needs, no join to spr.
-			expect(chi.name).toBe("Chicago")
-			expect(chi.country).toBe("US")
-			expect(chi.placetype).toBe("locality")
-			expect(chi.latitude).toBeCloseTo(41.88, 2)
-			expect(chi.min_lat).toBeCloseTo(41.6, 2)
-			expect(chi.is_primary).toBe(1)
+			expect(chi!.name).toBe("Chicago")
+			expect(chi!.country).toBe("US")
+			expect(chi!.placetype).toBe("locality")
+			expect(chi!.latitude).toBeCloseTo(41.88, 2)
+			expect(chi!.min_lat).toBeCloseTo(41.6, 2)
+			expect(chi!.is_primary).toBe(1)
 
 			// Deprecated row must not resolve.
 			expect(probe(db, normalizeLocalityForKey("Old Town"))).toHaveLength(0)

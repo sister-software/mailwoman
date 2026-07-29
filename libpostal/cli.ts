@@ -42,7 +42,8 @@ async function serve(): Promise<void> {
 
 	const engine: LibpostalEngine = {
 		async parse(query) {
-			const tree = await classifier.parse(query, { postcodeRepair: true })
+			// Decision A endpoint default: libpostal consumers submit full postal addresses (the record register).
+			const tree = await classifier.parse(query, { postcodeRepair: true, inputMode: "formatted" })
 
 			// `treeToParseMatches` collapses the street-name family into one `road`-bound match and
 			// yields reading-order `{ classification, value }` pairs; the app maps them to libpostal labels.
@@ -89,6 +90,7 @@ function openapi(): void {
 	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
 		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
 		console.error("Usage: mailwoman-libpostal openapi [--flavor 3.1|3.0] [--out <path>]")
+
 		process.exit(1)
 	}
 

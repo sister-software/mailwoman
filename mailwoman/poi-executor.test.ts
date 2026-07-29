@@ -45,6 +45,7 @@ const NEVER_BUILD_LOCAL = () => false
 describe("createPOIExecutor", () => {
 	it("category happy path: resolves the center from the anchor tree and returns mapped results", () => {
 		const seenQueries: POISearchQuery[] = []
+
 		const executor = createPOIExecutor({
 			lookup: stubLookup((query) => {
 				seenQueries.push(query)
@@ -58,11 +59,13 @@ describe("createPOIExecutor", () => {
 			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		}
+
 		const outcome = executor(intent)
 
 		expect(outcome.type).toBe("intent")
 
 		if (outcome.type !== "intent") throw new Error("unreachable")
+
 		expect(outcome.results).toEqual([
 			{
 				name: "Springfield General",
@@ -76,6 +79,7 @@ describe("createPOIExecutor", () => {
 				distanceM: 120,
 			},
 		])
+
 		expect(seenQueries).toEqual([
 			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
 		])
@@ -85,6 +89,7 @@ describe("createPOIExecutor", () => {
 		const seenQueries: POISearchQuery[] = []
 		// The db stores the raw Overture leaf id on each row — the executor must re-tag it back to `supermarket`.
 		const groceryHit: POISearchHit = { ...HOSPITAL_HIT, name: "Jewel-Osco", categoryID: "grocery_store" }
+
 		const executor = createPOIExecutor({
 			lookup: stubLookup((query) => {
 				seenQueries.push(query)
@@ -103,6 +108,7 @@ describe("createPOIExecutor", () => {
 		expect(outcome.type).toBe("intent")
 
 		if (outcome.type !== "intent") throw new Error("unreachable")
+
 		// The query fans out over the leaves (not the raw seed id); the emitted id is the canonical seed id.
 		expect(seenQueries).toEqual([
 			{
@@ -111,12 +117,14 @@ describe("createPOIExecutor", () => {
 				limit: undefined,
 			},
 		])
+
 		expect(outcome.results![0]!.categoryID).toBe("supermarket")
 		expect(outcome.results![0]!.name).toBe("Jewel-Osco")
 	})
 
 	it("category identity default: no injected resolver ⇒ probes [categoryID] and re-tag is a no-op", () => {
 		const seenQueries: POISearchQuery[] = []
+
 		const executor = createPOIExecutor({
 			lookup: stubLookup((query) => {
 				seenQueries.push(query)
@@ -134,9 +142,11 @@ describe("createPOIExecutor", () => {
 		expect(outcome.type).toBe("intent")
 
 		if (outcome.type !== "intent") throw new Error("unreachable")
+
 		expect(seenQueries).toEqual([
 			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
 		])
+
 		expect(outcome.results![0]!.categoryID).toBe("hospital")
 	})
 
@@ -175,6 +185,7 @@ describe("createPOIExecutor", () => {
 			subject: { kind: "category", categoryID: "fire_hydrant", matched: "fire hydrant" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		}
+
 		const outcome = executor(intent)
 
 		expect(outcome).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
@@ -202,6 +213,7 @@ describe("createPOIExecutor", () => {
 
 	it("name search without center: OK, no abstain, search runs un-anchored", () => {
 		const seenQueries: POISearchQuery[] = []
+
 		const nameHit: POISearchHit = {
 			name: "Joe's Diner",
 			categoryID: null,
@@ -212,6 +224,7 @@ describe("createPOIExecutor", () => {
 			confidence: 0.6,
 			gersID: null,
 		}
+
 		const executor = createPOIExecutor({
 			lookup: stubLookup((query) => {
 				seenQueries.push(query)
@@ -226,6 +239,7 @@ describe("createPOIExecutor", () => {
 		expect(outcome.type).toBe("intent")
 
 		if (outcome.type !== "intent") throw new Error("unreachable")
+
 		expect(outcome.results).toEqual([
 			{
 				name: "Joe's Diner",
@@ -238,6 +252,7 @@ describe("createPOIExecutor", () => {
 				gersID: null,
 			},
 		])
+
 		expect(seenQueries).toEqual([{ name: "Joe's Diner", center: undefined, limit: undefined }])
 	})
 
@@ -260,11 +275,13 @@ describe("createPOIExecutor", () => {
 
 	it("ancestry is decorated per-result when reverseGeocode is wired, capped at the result count", () => {
 		const seenCoords: Array<[number, number]> = []
+
 		const ancestry = [
 			{ placetype: "locality", name: "Springfield", wofID: 1 },
 			{ placetype: "region", name: "Illinois", wofID: 2 },
 			{ placetype: "country", name: "United States", wofID: 3 },
 		]
+
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => [HOSPITAL_HIT]),
 			requiresBuildLocal: NEVER_BUILD_LOCAL,

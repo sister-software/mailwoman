@@ -16,6 +16,7 @@ export { classifyKind, classifyKindSync, createKindClassifier } from "./classify
 export type { KindClassifierOpts } from "./classify.ts"
 export { matchPOISubject } from "./poi.ts"
 export type { POIPhraseMatch, POIPhraseLookup, POISubjectMatch } from "./poi.ts"
+
 export {
 	scoreIntersection,
 	scoreLandmark,
@@ -25,4 +26,5 @@ export {
 	scoreStructuredAddress,
 	scoreVague,
 } from "./rules.ts"
+
 export type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.ts"

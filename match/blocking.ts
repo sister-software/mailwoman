@@ -18,10 +18,14 @@
  *   default, and any block too large to scan is _reported_, never silently dropped.
  */
 
-/** Maps a record to zero or more block keys. Two records sharing any key become a candidate pair. */
+/**
+ * Maps a record to zero or more block keys. Two records sharing any key become a candidate pair.
+ */
 export type BlockingKey<R> = (record: R) => string[]
 
-/** A geographic coordinate (WGS84 decimal degrees). */
+/**
+ * A geographic coordinate (WGS84 decimal degrees).
+ */
 export interface LatLon {
 	latitude: number
 	longitude: number
@@ -74,7 +78,7 @@ export function exactKey<R>(
 	extract: (record: R) => string | null | undefined,
 	opts: { prefix?: number; normalize?: (value: string) => string } = {}
 ): BlockingKey<R> {
-	const normalize = opts.normalize ?? ((v: string) => v.trim().toLowerCase().replace(/\s+/g, " "))
+	const normalize = opts.normalize ?? ((v: string) => v.trim().toLowerCase().replaceAll(/\s+/g, " "))
 
 	return (record) => {
 		const value = extract(record)
@@ -100,7 +104,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 		for (const key of keys) {
 			const parts = key(record)
 
-			if (parts.length === 0) return []
+			if (!parts.length) return []
 			combos = combos.flatMap((prefix) => parts.map((part) => (prefix ? `${prefix}&${part}` : part)))
 		}
 
@@ -108,11 +112,17 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 	}
 }
 
-/** The outcome of a blocking pass. */
+/**
+ * The outcome of a blocking pass.
+ */
 export interface BlockResult<R> {
-	/** Deduplicated candidate pairs (no self-pairs; a pair caught by multiple keys appears once). */
+	/**
+	 * Deduplicated candidate pairs (no self-pairs; a pair caught by multiple keys appears once).
+	 */
 	pairs: Array<[R, R]>
-	/** Blocks that exceeded `maxBlockSize` and were skipped — surfaced so coverage limits are visible. */
+	/**
+	 * Blocks that exceeded `maxBlockSize` and were skipped — surfaced so coverage limits are visible.
+	 */
 	droppedBlocks: Array<{ key: string; size: number }>
 }
 
@@ -159,6 +169,7 @@ export function block<R>(
 
 		if (bucket.length > maxBlockSize) {
 			droppedBlocks.push({ key, size: bucket.length })
+
 			continue
 		}
 

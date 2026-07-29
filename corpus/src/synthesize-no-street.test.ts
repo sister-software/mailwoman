@@ -20,9 +20,9 @@ function seededRandom(seed: number): () => number {
 	let s = seed
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 
@@ -39,6 +39,7 @@ describe("synthesizeNoStreetRow", () => {
 			random: seededRandom(1),
 			forceTemplate: "venue-plain",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.template).toBe("venue-plain")
 		expect(row!.components.venue).toBeDefined()
@@ -53,6 +54,7 @@ describe("synthesizeNoStreetRow", () => {
 			random: seededRandom(2),
 			forceTemplate: "venue-adversarial",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.template).toBe("venue-adversarial")
 		expect(row!.components.venue).toBeDefined()
@@ -61,6 +63,7 @@ describe("synthesizeNoStreetRow", () => {
 		// The whole point: adversarial venues contain street-typing tokens that the model
 		// must learn to NOT classify as street-side tags.
 		const v = row!.components.venue!.toLowerCase()
+
 		const hasStreetWord = [
 			"street",
 			"avenue",
@@ -74,6 +77,7 @@ describe("synthesizeNoStreetRow", () => {
 			"court",
 			"square",
 		].some((w) => v.includes(w))
+
 		expect(hasStreetWord).toBe(true)
 	})
 
@@ -82,6 +86,7 @@ describe("synthesizeNoStreetRow", () => {
 			random: seededRandom(3),
 			forceTemplate: "locality-region-postcode",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.raw).toBe("Boston, MA 02101")
 		expect(row!.components.locality).toBe("Boston")
@@ -96,6 +101,7 @@ describe("synthesizeNoStreetRow", () => {
 			random: seededRandom(4),
 			forceTemplate: "postcode-only",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.raw).toBe("02101")
 		expect(row!.components).toEqual({ postcode: "02101" })
@@ -107,6 +113,7 @@ describe("synthesizeNoStreetRow", () => {
 			random: seededRandom(5),
 			forceTemplate: "country-only",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.components.country).toBeDefined()
 		// Country surface form is the canonical / colloquial name, not the ISO code.
@@ -129,6 +136,7 @@ describe("synthesizeNoStreetRow", () => {
 
 	it("template distribution is reasonable across 1000 invocations", () => {
 		const rng = seededRandom(99)
+
 		const counts: Record<NoStreetTemplate, number> = {
 			"venue-plain": 0,
 			"venue-adversarial": 0,
@@ -140,8 +148,10 @@ describe("synthesizeNoStreetRow", () => {
 
 		for (let i = 0; i < 1000; i++) {
 			const row = synthesizeNoStreetRow(SAMPLE_BASE, { random: rng })
+
 			counts[row!.template]++
 		}
+
 		// venue-adversarial is the critical slice — should be the largest single bucket.
 		expect(counts["venue-adversarial"]).toBeGreaterThan(counts["venue-plain"])
 
@@ -166,6 +176,7 @@ describe("synthesizeNoStreetRow", () => {
 				{ ...SAMPLE_BASE, country },
 				{ random: seededRandom(7), forceTemplate: "venue-plain" }
 			)
+
 			expect(row!.locale).toBe(expectedLocale)
 		}
 	})

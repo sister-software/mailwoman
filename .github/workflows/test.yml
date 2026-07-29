@@ -34,6 +34,12 @@ env:
   # Opt into Node 24 for JavaScript-based actions (checkout, setup-node, etc.)
   # ahead of the forced switch in June 2026 / removal in Sep 2026.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  # onnxruntime-node's postinstall downloads OPTIONAL GPU-provider binaries from Microsoft's Akamai
+  # CDN — the CPU libs the runners actually use are bundled in the npm tarball. That CDN edge is
+  # intermittently unreachable from the lab runners (2026-07-28: three CI rounds died on it —
+  # ETIMEDOUT IPv4 + ENETUNREACH IPv6). Skip the download entirely: deterministic installs, no GPU
+  # inference on CI to miss it.
+  ONNXRUNTIME_NODE_INSTALL: skip
 
 concurrency:
   group: test-${{ github.workflow }}-${{ github.ref }}
@@ -47,7 +53,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -55,7 +61,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -72,6 +80,21 @@ jobs:
       # workspace .d.ts under each `out/` exist for `@mailwoman/*` resolution.
       - name: Typecheck scripts
         run: yarn typecheck:scripts
+
+      # Test files are excluded from every build project on purpose — the build emits what it includes,
+      # and an included test lands in `out/` and then in the tarball. That `exclude` suppressed the emit
+      # AND the checking, so until this step tests were compiled by vitest's esbuild transform, which
+      # strips types without looking at them. Each workspace's tsconfig.test.json is the non-emitting
+      # half. Runs after Compile for the same .d.ts reason as the step above.
+      - name: Typecheck tests
+        run: yarn typecheck:tests
+
+      # docs/ is a Docusaurus app, so it is not in `tsc -b` — which meant nothing checked it. Three real
+      # bugs were sitting there when this step was added: a ReferenceError in a React state updater, a
+      # shorthand property key renamed out from under its consumer, and a timer ref typed for the wrong
+      # runtime. Same gap as the test files, one workspace over.
+      - name: Typecheck docs
+        run: yarn typecheck:docs
 
       # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
       # "command not found: uvx", exit 127).
@@ -100,7 +123,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -108,7 +131,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -168,7 +193,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -176,7 +201,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -206,7 +233,7 @@ jobs:
       - self-hosted
       - Linux
       - X64
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -214,7 +241,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable

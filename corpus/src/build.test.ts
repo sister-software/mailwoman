@@ -40,6 +40,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	it("produces top-level MANIFEST.json + parquet shards + splits + quarantine pile", async () => {
 		const outDir = join(scratch, "build")
 		const stages: BuildStage[] = []
+
 		const manifest = await buildCorpus({
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
@@ -83,11 +84,12 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		await reader.close()
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")
-		expect(firstRow!.tokens.length).toBe(firstRow!.labels.length)
+		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)
 	})
 
 	it("routes rows whose components.region is held out to val/test", async () => {
 		const outDir = join(scratch, "build")
+
 		await buildCorpus({
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
@@ -132,6 +134,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: false,
 		})
+
 		const withSynth = await buildCorpus({
 			outputDir: join(scratch, "with-synth"),
 			corpusVersion: "0.1.0",
@@ -139,6 +142,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 		})
+
 		expect(withSynth.total_aligned_rows).toBeGreaterThan(noSynth.total_aligned_rows)
 	})
 
@@ -149,6 +153,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			adapters: [wofAdminAdapter],
 			adapterInputs: {}, // no input for wof-admin
 		})
+
 		expect(manifest.skipped_adapters).toContain("wof-admin")
 		expect(manifest.adapters).toHaveLength(0)
 		expect(manifest.total_aligned_rows).toBe(0)

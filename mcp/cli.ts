@@ -104,6 +104,7 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 
 	if (cached) return cached
 	const { classifier, resolver } = await loadCore()
+
 	const pipeline = createRuntimePipeline({
 		classifier,
 		resolver,
@@ -150,6 +151,7 @@ const deps: MCPToolDeps = {
 				`mailwoman_overpass_export: query is not POI-shaped (${outcome?.type ?? "no poi intent"}${reason})`
 			)
 		}
+
 		const { subject } = outcome.intent
 		const osmTag = subject.kind === "category" ? getPOICategory(subject.categoryID)?.osmTag : undefined
 
@@ -160,7 +162,9 @@ const deps: MCPToolDeps = {
 		using db = new DatabaseClient<LayerContractDatabase>({
 			database: new DatabaseSync(databasePath, { readOnly: true }),
 		})
+
 		const manifest = await readLayerManifest(db)
+
 		const coverage = await db
 			.selectFrom("layer_coverage")
 			.select((eb) => [

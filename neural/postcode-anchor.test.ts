@@ -18,11 +18,17 @@ import {
 	type PostcodeResolver,
 } from "./postcode-anchor.ts"
 
-/** A fake gazetteer: exact-match map from normalized postcode → hits. */
+/**
+ * A fake gazetteer: exact-match map from normalized postcode → hits.
+ */
 class FakeResolver implements PostcodeResolver {
-	constructor(private readonly map: Record<string, PostcodePlace[]>) {}
+	readonly #map: Record<string, PostcodePlace[]>
+
+	constructor(map: Record<string, PostcodePlace[]>) {
+		this.#map = map
+	}
 	lookup(postcode: string): PostcodePlace[] {
-		return this.map[postcode] ?? []
+		return this.#map[postcode] ?? []
 	}
 }
 
@@ -102,7 +108,7 @@ describe("extractPostcodeAnchors", () => {
 	it("returns multiple anchors for multiple postcodes", () => {
 		const anchors = extractPostcodeAnchors("94105 ... 75001", RESOLVER)
 		expect(anchors).toHaveLength(2)
-		expect(anchors.map((a) => a.normalized).sort()).toEqual(["75001", "94105"])
+		expect(anchors.map((a) => a.normalized).toSorted()).toEqual(["75001", "94105"])
 	})
 
 	it("tags an exact hit with matchType 'exact'", () => {
@@ -215,6 +221,7 @@ describe("gbOutwardCode", () => {
 		expect(gbOutwardCode("SO4 3RX")).toBe("SO4")
 		expect(gbOutwardCode("SW1A 2AA")).toBe("SW1A")
 	})
+
 	it("returns null for non-GB shapes (never fires elsewhere)", () => {
 		expect(gbOutwardCode("75001")).toBeNull() // numeric
 		expect(gbOutwardCode("1012LM")).toBeNull() // no space
@@ -239,6 +246,7 @@ describe("extractPostcodeAnchors — GB outward fallback", () => {
 			"SW1A 2AA": [{ country: "GB", lat: 51.5, lon: -0.14 }],
 			SW1A: [{ country: "GB", lat: 51.501, lon: -0.142 }],
 		})
+
 		const [a] = extractPostcodeAnchors("SW1A 2AA", both)
 		expect(a!.matchType).toBe("exact")
 	})

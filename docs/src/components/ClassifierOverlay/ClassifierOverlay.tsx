@@ -15,13 +15,12 @@
  *       influenced each parsed component.
  */
 
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import type { ResultNode } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Stage taxonomy
-// ---------------------------------------------------------------------------
+//#region Stage taxonomy
 
 interface StageDef {
 	key: string
@@ -35,9 +34,13 @@ interface StageDef {
 	 * contributed to that node.
 	 */
 	sourceMatches: string[]
-	/** True when a node can carry this stage's badge AND a different source (displaced classifier). */
+	/**
+	 * True when a node can carry this stage's badge AND a different source (displaced classifier).
+	 */
 	coexists?: boolean
-	/** Pipeline-wide flag — not a per-node source. */
+	/**
+	 * Pipeline-wide flag — not a per-node source.
+	 */
 	isPipelineFlag?: boolean
 }
 
@@ -127,7 +130,9 @@ const STAGES: StageDef[] = [
 	},
 ]
 
-/** Fast lookup: source string → StageDef */
+/**
+ * Fast lookup: source string → StageDef
+ */
 const SOURCE_TO_STAGE: Map<string, StageDef> = new Map()
 
 for (const stage of STAGES) {
@@ -136,9 +141,9 @@ for (const stage of STAGES) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Tree-flattening with source preservation
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Tree-flattening with source preservation
 
 interface SourceNode {
 	tag: string
@@ -148,7 +153,9 @@ interface SourceNode {
 	end?: number
 	source?: string
 	sourceID?: string
-	/** Displaced classifier source when the resolver won (from metadata). */
+	/**
+	 * Displaced classifier source when the resolver won (from metadata).
+	 */
 	displacedSource?: string
 	displacedSourceID?: string
 }
@@ -180,8 +187,10 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 		if (typeof n.tag === "string") {
 			const displacedSource =
 				typeof n.metadata?.classifier_source === "string" ? n.metadata.classifier_source : undefined
+
 			const displacedSourceID =
 				typeof n.metadata?.classifier_source_id === "string" ? n.metadata.classifier_source_id : undefined
+
 			out.push({
 				tag: n.tag,
 				value: n.value,
@@ -202,20 +211,24 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 		}
 	}
 
-	return out.reverse()
+	return out.toReversed()
 }
 
-// ---------------------------------------------------------------------------
-// Stage resolution for a node
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Stage resolution for a node
 
 interface StageContribution {
 	stage: StageDef
-	/** When true, this is a displaced classifier — the resolver overrode it. */
+	/**
+	 * When true, this is a displaced classifier — the resolver overrode it.
+	 */
 	displaced?: boolean
 }
 
-/** Determine which pipeline stages contributed to a node. */
+/**
+ * Determine which pipeline stages contributed to a node.
+ */
 function resolveStages(node: SourceNode): StageContribution[] {
 	const contributions: StageContribution[] = []
 
@@ -238,24 +251,32 @@ function resolveStages(node: SourceNode): StageContribution[] {
 	return contributions
 }
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Props
 
 export interface ClassifierOverlayProps {
-	/** The parse tree with source provenance on nodes (AddressTree). */
+	/**
+	 * The parse tree with source provenance on nodes (AddressTree).
+	 */
 	tree: unknown
-	/** Flattened nodes for display ordering and cross-reference. */
+	/**
+	 * Flattened nodes for display ordering and cross-reference.
+	 */
 	nodes: ResultNode[]
-	/** Whether the FST gazetteer matcher was active for this parse. */
+	/**
+	 * Whether the FST gazetteer matcher was active for this parse.
+	 */
 	fstActive?: boolean
-	/** Display mode. Default: "dynamic". */
+	/**
+	 * Display mode. Default: "dynamic".
+	 */
 	mode?: "static" | "dynamic"
 }
 
-// ---------------------------------------------------------------------------
-// Static legend
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Static legend
 
 const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	<div className={styles.staticLegend}>
@@ -282,7 +303,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 							{dimmed ? <span className={styles.inactiveTag}>inactive</span> : null}
 						</div>
 						<p className={styles.stageCardDesc}>{stage.description}</p>
-						{stage.sourceMatches.length > 0 ? (
+						{stage.sourceMatches.length ? (
 							<div className={styles.stageCardSources}>
 								<span className={styles.sourcesLabel}>Node source:</span>
 								{stage.sourceMatches.map((s) => (
@@ -315,19 +336,19 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	</div>
 )
 
-// ---------------------------------------------------------------------------
-// Confidence tier
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Confidence tier
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
-// ---------------------------------------------------------------------------
-// Dynamic per-component table
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Dynamic per-component table
 
 const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: boolean }> = ({
 	tree,
@@ -387,7 +408,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 									)}
 								</td>
 								<td className={styles.originCell}>
-									{contributions.length === 0 ? (
+									{!contributions.length ? (
 										<span className={styles.unknownOrigin}>unknown</span>
 									) : (
 										contributions.map((c, ci) => (
@@ -430,9 +451,9 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Public component
 
 export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 	tree,
@@ -444,7 +465,7 @@ export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 		return <StaticLegend fstActive={fstActive} />
 	}
 
-	if (!tree || nodes.length === 0) {
+	if (!tree || !nodes.length) {
 		return (
 			<div className={styles.empty}>
 				<p>Parse an address to see classifier origin information.</p>
@@ -454,3 +475,5 @@ export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 
 	return <DynamicOverlay tree={tree} nodes={nodes} fstActive={fstActive} />
 }
+
+//#endregion

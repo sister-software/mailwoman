@@ -6,7 +6,9 @@ import { describe, expect, it } from "vitest"
 import { enforceWordConsistency } from "./word-consistency.ts"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const
-/** A logit row peaking at `idx` (softmaxes to high prob there). */
+/**
+ * A logit row peaking at `idx` (softmaxes to high prob there).
+ */
 const peak = (idx: number, hi: number): number[] => LABELS.map((_l, i) => (i === idx ? hi : 0))
 
 describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
@@ -39,6 +41,7 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 			LABELS,
 			[1, 1]
 		)
+
 		expect(r.healedWords).toBe(0) // two independent locality words, each already B-locality
 		expect(r.labelIndices).toEqual([1, 1])
 	})
@@ -94,6 +97,7 @@ describe("enforceWordConsistency confidence gates (#727 gated variant)", () => {
 		const r = enforceWordConsistency([{ piece: "▁Loz" }, { piece: "ère" }], [peak(1, 3), peak(3, 9)], LABELS, [1, 3], {
 			minMeanConfidence: 0.5,
 		})
+
 		expect(r.healedWords).toBe(1)
 		expect([LABELS[r.labelIndices[0]!], LABELS[r.labelIndices[1]!]]).toEqual(["B-region", "I-region"])
 	})

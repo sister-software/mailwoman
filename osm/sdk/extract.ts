@@ -18,11 +18,17 @@ import { spawn } from "node:child_process"
 
 import { TextSpliterator } from "spliterator"
 
-/** One OSM address feature, geometry already reduced to a single representative coordinate. */
+/**
+ * One OSM address feature, geometry already reduced to a single representative coordinate.
+ */
 export interface OSMAddrRecord {
-	/** `addr:housenumber` — always present (the extract filters on it). */
+	/**
+	 * `addr:housenumber` — always present (the extract filters on it).
+	 */
 	housenumber: string
-	/** `addr:street` — null when the point carries no street tag (the association gap; counted, not written). */
+	/**
+	 * `addr:street` — null when the point carries no street tag (the association gap; counted, not written).
+	 */
 	street: string | null
 	postcode: string | null
 	city: string | null
@@ -30,10 +36,14 @@ export interface OSMAddrRecord {
 	lat: number
 }
 
-/** The OSM driver layers that can carry `addr:housenumber`: nodes and building ways/relations. */
+/**
+ * The OSM driver layers that can carry `addr:housenumber`: nodes and building ways/relations.
+ */
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
-/** OGRSQL projecting the four `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number. */
+/**
+ * OGRSQL projecting the four `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
+ */
 function addrSQL(layer: string): string {
 	return (
 		`SELECT hstore_get_value(other_tags,'addr:housenumber') AS housenumber, ` +
@@ -47,7 +57,9 @@ function addrSQL(layer: string): string {
 const isFinitePair = (lon: unknown, lat: unknown): boolean =>
 	typeof lon === "number" && typeof lat === "number" && Number.isFinite(lon) && Number.isFinite(lat)
 
-/** Reduce a GeoJSON geometry to one representative coordinate: the point itself, or a ring-vertex average for a polygon. */
+/**
+ * Reduce a GeoJSON geometry to one representative coordinate: the point itself, or a ring-vertex average for a polygon.
+ */
 function representativePoint(
 	geom: { type?: string; coordinates?: unknown } | null | undefined
 ): [number, number] | null {
@@ -67,7 +79,7 @@ function representativePoint(
 				: null
 	) as number[][] | null
 
-	if (!ring || ring.length === 0) return null
+	if (!ring || !ring.length) return null
 
 	// Average the exterior-ring vertices (dropping the duplicated closing vertex). For a single
 	// building footprint this lands a few metres inside the roof — fine for the rooftop tier.
@@ -76,6 +88,7 @@ function representativePoint(
 	if (n > 1 && ring[0]![0] === ring[n - 1]![0] && ring[0]![1] === ring[n - 1]![1]) {
 		n--
 	}
+
 	let sx = 0
 	let sy = 0
 
@@ -83,6 +96,7 @@ function representativePoint(
 		sx += ring[i]![0]!
 		sy += ring[i]![1]!
 	}
+
 	const lon = sx / n
 	const lat = sy / n
 
@@ -111,7 +125,9 @@ function toRecord(feature: {
 	}
 }
 
-/** Run ogr2ogr against one layer, yielding parsed records from its GeoJSONSeq stdout. */
+/**
+ * Run ogr2ogr against one layer, yielding parsed records from its GeoJSONSeq stdout.
+ */
 async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddrRecord> {
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSQL(layer), pbfPath]
 	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
@@ -120,6 +136,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 	proc.stderr.on("data", (d: Buffer) => {
 		stderr += d.toString()
 	})
+
 	const exit = new Promise<number>((resolve, reject) => {
 		proc.on("error", reject)
 		proc.on("close", resolve)
@@ -138,12 +155,14 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 		} catch {
 			continue
 		}
+
 		const rec = toRecord(feature)
 
 		if (rec) {
 			yield rec
 		}
 	}
+
 	const code = await exit
 
 	if (code !== 0) throw new Error(`ogr2ogr (${layer}) exited ${code}: ${stderr.slice(-800)}`)

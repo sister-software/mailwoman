@@ -6,7 +6,9 @@ import { describe, expect, it, vi } from "vitest"
 
 import { rerankByResolution } from "./rerank.ts"
 
-/** A tree whose finest resolved node carries `tag` — `country` is what the guard vetoes. */
+/**
+ * A tree whose finest resolved node carries `tag` — `country` is what the guard vetoes.
+ */
 function resolvedTree(tag: string, raw = "x"): AddressTree {
 	const node: AddressNode = {
 		tag,
@@ -28,6 +30,7 @@ const bare = (raw: string): AddressTree => ({ raw, roots: [] })
 describe("rerankByResolution", () => {
 	it("keeps the model's rank-1 when it resolves plausibly — no gratuitous reordering", async () => {
 		const resolve = vi.fn(async () => resolvedTree("locality"))
+
 		const out = await rerankByResolution(
 			[
 				{ score: -1, tree: bare("a"), payload: "a" },
@@ -35,6 +38,7 @@ describe("rerankByResolution", () => {
 			],
 			resolve
 		)
+
 		expect(out.best.payload).toBe("a")
 		expect(out.changed).toBe(false)
 		// Rank-1 was plausible, so rank-2 need not have been resolved at all... but the budget resolves
@@ -44,6 +48,7 @@ describe("rerankByResolution", () => {
 
 	it("promotes rank-2 when rank-1 resolves to a country centroid — the arc's whole claim", async () => {
 		const resolve = vi.fn(async (t: AddressTree) => (t.raw === "a" ? resolvedTree("country") : resolvedTree("street")))
+
 		const out = await rerankByResolution(
 			[
 				{ score: -1, tree: bare("a"), payload: "rank1-garbage" },
@@ -51,6 +56,7 @@ describe("rerankByResolution", () => {
 			],
 			resolve
 		)
+
 		expect(out.best.payload).toBe("rank2-real")
 		expect(out.changed).toBe(true)
 		// The vetoed one is retained, with its reason — never silently dropped.
@@ -62,6 +68,7 @@ describe("rerankByResolution", () => {
 	it("falls back to the model's rank-1 when EVERY candidate is implausible", async () => {
 		// "All my evidence says these are all bad" is not grounds to invent a different answer.
 		const resolve = vi.fn(async () => resolvedTree("country"))
+
 		const out = await rerankByResolution(
 			[
 				{ score: -1, tree: bare("a"), payload: "rank1" },
@@ -69,6 +76,7 @@ describe("rerankByResolution", () => {
 			],
 			resolve
 		)
+
 		expect(out.best.payload).toBe("rank1")
 		expect(out.changed).toBe(false)
 	})
@@ -79,6 +87,7 @@ describe("rerankByResolution", () => {
 
 			return resolvedTree("street")
 		})
+
 		const out = await rerankByResolution(
 			[
 				{ score: -1, tree: bare("a"), payload: "rank1" },
@@ -86,6 +95,7 @@ describe("rerankByResolution", () => {
 			],
 			resolve
 		)
+
 		expect(out.best.payload).toBe("rank1")
 		expect(out.best.implausible).toBe(false)
 		expect(out.changed).toBe(false)

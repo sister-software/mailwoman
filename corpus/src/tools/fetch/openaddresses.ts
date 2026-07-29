@@ -50,6 +50,9 @@
  *   ```
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import { execFile, spawn } from "node:child_process"
 import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
@@ -63,6 +66,22 @@ import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { isTransientStatus, writeManifest } from "./download.ts"
+
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+/**
+ * A successful fetch; anything else is an error page or a redirect we did not follow.
+ */
+const HTTP_OK = 200
+
+/**
+ * Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body.
+ */
+const MIN_PLAUSIBLE_SHARD_BYTES = 10_240
+
+const BYTES_PER_KIB = 1024
 
 const execFileAsync = promisify(execFile)
 
@@ -82,7 +101,9 @@ const OA_COLLECTION_IDS: Record<string, number> = {
 }
 
 export interface FetchOpenAddressesOptions extends BaseFetchOptions {
-	/** OA country collection code. Default `ca`. */
+	/**
+	 * OA country collection code. Default `ca`.
+	 */
 	country?: string
 }
 
@@ -93,13 +114,15 @@ interface OaCollection {
 	size?: number
 }
 
-/** Stream-count newlines, matching `wc -l` (memory-safe for the multi-GB collection). */
+/**
+ * Stream-count newlines, matching `wc -l` (memory-safe for the multi-GB collection).
+ */
 async function countLines(path: string): Promise<number> {
 	let count = 0
 
 	for await (const chunk of createReadStream(path) as AsyncIterable<Buffer>) {
-		for (let i = 0; i < chunk.length; i++) {
-			if (chunk[i] === 0x0a) {
+		for (const byte of chunk) {
+			if (byte === 0x0a) {
 				count++
 			}
 		}
@@ -113,8 +136,9 @@ function humanBytes(bytes: number): string {
 	let value = bytes
 	let unit = 0
 
-	while (value >= 1024 && unit < units.length - 1) {
+	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
 		value /= 1024
+
 		unit++
 	}
 
@@ -153,6 +177,7 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 
 			if (attempt < opts.retries && isTransientStatus(res.status)) {
 				await sleep(opts.retryDelayMs)
+
 				continue
 			}
 
@@ -160,6 +185,7 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 		} catch {
 			if (attempt < opts.retries) {
 				await sleep(opts.retryDelayMs)
+
 				continue
 			}
 
@@ -170,12 +196,16 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 	return 0
 }
 
-/** Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used. */
+/**
+ * Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used.
+ */
 async function gunzipToFile(src: string, dest: string): Promise<void> {
 	const child = spawn("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
 		stdio: ["ignore", "pipe", "inherit"],
 	})
+
 	await pipeline(child.stdout!, createWriteStream(dest))
+
 	await new Promise<void>((resolve, reject) => {
 		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`gunzip exited with code ${code}`))))
 		child.on("error", reject)
@@ -200,9 +230,8 @@ export async function fetchOpenAddresses(
 
 	mkdirSync(destDir, { recursive: true })
 
-	// -------------------------------------------------------------------------
-	// Authentication check
-	// -------------------------------------------------------------------------
+	// MARK: Authentication check
+
 	if (!token) {
 		report?.(`
 ERROR: OA_BATCH_TOKEN is not set.
@@ -226,13 +255,13 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		return fail("OA_BATCH_TOKEN")
 	}
 
-	// -------------------------------------------------------------------------
-	// Determine collection ID
-	// -------------------------------------------------------------------------
+	// MARK: Determine collection ID
+
 	let collectionID = OA_COLLECTION_IDS[country]
 
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
+
 		const res = await fetch(`${OA_BASE}/api/collections`, {
 			headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" },
 			signal: AbortSignal.timeout(30_000),
@@ -263,9 +292,8 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		report?.(`  Found collection id=${collectionID} for '${country}'`)
 	}
 
-	// -------------------------------------------------------------------------
-	// Download via the collections download endpoint (302s to S3)
-	// -------------------------------------------------------------------------
+	// MARK: Download via the collections download endpoint (302s to S3)
+
 	report?.(`  Resolving download URL for collection id=${collectionID}...`)
 	report?.(`  Attempting authenticated download...`)
 
@@ -280,7 +308,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		retryDelayMs: 30_000,
 	})
 
-	if (httpStatus !== 200) {
+	if (httpStatus !== HTTP_OK) {
 		// Try the geojsonl.gz directly with token as query param (alternate URL shape).
 		httpStatus = await streamDownload(`${OA_BASE}/api/collections/${collectionID}/geojsonl.gz?token=${token}`, tmpGz, {
 			timeoutMs: 7_200_000,
@@ -289,8 +317,9 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		})
 	}
 
-	if (httpStatus !== 200) {
+	if (httpStatus !== HTTP_OK) {
 		rmSync(tmpGz, { force: true })
+
 		report?.(`
 ERROR: Download returned HTTP ${httpStatus}.
 
@@ -311,9 +340,8 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		return fail(country)
 	}
 
-	// -------------------------------------------------------------------------
-	// Decompress if the downloaded file is gzipped
-	// -------------------------------------------------------------------------
+	// MARK: Decompress if the downloaded file is gzipped
+
 	const fileMagic = (await execFileAsync("file", ["--brief", tmpGz]).catch(() => ({ stdout: "" }))).stdout
 
 	if (/gzip|compressed/i.test(fileMagic)) {
@@ -331,9 +359,8 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
 
-	// -------------------------------------------------------------------------
-	// Verify + write MANIFEST
-	// -------------------------------------------------------------------------
+	// MARK: Verify + write MANIFEST
+
 	if (!existsSync(outputFile)) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)
 
@@ -342,7 +369,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	const size = statSync(outputFile).size
 
-	if (size < 10240) {
+	if (size < MIN_PLAUSIBLE_SHARD_BYTES) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)
 
 		return fail(country)
@@ -364,6 +391,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		notes:
 			"batch.openaddresses.io requires a free registered account for downloads. License is mixed per-row; use the openaddresses adapter with allowShareAlike=false (default) to filter Tier-C rows.",
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${humanBytes(size)}  rows=${rowCount}  sha256=${sha}`)

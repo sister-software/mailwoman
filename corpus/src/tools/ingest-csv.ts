@@ -30,9 +30,7 @@ import type { SQLInputValue } from "node:sqlite"
 
 import { TextSpliterator } from "spliterator"
 
-// ---------------------------------------------------------------------------
-// Core: quote-aware CSV field splitting
-// ---------------------------------------------------------------------------
+//#region Core: quote-aware CSV field splitting
 
 const COMMA = 44
 const DOUBLE_QUOTE = 34
@@ -58,6 +56,7 @@ function splitCSVLine(line: string, separator: number = COMMA): string[] {
 			start = i + 1
 		}
 	}
+
 	fields.push(line.slice(start))
 
 	return fields
@@ -67,24 +66,24 @@ function stripQuotes(field: string): string {
 	const trimmed = field.trim()
 
 	if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
-		return trimmed.slice(1, -1).replace(/""/g, '"')
+		return trimmed.slice(1, -1).replaceAll('""', '"')
 	}
 
 	return trimmed
 }
 
-// ---------------------------------------------------------------------------
-// Column name normalization
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Column name normalization
 
 function normalizeColumnName(raw: string): string {
 	return (
 		raw
 			.trim()
-			.replace(/^"+|"+$/g, "")
+			.replaceAll(/^"+|"+$/g, "")
 			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "_")
-			.replace(/^_|_$/g, "") || "unnamed"
+			.replaceAll(/[^a-z0-9]+/g, "_")
+			.replaceAll(/^_|_$/g, "") || "unnamed"
 	)
 }
 
@@ -99,9 +98,9 @@ function dedupColumns(names: string[]): string[] {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Type inference
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Type inference
 
 type SQLiteColType = "INTEGER" | "REAL" | "TEXT"
 
@@ -115,7 +114,7 @@ function normalizeField(raw: string): string | null {
 	let s = raw.trim()
 
 	if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
-		s = s.slice(1, -1).replace(/""/g, '"')
+		s = s.slice(1, -1).replaceAll('""', '"')
 	}
 
 	// Normalize common null-like values
@@ -135,6 +134,7 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	for (const s of samples) {
 		if (s === null) {
 			nullCount++
+
 			continue
 		}
 
@@ -153,9 +153,9 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	return { name: "", type, nullable: nullCount / total >= 0.5 }
 }
 
-// ---------------------------------------------------------------------------
-// Main: read CSV, infer schema, produce SQL
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Main: read CSV, infer schema, produce SQL
 
 interface IngestOptions {
 	inputPath: string
@@ -191,6 +191,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 		if (!headerLine && opts.hasHeader) {
 			headerLine = line
+
 			continue
 		}
 
@@ -225,6 +226,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 			return normalizeField(raw)
 		})
+
 		const info = inferColumnType(samples)
 		info.name = name
 
@@ -262,6 +264,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	// Use the .import approach via a temp table, then INSERT INTO ... SELECT to handle
 	// NULL normalization and type coercion.
 	const csvBasename = basename(opts.inputPath)
+
 	const importSQL = [
 		`CREATE TEMP TABLE "${opts.tableName}_source" (${colDefs});`,
 		`.mode csv`,
@@ -290,15 +293,16 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			for (const row of batch) {
 				insertStmt.run(...row)
 			}
+
 			db.exec("COMMIT")
-		} catch (err) {
+		} catch (error) {
 			db.exec("ROLLBACK")
-			throw err
+			throw error
 		}
 	}
 
 	const batch: SQLInputValue[][] = []
-	const BATCH_SIZE = 10000
+	const BATCH_SIZE = 10_000
 
 	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 		lineNum++
@@ -307,19 +311,21 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 		if (opts.hasHeader && !headerSkipped) {
 			headerSkipped = true
+
 			continue
 		}
 
 		const fields = splitCSVLine(line, sep).map(stripQuotes)
+
 		const values = fields.map((f, i) => {
 			const v = normalizeField(f)
 
 			if (v === null) return null
 			const col = columns[i]
 
-			if (col?.type === "INTEGER" && /^-?\d+$/.test(v)) return parseInt(v, 10)
+			if (col?.type === "INTEGER" && /^-?\d+$/.test(v)) return Number.parseInt(v, 10)
 
-			if (col?.type === "REAL" && /^-?\d+\.?\d+$/.test(v)) return parseFloat(v)
+			if (col?.type === "REAL" && /^-?\d+\.?\d+$/.test(v)) return Number.parseFloat(v)
 
 			return v
 		})
@@ -328,6 +334,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		while (values.length < columns.length) {
 			values.push(null)
 		}
+
 		values.length = columns.length
 
 		batch.push(values)
@@ -337,14 +344,14 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			imported += batch.length
 			batch.length = 0
 
-			if (imported % 100000 === 0) {
+			if (imported % 100_000 === 0) {
 				process.stderr.write(`  ${(imported / 1_000_000).toFixed(1)}M rows...\n`)
 			}
 		}
 	}
 
 	// Flush remaining
-	if (batch.length > 0) {
+	if (batch.length) {
 		doInsert()
 		imported += batch.length
 	}
@@ -356,6 +363,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	if (firstTextCol) {
 		process.stderr.write(`Building index on "${firstTextCol.name}"...\n`)
+
 		db.exec(
 			`CREATE INDEX IF NOT EXISTS idx_${opts.tableName}_${firstTextCol.name} ON "${opts.tableName}"("${firstTextCol.name}");`
 		)
@@ -366,6 +374,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	// Write MANIFEST
 	const fileSize = (await import("node:fs/promises")).stat
 	const stat = await (await import("node:fs/promises")).stat(opts.outputPath)
+
 	const manifest = {
 		ingested_at: new Date().toISOString(),
 		source_csv: basename(opts.inputPath),
@@ -374,6 +383,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		row_count: imported,
 		db_bytes: stat.size,
 	}
+
 	const manifestPath = opts.outputPath.replace(/\.db$/, ".manifest.json")
 	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n")
 
@@ -382,7 +392,9 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	)
 }
 
-/** Flag-shaped options for {@linkcode ingestCSV} — `table`/`output` derive from `input` when omitted. */
+/**
+ * Flag-shaped options for {@linkcode ingestCSV} — `table`/`output` derive from `input` when omitted.
+ */
 export interface IngestCSVOptions {
 	input: string
 	table?: string
@@ -404,11 +416,12 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!existsSync(options.input)) {
 		throw new Error(`File not found: ${options.input}`)
 	}
+
 	const csvName = basename(options.input, extname(options.input))
 
 	await runIngest({
 		inputPath: options.input,
-		tableName: options.table ?? csvName.replace(/[^a-zA-Z0-9_]/g, "_"),
+		tableName: options.table ?? csvName.replaceAll(/[^a-zA-Z0-9_]/g, "_"),
 		outputPath: options.output ?? join(dirname(options.input), csvName + ".db"),
 		sampleSize: options.sample ?? 100,
 		separator: options.separator ?? ",",
@@ -417,3 +430,5 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 		dryRun: options.dryRun ?? false,
 	})
 }
+
+//#endregion

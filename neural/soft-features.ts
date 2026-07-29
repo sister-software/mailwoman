@@ -22,15 +22,21 @@ import { buildCountryFeatures, type CountryLexicon } from "./country-inference.t
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.ts"
 import type { TokenizedPiece } from "./tokenizer.ts"
 
-/** A built soft-feature channel: per-piece feature rows + per-piece confidence. */
+/**
+ * A built soft-feature channel: per-piece feature rows + per-piece confidence.
+ */
 export interface SoftFeatureChannel {
 	features: number[][]
 	confidence: number[]
 }
 
-/** The soft-feature channels fed to the runner. Each is present only when its source is configured. */
+/**
+ * The soft-feature channels fed to the runner. Each is present only when its source is configured.
+ */
 export interface SoftFeatures {
-	/** Postcode-anchor channel (#239/#240) — present iff `postcodeAnchorLookup` was supplied. */
+	/**
+	 * Postcode-anchor channel (#239/#240) — present iff `postcodeAnchorLookup` was supplied.
+	 */
 	anchor?: SoftFeatureChannel
 	/**
 	 * Gazetteer-anchor channel (#464) — present iff `gazetteerLexicon` was supplied. Already choreographed: when
@@ -44,15 +50,33 @@ export interface SoftFeatures {
 	 * (where the gazetteer clue is zeroed by the near-postcode choreography). See `country-inference.ts`.
 	 */
 	country?: SoftFeatureChannel
+	/**
+	 * Street-type evidence channel (Option-A bundle, Phase 2) — present iff `streetTypeLexicon` was supplied. Painted by
+	 * the SAME generic painter as the gazetteer channel (the lexicons share one schema); no choreography — the bundle's
+	 * anti-over-trust discipline is the TRAIN-side curriculum, not a decode-side transform.
+	 */
+	streetType?: SoftFeatureChannel
+	/**
+	 * Locality-surface evidence channel (Option-A bundle, Phase 2) — present iff `localitySurfaceLexicon` was supplied.
+	 */
+	localitySurface?: SoftFeatureChannel
 }
 
-/** Sources + choreography for {@link buildSoftFeatures}. Mirrors the classifier's config fields. */
+/**
+ * Sources + choreography for {@link buildSoftFeatures}. Mirrors the classifier's config fields.
+ */
 export interface SoftFeatureSources {
-	/** Postcode→anchor lookup (#239/#240). Omit to skip the anchor channel. */
+	/**
+	 * Postcode→anchor lookup (#239/#240). Omit to skip the anchor channel.
+	 */
 	postcodeAnchorLookup?: AnchorLookup
-	/** Gazetteer-anchor lexicon (#464). Omit to skip the gazetteer channel. */
+	/**
+	 * Gazetteer-anchor lexicon (#464). Omit to skip the gazetteer channel.
+	 */
 	gazetteerLexicon?: GazetteerLexicon
-	/** Country-lexicon (#1104). Omit to skip the country channel. */
+	/**
+	 * Country-lexicon (#1104). Omit to skip the country channel.
+	 */
 	countryLexicon?: CountryLexicon
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to a postcode-anchor
@@ -61,6 +85,14 @@ export interface SoftFeatureSources {
 	 * choreography. See `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`. Does NOT touch the country channel.
 	 */
 	suppressGazetteerNearPostcode?: boolean
+	/**
+	 * Street-type evidence lexicon (Option-A bundle). Omit to skip the channel. Same JSON schema as the gazetteer.
+	 */
+	streetTypeLexicon?: GazetteerLexicon
+	/**
+	 * Locality-surface evidence lexicon (Option-A bundle). Omit to skip the channel.
+	 */
+	localitySurfaceLexicon?: GazetteerLexicon
 }
 
 /**
@@ -83,18 +115,44 @@ export function buildSoftFeatures(
 	const anchor = sources.postcodeAnchorLookup
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup)
 		: undefined
+
 	const gazetteer = sources.gazetteerLexicon
 		? buildGazetteerFeatures(text, pieces, sources.gazetteerLexicon)
 		: undefined
+
 	const gazFed =
 		gazetteer && anchor && sources.suppressGazetteerNearPostcode
 			? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 			: gazetteer
+
 	const country = sources.countryLexicon ? buildCountryFeatures(text, pieces, sources.countryLexicon) : undefined
+
+	const streetType = sources.streetTypeLexicon
+		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
+		: undefined
+
+	// STREET-CONTEXT GATE for the locality channel (2026-07-29, the 8.2.0 pre-ship gauntlet catch;
+	// precedent: the #1315 FST street-context gate). Locality-surface evidence feeds ONLY when the
+	// street painter found context on this input. On a bare place-name lookup ("Melbourne",
+	// "Sydney, Australia") homograph-flagged locality evidence ROTATES the parse (locality → region/
+	// street — the Washington-DC class, surviving in the fragment register on world-city homographs)
+	// while the resolver already owns that register outright; withholding = the curriculum-trained
+	// absence identity, the same declared-ablation semantics as formatted mode. Street-bearing
+	// fragments — every measured win class (homonym/bare-street/particle rows all carry a street-type
+	// word) — keep the full bundle. The street channel itself needs no gate: it paints nothing on a
+	// street-word-less input by construction.
+	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
+
+	const localitySurface =
+		sources.localitySurfaceLexicon && (streetContext || sources.streetTypeLexicon === undefined)
+			? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
+			: undefined
 
 	return {
 		...(anchor ? { anchor } : {}),
 		...(gazFed ? { gazetteer: gazFed } : {}),
 		...(country ? { country } : {}),
+		...(streetType ? { streetType } : {}),
+		...(localitySurface ? { localitySurface } : {}),
 	}
 }

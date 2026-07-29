@@ -30,6 +30,7 @@ export type ExtractResponseData<T> = T extends ResponseContainer<infer Body> ? B
 
 function isResponseContainer<Body>(responseContainer: ResponseLike<Body>): responseContainer is ResponseContainer<Body>
 function isResponseContainer<Body>(body: Body): body is Body
+
 function isResponseContainer<Body>(input: ResponseLike<Body>): input is ResponseContainer<Body> {
 	return typeof input === "object" && input !== null && "data" in input
 }
@@ -39,6 +40,7 @@ function isResponseContainer<Body>(input: ResponseLike<Body>): input is Response
  */
 function pluckResponseBody<Body>(responseContainer: ResponseContainer<Body>): Body
 function pluckResponseBody<Body>(rawBody: Body): Body
+
 function pluckResponseBody<Body>(input: ResponseContainer<Body> | Body): Body {
 	if (isResponseContainer(input)) return input.data
 
@@ -66,6 +68,7 @@ export type ExtractResponseBodyData<Body> = Body extends {
  * @internal
  */
 export function pluckResponseData<Body>(responseContainer: ResponseContainer<Body>): ExtractResponseBodyData<Body>
+
 export function pluckResponseData<Body>(input: ResponseContainer<Body> | Body): ExtractResponseBodyData<Body> {
 	const body = pluckResponseBody(input)
 
@@ -91,7 +94,7 @@ export function checkConnectivity(
  */
 export async function delegateAxiosError(error: unknown): Promise<unknown> {
 	{
-		if (!isAxiosError(error)) return Promise.reject(error)
+		if (!isAxiosError(error)) throw error
 
 		const { response, code: networkErrorCode } = error
 
@@ -124,11 +127,11 @@ export async function delegateAxiosError(error: unknown): Promise<unknown> {
 			case AxiosError.ERR_CANCELED:
 			case AxiosError.ECONNABORTED:
 			case AxiosError.ETIMEDOUT:
-				return Promise.resolve()
+				return
 			default:
 				ConsoleLogger.warn(`Unhandled network error: ${networkErrorCode}`)
 		}
 
-		return Promise.reject(error)
+		throw error
 	}
 }

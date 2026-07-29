@@ -44,6 +44,7 @@ const repoRoot = resolve(import.meta.dirname, "..")
 
 function fail(message: string): never {
 	console.error(`prepare-release-version: ${message}`)
+
 	process.exit(1)
 }
 
@@ -81,9 +82,10 @@ if (values.version === "major" || values.version === "minor" || values.version =
 const releaseItConfig = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8")) as {
 	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
 }
+
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
-if (!Array.isArray(workspaces) || workspaces.length === 0) {
+if (!Array.isArray(workspaces) || !workspaces.length) {
 	fail(".release-it.json workspace list is empty")
 }
 

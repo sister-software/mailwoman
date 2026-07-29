@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { layers } from "@protomaps/basemaps"
-import { type LayerSpecification } from "maplibre-gl"
+import type { LayerSpecification } from "maplibre-gl"
 
 import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.ts"
 import { LayerID } from "../styles/layers.ts"
 import { BuildingLayers } from "./buildings.ts"
 import { HillshadeTileSetID } from "./terrain.ts"
 
+/**
+ * Layer id for the hillshade raster, referenced by style definitions that draw terrain beneath the base map.
+ */
 export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
 
 /**
@@ -21,6 +24,9 @@ const labelLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: 
 const labelLayerIDs = new Set(labelLayers.map((layer) => layer.id))
 const nonLabelLayers = allBaseLayers.filter((layer) => !labelLayerIDs.has(layer.id))
 
+/**
+ * The base map's layer stack, in draw order — terrain, then land cover, then water, then boundaries.
+ */
 export const BaseLayers: LayerSpecification[] = [
 	...nonLabelLayers,
 	{

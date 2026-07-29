@@ -45,12 +45,30 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-const ZCTA_SOURCE = "census-zcta-2024" // keep in sync with scripts/zcta-centroids.ts
+/**
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * even, which is what keeps repeated centroid rounding unbiased.
+ */
+/**
+ * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
+ */
+const GAZETTEER_ROW_COLUMNS = 7
 
-/** (lat, lon, source): source is null when the row is a placeholder (membership only). */
+const ROUND_HALF_DIGIT = 5
+
+/**
+ * Keep in sync with scripts/zcta-centroids.ts.
+ */
+const ZCTA_SOURCE = "census-zcta-2024"
+
+/**
+ * (lat, lon, source): source is null when the row is a placeholder (membership only).
+ */
 type Centroid = [number, number, string | null]
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -60,6 +78,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -77,7 +96,7 @@ function incDecimalString(s: string): string {
  * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
  * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
-function pyRound(x: number, nd: number = 0): number {
+function pyRound(x: number, nd = 0): number {
 	if (!Number.isFinite(x)) return x
 
 	if (nd === 0) {
@@ -90,6 +109,7 @@ function pyRound(x: number, nd: number = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -100,9 +120,9 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) {
+	if (first > ROUND_HALF_DIGIT) {
 		roundUp = true
-	} else if (first === 5) {
+	} else if (first === ROUND_HALF_DIGIT) {
 		if (/[1-9]/.test(rest.slice(1))) {
 			roundUp = true
 		} else {
@@ -111,17 +131,21 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
 }
 
-/** Python `float()`: trimmed empty / non-numeric → null (the load_zcta try/except skip). */
+/**
+ * Python `float()`: trimmed empty / non-numeric → null (the load_zcta try/except skip).
+ */
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
@@ -139,13 +163,16 @@ function fiveDigit(name: string | null | undefined): string | null {
 }
 
 function placed(lat: number, lon: number): boolean {
-	return lat !== 0.0 || lon !== 0.0
+	return lat !== 0 || lon !== 0
 }
 
-/** DE/FR postcodes → centroid from postalcode-intl.db (inline lat/lon). */
+/**
+ * DE/FR postcodes → centroid from postalcode-intl.db (inline lat/lon).
+ */
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
 	const con = new DatabaseSync(dataRootPath("wof", "postalcode-intl.db"))
+
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
 		.all(country) as Array<{ name: string; latitude: number; longitude: number }>
@@ -159,6 +186,7 @@ function loadIntl(country: string): Map<string, Centroid> {
 			out.set(pc, [lat, lon, placed(lat, lon) ? "wof" : null])
 		}
 	}
+
 	con.close()
 
 	return out
@@ -174,6 +202,7 @@ function loadUs(): Map<string, Centroid> {
 	const hasSources = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='centroid_source'").get()
 	const srcJoin = hasSources ? "LEFT JOIN centroid_source cs ON cs.id=spr.id" : ""
 	const srcCol = hasSources ? "cs.source" : "NULL"
+
 	const rows = con
 		.prepare(
 			`SELECT spr.name, spr.latitude, spr.longitude, ${srcCol} AS src FROM spr ${srcJoin} ` +
@@ -190,6 +219,7 @@ function loadUs(): Map<string, Centroid> {
 			out.set(pc, [lat, lon, placed(lat, lon) ? row.src || "wof" : null])
 		}
 	}
+
 	con.close()
 
 	return out
@@ -206,7 +236,7 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 		const fields = line.split("\t").map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 
-		if (!pc || fields.length < 7) continue
+		if (!pc || fields.length < GAZETTEER_ROW_COLUMNS) continue
 		const lat = pyFloat(fields[5])
 		const lon = pyFloat(fields[6])
 
@@ -220,7 +250,9 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 	return out
 }
 
-/** Python `ensure_ascii=False` JSON string escape (quote, backslash, control chars). */
+/**
+ * Python `ensure_ascii=False` JSON string escape (quote, backslash, control chars).
+ */
 function pyJSONStr(s: string): string {
 	let out = '"'
 
@@ -247,14 +279,18 @@ function pyJSONStr(s: string): string {
 	return out + '"'
 }
 
-/** Python `repr`/`json` of a float — shortest round-trip, but integer-valued renders with `.0`. */
+/**
+ * Python `repr`/`json` of a float — shortest round-trip, but integer-valued renders with `.0`.
+ */
 function pyJSONNum(x: number): string {
 	if (Number.isInteger(x)) return Object.is(x, -0) ? "-0.0" : `${x}.0`
 
 	return String(x)
 }
 
-/** Serialize one lookup value `[posterior, lat, lon, source]` the way Python `json.dumps` would. */
+/**
+ * Serialize one lookup value `[posterior, lat, lon, source]` the way Python `json.dumps` would.
+ */
 function pyJSONValue(v: unknown): string {
 	if (v === null) return "null"
 
@@ -284,7 +320,9 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		["DE", loadIntl("DE")],
 		["FR", loadIntl("FR")],
 		["US", loadUs()],
-	] // centroid priority order
+	]
+
+	// centroid priority order
 	const zcta = args.zcta ? loadZCTA(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
 
@@ -295,7 +333,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 	}
 
 	const lookup: Record<string, LookupRow> = {}
-	const sortedCodes = [...allCodes].sort()
+	const sortedCodes = [...allCodes].toSorted()
 	let collisions = 0
 	let zctaFilled = 0
 
@@ -305,15 +343,16 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		const posterior: Record<string, number> = {}
 
 		for (const c of members) {
-			posterior[c] = 1.0 / k
+			posterior[c] = 1 / k
 		}
 
 		if (k > 1) {
 			collisions++
 		}
+
 		// centroid: first source (DE→FR→US) with a non-zero centroid; never overwritten by ZCTA.
-		let lat = 0.0
-		let lon = 0.0
+		let lat = 0
+		let lon = 0
 		let source: string | null = null
 
 		for (const [, d] of sources) {
@@ -321,6 +360,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 
 			if (c && placed(c[0], c[1])) {
 				;[lat, lon, source] = c
+
 				break
 			}
 		}
@@ -329,8 +369,10 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		if (source === null && members.includes("US") && zcta.has(pc)) {
 			;[lat, lon] = zcta.get(pc)!
 			source = ZCTA_SOURCE
+
 			zctaFilled++
 		}
+
 		lookup[pc] = [posterior, pyRound(lat, 5), pyRound(lon, 5), source]
 	}
 
@@ -344,22 +386,26 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 	for (const [c] of sources) {
 		byCountry[c] = Object.values(lookup).filter((v) => c in v[0]).length
 	}
+
 	const bySource = new Map<string | null, number>()
 
 	for (const v of Object.values(lookup)) {
 		bySource.set(v[3], (bySource.get(v[3]) ?? 0) + 1)
 	}
+
 	const placeholders = bySource.get(null) ?? 0
 
 	// Python repr of `{k or 'placeholder': n for k, n in sorted(by_source.items(), key=lambda kv: -kv[1])}`.
 	const sourceRepr =
 		"{" +
 		[...bySource.entries()]
-			.sort((a, b) => b[1] - a[1])
+			.toSorted((a, b) => b[1] - a[1])
 			.map(([k, n]) => `'${k ?? "placeholder"}': ${n}`)
 			.join(", ") +
 		"}"
+
 	const total = Object.keys(lookup).length
+
 	console.log(
 		`${total.toLocaleString("en-US")} postcodes → ${args.output}  ` +
 			`(DE ${byCountry["DE"]!.toLocaleString("en-US")}, FR ${byCountry["FR"]!.toLocaleString("en-US")}, ` +

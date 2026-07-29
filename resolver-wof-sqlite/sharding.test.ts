@@ -43,6 +43,7 @@ describe("resolveShards", () => {
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			"/tmp/whosonfirst-data-postalcode-us-latest.db",
 		])
+
 		expect(r).toEqual([
 			{ path: "/tmp/whosonfirst-data-admin-us-latest.db", schemaName: "main", placetypes: [] },
 			{ path: "/tmp/whosonfirst-data-postalcode-us-latest.db", schemaName: "postalcode_us", placetypes: [] },
@@ -54,6 +55,7 @@ describe("resolveShards", () => {
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			{ path: "/tmp/weird-name.db", schemaName: "postalcode_us" },
 		])
+
 		expect(r[1]?.schemaName).toBe("postalcode_us")
 	})
 
@@ -62,6 +64,7 @@ describe("resolveShards", () => {
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			{ path: "/tmp/whosonfirst-data-postalcode-us-latest.db", placetypes: ["postalcode"] },
 		])
+
 		expect(r[1]?.placetypes).toEqual(["postalcode"])
 	})
 
@@ -118,6 +121,7 @@ describe("pickShardForPlacetype", () => {
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			{ path: "/tmp/whosonfirst-data-postalcode-us-latest.db", placetypes: ["postalcode", "region"] },
 		])
+
 		// `region` doesn't substring-match `postalcode_us`, but the explicit hint claims it.
 		expect(pickShardForPlacetype(explicit, "region").schemaName).toBe("postalcode_us")
 	})
@@ -137,6 +141,7 @@ describe("pickShardForPlacetype", () => {
 			"/tmp/whosonfirst-data-postalcode-us-latest.db",
 			"/tmp/postalcode-geonames-tail.db",
 		])
+
 		const countries = new Map([
 			["postalcode_us", new Set(["US"])],
 			["postalcode_geonames_tail", new Set(["FI", "CZ", "PL"])],
@@ -145,13 +150,16 @@ describe("pickShardForPlacetype", () => {
 		expect(pickShardForPlacetype(two, "postalcode", { country: "FI", countriesBySchema: countries }).schemaName).toBe(
 			"postalcode_geonames_tail"
 		)
+
 		expect(pickShardForPlacetype(two, "postalcode", { country: "US", countriesBySchema: countries }).schemaName).toBe(
 			"postalcode_us"
 		)
+
 		// Unknown country / no probe → first placetype match (the pre-#920 behavior, unchanged).
 		expect(pickShardForPlacetype(two, "postalcode", { country: "XX", countriesBySchema: countries }).schemaName).toBe(
 			"postalcode_us"
 		)
+
 		expect(pickShardForPlacetype(two, "postalcode").schemaName).toBe("postalcode_us")
 	})
 })

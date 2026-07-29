@@ -30,7 +30,9 @@ const STUB_STYLE: DemoMapStyle = {
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-/** A resolved place with a real-extent bbox → the spec draws a fill+line outline and a bounds camera. */
+/**
+ * A resolved place with a real-extent bbox → the spec draws a fill+line outline and a bounds camera.
+ */
 const SPEC = computeMapPlaceRenderSpec({
 	id: 1,
 	name: "Test City",
@@ -41,7 +43,9 @@ const SPEC = computeMapPlaceRenderSpec({
 	bbox: { minLat: 40.6, maxLat: 40.8, minLon: -74.1, maxLon: -73.9 },
 })
 
-/** One host overlay: an (empty) geojson source + a fill layer, exercising the `<OverlayLayers>` path. */
+/**
+ * One host overlay: an (empty) geojson source + a fill layer, exercising the `<OverlayLayers>` path.
+ */
 const OVERLAY: OverlaySpec = {
 	id: "coverage",
 	source: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
@@ -49,7 +53,9 @@ const OVERLAY: OverlaySpec = {
 	label: "Coverage",
 }
 
-/** Poll `get` until truthy or `timeout` ms elapse, flushing react-map-gl's async effects inside act(). */
+/**
+ * Poll `get` until truthy or `timeout` ms elapse, flushing react-map-gl's async effects inside act().
+ */
 async function settle<T>(get: () => T | null | undefined, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 	let found: T | null | undefined = null
@@ -59,7 +65,10 @@ async function settle<T>(get: () => T | null | undefined, timeout = 8000): Promi
 			found = get()
 
 			if (found) break
-			await new Promise((resolve) => setTimeout(resolve, 50))
+
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50)
+			})
 		}
 	})
 
@@ -124,8 +133,12 @@ test("a null spec renders no marker and no result layers", async () => {
 
 	if (!mapEl) return
 
+	// Read the ref lazily: it is assigned in a callback TypeScript cannot see, so reading it directly
+	// here narrows it to `never`.
+	const getMap = () => mapRef?.getMap()
+
 	// Give the style a beat to settle, then confirm nothing was drawn.
-	await settle(() => mapRef?.getMap()?.isStyleLoaded() || null, 4000)
+	await settle(() => getMap()?.isStyleLoaded() || null, 4000)
 	expect(container.querySelector(".maplibregl-marker")).toBeNull()
-	expect(mapRef?.getMap()?.getLayer("mw-result-fill")).toBeFalsy()
+	expect(getMap()?.getLayer("mw-result-fill")).toBeFalsy()
 })

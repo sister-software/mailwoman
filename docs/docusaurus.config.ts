@@ -18,6 +18,7 @@ const gitHash = (() => {
 
 const buildDate = new Date()
 const buildTime = buildDate.toISOString()
+
 // Locale-stable display format: "2026-05-28 02:42 UTC". Same string on server and client,
 // so no React hydration mismatch.
 const buildTimeDisplay = (() => {

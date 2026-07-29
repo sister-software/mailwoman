@@ -11,14 +11,15 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 	const [copied, setCopied] = useState(false)
 
 	const onClick = useCallback(async () => {
-		if (typeof window === "undefined") return
-		const url = new URL(window.location.href)
+		if (globalThis.window === undefined) return
+		const url = new URL(globalThis.location.href)
 
 		if (text) {
 			url.searchParams.set("q", text)
 		} else {
 			url.searchParams.delete("q")
 		}
+
 		const href = url.toString()
 
 		try {
@@ -36,10 +37,12 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 			} catch {
 				/* nothing more we can do; user can copy from address bar */
 			}
+
 			document.body.removeChild(ta)
 		}
+
 		setCopied(true)
-		window.setTimeout(() => setCopied(false), 1500)
+		globalThis.setTimeout(() => setCopied(false), 1500)
 	}, [text])
 
 	return (

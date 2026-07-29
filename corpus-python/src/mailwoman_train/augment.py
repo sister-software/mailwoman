@@ -58,6 +58,38 @@ DIRECTIONALS: dict[str, str] = {
     "SW": "Southwest",
 }
 
+# Ordinal street names, both directions ("5th" ↔ "Fifth") — the 8.2.0 pre-ship metamorphic catch:
+# "350 Fifth Ave, New York, NY" (the Empire State Building) lost its locality while the digit form
+# parsed clean. The num-ordinal BAND relation is a stated product invariant (gauntlet metamorphic);
+# teach the equivalence instead of hoping for it. First..Tenth covers the overwhelming mass of US
+# ordinal streets; applied ONLY to street-family-labeled tokens (a "5th" unit/floor is not a street).
+ORDINAL_STREETS: dict[str, str] = {
+    "1st": "First",
+    "2nd": "Second",
+    "3rd": "Third",
+    "4th": "Fourth",
+    "5th": "Fifth",
+    "6th": "Sixth",
+    "7th": "Seventh",
+    "8th": "Eighth",
+    "9th": "Ninth",
+    "10th": "Tenth",
+    "First": "1st",
+    "Second": "2nd",
+    "Third": "3rd",
+    "Fourth": "4th",
+    "Fifth": "5th",
+    "Sixth": "6th",
+    "Seventh": "7th",
+    "Eighth": "8th",
+    "Ninth": "9th",
+    "Tenth": "10th",
+}
+
+_STREET_FAMILY_LABELS = frozenset(
+    ("B-street", "I-street", "B-street_prefix", "I-street_prefix", "B-street_suffix", "I-street_suffix")
+)
+
 # US state abbreviations → full names. Only unambiguous 2-letter codes.
 US_STATES: dict[str, str] = {
     "AL": "Alabama",
@@ -389,6 +421,7 @@ def augment_row(
     case_prob: float = 0.0,
     punct_drop_prob: float = 0.0,
     upper_case_prob: float = 0.0,
+    ordinal_prob: float = 0.0,
 ) -> Iterator[dict]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -407,6 +440,18 @@ def augment_row(
         if directional_indices:
             idx = rng.choice(directional_indices)
             yield splice_expansion(row, idx, DIRECTIONALS[tokens[idx]])
+
+    # Ordinal-street swap ("5th" ↔ "Fifth"): street-family labels only. The prob guard keeps the
+    # rng stream bit-identical for configs that leave the knob at 0 (every recipe before v3.24).
+    if ordinal_prob > 0 and rng.random() < ordinal_prob:
+        ordinal_indices = [
+            i
+            for i, (t, lab) in enumerate(zip(tokens, labels, strict=True))
+            if t in ORDINAL_STREETS and lab in _STREET_FAMILY_LABELS
+        ]
+        if ordinal_indices:
+            idx = rng.choice(ordinal_indices)
+            yield splice_expansion(row, idx, ORDINAL_STREETS[tokens[idx]])
 
     # Region+postcode glue (#513): fuse the last region token with an immediately-following
     # postcode token in raw. Letter→digit boundary only — that's the boundary SentencePiece

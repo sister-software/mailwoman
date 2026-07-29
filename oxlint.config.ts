@@ -17,6 +17,20 @@ const config = createOxlintConfig({
 	// Left off here to match the repo's prior behavior.
 	headers: false,
 	restrictProcessGlobals: true,
+	// A number used as a comparison threshold needs a name; data tables (bbox rows, codepoint
+	// ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
+	unnamedThresholds: true,
+	// Exported module-level constants carry a JSDoc block saying what the value means and where it came
+	// from — provenance, not a restatement of the identifier. Scoped to EXPORTED only: on the local
+	// SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`,
+	// `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader
+	// more than the missing comment did. Public surface is where a reader has no other context.
+	constantDocs: {
+		scope: "exported",
+		// Pastel command modules must export these, and the framework gives each its meaning — the
+		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
+		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
+	},
 	ignorePatterns: [
 		...DefaultIgnorePatterns,
 		".pi",
@@ -38,5 +52,9 @@ export default {
 		"guard-for-in": "error",
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
+		// Several suites assert through helpers that throw rather than calling `expect` inline —
+		// `expectProposal` in the phrase-grouper catalogue, `assertDownstreamOffsetsSurvive` in the
+		// tokenizer suite. Without this the rule reads those tests as asserting nothing.
+		"vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expect*", "assert*"] }],
 	},
 }

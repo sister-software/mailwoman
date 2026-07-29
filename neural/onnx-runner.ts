@@ -18,10 +18,23 @@ import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
 import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
-import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
+import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
+
+// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so neural-web's runner can
+// import them without touching this node-only module.
+export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
+
+/**
+ * Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims).
+ */
+/**
+ * Channel width of the locality-surface evidence feature. Must match the trained model's input shape.
+ */
 
 export interface ONNXRunnerOpts {
-	/** If true, load the model immediately in `create()`. Default false. */
+	/**
+	 * If true, load the model immediately in `create()`. Default false.
+	 */
 	warmup?: boolean
 	/**
 	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128 (the training-time max position)
@@ -39,13 +52,19 @@ export interface ONNXRunnerOpts {
 	executionProviders?: string[]
 }
 
-/** Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128). */
+/**
+ * Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128).
+ */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 export interface InferResult {
-	/** Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`. */
+	/**
+	 * Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`.
+	 */
 	logits: number[][]
-	/** Number of label classes (the inner-dim of the logits tensor). */
+	/**
+	 * Number of label classes (the inner-dim of the logits tensor).
+	 */
 	numLabels: number
 	/**
 	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model exports it (v1.1.0+,
@@ -63,7 +82,9 @@ export interface InferResult {
 	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
 	spanScores?: number[][][]
-	/** Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is. */
+	/**
+	 * Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is.
+	 */
 	maxSpan?: number
 }
 
@@ -85,7 +106,9 @@ export class ONNXRunner {
 		this.executionProviders = requested.includes("cpu") ? requested : [...requested, "cpu"]
 	}
 
-	/** Load by path. Reads the model lazily unless `warmup` is true. */
+	/**
+	 * Load by path. Reads the model lazily unless `warmup` is true.
+	 */
 	static async create(modelPath: string, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner(modelPath, null, opts)
 
@@ -96,7 +119,9 @@ export class ONNXRunner {
 		return runner
 	}
 
-	/** Load from an already-read byte buffer. */
+	/**
+	 * Load from an already-read byte buffer.
+	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner("(bytes)", modelBytes, opts)
 
@@ -133,13 +158,13 @@ export class ONNXRunner {
 				executionProviders: this.executionProviders,
 				graphOptimizationLevel: "all",
 			})
-		} catch (err) {
-			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw err
+		} catch (error) {
+			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw error
 
 			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
 			console.warn(
 				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
-					`(${(err as Error).message.split("\n")[0]}); falling back to CPU.`
+					`(${(error as Error).message.split("\n")[0]}); falling back to CPU.`
 			)
 
 			return ort.InferenceSession.create(bytes, { executionProviders: ["cpu"], graphOptimizationLevel: "all" })
@@ -161,7 +186,11 @@ export class ONNXRunner {
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		evidence?: {
+			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		}
 	): Promise<InferResult> {
 		const session = await this.ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
@@ -193,6 +222,7 @@ export class ONNXRunner {
 					}
 				}
 			}
+
 			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
 			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("anchor_features")) {
@@ -204,6 +234,7 @@ export class ONNXRunner {
 				this.fixedSeqLen,
 				ANCHOR_FEATURE_DIM,
 			])
+
 			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -225,6 +256,7 @@ export class ONNXRunner {
 					}
 				}
 			}
+
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("gazetteer_features")) {
@@ -233,6 +265,7 @@ export class ONNXRunner {
 				this.fixedSeqLen,
 				GAZETTEER_FEATURE_DIM,
 			])
+
 			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -253,6 +286,7 @@ export class ONNXRunner {
 					}
 				}
 			}
+
 			feeds.country_features = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, dim])
 			feeds.country_confidence = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("country_features")) {
@@ -261,7 +295,51 @@ export class ONNXRunner {
 				this.fixedSeqLen,
 				COUNTRY_FEATURE_DIM,
 			])
+
 			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
+		}
+
+		// Evidence-bundle channels (Option-A, Phase 2): same feed contract as every soft channel —
+		// present-conditional on the graph's declared inputs, confidence=0 identity zero-fallback for a
+		// bundle-trained model run without lexicons. Inert against every pre-bundle model by construction.
+		const evidenceFeeds = [
+			{ prefix: "street_type", dim: STREET_TYPE_FEATURE_DIM, data: evidence?.streetType },
+			{ prefix: "locality_surface", dim: LOCALITY_SURFACE_FEATURE_DIM, data: evidence?.localitySurface },
+		] as const
+
+		for (const { prefix, dim: fallbackDim, data } of evidenceFeeds) {
+			if (!session.inputNames.includes(`${prefix}_features`)) continue
+
+			if (data) {
+				const dim = data.features[0]?.length ?? fallbackDim
+				const ef = new Float32Array(this.fixedSeqLen * dim)
+				const ec = new Float32Array(this.fixedSeqLen)
+
+				for (let i = 0; i < seqLen; i++) {
+					ec[i] = data.confidence[i] ?? 0
+					const row = data.features[i]
+
+					if (row) {
+						for (let d = 0; d < dim; d++) {
+							ef[i * dim + d] = row[d] ?? 0
+						}
+					}
+				}
+
+				feeds[`${prefix}_features`] = new ort.Tensor("float32", ef, [1, this.fixedSeqLen, dim])
+				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", ec, [1, this.fixedSeqLen])
+			} else {
+				feeds[`${prefix}_features`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * fallbackDim), [
+					1,
+					this.fixedSeqLen,
+					fallbackDim,
+				])
+
+				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
+					1,
+					this.fixedSeqLen,
+				])
+			}
 		}
 
 		const output = await session.run(feeds)
@@ -269,7 +347,8 @@ export class ONNXRunner {
 
 		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
 		const data = logitsTensor.data as Float32Array
-		const [, , numLabels] = logitsTensor.dims as readonly [number, number, number]
+		// dims are [batch, sequence, labels].
+		const numLabels = (logitsTensor.dims as readonly [number, number, number])[2]
 
 		const logits: number[][] = []
 
@@ -280,6 +359,7 @@ export class ONNXRunner {
 			for (let l = 0; l < numLabels; l++) {
 				row[l] = data[base + l]!
 			}
+
 			logits.push(row)
 		}
 
@@ -295,7 +375,10 @@ export class ONNXRunner {
 
 		if (spanTensor) {
 			const spanData = spanTensor.data as Float32Array
-			const [, , spanLen, numTypes] = spanTensor.dims as readonly [number, number, number, number]
+			// dims are [batch, sequence, span, type].
+			const spanDims = spanTensor.dims as readonly [number, number, number, number]
+			const spanLen = spanDims[2]
+			const numTypes = spanDims[3]
 			maxSpan = spanLen
 			spanScores = []
 
@@ -310,8 +393,10 @@ export class ONNXRunner {
 					for (let ty = 0; ty < numTypes; ty++) {
 						row[ty] = spanData[base + ty]!
 					}
+
 					perLength[l] = row
 				}
+
 				spanScores.push(perLength)
 			}
 		}

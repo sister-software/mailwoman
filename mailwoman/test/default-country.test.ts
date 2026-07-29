@@ -38,11 +38,13 @@ describe("localeToCountry", () => {
 		expect(localeToCountry("fr-FR")).toBe("FR")
 		expect(localeToCountry("de-DE")).toBe("DE")
 	})
+
 	test("ignores script subtags and language-only tags (no guessing)", () => {
 		expect(localeToCountry("en")).toBeUndefined()
 		expect(localeToCountry("zh-Hant")).toBeUndefined() // 4-letter script subtag, not a region
 		expect(localeToCountry(undefined)).toBeUndefined()
 	})
+
 	test("reads the trailing region of a multi-subtag tag", () => {
 		expect(localeToCountry("zh-Hant-TW")).toBe("TW")
 	})
@@ -52,9 +54,11 @@ describe("resolverDefaultCountry", () => {
 	test("explicit --default-country wins over the locale", () => {
 		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US" })).toBe("FR")
 	})
+
 	test("falls back to the locale's country when unset", () => {
 		expect(resolverDefaultCountry({ locale: "de-DE" })).toBe("DE")
 	})
+
 	test("'none' disables the filter", () => {
 		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US" })).toBeUndefined()
 	})
@@ -64,13 +68,16 @@ describe("--default-country schema validation", () => {
 	test("accepts an explicit ISO country", () => {
 		expect(parseOptions.parse({ defaultCountry: "US" }).defaultCountry).toBe("US")
 	})
+
 	test("is optional (undefined when omitted)", () => {
 		expect(parseOptions.parse({}).defaultCountry).toBeUndefined()
 	})
 })
 
 // End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
+
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const run = (address: string, extra: string[] = []) =>
 		exec(
@@ -117,7 +124,9 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		expect(frLat!).toBeGreaterThan(45)
 		// The point of the test: the scope changed the resolved place.
 		expect(usLat).not.toBe(frLat)
-	})
+		// Two FULL CLI geocodes back-to-back (weights load ×2 + resolver DBs) — ~8s healthy, and the
+		// global 15s budget grazes on a loaded runner (CI flake 2026-07-28). Own budget, not a global bump.
+	}, 60_000)
 
 	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
 		// The #833 class: with coherence ON (the default), "Paris, TX" under `--default-country none`

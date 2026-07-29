@@ -38,15 +38,16 @@ export class FSTMatcher {
 	walk(tokens: string[]): FSTMatchResult | null {
 		let stateID = 0
 
-		for (let i = 0; i < tokens.length; i++) {
+		for (const token of tokens) {
 			const node = this.nodes[stateID]
 
 			if (!node) return null
-			const next = node.edges.get(tokens[i]!)
+			const next = node.edges.get(token)
 
 			if (next === undefined) return null
 			stateID = next
 		}
+
 		const node = this.nodes[stateID]!
 
 		return { stateID, accepted: node.places.length > 0, depth: tokens.length }
@@ -76,6 +77,7 @@ export class FSTMatcher {
 
 		for (const [token, targetID] of node.edges) {
 			const target = this.nodes[targetID]!
+
 			result.push({
 				token,
 				targetState: targetID,
@@ -103,6 +105,7 @@ export class FSTMatcher {
 
 				if (next === undefined) break
 				stateID = next
+
 				depth++
 			}
 
@@ -126,7 +129,9 @@ export class FSTMatcher {
 		return this.nodes.length
 	}
 
-	/** Expose the internal node array for serialization. */
+	/**
+	 * Expose the internal node array for serialization.
+	 */
 	toNodes(): readonly FSTNode[] {
 		return this.nodes
 	}
@@ -136,12 +141,14 @@ export class FSTMatcher {
 	}
 }
 
-/** Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. */
+/**
+ * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace.
+ */
 export function normalizeTokens(text: string): string[] {
 	return text
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[\p{P}\p{S}]/gu, "")
+		.replaceAll(/[\p{P}\p{S}]/gu, "")
 		.split(/\s+/)
 		.filter((t) => t.length > 0)
 }

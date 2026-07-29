@@ -14,6 +14,7 @@ describe("poi_query pipeline branch", () => {
 			type: "intent",
 			intent: { subject: { kind: "category", categoryID: "hospital", matched: "hospital" } },
 		}
+
 		const result = await runPipeline("hospital", {
 			classifyKind: async () => POI_KIND,
 			poiIntent: async () => outcome,
@@ -40,6 +41,7 @@ describe("poi_query pipeline branch", () => {
 				},
 			],
 		}
+
 		const outcome: POIIntentOutcome = {
 			type: "intent",
 			intent: {
@@ -47,6 +49,7 @@ describe("poi_query pipeline branch", () => {
 				anchor: { text: "Springfield IL", tree: anchorTree },
 			},
 		}
+
 		const result = await runPipeline("hospital near Springfield IL", {
 			classifyKind: async () => POI_KIND,
 			poiIntent: async () => outcome,
@@ -77,6 +80,7 @@ describe("poi_query pipeline branch", () => {
 
 	it("returns an abstain outcome verbatim", async () => {
 		const outcome: POIIntentOutcome = { type: "abstain", reason: "no_executor" }
+
 		const result = await runPipeline("drinking fountain", {
 			classifyKind: async () => POI_KIND,
 			poiIntent: async () => outcome,

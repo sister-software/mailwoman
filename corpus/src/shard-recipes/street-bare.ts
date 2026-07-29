@@ -21,6 +21,10 @@ import { DEFAULT_US_BASES } from "../synthesize-intersection.ts"
 import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.ts"
 import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const streetBareRecipe: ShardRecipe = {
 	name: "street-bare",
 	description: "Bare-street rows (US): DEFAULT_US_BASES → synthesizeStreetRow (bare) → aligned LabeledRow",
@@ -42,6 +46,7 @@ export const streetBareRecipe: ShardRecipe = {
 
 		while (emitted < count && guard++ < count * 5) {
 			const base = DEFAULT_US_BASES[emitted % DEFAULT_US_BASES.length]!
+
 			const synth = synthesizeStreetRow(base as StreetBaseTuple, {
 				random,
 				bareProb,
@@ -50,8 +55,10 @@ export const streetBareRecipe: ShardRecipe = {
 
 			if (!synth) {
 				skipped++
+
 				continue
 			}
+
 			const isBare = synth.components.region === undefined
 
 			const canonical: CanonicalShardRow = {
@@ -78,9 +85,12 @@ export const streetBareRecipe: ShardRecipe = {
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

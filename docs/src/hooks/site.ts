@@ -11,6 +11,7 @@ export interface DocusaurusConfigCustomFields {
  */
 export function useSiteConfig() {
 	const docusaurusContext = useDocusaurusContext()
+
 	const {
 		customFields,
 		// Consistent casing across the codebase, even though Docusaurus calls it `baseUrl` in the type.

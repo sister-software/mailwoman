@@ -21,6 +21,7 @@ import { SqliteConventionSource } from "./sqlite-convention-source.ts"
  */
 function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
@@ -31,13 +32,15 @@ function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []
 			aliases TEXT, distance_km REAL, is_containing INTEGER);
 		CREATE TABLE address_convention (wof_id INTEGER PRIMARY KEY, convention TEXT NOT NULL, source TEXT NOT NULL);
 	`)
+
 	const spr = db.prepare(
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
-	spr.run(90, 0, "Germany", "country", "DE", 51.0, 10.0, 47.0, 55.0, 6.0, 15.0)
-	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
-	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
+
+	spr.run(90, 0, "Germany", "country", "DE", 51, 10, 47, 55, 6, 15)
+	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12, 12.3)
+	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0, 1)
 	const ins = db.prepare(`INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)`)
 
 	for (const c of conventions) {
@@ -49,9 +52,11 @@ function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []
 
 describe("SqliteConventionSource", () => {
 	let db: DatabaseSync
+
 	beforeEach(() => {
 		db = buildDB([{ wof_id: 90, convention: { scoringWeights: { pc: 0.9 } } }])
 	})
+
 	afterEach(() => {
 		db.close()
 	})
@@ -59,7 +64,7 @@ describe("SqliteConventionSource", () => {
 	it("reads + parses a convention by WOF id, and returns undefined for a miss", () => {
 		const src = new SqliteConventionSource(db, "main")
 		expect(src.get(90)).toEqual({ scoringWeights: { pc: 0.9 } })
-		expect(src.get(12345)).toBeUndefined()
+		expect(src.get(12_345)).toBeUndefined()
 	})
 
 	it("memoizes (a second get for the same id does not re-query)", () => {
@@ -88,6 +93,7 @@ describe("convention-asset auto-detect → dispatch", () => {
 			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
 			buildFTS: true,
 		})
+
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).not.toBe("Plauen")
 		lookup.close()
@@ -95,12 +101,14 @@ describe("convention-asset auto-detect → dispatch", () => {
 
 	it("warns loudly (once) on a convention that names an unknown strategy, then continues", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		const lookup = new WOFSqlitePlaceLookup({
 			database: buildDB([
 				{ wof_id: 90, convention: { candidateStrategies: ["does_not_exist", "fallback_fuzzy_name_match"] } },
 			]),
 			buildFTS: true,
 		})
+
 		// First query warns about the unknown strategy and falls through to the known one.
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })

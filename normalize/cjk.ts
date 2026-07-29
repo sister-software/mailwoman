@@ -31,17 +31,33 @@ import { identityMap } from "./offset-map.ts"
 export interface CjkResult {
 	text: string
 	map: number[]
-	/** Count of characters folded in place (full-width → ASCII, ideographic space → ' '). */
+	/**
+	 * Count of characters folded in place (full-width → ASCII, ideographic space → ' ').
+	 */
 	folded: number
-	/** Count of characters dropped (the postal mark). */
+	/**
+	 * Count of characters dropped (the postal mark).
+	 */
 	stripped: number
 }
 
-const FULLWIDTH_START = 0xff01 // ！
-const FULLWIDTH_END = 0xff5e // ～
-const FULLWIDTH_TO_ASCII = 0xfee0 // U+FFxx − 0xFEE0 = U+00xx
-const IDEOGRAPHIC_SPACE = 0x3000
-const POSTAL_MARK = 0x3012 // 〒
+/**
+ * ！.
+ */
+const FULLWIDTH_START = 0xff_01
+/**
+ * ～.
+ */
+const FULLWIDTH_END = 0xff_5e
+/**
+ * U+FFxx − 0xFEE0 = U+00xx.
+ */
+const FULLWIDTH_TO_ASCII = 0xfe_e0
+const IDEOGRAPHIC_SPACE = 0x30_00
+/**
+ * 〒.
+ */
+const POSTAL_MARK = 0x30_12
 
 export function applyCjkNormalization(input: string): CjkResult {
 	let folded = 0
@@ -56,6 +72,7 @@ export function applyCjkNormalization(input: string): CjkResult {
 
 		if (code === POSTAL_MARK) {
 			stripped += 1
+
 			continue // drop — no addressing content; whitespace collapse later tidies any gap
 		}
 
@@ -63,6 +80,7 @@ export function applyCjkNormalization(input: string): CjkResult {
 			out.push(String.fromCharCode(code - FULLWIDTH_TO_ASCII))
 			map.push(i)
 			folded += 1
+
 			continue
 		}
 
@@ -70,8 +88,10 @@ export function applyCjkNormalization(input: string): CjkResult {
 			out.push(" ")
 			map.push(i)
 			folded += 1
+
 			continue
 		}
+
 		out.push(input[i]!)
 		map.push(i)
 	}

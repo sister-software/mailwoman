@@ -128,13 +128,16 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			out.push(ch)
 			map.push(i)
 			i += 1
+
 			continue
 		}
+
 		const start = i
 
 		while (i < input.length && isTokenChar(input[i]!)) {
 			i += 1
 		}
+
 		const token = input.slice(start, i)
 		const tokenWithTrailingDot = i < input.length && input[i] === "." ? `${token}.` : token
 		const lookupKey = token.replace(/\.$/, "").toLowerCase()
@@ -145,6 +148,7 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 				out.push(token[k]!)
 				map.push(start + k)
 			}
+
 			continue
 		}
 
@@ -153,6 +157,7 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			out.push(expansion[k]!)
 			map.push(start + Math.min(k, token.length - 1))
 		}
+
 		expansions.push({
 			from: tokenWithTrailingDot,
 			to: expansion,

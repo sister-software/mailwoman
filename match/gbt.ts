@@ -17,7 +17,19 @@
  *       trains offline once and ships as a data file.
  */
 
-/** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */
+/**
+ * Distinct values at or below which every split point is tried exactly rather than by quantile.
+ */
+const MAX_EXACT_SPLIT_VALUES = 5
+
+/**
+ * Quantile split points evaluated for a continuous feature.
+ */
+const QUANTILE_SPLIT_COUNT = 6
+
+/**
+ * A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value.
+ */
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
@@ -31,24 +43,26 @@ export function buildThresholds(X: number[][]): number[][] {
 
 	for (let f = 0; f < dim; f++) {
 		const vals = X.map((r) => r[f]!)
-		const uniq = [...new Set(vals)].sort((p, q) => p - q)
+		const uniq = [...new Set(vals)].toSorted((p, q) => p - q)
 
 		if (uniq.length <= 1) {
 			out.push([])
-		} else if (uniq.length <= 5) {
+		} else if (uniq.length <= MAX_EXACT_SPLIT_VALUES) {
 			const t: number[] = []
 
 			for (let k = 0; k < uniq.length - 1; k++) {
 				t.push((uniq[k]! + uniq[k + 1]!) / 2)
 			}
+
 			out.push(t)
 		} else {
-			const sorted = [...vals].sort((p, q) => p - q)
+			const sorted = [...vals].toSorted((p, q) => p - q)
 			const t: number[] = []
 
-			for (let q = 1; q <= 6; q++) {
+			for (let q = 1; q <= QUANTILE_SPLIT_COUNT; q++) {
 				t.push(sorted[Math.floor((q / 7) * (sorted.length - 1))]!)
 			}
+
 			out.push([...new Set(t)])
 		}
 	}
@@ -56,7 +70,9 @@ export function buildThresholds(X: number[][]): number[][] {
 	return out
 }
 
-/** Weighted SSE of target `g` over `rows` around their weighted mean. */
+/**
+ * Weighted SSE of target `g` over `rows` around their weighted mean.
+ */
 function nodeSSE(rows: number[], g: number[], w: number[]): number {
 	let wsum = 0
 	let wg = 0
@@ -65,6 +81,7 @@ function nodeSSE(rows: number[], g: number[], w: number[]): number {
 		wsum += w[i]!
 		wg += w[i]! * g[i]!
 	}
+
 	const mean = wsum > 0 ? wg / wsum : 0
 	let sse = 0
 
@@ -76,7 +93,9 @@ function nodeSSE(rows: number[], g: number[], w: number[]): number {
 	return sse
 }
 
-/** Greedy depth-limited weighted regression tree on target `g` (the boosting residual). */
+/**
+ * Greedy depth-limited weighted regression tree on target `g` (the boosting residual).
+ */
 function fitRegTree(
 	rows: number[],
 	X: number[][],
@@ -93,6 +112,7 @@ function fitRegTree(
 		wsum += w[i]!
 		wg += w[i]! * g[i]!
 	}
+
 	const leaf = wsum > 0 ? wg / wsum : 0
 
 	if (depth === 0 || rows.length < 2 * minLeaf) return { leaf }
@@ -145,14 +165,18 @@ function predictTree(t: TreeNode, x: number[]): number {
 	return n.leaf
 }
 
-/** A trained gradient-boosted-tree model: an additive ensemble over a base log-odds. Plain JSON. */
+/**
+ * A trained gradient-boosted-tree model: an additive ensemble over a base log-odds. Plain JSON.
+ */
 export interface GBT {
 	trees: TreeNode[]
 	lr: number
 	base: number
 }
 
-/** Hyperparameters for {@link trainGBT}. */
+/**
+ * Hyperparameters for {@link trainGBT}.
+ */
 export interface GBTOpts {
 	rounds: number
 	depth: number
@@ -160,7 +184,9 @@ export interface GBTOpts {
 	minLeaf: number
 }
 
-/** Gradient-boosted regression trees on logistic loss, with per-sample class weights `w`. */
+/**
+ * Gradient-boosted regression trees on logistic loss, with per-sample class weights `w`.
+ */
 export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts): GBT {
 	const N = X.length
 	const thresholds = buildThresholds(X)
@@ -175,6 +201,7 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 			wpos += w[i]!
 		}
 	}
+
 	const base = Math.log((wpos + 1) / (wtot - wpos + 1)) // weighted base log-odds
 	const F = new Array<number>(N).fill(base)
 	const trees: TreeNode[] = []
@@ -184,19 +211,24 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 
 		for (let i = 0; i < N; i++) {
 			g[i] = y[i]! - sigmoid(F[i]!)
-		} // negative gradient of logistic loss
+		}
+
+		// negative gradient of logistic loss
 		const tree = fitRegTree(rowsAll, X, g, w, thresholds, opts.depth, opts.minLeaf)
 
 		for (let i = 0; i < N; i++) {
 			F[i]! += opts.lr * predictTree(tree, X[i]!)
 		}
+
 		trees.push(tree)
 	}
 
 	return { trees, lr: opts.lr, base }
 }
 
-/** GBT score (logit) for one feature vector. Threshold-comparable like the FS weight. */
+/**
+ * GBT score (logit) for one feature vector. Threshold-comparable like the FS weight.
+ */
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base
 

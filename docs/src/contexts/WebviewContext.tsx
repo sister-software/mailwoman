@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { createContext, SetStateAction, useCallback, useContext } from "react"
+import type { SetStateAction } from "react"
+import { createContext, useCallback, useContext, useMemo } from "react"
 import type { ViewState } from "react-map-gl"
 
 export interface PlaypenWebviewState {
@@ -63,7 +64,7 @@ function validateSerializedState(input: unknown): asserts input is PlaypenWebvie
  * Should be called once on startup.
  */
 export function pluckSerializedState(): PlaypenWebviewState {
-	let serializedState: unknown = null
+	let serializedState: unknown
 
 	try {
 		serializedState = JSON.parse(localStorage.getItem("webview-state") || "null")
@@ -104,17 +105,15 @@ export const PlaypenStateProvider: React.FC<PlaypenStateProviderProps> = ({ init
 			validateSerializedState(value)
 		} catch (error) {
 			console.warn("Failed to persist serialized state", error)
-
-			return
 		}
 
 		// vscode.setState(value)
 	}, [])
 
-	const value = {
-		persistWebviewState,
-		initialWebviewState,
-	}
+	const value = useMemo(
+		() => ({ persistWebviewState, initialWebviewState }),
+		[persistWebviewState, initialWebviewState]
+	)
 
 	return (
 		<>

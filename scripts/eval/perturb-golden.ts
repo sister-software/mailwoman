@@ -29,6 +29,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { golden?: string; out?: string; "per-file"?: string }
 const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
@@ -42,13 +43,15 @@ interface GoldenRow {
 	locale?: string
 }
 
-/** Collapse the space between a trailing region + postcode, e.g. "OR 97214" → "OR97214". */
+/**
+ * Collapse the space between a trailing region + postcode, e.g. "OR 97214" → "OR97214".
+ */
 function glue(raw: string): string {
-	return raw.replace(/\b([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\b/g, "$1$2")
+	return raw.replaceAll(/\b([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\b/g, "$1$2")
 }
 
 const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
-	{ name: "delimiter-strip", apply: (r) => r.replace(/,/g, "") },
+	{ name: "delimiter-strip", apply: (r) => r.replaceAll(",", "") },
 	{ name: "lowercase", apply: (r) => r.toLowerCase() },
 	{ name: "glue", apply: glue },
 ]
@@ -62,6 +65,7 @@ function main(): void {
 		const lines = readFileSync(join(GOLDEN, file), "utf8")
 			.split("\n")
 			.filter((l) => l.trim())
+
 		// Deterministic spread: every Nth row up to PER_FILE.
 		const step = Math.max(1, Math.floor(lines.length / PER_FILE))
 
@@ -83,12 +87,14 @@ function main(): void {
 					expected[tag] = [val]
 				}
 
-			if (Object.keys(expected).length === 0) continue
+			if (!Object.keys(expected).length) continue
 
 			for (const p of PERTURBATIONS) {
 				const input = p.apply(row.raw)
 
-				if (input === row.raw && p.name !== "lowercase") continue // perturbation was a no-op (skip; keep lowercase always)
+				if (input === row.raw && p.name !== "lowercase") continue
+
+				// perturbation was a no-op (skip; keep lowercase always)
 				out.push(
 					JSON.stringify({
 						input,
@@ -100,10 +106,12 @@ function main(): void {
 				)
 			}
 		}
+
 		base += PER_FILE
 	}
 
 	writeFileSync(OUT, out.join("\n") + "\n")
+
 	console.log(`wrote ${out.length} perturbed cases (${PERTURBATIONS.map((p) => p.name).join(", ")}) → ${OUT}`)
 }
 

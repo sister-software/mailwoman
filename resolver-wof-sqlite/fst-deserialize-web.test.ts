@@ -18,7 +18,9 @@ const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
 const STATE_ENTRY_SIZE_V2 = 12 // version < 4
-const MAGIC = [0x46, 0x53, 0x54, 0x00] // "FST\0"
+const MAGIC = [0x46, 0x53, 0x54, 0x00]
+
+// "FST\0"
 
 const PLACETYPE_ORDER = [
 	"country",
@@ -65,6 +67,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	// --- Intern strings (edge tokens, then place names), first-seen order. ---
 	const stringMap = new Map<string, number>()
 	const strings: string[] = []
+
 	const intern = (s: string): number => {
 		let idx = stringMap.get(s)
 
@@ -111,7 +114,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 
 	const bytes = new Uint8Array(totalSize)
 	const view = new DataView(bytes.buffer)
-	let pos = 0
+	let pos: number
 
 	// --- Header ---
 	bytes.set(MAGIC, 0)
@@ -141,6 +144,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 		pos += 4
 		strOffset += encoded.length
 	}
+
 	view.setUint32(pos, strOffset, true) // sentinel
 	pos += 4
 
@@ -171,6 +175,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			const ep = edgeTableStart + edgeIdx * EDGE_ENTRY_SIZE
 			view.setUint32(ep, intern(token), true)
 			view.setUint32(ep + 4, target, true)
+
 			edgeIdx++
 		}
 
@@ -189,12 +194,14 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			} else {
 				view.setUint32(pp + 12, place.importance, true)
 			}
+
 			view.setFloat32(pp + 16, place.lat, true)
 			view.setFloat32(pp + 20, place.lon, true)
 
 			for (let ci = 0; ci < chain.length; ci++) {
 				view.setUint32(pp + 24 + ci * 4, chain[ci]!, true)
 			}
+
 			placeIdx++
 		}
 	}
@@ -214,13 +221,13 @@ const PARIS_FIXTURE: FixtureNode[] = [
 		edges: [],
 		places: [
 			{
-				wofID: 101748479,
+				wofID: 101_748_479,
 				placetype: "locality",
 				name: "Paris",
 				importance: 0.95,
 				lat: 48.8566,
 				lon: 2.3522,
-				parentChain: [85633147, 85632343],
+				parentChain: [85_633_147, 85_632_343],
 			},
 		],
 	},
@@ -255,7 +262,7 @@ describe("deserializeFSTWeb", () => {
 		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 		const place = matcher.accepting(matcher.walk(["paris"])!.stateID)[0]!
 
-		expect(place.wofID).toBe(101748479)
+		expect(place.wofID).toBe(101_748_479)
 		expect(place.placetype).toBe("locality")
 		expect(place.name).toBe("Paris")
 		expect(place.importance).toBeCloseTo(0.95, 5)
@@ -267,7 +274,7 @@ describe("deserializeFSTWeb", () => {
 		const matcher = deserializeFSTWeb(buildFSTBuffer(PARIS_FIXTURE))
 		const place = matcher.accepting(1)[0]!
 
-		expect(place.parentChain).toEqual([85633147, 85632343])
+		expect(place.parentChain).toEqual([85_633_147, 85_632_343])
 	})
 
 	test("placetypeIdx decodes via PLACETYPE_ORDER (region, not locality)", () => {
@@ -275,6 +282,7 @@ describe("deserializeFSTWeb", () => {
 			{ edges: [["x", 1]], places: [] },
 			{ edges: [], places: [{ wofID: 1, placetype: "region", name: "X", importance: 0.1, lat: 0, lon: 0 }] },
 		]
+
 		const place = deserializeFSTWeb(buildFSTBuffer(nodes)).accepting(1)[0]!
 
 		expect(place.placetype).toBe("region")
@@ -283,7 +291,7 @@ describe("deserializeFSTWeb", () => {
 	test("accepts a Uint8Array as well as an ArrayBuffer", () => {
 		const u8 = buildFSTBuffer(PARIS_FIXTURE)
 		const fromU8 = deserializeFSTWeb(u8)
-		const fromAb = deserializeFSTWeb(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength))
+		const fromAb = deserializeFSTWeb(u8.slice().buffer)
 
 		expect(fromU8.placeCount).toBe(1)
 		expect(fromAb.placeCount).toBe(1)
@@ -301,6 +309,7 @@ test("deserializeFSTWeb: v1 derives importance from a population u32 via the log
 		{ edges: [["t", 1]], places: [] },
 		{ edges: [], places: [{ wofID: 1, placetype: "locality", name: "T", importance: 1000, lat: 0, lon: 0 }] },
 	]
+
 	const matcher = deserializeFSTWeb(buildFSTBuffer(nodes, { version: 1 }))
 	const place = matcher.accepting(1)[0]!
 
@@ -380,11 +389,12 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 
 //#endregion
 
-//#region surface-ambiguity classes (survey #4) — the web reader mirrors fst-serialize's flags bit0
+//#region surface-ambiguity classes
 
 test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
 	const { serializeFST } = await import("./fst-serialize.ts")
 	const { FSTMatcher } = await import("./fst-matcher.ts")
+
 	const nodes = [
 		{ edges: new Map([["pierre", 1]]), places: [] },
 		{
@@ -403,6 +413,7 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 			],
 		},
 	]
+
 	const withAmbiguity = new Uint8Array(serializeFST(FSTMatcher.fromNodes(nodes)))
 	const m = deserializeFSTWeb(withAmbiguity)
 	const hit = m.walk(["pierre"])!

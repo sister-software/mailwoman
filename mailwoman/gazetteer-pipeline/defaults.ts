@@ -13,7 +13,9 @@
  *   gazetteer" and the #1021 PR.
  */
 
-/** The locales whose WOF GeoJSON repos are cloned + ingested directly (`<repos>/whosonfirst-data*`). */
+/**
+ * The locales whose WOF GeoJSON repos are cloned + ingested directly (`<repos>/whosonfirst-data*`).
+ */
 export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"CN",
 	"DE",
@@ -28,7 +30,9 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"US",
 ] as const
 
-/** Overture `divisions`-theme backfill set (synthetic ids @ 8e12) — the zero-WOF-repo locales. */
+/**
+ * Overture `divisions`-theme backfill set (synthetic ids @ 8e12) — the zero-WOF-repo locales.
+ */
 export const DEFAULT_OVERTURE_COUNTRIES = [
 	"AE",
 	"AO",
@@ -118,7 +122,9 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 	"ZA",
 ] as const
 
-/** GeoNames alias-fold tail (synthetic ids @ 9e12) — bilingual/alt-name coverage for the remaining locales. */
+/**
+ * GeoNames alias-fold tail (synthetic ids @ 9e12) — bilingual/alt-name coverage for the remaining locales.
+ */
 export const DEFAULT_GEONAMES_COUNTRIES = [
 	"AD",
 	"AF",
@@ -283,10 +289,14 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 	"ZW",
 ] as const
 
-/** Pinned Overture release for the divisions theme (rows churn between monthly releases; never mix two). */
+/**
+ * Pinned Overture release for the divisions theme (rows churn between monthly releases; never mix two).
+ */
 export const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
 
-/** Staging suffix for admin rebuilds — build here, verify, THEN swap over the live name (RELEASING.md). */
+/**
+ * Staging suffix for admin rebuilds — build here, verify, THEN swap over the live name (RELEASING.md).
+ */
 export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 
 /**

@@ -21,7 +21,7 @@ const GEOFABRIK_BASE = "https://download.geofabrik.de"
  * `europe/germany`. Pass the path WITHOUT the `-latest.osm.pbf` suffix.
  */
 export function geofabrikURL(regionPath: string): string {
-	const clean = regionPath.replace(/^\/+|\/+$/g, "")
+	const clean = regionPath.replaceAll(/^\/+|\/+$/g, "")
 
 	return `${GEOFABRIK_BASE}/${clean}-latest.osm.pbf`
 }
@@ -36,6 +36,7 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 
 	if (!res.ok || !res.body) throw new Error(`Geofabrik download failed (${res.status}) for ${url}`)
 	let bytes = 0
+
 	const counter = new TransformStream<Uint8Array, Uint8Array>({
 		transform(chunk, controller) {
 			bytes += chunk.byteLength

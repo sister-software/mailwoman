@@ -21,7 +21,9 @@ import { describe, expect, test } from "vitest"
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-/** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
+/**
+ * Strip ANSI escapes + ink spinner frames; isolate the JSON payload.
+ */
 function extractJSON(stdout: string): unknown {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
@@ -29,7 +31,7 @@ function extractJSON(stdout: string): unknown {
 	const objStart = cleaned.indexOf("{")
 	const objEnd = cleaned.lastIndexOf("}")
 
-	if (objStart < 0 || objEnd < objStart) {
+	if (objStart === -1 || objEnd < objStart) {
 		throw new Error(`No JSON object in stdout:\n${stdout}`)
 	}
 
@@ -44,6 +46,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 
 		// Shape: every PipelineResult key is present.
@@ -76,6 +79,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const kind = result["kind"] as Record<string, unknown>
 		expect(kind["kind"]).toBe("locality_only")
@@ -86,6 +90,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const shape = result["queryShape"] as Record<string, unknown>
 		const formats = shape["knownFormats"] as Array<Record<string, unknown>>
@@ -97,6 +102,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const normalized = result["normalized"] as Record<string, unknown>
 		expect(normalized["normalized"]).toBe("Paris")

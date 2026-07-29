@@ -7,7 +7,6 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import Layout from "@theme/Layout"
 import type React from "react"
 

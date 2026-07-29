@@ -32,7 +32,9 @@ export interface PhotonProperties {
 	[key: string]: unknown
 }
 
-/** A Photon result feature: a GeoJSON Point with {@link PhotonProperties}. */
+/**
+ * A Photon result feature: a GeoJSON Point with {@link PhotonProperties}.
+ */
 export interface PhotonFeature {
 	type: "Feature"
 	geometry: {
@@ -42,18 +44,24 @@ export interface PhotonFeature {
 	properties: PhotonProperties
 }
 
-/** The Photon response envelope — a GeoJSON FeatureCollection. */
+/**
+ * The Photon response envelope — a GeoJSON FeatureCollection.
+ */
 export interface PhotonFeatureCollection {
 	type: "FeatureCollection"
 	features: PhotonFeature[]
 }
 
-/** Parsed `/api` (forward / autocomplete) parameters. */
+/**
+ * Parsed `/api` (forward / autocomplete) parameters.
+ */
 export interface PhotonSearchParams {
 	q: string
 	limit: number
 	lang?: string
-	/** Location bias. */
+	/**
+	 * Location bias.
+	 */
 	lat?: number
 	lon?: number
 	bbox?: [number, number, number, number]
@@ -61,7 +69,9 @@ export interface PhotonSearchParams {
 	layer?: string[]
 }
 
-/** Parsed `/reverse` parameters. */
+/**
+ * Parsed `/reverse` parameters.
+ */
 export interface PhotonReverseParams {
 	lat: number
 	lon: number
@@ -79,12 +89,16 @@ export interface PhotonEngine {
 	reverse?(params: PhotonReverseParams): Promise<PhotonFeatureCollection>
 }
 
-/** Build a Photon `Feature` from a coordinate + properties. */
+/**
+ * Build a Photon `Feature` from a coordinate + properties.
+ */
 export function photonFeature(lon: number, lat: number, properties: PhotonProperties): PhotonFeature {
 	return { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties }
 }
 
-/** Wrap features in a Photon `FeatureCollection`. */
+/**
+ * Wrap features in a Photon `FeatureCollection`.
+ */
 export function photonCollection(features: PhotonFeature[]): PhotonFeatureCollection {
 	return { type: "FeatureCollection", features }
 }

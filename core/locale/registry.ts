@@ -30,7 +30,9 @@ export class InMemoryLocaleRegistry implements LocaleRegistry {
 		return Array.from(this.#profiles.values())
 	}
 
-	/** Remove a locale. No-op if not present. */
+	/**
+	 * Remove a locale. No-op if not present.
+	 */
 	unregister(locale: string): void {
 		this.#profiles.delete(locale)
 	}

@@ -17,6 +17,9 @@ import styles from "./styles.module.css"
  */
 // Order matters: first match wins. Labels go first so road-label / earth-label / address-label
 // don't get pulled into the Roads / Landuse buckets.
+/**
+ * Patterns grouping map layers into the toggles shown in the control, so related layers switch together.
+ */
 export const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "Labels", match: /(?:_label|^places_|^address_label|^country)/ },
 	{ name: "Background", match: /^background/ },
@@ -53,6 +56,7 @@ export class LayerToggleControl implements IControl {
 		this.container.className = `maplibregl-ctrl maplibregl-ctrl-group ${styles.layerToggleCtrl}`
 		// Render a placeholder so the panel is visible immediately; replace once layers land.
 		this.renderPlaceholder()
+
 		// Re-render whenever the style swaps (theme toggle, etc.) AND when sources finish
 		// loading — styledata can fire before any layers are populated. Guard against the
 		// empty-layers race by skipping renders that would produce 0 buckets.
@@ -60,9 +64,10 @@ export class LayerToggleControl implements IControl {
 			if (!this.map?.isStyleLoaded()) return
 			const layers = this.map.getStyle()?.layers ?? []
 
-			if (layers.length === 0) return
+			if (!layers.length) return
 			this.render()
 		}
+
 		map.on("styledata", this.styleListener)
 		map.on("idle", this.styleListener)
 
@@ -87,6 +92,7 @@ export class LayerToggleControl implements IControl {
 			this.map.off("styledata", this.styleListener)
 			this.map.off("idle", this.styleListener)
 		}
+
 		this.container?.remove()
 		this.container = null
 		this.map = null
@@ -100,7 +106,12 @@ export class LayerToggleControl implements IControl {
 
 		// Bucket every layer into a group (catch-all → "Other"). Skip mailwoman-bbox + marker
 		// layers — they're transient resolver output, not part of the basemap.
-		type Bucket = { name: string; layerIds: string[]; visible: boolean }
+		interface Bucket {
+			name: string
+			layerIds: string[]
+			visible: boolean
+		}
+
 		const buckets = new Map<string, Bucket>()
 
 		for (const layer of style.layers) {
@@ -112,6 +123,7 @@ export class LayerToggleControl implements IControl {
 			if (!buckets.has(group)) {
 				buckets.set(group, { name: group, layerIds: [], visible: true })
 			}
+
 			const bucket = buckets.get(group)!
 			bucket.layerIds.push(id)
 			// Group is "visible" if at least one of its layers is visible (default vs explicit none).
@@ -153,6 +165,7 @@ export class LayerToggleControl implements IControl {
 			const cb = document.createElement("input")
 			cb.type = "checkbox"
 			cb.checked = bucket.visible
+
 			cb.addEventListener("change", () => {
 				const visibility = cb.checked ? "visible" : "none"
 
@@ -164,6 +177,7 @@ export class LayerToggleControl implements IControl {
 					}
 				}
 			})
+
 			row.appendChild(cb)
 			const label = document.createElement("span")
 			label.className = styles.layerToggleLabel

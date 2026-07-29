@@ -4,7 +4,7 @@
 import * as fs from "node:fs/promises"
 
 import FastGlob from "fast-glob"
-import { PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
 import { takeInParallel } from "../../collections.ts"
 import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"
@@ -16,6 +16,9 @@ import {
 	PlacetypeRoleOrder,
 } from "./definition.ts"
 
+/**
+ * Upstream Who's On First placetypes repository the local definitions are generated from.
+ */
 export const PLACETYPES_REPO_SOURCE = {
 	url: "https://github.com/whosonfirst/whosonfirst-placetypes.git",
 	owner: "whosonfirst",
@@ -240,7 +243,7 @@ export class Placetype implements Disposable {
 
 		this.#collectAncestors(ancestorsContext, roleFilters)
 
-		return Array.from(ancestorsContext).sort(Placetype.comparatorAsc)
+		return Array.from(ancestorsContext).toSorted(Placetype.comparatorAsc)
 	}
 
 	#collectAncestors(ancestorsContext: Set<Placetype>, roleFilters?: Set<PlacetypeRole> | null): void {
@@ -268,7 +271,7 @@ export class Placetype implements Disposable {
 			validChildren.push(child)
 		}
 
-		return validChildren.sort(Placetype.comparatorAsc)
+		return validChildren.toSorted(Placetype.comparatorAsc)
 	}
 
 	/**
@@ -286,7 +289,7 @@ export class Placetype implements Disposable {
 			validParents.push(parent)
 		}
 
-		return validParents.sort(Placetype.comparatorDesc)
+		return validParents.toSorted(Placetype.comparatorDesc)
 	}
 
 	/**
@@ -301,7 +304,7 @@ export class Placetype implements Disposable {
 			return validSiblings.filter((sibling) => roleFilters.has(sibling.role))
 		}
 
-		return validSiblings.sort((a, b) => {
+		return validSiblings.toSorted((a, b) => {
 			return PlacetypeRoleOrder[a.role] - PlacetypeRoleOrder[b.role]
 		})
 	}
@@ -317,7 +320,7 @@ export class Placetype implements Disposable {
 
 		this.#collectDescendants(descendantsContext, roleFilters)
 
-		return Array.from(descendantsContext).sort(Placetype.comparatorAsc)
+		return Array.from(descendantsContext).toSorted(Placetype.comparatorAsc)
 	}
 
 	#collectDescendants(descendantsContext: Set<Placetype>, roleFilters?: Set<PlacetypeRole> | null): void {

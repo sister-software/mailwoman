@@ -237,6 +237,8 @@ class MailwomanCoarseEncoder(nn.Module):
         country_ambiguous_scale: float = 1.0,
         use_street_type_anchor: bool = False,
         street_type_feature_dim: int = 1,
+        use_locality_surface_anchor: bool = False,
+        locality_surface_feature_dim: int = 2,
         use_affix_head: bool = False,
         use_deploc_head: bool = False,
         use_conventions_loss_mask: bool = False,
@@ -317,6 +319,14 @@ class MailwomanCoarseEncoder(nn.Module):
         # absence (P-C: open-vocab FR misses are mis-labeling, not mis-segmentation).
         self.use_street_type_anchor = use_street_type_anchor
         self.street_type_feature_dim = int(street_type_feature_dim) if use_street_type_anchor else 0
+        # Locality-surface conditioning channel (v3.16.0 evidence-bundle probe — Option A's second
+        # correlated channel). Same additive input-layer shape; features are the per-token
+        # [locality, locality_homograph] clue painted from the RAW SURFACE by the locality-surface
+        # lexicon (WOF US+FR locality/localadmin names, curated, homograph = place-name in ≥2
+        # countries). The BUNDLE doctrine (P-A verdict): street-type and locality-membership must be
+        # weighed against each other in context so neither becomes a decisive soft rule.
+        self.use_locality_surface_anchor = use_locality_surface_anchor
+        self.locality_surface_feature_dim = int(locality_surface_feature_dim) if use_locality_surface_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -442,6 +452,17 @@ class MailwomanCoarseEncoder(nn.Module):
         else:
             self.street_type_projection = None
             self.street_type_token_embedding = None
+
+        # Locality-surface projection W_l (feature_dim→hidden) + learned v_LOC cue (v3.16.0). None when
+        # off (forward skips it → bit-identical to a no-locality-surface encoder).
+        self.locality_surface_projection: nn.Linear | None
+        self.locality_surface_token_embedding: nn.Parameter | None
+        if self.use_locality_surface_anchor:
+            self.locality_surface_projection = nn.Linear(self.locality_surface_feature_dim, hidden_size, bias=True)
+            self.locality_surface_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+        else:
+            self.locality_surface_projection = None
+            self.locality_surface_token_embedding = None
 
         self.blocks = nn.ModuleList(
             [
@@ -619,6 +640,8 @@ class MailwomanCoarseEncoder(nn.Module):
         country_confidence: torch.Tensor | None = None,
         street_type_features: torch.Tensor | None = None,
         street_type_confidence: torch.Tensor | None = None,
+        locality_surface_features: torch.Tensor | None = None,
+        locality_surface_confidence: torch.Tensor | None = None,
         char_ids: torch.Tensor | None = None,
     ) -> _CoarseEncoderOutput:
         # Token embedding source: char-composed (CharCNN over per-token char IDs, shape (B, S, W)) or the
@@ -773,6 +796,30 @@ class MailwomanCoarseEncoder(nn.Module):
             raise ValueError(
                 "street_type_features supplied but use_street_type_anchor=False — rebuild the "
                 "encoder with use_street_type_anchor=True or drop the street_type arguments"
+            )
+
+        # Locality-surface injection (v3.16.0 evidence bundle). Per-token additive: l_i = c_i ·
+        # (W_l·features + v_LOC). Same no-clue-identity continuum as every other channel.
+        if self.locality_surface_projection is not None and self.locality_surface_token_embedding is not None:
+            if locality_surface_features is None or locality_surface_confidence is None:
+                locality_surface_features = torch.zeros(
+                    bsz, seq, self.locality_surface_feature_dim, dtype=h.dtype, device=h.device
+                )
+                locality_surface_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
+            elif locality_surface_features.shape != (bsz, seq, self.locality_surface_feature_dim):
+                raise ValueError(
+                    f"locality_surface_features shape {tuple(locality_surface_features.shape)} != "
+                    f"({bsz}, {seq}, {self.locality_surface_feature_dim})"
+                )
+            loc_vec = (
+                self.locality_surface_projection(locality_surface_features.to(h.dtype))
+                + self.locality_surface_token_embedding
+            )
+            h = h + locality_surface_confidence.to(h.dtype).unsqueeze(-1) * loc_vec
+        elif locality_surface_features is not None:
+            raise ValueError(
+                "locality_surface_features supplied but use_locality_surface_anchor=False — rebuild the "
+                "encoder with use_locality_surface_anchor=True or drop the locality_surface arguments"
             )
 
         h = self.input_dropout(self.input_ln(h))
@@ -1134,6 +1181,8 @@ class MailwomanCoarseEncoder(nn.Module):
             "country_feature_dim": int(self.country_feature_dim),
             "use_street_type_anchor": bool(getattr(self, "use_street_type_anchor", False)),
             "street_type_feature_dim": int(getattr(self, "street_type_feature_dim", 0)),
+            "use_locality_surface_anchor": bool(getattr(self, "use_locality_surface_anchor", False)),
+            "locality_surface_feature_dim": int(getattr(self, "locality_surface_feature_dim", 0)),
             # #1104 homograph-guard scale — MUST serialize so export/reload rebuild with the same scale
             # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
             "country_ambiguous_scale": float(self.country_ambiguous_scale),
@@ -1213,6 +1262,8 @@ class MailwomanCoarseEncoder(nn.Module):
             country_feature_dim=cfg.get("country_feature_dim", 2),
             use_street_type_anchor=cfg.get("use_street_type_anchor", False),
             street_type_feature_dim=cfg.get("street_type_feature_dim", 1),
+            use_locality_surface_anchor=cfg.get("use_locality_surface_anchor", False),
+            locality_surface_feature_dim=cfg.get("locality_surface_feature_dim", 2),
             country_ambiguous_scale=cfg.get("country_ambiguous_scale", 1.0),
             use_affix_head=cfg.get("use_affix_head", False),
             use_deploc_head=cfg.get("use_deploc_head", False),
@@ -1301,6 +1352,8 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         country_feature_dim=getattr(cfg.model, "country_feature_dim", 2),
         use_street_type_anchor=getattr(cfg.model, "use_street_type_anchor", False),
         street_type_feature_dim=getattr(cfg.model, "street_type_feature_dim", 1),
+        use_locality_surface_anchor=getattr(cfg.model, "use_locality_surface_anchor", False),
+        locality_surface_feature_dim=getattr(cfg.model, "locality_surface_feature_dim", 2),
         country_ambiguous_scale=getattr(cfg.model, "country_ambiguous_scale", 1.0),
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),

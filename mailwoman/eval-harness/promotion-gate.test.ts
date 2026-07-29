@@ -47,7 +47,9 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 	return matchFrom(0, 0)
 }
 
-/** One path segment against one glob segment — `*` matches any in-segment run, everything else is literal. */
+/**
+ * One path segment against one glob segment — `*` matches any in-segment run, everything else is literal.
+ */
 function segmentMatches(glob: string, segment: string): boolean {
 	const pieces = glob.split("*")
 	let at = 0
@@ -58,7 +60,7 @@ function segmentMatches(glob: string, segment: string): boolean {
 		if (piece === "") continue
 		const found = segment.indexOf(piece, at)
 
-		if (found < 0) return false
+		if (found === -1) return false
 
 		// A literal after the leading `*` may start anywhere; a leading literal must anchor at 0.
 		if (i === 0 && found !== 0) return false
@@ -66,12 +68,14 @@ function segmentMatches(glob: string, segment: string): boolean {
 	}
 
 	// A trailing literal must anchor the end ("*.json" matches "a.json", not "a.json.bak").
-	const last = pieces[pieces.length - 1]!
+	const last = pieces.at(-1)!
 
 	return last === "" || segment.endsWith(last)
 }
 
-/** Whether `path` (package-root-relative) ships in the tarball per package.json `files` (negations applied in order). */
+/**
+ * Whether `path` (package-root-relative) ships in the tarball per package.json `files` (negations applied in order).
+ */
 function shipsInPackage(files: string[], path: string): boolean {
 	let included = false
 

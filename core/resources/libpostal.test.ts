@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { LibPostalLanguageCode, LocaleIndex, generatePlurals } from "@mailwoman/core/resources"
+import type { LibPostalLanguageCode } from "@mailwoman/core/resources"
+import { LocaleIndex, generatePlurals } from "@mailwoman/core/resources"
 import { expect, test } from "vitest"
 
 function createIndexFixture<T extends Iterable<readonly [string, Iterable<LibPostalLanguageCode>]>>(
@@ -48,6 +49,7 @@ test("generatePlurals: english - functional", () => {
 		["dogs", ["en"]], // already plural
 		["fish", ["en"]], // same word singular/plural in English
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -100,6 +102,7 @@ test("generatePlurals: english - sibilant sound", () => {
 		["witch", ["en"]],
 		["judge", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -127,6 +130,7 @@ test("generatePlurals: english - voiceless consonant", () => {
 		["cuff", ["en"]],
 		["death", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -150,6 +154,7 @@ test("generatePlurals: english - regular plural", () => {
 		["girl", ["en"]],
 		["chair", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -169,6 +174,7 @@ test("generatePlurals: english - nouns ending in -o", () => {
 		["potato", ["en"]],
 		["volcano", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -194,6 +200,7 @@ test("generatePlurals: english - nouns ending in -o (Italian loanwords)", () => 
 		["quarto", ["en"]],
 		["kimono", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -225,6 +232,7 @@ test("generatePlurals: english - nouns ending in -y", () => {
 		["lady", ["en"]],
 		["sky", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([
@@ -261,6 +269,7 @@ test("generatePlurals: english - voiceless fricatives", () => {
 		["moth", ["en"]],
 		["proof", ["en"]],
 	])
+
 	generatePlurals(index)
 
 	expect(index.toJSON()).toStrictEqual([

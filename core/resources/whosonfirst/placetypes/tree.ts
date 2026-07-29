@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { PlacetypeRole } from "./definition.ts"
-import { Placetype } from "./Placetype.ts"
+import type { Placetype } from "./Placetype.ts"
 
 /**
  * A node in the nested placetype tree produced by {@linkcode generatePlacetypeTree}.

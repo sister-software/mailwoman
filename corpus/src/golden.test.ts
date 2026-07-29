@@ -3,7 +3,7 @@
 
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
+import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -13,9 +13,11 @@ import { parseGoldenLine, unreachableComponents, validateGoldenDir, validateGold
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-golden-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -57,6 +59,7 @@ describe("unreachableComponents", () => {
 			country: "FR",
 			source: "golden",
 		})
+
 		expect(missing).toEqual([])
 	})
 
@@ -67,6 +70,7 @@ describe("unreachableComponents", () => {
 			country: "FR",
 			source: "golden",
 		})
+
 		expect(missing).toEqual(["region"])
 	})
 })
@@ -74,6 +78,7 @@ describe("unreachableComponents", () => {
 describe("validateGoldenFile", () => {
 	it("flags both schema + reachability issues in one pass", async () => {
 		const path = join(scratch, "test.jsonl")
+
 		await writeFile(
 			path,
 			[
@@ -84,6 +89,7 @@ describe("validateGoldenFile", () => {
 			].join("\n"),
 			"utf8"
 		)
+
 		const issues = await validateGoldenFile(path)
 		expect(issues).toHaveLength(2)
 		expect(issues[0]!.reason).toMatch(/components not reachable/)

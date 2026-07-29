@@ -10,6 +10,7 @@ import { buildGazetteerFeatures, gazetteerCharPaint, parseGazetteerLexicon } fro
 import type { TokenizedPiece } from "./tokenizer.ts"
 
 const BITS = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
+
 const LEXICON = parseGazetteerLexicon({
 	feature_dim: 5,
 	slots: ["country", "region", "po_box", "cedex", "homograph"],
@@ -34,17 +35,20 @@ const LEXICON = parseGazetteerLexicon({
 	},
 })
 
-/** Bits painted on the first kept char of each whitespace word. */
+/**
+ * Bits painted on the first kept char of each whitespace word.
+ */
 function paintedWords(raw: string): Record<string, number> {
 	const charBits = gazetteerCharPaint(raw, LEXICON)
 	const out: Record<string, number> = {}
 
 	for (const m of raw.matchAll(/\S+/g)) {
-		const word = m[0].replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
+		const word = m[0].replaceAll(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
 
 		for (let c = m.index; c < m.index + m[0].length; c++) {
 			if (/[A-Za-z0-9]/.test(raw[c]!)) {
 				out[word] = charBits[c]!
+
 				break
 			}
 		}
@@ -93,12 +97,14 @@ describe("gazetteer matcher parity", () => {
 
 	it("projects onto pieces by first-non-ws char, pads zero", () => {
 		const raw = "Tbilisi, Georgia"
+
 		const pieces: TokenizedPiece[] = [
 			{ piece: "Tbilisi", id: 10, start: 0, end: 7 },
 			{ piece: ", ", id: 11, start: 7, end: 9 },
 			{ piece: "Geo", id: 12, start: 9, end: 12 },
 			{ piece: "rgia", id: 13, start: 12, end: 16 },
 		]
+
 		const { features, confidence } = buildGazetteerFeatures(raw, pieces, LEXICON)
 		expect(features[0]).toEqual([0, 0, 0, 0, 0])
 		expect(confidence[0]).toBe(0)

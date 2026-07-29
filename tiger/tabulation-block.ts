@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type MultiPolygonLiteral } from "@mailwoman/spatial"
+import type { MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import { TIGERProperty, type TIGERPropertyRecord } from "./constants.ts"
-import { GeoIDPart, type FIPSBlockGeoID, type ParsedGeoIDBlockLevel } from "./geoid.ts"
+import type { TIGERProperty, TIGERPropertyRecord } from "./constants.ts"
+import type { GeoIDPart, FIPSBlockGeoID, ParsedGeoIDBlockLevel } from "./geoid.ts"
 
 /**
  * The properties of a tabulated block from the TIGER/Line dataset.

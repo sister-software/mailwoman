@@ -55,7 +55,9 @@ interface PointRow {
 	release: string
 }
 
-/** One known house number on the street: the centroid of its rows (unit siblings collapse). */
+/**
+ * One known house number on the street: the centroid of its rows (unit siblings collapse).
+ */
 interface NumberAnchor {
 	n: number
 	lat: number
@@ -80,6 +82,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 		} else {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
+
 		this.#fallback = opts.fallback
 
 		// Degrade gracefully on an empty/tableless shard (#568): with no `address_point` table this tier
@@ -120,7 +123,9 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	}
 }
 
-/** Collapse rows to one centroid anchor per distinct house number, sorted ascending. */
+/**
+ * Collapse rows to one centroid anchor per distinct house number, sorted ascending.
+ */
 function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 	const byN = new Map<number, PointRow[]>()
 
@@ -142,7 +147,7 @@ function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 			source: group[0]!.source,
 			release: group[0]!.release,
 		}))
-		.sort((a, b) => a.n - b.n)
+		.toSorted((a, b) => a.n - b.n)
 }
 
 function interpolateFromNeighbors(rows: readonly PointRow[], n: number): InterpolatedHit | null {
@@ -157,6 +162,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 			below = anchor
 		} else {
 			above = anchor
+
 			break
 		}
 	}

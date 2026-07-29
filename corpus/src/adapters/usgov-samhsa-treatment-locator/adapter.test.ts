@@ -24,6 +24,7 @@ let scratch: string
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-samhsa-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -45,6 +46,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		// 9 fixture rows minus 1 (invalid state "ZZ" on row SR0009).
 		// SR0008 has empty name1 but non-empty name2, so composeVenue returns the parent org → still emitted.
 		expect(m.yielded).toBe(8)
@@ -63,6 +65,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0002")!
 		expect(row.components.venue).toBe("Mountain Plains Counseling Services - Catholic Charities of Wyoming")
@@ -75,6 +78,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0001")!
 		expect(row.components.street).toBe("SW Madison St, Suite 300")
@@ -89,6 +93,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0003")!
 		expect(row.components.street).toContain("Elmwood Ave")
@@ -103,6 +108,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0003")!
 		const result = alignRow(row)
@@ -122,6 +128,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0004")!
 		expect(row.components.house_number).toBe("40-12")
@@ -135,6 +142,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0007")!
 		expect(row.components.house_number).toBeUndefined()
@@ -148,6 +156,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0008")!
 		expect(row.components.venue).toBe("Some Parent Org")
@@ -160,6 +169,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0009")).toBeUndefined()
 	})
@@ -182,6 +192,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(m.yielded).toBe(3)
 		expect(m.written).toBe(3)
 	})
@@ -193,13 +204,16 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, USGOV_SAMHSA_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

@@ -32,6 +32,7 @@ describe("synth-po-box adapter", () => {
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
 			{ locality: "Paris", region: "Île-de-France", postcode: "75001", country: "FR" },
 		])
+
 		const rows = await collect(path)
 		expect(rows).toHaveLength(2)
 		expect(rows[0]!.source).toBe(SYNTH_PO_BOX_ADAPTER_ID)
@@ -59,6 +60,7 @@ describe("synth-po-box adapter", () => {
 			{ locality: "Missing postcode", region: "VT", country: "US" }, // invalid
 			{ region: "VT", postcode: "05401", country: "US" }, // invalid (no locality)
 		])
+
 		const rows = await collect(path)
 		expect(rows).toHaveLength(1)
 	})
@@ -69,12 +71,14 @@ describe("synth-po-box adapter", () => {
 			{ locality: "B", region: "Île-de-France", postcode: "75001", country: "FR" },
 			{ locality: "C", region: "CA", postcode: "94133", country: "US" },
 		])
+
 		const adapter = createSynthPoBoxAdapter({ seed: 7 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {
 			rows.push(row)
 		}
+
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.locale).toBe("fr-FR")
 		expect(rows[0]!.country).toBe("FR")
@@ -88,6 +92,7 @@ describe("synth-po-box adapter", () => {
 		for await (const row of adapter.rows({ inputPath: path })) {
 			rows.push(row)
 		}
+
 		expect(rows).toHaveLength(5)
 		// At least 2 unique raw strings out of 5 (with seed=42, leader selection varies)
 		const unique = new Set(rows.map((r) => r.raw))
@@ -105,7 +110,8 @@ describe("synth-po-box adapter", () => {
 				houseNumber: "100",
 			},
 		])
-		const adapter = createSynthPoBoxAdapter({ seed: 99, pmbRatio: 1.0 })
+
+		const adapter = createSynthPoBoxAdapter({ seed: 99, pmbRatio: 1 })
 		const rows = await collect(path, adapter)
 		expect(rows[0]!.components.street).toBe("Main St")
 		expect(rows[0]!.components.house_number).toBe("100")
@@ -121,12 +127,14 @@ describe("synth-po-box adapter", () => {
 				country: "US",
 			}))
 		)
+
 		const adapter = createSynthPoBoxAdapter({ seed: 1 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, limit: 3 })) {
 			rows.push(row)
 		}
+
 		expect(rows).toHaveLength(3)
 	})
 
@@ -135,6 +143,7 @@ describe("synth-po-box adapter", () => {
 			{ locality: "A", region: "VT", postcode: "05401", country: "US" },
 			{ locality: "B", region: "VT", postcode: "05402", country: "US" },
 		])
+
 		const rows = await collect(path)
 		const ids = new Set(rows.map((r) => r.source_id))
 		expect(ids.size).toBe(2)
@@ -143,7 +152,7 @@ describe("synth-po-box adapter", () => {
 
 	it("militaryRatio emits a US military/diplomatic PO-box row per input (#517)", async () => {
 		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
-		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1.0 })
+		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1 })
 		const rows = await collect(path, adapter)
 		// One standard po_box row + one self-contained military row.
 		expect(rows).toHaveLength(2)
@@ -174,12 +183,13 @@ describe("synth-po-box adapter", () => {
 
 	it("military rows are US-only — suppressed under a non-US country filter", async () => {
 		const path = writeFixture([{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" }])
-		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1.0 })
+		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1 })
 		const rows = []
 
 		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) {
 			rows.push(row)
 		}
+
 		expect(rows.length).toBeGreaterThanOrEqual(1)
 		expect(rows.every((r) => !/^(PSC|CMR|Unit) /.test(String(r.components.po_box)))).toBe(true)
 	})

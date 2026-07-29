@@ -38,17 +38,25 @@ export function weightsCacheDir(): string {
 	return resolve(homedir(), ".cache", "mailwoman", "weights")
 }
 
-/** The weights package for a locale tag, normalized to the all-lowercase BCP-47 package convention. */
+/**
+ * The weights package for a locale tag, normalized to the all-lowercase BCP-47 package convention.
+ */
 export function weightsPackageName(locale?: string): string {
 	return `@mailwoman/neural-weights-${(locale ?? "en-us").toLowerCase()}`
 }
 
 export interface ResolveWeightsOpts {
-	/** BCP-47-ish locale tag, e.g. "en-us" or "fr-fr". Used to pick the weights package. */
+	/**
+	 * BCP-47-ish locale tag, e.g. "en-us" or "fr-fr". Used to pick the weights package.
+	 */
 	locale?: string
-	/** Explicit model.onnx path; takes precedence over package auto-resolve. */
+	/**
+	 * Explicit model.onnx path; takes precedence over package auto-resolve.
+	 */
 	modelPath?: string
-	/** Explicit tokenizer.model path; takes precedence over package auto-resolve. */
+	/**
+	 * Explicit tokenizer.model path; takes precedence over package auto-resolve.
+	 */
 	tokenizerPath?: string
 	/**
 	 * Explicit `model-card.json` path (for the label vocab) on the explicit model+tokenizer path. When omitted, falls
@@ -112,6 +120,15 @@ export interface ResolvedWeights {
 	 */
 	countryLexiconPath?: string
 	/**
+	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2) — `street-type-lexicon-v3.json`. Server tier only;
+	 * ships at the promote whose model requires the bundle channels.
+	 */
+	streetTypeLexiconPath?: string
+	/**
+	 * Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v6.json`.
+	 */
+	localitySurfaceLexiconPath?: string
+	/**
 	 * Path to the per-locale FST gazetteer (`fst-<locale>.bin`) shipped beside the resolved model. `undefined` when the
 	 * package doesn't ship one (e.g. en-nz — byte-stable). PATH ONLY: `neural` deliberately carries no
 	 * `@mailwoman/resolver-wof-sqlite` dependency (the FST prior consumes a structural `FSTMatcherLike`), so
@@ -137,7 +154,9 @@ export interface ResolvedWeights {
 	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
 	 */
 	pairIndexPath?: string
-	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
+	/**
+	 * "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve.
+	 */
 	source: string
 }
 
@@ -164,6 +183,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const packageName = weightsPackageName(locale)
 
 	const cacheDir = resolve(opts.cacheRoot ?? weightsCacheDir(), "node_modules", packageName)
+
 	const cacheHasBinaries = () =>
 		existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))
 
@@ -233,9 +253,11 @@ function resolveFromPackageDir(
 			if (!opts.tokenizerPath) {
 				tokenizerPath = resolve(baseDir, "tokenizer.model")
 			}
+
 			source = `${source}+base`
 		}
 	}
+
 	tried.push(modelPath, tokenizerPath)
 
 	if (!existsSync(modelPath) || !existsSync(tokenizerPath)) {
@@ -255,6 +277,7 @@ function resolveFromPackageDir(
 	// `+base` source suffix convention.
 	const modelCardCandidate = resolve(packageDir, "model-card.json")
 	const baseModelCardCandidate = baseDir ? resolve(baseDir, "model-card.json") : undefined
+
 	const modelCardPath = existsSync(modelCardCandidate)
 		? modelCardCandidate
 		: baseModelCardCandidate && existsSync(baseModelCardCandidate)
@@ -279,12 +302,28 @@ function resolveFromPackageDir(
 	const anchorLookupPath = resolveAnchorLookupSibling(packageDir, country)
 	// Tier `"pocket"` is anchor-only — never surface the gazetteer lexicon (the loader then skips it).
 	const gazetteerCandidate = resolve(packageDir, "anchor-lexicon-v1.json")
+
 	const gazetteerLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(gazetteerCandidate) ? gazetteerCandidate : undefined
+
 	// Country-lexicon sibling (#1104): ships with the server tier alongside the gazetteer; pocket is anchor-only.
 	const countryCandidate = resolve(packageDir, "country-surface-lexicon-v1.json")
+
 	const countryLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
+
+	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
+	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them).
+	const streetTypeCandidate = resolve(packageDir, "street-type-lexicon-v3.json")
+
+	const streetTypeLexiconPath =
+		opts.tier === "pocket" ? undefined : existsSync(streetTypeCandidate) ? streetTypeCandidate : undefined
+
+	const localitySurfaceCandidate = resolve(packageDir, "locality-surface-lexicon-v6.json")
+
+	const localitySurfaceLexiconPath =
+		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
+
 	// Placetype-pair index sibling (placetype-pair-prior arc Task 5) — resolved LOCALLY from packageDir
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
@@ -300,6 +339,7 @@ function resolveFromPackageDir(
 	// package when a data-only overlay doesn't ship its own copy (same fallback family as the model card above).
 	const morphologyCandidate = resolve(packageDir, "fst-street-morphology.bin")
 	const baseMorphologyCandidate = baseDir ? resolve(baseDir, "fst-street-morphology.bin") : undefined
+
 	const streetMorphologyPath = existsSync(morphologyCandidate)
 		? morphologyCandidate
 		: baseMorphologyCandidate && existsSync(baseMorphologyCandidate)
@@ -318,6 +358,8 @@ function resolveFromPackageDir(
 		...(pairIndexPath ? { pairIndexPath } : {}),
 		...(fstPath ? { fstPath } : {}),
 		...(streetMorphologyPath ? { streetMorphologyPath } : {}),
+		...(streetTypeLexiconPath ? { streetTypeLexiconPath } : {}),
+		...(localitySurfaceLexiconPath ? { localitySurfaceLexiconPath } : {}),
 		source,
 	}
 }
@@ -337,6 +379,7 @@ function resolveAnchorLookupSibling(
 
 		if (existsSync(binary)) return { path: binary, binary: true }
 	}
+
 	const json = resolve(packageDir, "anchor-lookup.json")
 
 	if (existsSync(json)) return { path: json, binary: false }
@@ -371,6 +414,7 @@ function resolveBaseWeightsDir(packageDir: string): string | undefined {
 		const pkg = JSON.parse(readFileSync(resolve(packageDir, "package.json"), "utf8")) as {
 			mailwoman?: { baseWeights?: string }
 		}
+
 		const base = pkg.mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return undefined
@@ -400,6 +444,7 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -413,7 +458,7 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 
 	if (labels === undefined) return undefined
 
-	if (!Array.isArray(labels) || labels.length === 0 || !labels.every((l) => typeof l === "string")) {
+	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`labels\` field — ` +
 				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`
@@ -429,18 +474,38 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
  * the #566/#685 trap). Each channel is optional; a missing channel means "not declared" (treated as not-required).
  */
 export interface RequiredChannels {
-	/** Postcode-anchor channel (#239/#240). */
+	/**
+	 * Postcode-anchor channel (#239/#240).
+	 */
 	anchor?: { required: boolean }
-	/** Gazetteer-anchor channel (#464). */
+	/**
+	 * Gazetteer-anchor channel (#464).
+	 */
 	gazetteer?: { required: boolean }
-	/** Country-lexicon channel (#1104). */
+	/**
+	 * Country-lexicon channel (#1104).
+	 */
 	country?: { required: boolean }
-	/** Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`. */
+	/**
+	 * Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`.
+	 */
 	conventions?: { required: boolean; mode?: "auto" | string }
-	/** Punctuation-gap span bridge (v4.4.0 corrective). */
+	/**
+	 * Punctuation-gap span bridge (v4.4.0 corrective).
+	 */
 	bridge?: { required: boolean }
-	/** Near-postcode gazetteer choreography (#464, v0.9.13). */
+	/**
+	 * Near-postcode gazetteer choreography (#464, v0.9.13).
+	 */
 	suppress_gazetteer_near_postcode?: boolean
+	/**
+	 * Street-type evidence channel (Option-A bundle, Phase 3).
+	 */
+	street_type?: { required: boolean }
+	/**
+	 * Locality-surface evidence channel (Option-A bundle, Phase 3).
+	 */
+	locality_surface?: { required: boolean }
 }
 
 /**
@@ -459,6 +524,7 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -478,10 +544,19 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 				`expected an object, got ${JSON.stringify(requires)}.`
 		)
 	}
+
 	const obj = requires as Record<string, unknown>
 
 	// Channel entries must be `{ required: boolean, ... }`; a present-but-shapeless entry is corrupt.
-	for (const channel of ["anchor", "gazetteer", "country", "conventions", "bridge"] as const) {
+	for (const channel of [
+		"anchor",
+		"gazetteer",
+		"country",
+		"conventions",
+		"bridge",
+		"street_type",
+		"locality_surface",
+	] as const) {
 		const entry = obj[channel]
 
 		if (entry === undefined) continue
@@ -523,6 +598,8 @@ export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): 
 		...(names.has("anchor_features") ? { anchor: { required: true } } : {}),
 		...(names.has("gazetteer_features") ? { gazetteer: { required: true } } : {}),
 		...(names.has("country_features") ? { country: { required: true } } : {}),
+		...(names.has("street_type_features") ? { street_type: { required: true } } : {}),
+		...(names.has("locality_surface_features") ? { locality_surface: { required: true } } : {}),
 	}
 }
 
@@ -533,9 +610,13 @@ export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): 
  * loader's delta-gate consults it.
  */
 export interface TagCapability {
-	/** Measured per-tag F1 (percent) with the conventions mask OFF — the model's real capability. */
+	/**
+	 * Measured per-tag F1 (percent) with the conventions mask OFF — the model's real capability.
+	 */
 	maskOffF1: number
-	/** Measured per-tag F1 (percent) with the mask ON. Present only for codex-forbidden tags. */
+	/**
+	 * Measured per-tag F1 (percent) with the mask ON. Present only for codex-forbidden tags.
+	 */
 	maskOnF1?: number
 }
 
@@ -566,6 +647,7 @@ export function readCapabilityManifest(modelCardPath: string | undefined): Capab
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -632,6 +714,7 @@ export function readCrfTransitions(crfPath: string | undefined): CrfTransitions 
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -648,7 +731,7 @@ export function readCrfTransitions(crfPath: string | undefined): CrfTransitions 
 
 	if (!Array.isArray(transitions) || !Array.isArray(start) || !Array.isArray(end)) return undefined
 
-	if (transitions.length === 0 || start.length === 0 || end.length === 0) return undefined
+	if (!transitions.length || !start.length || !end.length) return undefined
 
 	return {
 		transitions: transitions as number[][],

@@ -23,16 +23,24 @@ function mulberry32(seed: number): () => number {
 
 	return () => {
 		a |= 0
-		a = (a + 0x6d2b79f5) | 0
+		a = (a + 0x6d_2b_79_f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
 
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 }
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
-	return { ...r, source: "synth-boundary-stress", source_id: "synth-boundary-stress:test" } as CanonicalRow
+	return {
+		...r,
+		source: "synth-boundary-stress",
+		source_id: "synth-boundary-stress:test",
+		// CanonicalRow requires a country; the synthesized row carries only the locale it was minted for.
+		country: r.locale.split("-")[1] ?? "DE",
+		corpus_version: "0.0.0-test",
+		license: "synthetic fixture — not distributed",
+	}
 }
 
 const labelsFor = (template: BoundaryStressTemplate, seed: number): readonly string[] => {
@@ -58,6 +66,7 @@ describe("synthesizeBoundaryStressRow", () => {
 			random: mulberry32(2),
 			forceTemplate: "comma-less-city-state",
 		})
+
 		expect(row.raw).not.toContain(",") // the whole point — no delimiter cue
 		const result = alignRow(asCanonical(row))
 		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
@@ -87,6 +96,7 @@ describe("synthesizeBoundaryStressRow", () => {
 			{ locality: "Sacramento", region: "CA", postcode: "95823", country: "US" },
 			{ random: mulberry32(7), forceTemplate: "bare-locality" }
 		)
+
 		const result = alignRow(asCanonical(row))
 		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
 
@@ -118,8 +128,10 @@ describe("synthesizeBoundaryStressRow", () => {
 			const result = alignRow(asCanonical(row))
 
 			if (result.kind !== "labeled") continue
+
 			labeled++
 		}
+
 		expect(labeled).toBeGreaterThanOrEqual(388) // 97%
 	})
 })

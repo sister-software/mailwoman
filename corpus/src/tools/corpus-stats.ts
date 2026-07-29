@@ -81,6 +81,7 @@ n = min(len(tokens_col), ${limit ?? "len(tokens_col)"})
 for i in range(n):
     sys.stdout.write(json.dumps({"tokens": tokens_col[i], "labels": labels_col[i]}) + "\\n")
 `
+
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: Array<{ tokens: string[]; labels: string[] }> = []
 
@@ -94,6 +95,7 @@ for i in range(n):
 
 export function buildCorpusStats(args: CorpusStatsOptions): void {
 	const shardPaths = discoverShards(args.shardsArg)
+
 	console.error(`Discovered ${shardPaths.length} parquet shard(s)`)
 
 	const tokenStats = new Map<string, Map<string, number>>()
@@ -102,6 +104,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 
 	for (const path of shardPaths) {
 		console.error(`Reading ${path}...`)
+
 		const rows = streamShardRows(path, args.limitPerShard)
 		totalRows += rows.length
 
@@ -120,6 +123,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 					labelMap = new Map()
 					tokenStats.set(tk, labelMap)
 				}
+
 				labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
 
 				if (i + 1 < tokens.length) {
@@ -131,10 +135,12 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 						bMap = new Map()
 						bigramStats.set(bigramKey, bMap)
 					}
+
 					bMap.set(bigramLabel, (bMap.get(bigramLabel) ?? 0) + 1)
 				}
 			}
 		}
+
 		console.error(
 			`  ${rows.length} rows; running totals: ${tokenStats.size} unique tokens, ${bigramStats.size} unique bigrams`
 		)
@@ -154,9 +160,11 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 
 		if (total < MIN_BIGRAM_COUNT) {
 			bigramStats.delete(k)
+
 			prunedBigrams++
 		}
 	}
+
 	console.error(`Pruned ${prunedBigrams} singleton bigrams; ${bigramStats.size} remain`)
 
 	const out = {
@@ -176,6 +184,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 
 	writeFileSync(args.outputPath, JSON.stringify(out))
 	const sizeMB = (Buffer.byteLength(JSON.stringify(out)) / 1024 / 1024).toFixed(1)
+
 	console.error(
 		`Wrote ${args.outputPath} (${sizeMB} MB) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`
 	)

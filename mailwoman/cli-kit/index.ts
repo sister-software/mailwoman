@@ -17,7 +17,7 @@ import type * as zod from "zod"
 /**
  * Type-helper to infer the positional arguments of a command.
  */
-export type PositionalArguments<T extends zod.ZodTypeAny> = {
+export interface PositionalArguments<T extends zod.ZodTypeAny> {
 	args: zod.infer<T>
 }
 
@@ -29,10 +29,10 @@ export type PositionalCommandComponent<T extends zod.ZodTypeAny> = React.FC<Posi
 /**
  * Type-helper to infer the options of a command.
  */
-export type CommandProps<
+export interface CommandProps<
 	OptionProps extends zod.ZodObject,
 	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
-> = {
+> {
 	options: zod.infer<OptionProps>
 	args: PositionalProps extends zod.ZodTypeAny ? zod.infer<PositionalProps> : unknown[]
 }
@@ -45,7 +45,9 @@ export type CommandComponent<
 	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
 > = React.FC<CommandProps<OptionProps, PositionalProps>>
 
-/** The lifecycle of a command's one-shot async task. */
+/**
+ * The lifecycle of a command's one-shot async task.
+ */
 export type CommandTaskState<T> =
 	| { status: "running" }
 	| { status: "done"; result: T }
@@ -78,6 +80,7 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 
 	return state
 }
+
 /* oxlint-enable react-hooks/exhaustive-deps */
 
 /**
@@ -92,7 +95,9 @@ export function commandError(message: string): Error {
 	return error
 }
 
-/** One ✓/✗ line in a {@linkcode CheckList}. */
+/**
+ * One ✓/✗ line in a {@linkcode CheckList}.
+ */
 export interface Check {
 	ok: boolean
 	check: string
@@ -111,6 +116,7 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 			`${c.ok ? "✓" : "✗"} ${c.check}${c.detail ? `: ${c.detail}` : ""}`
 		)
 	)
+
 	const summary =
 		verdict === undefined
 			? null

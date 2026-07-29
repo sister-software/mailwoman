@@ -39,10 +39,20 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { formatAddress, reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
-/** SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord. */
+/**
+ * SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord.
+ */
 interface BdcLocationRow {
 	location_id: number
 	address_primary: string
@@ -109,7 +119,9 @@ export function buildPostcode(zip: string, suffix: string | null): string {
 	return `${z}-${s}`
 }
 
-/** Build a BDC adapter. Pure factory so multiple instances can be created in tests. */
+/**
+ * Build a BDC adapter. Pure factory so multiple instances can be created in tests.
+ */
 export function createFccBdcAdapter(): CorpusAdapter {
 	return {
 		id: FCC_BDC_ADAPTER_ID,
@@ -163,7 +175,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 					if (!raw) continue
 					const aligned = reconcileComponents(components, raw)
 
-					if (Object.keys(aligned).length === 0) continue
+					if (!Object.keys(aligned).length) continue
 
 					yield {
 						raw,
@@ -175,6 +187,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: FCC_BDC_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -184,4 +197,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const fccBdcAdapter = createFccBdcAdapter()

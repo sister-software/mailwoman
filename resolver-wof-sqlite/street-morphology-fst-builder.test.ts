@@ -45,7 +45,7 @@ describe("buildStreetMorphologyFST", () => {
 
 		// Demonstrate the length filter — 'av' should NOT match under default opts.
 		const av = matcher.query("av")
-		expect(av.accepting.length).toBe(0)
+		expect(av.accepting).toHaveLength(0)
 	})
 
 	it("recognises French 'rue' and German 'straße' canonicals", () => {
@@ -64,6 +64,7 @@ describe("buildStreetMorphologyFST", () => {
 			dictionariesDir: DICTIONARIES_DIR,
 			locales: ["en"],
 		})
+
 		const buf = serializeFST(matcher, provenance)
 		const restored = deserializeFST(buf)
 		const restoredProvenance = readFSTProvenance(buf)

@@ -12,9 +12,13 @@ import { DemoFixture } from "./fixtures/DemoFixture.ts"
 export { expect } from "@playwright/test"
 
 interface E2EFixtures {
-	/** Captures console messages + page errors + failed requests for a single test. */
+	/**
+	 * Captures console messages + page errors + failed requests for a single test.
+	 */
 	console: ConsoleFixture
-	/** High-level actions on the /demo page: load, set address, submit, read results. */
+	/**
+	 * High-level actions on the /demo page: load, set address, submit, read results.
+	 */
 	demo: DemoFixture
 }
 

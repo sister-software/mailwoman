@@ -36,7 +36,9 @@ import "@mailwoman/react/styles.css"
 import { useSiteConfig } from "../../hooks/site.ts"
 
 export interface POIExplorerProps {
-	/** Query to pre-fill in the input. */
+	/**
+	 * Query to pre-fill in the input.
+	 */
 	defaultText?: string
 }
 
@@ -56,6 +58,7 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 
 			try {
 				const worker = await loadPOIWorker(sqljsBaseURL)
+
 				const hits = await searchPOICategory(worker, {
 					categoryID,
 					categoryIDs: overtureCategoryIDs,

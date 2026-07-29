@@ -12,7 +12,9 @@
  *   join.
  */
 
-/** Per-state record: two-letter postal abbreviation + full canonical display name. */
+/**
+ * Per-state record: two-letter postal abbreviation + full canonical display name.
+ */
 export interface USStateInfo {
 	abbreviation: string
 	name: string
@@ -82,7 +84,9 @@ export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freez
 	"78": { abbreviation: "VI", name: "Virgin Islands" },
 })
 
-/** Lookup helper. Returns null when the FIPS code isn't recognized. */
+/**
+ * Lookup helper. Returns null when the FIPS code isn't recognized.
+ */
 export function lookupFipsState(statefp: string | null | undefined): USStateInfo | null {
 	if (!statefp) return null
 

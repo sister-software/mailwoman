@@ -140,6 +140,7 @@ describe("matchLeadingDesignatorWithRange", () => {
 			range: "4B",
 			requiresRange: true,
 		})
+
 		expect(matchLeadingDesignatorWithRange("SUITE 200")).toEqual({
 			canonical: "SUITE",
 			matched: "SUITE",
@@ -155,6 +156,7 @@ describe("matchLeadingDesignatorWithRange", () => {
 			range: undefined,
 			requiresRange: false,
 		})
+
 		expect(matchLeadingDesignatorWithRange("Penthouse")).toEqual({
 			canonical: "PENTHOUSE",
 			matched: "Penthouse",

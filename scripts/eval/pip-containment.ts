@@ -22,16 +22,22 @@ import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+/**
+ * Artifact examples collected before the list is truncated.
+ */
+const MAX_LISTED_ARTIFACTS = 12
+
 const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
 
 function adminRoots(): string[] {
-	let matched: string[] = []
+	let matched: string[]
 
 	try {
 		matched = [...globSync(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)]
 	} catch {
 		matched = []
 	}
+
 	matched.sort()
 
 	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
@@ -40,6 +46,7 @@ function adminRoots(): string[] {
 const ADMIN_ROOTS = adminRoots()
 
 type Ring = number[][]
+
 type Geometry = { type?: string; coordinates?: unknown } | null
 
 const geomCache = new Map<number, Geometry>()
@@ -55,6 +62,7 @@ function geomForID(wofID: number): Geometry {
 		chunks.push(s.slice(i, i + 3))
 		i += 3
 	}
+
 	const rel = chunks.join("/") + `/${s}.geojson`
 	let geom: Geometry = null
 
@@ -63,13 +71,15 @@ function geomForID(wofID: number): Geometry {
 
 		if (existsSync(fp)) {
 			try {
-				geom = (JSON.parse(readFileSync(fp, "utf-8")).geometry as Geometry) ?? null
+				geom = (JSON.parse(readFileSync(fp, "utf8")).geometry as Geometry) ?? null
 			} catch {
 				geom = null
 			}
+
 			break
 		}
 	}
+
 	geomCache.set(wofID, geom)
 
 	return geom
@@ -89,6 +99,7 @@ function inRing(x: number, y: number, ring: Ring): boolean {
 		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
 			inside = !inside
 		}
+
 		j = i
 	}
 
@@ -120,14 +131,18 @@ function contains(geom: Geometry, lon: number, lat: number): boolean | null {
 }
 
 type Counter = Record<string, number>
+
 function inc(c: Counter, k: string): void {
 	c[k] = (c[k] ?? 0) + 1
 }
+
 function get(c: Counter, k: string): number {
 	return c[k] ?? 0
 }
 
-/** Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away). */
+/**
+ * Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away).
+ */
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)
@@ -139,6 +154,7 @@ function pyFixed(x: number, d: number): string {
 
 		return (neg ? "-" : "") + body
 	}
+
 	const keep = frac.slice(0, d)
 	const rest = frac.slice(d)
 	let roundUp: boolean
@@ -147,12 +163,13 @@ function pyFixed(x: number, d: number): string {
 		roundUp = true
 	} else if (rest[0]! < "5") {
 		roundUp = false
-	} else if (rest.slice(1).replace(/0+$/, "").length > 0) {
+	} else if (rest.slice(1).replace(/0+$/, "").length) {
 		roundUp = true
 	} else {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
-		roundUp = parseInt(lastKept, 10) % 2 === 1
+		roundUp = Number.parseInt(lastKept, 10) % 2 === 1
 	}
+
 	let digits = intPart! + keep
 
 	if (roundUp) {
@@ -163,7 +180,8 @@ function pyFixed(x: number, d: number): string {
 			if (arr[i] === "9") {
 				arr[i] = "0"
 			} else {
-				arr[i] = String(parseInt(arr[i]!, 10) + 1)
+				arr[i] = String(Number.parseInt(arr[i]!, 10) + 1)
+
 				break
 			}
 		}
@@ -171,15 +189,19 @@ function pyFixed(x: number, d: number): string {
 		if (i < 0) {
 			arr.unshift("1")
 		}
+
 		digits = arr.join("")
 	}
+
 	const di = digits.length - d
 	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
 
 	return (neg ? "-" : "") + body
 }
 
-/** Python `f"{x:+.1f}"` — fixed precision with an always-present sign. */
+/**
+ * Python `f"{x:+.1f}"` — fixed precision with an always-present sign.
+ */
 function pySigned(x: number, d: number): string {
 	const s = pyFixed(x, d)
 
@@ -232,6 +254,7 @@ function main(): number {
 		strict: false,
 		allowPositionals: true,
 	})
+
 	const src: string | null = positionals[0] ?? null
 	const labelArg: string | null = (values.label as string | undefined) ?? null
 	const jsonOut: string | null = (values.json as string | undefined) ?? null
@@ -242,7 +265,7 @@ function main(): number {
 		return 2
 	}
 
-	const rows: ResolvedRow[] = JSON.parse(readFileSync(src, "utf-8"))
+	const rows: ResolvedRow[] = JSON.parse(readFileSync(src, "utf8"))
 	const overall: Counter = {}
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []
@@ -259,6 +282,7 @@ function main(): number {
 			inc(overall, "name")
 			inc(byState[st]!, "name")
 		}
+
 		const lid = r.neuralLocID
 		const contained = lid ? contains(geomForID(lid), r.lon, r.lat) : null
 
@@ -274,7 +298,7 @@ function main(): number {
 			inc(overall, "pip")
 			inc(byState[st]!, "pip")
 
-			if (!nameOk && artifactExamples.length < 12) {
+			if (!nameOk && artifactExamples.length < MAX_LISTED_ARTIFACTS) {
 				artifactExamples.push(`  "${r.input}"  gold="${pyStr(r.expectedLoc)}"  resolved="${pyStr(r.neuralLoc)}"`)
 			}
 		}
@@ -283,9 +307,10 @@ function main(): number {
 	console.log(`\n=== PIP-containment vs name-match (${src}${labelArg ? " · " + labelArg : ""}) ===`)
 	console.log(line("OVERALL", overall))
 
-	for (const st of Object.keys(byState).sort()) {
+	for (const st of Object.keys(byState).toSorted()) {
 		console.log(line(st, byState[st]!))
 	}
+
 	console.log(`\n  rows resolved-but-polygon-missing: ${noPoly}`)
 	console.log(`\nMETRIC-ARTIFACT cases (name-match FAILED but gold point IS inside the resolved locality):`)
 
@@ -295,6 +320,7 @@ function main(): number {
 
 	if (jsonOut) {
 		const n = get(overall, "n")
+
 		const summary = {
 			label: labelArg,
 			source: src,
@@ -305,7 +331,9 @@ function main(): number {
 			poly_coverage: n ? get(overall, "poly") / n : null,
 			no_polygon: noPoly,
 		}
+
 		writeFileSync(jsonOut, JSON.stringify(summary, null, 2))
+
 		console.error(`\nwrote summary → ${jsonOut}`)
 	}
 

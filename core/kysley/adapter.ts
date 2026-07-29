@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DialectAdapterBase, Kysely, type MigrationLockOptions } from "kysely"
+import { type Kysely, DialectAdapterBase, type MigrationLockOptions } from "kysely"
 
 export class SqliteAdapter extends DialectAdapterBase {
 	override get supportsTransactionalDdl(): boolean {

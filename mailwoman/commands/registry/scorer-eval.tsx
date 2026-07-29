@@ -31,7 +31,7 @@ import zod from "zod"
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { evalGeocoderFactory } from "./run.tsx"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod
 		.enum([
 			"pairwise",
@@ -112,10 +112,11 @@ const OptionsSchema = zod.object({
 		.describe("coverage-reconciliation/cross-dataset: also write the GeoJSON artifact here"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
 type Options = zod.infer<typeof OptionsSchema>
-type Kind = zod.infer<typeof args>[0]
+
+type Kind = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)
 
@@ -127,6 +128,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		tokenizerPath: options.tokenizer,
 		modelCardPath: options.modelCard,
 	})
+
 	const base = { createGeocoder, sources: options.sources, outMd: options.outMd }
 
 	switch (kind) {
@@ -253,7 +255,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const RegistryScorerEval: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const RegistryScorerEval: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(() => runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

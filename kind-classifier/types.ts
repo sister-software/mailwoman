@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/** Re-exports of the canonical types from `@mailwoman/core/pipeline`. */
+/**
+ * Re-exports of the canonical types from `@mailwoman/core/pipeline`.
+ */
 export type { LocaleHint, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
 
 /**

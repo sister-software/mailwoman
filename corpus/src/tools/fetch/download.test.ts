@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readFileSync } from "node:fs"
-import { mkdtempSync } from "node:fs"
+import { readFileSync, mkdtempSync } from "node:fs"
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 import { tmpdir } from "node:os"
@@ -36,7 +35,11 @@ beforeAll(async () => {
 			res.end("nope")
 		}
 	})
-	await new Promise<void>((resolve) => server.listen(0, resolve))
+
+	await new Promise<void>((resolve) => {
+		server.listen(0, resolve)
+	})
+
 	base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 })
 
@@ -62,6 +65,7 @@ describe("downloadToFile", () => {
 
 	it("throws immediately on a non-transient status", async () => {
 		const dest = join(mkdtempSync(join(tmpdir(), "dl-")), "missing.txt")
+
 		await expect(downloadToFile({ url: `${base}/missing`, dest, retries: 2, retryDelayMs: 10 })).rejects.toThrow(
 			/HTTP 404/
 		)
@@ -71,10 +75,12 @@ describe("downloadToFile", () => {
 describe("manifest helpers", () => {
 	it("round-trips and keys entries; corrupt reads as null", async () => {
 		const path = join(mkdtempSync(join(tmpdir(), "manifest-")), "MANIFEST.json")
+
 		const entries = [
 			{ id: "a", sha256: "x" },
 			{ id: "b", sha256: "y" },
 		]
+
 		await writeManifest(path, entries)
 		expect(await readManifest(path)).toEqual(entries)
 

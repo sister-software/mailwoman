@@ -19,6 +19,7 @@ export * from "./span-proposal-prior.ts"
 export * from "./span-proposer-lexicon.ts"
 export * from "./tokenizer.ts"
 export * from "./trace.ts"
+
 export {
 	buildBIOEndMask,
 	buildBIOStartMask,
@@ -27,5 +28,6 @@ export {
 	softmax,
 	viterbi,
 } from "./viterbi.ts"
+
 export type { ViterbiInput, ViterbiResult } from "./viterbi.ts"
 export * from "./weights.ts"

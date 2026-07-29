@@ -34,20 +34,30 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 import { assertProfile, BaselineDeviationError, formatVerdict } from "./baseline-assert.ts"
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "./parity-corpus.ts"
 
-/** Maximum typed-segment length in words. */
+/**
+ * Maximum typed-segment length in words.
+ */
 const MAX_SEGMENT_WORDS = 6
 
-/** Golden dev files used to estimate the segment-type transition bigrams. */
+/**
+ * Golden dev files used to estimate the segment-type transition bigrams.
+ */
 const TRANSITION_GOLDEN_FILES = ["us.jsonl", "fr.jsonl"]
 
 export interface OracleKOptions {
 	locale?: string
-	/** Package-shaped candidate weights dir (mirrors `eval parity --weights-cache`). */
+	/**
+	 * Package-shaped candidate weights dir (mirrors `eval parity --weights-cache`).
+	 */
 	weightsCacheRoot?: string
 	fixturesPath?: string
-	/** Golden dev dir for the transition-bigram estimate. */
+	/**
+	 * Golden dev dir for the transition-bigram estimate.
+	 */
 	goldenDir?: string
-	/** Hypotheses kept per input (default 10). */
+	/**
+	 * Hypotheses kept per input (default 10).
+	 */
 	k?: number
 	/**
 	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`). When set, the harness
@@ -61,13 +71,16 @@ export interface OracleKOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
-/** Smoothed empirical segment-type transition table from gold component orderings. */
+/**
+ * Smoothed empirical segment-type transition table from gold component orderings.
+ */
 export function buildTransitionTable(goldenDir: string): (from: string, to: string) => number {
 	const counts = new Map<string, number>()
 	const fromTotals = new Map<string, number>()
+
 	const bump = (a: string, b: string): void => {
 		counts.set(`${a}→${b}`, (counts.get(`${a}→${b}`) ?? 0) + 1)
 		fromTotals.set(a, (fromTotals.get(a) ?? 0) + 1)
@@ -88,10 +101,11 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 
 			if (!row.components || !row.raw) continue
 			const folded = fold(row.raw)
+
 			const seq = Object.entries(row.components)
 				.map(([tag, value]) => ({ tag, idx: folded.indexOf(fold(String(value))) }))
 				.filter((entry) => entry.idx >= 0)
-				.sort((a, b) => a.idx - b.idx)
+				.toSorted((a, b) => a.idx - b.idx)
 				.map((entry) => entry.tag)
 
 			if (!seq.length) continue
@@ -100,7 +114,8 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 			for (let i = 1; i < seq.length; i++) {
 				bump(seq[i - 1]!, seq[i]!)
 			}
-			bump(seq[seq.length - 1]!, "END")
+
+			bump(seq.at(-1)!, "END")
 		}
 	}
 
@@ -113,13 +128,17 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 
 interface Hypothesis {
 	score: number
-	/** Typed segments as [firstWord, lastWordExclusive, type]. */
+	/**
+	 * Typed segments as [firstWord, lastWordExclusive, type].
+	 */
 	segments: Array<[number, number, string]>
 }
 
 interface SegmentDecodeResult {
 	hypotheses: Hypothesis[]
-	/** Word → piece indices. */
+	/**
+	 * Word → piece indices.
+	 */
 	words: number[][]
 }
 
@@ -140,6 +159,7 @@ export function segmentDecodeKBest(
 ): SegmentDecodeResult {
 	const bIndex = new Map<string, number>()
 	const iIndex = new Map<string, number>()
+
 	trace.labels.forEach((label, index) => {
 		if (label.startsWith("B-")) {
 			bIndex.set(label.slice(2), index)
@@ -147,6 +167,7 @@ export function segmentDecodeKBest(
 			iIndex.set(label.slice(2), index)
 		}
 	})
+
 	const oIndex = trace.labels.indexOf("O")
 	const types = [...bIndex.keys()].filter((type) => iIndex.has(type))
 
@@ -160,12 +181,15 @@ export function segmentDecodeKBest(
 	// Group pieces into words; pure-punctuation pieces are their own word.
 	const words: number[][] = []
 	let current: number[] = []
+
 	const flush = (): void => {
 		if (current.length) {
 			words.push(current)
 		}
+
 		current = []
 	}
+
 	trace.tokens.forEach((token, index) => {
 		const content = token.piece.startsWith("▁") ? token.piece.slice(1) : token.piece
 
@@ -189,12 +213,15 @@ export function segmentDecodeKBest(
 			current.push(index)
 		}
 	})
+
 	flush()
+
 	const isPunctuationWord = words.map(
 		(word) => word.length === 1 && PUNCTUATION_ONLY.test(trace.tokens[word[0]!]!.piece.replace(/^▁/, ""))
 	)
 
 	const wordCount = words.length
+
 	const spanScore = (from: number, to: number, type: string): number => {
 		let score = 0
 		let first = true
@@ -210,12 +237,18 @@ export function segmentDecodeKBest(
 
 		return score
 	}
+
 	const oScore = (wordIndex: number): number =>
 		words[wordIndex]!.reduce((sum, pieceIndex) => sum + (logProbs[pieceIndex]![oIndex] ?? -50), 0)
 
-	type Entry = { score: number; segments: Array<[number, number, string]> }
+	interface Entry {
+		score: number
+		segments: Array<[number, number, string]>
+	}
+
 	const dp: Array<Map<string, Entry[]>> = Array.from({ length: wordCount + 1 }, () => new Map())
 	dp[0]!.set("START", [{ score: 0, segments: [] }])
+
 	const push = (column: Map<string, Entry[]>, key: string, entry: Entry): void => {
 		const list = column.get(key) ?? []
 		list.push(entry)
@@ -224,7 +257,24 @@ export function segmentDecodeKBest(
 		if (list.length > k) {
 			list.length = k
 		}
+
 		column.set(key, list)
+	}
+
+	/**
+	 * Extend `entry` by the span [i, j) under every candidate type, stopping at the first impossible one.
+	 */
+	const pushSpanExtensions = (i: number, j: number, lastType: string, entry: Hypothesis): void => {
+		for (const type of types) {
+			const score = spanScore(i, j, type)
+
+			if (score === -Infinity) break
+
+			push(dp[j]!, type, {
+				score: entry.score + score + logTransition(lastType, type),
+				segments: [...entry.segments, [i, j, type]],
+			})
+		}
 	}
 
 	for (let i = 0; i < wordCount; i++) {
@@ -235,15 +285,7 @@ export function segmentDecodeKBest(
 				if (isPunctuationWord[i]) continue
 
 				for (let j = i + 1; j <= Math.min(wordCount, i + MAX_SEGMENT_WORDS); j++) {
-					for (const type of types) {
-						const score = spanScore(i, j, type)
-
-						if (score === -Infinity) break
-						push(dp[j]!, type, {
-							score: entry.score + score + logTransition(lastType, type),
-							segments: [...entry.segments, [i, j, type]],
-						})
-					}
+					pushSpanExtensions(i, j, lastType, entry)
 
 					if (isPunctuationWord[j - 1]) break
 				}
@@ -258,12 +300,15 @@ export function segmentDecodeKBest(
 			finals.push({ score: entry.score + logTransition(lastType, "END"), segments: entry.segments })
 		}
 	}
+
 	finals.sort((a, b) => b.score - a.score)
 
 	return { hypotheses: finals.slice(0, k), words }
 }
 
-/** Concatenate a hypothesis's segment surfaces whose type satisfies the predicate, in position order. */
+/**
+ * Concatenate a hypothesis's segment surfaces whose type satisfies the predicate, in position order.
+ */
 function extractSurface(
 	hypothesis: Hypothesis,
 	words: number[][],
@@ -271,20 +316,23 @@ function extractSurface(
 	matches: (type: string) => boolean
 ): string {
 	return hypothesis.segments
-		.filter(([, , type]) => matches(type))
-		.sort((a, b) => a[0] - b[0])
+		.filter((segment) => matches(segment[2]))
+		.toSorted((a, b) => a[0] - b[0])
 		.map(([from, to]) => {
 			const firstPiece = words[from]![0]!
 			const lastWord = words[to - 1]!
 
-			return trace.text.slice(trace.tokens[firstPiece]!.start, trace.tokens[lastWord[lastWord.length - 1]!]!.end)
+			return trace.text.slice(trace.tokens[firstPiece]!.start, trace.tokens[lastWord.at(-1)!]!.end)
 		})
 		.join(" ")
 }
 
-/** Run the oracle-recall@k eval; narrates the per-floor table on stdout. Informational — always exits 0. */
+/**
+ * Run the oracle-recall@k eval; narrates the per-floor table on stdout. Informational — always exits 0.
+ */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
+
 	const fixtures = readFileSync(options.fixturesPath ?? PARITY_FIXTURES_PATH, "utf8")
 		.split("\n")
 		.filter(Boolean)
@@ -292,6 +340,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		.filter((fixture) => !fixture.dropped && fixture.expect)
 
 	const logTransition = buildTransitionTable(options.goldenDir ?? "data/eval/golden/v0.1.2/dev")
+
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
 		cacheRoot: options.weightsCacheRoot,
@@ -311,6 +360,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const baseByTag = new Map<string, string[]>()
 		const stack = [...tree.roots]
 
@@ -328,6 +378,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const { hypotheses, words } = segmentDecodeKBest(trace, k, logTransition)
 
 		for (const { label, tags } of PARITY_FLOORS) {
@@ -336,6 +387,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			if (!goldValues?.length) continue
 			const gold = fold(goldValues.join(" "))
 			const tally = tallies.get(label)!
+
 			tally.total++
 			const tagSet = new Set<string>(tags)
 			const baseActual = tags.flatMap((tag) => baseByTag.get(tag) ?? []).join(" ")
@@ -343,6 +395,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			if (fold(baseActual) === gold) {
 				tally.base++
 			}
+
 			const surfaces = hypotheses.map((hypothesis) =>
 				fold(extractSurface(hypothesis, words, trace, (type) => tagSet.has(type)))
 			)
@@ -394,6 +447,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		}
 
 		if (!verdict.ok) throw new BaselineDeviationError(verdict)
+
 		console.log(`✓ ${formatVerdict(verdict)} (profile: ${options.assertBaseline})`)
 		console.log("")
 	}
@@ -405,6 +459,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 	for (const { label } of PARITY_FLOORS) {
 		const tally = tallies.get(label)!
 		const rate = (value: number): string => (tally.total ? (value / tally.total).toFixed(3) : "—")
+
 		console.log(
 			`${label.padEnd(14)} ${String(tally.total).padStart(3)}   ${rate(tally.base).padStart(7)}  ${rate(tally.top1).padStart(6)}  ${rate(tally.oracle5).padStart(8)}  ${rate(tally.oracleK).padStart(8)}`
 		)

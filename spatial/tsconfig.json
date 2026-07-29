@@ -1,5 +1,5 @@
 {
-	"extends": "@sister.software/tsconfig",
+	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
 		"emitDecoratorMetadata": true,

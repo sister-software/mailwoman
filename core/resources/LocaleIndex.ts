@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { TextNormalizer } from "../tokenization/normalizer.ts"
+import type { TextNormalizer } from "../tokenization/normalizer.ts"
 import type { Displayable } from "./debugging.ts"
 
 /**
@@ -46,7 +46,7 @@ export class LocaleIndex<LanguageCodes extends string> extends Map<string, Set<L
 	 * @param languageCodes The language codes to associate with the placename.
 	 */
 	public add(placename: string, ...languageCodes: LanguageCodes[]): void {
-		if (languageCodes.length === 0) {
+		if (!languageCodes.length) {
 			throw new Error(`At least one language code must be provided for "${placename}".`)
 		}
 

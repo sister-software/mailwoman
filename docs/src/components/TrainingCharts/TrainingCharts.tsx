@@ -24,14 +24,48 @@ import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────
 
+/**
+ * Residual bands the chart colours against, in the loss units plotted. Presentation only.
+ */
+const RESIDUAL_TIGHT = 1.5
+
+/**
+ * See {@link RESIDUAL_TIGHT}.
+ */
+const RESIDUAL_MODERATE = 3
+
+/**
+ * See {@link RESIDUAL_TIGHT}.
+ */
+const RESIDUAL_LOOSE = 7
+
+/**
+ * Magnitude below which a tick is rendered in scientific notation rather than as a decimal.
+ */
+const SCIENTIFIC_NOTATION_BELOW = 0.001
+
+/**
+ * Magnitude below which a tick keeps one decimal place; above it the value is abbreviated.
+ */
+const COMPACT_NOTATION_ABOVE = 10_000
+
+/**
+ * Pixel radius within which the cursor snaps to a data point.
+ */
+const MAX_HOVER_DISTANCE_PX = 40
+
 const TRACKIO_BASE = "https://sister-software-mailwoman-trackio.hf.space"
 const PROJECT = "mailwoman"
 const POLL_INTERVAL_MS = 30_000
 
-/** Default metrics to enable on first load. */
+/**
+ * Default metrics to enable on first load.
+ */
 const DEFAULT_METRICS = ["train_loss", "val_loss", "val_macro_f1"]
 
-/** All known metric keys — populated dynamically but these are the common ones. */
+/**
+ * All known metric keys — populated dynamically but these are the common ones.
+ */
 const KNOWN_METRICS: Array<{ key: string; label: string; group: "loss" | "f1" | "support" }> = [
 	{ key: "train_loss", label: "train loss", group: "loss" },
 	{ key: "val_loss", label: "val loss", group: "loss" },
@@ -80,7 +114,9 @@ interface RunSummary {
 	[key: string]: unknown
 }
 
-/** One rendered line on the chart. */
+/**
+ * One rendered line on the chart.
+ */
 interface ChartSeries {
 	run: string
 	metric: string
@@ -89,7 +125,9 @@ interface ChartSeries {
 	points: MetricPoint[]
 }
 
-/** Hover tooltip state — x/y are CSS-pixel offsets relative to the chart wrapper. */
+/**
+ * Hover tooltip state — x/y are CSS-pixel offsets relative to the chart wrapper.
+ */
 interface TooltipDatum {
 	series: ChartSeries
 	point: MetricPoint
@@ -145,11 +183,11 @@ function niceTicks(min: number, max: number, count: number): number[] {
 	const residual = roughStep / magnitude
 	let niceStep: number
 
-	if (residual <= 1.5) {
+	if (residual <= RESIDUAL_TIGHT) {
 		niceStep = 1 * magnitude
-	} else if (residual <= 3) {
+	} else if (residual <= RESIDUAL_MODERATE) {
 		niceStep = 2 * magnitude
-	} else if (residual <= 7) {
+	} else if (residual <= RESIDUAL_LOOSE) {
 		niceStep = 5 * magnitude
 	} else {
 		niceStep = 10 * magnitude
@@ -169,13 +207,13 @@ function niceTicks(min: number, max: number, count: number): number[] {
 function formatValue(v: number): string {
 	if (v === 0) return "0"
 
-	if (Math.abs(v) < 0.001) return v.toExponential(2)
+	if (Math.abs(v) < SCIENTIFIC_NOTATION_BELOW) return v.toExponential(2)
 
 	if (Math.abs(v) < 1) return v.toFixed(4)
 
 	if (Math.abs(v) < 100) return v.toFixed(3)
 
-	if (Math.abs(v) < 10_000) return v.toFixed(1)
+	if (Math.abs(v) < COMPACT_NOTATION_ABOVE) return v.toFixed(1)
 
 	return v.toExponential(2)
 }
@@ -202,7 +240,8 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 
 	// In log mode, we map y through log10 and work in log-space.
 	const { xMin, xMax, yMin, yMax, yMinData } = useMemo(() => {
-		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0 }
+		if (!allPoints.length) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0 }
+
 		let xmn = Infinity,
 			xmx = -Infinity,
 			ymn = Infinity,
@@ -225,11 +264,12 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 				ymx = p.value
 			}
 		}
+
 		const yPad = (ymx - ymn) * 0.05 || 0.01
-		const yMinData = ymn - yPad
+		const innerYMinData = ymn - yPad
 		const yMaxData = ymx + yPad
 
-		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: yMinData, yMax: yMaxData, yMinData }
+		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: innerYMinData, yMax: yMaxData, yMinData: innerYMinData }
 		// Log scale: the floor must come from the smallest *positive* data value, not the
 		// linearly-padded minimum — otherwise a metric that touches/approaches zero (F1 scores
 		// start near 0, val_loss can be tiny) drags the floor to ~0 and the axis spans many
@@ -244,7 +284,9 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 
 		if (!Number.isFinite(posMin)) {
 			posMin = 1e-6
-		} // all values non-positive; nominal floor
+		}
+
+		// all values non-positive; nominal floor
 		const posMax = Math.max(ymx, posMin * 10)
 		const logMin = Math.log10(posMin)
 		const logMax = Math.log10(posMax)
@@ -266,6 +308,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 		(x: number) => SVG_PAD.left + ((x - xMin) / (xMax - xMin || 1)) * plotW,
 		[xMin, xMax, plotW]
 	)
+
 	const yScale = useCallback(
 		(y: number) => {
 			// Clamp ≤0 values to the positive floor so they rest on the axis bottom (log10(0) = -∞).
@@ -295,14 +338,15 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			}
 		}
 
-		return ticks.sort((a, b) => a - b)
+		return ticks.toSorted((a, b) => a - b)
 	}, [yMin, yMax, isLog])
+
 	const xTicks = useMemo(() => niceTicks(xMin, xMax, 8), [xMin, xMax])
 
 	// Generate polyline points strings once per series
 	const polyPoints = useMemo(() => {
 		return series.map((s) => {
-			if (s.points.length === 0) return ""
+			if (!s.points.length) return ""
 
 			return s.points.map((p) => `${xScale(p.step).toFixed(1)},${yScale(p.value).toFixed(1)}`).join(" ")
 		})
@@ -322,15 +366,13 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			let best: TooltipDatum | null = null
 			let bestDist = Infinity
 
-			for (let si = 0; si < series.length; si++) {
-				const s = series[si]
-
+			for (const s of series) {
 				for (const p of s.points) {
 					const px = xScale(p.step)
 					const py = yScale(p.value)
 					const dist = Math.abs(mx - px) + Math.abs(my - py) * 2
 
-					if (dist < bestDist && dist < 40) {
+					if (dist < bestDist && dist < MAX_HOVER_DISTANCE_PX) {
 						bestDist = dist
 						// Convert viewBox coords to wrapper-relative CSS pixels
 						const sx = (px / SVG_WIDTH) * svgRect.width + (svgRect.left - wrapperRect.left)
@@ -345,7 +387,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 		[series, xScale, yScale, onHover, containerRef]
 	)
 
-	if (allPoints.length === 0) {
+	if (!allPoints.length) {
 		return (
 			<svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className={styles.chartSVG}>
 				<text x={SVG_WIDTH / 2} y={SVG_HEIGHT / 2} textAnchor="middle" fill="#9ca3af" fontSize="14">
@@ -469,6 +511,7 @@ const TrainingChartsInner: React.FC = () => {
 	// Fetch runs on mount
 	useEffect(() => {
 		let cancelled = false
+
 		async function load() {
 			try {
 				const runList = await fetchRuns()
@@ -479,15 +522,16 @@ const TrainingChartsInner: React.FC = () => {
 				// Auto-select first N runs (max 4)
 				const toSelect = runList.slice(0, 4).map((r) => r.name)
 				setSelectedRuns(new Set(toSelect))
-			} catch (err) {
+			} catch (caught) {
 				if (cancelled) return
-				setError(err instanceof Error ? err.message : String(err))
+				setError(caught instanceof Error ? caught.message : String(caught))
 			} finally {
 				if (!cancelled) {
 					setLoading(false)
 				}
 			}
 		}
+
 		load()
 
 		return () => {
@@ -497,7 +541,7 @@ const TrainingChartsInner: React.FC = () => {
 
 	// When selected runs change, discover metrics and fetch data
 	useEffect(() => {
-		if (selectedRuns.size === 0) return
+		if (!selectedRuns.size) return
 
 		let cancelled = false
 		const newAvailable = new Set<string>()
@@ -576,12 +620,12 @@ const TrainingChartsInner: React.FC = () => {
 
 		// Poll every POLL_INTERVAL_MS
 		pollRef.current = setInterval(async () => {
-			if (selectedRuns.size === 0) return
+			if (!selectedRuns.size) return
 
 			const newData = new Map(metricData)
 
 			for (const runName of selectedRuns) {
-				const runMap = new Map(newData.get(runName) ?? [])
+				const runMap = new Map(newData.get(runName))
 
 				for (const mk of selectedMetrics) {
 					try {
@@ -591,8 +635,10 @@ const TrainingChartsInner: React.FC = () => {
 						// ignore
 					}
 				}
+
 				newData.set(runName, runMap)
 			}
+
 			setMetricData(newData)
 		}, POLL_INTERVAL_MS)
 
@@ -621,14 +667,16 @@ const TrainingChartsInner: React.FC = () => {
 			for (const mk of selectedMetrics) {
 				const points = runData.get(mk)
 
-				if (!points || points.length === 0) continue
+				if (!points || !points.length) continue
+
 				series.push({
 					run: runName,
 					metric: mk,
 					label: `${runName} / ${mk}`,
 					color: LINE_COLORS[colorIdx % LINE_COLORS.length],
-					points: [...points].sort((a, b) => a.step - b.step),
+					points: [...points].toSorted((a, b) => a.step - b.step),
 				})
+
 				colorIdx++
 			}
 		}
@@ -703,7 +751,7 @@ const TrainingChartsInner: React.FC = () => {
 		)
 	}
 
-	if (runs.length === 0) {
+	if (!runs.length) {
 		return (
 			<div className={styles.container}>
 				<div className={styles.title}>Training metrics</div>
@@ -743,7 +791,7 @@ const TrainingChartsInner: React.FC = () => {
 				</div>
 
 				{/* Metric selector */}
-				{visibleMetrics.length > 0 ? (
+				{visibleMetrics.length ? (
 					<div className={styles.controlGroup}>
 						<span className={styles.controlLabel}>Metrics ({selectedMetrics.size})</span>
 						<div className={styles.metricCheckboxes}>
@@ -811,7 +859,7 @@ const TrainingChartsInner: React.FC = () => {
 			</div>
 
 			{/* Legend */}
-			{chartSeries.length > 0 ? (
+			{chartSeries.length ? (
 				<div className={styles.legend}>
 					{chartSeries.map((s) => (
 						<div key={`${s.run}:${s.metric}`} className={styles.legendItem}>
@@ -820,9 +868,9 @@ const TrainingChartsInner: React.FC = () => {
 						</div>
 					))}
 				</div>
-			) : selectedRuns.size === 0 ? (
+			) : !selectedRuns.size ? (
 				<div className={styles.status}>Select at least one run to display metrics.</div>
-			) : selectedMetrics.size === 0 ? (
+			) : !selectedMetrics.size ? (
 				<div className={styles.status}>Select at least one metric to chart.</div>
 			) : (
 				<div className={styles.status}>No metric data available for the selected runs.</div>

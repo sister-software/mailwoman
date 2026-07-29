@@ -37,6 +37,7 @@ export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
 		const resolved = resolve(dirname(target), linkDest)
 		unlinkSync(target)
 		copyFileSync(resolved, target)
+
 		console.error(`pack-workspace: dereferenced ${entry} ← ${resolved}`)
 	}
 }
@@ -60,8 +61,10 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 				...manifest.publishConfig,
 				exports: transformExportsForPublish(manifest.exports),
 			}
+
 			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
 		}
+
 		const result = spawnSync("yarn", ["pack", "-o", outFile], { cwd: workspaceDir, stdio: ["ignore", "pipe", "pipe"] })
 
 		if (result.status !== 0) {

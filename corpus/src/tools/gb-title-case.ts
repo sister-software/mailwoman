@@ -59,6 +59,7 @@ export function titleCaseGB(value: string): string {
 				.split("-")
 				.map((seg, segIndex) => caseWord(seg, wordIndex === 0 && segIndex === 0))
 				.join("-")
+
 			wordIndex += 1
 
 			return cased

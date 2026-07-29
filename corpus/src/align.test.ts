@@ -66,10 +66,12 @@ describe("alignRow — verbatim matches", () => {
 				},
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens).toEqual(["1600", "Pennsylvania", "Ave", "NW", "Washington", "DC", "20500"])
+
 		expect(result.row.labels).toEqual([
 			"B-house_number",
 			"B-street",
@@ -94,10 +96,12 @@ describe("alignRow — verbatim matches", () => {
 				},
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
 		expect(result.row.tokens).toEqual(["10", "Rue", "de", "la", "République", "75008", "Paris"])
+
 		expect(result.row.labels).toEqual([
 			"B-house_number",
 			"B-street",
@@ -119,6 +123,7 @@ describe("alignRow — verbatim matches", () => {
 				components: { locality: "Paris", country: "France" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -134,10 +139,11 @@ describe("alignRow — verbatim matches", () => {
 				components: { house_number: "12", street: "Main St", locality: "Springfield", region: "IL", postcode: "62701" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		expect(result.row.tokens).toHaveLength(result.row.labels.length)
 	})
 })
 
@@ -151,6 +157,7 @@ describe("alignRow — fuzzy fallback", () => {
 			}),
 			{ maxEditDistance: 2 }
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -164,6 +171,7 @@ describe("alignRow — fuzzy fallback", () => {
 				components: { locality: "Paris", region: "Île-de-France" },
 			})
 		)
+
 		expect(result.kind).toBe("quarantined")
 
 		if (result.kind !== "quarantined") return
@@ -178,6 +186,7 @@ describe("alignRow — fuzzy fallback", () => {
 			}),
 			{ maxEditDistance: 0 }
 		)
+
 		expect(result.kind).toBe("quarantined")
 	})
 })
@@ -208,6 +217,7 @@ describe("alignRow — edge cases", () => {
 				components: { locality: "Paris", country: "France" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -223,6 +233,7 @@ describe("alignRow — edge cases", () => {
 			}),
 			{ caseInsensitive: false, maxEditDistance: 0 }
 		)
+
 		expect(result.kind).toBe("quarantined")
 	})
 
@@ -234,6 +245,7 @@ describe("alignRow — edge cases", () => {
 			source_id: "wof-admin-2011-self",
 			license: "CC0-1.0",
 		})
+
 		const result = alignRow(row)
 		expect(result.kind).toBe("labeled")
 
@@ -262,11 +274,12 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 				},
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
 		// Token path untouched.
-		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		expect(result.row.tokens).toHaveLength(result.row.labels.length)
 		// Span triple: parallel, sorted by start, each slice round-trips to the component surface.
 		expect(result.row.span_tags).toEqual(["house_number", "street", "locality", "region", "postcode"])
 		expect(result.row.span_starts).toEqual([0, 5, 26, 38, 41])
@@ -286,6 +299,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 				components: { locality: "Springfield", region: "IL" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -296,7 +310,9 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 
 	it("accented NFC raw (é = one code unit) offsets address the composed form", () => {
 		const raw = "10 Rue de la République, 75008 Paris"
-		expect(raw.normalize("NFC")).toBe(raw) // fixture sanity: source literal is NFC
+		expect(raw.normalize("NFC")).toBe(raw)
+
+		// fixture sanity: source literal is NFC
 		const result = alignRow(
 			baseRow({
 				raw,
@@ -304,6 +320,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 				components: { house_number: "10", street: "Rue de la République", locality: "Paris", postcode: "75008" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -333,8 +350,8 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 
 			if (result.kind !== "labeled") continue
 			const { span_starts, span_ends, span_tags } = result.row
-			expect(span_starts!.length).toBe(span_ends!.length)
-			expect(span_starts!.length).toBe(span_tags!.length)
+			expect(span_starts!).toHaveLength(span_ends!.length)
+			expect(span_starts!).toHaveLength(span_tags!.length)
 
 			for (let i = 1; i < span_starts!.length; i++) {
 				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted AND non-overlapping
@@ -356,6 +373,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		// NFD: "é" as base letter + combining acute — two code units where NFC has one.
 		const nfdRaw = "10 Rue de la Re\u0301publique, 75008 Paris"
 		expect(nfdRaw.normalize("NFC")).not.toBe(nfdRaw)
+
 		const result = alignRow(
 			baseRow({
 				raw: nfdRaw,
@@ -364,16 +382,19 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 				components: { locality: "Paris", postcode: "75008" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
 		// Stored raw is the NFC form (single normalization form — #519 principle preserved).
 		const nfcRaw = nfdRaw.normalize("NFC")
 		expect(result.row.raw).toBe(nfcRaw)
+
 		// Spans located over the NFC raw → slicing by each span yields the component text.
-		const located = result.row.span_tags.map(
-			(tag, i) => `${tag}:${nfcRaw.slice(result.row.span_starts[i]!, result.row.span_ends[i]!)}`
+		const located = result.row.span_tags!.map(
+			(tag, i) => `${tag}:${nfcRaw.slice(result.row.span_starts![i]!, result.row.span_ends![i]!)}`
 		)
+
 		expect(located).toContain("locality:Paris")
 		expect(located).toContain("postcode:75008")
 	})
@@ -394,6 +415,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 				components: { street: "Umak", street_suffix: "Cir", region: "AK", postcode: "99546" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -421,6 +443,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 				},
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -440,6 +463,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 				components: { street: "Alaska Regional Dr", region: "Alaska", postcode: "99508" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -456,6 +480,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 				components: { street: "Lake", street_suffix: "Dr", region: "AK", postcode: "99692" },
 			})
 		)
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -465,6 +490,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 			const slice = raw.slice(span_starts![i]!, span_ends![i]!)
 			expect(slice.trim()).toBe(slice) // no span carries edge whitespace
 		}
+
 		const regionIdx = span_tags!.indexOf("region")
 		expect(raw.slice(span_starts![regionIdx]!, span_ends![regionIdx]!)).toBe("AK")
 		expect(span_starts![regionIdx]).toBe(9)

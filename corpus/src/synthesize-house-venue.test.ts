@@ -9,9 +9,9 @@ function seededRandom(seed: number): () => number {
 	let s = seed
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 
@@ -28,6 +28,7 @@ describe("synthesizeHouseVenueRow", () => {
 			random: seededRandom(1),
 			forceTemplate: "venue-after-street",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.template).toBe("venue-after-street")
 		expect(row!.raw).toMatch(/^\d+ .+, .+, Boston, MA 02101$/)
@@ -39,6 +40,7 @@ describe("synthesizeHouseVenueRow", () => {
 			random: seededRandom(2),
 			forceTemplate: "venue-before-street",
 		})
+
 		expect(row).not.toBeNull()
 		expect(row!.template).toBe("venue-before-street")
 		expect(row!.raw).toMatch(/^.+, \d+ .+, Boston, MA 02101$/)
@@ -50,6 +52,7 @@ describe("synthesizeHouseVenueRow", () => {
 			{ ...TUPLE, street: "Newbury St", houseNumber: "234" },
 			{ random: seededRandom(3), forceTemplate: "venue-after-street" }
 		)
+
 		expect(row).not.toBeNull()
 		expect(row!.components.street).toBe("Newbury St")
 		expect(row!.components.house_number).toBe("234")
@@ -85,8 +88,10 @@ describe("synthesizeHouseVenueRow", () => {
 
 		for (let i = 0; i < 1000; i++) {
 			const row = synthesizeHouseVenueRow(TUPLE, { random: rng })
+
 			counts[row!.template]++
 		}
+
 		// 50/50 split with reasonable tolerance
 		expect(counts["venue-after-street"]).toBeGreaterThan(400)
 		expect(counts["venue-after-street"]).toBeLessThan(600)
@@ -105,6 +110,7 @@ describe("synthesizeHouseVenueRow", () => {
 				{ ...TUPLE, country },
 				{ random: seededRandom(7), forceTemplate: "venue-after-street" }
 			)
+
 			expect(row!.locale).toBe(expectedLocale)
 		}
 	})

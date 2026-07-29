@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
+import type { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import { Fragment, memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import { IControl, MapInstance } from "react-map-gl/maplibre"
+import type { IControl, MapInstance } from "react-map-gl/maplibre"
 
 import styles from "./_debug.module.css"
 
@@ -56,6 +56,7 @@ export function useMapPointerInfo(map: MapLibreMap | null) {
 					})
 					.filter((feature) => (feature.layer.metadata as { queryable?: boolean })?.queryable !== false)
 					.slice(0, 5)
+
 				setFeatureTargets(nextFeatureTargets)
 			} else {
 				setFeatureTargets([])
@@ -97,6 +98,9 @@ export interface DebugControlProps {
 	map: MapLibreMap | null
 }
 
+/**
+ * Demo-page debug panel — the same idea as the dashboard's, wired to the demo's own runtime.
+ */
 export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 	const [debugControl] = useState<DebugControlBase>(() => new DebugControlBase())
 
@@ -118,6 +122,7 @@ export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 				const layerID = feature.layer.id
 
 				const isNamed = "pmap:kind" in feature.properties
+
 				const entries: [string, unknown][] = isNamed
 					? []
 					: Object.entries(feature.properties).filter(

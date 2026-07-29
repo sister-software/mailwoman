@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { TIGERClassCode } from "./class-code.ts"
-import { TIGERFunctionalStatus } from "./functional-status.ts"
+import type { TIGERClassCode } from "./class-code.ts"
+import type { TIGERFunctionalStatus } from "./functional-status.ts"
 import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
 import type { AdminLevel1Code } from "./state.ts"
 
@@ -128,4 +128,7 @@ export interface TIGERCounty {
 	NAME: string
 }
 
+/**
+ * Brand symbol marking a value as a TIGER county record, so a bare object cannot be passed as one.
+ */
 export const TIGERCountySymbol = Symbol.for("TIGERCounty")

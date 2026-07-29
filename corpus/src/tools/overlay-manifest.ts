@@ -50,9 +50,11 @@ interface BaseManifest {
 	total_rows: number
 }
 
-/** Escape a path for single-quoted SQL string literals. */
+/**
+ * Escape a path for single-quoted SQL string literals.
+ */
 function sqlString(value: string): string {
-	return value.replace(/'/g, "''")
+	return value.replaceAll("'", "''")
 }
 
 async function descriptor(
@@ -77,7 +79,7 @@ async function descriptor(
 		bytes: statSync(localPath).size,
 		sha256: sha256Hex(readFileSync(localPath)),
 		first_source_id: sids[0]!,
-		last_source_id: sids[sids.length - 1]!,
+		last_source_id: sids.at(-1)!,
 		source,
 	}
 }
@@ -102,7 +104,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const reroot = (p: string): string => {
 		const i = p.indexOf("/corpus/versioned/")
 
-		return i >= 0 ? "/data" + p.slice(i) : p
+		return i !== -1 ? "/data" + p.slice(i) : p
 	}
 
 	const kept = base.shards.map((s) => ({ ...s, path: reroot(s.path) }))
@@ -133,6 +135,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	const out = join(args.newDir, "MANIFEST.json")
 	writeFileSync(out, JSON.stringify(manifest, null, 1) + "\n")
+
 	console.log(`wrote ${out}`)
 	console.log(`  shards: ${manifest.shards.length} (${kept.length} base kept, +1 ${args.source})`)
 	console.log(`  counts: ${JSON.stringify(manifest.counts)}  total: ${manifest.total_rows}`)

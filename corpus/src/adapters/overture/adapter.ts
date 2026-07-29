@@ -35,10 +35,20 @@ import { stableSourceID } from "../../adapter.ts"
 import { formatAddress, reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const OVERTURE_ADAPTER_ID = "overture"
+/**
+ * License carried by this source (CDLA-Permissive-2.0), attached to each row so downstream consumers inherit the terms
+ * rather than having to look them up.
+ */
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
 
-/** The flattened per-row shape emitted by `ingest-overture-addresses.ts --corpus-jsonl`. */
+/**
+ * The flattened per-row shape emitted by `ingest-overture-addresses.ts --corpus-jsonl`.
+ */
 interface OvertureCorpusRow {
 	street?: string
 	number?: string
@@ -73,6 +83,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 					"overture adapter: --country is required (the Overture JSONL is per-country and rows omit a country field)"
 				)
 			}
+
 			const country = opts.country
 
 			// TextSpliterator streams string lines (parseLine keeps tolerating blank/`#`/malformed
@@ -108,6 +119,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 				if (/^\d/.test(number)) {
 					components.house_number = number
 				}
+
 				components.street = street
 
 				if (unit) {
@@ -128,7 +140,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 
 				const aligned = reconcileComponents(components, raw)
 
-				if (Object.keys(aligned).length === 0) continue
+				if (!Object.keys(aligned).length) continue
 
 				yield {
 					raw,
@@ -139,10 +151,14 @@ export function createOvertureAdapter(): CorpusAdapter {
 					corpus_version: "",
 					license: OVERTURE_DEFAULT_LICENSE,
 				}
+
 				emitted++
 			}
 		},
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const overtureAdapter = createOvertureAdapter()

@@ -42,6 +42,7 @@ export function pick<O extends object, K extends keyof O>(
 	setLike: SetLike<K>,
 	transform?: (value: O[keyof O], key: keyof O, input: O) => never
 ): Pick<O, K>
+
 /**
  * @param input Source object.
  * @param scalarEnum Enum-like object whose members represent the subset of keys to pick.
@@ -53,6 +54,7 @@ export function pick<O extends object, K extends keyof O>(
 	scalarEnum: Record<K, K>,
 	transform?: (value: O[keyof O], key: keyof O, input: O) => never
 ): Pick<O, StringKeyOf<O>>
+
 /**
  * @param input Source object.
  * @param constraints Unconstrained iterable of keys to pick, such as in array or Map.
@@ -76,6 +78,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	constraints: Record<K, K>,
 	transform?: (value: O[keyof O], key: keyof O, input: O) => never
 ): Pick<O, K>
+
 /**
  * @param input Source object.
  * @param keys Unconstrained iterable of keys to pick, such as in array or Map.
@@ -87,6 +90,7 @@ export function pick<O extends object, K extends string>(
 	keys: Iterable<K>,
 	transform?: (value: O[keyof O], key: keyof O, input: O) => never
 ): Pick<O, StringKeyOf<O>>
+
 /**
  * @param input Source object.
  * @param constraints Unconstrained iterable of keys to pick, such as in array or Map.
@@ -146,7 +150,7 @@ export function omitNullable<T extends object>(input: T): NonNullableObject<T> {
 		if (isRecordLike(currentValue)) {
 			const childResult = omitNullable(currentValue)
 
-			if (Object.keys(childResult).length > 0) {
+			if (Object.keys(childResult).length) {
 				result[key] = childResult
 			}
 		} else if (Array.isArray(currentValue)) {
@@ -154,7 +158,7 @@ export function omitNullable<T extends object>(input: T): NonNullableObject<T> {
 				.map((entryValue) => (isRecordLike(entryValue) ? omitNullable(entryValue) : entryValue))
 				.filter((val) => val != null)
 
-			if (arr.length > 0) {
+			if (arr.length) {
 				result[key] = arr
 			}
 		} else if (currentValue !== null) {
@@ -170,6 +174,7 @@ export function omitNullable<T extends object>(input: T): NonNullableObject<T> {
  */
 export function tryParsingJSON<T = unknown>(input: unknown, fallback?: undefined): T | undefined
 export function tryParsingJSON<T = unknown>(input: unknown, fallback: null): T | null
+
 export function tryParsingJSON<T = unknown, F = null>(input: unknown, fallback?: F): T | F {
 	if (typeof input !== "string") return (fallback ?? null) as F
 

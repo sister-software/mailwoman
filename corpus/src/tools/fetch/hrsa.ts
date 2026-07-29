@@ -40,6 +40,7 @@ export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: strin
 	const dest = join(destDir, FILENAME)
 
 	report?.(`=== ${SLUG} / ${FILENAME}`)
+
 	const { bytes } = await downloadToFile({
 		url: SOURCE_URL,
 		dest,
@@ -47,6 +48,7 @@ export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: strin
 		headers: { "Accept-Encoding": "gzip, br" },
 		report,
 	})
+
 	const sha = await sha256File(dest)
 
 	const manifest: SourceManifest = {
@@ -56,6 +58,7 @@ export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: strin
 		sha256: sha,
 		bytes,
 	}
+
 	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
 
 	report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)

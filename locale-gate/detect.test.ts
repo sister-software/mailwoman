@@ -18,7 +18,7 @@ describe("detectLocale — caller hint precedence", () => {
 	it("caller hint wins at confidence 1.0 with source=caller", () => {
 		const r = detectLocaleSync(input("anything"), shape({ characterClass: "cjk" }), { hint: "fr-FR" })
 		expect(r.locale).toBe("fr-FR")
-		expect(r.confidence).toBe(1.0)
+		expect(r.confidence).toBe(1)
 		expect(r.source).toBe("caller")
 	})
 
@@ -57,6 +57,7 @@ describe("detectLocale — postcode-format detection", () => {
 				characterClass: "alphanumeric",
 			})
 		)
+
 		expect(r.locale).toBe("en-US")
 		expect(r.confidence).toBeGreaterThanOrEqual(0.9)
 	})
@@ -69,6 +70,7 @@ describe("detectLocale — postcode-format detection", () => {
 				characterClass: "alphanumeric",
 			})
 		)
+
 		expect(r.locale).toBe("en-GB")
 	})
 
@@ -80,6 +82,7 @@ describe("detectLocale — postcode-format detection", () => {
 				characterClass: "alphanumeric",
 			})
 		)
+
 		expect(r.locale).toBe("en-CA")
 	})
 
@@ -91,6 +94,7 @@ describe("detectLocale — postcode-format detection", () => {
 				characterClass: "alphanumeric",
 			})
 		)
+
 		expect(r.locale).toBe("ja-JP")
 	})
 
@@ -106,6 +110,7 @@ describe("detectLocale — postcode-format detection", () => {
 				characterClass: "numeric",
 			})
 		)
+
 		expect(r.locale).toBe("en-US")
 		expect(r.confidence).toBeLessThan(0.7)
 	})
@@ -140,6 +145,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 				characterClass: "numeric",
 			})
 		)
+
 		const allLocales = [r.locale, ...r.alternatives.map((a) => a.locale)]
 		const unique = new Set(allLocales)
 		expect(unique.size).toBe(allLocales.length)

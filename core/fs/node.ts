@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { PathLike, Stats } from "node:fs"
-import { existsSync } from "node:fs"
+import type { Stats } from "node:fs"
 import { stat } from "node:fs/promises"
 
 import type { PathBuilderLike } from "path-ts"
+
+export { existsSync } from "node:fs"
 
 /**
  * Attempts to stat a file or directory.
@@ -13,10 +14,10 @@ import type { PathBuilderLike } from "path-ts"
  * @throws If the path exists but cannot be statted for some reason other than non-existence.
  */
 export function tryStat(pathBuilderLike: PathBuilderLike): Promise<Stats | null> {
-	return stat(pathBuilderLike.toString()).catch((err) => {
-		if (err.code === "ENOENT") return null
+	return stat(pathBuilderLike.toString()).catch((error) => {
+		if (error.code === "ENOENT") return null
 
-		throw err
+		throw error
 	})
 }
 
@@ -26,10 +27,8 @@ export function tryStat(pathBuilderLike: PathBuilderLike): Promise<Stats | null>
 export async function isDirectory(path: PathBuilderLike): Promise<boolean> {
 	return tryStat(path)
 		.then((stats) => stats?.isDirectory() ?? false)
-		.catch((err) => {
-			if (err.code === "ENOENT") return false
-			throw err
+		.catch((error) => {
+			if (error.code === "ENOENT") return false
+			throw error
 		})
 }
-
-export { existsSync }

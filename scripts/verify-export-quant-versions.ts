@@ -24,6 +24,7 @@ const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"
 
 if (!existsSync(PYTHON)) {
 	console.error(`✗ ${PYTHON} not found — create the corpus-python venv first`)
+
 	process.exit(2)
 }
 
@@ -34,7 +35,9 @@ if (!existsSync(PYTHON)) {
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 
-/** Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth. */
+/**
+ * Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth.
+ */
 function pinnedVersions(): Array<[string, string]> {
 	const src = readFileSync(TRAIN_REMOTE, "utf8")
 	const matches = src.matchAll(/"(torch|transformers|onnx|onnxruntime|onnxscript)==([0-9.]+)"/g)
@@ -66,6 +69,7 @@ for (const [pkg, pinned] of pinnedVersions()) {
 		console.error(`⚠ ${pkg}: not installed locally (export-side; required on Modal, fine here)`)
 	} else {
 		console.error(`✗ ${pkg}: local=${actual} pinned=${pinned}`)
+
 		fail = true
 	}
 }
@@ -73,6 +77,8 @@ for (const [pkg, pinned] of pinnedVersions()) {
 if (fail) {
 	console.error("")
 	console.error(`Toolchain drift vs ${TRAIN_REMOTE} — do NOT quantize for release with this env.`)
+
 	process.exit(1)
 }
+
 console.error("toolchain matches the pinned training-image set")

@@ -1,3 +1,5 @@
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
+
 import styles from "./styles.module.css"
 
 /**
@@ -11,15 +13,19 @@ interface TreeNode {
 }
 
 export interface TreeViewProps {
-	/** The parser's `AddressTree` (`result.tree`) — we read `.roots` and recurse `.children`. */
+	/**
+	 * The parser's `AddressTree` (`result.tree`) — we read `.roots` and recurse `.children`.
+	 */
 	tree: unknown
 }
 
-/** ConfidenceCell's tiers, verbatim. */
+/**
+ * ConfidenceCell's tiers, verbatim.
+ */
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
 function renderNode(node: TreeNode, path: string): React.ReactNode {
@@ -49,7 +55,7 @@ function renderNode(node: TreeNode, path: string): React.ReactNode {
 export const TreeView: React.FC<TreeViewProps> = ({ tree }) => {
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots
 
-	if (!Array.isArray(roots) || roots.length === 0) return null
+	if (!Array.isArray(roots) || !roots.length) return null
 
 	return (
 		<ul className={`${styles.children} ${styles.treeView}`}>

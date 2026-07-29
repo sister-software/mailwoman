@@ -30,9 +30,11 @@ import { commandError, type CommandComponent, useCommandTask } from "../../../cl
 
 const BATCH_SIZE = availableParallelism()
 
-// Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass
-// e.g. `--interpolator viridis` and we map it to `interpolateViridis`. Categorical
-// scales (`scheme*`) are deliberately excluded — they're string[]s, not (t)=>string.
+/**
+ * Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass e.g. `--interpolator viridis` and we
+ * map it to `interpolateViridis`. Categorical scales (`scheme*`) are deliberately excluded — they're string[]s, not
+ * (t)=>string.
+ */
 const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 	const out: Record<string, InterpolateColorCallback> = {}
 
@@ -43,7 +45,8 @@ const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 
 	return out
 })()
-const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).sort()
+
+const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).toSorted()
 
 const ArgumentsSchema = zod
 	.array(zod.string())
@@ -85,6 +88,7 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
 
 	const valid = new Set<string>(PlacetypeRoles)
+
 	const parsed = raw
 		.split(",")
 		.map((s) => s.trim())
