@@ -85,7 +85,8 @@
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
 		"test:unit": "vitest --exclude ./mailwoman/test",
-		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit"
+		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
+		"typecheck:tests": "node scripts/typecheck-tests.ts"
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.3-r.3",
