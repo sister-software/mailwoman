@@ -1236,6 +1236,47 @@
 			},
 			"notes": "Bundle revision on unchanged model bytes: per-locale FSTs rebuilt with build-time degenerate-surface curation (policy degenerate-surface-exclusion v1.1 in each artifact trailer). Fragment street-particle 290→298/400 (residual 3 = true homographs: La Grange / La Grande OR / Pierre SD), bare-street 240→241 = P0 parity, admin-street-homonym 159 = exact P0 parity (with the D2 gate pin, closed #1320); golden us/fr byte-equal to shipped (+52/+0 vs P0 unchanged); uncurated A/B control == shipped exactly (delta is pure curation); gauntlet PASS ×3 layers incl. candidate weights-cache (held-out z=0.00). Per-tag golden metrics carried forward from 6.6.3 — measured byte-identical. Also ships fst-street-morphology.bin (sealed, locale-general) unifying 3 build sites + enabling the browser street-context gate at the next docs deploy.",
 			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
+		},
+		{
+			"run_id": "v670-bundle-ordinal-ship-gate",
+			"model_version": "6.7.0",
+			"model_path": "@mailwoman/neural-weights-en-us@8.2.0",
+			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v6.0.0-shipped-baseline): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-29",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 97.7,
+					"country_homograph": 83.3,
+					"micro": 87.1,
+					"locality": 77.5,
+					"region": 90.3,
+					"street": 81.2,
+					"street_prefix": 98,
+					"street_suffix": 94.9,
+					"unit": 97,
+					"po_box_real": 90.5,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.9,
+					"house_number": 95,
+					"region": 46.7,
+					"cedex_real": 82.8
+				},
+				"de": {
+					"native_locality_anchor_on": 91.5
+				},
+				"arena": {
+					"perturb": 82
+				}
+			},
+			"notes": "6.7.0-bundle (v3.24.0-bundle-ordinal step-4000, npm 8.2.0): the Option-A evidence bundle ships — street_type+locality_surface channels, digit-guarded four-law lexicons (street v3/locality-surface v6), inputMode register gating (Decision A) + the street-context gate, ordinal-street augmentation (the 8.2.0 pre-ship metamorphic catch trained out). G5 graded the ABLATED column = formatted-mode production; fragment register: homonym +0.258 asis/+0.730 lower+heal, ALL +0.267 lower+heal. fr.cedex under the noise-honest 82.2 floor (NAMED WATCH). street-hn asis raw -0.022 (one row past the diagnostic bar; +0.022 heal-on production register — recorded). [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v3240-ablated]"
 		}
 	]
 }
