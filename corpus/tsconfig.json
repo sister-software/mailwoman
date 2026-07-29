@@ -7,6 +7,6 @@
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./src/**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*", "./test-kit/**/*"],
 	"references": [{ "path": "../core" }, { "path": "../codex" }, { "path": "../formatter" }]
 }

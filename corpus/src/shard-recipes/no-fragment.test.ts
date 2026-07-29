@@ -14,28 +14,12 @@
  *      digit. The bare-LOCALITY and bare-POSTCODE counter rows must both exist and carry no street.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { describe, expect, it } from "vitest"
 
+import { scratch, shardRunner } from "../../test-kit/shard-recipe.ts"
 import { noFragmentRecipe } from "./no-fragment.ts"
 
-/**
- * The fields these assertions read off a shard row. `JSON.parse` hands back `any`; naming the shape is what lets the
- * assertions be checked at all — the previous `Record<string, never>` typed every property as `never`, so nothing could
- * be read without a cast and nothing was ever verified.
- */
-interface ShardRow {
-	raw: string
-	synth_method?: string
-	source?: string
-	source_id?: string
-	components?: Partial<Record<string, string>>
-	labels?: string[]
-	tokens?: string[]
-}
+const run = shardRunner("no-fragment", noFragmentRecipe, 901)
 
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
@@ -45,32 +29,9 @@ const TUPLES = [
 	{ street: "Øvrabø", locality: "hellvik", number: "124/1", postcode: "4375" },
 ]
 
-function scratch(tuples: object[], surfaces: string[]): { input: string; exclude: string } {
-	const dir = mkdtempSync(join(tmpdir(), "no-fragment-"))
-	const input = join(dir, "tuples.jsonl")
-	const exclude = join(dir, "surfaces.txt")
-
-	writeFileSync(input, tuples.map((t) => JSON.stringify(t)).join("\n") + "\n")
-	writeFileSync(exclude, "# reserved\n" + surfaces.join("\n") + "\n")
-
-	return { input, exclude }
-}
-
-async function run(tuples: object[], surfaces: string[], opts: Record<string, unknown> = {}) {
-	const { input, exclude } = scratch(tuples, surfaces)
-	const lines: string[] = []
-
-	const stats = await noFragmentRecipe.run(
-		{ output: "", seed: 901, variants: 1, input, excludeSurfaces: exclude, ...opts },
-		(line) => lines.push(line)
-	)
-
-	return { stats, rows: lines.map((line) => JSON.parse(line) as ShardRow) }
-}
-
 describe("no-fragment", () => {
 	it("REFUSES to run without an exclusion list", async () => {
-		const { input } = scratch(TUPLES, [])
+		const { input } = scratch("no-fragment", TUPLES, [])
 
 		await expect(noFragmentRecipe.run({ output: "", seed: 901, variants: 1, input }, () => {})).rejects.toThrow(
 			/--exclude-surfaces is REQUIRED/

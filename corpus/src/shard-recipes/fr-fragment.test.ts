@@ -21,22 +21,10 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { scratch, shardRunner, type ShardRow } from "../../test-kit/shard-recipe.ts"
 import { frFragmentRecipe, frTitleCase } from "./fr-fragment.ts"
 
-/**
- * The fields these assertions read off a shard row. `JSON.parse` hands back `any`; naming the shape is what lets the
- * assertions be checked at all — the previous `Record<string, never>` typed every property as `never`, so nothing could
- * be read without a cast and nothing was ever verified.
- */
-interface ShardRow {
-	raw: string
-	synth_method?: string
-	source?: string
-	source_id?: string
-	components?: Partial<Record<string, string>>
-	labels?: string[]
-	tokens?: string[]
-}
+const run = shardRunner("fr-fragment", frFragmentRecipe, 727)
 
 const TUPLES = [
 	{ street: "Rue Montmartre", locality: "paris", postcode: "75002" },
@@ -45,28 +33,6 @@ const TUPLES = [
 	{ street: "Avenue des Champs", locality: "saint-jean-de-luz", postcode: "64500" },
 	{ street: "Boulevard Voltaire", locality: "mery-sur-oise", postcode: "95540" },
 ]
-
-function scratch(tuples: object[], surfaces: string[]): { input: string; exclude: string } {
-	const dir = mkdtempSync(join(tmpdir(), "fr-fragment-"))
-	const input = join(dir, "tuples.jsonl")
-	const exclude = join(dir, "surfaces.txt")
-	writeFileSync(input, tuples.map((t) => JSON.stringify(t)).join("\n") + "\n")
-	writeFileSync(exclude, "# reserved\n" + surfaces.join("\n") + "\n")
-
-	return { input, exclude }
-}
-
-async function run(tuples: object[], surfaces: string[], opts: Record<string, unknown> = {}) {
-	const { input, exclude } = scratch(tuples, surfaces)
-	const lines: string[] = []
-
-	const stats = await frFragmentRecipe.run(
-		{ output: "", seed: 727, variants: 1, input, excludeSurfaces: exclude, ...opts },
-		(line) => lines.push(line)
-	)
-
-	return { stats, rows: lines.map((line) => JSON.parse(line) as ShardRow) }
-}
 
 describe("frTitleCase", () => {
 	it("capitalizes elements and leaves French particles lowercase", () => {
@@ -83,7 +49,7 @@ describe("frTitleCase", () => {
 
 describe("fr-fragment: the split", () => {
 	it("REFUSES to run without an exclusion list rather than mint a contaminated shard", async () => {
-		const { input } = scratch(TUPLES, [])
+		const { input } = scratch("fr-fragment", TUPLES, [])
 
 		await expect(frFragmentRecipe.run({ output: "", seed: 1, variants: 1, input }, () => {})).rejects.toThrow(
 			/--exclude-surfaces is REQUIRED/
@@ -91,7 +57,7 @@ describe("fr-fragment: the split", () => {
 	})
 
 	it("refuses an exclusion list that is present but empty", async () => {
-		const { input, exclude } = scratch(TUPLES, [])
+		const { input, exclude } = scratch("fr-fragment", TUPLES, [])
 		writeFileSync(exclude, "# only a comment\n")
 
 		await expect(
