@@ -1,19 +1,14 @@
 {
-	// A NON-EMITTING companion to ./tsconfig.json, so test files are type-checked without being built.
-	// See any sibling workspace's tsconfig.test.json for the full rationale.
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"noEmit": true,
-		"emitDeclarationOnly": false,
-		"composite": false,
-		"incremental": false
-	},
+	// Non-emitting companion to ./tsconfig.json — see ../tsconfig.test-base.json for why it exists.
+	"extends": ["./tsconfig.json", "../tsconfig.test-base.json"],
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
-	// hot-db.test.ts imports `runCascade` from `../docs/src/shared/demo-helpers.ts`. `docs` is a private
-	// Docusaurus app, not a referenced project, so TypeScript reads it — and the React graph behind it —
-	// as source that sits outside this project's rootDir. There is no compiler option that makes that
-	// legal; the fix is to move `runCascade` out of the docs site into a workspace this package may
-	// depend on. Until then the file is checked by vitest at runtime only.
-	"exclude": ["./out/**/*", "./hot-db.test.ts"],
+	"exclude": [
+		"./out/**/*",
+		// hot-db.test.ts imports `runCascade` from `../docs/src/shared/demo-helpers.ts`. `docs` is a private
+		// Docusaurus app, not a referenced project, so TypeScript reads it — and the React graph behind it —
+		// as source outside this project's rootDir. No compiler option makes that legal; the fix is to move
+		// `runCascade` into a workspace this package may depend on. Checked by vitest at runtime only.
+		"./hot-db.test.ts"
+	],
 	"references": [{ "path": "./tsconfig.json" }]
 }

@@ -1,19 +1,6 @@
 {
-	// A NON-EMITTING companion to ./tsconfig.json, so test files are type-checked without being built.
-	//
-	// The build project excludes tests on purpose: anything it includes lands in out/ and then in the
-	// published tarball (mailwoman's `files` array still carries a `!out/test/**/*` negation from the one
-	// test that rides the build). `exclude` suppressed the emit AND the checking; this project restores
-	// the checking half. It references ./tsconfig.json so sibling packages resolve through their built
-	// .d.ts — without that, TypeScript follows each package's dev `exports` condition into sibling
-	// SOURCE and checks it under THIS workspace's compiler options.
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"noEmit": true,
-		"emitDeclarationOnly": false,
-		"composite": false,
-		"incremental": false
-	},
+	// Non-emitting companion to ./tsconfig.json — see ../tsconfig.test-base.json for why it exists.
+	"extends": ["./tsconfig.json", "../tsconfig.test-base.json"],
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"exclude": ["./out/**/*"],
 	"references": [{ "path": "./tsconfig.json" }]

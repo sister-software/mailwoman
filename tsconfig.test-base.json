@@ -1,0 +1,22 @@
+{
+	// Shared settings for every workspace's `tsconfig.test.json`.
+	//
+	// Test files are excluded from every BUILD project on purpose: `tsc -b` emits what it includes, so an
+	// included test lands in `out/` and then in the published tarball — mailwoman's `files` array still
+	// carries a `!out/test/**/*` negation from the one test that rides the build. That `exclude`
+	// suppressed the emit AND the checking, and only the emit needed it.
+	//
+	// A workspace's test project layers this on top of its own tsconfig and adds the test globs. It must
+	// also reference its own build project: without that, TypeScript follows each package's dev `exports`
+	// condition into sibling SOURCE and checks it under the WRONG workspace's compiler options. `extends`
+	// does not inherit `include`/`exclude`/`references`, which is why those repeat per workspace and this
+	// file carries only the options.
+	//
+	// Run them all with `yarn typecheck:tests`.
+	"compilerOptions": {
+		"noEmit": true,
+		"emitDeclarationOnly": false,
+		"composite": false,
+		"incremental": false
+	}
+}
