@@ -54,6 +54,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
@@ -146,6 +147,51 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
 		if (tokens.length) {
 			surfaces.add(tokens.join(" "))
 		}
+	}
+
+	return surfaces
+}
+
+/**
+ * The three German city-states: Land and Stadt are the SAME coextensive place, and the locality reading dominates user
+ * text ("10115 berlin", "hamburg altona") — see {@link loadDERegionVocabulary}.
+ */
+const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
+
+/**
+ * Law-4 region vocabulary for DE (v7, the per-country revisit the law reserves at each locale fold): the 13
+ * TERRITORIAL-state names — native, English exonym, and the everyday aliases the codex alias map carries (NRW,
+ * Thueringen, …) — are region vocabulary, never locality evidence; painting "bayern" as a locality teaches the same
+ * evidence→REGION rotation the v3.19 US flip census measured for state names.
+ *
+ * The city-states (Berlin, Hamburg, Bremen) are deliberately ABSENT from the exclusion: the US analogy does not
+ * transfer — Washington-the-state and Washington-the-city are DIFFERENT places (a rotation hazard), while
+ * Berlin-the-Land and Berlin-the-Stadt are one coextensive place whose dominant reading in user text is the locality.
+ * Withholding evidence there would gut the DE fold's value on the three largest cities; the model owns the residual
+ * region/locality call (model-first).
+ */
+export function loadDERegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
+	const surfaces = new Set<string>()
+
+	const add = (s: string) => {
+		const tokens = fold(s)
+
+		if (tokens.length) {
+			surfaces.add(tokens.join(" "))
+		}
+	}
+
+	for (const [alias, code] of DE_STATE_NAME_TO_CODE) {
+		if (DE_CITY_STATES.has(code)) continue
+
+		add(alias)
+	}
+
+	for (const info of Object.values(DE_BUNDESLAENDER)) {
+		if (DE_CITY_STATES.has(info.code as GermanStateCode)) continue
+
+		add(info.name)
+		add(info.english)
 	}
 
 	return surfaces
@@ -277,8 +323,21 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		degenerate.add(painterFold(s).join(" "))
 	}
 
-	// Law 4 (v5): region vocabulary, scoped to the countries this build covers.
-	const regionVocabulary = countries.includes("US") ? loadUSRegionVocabulary() : new Set<string>()
+	// Law 4 (v5; DE joined at v7): region vocabulary, scoped to the countries this build covers.
+	const regionVocabulary = new Set<string>()
+
+	if (countries.includes("US")) {
+		for (const s of loadUSRegionVocabulary()) {
+			regionVocabulary.add(s)
+		}
+	}
+
+	if (countries.includes("DE")) {
+		for (const s of loadDERegionVocabulary()) {
+			regionVocabulary.add(s)
+		}
+	}
+
 	const countryCounts = computeSurfaceCountryCounts(dbPath)
 	const personNames = loadPersonNameSurfaces()
 
@@ -405,7 +464,8 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const homographs = [...entries.values()].filter((b) => b & LOCALITY_BIT.locality_homograph).length
 
 	const lexicon = {
-		version: 6,
+		// v7: the DE country fold (law-4 DE region vocabulary with the city-state exception).
+		version: 7,
 		generated_by:
 			`mailwoman gazetteer build locality-surface-lexicon (four-law selectivity: degenerate+directional exclusion + ` +
 			`prominence ${ONE_TOKEN_IMPORTANCE_FLOOR} + person-name ${PERSON_NAME_IMPORTANCE_FLOOR} + ` +
