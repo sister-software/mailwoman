@@ -121,9 +121,13 @@ describe("LocaleProfile — bundled profiles", () => {
 		expect(frFR.componentsSupported).toContain("street_prefix_particle")
 	})
 
-	test("ja-JP omits street and house_number (Phase 6 forward-compat)", () => {
+	test("ja-JP omits street but carries house_number (CJK Phase 2 / D4)", () => {
+		// The original forward-compat property survives: JP has no `street` role (district/block
+		// carry that ladder) and the core abstraction must accept the omission. D4 ADDED
+		// house_number — the compact number ("2-3-16") is one whole-span house_number; the fine
+		// block/sub_block/building_number tags label the kanji-designator long form only.
 		expect(jaJP.componentsSupported).not.toContain("street")
-		expect(jaJP.componentsSupported).not.toContain("house_number")
+		expect(jaJP.componentsSupported).toContain("house_number")
 		expect(jaJP.componentsSupported).toContain("prefecture")
 		expect(jaJP.componentsSupported).toContain("municipality")
 	})

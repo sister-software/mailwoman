@@ -45,7 +45,7 @@ import pyarrow.parquet as pq
 from .augment import SPAN_KEYS, augment_row
 from .char_tokenizer import encode_row_units, load_char_vocab
 from .config import Config, DataConfig
-from .labels import IGNORE_INDEX, active_components_present, locale_id
+from .labels import IGNORE_INDEX, active_components_present, locale_id, resolve_label_set
 from .relabel import AffixRelabelLexicon, relabel_row
 from .tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
 
@@ -615,6 +615,12 @@ def iter_encoded(
             )
         max_units = int(getattr(cfg_data, "max_units", None) or cfg_data.max_length)
         char_vocab = load_char_vocab(cfg_data.char_vocab_path)
+    # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the CHAR path only.
+    # The SP path still encodes against the module-global STAGE3 maps, so a non-default set there
+    # would silently mislabel — raise instead (the #1349 lesson: silent label-space mismatches).
+    label_set = resolve_label_set(getattr(cfg_data, "label_set", "stage3"))
+    if label_set.name != "stage3" and char_mode == "off":
+        raise ValueError(f"data.label_set={label_set.name!r} is only supported with data.char_mode != 'off'")
     # Postcode-anchor lookup (#239/#240): loaded once, passed to every encode_row. None → no anchor
     # features produced (back-compat). See load_anchor_lookup.
     anchor_lookup = load_anchor_lookup(cfg_data.anchor_lookup_path) if cfg_data.anchor_lookup_path else None
@@ -705,6 +711,8 @@ def iter_encoded(
                 max_units=max_units,
                 max_unit_width=max_unit_width,
                 ctx_chars=char_ctx,
+                label_to_id=label_set.label_to_id,
+                collapse=label_set.collapse_label,
             )
             yield EncodedExample(
                 # Dummy pad row — the model's use_char_embed branch derives (B, S) from char_ids
