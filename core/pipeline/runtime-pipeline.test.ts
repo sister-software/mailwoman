@@ -10,7 +10,7 @@
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "../decoder/types.ts"
-import type { GazetteerArtifactCoverage, Resolver } from "../resolver/types.ts"
+import type { GazetteerArtifactCoverage, Resolver, ResolveOpts } from "../resolver/types.ts"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
 import type {
@@ -82,7 +82,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 		artifact?: GazetteerArtifactCoverage
 		override?: ReadonlySet<string>
 	}): Promise<string | undefined> => {
-		const resolveTree = vi.fn(async (tree: AddressTree) => tree)
+		const resolveTree = vi.fn(async (tree: AddressTree, _opts?: ResolveOpts) => tree)
 		const resolver: Resolver = { resolveTree }
 
 		if (opts.artifact) {

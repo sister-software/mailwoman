@@ -173,7 +173,7 @@ test("Composer.toJSON: carries the composed light, sky, terrain, sources and lay
 
 	expect(style.light).toEqual(createLightSpec(composer.light))
 	expect(style.sky).toEqual(createSkySpec(composer.sky))
-	expect(style.terrain).toEqual(composer.terrain)
+	// `terrain` is parked with the tests below — the getter is commented out in composition.ts.
 	expect(style.sources).toBe(composer.sources)
 	expect(style.layers).toEqual(composer.layers)
 })

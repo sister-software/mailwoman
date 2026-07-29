@@ -68,7 +68,6 @@ describe("parseForGeocode", () => {
 
 		const tree = await parseForGeocode("500 N HIATUS RD, PEMBROKE PINES, FL", {
 			classifier,
-			resolver: captureResolver().resolver,
 		})
 
 		expect(classifier.parse).toHaveBeenCalledTimes(1)
@@ -85,7 +84,7 @@ describe("parseForGeocode", () => {
 		const classifier = fakeClassifier(emptyTree)
 		const { resolver, seen } = captureResolver()
 
-		const tree = await parseForGeocode("x", { classifier, resolver })
+		const tree = await parseForGeocode("x", { classifier })
 		await geocodeAddress("x", { classifier, resolver, placeCountry: false, parsedTree: tree })
 
 		// parseForGeocode parsed once; geocodeAddress did not parse again.

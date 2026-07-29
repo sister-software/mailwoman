@@ -79,6 +79,14 @@ jobs:
       - name: Typecheck scripts
         run: yarn typecheck:scripts
 
+      # Test files are excluded from every build project on purpose — the build emits what it includes,
+      # and an included test lands in `out/` and then in the tarball. That `exclude` suppressed the emit
+      # AND the checking, so until this step tests were compiled by vitest's esbuild transform, which
+      # strips types without looking at them. Each workspace's tsconfig.test.json is the non-emitting
+      # half. Runs after Compile for the same .d.ts reason as the step above.
+      - name: Typecheck tests
+        run: yarn typecheck:tests
+
       # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
       # "command not found: uvx", exit 127).
       - name: Setup uv (ruff for lint:python)

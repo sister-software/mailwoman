@@ -7,7 +7,8 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
+import { createLayerCoverageTable, createLayerManifestTable, type LayerContractDatabase } from "@mailwoman/core/layers"
+import type { Kysely } from "kysely"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
@@ -42,8 +43,8 @@ describe("poi schema", () => {
 	it("stages + contract tables coexist and accept typed rows", async () => {
 		const { kdb } = openMemory()
 		await createPOIStagingTables(kdb)
-		await createLayerManifestTable(kdb)
-		await createLayerCoverageTable(kdb)
+		await createLayerManifestTable(kdb as unknown as Kysely<LayerContractDatabase>)
+		await createLayerCoverageTable(kdb as unknown as Kysely<LayerContractDatabase>)
 
 		await kdb
 			.insertInto("poi_stage")

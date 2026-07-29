@@ -64,13 +64,13 @@ describe("createMatchFeaturizer", () => {
 	it("fires the roll-up signature (#625): same official + org disagree + co-located", () => {
 		const a = {
 			...rec("1", "", "", "10 oak st", "10 OAK ST"),
-			organization: { canonical: "sunrise home care", raw: "Sunrise Home Care" },
+			organization: { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [] },
 			attributes: { authorizedOfficial: "shane lewis" },
 		}
 
 		const b = {
 			...rec("2", "", "", "10 oak st", "10 OAK ST"),
-			organization: { canonical: "bluebonnet health services", raw: "Bluebonnet Health Services" },
+			organization: { canonical: "bluebonnet health services", raw: "Bluebonnet Health Services", designations: [] },
 			attributes: { authorizedOfficial: "shane lewis" },
 		}
 
@@ -79,7 +79,7 @@ describe("createMatchFeaturizer", () => {
 		expect(t[4]).toBe(1) // officialAgree × orgDisagree — the roll-up core
 		expect(t[5]).toBe(1) // …at the same place
 		// Same officials but org names AGREE → the roll-up features must NOT fire.
-		const c = { ...b, organization: { canonical: "sunrise home care", raw: "Sunrise Home Care" } }
+		const c = { ...b, organization: { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [] } }
 		const t2 = tail(a, c)
 		expect(t2[4]).toBe(0)
 		expect(t2[5]).toBe(0)
@@ -94,7 +94,7 @@ describe("createMatchFeaturizer", () => {
 		const rare = tail(
 			rec("3", "ann", "lee", "9 lane", "9 QUIET LANE"),
 			rec("4", "bob", "ng", "9 lane", "9 QUIET LANE")
-		)[2]
+		)[2]!
 
 		expect(crowded).toBeGreaterThan(rare) // a crowded address scores higher on the crowdedness feature
 	})

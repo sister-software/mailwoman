@@ -261,7 +261,8 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 
 		// an entry WITHOUT the field alongside one with it — the writer records 0 for it, and since the
 		// header flag is set the reader reports 0 (a build that opted in but had no count for a surface)
-		m.nodes[1]!.places.push({
+		// Reaching past `private` to seed a fixture the public surface cannot express.
+		;(m as unknown as { nodes: Array<{ places: unknown[] }> }).nodes[1]!.places.push({
 			wofID: 102,
 			placetype: "locality",
 			name: "Pierre Part",

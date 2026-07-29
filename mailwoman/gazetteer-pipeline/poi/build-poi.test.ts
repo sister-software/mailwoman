@@ -23,8 +23,10 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { Kysely } from "kysely"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { buildPOIDatabase, type POISourceRow } from "./build-poi.ts"
@@ -152,7 +154,7 @@ describe("buildPOIDatabase", () => {
 		expect(firstPhysicalRow.confidence).toBeCloseTo(maxConfidence, 10)
 
 		// --- manifest reads back valid ---
-		const manifest = await readLayerManifest(kdb)
+		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
 
 		expect(manifest).toMatchObject({
 			name: "poi",
@@ -176,7 +178,7 @@ describe("buildPOIDatabase", () => {
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(30)
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
-		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
+		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
 
 		// --- end-to-end via Task 2's POILookup reader ---
 		using lookup = new POILookup({ databasePath: out })

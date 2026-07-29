@@ -92,8 +92,9 @@ describe("aggregateSpanLogits", () => {
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 3, labels: LABELS })
 
-		const oCandidate = candidates.find((c) => c.tag === "O")
-		expect(oCandidate).toBeUndefined()
+		// "O" is not a ComponentTag, so this could never have matched — the aggregator dropping the O
+		// label is exactly what makes every candidate's tag typed in the first place.
+		expect(candidates.map((c) => String(c.tag))).not.toContain("O")
 	})
 
 	it("normalizes by token count so longer spans don't auto-dominate", () => {

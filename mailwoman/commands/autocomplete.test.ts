@@ -14,18 +14,19 @@ import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
+import { FSTMatcher, normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst-types"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
-import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.ts"
-import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.ts"
-import { serializeFST } from "../../resolver-wof-sqlite/fst-serialize.ts"
 import { resolveFSTPath, runAutocomplete } from "./autocomplete.tsx"
 
 // MARK: Fixture helpers
 
 interface FixturePlace {
 	wofID: number
-	placetype: string
+	placetype: PlacetypeID
 	name: string
 	importance: number
 	parentChain: number[]

@@ -292,7 +292,7 @@ describe("deserializeFSTWeb", () => {
 	test("accepts a Uint8Array as well as an ArrayBuffer", () => {
 		const u8 = buildFSTBuffer(PARIS_FIXTURE)
 		const fromU8 = deserializeFSTWeb(u8)
-		const fromAb = deserializeFSTWeb(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength))
+		const fromAb = deserializeFSTWeb(u8.slice().buffer)
 
 		expect(fromU8.placeCount).toBe(1)
 		expect(fromAb.placeCount).toBe(1)

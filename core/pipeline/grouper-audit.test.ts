@@ -10,15 +10,20 @@ import { describe, expect, it } from "vitest"
 import type { AddressTree } from "../decoder/types.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
 import { grouperAudit, runPipeline } from "./runtime-pipeline.ts"
-import type { PhraseProposal, RuntimePipelineStages } from "./types.ts"
+import type { NormalizedInputLite, PhraseProposal, QueryShapeLite, RuntimePipelineStages } from "./types.ts"
 
 function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipelineStages {
 	return {
-		normalize: (raw) => ({ normalized: raw, originalToNormalized: (i: number) => i }),
-		computeQueryShape: (input) => ({
-			knownFormats: [],
-			segments: [{ body: input.normalized, span: { start: 0, end: input.normalized.length } }],
-		}),
+		normalize: (raw) => ({ normalized: raw, originalToNormalized: (i: number) => i }) as unknown as NormalizedInputLite,
+		computeQueryShape: (input) => {
+			// The stage contract accepts a bare string as well as a normalized input.
+			const normalized = typeof input === "string" ? input : input.normalized
+
+			return {
+				knownFormats: [],
+				segments: [{ body: normalized, span: { start: 0, end: normalized.length } }],
+			} as unknown as QueryShapeLite
+		},
 		...overrides,
 	}
 }

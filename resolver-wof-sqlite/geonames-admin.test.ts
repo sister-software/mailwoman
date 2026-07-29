@@ -106,7 +106,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 
 	const ancestorIds = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? ORDER BY ancestor_id")
-		.all(loc.id)
+		.all(loc.id!)
 		.map((r) => (r as Row).ancestor_id)
 
 	expect(ancestorIds).toContain(region.id)
@@ -115,7 +115,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	// The region itself ancestors to the country (so a region→country query works too).
 	const regionAnc = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ?")
-		.all(region.id)
+		.all(region.id!)
 		.map((r) => (r as Row).ancestor_id)
 
 	expect(regionAnc).toContain(country.id)

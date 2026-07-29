@@ -46,7 +46,7 @@ describe("toMapHTML", () => {
 	})
 
 	it("inlines a real Protomaps basemap (many generated layers) plus the entity circle layer", () => {
-		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1 })]))
+		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1, sources: ["x"], name: null })]))
 		// @protomaps/basemaps generates ~70 layer specs; they + our layer are inlined in the style.
 		expect(html).toContain('"id":"mw-entities"')
 		expect(html).toContain('"id":"earth"')
@@ -60,7 +60,9 @@ describe("toMapHTML", () => {
 	})
 
 	it("escapes `</script>` inside record values so a string can't break out of the inlined data", () => {
-		const html = toMapHTML(fc([point(0, 0, { entityID: "x", recordCount: 1, name: "</script><script>alert(1)" })]))
+		const html = toMapHTML(
+			fc([point(0, 0, { entityID: "x", recordCount: 1, name: "</script><script>alert(1)", sources: ["x"] })])
+		)
 		expect(html).not.toContain("</script><script>alert(1)")
 		expect(html).toContain("\\u003c/script")
 	})
@@ -68,8 +70,8 @@ describe("toMapHTML", () => {
 	it("auto-selects bucket coloring when any feature carries a `bucket`, else cross-dataset coloring", () => {
 		const withBuckets = toMapHTML(
 			fc([
-				point(0, 0, { entityID: "a", recordCount: 1, bucket: "enrolled", sources: ["x"] }),
-				point(1, 1, { entityID: "b", recordCount: 1, bucket: "eligible-not-enrolled", sources: ["y"] }),
+				point(0, 0, { entityID: "a", recordCount: 1, bucket: "enrolled", sources: ["x"], name: null }),
+				point(1, 1, { entityID: "b", recordCount: 1, bucket: "eligible-not-enrolled", sources: ["y"], name: null }),
 			])
 		)
 
@@ -79,12 +81,12 @@ describe("toMapHTML", () => {
 		// Each feature gets a precomputed `_color`.
 		expect(withBuckets).toContain('"_color"')
 
-		const noBuckets = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x", "y"] })]))
+		const noBuckets = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x", "y"], name: null })]))
 		expect(noBuckets).toContain("cross-dataset link")
 	})
 
 	it("honors the flavor + title options", () => {
-		const html = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1 })]), {
+		const html = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x"], name: null })]), {
 			title: "Coverage reconciliation",
 			flavor: "dark",
 		})

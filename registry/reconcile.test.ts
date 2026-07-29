@@ -30,7 +30,7 @@ function entity(id: string, sources: string[], coordinate?: { latitude: number; 
 	return {
 		id,
 		records,
-		representative: { ...records[0]!, organization: { canonical: `Org ${id}`, raw: `Org ${id}` } },
+		representative: { ...records[0]!, organization: { canonical: `Org ${id}`, raw: `Org ${id}`, designations: [] } },
 		...(coordinate ? { coordinate } : {}),
 		cohesion: sources.length > 1 ? 10 : null,
 	}
