@@ -99,6 +99,11 @@ class DataConfig:
     max_unit_width: int = 16
     # S: max units per row (char mode: chars; word mode: words). None -> data.max_length.
     max_units: int | None = None
+    # Label vocabulary (v8 CJK Phase 2 — labels.resolve_label_set). "stage3" (default, the Latin 33)
+    # keeps every existing recipe byte-identical; "stage3-jp" is the JP char model's 47-label head.
+    # Non-default sets are supported ONLY on the char path — the SP path raises (loud, per #1349's
+    # silent-mismatch lesson) until it grows its own threading.
+    label_set: str = "stage3"
     # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
     # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
     # relabeled with the affix shard builder's exact split semantics (trailing USPS suffix ->

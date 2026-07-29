@@ -379,6 +379,7 @@ def _token_f1(
     preds: torch.Tensor,
     labels: torch.Tensor,
     num_labels: int,
+    bio_labels: tuple[str, ...] = ACTIVE_BIO_LABELS,
 ) -> dict[str, float]:
     """Compute macro/per-class token-level F1 over a batch. Ignores ``IGNORE_INDEX`` positions.
 
@@ -405,19 +406,20 @@ def _token_f1(
     precision = tp / (tp + fp + 1e-9)
     recall = tp / (tp + fn + 1e-9)
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
-    per_label = {ACTIVE_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
-    per_label_support = {ACTIVE_BIO_LABELS[c]: int(support[c]) for c in range(num_labels)}
+    per_label = {bio_labels[c]: float(f1[c]) for c in range(num_labels)}
+    per_label_support = {bio_labels[c]: int(support[c]) for c in range(num_labels)}
 
     # Support-aware macro: average F1 only over COMPONENT labels (exclude "O") that actually
     # occur in the val sample. A zero-support label (a tag the val sample happens not to contain —
     # e.g. po_box/cedex in a US-primary sample) otherwise pins F1 at 0 and drags the macro down;
     # that's a val-coverage artifact, not model quality. Excluding "O" also stops its huge-support,
     # ~1.0 F1 from inflating the average. See val-set stratification (Layer 2) for the coverage fix.
-    supported = [c for c in range(num_labels) if ACTIVE_BIO_LABELS[c] != "O" and support[c] > 0]
+    supported = [c for c in range(num_labels) if bio_labels[c] != "O" and support[c] > 0]
     macro = sum(float(f1[c]) for c in supported) / len(supported) if supported else 0.0
 
     result = {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
-    for tag in ACTIVE_TAGS:
+    tags = tuple(dict.fromkeys(label.split("-", 1)[1] for label in bio_labels if "-" in label))
+    for tag in tags:
         b_f1 = per_label.get(f"B-{tag}", 0.0)
         i_f1 = per_label.get(f"I-{tag}", 0.0)
         result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
@@ -507,7 +509,10 @@ def _eval_val(
         return {"val_loss": float("nan"), "val_rows": 0, "macro_f1": 0.0}
     preds = torch.cat(all_preds, dim=0)
     labels = torch.cat(all_labels, dim=0)
-    metrics = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
+    from .labels import resolve_label_set
+
+    label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
+    metrics = _token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
     # PR3 tripwire + aux-head accuracy.
@@ -803,7 +808,10 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     csv_mode = "a" if resume_step > 0 and csv_path.is_file() else "w"
     csv_fh = csv_path.open(csv_mode, encoding="utf-8", newline="")
     csv_writer = csv.writer(csv_fh)
-    per_tag_cols = [f"f1.{tag}" for tag in ACTIVE_TAGS]
+    from .labels import resolve_label_set as _resolve_label_set
+
+    _label_set = _resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
+    per_tag_cols = [f"f1.{tag}" for tag in _label_set.tags]
     if csv_mode == "w":
         csv_writer.writerow(
             [

@@ -24,8 +24,8 @@
  * - Street-level (Phase 2): house_number, street, street_prefix*, street_suffix, intersection_a/b, unit
  * - Venue-level (Phase 3): venue, attention, po_box
  * - FR-specific: cedex
- * - JP-specific (Phase 6, declared but unused before then): prefecture, municipality, district, block, sub_block,
- *   building_number, building_name
+ * - JP-specific (ACTIVATED at CJK Phase 2, 2026-07-29 — the JP char model's 47-label head trains against them; the Latin
+ *   model never emits them): prefecture, municipality, district, block, sub_block, building_number, building_name
  */
 export const COMPONENT_TAGS = [
 	// Universal
@@ -50,7 +50,7 @@ export const COMPONENT_TAGS = [
 	"po_box",
 	// FR-specific
 	"cedex",
-	// JP-specific (Phase 6 — declared but unused until then)
+	// JP-specific (ACTIVATED at CJK Phase 2 — the stage3-jp label set; Latin models never emit these)
 	"prefecture",
 	"municipality",
 	"district",

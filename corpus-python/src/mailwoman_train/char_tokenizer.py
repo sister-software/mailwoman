@@ -26,7 +26,7 @@ confirms the fix reaches the coordinate.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 
 from .labels import IGNORE_INDEX, LABEL_TO_ID, collapse_label
@@ -69,6 +69,9 @@ def encode_row_units(
     max_units: int,
     max_unit_width: int,
     ctx_chars: int = 0,
+    *,
+    label_to_id: dict[str, int] | None = None,
+    collapse: Callable[[str], str] | None = None,
 ) -> dict[str, list]:
     """Encode one row under the D1 contract: ``char_ids (S, W)`` where S = label units, W = window.
 
@@ -84,13 +87,16 @@ def encode_row_units(
 
     Per-unit labels come from ``char_labels`` (a per-char BIO array over ``raw``, e.g. from
     ``tokenizer.char_label_array_from_spans``): each unit takes its first non-whitespace char's
-    label (an all-whitespace unit gets ``O``), collapsed to the active set — used AS-IS for both
-    modes. A span-derived char array is already unit-correct: the span-leading unit's first char is
+    label (an all-whitespace unit gets ``O``), collapsed to the label set — used AS-IS for both
+    modes. ``label_to_id``/``collapse`` default to the module-global STAGE3 vocabulary; a
+    non-default model (the JP 47-label head) passes its ``LabelSet``'s pair (v8 CJK Phase 2). A span-derived char array is already unit-correct: the span-leading unit's first char is
     ``B-``, a continuation unit's first char is ``I-``, and two ADJACENT same-family spans each keep
     their own ``B-``. (The contract note sketched a piece-path-style B/I re-flip for word mode; that
     re-flip would MERGE adjacent same-family entities — first-char-as-is is strictly more faithful,
     the deliberate deviation.)
     """
+    label_to_id = LABEL_TO_ID if label_to_id is None else label_to_id
+    collapse = collapse_label if collapse is None else collapse
     units = list(unit_spans[:max_units])
 
     char_ids: list[list[int]] = []
@@ -110,7 +116,7 @@ def encode_row_units(
             if not raw[p].isspace():
                 label = char_labels[p] if p < len(char_labels) else "O"
                 break
-        label_ids.append(LABEL_TO_ID[collapse_label(label)])
+        label_ids.append(label_to_id[collapse(label)])
 
     attention = [1] * len(char_ids)
     pad_word = [PAD_CHAR_ID] * max_unit_width
