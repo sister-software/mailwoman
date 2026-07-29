@@ -11,6 +11,7 @@
 // usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
+import { clampConfidence } from "@mailwoman/core/decoder"
 import type { ParseResult } from "@mailwoman/react"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
@@ -452,11 +453,11 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 	if (!bins || !bins.length) throw new Error("createCalibrator: empty calibration table")
 	const sorted = [...bins].toSorted((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
-	const cals = sorted.map((b) => clamp01(b.calibrated))
+	const cals = sorted.map((b) => clampConfidence(b.calibrated))
 	const n = centers.length
 
 	return (raw: number): number => {
-		const x = clamp01(raw)
+		const x = clampConfidence(raw)
 
 		if (x <= centers[0]!) return cals[0]!
 
@@ -480,16 +481,6 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 
 		return cals[lo]! + t * (cals[hi]! - cals[lo]!)
 	}
-}
-
-function clamp01(v: number): number {
-	if (Number.isNaN(v)) return 0
-
-	if (v < 0) return 0
-
-	if (v > 1) return 1
-
-	return v
 }
 
 //#endregion

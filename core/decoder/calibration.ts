@@ -66,11 +66,11 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
-	const cals = sorted.map((b) => clamp01(b.calibrated))
+	const cals = sorted.map((b) => clampConfidence(b.calibrated))
 	const n = centers.length
 
 	return (raw: number): number => {
-		const x = clamp01(raw)
+		const x = clampConfidence(raw)
 
 		if (x <= centers[0]!) return cals[0]!
 
@@ -99,7 +99,14 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 	}
 }
 
-function clamp01(v: number): number {
+/**
+ * Clamp a confidence into `[0, 1]`, mapping NaN to 0.
+ *
+ * Distinct from `clampFraction` (`@mailwoman/spatial`), which lets NaN through on purpose: a confidence that cannot be
+ * computed is no confidence, while an interpolation fraction that cannot be computed must stay detectable rather than
+ * silently snapping to a segment's start.
+ */
+export function clampConfidence(v: number): number {
 	if (Number.isNaN(v)) return 0
 
 	if (v < 0) return 0
