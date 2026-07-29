@@ -43,10 +43,11 @@ from pathlib import Path
 import pyarrow.parquet as pq
 
 from .augment import SPAN_KEYS, augment_row
+from .char_tokenizer import encode_row_units, load_char_vocab
 from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present, locale_id
 from .relabel import AffixRelabelLexicon, relabel_row
-from .tokenizer import Tokenizer, encode_row, whitespace_spans
+from .tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,10 @@ class EncodedExample:
     # ``(max_length,)`` confidence, or None when no locality-surface lexicon is set.
     locality_surface_features: list[list[float]] | None = None
     locality_surface_confidence: list[float] | None = None
+    # CharCNN input path (#825 / v8 CJK, the D1 contract). ``(max_units, max_unit_width)`` char IDs,
+    # or None on the SentencePiece path. When present, ``input_ids`` is a dummy all-PAD row (the
+    # model's use_char_embed branch never reads it) and attention/labels are PER UNIT, not per piece.
+    char_ids: list[list[int]] | None = None
 
 
 def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
@@ -559,7 +564,7 @@ def iter_rows(
 
 def iter_encoded(
     cfg_data: DataConfig,
-    tokenizer: Tokenizer,
+    tokenizer: Tokenizer | None,
     *,
     split: str = "train",
     rng: random.Random | None = None,
@@ -569,8 +574,47 @@ def iter_encoded(
 
     Length-filter rationale: address text is short by nature; long rows are usually adapter
     bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
+
+    ``tokenizer`` may be None ONLY when ``cfg_data.char_mode != "off"`` — the char path never
+    touches SentencePiece.
     """
     rng = rng or random.Random(0)
+    # CharCNN input path (#825 / v8 CJK). When char_mode != "off" the loop below skips SentencePiece
+    # entirely and encodes per-unit char windows (encode_row_units). The mode is channel-free by
+    # contract — the channels project per SP-piece and get a per-unit re-alignment post-probe — so a
+    # configured channel path alongside char_mode is a config mistake, raised loudly here.
+    char_mode = getattr(cfg_data, "char_mode", "off")
+    if char_mode not in ("off", "word", "char"):
+        raise ValueError(f"unknown data.char_mode {char_mode!r} (expected off | word | char)")
+    char_vocab = None
+    if char_mode != "off":
+        if not getattr(cfg_data, "char_vocab_path", None):
+            raise ValueError("data.char_mode requires data.char_vocab_path (build_char_vocab's sealed JSON)")
+        channel_paths = [
+            name
+            for name in (
+                "anchor_lookup_path",
+                "gazetteer_lexicon_path",
+                "country_lexicon_path",
+                "street_type_lexicon_path",
+                "locality_surface_lexicon_path",
+            )
+            if getattr(cfg_data, name, None)
+        ]
+        if channel_paths:
+            raise ValueError(
+                f"data.char_mode is channel-free (channels re-align per-unit post-probe, v8 CJK plan): "
+                f"unset {channel_paths}"
+            )
+        char_ctx = int(getattr(cfg_data, "char_ctx", 0))
+        max_unit_width = int(getattr(cfg_data, "max_unit_width", 16))
+        if char_mode == "char" and max_unit_width < 2 * char_ctx + 1:
+            raise ValueError(
+                f"data.max_unit_width={max_unit_width} truncates the char window: char_mode=char with "
+                f"char_ctx={char_ctx} needs W >= {2 * char_ctx + 1}"
+            )
+        max_units = int(getattr(cfg_data, "max_units", None) or cfg_data.max_length)
+        char_vocab = load_char_vocab(cfg_data.char_vocab_path)
     # Postcode-anchor lookup (#239/#240): loaded once, passed to every encode_row. None → no anchor
     # features produced (back-compat). See load_anchor_lookup.
     anchor_lookup = load_anchor_lookup(cfg_data.anchor_lookup_path) if cfg_data.anchor_lookup_path else None
@@ -635,6 +679,42 @@ def iter_encoded(
                     astral_skipped,
                     row["raw"][:40],
                 )
+            continue
+        if char_vocab is not None:
+            # CharCNN path: span-schema is REQUIRED — the per-char label array comes straight from
+            # the span triple (no whitespace-token quantization), and a token-only frozen shard has
+            # no honest char-level labels to offer. Loud failure, never a silent fallback (#519).
+            starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
+            if starts is None or ends is None or tags is None:
+                raise ValueError(
+                    f"data.char_mode={char_mode} requires span-schema shards (v0.5.0 #519); "
+                    f"got a token-only row: {row['raw'][:60]!r}"
+                )
+            raw = row["raw"]
+            char_labels = char_label_array_from_spans(raw, starts, ends, tags)
+            if char_mode == "char":
+                # One unit per character (D3): unit index == char offset, whitespace units carry O.
+                unit_spans = [(i, i + 1) for i in range(len(raw))]
+            else:
+                unit_spans = whitespace_spans(raw, row["tokens"])
+            enc = encode_row_units(
+                raw,
+                unit_spans,
+                char_labels,
+                char_vocab,
+                max_units=max_units,
+                max_unit_width=max_unit_width,
+                ctx_chars=char_ctx,
+            )
+            yield EncodedExample(
+                # Dummy pad row — the model's use_char_embed branch derives (B, S) from char_ids
+                # and never reads input_ids; the constant row keeps collate/_to_tensor_batch uniform.
+                input_ids=[0] * len(enc["attention_mask"]),
+                attention_mask=enc["attention_mask"],
+                labels=enc["labels"],
+                locale_id=locale_id(row.get("country")),
+                char_ids=enc["char_ids"],
+            )
             continue
         enc = encode_row(
             tokenizer,
@@ -710,12 +790,15 @@ def collate(batch: list[EncodedExample]) -> dict:
     if batch and batch[0].locality_surface_features is not None:
         out["locality_surface_features"] = [ex.locality_surface_features for ex in batch]
         out["locality_surface_confidence"] = [ex.locality_surface_confidence for ex in batch]
+    # CharCNN input path (#825 / v8 CJK): same presence contract — set iff char_mode != "off".
+    if batch and batch[0].char_ids is not None:
+        out["char_ids"] = [ex.char_ids for ex in batch]
     return out
 
 
 def iter_batches(
     cfg: Config,
-    tokenizer: Tokenizer,
+    tokenizer: Tokenizer | None,
     *,
     split: str,
     batch_size: int,
