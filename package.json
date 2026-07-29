@@ -118,7 +118,6 @@
 		"zx": "^8.8.5"
 	},
 	"resolutions": {
-		"@sister.software/oxlint-config": "portal:../universe/oxlint-config",
 		"adm-zip": "0.6.0",
 		"http-proxy-middleware@^2.0.9": "2.0.10",
 		"serialize-javascript": "^7.0.5",
