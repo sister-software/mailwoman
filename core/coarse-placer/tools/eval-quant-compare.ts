@@ -23,30 +23,50 @@ interface TestRow {
 	country: string
 }
 
-/** Options for {@linkcode evalQuantCompare}. */
+/**
+ * Options for {@linkcode evalQuantCompare}.
+ */
 export interface EvalQuantCompareOptions {
-	/** Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	fp32?: string
-	/** Int8 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`. */
+	/**
+	 * Int8 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 */
 	int8?: string
-	/** Abstention threshold. Default 0.5. */
+	/**
+	 * Abstention threshold. Default 0.5.
+	 */
 	abstain?: number
-	/** Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode evalQuantCompare}. */
+/**
+ * Result of {@linkcode evalQuantCompare}.
+ */
 export interface EvalQuantCompareResult {
 	n: number
-	/** Fp32 overall accuracy in percent. */
+	/**
+	 * Fp32 overall accuracy in percent.
+	 */
 	accFp32: number
-	/** Int8 overall accuracy in percent. */
+	/**
+	 * Int8 overall accuracy in percent.
+	 */
 	accInt8: number
-	/** Whether int8 is within 1pp of fp32 (the gate). */
+	/**
+	 * Whether int8 is within 1pp of fp32 (the gate).
+	 */
 	pass: boolean
 }
 
-/** Coarse-placer int8-vs-fp32 comparison — see the module doc. Emits the report to stdout. */
+/**
+ * Coarse-placer int8-vs-fp32 comparison — see the module doc. Emits the report to stdout.
+ */
 export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): Promise<EvalQuantCompareResult> {
 	const fp32Dir = options.fp32 || dataRootPath("coarse-placer", "model")
 	const int8Dir = options.int8 || dataRootPath("coarse-placer", "model-int8")

@@ -27,9 +27,13 @@
 import type { AnchorLookup } from "./anchor-inference.ts"
 import type { PostcodePlace } from "./postcode-anchor.ts"
 
-/** "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31) */
+/**
+ * "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
+ */
 const MAGIC = 0x31_42_43_50
-/** CountryIdx(1) + latQ(2) + lonQ(2) */
+/**
+ * CountryIdx(1) + latQ(2) + lonQ(2)
+ */
 const REC_TAIL = 5
 const LAT_Q = 32_767 / 90
 const LON_Q = 32_767 / 180
@@ -140,7 +144,9 @@ export class PostcodeBinaryResolver {
 		this.#recBase = o
 	}
 
-	/** Compare the keyWidth bytes of record `i` against a padded query key. */
+	/**
+	 * Compare the keyWidth bytes of record `i` against a padded query key.
+	 */
 	#cmpKey(i: number, key: Uint8Array): number {
 		const base = this.#recBase + i * this.#recSize
 

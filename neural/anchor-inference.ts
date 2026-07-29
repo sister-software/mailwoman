@@ -23,10 +23,14 @@ import type { TokenizedPiece } from "./tokenizer.ts"
  */
 export const LOCALE_ORDER = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
-/** Anchor feature width = posterior over the locale set + a 2-d centroid. */
+/**
+ * Anchor feature width = posterior over the locale set + a 2-d centroid.
+ */
 export const ANCHOR_FEATURE_DIM = LOCALE_ORDER.length + 2
 
-/** One postcode's anchor record (from the pilot lookup): country posterior + a single centroid. */
+/**
+ * One postcode's anchor record (from the pilot lookup): country posterior + a single centroid.
+ */
 export interface AnchorEntry {
 	posterior: Record<string, number>
 	lat: number

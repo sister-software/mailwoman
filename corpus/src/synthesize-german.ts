@@ -25,7 +25,9 @@
 import { formatAddress } from "./format.ts"
 import type { CanonicalRow } from "./types.ts"
 
-/** A real address tuple (e.g. one OpenAddresses row): street + locality required, rest optional. */
+/**
+ * A real address tuple (e.g. one OpenAddresses row): street + locality required, rest optional.
+ */
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
@@ -45,7 +47,9 @@ export interface LocaleBaseTuple {
 	region?: string
 	postcode?: string
 }
-/** @deprecated Alias — use LocaleBaseTuple. */
+/**
+ * @deprecated Alias — use LocaleBaseTuple.
+ */
 export type GermanBaseTuple = LocaleBaseTuple
 
 export interface SynthesizedLocaleRow {
@@ -53,7 +57,9 @@ export interface SynthesizedLocaleRow {
 	components: CanonicalRow["components"]
 	locale: string
 }
-/** @deprecated Alias — use SynthesizedLocaleRow. */
+/**
+ * @deprecated Alias — use SynthesizedLocaleRow.
+ */
 export type SynthesizedGermanRow = SynthesizedLocaleRow
 
 export interface LocaleSynthesisOpts {
@@ -86,10 +92,14 @@ export interface LocaleSynthesisOpts {
 	 */
 	nativeHouseJoin?: "template" | "space"
 }
-/** @deprecated Alias — use LocaleSynthesisOpts. */
+/**
+ * @deprecated Alias — use LocaleSynthesisOpts.
+ */
 export type GermanSynthesisOpts = LocaleSynthesisOpts
 
-/** ISO-3166 alpha-2 → BCP-47 tag for the emitted rows (primary language per country). */
+/**
+ * ISO-3166 alpha-2 → BCP-47 tag for the emitted rows (primary language per country).
+ */
 const LOCALE_TAG: Record<string, string> = {
 	DE: "de-DE",
 	ES: "es-ES",
@@ -117,7 +127,9 @@ function normalizePostcode(postcode: string, country: string): string {
 	return postcode
 }
 
-/** True when `value` appears verbatim AND as a standalone token (so BIO alignment lands cleanly). */
+/**
+ * True when `value` appears verbatim AND as a standalone token (so BIO alignment lands cleanly).
+ */
 function tokenPresent(raw: string, value: string): boolean {
 	if (!raw.includes(value)) return false
 	// Reject substring-of-a-larger-number collisions (e.g. house "2" inside postcode "12623").
@@ -224,7 +236,9 @@ export function synthesizeLocaleRow(
 	return { raw, components, locale: LOCALE_TAG[country] ?? country.toLowerCase() }
 }
 
-/** German wrapper over {@link synthesizeLocaleRow}. Kept for the build-german-shard caller + tests. */
+/**
+ * German wrapper over {@link synthesizeLocaleRow}. Kept for the build-german-shard caller + tests.
+ */
 export function synthesizeGermanRow(
 	base: LocaleBaseTuple,
 	opts: LocaleSynthesisOpts = {}

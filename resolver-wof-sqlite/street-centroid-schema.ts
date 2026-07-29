@@ -29,27 +29,45 @@ import type { Kysely } from "kysely"
  * bbox diagonal into an honest `uncertainty_m`).
  */
 export interface StreetCentroidTable {
-	/** Shared `normalizeStreetForKeyLocale` of the street — the build/query-consistent probe key. */
+	/**
+	 * Shared `normalizeStreetForKeyLocale` of the street — the build/query-consistent probe key.
+	 */
 	street_norm: string
-	/** The 5-digit postcode of this group, or null when the source row carried none. */
+	/**
+	 * The 5-digit postcode of this group, or null when the source row carried none.
+	 */
 	postcode: string | null
-	/** Arrondissement-stripped commune (`stripArrondissement(normalizeLocalityForKey(commune))`) — the fallback scope. */
+	/**
+	 * Arrondissement-stripped commune (`stripArrondissement(normalizeLocalityForKey(commune))`) — the fallback scope.
+	 */
 	locality_base: string
-	/** Weighted-mean centroid latitude of the street's member points. */
+	/**
+	 * Weighted-mean centroid latitude of the street's member points.
+	 */
 	lat: number
-	/** Weighted-mean centroid longitude of the street's member points. */
+	/**
+	 * Weighted-mean centroid longitude of the street's member points.
+	 */
 	lon: number
 	min_lat: number
 	max_lat: number
 	min_lon: number
 	max_lon: number
-	/** Member address-point count — the weight for a cross-group centroid aggregate. */
+	/**
+	 * Member address-point count — the weight for a cross-group centroid aggregate.
+	 */
 	point_count: number
-	/** A representative street name as it appeared in the source (display / debugging). */
+	/**
+	 * A representative street name as it appeared in the source (display / debugging).
+	 */
 	street_raw: string
-	/** Provenance: the register this street was derived from (e.g. `ban:fr`). */
+	/**
+	 * Provenance: the register this street was derived from (e.g. `ban:fr`).
+	 */
 	source: string
-	/** The pinned data release the underlying points came from. */
+	/**
+	 * The pinned data release the underlying points came from.
+	 */
 	release: string
 	/**
 	 * #727 phase-4c: `foldStreetSurface(street_raw)` — the contract-fold street-NAME existence key for
@@ -61,7 +79,9 @@ export interface StreetCentroidTable {
 	name_key: string
 }
 
-/** The street-centroid database schema for `new DatabaseClient<StreetCentroidDatabase>(...)`. */
+/**
+ * The street-centroid database schema for `new DatabaseClient<StreetCentroidDatabase>(...)`.
+ */
 export interface StreetCentroidDatabase {
 	street_centroid: StreetCentroidTable
 }
@@ -87,7 +107,9 @@ export const STREET_CENTROID_COLUMNS = [
 	"name_key",
 ] as const
 
-/** Create the `street_centroid` table — called before the streaming bulk load. */
+/**
+ * Create the `street_centroid` table — called before the streaming bulk load.
+ */
 export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema
 		.createTable("street_centroid")

@@ -36,10 +36,14 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-/** Fixture set backing the fragment board — bare-street and partial-address probes. */
+/**
+ * Fixture set backing the fragment board — bare-street and partial-address probes.
+ */
 export const FRAGMENT_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/ban-fragments-fr.jsonl"
 
-/** Tags that together form the street phrase under the board's label policy. */
+/**
+ * Tags that together form the street phrase under the board's label policy.
+ */
 const STREET_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 export interface FragmentFixture {
@@ -47,7 +51,9 @@ export interface FragmentFixture {
 	klass: string
 	input: string
 	expect: Record<string, string[]>
-	/** Present on the negative class: the parser must emit NO street. */
+	/**
+	 * Present on the negative class: the parser must emit NO street.
+	 */
 	expect_no_street?: boolean
 	surface: string | null
 	source: string
@@ -57,7 +63,9 @@ export interface FragmentBoardOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath?: string
-	/** Restrict to one class (e.g. `bare-street`) for a fast iteration loop. */
+	/**
+	 * Restrict to one class (e.g. `bare-street`) for a fast iteration loop.
+	 */
 	klass?: string
 }
 

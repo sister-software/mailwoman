@@ -38,7 +38,9 @@ import {
  */
 export interface DocsDemoAssets {
 	classifier: MailwomanClassifierLike
-	/** Postcode-anchor centroid lookup (US ZIP → real centroid), for the postcode-only dead-end fallback. */
+	/**
+	 * Postcode-anchor centroid lookup (US ZIP → real centroid), for the postcode-only dead-end fallback.
+	 */
 	anchorLookup: Map<string, { lat: number; lon: number }> | null
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null

@@ -46,10 +46,14 @@ import { dirname, resolve } from "node:path"
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
 
-/** Ambiguous entries printed before the list is truncated. */
+/**
+ * Ambiguous entries printed before the list is truncated.
+ */
 const MAX_LISTED_AMBIGUOUS = 12
 
-/** Letters at or below which a token reads as an abbreviation rather than a word. */
+/**
+ * Letters at or below which a token reads as an abbreviation rather than a word.
+ */
 const MAX_ABBREVIATION_LETTERS = 3
 
 const BIT = { country_surface: 1, country_ambiguous: 2 }
@@ -76,7 +80,9 @@ const wordNorm = (s: string): string =>
 
 const norm = (s: string): string => wordNorm(s).toLowerCase()
 
-/** Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching. */
+/**
+ * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
+ */
 const isShortCode = (s: string): boolean => {
 	const letters = s.replaceAll(/[^\p{L}]/gu, "")
 

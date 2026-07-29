@@ -28,7 +28,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
-	/** Captures constructor args so tests can assert on what the runner fed. */
+	/**
+	 * Captures constructor args so tests can assert on what the runner fed.
+	 */
 	class Tensor {
 		constructor(
 			public readonly type: string,

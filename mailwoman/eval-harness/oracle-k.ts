@@ -35,20 +35,30 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 import { assertProfile, BaselineDeviationError, formatVerdict } from "./baseline-assert.ts"
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "./parity-corpus.ts"
 
-/** Maximum typed-segment length in words. */
+/**
+ * Maximum typed-segment length in words.
+ */
 const MAX_SEGMENT_WORDS = 6
 
-/** Golden dev files used to estimate the segment-type transition bigrams. */
+/**
+ * Golden dev files used to estimate the segment-type transition bigrams.
+ */
 const TRANSITION_GOLDEN_FILES = ["us.jsonl", "fr.jsonl"]
 
 export interface OracleKOptions {
 	locale?: string
-	/** Package-shaped candidate weights dir (mirrors `eval parity --weights-cache`). */
+	/**
+	 * Package-shaped candidate weights dir (mirrors `eval parity --weights-cache`).
+	 */
 	weightsCacheRoot?: string
 	fixturesPath?: string
-	/** Golden dev dir for the transition-bigram estimate. */
+	/**
+	 * Golden dev dir for the transition-bigram estimate.
+	 */
 	goldenDir?: string
-	/** Hypotheses kept per input (default 10). */
+	/**
+	 * Hypotheses kept per input (default 10).
+	 */
 	k?: number
 	/**
 	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`). When set, the harness
@@ -65,7 +75,9 @@ export interface OracleKOutcome {
 const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
-/** Smoothed empirical segment-type transition table from gold component orderings. */
+/**
+ * Smoothed empirical segment-type transition table from gold component orderings.
+ */
 export function buildTransitionTable(goldenDir: string): (from: string, to: string) => number {
 	const counts = new Map<string, number>()
 	const fromTotals = new Map<string, number>()
@@ -114,13 +126,17 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 
 interface Hypothesis {
 	score: number
-	/** Typed segments as [firstWord, lastWordExclusive, type]. */
+	/**
+	 * Typed segments as [firstWord, lastWordExclusive, type].
+	 */
 	segments: Array<[number, number, string]>
 }
 
 interface SegmentDecodeResult {
 	hypotheses: Hypothesis[]
-	/** Word → piece indices. */
+	/**
+	 * Word → piece indices.
+	 */
 	words: number[][]
 }
 
@@ -231,7 +247,9 @@ export function segmentDecodeKBest(
 		column.set(key, list)
 	}
 
-	/** Extend `entry` by the span [i, j) under every candidate type, stopping at the first impossible one. */
+	/**
+	 * Extend `entry` by the span [i, j) under every candidate type, stopping at the first impossible one.
+	 */
 	const pushSpanExtensions = (i: number, j: number, lastType: string, entry: Hypothesis): void => {
 		for (const type of types) {
 			const score = spanScore(i, j, type)
@@ -272,7 +290,9 @@ export function segmentDecodeKBest(
 	return { hypotheses: finals.slice(0, k), words }
 }
 
-/** Concatenate a hypothesis's segment surfaces whose type satisfies the predicate, in position order. */
+/**
+ * Concatenate a hypothesis's segment surfaces whose type satisfies the predicate, in position order.
+ */
 function extractSurface(
 	hypothesis: Hypothesis,
 	words: number[][],
@@ -291,7 +311,9 @@ function extractSurface(
 		.join(" ")
 }
 
-/** Run the oracle-recall@k eval; narrates the per-floor table on stdout. Informational — always exits 0. */
+/**
+ * Run the oracle-recall@k eval; narrates the per-floor table on stdout. Informational — always exits 0.
+ */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
 	const fixtures = readFileSync(options.fixturesPath ?? PARITY_FIXTURES_PATH, "utf8")

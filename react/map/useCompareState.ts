@@ -13,15 +13,25 @@
 import { useCallback, useState } from "react"
 
 export interface UseCompareState {
-	/** Whether compare mode is on. */
+	/**
+	 * Whether compare mode is on.
+	 */
 	compareMode: boolean
-	/** The version chosen to compare against, or `null`. */
+	/**
+	 * The version chosen to compare against, or `null`.
+	 */
 	compareVersion: string | null
-	/** Flip compare mode; turning it off clears the chosen version. */
+	/**
+	 * Flip compare mode; turning it off clears the chosen version.
+	 */
 	setCompareMode: (compareMode: boolean) => void
-	/** Choose a compare version (`null` clears it). */
+	/**
+	 * Choose a compare version (`null` clears it).
+	 */
 	setCompareVersion: (version: string | null) => void
-	/** Keep the compare selection distinct from the primary — call when the primary version changes. */
+	/**
+	 * Keep the compare selection distinct from the primary — call when the primary version changes.
+	 */
 	clearIfPrimary: (primaryVersion: string) => void
 }
 

@@ -42,7 +42,9 @@ export function streetLocaleForBANCountry(countryCode: string): StreetLocale {
 	return locale
 }
 
-/** The countries with a registered BAN street locale (for CLI validation / provider gating). */
+/**
+ * The countries with a registered BAN street locale (for CLI validation / provider gating).
+ */
 export function supportedBANCountries(): string[] {
 	return [...BAN_COUNTRY_TO_STREET_LOCALE.keys()]
 }

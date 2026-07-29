@@ -32,7 +32,9 @@ import { buildPOIDatabase, type POISourceRow } from "./build-poi.ts"
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as const }
 const PARIS = { latitude: 48.8566, longitude: 2.3522, country: "FR" as const }
 const CATEGORIES = ["cafe", "restaurant", "museum"] as const
-/** ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category) group clusters into one cell. */
+/**
+ * ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category) group clusters into one cell.
+ */
 const JITTER_DEG = 0.00003
 
 function* fixtureRows(): Iterable<POISourceRow> {

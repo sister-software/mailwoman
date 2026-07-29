@@ -23,16 +23,24 @@
  */
 const ASCII_MAX = 127
 
-/** Code point of `A`. */
+/**
+ * Code point of `A`.
+ */
 const ASCII_UPPER_A = 65
 
-/** Code point of `Z`. */
+/**
+ * Code point of `Z`.
+ */
 const ASCII_UPPER_Z = 90
 
-/** Code point of `a`. */
+/**
+ * Code point of `a`.
+ */
 const ASCII_LOWER_A = 97
 
-/** Code point of `z`. */
+/**
+ * Code point of `z`.
+ */
 const ASCII_LOWER_Z = 122
 
 /**

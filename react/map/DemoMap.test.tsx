@@ -26,7 +26,9 @@ const STUB_STYLE: DemoMapStyle = {
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-/** Poll `get` until it returns a truthy value or `timeout` ms elapse. Never throws — returns null on timeout. */
+/**
+ * Poll `get` until it returns a truthy value or `timeout` ms elapse. Never throws — returns null on timeout.
+ */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 

@@ -39,7 +39,9 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts
  * it came from.
  */
 export const GNAF_ADAPTER_ID = "gnaf"
-/** Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style). */
+/**
+ * Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style).
+ */
 export const GNAF_DEFAULT_LICENSE = "CC-BY-4.0"
 
 interface GNAFTuple {
@@ -140,5 +142,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const gnafAdapter = createGNAFAdapter()

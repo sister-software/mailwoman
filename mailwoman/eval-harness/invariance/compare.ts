@@ -39,11 +39,15 @@ export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADE
 
 export interface CompareResult {
 	verdict: Verdict
-	/** Human-readable per-tag diff lines, empty for INVARIANT. */
+	/**
+	 * Human-readable per-tag diff lines, empty for INVARIANT.
+	 */
 	diff: string[]
 }
 
-/** Normalize a component value for comparison: trim, lowercase, collapse internal whitespace. Non-string/empty → "". */
+/**
+ * Normalize a component value for comparison: trim, lowercase, collapse internal whitespace. Non-string/empty → "".
+ */
 function normVal(v: unknown): string {
 	if (typeof v !== "string") return ""
 

@@ -137,7 +137,9 @@ function stripBIOPrefix(label: string): string {
 	return label.slice(dash + 1)
 }
 
-/** Numerically stable softmax over a row of logits. */
+/**
+ * Numerically stable softmax over a row of logits.
+ */
 function softmax(row: readonly number[]): number[] {
 	let max = row[0]!
 

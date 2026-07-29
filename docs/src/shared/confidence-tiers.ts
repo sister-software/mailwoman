@@ -9,13 +9,19 @@
  *   span is drawn in — so it lives here rather than anywhere the pipeline can see it.
  */
 
-/** At or above this the span is drawn as high-confidence. */
+/**
+ * At or above this the span is drawn as high-confidence.
+ */
 export const HIGH_CONFIDENCE_MIN = 0.8
 
-/** At or above this the span is drawn as medium-confidence; below it, low. */
+/**
+ * At or above this the span is drawn as medium-confidence; below it, low.
+ */
 export const MID_CONFIDENCE_MIN = 0.5
 
-/** The banding a component applies to a span's confidence. */
+/**
+ * The banding a component applies to a span's confidence.
+ */
 export type ConfidenceTier = "high" | "mid" | "low"
 
 /**

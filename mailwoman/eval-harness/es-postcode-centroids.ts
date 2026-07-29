@@ -21,22 +21,32 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** Options for {@linkcode buildESPostcodeCentroids}. */
+/**
+ * Options for {@linkcode buildESPostcodeCentroids}.
+ */
 export interface ESPostcodeCentroidsOptions {
-	/** ISO country code selecting the Overture addresses parquet + output name. Default `ES`. */
+	/**
+	 * ISO country code selecting the Overture addresses parquet + output name. Default `ES`.
+	 */
 	country?: string
 	/**
 	 * Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK. `0` = no lpad
 	 * (use the raw Overture form). Default 5.
 	 */
 	pcLen?: number
-	/** Overture addresses parquet. Default: the pinned 2026-05-20.0 release under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Overture addresses parquet. Default: the pinned 2026-05-20.0 release under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	parquet?: string
-	/** Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postcode-<cc>-overture.db`. */
+	/**
+	 * Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postcode-<cc>-overture.db`.
+	 */
 	out?: string
 }
 
-/** Build the per-postcode-centroid `spr` DB from the Overture addresses parquet. */
+/**
+ * Build the per-postcode-centroid `spr` DB from the Overture addresses parquet.
+ */
 export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptions = {}): Promise<void> {
 	const CC = options.country || "ES"
 	const PC_LEN = options.pcLen ?? 5

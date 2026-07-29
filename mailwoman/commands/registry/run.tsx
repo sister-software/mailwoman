@@ -55,12 +55,12 @@ import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../../resolver-backend.ts"
 import { resolverDefaultCountry } from "../parse.tsx"
 
-/** Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands. */
+/**
+ * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
+ */
 export const isDefault = true
 
-// ---------------------------------------------------------------------------
-// CLI contract — args + options
-// ---------------------------------------------------------------------------
+// MARK: CLI contract — args + options
 
 const ArgumentsSchema = zod
 	.array(zod.string().describe("Path to a CSV file of contact / organization records"))
@@ -160,9 +160,7 @@ const OptionsSchema = zod.object({
 
 export { ArgumentsSchema as args, OptionsSchema as options }
 
-// ---------------------------------------------------------------------------
-// Column mapping
-// ---------------------------------------------------------------------------
+// MARK: Column mapping
 
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV that splits the
@@ -270,15 +268,25 @@ async function buildGeocoder(
 	}
 }
 
-/** Command-level wiring for the record-matcher tool geocoder (`--wof`/`--data-root`/`--locale` + model swaps). */
+/**
+ * Command-level wiring for the record-matcher tool geocoder (`--wof`/`--data-root`/`--locale` + model swaps).
+ */
 export interface EvalGeocoderFlags {
-	/** WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`. */
+	/**
+	 * WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 */
 	wof?: string
-	/** Per-state shard root. Default `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Per-state shard root. Default `$MAILWOMAN_DATA_ROOT`.
+	 */
 	dataRoot?: string
-	/** Weights locale. Default en-US. */
+	/**
+	 * Weights locale. Default en-US.
+	 */
 	locale?: string
-	/** Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`. */
+	/**
+	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`.
+	 */
 	modelPath?: string
 	tokenizerPath?: string
 	modelCardPath?: string
@@ -339,7 +347,9 @@ interface MultiSourceSpec {
 	delimiter?: "comma" | "tab"
 	mapping: ColumnMapping
 	source?: string
-	/** For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment. */
+	/**
+	 * For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment.
+	 */
 	role?: "eligibility" | "funding"
 	/**
 	 * Read at most this many rows (the head of the file) — sampling a huge source without pre-filtering.
@@ -347,7 +357,9 @@ interface MultiSourceSpec {
 	limit?: number
 }
 
-/** Parse `--sources` (a file path or inline JSON) into specs. */
+/**
+ * Parse `--sources` (a file path or inline JSON) into specs.
+ */
 export function loadSources(option: string): MultiSourceSpec[] {
 	const text = /^[[{]/.test(option.trim()) ? option : readFileSync(option, "utf8")
 	let parsed: unknown
@@ -480,9 +492,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Core
-// ---------------------------------------------------------------------------
+// MARK: Core
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	if (options.reconcile) {
@@ -521,9 +531,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 	}
 }
 
-// ---------------------------------------------------------------------------
-// React command component
-// ---------------------------------------------------------------------------
+// MARK: React command component
 
 const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {

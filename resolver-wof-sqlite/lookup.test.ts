@@ -29,13 +29,19 @@ interface FixturePlace {
 	country: string | null
 	lat: number
 	lon: number
-	/** Alternate names (one per locale) — joined into FTS as a single token-bag. */
+	/**
+	 * Alternate names (one per locale) — joined into FTS as a single token-bag.
+	 */
 	alt_names?: string[]
-	/** Ancestor chain (NOT including self). Used to seed the `ancestors` table. */
+	/**
+	 * Ancestor chain (NOT including self). Used to seed the `ancestors` table.
+	 */
 	ancestor_ids?: number[]
 }
 
-/** A small but representative fixture covering the cases the tests assert against. */
+/**
+ * A small but representative fixture covering the cases the tests assert against.
+ */
 const FIXTURE: FixturePlace[] = [
 	// Countries
 	{ id: 85_633_147, parent_id: null, name: "United States", placetype: "country", country: "US", lat: 39.5, lon: -98 },

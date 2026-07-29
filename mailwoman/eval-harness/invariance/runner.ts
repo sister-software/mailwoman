@@ -34,22 +34,26 @@ import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
 // (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
 // resolves against the CWD the CLI is invoked from (the repo root), not `import.meta.dirname`.
-/** Suite the invariance runner loads when no path is given. */
+/**
+ * Suite the invariance runner loads when no path is given.
+ */
 export const DEFAULT_SUITE_PATH = "mailwoman/eval-harness/invariance/suite.jsonl"
 
-// -------------------------------------------------------------------------------------------------
-// fixture loading
-// -------------------------------------------------------------------------------------------------
+// MARK: fixture loading
 
 export interface InvarianceRow {
 	id: string
 	raw: string
 	country: string
-	/** Transform ids (see transforms.ts) that apply to this row. */
+	/**
+	 * Transform ids (see transforms.ts) that apply to this row.
+	 */
 	transforms: string[]
 }
 
-/** Load `suite.jsonl`-shaped rows. Blank lines and `//`-prefixed comment lines (the fixture header) are skipped. */
+/**
+ * Load `suite.jsonl`-shaped rows. Blank lines and `//`-prefixed comment lines (the fixture header) are skipped.
+ */
 export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 	if (!existsSync(path)) throw new Error(`invariance suite not found: ${path}`)
 
@@ -65,15 +69,17 @@ export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 	return rows
 }
 
-// -------------------------------------------------------------------------------------------------
-// parse function construction
-// -------------------------------------------------------------------------------------------------
+// MARK: parse function construction
 
 export type ParseFn = (raw: string) => Promise<Record<string, string>>
 
-/** Options that select a model — mirrors the shape of `eval gate` / `eval error-analysis`. */
+/**
+ * Options that select a model — mirrors the shape of `eval gate` / `eval error-analysis`.
+ */
 export interface ModelSelectOptions {
-	/** Candidate ONNX (requires `tokenizer` + `modelCard`, or falls back to co-located siblings via `weightsCache`). */
+	/**
+	 * Candidate ONNX (requires `tokenizer` + `modelCard`, or falls back to co-located siblings via `weightsCache`).
+	 */
 	model?: string
 	tokenizer?: string
 	modelCard?: string
@@ -83,7 +89,9 @@ export interface ModelSelectOptions {
 	 * whose vocab differs (splice), and the only correct grade for a country-channel model. Alternative to `model`.
 	 */
 	weightsCache?: string
-	/** BCP-47-ish locale tag for weights-package resolution. Default `en-US`. */
+	/**
+	 * BCP-47-ish locale tag for weights-package resolution. Default `en-US`.
+	 */
 	locale?: string
 }
 
@@ -110,16 +118,16 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 	return NeuralAddressClassifier.loadFromWeights({ locale })
 }
 
-/** Build a `ParseFn` from model-select options. Exported so `--baseline` can build a second, independent classifier. */
+/**
+ * Build a `ParseFn` from model-select options. Exported so `--baseline` can build a second, independent classifier.
+ */
 export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const classifier = await buildClassifier(opts)
 
 	return async (raw: string) => decodeAsJSON(await classifier.parse(raw)) as Record<string, string>
 }
 
-// -------------------------------------------------------------------------------------------------
-// the run
-// -------------------------------------------------------------------------------------------------
+// MARK: the run
 
 export interface PairOutcome {
 	rowId: string
@@ -129,9 +137,13 @@ export interface PairOutcome {
 	transformed: string
 	verdict: Verdict
 	diff: string[]
-	/** Only set in `--baseline` mode: the baseline model's verdict on the SAME pair. */
+	/**
+	 * Only set in `--baseline` mode: the baseline model's verdict on the SAME pair.
+	 */
 	baselineVerdict?: Verdict
-	/** True when the candidate violates but the baseline ALSO violates — reported, non-blocking. */
+	/**
+	 * True when the candidate violates but the baseline ALSO violates — reported, non-blocking.
+	 */
 	preExisting?: boolean
 }
 
@@ -139,7 +151,9 @@ export interface InvarianceReport {
 	outcomes: PairOutcome[]
 	skipped: Array<{ rowId: string; transformId: string; reason: string }>
 	counts: { invariant: number; degraded: number; lost: number }
-	/** Counts restricted to NEW violations (baseline mode) — identical to `counts` when there's no baseline. */
+	/**
+	 * Counts restricted to NEW violations (baseline mode) — identical to `counts` when there's no baseline.
+	 */
 	newCounts: { degraded: number; lost: number }
 	pass: boolean
 	exitCode: number
@@ -148,14 +162,20 @@ export interface InvarianceReport {
 export interface RunInvarianceOptions {
 	rows: InvarianceRow[]
 	parse: ParseFn
-	/** `--baseline` regression mode: pre-existing baseline violations are reported but non-blocking. */
+	/**
+	 * `--baseline` regression mode: pre-existing baseline violations are reported but non-blocking.
+	 */
 	baselineParse?: ParseFn
-	/** Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0. */
+	/**
+	 * Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0.
+	 */
 	maxDegraded?: number
 	report?: (line: string) => void
 }
 
-/** Canonicalize every value in a component map to long-form Ave/St/Rd (see `canonicalizeAbbreviations`). */
+/**
+ * Canonicalize every value in a component map to long-form Ave/St/Rd (see `canonicalizeAbbreviations`).
+ */
 function canonicalizeMap(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
 
@@ -183,7 +203,9 @@ function compareForTransform(
 	return compareComponents(original, transformed)
 }
 
-/** Run the full suite. Returns a report with per-pair outcomes, summary counts, and the gate exit code. */
+/**
+ * Run the full suite. Returns a report with per-pair outcomes, summary counts, and the gate exit code.
+ */
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0
 	const report = options.report ?? console.error

@@ -26,9 +26,13 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Options for {@linkcode yardstickFigure}. */
+/**
+ * Options for {@linkcode yardstickFigure}.
+ */
 export interface YardstickFigureOptions {
-	/** Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd). */
+	/**
+	 * Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd).
+	 */
 	outSvg?: string
 }
 
@@ -52,12 +56,16 @@ const GRAINS: Grain[] = [
 	},
 ]
 
-/** F1 per (model, grain), in %. */
+/**
+ * F1 per (model, grain), in %.
+ */
 const F1: Record<string, [number, number, number, number]> = {
 	GBT: [53.6, 55.3, 60.7, 68.1], // shipped default
 	FS: [45.1, 42.7, 52.3, 60.3], // FS full stack baseline
 }
-/** Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT. */
+/**
+ * Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT.
+ */
 const OVERMERGE: Record<string, [number, number, number, number]> = {
 	GBT: [109, 208, 92, 76],
 	FS: [144, 253, 129, 114],
@@ -85,7 +93,9 @@ const MODELS = [
 
 const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
-/** Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc. */
+/**
+ * Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc.
+ */
 export function yardstickFigure(
 	options: YardstickFigureOptions = {},
 	report?: (line: string) => void

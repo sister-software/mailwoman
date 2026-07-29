@@ -83,7 +83,9 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	},
 }
 
-/** Look up conventions for a system. Absent row = no constraints KNOWN (parse unconstrained). */
+/**
+ * Look up conventions for a system. Absent row = no constraints KNOWN (parse unconstrained).
+ */
 export function conventionsForSystem(system: SystemCode | null | undefined): AddressSystemConventions | null {
 	if (!system) return null
 

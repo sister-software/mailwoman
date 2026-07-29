@@ -19,7 +19,9 @@ import type { GlossaryBacklinks, GlossaryTagMeta, TaggedGlossaryTerm } from "../
 
 import styles from "./styles.module.css"
 
-/** Anchor on the page h1, used by the TOC's back-to-top entry. */
+/**
+ * Anchor on the page h1, used by the TOC's back-to-top entry.
+ */
 const TOP_ANCHOR = "glossary"
 
 interface GlossaryPageProps {
@@ -32,7 +34,9 @@ interface GlossaryPageProps {
 	backlinks: GlossaryBacklinks
 }
 
-/** Upstream anchor scheme — must not change or remark tooltip links break. */
+/**
+ * Upstream anchor scheme — must not change or remark tooltip links break.
+ */
 function termAnchor(term: TaggedGlossaryTerm): string {
 	return term.id || term.term.toLowerCase().replaceAll(/\s+/g, "-")
 }

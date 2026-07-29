@@ -26,25 +26,45 @@
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 
-/** Options for {@linkcode ledgerAppend}. */
+/**
+ * Options for {@linkcode ledgerAppend}.
+ */
 export interface LedgerAppendOptions {
-	/** The promotion-gate out-dir carrying `verdict.json`. */
+	/**
+	 * The promotion-gate out-dir carrying `verdict.json`.
+	 */
 	outDir?: string
-	/** The npm semver being ledgered. */
+	/**
+	 * The npm semver being ledgered.
+	 */
 	modelVersion?: string
-	/** Stable run id (`^[a-z0-9-]+$`). */
+	/**
+	 * Stable run id (`^[a-z0-9-]+$`).
+	 */
 	runId?: string
-	/** The published artifact pointer, e.g. `@mailwoman/neural-weights-en-us@5.0.0`. */
+	/**
+	 * The published artifact pointer, e.g. `@mailwoman/neural-weights-en-us@5.0.0`.
+	 */
 	modelPath?: string
-	/** Model card JSON (run-metadata defaults). Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model card JSON (run-metadata defaults). Default `neural-weights-en-us/model-card.json`.
+	 */
 	card?: string
-	/** The ledger file. Default `evals/scores-by-version.json`. */
+	/**
+	 * The ledger file. Default `evals/scores-by-version.json`.
+	 */
 	ledger?: string
-	/** ISO date the model trained. Default: today. */
+	/**
+	 * ISO date the model trained. Default: today.
+	 */
 	trainedAt?: string
-	/** Free-text notes appended to the row. */
+	/**
+	 * Free-text notes appended to the row.
+	 */
 	notes?: string
-	/** Overwrite an existing row for the same run_id / model_version. */
+	/**
+	 * Overwrite an existing row for the same run_id / model_version.
+	 */
 	replace?: boolean
 	/**
 	 * The gate-revision escape (mirrors the no-silent-gate-drift discipline): a FAIL verdict may be ledgered ONLY when

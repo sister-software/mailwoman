@@ -7,7 +7,9 @@
  *   locality comparison. Its own module because both would otherwise import each other for it.
  */
 
-/** Case/diacritic-insensitive fold for commune-name comparison (#1058) — mirrors span-rescore's `norm`. */
+/**
+ * Case/diacritic-insensitive fold for commune-name comparison (#1058) — mirrors span-rescore's `norm`.
+ */
 export function foldName(s: string): string {
 	return s
 		.toLowerCase()

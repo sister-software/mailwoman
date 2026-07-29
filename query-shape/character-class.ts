@@ -6,7 +6,9 @@
 
 import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.ts"
 
-/** Codepoint-level character class. */
+/**
+ * Codepoint-level character class.
+ */
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
@@ -95,7 +97,9 @@ const CONNECTOR_CODEPOINTS = new Set<number>([
 	0x20_19, // ’
 ])
 
-/** Classify a single Unicode codepoint. */
+/**
+ * Classify a single Unicode codepoint.
+ */
 export function classifyCodepoint(cp: number): CodepointClass {
 	if (cp >= 0x30 && cp <= 0x39) return "digit"
 
@@ -179,7 +183,9 @@ export function classifyToken(text: string): TokenCharacterClass {
 	return "mixed"
 }
 
-/** Fold per-token classes into the whole-input character class. */
+/**
+ * Fold per-token classes into the whole-input character class.
+ */
 export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClass {
 	if (!tokens.length) return "alpha"
 

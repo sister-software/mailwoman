@@ -42,17 +42,23 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 		return registry
 	}
 
-	/** Install a policy entry. Replaces any prior entry with the same key. */
+	/**
+	 * Install a policy entry. Replaces any prior entry with the same key.
+	 */
 	set(policy: ClassifierPolicy): void {
 		this.#entries.set(policyKey(policy.component, policy.locale), policy)
 	}
 
-	/** Remove a policy entry, if present. */
+	/**
+	 * Remove a policy entry, if present.
+	 */
 	remove(component: ComponentTag, locale?: string): void {
 		this.#entries.delete(policyKey(component, locale))
 	}
 
-	/** All current entries, in insertion order. */
+	/**
+	 * All current entries, in insertion order.
+	 */
 	entries(): ClassifierPolicy[] {
 		return Array.from(this.#entries.values())
 	}

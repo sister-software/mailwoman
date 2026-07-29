@@ -54,26 +54,38 @@ interface ResolutionState {
 	 * can inject postcode-proximal locality candidates.
 	 */
 	postcode?: string
-	/** Proximity-bias points (viewport, user location) — forwarded to every primary lookup. */
+	/**
+	 * Proximity-bias points (viewport, user location) — forwarded to every primary lookup.
+	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
-	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
+	/**
+	 * Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default).
+	 */
 	anchorPosterior?: Record<string, number>
-	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
+	/**
+	 * Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set.
+	 */
 	anchorWeight: number
 	/**
 	 * #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off = undefined.
 	 */
 	hardCountry?: string
-	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
+	/**
+	 * Dual-role hierarchy completion (#405). Off by default → byte-stable.
+	 */
 	hierarchyCompletion: boolean
-	/** Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable. */
+	/**
+	 * Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable.
+	 */
 	includeAncestors: boolean
 	/**
 	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the completion only
 	 * fires when the parser emitted no locality at all, never to override one.
 	 */
 	localityNodePresent: boolean
-	/** The first region that resolved (its place — for the coincident-roles lookup). */
+	/**
+	 * The first region that resolved (its place — for the coincident-roles lookup).
+	 */
 	resolvedRegion: ResolvedPlace | null
 	/**
 	 * The decorated region NODE that produced {@link resolvedRegion} — completion pushes the locality interpretation onto
@@ -218,7 +230,9 @@ async function recoverPostcodeNode(
 	}
 }
 
-/** A resolved node carries a real coordinate (placeID set + non-zero lat/lon). */
+/**
+ * A resolved node carries a real coordinate (placeID set + non-zero lat/lon).
+ */
 function isResolvedWithCoord(n: AddressNode): boolean {
 	return !!(n.placeID && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0))
 }

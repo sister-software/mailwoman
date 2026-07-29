@@ -30,7 +30,9 @@ export interface FreezeAdminResult {
 	coincidentRoles: number
 }
 
-/** Freeze an ingested admin staging DB (see the module docstring for the exact order and why it matters). */
+/**
+ * Freeze an ingested admin staging DB (see the module docstring for the exact order and why it matters).
+ */
 export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {}): Promise<FreezeAdminResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — import it lazily (the gazetteer-pipeline
 	// convention) so eagerly loading this module (pastel imports every command) never faults without it.

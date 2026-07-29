@@ -56,9 +56,13 @@ const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 }
 
 export interface DocsSubHeaderProps {
-	/** From `useHideableNavbar` — measures the band so its height sets the hide threshold. */
+	/**
+	 * From `useHideableNavbar` — measures the band so its height sets the hide threshold.
+	 */
 	navbarRef: Ref<HTMLElement>
-	/** Slide the band up out of view (scrolled down); the parent reclaims its space in sync. */
+	/**
+	 * Slide the band up out of view (scrolled down); the parent reclaims its space in sync.
+	 */
 	hidden: boolean
 }
 

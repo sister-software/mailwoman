@@ -16,18 +16,26 @@
  *   preserve it so the ported behavior is byte-identical and the browser graph stays clean.
  */
 
-/** Segments used to approximate a circle as a polygon ring. */
+/**
+ * Segments used to approximate a circle as a polygon ring.
+ */
 const CIRCLE_SEGMENTS = 64
 
-/** Mean km per degree of latitude (WGS84 average). */
+/**
+ * Mean km per degree of latitude (WGS84 average).
+ */
 const KM_PER_DEG_LAT = 111.32
 
-/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */
+/**
+ * A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline.
+ */
 export type PlaceGeometry =
 	| { type: "Polygon"; coordinates: number[][][] }
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
 
-/** A place bounding box in the demo's object form (the WOF points DB carries only these four numbers). */
+/**
+ * A place bounding box in the demo's object form (the WOF points DB carries only these four numbers).
+ */
 export interface PlaceBBox {
 	minLat: number
 	maxLat: number
@@ -35,15 +43,21 @@ export interface PlaceBBox {
 	maxLon: number
 }
 
-/** A `[west, south, east, north]` → `[[minLon, minLat], [maxLon, maxLat]]` pair, the shape `fitBounds` wants. */
+/**
+ * A `[west, south, east, north]` → `[[minLon, minLat], [maxLon, maxLat]]` pair, the shape `fitBounds` wants.
+ */
 export type BoundsTuple = [[number, number], [number, number]]
 
-/** Km per degree of longitude at a given latitude — the meridians converge toward the poles. */
+/**
+ * Km per degree of longitude at a given latitude — the meridians converge toward the poles.
+ */
 function kmPerDegLon(lat: number): number {
 	return KM_PER_DEG_LAT * Math.cos((lat * Math.PI) / 180)
 }
 
-/** A closed 64-segment (65-point) GeoJSON ring of `radiusKm` around `[lon, lat]`, with latitude correction. */
+/**
+ * A closed 64-segment (65-point) GeoJSON ring of `radiusKm` around `[lon, lat]`, with latitude correction.
+ */
 function circleRing(lat: number, lon: number, radiusKm: number): number[][] {
 	const perLon = kmPerDegLon(lat)
 	const ring: number[][] = []
@@ -129,7 +143,9 @@ export function geomBounds(geometry: PlaceGeometry): PlaceBBox {
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-/** Reshape a {@link PlaceBBox} into the `[[minLon, minLat], [maxLon, maxLat]]` pair `fitBounds` expects. */
+/**
+ * Reshape a {@link PlaceBBox} into the `[[minLon, minLat], [maxLon, maxLat]]` pair `fitBounds` expects.
+ */
 export function bboxToBounds(bbox: PlaceBBox): BoundsTuple {
 	return [
 		[bbox.minLon, bbox.minLat],

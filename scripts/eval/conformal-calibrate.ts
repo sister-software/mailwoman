@@ -57,10 +57,14 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-/** How far empirical coverage may sit from the nominal level and still count as calibrated. */
+/**
+ * How far empirical coverage may sit from the nominal level and still count as calibrated.
+ */
 const COVERAGE_TOLERANCE = 0.03
 
-/** Interval-width ratio above which the calibrated radius is reported as inflated rather than tight. */
+/**
+ * Interval-width ratio above which the calibrated radius is reported as inflated rather than tight.
+ */
 const INFLATED_INTERVAL_RATIO = 1.1
 
 const { values: rawValues } = parseArgs({
@@ -92,13 +96,10 @@ const values = rawValues as {
 	tokenizer?: string
 	wof?: string
 }
-// ---------------------------------------------------------------------------
-// CLI helpers
-// ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Percentile (0-indexed: p=0.9 → 90th)
-// ---------------------------------------------------------------------------
+// MARK: CLI helpers
+
+// MARK: Percentile (0-indexed: p=0.9 → 90th)
 
 function percentile(xs: number[], p: number): number {
 	if (!xs.length) return Number.NaN
@@ -111,9 +112,7 @@ function median(xs: number[]): number {
 	return percentile(xs, 0.5)
 }
 
-// ---------------------------------------------------------------------------
-// Conformal quantile  Q̂ = the ⌈(n+1)×(1−α)⌉-th sorted calibration score
-// ---------------------------------------------------------------------------
+// MARK: Conformal quantile  Q̂ = the ⌈(n+1)×(1−α)⌉-th sorted calibration score
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
@@ -127,9 +126,7 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
-// ---------------------------------------------------------------------------
-// Seeded deterministic shuffle (LCG, no external deps)
-// ---------------------------------------------------------------------------
+// MARK: Seeded deterministic shuffle (LCG, no external deps)
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
@@ -144,18 +141,20 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Tree walkers — read STAMPED metadata, never alter resolution
-// ---------------------------------------------------------------------------
+// MARK: Tree walkers — read STAMPED metadata, never alter resolution
 
-/** Fixed floor for an exact situs point (building-centroid precision). */
+/**
+ * Fixed floor for an exact situs point (building-centroid precision).
+ */
 const SITUS_FLOOR_M = 10
 
 interface StreetHit {
 	tier: "address_point" | "interpolated"
 	lat: number
 	lon: number
-	/** Claimed uncertainty radius in metres (10 m floor for situs, uncertainty_m for interp). */
+	/**
+	 * Claimed uncertainty radius in metres (10 m floor for situs, uncertainty_m for interp).
+	 */
 	claimedRadiusM: number
 }
 
@@ -191,9 +190,7 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 	return null
 }
 
-// ---------------------------------------------------------------------------
-// Holdout row type (matches /tmp/ood-truth.jsonl)
-// ---------------------------------------------------------------------------
+// MARK: Holdout row type (matches /tmp/ood-truth.jsonl)
 
 interface HoldoutRow {
 	input: string
@@ -203,9 +200,7 @@ interface HoldoutRow {
 	state?: string
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
+// MARK: Main
 
 /**
  * Build the parse → resolve cascade this calibration measures. Mirrors `oa-resolver-eval.ts`'s construction exactly —

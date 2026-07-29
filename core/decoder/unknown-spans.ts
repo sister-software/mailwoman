@@ -17,13 +17,19 @@ import type { AddressNode, AddressTree } from "./types.ts"
 export interface UnknownSpan {
 	kind: "unknown"
 	value: string
-	/** Inclusive start char offset into `tree.raw`. */
+	/**
+	 * Inclusive start char offset into `tree.raw`.
+	 */
 	start: number
-	/** Exclusive end char offset into `tree.raw`. */
+	/**
+	 * Exclusive end char offset into `tree.raw`.
+	 */
 	end: number
 }
 
-/** One tile of the lossless decomposition: a run that some node covers, or an `unknown` gap. */
+/**
+ * One tile of the lossless decomposition: a run that some node covers, or an `unknown` gap.
+ */
 export interface LosslessSegment {
 	kind: "covered" | "unknown"
 	value: string
@@ -31,7 +37,9 @@ export interface LosslessSegment {
 	end: number
 }
 
-/** Mark every char index `tree.raw` that any node's `[start,end)` covers (nesting overlaps merge naturally). */
+/**
+ * Mark every char index `tree.raw` that any node's `[start,end)` covers (nesting overlaps merge naturally).
+ */
 function coveredMask(tree: AddressTree): Uint8Array {
 	const len = tree.raw.length
 	const covered = new Uint8Array(len)

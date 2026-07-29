@@ -37,25 +37,43 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Share of entities assigned to fit; the rest are held out. */
+/**
+ * Share of entities assigned to fit; the rest are held out.
+ */
 const FIT_SPLIT_FRACTION = 0.8
 
-/** Groups below this size are too small for a held-out split to mean anything. */
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
 const MIN_GROUP_SIZE = 5
 
-/** Options for {@linkcode trainDedupGBT}. */
+/**
+ * Options for {@linkcode trainDedupGBT}.
+ */
 export interface TrainDedupGBTOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 3000. */
+	/**
+	 * NPIs sampled. Default 3000.
+	 */
 	npis?: number
-	/** Output TS module path. Default `registry/models/dedup-gbt-en-us.ts`. */
+	/**
+	 * Output TS module path. Default `registry/models/dedup-gbt-en-us.ts`.
+	 */
 	out?: string
-	/** Locale recorded in the model meta (the command's factory loads the matching weights). Default en-US. */
+	/**
+	 * Locale recorded in the model meta (the command's factory loads the matching weights). Default en-US.
+	 */
 	locale?: string
 	/**
 	 * Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the model is more
@@ -63,7 +81,9 @@ export interface TrainDedupGBTOptions {
 	 * class-balanced default; >1 penalizes a false merge more than a missed one.
 	 */
 	cost?: number
-	/** Training date stamped into the meta (overridable for reproducible commits). Default today. */
+	/**
+	 * Training date stamped into the meta (overridable for reproducible commits). Default today.
+	 */
 	date?: string
 }
 
@@ -95,11 +115,15 @@ interface MessyRow {
 	name: string
 	org: string
 	address: string
-	/** Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree). */
+	/**
+	 * Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree).
+	 */
 	auth: string
 }
 
-/** Deterministic LCG (no Math.random — reproducible split + commit). */
+/**
+ * Deterministic LCG (no Math.random — reproducible split + commit).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
@@ -110,7 +134,9 @@ function lcg(seed: number): () => number {
 	}
 }
 
-/** Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates. */
+/**
+ * Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates.
+ */
 function uniqueQuantiles(sorted: number[], n: number): number[] {
 	if (!sorted.length) return [0]
 	const ts = new Set<number>()
@@ -122,7 +148,9 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 	return [...ts]
 }
 
-/** Pairwise clustering F1 of resolved entities vs the NPI grouping (record.id = the NPI). */
+/**
+ * Pairwise clustering F1 of resolved entities vs the NPI grouping (record.id = the NPI).
+ */
 function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	const choose2 = (k: number) => (k * (k - 1)) / 2
 	const npiTotals = new Map<string, number>()
@@ -153,7 +181,9 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	return precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 }
 
-/** Train + emit the production dedup GBT — see the module doc. */
+/**
+ * Train + emit the production dedup GBT — see the module doc.
+ */
 export async function trainDedupGBT(
 	options: TrainDedupGBTOptions,
 	report?: (line: string) => void

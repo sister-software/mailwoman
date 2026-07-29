@@ -127,7 +127,9 @@ export class FSTMatcher {
 		return this.nodes.length
 	}
 
-	/** Expose the internal node array for serialization. */
+	/**
+	 * Expose the internal node array for serialization.
+	 */
 	toNodes(): readonly FSTNode[] {
 		return this.nodes
 	}
@@ -137,7 +139,9 @@ export class FSTMatcher {
 	}
 }
 
-/** Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. */
+/**
+ * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace.
+ */
 export function normalizeTokens(text: string): string[] {
 	return text
 		.normalize("NFKC")

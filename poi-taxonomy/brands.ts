@@ -54,22 +54,32 @@ export function lookupPOIBrand(text: string) {
 	return CORE.lookupPOIBrand(text)
 }
 
-/** The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining seam for part 2. */
+/**
+ * The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining seam for part 2.
+ */
 export function resolveBrandName(name: string): BrandRecord | undefined {
 	return CORE.resolveBrandName(name)
 }
 
-/** Fetch a brand by its Wikidata QID. */
+/**
+ * Fetch a brand by its Wikidata QID.
+ */
 export function getBrand(wikidata: string): BrandRecord | undefined {
 	return CORE.getBrand(wikidata)
 }
 
-/** Enumerate the full table (corpus synthesis, builders, docs). */
+/**
+ * Enumerate the full table (corpus synthesis, builders, docs).
+ */
 export function getAllBrands(): ReadonlyArray<BrandRecord> {
 	return CORE.getAllBrands()
 }
 
-/** Version of the bundled POI brand table, for cache keys and diagnostics. */
+/**
+ * Version of the bundled POI brand table, for cache keys and diagnostics.
+ */
 export const POI_BRAND_TABLE_VERSION = TABLE.version
-/** Source layer the brand table was derived from, recorded so a consumer can tell which snapshot it has. */
+/**
+ * Source layer the brand table was derived from, recorded so a consumer can tell which snapshot it has.
+ */
 export const POI_BRAND_SOURCE_LAYER: POIBrandSourceLayer = TABLE.sourceLayer

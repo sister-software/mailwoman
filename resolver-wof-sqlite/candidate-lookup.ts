@@ -38,9 +38,13 @@ import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normal
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
 export interface WOFCandidateTableLookupOpts {
-	/** Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only. */
+	/**
+	 * Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only.
+	 */
 	databasePath?: string
-	/** Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`. */
+	/**
+	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 */
 	database?: DatabaseSync
 }
 
@@ -102,7 +106,9 @@ const PRIMARY_PREFERENCE_LOG10 = 1
  */
 const RERANK_FETCH = 64
 
-/** A candidate row annotated with the {@link rankByPrimaryPreference} effective rank + the exact-tier demotion flag. */
+/**
+ * A candidate row annotated with the {@link rankByPrimaryPreference} effective rank + the exact-tier demotion flag.
+ */
 export type RankedRow<R> = R & {
 	/**
 	 * `neg_rank` plus the bounded cross-country alias penalty — the value the row is ORDERED by, and the base the emitted
@@ -270,7 +276,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
 	}
 
-	/** Does this query want a locality-tier place? Postal-city aliases (#741) are all localities. */
+	/**
+	 * Does this query want a locality-tier place? Postal-city aliases (#741) are all localities.
+	 */
 	#wantsLocality(placetype: FindPlaceQuery["placetype"]): boolean {
 		if (!placetype) return true
 		const want = Array.isArray(placetype) ? placetype : [placetype]

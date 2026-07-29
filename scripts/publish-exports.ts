@@ -9,7 +9,9 @@
  *   publish.
  */
 
-/** True for TypeScript SOURCE (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets. */
+/**
+ * True for TypeScript SOURCE (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
+ */
 export function isTypeScriptSource(path: string): boolean {
 	return /\.tsx?$/.test(path) && !path.endsWith(".d.ts")
 }
@@ -52,7 +54,9 @@ export function transformExportsForPublish(exports: unknown): unknown {
 	return out
 }
 
-/** Walk a transformed exports map; return every concrete (non-pattern) file target. */
+/**
+ * Walk a transformed exports map; return every concrete (non-pattern) file target.
+ */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []
 	const walk = (value: unknown): void => {

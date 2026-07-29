@@ -35,20 +35,34 @@ import { writeFileSync } from "node:fs"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-/** Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated. */
+/**
+ * Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated.
+ */
 const WEAK_SIMILARITY_MIN = 0.3
 
-/** Options for {@linkcode dedupCeiling}. */
+/**
+ * Options for {@linkcode dedupCeiling}.
+ */
 export interface DedupCeilingOptions {
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Providers sampled from the registry. Default 50000. */
+	/**
+	 * Providers sampled from the registry. Default 50000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** Org-name Jaccard collision threshold. Default 0.7. */
+	/**
+	 * Org-name Jaccard collision threshold. Default 0.7.
+	 */
 	tau?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
@@ -105,7 +119,9 @@ interface Provider {
 	npi: string
 	tokens: Set<string>
 	phone: string
-	/** Authorized official (last + first), lowercased — same official ⇒ almost certainly one org. */
+	/**
+	 * Authorized official (last + first), lowercased — same official ⇒ almost certainly one org.
+	 */
 	auth: string
 	/**
 	 * Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different provider.
@@ -113,7 +129,9 @@ interface Provider {
 	taxonomy: string
 }
 
-/** #625 ceiling measurement — see the module doc. Emits the markdown report to stdout. */
+/**
+ * #625 ceiling measurement — see the module doc. Emits the markdown report to stdout.
+ */
 export async function dedupCeiling(
 	options: DedupCeilingOptions = {},
 	report?: (line: string) => void

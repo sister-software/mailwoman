@@ -23,7 +23,9 @@
  *   applies in `flush()`.
  */
 
-/** One row of the lookup table: a confidence bin and the calibrated value at its center. */
+/**
+ * One row of the lookup table: a confidence bin and the calibrated value at its center.
+ */
 export interface CalibrationBin {
 	lo: number
 	hi: number
@@ -31,7 +33,9 @@ export interface CalibrationBin {
 	calibrated: number
 }
 
-/** The full calibration artifact emitted by `fit-isotonic-calibration.py`. */
+/**
+ * The full calibration artifact emitted by `fit-isotonic-calibration.py`.
+ */
 export interface CalibrationTable {
 	model: string
 	model_version: string
@@ -41,7 +45,9 @@ export interface CalibrationTable {
 	[key: string]: unknown
 }
 
-/** Maps a raw span confidence in [0, 1] to its calibrated probability of correctness. */
+/**
+ * Maps a raw span confidence in [0, 1] to its calibrated probability of correctness.
+ */
 export type Calibrator = (rawConfidence: number) => number
 
 /**

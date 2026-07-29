@@ -22,7 +22,9 @@ import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/
 import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
-/** Bytes per KiB, for human-readable sizes. */
+/**
+ * Bytes per KiB, for human-readable sizes.
+ */
 const BYTES_PER_KIB = 1024
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
@@ -202,7 +204,9 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	return <ParseTask options={options} args={args} weightsOutcome="neural" />
 }
 
-/** The actual parse work, one hook-owning component below the guard so the prompt can render first. */
+/**
+ * The actual parse work, one hook-owning component below the guard so the prompt can render first.
+ */
 function ParseTask({
 	options,
 	args,

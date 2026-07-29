@@ -21,7 +21,9 @@ import { describe, expect, test } from "vitest"
 import { NeuralAddressClassifier } from "../classifier.ts"
 import { createNeuralProposalClassifier } from "../proposal-classifier.ts"
 
-/** Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans. */
+/**
+ * Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans.
+ */
 function makeSection(body: string, start = 0): Section {
 	return { body, start, end: start + body.length } as unknown as Section
 }
@@ -32,7 +34,9 @@ const MODEL_PATH =
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
 const haveModel = existsSync(MODEL_PATH)
 
-/** Minimal stub that just returns a canned tree, ignoring the input text. */
+/**
+ * Minimal stub that just returns a canned tree, ignoring the input text.
+ */
 function stubClassifier(tree: AddressTree): NeuralAddressClassifier {
 	return { parse: async () => tree } as unknown as NeuralAddressClassifier
 }

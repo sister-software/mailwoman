@@ -51,24 +51,38 @@ interface CategoryStats {
 	examples: Array<{ raw: string; detail: string }>
 }
 
-/** Options for {@linkcode evalErrorAnalysis}. */
+/**
+ * Options for {@linkcode evalErrorAnalysis}.
+ */
 export interface ErrorAnalysisOptions {
-	/** Golden eval-set dir (`us.jsonl` / `fr.jsonl` / `adversarial.jsonl`). */
+	/**
+	 * Golden eval-set dir (`us.jsonl` / `fr.jsonl` / `adversarial.jsonl`).
+	 */
 	golden?: string
-	/** Candidate ONNX (requires `tokenizer` + `modelCard`). Omit for the shipped dev weights. */
+	/**
+	 * Candidate ONNX (requires `tokenizer` + `modelCard`). Omit for the shipped dev weights.
+	 */
 	model?: string
-	/** Candidate tokenizer path. */
+	/**
+	 * Candidate tokenizer path.
+	 */
 	tokenizer?: string
-	/** Candidate model-card path. */
+	/**
+	 * Candidate model-card path.
+	 */
 	modelCard?: string
-	/** Parse with postcode repair enabled. */
+	/**
+	 * Parse with postcode repair enabled.
+	 */
 	postcodeRepair?: boolean
 	/**
 	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15). Off by default so
 	 * pre-flip baselines stay reproducible; pass it to grade the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
-	/** STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true. */
+	/**
+	 * STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true.
+	 */
 	strict?: boolean
 }
 

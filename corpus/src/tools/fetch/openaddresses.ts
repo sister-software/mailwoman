@@ -69,10 +69,14 @@ import { isTransientStatus, writeManifest } from "./download.ts"
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
  * than data.
  */
-/** A successful fetch; anything else is an error page or a redirect we did not follow. */
+/**
+ * A successful fetch; anything else is an error page or a redirect we did not follow.
+ */
 const HTTP_OK = 200
 
-/** Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body. */
+/**
+ * Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body.
+ */
 const MIN_PLAUSIBLE_SHARD_BYTES = 10_240
 
 const BYTES_PER_KIB = 1024
@@ -95,7 +99,9 @@ const OA_COLLECTION_IDS: Record<string, number> = {
 }
 
 export interface FetchOpenAddressesOptions extends BaseFetchOptions {
-	/** OA country collection code. Default `ca`. */
+	/**
+	 * OA country collection code. Default `ca`.
+	 */
 	country?: string
 }
 
@@ -106,7 +112,9 @@ interface OaCollection {
 	size?: number
 }
 
-/** Stream-count newlines, matching `wc -l` (memory-safe for the multi-GB collection). */
+/**
+ * Stream-count newlines, matching `wc -l` (memory-safe for the multi-GB collection).
+ */
 async function countLines(path: string): Promise<number> {
 	let count = 0
 
@@ -183,7 +191,9 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 	return 0
 }
 
-/** Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used. */
+/**
+ * Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used.
+ */
 async function gunzipToFile(src: string, dest: string): Promise<void> {
 	const child = spawn("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
 		stdio: ["ignore", "pipe", "inherit"],
@@ -213,9 +223,8 @@ export async function fetchOpenAddresses(
 
 	mkdirSync(destDir, { recursive: true })
 
-	// -------------------------------------------------------------------------
-	// Authentication check
-	// -------------------------------------------------------------------------
+	// MARK: Authentication check
+
 	if (!token) {
 		report?.(`
 ERROR: OA_BATCH_TOKEN is not set.
@@ -239,9 +248,8 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		return fail("OA_BATCH_TOKEN")
 	}
 
-	// -------------------------------------------------------------------------
-	// Determine collection ID
-	// -------------------------------------------------------------------------
+	// MARK: Determine collection ID
+
 	let collectionID = OA_COLLECTION_IDS[country]
 
 	if (collectionID === undefined) {
@@ -276,9 +284,8 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		report?.(`  Found collection id=${collectionID} for '${country}'`)
 	}
 
-	// -------------------------------------------------------------------------
-	// Download via the collections download endpoint (302s to S3)
-	// -------------------------------------------------------------------------
+	// MARK: Download via the collections download endpoint (302s to S3)
+
 	report?.(`  Resolving download URL for collection id=${collectionID}...`)
 	report?.(`  Attempting authenticated download...`)
 
@@ -324,9 +331,8 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		return fail(country)
 	}
 
-	// -------------------------------------------------------------------------
-	// Decompress if the downloaded file is gzipped
-	// -------------------------------------------------------------------------
+	// MARK: Decompress if the downloaded file is gzipped
+
 	const fileMagic = (await execFileAsync("file", ["--brief", tmpGz]).catch(() => ({ stdout: "" }))).stdout
 
 	if (/gzip|compressed/i.test(fileMagic)) {
@@ -344,9 +350,8 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
 
-	// -------------------------------------------------------------------------
-	// Verify + write MANIFEST
-	// -------------------------------------------------------------------------
+	// MARK: Verify + write MANIFEST
+
 	if (!existsSync(outputFile)) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)
 

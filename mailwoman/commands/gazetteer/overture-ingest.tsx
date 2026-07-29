@@ -41,7 +41,9 @@ const DEFAULT_RELEASE = "2026-05-20.0"
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
 
-/** Fields whose fill rate the report tracks — the gate inputs for #472-#477. */
+/**
+ * Fields whose fill rate the report tracks — the gate inputs for #472-#477.
+ */
 const FILL_FIELDS = ["postcode", "street", "number", "unit", "postal_city"] as const
 
 interface CountryProbe {
@@ -189,7 +191,9 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 			console.error(`[corpus-jsonl] ${cc} -> ${dest}`)
 		}
 
-		/** Probe one country's LOCAL Parquet for the fill-rate report. */
+		/**
+		 * Probe one country's LOCAL Parquet for the fill-rate report.
+		 */
 		const probeCountry = async (cc: string): Promise<CountryProbe | null> => {
 			const src = countryParquet(cc)
 			const fillExprs = FILL_FIELDS.map(

@@ -14,7 +14,9 @@ function labelCol(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
 }
 
-/** Same structural mock as fst-prior.test.ts — paths joined by spaces, prefix-aware walk. */
+/**
+ * Same structural mock as fst-prior.test.ts — paths joined by spaces, prefix-aware walk.
+ */
 function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 	const states = new Map<string, { id: number; entries: FSTPlaceEntryLike[] }>()
 	let nextID = 1

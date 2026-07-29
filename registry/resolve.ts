@@ -60,7 +60,9 @@ export function addressFrequencyKey(raw: string): string {
 		.replaceAll(/\s+/g, " ")
 }
 
-/** Default tiered levels for a name-like text field. `m`/`u` are EM-estimable seeds. */
+/**
+ * Default tiered levels for a name-like text field. `m`/`u` are EM-estimable seeds.
+ */
 const NAME_LEVELS: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
@@ -85,7 +87,9 @@ const CODE_SET_LEVELS: ComparisonLevel[] = [
 	{ label: "different", minSimilarity: 0, m: 0.25, u: 0.92 },
 ]
 
-/** 1 when the whitespace-joined code sets share ANY code, else 0 (order/count-insensitive, case-folded). */
+/**
+ * 1 when the whitespace-joined code sets share ANY code, else 0 (order/count-insensitive, case-folded).
+ */
 function codeSetOverlap(a: string, b: string): number {
 	const sa = new Set(a.toUpperCase().split(/\s+/).filter(Boolean))
 
@@ -94,7 +98,9 @@ function codeSetOverlap(a: string, b: string): number {
 	return 0
 }
 
-/** Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions). */
+/**
+ * Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions).
+ */
 function normalizePhone(raw: string | null | undefined): string | null {
 	if (!raw) return null
 	const digits = raw.replaceAll(/\D+/g, "")
@@ -241,7 +247,9 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
 	}
 }
 
-/** The default blocking keys: a union of location, canonical address, phone, and email. */
+/**
+ * The default blocking keys: a union of location, canonical address, phone, and email.
+ */
 export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	return [
 		geoCellKey((r) => r.address?.geocode?.coordinate),
@@ -251,15 +259,25 @@ export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	]
 }
 
-/** Options for {@link resolveEntities}. */
+/**
+ * Options for {@link resolveEntities}.
+ */
 export interface ResolveConfig {
-	/** Scoring model. Default {@link buildDefaultModel}. */
+	/**
+	 * Scoring model. Default {@link buildDefaultModel}.
+	 */
 	model?: FellegiSunterModel<SourceRecord>
-	/** Blocking keys (their union). Default {@link defaultBlockingKeys}. */
+	/**
+	 * Blocking keys (their union). Default {@link defaultBlockingKeys}.
+	 */
 	blockingKeys?: BlockingKey<SourceRecord>[]
-	/** Link two records into the same entity at or above this match weight (bits). Default 0. */
+	/**
+	 * Link two records into the same entity at or above this match weight (bits). Default 0.
+	 */
 	threshold?: number
-	/** Skip and report blocks larger than this rather than scanning them. */
+	/**
+	 * Skip and report blocks larger than this rather than scanning them.
+	 */
 	maxBlockSize?: number
 	/**
 	 * Fit the model's `m`/`u` to the candidate pairs with EM before scoring (label-free). Default false.
@@ -334,12 +352,18 @@ export interface ResolveConfig {
 	learnedScorer?: boolean | GBT
 }
 
-/** The outcome of a resolve pass. */
+/**
+ * The outcome of a resolve pass.
+ */
 export interface ResolveResult {
 	entities: ResolvedEntity[]
-	/** Number of candidate pairs blocking produced. */
+	/**
+	 * Number of candidate pairs blocking produced.
+	 */
 	candidatePairs: number
-	/** Blocks too large to scan, surfaced so coverage limits are visible. */
+	/**
+	 * Blocks too large to scan, surfaced so coverage limits are visible.
+	 */
 	droppedBlocks: Array<{ key: string; size: number }>
 }
 

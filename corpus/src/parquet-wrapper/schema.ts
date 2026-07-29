@@ -21,18 +21,26 @@ import type { createSBBFParams as BloomFilterCreation } from "@dsnp/parquetjs/di
 import type { FieldDefinition } from "@dsnp/parquetjs/dist/lib/declare.js"
 import { LRUCache } from "lru-cache"
 
-/** A Parquet record-like object, i.e. a record with string keys and JSON-serializable values. */
+/**
+ * A Parquet record-like object, i.e. a record with string keys and JSON-serializable values.
+ */
 export type ParquetRecordLike = Record<string, unknown | undefined>
 
-/** Typed Parquet schema definition. */
+/**
+ * Typed Parquet schema definition.
+ */
 export type ParquetSchemaDefinition<T = ParquetRecordLike> = Record<Extract<keyof T, string>, FieldDefinition>
 
-/** Typed Parquet schema. */
+/**
+ * Typed Parquet schema.
+ */
 export class ParquetSchema<T> extends BaseParquetSchema {
 	declare schema: ParquetSchemaDefinition<T>
 }
 
-/** Given a Parquet schema and a list of columns, create a list of Bloom filters for those columns. */
+/**
+ * Given a Parquet schema and a list of columns, create a list of Bloom filters for those columns.
+ */
 export function createBloomFilters<T>(
 	parquetSchemaDef: ParquetSchemaDefinition<T>,
 	columns: Extract<keyof T, string>[]

@@ -20,7 +20,9 @@ import {
 } from "./synthesize-intersection.ts"
 import type { CanonicalRow } from "./types.ts"
 
-/** Deterministic PRNG so tests are reproducible. */
+/**
+ * Deterministic PRNG so tests are reproducible.
+ */
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
 

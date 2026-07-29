@@ -8,7 +8,9 @@
  *   both rank the same typo identically — the whole reason this is one module rather than two copies.
  */
 
-/** Case-fold + strip diacritics + collapse punctuation — for the coord-first soft name match. */
+/**
+ * Case-fold + strip diacritics + collapse punctuation — for the coord-first soft name match.
+ */
 export function cfNormalize(s: string): string {
 	return s
 		.toLowerCase()
@@ -18,7 +20,9 @@ export function cfNormalize(s: string): string {
 		.trim()
 }
 
-/** Padded character-trigram set (a leading/trailing space pads short tokens). */
+/**
+ * Padded character-trigram set (a leading/trailing space pads short tokens).
+ */
 export function trigrams(s: string): Set<string> {
 	const t = ` ${s} `
 	const out = new Set<string>()
@@ -50,7 +54,9 @@ export function trigramJaccard(a: string, b: string): number {
 	return inter / (A.size + B.size - inter)
 }
 
-/** Soft name-match score ∈ [0,1]: exact (normalized) name/alias → 1, else best trigram-Jaccard. */
+/**
+ * Soft name-match score ∈ [0,1]: exact (normalized) name/alias → 1, else best trigram-Jaccard.
+ */
 export function softNameScore(text: string, name: string, aliases: readonly string[]): number {
 	const q = cfNormalize(text)
 

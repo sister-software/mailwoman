@@ -15,16 +15,24 @@ import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, Photon
 import { photonToSchemaOrg } from "./projection.ts"
 import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "./schema.ts"
 
-/** Southern limit of latitude in WGS-84 degrees. */
+/**
+ * Southern limit of latitude in WGS-84 degrees.
+ */
 const MIN_LATITUDE = -90
 
-/** Northern limit of latitude in WGS-84 degrees. */
+/**
+ * Northern limit of latitude in WGS-84 degrees.
+ */
 const MAX_LATITUDE = 90
 
-/** Western limit of longitude in WGS-84 degrees. */
+/**
+ * Western limit of longitude in WGS-84 degrees.
+ */
 const MIN_LONGITUDE = -180
 
-/** Eastern limit of longitude in WGS-84 degrees. */
+/**
+ * Eastern limit of longitude in WGS-84 degrees.
+ */
 const MAX_LONGITUDE = 180
 
 const DEFAULT_LIMIT = 15
@@ -143,7 +151,9 @@ const reverseRoute = createRoute({
 	responses: collectionResponses,
 })
 
-/** Register the Photon-compatible routes against an injected engine. */
+/**
+ * Register the Photon-compatible routes against an injected engine.
+ */
 export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): void {
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 

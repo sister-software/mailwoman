@@ -11,7 +11,9 @@
  *   contract, do not merge).
  */
 
-/** FNV-1a → uint32, for deterministic ordering/variant choice. */
+/**
+ * FNV-1a → uint32, for deterministic ordering/variant choice.
+ */
 export function hashFNV1a(s: string): number {
 	let h = 2_166_136_261
 

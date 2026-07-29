@@ -22,10 +22,14 @@ import type { AnnotationSet, Annotator, Nuts } from "@mailwoman/annotations"
  */
 const NUTS_1_LENGTH = 3
 
-/** See {@link NUTS_1_LENGTH}. */
+/**
+ * See {@link NUTS_1_LENGTH}.
+ */
 const NUTS_2_LENGTH = 4
 
-/** See {@link NUTS_1_LENGTH}. */
+/**
+ * See {@link NUTS_1_LENGTH}.
+ */
 const NUTS_3_LENGTH = 5
 
 export type MultiPolygonCoords = number[][][][]
@@ -55,7 +59,9 @@ function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolea
 	return true
 }
 
-/** Inside any polygon of a (multi)polygon feature. */
+/**
+ * Inside any polygon of a (multi)polygon feature.
+ */
 export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPolygonCoords): boolean {
 	return polygons.some((polygon) => pointInPolygon(lon, lat, polygon))
 }
@@ -81,7 +87,9 @@ export function nutsFromID(id: string): Nuts {
 	return nuts
 }
 
-/** A NUTS lookup over a built `node:sqlite` polygon table. */
+/**
+ * A NUTS lookup over a built `node:sqlite` polygon table.
+ */
 export class NutsLookup {
 	#db: DatabaseSync
 	#byLevelBox: ReturnType<DatabaseSync["prepare"]>
@@ -117,7 +125,9 @@ export class NutsLookup {
 	}
 }
 
-/** Build an `Annotator` filling `AnnotationSet.nuts` for EU coordinates (abstains elsewhere). */
+/**
+ * Build an `Annotator` filling `AnnotationSet.nuts` for EU coordinates (abstains elsewhere).
+ */
 export function makeNutsAnnotator(lookup: NutsLookup): Annotator {
 	return ({ lat, lon }): Partial<AnnotationSet> => {
 		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find

@@ -26,21 +26,31 @@ import { existsSync, readFileSync } from "node:fs"
  */
 const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
 
-/** Options for {@linkcode lintMDXAngles}. */
+/**
+ * Options for {@linkcode lintMDXAngles}.
+ */
 export interface LintMDXAnglesOptions {
-	/** Files to check. Default: staged `docs/**` markdown (the pre-commit mode). */
+	/**
+	 * Files to check. Default: staged `docs/**` markdown (the pre-commit mode).
+	 */
 	files?: string[]
 }
 
-/** One flagged file: its path + the offending 1-based `line:text` hits. */
+/**
+ * One flagged file: its path + the offending 1-based `line:text` hits.
+ */
 export interface MDXAngleFinding {
 	file: string
 	hits: string[]
 }
 
-/** Findings summary returned by {@linkcode lintMDXAngles}. */
+/**
+ * Findings summary returned by {@linkcode lintMDXAngles}.
+ */
 export interface LintMDXAnglesSummary {
-	/** Number of files flagged — the command exits 1 when nonzero. */
+	/**
+	 * Number of files flagged — the command exits 1 when nonzero.
+	 */
 	errors: number
 	warnings: number
 	filesChecked: number
@@ -81,7 +91,9 @@ function violations(file: string): string[] {
 	return hits
 }
 
-/** Lint the given (or staged) docs markdown for build-breaking raw angles/braces. */
+/**
+ * Lint the given (or staged) docs markdown for build-breaking raw angles/braces.
+ */
 export function lintMDXAngles(
 	options: LintMDXAnglesOptions = {},
 	report?: (line: string) => void

@@ -25,28 +25,44 @@
  *   reorders types would otherwise silently mislabel every decode).
  */
 
-/** The decode-time transition grammar, as shipped in `semi-crf-transitions.json`. */
+/**
+ * The decode-time transition grammar, as shipped in `semi-crf-transitions.json`.
+ */
 export interface SemiCRFTransitions {
-	/** Segment-type axis, index-aligned with the `span_scores` inner dim. Index 0 is always `O`. */
+	/**
+	 * Segment-type axis, index-aligned with the `span_scores` inner dim. Index 0 is always `O`.
+	 */
 	segmentTypes: string[]
-	/** Max span length in tokens — the `L` axis of `span_scores`. */
+	/**
+	 * Max span length in tokens — the `L` axis of `span_scores`.
+	 */
 	maxSpan: number
-	/** `transitions[from][to]` — additive score for a `from`→`to` segment-type transition. */
+	/**
+	 * `transitions[from][to]` — additive score for a `from`→`to` segment-type transition.
+	 */
 	transitions: number[][]
-	/** `startTransitions[t]` — additive score for a segmentation whose FIRST segment is type `t`. */
+	/**
+	 * `startTransitions[t]` — additive score for a segmentation whose FIRST segment is type `t`.
+	 */
 	startTransitions: number[]
-	/** `endTransitions[t]` — additive score for a segmentation whose LAST segment is type `t`. */
+	/**
+	 * `endTransitions[t]` — additive score for a segmentation whose LAST segment is type `t`.
+	 */
 	endTransitions: number[]
 }
 
-/** One decoded segment: tokens `[start, start + length)` carry type `segmentTypes[typeID]`. */
+/**
+ * One decoded segment: tokens `[start, start + length)` carry type `segmentTypes[typeID]`.
+ */
 export interface DecodedSegment {
 	start: number
 	length: number
 	typeID: number
 }
 
-/** One whole-segmentation hypothesis. `score` is comparable to its siblings from the SAME input. */
+/**
+ * One whole-segmentation hypothesis. `score` is comparable to its siblings from the SAME input.
+ */
 export interface SegmentationHypothesis {
 	score: number
 	segments: DecodedSegment[]
@@ -59,7 +75,9 @@ export interface SegmentationHypothesis {
  */
 const NEG_INF = -1e4
 
-/** `O` is index 0 by construction (`_derive_segment_types` in span_scorer.py). */
+/**
+ * `O` is index 0 by construction (`_derive_segment_types` in span_scorer.py).
+ */
 const O_TYPE_ID = 0
 
 /**

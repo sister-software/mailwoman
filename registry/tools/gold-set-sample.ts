@@ -25,19 +25,33 @@ import { writeFileSync } from "node:fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-/** Options for {@linkcode goldSetSample}. */
+/**
+ * Options for {@linkcode goldSetSample}.
+ */
 export interface GoldSetSampleOptions {
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Providers sampled from the registry. Default 200000. */
+	/**
+	 * Providers sampled from the registry. Default 200000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** Org-name Jaccard collision threshold. Default 0.7. */
+	/**
+	 * Org-name Jaccard collision threshold. Default 0.7.
+	 */
 	tau?: number
-	/** Adjudication sample size. Default 300. */
+	/**
+	 * Adjudication sample size. Default 300.
+	 */
 	n?: number
-	/** Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout). */
+	/**
+	 * Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout).
+	 */
 	outJsonl?: string
 }
 
@@ -106,7 +120,9 @@ interface Prov {
 	parent: string
 }
 
-/** Gold-set P3 (#625) — sample the HARD co-located name-collision slice for adjudication. */
+/**
+ * Gold-set P3 (#625) — sample the HARD co-located name-collision slice for adjudication.
+ */
 export async function goldSetSample(
 	options: GoldSetSampleOptions = {},
 	report?: (line: string) => void

@@ -49,7 +49,9 @@ export interface PlaceCandidate {
 	id: number
 	name: string
 	placetype: WOFPlacetype
-	/** ISO 3166-1 alpha-2 country code. */
+	/**
+	 * ISO 3166-1 alpha-2 country code.
+	 */
 	country: string
 	lat: number
 	lon: number
@@ -125,9 +127,13 @@ export interface GeoBbox {
 export interface FindPlaceQuery {
 	text: string
 	placetype?: WOFPlacetype | WOFPlacetype[]
-	/** ISO 3166-1 alpha-2 — narrows to one country. */
+	/**
+	 * ISO 3166-1 alpha-2 — narrows to one country.
+	 */
 	country?: string
-	/** WOF place id — narrows to descendants of this place. */
+	/**
+	 * WOF place id — narrows to descendants of this place.
+	 */
 	parentID?: number
 	/**
 	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present, triggers the
@@ -136,7 +142,9 @@ export interface FindPlaceQuery {
 	 * postcode_locality shard is present.
 	 */
 	postcode?: string
-	/** Proximity hint — candidates close to this point get a ranking boost. */
+	/**
+	 * Proximity hint — candidates close to this point get a ranking boost.
+	 */
 	near?: GeoPoint & { maxDistanceKm?: number }
 	/**
 	 * Ordered proximity-bias points (viewport center, user location, …), each optionally weighted (default 1.0, first
@@ -147,9 +155,13 @@ export interface FindPlaceQuery {
 	 * back-compat.
 	 */
 	bias?: Array<GeoPoint & { weight?: number }>
-	/** Bounding-box filter — only candidates whose bbox intersects this box are returned. */
+	/**
+	 * Bounding-box filter — only candidates whose bbox intersects this box are returned.
+	 */
 	bbox?: GeoBbox
-	/** Default 10. */
+	/**
+	 * Default 10.
+	 */
 	limit?: number
 }
 

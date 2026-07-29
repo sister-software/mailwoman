@@ -11,13 +11,21 @@
  *   codes matter for resolver region-matching and display, not for parsing the surface string.
  */
 
-/** Per-state record: ISO 3166-2:DE code, native German name, and the common English exonym. */
+/**
+ * Per-state record: ISO 3166-2:DE code, native German name, and the common English exonym.
+ */
 export interface GermanStateInfo {
-	/** ISO 3166-2:DE subdivision code without the `DE-` prefix (e.g. `BY` for `DE-BY`). */
+	/**
+	 * ISO 3166-2:DE subdivision code without the `DE-` prefix (e.g. `BY` for `DE-BY`).
+	 */
 	code: string
-	/** Native German name (e.g. `Bayern`). */
+	/**
+	 * Native German name (e.g. `Bayern`).
+	 */
 	name: string
-	/** Common English name (e.g. `Bavaria`). */
+	/**
+	 * Common English name (e.g. `Bavaria`).
+	 */
 	english: string
 }
 
@@ -44,12 +52,16 @@ export const DE_BUNDESLAENDER = {
 	TH: { code: "TH", name: "Thüringen", english: "Thuringia" },
 } as const satisfies Record<string, GermanStateInfo>
 
-/** An ISO 3166-2:DE state code (`BW`, `BY`, `BE`, …). */
+/**
+ * An ISO 3166-2:DE state code (`BW`, `BY`, `BE`, …).
+ */
 export type GermanStateCode = keyof typeof DE_BUNDESLAENDER
 
 const STATE_CODE_SET: ReadonlySet<string> = new Set(Object.keys(DE_BUNDESLAENDER))
 
-/** Type-predicate for an ISO 3166-2:DE state code. Case-insensitive. */
+/**
+ * Type-predicate for an ISO 3166-2:DE state code. Case-insensitive.
+ */
 export function isGermanStateCode(input: unknown): input is GermanStateCode {
 	return typeof input === "string" && STATE_CODE_SET.has(input.toUpperCase())
 }

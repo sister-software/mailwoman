@@ -15,7 +15,9 @@ import { cors } from "hono/cors"
 import type { PhotonEngine } from "./engine.ts"
 import { registerPhotonRoutes } from "./routes.ts"
 
-/** Options for {@link createPhotonApp}. */
+/**
+ * Options for {@link createPhotonApp}.
+ */
 export interface PhotonAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -54,7 +56,9 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the Photon-compatible app around an injected {@link PhotonEngine}. */
+/**
+ * Build the Photon-compatible app around an injected {@link PhotonEngine}.
+ */
 export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 

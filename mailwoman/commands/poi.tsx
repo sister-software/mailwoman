@@ -90,7 +90,9 @@ const OptionsSchema = zod.object({
 		),
 })
 
-/** Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run. */
+/**
+ * Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run.
+ */
 async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | undefined> {
 	try {
 		return await NeuralAddressClassifier.loadFromWeights({ locale })
@@ -153,7 +155,9 @@ function formatSubject(subject: POIIntent["subject"]): string {
 	}
 }
 
-/** Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping. */
+/**
+ * Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping.
+ */
 function formatOverpassBlock(intent: POIIntent): string {
 	if (intent.subject.kind === "category") {
 		const category = getPOICategory(intent.subject.categoryID)

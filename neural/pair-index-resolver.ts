@@ -44,33 +44,53 @@
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 
-/** Tags addressable by the single-byte index the pair table packs into. */
+/**
+ * Tags addressable by the single-byte index the pair table packs into.
+ */
 const MAX_TAGS_PER_BYTE = 256
 
-/** "PIX1" little-endian (P=0x50 I=0x49 X=0x58 1=0x31) */
+/**
+ * "PIX1" little-endian (P=0x50 I=0x49 X=0x58 1=0x31)
+ */
 const MAGIC = 0x31_58_49_50
 const KNOWN_SCHEMA_VERSION = 1
 
 export interface PairIndexEntry {
-	/** Folded child place name (e.g. a dependent_locality or locality candidate). */
+	/**
+	 * Folded child place name (e.g. a dependent_locality or locality candidate).
+	 */
 	child: string
-	/** Folded parent place name the child was observed under. */
+	/**
+	 * Folded parent place name the child was observed under.
+	 */
 	parent: string
-	/** The `ComponentTag` this (child, parent) pair resolves to. */
+	/**
+	 * The `ComponentTag` this (child, parent) pair resolves to.
+	 */
 	tag: ComponentTag
 }
 
 export interface PairIndexHeader {
-	/** ISO country code this shard was built for. */
+	/**
+	 * ISO country code this shard was built for.
+	 */
 	country: string
-	/** The soft-prior bias magnitude a probe hit should contribute (consumer-interpreted). */
+	/**
+	 * The soft-prior bias magnitude a probe hit should contribute (consumer-interpreted).
+	 */
 	delta: number
 	schemaVersion: 1
-	/** Which fold (`normalizeFSTToken`-style normalization) the entries were built against. */
+	/**
+	 * Which fold (`normalizeFSTToken`-style normalization) the entries were built against.
+	 */
 	foldVersion: 1
-	/** MD5s of the source file(s) this shard was built from, for provenance. */
+	/**
+	 * MD5s of the source file(s) this shard was built from, for provenance.
+	 */
 	sourceMD5s: string[]
-	/** ISO date the shard was built. */
+	/**
+	 * ISO date the shard was built.
+	 */
 	buildDate: string
 	/**
 	 * OPTIONAL per-country transition-bonus magnitude (TRANSITION-BETA build, 2026-07-24): on a pair hit, the prior emits
@@ -258,7 +278,9 @@ export class PairIndexResolver {
 		this.#probeMap = map
 	}
 
-	/** Look up the `ComponentTag` for a folded (child, parent) pair, or `undefined` if the index has no entry for it. */
+	/**
+	 * Look up the `ComponentTag` for a folded (child, parent) pair, or `undefined` if the index has no entry for it.
+	 */
 	probe(childFolded: string, parentFolded: string): ComponentTag | undefined {
 		return this.#probeMap.get(pairKey(childFolded, parentFolded))
 	}

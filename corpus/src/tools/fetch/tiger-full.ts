@@ -34,10 +34,14 @@ import { isTransientStatus, readManifest, writeManifest } from "./download.ts"
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
  * than data.
  */
-/** Lowest 2xx status; anything below is informational. */
+/**
+ * Lowest 2xx status; anything below is informational.
+ */
 const HTTP_OK = 200
 
-/** Lowest 3xx status; at or above it the response is a redirect or an error, not a body. */
+/**
+ * Lowest 3xx status; at or above it the response is a redirect or an error, not a body.
+ */
 const HTTP_REDIRECT = 300
 
 const BYTES_PER_KIB = 1024
@@ -50,11 +54,17 @@ export interface FetchTigerFullOptions extends BaseFetchOptions {
 	 * v0.1.1.
 	 */
 	skipStateFips?: string
-	/** Seconds to sleep between downloads. Default `0.2`. */
+	/**
+	 * Seconds to sleep between downloads. Default `0.2`.
+	 */
 	rateSleep?: number
-	/** Max concurrent download workers per state. Default `4`. */
+	/**
+	 * Max concurrent download workers per state. Default `4`.
+	 */
 	maxParallel?: number
-	/** Print planned downloads without fetching. Default `false`. */
+	/**
+	 * Print planned downloads without fetching. Default `false`.
+	 */
 	dryRun?: boolean
 }
 
@@ -118,7 +128,9 @@ async function streamDownload(
 	return 0
 }
 
-/** Read a per-state MANIFEST.json into a filename → entry map. */
+/**
+ * Read a per-state MANIFEST.json into a filename → entry map.
+ */
 async function readCountyManifest(manifestPath: string): Promise<Map<string, CountyEntry>> {
 	const map = new Map<string, CountyEntry>()
 	const parsed = await readManifest<{ counties?: CountyEntry[] }>(manifestPath)
@@ -132,7 +144,9 @@ async function readCountyManifest(manifestPath: string): Promise<Map<string, Cou
 	return map
 }
 
-/** Check whether a file already matches a recorded sha256 and byte count. */
+/**
+ * Check whether a file already matches a recorded sha256 and byte count.
+ */
 async function fileMatchesSha(path: string, expectedSha: string, expectedBytes: number): Promise<boolean> {
 	if (!existsSync(path)) return false
 
@@ -145,7 +159,9 @@ type CountyResult =
 	| { ok: true; filename: string; sha256: string; bytes: number }
 	| { ok: false; filename: string; reason: string }
 
-/** Download one county ZIP (size sanity check + sha256). */
+/**
+ * Download one county ZIP (size sanity check + sha256).
+ */
 async function downloadCounty(url: string, dest: string): Promise<CountyResult> {
 	const filename = basename(dest)
 	const status = await streamDownload(url, dest, { timeoutMs: 600_000, retries: 3, retryDelayMs: 5000 })
@@ -179,9 +195,8 @@ export async function fetchTigerFull(
 	const addrfeatDir = join(options.outRoot, "tiger", "addrfeat")
 	mkdirSync(addrfeatDir, { recursive: true })
 
-	// -------------------------------------------------------------------------
-	// Step 1: Discover the full county file list from the TIGER directory listing.
-	// -------------------------------------------------------------------------
+	// MARK: Step 1: Discover the full county file list from the TIGER directory listing.
+
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 	const listingRes = await fetch(`${TIGER_BASE_URL}/`, {
 		headers: { "Accept-Encoding": "gzip, br" },
@@ -207,9 +222,8 @@ export async function fetchTigerFull(
 
 	report?.(`  Spans ${stateFiles.size} state/territory FIPS codes.`)
 
-	// -------------------------------------------------------------------------
-	// Step 2: For each state, download missing/unverified county ZIPs.
-	// -------------------------------------------------------------------------
+	// MARK: Step 2: For each state, download missing/unverified county ZIPs.
+
 	let totalFetched = 0
 	let totalSkipped = 0
 	let totalSkippedState = 0
@@ -308,9 +322,8 @@ export async function fetchTigerFull(
 		await writeManifest(manifestPath, manifestDoc)
 	}
 
-	// -------------------------------------------------------------------------
-	// Summary
-	// -------------------------------------------------------------------------
+	// MARK: Summary
+
 	report?.(`=== Summary ===`)
 	report?.(`  Total counties in index   : ${totalCounties}`)
 	report?.(`  State(s) fully skipped    : ${totalSkippedState} (--skip-state-fips "${skipStateFips.join(" ")}")`)

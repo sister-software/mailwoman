@@ -13,11 +13,15 @@ interface TreeNode {
 }
 
 export interface TreeViewProps {
-	/** The parser's `AddressTree` (`result.tree`) — we read `.roots` and recurse `.children`. */
+	/**
+	 * The parser's `AddressTree` (`result.tree`) — we read `.roots` and recurse `.children`.
+	 */
 	tree: unknown
 }
 
-/** ConfidenceCell's tiers, verbatim. */
+/**
+ * ConfidenceCell's tiers, verbatim.
+ */
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 

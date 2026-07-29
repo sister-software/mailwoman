@@ -22,7 +22,9 @@ import { describe, expect, test } from "vitest"
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-/** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
+/**
+ * Strip ANSI escapes + ink spinner frames; isolate the JSON payload.
+ */
 function extractJSON(stdout: string): unknown {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()

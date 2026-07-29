@@ -105,7 +105,9 @@ export * from "./state-hi-schools.ts"
 export * from "./state-sources.ts"
 export * from "./tiger-full.ts"
 
-/** The fetch-source registry: id → module entry point. Each entry point takes its own options interface. */
+/**
+ * The fetch-source registry: id → module entry point. Each entry point takes its own options interface.
+ */
 export const FETCH_SOURCES = {
 	ban: fetchBan,
 	nad: fetchNAD,

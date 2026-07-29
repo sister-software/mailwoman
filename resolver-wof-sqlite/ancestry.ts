@@ -36,12 +36,16 @@ export const PLACETYPE_DEPTH: Readonly<Record<string, number>> = {
 	microhood: 11,
 }
 
-/** Containment depth for a placetype — 0 (sorts coarsest) when unknown. */
+/**
+ * Containment depth for a placetype — 0 (sorts coarsest) when unknown.
+ */
 export function placetypeDepth(placetype: string): number {
 	return PLACETYPE_DEPTH[placetype] ?? 0
 }
 
-/** One ancestor row, enriched with the `spr` columns both consumers need. */
+/**
+ * One ancestor row, enriched with the `spr` columns both consumers need.
+ */
 export interface AncestorPlaceRow {
 	id: number
 	placetype: string

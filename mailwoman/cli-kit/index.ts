@@ -46,7 +46,9 @@ export type CommandComponent<
 	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
 > = React.FC<CommandProps<OptionProps, PositionalProps>>
 
-/** The lifecycle of a command's one-shot async task. */
+/**
+ * The lifecycle of a command's one-shot async task.
+ */
 export type CommandTaskState<T> =
 	| { status: "running" }
 	| { status: "done"; result: T }
@@ -93,7 +95,9 @@ export function commandError(message: string): Error {
 	return error
 }
 
-/** One ✓/✗ line in a {@linkcode CheckList}. */
+/**
+ * One ✓/✗ line in a {@linkcode CheckList}.
+ */
 export interface Check {
 	ok: boolean
 	check: string

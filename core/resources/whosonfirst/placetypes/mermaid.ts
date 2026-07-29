@@ -52,7 +52,9 @@ const PlacetypeRoleText = {
 export type InterpolateColorCallback = (t: number) => string
 
 export interface GenerateMermaidMarkupOptions {
-	/** Restrict descendants to the given roles. Default: all roles. */
+	/**
+	 * Restrict descendants to the given roles. Default: all roles.
+	 */
 	roles?: Iterable<PlacetypeRole>
 	/**
 	 * Edge color interpolator. Each edge is colored by its child node's depth from the root: `t = (childDepth - 1) /

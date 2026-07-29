@@ -84,7 +84,9 @@ function parse(): BuildArgs {
 	return { country, source, release, output }
 }
 
-/** Streaming md5 of a file (never buffer a multi-GB artifact). */
+/**
+ * Streaming md5 of a file (never buffer a multi-GB artifact).
+ */
 async function fileMD5(path: string): Promise<string> {
 	const hash = createHash("md5")
 
@@ -95,7 +97,9 @@ async function fileMD5(path: string): Promise<string> {
 	return hash.digest("hex")
 }
 
-/** The md5 the #1012 build recorded for the sealed rooftop input, for the derivation provenance chain. */
+/**
+ * The md5 the #1012 build recorded for the sealed rooftop input, for the derivation provenance chain.
+ */
 function sourceMD5(country: string): string | null {
 	try {
 		const rec = JSON.parse(readFileSync(dataRootPath("ban", "ATTRIBUTION.json"), "utf8")) as {

@@ -60,7 +60,9 @@ interface SamhsaSiteRow {
 	city: string
 	state: string
 	zip: string
-	/** Optional. Falls back to `stableSourceID` derived from components when missing. */
+	/**
+	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 */
 	frid?: string
 }
 
@@ -117,7 +119,9 @@ function composeVenue(name1: string, name2: string | undefined): string {
 	return `${n1} - ${n2}`
 }
 
-/** Same envelope-style format as HRSA: venue prefix, street body, city/state/zip suffix. */
+/**
+ * Same envelope-style format as HRSA: venue prefix, street body, city/state/zip suffix.
+ */
 function composeRaw(
 	venue: string,
 	house: string | undefined,
@@ -216,5 +220,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovSamhsaTreatmentLocatorAdapter = createUsgovSamhsaTreatmentLocatorAdapter()

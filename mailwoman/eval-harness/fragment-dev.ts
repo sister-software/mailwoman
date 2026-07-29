@@ -24,7 +24,9 @@ export interface FragmentDevOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath: string
-	/** Cap rows for a fast read (0 = all). */
+	/**
+	 * Cap rows for a fast read (0 = all).
+	 */
 	limit?: number
 }
 
@@ -37,7 +39,9 @@ interface DevRow {
 
 const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-/** Score fragment-dev; narrates the separator metrics and returns them for programmatic use. */
+/**
+ * Score fragment-dev; narrates the separator metrics and returns them for programmatic use.
+ */
 export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	spanExact: number
 	tagAccuracy: number

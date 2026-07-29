@@ -44,11 +44,17 @@ export interface ShardTranslitOptions {
 	jsonl: string
 	baseManifest: string
 	outDir: string
-	/** Default `"0.4.0"`. */
+	/**
+	 * Default `"0.4.0"`.
+	 */
 	corpusVersion?: string
-	/** Default `"/data/"`. */
+	/**
+	 * Default `"/data/"`.
+	 */
 	canonicalPathPrefix?: string
-	/** Default `"/mnt/playpen/mailwoman-data/"`. */
+	/**
+	 * Default `"/mnt/playpen/mailwoman-data/"`.
+	 */
 	legacyPathPrefix?: string
 }
 

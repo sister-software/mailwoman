@@ -20,7 +20,9 @@ import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize, inMapPoste
 const tmpRoot = mkdtempSync(join(tmpdir(), "coarse-placer-test-"))
 afterAll(() => rmSync(tmpRoot, { recursive: true, force: true }))
 
-/** Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible. */
+/**
+ * Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible.
+ */
 function seededWeights(classCount: number, dim: number, seed: number): Float32Array {
 	const w = new Float32Array(classCount * dim)
 	let s = seed >>> 0
@@ -33,7 +35,9 @@ function seededWeights(classCount: number, dim: number, seed: number): Float32Ar
 	return w
 }
 
-/** Per-row symmetric int8 quantization (mirrors scripts/coarse-placer/quantize.mjs). */
+/**
+ * Per-row symmetric int8 quantization (mirrors scripts/coarse-placer/quantize.mjs).
+ */
 function quantize(w: Float32Array, classCount: number, dim: number) {
 	const int8 = new Int8Array(classCount * dim)
 	const scales: number[] = []
@@ -56,7 +60,9 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 	return { int8, scales }
 }
 
-/** Write an fp32 and an int8 artifact dir for the same weights; return both paths. */
+/**
+ * Write an fp32 and an int8 artifact dir for the same weights; return both paths.
+ */
 function writeArtifacts(classes: string[], dim: number, weights: Float32Array, bias: number[], temperature = 1) {
 	const fp32Dir = join(tmpRoot, `fp32-${classes.join("")}-${dim}`)
 	const int8Dir = join(tmpRoot, `int8-${classes.join("")}-${dim}`)

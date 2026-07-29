@@ -26,7 +26,9 @@ import { parseArgs } from "node:util"
 import { chromium, type Page } from "@playwright/test"
 
 // oxlint-disable-next-line sister-software/no-process-globals
-/** Lowest 4xx status — at or above it the page failed to render. */
+/**
+ * Lowest 4xx status — at or above it the page failed to render.
+ */
 const HTTP_CLIENT_ERROR_MIN = 400
 
 // oxlint-disable-next-line sister-software/no-process-globals -- a standalone skill driver, run outside the repo's env helpers

@@ -37,7 +37,9 @@ import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
-/** The served Latin-script language tiers (see SCOPE.mdx) — uniform curation set for every locale FST. */
+/**
+ * The served Latin-script language tiers (see SCOPE.mdx) — uniform curation set for every locale FST.
+ */
 export const CURATION_LANGUAGES = [
 	"en",
 	"fr",
@@ -76,7 +78,9 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 	"op",
 ])
 
-/** The shipped per-locale FST set (provenance-recovered country scoping; en-nz deliberately has none). */
+/**
+ * The shipped per-locale FST set (provenance-recovered country scoping; en-nz deliberately has none).
+ */
 export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["en-us", ["US"]],
 	["fr-fr", ["FR"]],
@@ -84,7 +88,9 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["de-de", ["DE"]],
 ])
 
-/** One dictionary line = canonical|variant|variant… — every pipe-separated form is a surface. */
+/**
+ * One dictionary line = canonical|variant|variant… — every pipe-separated form is a surface.
+ */
 function surfacesOfLine(line: string): string[] {
 	return line
 		.split("|")
@@ -211,13 +217,21 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 }
 
 export interface BuildLocaleFSTsOpts {
-	/** Locales to build (default: every FST_LOCALES key). */
+	/**
+	 * Locales to build (default: every FST_LOCALES key).
+	 */
 	locales?: string[]
-	/** WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`). */
+	/**
+	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
+	 */
 	dbPath?: string
-	/** Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`). Never the shipped dir. */
+	/**
+	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`). Never the shipped dir.
+	 */
 	outputDir?: string
-	/** Skip the curation (an A/B control build with the SAME current DB). */
+	/**
+	 * Skip the curation (an A/B control build with the SAME current DB).
+	 */
 	uncurated?: boolean
 	onProgress?: (line: string) => void
 }

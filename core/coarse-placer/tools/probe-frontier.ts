@@ -26,37 +26,55 @@ import { corePackagePath } from "../../utils/repo.ts"
 import { median } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 
-/** False-positive rate above which the in-class frontier is judged to have degraded. */
+/**
+ * False-positive rate above which the in-class frontier is judged to have degraded.
+ */
 const MAX_IN_CLASS_FALSE_RATE = 0.05
 
-/** Top-1 accuracy below which the in-class frontier is judged to have degraded. */
+/**
+ * Top-1 accuracy below which the in-class frontier is judged to have degraded.
+ */
 const MIN_IN_CLASS_TOP1 = 0.8
 
-/** Options for {@linkcode probeFrontier}. */
+/**
+ * Options for {@linkcode probeFrontier}.
+ */
 export interface ProbeFrontierOptions {
 	/**
 	 * Model artifact dir. Default: the DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the
 	 * `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
 	 */
 	model?: string
-	/** Queries sampled (shortest first). Default 2000. */
+	/**
+	 * Queries sampled (shortest first). Default 2000.
+	 */
 	n?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	out?: string
 }
 
-/** Result of {@linkcode probeFrontier}. */
+/**
+ * Result of {@linkcode probeFrontier}.
+ */
 export interface ProbeFrontierResult {
-	/** The Phase-2 branch verdict line. */
+	/**
+	 * The Phase-2 branch verdict line.
+	 */
 	branch: string
 	n: number
 	markdown: string
 }
 
-/** Mirrors core/pipeline/runtime-pipeline.ts. */
+/**
+ * Mirrors core/pipeline/runtime-pipeline.ts.
+ */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-/** The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them). */
+/**
+ * The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them).
+ */
 const RECOVERABLE = [
 	"AO",
 	"AR",
@@ -96,7 +114,9 @@ const RECOVERABLE = [
 	"VE",
 ]
 
-/** Coarse-placer frontier probe (#822) — see the module doc. Emits the report head to stdout. */
+/**
+ * Coarse-placer frontier probe (#822) — see the module doc. Emits the report head to stdout.
+ */
 export async function probeFrontier(
 	options: ProbeFrontierOptions = {},
 	report?: (line: string) => void

@@ -32,15 +32,23 @@ import { corePackagePath } from "@mailwoman/core/utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
-/** Flag-shaped options for {@linkcode downloadSSLAddress}. */
+/**
+ * Flag-shaped options for {@linkcode downloadSSLAddress}.
+ */
 export interface DownloadSSLAddressOptions {
-	/** Destination directory. Default: the checked-in `core/data/chromium-i18n/ssl-address`. */
+	/**
+	 * Destination directory. Default: the checked-in `core/data/chromium-i18n/ssl-address`.
+	 */
 	outDir?: string
-	/** Parallel per-country fetches. Default 8. */
+	/**
+	 * Parallel per-country fetches. Default 8.
+	 */
 	concurrency?: number
 }
 
-/** Fetch the `~`-delimited country list and return it as an array of ISO codes. */
+/**
+ * Fetch the `~`-delimited country list and return it as an array of ISO codes.
+ */
 async function fetchCountryCodes(): Promise<string[]> {
 	const res = await fetch(BASE_URL, { signal: AbortSignal.timeout(60_000) })
 
@@ -50,7 +58,9 @@ async function fetchCountryCodes(): Promise<string[]> {
 	return (data.countries ?? "").split("~").filter(Boolean)
 }
 
-/** Fetch a single country's metadata record and write its raw JSON body to `<outDir>/<cc>.json`. */
+/**
+ * Fetch a single country's metadata record and write its raw JSON body to `<outDir>/<cc>.json`.
+ */
 async function fetchCountry(cc: string, outDir: string): Promise<void> {
 	const res = await fetch(`${BASE_URL}/${cc}`, { signal: AbortSignal.timeout(60_000) })
 

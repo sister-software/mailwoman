@@ -100,7 +100,9 @@ export function jaroWinkler(
 	return base + prefix * weight * (1 - base)
 }
 
-/** Normalized Levenshtein similarity in [0, 1]: `1 - editDistance / max(len)`. */
+/**
+ * Normalized Levenshtein similarity in [0, 1]: `1 - editDistance / max(len)`.
+ */
 export function levenshteinSimilarity(a: string, b: string): number {
 	if (a === b) return 1
 	const longest = Math.max(a.length, b.length)

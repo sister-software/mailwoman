@@ -72,7 +72,9 @@ export const GB_STREET_TYPES = [
 	"gait",
 ] as const
 
-/** A canonical British thoroughfare word (e.g. `street`, `crescent`, `mews`). */
+/**
+ * A canonical British thoroughfare word (e.g. `street`, `crescent`, `mews`).
+ */
 export type BritishStreetType = (typeof GB_STREET_TYPES)[number]
 
 const STREET_TYPE_SET: ReadonlySet<string> = new Set(GB_STREET_TYPES)

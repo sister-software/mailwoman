@@ -16,7 +16,9 @@ import { afterEach, describe, expect, test } from "vitest"
 
 import { WOFCandidateTableLookup } from "./httpvfs-resolver.ts"
 
-/** Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape). */
+/**
+ * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
+ */
 function stubWorker(db: DatabaseSync) {
 	return {
 		db: {

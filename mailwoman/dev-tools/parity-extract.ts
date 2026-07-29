@@ -12,13 +12,21 @@
 import ts from "typescript"
 
 export interface ParityCase {
-	/** Repo-relative source file the assertion came from. */
+	/**
+	 * Repo-relative source file the assertion came from.
+	 */
 	file: string
-	/** The address input under test. */
+	/**
+	 * The address input under test.
+	 */
 	input: string
-	/** The hand-written expected classification records (JSON values), file order preserved. */
+	/**
+	 * The hand-written expected classification records (JSON values), file order preserved.
+	 */
 	expected: unknown[]
-	/** Set when an expected arg wasn't a pure literal; that slot in `expected` holds source text. */
+	/**
+	 * Set when an expected arg wasn't a pure literal; that slot in `expected` holds source text.
+	 */
 	nonLiteral?: boolean
 }
 
@@ -69,7 +77,9 @@ function literalToJSON(node: ts.Expression): { ok: true; value: unknown } | { ok
 	return { ok: false }
 }
 
-/** Extract every top-level-or-nested `assert("input", ...records)` call from one source text. */
+/**
+ * Extract every top-level-or-nested `assert("input", ...records)` call from one source text.
+ */
 export function extractAssertCalls(sourceText: string, fileName: string): ParityCase[] {
 	const source = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true)
 	const cases: ParityCase[] = []

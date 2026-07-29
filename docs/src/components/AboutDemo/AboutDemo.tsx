@@ -16,9 +16,7 @@ import React from "react"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Inner component (below BrowserOnly boundary)
-// ---------------------------------------------------------------------------
+// MARK: Inner component (below BrowserOnly boundary)
 
 const AboutDemoInner: React.FC = () => {
 	return (

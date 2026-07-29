@@ -94,13 +94,19 @@ const US_REGION_NAMES: ReadonlySet<string> = new Set([
  */
 const MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS = 4
 
-/** Confidence for a pure-numeric token short enough to be unambiguous. */
+/**
+ * Confidence for a pure-numeric token short enough to be unambiguous.
+ */
 const UNAMBIGUOUS_NUMERIC_CONFIDENCE = 0.95
 
-/** Token count at which a run reads as a venue name in its own right rather than a stray pair. */
+/**
+ * Token count at which a run reads as a venue name in its own right rather than a stray pair.
+ */
 const VENUE_RUN_MIN_TOKENS = 3
 
-/** Confidence for a venue run too short to clear {@link VENUE_RUN_MIN_TOKENS}. */
+/**
+ * Confidence for a venue run too short to clear {@link VENUE_RUN_MIN_TOKENS}.
+ */
 const SHORT_VENUE_RUN_CONFIDENCE = 0.5
 
 /**
@@ -112,10 +118,14 @@ const PLACE_RUN_LENGTH_BONUS: ReadonlyMap<number, number> = new Map([
 	[3, 0.12],
 ])
 
-/** Bonus applied to place-name runs at or beyond {@link VENUE_RUN_MIN_TOKENS} + 1 tokens. */
+/**
+ * Bonus applied to place-name runs at or beyond {@link VENUE_RUN_MIN_TOKENS} + 1 tokens.
+ */
 const LONG_PLACE_RUN_BONUS = 0.08
 
-/** Penalty for a US region NAME appearing away from the tail, where it is more likely a locality. */
+/**
+ * Penalty for a US region NAME appearing away from the tail, where it is more likely a locality.
+ */
 const NON_TAIL_REGION_NAME_PENALTY = 0.2
 
 export function tokenizeSegment(segmentBody: string, segmentStart: number): SegmentToken[] {
@@ -143,17 +153,23 @@ export function tokenizeSegment(segmentBody: string, segmentStart: number): Segm
 	return tokens
 }
 
-/** Build a `Section` (Span instance) from absolute offsets into the original text. */
+/**
+ * Build a `Section` (Span instance) from absolute offsets into the original text.
+ */
 function makeSection(text: string, start: number, end: number): Span {
 	return Span.from(text.slice(start, end), { start })
 }
 
-/** True when token body is non-empty digits only. */
+/**
+ * True when token body is non-empty digits only.
+ */
 function isAllDigit(s: string): boolean {
 	return s.length > 0 && /^[0-9]+$/.test(s)
 }
 
-/** True when token body is 2-3 uppercase Latin letters (US state, Canadian province abbreviation). */
+/**
+ * True when token body is 2-3 uppercase Latin letters (US state, Canadian province abbreviation).
+ */
 function isRegionAbbreviation(s: string): boolean {
 	return /^[A-Z]{2,3}$/.test(s)
 }
@@ -340,7 +356,9 @@ function isPlaceNameContent(s: string): boolean {
 	return startsCapitalized(s) || isFusedParticleName(s)
 }
 
-/** True when the token is a known lowercase place-name connective (`de`, `in`, `aan`, `am`, …). */
+/**
+ * True when the token is a known lowercase place-name connective (`de`, `in`, `aan`, `am`, …).
+ */
 function isPlaceNameParticle(s: string): boolean {
 	return PLACE_NAME_PARTICLES.has(s.toLowerCase())
 }

@@ -44,7 +44,9 @@ import {
 	toNominatimResult,
 } from "./index.ts"
 
-/** WOF placetype → Nominatim address key. */
+/**
+ * WOF placetype → Nominatim address key.
+ */
 const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 	venue: "road",
 	street: "road",
@@ -68,7 +70,9 @@ function joinNonEmpty(...parts: Array<string | undefined>): string {
 	return parts.filter(Boolean).join(", ")
 }
 
-/** Map a forward geocode result (admin + coordinate) into the formatter's neutral shape. */
+/**
+ * Map a forward geocode result (admin + coordinate) into the formatter's neutral shape.
+ */
 function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 	const address: NominatimAddressDetails = {}
 

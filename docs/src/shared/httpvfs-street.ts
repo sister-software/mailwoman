@@ -27,7 +27,9 @@ import {
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-/** The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns. */
+/**
+ * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
+ */
 export interface HTTPVFSDB {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
@@ -37,7 +39,9 @@ export interface HTTPVFSDB {
  */
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
-/** Sql.js exec result → row objects. */
+/**
+ * Sql.js exec result → row objects.
+ */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
 	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
@@ -60,7 +64,9 @@ export class HTTPVFSAddressPointLookup {
 	#available: Promise<boolean> | undefined
 	#locale: StreetLocale
 
-	/** `streetLocale` must match the shard's build locale (the node class's contract) — default "us". */
+	/**
+	 * `streetLocale` must match the shard's build locale (the node class's contract) — default "us".
+	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
 		this.#locale = opts.streetLocale ?? "us"
@@ -98,7 +104,9 @@ export class HTTPVFSAddressPointLookup {
 			`SELECT lat, lon, source, release FROM address_point WHERE ${where} LIMIT 1`
 		let rows: Record<string, unknown>[] = []
 
-		/** Run one address-point probe and hand back its rows. */
+		/**
+		 * Run one address-point probe and hand back its rows.
+		 */
 		const probe = async (where: string): Promise<Record<string, unknown>[]> =>
 			rowsFromExec(await this.#worker.db.exec(select(where)))
 

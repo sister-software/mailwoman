@@ -26,7 +26,9 @@ import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "./fst
 import type { TokenLike } from "./query-shape-prior.ts"
 
 export interface StreetMorphologyPriorOpts {
-	/** Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0. */
+	/**
+	 * Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0.
+	 */
 	biasScale?: number
 	/**
 	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin FST. The morphology

@@ -33,17 +33,25 @@ import { join } from "node:path"
 import { PSVSpliterator } from "spliterator"
 
 export interface GNAFAssembleOptions {
-	/** G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables). */
+	/**
+	 * G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables).
+	 */
 	standardDir: string
-	/** Target sample size (uniform reservoir → population-proportional across states). */
+	/**
+	 * Target sample size (uniform reservoir → population-proportional across states).
+	 */
 	sampleSize: number
-	/** Output JSONL path. */
+	/**
+	 * Output JSONL path.
+	 */
 	out: string
 	/**
 	 * Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode) are excluded.
 	 */
 	holdoutPath?: string
-	/** Progress sink (the CLI passes a setter). */
+	/**
+	 * Progress sink (the CLI passes a setter).
+	 */
 	onProgress?: (message: string) => void
 }
 
@@ -54,7 +62,9 @@ export interface GNAFAssembleResult {
 	byState: Record<string, number>
 }
 
-/** UPPERCASE → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour). */
+/**
+ * UPPERCASE → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour).
+ */
 export function titlecase(s: string): string {
 	return s
 		.toLowerCase()
@@ -62,7 +72,9 @@ export function titlecase(s: string): string {
 		.trim()
 }
 
-/** Holdout/dedup key: a street within a locality+postcode (house-number-agnostic — conservative). */
+/**
+ * Holdout/dedup key: a street within a locality+postcode (house-number-agnostic — conservative).
+ */
 export function gnafHoldoutKey(street: string, locality: string, postcode: string): string {
 	return `${street}|${locality}|${postcode}`.toLowerCase()
 }
@@ -72,7 +84,9 @@ async function* psvObjects(path: string): AsyncIterable<Row> {
 	yield* PSVSpliterator.fromAsync(path, { mode: "object", header: true }) as AsyncIterable<Row>
 }
 
-/** Load a small lookup table fully into a Map keyed by `keyCol`. */
+/**
+ * Load a small lookup table fully into a Map keyed by `keyCol`.
+ */
 async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V): Promise<Map<string, V>> {
 	const m = new Map<string, V>()
 
@@ -89,7 +103,9 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
 	return m
 }
 
-/** Build the held-out key set from an eval JSONL whose rows carry a `components` object. */
+/**
+ * Build the held-out key set from an eval JSONL whose rows carry a `components` object.
+ */
 async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()
 	const text = await readFile(path, "utf8")

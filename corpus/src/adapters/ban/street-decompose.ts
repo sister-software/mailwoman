@@ -20,7 +20,9 @@ import { resolve } from "node:path"
 
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
 
-/** Tokens a BAN street needs before a type/article/name decomposition is attempted. */
+/**
+ * Tokens a BAN street needs before a type/article/name decomposition is attempted.
+ */
 const MIN_TOKENS_FOR_DECOMPOSE = 3
 
 function loadDictionary(filename: string): Set<string> {

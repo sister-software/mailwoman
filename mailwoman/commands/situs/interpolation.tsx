@@ -38,19 +38,29 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
-/** A successful response; anything else is an error page or an unfollowed redirect. */
+/**
+ * A successful response; anything else is an error page or an unfollowed redirect.
+ */
 const HTTP_OK = 200
 
-/** Lowest 3xx status. */
+/**
+ * Lowest 3xx status.
+ */
 const HTTP_REDIRECT_MIN = 300
 
-/** Lowest 4xx status — the end of the redirect range. */
+/**
+ * Lowest 4xx status — the end of the redirect range.
+ */
 const HTTP_CLIENT_ERROR_MIN = 400
 
-/** Lowest 5xx status. Server-side failures are worth retrying; client errors are not. */
+/**
+ * Lowest 5xx status. Server-side failures are worth retrying; client errors are not.
+ */
 const HTTP_SERVER_ERROR_MIN = 500
 
-/** Failed GEOIDs printed before the list is truncated. */
+/**
+ * Failed GEOIDs printed before the list is truncated.
+ */
 const MAX_LISTED_FAILURES = 20
 
 const OptionsSchema = zod.object({
@@ -78,9 +88,7 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-// ---------------------------------------------------------------------------
-// State FIPS map (mirrors build-interpolation-shard.ts — single source in future)
-// ---------------------------------------------------------------------------
+// MARK: State FIPS map (mirrors build-interpolation-shard.ts — single source in future)
 
 const STATE_FIPS: Record<string, string> = {
 	AL: "01",
@@ -151,9 +159,7 @@ const CLI_ENTRY = scriptEntryPath()
 const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 
-// ---------------------------------------------------------------------------
-// County population ranking
-// ---------------------------------------------------------------------------
+// MARK: County population ranking
 
 interface CountyRecord {
 	stateFips: string
@@ -220,11 +226,11 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	return records
 }
 
-// ---------------------------------------------------------------------------
-// HTTP utilities
-// ---------------------------------------------------------------------------
+// MARK: HTTP utilities
 
-/** Simple GET-to-text over HTTPS with redirect following (≤3 hops). */
+/**
+ * Simple GET-to-text over HTTPS with redirect following (≤3 hops).
+ */
 function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const req = https.get(url, (res) => {
@@ -248,7 +254,9 @@ function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 	})
 }
 
-/** Download a URL to a local file path, with retry on 5xx / network errors. */
+/**
+ * Download a URL to a local file path, with retry on 5xx / network errors.
+ */
 async function downloadFile(url: string, dest: string, retries = 3): Promise<void> {
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch falls through to the next attempt when the error is retryable
 	for (let attempt = 1; attempt <= retries; attempt++) {
@@ -299,9 +307,7 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// ZIP extraction
-// ---------------------------------------------------------------------------
+// MARK: ZIP extraction
 
 /**
  * Unpack a TIGER EDGES ZIP into --edges-dir using the system `unzip` command. Only extracts files whose names end with
@@ -319,9 +325,7 @@ function extractEdgesZip(zipPath: string, destDir: string): void {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Parallel download pool
-// ---------------------------------------------------------------------------
+// MARK: Parallel download pool
 
 interface DownloadTask {
 	geoid: string
@@ -329,7 +333,9 @@ interface DownloadTask {
 	zipPath: string
 }
 
-/** Download and unpack a list of county ZIPs with capped parallelism. */
+/**
+ * Download and unpack a list of county ZIPs with capped parallelism.
+ */
 async function downloadParallel(
 	tasks: DownloadTask[],
 	concurrency: number,
@@ -381,9 +387,7 @@ async function downloadParallel(
 	return { downloaded, skipped, failed }
 }
 
-// ---------------------------------------------------------------------------
-// Shard build (per state)
-// ---------------------------------------------------------------------------
+// MARK: Shard build (per state)
 
 interface ShardBuildResult {
 	wallMs: number

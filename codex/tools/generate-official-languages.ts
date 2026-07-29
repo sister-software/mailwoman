@@ -30,17 +30,27 @@ import { fileURLToPath } from "node:url"
  */
 const DEFAULT_OUT = fileURLToPath(new URL("../country/official-languages.ts", import.meta.url))
 
-/** Options for {@linkcode generateOfficialLanguages}. */
+/**
+ * Options for {@linkcode generateOfficialLanguages}.
+ */
 export interface GenerateOfficialLanguagesOptions {
-	/** Read cldr-territoryInfo.json + cldr-aliases.json from this directory instead of fetching. */
+	/**
+	 * Read cldr-territoryInfo.json + cldr-aliases.json from this directory instead of fetching.
+	 */
 	cldrDir?: string
-	/** Pinned cldr-core release fetched from jsdelivr when {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent. */
+	/**
+	 * Pinned cldr-core release fetched from jsdelivr when {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent.
+	 */
 	cldrVersion?: string
-	/** Output path override. Default: `codex/country/official-languages.ts` (the committed table). */
+	/**
+	 * Output path override. Default: `codex/country/official-languages.ts` (the committed table).
+	 */
 	out?: string
 }
 
-/** Summary returned by {@linkcode generateOfficialLanguages}. */
+/**
+ * Summary returned by {@linkcode generateOfficialLanguages}.
+ */
 export interface GenerateOfficialLanguagesSummary {
 	territories: number
 	cldrVersion: string
@@ -61,7 +71,9 @@ async function loadCLDR(file: string, cldrDir: string | undefined, cldrVersion: 
 	return res.json()
 }
 
-/** Regenerate the committed `OFFICIAL_LANGUAGES` table from CLDR supplemental data. */
+/**
+ * Regenerate the committed `OFFICIAL_LANGUAGES` table from CLDR supplemental data.
+ */
 export async function generateOfficialLanguages(
 	options: GenerateOfficialLanguagesOptions = {},
 	report?: (line: string) => void

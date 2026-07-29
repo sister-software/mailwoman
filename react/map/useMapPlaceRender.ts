@@ -15,7 +15,9 @@ import { useMemo } from "react"
 import { computeMapPlaceRenderSpec } from "./place-render.ts"
 import type { MapPlaceRenderSpec, ResolvedMapPlace } from "./place-render.ts"
 
-/** Memoize the render spec for a resolved place; `null` in → `null` out (nothing to draw). */
+/**
+ * Memoize the render spec for a resolved place; `null` in → `null` out (nothing to draw).
+ */
 export function useMapPlaceRender(place: ResolvedMapPlace | null | undefined): MapPlaceRenderSpec | null {
 	return useMemo(() => (place ? computeMapPlaceRenderSpec(place) : null), [place])
 }

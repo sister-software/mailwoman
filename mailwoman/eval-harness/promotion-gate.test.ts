@@ -48,7 +48,9 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 	return matchFrom(0, 0)
 }
 
-/** One path segment against one glob segment — `*` matches any in-segment run, everything else is literal. */
+/**
+ * One path segment against one glob segment — `*` matches any in-segment run, everything else is literal.
+ */
 function segmentMatches(glob: string, segment: string): boolean {
 	const pieces = glob.split("*")
 	let at = 0
@@ -72,7 +74,9 @@ function segmentMatches(glob: string, segment: string): boolean {
 	return last === "" || segment.endsWith(last)
 }
 
-/** Whether `path` (package-root-relative) ships in the tarball per package.json `files` (negations applied in order). */
+/**
+ * Whether `path` (package-root-relative) ships in the tarball per package.json `files` (negations applied in order).
+ */
 function shipsInPackage(files: string[], path: string): boolean {
 	let included = false
 

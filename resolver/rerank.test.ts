@@ -9,7 +9,9 @@ import { describe, expect, it, vi } from "vitest"
 
 import { rerankByResolution } from "./rerank.ts"
 
-/** A tree whose finest resolved node carries `tag` — `country` is what the guard vetoes. */
+/**
+ * A tree whose finest resolved node carries `tag` — `country` is what the guard vetoes.
+ */
 function resolvedTree(tag: string, raw = "x"): AddressTree {
 	const node: AddressNode = {
 		tag,

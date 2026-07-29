@@ -61,13 +61,17 @@ const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 	FR: "France",
 }
 
-/** BCP-47 locale defaulting for the corpus row's `locale` field. Defaulted by country. */
+/**
+ * BCP-47 locale defaulting for the corpus row's `locale` field. Defaulted by country.
+ */
 const LOCALE_BY_COUNTRY: Record<string, string> = {
 	US: "en-US",
 	FR: "fr-FR",
 }
 
-/** Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip. */
+/**
+ * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
+ */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
 		case "country":
@@ -93,10 +97,14 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 }
 
 interface VariantSpec {
-	/** Hierarchy-variant id appended to `source_id`. */
+	/**
+	 * Hierarchy-variant id appended to `source_id`.
+	 */
 	suffix: string
 
-	/** Component tag → display string the adapter will hand to the runner. */
+	/**
+	 * Component tag → display string the adapter will hand to the runner.
+	 */
 	components: Partial<Record<ComponentTag, string>>
 }
 
@@ -280,5 +288,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 	}
 }
 
-/** Single shared instance, suitable for `defaultAdapterRegistry`. */
+/**
+ * Single shared instance, suitable for `defaultAdapterRegistry`.
+ */
 export const wofAdminAdapter = createWOFAdminAdapter()

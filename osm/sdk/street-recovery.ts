@@ -18,9 +18,13 @@ import { spawn } from "node:child_process"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-/** ~330m grid cell. */
+/**
+ * ~330m grid cell.
+ */
 const CELL_DEG = 0.003
-/** Interpolate a vertex every ~20m along each segment. */
+/**
+ * Interpolate a vertex every ~20m along each segment.
+ */
 const DENSIFY_KM = 0.02
 
 interface Vertex {
@@ -29,7 +33,9 @@ interface Vertex {
 	lat: number
 }
 
-/** Grid-indexed nearest-named-highway lookup. */
+/**
+ * Grid-indexed nearest-named-highway lookup.
+ */
 export class StreetRecoveryIndex {
 	readonly #grid = new Map<string, Vertex[]>()
 	#count = 0
@@ -54,7 +60,9 @@ export class StreetRecoveryIndex {
 		this.#count++
 	}
 
-	/** Nearest highway name within `maxKm`, or null. Scans the point's cell + the 8 neighbours. */
+	/**
+	 * Nearest highway name within `maxKm`, or null. Scans the point's cell + the 8 neighbours.
+	 */
 	nearest(lon: number, lat: number, maxKm: number): { name: string; km: number } | null {
 		const cx = Math.floor(lon / CELL_DEG)
 		const cy = Math.floor(lat / CELL_DEG)
@@ -102,7 +110,9 @@ function* densify(coords: number[][]): Generator<[number, number]> {
 	}
 }
 
-/** Build the recovery index from the PBF's named highways (the `lines` layer). */
+/**
+ * Build the recovery index from the PBF's named highways (the `lines` layer).
+ */
 export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetRecoveryIndex> {
 	const args = [
 		"-f",

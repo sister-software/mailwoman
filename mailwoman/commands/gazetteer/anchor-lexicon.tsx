@@ -36,10 +36,14 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-/** Homographs printed before the list is truncated. */
+/**
+ * Homographs printed before the list is truncated.
+ */
 const MAX_LISTED_HOMOGRAPHS = 12
 
-/** Letters at or below which a token reads as an abbreviation rather than a word. */
+/**
+ * Letters at or below which a token reads as an abbreviation rather than a word.
+ */
 const MAX_ABBREVIATION_LETTERS = 3
 
 const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
@@ -63,9 +67,13 @@ const wordNorm = (s: string): string =>
 		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.join(" ")
-/** Normalize a surface for the case-insensitive map. */
+/**
+ * Normalize a surface for the case-insensitive map.
+ */
 const norm = (s: string): string => wordNorm(s).toLowerCase()
-/** Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching. */
+/**
+ * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
+ */
 const isShortCode = (s: string): boolean => {
 	const letters = s.replaceAll(/[^\p{L}]/gu, "")
 

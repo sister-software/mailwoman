@@ -24,7 +24,9 @@ type Row = Record<string, string | number | null>
 let dir: string
 let altDir: string
 
-/** One GeoNames main-dump row (19 tab-separated columns). */
+/**
+ * One GeoNames main-dump row (19 tab-separated columns).
+ */
 function mainRow(over: Record<number, string>): string {
 	const f = new Array(19).fill("")
 

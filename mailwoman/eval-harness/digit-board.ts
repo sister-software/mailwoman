@@ -49,7 +49,9 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { wilson } from "./fragment-board.ts"
 
-/** Fixture set backing the digit board — house-number and postcode ambiguity probes. */
+/**
+ * Fixture set backing the digit board — house-number and postcode ambiguity probes.
+ */
 export const DIGIT_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/no-digits.jsonl"
 
 export interface DigitFixture {
@@ -57,7 +59,9 @@ export interface DigitFixture {
 	klass: string
 	input: string
 	expect: Record<string, string[]>
-	/** Present on the negative class: the parser must emit NO house_number, and MUST still emit the postcode. */
+	/**
+	 * Present on the negative class: the parser must emit NO house_number, and MUST still emit the postcode.
+	 */
 	expect_no_house_number?: boolean
 	surface: string | null
 	source: string

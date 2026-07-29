@@ -42,7 +42,9 @@ const hasStack = existsSync(wofPath) && existsSync(txSitus)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)
 
-/** `/v1/parse` needs only the model weights (Task 2) — gate its own tests independently of the WOF/TX stack above. */
+/**
+ * `/v1/parse` needs only the model weights (Task 2) — gate its own tests independently of the WOF/TX stack above.
+ */
 function weightsPresent(): boolean {
 	try {
 		return existsSync(realpathSync("neural-weights-en-us/model.onnx"))
@@ -74,9 +76,7 @@ async function postJSON(path: string, body: unknown): Promise<{ status: number; 
 	return { status: res.status, body: (await res.json()) as Record<string, unknown> }
 }
 
-// ---------------------------------------------------------------------------------------------
-// /v1/geocode + /v1/batch — error paths (run unconditionally; ported from geocode-router.test.ts)
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/geocode + /v1/batch — error paths (run unconditionally; ported from geocode-router.test.ts)
 
 describe("api-engine — error paths (run unconditionally)", () => {
 	test("POST /v1/geocode: 400 when `address` is missing", async () => {
@@ -97,9 +97,7 @@ describe("api-engine — error paths (run unconditionally)", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------------------------
-// /health — answers even when the geocode/resolve stack is unavailable (ported from health-router.test.ts)
-// ---------------------------------------------------------------------------------------------
+// MARK: /health — answers even when the geocode/resolve stack is unavailable (ported from health-router.test.ts)
 
 describe("api-engine — /health (run unconditionally, never throws)", () => {
 	test("GET /health: returns status + data shape", async () => {
@@ -148,9 +146,7 @@ describeIfWeights(
 	60_000
 )
 
-// ---------------------------------------------------------------------------------------------
-// Success paths against real WOF + TX shards (ported from geocode-router.test.ts)
-// ---------------------------------------------------------------------------------------------
+// MARK: Success paths against real WOF + TX shards (ported from geocode-router.test.ts)
 
 describeIfStack("api-engine — success path against real WOF + TX shards", () => {
 	test("POST /v1/geocode: resolves a TX address to a street-level coordinate", async () => {

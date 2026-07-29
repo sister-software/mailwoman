@@ -14,15 +14,23 @@
 import type { ReactNode } from "react"
 
 export interface BackendControlProps {
-	/** The backend the runtime resolved to (e.g. `webgpu (28 MB int8)`); empty before it is known. */
+	/**
+	 * The backend the runtime resolved to (e.g. `webgpu (28 MB int8)`); empty before it is known.
+	 */
 	activeBackend?: string
-	/** Whether the CPU/WASM backend is currently forced. */
+	/**
+	 * Whether the CPU/WASM backend is currently forced.
+	 */
 	forceWASM: boolean
-	/** Fired when the visitor toggles the "Force WASM" checkbox. */
+	/**
+	 * Fired when the visitor toggles the "Force WASM" checkbox.
+	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 }
 
-/** The backend indicator + WASM opt-out. */
+/**
+ * The backend indicator + WASM opt-out.
+ */
 export function BackendControl({ activeBackend, forceWASM, onForceWASMChange }: BackendControlProps): ReactNode {
 	return (
 		<div className="mw-demo-backend">

@@ -25,7 +25,9 @@
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 
-/** Canonical 2-letter slug for a US state/territory NAME or 2-letter abbreviation, else null. */
+/**
+ * Canonical 2-letter slug for a US state/territory NAME or 2-letter abbreviation, else null.
+ */
 const STATE_NAME_TO_SLUG: Record<string, string> = {
 	alabama: "al",
 	alaska: "ak",
@@ -99,7 +101,9 @@ export function usStateSlug(value: string): string | null {
 	return null
 }
 
-/** Build a region node covering the state token, carrying a (lightly-confident) provenance marker. */
+/**
+ * Build a region node covering the state token, carrying a (lightly-confident) provenance marker.
+ */
 function makeRegionNode(value: string, start: number, end: number, confidence: number): AddressNode {
 	return {
 		tag: "region" as ComponentTag,
@@ -188,7 +192,9 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	return region
 }
 
-/** Recursively correct a node's children. */
+/**
+ * Recursively correct a node's children.
+ */
 function correctNode(node: AddressNode): AddressNode {
 	if (node.children.length) {
 		node.children = correctSiblings(node.children).map(correctNode)

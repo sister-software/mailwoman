@@ -30,27 +30,47 @@ import type { UsePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
 import { VersionPicker } from "./VersionPicker.tsx"
 
 export interface DemoControlsProps {
-	/** The injected demo runtime. */
+	/**
+	 * The injected demo runtime.
+	 */
 	runtime: DemoRuntime
-	/** The parse+resolve state machine. */
+	/**
+	 * The parse+resolve state machine.
+	 */
 	geocode: UseDemoGeocode
-	/** The place-autocomplete combobox state. */
+	/**
+	 * The place-autocomplete combobox state.
+	 */
 	autocomplete: UsePlaceAutocomplete
-	/** The compare-mode state. */
+	/**
+	 * The compare-mode state.
+	 */
 	compare: UseCompareState
-	/** Host-injected panels (about, release blurb, compare, permalink, extras, failure). */
+	/**
+	 * Host-injected panels (about, release blurb, compare, permalink, extras, failure).
+	 */
 	panels: DemoPanels
-	/** Example chips. */
+	/**
+	 * Example chips.
+	 */
 	presets: ReadonlyArray<Preset>
-	/** Input placeholder. */
+	/**
+	 * Input placeholder.
+	 */
 	placeholder: string
-	/** Select a model version (the composed demo also clears a now-colliding compare selection). */
+	/**
+	 * Select a model version (the composed demo also clears a now-colliding compare selection).
+	 */
 	onSelectVersion: (version: string) => void
-	/** Toggle the forced WASM backend. */
+	/**
+	 * Toggle the forced WASM backend.
+	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 }
 
-/** The floating control panel. */
+/**
+ * The floating control panel.
+ */
 export function DemoControls({
 	runtime,
 	geocode,

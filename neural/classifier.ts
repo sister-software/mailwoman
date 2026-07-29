@@ -98,9 +98,13 @@ export interface NeuralAddressClassifierConfig {
 	 * is used.
 	 */
 	transitions?: number[][]
-	/** Optional learned start-of-sequence transition scores per label. */
+	/**
+	 * Optional learned start-of-sequence transition scores per label.
+	 */
 	startTransitions?: number[]
-	/** Optional learned end-of-sequence transition scores per label. */
+	/**
+	 * Optional learned end-of-sequence transition scores per label.
+	 */
 	endTransitions?: number[]
 	/**
 	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
@@ -152,7 +156,9 @@ export interface NeuralAddressClassifierConfig {
 	 * `street_type_features`/`street_type_confidence` ONNX inputs). Same JSON schema + parser as the gazetteer lexicon.
 	 */
 	streetTypeLexicon?: GazetteerLexicon
-	/** Optional locality-surface evidence lexicon (Option-A bundle) — `locality_surface_*` ONNX inputs. */
+	/**
+	 * Optional locality-surface evidence lexicon (Option-A bundle) — `locality_surface_*` ONNX inputs.
+	 */
 	localitySurfaceLexicon?: GazetteerLexicon
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces adjacent to a
@@ -217,7 +223,9 @@ export interface NeuralAddressClassifierConfig {
  * Config for the Stage 2.7 span-proposer integration (see `NeuralAddressClassifierConfig.spanProposer`).
  */
 export interface SpanProposerConfig extends SpanProposalPriorOpts {
-	/** Codex-backed designator vocabulary (`buildCodexSpanLexicon`). */
+	/**
+	 * Codex-backed designator vocabulary (`buildCodexSpanLexicon`).
+	 */
 	lexicon: SpanProposerLexicon
 }
 
@@ -225,7 +233,9 @@ export class NeuralAddressClassifier {
 	private readonly labels: readonly string[]
 	private readonly decodeMode: "viterbi" | "argmax"
 	private readonly transitions: number[][]
-	/** Lazily-built default Stage 2.7 config (codex lexicon, frozen scales) — see `cfg.spanProposer`. */
+	/**
+	 * Lazily-built default Stage 2.7 config (codex lexicon, frozen scales) — see `cfg.spanProposer`.
+	 */
 	#defaultProposerCfg: SpanProposerConfig | undefined
 	private readonly startTransitions: number[]
 	private readonly endTransitions: number[]
@@ -512,7 +522,9 @@ export class NeuralAddressClassifier {
 		})
 	}
 
-	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
+	/**
+	 * Tokenize → infer → Viterbi (or argmax) → decoder tree.
+	 */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (!text.length) return { raw: text, roots: [] }
 		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
@@ -625,7 +637,9 @@ export class NeuralAddressClassifier {
 		tokens: DecoderToken[]
 		logits: number[][]
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
-		/** Present iff `trace` — the retained intermediates `traceParse` assembles. */
+		/**
+		 * Present iff `trace` — the retained intermediates `traceParse` assembles.
+		 */
 		trace?: {
 			anchor?: SoftFeatureChannel
 			gazetteer?: SoftFeatureChannel
@@ -1050,7 +1064,9 @@ export class NeuralAddressClassifier {
 	}
 }
 
-/** Result of `parseWithLogits` — tree + raw material for per-span logit aggregation. */
+/**
+ * Result of `parseWithLogits` — tree + raw material for per-span logit aggregation.
+ */
 export interface ParseWithLogitsResult {
 	tree: AddressTree
 	logits: number[][]
@@ -1124,7 +1140,9 @@ export interface ParseOpts {
 	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
-	/** Override bias magnitudes for the morphology prior. */
+	/**
+	 * Override bias magnitudes for the morphology prior.
+	 */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 	/**
 	 * Trailing-locality prior (comma-free "street + trailing city" — fork B). Geometry-gated: fires only on a trailing
@@ -1181,7 +1199,9 @@ export interface ParseOpts {
 	 * `data/eval/calibration/isotonic-<locale>-<version>.json`.
 	 */
 	calibrate?: Calibrator
-	/** Per-parse override of the config-level `bridgePunctuationGaps` (see that doc). */
+	/**
+	 * Per-parse override of the config-level `bridgePunctuationGaps` (see that doc).
+	 */
 	bridgePunctuationGaps?: boolean
 	/**
 	 * Per-parse switch for the config-level `spanProposer` (see that doc). `false` disables the configured proposer for
@@ -1304,7 +1324,9 @@ function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
 	return { idx: maxIdx, conf }
 }
 
-/** Element-wise add two square matrices. Used to compose the structural mask + learned transitions. */
+/**
+ * Element-wise add two square matrices. Used to compose the structural mask + learned transitions.
+ */
 function addMatrices(a: number[][], b: number[][]): number[][] {
 	const n = a.length
 	const out: number[][] = []

@@ -21,22 +21,32 @@ import { ResultCamera } from "./ResultCamera.tsx"
 import { ResultOverlay } from "./ResultOverlay.tsx"
 
 export interface ResolvedPlaceLayersProps {
-	/** The render spec (from {@link useMapPlaceRender}); `null` renders nothing. */
+	/**
+	 * The render spec (from {@link useMapPlaceRender}); `null` renders nothing.
+	 */
 	spec: MapPlaceRenderSpec | null
 	/**
 	 * Apply the computed camera target via {@link ResultCamera}. @default true. Set false when the consumer drives the
 	 * camera itself (e.g. a controlled `<DemoMap viewState>` fed by {@link cameraToViewState}).
 	 */
 	applyCamera?: boolean
-	/** Animate the camera move. Forwarded to {@link ResultCamera}. @default true */
+	/**
+	 * Animate the camera move. Forwarded to {@link ResultCamera}. @default true
+	 */
 	animateCamera?: boolean
-	/** Source/layer id prefix for the outline. @default "mw-result" */
+	/**
+	 * Source/layer id prefix for the outline. @default "mw-result"
+	 */
 	outlineId?: string
-	/** Marker color. @default the house pink. */
+	/**
+	 * Marker color. @default the house pink.
+	 */
 	markerColor?: string
 }
 
-/** Render the marker(s), outline, and (optional) camera move for one resolved place. */
+/**
+ * Render the marker(s), outline, and (optional) camera move for one resolved place.
+ */
 export function ResolvedPlaceLayers({
 	spec,
 	applyCamera = true,

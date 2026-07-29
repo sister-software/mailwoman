@@ -27,26 +27,36 @@ const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/count
  */
 const DEFAULT_OUT = fileURLToPath(new URL("../country/reference-data.ts", import.meta.url))
 
-/** A single country record from mledoze/countries, narrowed to the fields this tool reads. */
+/**
+ * A single country record from mledoze/countries, narrowed to the fields this tool reads.
+ */
 interface MledozeCountry {
 	cca2?: string
 	idd?: { root?: string; suffixes?: string[] }
 	currencies?: Record<string, { name?: string; symbol?: string }>
 }
 
-/** The emitted per-country reference row. */
+/**
+ * The emitted per-country reference row.
+ */
 interface CountryReferenceEntry {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
 }
 
-/** Options for {@linkcode generateCountryReference}. */
+/**
+ * Options for {@linkcode generateCountryReference}.
+ */
 export interface GenerateCountryReferenceOptions {
-	/** Output path override. Default: `codex/country/reference-data.ts` (the committed table). */
+	/**
+	 * Output path override. Default: `codex/country/reference-data.ts` (the committed table).
+	 */
 	out?: string
 }
 
-/** Summary returned by {@linkcode generateCountryReference}. */
+/**
+ * Summary returned by {@linkcode generateCountryReference}.
+ */
 export interface GenerateCountryReferenceSummary {
 	countries: number
 	outPath: string
@@ -78,7 +88,9 @@ const serialize = (o: CountryReferenceEntry): string =>
 		.replaceAll('"name"', "name")
 		.replaceAll('"symbol"', "symbol")
 
-/** Fetch mledoze/countries and regenerate the committed `COUNTRY_REFERENCE` table. */
+/**
+ * Fetch mledoze/countries and regenerate the committed `COUNTRY_REFERENCE` table.
+ */
 export async function generateCountryReference(
 	options: GenerateCountryReferenceOptions = {},
 	report?: (line: string) => void

@@ -39,7 +39,9 @@ const BYTES_PER_KIB = 1024
 
 const execFileAsync = promisify(execFile)
 
-/** The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05). If IMLS publishes a newer year, update this URL. */
+/**
+ * The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05). If IMLS publishes a newer year, update this URL.
+ */
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
 const SLUG = "usgov-imls-pls"
 
@@ -53,7 +55,9 @@ interface SourceManifest {
 	bytes: number
 }
 
-/** Return the filenames listed inside a ZIP (the trailing column of each `unzip -l` row). */
+/**
+ * Return the filenames listed inside a ZIP (the trailing column of each `unzip -l` row).
+ */
 async function listZipEntries(zipPath: string): Promise<string[]> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
@@ -75,9 +79,8 @@ export async function fetchIMLSPLS(
 
 	report?.(`=== ${SLUG}`)
 
-	// ------------------------------------------------------------------
-	// Idempotency check: if outlet CSV already exists and sha matches, skip.
-	// ------------------------------------------------------------------
+	// MARK: Idempotency check: if outlet CSV already exists and sha matches, skip.
+
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
@@ -90,9 +93,8 @@ export async function fetchIMLSPLS(
 		}
 	}
 
-	// ------------------------------------------------------------------
-	// Download ZIP
-	// ------------------------------------------------------------------
+	// MARK: Download ZIP
+
 	report?.(`  Downloading ${ZIP_URL} ...`)
 	const { bytes: zipSize } = await downloadToFile({
 		url: ZIP_URL,
@@ -142,15 +144,13 @@ export async function fetchIMLSPLS(
 	const csvSize = statSync(csvDest).size
 	const csvSha = await sha256File(csvDest)
 
-	// ------------------------------------------------------------------
-	// Remove ZIP (small, but keep destDir clean)
-	// ------------------------------------------------------------------
+	// MARK: Remove ZIP (small, but keep destDir clean)
+
 	await rm(zipDest, { force: true })
 	report?.("  Removed ZIP (CSV kept)")
 
-	// ------------------------------------------------------------------
-	// Write MANIFEST
-	// ------------------------------------------------------------------
+	// MARK: Write MANIFEST
+
 	const manifest: SourceManifest = {
 		source_url: ZIP_URL,
 		downloaded_at: new Date().toISOString(),

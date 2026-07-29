@@ -12,7 +12,9 @@ import { repoRootPath } from "@mailwoman/core/utils"
 
 const repoRoot = repoRootPath()
 
-/** Files to rewrite: everything under packages/, recursively, .ts/.tsx. */
+/**
+ * Files to rewrite: everything under packages/, recursively, .ts/.tsx.
+ */
 function listFiles() {
 	const out = execSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
 
@@ -22,7 +24,9 @@ function listFiles() {
 		.map((p) => resolve(repoRoot, p))
 }
 
-/** Map intra-monorepo import paths to their new home. Order matters: longer first. */
+/**
+ * Map intra-monorepo import paths to their new home. Order matters: longer first.
+ */
 const scopeRewrites: Array<[RegExp, string]> = [
 	[/^mailwoman\/core\/resources\/languages$/, "@mailwoman/core/resources/languages"],
 	[/^mailwoman\/core\/resources\/db$/, "@mailwoman/core/resources/db"],
@@ -37,7 +41,9 @@ const scopeRewrites: Array<[RegExp, string]> = [
 	[/^mailwoman\/solvers$/, "@mailwoman/core/solvers"],
 ]
 
-/** Imports that should become repo-relative paths (root-only modules). */
+/**
+ * Imports that should become repo-relative paths (root-only modules).
+ */
 const rootRelative: Record<string, string> = {
 	"mailwoman/cli-kit": "cli-kit/index.js",
 	"mailwoman/test-kit": "test-kit/index.js",

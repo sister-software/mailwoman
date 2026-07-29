@@ -21,157 +21,259 @@ import type { TIGERTabulatedBlockProperties } from "./tabulation-block.ts"
  * @see {@linkcode AdminLevel1Code} for a combined set of states and territories.
  */
 export const FIPSStateCode = {
-	/** @title Alabama */
+	/**
+	 * @title Alabama
+	 */
 	AL: "01",
 
-	/** @title Alaska */
+	/**
+	 * @title Alaska
+	 */
 	AK: "02",
 
-	/** @title Arizona */
+	/**
+	 * @title Arizona
+	 */
 	AZ: "04",
 
-	/** @title Arkansas */
+	/**
+	 * @title Arkansas
+	 */
 	AR: "05",
 
-	/** @title California */
+	/**
+	 * @title California
+	 */
 	CA: "06",
 
-	/** @title Colorado */
+	/**
+	 * @title Colorado
+	 */
 	CO: "08",
 
-	/** @title Connecticut */
+	/**
+	 * @title Connecticut
+	 */
 	CT: "09",
 
-	/** @title Delaware */
+	/**
+	 * @title Delaware
+	 */
 	DE: "10",
 
-	/** @title District Of Columbia */
+	/**
+	 * @title District Of Columbia
+	 */
 	DC: "11",
 
-	/** @title Florida */
+	/**
+	 * @title Florida
+	 */
 	FL: "12",
 
-	/** @title Georgia */
+	/**
+	 * @title Georgia
+	 */
 	GA: "13",
 
-	/** @title Hawaii */
+	/**
+	 * @title Hawaii
+	 */
 	HI: "15",
 
-	/** @title Idaho */
+	/**
+	 * @title Idaho
+	 */
 	ID: "16",
 
-	/** @title Illinois */
+	/**
+	 * @title Illinois
+	 */
 	IL: "17",
 
-	/** @title Indiana */
+	/**
+	 * @title Indiana
+	 */
 	IN: "18",
 
-	/** @title Iowa */
+	/**
+	 * @title Iowa
+	 */
 	IA: "19",
 
-	/** @title Kansas */
+	/**
+	 * @title Kansas
+	 */
 	KS: "20",
 
-	/** @title Kentucky */
+	/**
+	 * @title Kentucky
+	 */
 	KY: "21",
 
-	/** @title Louisiana */
+	/**
+	 * @title Louisiana
+	 */
 	LA: "22",
 
-	/** @title Maine */
+	/**
+	 * @title Maine
+	 */
 	ME: "23",
 
-	/** @title Maryland */
+	/**
+	 * @title Maryland
+	 */
 	MD: "24",
 
-	/** @title Massachusetts */
+	/**
+	 * @title Massachusetts
+	 */
 	MA: "25",
 
-	/** @title Michigan */
+	/**
+	 * @title Michigan
+	 */
 	MI: "26",
 
-	/** @title Minnesota */
+	/**
+	 * @title Minnesota
+	 */
 	MN: "27",
 
-	/** @title Mississippi */
+	/**
+	 * @title Mississippi
+	 */
 	MS: "28",
 
-	/** @title Missouri */
+	/**
+	 * @title Missouri
+	 */
 	MO: "29",
 
-	/** @title Montana */
+	/**
+	 * @title Montana
+	 */
 	MT: "30",
 
-	/** @title Nebraska */
+	/**
+	 * @title Nebraska
+	 */
 	NE: "31",
 
-	/** @title Nevada */
+	/**
+	 * @title Nevada
+	 */
 	NV: "32",
 
-	/** @title New Hampshire */
+	/**
+	 * @title New Hampshire
+	 */
 	NH: "33",
 
-	/** @title New Jersey */
+	/**
+	 * @title New Jersey
+	 */
 	NJ: "34",
 
-	/** @title New Mexico */
+	/**
+	 * @title New Mexico
+	 */
 	NM: "35",
 
-	/** @title New York */
+	/**
+	 * @title New York
+	 */
 	NY: "36",
 
-	/** @title North Carolina */
+	/**
+	 * @title North Carolina
+	 */
 	NC: "37",
 
-	/** @title North Dakota */
+	/**
+	 * @title North Dakota
+	 */
 	ND: "38",
 
-	/** @title Ohio */
+	/**
+	 * @title Ohio
+	 */
 	OH: "39",
 
-	/** @title Oklahoma */
+	/**
+	 * @title Oklahoma
+	 */
 	OK: "40",
 
-	/** @title Oregon */
+	/**
+	 * @title Oregon
+	 */
 	OR: "41",
 
-	/** @title Pennsylvania */
+	/**
+	 * @title Pennsylvania
+	 */
 	PA: "42",
 
-	/** @title Rhode Island */
+	/**
+	 * @title Rhode Island
+	 */
 	RI: "44",
 
-	/** @title South Carolina */
+	/**
+	 * @title South Carolina
+	 */
 	SC: "45",
 
-	/** @title South Dakota */
+	/**
+	 * @title South Dakota
+	 */
 	SD: "46",
 
-	/** @title Tennessee */
+	/**
+	 * @title Tennessee
+	 */
 	TN: "47",
 
-	/** @title Texas */
+	/**
+	 * @title Texas
+	 */
 	TX: "48",
 
-	/** @title Utah */
+	/**
+	 * @title Utah
+	 */
 	UT: "49",
 
-	/** @title Vermont */
+	/**
+	 * @title Vermont
+	 */
 	VT: "50",
 
-	/** @title Virginia */
+	/**
+	 * @title Virginia
+	 */
 	VA: "51",
 
-	/** @title Washington */
+	/**
+	 * @title Washington
+	 */
 	WA: "53",
 
-	/** @title West Virginia */
+	/**
+	 * @title West Virginia
+	 */
 	WV: "54",
 
-	/** @title Wisconsin */
+	/**
+	 * @title Wisconsin
+	 */
 	WI: "55",
 
-	/** @title Wyoming */
+	/**
+	 * @title Wyoming
+	 */
 	WY: "56",
 } as const
 
@@ -194,19 +296,29 @@ export const FIPSTerritoryCode = {
 	 */
 	JA: "74",
 
-	/** @title American Samoa */
+	/**
+	 * @title American Samoa
+	 */
 	AS: "60",
 
-	/** @title Guam */
+	/**
+	 * @title Guam
+	 */
 	GU: "66",
 
-	/** @title Northern Mariana Islands */
+	/**
+	 * @title Northern Mariana Islands
+	 */
 	MP: "69",
 
-	/** @title Puerto Rico */
+	/**
+	 * @title Puerto Rico
+	 */
 	PR: "72",
 
-	/** @title Virgin Islands */
+	/**
+	 * @title Virgin Islands
+	 */
 	VI: "78",
 } as const
 
@@ -344,7 +456,9 @@ export const StateAbbreviation = {
 
 export type StateAbbreviation = (typeof StateAbbreviation)[keyof typeof StateAbbreviation]
 
-/** Postal abbreviations for US territories, kept apart from the states so callers can include or exclude them. */
+/**
+ * Postal abbreviations for US territories, kept apart from the states so callers can include or exclude them.
+ */
 export const TerritoryAbbreviation = {
 	"American Samoa": "AS",
 	"Johnston Atoll": "JA",
@@ -365,7 +479,9 @@ export type TerritoryAbbreviation = (typeof TerritoryAbbreviation)[keyof typeof 
  */
 export type AdminLevel1Abbreviation = StateAbbreviation | TerritoryAbbreviation
 
-/** Every admin-level-1 postal abbreviation — the fifty states, DC, and the territories together. */
+/**
+ * Every admin-level-1 postal abbreviation — the fifty states, DC, and the territories together.
+ */
 export const AdminLevel1Abbreviation = {
 	...StateAbbreviation,
 	...TerritoryAbbreviation,

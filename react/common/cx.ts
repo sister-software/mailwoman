@@ -10,7 +10,9 @@
 
 export type ClassValue = string | number | false | null | undefined | Record<string, boolean>
 
-/** Join truthy class tokens; object entries contribute their key when the value is truthy. */
+/**
+ * Join truthy class tokens; object entries contribute their key when the value is truthy.
+ */
 export function cx(...values: ClassValue[]): string {
 	const out: string[] = []
 

@@ -343,5 +343,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovNADAdapter = createUsgovNADAdapter()

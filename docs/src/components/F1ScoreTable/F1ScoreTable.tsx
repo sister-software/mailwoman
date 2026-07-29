@@ -17,37 +17,47 @@ import React, { useMemo, useState } from "react"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Data types
-// ---------------------------------------------------------------------------
+// MARK: Data types
 
-/** F1 percentage at or above which a cell is shaded as strong. Presentation only. */
+/**
+ * F1 percentage at or above which a cell is shaded as strong. Presentation only.
+ */
 const HIGH_F1_PERCENT = 80
 
-/** F1 percentage at or above which a cell is shaded as middling; below it, weak. */
+/**
+ * F1 percentage at or above which a cell is shaded as middling; below it, weak.
+ */
 const MID_F1_PERCENT = 30
 
 interface F1Row {
-	/** Human-readable tag label (e.g. "us.street"). */
+	/**
+	 * Human-readable tag label (e.g. "us.street").
+	 */
 	tag: string
-	/** Which eval set this was measured against. */
+	/**
+	 * Which eval set this was measured against.
+	 */
 	eval: string
-	/** Tooltip explaining this metric in context. */
+	/**
+	 * Tooltip explaining this metric in context.
+	 */
 	tooltip: string
-	/** F1 score (0–100). `null` means not measured for this version. */
+	/**
+	 * F1 score (0–100). `null` means not measured for this version.
+	 */
 	v410: number | null
 	v420: number | null
 	v430: number | null
 	v440: number | null
-	/** The 2026-07-02 full re-score of the shipped 5.0.0 line (weights = v4.15.0, int8). */
+	/**
+	 * The 2026-07-02 full re-score of the shipped 5.0.0 line (weights = v4.15.0, int8).
+	 */
 	v500: number | null
 }
 
 type SortKey = "tag" | "eval" | "v410" | "v420" | "v430" | "v440" | "v500"
 
-// ---------------------------------------------------------------------------
-// F1 data (sourced from parity-scorecard-2026-06-11.md)
-// ---------------------------------------------------------------------------
+// MARK: F1 data (sourced from parity-scorecard-2026-06-11.md)
 
 const F1_DATA: F1Row[] = [
 	{
@@ -216,11 +226,11 @@ const F1_DATA: F1Row[] = [
 	},
 ]
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+// MARK: Helpers
 
-/** Color a cell based on the score range: red < 30, amber 30–80, green ≥ 80. */
+/**
+ * Color a cell based on the score range: red < 30, amber 30–80, green ≥ 80.
+ */
 function scoreClass(value: number | null): string {
 	if (value == null) return styles.cellNA
 
@@ -231,16 +241,16 @@ function scoreClass(value: number | null): string {
 	return styles.cellLow
 }
 
-/** Draw an arrow for the sort direction. */
+/**
+ * Draw an arrow for the sort direction.
+ */
 function sortArrow(key: SortKey, current: SortKey, dir: "asc" | "desc"): string {
 	if (key !== current) return ""
 
 	return dir === "asc" ? " ▲" : " ▼"
 }
 
-// ---------------------------------------------------------------------------
-// Tooltip component (pure CSS tooltip — lightweight, works without JS in SSR)
-// ---------------------------------------------------------------------------
+// MARK: Tooltip component (pure CSS tooltip — lightweight, works without JS in SSR)
 
 const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
 	return (
@@ -251,9 +261,7 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Inner component (below BrowserOnly boundary — sort state is React)
-// ---------------------------------------------------------------------------
+// MARK: Inner component (below BrowserOnly boundary — sort state is React)
 
 const F1ScoreTableInner: React.FC = () => {
 	const [sortKey, setSortKey] = useState<SortKey>("tag")
@@ -361,9 +369,7 @@ const F1ScoreTableInner: React.FC = () => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component (SSR-safe)
-// ---------------------------------------------------------------------------
+// MARK: Public component (SSR-safe)
 
 export const F1ScoreTable: React.FC = () => {
 	return <BrowserOnly fallback={<p>Loading F1 score table…</p>}>{() => <F1ScoreTableInner />}</BrowserOnly>

@@ -39,9 +39,13 @@ function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
 }
 
 export interface SQLiteStreetNameLookupOpts {
-	/** ISO-2 (upper-case) countries this index answers for. Default `["FR"]` (the BAN street-centroids instance). */
+	/**
+	 * ISO-2 (upper-case) countries this index answers for. Default `["FR"]` (the BAN street-centroids instance).
+	 */
 	countries?: Iterable<string>
-	/** Table name. Default `street_centroid`. */
+	/**
+	 * Table name. Default `street_centroid`.
+	 */
 	table?: string
 }
 
@@ -98,7 +102,9 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 		return this.#byName.get(norm) !== undefined
 	}
 
-	/** Close the underlying handle. */
+	/**
+	 * Close the underlying handle.
+	 */
 	close(): void {
 		this.#db.close()
 	}

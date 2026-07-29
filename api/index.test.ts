@@ -13,7 +13,9 @@ beforeEach(() => {
 	resetMetricsForTest()
 })
 
-/** The `detail` text every "engine method absent" 503 carries — see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`. */
+/**
+ * The `detail` text every "engine method absent" 503 carries — see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`.
+ */
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
@@ -33,7 +35,9 @@ function fixtureGeocodeOutcome(address: string) {
 	return { address, lat: 38.8977, lon: -77.0365, resolution_tier: "address_point" }
 }
 
-/** A fully-wired fixture engine — every method present, exercising every 200 happy path. */
+/**
+ * A fully-wired fixture engine — every method present, exercising every 200 happy path.
+ */
 const fullEngine: MailwomanAPIEngine = {
 	parse: async (address, opts) => fixtureParseOutcome(address, opts.debug),
 	geocode: async (address) => fixtureGeocodeOutcome(address),
@@ -45,9 +49,7 @@ const fullEngine: MailwomanAPIEngine = {
 	health: () => ({ model: { name: "test-model", version: "0.0.0" } }),
 }
 
-// ---------------------------------------------------------------------------------------------
-// /v1/parse
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/parse
 
 test("POST /v1/parse: happy path returns the components + decoded tree", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -131,9 +133,7 @@ test("GET /v1/parse: engine.parse absent -> 501", async () => {
 	expect(await res.json()).toEqual({ error: "parse not implemented" })
 })
 
-// ---------------------------------------------------------------------------------------------
-// /v1/geocode
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/geocode
 
 test("POST /v1/geocode: happy path passes the GeocodeOutcome through verbatim", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -187,9 +187,7 @@ test("POST /v1/geocode: a thrown engine error is recorded as an error tier, then
 	expect(snapshot.timings.errors).toBe(1)
 })
 
-// ---------------------------------------------------------------------------------------------
-// /v1/batch
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/batch
 
 test("POST /v1/batch: happy path returns one row per address, in order, per-row error isolation", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -259,9 +257,7 @@ test("/v1/batch records whole-call latency under the batch tier", async () => {
 	expect(snapshot.timings.tiers["batch"]).toBe(1)
 })
 
-// ---------------------------------------------------------------------------------------------
-// /v1/resolve
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/resolve
 
 test("POST /v1/resolve: happy path returns { tree } passed through the engine", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -297,9 +293,7 @@ test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
 	expect(await res.json()).toEqual({ error: "resolver not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
-// ---------------------------------------------------------------------------------------------
-// /v1/reload
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/reload
 
 test("POST /v1/reload: happy path passes { reloaded, versions } through", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -315,9 +309,7 @@ test("POST /v1/reload: engine.reload absent -> 503", async () => {
 	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
-// ---------------------------------------------------------------------------------------------
-// /v1/format — wired in-package, no engine method, always available
-// ---------------------------------------------------------------------------------------------
+// MARK: /v1/format — wired in-package, no engine method, always available
 
 test("POST /v1/format: round-trips components into a formatted string + a non-empty canonicalKey", async () => {
 	const app = createMailwomanAPI({})
@@ -369,9 +361,7 @@ test("POST /v1/format: a missing required field -> 400 in the api-kit envelope, 
 	expect(Object.keys(body).toSorted()).toEqual(["detail", "error"])
 })
 
-// ---------------------------------------------------------------------------------------------
-// /health
-// ---------------------------------------------------------------------------------------------
+// MARK: /health
 
 test("GET /health: with an engine, spreads engine.health() alongside status + uptime_s", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -392,9 +382,7 @@ test("GET /health: without an engine, still answers 200 with status + uptime_s (
 	expect(typeof body["uptime_s"]).toBe("number")
 })
 
-// ---------------------------------------------------------------------------------------------
-// /metrics
-// ---------------------------------------------------------------------------------------------
+// MARK: /metrics
 
 test("GET /metrics: reflects a recorded /v1/geocode call", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -414,9 +402,7 @@ test("GET /metrics: reflects a recorded /v1/geocode call", async () => {
 	expect(after.timings.tiers["address_point"]).toBe(1)
 })
 
-// ---------------------------------------------------------------------------------------------
-// /openapi.json
-// ---------------------------------------------------------------------------------------------
+// MARK: /openapi.json
 
 test("GET /openapi.json: documents all 8 native paths, and is not self-referenced", async () => {
 	const app = createMailwomanAPI(fullEngine)
@@ -455,9 +441,7 @@ test("GET /openapi.json: full-info document config lands (license, contact, serv
 	expect(doc.tags?.map((t) => t.name)).toContain("meta")
 })
 
-// ---------------------------------------------------------------------------------------------
-// CORS + body limit + the 500 safety net
-// ---------------------------------------------------------------------------------------------
+// MARK: CORS + body limit + the 500 safety net
 
 test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients), GET/POST/OPTIONS", async () => {
 	const app = createMailwomanAPI(fullEngine)

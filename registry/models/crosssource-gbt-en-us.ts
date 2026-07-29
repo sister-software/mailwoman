@@ -11,7 +11,9 @@
 
 import type { GBT } from "@mailwoman/match"
 
-/** Training provenance for {@link CROSS_SOURCE_GBT_MODEL} — seed, split and scores. */
+/**
+ * Training provenance for {@link CROSS_SOURCE_GBT_MODEL} — seed, split and scores.
+ */
 export const CROSS_SOURCE_GBT_META = {
 	version: "1.0.0",
 	objective: "cross-source-link",

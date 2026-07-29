@@ -47,7 +47,9 @@ export interface CoarsePlacerMeta {
 	temperature: number
 	bias: number[]
 	quantization?: "int8-per-row"
-	/** Per-class dequantization scale; present iff `quantization === "int8-per-row"`. */
+	/**
+	 * Per-class dequantization scale; present iff `quantization === "int8-per-row"`.
+	 */
 	scales?: number[]
 }
 
@@ -82,17 +84,25 @@ export function dequantizeInt8Weights(
 }
 
 export interface CoarsePrediction {
-	/** The predicted class, or `null` when the model abstained (confidence below the threshold). */
+	/**
+	 * The predicted class, or `null` when the model abstained (confidence below the threshold).
+	 */
 	country: string | null
-	/** Calibrated probability of the top class (the abstention signal). */
+	/**
+	 * Calibrated probability of the top class (the abstention signal).
+	 */
 	confidence: number
 	abstained: boolean
-	/** The full calibrated class distribution. */
+	/**
+	 * The full calibrated class distribution.
+	 */
 	probs: Record<string, number>
 }
 
 export interface CoarsePlacerOpts {
-	/** Abstain when the calibrated top-class confidence is below this (default 0.5). */
+	/**
+	 * Abstain when the calibrated top-class confidence is below this (default 0.5).
+	 */
 	abstainBelow?: number
 	/**
 	 * Open-set reject rule (#244 M2). When `true`, the ABSTAIN decision uses the total IN-MAP probability mass `1 -
@@ -300,7 +310,9 @@ export function inMapPosterior(
 	return posterior
 }
 
-/** Load a coarse-placer from a JSON metadata file + a sibling `.weights.bin` (Float32). */
+/**
+ * Load a coarse-placer from a JSON metadata file + a sibling `.weights.bin` (Float32).
+ */
 export async function loadCoarsePlacer(
 	metaJson: { classes: string[]; featureDim: number; temperature: number; bias: number[] },
 	weights: Float32Array,

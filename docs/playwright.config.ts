@@ -21,7 +21,9 @@ import { defineConfig, devices } from "@playwright/test"
 
 const CI = !!$public.CI
 
-/** When set, run against a deployed URL and skip the local build+serve machinery. */
+/**
+ * When set, run against a deployed URL and skip the local build+serve machinery.
+ */
 const remoteURL = $public.MAILWOMAN_DEMO_URL
 const LOCAL_PORT = 7770
 const baseURL = remoteURL ?? `http://localhost:${LOCAL_PORT}`

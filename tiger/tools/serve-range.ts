@@ -15,15 +15,23 @@ import { createReadStream, statSync, type Stats } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import { extname, join, normalize } from "node:path"
 
-/** Options for {@linkcode serveWithRangeSupport}. */
+/**
+ * Options for {@linkcode serveWithRangeSupport}.
+ */
 export interface ServeRangeOptions {
-	/** Directory to serve. Default `/tmp`. */
+	/**
+	 * Directory to serve. Default `/tmp`.
+	 */
 	dir?: string
-	/** Port to listen on. Default 8899. */
+	/**
+	 * Port to listen on. Default 8899.
+	 */
 	port?: number
 }
 
-/** A running range-capable static server, resolved once listening. */
+/**
+ * A running range-capable static server, resolved once listening.
+ */
 export interface RangeServer {
 	dir: string
 	port: number

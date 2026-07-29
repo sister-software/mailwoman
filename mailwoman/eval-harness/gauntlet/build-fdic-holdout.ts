@@ -19,22 +19,34 @@ import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
 
-/** Southern edge of the US including Puerto Rico and Hawaii. */
+/**
+ * Southern edge of the US including Puerto Rico and Hawaii.
+ */
 const MIN_US_LATITUDE = 17
 
-/** Northern edge of the US including Alaska. */
+/**
+ * Northern edge of the US including Alaska.
+ */
 const MAX_US_LATITUDE = 72
 
-/** Western edge of the US including the Aleutians. */
+/**
+ * Western edge of the US including the Aleutians.
+ */
 const MIN_US_LONGITUDE = -180
 
-/** Eastern edge of the US including Maine and the Virgin Islands. */
+/**
+ * Eastern edge of the US including Maine and the Virgin Islands.
+ */
 const MAX_US_LONGITUDE = -64
 
-/** Largest absolute latitude in WGS-84 degrees. */
+/**
+ * Largest absolute latitude in WGS-84 degrees.
+ */
 const MAX_ABS_LATITUDE = 90
 
-/** Largest absolute longitude in WGS-84 degrees. */
+/**
+ * Largest absolute longitude in WGS-84 degrees.
+ */
 const MAX_ABS_LONGITUDE = 180
 
 const API = "https://banks.data.fdic.gov/api/locations"
@@ -50,7 +62,9 @@ interface Loc {
 	LONGITUDE?: number
 }
 
-/** Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth. */
+/**
+ * Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth.
+ */
 function plausibleUs(lat: number, lon: number): boolean {
 	return (
 		Number.isFinite(lat) &&
@@ -72,7 +86,9 @@ async function fetchPage(offset: number): Promise<Loc[]> {
 	return (body.data ?? []).map((d) => d.data)
 }
 
-/** Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy). */
+/**
+ * Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy).
+ */
 export async function buildFDICHoldout(): Promise<void> {
 	const OUT = `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`
 	const tmp = `${OUT}.tmp-${process.pid}`

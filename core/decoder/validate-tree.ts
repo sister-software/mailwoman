@@ -56,7 +56,9 @@ export interface TreeValidity {
 	violations: TreeViolation[]
 }
 
-/** Validate an `AddressTree`'s structural coherence. See module docstring. */
+/**
+ * Validate an `AddressTree`'s structural coherence. See module docstring.
+ */
 export function validateTree(tree: AddressTree): TreeValidity {
 	const violations: TreeViolation[] = []
 	// Validate against the tree's own addressing system's hierarchy (defaults to Western).

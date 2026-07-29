@@ -51,7 +51,9 @@ export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
  */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
-/** SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord. */
+/**
+ * SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord.
+ */
 interface BdcLocationRow {
 	location_id: number
 	address_primary: string
@@ -118,7 +120,9 @@ export function buildPostcode(zip: string, suffix: string | null): string {
 	return `${z}-${s}`
 }
 
-/** Build a BDC adapter. Pure factory so multiple instances can be created in tests. */
+/**
+ * Build a BDC adapter. Pure factory so multiple instances can be created in tests.
+ */
 export function createFccBdcAdapter(): CorpusAdapter {
 	return {
 		id: FCC_BDC_ADAPTER_ID,
@@ -193,5 +197,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const fccBdcAdapter = createFccBdcAdapter()

@@ -23,15 +23,23 @@
  *   fn (the corpus-tools lazy-import convention).
  */
 
-/** Options for {@linkcode renderServedMapToPNG}. */
+/**
+ * Options for {@linkcode renderServedMapToPNG}.
+ */
 export interface RenderMapOptions {
-	/** The served localhost URL of the map page (NOT a file:// path — see the module doc). */
+	/**
+	 * The served localhost URL of the map page (NOT a file:// path — see the module doc).
+	 */
 	url: string
-	/** Output PNG path. */
+	/**
+	 * Output PNG path.
+	 */
 	outPNG: string
 }
 
-/** Screenshot a served MapLibre map page once the tiles + marker layer settle. */
+/**
+ * Screenshot a served MapLibre map page once the tiles + marker layer settle.
+ */
 export async function renderServedMapToPNG(
 	options: RenderMapOptions,
 	report?: (line: string) => void

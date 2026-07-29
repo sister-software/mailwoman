@@ -14,7 +14,9 @@ import { describe, expect, it } from "vitest"
 
 import mailwomanFastify, { type MailwomanFastifyOptions, type RuntimePipeline } from "./index.ts"
 
-/** A minimal resolved locality node — carries a coordinate so `extractGeocodeResult` returns lat/lon (admin tier). */
+/**
+ * A minimal resolved locality node — carries a coordinate so `extractGeocodeResult` returns lat/lon (admin tier).
+ */
 function localityNode(value: string, lat: number, lon: number): AddressNode {
 	return {
 		tag: "locality",
@@ -29,7 +31,9 @@ function localityNode(value: string, lat: number, lon: number): AddressNode {
 	}
 }
 
-/** Build a fake pipeline whose result is fixed except for the echoed input. `poiIntent` is attached when supplied. */
+/**
+ * Build a fake pipeline whose result is fixed except for the echoed input. `poiIntent` is attached when supplied.
+ */
 function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline {
 	return async (raw: string, _opts?: PipelineOpts): Promise<PipelineResult> => {
 		const tree: AddressTree = { raw, roots: [localityNode("New York", 40.7128, -74.006)] }
@@ -49,7 +53,9 @@ function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline 
 	}
 }
 
-/** Register the plugin against a fresh Fastify instance with an injected fake pipeline. */
+/**
+ * Register the plugin against a fresh Fastify instance with an injected fake pipeline.
+ */
 async function buildApp(
 	opts: Omit<MailwomanFastifyOptions, "pipeline"> & { pipeline?: RuntimePipeline }
 ): Promise<FastifyInstance> {

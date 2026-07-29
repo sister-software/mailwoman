@@ -1026,11 +1026,11 @@ describe("resolveTree — interpolation tier (#483)", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// Street-centroid tier (#1042) — the street-only rung between interp and admin.
-// ---------------------------------------------------------------------------
+// MARK: Street-centroid tier (#1042) — the street-only rung between interp and admin.
 
-/** A fake street-centroid lookup that hits only for known (normalized street, commune) pairs. */
+/**
+ * A fake street-centroid lookup that hits only for known (normalized street, commune) pairs.
+ */
 function fakeStreetCentroids(
 	entries: Array<{ street: string; commune: string; lat: number; lon: number }>,
 	onCall?: () => void
@@ -1057,10 +1057,14 @@ function fakeStreetCentroids(
 	}
 }
 
-/** A FR-only provider (mirrors BANShardProvider: only `fr` yields a lookup). */
+/**
+ * A FR-only provider (mirrors BANShardProvider: only `fr` yields a lookup).
+ */
 const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (country === "fr" ? lookup : undefined)
 
-/** Pull the street node's stamped street-centroid tier out of a resolved tree, if any. */
+/**
+ * Pull the street node's stamped street-centroid tier out of a resolved tree, if any.
+ */
 function streetTier(t: AddressTree): AddressNode | undefined {
 	const stack = [...t.roots]
 

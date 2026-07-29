@@ -82,17 +82,27 @@ const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
 	synth_base_id: "VARCHAR",
 }
 
-/** Options for {@linkcode jsonlToParquet}. */
+/**
+ * Options for {@linkcode jsonlToParquet}.
+ */
 export interface JSONLToParquetOptions {
-	/** The labeled-row JSONL to convert. */
+	/**
+	 * The labeled-row JSONL to convert.
+	 */
 	input: string
-	/** The parquet shard to write. */
+	/**
+	 * The parquet shard to write.
+	 */
 	output: string
-	/** Parquet row-group size. Default 50000. */
+	/**
+	 * Parquet row-group size. Default 50000.
+	 */
 	rowGroupSize?: number
 }
 
-/** Summary returned by {@linkcode jsonlToParquet}. */
+/**
+ * Summary returned by {@linkcode jsonlToParquet}.
+ */
 export interface JSONLToParquetSummary {
 	read: number
 	written: number
@@ -126,12 +136,16 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	}
 }
 
-/** Escape a path for single-quoted SQL string literals. */
+/**
+ * Escape a path for single-quoted SQL string literals.
+ */
 function sqlString(value: string): string {
 	return value.replaceAll("'", "''")
 }
 
-/** Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard. */
+/**
+ * Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard.
+ */
 export async function jsonlToParquet(
 	options: JSONLToParquetOptions,
 	report?: (line: string) => void

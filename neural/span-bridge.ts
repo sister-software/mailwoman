@@ -33,7 +33,9 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  * - House-number fragments on six FR golden rows (the model double-labels the number; the comma is the only thing keeping
  *   the spans honest). A comma between same-tag spans is a list/separator, never the inside of a surface form.
  */
-/** Tokens a gap may span and still be bridged. Wider gaps are separate spans, not one interrupted span. */
+/**
+ * Tokens a gap may span and still be bridged. Wider gaps are separate spans, not one interrupted span.
+ */
 const MAX_BRIDGEABLE_GAP = 3
 
 function bridgeable(gap: string): boolean {
@@ -44,7 +46,9 @@ function bridgeable(gap: string): boolean {
 	return /[^\s]/.test(gap)
 }
 
-/** Options for {@link bridgePunctuationGaps}. */
+/**
+ * Options for {@link bridgePunctuationGaps}.
+ */
 export interface BridgePunctuationOpts {
 	/**
 	 * Structural spans (from the Stage 2.7 span proposer — ANNOTATION/QUOTED groups, delimiters inclusive) whose
@@ -57,7 +61,9 @@ export interface BridgePunctuationOpts {
 	blockedSpans?: ReadonlyArray<{ start: number; end: number }>
 }
 
-/** True when a structural boundary falls inside the closed gap interval `[gapStart, gapEnd]`. */
+/**
+ * True when a structural boundary falls inside the closed gap interval `[gapStart, gapEnd]`.
+ */
 function crossesBlockedBoundary(
 	gapStart: number,
 	gapEnd: number,

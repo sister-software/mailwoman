@@ -13,7 +13,9 @@
 
 import type { GBT } from "@mailwoman/match"
 
-/** Provenance for the bundled model — what it was trained on. */
+/**
+ * Provenance for the bundled model — what it was trained on.
+ */
 export const DEDUP_GBT_META = {
 	version: "1.0.0",
 	locale: "en-US",

@@ -61,7 +61,9 @@ const PORTLAND_ME: ResolvedPlace = {
 	exactMatch: true,
 }
 
-/** Backend filtered by name-substring + placetype + country + `parentID` (descendant scope via parent_id). */
+/**
+ * Backend filtered by name-substring + placetype + country + `parentID` (descendant scope via parent_id).
+ */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {

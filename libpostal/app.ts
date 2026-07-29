@@ -23,7 +23,9 @@ import { registerLibpostalRoutes } from "./routes.ts"
  */
 const MAX_BODY_BYTES = 102_400
 
-/** Options for {@link createLibpostalApp}. */
+/**
+ * Options for {@link createLibpostalApp}.
+ */
 export interface LibpostalAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -62,7 +64,9 @@ export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the libpostal-compatible app around an injected {@link LibpostalEngine}. */
+/**
+ * Build the libpostal-compatible app around an injected {@link LibpostalEngine}.
+ */
 export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 

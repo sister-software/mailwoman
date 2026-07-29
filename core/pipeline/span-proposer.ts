@@ -34,13 +34,19 @@
  *   (see `neural/span-proposer-lexicon.ts`).
  */
 
-/** Token count below which an input is too short for its tail position to carry much signal. */
+/**
+ * Token count below which an input is too short for its tail position to carry much signal.
+ */
 const SHORT_INPUT_MAX_TOKENS = 3
 
-/** Confidence for a tail span in an input too short to clear {@link SHORT_INPUT_MAX_TOKENS}. */
+/**
+ * Confidence for a tail span in an input too short to clear {@link SHORT_INPUT_MAX_TOKENS}.
+ */
 const SHORT_TAIL_CONFIDENCE = 0.45
 
-/** Digits in the first half of a ZIP+4. A hyphen compound with this shape is a postcode, not a house number. */
+/**
+ * Digits in the first half of a ZIP+4. A hyphen compound with this shape is a postcode, not a house number.
+ */
 const ZIP5_LENGTH = 5
 
 /**
@@ -49,33 +55,53 @@ const ZIP5_LENGTH = 5
  */
 const CONFIDENT_ANNOTATION_MIN = 0.6
 
-/** Typed kinds a span proposal may carry. See the module doc for the three cue families. */
+/**
+ * Typed kinds a span proposal may carry. See the module doc for the three cue families.
+ */
 export type ProposedSpanKind =
-	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
+	/**
+	 * A balanced `()`/`[]` group whose content reads as an aside about the address.
+	 */
 	| "ANNOTATION_SPAN"
 	/**
 	 * A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's job.
 	 */
 	| "QUOTED_SPAN"
-	/** Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7"). */
+	/**
+	 * Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7").
+	 */
 	| "PO_BOX_PHRASE"
-	/** Secondary-unit designator + identifier ("Apt 4B", "Suite 500"). */
+	/**
+	 * Secondary-unit designator + identifier ("Apt 4B", "Suite 500").
+	 */
 	| "UNIT_PHRASE"
-	/** Level-class designator + identifier ("Floor 3", "FL 12"). */
+	/**
+	 * Level-class designator + identifier ("Floor 3", "FL 12").
+	 */
 	| "LEVEL_PHRASE"
-	/** Dual-path FUSED reading: the punctuated numeric is ONE value ("123 1/2", "69-10", "14/2"). */
+	/**
+	 * Dual-path FUSED reading: the punctuated numeric is ONE value ("123 1/2", "69-10", "14/2").
+	 */
 	| "FUSED_NUMBER"
-	/** Dual-path SPLIT reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45"). */
+	/**
+	 * Dual-path SPLIT reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45").
+	 */
 	| "SPLIT_UNIT"
-	/** Dual-path SPLIT reading, right side: the house number ("14" of "Flat 2/14"). */
+	/**
+	 * Dual-path SPLIT reading, right side: the house number ("14" of "Flat 2/14").
+	 */
 	| "SPLIT_HOUSE_NUMBER"
 
-/** One typed span proposal. Char offsets into the raw input; `end` exclusive. */
+/**
+ * One typed span proposal. Char offsets into the raw input; `end` exclusive.
+ */
 export interface ProposedSpan {
 	start: number
 	end: number
 	kind: ProposedSpanKind
-	/** 0..1. Confidence is shape-derived; consumers weight or floor it (it is never a verdict). */
+	/**
+	 * 0..1. Confidence is shape-derived; consumers weight or floor it (it is never a verdict).
+	 */
 	confidence: number
 	/**
 	 * Alternative readings of ONE surface share a group id (M3 dual-path: the fused and split readings of `2/14` carry
@@ -98,9 +124,13 @@ export interface SpanProposerLexicon {
 	 * Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale conditioning.
 	 */
 	systems: ReadonlySet<string>
-	/** Leading secondary-unit designator tokens (USPS Pub-28 C2 variants: "apt", "ste", "unit", …). */
+	/**
+	 * Leading secondary-unit designator tokens (USPS Pub-28 C2 variants: "apt", "ste", "unit", …).
+	 */
 	unitDesignators: ReadonlySet<string>
-	/** Level-class designator tokens ("floor", "fl", "bsmt", "ph", …) — typed LEVEL_PHRASE. */
+	/**
+	 * Level-class designator tokens ("floor", "fl", "bsmt", "ph", …) — typed LEVEL_PHRASE.
+	 */
 	levelDesignators: ReadonlySet<string>
 	/**
 	 * Descriptive designators ("building", "rear", "side", …) that, inside a bracketed group, read as annotation content
@@ -114,7 +144,9 @@ export interface SpanProposerLexicon {
 	deliveryService?: RegExp
 }
 
-/** Empty lexicon — paired-delimiter proposals only. */
+/**
+ * Empty lexicon — paired-delimiter proposals only.
+ */
 export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	systems: new Set(),
 	unitDesignators: new Set(),
@@ -122,16 +154,18 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	weakDesignators: new Set(),
 }
 
-// ---------------------------------------------------------------------------
-// Tokenization (offset-preserving, punctuation-stripped match bodies)
-// ---------------------------------------------------------------------------
+// MARK: Tokenization (offset-preserving, punctuation-stripped match bodies)
 
 interface RawToken {
-	/** Whitespace-delimited body as written. */
+	/**
+	 * Whitespace-delimited body as written.
+	 */
 	body: string
 	start: number
 	end: number
-	/** Body with leading/trailing punctuation stripped (for matching); offsets of the stripped core. */
+	/**
+	 * Body with leading/trailing punctuation stripped (for matching); offsets of the stripped core.
+	 */
 	stripped: string
 	strippedStart: number
 	strippedEnd: number
@@ -178,9 +212,7 @@ function tokenize(text: string): RawToken[] {
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Cue family 1 — paired delimiters (M2)
-// ---------------------------------------------------------------------------
+// MARK: Cue family 1 — paired delimiters (M2)
 
 /**
  * Find balanced pairs for one open/close class. Returns null when ANY delimiter of the class is unbalanced (stray
@@ -206,7 +238,9 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 	return stack.length ? null : out
 }
 
-/** Same-character quote pairing ("…"): consecutive occurrences pair up; an odd count is unbalanced. */
+/**
+ * Same-character quote pairing ("…"): consecutive occurrences pair up; an odd count is unbalanced.
+ */
 function findSameCharPairs(text: string, ch: string): Array<{ open: number; close: number }> | null {
 	const positions: number[] = []
 
@@ -325,11 +359,11 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Cue family 2 — designator + identifier (the sub-premise grammar)
-// ---------------------------------------------------------------------------
+// MARK: Cue family 2 — designator + identifier (the sub-premise grammar)
 
-/** Short identifier shapes per the designator grammar: "4B", "500", "#104", "B", "B99". */
+/**
+ * Short identifier shapes per the designator grammar: "4B", "500", "#104", "B", "B99".
+ */
 function isShortIdentifier(body: string): boolean {
 	return /^#?\d{1,6}[A-Za-z]{0,2}$/.test(body) || /^[A-Za-z]$/.test(body) || /^[A-Za-z]\d{1,4}$/.test(body)
 }
@@ -381,9 +415,7 @@ function proposeDesignatorPhrases(
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Cue family 3 — dual-path numeric punctuation (M3)
-// ---------------------------------------------------------------------------
+// MARK: Cue family 3 — dual-path numeric punctuation (M3)
 
 const SLASH_COMPOUND = /^(\d{1,4}[A-Za-z]?)\/(\d{1,5}[A-Za-z]?)$/
 const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
@@ -567,9 +599,7 @@ function proposeNumericReadings(
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------------
+// MARK: Entry point
 
 /**
  * Propose typed spans over `text`. Pure and synchronous; safe to run on every parse. Proposals may overlap freely

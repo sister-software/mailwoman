@@ -28,27 +28,43 @@ import { streamRows } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Largest absolute latitude in WGS-84 degrees. */
+/**
+ * Largest absolute latitude in WGS-84 degrees.
+ */
 const MAX_ABS_LATITUDE = 90
 
-/** Largest absolute longitude in WGS-84 degrees. */
+/**
+ * Largest absolute longitude in WGS-84 degrees.
+ */
 const MAX_ABS_LONGITUDE = 180
 
-/** Options for {@linkcode geocoderVsProvidedCoords}. */
+/**
+ * Options for {@linkcode geocoderVsProvidedCoords}.
+ */
 export interface GeocoderVsProvidedCoordsOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Facilities geocoded. Default 2000. */
+	/**
+	 * Facilities geocoded. Default 2000.
+	 */
 	max?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
-/** Parse a `lat,lon` string into a coordinate, or null if malformed / out of range. */
+/**
+ * Parse a `lat,lon` string into a coordinate, or null if malformed / out of range.
+ */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
 	const [a, b] = raw.split(",").map((x) => Number(x.trim()))
@@ -64,7 +80,9 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 // — byte-identical semantics (floor index, clamped); `?? NaN` preserves the empty-sample behavior.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
-/** Geocoder validation against provided coordinates (#619) — see the module doc. Emits the report to stdout. */
+/**
+ * Geocoder validation against provided coordinates (#619) — see the module doc. Emits the report to stdout.
+ */
 export async function geocoderVsProvidedCoords(
 	options: GeocoderVsProvidedCoordsOptions,
 	report?: (line: string) => void

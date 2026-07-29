@@ -45,7 +45,9 @@ test("COMPONENT_TO_LIBPOSTAL: the core US/EU mappings hold", () => {
 	expect(COMPONENT_TO_LIBPOSTAL.postcode).toBe("postcode")
 })
 
-/** An engine that parses "1600 pennsylvania ave" into two fixed matches; no expand. */
+/**
+ * An engine that parses "1600 pennsylvania ave" into two fixed matches; no expand.
+ */
 const fixtureEngine: LibpostalEngine = {
 	parse: async () => [
 		{ classification: "house_number", value: "1600" },

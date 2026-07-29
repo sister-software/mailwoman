@@ -16,17 +16,29 @@ import { cx } from "./cx.ts"
 export type LoadingMode = "pulse" | "spinner" | "staged"
 
 export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
-	/** @default "spinner" */
+	/**
+	 * @default "spinner"
+	 */
 	mode?: LoadingMode
-	/** Optional label; in staged mode it renders above the step list. */
+	/**
+	 * Optional label; in staged mode it renders above the step list.
+	 */
 	label?: string
-	/** Number of skeleton bars (pulse mode). @default 3 */
+	/**
+	 * Number of skeleton bars (pulse mode). @default 3
+	 */
 	barCount?: number
-	/** Spinner ring size. @default "medium" */
+	/**
+	 * Spinner ring size. @default "medium"
+	 */
 	size?: "small" | "medium" | "large"
-	/** Step labels (staged mode) — one row each. */
+	/**
+	 * Step labels (staged mode) — one row each.
+	 */
 	steps?: string[]
-	/** 0-based index of the active step; earlier steps are complete, later ones pending. @default -1 */
+	/**
+	 * 0-based index of the active step; earlier steps are complete, later ones pending. @default -1
+	 */
 	activeStep?: number
 }
 
@@ -36,7 +48,9 @@ const SIZE_CLASS: Record<NonNullable<LoadingIndicatorProps["size"]>, string> = {
 	large: "mw-spinner--large",
 }
 
-/** Spinner, pulse or staged progress, depending on how long the caller expects to wait. */
+/**
+ * Spinner, pulse or staged progress, depending on how long the caller expects to wait.
+ */
 export const LoadingIndicator = memo<LoadingIndicatorProps>(function LoadingIndicator({
 	mode = "spinner",
 	label,

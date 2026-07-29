@@ -15,7 +15,9 @@
  *   uniform `choice`, with-replacement `choices`.
  */
 
-/** Seeded `random.Random`-equivalent. Backed by mulberry32 (a 32-bit stateful generator). */
+/**
+ * Seeded `random.Random`-equivalent. Backed by mulberry32 (a 32-bit stateful generator).
+ */
 export class SeededRandom {
 	#state: number
 
@@ -24,7 +26,9 @@ export class SeededRandom {
 		this.#state = seed >>> 0 || 1
 	}
 
-	/** Float in `[0, 1)`. Mirrors Python `random.random()`. */
+	/**
+	 * Float in `[0, 1)`. Mirrors Python `random.random()`.
+	 */
 	random(): number {
 		let t = (this.#state += 0x6d_2b_79_f5)
 		t = Math.imul(t ^ (t >>> 15), t | 1)
@@ -33,17 +37,23 @@ export class SeededRandom {
 		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 
-	/** Integer in `[lo, hi]` inclusive. Mirrors Python `random.randint(lo, hi)`. */
+	/**
+	 * Integer in `[lo, hi]` inclusive. Mirrors Python `random.randint(lo, hi)`.
+	 */
 	randint(lo: number, hi: number): number {
 		return lo + Math.floor(this.random() * (hi - lo + 1))
 	}
 
-	/** One uniformly-chosen element. Mirrors Python `random.choice(seq)`. */
+	/**
+	 * One uniformly-chosen element. Mirrors Python `random.choice(seq)`.
+	 */
 	choice<T>(seq: readonly T[]): T {
 		return seq[Math.floor(this.random() * seq.length)]!
 	}
 
-	/** `k` elements chosen with replacement. Mirrors Python `random.choices(seq, k=k)`. */
+	/**
+	 * `k` elements chosen with replacement. Mirrors Python `random.choices(seq, k=k)`.
+	 */
 	choices<T>(seq: readonly T[], k: number): T[] {
 		const out: T[] = []
 

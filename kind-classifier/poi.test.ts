@@ -10,7 +10,9 @@ import { classifyKind, createKindClassifier } from "./index.ts"
 import { matchPOISubject, type POIPhraseLookup } from "./poi.ts"
 import type { LocaleHint } from "./types.ts"
 
-/** Stub lexicon: knows `hospital` and the two-token `drinking fountain`. */
+/**
+ * Stub lexicon: knows `hospital` and the two-token `drinking fountain`.
+ */
 const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
 

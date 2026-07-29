@@ -124,7 +124,9 @@ const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
  * format the #723 override broke and Probe A0 eroded.
  */
 const RURAL_REGIONS = ["VT", "ND", "SD", "NH", "ME", "MT", "WY"]
-/** DE leading-postcode tuples: "{postcode} {locality}, {street} {house}". */
+/**
+ * DE leading-postcode tuples: "{postcode} {locality}, {street} {house}".
+ */
 const DE_TUPLES = [
 	{ postcode: "10115", locality: "Berlin", street: "Hauptstraße" },
 	{ postcode: "80331", locality: "München", street: "Sendlinger Straße" },
@@ -133,10 +135,14 @@ const DE_TUPLES = [
 	{ postcode: "01067", locality: "Dresden", street: "Prager Straße" },
 ]
 const HOUSE_NUMS = ["5", "12", "27", "100", "212", "1450", "8"]
-/** Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp. */
+/**
+ * Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp.
+ */
 const FAKE_ZIPS = ["00000", "99998", "99997", "00001", "99996"]
 
-/** Build one anchor-absorption counter-augmentation row. */
+/**
+ * Build one anchor-absorption counter-augmentation row.
+ */
 export function synthesizeAnchorAbsorptionRow(
 	opts: AnchorAbsorptionSynthesisOpts = {}
 ): SynthesizedAnchorAbsorptionRow {

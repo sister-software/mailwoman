@@ -27,7 +27,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 
-/** Synthetic id base — distinct from the GeoNames postal range (9500000000000). */
+/**
+ * Synthetic id base — distinct from the GeoNames postal range (9500000000000).
+ */
 const NL_PC6_ID_BASE = 9_600_000_000_000
 
 export interface BuildNLPC6Options {
@@ -36,7 +38,9 @@ export interface BuildNLPC6Options {
 	 * `<data-root>/cbs/pc6-centroids.csv`.
 	 */
 	csvPath?: string
-	/** Output shard. Default `<data-root>/wof/postalcode-nl-pc6.db`. */
+	/**
+	 * Output shard. Default `<data-root>/wof/postalcode-nl-pc6.db`.
+	 */
 	out?: string
 }
 

@@ -36,10 +36,14 @@ const WEAK_CANONICALS: ReadonlySet<string> = new Set([
 	"STOP",
 ])
 
-/** USPS canonicals that name a LEVEL of the building rather than a numbered unit on it. */
+/**
+ * USPS canonicals that name a LEVEL of the building rather than a numbered unit on it.
+ */
 const LEVEL_CANONICALS: ReadonlySet<string> = new Set(["FLOOR", "BASEMENT", "PENTHOUSE", "LOBBY"])
 
-/** AU/NZ delivery types excluded from the scan regex (no required number / two-letter ambiguity). */
+/**
+ * AU/NZ delivery types excluded from the scan regex (no required number / two-letter ambiguity).
+ */
 const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
 	"MS",
 	"CARE PO",

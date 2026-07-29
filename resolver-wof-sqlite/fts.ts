@@ -66,7 +66,9 @@ export const PLACE_SEARCH_TABLE = "place_search"
  */
 export const ALIAS_SEPARATOR = "\uE000"
 
-/** `char()` argument for {@link ALIAS_SEPARATOR} in SQL — keeps the SQL text plain ASCII. */
+/**
+ * `char()` argument for {@link ALIAS_SEPARATOR} in SQL — keeps the SQL text plain ASCII.
+ */
 const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
 
 /**
@@ -126,15 +128,25 @@ export const PLACE_POPULATION_TABLE = "place_population"
  * user.
  */
 export interface BuildPlaceSearchFTSResult {
-	/** Whether the FTS5 index was created (true) or already existed and was left alone (false). */
+	/**
+	 * Whether the FTS5 index was created (true) or already existed and was left alone (false).
+	 */
 	created: boolean
-	/** Number of rows in the `place_search` table after the call. */
+	/**
+	 * Number of rows in the `place_search` table after the call.
+	 */
 	indexedRows: number
-	/** Whether the R*Tree bbox index was created (true) or already existed (false). */
+	/**
+	 * Whether the R*Tree bbox index was created (true) or already existed (false).
+	 */
 	bboxCreated: boolean
-	/** Number of rows in the `place_bbox` R*Tree after the call. */
+	/**
+	 * Number of rows in the `place_bbox` R*Tree after the call.
+	 */
 	bboxIndexedRows: number
-	/** Wall-clock duration of the build step, in milliseconds. */
+	/**
+	 * Wall-clock duration of the build step, in milliseconds.
+	 */
 	durationMs: number
 }
 
@@ -299,12 +311,16 @@ export function placeSearchFTSExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_SEARCH_TABLE)
 }
 
-/** Returns true iff the `place_bbox` R*Tree table exists. Used for opt-in proximity lookup checks. */
+/**
+ * Returns true iff the `place_bbox` R*Tree table exists. Used for opt-in proximity lookup checks.
+ */
 export function placeBboxExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_BBOX_TABLE)
 }
 
-/** Returns true iff the `place_population` table exists. Used for opt-in population-ranking checks. */
+/**
+ * Returns true iff the `place_population` table exists. Used for opt-in population-ranking checks.
+ */
 export function placePopulationExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_POPULATION_TABLE)
 }

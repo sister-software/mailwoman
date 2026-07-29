@@ -70,7 +70,9 @@ async function discoverLatestZip(): Promise<string | undefined> {
 	return undefined
 }
 
-/** Extract the main registry CSV name (npidata_pfile_*.csv) from a ZIP's `unzip -l` listing. */
+/**
+ * Extract the main registry CSV name (npidata_pfile_*.csv) from a ZIP's `unzip -l` listing.
+ */
 async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
@@ -119,9 +121,8 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		}
 	}
 
-	// ------------------------------------------------------------------
-	// Download ZIP (large; 60-minute timeout)
-	// ------------------------------------------------------------------
+	// MARK: Download ZIP (large; 60-minute timeout)
+
 	report?.(`  Downloading ${zipURL} ...`)
 	const { bytes: zipSize } = await downloadToFile({
 		url: zipURL,
@@ -132,9 +133,8 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	})
 	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
 
-	// ------------------------------------------------------------------
-	// Extract only the main registry CSV (npidata_pfile_*.csv)
-	// ------------------------------------------------------------------
+	// MARK: Extract only the main registry CSV (npidata_pfile_*.csv)
+
 	report?.("  Extracting npidata_pfile CSV from ZIP ...")
 	const csvName = await findNpidataCSV(zipDest)
 
@@ -152,15 +152,13 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const csvSha = await sha256File(csvDest)
 	report?.(`  CSV size: ${(csvSize / 1024 / 1024).toFixed(1)} MB`)
 
-	// ------------------------------------------------------------------
-	// Remove the ZIP to reclaim ~1 GB (the CSV is what adapters consume)
-	// ------------------------------------------------------------------
+	// MARK: Remove the ZIP to reclaim ~1 GB (the CSV is what adapters consume)
+
 	await rm(zipDest, { force: true })
 	report?.("  Removed ZIP (CSV kept)")
 
-	// ------------------------------------------------------------------
-	// Write MANIFEST (records the extracted CSV, not the ZIP)
-	// ------------------------------------------------------------------
+	// MARK: Write MANIFEST (records the extracted CSV, not the ZIP)
+
 	const manifest: SourceManifest = {
 		source_url: zipURL,
 		downloaded_at: new Date().toISOString(),

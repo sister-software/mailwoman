@@ -43,7 +43,9 @@
  */
 export const JP_ADMIN_SUFFIXES = ["都", "道", "府", "県", "市", "区", "郡", "町", "村"] as const
 
-/** A single administrative-area suffix kanji (`都`, `市`, `区`, …). */
+/**
+ * A single administrative-area suffix kanji (`都`, `市`, `区`, …).
+ */
 export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
 
 /**
@@ -57,7 +59,9 @@ export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
  */
 export const JP_BLOCK_MARKERS = ["丁目", "番地", "番", "号"] as const
 
-/** A numbered-tail marker (`丁目`, `番地`, `番`, `号`). */
+/**
+ * A numbered-tail marker (`丁目`, `番地`, `番`, `号`).
+ */
 export type JapaneseBlockMarker = (typeof JP_BLOCK_MARKERS)[number]
 
 const ADMIN_SUFFIX_SET: ReadonlySet<string> = new Set(JP_ADMIN_SUFFIXES)

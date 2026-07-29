@@ -11,9 +11,13 @@
 import { type ModelSelectOptions, loadSuite, buildParseFn, runInvarianceSuite } from "./runner.ts"
 
 export interface InvarianceCommandOptions extends ModelSelectOptions {
-	/** Alternate suite fixture path. Default the shipped `suite.jsonl`. */
+	/**
+	 * Alternate suite fixture path. Default the shipped `suite.jsonl`.
+	 */
 	suite?: string
-	/** Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0. */
+	/**
+	 * Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0.
+	 */
 	maxDegraded?: number
 	/**
 	 * `--baseline` regression mode (probe-grading shape, e.g. v385): a baseline candidate ONNX graded on the SAME suite.
@@ -23,11 +27,15 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 	baseline?: string
 	baselineTokenizer?: string
 	baselineModelCard?: string
-	/** Package-shaped baseline weights dir — alternative to `baseline` + the two flags above. */
+	/**
+	 * Package-shaped baseline weights dir — alternative to `baseline` + the two flags above.
+	 */
 	baselineWeightsCache?: string
 }
 
-/** Run the invariance mini-suite from CLI-shaped options. Returns the process exit code (0 = PASS). */
+/**
+ * Run the invariance mini-suite from CLI-shaped options. Returns the process exit code (0 = PASS).
+ */
 export async function runInvarianceCommand(options: InvarianceCommandOptions): Promise<number> {
 	const rows = loadSuite(options.suite)
 	console.error(`[invariance] loaded ${rows.length} rows from ${options.suite ?? "the shipped suite.jsonl"}`)

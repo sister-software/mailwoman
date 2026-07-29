@@ -39,14 +39,18 @@ import { join } from "node:path"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** A column-projected base/shard row: parallel token + label lists plus the row's country. */
+/**
+ * A column-projected base/shard row: parallel token + label lists plus the row's country.
+ */
 interface CorpusRow {
 	tokens: string[]
 	labels: string[]
 	country: string | null
 }
 
-/** Strip a BIO prefix ("B-"/"I-") off a label, matching the Python `strip_bio`. */
+/**
+ * Strip a BIO prefix ("B-"/"I-") off a label, matching the Python `strip_bio`.
+ */
 function stripBIO(label: string): string {
 	const head = label.slice(0, 2)
 
@@ -77,7 +81,9 @@ function pyRound(x: number): number {
 	return floor % 2 === 0 ? floor : floor + 1
 }
 
-/** Format a fraction as a whole-percent string the way Python's `:.0%` does, e.g. 0.73 -> "73%". */
+/**
+ * Format a fraction as a whole-percent string the way Python's `:.0%` does, e.g. 0.73 -> "73%".
+ */
 function pct(frac: number): string {
 	return `${pyRound(frac * 100)}%`
 }
@@ -91,7 +97,9 @@ function pyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
 }
 
-/** Left-justify to a minimum width with spaces, matching Python's `{value:N}` string field. */
+/**
+ * Left-justify to a minimum width with spaces, matching Python's `{value:N}` string field.
+ */
 function pad(value: string, width: number): string {
 	return value.padEnd(width)
 }
@@ -119,7 +127,9 @@ function dominant(counter: Map<string, number>): [string, number, number] {
 	return [bestTag, total, bestCount / total]
 }
 
-/** Bump a (key -> count) tally, creating the inner counter on first sight. */
+/**
+ * Bump a (key -> count) tally, creating the inner counter on first sight.
+ */
 function bump(table: Map<string, Map<string, number>>, key: string, sub: string): void {
 	let counter = table.get(key)
 
@@ -130,7 +140,9 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 	counter.set(sub, (counter.get(sub) ?? 0) + 1)
 }
 
-/** The DuckDB connection type, without a static dependency on the optional-peer package. */
+/**
+ * The DuckDB connection type, without a static dependency on the optional-peer package.
+ */
 type DuckDBConnection = Awaited<
 	ReturnType<Awaited<ReturnType<(typeof import("@duckdb/node-api"))["DuckDBInstance"]["create"]>>["connect"]>
 >
@@ -162,7 +174,9 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 	return rows
 }
 
-/** Read just the first row's `source` value — used to group base parts for a proportional slice. */
+/**
+ * Read just the first row's `source` value — used to group base parts for a proportional slice.
+ */
 async function readSource(con: DuckDBConnection, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
 	const rows = result.getRowObjects() as Array<{ source: unknown }>
@@ -170,7 +184,9 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 	return rows.length ? String(rows[0]!.source) : ""
 }
 
-/** Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`. */
+/**
+ * Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`.
+ */
 function globParquet(dir: string): string[] {
 	let names: string[]
 
@@ -186,35 +202,59 @@ function globParquet(dir: string): string[] {
 		.toSorted()
 }
 
-/** Options for {@linkcode lintShardVocab}. */
+/**
+ * Options for {@linkcode lintShardVocab}.
+ */
 export interface LintShardVocabOptions {
-	/** The shard parquet to lint. */
+	/**
+	 * The shard parquet to lint.
+	 */
 	shard: string
-	/** Base corpus version. Default `v0.5.0`. */
+	/**
+	 * Base corpus version. Default `v0.5.0`.
+	 */
 	baseVersion?: string
-	/** Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`. */
+	/**
+	 * Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
+	 */
 	baseRoot?: string
-	/** Base-majority confidence floor for a contradiction. Default 0.7. */
+	/**
+	 * Base-majority confidence floor for a contradiction. Default 0.7.
+	 */
 	threshold?: number
-	/** Minimum base support to judge a token. Default 50. */
+	/**
+	 * Minimum base support to judge a token. Default 50.
+	 */
 	minCount?: number
-	/** Fraction of base parts to scan (proportional per-source slice below 1.0). Default 1.0. */
+	/**
+	 * Fraction of base parts to scan (proportional per-source slice below 1.0). Default 1.0.
+	 */
 	fraction?: number
 }
 
-/** One contradiction row: token, shard tag, base tag, base fraction, base total. */
+/**
+ * One contradiction row: token, shard tag, base tag, base fraction, base total.
+ */
 export type ShardVocabRow = [token: string, shardTag: string, baseTag: string, baseFrac: number, baseTotal: number]
 
-/** Findings summary returned by {@linkcode lintShardVocab}. */
+/**
+ * Findings summary returned by {@linkcode lintShardVocab}.
+ */
 export interface LintShardVocabSummary {
-	/** Real contradictions — the command exits 1 when nonzero. */
+	/**
+	 * Real contradictions — the command exits 1 when nonzero.
+	 */
 	errors: number
-	/** Affix-split rows (EXPECTED — the loader's affix-relabel handles them). */
+	/**
+	 * Affix-split rows (EXPECTED — the loader's affix-relabel handles them).
+	 */
 	warnings: number
 	findings: { contradictions: ShardVocabRow[]; affixSplits: ShardVocabRow[] }
 }
 
-/** Lint a synthetic shard's (token → tag) vocabulary against the base corpus, country-scoped. */
+/**
+ * Lint a synthetic shard's (token → tag) vocabulary against the base corpus, country-scoped.
+ */
 export async function lintShardVocab(options: LintShardVocabOptions): Promise<LintShardVocabSummary> {
 	const baseVersion = options.baseVersion ?? "v0.5.0"
 	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")

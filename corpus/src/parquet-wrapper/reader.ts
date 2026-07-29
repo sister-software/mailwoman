@@ -14,7 +14,9 @@ import { ParquetEnvelopeReader } from "@dsnp/parquetjs/dist/lib/reader.js"
 
 import type { ParquetSchema, ParquetRecordLike } from "./schema.ts"
 
-/** A typed Parquet reader, wrapping the base Parquet reader. */
+/**
+ * A typed Parquet reader, wrapping the base Parquet reader.
+ */
 export class ParquetReader<T extends ParquetRecordLike> extends BaseParquetReader implements AsyncDisposable {
 	declare schema: ParquetSchema<T>
 

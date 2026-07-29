@@ -39,10 +39,14 @@ import { resolve } from "node:path"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
-/** The parseArgs option names of the required per-release artifacts. */
+/**
+ * The parseArgs option names of the required per-release artifacts.
+ */
 type RequiredFileOption = "model" | "tokenizer" | "model-card"
 
-/** The camelCase {@linkcode PublishHFOptions} field for each required-file option id. */
+/**
+ * The camelCase {@linkcode PublishHFOptions} field for each required-file option id.
+ */
 const OPTION_TO_FIELD = {
 	model: "model",
 	tokenizer: "tokenizer",
@@ -78,7 +82,9 @@ async function servedOnDemoPath(_name: string, _locale: string, _version: string
 }
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
-/** Options for {@linkcode publishReleaseToHF} — the retired `wofHot` is accepted and ignored. */
+/**
+ * Options for {@linkcode publishReleaseToHF} — the retired `wofHot` is accepted and ignored.
+ */
 export interface PublishHFOptions {
 	version?: string
 	locale?: string
@@ -99,7 +105,9 @@ export interface PublishHFOptions {
 	localitySurfaceLexicon?: string
 	polygons?: string
 	setDefault?: boolean
-	/** Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail. */
+	/**
+	 * Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail.
+	 */
 	wofHot?: string
 }
 

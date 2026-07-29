@@ -53,7 +53,9 @@ import type { PhraseProposal } from "./types.ts"
 export interface ClassifierCandidate {
 	span: { start: number; end: number }
 	tag: ComponentTag
-	/** Calibrated confidence in [0, 1]. */
+	/**
+	 * Calibrated confidence in [0, 1].
+	 */
 	score: number
 }
 
@@ -75,10 +77,14 @@ export interface ParentChainLookup {
 }
 
 export interface ReconcileInputs {
-	/** Raw input text — used to materialize `value` strings on the resulting tree. */
+	/**
+	 * Raw input text — used to materialize `value` strings on the resulting tree.
+	 */
 	raw: string
 	phraseProposals: ReadonlyArray<PhraseProposal>
-	/** Sorted descending by score. May be empty (returns an empty tree). */
+	/**
+	 * Sorted descending by score. May be empty (returns an empty tree).
+	 */
 	classifierTopK: ReadonlyArray<ClassifierCandidate>
 	resolverCandidates?: ResolverCandidatesLookup
 	parentChain?: ParentChainLookup
@@ -86,20 +92,30 @@ export interface ReconcileInputs {
 }
 
 export interface ReconcileOpts {
-	/** Top-k phrase span proposals retained per (start, end) — default 3. */
+	/**
+	 * Top-k phrase span proposals retained per (start, end) — default 3.
+	 */
 	kSpan?: number
-	/** Top-k classifier tag interpretations retained per span — default 3. */
+	/**
+	 * Top-k classifier tag interpretations retained per span — default 3.
+	 */
 	kTag?: number
-	/** Top-k resolver candidates retained per (span, tag) — default 5. */
+	/**
+	 * Top-k resolver candidates retained per (span, tag) — default 5.
+	 */
 	kResolver?: number
 	/**
 	 * Concordance bonus multiplier. 1.0 weights chain-consistency equal to one classifier-score factor; lower values
 	 * trust the classifier more, higher values trust the gazetteer more. Default 1.0.
 	 */
 	concordanceWeight?: number
-	/** Beam width during search — default 16. */
+	/**
+	 * Beam width during search — default 16.
+	 */
 	beamWidth?: number
-	/** Runner-up parses returned alongside the winner — default 3. */
+	/**
+	 * Runner-up parses returned alongside the winner — default 3.
+	 */
 	runnersUp?: number
 }
 
@@ -108,13 +124,17 @@ export interface ScoreBreakdown {
 	classifier: number
 	resolver: number
 	concordance: number
-	/** Composite multiplicative score in real space, [0, ∞). */
+	/**
+	 * Composite multiplicative score in real space, [0, ∞).
+	 */
 	total: number
 }
 
 export interface ParseTree {
 	tree: AddressTree
-	/** Softmaxed confidence in [0, 1] over the finalized beam. */
+	/**
+	 * Softmaxed confidence in [0, 1] over the finalized beam.
+	 */
 	confidence: number
 	runnersUp: AddressTree[]
 	scoreBreakdown: ScoreBreakdown
@@ -172,15 +192,21 @@ interface SlotChoice {
 	classifierScore: number
 	place: ResolvedPlace | null
 	resolverScore: number
-	/** Whitespace-delimited word count of the span's surface text — scales the inclusion bonus. */
+	/**
+	 * Whitespace-delimited word count of the span's surface text — scales the inclusion bonus.
+	 */
 	wordCount: number
 }
 
 interface Beam {
 	assignments: SlotChoice[]
-	/** Log-space score combining phrase × classifier × resolver × concordance (running). */
+	/**
+	 * Log-space score combining phrase × classifier × resolver × concordance (running).
+	 */
 	logScore: number
-	/** Cached last-end so we can extend left-to-right without re-scanning assignments. */
+	/**
+	 * Cached last-end so we can extend left-to-right without re-scanning assignments.
+	 */
 	lastEnd: number
 }
 

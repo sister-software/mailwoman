@@ -59,21 +59,33 @@ const LEVEL_TABLE: Record<TIGERFetchLevel, keyof TIGERDatabase> = {
 }
 
 export interface FetchTIGEROptions {
-	/** Two-digit state FIPS, e.g. `"06"`. */
+	/**
+	 * Two-digit state FIPS, e.g. `"06"`.
+	 */
 	stateFIPS: string
-	/** TIGER level. Default `tabblock20`. */
+	/**
+	 * TIGER level. Default `tabblock20`.
+	 */
 	level?: TIGERFetchLevel
-	/** Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current). */
+	/**
+	 * Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current).
+	 */
 	vintage?: number
 	/**
 	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter reads).
 	 */
 	outPath?: string
-	/** Download cache + default output root. */
+	/**
+	 * Download cache + default output root.
+	 */
 	dataRoot?: string
-	/** Optional three-digit county FIPS filter (blocks only — addrfeat is already per-county). */
+	/**
+	 * Optional three-digit county FIPS filter (blocks only — addrfeat is already per-county).
+	 */
 	county?: string
-	/** Rows per insert. Default 1000. */
+	/**
+	 * Rows per insert. Default 1000.
+	 */
 	batchSize?: number
 }
 
@@ -88,7 +100,9 @@ export interface FetchTIGERResult {
 	inserted: number
 }
 
-/** The isp-nexus column map for `tabblock20`. Geometry rides along implicitly. */
+/**
+ * The isp-nexus column map for `tabblock20`. Geometry rides along implicitly.
+ */
 function blockSelectSQL(layer: string, county?: string): string {
 	const where = county ? ` WHERE COUNTYFP20 = '${county}'` : ""
 
@@ -188,7 +202,9 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	return false
 }
 
-/** Scrape the ADDRFEAT directory listing for a state's county FIPS codes. */
+/**
+ * Scrape the ADDRFEAT directory listing for a state's county FIPS codes.
+ */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
 	const res = await fetch(`${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, { redirect: "follow" })
 

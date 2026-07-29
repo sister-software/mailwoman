@@ -26,7 +26,9 @@ function tmp(): string {
 }
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
 
-/** Fake lookups: record the path they were opened from + whether they've been closed. */
+/**
+ * Fake lookups: record the path they were opened from + whether they've been closed.
+ */
 class FakeAddressPoints {
 	closed = false
 	constructor(public dbPath: string) {}
@@ -49,7 +51,9 @@ class FakeInterp {
 }
 const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolator: FakeInterp } as never
 
-/** Ensure a directory exists and return it. */
+/**
+ * Ensure a directory exists and return it.
+ */
 function dirEnsure(d: string): string {
 	mkdirSync(d, { recursive: true })
 

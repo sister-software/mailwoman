@@ -36,7 +36,9 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
-/** Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from. */
+/**
+ * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
+ */
 const MIN_OUTLIER_LENGTH = 6
 
 interface OaTestRow {
@@ -47,17 +49,27 @@ interface OaTestRow {
 	family: string
 }
 
-/** Options for {@linkcode buildOutlierOA}. */
+/**
+ * Options for {@linkcode buildOutlierOA}.
+ */
 export interface BuildOutlierOAOptions {
-	/** Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`. */
+	/**
+	 * Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
+	 */
 	oaDir?: string
-	/** Row cap per off-map country. Default 6000. */
+	/**
+	 * Row cap per off-map country. Default 6000.
+	 */
 	perCountry?: number
-	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildOutlierOA}. */
+/**
+ * Result of {@linkcode buildOutlierOA}.
+ */
 export interface BuildOutlierOAResult {
 	train: number
 	val: number
@@ -66,7 +78,9 @@ export interface BuildOutlierOAResult {
 	heldoutCountries: number
 }
 
-/** The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts) */
+/**
+ * The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts)
+ */
 const IN_MAP = new Set(["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"])
 
 /**
@@ -94,7 +108,9 @@ const FAMILIES: Record<string, string[]> = {
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
-/** Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin. */
+/**
+ * Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin.
+ */
 function assemble(r: Record<string, unknown>): string | null {
 	const num = (r.number ?? "").toString().trim()
 	const street = (r.street ?? "").toString().trim()
@@ -119,7 +135,9 @@ function assemble(r: Record<string, unknown>): string | null {
 	}
 }
 
-/** Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc. */
+/**
+ * Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc.
+ */
 export async function buildOutlierOA(
 	options: BuildOutlierOAOptions = {},
 	report?: (line: string) => void

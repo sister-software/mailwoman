@@ -56,7 +56,9 @@ interface PointRow {
 	release: string
 }
 
-/** One known house number on the street: the centroid of its rows (unit siblings collapse). */
+/**
+ * One known house number on the street: the centroid of its rows (unit siblings collapse).
+ */
 interface NumberAnchor {
 	n: number
 	lat: number
@@ -121,7 +123,9 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	}
 }
 
-/** Collapse rows to one centroid anchor per distinct house number, sorted ascending. */
+/**
+ * Collapse rows to one centroid anchor per distinct house number, sorted ascending.
+ */
 function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 	const byN = new Map<number, PointRow[]>()
 

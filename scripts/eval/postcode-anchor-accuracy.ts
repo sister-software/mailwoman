@@ -24,7 +24,9 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
-/** Distance within which a postcode anchor counts as correct, in kilometres. */
+/**
+ * Distance within which a postcode anchor counts as correct, in kilometres.
+ */
 const ANCHOR_TOLERANCE_KM = 25
 
 interface Args {

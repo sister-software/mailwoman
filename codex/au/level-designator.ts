@@ -45,11 +45,17 @@
  * identifier from standalone ones.
  */
 export interface AuLevelDesignator {
-	/** AS 4590.1 LEVEL_TYPE_CODE (the GNAF / AMAS internal code). */
+	/**
+	 * AS 4590.1 LEVEL_TYPE_CODE (the GNAF / AMAS internal code).
+	 */
 	code: string
-	/** Full descriptive name (AMAS table label). */
+	/**
+	 * Full descriptive name (AMAS table label).
+	 */
 	name: string
-	/** The approved AMAS surface abbreviation written on mail ("L", "B", "M"). */
+	/**
+	 * The approved AMAS surface abbreviation written on mail ("L", "B", "M").
+	 */
 	abbreviation: string
 	/**
 	 * True when the designator takes a numeric or alphanumeric floor identifier after it (`LEVEL 3`, `BASEMENT 2`). False
@@ -74,7 +80,9 @@ export const AU_LEVEL_DESIGNATORS = [
 	{ code: "RT", name: "ROOFTOP", abbreviation: "RT", requiresNumber: false },
 ] as const satisfies readonly AuLevelDesignator[]
 
-/** A canonical AS 4590.1 LEVEL_TYPE_CODE. */
+/**
+ * A canonical AS 4590.1 LEVEL_TYPE_CODE.
+ */
 export type AuLevelCode = (typeof AU_LEVEL_DESIGNATORS)[number]["code"]
 
 /**
@@ -134,13 +142,21 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 	return out
 })()
 
-/** Result of an AU level designator parse. */
+/**
+ * Result of an AU level designator parse.
+ */
 export interface AuLevelDesignatorMatch {
-	/** The code as it appeared in the input ("Level", "L", "lvl"). */
+	/**
+	 * The code as it appeared in the input ("Level", "L", "lvl").
+	 */
 	matched: string
-	/** The canonical AS 4590.1 LEVEL_TYPE_CODE ("L", "B", "M"). */
+	/**
+	 * The canonical AS 4590.1 LEVEL_TYPE_CODE ("L", "B", "M").
+	 */
 	code: AuLevelCode
-	/** The floor identifier when present ("3", "G", "B2"). */
+	/**
+	 * The floor identifier when present ("3", "G", "B2").
+	 */
 	identifier?: string
 }
 
@@ -190,7 +206,9 @@ export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch |
 	return null
 }
 
-/** Type-predicate: does the input look like a standalone AU level designator phrase? */
+/**
+ * Type-predicate: does the input look like a standalone AU level designator phrase?
+ */
 export function isAuLevelDesignator(input: unknown): boolean {
 	return matchAuLevelDesignator(input) !== null
 }

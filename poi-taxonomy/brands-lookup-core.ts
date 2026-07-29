@@ -12,15 +12,21 @@ import type { BrandRecord, POIBrandTable } from "./types.ts"
 
 export interface BrandMatch {
 	brand: BrandRecord
-	/** The lexicon phrase that matched (lowercased) — the brand's `name` or one of its `aliases`. */
+	/**
+	 * The lexicon phrase that matched (lowercased) — the brand's `name` or one of its `aliases`.
+	 */
 	matchedPhrase: string
-	/** Always 1.0 — brand matching is exact-phrase only, no locale gating (unlike category synonyms). */
+	/**
+	 * Always 1.0 — brand matching is exact-phrase only, no locale gating (unlike category synonyms).
+	 */
 	confidence: number
 }
 
 export interface POIBrandLookup {
 	lookupPOIBrand(text: string): BrandMatch[]
-	/** Convenience wrapper: the single best (highest-`rows`) brand for an exact-phrase match, if any. */
+	/**
+	 * Convenience wrapper: the single best (highest-`rows`) brand for an exact-phrase match, if any.
+	 */
 	resolveBrandName(name: string): BrandRecord | undefined
 	getBrand(wikidata: string): BrandRecord | undefined
 	getAllBrands(): ReadonlyArray<BrandRecord>
@@ -31,7 +37,9 @@ interface PhraseEntry {
 	phrase: string
 }
 
-/** Builds the matching core over an in-memory {@link POIBrandTable}. */
+/**
+ * Builds the matching core over an in-memory {@link POIBrandTable}.
+ */
 export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 	const byWikidata: ReadonlyMap<string, BrandRecord> = new Map(table.brands.map((b) => [b.wikidata, b]))
 
@@ -87,17 +95,23 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 		)
 	}
 
-	/** The single best (highest-`rows`) brand for an exact-phrase match, if any. */
+	/**
+	 * The single best (highest-`rows`) brand for an exact-phrase match, if any.
+	 */
 	function resolveBrandName(name: string): BrandRecord | undefined {
 		return lookupPOIBrand(name)[0]?.brand
 	}
 
-	/** Fetch a brand by its Wikidata QID. */
+	/**
+	 * Fetch a brand by its Wikidata QID.
+	 */
 	function getBrand(wikidata: string): BrandRecord | undefined {
 		return byWikidata.get(wikidata)
 	}
 
-	/** Enumerate the full table (corpus synthesis, builders, docs). */
+	/**
+	 * Enumerate the full table (corpus synthesis, builders, docs).
+	 */
 	function getAllBrands(): ReadonlyArray<BrandRecord> {
 		return table.brands
 	}

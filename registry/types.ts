@@ -9,17 +9,29 @@
 
 import type { OrganizationName, PersonName, PostalAddress, ResolutionTier } from "@mailwoman/record"
 
-/** A single source record: one row of a messy contact/organization dataset, after normalization. */
+/**
+ * A single source record: one row of a messy contact/organization dataset, after normalization.
+ */
 export interface SourceRecord {
-	/** Stable identifier within the input (row id, primary key…). */
+	/**
+	 * Stable identifier within the input (row id, primary key…).
+	 */
 	id: string
-	/** Provenance: which file / dataset this came from. */
+	/**
+	 * Provenance: which file / dataset this came from.
+	 */
 	source?: string | null
-	/** Parsed person name, when the record is a contact. */
+	/**
+	 * Parsed person name, when the record is a contact.
+	 */
 	name?: PersonName | null
-	/** Canonicalized organization name, when the record is an org. */
+	/**
+	 * Canonicalized organization name, when the record is an org.
+	 */
 	organization?: OrganizationName | null
-	/** The address, normalized + (ideally) geocoded. */
+	/**
+	 * The address, normalized + (ideally) geocoded.
+	 */
 	address?: PostalAddress | null
 	phone?: string | null
 	email?: string | null
@@ -30,19 +42,31 @@ export interface SourceRecord {
 	 * field name the model references.
 	 */
 	attributes?: Record<string, string>
-	/** The original row, verbatim, for audit. */
+	/**
+	 * The original row, verbatim, for audit.
+	 */
 	raw?: Record<string, string>
 }
 
-/** A resolved canonical entity: a cluster of source records judged to be the same real-world thing. */
+/**
+ * A resolved canonical entity: a cluster of source records judged to be the same real-world thing.
+ */
 export interface ResolvedEntity {
-	/** Identifier assigned to the entity. */
+	/**
+	 * Identifier assigned to the entity.
+	 */
 	id: string
-	/** The source records that resolved to this entity. */
+	/**
+	 * The source records that resolved to this entity.
+	 */
 	records: SourceRecord[]
-	/** The most complete record, used as the entity's canonical face. */
+	/**
+	 * The most complete record, used as the entity's canonical face.
+	 */
 	representative: SourceRecord
-	/** The entity's location, from the representative's geocode. */
+	/**
+	 * The entity's location, from the representative's geocode.
+	 */
 	coordinate?: { latitude: number; longitude: number }
 	/**
 	 * Weakest within-cluster link weight in bits (how tightly it holds together); `null` for a singleton.

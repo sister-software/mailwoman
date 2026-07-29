@@ -74,83 +74,157 @@ import { renderOaResolverReport } from "./oa-resolver-report.ts"
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
  * off, tri-states are the paired on/off flags the gate legs pin (`adminCoherence`/`noAdminCoherence`).
  */
-/** Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals. */
+/**
+ * Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals.
+ */
 const MIN_DISTINCTIVE_TOKEN_LENGTH = 4
 
-/** Shortest qualifier still meaningful when comparing an address's trailing parts. */
+/**
+ * Shortest qualifier still meaningful when comparing an address's trailing parts.
+ */
 const MIN_QUALIFIER_LENGTH = 3
 
-/** Misses retained for diagnostics before the harness stops accumulating, to bound memory on a full run. */
+/**
+ * Misses retained for diagnostics before the harness stops accumulating, to bound memory on a full run.
+ */
 const MAX_DIAGNOSTIC_MISSES = 5000
 
 export interface OAResolverEvalOptions {
-	/** #722 baseline: ablate to anchor-only (gazetteer + conventions OFF). */
+	/**
+	 * #722 baseline: ablate to anchor-only (gazetteer + conventions OFF).
+	 */
 	ablateToAnchor?: boolean
-	/** #476 street-level exact-point shard (single-state). */
+	/**
+	 * #476 street-level exact-point shard (single-state).
+	 */
 	addressPoints?: string
-	/** #895 tri-state pin: force adminCoherence ON. */
+	/**
+	 * #895 tri-state pin: force adminCoherence ON.
+	 */
 	adminCoherence?: boolean
-	/** Minimum anchor confidence to trust the anchor coordinate. Default 0.5. */
+	/**
+	 * Minimum anchor confidence to trust the anchor coordinate. Default 0.5.
+	 */
 	anchorMinConf?: number
-	/** #887 declared ablation of the model's postcode-anchor input channel. */
+	/**
+	 * #887 declared ablation of the model's postcode-anchor input channel.
+	 */
 	anchorOff?: boolean
-	/** #369 S8: feed the anchor's country posterior into the locality re-rank. */
+	/**
+	 * #369 S8: feed the anchor's country posterior into the locality re-rank.
+	 */
 	anchorRerank?: boolean
-	/** #478 leg 2: add the assembled (pipeline) arms. */
+	/**
+	 * #478 leg 2: add the assembled (pipeline) arms.
+	 */
 	assembled?: boolean
-	/** Swap the FTS backend for the byte-range candidate-table lookup (demo parity). */
+	/**
+	 * Swap the FTS backend for the byte-range candidate-table lookup (demo parity).
+	 */
 	candidateDb?: string
-	/** #718 situs-eval: grade the production coordinate cascade (per-state shards). */
+	/**
+	 * #718 situs-eval: grade the production coordinate cascade (per-state shards).
+	 */
 	cascade?: boolean
-	/** Shard root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Shard root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`.
+	 */
 	dataRoot?: string
-	/** Hard country filter for admin lookups (`none` disables). Default `US`. */
+	/**
+	 * Hard country filter for admin lookups (`none` disables). Default `US`.
+	 */
 	defaultCountry?: string
-	/** Write per-row failure dump here. */
+	/**
+	 * Write per-row failure dump here.
+	 */
 	errorsJson?: string
-	/** Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`. */
+	/**
+	 * Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`.
+	 */
 	eval?: string
-	/** #405: recover the locality dropped for a dual-role place. */
+	/**
+	 * #405: recover the locality dropped for a dual-role place.
+	 */
 	hierarchyCompletion?: boolean
-	/** #483 house-number interpolation shard (single-state). */
+	/**
+	 * #483 house-number interpolation shard (single-state).
+	 */
 	interpolation?: string
-	/** Row cap (0/omitted = all rows). */
+	/**
+	 * Row cap (0/omitted = all rows).
+	 */
 	limit?: number
-	/** Candidate ONNX. */
+	/**
+	 * Candidate ONNX.
+	 */
 	model?: string
-	/** Pin the anchor lookup source. */
+	/**
+	 * Pin the anchor lookup source.
+	 */
 	modelAnchorLookup?: string
-	/** Candidate model-card. */
+	/**
+	 * Candidate model-card.
+	 */
 	modelCard?: string
-	/** #895 tri-state pin: force adminCoherence OFF. */
+	/**
+	 * #895 tri-state pin: force adminCoherence OFF.
+	 */
 	noAdminCoherence?: boolean
-	/** #690/#895 tri-state pin: force normalizeCase ON. */
+	/**
+	 * #690/#895 tri-state pin: force normalizeCase ON.
+	 */
 	normalizeCase?: boolean
-	/** Write the aggregate JSON dump here. */
+	/**
+	 * Write the aggregate JSON dump here.
+	 */
 	outJson?: string
-	/** Also write the markdown report here (self-reporting safeguard). */
+	/**
+	 * Also write the markdown report here (self-reporting safeguard).
+	 */
 	outMd?: string
-	/** Per-row resolved-locality dump for the PIP-containment metric. */
+	/**
+	 * Per-row resolved-locality dump for the PIP-containment metric.
+	 */
 	outResolved?: string
-	/** Per-row neural-vs-v0 outcome dump (every row). */
+	/**
+	 * Per-row neural-vs-v0 outcome dump (every row).
+	 */
 	outRows?: string
-	/** #743: production-representative placer (soft country prior). */
+	/**
+	 * #743: production-representative placer (soft country prior).
+	 */
 	placeCountry?: boolean
-	/** #194/#743: promote a confident placer guess to a hard country filter (safelist-gated). */
+	/**
+	 * #194/#743: promote a confident placer guess to a hard country filter (safelist-gated).
+	 */
 	placeCountryHard?: boolean
-	/** Ungated hard-filter measurement (full in-map safelist). */
+	/**
+	 * Ungated hard-filter measurement (full in-map safelist).
+	 */
 	placeCountryHardAll?: boolean
-	/** #475 opt-in postal-city alias scorer on the FTS path. */
+	/**
+	 * #475 opt-in postal-city alias scorer on the FTS path.
+	 */
 	postalCityAliasDb?: string
-	/** Add the `neural+anchor` row (coordinate from the postcode anchor centroid). */
+	/**
+	 * Add the `neural+anchor` row (coordinate from the postcode anchor centroid).
+	 */
 	postcodeAnchor?: boolean
-	/** Postcode shards for the anchor rows (comma-separated). */
+	/**
+	 * Postcode shards for the anchor rows (comma-separated).
+	 */
 	postcodeShards?: string
-	/** #690/#895 tri-state pin: force normalizeCase OFF. */
+	/**
+	 * #690/#895 tri-state pin: force normalizeCase OFF.
+	 */
 	rawCase?: boolean
-	/** Candidate tokenizer. */
+	/**
+	 * Candidate tokenizer.
+	 */
 	tokenizer?: string
-	/** WOF shard list (comma-separated). Default admin + postcode-locality-intl. */
+	/**
+	 * WOF shard list (comma-separated). Default admin + postcode-locality-intl.
+	 */
 	wof?: string
 }
 
@@ -163,7 +237,9 @@ interface OaRow {
 	source: string
 }
 
-/** Most-specific placetype wins (locality beats region beats country). */
+/**
+ * Most-specific placetype wins (locality beats region beats country).
+ */
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
 	locality: 5,
@@ -182,7 +258,9 @@ interface Resolved {
 	lon: number
 }
 
-/** Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any. */
+/**
+ * Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any.
+ */
 function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
 
@@ -197,7 +275,9 @@ function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | 
 	return null
 }
 
-/** Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any. */
+/**
+ * Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any.
+ */
 function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
 
@@ -212,7 +292,9 @@ function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | 
 	return null
 }
 
-/** Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific). */
+/**
+ * Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific).
+ */
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
@@ -391,7 +473,9 @@ function regionMatches(resolvedName: string | undefined, expected: string | unde
 	return gotFr !== null && gotFr === lookupFrenchRegion(expected)
 }
 
-/** Run the OpenAddresses real-point resolver eval. Markdown report on stdout (+ optional `outMd`). */
+/**
+ * Run the OpenAddresses real-point resolver eval. Markdown report on stdout (+ optional `outMd`).
+ */
 /**
  * The locality-credit predicate: does the resolved place count as OA's expected locality?
  *
@@ -750,7 +834,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// former, so a span the position prior flags as a house number falls back to the resolver coordinate
 	// (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
 	const anchorMinConf = options.anchorMinConf ?? 0.5
-	/** The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`). */
+	/**
+	 * The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`).
+	 */
 	const anchorCoordFor = (input: string): { lat: number; lon: number } | null => {
 		if (!postcodeLookup || !extractAnchors) return null
 		const prefer = (dc && dc.toLowerCase() !== "none" ? dc : "").toUpperCase()
@@ -821,7 +907,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		}
 	}
 
-	/** Resolve one tree, return the admin-match flags + coord error vs OA's ground-truth point. */
+	/**
+	 * Resolve one tree, return the admin-match flags + coord error vs OA's ground-truth point.
+	 */
 	const scoreTree = (
 		row: OaRow,
 		resolved: Resolved[]

@@ -35,13 +35,21 @@ import { useMapPlaceRender } from "./useMapPlaceRender.ts"
 import { usePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
 
 export interface GeocoderDemoProps {
-	/** The injected demo runtime (map style + overlays + parse + version/backend). */
+	/**
+	 * The injected demo runtime (map style + overlays + parse + version/backend).
+	 */
 	runtime: DemoRuntime
-	/** Host-injected panels (about, release blurb, compare, permalink, debug drawer, map controls, …). */
+	/**
+	 * Host-injected panels (about, release blurb, compare, permalink, debug drawer, map controls, …).
+	 */
 	panels?: DemoPanels
-	/** Address to pre-fill. */
+	/**
+	 * Address to pre-fill.
+	 */
 	defaultAddress?: string
-	/** Example chips. @default the empty set (host supplies its own). */
+	/**
+	 * Example chips. @default the empty set (host supplies its own).
+	 */
 	presets?: ReadonlyArray<Preset>
 	/**
 	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
@@ -146,11 +154,15 @@ function GeocoderDemoInner({
 	)
 }
 
-/** Stable empty defaults — a fresh `{}`/`[]` per render would churn every downstream memo dep. */
+/**
+ * Stable empty defaults — a fresh `{}`/`[]` per render would churn every downstream memo dep.
+ */
 const NO_PANELS: DemoPanels = {}
 const NO_PRESETS: ReadonlyArray<Preset> = []
 
-/** The composed geocoder demo, behind a `ClientOnly` SSR boundary (the map is intrinsically a client component). */
+/**
+ * The composed geocoder demo, behind a `ClientOnly` SSR boundary (the map is intrinsically a client component).
+ */
 export function GeocoderDemo({
 	runtime,
 	panels = NO_PANELS,

@@ -14,7 +14,9 @@
  * @see {@link https://www.iso.org/obp/ui/#iso:code:3166:AU ISO 3166-2:AU}
  */
 
-/** State/territory abbreviation → full name (ISO 3166-2:AU subdivision set). */
+/**
+ * State/territory abbreviation → full name (ISO 3166-2:AU subdivision set).
+ */
 export const AU_STATE_ABBREVIATIONS = {
 	ACT: "Australian Capital Territory",
 	NSW: "New South Wales",
@@ -26,10 +28,14 @@ export const AU_STATE_ABBREVIATIONS = {
 	WA: "Western Australia",
 } as const satisfies Record<string, string>
 
-/** An Australian state/territory abbreviation as written on the last address line. */
+/**
+ * An Australian state/territory abbreviation as written on the last address line.
+ */
 export type AuStateAbbreviation = keyof typeof AU_STATE_ABBREVIATIONS
 
-/** Type-predicate for an AU state/territory abbreviation (case-insensitive). */
+/**
+ * Type-predicate for an AU state/territory abbreviation (case-insensitive).
+ */
 export function isAuStateAbbreviation(input: unknown): input is AuStateAbbreviation {
 	return typeof input === "string" && Object.hasOwn(AU_STATE_ABBREVIATIONS, input.toUpperCase())
 }

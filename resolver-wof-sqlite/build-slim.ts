@@ -48,13 +48,21 @@ import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SE
 import type { NamesTable, SprTable } from "./schema.ts"
 
 export interface BuildSlimOptions {
-	/** Input WOF SQLite distributions. Each should already have spr / names / place_population tables. */
+	/**
+	 * Input WOF SQLite distributions. Each should already have spr / names / place_population tables.
+	 */
 	inputs: string[]
-	/** Output path for the slim DB. Will be overwritten if it exists. */
+	/**
+	 * Output path for the slim DB. Will be overwritten if it exists.
+	 */
 	output: string
-	/** Country codes to keep (ISO 2-letter). Defaults to `["US"]`. */
+	/**
+	 * Country codes to keep (ISO 2-letter). Defaults to `["US"]`.
+	 */
 	countries?: string[]
-	/** Cap on the number of localities to keep per country, by descending population. */
+	/**
+	 * Cap on the number of localities to keep per country, by descending population.
+	 */
 	topLocalitiesPerCountry?: number
 	/**
 	 * Drop the `names` table after the FTS index is built (default false). `place_search` is a self-contained FTS5 (no
@@ -64,7 +72,9 @@ export interface BuildSlimOptions {
 	 * alt-names at runtime should ship a SEPARATE shard rather than re-bloat the hot DB.
 	 */
 	dropNames?: boolean
-	/** Optional progress callback for CLI / test introspection. */
+	/**
+	 * Optional progress callback for CLI / test introspection.
+	 */
 	onProgress?: (phase: SlimBuildPhase, detail: string) => void
 }
 
@@ -96,16 +106,24 @@ export interface BuildSlimResult {
 	}
 }
 
-/** Placetypes that we always keep so the ancestor chain a selected locality reports stays valid. */
+/**
+ * Placetypes that we always keep so the ancestor chain a selected locality reports stays valid.
+ */
 const ANCESTOR_PLACETYPES = ["country", "region", "county", "borough", "macroregion"] as const
 
-/** Tables copied verbatim (schema + filtered rows) from each source DB. Anything else is dropped. */
+/**
+ * Tables copied verbatim (schema + filtered rows) from each source DB. Anything else is dropped.
+ */
 const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
 
-/** Fallback DDL for `place_population` when the first source predates the aux table (defensive). */
+/**
+ * Fallback DDL for `place_population` when the first source predates the aux table (defensive).
+ */
 const PLACE_POPULATION_DDL = `CREATE TABLE ${PLACE_POPULATION_TABLE} (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0)`
 
-/** Minimal row shape for the population aux table — id + population, nothing else. */
+/**
+ * Minimal row shape for the population aux table — id + population, nothing else.
+ */
 interface PlacePopulationTable {
 	id: number
 	population: number

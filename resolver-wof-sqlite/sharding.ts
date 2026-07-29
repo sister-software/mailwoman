@@ -86,7 +86,9 @@ export interface ResolvedShard {
 	placetypes: readonly string[]
 }
 
-/** SQLite identifier regex — `[A-Za-z_][A-Za-z0-9_]*`. */
+/**
+ * SQLite identifier regex — `[A-Za-z_][A-Za-z0-9_]*`.
+ */
 const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
 
 /**
@@ -194,7 +196,9 @@ export function pickShardForPlacetype(
 		 * order remains the tiebreak when no shard claims the country (or none was probed).
 		 */
 		country?: string
-		/** Per-schema probed country sets (see `WOFSqlitePlaceLookup`'s construction probe). */
+		/**
+		 * Per-schema probed country sets (see `WOFSqlitePlaceLookup`'s construction probe).
+		 */
 		countriesBySchema?: ReadonlyMap<string, ReadonlySet<string>>
 	}
 ): ResolvedShard {

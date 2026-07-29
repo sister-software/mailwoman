@@ -20,7 +20,9 @@
 
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
-/** "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case. */
+/**
+ * "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case.
+ */
 function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
 }

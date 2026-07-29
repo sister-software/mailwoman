@@ -20,12 +20,16 @@ import {
 	type PhotonSearchParams,
 } from "./index.ts"
 
-/** Fixture engine: `search` resolves a fixed empty collection. */
+/**
+ * Fixture engine: `search` resolves a fixed empty collection.
+ */
 const searchEngine: PhotonEngine = {
 	search: async () => ({ type: "FeatureCollection", features: [] }),
 }
 
-/** Fixture engine: `reverse` resolves a fixed empty collection. */
+/**
+ * Fixture engine: `reverse` resolves a fixed empty collection.
+ */
 const reverseEngine: PhotonEngine = {
 	reverse: async () => ({ type: "FeatureCollection", features: [] }),
 }

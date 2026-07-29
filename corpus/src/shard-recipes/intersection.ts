@@ -60,7 +60,9 @@ const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
 const OA_COOK = { zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv" }
 
-/** One real crossing extracted from a county's TIGER EDGES shapefile. */
+/**
+ * One real crossing extracted from a county's TIGER EDGES shapefile.
+ */
 interface Crossing {
 	a: string
 	b: string
@@ -131,7 +133,9 @@ const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"]
  */
 const BAD_NAME = /[,&@/]|\b(and|at)\b/i
 
-/** Punctuation a connector form may leave between spans (besides whitespace): `, & @ /`. */
+/**
+ * Punctuation a connector form may leave between spans (besides whitespace): `, & @ /`.
+ */
 const CONNECTOR_PUNCT_RE = /^[\s,&@/]*$/
 
 function weightedPick<T extends { w: number }>(items: readonly T[], random: () => number): T {
@@ -147,7 +151,9 @@ function weightedPick<T extends { w: number }>(items: readonly T[], random: () =
 	return items.at(-1)!
 }
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields) — same as the affix builder. */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields) — same as the affix builder.
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -181,10 +187,14 @@ function splitCSV(line: string): string[] {
 	return out
 }
 
-/** Order-insensitive crossing key, for eval-leakage exclusion + pair dedup. */
+/**
+ * Order-insensitive crossing key, for eval-leakage exclusion + pair dedup.
+ */
 const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].toSorted().join("\u001F")
 
-/** Load the eval's crossings so neither train nor golden ever sees them. */
+/**
+ * Load the eval's crossings so neither train nor golden ever sees them.
+ */
 function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
 	const nodes = new Set<number>()
 	const pairs = new Set<string>()
@@ -254,7 +264,9 @@ async function extractCrossings(
 	return out
 }
 
-/** ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings). */
+/**
+ * ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings).
+ */
 function buildZipCityMap(): Map<string, string> {
 	const r = spawnSync("unzip", ["-p", OA_COOK.zip, OA_COOK.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 

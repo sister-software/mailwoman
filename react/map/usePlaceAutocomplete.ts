@@ -21,19 +21,31 @@ import { useDebouncedValue } from "../common/useDebouncedValue.ts"
 import type { Suggestion } from "./types.ts"
 
 export interface UsePlaceAutocompleteOptions {
-	/** The current input text. */
+	/**
+	 * The current input text.
+	 */
 	text: string
-	/** Setter for the input text (a pick rewrites the last-comma segment). */
+	/**
+	 * Setter for the input text (a pick rewrites the last-comma segment).
+	 */
 	setText: (text: string) => void
-	/** The host's autocomplete fetcher (FST prefix-walk). Absent → the combobox is inert. */
+	/**
+	 * The host's autocomplete fetcher (FST prefix-walk). Absent → the combobox is inert.
+	 */
 	autocomplete?: (query: string) => Promise<Suggestion[]>
-	/** Minimum query length before suggesting. @default 2 */
+	/**
+	 * Minimum query length before suggesting. @default 2
+	 */
 	minChars?: number
-	/** Debounce before firing the fetcher. @default 150 */
+	/**
+	 * Debounce before firing the fetcher. @default 150
+	 */
 	debounceMs?: number
 }
 
-/** The combobox aria props to spread onto the input the suggestions describe. */
+/**
+ * The combobox aria props to spread onto the input the suggestions describe.
+ */
 export interface AutocompleteInputProps {
 	role: "combobox"
 	"aria-expanded": boolean
@@ -44,35 +56,57 @@ export interface AutocompleteInputProps {
 }
 
 export interface UsePlaceAutocomplete {
-	/** The current suggestions (empty when nothing matches — the listbox then hides). */
+	/**
+	 * The current suggestions (empty when nothing matches — the listbox then hides).
+	 */
 	suggestions: Suggestion[]
-	/** The keyboard-highlighted suggestion index; `-1` when none is highlighted. */
+	/**
+	 * The keyboard-highlighted suggestion index; `-1` when none is highlighted.
+	 */
 	activeIndex: number
-	/** Set the highlighted index (the listbox calls this on mouse-enter). */
+	/**
+	 * Set the highlighted index (the listbox calls this on mouse-enter).
+	 */
 	setActiveIndex: (index: number) => void
-	/** Keydown handler for the input: ↑/↓ highlight, Enter accepts (+ suppresses submit), Esc dismisses. */
+	/**
+	 * Keydown handler for the input: ↑/↓ highlight, Enter accepts (+ suppresses submit), Esc dismisses.
+	 */
 	onInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
-	/** Accept a suggestion by value (rewrites the last-comma segment, closes the list). */
+	/**
+	 * Accept a suggestion by value (rewrites the last-comma segment, closes the list).
+	 */
 	pick: (value: string) => void
-	/** Close the list without picking. */
+	/**
+	 * Close the list without picking.
+	 */
 	dismiss: () => void
-	/** Aria/combobox props for the input the suggestions describe. */
+	/**
+	 * Aria/combobox props for the input the suggestions describe.
+	 */
 	inputProps: AutocompleteInputProps
-	/** The listbox element id (matches `inputProps["aria-controls"]`). */
+	/**
+	 * The listbox element id (matches `inputProps["aria-controls"]`).
+	 */
 	listboxId: string
-	/** Build the option element id for suggestion `index`. */
+	/**
+	 * Build the option element id for suggestion `index`.
+	 */
 	optionId: (index: number) => string
 }
 
 const LISTBOX_ID = "mw-demo-suggest-list"
 const optionId = (index: number) => `mw-demo-suggest-${index}`
 
-/** Extract the locality segment being typed — the text after the last comma, trimmed. */
+/**
+ * Extract the locality segment being typed — the text after the last comma, trimmed.
+ */
 function localitySegment(text: string): string {
 	return (text.includes(",") ? text.slice(text.lastIndexOf(",") + 1) : text).trim()
 }
 
-/** Replace the locality segment (after the last comma) with `name`, preserving the address prefix. */
+/**
+ * Replace the locality segment (after the last comma) with `name`, preserving the address prefix.
+ */
 function replaceSegment(current: string, name: string): string {
 	return current.includes(",") ? `${current.slice(0, current.lastIndexOf(",") + 1)} ${name}` : name
 }

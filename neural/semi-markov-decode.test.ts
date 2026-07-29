@@ -27,7 +27,9 @@ function grammar(overrides: Partial<SemiCRFTransitions> = {}): SemiCRFTransition
 	}
 }
 
-/** Deterministic pseudo-random scores — a fixed table beats a seeded RNG for reproducibility. */
+/**
+ * Deterministic pseudo-random scores — a fixed table beats a seeded RNG for reproducibility.
+ */
 function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	let s = seed
 
@@ -42,7 +44,9 @@ function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	)
 }
 
-/** Every valid segmentation of [0, seqLen) — O segments length 1, others up to maxSpan. */
+/**
+ * Every valid segmentation of [0, seqLen) — O segments length 1, others up to maxSpan.
+ */
 function bruteForce(seqLen: number, maxSpan: number): Array<Array<[number, number, number]>> {
 	const out: Array<Array<[number, number, number]>> = []
 

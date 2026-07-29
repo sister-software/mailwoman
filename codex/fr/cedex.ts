@@ -14,16 +14,24 @@
  *   from here (the provenance-first discipline: one provenanced source).
  */
 
-/** Matches a CEDEX phrase: the keyword plus an optional 1–2 digit office number. */
+/**
+ * Matches a CEDEX phrase: the keyword plus an optional 1–2 digit office number.
+ */
 export const CEDEX_PATTERN = /\bCEDEX(?:\s+(\d{1,2}))?\b/i
 
-/** A matched CEDEX phrase with its char range and optional office number. */
+/**
+ * A matched CEDEX phrase with its char range and optional office number.
+ */
 export interface CedexMatch {
-	/** The full matched phrase as it appears ("CEDEX 08", "Cedex"). */
+	/**
+	 * The full matched phrase as it appears ("CEDEX 08", "Cedex").
+	 */
 	matched: string
 	start: number
 	end: number
-	/** The office number when present ("08"), undefined for bare CEDEX. */
+	/**
+	 * The office number when present ("08"), undefined for bare CEDEX.
+	 */
 	office?: string
 }
 
@@ -47,7 +55,9 @@ export function matchCedex(text: string): CedexMatch | null {
 	return match
 }
 
-/** True when the string is exactly a CEDEX phrase (the component-value validator). */
+/**
+ * True when the string is exactly a CEDEX phrase (the component-value validator).
+ */
 export function isCedex(input: unknown): boolean {
 	if (typeof input !== "string") return false
 	const m = input.trim().match(CEDEX_PATTERN)

@@ -12,7 +12,9 @@
 import { z } from "@hono/zod-openapi"
 import { featureCollectionSchema, featureSchema } from "@mailwoman/api-kit"
 
-/** Photon feature properties — OSM-derived keys; tolerant of extras (`[key: string]: unknown` on the wire type). */
+/**
+ * Photon feature properties — OSM-derived keys; tolerant of extras (`[key: string]: unknown` on the wire type).
+ */
 export const PhotonPropertiesSchema = z
 	.object({
 		osm_id: z.union([z.number(), z.string()]).optional(),
@@ -35,14 +37,20 @@ export const PhotonPropertiesSchema = z
 	.loose()
 	.openapi("PhotonProperties")
 
-/** One Photon result feature — GeoJSON geometry plus Photon's property block. */
+/**
+ * One Photon result feature — GeoJSON geometry plus Photon's property block.
+ */
 export const PhotonFeatureSchema = featureSchema(PhotonPropertiesSchema).openapi("PhotonFeature")
 
-/** Response body of `/api`, a GeoJSON FeatureCollection as Photon returns it. */
+/**
+ * Response body of `/api`, a GeoJSON FeatureCollection as Photon returns it.
+ */
 export const PhotonFeatureCollectionSchema =
 	featureCollectionSchema(PhotonFeatureSchema).openapi("PhotonFeatureCollection")
 
-/** The error/degenerate envelope: an EMPTY FeatureCollection carrying a message. Never `{error}` on this surface. */
+/**
+ * The error/degenerate envelope: an EMPTY FeatureCollection carrying a message. Never `{error}` on this surface.
+ */
 export const PhotonMessageCollectionSchema = z
 	.object({
 		type: z.literal("FeatureCollection"),
@@ -65,7 +73,9 @@ export const SchemaOrgGeoCoordinatesSchema = z
 	})
 	.openapi("SchemaOrgGeoCoordinates")
 
-/** The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node — mirrors `SchemaOrgPostalAddress`. */
+/**
+ * The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node — mirrors `SchemaOrgPostalAddress`.
+ */
 export const SchemaOrgPostalAddressSchema = z
 	.object({
 		"@type": z.literal("PostalAddress"),
@@ -107,7 +117,9 @@ export const PhotonResponseSchema = z
  */
 const tolerantParam = z.union([z.string(), z.array(z.string())]).optional()
 
-/** `GET /api` query — documented shape; presence/parsing enforced in-handler. */
+/**
+ * `GET /api` query — documented shape; presence/parsing enforced in-handler.
+ */
 export const searchQueryParams = z.object({
 	q: tolerantParam.openapi({ type: "string", description: "The query string to search for." }),
 	limit: tolerantParam.openapi({ type: "integer", description: "Maximum results (default 15)." }),
@@ -123,7 +135,9 @@ export const searchQueryParams = z.object({
 	format: tolerantParam.openapi({ type: "string", enum: ["geojson", "jsonld"], description: "Output format." }),
 })
 
-/** `GET /reverse` query. */
+/**
+ * `GET /reverse` query.
+ */
 export const reverseQueryParams = z.object({
 	lat: tolerantParam.openapi({ type: "number", description: "Latitude." }),
 	lon: tolerantParam.openapi({ type: "number", description: "Longitude." }),

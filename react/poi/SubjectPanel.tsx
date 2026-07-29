@@ -16,7 +16,9 @@ export interface SubjectPanelProps {
 	subject: POISubject
 }
 
-/** The shared match-detail list (matched phrase, confidence, anchor) — identical for category + brand subjects. */
+/**
+ * The shared match-detail list (matched phrase, confidence, anchor) — identical for category + brand subjects.
+ */
 function MatchDetail({ subject }: SubjectPanelProps): ReactNode {
 	return (
 		<dl className="mw-subject__detail">

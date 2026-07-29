@@ -40,7 +40,9 @@ export function compileLicenseExcludes(spec: string): RegExp[] {
 		.map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))
 }
 
-/** True iff `license` matches any of the exclude `patterns` (empty patterns → never excluded). */
+/**
+ * True iff `license` matches any of the exclude `patterns` (empty patterns → never excluded).
+ */
 export function licenseExcluded(license: string | undefined, patterns: readonly RegExp[]): boolean {
 	const l = license ?? ""
 

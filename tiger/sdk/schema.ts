@@ -47,7 +47,9 @@ export interface PLBlockTable {
 	multi: number
 }
 
-/** Kysely row type for `tiger_streets` (ADDRFEAT — named street segments + ZIPs, per county). */
+/**
+ * Kysely row type for `tiger_streets` (ADDRFEAT — named street segments + ZIPs, per county).
+ */
 export interface TIGERStreetTable {
 	linearid: string
 	fullname: string
@@ -56,7 +58,9 @@ export interface TIGERStreetTable {
 	statefp: string
 }
 
-/** Kysely row type for `tiger_places` (PLACE — incorporated/census places, per state). */
+/**
+ * Kysely row type for `tiger_places` (PLACE — incorporated/census places, per state).
+ */
 export interface TIGERPlaceTable {
 	geoid: string
 	name: string
@@ -66,7 +70,9 @@ export interface TIGERPlaceTable {
 	classfp: string | null
 }
 
-/** The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`. */
+/**
+ * The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`.
+ */
 export interface TIGERDatabase {
 	tabblock20: TIGERBlockTable
 	pl_block: PLBlockTable
@@ -74,7 +80,9 @@ export interface TIGERDatabase {
 	tiger_places: TIGERPlaceTable
 }
 
-/** Marker so callers can opt into `Generated` columns later without importing kysely here. */
+/**
+ * Marker so callers can opt into `Generated` columns later without importing kysely here.
+ */
 
 /**
  * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take effect on an empty DB,

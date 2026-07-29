@@ -51,7 +51,9 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 		return new ParquetWriter<T>(schema, envelopeWriter, opts)
 	}
 
-	/** Convenience method to create a new buffered parquet writer that writes to the specified file. */
+	/**
+	 * Convenience method to create a new buffered parquet writer that writes to the specified file.
+	 */
 	static override async openFile<T extends ParquetRecordLike>(
 		schemaLike: ParquetSchema<T> | ParquetSchemaDefinition<T>,
 		sourcePath: string | Buffer | URL,
@@ -67,17 +69,23 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 	}
 
 	// @note This fixes invalid Markdown in the base class JSDoc.
-	/** Set a metadata key-value pair on the writer. */
+	/**
+	 * Set a metadata key-value pair on the writer.
+	 */
 	public override setMetadata(key: string, value: string): void {
 		return super.setMetadata(key, value)
 	}
 
-	/** Append a row to the buffer. If the buffer is full, the data will be written to disk. */
+	/**
+	 * Append a row to the buffer. If the buffer is full, the data will be written to disk.
+	 */
 	public override async appendRow(row: T): Promise<void> {
 		return super.appendRow(row)
 	}
 
-	/** Flush all buffered data to disk, close the file, and release resources. */
+	/**
+	 * Flush all buffered data to disk, close the file, and release resources.
+	 */
 	public override async close(): Promise<void> {
 		await this.#flushing
 

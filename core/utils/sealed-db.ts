@@ -23,7 +23,9 @@ function sqlite(): typeof import("node:sqlite") {
 	return process.getBuiltinModule("node:sqlite")
 }
 
-/** A write-mode open was attempted on a sealed (0444) data artifact. */
+/**
+ * A write-mode open was attempted on a sealed (0444) data artifact.
+ */
 export class SealedArtifactError extends Error {
 	constructor(path: string) {
 		super(
@@ -34,7 +36,9 @@ export class SealedArtifactError extends Error {
 	}
 }
 
-/** True when the artifact exists and carries no write bits (the sealed state {@link sealDatabase} leaves). */
+/**
+ * True when the artifact exists and carries no write bits (the sealed state {@link sealDatabase} leaves).
+ */
 export function isSealed(path: string): boolean {
 	return existsSync(path) && (statSync(path).mode & 0o222) === 0
 }

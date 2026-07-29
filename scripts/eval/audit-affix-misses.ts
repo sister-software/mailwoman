@@ -23,7 +23,9 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-/** Longest suffix still likely an abbreviation when it carries no trailing period. */
+/**
+ * Longest suffix still likely an abbreviation when it carries no trailing period.
+ */
 const MAX_ABBREVIATED_SUFFIX = 4
 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -73,7 +75,9 @@ const COMMON_SUFFIXES = new Set([
 	"lane",
 ])
 
-/** Classify the surface-form features of one eval row. */
+/**
+ * Classify the surface-form features of one eval row.
+ */
 function formFeatures(row: { raw: string; components: Record<string, string> }): string[] {
 	const f: string[] = []
 	const { street_prefix: prefix, street_suffix: suffix } = row.components

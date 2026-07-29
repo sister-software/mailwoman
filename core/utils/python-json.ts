@@ -26,11 +26,15 @@
  */
 
 export interface PyJSONOptions {
-	/** Escape non-ASCII as `\uXXXX` (Python `ensure_ascii`). Defaults to `true`, matching Python. */
+	/**
+	 * Escape non-ASCII as `\uXXXX` (Python `ensure_ascii`). Defaults to `true`, matching Python.
+	 */
 	ensureAscii?: boolean
 }
 
-/** Serialize one string the way Python's json does (then optionally `ensure_ascii`-escape it). */
+/**
+ * Serialize one string the way Python's json does (then optionally `ensure_ascii`-escape it).
+ */
 function serializeString(value: string, ensureAscii: boolean): string {
 	// JSON.stringify handles the quote/backslash/control escaping identically to Python's json.
 	const out = JSON.stringify(value)
@@ -48,7 +52,9 @@ function serializeString(value: string, ensureAscii: boolean): string {
 	return escaped
 }
 
-/** Serialize one finite/non-finite number the way Python's json does. */
+/**
+ * Serialize one finite/non-finite number the way Python's json does.
+ */
 function serializeNumber(value: number): string {
 	if (Number.isFinite(value)) return JSON.stringify(value)
 
@@ -85,7 +91,9 @@ function serialize(value: unknown, ensureAscii: boolean): string {
 	throw new TypeError(`pyJSONDumps: unsupported value of type ${t}`)
 }
 
-/** `json.dumps(value)` — single line, `(", ", ": ")` separators, `ensure_ascii` per options. */
+/**
+ * `json.dumps(value)` — single line, `(", ", ": ")` separators, `ensure_ascii` per options.
+ */
 export function pyJSONDumps(value: unknown, options: PyJSONOptions = {}): string {
 	return serialize(value, options.ensureAscii ?? true)
 }

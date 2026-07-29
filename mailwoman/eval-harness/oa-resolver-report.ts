@@ -14,7 +14,9 @@ import { percentile } from "@mailwoman/core/utils"
 
 import type { Agg, AggPair, OAResolverEvalOptions } from "./oa-resolver-eval.ts"
 
-/** Everything the report reads: the per-arm aggregates, the tier hit counts, and the run's flags. */
+/**
+ * Everything the report reads: the per-arm aggregates, the tier hit counts, and the run's flags.
+ */
 export interface OaReportInput {
 	agg: { neural: AggPair }
 	assembledAgg: AggPair
@@ -39,7 +41,9 @@ export interface OaReportInput {
 	options: OAResolverEvalOptions
 }
 
-/** Render the run's markdown report. Pure — every number comes from `input`. */
+/**
+ * Render the run's markdown report. Pure — every number comes from `input`.
+ */
 export function renderOaResolverReport(input: OaReportInput): string {
 	const {
 		agg,

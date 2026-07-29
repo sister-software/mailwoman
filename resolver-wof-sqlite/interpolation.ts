@@ -44,13 +44,19 @@ import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
 
-/** One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`. */
+/**
+ * One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`.
+ */
 export interface InterpolatedHit {
 	lat: number
 	lon: number
-	/** Always true — the tier's honesty flag, mirrored into `resolution_tier` when wired. */
+	/**
+	 * Always true — the tier's honesty flag, mirrored into `resolution_tier` when wired.
+	 */
 	interpolated: true
-	/** Which rung answered — see {@link InterpolationMethod}. */
+	/**
+	 * Which rung answered — see {@link InterpolationMethod}.
+	 */
 	method: InterpolationMethod
 	/**
 	 * `tiger_range` only. True when the matched segment side's parity agrees with the house number (or the side is
@@ -67,16 +73,22 @@ export interface InterpolatedHit {
 	 * span (`address_point`/`both`), or the explicitly larger extrapolation penalty (`address_point`/`single`).
 	 */
 	uncertaintyM: number
-	/** Provenance, e.g. `"tiger:edges"`. */
+	/**
+	 * Provenance, e.g. `"tiger:edges"`.
+	 */
 	source: string
-	/** Pinned data vintage, e.g. `"TIGER2023"`. */
+	/**
+	 * Pinned data vintage, e.g. `"TIGER2023"`.
+	 */
 	release: string
 }
 
 export interface InterpolationQuery {
 	street: string
 	number: string
-	/** ZIP scope — strongly preferred; without it common street names abstain (see module doc). */
+	/**
+	 * ZIP scope — strongly preferred; without it common street names abstain (see module doc).
+	 */
 	postcode?: string
 }
 

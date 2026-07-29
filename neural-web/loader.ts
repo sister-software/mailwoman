@@ -44,13 +44,19 @@ export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"
  * construct only the one matching index — is superseded; the `country` load-option survives as an optional
  * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
  */
-/** Absent asset — a soft-feed sibling that was never published, not a failure. */
+/**
+ * Absent asset — a soft-feed sibling that was never published, not a failure.
+ */
 const HTTP_NOT_FOUND = 404
 
 export interface LoadedPairIndex {
-	/** URL the binary was fetched from. */
+	/**
+	 * URL the binary was fetched from.
+	 */
 	url: string
-	/** The header's ISO country code — the key the per-parse selection matches a detected country against. */
+	/**
+	 * The header's ISO country code — the key the per-parse selection matches a detected country against.
+	 */
 	country: string
 	/**
 	 * The constructed, live resolver. The SAME instance the per-parse selection returns (and, for a posture-pinned load,
@@ -101,9 +107,13 @@ export interface LoadResult {
 }
 
 export interface LoadFromURLsOptions {
-	/** URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`). */
+	/**
+	 * URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`).
+	 */
 	modelURL: string
-	/** URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`). */
+	/**
+	 * URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`).
+	 */
 	tokenizerURL: string
 	/**
 	 * URL to `model-card.json`. When provided, its `labels` field is threaded into the classifier so post-Stage-2 bundles
@@ -114,7 +124,9 @@ export interface LoadFromURLsOptions {
 	 * logits and viterbi crashes with "Cannot read properties of undefined".
 	 */
 	modelCardURL?: string
-	/** Runner options (WebGPU toggle, fixed sequence length, WASM path override). */
+	/**
+	 * Runner options (WebGPU toggle, fixed sequence length, WASM path override).
+	 */
 	runner?: WebONNXRunnerOpts
 	/**
 	 * URLs to one or more PCB1 postcode binaries (`postcode-<cc>.bin`). For anchor-trained models (#239/#240) these are
@@ -205,7 +217,9 @@ export interface LoadFromURLsOptions {
 	 * disable for pre-bridge bundles where gate parity matters.
 	 */
 	bridgePunctuationGaps?: boolean
-	/** Optional fetch override. Defaults to `globalThis.fetch`. */
+	/**
+	 * Optional fetch override. Defaults to `globalThis.fetch`.
+	 */
 	fetchImpl?: typeof fetch
 }
 
@@ -249,7 +263,9 @@ async function loadPostcodeAnchorLookup(
 	return lookups.length ? mergeAnchorLookups(lookups) : undefined
 }
 
-/** Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. */
+/**
+ * Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids.
+ */
 function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 	if (lookups.length === 1) return lookups[0]!
 	const merged: AnchorLookup = new Map()
@@ -394,12 +410,16 @@ export function defaultCountryLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "country-surface-lexicon-v1.json")
 }
 
-/** Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout). */
+/**
+ * Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout).
+ */
 function defaultStreetTypeLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "street-type-lexicon-v3.json")
 }
 
-/** Default location of the locality-surface evidence lexicon: a sibling of the model file. */
+/**
+ * Default location of the locality-surface evidence lexicon: a sibling of the model file.
+ */
 function defaultLocalitySurfaceLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "locality-surface-lexicon-v6.json")
 }

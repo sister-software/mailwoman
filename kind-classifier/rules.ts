@@ -18,7 +18,9 @@ import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
  */
 const MAX_LANDMARK_LENGTH = 50
 
-/** Longest input still plausible as a bare postcode, allowing for a country prefix and separators. */
+/**
+ * Longest input still plausible as a bare postcode, allowing for a country prefix and separators.
+ */
 const MAX_POSTCODE_ONLY_LENGTH = 16
 
 /**
@@ -27,7 +29,9 @@ const MAX_POSTCODE_ONLY_LENGTH = 16
  */
 const MIN_POSTCODE_COVERAGE = 0.7
 
-/** Longest input still plausible as a bare locality name, including a trailing region code. */
+/**
+ * Longest input still plausible as a bare locality name, including a trailing region code.
+ */
 const MAX_LOCALITY_ONLY_LENGTH = 30
 
 /**
@@ -36,10 +40,14 @@ const MAX_LOCALITY_ONLY_LENGTH = 30
  */
 const VENUE_PHRASE_MIN_WORDS = 2
 
-/** Upper bound of the short-phrase venue window; see {@link VENUE_PHRASE_MIN_WORDS}. */
+/**
+ * Upper bound of the short-phrase venue window; see {@link VENUE_PHRASE_MIN_WORDS}.
+ */
 const VENUE_PHRASE_MAX_WORDS = 4
 
-/** Word count above which a single-segment proper-case phrase stops reading as a venue name. */
+/**
+ * Word count above which a single-segment proper-case phrase stops reading as a venue name.
+ */
 const LONG_VENUE_PHRASE_MAX_WORDS = 6
 
 /**
@@ -48,7 +56,9 @@ const LONG_VENUE_PHRASE_MAX_WORDS = 6
  */
 const ALPHANUMERIC_POSTCODE_MIN_LENGTH = 15
 
-/** Landmark vocabulary — phrases that suggest a vague-location description rather than an address. */
+/**
+ * Landmark vocabulary — phrases that suggest a vague-location description rather than an address.
+ */
 const LANDMARK_LEADERS = [
 	"behind",
 	"near",
@@ -61,7 +71,9 @@ const LANDMARK_LEADERS = [
 	"beside",
 ]
 
-/** Intersection vocabulary — words that signal "where two streets cross" rather than an address. */
+/**
+ * Intersection vocabulary — words that signal "where two streets cross" rather than an address.
+ */
 const INTERSECTION_PATTERNS = [
 	/\bcorner of\b/i,
 	/\bintersection of\b/i,
@@ -111,7 +123,9 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 	return 0
 }
 
-/** Street-suffix tokens that indicate an address, not a venue name. */
+/**
+ * Street-suffix tokens that indicate an address, not a venue name.
+ */
 const STREET_SUFFIXES = new Set([
 	"st",
 	"street",
@@ -197,7 +211,9 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	return 0
 }
 
-/** Known QueryShape format strings that indicate "this token is a postcode". */
+/**
+ * Known QueryShape format strings that indicate "this token is a postcode".
+ */
 const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
 	"us_zip",
 	"us_zip4",

@@ -20,19 +20,31 @@
 import { resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 
-/** Options for {@linkcode renderPlotlyHTMLToPNG}. */
+/**
+ * Options for {@linkcode renderPlotlyHTMLToPNG}.
+ */
 export interface RenderPlotlyOptions {
-	/** The self-contained Plotly HTML file. */
+	/**
+	 * The self-contained Plotly HTML file.
+	 */
 	inHTML: string
-	/** Output PNG path. */
+	/**
+	 * Output PNG path.
+	 */
 	outPNG: string
-	/** Viewport width. Default 1160. */
+	/**
+	 * Viewport width. Default 1160.
+	 */
 	width?: number
-	/** Viewport height. Default 1000. */
+	/**
+	 * Viewport height. Default 1000.
+	 */
 	height?: number
 }
 
-/** Screenshot a Plotly HTML page after every graph div's `plotly_afterplot` fires. */
+/**
+ * Screenshot a Plotly HTML page after every graph div's `plotly_afterplot` fires.
+ */
 export async function renderPlotlyHTMLToPNG(
 	options: RenderPlotlyOptions,
 	report?: (line: string) => void

@@ -30,10 +30,14 @@ import { deserializeFST, readFSTProvenance } from "./fst-serialize.ts"
 import type { FSTProvenance } from "./fst-types.ts"
 import { buildStreetMorphologyFST } from "./street-morphology-fst-builder.ts"
 
-/** The sealed artifact's canonical filename — identical in the data-root staging dir and as a weights-package sibling. */
+/**
+ * The sealed artifact's canonical filename — identical in the data-root staging dir and as a weights-package sibling.
+ */
 export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
 
-/** The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`. */
+/**
+ * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`.
+ */
 export function defaultStreetMorphologyArtifactPath(): string {
 	return String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME))
 }
@@ -44,23 +48,35 @@ export interface LoadStreetMorphologyFSTOpts {
 	 * unreadable degrades straight to the dictionary build, never a throw.
 	 */
 	artifactPath?: string
-	/** Dictionaries dir for the build fallback. Defaults to core's bundled libpostal dictionaries. */
+	/**
+	 * Dictionaries dir for the build fallback. Defaults to core's bundled libpostal dictionaries.
+	 */
 	dictionariesDir?: string
-	/** Unreadable-artifact diagnostics. Defaults to silent (the caller owns its warn channel). */
+	/**
+	 * Unreadable-artifact diagnostics. Defaults to silent (the caller owns its warn channel).
+	 */
 	onWarn?: (message: string) => void
 }
 
 export interface LoadedStreetMorphologyFST {
 	matcher: FSTMatcher
-	/** Which rung produced the matcher: a sealed-artifact deserialize, or the per-process dictionary build. */
+	/**
+	 * Which rung produced the matcher: a sealed-artifact deserialize, or the per-process dictionary build.
+	 */
 	source: "artifact" | "built"
-	/** The artifact path when `source === "artifact"`. */
+	/**
+	 * The artifact path when `source === "artifact"`.
+	 */
 	path?: string
-	/** Build provenance — read from the artifact trailer, or carried fresh off the fallback build. */
+	/**
+	 * Build provenance — read from the artifact trailer, or carried fresh off the fallback build.
+	 */
 	provenance?: FSTProvenance
 }
 
-/** Load the street-morphology matcher: sealed artifact first, per-process dictionary build as the degrade path. */
+/**
+ * Load the street-morphology matcher: sealed artifact first, per-process dictionary build as the degrade path.
+ */
 export function loadStreetMorphologyFST(opts: LoadStreetMorphologyFSTOpts = {}): LoadedStreetMorphologyFST {
 	const warn = opts.onWarn ?? (() => {})
 	const artifactPath = opts.artifactPath ?? defaultStreetMorphologyArtifactPath()

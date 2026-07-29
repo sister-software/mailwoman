@@ -24,26 +24,42 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
-/** Share of a bucket that must be off-map before it is treated as an exposure case rather than noise. */
+/**
+ * Share of a bucket that must be off-map before it is treated as an exposure case rather than noise.
+ */
 const OFFMAP_DOMINANCE = 0.6
 
-/** Options for {@linkcode buildOutlierExposure}. */
+/**
+ * Options for {@linkcode buildOutlierExposure}.
+ */
 export interface BuildOutlierExposureOptions {
-	/** Names sampled per off-map language. Default 2500. */
+	/**
+	 * Names sampled per off-map language. Default 2500.
+	 */
 	perLang?: number
-	/** WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`. */
+	/**
+	 * WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 */
 	wof?: string
-	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildOutlierExposure}. */
+/**
+ * Result of {@linkcode buildOutlierExposure}.
+ */
 export interface BuildOutlierExposureResult {
-	/** Total OTHER pool size (names + address-shaped variants). */
+	/**
+	 * Total OTHER pool size (names + address-shaped variants).
+	 */
 	total: number
 }
 
-/** Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW). */
+/**
+ * Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
+ */
 const OFF_MAP_LANGS = [
 	"rus",
 	"ukr",
@@ -78,7 +94,9 @@ const OFF_MAP_LANGS = [
 	"amh", // Georgian / Armenian / Ethiopic
 ]
 
-/** Dominant script must be off-map: has chars in a non-Latin, non-CJK, non-digit block. */
+/**
+ * Dominant script must be off-map: has chars in a non-Latin, non-CJK, non-digit block.
+ */
 function isOffMapScript(s: string): boolean {
 	let off = 0
 	let total = 0
@@ -121,7 +139,9 @@ function addressVariant(name: string, h: number): string {
 	}
 }
 
-/** Coarse-placer non-Latin outlier-exposure builder — see the module doc. */
+/**
+ * Coarse-placer non-Latin outlier-exposure builder — see the module doc.
+ */
 export async function buildOutlierExposure(
 	options: BuildOutlierExposureOptions = {},
 	report?: (line: string) => void

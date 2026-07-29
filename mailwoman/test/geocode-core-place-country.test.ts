@@ -16,12 +16,16 @@ import { describe, expect, test, vi } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier } from "../geocode-core.ts"
 
-/** A classifier that returns a fixed tree (no region → admin-only path, no shards needed). */
+/**
+ * A classifier that returns a fixed tree (no region → admin-only path, no shards needed).
+ */
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }
 }
 
-/** A resolver that records the ResolveOpts it was handed and echoes the tree back. */
+/**
+ * A resolver that records the ResolveOpts it was handed and echoes the tree back.
+ */
 function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 	const seen: ResolveOpts[] = []
 	const resolver: Resolver = {

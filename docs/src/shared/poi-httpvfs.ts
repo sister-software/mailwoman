@@ -46,7 +46,9 @@ export async function loadPOIWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWor
 	return loadHTTPVFSDatabase(poiLayerURL(), sqljsBaseURL)
 }
 
-/** Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported. */
+/**
+ * Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported.
+ */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
 	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
@@ -187,9 +189,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 		.slice(0, limit)
 }
 
-// ---------------------------------------------------------------------------
-// Anchor → center resolution (no neural runtime)
-// ---------------------------------------------------------------------------
+// MARK: Anchor → center resolution (no neural runtime)
 
 let candidateWorkerPromise: Promise<POIHTTPVFSWorker> | undefined
 
@@ -212,7 +212,9 @@ function loadCandidateWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 export interface AnchorCenter {
 	lat: number
 	lon: number
-	/** The resolved place's canonical name — surfaced so the UI can show what "Springfield" resolved to. */
+	/**
+	 * The resolved place's canonical name — surfaced so the UI can show what "Springfield" resolved to.
+	 */
 	name: string
 }
 

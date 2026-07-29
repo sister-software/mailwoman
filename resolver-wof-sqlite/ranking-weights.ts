@@ -13,17 +13,29 @@
  * doc.
  */
 export interface RankingWeights {
-	/** Boost when the candidate's placetype matches an explicit `placetype` filter. */
+	/**
+	 * Boost when the candidate's placetype matches an explicit `placetype` filter.
+	 */
 	placetypeMatchBoost: number
-	/** Boost when the candidate is a locality and no explicit placetype was requested. */
+	/**
+	 * Boost when the candidate is a locality and no explicit placetype was requested.
+	 */
 	localityImplicitBoost: number
-	/** Boost when the candidate's country matches an explicit `country` filter. */
+	/**
+	 * Boost when the candidate's country matches an explicit `country` filter.
+	 */
 	countryMatchBoost: number
-	/** Boost when the candidate is a direct child of the requested `parentID`. */
+	/**
+	 * Boost when the candidate is a direct child of the requested `parentID`.
+	 */
 	directChildBoost: number
-	/** Boost when the candidate is a transitive descendant of the requested `parentID`. */
+	/**
+	 * Boost when the candidate is a transitive descendant of the requested `parentID`.
+	 */
 	descendantBoost: number
-	/** Multiplier on the length-penalty term (penalizes much-longer-than-query names). */
+	/**
+	 * Multiplier on the length-penalty term (penalizes much-longer-than-query names).
+	 */
 	lengthPenaltyWeight: number
 	/**
 	 * Magnitude of the proximity boost when the query carries `near`. The contribution is `proximityBoost / (1 +
@@ -39,7 +51,9 @@ export interface RankingWeights {
 	 * population.
 	 */
 	biasBoost: number
-	/** Distance (km) at which the proximity boost halves. Tune to the typical query radius. */
+	/**
+	 * Distance (km) at which the proximity boost halves. Tune to the typical query radius.
+	 */
 	proximityScaleKm: number
 	/**
 	 * Magnitude of the population boost when the candidate has a known `wof:population`. The contribution is

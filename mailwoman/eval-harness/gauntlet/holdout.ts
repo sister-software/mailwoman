@@ -26,13 +26,21 @@ import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
 
-/** Options for {@linkcode runHoldoutLayer}. */
+/**
+ * Options for {@linkcode runHoldoutLayer}.
+ */
 export interface HoldoutLayerOptions {
-	/** Candidate ONNX (required — the layer is candidate-vs-prod). */
+	/**
+	 * Candidate ONNX (required — the layer is candidate-vs-prod).
+	 */
 	candidate?: string
-	/** Fresh-draw sample size. Default 300. */
+	/**
+	 * Fresh-draw sample size. Default 300.
+	 */
 	n?: number
-	/** Truth source: `fr` (BAN) or `us` (FDIC). Default `fr`. */
+	/**
+	 * Truth source: `fr` (BAN) or `us` (FDIC). Default `fr`.
+	 */
 	source?: string
 	/**
 	 * A tokenizer-SPLICE candidate (#444/#884/#912) ships a NEW vocab; grading it needs the candidate tokenizer (+ card)
@@ -40,7 +48,9 @@ export interface HoldoutLayerOptions {
 	 * the only variables are the ONNX + the vocab. Omit for a model-only bump.
 	 */
 	tokenizer?: string
-	/** Candidate model-card (paired with `tokenizer`). */
+	/**
+	 * Candidate model-card (paired with `tokenizer`).
+	 */
 	card?: string
 	/**
 	 * Package-shaped candidate weights dir — the #718-safe path (see {@link GauntletLayerOptions.weightsCacheRoot}). Like
@@ -50,9 +60,13 @@ export interface HoldoutLayerOptions {
 	weightsCacheRoot?: string
 }
 
-/** Rooftop / street / locality (km) */
+/**
+ * Rooftop / street / locality (km)
+ */
 const TOLS = [0.1, 0.5, 5] as const
-/** The z-test runs at the locality bucket (the dominant resolvable tier) */
+/**
+ * The z-test runs at the locality bucket (the dominant resolvable tier)
+ */
 const GATE_TOL = 5
 
 interface Sample {
@@ -111,7 +125,9 @@ function holdoutSources(): Record<string, SourceDef> {
 	}
 }
 
-/** Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run. */
+/**
+ * Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run.
+ */
 async function draw(src: SourceDef, n: number): Promise<Sample[]> {
 	const res: Sample[] = []
 	let seen = 0
@@ -161,7 +177,9 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 	return { hits, resolved }
 }
 
-/** Two-proportion z (candidate − prod). z < −1.96 → candidate significantly WORSE (block). */
+/**
+ * Two-proportion z (candidate − prod). z < −1.96 → candidate significantly WORSE (block).
+ */
 function zStat(cand: number, prod: number, n: number): number {
 	const pc = cand / n
 	const pp = prod / n

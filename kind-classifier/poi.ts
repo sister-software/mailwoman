@@ -17,7 +17,9 @@ import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
  */
 const MAX_POI_SEGMENTS = 3
 
-/** One lexicon hit for a candidate subject phrase. */
+/**
+ * One lexicon hit for a candidate subject phrase.
+ */
 export interface POIPhraseMatch {
 	/**
 	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. For
@@ -32,19 +34,29 @@ export interface POIPhraseMatch {
 	 * source-compatible.
 	 */
 	kind?: "category" | "brand"
-	/** Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match). */
+	/**
+	 * Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match).
+	 */
 	wikidata?: string
 }
 
-/** Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss. */
+/**
+ * Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss.
+ */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
-/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
+/**
+ * Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default).
+ */
 export interface POISubjectMatch {
 	match: POIPhraseMatch
-	/** The matched subject text as it appeared in the query. */
+	/**
+	 * The matched subject text as it appeared in the query.
+	 */
 	subject: string
-	/** The anchor remainder after the separator; `""` when the whole input matched. */
+	/**
+	 * The anchor remainder after the separator; `""` when the whole input matched.
+	 */
 	remainder: string
 }
 
@@ -68,7 +80,9 @@ export interface POISubjectMatch {
  */
 const ANCHOR_SEPARATOR = /,\s*|\s(?:near|in|at|around)\s+/gi
 
-/** Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table. */
+/**
+ * Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table.
+ */
 const MAX_SUBJECT_TOKENS = 4
 
 /**

@@ -56,7 +56,9 @@ export type ClientSurface = (typeof CLIENT_SURFACES)[number]
 const FLAVORS = ["3.1", "3.0"] as const
 type Flavor = (typeof FLAVORS)[number]
 
-/** Every surface's compiled CLI entry point, relative to the repo root — the emitters this pipeline shells out to. */
+/**
+ * Every surface's compiled CLI entry point, relative to the repo root — the emitters this pipeline shells out to.
+ */
 function emitterCLIPath(surface: ClientSurface): string {
 	return repoRootPath(surface, "out", "cli.js")
 }
@@ -70,20 +72,26 @@ function emitterCLIPath(surface: ClientSurface): string {
  */
 const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
 
-/** Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps. */
+/**
+ * Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps.
+ */
 function copyLicenseFiles(destDir: string): void {
 	for (const filename of LICENSE_FILENAMES) {
 		copyFileSync(repoRootPath(filename), join(destDir, filename))
 	}
 }
 
-/** Absolute paths to each surface's emitted document, per flavor. */
+/**
+ * Absolute paths to each surface's emitted document, per flavor.
+ */
 export interface SpecPaths {
 	v31: Record<ClientSurface, string>
 	v30: Record<ClientSurface, string>
 }
 
-/** Everything a completed (or partially completed, on early abort) run produced. */
+/**
+ * Everything a completed (or partially completed, on early abort) run produced.
+ */
 export interface GenerateClientsReceipt {
 	version: string
 	outDir: string
@@ -97,7 +105,9 @@ export interface GenerateClientsReceipt {
 }
 
 export interface GenerateClientsOptions {
-	/** Output root. Default `<repo>/clients-build` (gitignored). */
+	/**
+	 * Output root. Default `<repo>/clients-build` (gitignored).
+	 */
 	outDir?: string
 	/**
 	 * Skip `uv build`/import-check + `cargo check --examples` (dev only — an unverified pipeline must never be trusted as
@@ -162,7 +172,9 @@ function checkCompiled(): void {
 	}
 }
 
-/** Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`. */
+/**
+ * Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`.
+ */
 function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): SpecPaths {
 	mkdirSync(specsDir, { recursive: true })
 
@@ -800,7 +812,9 @@ function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): vo
 	run("cargo", ["check", "--examples"], { cwd: rustDir })
 }
 
-/** Run the full pipeline. See the module docstring for the phase order and the `--examples` verify note. */
+/**
+ * Run the full pipeline. See the module docstring for the phase order and the `--examples` verify note.
+ */
 export async function generateClients(opts: GenerateClientsOptions = {}): Promise<GenerateClientsResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})

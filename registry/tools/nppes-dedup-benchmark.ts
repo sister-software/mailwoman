@@ -46,28 +46,44 @@ import { latLngToCell } from "h3-js"
 
 import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Groups below this size are too small for a held-out split to mean anything. */
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
 const MIN_GROUP_SIZE = 5
 
-/** F1 gap within which two blocking strategies are treated as equivalent. */
+/**
+ * F1 gap within which two blocking strategies are treated as equivalent.
+ */
 const BLOCKING_PARITY_TOLERANCE = 0.015
 
-/** Options for {@linkcode nppesDedupBenchmark}. */
+/**
+ * Options for {@linkcode nppesDedupBenchmark}.
+ */
 export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). Model-swap
 	 * overrides (`--model`/`--tokenizer`/`--model-card`) are the COMMAND's factory config, not tool options.
 	 */
 	createGeocoder: EvalGeocoderFactory
-	/** The threaded geocode surface — required when {@linkcode parallelGeocode} is set. */
+	/**
+	 * The threaded geocode surface — required when {@linkcode parallelGeocode} is set.
+	 */
 	geocodeStream?: EvalGeocodeStream
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 300. */
+	/**
+	 * NPIs sampled. Default 300.
+	 */
 	maxNpis?: number
-	/** EM-train the FS arms (label-free). Default true; `--no-train-em` uses the seeds. */
+	/**
+	 * EM-train the FS arms (label-free). Default true; `--no-train-em` uses the seeds.
+	 */
 	trainEm?: boolean
 	/**
 	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + normalizeCase OFF). Default off (the
@@ -80,22 +96,32 @@ export interface NPPESDedupBenchmarkOptions {
 	 * the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
 	 */
 	candidate?: string
-	/** Write the #625 gold-set adjudication packet (org-name-grain over-merged clusters) here. */
+	/**
+	 * Write the #625 gold-set adjudication packet (org-name-grain over-merged clusters) here.
+	 */
 	dumpOvermerges?: string
-	/** H3 resolution for the org-name-h3 truth grain. Default 11 (≈25 m edge). */
+	/**
+	 * H3 resolution for the org-name-h3 truth grain. Default 11 (≈25 m edge).
+	 */
 	h3Res?: number
 	/**
 	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process seam. Heavy
 	 * per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2 workers, coordinates identical.
 	 */
 	parallelGeocode?: boolean
-	/** Worker-pool concurrency for {@linkcode parallelGeocode}. Default 2 (geocode is I/O-bound). */
+	/**
+	 * Worker-pool concurrency for {@linkcode parallelGeocode}. Default 2 (geocode is I/O-bound).
+	 */
 	geoConcurrency?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
-/** NPPES column names (verbatim from the file headers). */
+/**
+ * NPPES column names (verbatim from the file headers).
+ */
 const C = {
 	npi: "NPI",
 	entityType: "Entity Type Code",
@@ -165,7 +191,9 @@ function orgJaccard(a: Set<string>, b: Set<string>): number {
 
 	return inter / (a.size + b.size - inter)
 }
-/** Gold-set threshold. */
+/**
+ * Gold-set threshold.
+ */
 const ORG_TAU = 0.7
 
 /**
@@ -178,12 +206,16 @@ interface MessyRow {
 	org: string
 	address: string
 	auth: string
-	/** Whitespace-joined taxonomy-code set (up to 15 slots) — the #625 code-set discriminator. */
+	/**
+	 * Whitespace-joined taxonomy-code set (up to 15 slots) — the #625 code-set discriminator.
+	 */
 	taxonomy: string
 	entityID: string
 }
 
-/** The #617 NPPES dedup benchmark — see the module doc. Emits the markdown report to stdout. */
+/**
+ * The #617 NPPES dedup benchmark — see the module doc. Emits the markdown report to stdout.
+ */
 /* oxlint-disable max-lines, max-statements, complexity -- 824 lines / 261 statements / complexity 101.
    Same shape as oa-resolver-eval: a linear benchmark (build the sample, run each lever, score, emit the
    markdown) whose report half wants the same extraction that file got. Left whole because the report

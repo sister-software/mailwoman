@@ -29,17 +29,29 @@ import {
 } from "./zcta-centroids.ts"
 
 export interface BuildPostcodeShardOptions {
-	/** ISO-2 country whose `whosonfirst-data-postalcode-<cc>` repo to ingest. */
+	/**
+	 * ISO-2 country whose `whosonfirst-data-postalcode-<cc>` repo to ingest.
+	 */
 	country: string
-	/** WOF repos root. Default `<data-root>/wof/repos`. */
+	/**
+	 * WOF repos root. Default `<data-root>/wof/repos`.
+	 */
 	reposDir?: string
-	/** Output artifact. Default `<data-root>/wof/postalcode-<cc>.REBUILD.db` (staging — swap deliberately). */
+	/**
+	 * Output artifact. Default `<data-root>/wof/postalcode-<cc>.REBUILD.db` (staging — swap deliberately).
+	 */
 	out?: string
-	/** Census ZCTA Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`. */
+	/**
+	 * Census ZCTA Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
+	 */
 	zctaPath?: string
-	/** GeoNames postal dump dir. Default `<data-root>/geonames-postal`. */
+	/**
+	 * GeoNames postal dump dir. Default `<data-root>/geonames-postal`.
+	 */
 	geonamesPostalDir?: string
-	/** Admin gazetteer for the parent/ancestor borrows. Default the live `admin-global-priority.db`. */
+	/**
+	 * Admin gazetteer for the parent/ancestor borrows. Default the live `admin-global-priority.db`.
+	 */
 	adminPath?: string
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -53,7 +65,9 @@ export interface BuildPostcodeShardResult {
 	sealed: boolean
 }
 
-/** Build one country's sealed postcode shard. See the module docstring for the fill ladder. */
+/**
+ * Build one country's sealed postcode shard. See the module docstring for the fill ladder.
+ */
 export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promise<BuildPostcodeShardResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()

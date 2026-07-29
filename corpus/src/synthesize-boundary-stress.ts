@@ -76,7 +76,9 @@ export interface BoundaryStressBaseTuple {
 
 export interface BoundaryStressSynthesisOpts {
 	random?: () => number
-	/** Force a specific shape (tests + balanced shard composition). */
+	/**
+	 * Force a specific shape (tests + balanced shard composition).
+	 */
 	forceTemplate?: BoundaryStressTemplate
 }
 

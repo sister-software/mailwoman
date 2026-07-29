@@ -72,19 +72,33 @@ interface ModelCard {
 	training: { tokenizer_version: string }
 }
 
-/** Options for {@linkcode runPromotionGate}. */
+/**
+ * Options for {@linkcode runPromotionGate}.
+ */
 export interface PromotionGateOptions {
-	/** Candidate fp32 ONNX (required). */
+	/**
+	 * Candidate fp32 ONNX (required).
+	 */
 	model?: string
-	/** Quantized int8 sibling — re-runs the per-tag battery and enforces the delta cap. */
+	/**
+	 * Quantized int8 sibling — re-runs the per-tag battery and enforces the delta cap.
+	 */
 	int8?: string
-	/** Gate-spec JSON: a path, or a bare spec name resolved against the bundled `gates/` dir (required). */
+	/**
+	 * Gate-spec JSON: a path, or a bare spec name resolved against the bundled `gates/` dir (required).
+	 */
 	gate?: string
-	/** Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	tokenizer?: string
-	/** Model-card JSON. Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model-card JSON. Default `neural-weights-en-us/model-card.json`.
+	 */
 	card?: string
-	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	/**
+	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 */
 	gazetteerLexicon?: string
 	/**
 	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us` — the #718-safe path
@@ -92,7 +106,9 @@ export interface PromotionGateOptions {
 	 * (v6.2.0+). Alternative to --model/--int8; takes precedence.
 	 */
 	weightsCache?: string
-	/** Battery output dir. Default `/tmp/gate-<label>-<hhmm>`. */
+	/**
+	 * Battery output dir. Default `/tmp/gate-<label>-<hhmm>`.
+	 */
 	outDir?: string
 }
 
@@ -125,7 +141,9 @@ export function resolveGateSpecPath(gate: string): string {
 	throw new Error(`Gate spec not found: "${gate}". Known specs: ${listGateSpecs().join(", ") || "(none)"}`)
 }
 
-/** Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling. */
+/**
+ * Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling.
+ */
 export function listGateSpecs(): string[] {
 	for (const dir of [new URL("./gates/", import.meta.url), new URL("../../eval-harness/gates/", import.meta.url)]) {
 		if (!existsSync(dir)) continue

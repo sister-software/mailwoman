@@ -29,11 +29,17 @@ import type { GauntletDatabase } from "./schema.ts"
  * Model-only bumps omit them.
  */
 export interface GauntletLayerOptions {
-	/** Candidate ONNX. Omit to self-check the shipped default. */
+	/**
+	 * Candidate ONNX. Omit to self-check the shipped default.
+	 */
 	model?: string
-	/** Candidate tokenizer (tokenizer-splice candidates only). */
+	/**
+	 * Candidate tokenizer (tokenizer-splice candidates only).
+	 */
 	tokenizer?: string
-	/** Candidate model-card (paired with `tokenizer`). */
+	/**
+	 * Candidate model-card (paired with `tokenizer`).
+	 */
 	card?: string
 	/**
 	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`). The #718-safe path
@@ -45,7 +51,9 @@ export interface GauntletLayerOptions {
 
 const DEFAULT_TOL_M = 5000
 
-/** Map an expect_components key to the assembled-result field it asserts. */
+/**
+ * Map an expect_components key to the assembled-result field it asserts.
+ */
 function componentOf(r: GauntletResult, key: string): string | null {
 	switch (key) {
 		case "country":
@@ -65,14 +73,18 @@ function componentOf(r: GauntletResult, key: string): string | null {
 	}
 }
 
-/** Run the curated regression layer. Returns `pass` (every `status=pass` case still passes). */
+/**
+ * Run the curated regression layer. Returns `pass` (every `status=pass` case still passes).
+ */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
 	await kdb.destroy()
 
-	/** Assert the assembled result against a case's expectations; returns a list of mismatches (empty = passes). */
+	/**
+	 * Assert the assembled result against a case's expectations; returns a list of mismatches (empty = passes).
+	 */
 	function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
 		const issues: string[] = []
 

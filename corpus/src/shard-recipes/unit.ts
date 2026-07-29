@@ -31,7 +31,9 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
-/** A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region. */
+/**
+ * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
+ */
 
 /**
  * Longest OpenAddresses unit id reused verbatim. Longer values are building codes or free text, so a synthetic id is
@@ -90,11 +92,15 @@ const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 	"UPPER",
 	"LOWER",
 ]
-/** 85% id-bearing designators, 15% standalone. */
+/**
+ * 85% id-bearing designators, 15% standalone.
+ */
 const ID_WEIGHT = 0.85
 const SYNTH_IDS: readonly string[] = ["4B", "200", "12", "3", "A", "101", "5", "2A", "310", "B", "7", "1500", "404"]
 
-/** A real US tuple read out of a cached OA zip (number/street/city/postcode + the bare OA unit id). */
+/**
+ * A real US tuple read out of a cached OA zip (number/street/city/postcode + the bare OA unit id).
+ */
 interface UnitTuple {
 	house_number: string
 	street: string
@@ -104,7 +110,9 @@ interface UnitTuple {
 	oaUnit: string
 }
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -138,7 +146,9 @@ function splitCSV(line: string): string[] {
 	return out
 }
 
-/** Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip. */
+/**
+ * Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip.
+ */
 function readTuples(source: UnitSource): UnitTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
@@ -186,10 +196,14 @@ function readTuples(source: UnitSource): UnitTuple[] {
 	return tuples
 }
 
-/** Title-case a canonical/abbrev designator ("APARTMENT" → "Apartment", "APT" → "Apt"). */
+/**
+ * Title-case a canonical/abbrev designator ("APARTMENT" → "Apartment", "APT" → "Apt").
+ */
 const title = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
 
-/** Build an injected unit string ("Apt 4B"), varying canonical vs approved-abbrev form per row. */
+/**
+ * Build an injected unit string ("Apt 4B"), varying canonical vs approved-abbrev form per row.
+ */
 function makeUnit(random: () => number, oaUnit: string): string {
 	const standalone = random() >= ID_WEIGHT
 	const pool = standalone ? STANDALONE_DESIGNATORS : ID_DESIGNATORS
@@ -204,7 +218,9 @@ function makeUnit(random: () => number, oaUnit: string): string {
 	return `${designator} ${id}`
 }
 
-/** Synthetic recipient/venue prefixes — the "JOHN DOE, ACME INC, ..." arena pattern. */
+/**
+ * Synthetic recipient/venue prefixes — the "JOHN DOE, ACME INC, ..." arena pattern.
+ */
 const VENUES: readonly string[] = [
 	"John Doe",
 	"Jane Smith",
@@ -218,7 +234,9 @@ const VENUES: readonly string[] = [
 	"Riverside Clinic",
 ]
 
-/** Address tail: "City, ST 12345" (or no postcode). */
+/**
+ * Address tail: "City, ST 12345" (or no postcode).
+ */
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
 /**

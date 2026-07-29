@@ -23,18 +23,30 @@
  *   `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
  */
 
-/** A to/dō/fu/ken classification of the top-level admin unit. */
+/**
+ * A to/dō/fu/ken classification of the top-level admin unit.
+ */
 export type JapanesePrefectureType = "to" | "do" | "fu" | "ken"
 
-/** Per-prefecture record: ISO 3166-2:JP numeric code + kanji + romaji + to/dō/fu/ken type. */
+/**
+ * Per-prefecture record: ISO 3166-2:JP numeric code + kanji + romaji + to/dō/fu/ken type.
+ */
 export interface JapanesePrefectureInfo {
-	/** ISO 3166-2:JP code without the `JP-` prefix: a two-digit numeric string (`"13"` for `JP-13`). */
+	/**
+	 * ISO 3166-2:JP code without the `JP-` prefix: a two-digit numeric string (`"13"` for `JP-13`).
+	 */
 	code: string
-	/** Kanji name, including its 都/道/府/県 suffix (e.g. `東京都`). */
+	/**
+	 * Kanji name, including its 都/道/府/県 suffix (e.g. `東京都`).
+	 */
 	kanji: string
-	/** Macron-free romaji name, suffix-less (e.g. `Tokyo`). */
+	/**
+	 * Macron-free romaji name, suffix-less (e.g. `Tokyo`).
+	 */
 	romaji: string
-	/** Which of the four flavours of top-level unit this is. */
+	/**
+	 * Which of the four flavours of top-level unit this is.
+	 */
 	type: JapanesePrefectureType
 }
 
@@ -92,12 +104,16 @@ export const JP_PREFECTURES = {
 	"47": { code: "47", kanji: "沖縄県", romaji: "Okinawa", type: "ken" },
 } as const satisfies Record<string, JapanesePrefectureInfo>
 
-/** An ISO 3166-2:JP prefecture code (`"01"`..`"47"`). */
+/**
+ * An ISO 3166-2:JP prefecture code (`"01"`..`"47"`).
+ */
 export type JapanesePrefectureCode = keyof typeof JP_PREFECTURES
 
 const PREFECTURE_CODE_SET: ReadonlySet<string> = new Set(Object.keys(JP_PREFECTURES))
 
-/** Type-predicate for an ISO 3166-2:JP prefecture code (`"01"`..`"47"`). */
+/**
+ * Type-predicate for an ISO 3166-2:JP prefecture code (`"01"`..`"47"`).
+ */
 export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefectureCode {
 	return typeof input === "string" && PREFECTURE_CODE_SET.has(input)
 }

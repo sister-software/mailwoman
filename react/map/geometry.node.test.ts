@@ -16,7 +16,9 @@ import { approxCircleGeometry, bboxToBounds, geomBounds, type PlaceGeometry, rad
 
 const KM_PER_DEG_LAT = 111.32
 
-/** Recover a centered circle's radius (km) from the latitude half-span of its ring — no cos() needed on latitude. */
+/**
+ * Recover a centered circle's radius (km) from the latitude half-span of its ring — no cos() needed on latitude.
+ */
 function circleRadiusKm(geometry: PlaceGeometry): number {
 	const b = geomBounds(geometry)
 

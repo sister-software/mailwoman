@@ -46,7 +46,9 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
  */
 const norm = (value: string): string => value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-/** Title-case a Kartverket ALL-CAPS locality (HELLVIK -> Hellvik); #690, all-caps is OOD. */
+/**
+ * Title-case a Kartverket ALL-CAPS locality (HELLVIK -> Hellvik); #690, all-caps is OOD.
+ */
 const titleNO = (value: string): string =>
 	value
 		.split(/\s+/)

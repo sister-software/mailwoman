@@ -29,13 +29,19 @@ import { CSVSpliterator, Delimiters } from "spliterator"
 
 import type { SourceRecord } from "./types.ts"
 
-/** Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder. */
+/**
+ * Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder.
+ */
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null
 
-/** Column delimiter of a delimited source. */
+/**
+ * Column delimiter of a delimited source.
+ */
 export type Delimiter = "comma" | "tab"
 
-/** Infer the delimiter from a path's extension (`.tsv` → tab, else comma). */
+/**
+ * Infer the delimiter from a path's extension (`.tsv` → tab, else comma).
+ */
 export function delimiterFor(path: string): Delimiter {
 	return /\.tsv$/i.test(path) ? "tab" : "comma"
 }
@@ -72,9 +78,13 @@ export async function* streamRows(
  * Maps dataset columns to record fields. A field may draw from several columns (joined with spaces).
  */
 export interface ColumnMapping {
-	/** Column holding a stable row id. Falls back to the row index. */
+	/**
+	 * Column holding a stable row id. Falls back to the row index.
+	 */
 	id?: string
-	/** A literal provenance label for every row (not a column). */
+	/**
+	 * A literal provenance label for every row (not a column).
+	 */
 	source?: string
 	name?: string | string[]
 	organization?: string | string[]
@@ -153,9 +163,13 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 	return mapping
 }
 
-/** Options for {@link ingestRows}. */
+/**
+ * Options for {@link ingestRows}.
+ */
 export interface IngestOptions {
-	/** The geocoding seam. Without it, records carry name/org but no resolved address. */
+	/**
+	 * The geocoding seam. Without it, records carry name/org but no resolved address.
+	 */
 	geocodeAddress?: GeocodeAddress
 	/**
 	 * Separator for joining a multi-column ADDRESS mapping (name/org always join with a space). Default `" "`. Pass `",
@@ -169,12 +183,16 @@ export interface IngestOptions {
 	addressSeparator?: string
 }
 
-/** Parse a CSV string (with a header row) into row objects keyed by column name. */
+/**
+ * Parse a CSV string (with a header row) into row objects keyed by column name.
+ */
 export function parseCSV(text: string): Record<string, string>[] {
 	return parseCSVSync(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true })
 }
 
-/** Join the named column(s) of a row into a single trimmed string, or undefined if empty. */
+/**
+ * Join the named column(s) of a row into a single trimmed string, or undefined if empty.
+ */
 export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
 	if (!columns) return undefined
 	const list = Array.isArray(columns) ? columns : [columns]
@@ -279,7 +297,9 @@ export interface RawGeocode {
 	hierarchy?: AddressGeocode["hierarchy"]
 }
 
-/** The component map {@link toPostalAddress} consumes (kept structural so this package never imports the geocoder). */
+/**
+ * The component map {@link toPostalAddress} consumes (kept structural so this package never imports the geocoder).
+ */
 type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
 
 /**

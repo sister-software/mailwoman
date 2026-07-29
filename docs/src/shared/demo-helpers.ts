@@ -17,14 +17,16 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// MARK: Types
 
-/** WOF hierarchy rank of a locality. */
+/**
+ * WOF hierarchy rank of a locality.
+ */
 const WOF_RANK_LOCALITY = 5
 
-/** WOF hierarchy rank of a region, one step up from a locality. */
+/**
+ * WOF hierarchy rank of a region, one step up from a locality.
+ */
 const WOF_RANK_REGION = 4
 
 export interface ReleaseInfo {
@@ -46,11 +48,15 @@ export interface ReleasesManifest {
 	releases: ReleaseInfo[]
 }
 
-/** The raw wire shape of one releases.json entry — either key generation may appear. */
+/**
+ * The raw wire shape of one releases.json entry — either key generation may appear.
+ */
 interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
 	hasFST?: boolean
 	hasWOFDb?: boolean
-	/** Pre-2026-07-04 manifests published lowercase-acronym keys. */
+	/**
+	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
+	 */
 	hasFst?: boolean
 	hasWofDb?: boolean
 }
@@ -97,14 +103,16 @@ export interface TreeNode {
 	children?: unknown[]
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+// MARK: Constants
 
-/** Locale the demo opens on. */
+/**
+ * Locale the demo opens on.
+ */
 export const DEFAULT_LOCALE = "en-us"
 
-/** Address the demo opens on — it exercises house number, street, directional, locality and region in one line. */
+/**
+ * Address the demo opens on — it exercises house number, street, directional, locality and region in one line.
+ */
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**
@@ -157,9 +165,7 @@ export function pairCountryForInput(input: string): string | undefined {
 	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
 }
 
-// ---------------------------------------------------------------------------
-// US state abbreviation expansion
-// ---------------------------------------------------------------------------
+// MARK: US state abbreviation expansion
 
 const US_STATE_ABBREV: Record<string, string> = {
 	AL: "Alabama",
@@ -227,9 +233,7 @@ export function expandUSRegion(text: string): string {
 	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
 }
 
-// ---------------------------------------------------------------------------
-// Tree flattening
-// ---------------------------------------------------------------------------
+// MARK: Tree flattening
 
 /**
  * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
@@ -258,22 +262,32 @@ export function flattenTree(
 	return out.toReversed()
 }
 
-// ---------------------------------------------------------------------------
-// Parse orchestration — the shared classify → resolve front-half (#861 / #1278)
-// ---------------------------------------------------------------------------
+// MARK: Parse orchestration — the shared classify → resolve front-half (#861 / #1278)
 
-/** A source-order parsed node, as {@link flattenTree} yields it. */
+/**
+ * A source-order parsed node, as {@link flattenTree} yields it.
+ */
 export type FlatNode = ReturnType<typeof flattenTree>[number]
 
-/** What both demo parse paths need out of the neural classify stage before resolution. */
+/**
+ * What both demo parse paths need out of the neural classify stage before resolution.
+ */
 export interface ClassifyStageResult {
-	/** The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`). */
+	/**
+	 * The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`).
+	 */
 	tree: unknown
-	/** Source-order flattened nodes. */
+	/**
+	 * Source-order flattened nodes.
+	 */
 	nodes: FlatNode[]
-	/** The query-shape kind hypothesis (`postcode_only` / `structured_address` / …). */
+	/**
+	 * The query-shape kind hypothesis (`postcode_only` / `structured_address` / …).
+	 */
 	kindResult: ParseResult["kindResult"]
-	/** Wall-clock timing for the two front-half stages, in ms. */
+	/**
+	 * Wall-clock timing for the two front-half stages, in ms.
+	 */
 	timing: { shape: number; classify: number }
 }
 
@@ -297,9 +311,13 @@ export interface ClassifyStageResult {
 export type SelectPairIndex = (text: string, opts?: { country?: string }) => object | undefined
 
 export interface ClassifyStageDeps {
-	/** The loaded neural classifier (must be ready — the caller guards `null`). */
+	/**
+	 * The loaded neural classifier (must be ready — the caller guards `null`).
+	 */
 	classifier: MailwomanClassifierLike
-	/** The optional FST gazetteer prior. */
+	/**
+	 * The optional FST gazetteer prior.
+	 */
 	fst?: FSTMatcherLike | null
 	/**
 	 * The optional street-morphology matcher — the #1315 street-context gate's signal source. The gate only fires when
@@ -398,11 +416,11 @@ export async function resolveDualRoles(
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Confidence calibration (browser-safe mirror)
-// ---------------------------------------------------------------------------
+// MARK: Confidence calibration (browser-safe mirror)
 
-/** Maps a raw span confidence in [0, 1] to its calibrated probability of correctness. */
+/**
+ * Maps a raw span confidence in [0, 1] to its calibrated probability of correctness.
+ */
 export type Calibrator = (raw: number) => number
 
 interface CalibrationBin {
@@ -462,9 +480,7 @@ function clamp01(v: number): number {
 	return v
 }
 
-// ---------------------------------------------------------------------------
-// WOF resolution — the shared resolver over the demo's candidate lookup (#861)
-// ---------------------------------------------------------------------------
+// MARK: WOF resolution — the shared resolver over the demo's candidate lookup (#861)
 
 /**
  * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
@@ -486,7 +502,9 @@ const PIN_RANK: Record<string, number> = {
 
 type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
 
-/** Minimal structural view of a decorated `AddressTree` node (decoupled from core's types). */
+/**
+ * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
+ */
 interface ResolvedTreeNode {
 	source?: string
 	sourceID?: string
@@ -510,7 +528,9 @@ interface ResolvedTreeNode {
  * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
  * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
  */
-/** Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter. */
+/**
+ * Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter.
+ */
 export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
 
 export async function runCascade(
@@ -638,11 +658,11 @@ export async function runCascade(
 	return hits
 }
 
-// ---------------------------------------------------------------------------
-// Street-level resolution (situs → interpolation), in front of the admin cascade
-// ---------------------------------------------------------------------------
+// MARK: Street-level resolution (situs → interpolation), in front of the admin cascade
 
-/** A street-level coordinate + which tier produced it + an honest radius. */
+/**
+ * A street-level coordinate + which tier produced it + an honest radius.
+ */
 export interface StreetResolution {
 	lat: number
 	lon: number
@@ -653,7 +673,9 @@ export interface StreetResolution {
 	uncertaintyM: number
 }
 
-/** Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes). */
+/**
+ * Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes).
+ */
 interface SitusLike {
 	find(q: {
 		street: string

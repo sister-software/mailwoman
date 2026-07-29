@@ -378,7 +378,9 @@ export interface PlacetypePairProbeTrace {
 }
 
 export interface PlacetypePairPriorOpts {
-	/** The PIX1 pair index to probe. */
+	/**
+	 * The PIX1 pair index to probe.
+	 */
 	index: PairIndexLike
 	/**
 	 * Fallback bias magnitude when `index.delta` is absent (a hand-built test double). Default 1.0 — see
@@ -424,11 +426,17 @@ export interface PlacetypePairPriorOpts {
  * decoder's axis.
  */
 export interface TransitionAdjustment {
-	/** Piece position whose INCOMING transition is adjusted — the child span's first piece. */
+	/**
+	 * Piece position whose INCOMING transition is adjusted — the child span's first piece.
+	 */
 	pieceIndex: number
-	/** Full BIO label the adjusted transition lands on (e.g. `"B-dependent_locality"`). */
+	/**
+	 * Full BIO label the adjusted transition lands on (e.g. `"B-dependent_locality"`).
+	 */
 	toLabel: string
-	/** Additive bonus (log-score units) — the index header's `transitionBeta`. */
+	/**
+	 * Additive bonus (log-score units) — the index header's `transitionBeta`.
+	 */
 	bonus: number
 }
 
@@ -448,7 +456,9 @@ export interface PlacetypePairPriorResult {
  * segment (segment mode).
  */
 interface CandidateWindow {
-	/** The space-joined fold — see the module docstring's "St Helens" → "st helens" note. */
+	/**
+	 * The space-joined fold — see the module docstring's "St Helens" → "st helens" note.
+	 */
 	key: string
 	/**
 	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note. Identical to
@@ -464,7 +474,9 @@ interface CandidateWindow {
 	pieceIndices: number[]
 }
 
-/** Build every contiguous 1..maxWords window over the non-punctuation word groups (window mode). */
+/**
+ * Build every contiguous 1..maxWords window over the non-punctuation word groups (window mode).
+ */
 function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
@@ -546,7 +558,9 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
 	["nz", NZ_POSTCODE_PATTERN],
 ])
 
-/** The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip). */
+/**
+ * The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip).
+ */
 function segmentParentPostcodeShape(country: string | undefined): RegExp | undefined {
 	return country ? SEGMENT_PARENT_POSTCODE_SHAPES.get(country.toLowerCase()) : undefined
 }
@@ -623,7 +637,9 @@ function buildSegmentWindows(
 	return windows
 }
 
-/** Two windows are disjoint iff their word-group position ranges don't overlap (also excludes a window from itself). */
+/**
+ * Two windows are disjoint iff their word-group position ranges don't overlap (also excludes a window from itself).
+ */
 function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.endPos < b.startPos || b.endPos < a.startPos
 }
@@ -662,7 +678,9 @@ function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateW
 	return undefined
 }
 
-/** Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector). */
+/**
+ * Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector).
+ */
 function makeCandidateWindow(nonEmptyGroups: readonly WordGroup[], startPos: number, endPos: number): CandidateWindow {
 	const slice = nonEmptyGroups.slice(startPos, endPos + 1)
 	const tokens = slice.map((g) => g.fstToken)

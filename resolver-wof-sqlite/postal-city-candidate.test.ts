@@ -52,7 +52,9 @@ function buildFixtureAdmin(path: string): void {
 	db.close()
 }
 
-/** Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1). */
+/**
+ * Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1).
+ */
 async function attachPostalCityIndex(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
 	const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: raw })

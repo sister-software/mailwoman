@@ -49,7 +49,9 @@ function writeTinyFST(dir: string): string {
 	return fstPath
 }
 
-/** Minimal classifier stand-in: records the opts it was called with, returns an empty tree. */
+/**
+ * Minimal classifier stand-in: records the opts it was called with, returns an empty tree.
+ */
 function fakeClassifier(fstPath?: string) {
 	const calls: Array<Record<string, unknown>> = []
 

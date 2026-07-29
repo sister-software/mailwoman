@@ -31,25 +31,39 @@ import { haversineKm } from "@mailwoman/spatial"
 import { buildGauntletDeps, runOne } from "./harness.ts"
 import type { GauntletLayerOptions } from "./regression.ts"
 
-/** Shortest span body worth mutating — below it a perturbation changes the token entirely. */
+/**
+ * Shortest span body worth mutating — below it a perturbation changes the token entirely.
+ */
 const MIN_MUTABLE_BODY_LENGTH = 5
 
-/** 1m — same address, identical resolution expected. */
+/**
+ * 1m — same address, identical resolution expected.
+ */
 const INV_EPSILON_KM = 0.001
-/** Dropping the postcode may lose the rooftop, but must still land in the right area. */
+/**
+ * Dropping the postcode may lose the rooftop, but must still land in the right area.
+ */
 const DIR_NEAR_KM = 5
-/** A corrupted surface may shift the parse, but must stay within the tolerance band. */
+/**
+ * A corrupted surface may shift the parse, but must stay within the tolerance band.
+ */
 const BAND_NEAR_KM = 5
 
 interface Base {
 	input: string
-	/** Drives the DIR (drop-postcode) test; all bases drive INV + BAND. */
+	/**
+	 * Drives the DIR (drop-postcode) test; all bases drive INV + BAND.
+	 */
 	postcode: boolean
-	/** Selects the abbreviation dictionary for the `abbrev` INV perturbation. */
+	/**
+	 * Selects the abbreviation dictionary for the `abbrev` INV perturbation.
+	 */
 	locale: string
 }
 
-/** Base inputs. The postcode'd ones drive the DIR (drop-postcode) test; all drive INV + BAND. */
+/**
+ * Base inputs. The postcode'd ones drive the DIR (drop-postcode) test; all drive INV + BAND.
+ */
 const BASES: Base[] = [
 	{ input: "181 Rue du Chevaleret, Paris", postcode: false, locale: "fr-FR" },
 	{ input: "181 Rue du Chevaleret, 75013 Paris", postcode: true, locale: "fr-FR" },
@@ -88,7 +102,9 @@ function inverseAbbrev(locale: string): Map<string, string> {
 	return inv
 }
 
-/** Replace the first expandable long-form token with its abbreviation (`Avenue`→`Ave`). Null if none present. */
+/**
+ * Replace the first expandable long-form token with its abbreviation (`Avenue`→`Ave`). Null if none present.
+ */
 function abbreviate(input: string, locale: string): string | null {
 	const inv = inverseAbbrev(locale)
 	const tokens = input.split(/(\s+)/)
@@ -108,7 +124,9 @@ function abbreviate(input: string, locale: string): string | null {
 	return null
 }
 
-/** The longest maximal run of letters, length ≥5, leftmost on ties. Null if none — nothing safe to corrupt. */
+/**
+ * The longest maximal run of letters, length ≥5, leftmost on ties. Null if none — nothing safe to corrupt.
+ */
 function longestAlphaToken(s: string): { start: number; body: string } | null {
 	let best: { start: number; body: string } | null = null
 	const re = /\p{L}+/gu
@@ -127,7 +145,9 @@ function longestAlphaToken(s: string): { start: number; body: string } | null {
 	return best
 }
 
-/** Adjacent-char swap at the middle of the longest alphabetic token. Deterministic, no RNG. Null if not applicable. */
+/**
+ * Adjacent-char swap at the middle of the longest alphabetic token. Deterministic, no RNG. Null if not applicable.
+ */
 function transposeMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
 
@@ -151,7 +171,9 @@ function transposeMiddle(s: string): string | null {
 	return s.slice(0, tok.start) + swapped.join("") + s.slice(tok.start + tok.body.length)
 }
 
-/** Single-char substitution at the middle of the longest alphabetic token (→`x`, or `z` when already `x`). */
+/**
+ * Single-char substitution at the middle of the longest alphabetic token (→`x`, or `z` when already `x`).
+ */
 function substituteMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
 
@@ -170,7 +192,9 @@ function substituteMiddle(s: string): string | null {
 	return s.slice(0, tok.start) + body + s.slice(tok.start + tok.body.length)
 }
 
-/** Numeral↔spelled ordinal street names (`5th`↔`Fifth`). */
+/**
+ * Numeral↔spelled ordinal street names (`5th`↔`Fifth`).
+ */
 const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 	["1st", "First"],
 	["2nd", "Second"],
@@ -186,7 +210,9 @@ const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 	["12th", "Twelfth"],
 ]
 
-/** Swap the first ordinal-street token between numeral and spelled form (`5th Ave`↔`Fifth Ave`). Null if none. */
+/**
+ * Swap the first ordinal-street token between numeral and spelled form (`5th Ave`↔`Fifth Ave`). Null if none.
+ */
 function swapOrdinal(s: string): string | null {
 	const numToWord = new Map(ORDINALS.map(([n, w]) => [n.toLowerCase(), w]))
 	const wordToNum = new Map(ORDINALS.map(([n, w]) => [w.toLowerCase(), n]))
@@ -207,7 +233,9 @@ function swapOrdinal(s: string): string | null {
 	return null
 }
 
-/** Spell out the LEADING house-number token (`100`→`One Hundred`). Bounded map — never a general algorithm. */
+/**
+ * Spell out the LEADING house-number token (`100`→`One Hundred`). Bounded map — never a general algorithm.
+ */
 const HOUSE_SPELL = new Map<string, string>([["100", "One Hundred"]])
 
 function spellHouseNumber(s: string): string | null {
@@ -227,7 +255,9 @@ interface Perturbation {
 	f: (s: string, base: Base) => string | null
 }
 
-/** Label-preserving perturbations — the output must be INVARIANT (≤1m, same tier). */
+/**
+ * Label-preserving perturbations — the output must be INVARIANT (≤1m, same tier).
+ */
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
 	{ name: "upper", f: (s) => s.toUpperCase() },
@@ -242,7 +272,9 @@ const INV: Perturbation[] = [
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
 
-/** Corrupting perturbations — output may shift, but must stay within the BAND (≤5km). */
+/**
+ * Corrupting perturbations — output may shift, but must stay within the BAND (≤5km).
+ */
 const BAND: Perturbation[] = [
 	{ name: "transpose", f: (s) => transposeMiddle(s) },
 	{ name: "typo-sub", f: (s) => substituteMiddle(s) },
@@ -300,7 +332,9 @@ const KNOWN_BAND_XFAIL = new Map<string, string>([
 	["typo-sub|Damrak 1, 1012 LG Amsterdam", "anchor-off: typo'd locality, no postcode anchor → no-resolve"],
 ])
 
-/** Strip a 5-digit (US/FR) postcode token for the DIR test. */
+/**
+ * Strip a 5-digit (US/FR) postcode token for the DIR test.
+ */
 const dropPostcode = (s: string) =>
 	s
 		.replace(/\b\d{5}\b/, "")
@@ -321,7 +355,9 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 	m.set(name, t)
 }
 
-/** Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails). */
+/**
+ * Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails).
+ */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const deps = await buildGauntletDeps(
 		options.weightsCacheRoot

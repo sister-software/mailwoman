@@ -39,10 +39,14 @@ import { execSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
-/** Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern. */
+/**
+ * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
+ */
 const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
 
-/** Examples printed per finding before the list is truncated. */
+/**
+ * Examples printed per finding before the list is truncated.
+ */
 const MAX_LISTED_EXAMPLES = 20
 
 const SEP = ""
@@ -73,17 +77,29 @@ function defaultRulesPath(): string {
 	return fileURLToPath(new URL("../../../src/tools/lint-rules.json", import.meta.url))
 }
 
-/** Options for {@linkcode lintCorpusShard}. */
+/**
+ * Options for {@linkcode lintCorpusShard}.
+ */
 export interface LintCorpusShardOptions {
-	/** The new shard parquet to lint. */
+	/**
+	 * The new shard parquet to lint.
+	 */
 	shardPath: string
-	/** Pre-computed corpus stats JSON (see `corpus-stats.ts`). */
+	/**
+	 * Pre-computed corpus stats JSON (see `corpus-stats.ts`).
+	 */
 	statsPath: string
-	/** Anti-pattern rules JSON. Default: the `lint-rules.json` beside this module. */
+	/**
+	 * Anti-pattern rules JSON. Default: the `lint-rules.json` beside this module.
+	 */
 	rulesPath?: string
-	/** Write the markdown report here as well as stdout. */
+	/**
+	 * Write the markdown report here as well as stdout.
+	 */
 	outMd?: string
-	/** Write a JSON sidecar of the flags + summary here. */
+	/**
+	 * Write a JSON sidecar of the flags + summary here.
+	 */
 	outJson?: string
 }
 
@@ -211,7 +227,9 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 	return { label: bestLabel, count: bestCount, total, confidence: total === 0 ? 0 : bestCount / total }
 }
 
-/** One lint flag emitted by a check. */
+/**
+ * One lint flag emitted by a check.
+ */
 export interface LintShardFlag {
 	check: string
 	severity: "error" | "warn"
@@ -225,12 +243,16 @@ export interface LintShardFlag {
 	ruleID?: string
 }
 
-/** Findings summary returned by {@linkcode lintCorpusShard}. */
+/**
+ * Findings summary returned by {@linkcode lintCorpusShard}.
+ */
 export interface LintCorpusShardSummary {
 	errors: number
 	warnings: number
 	findings: LintShardFlag[]
-	/** The rendered markdown report (also printed to stdout). */
+	/**
+	 * The rendered markdown report (also printed to stdout).
+	 */
 	report: string
 }
 
@@ -439,7 +461,9 @@ function renderReport(
 	return lines.join("\n")
 }
 
-/** Lint a shard against corpus stats + the anti-pattern rules; print the markdown report to stdout. */
+/**
+ * Lint a shard against corpus stats + the anti-pattern rules; print the markdown report to stdout.
+ */
 export function lintCorpusShard(
 	options: LintCorpusShardOptions,
 	report?: (line: string) => void

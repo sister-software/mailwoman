@@ -46,7 +46,9 @@ const CORSICA_2A_2B_BOUNDARY = 20_200
 
 export type CodePostal = Tagged<string, "CodePostal">
 
-/** The code-postal shape: exactly five digits. */
+/**
+ * The code-postal shape: exactly five digits.
+ */
 export const CODE_POSTAL_PATTERN = /^\d{5}$/
 
 /**
@@ -60,7 +62,9 @@ export function normalizeCodePostal(raw: unknown): CodePostal | null {
 	return CODE_POSTAL_PATTERN.test(s) ? (s as CodePostal) : null
 }
 
-/** Type-predicate for a (normalized) French postal code. */
+/**
+ * Type-predicate for a (normalized) French postal code.
+ */
 export function isCodePostal(input: unknown): input is CodePostal {
 	return typeof input === "string" && CODE_POSTAL_PATTERN.test(input)
 }
@@ -96,7 +100,9 @@ export function departementOfCodePostal(codePostal: unknown): DepartementCode | 
 	return departementInfo(dd) ? (dd as DepartementCode) : null
 }
 
-/** The full département record a postal code resolves to (name + région), or null. */
+/**
+ * The full département record a postal code resolves to (name + région), or null.
+ */
 export function departementForCodePostal(codePostal: unknown): DepartementInfo | null {
 	return departementInfo(departementOfCodePostal(codePostal))
 }

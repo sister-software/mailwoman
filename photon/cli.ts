@@ -42,7 +42,9 @@ import {
 	type PhotonProperties,
 } from "./index.ts"
 
-/** WOF placetype → Photon property key. */
+/**
+ * WOF placetype → Photon property key.
+ */
 const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 	street: "street",
 	locality: "city",
@@ -52,7 +54,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 	country: "country",
 }
 
-/** A real address fits comfortably; longer is malformed input (and would exceed the model's window). */
+/**
+ * A real address fits comfortably; longer is malformed input (and would exceed the model's window).
+ */
 const MAX_QUERY_LEN = 512
 
 async function serve(): Promise<void> {

@@ -20,14 +20,18 @@
  *   across the whole dataset.
  */
 
-/** A scored candidate pair: two records and the match weight (bits) the scorer assigned them. */
+/**
+ * A scored candidate pair: two records and the match weight (bits) the scorer assigned them.
+ */
 export interface ScoredLink<R> {
 	a: R
 	b: R
 	weight: number
 }
 
-/** Options for {@link cluster}. */
+/**
+ * Options for {@link cluster}.
+ */
 export interface ClusterOptions {
 	/**
 	 * Link two records only when their match weight is at or above this (bits) — the precision/recall knob.

@@ -14,9 +14,13 @@ import { formatDistance } from "./runtime.ts"
 import type { LiveSearchState } from "./types.ts"
 
 export interface LiveResultsBlockProps {
-	/** Subject label for empty-state copy — a category ("No hospital results near …") or a brand ("No chevron results …"). */
+	/**
+	 * Subject label for empty-state copy — a category ("No hospital results near …") or a brand ("No chevron results …").
+	 */
 	subjectLabel: string
-	/** The location anchor the search runs against (empty ⇒ the button is disabled with a hint). */
+	/**
+	 * The location anchor the search runs against (empty ⇒ the button is disabled with a hint).
+	 */
 	anchor: string
 	state: LiveSearchState
 	onSearch: () => void

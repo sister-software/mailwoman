@@ -15,64 +15,100 @@
 
 import { sql, type Kysely } from "kysely"
 
-/** Distribution tier of a layer. Shipped = permissive-license, published by us. */
+/**
+ * Distribution tier of a layer. Shipped = permissive-license, published by us.
+ */
 export const LayerTier = {
 	Shipped: "shipped",
-	/** Share-alike sources (ODbL): we ship the builder CLI, the user builds locally. */
+	/**
+	 * Share-alike sources (ODbL): we ship the builder CLI, the user builds locally.
+	 */
 	BuildLocal: "build-local",
-	/** The user's own data, conforming to the contract, never distributed. */
+	/**
+	 * The user's own data, conforming to the contract, never distributed.
+	 */
 	Private: "private",
 } as const
 export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
 
-/** How a layer is kept current. */
+/**
+ * How a layer is kept current.
+ */
 export const LayerFreshnessPolicy = {
-	/** Immutable artifact; updates are full rebuilds (the gazetteer discipline). */
+	/**
+	 * Immutable artifact; updates are full rebuilds (the gazetteer discipline).
+	 */
 	Sealed: "sealed",
-	/** Periodically re-issued under the same name (e.g. registries of people/programs). */
+	/**
+	 * Periodically re-issued under the same name (e.g. registries of people/programs).
+	 */
 	VersionedRefresh: "versioned-refresh",
 } as const
 export type LayerFreshnessPolicy = (typeof LayerFreshnessPolicy)[keyof typeof LayerFreshnessPolicy]
 
-/** The single-row layer identity record. See {@link LayerManifest} for the parsed form. */
+/**
+ * The single-row layer identity record. See {@link LayerManifest} for the parsed form.
+ */
 export interface LayerManifestTable {
 	name: string
 	version: string
 	schema_version: number
-	/** One of {@link LayerTier}. */
+	/**
+	 * One of {@link LayerTier}.
+	 */
 	tier: string
-	/** SPDX-ish license expression, e.g. `CDLA-Permissive-2.0`, `ODbL-1.0`. */
+	/**
+	 * SPDX-ish license expression, e.g. `CDLA-Permissive-2.0`, `ODbL-1.0`.
+	 */
 	license: string
 	attribution: string | null
 	source: string
 	source_vintage: string
 	build_cmd: string
 	build_sha: string
-	/** One of {@link LayerFreshnessPolicy}. */
+	/**
+	 * One of {@link LayerFreshnessPolicy}.
+	 */
 	freshness_policy: string
-	/** JSON-encoded spine-key declaration (see `SpineKeys` in `manifest.ts`). */
+	/**
+	 * JSON-encoded spine-key declaration (see `SpineKeys` in `manifest.ts`).
+	 */
 	spine_keys: string
-	/** ISO-8601, supplied by the build script (never generated in-library). */
+	/**
+	 * ISO-8601, supplied by the build script (never generated in-library).
+	 */
 	created_at: string
 }
 
-/** Per-cell survey completeness. Missing row = unknown, NOT zero. */
+/**
+ * Per-cell survey completeness. Missing row = unknown, NOT zero.
+ */
 export interface LayerCoverageTable {
-	/** 48-bit short H3 cell at the resolution declared by the manifest's spine keys. */
+	/**
+	 * 48-bit short H3 cell at the resolution declared by the manifest's spine keys.
+	 */
 	h3_cell: number
-	/** Estimated completeness of the source survey in this cell, 0..1. */
+	/**
+	 * Estimated completeness of the source survey in this cell, 0..1.
+	 */
 	completeness: number
-	/** Rows this layer actually holds in the cell. */
+	/**
+	 * Rows this layer actually holds in the cell.
+	 */
 	observed_rows: number
 }
 
-/** Pass to `new DatabaseClient<LayerContractDatabase>(...)` (or intersect into a layer's own schema). */
+/**
+ * Pass to `new DatabaseClient<LayerContractDatabase>(...)` (or intersect into a layer's own schema).
+ */
 export interface LayerContractDatabase {
 	layer_manifest: LayerManifestTable
 	layer_coverage: LayerCoverageTable
 }
 
-/** Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline. */
+/**
+ * Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline.
+ */
 export async function createLayerManifestTable(db: Kysely<LayerContractDatabase>): Promise<void> {
 	await db.schema
 		.createTable("layer_manifest")
@@ -92,7 +128,9 @@ export async function createLayerManifestTable(db: Kysely<LayerContractDatabase>
 		.execute()
 }
 
-/** Create `layer_coverage` — small fixed-width rows probed by PK, the WITHOUT ROWID sweet spot. */
+/**
+ * Create `layer_coverage` — small fixed-width rows probed by PK, the WITHOUT ROWID sweet spot.
+ */
 export async function createLayerCoverageTable(db: Kysely<LayerContractDatabase>): Promise<void> {
 	await db.schema
 		.createTable("layer_coverage")

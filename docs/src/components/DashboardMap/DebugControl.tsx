@@ -33,7 +33,9 @@ class DebugControlBase implements IControl {
 	}
 }
 
-/** Map overlay exposing tile and layer state, for diagnosing a render without opening devtools. */
+/**
+ * Map overlay exposing tile and layer state, for diagnosing a render without opening devtools.
+ */
 export const DebugControl: React.FC = memo(() => {
 	const [_pointerPosition, setPointerPosition] = useState<Point>()
 	const [pointerCoords, setPointerCoords] = useState<LngLat>()

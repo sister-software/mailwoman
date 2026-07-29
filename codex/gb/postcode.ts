@@ -39,7 +39,9 @@ import type { Tagged } from "type-fest"
  * @title UK postcode
  * @pattern ^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$
  */
-/** Shortest valid UK postcode once spaces are stripped, e.g. `M11AE`. */
+/**
+ * Shortest valid UK postcode once spaces are stripped, e.g. `M11AE`.
+ */
 const MIN_POSTCODE_LENGTH = 5
 
 export type Postcode = Tagged<string, "UkPostcode">
@@ -68,7 +70,9 @@ export function normalizeUkPostcode(raw: unknown): Postcode | null {
 	return UK_POSTCODE_PATTERN.test(spaced) ? (spaced as Postcode) : null
 }
 
-/** Type-predicate for a UK postcode surface form (space optional). */
+/**
+ * Type-predicate for a UK postcode surface form (space optional).
+ */
 export function isUkPostcode(input: unknown): input is Postcode {
 	return typeof input === "string" && UK_POSTCODE_PATTERN.test(input.trim())
 }

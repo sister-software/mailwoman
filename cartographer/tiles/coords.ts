@@ -4,7 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-/** Parts in a `z/x/y` tile coordinate. */
+/**
+ * Parts in a `z/x/y` tile coordinate.
+ */
 const TILE_COORD_PARTS = 3
 
 /**

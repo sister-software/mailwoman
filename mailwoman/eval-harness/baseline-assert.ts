@@ -51,19 +51,33 @@
 import { existsSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
-/** A registered baseline row, as stored in `baselines.json`. */
+/**
+ * A registered baseline row, as stored in `baselines.json`.
+ */
 export interface RegisteredBaseline {
-	/** Stable identifier: `<fixture-or-scope>.<metric>@<model-or-artifact>`. */
+	/**
+	 * Stable identifier: `<fixture-or-scope>.<metric>@<model-or-artifact>`.
+	 */
 	id: string
-	/** Which harness module reads this number. */
+	/**
+	 * Which harness module reads this number.
+	 */
 	harness: string
-	/** Human-readable metric name. */
+	/**
+	 * Human-readable metric name.
+	 */
 	metric: string
-	/** Model / artifact label the number was measured on. */
+	/**
+	 * Model / artifact label the number was measured on.
+	 */
 	model: string
-	/** Fixture the number was measured over, when applicable. */
+	/**
+	 * Fixture the number was measured over, when applicable.
+	 */
 	fixture?: string
-	/** The registered value. */
+	/**
+	 * The registered value.
+	 */
 	value: number
 	/**
 	 * Allowed relative deviation, either direction. Defaults to the file's `default_tolerance_rel`. Widening this to
@@ -76,13 +90,21 @@ export interface RegisteredBaseline {
 	 * where relative deviation is undefined.
 	 */
 	tolerance_abs?: number
-	/** ISO date the row was registered. */
+	/**
+	 * ISO date the row was registered.
+	 */
 	registered_at: string
-	/** Commit the number was measured at. */
+	/**
+	 * Commit the number was measured at.
+	 */
 	commit: string
-	/** The command that reproduces it. */
+	/**
+	 * The command that reproduces it.
+	 */
 	command: string
-	/** What the number means, and what a deviation would imply. */
+	/**
+	 * What the number means, and what a deviation would imply.
+	 */
 	note: string
 }
 
@@ -102,20 +124,28 @@ interface BaselineFile {
 	baselines: RegisteredBaseline[]
 }
 
-/** One harness reading, checked against the registry. */
+/**
+ * One harness reading, checked against the registry.
+ */
 export interface BaselineObservation {
 	id: string
 	observed: number
 }
 
-/** Why a single observation failed. */
+/**
+ * Why a single observation failed.
+ */
 export interface BaselineViolation {
 	id: string
-	/** `unregistered` — no row exists, so the reading cannot be verified at all. */
+	/**
+	 * `unregistered` — no row exists, so the reading cannot be verified at all.
+	 */
 	kind: "deviation" | "unregistered"
 	observed: number
 	expected?: number
-	/** Signed relative deviation; negative means the observation read low. */
+	/**
+	 * Signed relative deviation; negative means the observation read low.
+	 */
 	deviationRel?: number
 	tolerance?: number
 	baseline?: RegisteredBaseline
@@ -150,7 +180,9 @@ function loadBaselineFile(): BaselineFile {
 	return cachedFile
 }
 
-/** Every registered baseline, for tooling that wants to list or audit them. */
+/**
+ * Every registered baseline, for tooling that wants to list or audit them.
+ */
 export function listBaselines(): RegisteredBaseline[] {
 	return loadBaselineFile().baselines
 }
@@ -163,7 +195,9 @@ export function listProfiles(): string[] {
 	return Object.keys(loadBaselineFile().profiles)
 }
 
-/** Look up a profile, refusing loudly on a typo rather than silently checking nothing. */
+/**
+ * Look up a profile, refusing loudly on a typo rather than silently checking nothing.
+ */
 export function resolveProfile(name: string): BaselineProfile {
 	const profile = loadBaselineFile().profiles[name]
 
@@ -263,7 +297,9 @@ export class BaselineDeviationError extends Error {
 	}
 }
 
-/** Render a verdict for a terminal — the message a refusing harness prints instead of a report. */
+/**
+ * Render a verdict for a terminal — the message a refusing harness prints instead of a report.
+ */
 export function formatVerdict(verdict: BaselineVerdict): string {
 	if (verdict.ok) return `baseline check: ${verdict.checked} observation(s) within tolerance`
 
@@ -311,7 +347,9 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 	return lines.join("\n")
 }
 
-/** Assert, or throw. The one-liner a harness puts before it prints anything. */
+/**
+ * Assert, or throw. The one-liner a harness puts before it prints anything.
+ */
 export function guardReport(observations: BaselineObservation[]): void {
 	const verdict = assertBaselines(observations)
 

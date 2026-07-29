@@ -21,7 +21,9 @@ import { streetLocaleForBANCountry, supportedBANCountries } from "./street-local
 const HEADER =
 	"id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source_position;source_nom_voie;certification_commune;cad_parcelles"
 
-/** Build one BAN CSV data row with `nom_ld` set, all other fields fixed/valid. */
+/**
+ * Build one BAN CSV data row with `nom_ld` set, all other fields fixed/valid.
+ */
 function lieuDitRow(id: string, nomLd: string, commune = "Altier"): string {
 	return `${id};;6;;Route de Pomaret;48800;48004;${commune};;;766812;6375458;3.840026;44.474983;entrée;;${nomLd};;;;;1;`
 }

@@ -38,15 +38,25 @@
  *   epic).
  */
 
-/** A canonicalized organization name. */
+/**
+ * A canonicalized organization name.
+ */
 export interface OrganizationName {
-	/** The original input, verbatim. */
+	/**
+	 * The original input, verbatim.
+	 */
 	raw: string
-	/** Normalized, designation-stripped key for blocking and comparison. */
+	/**
+	 * Normalized, designation-stripped key for blocking and comparison.
+	 */
 	canonical: string
-	/** Legal designations that were stripped (`llc`, `inc`, `gmbh`), in encounter order. */
+	/**
+	 * Legal designations that were stripped (`llc`, `inc`, `gmbh`), in encounter order.
+	 */
 	designations: string[]
-	/** The `doing business as` / trade-name clause, canonicalized, when one was present. */
+	/**
+	 * The `doing business as` / trade-name clause, canonicalized, when one was present.
+	 */
 	dba?: string
 }
 
@@ -192,7 +202,9 @@ function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string>
 	return set
 }
 
-/** Splits a `doing business as` / trade-name clause from a legal name. */
+/**
+ * Splits a `doing business as` / trade-name clause from a legal name.
+ */
 const DBA_PATTERN = /\s+(?:d\/b\/a|dba|doing business as|t\/a|trading as|a\/k\/a|aka|fka|f\/k\/a)\s+/i
 
 /**

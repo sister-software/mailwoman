@@ -34,7 +34,9 @@ const LEXICON = parseGazetteerLexicon({
 	},
 })
 
-/** Bits painted on the first kept char of each whitespace word. */
+/**
+ * Bits painted on the first kept char of each whitespace word.
+ */
 function paintedWords(raw: string): Record<string, number> {
 	const charBits = gazetteerCharPaint(raw, LEXICON)
 	const out: Record<string, number> = {}

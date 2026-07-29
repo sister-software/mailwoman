@@ -18,7 +18,9 @@ interface NutsFeature {
 	geometry: { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] }
 }
 
-/** Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`. */
+/**
+ * Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
+ */
 export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: number } {
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NutsFeature[] }
 	const db = new DatabaseSync(dbPath)

@@ -62,7 +62,9 @@ const errorContent = (description: string) => ({
 	content: { "application/json": { schema: ErrorSchema } },
 })
 
-/** Query-side request schema, shared by the GET routes (documented; presence enforced in-handler). */
+/**
+ * Query-side request schema, shared by the GET routes (documented; presence enforced in-handler).
+ */
 const parseQueryParams = z.object({
 	query: z.string().optional().openapi({ description: "The address to parse. `address` is accepted as an alias." }),
 	address: z.string().optional().openapi({ description: "Alias for `query`." }),
@@ -239,7 +241,9 @@ const canonicalizeQueryParams: MiddlewareHandler = async (c, next) => {
 	await next()
 }
 
-/** Register the libpostal-compatible routes against an injected engine. */
+/**
+ * Register the libpostal-compatible routes against an injected engine.
+ */
 export function registerLibpostalRoutes(app: OpenAPIHono, engine: LibpostalEngine): void {
 	app.use("/parse", canonicalizeJSONBody)
 	app.use("/expand", canonicalizeJSONBody)

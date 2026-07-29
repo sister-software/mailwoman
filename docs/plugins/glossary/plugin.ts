@@ -31,27 +31,37 @@ import { load as parseYAML } from "js-yaml"
 
 export { type GlossaryPluginOptions } from "docusaurus-plugin-glossary"
 
-/** A glossary term carrying the `tags` extension this wrapper enforces. */
+/**
+ * A glossary term carrying the `tags` extension this wrapper enforces.
+ */
 export interface TaggedGlossaryTerm extends GlossaryTerm {
 	tags?: string[]
 }
 
-/** One entry of the tags.yml registry, as consumed by the glossary page. */
+/**
+ * One entry of the tags.yml registry, as consumed by the glossary page.
+ */
 export interface GlossaryTagMeta {
 	key: string
 	label: string
 	description: string
-	/** Number of glossary terms carrying this tag (primary or secondary). */
+	/**
+	 * Number of glossary terms carrying this tag (primary or secondary).
+	 */
 	count: number
 }
 
-/** A docs page that references a glossary term. */
+/**
+ * A docs page that references a glossary term.
+ */
 export interface GlossaryBacklink {
 	title: string
 	permalink: string
 }
 
-/** Per-term backlinks, keyed by the term's `term` string. */
+/**
+ * Per-term backlinks, keyed by the term's `term` string.
+ */
 export type GlossaryBacklinks = Record<
 	string,
 	{
@@ -65,7 +75,9 @@ interface TagRegistryEntry {
 	description?: string
 }
 
-/** Shape of the docs-plugin content we consume in allContentLoaded. */
+/**
+ * Shape of the docs-plugin content we consume in allContentLoaded.
+ */
 interface DocsPluginContent {
 	loadedVersions?: {
 		docs: {
@@ -78,7 +90,9 @@ interface DocsPluginContent {
 	}[]
 }
 
-/** Backlinks shown per term card; the rest is summarized as "+N more". */
+/**
+ * Backlinks shown per term card; the rest is summarized as "+N more".
+ */
 const MAX_BACKLINKS_PER_TERM = 8
 
 /**
@@ -124,7 +138,9 @@ function referencesPhrase(text: string, textLower: string, needle: string, commo
 	return false
 }
 
-/** Strip the parts of a markdown source the remark auto-linker never links. */
+/**
+ * Strip the parts of a markdown source the remark auto-linker never links.
+ */
 function stripUnlinkableMarkdown(source: string): string {
 	return source
 		.replace(/^---\n[\s\S]*?\n---/, "") // frontmatter

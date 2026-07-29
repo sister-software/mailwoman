@@ -17,40 +17,56 @@ import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// MARK: Types
 
-/** Score delta below which two versions are shown as equivalent rather than as a change. */
+/**
+ * Score delta below which two versions are shown as equivalent rather than as a change.
+ */
 const NEGLIGIBLE_DELTA = 0.01
 
 export interface VersionCompareProps {
-	/** The primary (left) parse result. */
+	/**
+	 * The primary (left) parse result.
+	 */
 	primary: DemoResult
-	/** The compare (right) parse result. */
+	/**
+	 * The compare (right) parse result.
+	 */
 	compare: DemoResult
-	/** Version label for the primary side. */
+	/**
+	 * Version label for the primary side.
+	 */
 	primaryVersion: string
-	/** Version label for the compare side. */
+	/**
+	 * Version label for the compare side.
+	 */
 	compareVersion: string
 }
 
 interface CompareRow {
-	/** Tag label (e.g. "house_number", "street"). */
+	/**
+	 * Tag label (e.g. "house_number", "street").
+	 */
 	tag: string
-	/** Primary side node, if present. */
+	/**
+	 * Primary side node, if present.
+	 */
 	primaryNode: ResultNode | null
-	/** Compare side node, if present. */
+	/**
+	 * Compare side node, if present.
+	 */
 	compareNode: ResultNode | null
-	/** Confidence delta (compare − primary). Positive = improved, negative = regressed. */
+	/**
+	 * Confidence delta (compare − primary). Positive = improved, negative = regressed.
+	 */
 	delta: number | null
-	/** How this row relates across versions. */
+	/**
+	 * How this row relates across versions.
+	 */
 	diffKind: "match" | "primary-only" | "compare-only" | "tag-changed"
 }
 
-// ---------------------------------------------------------------------------
-// Diff computation
-// ---------------------------------------------------------------------------
+// MARK: Diff computation
 
 /**
  * Build a unified diff table of component rows across two parses. Row identity is by source-order position
@@ -163,9 +179,7 @@ function diffConfidence(c: number | undefined, p: number | undefined): number | 
 	return Number.parseFloat((c - p).toFixed(3))
 }
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
+// MARK: Sub-components
 
 const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({ delta, diffKind }) => {
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
@@ -183,9 +197,7 @@ const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKin
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
+// MARK: Main component
 
 export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare, primaryVersion, compareVersion }) => {
 	const rows = useMemo(() => computeCompareRows(primary, compare), [primary, compare])

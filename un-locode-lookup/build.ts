@@ -23,7 +23,9 @@ interface CSVRow {
 	Coordinates: string
 }
 
-/** Read the code-list CSV at `csvPath` and write the lookup DB to `dbPath`. */
+/**
+ * Read the code-list CSV at `csvPath` and write the lookup DB to `dbPath`.
+ */
 export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number; withCoords: number } {
 	const records = parse(readFileSync(csvPath), {
 		columns: true,

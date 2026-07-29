@@ -50,10 +50,14 @@ import {
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
 
-/** Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`). */
+/**
+ * Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
+ */
 const DATA_ROOT = mailwomanDataRoot()
 
-/** The classifier/resolver/shard bundle `geocode`/`batch`/`resolveTree`/`reload` close over. */
+/**
+ * The classifier/resolver/shard bundle `geocode`/`batch`/`resolveTree`/`reload` close over.
+ */
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
 	resolver: Resolver
@@ -61,7 +65,9 @@ interface GeocodeDepsBundle {
 	defaultCountry?: string
 }
 
-/** Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional shards). */
+/**
+ * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional shards).
+ */
 function wofPaths(): string[] {
 	const env = $public.MAILWOMAN_WOF_DB
 
@@ -175,7 +181,9 @@ function buildHealthData(): HealthData {
 	}
 }
 
-/** One geocode call over the shared deps. Ported from `GeocodeRouter`'s `oneGeocode`. */
+/**
+ * One geocode call over the shared deps. Ported from `GeocodeRouter`'s `oneGeocode`.
+ */
 function oneGeocode(
 	deps: GeocodeDepsBundle,
 	address: string,
@@ -191,7 +199,9 @@ function oneGeocode(
 	})
 }
 
-/** Pull the street node's resolution tier (if any) for the metric. Ported verbatim from `GeocodeRouter`. */
+/**
+ * Pull the street node's resolution tier (if any) for the metric. Ported verbatim from `GeocodeRouter`.
+ */
 function collectStreetTier(
 	node: AddressTree["roots"][number]
 ): Array<"address_point" | "interpolated" | "street" | "admin"> {
@@ -212,7 +222,9 @@ function collectStreetTier(
 	return out
 }
 
-/** {@link createServeEngine}'s return value. */
+/**
+ * {@link createServeEngine}'s return value.
+ */
 export interface ServeEngine {
 	engine: MailwomanAPIEngine
 	preflight: { ok: true } | { ok: false; message: string }

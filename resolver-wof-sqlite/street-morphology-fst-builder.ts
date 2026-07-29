@@ -40,7 +40,9 @@ const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 const STREET_TYPES_FILENAME = "street_types.txt"
 
 export interface BuildStreetMorphologyFSTOpts {
-	/** Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders. */
+	/**
+	 * Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders.
+	 */
 	dictionariesDir: string
 	/**
 	 * Optional locale filter — only ingest these locale subfolders. Defaults to all that have a `street_types.txt`.
@@ -56,7 +58,9 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * `rue`, `str`) while filtering out the noise.
 	 */
 	minVariantLength?: number
-	/** Optional progress callback. */
+	/**
+	 * Optional progress callback.
+	 */
 	onProgress?: (phase: string, detail?: string) => void
 }
 

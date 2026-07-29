@@ -49,26 +49,46 @@ import { TextSpliterator } from "spliterator"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Share of entities assigned to fit; the rest are held out. */
+/**
+ * Share of entities assigned to fit; the rest are held out.
+ */
 const FIT_SPLIT_FRACTION = 0.8
 
-/** Options for {@linkcode trainCrossSourceGBT}. */
+/**
+ * Options for {@linkcode trainCrossSourceGBT}.
+ */
 export interface TrainCrossSourceGBTOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 2000. */
+	/**
+	 * NPIs sampled. Default 2000.
+	 */
 	npis?: number
-	/** Output TS module path. Default `registry/models/crosssource-gbt-en-us.ts`. */
+	/**
+	 * Output TS module path. Default `registry/models/crosssource-gbt-en-us.ts`.
+	 */
 	out?: string
-	/** Locale recorded in the model meta. Default en-US. */
+	/**
+	 * Locale recorded in the model meta. Default en-US.
+	 */
 	locale?: string
-	/** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95. */
+	/**
+	 * #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95.
+	 */
 	precisionBar?: number
-	/** Training date stamped into the meta. Default today. */
+	/**
+	 * Training date stamped into the meta. Default today.
+	 */
 	date?: string
 }
 
@@ -95,7 +115,9 @@ interface MessyRow {
 	source: string
 }
 
-/** Deterministic LCG (no Math.random — reproducible split + commit). */
+/**
+ * Deterministic LCG (no Math.random — reproducible split + commit).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
@@ -106,7 +128,9 @@ function lcg(seed: number): () => number {
 	}
 }
 
-/** Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates. */
+/**
+ * Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates.
+ */
 function uniqueQuantiles(sorted: number[], n: number): number[] {
 	if (!sorted.length) return [0]
 	const ts = new Set<number>()
@@ -118,7 +142,9 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 	return [...ts]
 }
 
-/** Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows. */
+/**
+ * Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows.
+ */
 async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> {
 	// spliterator owns the line layer (crlf keeps header keys + the last column clean on CRLF sources);
 	// the manual quote/pending re-join + tokenizer below stays deliberately — spliterator ≥ 3.2.0 CAN
@@ -179,7 +205,9 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 	}
 }
 
-/** Train + emit the cross-source link GBT — see the module doc. */
+/**
+ * Train + emit the cross-source link GBT — see the module doc.
+ */
 export async function trainCrossSourceGBT(
 	options: TrainCrossSourceGBTOptions,
 	report?: (line: string) => void

@@ -26,7 +26,9 @@ const norm = (s: string): string =>
 		.replaceAll(/\s+/g, " ")
 		.trim()
 
-/** The SI shape: the village + its bare-code postcode row (the #920 name law — codes stored bare). */
+/**
+ * The SI shape: the village + its bare-code postcode row (the #920 name law — codes stored bare).
+ */
 const PLACES: ResolvedPlace[] = [
 	{
 		id: 1,
@@ -75,7 +77,9 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	...over,
 })
 
-/** The real failure shape: "Kožljek 7, 1382 Kožljek" — street+hn lead, globbed postcode trail. */
+/**
+ * The real failure shape: "Kožljek 7, 1382 Kožljek" — street+hn lead, globbed postcode trail.
+ */
 function failingTree(): AddressTree {
 	const raw = "Kožljek 7, 1382 Kožljek"
 

@@ -24,13 +24,21 @@ import type { LoadPOIRuntime, POILiveSearch } from "./types.ts"
 import { usePOISearch } from "./usePOISearch.ts"
 
 export interface POIExplorerProps {
-	/** Query to pre-fill in the input. */
+	/**
+	 * Query to pre-fill in the input.
+	 */
 	defaultText?: string
-	/** Example chips. @default the built-in POI presets */
+	/**
+	 * Example chips. @default the built-in POI presets
+	 */
 	presets?: ReadonlyArray<Preset>
-	/** Override the taxonomy-runtime loader (stories/tests inject a mock). */
+	/**
+	 * Override the taxonomy-runtime loader (stories/tests inject a mock).
+	 */
 	loadRuntime?: LoadPOIRuntime
-	/** Live poi.db probe. Absent ⇒ intent-only (no live-results affordance). */
+	/**
+	 * Live poi.db probe. Absent ⇒ intent-only (no live-results affordance).
+	 */
 	runLiveSearch?: POILiveSearch
 	/**
 	 * Whether {@link runLiveSearch} can serve BRAND subjects (fetch by QID). Default false: a brand subject shows the

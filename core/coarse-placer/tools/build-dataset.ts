@@ -30,15 +30,23 @@ interface DatasetRow {
 	country: string
 }
 
-/** Options for {@linkcode buildDataset}. */
+/**
+ * Options for {@linkcode buildDataset}.
+ */
 export interface BuildDatasetOptions {
-	/** Rows sampled per country. Default 50000. */
+	/**
+	 * Rows sampled per country. Default 50000.
+	 */
 	perCountry?: number
-	/** Dataset output dir. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset output dir. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildDataset}. */
+/**
+ * Result of {@linkcode buildDataset}.
+ */
 export interface BuildDatasetResult {
 	outDir: string
 	train: number
@@ -89,7 +97,9 @@ function formatEu(street: unknown, number: unknown, postcode: unknown, loc: stri
 	}
 }
 
-/** Coarse-placer dataset builder — see the module doc. */
+/**
+ * Coarse-placer dataset builder — see the module doc.
+ */
 export async function buildDataset(
 	options: BuildDatasetOptions = {},
 	report?: (line: string) => void

@@ -24,7 +24,9 @@ import type { ParityCase } from "./parity-extract.ts"
 const IN_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const OUT_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 
-/** Parity test file basename token → ISO-3166 alpha-2. Files without a country token score as ZZ. */
+/**
+ * Parity test file basename token → ISO-3166 alpha-2. Files without a country token score as ZZ.
+ */
 const FILE_COUNTRY: Record<string, string> = {
 	aus: "AU",
 	bra: "BR",
@@ -57,19 +59,31 @@ function countryFor(file: string): string {
 }
 
 export interface ParityFixture {
-	/** Stable id: `v1-<basename>-<index-within-file>`. */
+	/**
+	 * Stable id: `v1-<basename>-<index-within-file>`.
+	 */
 	id: string
 	input: string
 	country: string
-	/** Provenance: the v1 parity file this assertion came from. */
+	/**
+	 * Provenance: the v1 parity file this assertion came from.
+	 */
 	source: string
-	/** ComponentTag-keyed gold (top rules solution's hand-written expectation). Absent on tombstones. */
+	/**
+	 * ComponentTag-keyed gold (top rules solution's hand-written expectation). Absent on tombstones.
+	 */
 	expect?: Record<string, string[]>
-	/** Tombstone reason; the runner skips these rows but the provenance survives. */
+	/**
+	 * Tombstone reason; the runner skips these rows but the provenance survives.
+	 */
 	dropped?: string
-	/** Count of positional alternative records the v1 assertion carried beyond the gold. */
+	/**
+	 * Count of positional alternative records the v1 assertion carried beyond the gold.
+	 */
 	alternatives?: number
-	/** Legacy tags in the gold that have no ComponentTag equivalent — dropped from `expect`, recorded here. */
+	/**
+	 * Legacy tags in the gold that have no ComponentTag equivalent — dropped from `expect`, recorded here.
+	 */
 	droppedTags?: string[]
 }
 

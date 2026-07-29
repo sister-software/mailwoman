@@ -22,7 +22,9 @@ import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.ts"
 
 const TOKENIZER_MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Assert every piece AFTER the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`. */
+/**
+ * Assert every piece AFTER the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`.
+ */
 async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 	const { pieces } = tokenizer.encode(raw)
@@ -134,7 +136,9 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 	})
 })
 
-/** Project each piece to `[piece, start, end]` for exact-tuple assertions. */
+/**
+ * Project each piece to `[piece, start, end]` for exact-tuple assertions.
+ */
 async function encodeToTuples(raw: string): Promise<Array<[string, number, number]>> {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 	const { pieces } = tokenizer.encode(raw)

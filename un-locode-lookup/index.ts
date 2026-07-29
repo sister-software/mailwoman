@@ -13,7 +13,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
-/** Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace. */
+/**
+ * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.
+ */
 export function foldName(name: string): string {
 	return name
 		.normalize("NFD")
@@ -23,7 +25,9 @@ export function foldName(name: string): string {
 		.replaceAll(/\s+/g, " ")
 }
 
-/** Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed. */
+/**
+ * Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed.
+ */
 export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } | null {
 	const m = raw.trim().match(/^(\d{2})(\d{2})([NS])\s+(\d{3})(\d{2})([EW])$/)
 
@@ -45,7 +49,9 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): nu
 	return 2 * EARTH_R_KM * Math.asin(Math.sqrt(s))
 }
 
-/** A UN/LOCODE lookup over a built `node:sqlite` table. */
+/**
+ * A UN/LOCODE lookup over a built `node:sqlite` table.
+ */
 export class UnLocodeLookup {
 	#db: DatabaseSync
 	#byName: ReturnType<DatabaseSync["prepare"]>
@@ -61,7 +67,9 @@ export class UnLocodeLookup {
 		)
 	}
 
-	/** The UN/LOCODE (`"US NYC"`) for a country + place name, or null. */
+	/**
+	 * The UN/LOCODE (`"US NYC"`) for a country + place name, or null.
+	 */
 	byName(country: string, name: string): string | null {
 		const row = this.#byName.get(country.toUpperCase(), foldName(name)) as
 			| { country: string; location: string }
@@ -70,7 +78,9 @@ export class UnLocodeLookup {
 		return row ? `${row.country} ${row.location}` : null
 	}
 
-	/** The nearest coordinate-bearing UN/LOCODE within `maxKm`, or null. */
+	/**
+	 * The nearest coordinate-bearing UN/LOCODE within `maxKm`, or null.
+	 */
 	nearest(lat: number, lon: number, maxKm = 25): string | null {
 		const dLat = maxKm / 111
 		const dLon = maxKm / (111 * Math.max(0.01, Math.cos((lat * Math.PI) / 180)))

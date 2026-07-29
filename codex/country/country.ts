@@ -43,7 +43,9 @@ export const COUNTRY_SURFACE_FORMS = {
 
 export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS
 
-/** Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum). */
+/**
+ * Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum).
+ */
 export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [code as string, name as CountryName])
 )
@@ -91,7 +93,9 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	return out
 })()
 
-/** Result of a country match: the alpha-2 code, the canonical English name, and the matched surface. */
+/**
+ * Result of a country match: the alpha-2 code, the canonical English name, and the matched surface.
+ */
 export interface CountryMatch {
 	iso2: string
 	canonical: CountryName | undefined
@@ -112,7 +116,9 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
 	return { iso2, canonical: ISO2_TO_NAME.get(iso2), matched: token.trim() }
 }
 
-/** Case-insensitive check: is the token any recognized country form? */
+/**
+ * Case-insensitive check: is the token any recognized country form?
+ */
 export function isCountryToken(token: unknown): boolean {
 	return typeof token === "string" && COUNTRY_LOOKUP.has(token.trim().toLowerCase())
 }

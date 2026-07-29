@@ -90,7 +90,9 @@ function sanitizeFTS(text: string): string {
 	return prefix ? `"${cleaned}"*` : `"${cleaned}"`
 }
 
-/** Sql.js exec result → row objects. */
+/**
+ * Sql.js exec result → row objects.
+ */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
 	if (!res || !res.length) return []
 	const { columns, values } = res[0]
@@ -107,7 +109,9 @@ interface HTTPVFSWorker {
 	bytesRead(): Promise<number>
 }
 
-/** The raw shape `createDbWorker` resolves to — `worker` is the Comlink proxy. */
+/**
+ * The raw shape `createDbWorker` resolves to — `worker` is the Comlink proxy.
+ */
 interface RawWorkerHTTPVFS {
 	db: HTTPVFSWorker["db"]
 	worker?: { bytesRead?: number | Promise<number> }
@@ -189,14 +193,18 @@ export async function loadHTTPVFSDatabase(
 	}
 }
 
-/** All table-existence facts the lookup needs, resolved in ONE worker round trip. */
+/**
+ * All table-existence facts the lookup needs, resolved in ONE worker round trip.
+ */
 interface SchemaFacts {
 	hasPop: boolean
 	hasAbbr: boolean
 	hasRoles: boolean
 }
 
-/** PlaceLookup over the httpvfs worker — same ranking as WOFWasmPlaceLookup, async. */
+/**
+ * PlaceLookup over the httpvfs worker — same ranking as WOFWasmPlaceLookup, async.
+ */
 export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker
 	#schemaProbe: Promise<SchemaFacts> | undefined
@@ -328,7 +336,9 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		await Promise.all([this.#worker.db.exec(stmts.join(";\n")), this.#dualRolesMap()])
 	}
 
-	/** Total bytes range-fetched so far — surfaces live transfer progress in the demo UI. */
+	/**
+	 * Total bytes range-fetched so far — surfaces live transfer progress in the demo UI.
+	 */
 	bytesRead(): Promise<number> {
 		return this.#worker.bytesRead()
 	}
@@ -450,7 +460,9 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	}
 }
 
-/** Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized). */
+/**
+ * Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized).
+ */
 interface CandidateCodeMaps {
 	countryToID: Map<string, number>
 	idToCountry: Map<number, string>
@@ -473,7 +485,9 @@ interface CandidateCodeMaps {
 export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker
 	#codes: Promise<CandidateCodeMaps> | undefined
-	/** Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip). */
+	/**
+	 * Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip).
+	 */
 	#hasPostalCity: Promise<boolean> | undefined
 
 	constructor(worker: HTTPVFSWorker) {
@@ -528,7 +542,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		return this.#codes
 	}
 
-	/** Pull the code tables + a representative probe through the VFS during browser idle. */
+	/**
+	 * Pull the code tables + a representative probe through the VFS during browser idle.
+	 */
 	async warmUp(): Promise<void> {
 		await this.#codeMaps()
 		await this.#worker.db.exec(
@@ -536,7 +552,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		)
 	}
 
-	/** Total bytes range-fetched so far — surfaces live transfer progress in the demo UI. */
+	/**
+	 * Total bytes range-fetched so far — surfaces live transfer progress in the demo UI.
+	 */
 	bytesRead(): Promise<number> {
 		return this.#worker.bytesRead()
 	}
@@ -705,7 +723,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	}
 }
 
-/** Polygon lookup over an httpvfs worker: id → GeoJSON geometry (async). */
+/**
+ * Polygon lookup over an httpvfs worker: id → GeoJSON geometry (async).
+ */
 export function makeHTTPVFSPolygonLookup(worker: HTTPVFSWorker) {
 	return {
 		async get(id: number): Promise<unknown | null> {

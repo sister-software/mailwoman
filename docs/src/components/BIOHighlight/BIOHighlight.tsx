@@ -14,24 +14,38 @@ import type { ResultNode } from "../../shared/resources.tsx"
 import styles from "./styles.module.css"
 
 export interface BIOHighlightProps {
-	/** The raw text handed to the parser — `nodes[].start/end` index into this. */
+	/**
+	 * The raw text handed to the parser — `nodes[].start/end` index into this.
+	 */
 	input: string
-	/** Flattened parse nodes; only those with numeric `start`/`end` are rendered. */
+	/**
+	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
+	 */
 	nodes: ResultNode[]
 }
 
 interface BIOWord {
-	/** The word text as it appears in the input. */
+	/**
+	 * The word text as it appears in the input.
+	 */
 	text: string
-	/** Leading whitespace before this word. */
+	/**
+	 * Leading whitespace before this word.
+	 */
 	whitespace: string
-	/** BIO label for this word. */
+	/**
+	 * BIO label for this word.
+	 */
 	label: string
-	/** The tag this label refers to (e.g. "street", "locality", "house_number"). */
+	/**
+	 * The tag this label refers to (e.g. "street", "locality", "house_number").
+	 */
 	tag: string | null
 }
 
-/** Tokenize the raw input into words, preserving leading whitespace for each token. */
+/**
+ * Tokenize the raw input into words, preserving leading whitespace for each token.
+ */
 function tokenizeWords(input: string): Array<{ text: string; start: number; end: number; whitespace: string }> {
 	const words: Array<{ text: string; start: number; end: number; whitespace: string }> = []
 	let i = 0

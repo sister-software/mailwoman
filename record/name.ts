@@ -25,25 +25,43 @@
  *       professional suffixes) without a model.
  */
 
-/** A parsed person name. All fields optional — the parser fills what it can identify. */
+/**
+ * A parsed person name. All fields optional — the parser fills what it can identify.
+ */
 export interface PersonName {
-	/** Title / salutation that preceded the name (`Dr`, `Mr`, `Capt`). */
+	/**
+	 * Title / salutation that preceded the name (`Dr`, `Mr`, `Capt`).
+	 */
 	prefix?: string
-	/** First / given name. */
+	/**
+	 * First / given name.
+	 */
 	given?: string
-	/** Middle name(s) or initial. */
+	/**
+	 * Middle name(s) or initial.
+	 */
 	middle?: string
-	/** Surname, _without_ any particle (`Vega`, not `de la Vega`). */
+	/**
+	 * Surname, _without_ any particle (`Vega`, not `de la Vega`).
+	 */
 	family?: string
-	/** Surname particle, stored separately (`de la`, `van der`, `von`). */
+	/**
+	 * Surname particle, stored separately (`de la`, `van der`, `von`).
+	 */
 	familyParticle?: string
-	/** Generational or professional suffix (`Jr`, `III`, `PhD`, `MD`). */
+	/**
+	 * Generational or professional suffix (`Jr`, `III`, `PhD`, `MD`).
+	 */
 	suffix?: string
-	/** A parenthetical or quoted nickname (`"Gob"` in `George "Gob" Bluth`). */
+	/**
+	 * A parenthetical or quoted nickname (`"Gob"` in `George "Gob" Bluth`).
+	 */
 	nickname?: string
 }
 
-/** Titles / salutations that lead a name. Matched case-insensitively, trailing `.` ignored. */
+/**
+ * Titles / salutations that lead a name. Matched case-insensitively, trailing `.` ignored.
+ */
 const TITLES = new Set([
 	"airman",
 	"br",
@@ -100,7 +118,9 @@ const TITLES = new Set([
 	"sister",
 ])
 
-/** Generational + professional suffixes that trail a name. */
+/**
+ * Generational + professional suffixes that trail a name.
+ */
 const SUFFIXES = new Set([
 	// generational
 	"jr",

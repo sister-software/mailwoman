@@ -17,10 +17,14 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
-/** Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string. */
+/**
+ * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.
+ */
 export type DataReleaseManifest = Record<string, string>
 
-/** Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed. */
+/**
+ * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed.
+ */
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {
 		const raw = JSON.parse(readFileSync(`${dataRoot}/releases.json`, "utf8")) as unknown

@@ -23,7 +23,9 @@ import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
-/** Artifact examples collected before the list is truncated. */
+/**
+ * Artifact examples collected before the list is truncated.
+ */
 const MAX_LISTED_ARTIFACTS = 12
 
 const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
@@ -131,7 +133,9 @@ function get(c: Counter, k: string): number {
 	return c[k] ?? 0
 }
 
-/** Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away). */
+/**
+ * Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away).
+ */
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)
@@ -183,7 +187,9 @@ function pyFixed(x: number, d: number): string {
 	return (neg ? "-" : "") + body
 }
 
-/** Python `f"{x:+.1f}"` — fixed precision with an always-present sign. */
+/**
+ * Python `f"{x:+.1f}"` — fixed precision with an always-present sign.
+ */
 function pySigned(x: number, d: number): string {
 	const s = pyFixed(x, d)
 

@@ -20,14 +20,22 @@ import { fileURLToPath } from "node:url"
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
-/** Absolute path to the docs-plugin content root (`docs/articles`). */
+/**
+ * Absolute path to the docs-plugin content root (`docs/articles`).
+ */
 export const ARTICLES_DIR = path.resolve(SCRIPT_DIR, "..", "articles")
 
-/** One `.md`/`.mdx` page under `docs/articles`. */
+/**
+ * One `.md`/`.mdx` page under `docs/articles`.
+ */
 export interface DocPage {
-	/** Path relative to `docs/articles`, POSIX separators — e.g. `concepts/bio-labels.mdx`. */
+	/**
+	 * Path relative to `docs/articles`, POSIX separators — e.g. `concepts/bio-labels.mdx`.
+	 */
 	relativePath: string
-	/** Absolute filesystem path. */
+	/**
+	 * Absolute filesystem path.
+	 */
 	absolutePath: string
 	/**
 	 * The Docusaurus doc id: the directory part of the file path plus the frontmatter `id:` override (which replaces only
@@ -35,15 +43,21 @@ export interface DocPage {
 	 * `recipes/timezone-lookup`.
 	 */
 	id: string
-	/** Top-level scalar frontmatter fields, quotes stripped. */
+	/**
+	 * Top-level scalar frontmatter fields, quotes stripped.
+	 */
 	frontmatter: Map<string, string>
-	/** Every top-level frontmatter key, including keys whose values are nested/non-scalar. */
+	/**
+	 * Every top-level frontmatter key, including keys whose values are nested/non-scalar.
+	 */
 	declaredKeys: Set<string>
 }
 
 const FRONTMATTER_KEY_PATTERN = /^([A-Za-z][A-Za-z0-9_-]*):(.*)$/
 
-/** Strip one layer of matched surrounding quotes from a scalar value. */
+/**
+ * Strip one layer of matched surrounding quotes from a scalar value.
+ */
 function unquote(value: string): string {
 	if (value.length >= 2 && (value[0] === '"' || value[0] === "'") && value.endsWith(value[0]!)) {
 		return value.slice(1, -1)
@@ -85,7 +99,9 @@ export function parseFrontmatter(source: string): { fields: Map<string, string>;
 	return { fields, declaredKeys }
 }
 
-/** Walk `docs/articles` and parse every `.md`/`.mdx` page. */
+/**
+ * Walk `docs/articles` and parse every `.md`/`.mdx` page.
+ */
 export async function collectDocPages(): Promise<DocPage[]> {
 	const entries = await readdir(ARTICLES_DIR, { recursive: true })
 	const pages: DocPage[] = []

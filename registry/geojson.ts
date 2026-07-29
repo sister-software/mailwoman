@@ -14,7 +14,9 @@ import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/
 
 import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.ts"
 
-/** Assemble a display name from a record's parsed person name, if any. */
+/**
+ * Assemble a display name from a record's parsed person name, if any.
+ */
 function displayName(record: SourceRecord): string | null {
 	const name = record.name
 
@@ -27,7 +29,9 @@ function displayName(record: SourceRecord): string | null {
 	return joined || null
 }
 
-/** One entity → one GeoJSON Point feature. */
+/**
+ * One entity → one GeoJSON Point feature.
+ */
 function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoData> {
 	const rep = entity.representative
 

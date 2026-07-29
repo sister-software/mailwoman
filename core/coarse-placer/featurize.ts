@@ -72,7 +72,9 @@ export type CoarseClass = (typeof COARSE_CLASSES)[number]
  */
 export const FEATURE_DIM = 1 << 16
 
-/** Coarse Unicode-script buckets — strong priors the n-grams refine. */
+/**
+ * Coarse Unicode-script buckets — strong priors the n-grams refine.
+ */
 const SCRIPTS = [
 	"latin",
 	"cjk",
@@ -116,7 +118,9 @@ function scriptOf(cp: number): Script {
 	return "other"
 }
 
-/** FNV-1a → a feature bucket in [0, FEATURE_DIM). */
+/**
+ * FNV-1a → a feature bucket in [0, FEATURE_DIM).
+ */
 function bucket(s: string, salt: number): number {
 	let h = (2_166_136_261 ^ salt) >>> 0
 

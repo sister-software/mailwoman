@@ -26,32 +26,50 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** Attempts to place a dot inside its polygon by rejection sampling before giving up on it. */
+/**
+ * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.
+ */
 const MAX_PLACEMENT_TRIES = 60
 
-/** Options for {@linkcode raceDots}. */
+/**
+ * Options for {@linkcode raceDots}.
+ */
 export interface RaceDotsOptions {
-	/** TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`. */
+	/**
+	 * TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`.
+	 */
 	db?: string
-	/** Output NDJSON path. Default `/tmp/race-dots.ndjson`. */
+	/**
+	 * Output NDJSON path. Default `/tmp/race-dots.ndjson`.
+	 */
 	out?: string
-	/** People represented by one dot. Default 10. */
+	/**
+	 * People represented by one dot. Default 10.
+	 */
 	per?: number
-	/** Tippecanoe layer name. Default `dots`. */
+	/**
+	 * Tippecanoe layer name. Default `dots`.
+	 */
 	layer?: string
 }
 
-/** Result of {@linkcode raceDots}. */
+/**
+ * Result of {@linkcode raceDots}.
+ */
 export interface RaceDotsResult {
 	outPath: string
 	dots: number
 	skipped: number
 	blocks: number
-	/** Dots emitted per P2 category. */
+	/**
+	 * Dots emitted per P2 category.
+	 */
 	totals: Record<string, number>
 }
 
-/** The eight P2 categories (columns in pl_block) that partition each block's population. */
+/**
+ * The eight P2 categories (columns in pl_block) that partition each block's population.
+ */
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const
 
 type Ring = number[][]
@@ -84,7 +102,9 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 	return [minX, minY, maxX, maxY]
 }
 
-/** Race-by-dot-density NDJSON builder — see the module doc. */
+/**
+ * Race-by-dot-density NDJSON builder — see the module doc.
+ */
 export async function raceDots(
 	options: RaceDotsOptions = {},
 	report?: (line: string) => void

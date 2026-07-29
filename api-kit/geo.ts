@@ -10,7 +10,9 @@
 
 import { z } from "@hono/zod-openapi"
 
-/** A GeoJSON Point geometry: `[lon, lat]`. */
+/**
+ * A GeoJSON Point geometry: `[lon, lat]`.
+ */
 export const PointGeometrySchema = z
 	.object({
 		type: z.literal("Point"),
@@ -18,10 +20,14 @@ export const PointGeometrySchema = z
 	})
 	.openapi("PointGeometry")
 
-/** A `[minLon, minLat, maxLon, maxLat]`-style 4-tuple (photon's `extent` uses `[minLon, maxLat, maxLon, minLat]`). */
+/**
+ * A `[minLon, minLat, maxLon, maxLat]`-style 4-tuple (photon's `extent` uses `[minLon, maxLat, maxLon, minLat]`).
+ */
 export const BBoxSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
 
-/** GeoJSON Feature envelope over a surface-specific properties schema. */
+/**
+ * GeoJSON Feature envelope over a surface-specific properties schema.
+ */
 export function featureSchema<P extends z.ZodTypeAny>(properties: P) {
 	return z.object({
 		type: z.literal("Feature"),
@@ -30,7 +36,9 @@ export function featureSchema<P extends z.ZodTypeAny>(properties: P) {
 	})
 }
 
-/** GeoJSON FeatureCollection envelope over a feature schema. */
+/**
+ * GeoJSON FeatureCollection envelope over a feature schema.
+ */
 export function featureCollectionSchema<F extends z.ZodTypeAny>(feature: F) {
 	return z.object({
 		type: z.literal("FeatureCollection"),

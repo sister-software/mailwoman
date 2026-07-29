@@ -20,17 +20,27 @@ import type { ParseTraceLike } from "../../shared/resources.tsx"
 import demoStyles from "./styles.module.css"
 
 export interface DemoDebugDrawerProps {
-	/** The current parse result (its input is re-traced when dev mode is on). */
+	/**
+	 * The current parse result (its input is re-traced when dev mode is on).
+	 */
 	result: ParseResult | null
-	/** Whether dev mode is on. */
+	/**
+	 * Whether dev mode is on.
+	 */
 	devMode: boolean
-	/** Trace an input through the decode path (host's classifier). Resolves `null` when unavailable. */
+	/**
+	 * Trace an input through the decode path (host's classifier). Resolves `null` when unavailable.
+	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
-	/** Close the drawer (flips dev mode off). */
+	/**
+	 * Close the drawer (flips dev mode off).
+	 */
 	onClose: () => void
 }
 
-/** The model-visualizer drawer — mounts only in dev mode once a trace is ready. */
+/**
+ * The model-visualizer drawer — mounts only in dev mode once a trace is ready.
+ */
 export const DemoDebugDrawer: React.FC<DemoDebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
 	const [trace, setTrace] = useState<ParseTraceLike | null>(null)
 	const input = result?.input ?? null

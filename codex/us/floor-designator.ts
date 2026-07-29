@@ -34,11 +34,17 @@
  * PENTHOUSE and LOBBY may stand alone.
  */
 export interface USFloorDesignator {
-	/** Full canonical designator (uppercase per the publication). */
+	/**
+	 * Full canonical designator (uppercase per the publication).
+	 */
 	name: string
-	/** Approved USPS abbreviation (what the post office prints on standardized mail). */
+	/**
+	 * Approved USPS abbreviation (what the post office prints on standardized mail).
+	 */
 	abbreviation: string
-	/** Additional recognized surface variants from Appendix C2. */
+	/**
+	 * Additional recognized surface variants from Appendix C2.
+	 */
 	variants: readonly string[]
 	/**
 	 * True when Appendix C2 marks this designator as "Requires a Secondary Number" (FLOOR, BASEMENT). False for
@@ -58,7 +64,9 @@ export const US_FLOOR_DESIGNATORS = [
 	{ name: "LOBBY", abbreviation: "LBBY", variants: [], requiresNumber: false },
 ] as const satisfies readonly USFloorDesignator[]
 
-/** A canonical USPS floor-class designator name. */
+/**
+ * A canonical USPS floor-class designator name.
+ */
 export type USFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"]
 
 /**
@@ -89,7 +97,9 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorNa
  */
 export const US_FLOOR_DESIGNATOR_TOKENS: ReadonlySet<string> = new Set(US_FLOOR_DESIGNATOR_LOOKUP.keys())
 
-/** Approved USPS abbreviation per canonical floor designator name. */
+/**
+ * Approved USPS abbreviation per canonical floor designator name.
+ */
 export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignatorName, string>> = Object.fromEntries(
 	US_FLOOR_DESIGNATORS.map((r) => [r.name, r.abbreviation])
 ) as Readonly<Record<USFloorDesignatorName, string>>

@@ -11,7 +11,9 @@
 
 import { z } from "@hono/zod-openapi"
 
-/** The `addressdetails=1` breakdown — OSM-derived keys; tolerant of extras. */
+/**
+ * The `addressdetails=1` breakdown — OSM-derived keys; tolerant of extras.
+ */
 export const NominatimAddressDetailsSchema = z
 	.object({
 		house_number: z.string().optional(),
@@ -30,7 +32,9 @@ export const NominatimAddressDetailsSchema = z
 	.loose()
 	.openapi("NominatimAddressDetails")
 
-/** A single Nominatim result (the shape geopy and friends parse). */
+/**
+ * A single Nominatim result (the shape geopy and friends parse).
+ */
 export const NominatimResultSchema = z
 	.object({
 		place_id: z.union([z.number(), z.string()]),
@@ -52,13 +56,19 @@ export const NominatimResultSchema = z
 	.loose()
 	.openapi("NominatimResult")
 
-/** Response body of `/search`, matching Nominatim's result array so existing clients need no change. */
+/**
+ * Response body of `/search`, matching Nominatim's result array so existing clients need no change.
+ */
 export const NominatimResultsSchema = z.array(NominatimResultSchema)
 
-/** A GeoJSON 2D bounding box, as `[west, south, east, north]`. */
+/**
+ * A GeoJSON 2D bounding box, as `[west, south, east, north]`.
+ */
 const BBox2DSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
 
-/** One feature in the `format=geojson` envelope. */
+/**
+ * One feature in the `format=geojson` envelope.
+ */
 const NominatimFeatureSchema = z.object({
 	type: z.literal("Feature"),
 	properties: z.looseObject({}),
@@ -66,7 +76,9 @@ const NominatimFeatureSchema = z.object({
 	bbox: BBox2DSchema.optional(),
 })
 
-/** The `format=geojson` envelope — nominatim's own shape (polygon-capable geometry, result fields as properties). */
+/**
+ * The `format=geojson` envelope — nominatim's own shape (polygon-capable geometry, result fields as properties).
+ */
 export const NominatimFeatureCollectionSchema = z
 	.object({
 		type: z.literal("FeatureCollection"),
@@ -74,7 +86,9 @@ export const NominatimFeatureCollectionSchema = z
 	})
 	.openapi("NominatimFeatureCollection")
 
-/** The `/status` payload. */
+/**
+ * The `/status` payload.
+ */
 export const NominatimStatusSchema = z
 	.object({
 		status: z.number(),
@@ -83,7 +97,9 @@ export const NominatimStatusSchema = z
 	})
 	.openapi("NominatimStatus")
 
-/** The JSON error envelope (this surface uses `{error}`, unlike photon's FeatureCollection+message). */
+/**
+ * The JSON error envelope (this surface uses `{error}`, unlike photon's FeatureCollection+message).
+ */
 export const ErrorSchema = z
 	.object({
 		error: z.string(),
@@ -104,7 +120,9 @@ export const SchemaOrgGeoCoordinatesSchema = z
 	})
 	.openapi("SchemaOrgGeoCoordinates")
 
-/** The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node — mirrors `SchemaOrgPostalAddress`. */
+/**
+ * The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node — mirrors `SchemaOrgPostalAddress`.
+ */
 export const SchemaOrgPostalAddressSchema = z
 	.object({
 		"@type": z.literal("PostalAddress"),
@@ -159,10 +177,14 @@ export const NominatimLookupResponseSchema = z
 	.union([NominatimResultsSchema, NominatimFeatureCollectionSchema])
 	.openapi("NominatimLookupResponse")
 
-/** A validator-proof query param: accepts one value or repeats; the doc override keeps the emitted schema exact. */
+/**
+ * A validator-proof query param: accepts one value or repeats; the doc override keeps the emitted schema exact.
+ */
 const tolerantParam = z.union([z.string(), z.array(z.string())]).optional()
 
-/** `GET /search` query. */
+/**
+ * `GET /search` query.
+ */
 export const searchQueryParams = z.object({
 	q: tolerantParam.openapi({
 		type: "string",
@@ -193,7 +215,9 @@ export const searchQueryParams = z.object({
 	"accept-language": tolerantParam.openapi({ type: "string", description: "Preferred result language." }),
 })
 
-/** `GET /reverse` query. */
+/**
+ * `GET /reverse` query.
+ */
 export const reverseQueryParams = z.object({
 	lat: tolerantParam.openapi({ type: "number", description: "Latitude." }),
 	lon: tolerantParam.openapi({ type: "number", description: "Longitude." }),
@@ -211,7 +235,9 @@ export const reverseQueryParams = z.object({
 	"accept-language": tolerantParam.openapi({ type: "string", description: "Preferred result language." }),
 })
 
-/** `GET /lookup` query. */
+/**
+ * `GET /lookup` query.
+ */
 export const lookupQueryParams = z.object({
 	osm_ids: tolerantParam.openapi({ type: "string", description: "Comma-separated OSM ids (N|W|R-prefixed)." }),
 	addressdetails: tolerantParam.openapi({

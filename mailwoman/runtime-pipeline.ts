@@ -43,7 +43,9 @@ import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
 import { createPOIExecutor, type POIAncestryEntry } from "./poi-executor.ts"
 import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
 
-/** Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls. */
+/**
+ * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.
+ */
 interface ReverseGeocoderLike {
 	reverseGeocodeSync(
 		latitude: number,
@@ -78,9 +80,13 @@ function buildSyncReverseGeocode(
 }
 
 export interface CreateRuntimePipelineOpts {
-	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
+	/**
+	 * The Stage 3 classifier — typically a `NeuralAddressClassifier`.
+	 */
 	classifier?: RuntimePipelineStages["classifier"]
-	/** The Stage 6 resolver — typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`. */
+	/**
+	 * The Stage 6 resolver — typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`.
+	 */
 	resolver?: RuntimePipelineStages["resolver"]
 	/**
 	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification.

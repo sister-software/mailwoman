@@ -18,7 +18,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
 
-/** Share of a shard one source may hold before the mix is flagged as dominated by it. */
+/**
+ * Share of a shard one source may hold before the mix is flagged as dominated by it.
+ */
 const DOMINANT_SOURCE_SHARE = 0.4
 
 /**
@@ -39,11 +41,17 @@ export interface AuditOpts {
 }
 
 interface ShardStats {
-	/** Shards per source per split */
+	/**
+	 * Shards per source per split
+	 */
 	bySplit: Record<string, Record<string, number>>
-	/** Total shards counted (may be less than file count if sampleShardCount caps reads) */
+	/**
+	 * Total shards counted (may be less than file count if sampleShardCount caps reads)
+	 */
 	totalShards: number
-	/** Total shards on disk (file count) — equals totalShards unless capped */
+	/**
+	 * Total shards on disk (file count) — equals totalShards unless capped
+	 */
 	totalFiles: number
 }
 
@@ -174,7 +182,9 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"deepseek-translit-armn",
 ]
 
-/** Extract the source-name prefix from a `first_source_id` value. */
+/**
+ * Extract the source-name prefix from a `first_source_id` value.
+ */
 function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): string {
 	// Sort longest-first so usgov-nad beats usgov, wof-admin beats wof.
 	const sorted = [...knownPrefixes].toSorted((a, b) => b.length - a.length)

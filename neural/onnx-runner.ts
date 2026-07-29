@@ -21,13 +21,19 @@ import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
 import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
 import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
 
-/** Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims). */
+/**
+ * Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims).
+ */
 export const STREET_TYPE_FEATURE_DIM = 1
-/** Channel width of the locality-surface evidence feature. Must match the trained model's input shape. */
+/**
+ * Channel width of the locality-surface evidence feature. Must match the trained model's input shape.
+ */
 export const LOCALITY_SURFACE_FEATURE_DIM = 2
 
 export interface ONNXRunnerOpts {
-	/** If true, load the model immediately in `create()`. Default false. */
+	/**
+	 * If true, load the model immediately in `create()`. Default false.
+	 */
 	warmup?: boolean
 	/**
 	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128 (the training-time max position)
@@ -45,13 +51,19 @@ export interface ONNXRunnerOpts {
 	executionProviders?: string[]
 }
 
-/** Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128). */
+/**
+ * Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128).
+ */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 export interface InferResult {
-	/** Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`. */
+	/**
+	 * Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`.
+	 */
 	logits: number[][]
-	/** Number of label classes (the inner-dim of the logits tensor). */
+	/**
+	 * Number of label classes (the inner-dim of the logits tensor).
+	 */
 	numLabels: number
 	/**
 	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model exports it (v1.1.0+,
@@ -69,7 +81,9 @@ export interface InferResult {
 	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
 	spanScores?: number[][][]
-	/** Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is. */
+	/**
+	 * Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is.
+	 */
 	maxSpan?: number
 }
 
@@ -91,7 +105,9 @@ export class ONNXRunner {
 		this.executionProviders = requested.includes("cpu") ? requested : [...requested, "cpu"]
 	}
 
-	/** Load by path. Reads the model lazily unless `warmup` is true. */
+	/**
+	 * Load by path. Reads the model lazily unless `warmup` is true.
+	 */
 	static async create(modelPath: string, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner(modelPath, null, opts)
 
@@ -102,7 +118,9 @@ export class ONNXRunner {
 		return runner
 	}
 
-	/** Load from an already-read byte buffer. */
+	/**
+	 * Load from an already-read byte buffer.
+	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner("(bytes)", modelBytes, opts)
 

@@ -16,10 +16,14 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import FastGlob from "fast-glob"
 import { asyncParallelIterator } from "spliterator"
 
-/** Arity of a 2D bounding box: `[west, south, east, north]`. */
+/**
+ * Arity of a 2D bounding box: `[west, south, east, north]`.
+ */
 const BBOX_2D_LENGTH = 4
 
-/** The admin placetype allowlist (postalcode builds pass their own set). */
+/**
+ * The admin placetype allowlist (postalcode builds pass their own set).
+ */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
 	"region",
@@ -133,15 +137,25 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 }
 
 export interface IngestWOFOptions {
-	/** WOF repos root (a parent of `whosonfirst-data*` subrepos, or a single repo directory). */
+	/**
+	 * WOF repos root (a parent of `whosonfirst-data*` subrepos, or a single repo directory).
+	 */
 	dataDir: string
-	/** Placetype allowlist. Default {@link ADMIN_PLACETYPES}. */
+	/**
+	 * Placetype allowlist. Default {@link ADMIN_PLACETYPES}.
+	 */
 	placetypes?: ReadonlySet<string>
-	/** Parallel file reads. Default 64. */
+	/**
+	 * Parallel file reads. Default 64.
+	 */
 	concurrency?: number
-	/** Files per write transaction. Default 500. */
+	/**
+	 * Files per write transaction. Default 500.
+	 */
 	batchCommitSize?: number
-	/** Progress callback — invoked every 25,000 processed files. */
+	/**
+	 * Progress callback — invoked every 25,000 processed files.
+	 */
 	onProgress?: (processed: number, skipped: number, total: number) => void
 }
 

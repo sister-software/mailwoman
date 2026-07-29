@@ -49,7 +49,9 @@ import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-
  */
 const ROUND_HALF_DIGIT = 5
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -120,12 +122,16 @@ function pyRound(x: number, nd = 0): number {
 	return neg ? -num : num
 }
 
-/** Python `math.radians`. */
+/**
+ * Python `math.radians`.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine great-circle distance in km — ported from the Python `haversine` (asin form). */
+/**
+ * Haversine great-circle distance in km — ported from the Python `haversine` (asin form).
+ */
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
 	const R = 6371
 	const p1 = toRad(lat1)
@@ -137,10 +143,14 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
-/** Plus name:* / label:* props, gathered below. */
+/**
+ * Plus name:* / label:* props, gathered below.
+ */
 const ALT_NAME_KEYS = new Set(["wof:label"])
 
-/** WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical. */
+/**
+ * WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical.
+ */
 function aliasesFor(props: Record<string, unknown>, canonical: string): string[] {
 	const out = new Set<string>()
 
@@ -161,7 +171,9 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 	return [...out].toSorted()
 }
 
-/** Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`). */
+/**
+ * Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`).
+ */
 function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	const a = m.get(k)
 
@@ -172,7 +184,9 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	}
 }
 
-/** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
+/**
+ * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
@@ -281,7 +295,9 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	console.log(`finalized ${output}: integrity=ok, countries=${summaryRepr}`)
 }
 
-/** Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`). */
+/**
+ * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
+ */
 function geojsonFiles(dir: string): string[] {
 	if (!existsSync(dir)) return []
 

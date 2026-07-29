@@ -26,10 +26,14 @@ export interface TourStop {
 	description: string
 	diagnosis: string
 	pipelineStage: PipelineStage
-	/** The stage label shown in the badge (shorter, UI-friendly). */
+	/**
+	 * The stage label shown in the badge (shorter, UI-friendly).
+	 */
 	pipelineStageLabel: string
 	statusBadge: StatusBadge
-	/** Short doc citation for the source. */
+	/**
+	 * Short doc citation for the source.
+	 */
 	sourceDoc: string
 }
 

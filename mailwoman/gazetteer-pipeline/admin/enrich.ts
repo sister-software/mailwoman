@@ -23,7 +23,9 @@ import type { DatabaseSync } from "node:sqlite"
 import { corePackagePath } from "@mailwoman/core/utils"
 
 export interface EnrichAdminOptions {
-	/** Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`. */
+	/**
+	 * Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`.
+	 */
 	specsDir?: string
 }
 
@@ -33,7 +35,9 @@ export interface EnrichAdminResult {
 	placeAbbrRows: number
 }
 
-/** Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent. */
+/**
+ * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent.
+ */
 export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): EnrichAdminResult {
 	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
 

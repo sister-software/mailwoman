@@ -51,16 +51,24 @@ interface CalibrationData {
 }
 
 export interface CalibrationShowcaseProps {
-	/** Model version to load the table for. Defaults to the demo's default release. */
+	/**
+	 * Model version to load the table for. Defaults to the demo's default release.
+	 */
 	version?: string
-	/** Locale dir on R2. */
+	/**
+	 * Locale dir on R2.
+	 */
 	locale?: string
 }
 
 // Palette via theme vars where possible; fixed hexes for the two data series so the legend reads.
-/** Amber — the un-calibrated softmax score. */
+/**
+ * Amber — the un-calibrated softmax score.
+ */
 const RAW_COLOR = "#e8833a"
-/** Teal — after isotonic calibration. */
+/**
+ * Teal — after isotonic calibration.
+ */
 const CAL_COLOR = "#2e8b8b"
 
 export default function CalibrationShowcase({
@@ -136,9 +144,7 @@ export default function CalibrationShowcase({
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Reliability diagram
-// ---------------------------------------------------------------------------
+// MARK: Reliability diagram
 
 function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: ReliabilityBin[] }): React.ReactElement {
 	const W = 340
@@ -234,9 +240,7 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Abstention curve
-// ---------------------------------------------------------------------------
+// MARK: Abstention curve
 
 function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.ReactElement {
 	const W = 340

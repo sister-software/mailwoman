@@ -31,7 +31,9 @@ const ALIAS_SEP = "\u{E000}"
 
 let scratch: string
 
-/** A minimal admin WOF with the tables `buildCandidateTable` reads. */
+/**
+ * A minimal admin WOF with the tables `buildCandidateTable` reads.
+ */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
@@ -80,7 +82,9 @@ function buildFixtureAdmin(path: string): void {
 	db.close()
 }
 
-/** A postcode shard: `spr` with placetype='postalcode'. One real-coord ZIP + one placeholder 0,0. */
+/**
+ * A postcode shard: `spr` with placetype='postalcode'. One real-coord ZIP + one placeholder 0,0.
+ */
 function buildFixturePostcodes(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
@@ -109,7 +113,9 @@ interface CandRow {
 	is_primary: number
 }
 
-/** Resolve a normalized key the way the query side does — join the code maps back to strings. */
+/**
+ * Resolve a normalized key the way the query side does — join the code maps back to strings.
+ */
 function probe(db: DatabaseSync, key: string): CandRow[] {
 	return db
 		.prepare(

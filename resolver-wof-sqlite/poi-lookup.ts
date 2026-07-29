@@ -32,7 +32,9 @@ import { gridDisk, latLngToCell } from "h3-js"
 
 import type { POICategoryCodeTable, POITable } from "./poi-schema.ts"
 
-/** Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4). */
+/**
+ * Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4).
+ */
 export const POI_H3_RESOLUTION = 9
 
 /**
@@ -57,11 +59,15 @@ const DEFAULT_MAX_RINGS = 16
  */
 const BRAND_MAX_DISTANCE_KM = 500
 
-/** Row-count default when a query doesn't specify `limit`. */
+/**
+ * Row-count default when a query doesn't specify `limit`.
+ */
 const DEFAULT_LIMIT = 20
 
 export interface POISearchQuery {
-	/** Poi-taxonomy category id (string side of the dictionary). Ignored when `brandWikidata` is also set — brand wins. */
+	/**
+	 * Poi-taxonomy category id (string side of the dictionary). Ignored when `brandWikidata` is also set — brand wins.
+	 */
 	categoryID?: string
 	/**
 	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category rolls up into (e.g.
@@ -70,11 +76,17 @@ export interface POISearchQuery {
 	 * one-element list `[categoryID]` when this is absent). Ignored when `brandWikidata` is set — brand wins.
 	 */
 	categoryIDs?: string[]
-	/** Wikidata QID for brand-exact search. */
+	/**
+	 * Wikidata QID for brand-exact search.
+	 */
 	brandWikidata?: string
-	/** Free-text name (FTS5). */
+	/**
+	 * Free-text name (FTS5).
+	 */
 	name?: string
-	/** Search center. Required for category/brand queries (k-ring expansion). */
+	/**
+	 * Search center. Required for category/brand queries (k-ring expansion).
+	 */
 	center?: { latitude: number; longitude: number }
 	/**
 	 * Ring budget: how many res-9 k-rings to expand before giving up (default 16 ≈ ~5.4 km). Counts ring 0, so k reaches
@@ -92,19 +104,27 @@ export interface POISearchHit {
 	longitude: number
 	country: string
 	confidence: number
-	/** Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule; see `POITable.gers_id`). */
+	/**
+	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule; see `POITable.gers_id`).
+	 */
 	gersID: string | null
 	distanceM?: number
 }
 
 export interface POILookupOpts {
-	/** Path to a `poi.db` built by the (future) POI builder. Opened read-only. */
+	/**
+	 * Path to a `poi.db` built by the (future) POI builder. Opened read-only.
+	 */
 	databasePath?: string
-	/** Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`. */
+	/**
+	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 */
 	database?: DatabaseSync
 }
 
-/** The `poi` columns every search mode hydrates — a typed projection of the SHARED {@link POITable}. */
+/**
+ * The `poi` columns every search mode hydrates — a typed projection of the SHARED {@link POITable}.
+ */
 type POIRow = Pick<
 	POITable,
 	| "name"
@@ -129,11 +149,17 @@ export class POILookup implements Disposable {
 	readonly #categoryToID = new Map<string, number>()
 	readonly #idToCategory = new Map<number, string>()
 
-	/** `(h3_cell, category_id)` → the cell's category-clustered range, most-confident-first. */
+	/**
+	 * `(h3_cell, category_id)` → the cell's category-clustered range, most-confident-first.
+	 */
 	readonly #categoryCellProbe: ReturnType<DatabaseSync["prepare"]>
-	/** `brand_wikidata` → ALL of a brand's rows globally (partial-index range-scan); distance-sorted in JS, not SQL. */
+	/**
+	 * `brand_wikidata` → ALL of a brand's rows globally (partial-index range-scan); distance-sorted in JS, not SQL.
+	 */
 	readonly #brandProbe: ReturnType<DatabaseSync["prepare"]>
-	/** FTS5 `MATCH` over `poi_search`, returning candidate `name_key`s to hydrate. */
+	/**
+	 * FTS5 `MATCH` over `poi_search`, returning candidate `name_key`s to hydrate.
+	 */
 	readonly #nameFTSProbe: ReturnType<DatabaseSync["prepare"]>
 
 	constructor(opts: POILookupOpts) {
@@ -208,7 +234,9 @@ export class POILookup implements Disposable {
 			.map((row) => toHit(row, this.#idToCategory, center))
 	}
 
-	/** Category path: k-ring expansion from `query.center`'s res-9 cell, probing each new ring's cells. */
+	/**
+	 * Category path: k-ring expansion from `query.center`'s res-9 cell, probing each new ring's cells.
+	 */
 	#searchKRing(query: POISearchQuery, limit: number): POISearchHit[] {
 		const center = query.center!
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
@@ -334,7 +362,9 @@ export class POILookup implements Disposable {
 	}
 }
 
-/** `poi.h3_cell` is the SHORTENED (48-bit) cell — never the full h3-js cell string. */
+/**
+ * `poi.h3_cell` is the SHORTENED (48-bit) cell — never the full h3-js cell string.
+ */
 function h3CellToInt(cell: H3Cell): number {
 	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
 }

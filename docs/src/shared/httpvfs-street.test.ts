@@ -18,7 +18,9 @@ import { afterEach, describe, expect, test } from "vitest"
 import { resolveStreet } from "./demo-helpers.ts"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "./httpvfs-street.ts"
 
-/** Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape). */
+/**
+ * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
+ */
 function stubWorker(innerDb: DatabaseSync) {
 	return {
 		db: {

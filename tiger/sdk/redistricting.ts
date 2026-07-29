@@ -43,10 +43,14 @@ const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 const GEO_SUMLEV = 2
 const GEO_LOGRECNO = 7
 const GEO_GEOCODE = 9
-/** Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76. */
+/**
+ * Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76.
+ */
 const SEG_LOGRECNO = 4
 const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
-/** The eight P2 categories that partition the total (P0020001), in `pl_block` column order. */
+/**
+ * The eight P2 categories that partition the total (P0020001), in `pl_block` column order.
+ */
 const CATEGORY_INDEX = {
 	pop_total: P2(1),
 	hispanic: P2(2), // Hispanic or Latino (any race)
@@ -60,17 +64,29 @@ const CATEGORY_INDEX = {
 } as const
 
 export interface FetchRedistrictingOptions {
-	/** Two-digit state FIPS, e.g. `"06"`. */
+	/**
+	 * Two-digit state FIPS, e.g. `"06"`.
+	 */
 	stateFIPS: string
-	/** Decennial vintage. Default 2020 (the only P.L. 94-171 release this parses). */
+	/**
+	 * Decennial vintage. Default 2020 (the only P.L. 94-171 release this parses).
+	 */
 	vintage?: number
-	/** Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`). */
+	/**
+	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
+	 */
 	outPath?: string
-	/** Download cache + default output root. */
+	/**
+	 * Download cache + default output root.
+	 */
 	dataRoot?: string
-	/** Optional three-digit county FIPS filter, e.g. `"059"`. */
+	/**
+	 * Optional three-digit county FIPS filter, e.g. `"059"`.
+	 */
 	county?: string
-	/** Rows per insert. Default 2000. */
+	/**
+	 * Rows per insert. Default 2000.
+	 */
 	batchSize?: number
 }
 

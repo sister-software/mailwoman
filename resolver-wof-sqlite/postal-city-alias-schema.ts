@@ -23,28 +23,46 @@ import type { Kysely } from "kysely"
  * a `MIN_COUNT` floor on `n`, so every row is a non-trivial usage.
  */
 export interface PostalCityAliasTable {
-	/** The postcode the aggregate is scoped to (the resolver probes by this). */
+	/**
+	 * The postcode the aggregate is scoped to (the resolver probes by this).
+	 */
 	postcode: string
-	/** What the postal system calls the place (the surface a user is likely to type). */
+	/**
+	 * What the postal system calls the place (the surface a user is likely to type).
+	 */
 	postal_city: string
-	/** The geographic locality name the postcode actually sits in (≈ the gazetteer's canonical name). */
+	/**
+	 * The geographic locality name the postcode actually sits in (≈ the gazetteer's canonical name).
+	 */
 	geo_locality: string
-	/** Observed row count — the evidence weight behind this alias. */
+	/**
+	 * Observed row count — the evidence weight behind this alias.
+	 */
 	n: number
-	/** 1 when `postal_city != geo_locality` (the alias signal); 0 when they agree. */
+	/**
+	 * 1 when `postal_city != geo_locality` (the alias signal); 0 when they agree.
+	 */
 	divergent: number
-	/** Provenance: the dataset this aggregate came from (e.g. `overture:US`). */
+	/**
+	 * Provenance: the dataset this aggregate came from (e.g. `overture:US`).
+	 */
 	source: string
-	/** The pinned data release the aggregate was computed from. */
+	/**
+	 * The pinned data release the aggregate was computed from.
+	 */
 	release: string
 }
 
-/** The postal-city-alias database schema for `new DatabaseClient<PostalCityAliasDatabase>(...)`. */
+/**
+ * The postal-city-alias database schema for `new DatabaseClient<PostalCityAliasDatabase>(...)`.
+ */
 export interface PostalCityAliasDatabase {
 	postal_city_alias: PostalCityAliasTable
 }
 
-/** The `postal_city_alias` column order — the builder's INSERT derives its column list from this. */
+/**
+ * The `postal_city_alias` column order — the builder's INSERT derives its column list from this.
+ */
 export const POSTAL_CITY_ALIAS_COLUMNS = [
 	"postcode",
 	"postal_city",

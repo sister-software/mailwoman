@@ -30,7 +30,9 @@ import { normalizeJpPostalCode } from "./jp/index.ts"
 import { normalizeNzPostcode } from "./nz/index.ts"
 import { isZipCode } from "./us/index.ts"
 
-/** A codex address-system code — the subpath under `@mailwoman/codex/<system>`. */
+/**
+ * A codex address-system code — the subpath under `@mailwoman/codex/<system>`.
+ */
 export type SystemCode = "us" | "de" | "fr" | "ca" | "gb" | "jp" | "au" | "nz"
 
 /**

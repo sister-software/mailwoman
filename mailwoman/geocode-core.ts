@@ -65,7 +65,9 @@ export interface GeocodeResult {
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
-	/** Uncertainty radius in meters. null for the admin tier. */
+	/**
+	 * Uncertainty radius in meters. null for the admin tier.
+	 */
 	uncertainty_m: number | null
 	locality: string | null
 	region: string | null
@@ -122,10 +124,14 @@ export interface StateShards {
 	streetCentroids?: StreetCentroidLookup
 }
 
-/** Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards. */
+/**
+ * Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards.
+ */
 export type ShardResolver = (stateSlug: string | null) => StateShards
 
-/** The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it). */
+/**
+ * The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it).
+ */
 export interface GeocodeClassifier {
 	parse(
 		text: string,
@@ -148,7 +154,9 @@ export interface GeocodeDeps {
 	 * (`/v1/batch` + CSV → `"formatted"`, autocomplete drop-ins → `"fragmented"`).
 	 */
 	inputMode?: InputMode
-	/** Per-state shard resolver. Omit for admin-only geocoding. */
+	/**
+	 * Per-state shard resolver. Omit for admin-only geocoding.
+	 */
 	shards?: ShardResolver
 	/**
 	 * Authoritative national open-register rooftop shards keyed by ISO-3166 alpha-2 country (#1012) — the government
@@ -165,7 +173,9 @@ export interface GeocodeDeps {
 	 * `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
 	osmShards?: (country: string) => StateShards
-	/** Country constraint passed to the resolver (e.g. `"US"`). */
+	/**
+	 * Country constraint passed to the resolver (e.g. `"US"`).
+	 */
 	defaultCountry?: string
 	/**
 	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin pass through
@@ -278,7 +288,9 @@ const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly cou
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
 ]
 
-/** The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}. */
+/**
+ * The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}.
+ */
 export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
 	const p = postcode?.trim()
 
@@ -289,7 +301,9 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 	return null
 }
 
-/** Lowercase 2-letter state slug from a parsed region value / resolver name, else null. */
+/**
+ * Lowercase 2-letter state slug from a parsed region value / resolver name, else null.
+ */
 export function regionToStateSlug(
 	regionValue: string | null | undefined,
 	resolverName: string | null | undefined
@@ -335,7 +349,9 @@ export function selectAddressPointsDB(dataRoot: string, stateSlug: string | null
 	return existsSync(candidate) ? candidate : null
 }
 
-/** Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent. */
+/**
+ * Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent.
+ */
 export function selectInterpolationDB(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
@@ -343,7 +359,9 @@ export function selectInterpolationDB(dataRoot: string, stateSlug: string | null
 	return existsSync(candidate) ? candidate : null
 }
 
-/** The lookup-class surface a {@link ShardProvider} needs from `@mailwoman/resolver-wof-sqlite`. */
+/**
+ * The lookup-class surface a {@link ShardProvider} needs from `@mailwoman/resolver-wof-sqlite`.
+ */
 export interface ShardLookupFactory {
 	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & { close(): void }
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & { close(): void }
@@ -352,7 +370,9 @@ export interface ShardLookupFactory {
 interface ShardCacheEntry extends StateShards {
 	_ap?: { close(): void }
 	_ip?: { close(): void }
-	/** The resolved on-disk paths this entry was opened from — reload() diffs against these. */
+	/**
+	 * The resolved on-disk paths this entry was opened from — reload() diffs against these.
+	 */
 	apPath: string | null
 	ipPath: string | null
 }
@@ -367,7 +387,9 @@ export class ShardProvider {
 	readonly #factory: ShardLookupFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, ShardCacheEntry>()
-	/** Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace). */
+	/**
+	 * Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace).
+	 */
 	#retired: Array<{ close(): void }> = []
 	#manifest: DataReleaseManifest | null
 
@@ -398,7 +420,9 @@ export class ShardProvider {
 		return { addressPoints: entry.addressPoints, interpolation: entry.interpolation }
 	}
 
-	/** The current data-release versions ({@link readReleaseManifest}), or null in legacy mode. */
+	/**
+	 * The current data-release versions ({@link readReleaseManifest}), or null in legacy mode.
+	 */
 	versions(): DataReleaseManifest | null {
 		return this.#manifest ? { ...this.#manifest } : null
 	}
@@ -706,7 +730,9 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
  */
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
-/** Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041. */
+/**
+ * Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041.
+ */
 function assembleStreetName(streetNode: AddressNode): string {
 	const parts: AddressNode[] = []
 	const stack = [streetNode]

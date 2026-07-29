@@ -33,7 +33,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
-/** Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain. */
+/**
+ * Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain.
+ */
 const MAX_ANCESTRY_DEPTH = 6
 
 /**
@@ -56,7 +58,9 @@ interface NameRow {
 	language: string
 }
 
-/** Walk parent chain up to 6 levels. */
+/**
+ * Walk parent chain up to 6 levels.
+ */
 function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, string>): PlaceRow[] {
 	const stmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 	const out: PlaceRow[] = []
@@ -73,7 +77,9 @@ function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, strin
 	return out
 }
 
-/** Pick the best display name for a place: prefer Japanese variant, fall back to English. */
+/**
+ * Pick the best display name for a place: prefer Japanese variant, fall back to English.
+ */
 function pickName(row: PlaceRow, jpnNames: Map<number, string>): string {
 	return jpnNames.get(row.id) ?? row.name
 }
@@ -180,5 +186,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const wofAdminJpAdapter = createWOFAdminJpAdapter()

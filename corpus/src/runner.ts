@@ -34,36 +34,58 @@ import { dirname, join } from "node:path"
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "./adapter.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "./types.ts"
 
-/** Snapshot of the runner's state, emitted on every progress tick. */
+/**
+ * Snapshot of the runner's state, emitted on every progress tick.
+ */
 export interface RunnerProgress {
-	/** Adapter being driven. */
+	/**
+	 * Adapter being driven.
+	 */
 	adapterID: string
 
-	/** Total rows the adapter has yielded (before dedup). */
+	/**
+	 * Total rows the adapter has yielded (before dedup).
+	 */
 	yielded: number
 
-	/** Rows actually written to JSONL (after dedup). */
+	/**
+	 * Rows actually written to JSONL (after dedup).
+	 */
 	written: number
 
-	/** Bytes written to JSONL so far. */
+	/**
+	 * Bytes written to JSONL so far.
+	 */
 	bytes: number
 
-	/** Wall-clock milliseconds since the run started. */
+	/**
+	 * Wall-clock milliseconds since the run started.
+	 */
 	elapsed_ms: number
 }
 
-/** Per-invocation options for `runAdapter`. */
+/**
+ * Per-invocation options for `runAdapter`.
+ */
 export interface RunAdapterOptions {
-	/** Adapter to drive. */
+	/**
+	 * Adapter to drive.
+	 */
 	adapter: CorpusAdapter
 
-	/** Options handed to the adapter (input path, country filter, limit, signal). */
+	/**
+	 * Options handed to the adapter (input path, country filter, limit, signal).
+	 */
 	adapterOptions: AdapterOptions
 
-	/** Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it. */
+	/**
+	 * Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it.
+	 */
 	outputDir: string
 
-	/** Corpus version stamped onto every row. Locked together with the tokenizer version. */
+	/**
+	 * Corpus version stamped onto every row. Locked together with the tokenizer version.
+	 */
 	corpusVersion: string
 
 	/**
@@ -79,7 +101,9 @@ export interface RunAdapterOptions {
 	progressEvery?: number
 }
 
-/** Return value of `runAdapter`: the same shape as `MANIFEST.json` on disk. */
+/**
+ * Return value of `runAdapter`: the same shape as `MANIFEST.json` on disk.
+ */
 export interface AdapterRunManifest {
 	adapter_id: string
 	corpus_version: string
@@ -261,7 +285,9 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	}
 }
 
-/** Promise-ify a single event emission. Used to await `drain` / `close` on the write stream. */
+/**
+ * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream.
+ */
 function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const onEvent = (): void => {
@@ -277,7 +303,9 @@ function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	})
 }
 
-/** Convenience: ensure the parent directory of `filePath` exists. */
+/**
+ * Convenience: ensure the parent directory of `filePath` exists.
+ */
 export async function ensureParentDir(filePath: string): Promise<void> {
 	await mkdir(dirname(filePath), { recursive: true })
 }

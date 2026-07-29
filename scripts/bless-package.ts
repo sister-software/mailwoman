@@ -14,7 +14,9 @@ import { parseArgs } from "node:util"
 
 import { $ } from "zx"
 
-/** OTP entry attempts before giving up — npm codes expire in about 30 seconds. */
+/**
+ * OTP entry attempts before giving up — npm codes expire in about 30 seconds.
+ */
 const MAX_OTP_ATTEMPTS = 3
 
 const { values: flags, positionals: dirs } = parseArgs({

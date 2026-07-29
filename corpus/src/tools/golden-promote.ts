@@ -38,13 +38,19 @@ import { readJSONL, sha256File, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-/** Components a candidate needs before it is rich enough to be worth a golden-set slot. */
+/**
+ * Components a candidate needs before it is rich enough to be worth a golden-set slot.
+ */
 const MIN_GOLDEN_COMPONENTS = 5
 
-/** Components an existing entry must still carry to survive promotion. */
+/**
+ * Components an existing entry must still carry to survive promotion.
+ */
 const MIN_PROMOTABLE_COMPONENTS = 4
 
-/** Quote-delimited segments above which the raw line is malformed rather than merely quoted. */
+/**
+ * Quote-delimited segments above which the raw line is malformed rather than merely quoted.
+ */
 const MAX_QUOTE_SEGMENTS = 3
 
 interface GoldenEntry {
@@ -67,17 +73,29 @@ export interface PromoteStats {
 }
 
 export interface PromoteGoldenOptions {
-	/** Candidates JSONL (required). */
+	/**
+	 * Candidates JSONL (required).
+	 */
 	input: string
-	/** Target golden version dir (required, e.g. `v0.1.1`). */
+	/**
+	 * Target golden version dir (required, e.g. `v0.1.1`).
+	 */
 	bumpTo: string
-	/** Previous version to forward-copy + dedup against. Default `v0.1.0`. */
+	/**
+	 * Previous version to forward-copy + dedup against. Default `v0.1.0`.
+	 */
 	prior?: string
-	/** Golden dir root. Default `data/eval/golden`. */
+	/**
+	 * Golden dir root. Default `data/eval/golden`.
+	 */
 	goldenRoot?: string
-	/** Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator). */
+	/**
+	 * Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator).
+	 */
 	noFilters?: boolean
-	/** Report what would be written but don't touch disk. */
+	/**
+	 * Report what would be written but don't touch disk.
+	 */
 	dryRun?: boolean
 }
 
@@ -141,7 +159,9 @@ function isSuspicious(entry: GoldenEntry): boolean {
 
 // ── IO ─────────────────────────────────────────────────────────────────────
 
-/** Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket. */
+/**
+ * Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket.
+ */
 function readJSONLIfPresent<T>(path: string): T[] {
 	if (!existsSync(path)) return []
 

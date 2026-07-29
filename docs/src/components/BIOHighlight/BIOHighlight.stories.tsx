@@ -29,12 +29,16 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
-/** Word-level B-/I- labels derived from the span offsets of a full parse. */
+/**
+ * Word-level B-/I- labels derived from the span offsets of a full parse.
+ */
 export const WhiteHouse: Story = {
 	args: { input: WHITE_HOUSE, nodes: whiteHouseNodes },
 }
 
-/** A multi-word locality shows the B-/I- continuation across tokens. */
+/**
+ * A multi-word locality shows the B-/I- continuation across tokens.
+ */
 export const MultiWordLocality: Story = {
 	args: {
 		input: "350 5th Ave, New York, NY 10118",

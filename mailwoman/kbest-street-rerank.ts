@@ -65,32 +65,52 @@ const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 
 const BIO_LABEL_SET: ReadonlySet<string> = new Set(BIO_LABELS)
 
-/** Admin anchors whose presence in the argmax parse means the input is STRUCTURED — the rerank stands down (see below). */
+/**
+ * Admin anchors whose presence in the argmax parse means the input is STRUCTURED — the rerank stands down (see below).
+ */
 const ANCHOR_TAGS: ReadonlySet<string> = new Set(["country", "region"])
 
 export interface StreetRerankOpts {
-	/** K-best decode depth. Default 5 (the measured board depth). */
+	/**
+	 * K-best decode depth. Default 5 (the measured board depth).
+	 */
 	k?: number
-	/** G2 margin cap forwarded to {@link pickByStreetEvidence}. Default 2.5 (the measured value). */
+	/**
+	 * G2 margin cap forwarded to {@link pickByStreetEvidence}. Default 2.5 (the measured value).
+	 */
 	marginCap?: number
-	/** Locality/postcode scope for the evidence probe (fragments usually carry none). */
+	/**
+	 * Locality/postcode scope for the evidence probe (fragments usually carry none).
+	 */
 	scope?: StreetEvidenceScope
-	/** Parse options forwarded to `classifier.traceParse` (production config: postcodeRepair, queryShape, …). */
+	/**
+	 * Parse options forwarded to `classifier.traceParse` (production config: postcodeRepair, queryShape, …).
+	 */
 	parseOpts?: ParseOpts
 }
 
 export interface StreetRerankResult {
-	/** The parse tree: the argmax tree, with the winning street spliced in when the atlas confirms it. */
+	/**
+	 * The parse tree: the argmax tree, with the winning street spliced in when the atlas confirms it.
+	 */
 	tree: AddressTree
-	/** True when name evidence moved the pick off the model's rank-1 (a loggable rank-2-beats-rank-1 correction). */
+	/**
+	 * True when name evidence moved the pick off the model's rank-1 (a loggable rank-2-beats-rank-1 correction).
+	 */
 	moved: boolean
-	/** Index of the winning hypothesis in the k-best list (0 = model rank-1). */
+	/**
+	 * Index of the winning hypothesis in the k-best list (0 = model rank-1).
+	 */
 	rank: number
-	/** The winning street surface (raw), for logging + the training-signal capture. */
+	/**
+	 * The winning street surface (raw), for logging + the training-signal capture.
+	 */
 	streetSurface: string
 }
 
-/** Slice the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets. */
+/**
+ * Slice the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets.
+ */
 function hypothesisStreetSurface(
 	hyp: SegmentationHypothesis,
 	trace: NeuralParseTrace,

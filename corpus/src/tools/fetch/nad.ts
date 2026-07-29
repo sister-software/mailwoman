@@ -50,19 +50,33 @@ const FEATURE_SERVICE_URL =
 	"https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/Address_Points_from_National_Address_Database_view/FeatureServer/0"
 
 export interface FetchNADOptions extends BaseFetchOptions {
-	/** Fetch strategy. Default `featureserver`. */
+	/**
+	 * Fetch strategy. Default `featureserver`.
+	 */
 	mode?: "featureserver" | "bulk"
-	/** Pre-signed S3 URL for bulk mode. */
+	/**
+	 * Pre-signed S3 URL for bulk mode.
+	 */
 	nadURL?: string
-	/** Records per output file. Default `100000`. */
+	/**
+	 * Records per output file. Default `100000`.
+	 */
 	chunkSize?: number
-	/** Records per HTTP request. Default `5000`. */
+	/**
+	 * Records per HTTP request. Default `5000`.
+	 */
 	pageSize?: number
-	/** Parallel page fetches within a chunk. Default `4`. */
+	/**
+	 * Parallel page fetches within a chunk. Default `4`.
+	 */
 	concurrency?: number
-	/** Start OBJECTID. Default `1`. */
+	/**
+	 * Start OBJECTID. Default `1`.
+	 */
 	startOID?: number
-	/** Stop before this OID. Default = total count. */
+	/**
+	 * Stop before this OID. Default = total count.
+	 */
 	endOID?: number
 }
 

@@ -31,7 +31,9 @@ import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-/** Longest predicted region string still plausibly a code rather than a spelled-out name. */
+/**
+ * Longest predicted region string still plausibly a code rather than a spelled-out name.
+ */
 const MAX_REGION_CODE_LENGTH = 4
 
 const { values: rawStringArgs } = parseArgs({
@@ -81,7 +83,9 @@ const PLACETYPE_RANK: Record<string, number> = {
 	country: 0,
 }
 
-/** The pre-epoch (postcode-point) convention — continuity runs against pre-2026-07-04 dumps only. */
+/**
+ * The pre-epoch (postcode-point) convention — continuity runs against pre-2026-07-04 dumps only.
+ */
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 interface Resolved {
 	id: number

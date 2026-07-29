@@ -74,10 +74,14 @@ export interface WordConsistencyOpts {
 	splitOnPunctuation?: boolean
 }
 
-/** A piece that is punctuation-only (no letter or digit in any script). */
+/**
+ * A piece that is punctuation-only (no letter or digit in any script).
+ */
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
-/** A raw SentencePiece byte-fallback piece (`<0xE3>` …) — emitted for characters absent from the vocab. */
+/**
+ * A raw SentencePiece byte-fallback piece (`<0xE3>` …) — emitted for characters absent from the vocab.
+ */
 const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
 
 /**
@@ -103,15 +107,23 @@ export function parseWordConsistencyEnv(value: string | undefined): boolean | Wo
 }
 
 export interface WordConsistencyResult {
-	/** A new per-piece label-index array, word-consistent (input is not mutated). */
+	/**
+	 * A new per-piece label-index array, word-consistent (input is not mutated).
+	 */
 	labelIndices: number[]
-	/** PieceIndex → mean p(chosen type) across the word, for pieces in a word that was HEALED. */
+	/**
+	 * PieceIndex → mean p(chosen type) across the word, for pieces in a word that was HEALED.
+	 */
 	healedConfidence: Map<number, number>
-	/** Count of words whose labels were rewritten (0 = byte-identical to the input). */
+	/**
+	 * Count of words whose labels were rewritten (0 = byte-identical to the input).
+	 */
 	healedWords: number
 }
 
-/** The tag TYPE of a BIO label: `"region"` from `B-region`/`I-region`; `"O"` from `O`. */
+/**
+ * The tag TYPE of a BIO label: `"region"` from `B-region`/`I-region`; `"O"` from `O`.
+ */
 function labelType(label: string): string {
 	if (label === "O") return "O"
 	const dash = label.indexOf("-")

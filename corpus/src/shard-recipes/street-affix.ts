@@ -89,12 +89,18 @@ const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
-/** ["N","E","S","W","NE","NW","SE","SW"]. */
+/**
+ * ["N","E","S","W","NE","NW","SE","SW"].
+ */
 const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation)
-/** Fraction of prefix-less streets that get a synthetic directional. */
+/**
+ * Fraction of prefix-less streets that get a synthetic directional.
+ */
 const INJECT_PREFIX_PROB = 0.3
 
-/** A real US skeleton tuple read from a cached OA zip. */
+/**
+ * A real US skeleton tuple read from a cached OA zip.
+ */
 interface USTuple {
 	house_number: string
 	street: string
@@ -103,7 +109,9 @@ interface USTuple {
 	postcode: string
 }
 
-/** A non-US BALANCE tuple (carries a postcode + native order). */
+/**
+ * A non-US BALANCE tuple (carries a postcode + native order).
+ */
 interface BalanceTuple {
 	house_number: string
 	street: string
@@ -114,10 +122,14 @@ interface BalanceTuple {
 	order: string
 }
 
-/** Prefix carried through render — the (canonical, abbreviation) pair `renderDirectional` consumes. */
+/**
+ * Prefix carried through render — the (canonical, abbreviation) pair `renderDirectional` consumes.
+ */
 type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "canonical" | "abbreviation">
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -151,7 +163,9 @@ function splitCSV(line: string): string[] {
 	return out
 }
 
-/** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
+/**
+ * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
+ */
 function readTuples(source: USSource): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
@@ -269,7 +283,9 @@ function renderStreet(
 	return { street: parts.join(" "), components }
 }
 
-/** Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern. */
+/**
+ * Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern.
+ */
 const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)

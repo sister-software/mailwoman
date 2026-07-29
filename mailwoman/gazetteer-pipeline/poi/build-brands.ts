@@ -34,7 +34,9 @@ import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/l
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 
-/** `--min-rows` default — keeps the table to real chains, not one-off name collisions (~low-thousands of entries). */
+/**
+ * `--min-rows` default — keeps the table to real chains, not one-off name collisions (~low-thousands of entries).
+ */
 export const DEFAULT_MIN_ROWS = 25
 
 /**
@@ -51,7 +53,9 @@ export const DEFAULT_DOMINANCE = 0.5
  */
 export const BRAND_TABLE_VERSION = "0.2.0"
 
-/** Default `poi.db` read location — same default `build/poi.tsx`'s command uses for its `--out`. */
+/**
+ * Default `poi.db` read location — same default `build/poi.tsx`'s command uses for its `--out`.
+ */
 export function defaultPOIDatabasePath(): string {
 	return dataRootPath("poi", "poi.db")
 }
@@ -67,7 +71,9 @@ export function defaultBrandTableOutPath(): string {
 	return repoRootPath("poi-taxonomy", "data", "brands.json")
 }
 
-/** One `(brand_wikidata, name)` group from `poi` — the injected-iterator testability seam (mirrors `POISourceRow`). */
+/**
+ * One `(brand_wikidata, name)` group from `poi` — the injected-iterator testability seam (mirrors `POISourceRow`).
+ */
 export interface BrandNameCount {
 	wikidata: string
 	name: string
@@ -96,7 +102,9 @@ export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
 	}
 }
 
-/** Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs. */
+/**
+ * Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs.
+ */
 export async function readSourceLayer(dbPath: string): Promise<POIBrandSourceLayer> {
 	const raw = new DatabaseSync(dbPath, { readOnly: true })
 	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
@@ -188,7 +196,9 @@ export interface BuildBrandTableOptions {
 	 * too) unless `rows` is given.
 	 */
 	dbPath?: string
-	/** Injected row source — the testability seam. When given, `node:sqlite` is never touched. */
+	/**
+	 * Injected row source — the testability seam. When given, `node:sqlite` is never touched.
+	 */
 	rows?: Iterable<BrandNameCount>
 	/**
 	 * Injected source-layer identity — bypasses reading `dbPath`'s layer manifest. Required when `rows` is given without
@@ -196,9 +206,13 @@ export interface BuildBrandTableOptions {
 	 */
 	sourceLayer?: POIBrandSourceLayer
 	minRows?: number
-	/** Dominance floor — see {@link aggregateBrands}. Defaults to {@link DEFAULT_DOMINANCE}. */
+	/**
+	 * Dominance floor — see {@link aggregateBrands}. Defaults to {@link DEFAULT_DOMINANCE}.
+	 */
 	dominance?: number
-	/** The brand table's own `version` field. Defaults to {@link BRAND_TABLE_VERSION}. */
+	/**
+	 * The brand table's own `version` field. Defaults to {@link BRAND_TABLE_VERSION}.
+	 */
 	version?: string
 }
 
@@ -231,12 +245,16 @@ export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promis
 	return { version: opts.version ?? BRAND_TABLE_VERSION, sourceLayer, brands }
 }
 
-/** Stable, deterministic serialization — tab-indented (matches `taxonomy.json`), trailing newline. */
+/**
+ * Stable, deterministic serialization — tab-indented (matches `taxonomy.json`), trailing newline.
+ */
 export function serializeBrandTable(table: POIBrandTable): string {
 	return `${JSON.stringify(table, null, "\t")}\n`
 }
 
-/** Writes `table` to `out` (creating parent directories as needed) via {@link serializeBrandTable}. */
+/**
+ * Writes `table` to `out` (creating parent directories as needed) via {@link serializeBrandTable}.
+ */
 export function writeBrandTable(table: POIBrandTable, out: string): void {
 	mkdirSync(dirname(out), { recursive: true })
 	writeFileSync(out, serializeBrandTable(table))

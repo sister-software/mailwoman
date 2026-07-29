@@ -19,7 +19,9 @@ import {
 	type PostcodeResolver,
 } from "./postcode-anchor.ts"
 
-/** A fake gazetteer: exact-match map from normalized postcode → hits. */
+/**
+ * A fake gazetteer: exact-match map from normalized postcode → hits.
+ */
 class FakeResolver implements PostcodeResolver {
 	constructor(private readonly map: Record<string, PostcodePlace[]>) {}
 	lookup(postcode: string): PostcodePlace[] {

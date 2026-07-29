@@ -5,7 +5,9 @@
  *   warnings, etc.). Stripped from capture entirely.
  */
 
-/** Real failures — the test SHOULD fail when one of these surfaces. */
+/**
+ * Real failures — the test SHOULD fail when one of these surfaces.
+ */
 export const FAIL_PATTERNS: RegExp[] = [
 	/style is not done loading/i,
 	/cannot read properties of null \(reading 'addsource'\)/i,
@@ -21,7 +23,9 @@ export const FAIL_PATTERNS: RegExp[] = [
 	/\b(404|net::err_)/i,
 ]
 
-/** Noise — never causes a failure, never appears in the captured event list. */
+/**
+ * Noise — never causes a failure, never appears in the captured event list.
+ */
 export const IGNORE_PATTERNS: RegExp[] = [
 	/Removing initializer 'val_/, // onnxruntime cleanup
 	/WebGL.*GPU stall/i,

@@ -12,7 +12,9 @@ import { readFileSync, writeFileSync } from "node:fs"
 
 import { TextSpliterator } from "spliterator"
 
-/** Read an entire JSONL file into memory. Blank and whitespace-only lines are skipped. */
+/**
+ * Read an entire JSONL file into memory. Blank and whitespace-only lines are skipped.
+ */
 export function readJSONL<T>(path: string): T[] {
 	return readFileSync(path, "utf8")
 		.split("\n")
@@ -20,7 +22,9 @@ export function readJSONL<T>(path: string): T[] {
 		.map((line) => JSON.parse(line) as T)
 }
 
-/** Write rows as JSONL (one `JSON.stringify` per line, trailing newline). Returns the row count. */
+/**
+ * Write rows as JSONL (one `JSON.stringify` per line, trailing newline). Returns the row count.
+ */
 export function writeJSONL(path: string, rows: Iterable<unknown>): number {
 	let count = 0
 	let out = ""
@@ -34,7 +38,9 @@ export function writeJSONL(path: string, rows: Iterable<unknown>): number {
 	return count
 }
 
-/** Stream a JSONL file row-by-row without loading it whole. Blank lines are skipped. */
+/**
+ * Stream a JSONL file row-by-row without loading it whole. Blank lines are skipped.
+ */
 export async function* iterateJSONL<T>(path: string): AsyncIterable<T> {
 	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (!line.trim()) continue

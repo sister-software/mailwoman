@@ -31,24 +31,36 @@ import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/
 
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.ts"
 
-/** Which source labels denote eligibility vs funding/enrollment. */
+/**
+ * Which source labels denote eligibility vs funding/enrollment.
+ */
 export interface ReconcileConfig {
-	/** Source labels denoting membership in the base/eligibility set. */
+	/**
+	 * Source labels denoting membership in the base/eligibility set.
+	 */
 	eligibilitySources: readonly string[]
-	/** Source labels denoting enrollment / funding / program participation. */
+	/**
+	 * Source labels denoting enrollment / funding / program participation.
+	 */
 	fundingSources: readonly string[]
 }
 
-/** One entity, classified. */
+/**
+ * One entity, classified.
+ */
 export interface ReconciledEntity {
 	entity: ResolvedEntity
-	/** Distinct provenance labels the entity's records span, sorted. */
+	/**
+	 * Distinct provenance labels the entity's records span, sorted.
+	 */
 	sources: string[]
 	bucket: ReconciliationBucket
 }
 
 export interface ReconciliationResult {
-	/** Entities that carry at least one eligibility- or funding-tagged source, each bucketed. */
+	/**
+	 * Entities that carry at least one eligibility- or funding-tagged source, each bucketed.
+	 */
 	reconciled: ReconciledEntity[]
 	counts: Record<ReconciliationBucket, number>
 }
@@ -109,7 +121,9 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	return { reconciled, counts }
 }
 
-/** A display name for a reconciled entity's representative record. */
+/**
+ * A display name for a reconciled entity's representative record.
+ */
 function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
 	const person = [rep.name?.given, rep.name?.family].filter(Boolean).join(" ")
@@ -149,15 +163,25 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 }
 
 export interface ReconciliationReportOptions {
-	/** H1 title. Default: "Coverage reconciliation — eligibility ↔ enrollment". */
+	/**
+	 * H1 title. Default: "Coverage reconciliation — eligibility ↔ enrollment".
+	 */
 	title?: string
-	/** An italic scope paragraph under the title (what the sources are, how they were scoped). */
+	/**
+	 * An italic scope paragraph under the title (what the sources are, how they were scoped).
+	 */
 	scopeNote?: string
-	/** A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT). */
+	/**
+	 * A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT).
+	 */
 	scorerNote?: string
-	/** A paragraph about sampling/capping, woven into the caveat. */
+	/**
+	 * A paragraph about sampling/capping, woven into the caveat.
+	 */
 	sampleNote?: string
-	/** How many "eligible, not enrolled" rows to spot-check. Default 15. */
+	/**
+	 * How many "eligible, not enrolled" rows to spot-check. Default 15.
+	 */
 	spotCheckLimit?: number
 }
 

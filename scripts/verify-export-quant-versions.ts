@@ -35,7 +35,9 @@ if (!existsSync(PYTHON)) {
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 
-/** Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth. */
+/**
+ * Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth.
+ */
 function pinnedVersions(): Array<[string, string]> {
 	const src = readFileSync(TRAIN_REMOTE, "utf8")
 	const matches = src.matchAll(/"(torch|transformers|onnx|onnxruntime|onnxscript)==([0-9.]+)"/g)

@@ -20,19 +20,29 @@
  *   spans, independent of how the tokenizer chose its splits.
  */
 
-/** A token with its character span in the source string. */
+/**
+ * A token with its character span in the source string.
+ */
 export interface TokenSpan {
-	/** The token text, possibly normalized (case unchanged here; tokenizers may differ). */
+	/**
+	 * The token text, possibly normalized (case unchanged here; tokenizers may differ).
+	 */
 	text: string
 
-	/** Inclusive start offset (UTF-16 code-unit index) in the source string. */
+	/**
+	 * Inclusive start offset (UTF-16 code-unit index) in the source string.
+	 */
 	start: number
 
-	/** Exclusive end offset in the source string. `text === source.slice(start, end)`. */
+	/**
+	 * Exclusive end offset in the source string. `text === source.slice(start, end)`.
+	 */
 	end: number
 }
 
-/** A tokenizer that maps a string to a sequence of `TokenSpan`s. */
+/**
+ * A tokenizer that maps a string to a sequence of `TokenSpan`s.
+ */
 export interface Tokenizer {
 	tokenize(text: string): readonly TokenSpan[]
 }

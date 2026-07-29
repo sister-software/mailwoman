@@ -37,13 +37,17 @@ export class WOFPostcodeLookup {
 	readonly #dbs: DatabaseSync[]
 	readonly #stmts: ReturnType<DatabaseSync["prepare"]>[]
 
-	/** Open each shard read-only and prepare its exact-match statement. */
+	/**
+	 * Open each shard read-only and prepare its exact-match statement.
+	 */
 	constructor(dbPaths: readonly string[]) {
 		this.#dbs = dbPaths.map((p) => new DatabaseSync(p, { readOnly: true }))
 		this.#stmts = this.#dbs.map((db) => db.prepare(LOOKUP_SQL))
 	}
 
-	/** Exact-match the postcode across every shard and union the rows. */
+	/**
+	 * Exact-match the postcode across every shard and union the rows.
+	 */
 	lookup(postcode: string): PostcodePlace[] {
 		const out: PostcodePlace[] = []
 

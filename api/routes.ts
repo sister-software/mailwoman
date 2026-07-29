@@ -59,9 +59,13 @@ const startedAt = Date.now()
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
-/** Options for {@link registerMailwomanAPIRoutes}. */
+/**
+ * Options for {@link registerMailwomanAPIRoutes}.
+ */
 export interface RegisterMailwomanAPIRoutesOptions {
-	/** Max `addresses` rows accepted by `POST /v1/batch`. Default {@link DEFAULT_BATCH_MAX}. */
+	/**
+	 * Max `addresses` rows accepted by `POST /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
+	 */
 	batchMax?: number
 }
 
@@ -254,7 +258,9 @@ function toComponentDict(components: Record<string, string | string[]>): Compone
 	return out
 }
 
-/** Register the native `/v1` routes + `/health` + `/metrics` against an injected engine. */
+/**
+ * Register the native `/v1` routes + `/health` + `/metrics` against an injected engine.
+ */
 export function registerMailwomanAPIRoutes(
 	app: OpenAPIHono,
 	engine: MailwomanAPIEngine,

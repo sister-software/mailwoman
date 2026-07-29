@@ -37,10 +37,14 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-/** Vertices below which a ring cannot be simplified further without collapsing it. */
+/**
+ * Vertices below which a ring cannot be simplified further without collapsing it.
+ */
 const MIN_RING_VERTICES = 3
 
-/** Vertices a closed ring needs — three corners plus the repeated closing point. */
+/**
+ * Vertices a closed ring needs — three corners plus the repeated closing point.
+ */
 const MIN_CLOSED_RING_VERTICES = 4
 
 const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
@@ -88,7 +92,9 @@ interface RawGeometry {
 	coordinates: LinearRing[] | LinearRing[][]
 }
 
-/** WOF shard path: id split into 3-char chunks, then the full id. */
+/**
+ * WOF shard path: id split into 3-char chunks, then the full id.
+ */
 function geojsonPath(repos: string, country: string, id: number): string {
 	const s = String(id)
 	const shard = s.match(/.{1,3}/g)!.join("/")
@@ -96,7 +102,9 @@ function geojsonPath(repos: string, country: string, id: number): string {
 	return `${repos}/whosonfirst-data-admin-${country.toLowerCase()}/data/${shard}/${s}.geojson`
 }
 
-/** Perpendicular distance from point p to segment a–b (planar — fine at admin scale). */
+/**
+ * Perpendicular distance from point p to segment a–b (planar — fine at admin scale).
+ */
 function segDist(p: Position, a: Position, b: Position): number {
 	const dx = b[0]! - a[0]!
 	const dy = b[1]! - a[1]!
@@ -108,7 +116,9 @@ function segDist(p: Position, a: Position, b: Position): number {
 	return Math.hypot(p[0]! - (a[0]! + tc * dx), p[1]! - (a[1]! + tc * dy))
 }
 
-/** Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints; preserves closure. */
+/**
+ * Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints; preserves closure.
+ */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
 	if (ring.length <= MIN_RING_VERTICES) return ring
 	const keep = new Uint8Array(ring.length)

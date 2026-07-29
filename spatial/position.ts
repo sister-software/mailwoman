@@ -9,16 +9,24 @@
 import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { GeoPoint, type GeoPointInput } from "@mailwoman/spatial"
 
-/** Southern limit of latitude in WGS84 degrees. Outside it a value cannot be a latitude. */
+/**
+ * Southern limit of latitude in WGS84 degrees. Outside it a value cannot be a latitude.
+ */
 const LATITUDE_MIN = -90
 
-/** Northern limit of latitude in WGS84 degrees. */
+/**
+ * Northern limit of latitude in WGS84 degrees.
+ */
 const LATITUDE_MAX = 90
 
-/** Arity of a `[lon, lat]` coordinate tuple. */
+/**
+ * Arity of a `[lon, lat]` coordinate tuple.
+ */
 const COORD_PAIR_LENGTH = 2
 
-/** Arity of a `[lon, lat, elevation]` coordinate tuple. */
+/**
+ * Arity of a `[lon, lat, elevation]` coordinate tuple.
+ */
 const COORD_TRIPLE_LENGTH = 3
 
 /**
@@ -254,7 +262,9 @@ const RADII = {
  *
  * @returns The distance between the two points in the specified unit.
  */
-/** Shared great-circle math (no sentinel handling). `unit` selects the Earth radius. */
+/**
+ * Shared great-circle math (no sentinel handling). `unit` selects the Earth radius.
+ */
 function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, unit: EarthRadiusUnit): number {
 	const dLat = (lat2 - lat1) * ConversionFactor.DegreesToRadians
 	const dLon = (lon2 - lon1) * ConversionFactor.DegreesToRadians

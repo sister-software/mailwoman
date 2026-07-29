@@ -133,7 +133,9 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 	}
 }
 
-/** Three locality-level variants, mirroring `wof-admin`'s fan-out. */
+/**
+ * Three locality-level variants, mirroring `wof-admin`'s fan-out.
+ */
 function* placeVariants(row: TigerPlaceRow): Iterable<{
 	components: CanonicalRow["components"]
 	variantKey: string
@@ -159,7 +161,9 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 	}
 }
 
-/** Build a TIGER adapter. Pure factory so multiple instances can be created in tests. */
+/**
+ * Build a TIGER adapter. Pure factory so multiple instances can be created in tests.
+ */
 export function createTigerAdapter(): CorpusAdapter {
 	return {
 		id: TIGER_ADAPTER_ID,
@@ -237,5 +241,7 @@ export function createTigerAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const tigerAdapter = createTigerAdapter()

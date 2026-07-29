@@ -96,7 +96,9 @@ export function childEnv(overrides: Record<string, string | undefined> = {}): No
 	return { ...process.env, ...overrides }
 }
 
-/** The path of the executing script (`argv[1]`) — for commands that re-spawn or reference their own CLI entry. */
+/**
+ * The path of the executing script (`argv[1]`) — for commands that re-spawn or reference their own CLI entry.
+ */
 export function scriptEntryPath(): string {
 	// oxlint-disable-next-line sister-software/no-process-globals
 	return process.argv[1]!

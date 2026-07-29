@@ -27,7 +27,9 @@ import addressFormatter from "@fragaria/address-formatter"
 import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
 import type { ClassificationMap, VisibleClassification, ComponentTag } from "@mailwoman/core/types"
 
-/** Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace. */
+/**
+ * Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace.
+ */
 function slotPattern(slot: string): RegExp {
 	return new RegExp(`\\{\\{\\{\\s*${slot}\\s*\\}\\}\\}`)
 }
@@ -113,10 +115,14 @@ const DEPENDENT_LOCALITY_SLOTS: {
 	return { quarterOnly, placeOnly, postRender }
 })()
 
-/** A partial map of `ComponentTag` → string value — the canonical formatter input. */
+/**
+ * A partial map of `ComponentTag` → string value — the canonical formatter input.
+ */
 export type ComponentDict = Partial<Record<ComponentTag, string>>
 
-/** Options accepted by `formatAddress`. */
+/**
+ * Options accepted by `formatAddress`.
+ */
 export interface FormatAddressOptions {
 	/**
 	 * Append the country name as a final line (`"USA"`, `"France"`). Default `false`: most rows are intra-country and the

@@ -73,9 +73,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
-// -------------------------------------------------------------------------------------------------
-// Args
-// -------------------------------------------------------------------------------------------------
+// MARK: Args
 
 interface Args {
 	goldenDir: string
@@ -91,7 +89,9 @@ interface Args {
 	conventions?: string
 	bridgeGaps?: boolean
 	outJson?: string
-	/** P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read. */
+	/**
+	 * P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read.
+	 */
 	rawCase: boolean
 }
 
@@ -186,9 +186,7 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-// -------------------------------------------------------------------------------------------------
-// Golden row + fold (shared semantics with harness-neural.ts)
-// -------------------------------------------------------------------------------------------------
+// MARK: Golden row + fold (shared semantics with harness-neural.ts)
 
 interface GoldenRow {
 	raw: string
@@ -197,7 +195,9 @@ interface GoldenRow {
 	notes?: string
 }
 
-/** Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street). */
+/**
+ * Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street).
+ */
 function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<string, string> {
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
@@ -256,9 +256,7 @@ function exactMatch(pred: Record<string, string>, gold: Record<string, string>):
 	return true
 }
 
-// -------------------------------------------------------------------------------------------------
-// Per-file metrics
-// -------------------------------------------------------------------------------------------------
+// MARK: Per-file metrics
 
 interface TagMetric {
 	tp: number
@@ -349,9 +347,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	}
 }
 
-// -------------------------------------------------------------------------------------------------
-// Main
-// -------------------------------------------------------------------------------------------------
+// MARK: Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()

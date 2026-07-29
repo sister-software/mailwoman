@@ -42,51 +42,85 @@ import {
 
 const req = createRequire(import.meta.url)
 
-/** The resolved-weights shape the runner needs — a structural subset of `@mailwoman/neural`'s `ResolvedWeights`. */
+/**
+ * The resolved-weights shape the runner needs — a structural subset of `@mailwoman/neural`'s `ResolvedWeights`.
+ */
 interface ResolvedWeightsLike {
 	source: string
 	modelPath: string
 	tokenizerPath: string
 }
 
-/** Every environment seam `runDoctor` touches. Injected in tests; {@link defaultDoctorDeps} wires the real ones. */
+/**
+ * Every environment seam `runDoctor` touches. Injected in tests; {@link defaultDoctorDeps} wires the real ones.
+ */
 export interface DoctorDeps {
-	/** File-existence probe. */
+	/**
+	 * File-existence probe.
+	 */
 	existsSync(path: string): boolean
-	/** Byte size of a file, or `undefined` when it can't be stat'd. */
+	/**
+	 * Byte size of a file, or `undefined` when it can't be stat'd.
+	 */
 	fileSize(path: string): number | undefined
-	/** Whether a path is writable (W_OK). */
+	/**
+	 * Whether a path is writable (W_OK).
+	 */
 	isWritable(path: string): boolean
-	/** Resolve a locale's weights package (throws when unresolvable) — mirrors `@mailwoman/neural`. */
+	/**
+	 * Resolve a locale's weights package (throws when unresolvable) — mirrors `@mailwoman/neural`.
+	 */
 	resolveWeights(locale: string): ResolvedWeightsLike
-	/** The npm package name for a locale's weights (e.g. `@mailwoman/neural-weights-fr-fr`). */
+	/**
+	 * The npm package name for a locale's weights (e.g. `@mailwoman/neural-weights-fr-fr`).
+	 */
 	weightsPackageName(locale: string): string
-	/** The resolved data root (blessed helper) + whether it came from the env. */
+	/**
+	 * The resolved data root (blessed helper) + whether it came from the env.
+	 */
 	dataRoot(): { path: string; fromEnv: boolean }
 	/**
 	 * The candidate.db the TOOLS would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
 	 * on disk. NO convention-path fallback: that's exactly what geocode/serve do.
 	 */
 	envCandidatePath(): string | undefined
-	/** The `<data-root>/wof/candidate.db` convention path IF it exists on disk — used to detect the env-unset trap. */
+	/**
+	 * The `<data-root>/wof/candidate.db` convention path IF it exists on disk — used to detect the env-unset trap.
+	 */
 	conventionCandidatePath(): string | undefined
-	/** The WOF admin shard paths to probe ($MAILWOMAN_WOF_DB split, else the default shard set). */
+	/**
+	 * The WOF admin shard paths to probe ($MAILWOMAN_WOF_DB split, else the default shard set).
+	 */
 	wofShardPaths(): string[]
-	/** The default POI layer path (`gazetteer build poi`'s own default). */
+	/**
+	 * The default POI layer path (`gazetteer build poi`'s own default).
+	 */
 	poiPath(): string
-	/** Read + validate a POI layer manifest (throws on a missing/invalid manifest). */
+	/**
+	 * Read + validate a POI layer manifest (throws on a missing/invalid manifest).
+	 */
 	readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }>
-	/** Attempt to load the ONNX native binding (throws when unavailable). */
+	/**
+	 * Attempt to load the ONNX native binding (throws when unavailable).
+	 */
 	loadOnnx(): Promise<void>
-	/** The running Node version (`process.versions.node`). */
+	/**
+	 * The running Node version (`process.versions.node`).
+	 */
 	nodeVersion: string
-	/** The `engines.node` floor from mailwoman's package.json. */
+	/**
+	 * The `engines.node` floor from mailwoman's package.json.
+	 */
 	enginesFloor: string
-	/** The optional locale overlays to report (informational). */
+	/**
+	 * The optional locale overlays to report (informational).
+	 */
 	overlayLocales: string[]
 }
 
-/** Read `engines.node` from mailwoman's own package.json (self-reference export), defaulting to `">=0"` if unreadable. */
+/**
+ * Read `engines.node` from mailwoman's own package.json (self-reference export), defaulting to `">=0"` if unreadable.
+ */
 function readEnginesFloor(): string {
 	try {
 		const pkg = req("mailwoman/package.json") as { engines?: { node?: string } }
@@ -97,14 +131,18 @@ function readEnginesFloor(): string {
 	}
 }
 
-/** The `<data-root>/wof/candidate.db` convention path if it exists on disk — the file a fresh consumer downloads. */
+/**
+ * The `<data-root>/wof/candidate.db` convention path if it exists on disk — the file a fresh consumer downloads.
+ */
 function defaultConventionCandidatePath(): string | undefined {
 	const convention = dataRootPath("wof", "candidate.db")
 
 	return existsSync(convention) ? convention : undefined
 }
 
-/** The WOF admin shard set to probe: `$MAILWOMAN_WOF_DB` (comma-split) when set, else the default shard list. */
+/**
+ * The WOF admin shard set to probe: `$MAILWOMAN_WOF_DB` (comma-split) when set, else the default shard list.
+ */
 function defaultWOFShardPaths(): string[] {
 	const raw = $public.MAILWOMAN_WOF_DB
 
@@ -118,7 +156,9 @@ function defaultWOFShardPaths(): string[] {
 	return wofShardPaths()
 }
 
-/** Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints. */
+/**
+ * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
+ */
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
 	const raw = new DatabaseSync(path, { readOnly: true })
 	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
@@ -132,7 +172,9 @@ async function readPOIManifest(path: string): Promise<{ name: string; version: s
 	}
 }
 
-/** The production seams — the real filesystem, env, weights resolver, and dynamic imports. */
+/**
+ * The production seams — the real filesystem, env, weights resolver, and dynamic imports.
+ */
 export function defaultDoctorDeps(): DoctorDeps {
 	return {
 		existsSync,
@@ -171,9 +213,7 @@ export function defaultDoctorDeps(): DoctorDeps {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Fact gathering → checks
-// ---------------------------------------------------------------------------
+// MARK: Fact gathering → checks
 
 function gatherWeights(deps: DoctorDeps): WeightsObservation {
 	try {

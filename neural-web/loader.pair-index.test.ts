@@ -32,7 +32,9 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-/** The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface. */
+/**
+ * The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface.
+ */
 let capturedConfig: {
 	placetypePair?: {
 		index: { probe(c: string, p: string): string | undefined; delta?: number; transitionBeta?: number }
@@ -62,7 +64,9 @@ const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import(".
 
 const SEQ = 128
 
-/** A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings). */
+/**
+ * A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings).
+ */
 function installMockSession(): void {
 	sessionCreateMock.mockReset()
 	sessionCreateMock.mockResolvedValue({
@@ -88,7 +92,9 @@ function pairHeader(country: string, transitionBeta?: number): PairIndexHeader {
 	}
 }
 
-/** Real PIX1 bytes: one (shoreditch, london) → dependent_locality entry under the given header. */
+/**
+ * Real PIX1 bytes: one (shoreditch, london) → dependent_locality entry under the given header.
+ */
 function gbIndexBytes(): Uint8Array {
 	return serializePairIndex(pairHeader("gb", 5), [{ child: "shoreditch", parent: "london", tag: "dependent_locality" }])
 }

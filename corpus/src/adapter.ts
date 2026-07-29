@@ -34,16 +34,24 @@ import type { CanonicalRow, CorpusAdapter } from "./types.ts"
  * the dependency graph stays traceable.
  */
 export interface AdapterRegistry {
-	/** Add an adapter. Throws if `adapter.id` is already registered. */
+	/**
+	 * Add an adapter. Throws if `adapter.id` is already registered.
+	 */
 	register(adapter: CorpusAdapter): void
 
-	/** Return the adapter for `id`, or `undefined`. */
+	/**
+	 * Return the adapter for `id`, or `undefined`.
+	 */
 	get(id: string): CorpusAdapter | undefined
 
-	/** All registered adapters, in insertion order. */
+	/**
+	 * All registered adapters, in insertion order.
+	 */
 	list(): readonly CorpusAdapter[]
 
-	/** Convenience: ids only, in insertion order. */
+	/**
+	 * Convenience: ids only, in insertion order.
+	 */
 	ids(): readonly string[]
 }
 
@@ -130,7 +138,9 @@ export interface StreamingHasher {
 	digest(): string
 }
 
-/** Default `StreamingHasher` (SHA-256, hex). */
+/**
+ * Default `StreamingHasher` (SHA-256, hex).
+ */
 export function streamingSha256(): StreamingHasher {
 	const h: Hash = createHash("sha256")
 	let finalized = false

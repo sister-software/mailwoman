@@ -35,7 +35,9 @@ import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode-core
  */
 export type RuntimePipeline = (raw: string, opts?: PipelineOpts) => Promise<PipelineResult>
 
-/** Options for the `@mailwoman/fastify` plugin. */
+/**
+ * Options for the `@mailwoman/fastify` plugin.
+ */
 export interface MailwomanFastifyOptions {
 	/**
 	 * A pre-built runtime pipeline (`createRuntimePipeline(...)`). The dependency-injection / testing path — supply this
@@ -54,37 +56,55 @@ export interface MailwomanFastifyOptions {
 	 * pre-built `pipeline` is injected.
 	 */
 	resolveDatabasePath?: string
-	/** Locale for the lazily-loaded model weights + the default per-call locale hint. Defaults to `"en-US"`. */
+	/**
+	 * Locale for the lazily-loaded model weights + the default per-call locale hint. Defaults to `"en-US"`.
+	 */
 	locale?: string
-	/** Path prefix for every registered route (e.g. `"/geo"` → `POST /geo/parse`). Defaults to `""` (no prefix). */
+	/**
+	 * Path prefix for every registered route (e.g. `"/geo"` → `POST /geo/parse`). Defaults to `""` (no prefix).
+	 */
 	routePrefix?: string
 }
 
-/** One parsed component in reading order — a `ComponentTag` + the covered text. Mirrors `@mailwoman/api`'s shape. */
+/**
+ * One parsed component in reading order — a `ComponentTag` + the covered text. Mirrors `@mailwoman/api`'s shape.
+ */
 export interface ParseComponent {
 	tag: string
 	value: string
 }
 
-/** The `POST /parse` (and `mailwoman.parse`) outcome: ordered components + the full decoded tree. */
+/**
+ * The `POST /parse` (and `mailwoman.parse`) outcome: ordered components + the full decoded tree.
+ */
 export interface ParseOutcome {
 	input: string
-	/** Which path the coordinator took (`"fast-path"` | `"full"` | `"poi"`). */
+	/**
+	 * Which path the coordinator took (`"fast-path"` | `"full"` | `"poi"`).
+	 */
 	path: PipelineResult["path"]
 	components: ParseComponent[]
 	tree: AddressTree
 }
 
-/** The POI outcome when the query was not POI-shaped (the pipeline produced no intent). */
+/**
+ * The POI outcome when the query was not POI-shaped (the pipeline produced no intent).
+ */
 export interface NotPOIQuery {
 	type: "not_poi_query"
 }
 
-/** The programmatic surface exposed on `fastify.mailwoman`. Every method runs the same underlying pipeline. */
+/**
+ * The programmatic surface exposed on `fastify.mailwoman`. Every method runs the same underlying pipeline.
+ */
 export interface MailwomanDecorator {
-	/** Parse an address into ordered components + the decoded tree. */
+	/**
+	 * Parse an address into ordered components + the decoded tree.
+	 */
 	parse(text: string, opts?: PipelineOpts): Promise<ParseOutcome>
-	/** Geocode an address to a coordinate (the `GeocodeResult` extracted from the resolved tree). */
+	/**
+	 * Geocode an address to a coordinate (the `GeocodeResult` extracted from the resolved tree).
+	 */
 	geocode(text: string, opts?: PipelineOpts): Promise<GeocodeResult>
 	/**
 	 * Run the POI-query path. Returns the pipeline's `POIIntentOutcome` (intent / abstain, with results when a poi.db is
@@ -100,7 +120,9 @@ declare module "fastify" {
 	}
 }
 
-/** Thrown by `mailwoman.poi` when the plugin was registered without a `poiDatabasePath`. */
+/**
+ * Thrown by `mailwoman.poi` when the plugin was registered without a `poiDatabasePath`.
+ */
 export class POINotConfiguredError extends Error {
 	constructor() {
 		super("POI search is not configured — register @mailwoman/fastify with { poiDatabasePath } to enable it")
@@ -159,7 +181,9 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 	})
 }
 
-/** Merge the plugin's default locale into per-call pipeline opts (a caller-supplied `locale` wins). */
+/**
+ * Merge the plugin's default locale into per-call pipeline opts (a caller-supplied `locale` wins).
+ */
 function withLocale(opts: PipelineOpts | undefined, locale: string): PipelineOpts {
 	if (opts?.locale) return opts
 

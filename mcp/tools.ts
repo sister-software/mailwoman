@@ -21,7 +21,9 @@
 
 import { z } from "zod"
 
-/** The library surface every tool handler dispatches to. `cli.ts` builds the real implementation. */
+/**
+ * The library surface every tool handler dispatches to. `cli.ts` builds the real implementation.
+ */
 export interface MCPToolDeps {
 	parse: (text: string, opts?: { poi?: boolean }) => Promise<unknown>
 	geocode: (text: string) => Promise<unknown>
@@ -85,7 +87,9 @@ const LayerManifestInputSchema = z.object({
 		.describe("Path to a mailwoman spatial-layer database (poi.db, an address-points shard, etc.)."),
 })
 
-/** Build the tool table for a concrete `MCPToolDeps` implementation. Pure — no transport, no I/O of its own. */
+/**
+ * Build the tool table for a concrete `MCPToolDeps` implementation. Pure — no transport, no I/O of its own.
+ */
 export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 	return [
 		{

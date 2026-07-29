@@ -69,15 +69,23 @@ import {
 import { defaultAugmentationsForCountry, synthesizeRow } from "./synthesize.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "./types.ts"
 
-/** Stage tags surfaced to `onProgress`. */
+/**
+ * Stage tags surfaced to `onProgress`.
+ */
 export type BuildStage = "adapter-run" | "align" | "split" | "shard" | "manifest"
 
-/** Per-invocation options for `buildCorpus`. */
+/**
+ * Per-invocation options for `buildCorpus`.
+ */
 export interface BuildCorpusOptions {
-	/** Root output directory. All build artifacts land beneath it. */
+	/**
+	 * Root output directory. All build artifacts land beneath it.
+	 */
 	outputDir: string
 
-	/** Corpus version (e.g. `"0.1.0"`). Stamped onto every row + into the output dir name. */
+	/**
+	 * Corpus version (e.g. `"0.1.0"`). Stamped onto every row + into the output dir name.
+	 */
 	corpusVersion: string
 
 	/**
@@ -92,13 +100,19 @@ export interface BuildCorpusOptions {
 	 */
 	adapterInputs: Record<string, AdapterOptions>
 
-	/** Enable synthesis pass. Default `true`. Set `false` for fixture-driven smoke tests. */
+	/**
+	 * Enable synthesis pass. Default `true`. Set `false` for fixture-driven smoke tests.
+	 */
 	synthesize?: boolean
 
-	/** Forwarded to `writeShards`. Default 1_000_000. */
+	/**
+	 * Forwarded to `writeShards`. Default 1_000_000.
+	 */
 	rowsPerShard?: number
 
-	/** Progress hook. Errors thrown abort the build. */
+	/**
+	 * Progress hook. Errors thrown abort the build.
+	 */
 	onProgress?: (stage: BuildStage, message: string) => void
 
 	/**
@@ -110,7 +124,9 @@ export interface BuildCorpusOptions {
 	excludeLicenses?: readonly RegExp[]
 }
 
-/** Top-level manifest tying every stage together. */
+/**
+ * Top-level manifest tying every stage together.
+ */
 export interface BuildCorpusManifest {
 	corpus_version: string
 	built_at: string

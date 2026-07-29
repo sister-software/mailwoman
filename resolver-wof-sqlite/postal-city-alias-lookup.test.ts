@@ -23,7 +23,9 @@ import { WOFSqlitePlaceLookup } from "./lookup.ts"
 import { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
 import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
 
-/** A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row. */
+/**
+ * A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row.
+ */
 async function buildAliasDB(): Promise<DatabaseSync> {
 	const db = new DatabaseSync(":memory:")
 	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDB.close()),
@@ -43,7 +45,9 @@ async function buildAliasDB(): Promise<DatabaseSync> {
 	return db
 }
 
-/** Main resolver fixture: Nashville (the geographic city 37013 sits in) + a far Antioch distractor. */
+/**
+ * Main resolver fixture: Nashville (the geographic city 37013 sits in) + a far Antioch distractor.
+ */
 function buildMainDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec(`

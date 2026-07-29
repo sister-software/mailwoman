@@ -50,13 +50,19 @@ import { sealDatabase } from "@mailwoman/core/utils"
  */
 const ROUND_HALF_DIGIT = 5
 
-/** KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net. */
+/**
+ * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
+ */
 const MATCH_RADIUS_KM = 20
 const HANGUL = /[가-힣]/
-/** Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc. */
+/**
+ * Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc.
+ */
 const SUFFIX = /(특별자치도|특별자치시|광역시|특별시|면|동|읍|시|군|구|리)$/
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -127,12 +133,16 @@ function pyRound(x: number, nd = 0): number {
 	return neg ? -num : num
 }
 
-/** Python `str(float)` — integer-valued floats render with a trailing `.0` (e.g. `1.0`, `0.0`). */
+/**
+ * Python `str(float)` — integer-valued floats render with a trailing `.0` (e.g. `1.0`, `0.0`).
+ */
 function pyStrFloat(x: number): string {
 	return Number.isInteger(x) ? `${x}.0` : String(x)
 }
 
-/** Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip). */
+/**
+ * Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip).
+ */
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
@@ -151,12 +161,16 @@ function bare(s: string | null | undefined): string {
 	return norm(s).replace(SUFFIX, "")
 }
 
-/** Python `math.radians`. */
+/**
+ * Python `math.radians`.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form). */
+/**
+ * Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form).
+ */
 function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
 	const R = 6371
 	const p1 = toRad(aLat)
@@ -167,7 +181,9 @@ function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): nu
 	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
-/** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
+/**
+ * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }

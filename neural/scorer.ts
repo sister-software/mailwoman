@@ -51,13 +51,19 @@ import {
  */
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
-/** Default postcode→anchor lookup (the pilot lookup the shipped en-us model trained against). */
+/**
+ * Default postcode→anchor lookup (the pilot lookup the shipped en-us model trained against).
+ */
 export const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-/** Default gazetteer-anchor lexicon (codex-generated, repo-relative). */
+/**
+ * Default gazetteer-anchor lexicon (codex-generated, repo-relative).
+ */
 export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
-/** Default country-surface lexicon (codex-generated, repo-relative, #1104). */
+/**
+ * Default country-surface lexicon (codex-generated, repo-relative, #1104).
+ */
 export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
 /**
@@ -130,7 +136,9 @@ function defaultLocalitySurfaceLexicon(locale: string | undefined): string | und
 	}
 }
 
-/** Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1). */
+/**
+ * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1).
+ */
 function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLookup {
 	return source.binary
 		? new PostcodeBinaryResolver(new Uint8Array(readFileSync(source.path))).toAnchorLookup()
@@ -143,33 +151,53 @@ function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLook
  * ablation is legal — silent OOD is not, #566/#685).
  */
 export interface ScorerOverrides {
-	/** `false` to ablate the anchor channel even when the card declares it required. */
+	/**
+	 * `false` to ablate the anchor channel even when the card declares it required.
+	 */
 	anchor?: boolean
-	/** `false` to ablate the gazetteer channel even when the card declares it required. */
+	/**
+	 * `false` to ablate the gazetteer channel even when the card declares it required.
+	 */
 	gazetteer?: boolean
-	/** `false` to ablate the street-type evidence channel (Option-A bundle). */
+	/**
+	 * `false` to ablate the street-type evidence channel (Option-A bundle).
+	 */
 	streetType?: boolean
-	/** `false` to ablate the locality-surface evidence channel (Option-A bundle). */
+	/**
+	 * `false` to ablate the locality-surface evidence channel (Option-A bundle).
+	 */
 	localitySurface?: boolean
-	/** `false` to ablate the country-lexicon channel even when the card declares it required (#1104). */
+	/**
+	 * `false` to ablate the country-lexicon channel even when the card declares it required (#1104).
+	 */
 	country?: boolean
 	/**
 	 * Pin / disable the conventions mode (`"auto"` | a `SystemCode` | `false` to disable) regardless of the card's
 	 * declaration.
 	 */
 	conventions?: "auto" | string | false
-	/** Override the bridge declaration. */
+	/**
+	 * Override the bridge declaration.
+	 */
 	bridge?: boolean
-	/** Override the near-postcode gazetteer choreography. */
+	/**
+	 * Override the near-postcode gazetteer choreography.
+	 */
 	suppressGazetteerNearPostcode?: boolean
 }
 
 export interface CreateScorerOpts {
-	/** Path to the `model.onnx`. */
+	/**
+	 * Path to the `model.onnx`.
+	 */
 	modelPath: string
-	/** Path to the `tokenizer.model`. */
+	/**
+	 * Path to the `tokenizer.model`.
+	 */
 	tokenizerPath: string
-	/** Path to the `model-card.json` (label vocab + the `requires` ship-config). */
+	/**
+	 * Path to the `model-card.json` (label vocab + the `requires` ship-config).
+	 */
 	modelCardPath: string
 	/**
 	 * Postcode→anchor lookup path. Default {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the soft-feed sibling
@@ -181,9 +209,13 @@ export interface CreateScorerOpts {
 	 * shipped in the weights package (#718 D1).
 	 */
 	gazetteerLexiconPath?: string
-	/** Street-type evidence lexicon path (Option-A bundle). Default: repo artifact, else the weights sibling. */
+	/**
+	 * Street-type evidence lexicon path (Option-A bundle). Default: repo artifact, else the weights sibling.
+	 */
 	streetTypeLexiconPath?: string
-	/** Locality-surface evidence lexicon path (Option-A bundle). Default: the weights-package sibling. */
+	/**
+	 * Locality-surface evidence lexicon path (Option-A bundle). Default: the weights-package sibling.
+	 */
 	localitySurfaceLexiconPath?: string
 	/**
 	 * Country-surface lexicon path (#1104). Default {@link DEFAULT_COUNTRY_LEXICON} when it exists, else the soft-feed
@@ -207,11 +239,15 @@ export interface CreateScorerOpts {
 	 * tier the card doesn't certify → the gate has no capability claims to consult and is a no-op (legal).
 	 */
 	tier?: string
-	/** Deliberate, DECLARED ablations (warn-not-throw). See {@link ScorerOverrides}. */
+	/**
+	 * Deliberate, DECLARED ablations (warn-not-throw). See {@link ScorerOverrides}.
+	 */
 	overrides?: ScorerOverrides
 }
 
-/** A loud, descriptive fail-closed error for a declared-but-unfed channel. */
+/**
+ * A loud, descriptive fail-closed error for a declared-but-unfed channel.
+ */
 class UnfedChannelError extends Error {
 	constructor(message: string) {
 		super(message)

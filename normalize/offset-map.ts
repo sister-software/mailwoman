@@ -6,7 +6,9 @@
  *   Utilities for composing per-transform offset maps into the final `raw → normalized` map.
  */
 
-/** Identity map for an input of length `n`: `[0, 1, 2, ..., n-1]`. */
+/**
+ * Identity map for an input of length `n`: `[0, 1, 2, ..., n-1]`.
+ */
 export function identityMap(n: number): number[] {
 	const m = new Array<number>(n)
 

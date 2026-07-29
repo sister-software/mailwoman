@@ -190,7 +190,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * override) schema names.
 	 */
 	readonly #shards: ResolvedShard[]
-	/** #920: per-schema probed country sets for country-aware shard routing (non-main shards only). */
+	/**
+	 * #920: per-schema probed country sets for country-aware shard routing (non-main shards only).
+	 */
 	readonly #shardCountries: Map<string, ReadonlySet<string>>
 	/**
 	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon resolution profiles;
@@ -202,13 +204,17 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #conventionSource: ConventionSource
 	readonly #strategies: Map<string, Strategy>
 	readonly #countryWOFIdCache = new Map<string, number | null>()
-	/** Strategy names already warned about — so an unknown name surfaces once, not once per query. */
+	/**
+	 * Strategy names already warned about — so an unknown name surfaces once, not once per query.
+	 */
 	readonly #warnedUnknownStrategies = new Set<string>()
 	/**
 	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (null until first use).
 	 */
 	#coincidentRolesCache: Map<number, CoincidentLocality[]> | null = null
-	/** Per-id memoized ancestor lineages (#404) — a hot chain is queried once. */
+	/**
+	 * Per-id memoized ancestor lineages (#404) — a hot chain is queried once.
+	 */
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
 	 * Opt-in postal-city alias reader (#475). `null` unless `opts.postalCityAliases` was supplied — every alias code path
@@ -1098,7 +1104,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		})
 	}
 
-	/** Fetch locality spr rows (from main) for the postcode-injected candidate ids the FTS set missed. */
+	/**
+	 * Fetch locality spr rows (from main) for the postcode-injected candidate ids the FTS set missed.
+	 */
 	#fetchLocalitiesByID(ids: number[]): PlaceCandidate[] {
 		if (!ids.length) return []
 		const hasPop = this.#hasPopulationIndex.get("main") === true
@@ -1242,7 +1250,9 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		this.close()
 	}
 
-	/** Build the FTS5 virtual table from the `names` + `places` tables. */
+	/**
+	 * Build the FTS5 virtual table from the `names` + `places` tables.
+	 */
 	#ensureFTS(): void {
 		buildPlaceSearchFTS(this.#db)
 	}

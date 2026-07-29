@@ -28,10 +28,14 @@ import { loadStreetMorphologyFST } from "./street-morphology-fst-loader.ts"
 
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
-/** Street-type probes across the served languages: fr, en, de. */
+/**
+ * Street-type probes across the served languages: fr, en, de.
+ */
 const PROBES = ["rue", "avenue", "straße"] as const
 
-/** Project the identity triple so comparisons ignore object identity. */
+/**
+ * Project the identity triple so comparisons ignore object identity.
+ */
 const keyOf = (entries: PlaceEntry[]) => entries.map((e) => [e.wofID, e.placetype, e.name])
 
 const tempDir = mkdtempSync(join(tmpdir(), "morphology-fst-loader-"))

@@ -74,7 +74,9 @@ export async function classifyKind(
 	return classifyKindSync(input, shape)
 }
 
-/** Options for {@link createKindClassifier}. */
+/**
+ * Options for {@link createKindClassifier}.
+ */
 export interface KindClassifierOpts {
 	/**
 	 * POI phrase lexicon (spec §3.1). When present, a `poi_query` scorer joins the rule set — injected, never imported,

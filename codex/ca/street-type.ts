@@ -85,7 +85,9 @@ export const CA_STREET_TYPES_FR: ReadonlySet<string> = new Set([
 	"sentier",
 ])
 
-/** Strip diacritics + lowercase so `Côte`/`cote`, `Allée`/`allee`, `Crescent`/`crescent` key alike. */
+/**
+ * Strip diacritics + lowercase so `Côte`/`cote`, `Allée`/`allee`, `Crescent`/`crescent` key alike.
+ */
 function foldToken(s: string): string {
 	return s
 		.toLowerCase()
@@ -94,7 +96,9 @@ function foldToken(s: string): string {
 		.replaceAll(/[^a-z]/g, "")
 }
 
-/** The English + French street-type vocabularies, both folded, for one position-agnostic lookup. */
+/**
+ * The English + French street-type vocabularies, both folded, for one position-agnostic lookup.
+ */
 const STREET_WORD_SET: ReadonlySet<string> = (() => {
 	const out = new Set<string>()
 

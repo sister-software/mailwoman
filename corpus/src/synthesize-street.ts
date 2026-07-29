@@ -171,7 +171,9 @@ export interface SynthesizedStreetRow {
 
 export interface StreetSynthesisOpts {
 	random?: () => number
-	/** Probability of emitting house_number alongside the street. Default 0.85. */
+	/**
+	 * Probability of emitting house_number alongside the street. Default 0.85.
+	 */
 	includeHouseNumberProb?: number
 	/**
 	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/ postcode components

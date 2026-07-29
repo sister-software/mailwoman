@@ -24,7 +24,9 @@ import { expect, test } from "@playwright/test"
 
 const execFileAsync = promisify(execFile)
 
-/** Docs/ workspace root — this file lives at docs/test/build/. */
+/**
+ * Docs/ workspace root — this file lives at docs/test/build/.
+ */
 const DOCS_ROOT = fileURLToPath(new URL("../..", import.meta.url))
 
 /**

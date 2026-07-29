@@ -21,7 +21,9 @@ import { repoRootPath } from "../../utils/repo.ts"
 import { formatPercent } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
-/** Samples a bucket needs before its off-map rate is reported rather than folded into the tail. */
+/**
+ * Samples a bucket needs before its off-map rate is reported rather than folded into the tail.
+ */
 const MIN_REPORTABLE_SAMPLES = 8
 
 interface OffMapRow {
@@ -31,23 +33,35 @@ interface OffMapRow {
 	srcCountry: string
 }
 
-/** Options for {@linkcode evalLatinOffmap}. */
+/**
+ * Options for {@linkcode evalLatinOffmap}.
+ */
 export interface EvalLatinOffmapOptions {
-	/** Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	model?: string
-	/** Abstention threshold. Default 0.5. */
+	/**
+	 * Abstention threshold. Default 0.5.
+	 */
 	abstain?: number
-	/** Dataset dir (`test-latin-offmap.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`test-latin-offmap.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode evalLatinOffmap}. */
+/**
+ * Result of {@linkcode evalLatinOffmap}.
+ */
 export interface EvalLatinOffmapResult {
 	n: number
 	handled: number
 }
 
-/** Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout. */
+/**
+ * Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout.
+ */
 export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Promise<EvalLatinOffmapResult> {
 	const modelDir = options.model || dataRootPath("coarse-placer", "model")
 	const abstain = options.abstain ?? 0.5

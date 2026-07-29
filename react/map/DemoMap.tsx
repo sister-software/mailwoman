@@ -25,7 +25,9 @@ import type { CSSProperties, ReactNode, Ref } from "react"
 import { Map } from "react-map-gl/maplibre"
 import type { MapProps, MapRef, ViewStateChangeEvent } from "react-map-gl/maplibre"
 
-/** The style a `<DemoMap>` renders — a style URL or an inline/composed `StyleSpecification`. */
+/**
+ * The style a `<DemoMap>` renders — a style URL or an inline/composed `StyleSpecification`.
+ */
 export type DemoMapStyle = NonNullable<MapProps["mapStyle"]>
 
 /**
@@ -37,25 +39,45 @@ export type DemoMapExtraProps = Partial<
 >
 
 export interface DemoMapProps {
-	/** The map style — host-composed `StyleSpecification` or a style URL. */
+	/**
+	 * The map style — host-composed `StyleSpecification` or a style URL.
+	 */
 	mapStyle: DemoMapStyle
-	/** Uncontrolled initial camera. Use this OR `viewState`, not both. */
+	/**
+	 * Uncontrolled initial camera. Use this OR `viewState`, not both.
+	 */
 	initialViewState?: MapProps["initialViewState"]
-	/** Controlled camera. Pair with `onMove` to persist it. */
+	/**
+	 * Controlled camera. Pair with `onMove` to persist it.
+	 */
 	viewState?: MapProps["viewState"]
-	/** Fired on every camera change (drag/zoom/rotate) — the seam for viewport-bias persistence. */
+	/**
+	 * Fired on every camera change (drag/zoom/rotate) — the seam for viewport-bias persistence.
+	 */
 	onMove?: (event: ViewStateChangeEvent) => void
-	/** Map projection. @default "globe" (matches the docs `DashboardMap`). */
+	/**
+	 * Map projection. @default "globe" (matches the docs `DashboardMap`).
+	 */
 	projection?: MapProps["projection"]
-	/** Forwarded to the underlying `<Map>` for imperative access (`useMap`/`flyTo` in later phases). */
+	/**
+	 * Forwarded to the underlying `<Map>` for imperative access (`useMap`/`flyTo` in later phases).
+	 */
 	mapRef?: Ref<MapRef>
-	/** Overlays, markers, and controls — rendered as `<Map>` children. Empty in phase 1. */
+	/**
+	 * Overlays, markers, and controls — rendered as `<Map>` children. Empty in phase 1.
+	 */
 	children?: ReactNode
-	/** Class on the wrapper element. */
+	/**
+	 * Class on the wrapper element.
+	 */
 	className?: string
-	/** Inline style on the wrapper element (sizing lives here or on `.mw-demo-map`). */
+	/**
+	 * Inline style on the wrapper element (sizing lives here or on `.mw-demo-map`).
+	 */
 	style?: CSSProperties
-	/** Remaining `<Map>` props DemoMap does not surface explicitly. */
+	/**
+	 * Remaining `<Map>` props DemoMap does not surface explicitly.
+	 */
 	mapProps?: DemoMapExtraProps
 }
 

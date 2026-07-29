@@ -22,21 +22,35 @@ import type { DemoResult, MailwomanClassifierLike, ResultNode } from "../../shar
 import { neuralClassifierLoadURLs } from "../../shared/resources.tsx"
 
 export interface DemoCompareProps {
-	/** The primary (left) parse result from the package's compare context. */
+	/**
+	 * The primary (left) parse result from the package's compare context.
+	 */
 	primary: ParseResult | null
-	/** Whether compare mode is on. */
+	/**
+	 * Whether compare mode is on.
+	 */
 	compareMode: boolean
-	/** The version selected to compare against, or `null`. */
+	/**
+	 * The version selected to compare against, or `null`.
+	 */
 	compareVersion: string | null
-	/** The primary version label. */
+	/**
+	 * The primary version label.
+	 */
 	primaryVersion: string
-	/** The selectable releases (for the compare release's `hasAnchor`). */
+	/**
+	 * The selectable releases (for the compare release's `hasAnchor`).
+	 */
 	releases: ReleaseInfo[]
-	/** Whether the CPU/WASM backend is forced. */
+	/**
+	 * Whether the CPU/WASM backend is forced.
+	 */
 	forceWASM: boolean
 }
 
-/** Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`. */
+/**
+ * Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`.
+ */
 export const DemoCompare: React.FC<DemoCompareProps> = ({
 	primary,
 	compareMode,

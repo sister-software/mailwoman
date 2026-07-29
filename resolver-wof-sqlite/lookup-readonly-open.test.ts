@@ -48,7 +48,9 @@ import { DatabaseSync } from "node:sqlite"
 // oxlint-disable-next-line import/first -- see above
 import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
-/** Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable. */
+/**
+ * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.
+ */
 function seedFixture(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
@@ -68,7 +70,9 @@ function seedFixture(path: string): void {
 	db.close()
 }
 
-/** The readOnly option recorded for the main-shard open of `path` (asserts exactly one such open). */
+/**
+ * The readOnly option recorded for the main-shard open of `path` (asserts exactly one such open).
+ */
 function readOnlyForOpenOf(path: string): boolean | undefined {
 	const opens = spy.opens.filter((o) => o.path === path)
 	expect(opens).toHaveLength(1)

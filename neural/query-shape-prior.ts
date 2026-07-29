@@ -34,7 +34,9 @@
  * Minimal subset of `QueryShape` this module consumes. Compatible with `@mailwoman/query-shape`'s exported `QueryShape`
  * type by shape — no import required.
  */
-/** Candidate count above which the shape prior is too diffuse to be worth applying. */
+/**
+ * Candidate count above which the shape prior is too diffuse to be worth applying.
+ */
 const MAX_PRIOR_CANDIDATES = 4
 
 export interface QueryShapeLike {
@@ -50,11 +52,15 @@ export interface RegionAbbreviationHitLike {
 export interface KnownFormatHitLike {
 	format: string
 	span: { start: number; end: number }
-	/** 0..1; ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower. */
+	/**
+	 * 0..1; ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
+	 */
 	confidence: number
 }
 
-/** Minimal subset of `TokenizedPiece` this module consumes. */
+/**
+ * Minimal subset of `TokenizedPiece` this module consumes.
+ */
 export interface TokenLike {
 	start: number
 	end: number
@@ -197,14 +203,18 @@ function applyScopedLocalityBias(
 	}
 }
 
-/** Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton. */
+/**
+ * Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton.
+ */
 const SCOPED_LOCALITY_BIAS = 2
 
 function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end
 }
 
-/** Element-wise add two matrices of equal shape. Returns a new matrix. */
+/**
+ * Element-wise add two matrices of equal shape. Returns a new matrix.
+ */
 export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
 	if (!priors.length) return emissions.map((row) => row.slice())
 	const out: number[][] = []

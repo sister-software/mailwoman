@@ -41,7 +41,9 @@ const SOURCES: GermanSource[] = [
 	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -75,7 +77,9 @@ function splitCSV(line: string): string[] {
 	return out
 }
 
-/** Stream real German tuples out of a cached OA zip (buffered `unzip -p`). */
+/**
+ * Stream real German tuples out of a cached OA zip (buffered `unzip -p`).
+ */
 function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 

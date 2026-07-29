@@ -27,11 +27,17 @@ import type { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 export interface CentroidFillOptions {
-	/** GeoNames postal dump dir (`<CC>.txt`). Omit to skip pass 2. */
+	/**
+	 * GeoNames postal dump dir (`<CC>.txt`). Omit to skip pass 2.
+	 */
 	geonamesDir?: string
-	/** The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only). Omit to skip passes 3–4. */
+	/**
+	 * The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only). Omit to skip passes 3–4.
+	 */
 	adminPath?: string
-	/** WOF repos root for the pass-4 `wof:hierarchy` read. Omit to skip pass 4. */
+	/**
+	 * WOF repos root for the pass-4 `wof:hierarchy` read. Omit to skip pass 4.
+	 */
 	reposDir?: string
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -111,7 +117,9 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 	return fixed
 }
 
-/** WOF id → repo-relative GeoJSON path: chunk the id into groups of 3, then `<id>.geojson`. */
+/**
+ * WOF id → repo-relative GeoJSON path: chunk the id into groups of 3, then `<id>.geojson`.
+ */
 function wofIDPath(id: number): string {
 	const s = String(id)
 	const parts: string[] = []
@@ -174,7 +182,9 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	return fixed
 }
 
-/** Run the fill ladder (passes 2–4) on an OPEN staging postcode DB. See the module docstring for priorities. */
+/**
+ * Run the fill ladder (passes 2–4) on an OPEN staging postcode DB. See the module docstring for priorities.
+ */
 export async function fillPostcodeCentroids(
 	db: DatabaseSync,
 	opts: CentroidFillOptions = {}

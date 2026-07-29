@@ -228,7 +228,9 @@ export const US_STREET_SUFFIX_VARIANTS = {
 	WELLS: ["WLS"],
 } as const satisfies Record<string, readonly string[]>
 
-/** Canonical USPS suffix (full word, uppercase per the publication). */
+/**
+ * Canonical USPS suffix (full word, uppercase per the publication).
+ */
 export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
@@ -254,7 +256,9 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
 	return out
 })()
 
-/** Preferred USPS abbreviation per canonical (`AVENUE → "AVE"`, `STREET → "ST"`). */
+/**
+ * Preferred USPS abbreviation per canonical (`AVENUE → "AVE"`, `STREET → "ST"`).
+ */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
 	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]])
 ) as Readonly<Record<USStreetSuffix, string>>
@@ -304,17 +308,27 @@ export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
  */
 export type StreetSuffix = USStreetSuffix
 
-/** A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "BLVD". */
+/**
+ * A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "BLVD".
+ */
 export type USPSStandardSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuffix][0]
 
-/** Any USPS-recognized suffix variant or abbreviation. */
+/**
+ * Any USPS-recognized suffix variant or abbreviation.
+ */
 export type StreetSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuffix][number]
 
-/** Result of a successful USPS street suffix lookup. */
+/**
+ * Result of a successful USPS street suffix lookup.
+ */
 export interface StreetSuffixMatch<S extends StreetSuffix = StreetSuffix> {
-	/** The matched canonical USPS street suffix, i.e. "STREET", "AVENUE". */
+	/**
+	 * The matched canonical USPS street suffix, i.e. "STREET", "AVENUE".
+	 */
 	suffix: S
-	/** The preferred USPS street suffix abbreviation, i.e. "ST", "AVE". */
+	/**
+	 * The preferred USPS street suffix abbreviation, i.e. "ST", "AVE".
+	 */
 	abbreviation: StreetSuffixAbbreviationRecord[S][0]
 }
 
@@ -332,7 +346,9 @@ export function lookupStreetSuffix(input: string | null | undefined): StreetSuff
 	return { suffix, abbreviation: US_STREET_SUFFIX_VARIANTS[suffix][0] }
 }
 
-/** Type-predicate: is the input a canonical USPS street suffix (uppercase full word, e.g. "STREET")? */
+/**
+ * Type-predicate: is the input a canonical USPS street suffix (uppercase full word, e.g. "STREET")?
+ */
 export function isStreetSuffix(input: unknown): input is StreetSuffix {
 	return typeof input === "string" && Object.hasOwn(US_STREET_SUFFIX_VARIANTS, input)
 }

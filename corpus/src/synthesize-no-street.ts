@@ -39,9 +39,7 @@
 
 import type { CanonicalRow } from "./types.ts"
 
-// -------------------------------------------------------------------------------------------------
-// Types
-// -------------------------------------------------------------------------------------------------
+// MARK: Types
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -66,7 +64,9 @@ export type NoStreetTemplate =
 
 export interface NoStreetSynthesisOpts {
 	random?: () => number
-	/** Override the template selection entirely (used by tests for deterministic coverage). */
+	/**
+	 * Override the template selection entirely (used by tests for deterministic coverage).
+	 */
 	forceTemplate?: NoStreetTemplate
 }
 
@@ -77,9 +77,7 @@ export interface SynthesizedNoStreetRow {
 	template: NoStreetTemplate
 }
 
-// -------------------------------------------------------------------------------------------------
-// Venue name pools
-// -------------------------------------------------------------------------------------------------
+// MARK: Venue name pools
 
 /**
  * Plain venue names — businesses without street-typing words in the name. Used as the easy-mode positive class for
@@ -171,9 +169,7 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 	["AU", ["Australia"]],
 ])
 
-// -------------------------------------------------------------------------------------------------
-// Synthesis
-// -------------------------------------------------------------------------------------------------
+// MARK: Synthesis
 
 function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!

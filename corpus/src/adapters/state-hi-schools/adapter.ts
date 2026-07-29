@@ -176,5 +176,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const stateHiSchoolsAdapter = createStateHiSchoolsAdapter()

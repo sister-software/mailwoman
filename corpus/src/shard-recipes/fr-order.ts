@@ -47,14 +47,22 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 const SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
 
-/** Ordinal suffixes used in French house numbers (BAN corpus), to cover the "8 bis" sub-mode. */
+/**
+ * Ordinal suffixes used in French house numbers (BAN corpus), to cover the "8 bis" sub-mode.
+ */
 const ORDINAL_SUFFIXES: readonly string[] = ["bis", "ter", "quater"]
-/** Probability that a row gets an ordinal suffix injected (matches the golden's ~10-15% rate). */
+/**
+ * Probability that a row gets an ordinal suffix injected (matches the golden's ~10-15% rate).
+ */
 const ORDINAL_PROB = 0.12
-/** Probability that a locality renders ALL-CAPS (another sub-mode: "SAINTE-LIVRADE-SUR-LOT"). */
+/**
+ * Probability that a locality renders ALL-CAPS (another sub-mode: "SAINTE-LIVRADE-SUR-LOT").
+ */
 const ALLCAPS_PROB = 0.1
 
-/** A real FR tuple read out of the cached OA zip. */
+/**
+ * A real FR tuple read out of the cached OA zip.
+ */
 interface FrTuple {
 	house_number: string
 	street: string
@@ -62,7 +70,9 @@ interface FrTuple {
 	postcode: string
 }
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields with doubled-quote escaping). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields with doubled-quote escaping).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -158,7 +168,9 @@ function maybeAddOrdinal(random: () => number, house_number: string): string {
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`
 }
 
-/** Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes". */
+/**
+ * Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes".
+ */
 function renderCanonical(
 	hn: string,
 	street: string,

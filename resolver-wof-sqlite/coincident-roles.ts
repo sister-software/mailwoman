@@ -48,7 +48,9 @@ import { haversineKm } from "@mailwoman/spatial"
  */
 export const COINCIDENT_ROLES_TABLE = "coincident_roles"
 
-/** A place that plays multiple admin roles — one row of the relation, keyed by `admin_id`. */
+/**
+ * A place that plays multiple admin roles — one row of the relation, keyed by `admin_id`.
+ */
 export interface CoincidentRole {
 	localityID: number
 	relationshipType: "city-state" | "capital-seat" | "consolidated-county"
@@ -58,13 +60,17 @@ export interface CoincidentRole {
 }
 
 export interface BuildCoincidentRolesOpts {
-	/** Drop + rebuild the table if it already exists. Default true (the build is cheap + idempotent). */
+	/**
+	 * Drop + rebuild the table if it already exists. Default true (the build is cheap + idempotent).
+	 */
 	drop?: boolean
 	/**
 	 * Relative tolerance: a pair is kept when centroid distance ≤ `toleranceFraction × bbox-diagonal`. Default 0.15.
 	 */
 	toleranceFraction?: number
-	/** Floor (km) under the relative tolerance, so small-bbox city-states still qualify. Default 12. */
+	/**
+	 * Floor (km) under the relative tolerance, so small-bbox city-states still qualify. Default 12.
+	 */
 	minToleranceKm?: number
 	/**
 	 * Centroid distance (km) below which a region-tier pair is classed `city-state` (metadata only). Default 2.
@@ -195,7 +201,9 @@ export function buildCoincidentRoles(
 	return { created: true, rowCount, byCountry, durationMs: Date.now() - start }
 }
 
-/** True iff the relation table exists. Used by the resolver to decide whether completion can run. */
+/**
+ * True iff the relation table exists. Used by the resolver to decide whether completion can run.
+ */
 export function coincidentRolesExists(db: DatabaseSync): boolean {
 	return tableExists(db, COINCIDENT_ROLES_TABLE)
 }

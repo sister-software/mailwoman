@@ -14,12 +14,18 @@
 
 import type { VectorSourceSpecification } from "maplibre-gl"
 
-/** Segments used to approximate a circle as a polygon ring. */
+/**
+ * Segments used to approximate a circle as a polygon ring.
+ */
 const CIRCLE_SEGMENTS = 64
 
-/** Origin of the tile worker serving basemap and overlay tiles. CORS-restricted to localhost and the docs domains. */
+/**
+ * Origin of the tile worker serving basemap and overlay tiles. CORS-restricted to localhost and the docs domains.
+ */
 export const TILE_WORKER_URL = "https://tiles.sister.software"
-/** TileJSON the map reads before requesting basemap tiles. */
+/**
+ * TileJSON the map reads before requesting basemap tiles.
+ */
 export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
 
 /**
@@ -54,7 +60,9 @@ export function approxCircleGeometry(
 	return { type: "Polygon", coordinates: [ring] }
 }
 
-/** Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays. */
+/**
+ * Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays.
+ */
 export function geomBounds(geometry: PlaceGeometry): {
 	minLon: number
 	minLat: number
@@ -121,7 +129,9 @@ export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<
 	}
 }
 
-/** Fetch + normalize the protomaps v4 basemap tilejson into a MapLibre vector source spec. */
+/**
+ * Fetch + normalize the protomaps v4 basemap tilejson into a MapLibre vector source spec.
+ */
 export async function fetchBasemapSource(): Promise<VectorSourceSpecification> {
 	const response = await fetch(BASEMAP_TILEJSON_URL)
 

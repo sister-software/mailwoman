@@ -32,9 +32,13 @@ import type { NeuralAddressClassifier } from "./classifier.ts"
 import { STAGE2_TAGS } from "./labels.ts"
 
 export interface NeuralProposalClassifierConfig {
-	/** Stable id surfaced as `source_id` on every proposal (e.g. `neural-v0.2.0-en-us`). */
+	/**
+	 * Stable id surfaced as `source_id` on every proposal (e.g. `neural-v0.2.0-en-us`).
+	 */
 	id: string
-	/** The underlying neural classifier instance. */
+	/**
+	 * The underlying neural classifier instance.
+	 */
 	classifier: NeuralAddressClassifier
 	/**
 	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set (coarse + venue/street/house_number).
@@ -42,13 +46,19 @@ export interface NeuralProposalClassifierConfig {
 	 * back-compat risk.
 	 */
 	emits?: readonly ComponentTag[]
-	/** Locales this classifier is active for. `["*"]` (locale-agnostic) by default. */
+	/**
+	 * Locales this classifier is active for. `["*"]` (locale-agnostic) by default.
+	 */
 	locales?: readonly (string | "*")[]
-	/** Default penalty applied to emitted proposals. Default 0. */
+	/**
+	 * Default penalty applied to emitted proposals. Default 0.
+	 */
 	penalty?: number
 }
 
-/** Build a `ProposalClassifier` backed by a `NeuralAddressClassifier`. */
+/**
+ * Build a `ProposalClassifier` backed by a `NeuralAddressClassifier`.
+ */
 export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConfig): ProposalClassifier {
 	const emits = cfg.emits ?? STAGE2_TAGS
 	const emitsSet = new Set<ComponentTag>(emits as readonly ComponentTag[])

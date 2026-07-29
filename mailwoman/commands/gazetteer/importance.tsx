@@ -29,13 +29,19 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-/** Permanent redirect. */
+/**
+ * Permanent redirect.
+ */
 const HTTP_MOVED_PERMANENTLY = 301
 
-/** Temporary redirect. */
+/**
+ * Temporary redirect.
+ */
 const HTTP_FOUND = 302
 
-/** Columns a Wikidata concordance row needs before it carries a usable mapping. */
+/**
+ * Columns a Wikidata concordance row needs before it carries a usable mapping.
+ */
 const MIN_WIKIDATA_COLUMNS = 5
 
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"

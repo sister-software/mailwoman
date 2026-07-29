@@ -56,7 +56,9 @@ function initialAddress(): string {
 	return new URL(globalThis.location.href).searchParams.get("q") ?? DEFAULT_ADDRESS
 }
 
-/** The client-only demo body: build the real runtime, then render `<GeocoderDemo>` with docs panels. */
+/**
+ * The client-only demo body: build the real runtime, then render `<GeocoderDemo>` with docs panels.
+ */
 const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean }> = ({
 	initialCenter,
 	debugDefault = false,

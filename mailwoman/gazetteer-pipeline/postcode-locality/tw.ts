@@ -57,12 +57,18 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 
-/** Shortest romanised stem still specific enough to match a Taiwanese place name. */
+/**
+ * Shortest romanised stem still specific enough to match a Taiwanese place name.
+ */
 const MIN_ENGLISH_STEM_LENGTH = 3
 
-/** Extra non-containing candidates kept for the soft-score set (JP/KR precedent) */
+/**
+ * Extra non-containing candidates kept for the soft-score set (JP/KR precedent)
+ */
 const NEARBY_KEEP = 2
-/** No-polygon fallback: name+proximity net around the official center. */
+/**
+ * No-polygon fallback: name+proximity net around the official center.
+ */
 const FALLBACK_RADIUS_KM = 20
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
@@ -72,14 +78,20 @@ const FALLBACK_RADIUS_KM = 20
  * otherwise swallow the district tier.
  */
 const PLACETYPES = ["locality", "county", "localadmin", "borough", "neighbourhood"] as const
-/** District-tier placetypes — the rows that ARE the 區/鄉/鎮/市 tier when present inside the polygon. */
+/**
+ * District-tier placetypes — the rows that ARE the 區/鄉/鎮/市 tier when present inside the polygon.
+ */
 const DISTRICT_TIER = new Set(["county", "localadmin"])
 const DISTRICT_SUFFIX = /[區鄉鎮市]$/
 
-/** The county/city prefix (直轄市/縣/市) is always exactly 3 characters (371/371 rows verified). */
+/**
+ * The county/city prefix (直轄市/縣/市) is always exactly 3 characters (371/371 rows verified).
+ */
 const COUNTY_PREFIX_LENGTH = 3
 
-/** Fold the 臺/台 orthographic variants (both are current; sources disagree row-by-row). */
+/**
+ * Fold the 臺/台 orthographic variants (both are current; sources disagree row-by-row).
+ */
 export function normHan(s: string): string {
 	return s
 		.normalize("NFC")
@@ -107,7 +119,9 @@ function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine distance in km (asin form — same as the JP/KR builders). */
+/**
+ * Haversine distance in km (asin form — same as the JP/KR builders).
+ */
 function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
 	const R = 6371
 	const p1 = toRad(aLat)
@@ -118,19 +132,29 @@ function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): nu
 	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
-/** UTC ISO-8601 to the second. */
+/**
+ * UTC ISO-8601 to the second.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
 export interface PostalDistrict {
-	/** Full 行政區名, e.g. 臺北市中正區. */
+	/**
+	 * Full 行政區名, e.g. 臺北市中正區.
+	 */
 	name: string
-	/** County/city prefix (exactly 3 chars), e.g. 臺北市. */
+	/**
+	 * County/city prefix (exactly 3 chars), e.g. 臺北市.
+	 */
 	county: string
-	/** District remainder, e.g. 中正區. */
+	/**
+	 * District remainder, e.g. 中正區.
+	 */
 	district: string
-	/** 3-digit postal code (the admin-granularity key). */
+	/**
+	 * 3-digit postal code (the admin-granularity key).
+	 */
 	postcode: string
 	lat: number
 	lon: number
@@ -166,7 +190,9 @@ export function loadPostalDistricts(path: string): PostalDistrict[] {
 }
 
 export interface DivisionPolygon {
-	/** Overture names.primary (Chinese full form, e.g. 萬華區). */
+	/**
+	 * Overture names.primary (Chinese full form, e.g. 萬華區).
+	 */
 	name: string
 	nameHan: string
 	/**
@@ -174,13 +200,17 @@ export interface DivisionPolygon {
 	 * names (the whole `county` tier + the Kaohsiung `neighbourhood` districts).
 	 */
 	nameEn: string | null
-	/** Wikidata QID from the joined `division` row — the principled WOF-concordance bridge. */
+	/**
+	 * Wikidata QID from the joined `division` row — the principled WOF-concordance bridge.
+	 */
 	wikidata: string | null
 	geometry: GeojsonGeometry
 	bbox: [number, number, number, number] // minLon, minLat, maxLon, maxLat
 }
 
-/** Load the district polygons fetched from the Overture divisions theme (subtype=locality slice). */
+/**
+ * Load the district polygons fetched from the Overture divisions theme (subtype=locality slice).
+ */
 export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 	const out: DivisionPolygon[] = []
 
@@ -253,14 +283,20 @@ export interface PostcodeLocalityTWOptions {
 
 interface AdminPlace {
 	pid: number
-	/** Canonical (romanized) spr name. */
+	/**
+	 * Canonical (romanized) spr name.
+	 */
 	nm: string
 	placetype: string
 	la: number
 	lo: number
-	/** NormHan'd Chinese name forms from the names table (empty for the county tier — see header). */
+	/**
+	 * NormHan'd Chinese name forms from the names table (empty for the county tier — see header).
+	 */
 	hanNames: Set<string>
-	/** NormEn'd romanized stems (canonical spr.name + eng names) — matched against Overture's en name. */
+	/**
+	 * NormEn'd romanized stems (canonical spr.name + eng names) — matched against Overture's en name.
+	 */
 	engNames: Set<string>
 }
 

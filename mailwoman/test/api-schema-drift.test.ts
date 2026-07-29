@@ -67,17 +67,25 @@ import { z } from "zod"
 
 import type { GeocodeResult } from "../geocode-core.ts"
 
-/** The schema's declared shape, rebuilt as a non-`.loose()` object — same fields, no catchall index signature. */
+/**
+ * The schema's declared shape, rebuilt as a non-`.loose()` object — same fields, no catchall index signature.
+ */
 const KnownFieldsSchema = z.object(GeocodeOutcomeSchema.shape)
 
 type Inferred = z.infer<typeof GeocodeOutcomeSchema>
 type KnownInferred = z.infer<typeof KnownFieldsSchema>
 
-/** True iff `A` and `B` are exactly the same type (the standard distributive-conditional identity trick). */
+/**
+ * True iff `A` and `B` are exactly the same type (the standard distributive-conditional identity trick).
+ */
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
-/** True iff `A` is structurally assignable to `B` (wrapped in a tuple so a union `A` doesn't distribute). */
+/**
+ * True iff `A` is structurally assignable to `B` (wrapped in a tuple so a union `A` doesn't distribute).
+ */
 type IsAssignable<A, B> = [A] extends [B] ? true : false
-/** Forces a compile error when its argument isn't literally `true` — the "assertion" for the checks below. */
+/**
+ * Forces a compile error when its argument isn't literally `true` — the "assertion" for the checks below.
+ */
 type Expect<T extends true> = T
 
 // Exact key-set parity — see file header. Fails to compile on any field added, removed, or renamed on

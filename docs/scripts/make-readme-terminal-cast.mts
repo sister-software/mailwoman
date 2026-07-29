@@ -21,7 +21,9 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical. */
+/**
+ * Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical.
+ */
 function mulberry32(seed: number): () => number {
 	let state = seed >>> 0
 
@@ -41,7 +43,9 @@ const uniform = (low: number, high: number) => low + (high - low) * random()
 const WIDTH = 80
 const HEIGHT = 12
 
-/** Brand #ff00b0. */
+/**
+ * Brand #ff00b0.
+ */
 const MAGENTA = "\u001B[38;5;199m"
 const DIM = "\u001B[38;5;245m"
 const GREEN = "\u001B[38;5;114m"

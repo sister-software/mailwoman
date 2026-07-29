@@ -34,7 +34,9 @@ import { resolve } from "node:path"
 
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
-/** Workspace root the artifacts are linked into. Everything below resolves against it. */
+/**
+ * Workspace root the artifacts are linked into. Everything below resolves against it.
+ */
 const PKG_DIR = repoRootPath("neural-weights-fr-fr")
 
 /**
@@ -54,7 +56,9 @@ function linkForce(src: string, dest: string): void {
 	renameSync(tmp, dest)
 }
 
-/** Remove a leftover local file/symlink so the #1179 base-weights fallback engages. */
+/**
+ * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
+ */
 function removeIfPresent(dest: string): void {
 	try {
 		lstatSync(dest)
@@ -68,9 +72,13 @@ function removeIfPresent(dest: string): void {
 removeIfPresent(resolve(PKG_DIR, "model.onnx"))
 removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
 
-/** --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------. */
+/**
+ * --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------.
+ */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
-/** Country-surface lexicon generated into the repo by the codex build. */
+/**
+ * Country-surface lexicon generated into the repo by the codex build.
+ */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
@@ -87,11 +95,17 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
-/** WOF postcode database the FR postcode binary is built from — the international build, not the US one. */
+/**
+ * WOF postcode database the FR postcode binary is built from — the international build, not the US one.
+ */
 const FR_WOF_DB = dataRootPath("wof", "postalcode-intl.db")
-/** Compiled CLI used to run the build steps below. Requires `yarn compile` to have run. */
+/**
+ * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
+ */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
-/** Where the postcode binary is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
+ */
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-fr.bin")
 
 if (existsSync(POSTCODE_BIN_DEST)) {
@@ -125,7 +139,9 @@ if (existsSync(POSTCODE_BIN_DEST)) {
  * (release-sequenced).
  */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-fr-fr.bin")
-/** Where the locale FST is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const FST_DEST = resolve(PKG_DIR, "fst-fr-fr.bin")
 
 if (existsSync(FST_SRC)) {
@@ -143,7 +159,9 @@ if (existsSync(FST_SRC)) {
  * it.
  */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-/** Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {

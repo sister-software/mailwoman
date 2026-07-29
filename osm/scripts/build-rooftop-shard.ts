@@ -45,7 +45,9 @@ interface BuildArgs {
 	pbf: string
 	release: string
 	output: string
-	/** #250: recover the street for no-`addr:street` points from the nearest named highway. */
+	/**
+	 * #250: recover the street for no-`addr:street` points from the nearest named highway.
+	 */
 	recover: boolean
 	recoverRadiusKm: number
 }

@@ -29,26 +29,42 @@ import type { Comparison, FellegiSunterModel } from "./fellegi-sunter.ts"
  */
 const EPSILON = 1e-9
 
-/** Reduce a record pair to its agreement pattern — the per-comparison level index (`-1` = missing). */
+/**
+ * Reduce a record pair to its agreement pattern — the per-comparison level index (`-1` = missing).
+ */
 export function agreementPattern<R>(comparisons: Comparison<R>[], a: R, b: R): number[] {
 	return comparisons.map((comparison) => comparison.assess(a, b))
 }
 
-/** Options for {@link estimateParameters}. */
+/**
+ * Options for {@link estimateParameters}.
+ */
 export interface EmOptions {
-	/** Hard iteration cap. Default 100. */
+	/**
+	 * Hard iteration cap. Default 100.
+	 */
 	maxIterations?: number
-	/** Convergence tolerance on the largest parameter change between iterations. Default 1e-6. */
+	/**
+	 * Convergence tolerance on the largest parameter change between iterations. Default 1e-6.
+	 */
 	tolerance?: number
-	/** Starting prior match rate. Defaults to the model's `lambda`. */
+	/**
+	 * Starting prior match rate. Defaults to the model's `lambda`.
+	 */
 	initialLambda?: number
 }
 
-/** The fitted model plus convergence diagnostics. */
+/**
+ * The fitted model plus convergence diagnostics.
+ */
 export interface EmResult<R> {
-	/** The input model with every level's `m`/`u` and the prior `lambda` re-estimated. */
+	/**
+	 * The input model with every level's `m`/`u` and the prior `lambda` re-estimated.
+	 */
 	model: FellegiSunterModel<R>
-	/** The estimated prior match rate. */
+	/**
+	 * The estimated prior match rate.
+	 */
 	lambda: number
 	iterations: number
 	converged: boolean

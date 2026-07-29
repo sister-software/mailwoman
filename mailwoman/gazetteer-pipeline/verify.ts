@@ -35,21 +35,29 @@ export interface VerifyResult {
 }
 
 export interface VerifyBaseline {
-	/** ISO2 → required node placetypes. A listed country MUST have ≥1 current spr row of each placetype. */
+	/**
+	 * ISO2 → required node placetypes. A listed country MUST have ≥1 current spr row of each placetype.
+	 */
 	requiredNodes: Record<string, ReadonlyArray<"country" | "region">>
 	minRows: number
 	minCountries: number
 }
 
-/** The committed baseline (deliberate updates only — see `verify-baseline.ts`). */
+/**
+ * The committed baseline (deliberate updates only — see `verify-baseline.ts`).
+ */
 export function loadDefaultBaseline(): VerifyBaseline {
 	return DEFAULT_VERIFY_BASELINE
 }
 
-/** The #1015 Overture-extent spot-check set — checked only when the country has region rows at all. */
+/**
+ * The #1015 Overture-extent spot-check set — checked only when the country has region rows at all.
+ */
 const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 
-/** Run the structural checks against an (open) admin DB. Pure SQL — no network, no model. */
+/**
+ * Run the structural checks against an (open) admin DB. Pure SQL — no network, no model.
+ */
 export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
 	const tableExists = (name: string): boolean =>

@@ -174,5 +174,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const stateNyNotariesAdapter = createStateNyNotariesAdapter()

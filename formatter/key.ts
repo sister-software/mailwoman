@@ -45,9 +45,13 @@ const KEY_FIELD_ORDER = [
 	"country",
 ] as const satisfies readonly ComponentTag[]
 
-/** Options accepted by {@linkcode canonicalKey}. */
+/**
+ * Options accepted by {@linkcode canonicalKey}.
+ */
 export interface CanonicalKeyOptions {
-	/** Field separator in the emitted key. Default `"|"` — preserves field boundaries for blocking. */
+	/**
+	 * Field separator in the emitted key. Default `"|"` — preserves field boundaries for blocking.
+	 */
 	separator?: string
 }
 

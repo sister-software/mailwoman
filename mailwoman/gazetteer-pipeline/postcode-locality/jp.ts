@@ -46,21 +46,29 @@ import { sealDatabase } from "@mailwoman/core/utils"
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
  * even, which is what keeps repeated centroid rounding unbiased.
  */
-/** Columns a Japan Post KEN_ALL row needs before it is usable. */
+/**
+ * Columns a Japan Post KEN_ALL row needs before it is usable.
+ */
 const MIN_KEN_ALL_COLUMNS = 6
 
-/** Digits in a JIS local-government code, the first KEN_ALL field. */
+/**
+ * Digits in a JIS local-government code, the first KEN_ALL field.
+ */
 const JIS_CODE_LENGTH = 7
 
 const ROUND_HALF_DIGIT = 5
 
 const MATCH_RADIUS_KM = 15
-/** Extra non-containing candidates kept for the soft-score set. */
+/**
+ * Extra non-containing candidates kept for the soft-score set.
+ */
 const NEARBY_KEEP = 2
 const PLACETYPES = ["locality", "county", "localadmin", "borough"] as const
 const SUFFIX = /(shi|ku|cho|machi|gun|ken|fu|to|son|mura|ward|si|gu|dong|eup|myeon|ri)$/
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -131,7 +139,9 @@ function pyRound(x: number, nd = 0): number {
 	return neg ? -num : num
 }
 
-/** Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip). */
+/**
+ * Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip).
+ */
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
@@ -156,12 +166,16 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 	return nw.length >= 2 && norm(postalMuni).includes(nw)
 }
 
-/** Python `math.radians`. */
+/**
+ * Python `math.radians`.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form). */
+/**
+ * Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form).
+ */
 function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
 	const R = 6371
 	const p1 = toRad(aLat)
@@ -172,7 +186,9 @@ function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): nu
 	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
 }
 
-/** JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}. */
+/**
+ * JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}.
+ */
 function loadKenall(path: string): Map<string, string> {
 	const out = new Map<string, string>()
 	const text = new TextDecoder("shift_jis").decode(readFileSync(path))
@@ -189,7 +205,9 @@ function loadKenall(path: string): Map<string, string> {
 	return out
 }
 
-/** GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins). */
+/**
+ * GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins).
+ */
 function loadGeonamesPoints(path: string): Map<string, [number, number]> {
 	const out = new Map<string, [number, number]>()
 
@@ -208,7 +226,9 @@ function loadGeonamesPoints(path: string): Map<string, [number, number]> {
 	return out
 }
 
-/** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
+/**
+ * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }

@@ -46,27 +46,41 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 
-/** Options for {@linkcode generateCapabilityManifest}. */
+/**
+ * Options for {@linkcode generateCapabilityManifest}.
+ */
 export interface CapabilityManifestOptions {
-	/** ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	model?: string
-	/** SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	tokenizer?: string
-	/** Model card JSON. Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model card JSON. Default `neural-weights-en-us/model-card.json`.
+	 */
 	modelCard?: string
-	/** Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	anchorLookup?: string
-	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	/**
+	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 */
 	gazetteerLexicon?: string
-	/** Surgically insert the `capabilities` block into the model card (else dry run). */
+	/**
+	 * Surgically insert the `capabilities` block into the model card (else dry run).
+	 */
 	write?: boolean
 }
 
-// -------------------------------------------------------------------------------------------------
-// Tier + locale matrix
-// -------------------------------------------------------------------------------------------------
+// MARK: Tier + locale matrix
 
-/** Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides). */
+/**
+ * Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides).
+ */
 const TIERS: Record<string, ScorerOverrides> = {
 	// Production default — anchor + gazetteer both fed (no override needed; createScorer's defaults).
 	server: {},
@@ -76,9 +90,13 @@ const TIERS: Record<string, ScorerOverrides> = {
 }
 
 interface LocaleEvalSpec {
-	/** The codex address-system this locale maps to (`us`, `fr`, …). */
+	/**
+	 * The codex address-system this locale maps to (`us`, `fr`, …).
+	 */
 	system: SystemCode
-	/** Eval JSONL files (raw + components). Multiple files are concatenated. */
+	/**
+	 * Eval JSONL files (raw + components). Multiple files are concatenated.
+	 */
 	files: string[]
 }
 
@@ -97,7 +115,9 @@ const LOCALES: LocaleEvalSpec[] = [
 	{ system: "fr", files: ["data/eval/external/fr-street-prefix-real.jsonl"] },
 ]
 
-/** The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts). */
+/**
+ * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
+ */
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -126,9 +146,7 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-// -------------------------------------------------------------------------------------------------
-// Scoring (unfolded exact-match per-tag F1 — score-affix.ts machinery)
-// -------------------------------------------------------------------------------------------------
+// MARK: Scoring (unfolded exact-match per-tag F1 — score-affix.ts machinery)
 
 interface Row {
 	raw: string
@@ -152,7 +170,9 @@ function loadRows(files: string[]): Row[] {
 
 const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
 
-/** Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts. */
+/**
+ * Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts.
+ */
 async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
 	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
@@ -194,11 +214,11 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	return out
 }
 
-// -------------------------------------------------------------------------------------------------
-// Build the manifest
-// -------------------------------------------------------------------------------------------------
+// MARK: Build the manifest
 
-/** `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits. */
+/**
+ * `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits.
+ */
 interface TagCapability {
 	maskOffF1: number
 	maskOnF1?: number
@@ -289,11 +309,11 @@ function rowsHaveTag(rows: Row[], tag: string): boolean {
 	return false
 }
 
-// -------------------------------------------------------------------------------------------------
-// Entry
-// -------------------------------------------------------------------------------------------------
+// MARK: Entry
 
-/** Measure the per-tier × system × tag capability manifest; optionally patch it into the model card. */
+/**
+ * Measure the per-tier × system × tag capability manifest; optionally patch it into the model card.
+ */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
 		model: options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),

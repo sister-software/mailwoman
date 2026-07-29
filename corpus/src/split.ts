@@ -46,16 +46,24 @@ export interface SplitOptions {
 	holdouts?: Record<string, readonly string[]>
 }
 
-/** Output manifest: source_id lists per split. */
+/**
+ * Output manifest: source_id lists per split.
+ */
 export interface SplitManifest {
 	train: string[]
 	val: string[]
 	test: string[]
-	/** Echoes the holdouts used, so the manifest is self-describing. */
+	/**
+	 * Echoes the holdouts used, so the manifest is self-describing.
+	 */
 	holdouts: Record<string, readonly string[]>
-	/** Corpus version stamped onto the manifest. Read from the first row. */
+	/**
+	 * Corpus version stamped onto the manifest. Read from the first row.
+	 */
 	corpus_version: string
-	/** Counts for quick sanity checks. */
+	/**
+	 * Counts for quick sanity checks.
+	 */
 	counts: { train: number; val: number; test: number; total: number }
 }
 
@@ -140,7 +148,9 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	}
 }
 
-/** Lightweight deterministic 0..(n-1) bucket from a string id. */
+/**
+ * Lightweight deterministic 0..(n-1) bucket from a string id.
+ */
 export function hashBucket(id: string, n: number): number {
 	const digest = createHash("sha256").update(id).digest()
 	// Read 4 bytes as uint32 to avoid bigint overhead.
@@ -171,7 +181,9 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 	await writeFile(join(outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
 }
 
-/** Type re-export for callers that want to ingest LabeledRow specifically. */
+/**
+ * Type re-export for callers that want to ingest LabeledRow specifically.
+ */
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**

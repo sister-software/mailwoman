@@ -82,9 +82,13 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	),
 ]
 
-/** The conventional admin source the fold copies from. */
+/**
+ * The conventional admin source the fold copies from.
+ */
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
-/** The conventional candidate-build output. */
+/**
+ * The conventional candidate-build output.
+ */
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 
 /**
@@ -94,17 +98,23 @@ export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
 	return join(dataRoot, "wof")
 }
 
-/** `<data-root>/geonames`, the per-country GeoNames dump dir. */
+/**
+ * `<data-root>/geonames`, the per-country GeoNames dump dir.
+ */
 export function geonamesDir(dataRoot: string = mailwomanDataRoot()): string {
 	return join(dataRoot, "geonames")
 }
 
-/** `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir (#936 language tags). */
+/**
+ * `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir (#936 language tags).
+ */
 export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): string {
 	return join(dataRoot, "geonames-alternate")
 }
 
-/** Resolve the canonical postcode-shard filenames to absolute paths, keeping only those present. */
+/**
+ * Resolve the canonical postcode-shard filenames to absolute paths, keeping only those present.
+ */
 export function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
@@ -113,13 +123,21 @@ export function resolvePostcodeShards(
 }
 
 export interface FoldOptions {
-	/** Source admin (unified-WOF) DB — read via the copy, never mutated. */
+	/**
+	 * Source admin (unified-WOF) DB — read via the copy, never mutated.
+	 */
 	adminIn: string
-	/** Destination admin DB carrying the folded GeoNames names. MUST differ from `adminIn`. */
+	/**
+	 * Destination admin DB carrying the folded GeoNames names. MUST differ from `adminIn`.
+	 */
 	adminOut: string
-	/** ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold (default {@link DEFAULT_FOLD_COUNTRIES}). */
+	/**
+	 * ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold (default {@link DEFAULT_FOLD_COUNTRIES}).
+	 */
 	countries?: readonly string[]
-	/** Dir holding `<CC>.txt` GeoNames dumps (default {@link DEFAULT_FOLD_COUNTRIES}). */
+	/**
+	 * Dir holding `<CC>.txt` GeoNames dumps (default {@link DEFAULT_FOLD_COUNTRIES}).
+	 */
 	geonamesDir?: string
 	/**
 	 * #267: the countries to ALSO fold A-class admin (PCLI + ADM1) for, linking the locality→region→country ancestry.
@@ -180,11 +198,17 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 }
 
 export interface BuildOptions {
-	/** Admin DB to build the candidate from (the folded one for the durable recipe). */
+	/**
+	 * Admin DB to build the candidate from (the folded one for the durable recipe).
+	 */
 	adminDb: string
-	/** Candidate-DB output path. */
+	/**
+	 * Candidate-DB output path.
+	 */
 	out: string
-	/** Absolute postcode-shard paths to fold in (default {@link resolvePostcodeShards}). */
+	/**
+	 * Absolute postcode-shard paths to fold in (default {@link resolvePostcodeShards}).
+	 */
 	postcodeShards?: readonly string[]
 	onProgress?: (phase: string, message: string) => void
 }
@@ -236,15 +260,25 @@ export function promoteCandidate(candidateDb: string, dataRoot: string = mailwom
 }
 
 export interface PublishOptions {
-	/** Candidate DB to publish. */
+	/**
+	 * Candidate DB to publish.
+	 */
 	candidateDb: string
-	/** Dated, immutable gazetteer version, e.g. `2026-06-27a` (see {@link defaultGazetteerVersion}). */
+	/**
+	 * Dated, immutable gazetteer version, e.g. `2026-06-27a` (see {@link defaultGazetteerVersion}).
+	 */
 	version: string
-	/** Path to `scripts/publish-demo-assets-to-r2.py`. */
+	/**
+	 * Path to `scripts/publish-demo-assets-to-r2.py`.
+	 */
 	uploadScript: string
-	/** A staging dir; the candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`. */
+	/**
+	 * A staging dir; the candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
+	 */
 	stageDir: string
-	/** `docs/src/shared/resources.tsx` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump. */
+	/**
+	 * `docs/src/shared/resources.tsx` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
+	 */
 	resourcesFile?: string
 	bucket?: string
 	prefix?: string
@@ -253,9 +287,13 @@ export interface PublishOptions {
 }
 
 export interface PublishResult {
-	/** The R2 object key. */
+	/**
+	 * The R2 object key.
+	 */
 	key: string
-	/** Whether `ADMIN_GAZETTEER_VERSION` was bumped in the resources file. */
+	/**
+	 * Whether `ADMIN_GAZETTEER_VERSION` was bumped in the resources file.
+	 */
 	bumped: boolean
 }
 

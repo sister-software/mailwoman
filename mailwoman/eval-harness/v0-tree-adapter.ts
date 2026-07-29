@@ -34,11 +34,15 @@ import type { ClassificationRecord } from "mailwoman"
 
 export interface AdaptResult {
 	tree: AddressTree
-	/** Component values that could not be located in raw and were dropped. */
+	/**
+	 * Component values that could not be located in raw and were dropped.
+	 */
 	dropped: number
 }
 
-/** Find `value` in `raw` at or after `from`, case-insensitive fallback. Returns [start,end) or null. */
+/**
+ * Find `value` in `raw` at or after `from`, case-insensitive fallback. Returns [start,end) or null.
+ */
 function locate(raw: string, value: string, from: number): [number, number] | null {
 	if (!value) return null
 	let i = raw.indexOf(value, from)

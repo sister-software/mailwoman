@@ -17,7 +17,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { WOFPostcodeLookup } from "./postcode-point-lookup.ts"
 
-/** Create a minimal postcode shard with the columns the lookup reads. */
+/**
+ * Create a minimal postcode shard with the columns the lookup reads.
+ */
 function seedShard(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
 	const db = new DatabaseSync(path)
 	db.exec(

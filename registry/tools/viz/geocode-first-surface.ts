@@ -39,14 +39,18 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Options for {@linkcode geocodeFirstSurface}. */
+/**
+ * Options for {@linkcode geocodeFirstSurface}.
+ */
 export interface GeocodeFirstSurfaceOptions {
 	/**
 	 * Illustrative prior λ. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field model with phone
 	 * + spatial exact-key); here we want the boundary visible in a two-axis slice. Default 0.02.
 	 */
 	lambda?: number
-	/** Output HTML path. Default `/tmp/geocode-first-surface.html`. */
+	/**
+	 * Output HTML path. Default `/tmp/geocode-first-surface.html`.
+	 */
 	outHtml?: string
 }
 
@@ -61,14 +65,18 @@ interface Level {
 	maxKm?: number
 }
 
-/** Registry/resolve.ts → NAME_LEVELS. */
+/**
+ * Registry/resolve.ts → NAME_LEVELS.
+ */
 const NAME_LEVELS: Level[] = [
 	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
 
-/** Match/distance.ts → DEFAULT_DISTANCE_LEVELS. */
+/**
+ * Match/distance.ts → DEFAULT_DISTANCE_LEVELS.
+ */
 const DISTANCE_LEVELS: Level[] = [
 	{ label: "same-building", maxKm: 0.05, m: 0.7, u: 0.001 },
 	{ label: "same-block", maxKm: 0.5, m: 0.2, u: 0.02 },
@@ -81,21 +89,27 @@ const levelWeight = (lvl: Level) => (lvl.u <= 0 ? (lvl.m > 0 ? Infinity : 0) : M
 const priorWeight = (lambda: number) => Math.log2(lambda / (1 - lambda))
 const probabilityFromWeight = (w: number) => 1 / (1 + 2 ** -w)
 
-/** Assign a name-similarity score to its agreement-level weight (levels ordered high→low sim). */
+/**
+ * Assign a name-similarity score to its agreement-level weight (levels ordered high→low sim).
+ */
 function nameWeight(sim: number): number {
 	for (const lvl of NAME_LEVELS) if (sim >= (lvl.minSimilarity ?? 0)) return levelWeight(lvl)
 
 	return levelWeight(NAME_LEVELS.at(-1)!)
 }
 
-/** Assign a distance (km) to its agreement-level weight (levels ordered near→far). */
+/**
+ * Assign a distance (km) to its agreement-level weight (levels ordered near→far).
+ */
 function distanceWeight(km: number): number {
 	for (const lvl of DISTANCE_LEVELS) if (km <= (lvl.maxKm ?? Infinity)) return levelWeight(lvl)
 
 	return levelWeight(DISTANCE_LEVELS.at(-1)!)
 }
 
-/** Emit the geocode-first decision-surface Plotly HTML — see the module doc. */
+/**
+ * Emit the geocode-first decision-surface Plotly HTML — see the module doc.
+ */
 export function geocodeFirstSurface(
 	options: GeocodeFirstSurfaceOptions = {},
 	report?: (line: string) => void
@@ -105,9 +119,13 @@ export function geocodeFirstSurface(
 
 	const PRIOR = priorWeight(LAMBDA)
 
-	/** String-first model: name evidence only — distance is invisible to it. */
+	/**
+	 * String-first model: name evidence only — distance is invisible to it.
+	 */
 	const pStringFirst = (sim: number, _km: number) => probabilityFromWeight(PRIOR + nameWeight(sim))
-	/** Geocode-first model: name + distance evidence. */
+	/**
+	 * Geocode-first model: name + distance evidence.
+	 */
 	const pGeocodeFirst = (sim: number, km: number) => probabilityFromWeight(PRIOR + nameWeight(sim) + distanceWeight(km))
 
 	// ── Grid. X = string similarity 0→1. Y = geographic distance, sampled denser near 0 (log-ish) so

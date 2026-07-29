@@ -19,11 +19,17 @@ import { spawn } from "node:child_process"
 
 import { TextSpliterator } from "spliterator"
 
-/** One OSM address feature, geometry already reduced to a single representative coordinate. */
+/**
+ * One OSM address feature, geometry already reduced to a single representative coordinate.
+ */
 export interface OSMAddrRecord {
-	/** `addr:housenumber` — always present (the extract filters on it). */
+	/**
+	 * `addr:housenumber` — always present (the extract filters on it).
+	 */
 	housenumber: string
-	/** `addr:street` — null when the point carries no street tag (the association gap; counted, not written). */
+	/**
+	 * `addr:street` — null when the point carries no street tag (the association gap; counted, not written).
+	 */
 	street: string | null
 	postcode: string | null
 	city: string | null
@@ -31,10 +37,14 @@ export interface OSMAddrRecord {
 	lat: number
 }
 
-/** The OSM driver layers that can carry `addr:housenumber`: nodes and building ways/relations. */
+/**
+ * The OSM driver layers that can carry `addr:housenumber`: nodes and building ways/relations.
+ */
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
-/** OGRSQL projecting the four `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number. */
+/**
+ * OGRSQL projecting the four `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
+ */
 function addrSQL(layer: string): string {
 	return (
 		`SELECT hstore_get_value(other_tags,'addr:housenumber') AS housenumber, ` +
@@ -48,7 +58,9 @@ function addrSQL(layer: string): string {
 const isFinitePair = (lon: unknown, lat: unknown): boolean =>
 	typeof lon === "number" && typeof lat === "number" && Number.isFinite(lon) && Number.isFinite(lat)
 
-/** Reduce a GeoJSON geometry to one representative coordinate: the point itself, or a ring-vertex average for a polygon. */
+/**
+ * Reduce a GeoJSON geometry to one representative coordinate: the point itself, or a ring-vertex average for a polygon.
+ */
 function representativePoint(
 	geom: { type?: string; coordinates?: unknown } | null | undefined
 ): [number, number] | null {
@@ -112,7 +124,9 @@ function toRecord(feature: {
 	}
 }
 
-/** Run ogr2ogr against one layer, yielding parsed records from its GeoJSONSeq stdout. */
+/**
+ * Run ogr2ogr against one layer, yielding parsed records from its GeoJSONSeq stdout.
+ */
 async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddrRecord> {
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSQL(layer), pbfPath]
 	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })

@@ -20,12 +20,16 @@ import { describe, expect, test, vi } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier, type StateShards } from "../geocode-core.ts"
 
-/** A classifier that returns a fixed tree (no region → admin-only path, no US situs shards needed). */
+/**
+ * A classifier that returns a fixed tree (no region → admin-only path, no US situs shards needed).
+ */
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }
 }
 
-/** A resolver that records the ResolveOpts it was handed and echoes the tree back. */
+/**
+ * A resolver that records the ResolveOpts it was handed and echoes the tree back.
+ */
 function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 	const seen: ResolveOpts[] = []
 	const resolver: Resolver = {
@@ -41,7 +45,9 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 
 const emptyTree: AddressTree = { raw: "x", roots: [] }
 
-/** A sentinel address-point lookup — the cascade only assigns it to `opts.addressPoints`, never calls `find`. */
+/**
+ * A sentinel address-point lookup — the cascade only assigns it to `opts.addressPoints`, never calls `find`.
+ */
 const sentinel = (): AddressPointLookup => ({ find: vi.fn(() => null) })
 const banLookup = sentinel()
 const osmLookup = sentinel()

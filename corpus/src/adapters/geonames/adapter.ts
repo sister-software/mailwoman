@@ -48,7 +48,9 @@ export const GEONAMES_ADAPTER_ID = "geonames"
  */
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
-/** GeoNames main-table column indices (0-based; see the export README). */
+/**
+ * GeoNames main-table column indices (0-based; see the export README).
+ */
 const COL = {
 	geonameid: 0,
 	name: 1,
@@ -59,10 +61,14 @@ const COL = {
 	admin1: 10,
 } as const
 
-/** Populated-place feature codes that are NOT current real places — skip them. */
+/**
+ * Populated-place feature codes that are NOT current real places — skip them.
+ */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
-/** Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent. */
+/**
+ * Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent.
+ */
 function loadAdmin1(dir: string): Map<string, string> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "admin1CodesASCII.txt")
@@ -81,7 +87,9 @@ function loadAdmin1(dir: string): Map<string, string> {
 	return map
 }
 
-/** Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented. */
+/**
+ * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented.
+ */
 function loadCountries(dir: string): Map<string, string> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "countryInfo.txt")
@@ -190,5 +198,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const geonamesAdapter = createGeonamesAdapter()

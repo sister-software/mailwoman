@@ -27,7 +27,9 @@ export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
 const ArgumentsSchema = zod.array(zod.string().describe("Prefix string to complete"))
 
-/** Config accepted by `mailwoman autocomplete`, validated before the server starts so a bad flag fails fast. */
+/**
+ * Config accepted by `mailwoman autocomplete`, validated before the server starts so a bad flag fails fast.
+ */
 export const AutocompleteConfigSchema = zod.object({
 	limit: zod.coerce
 		.number()
@@ -47,7 +49,9 @@ export const AutocompleteConfigSchema = zod.object({
 	json: zod.boolean().optional().default(false).describe("Emit results as a JSON array instead of formatted text"),
 })
 
-/** Resolve the FST binary path from explicit flag, env var, or the staged default. */
+/**
+ * Resolve the FST binary path from explicit flag, env var, or the staged default.
+ */
 export function resolveFSTPath(explicitPath?: string): string {
 	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? "/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
 }

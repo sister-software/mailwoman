@@ -62,7 +62,9 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 })
 
 describe("runPipeline — artifact-manifest safelist precedence (survey candidate #2)", () => {
-	/** A resolver whose loaded gazetteer artifact declares its own coverage manifest. */
+	/**
+	 * A resolver whose loaded gazetteer artifact declares its own coverage manifest.
+	 */
 	const artifactWith = (safelist: string[]): GazetteerArtifactCoverage => ({
 		countryCoverage: new Map(),
 		countryBBoxes: new Map(),

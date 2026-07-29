@@ -31,9 +31,7 @@ import type { SQLInputValue } from "node:sqlite"
 
 import { TextSpliterator } from "spliterator"
 
-// ---------------------------------------------------------------------------
-// Core: quote-aware CSV field splitting
-// ---------------------------------------------------------------------------
+// MARK: Core: quote-aware CSV field splitting
 
 const COMMA = 44
 const DOUBLE_QUOTE = 34
@@ -74,9 +72,7 @@ function stripQuotes(field: string): string {
 	return trimmed
 }
 
-// ---------------------------------------------------------------------------
-// Column name normalization
-// ---------------------------------------------------------------------------
+// MARK: Column name normalization
 
 function normalizeColumnName(raw: string): string {
 	return (
@@ -100,9 +96,7 @@ function dedupColumns(names: string[]): string[] {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Type inference
-// ---------------------------------------------------------------------------
+// MARK: Type inference
 
 type SQLiteColType = "INTEGER" | "REAL" | "TEXT"
 
@@ -154,9 +148,7 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	return { name: "", type, nullable: nullCount / total >= 0.5 }
 }
 
-// ---------------------------------------------------------------------------
-// Main: read CSV, infer schema, produce SQL
-// ---------------------------------------------------------------------------
+// MARK: Main: read CSV, infer schema, produce SQL
 
 interface IngestOptions {
 	inputPath: string
@@ -383,7 +375,9 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	)
 }
 
-/** Flag-shaped options for {@linkcode ingestCSV} — `table`/`output` derive from `input` when omitted. */
+/**
+ * Flag-shaped options for {@linkcode ingestCSV} — `table`/`output` derive from `input` when omitted.
+ */
 export interface IngestCSVOptions {
 	input: string
 	table?: string

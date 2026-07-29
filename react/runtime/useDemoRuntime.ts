@@ -19,19 +19,31 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-/** The minimal contract a release-manifest entry must satisfy. Hosts extend this with their own fields. */
+/**
+ * The minimal contract a release-manifest entry must satisfy. Hosts extend this with their own fields.
+ */
 export interface DemoReleaseBase {
-	/** The version tag this entry describes (matched against `selectedVersion`). */
+	/**
+	 * The version tag this entry describes (matched against `selectedVersion`).
+	 */
 	version: string
-	/** Optional display label a version picker shows; falls back to `version`. */
+	/**
+	 * Optional display label a version picker shows; falls back to `version`.
+	 */
 	label?: string
 }
 
-/** The releases manifest the host fetches — the default version plus the selectable release entries. */
+/**
+ * The releases manifest the host fetches — the default version plus the selectable release entries.
+ */
 export interface DemoManifest<TRelease extends DemoReleaseBase = DemoReleaseBase> {
-	/** The version selected on first load (before the user picks another). */
+	/**
+	 * The version selected on first load (before the user picks another).
+	 */
 	defaultVersion: string
-	/** Every selectable release. */
+	/**
+	 * Every selectable release.
+	 */
 	releases: TRelease[]
 }
 
@@ -41,21 +53,35 @@ export interface DemoManifest<TRelease extends DemoReleaseBase = DemoReleaseBase
  * the terminal state (revealing the assets + clearing progress on success, surfacing the error on failure).
  */
 export interface DemoAssetsLoadContext {
-	/** Aborts when this load is superseded (version/backend switch) or the provider unmounts. */
+	/**
+	 * Aborts when this load is superseded (version/backend switch) or the provider unmounts.
+	 */
 	signal: AbortSignal
-	/** Whether the host should force the CPU/WASM backend (opt out of WebGPU) for this load. */
+	/**
+	 * Whether the host should force the CPU/WASM backend (opt out of WebGPU) for this load.
+	 */
 	forceWASM: boolean
-	/** Set the human-readable progress line (e.g. `Loading v7 model (~28 MB)…`). */
+	/**
+	 * Set the human-readable progress line (e.g. `Loading v7 model (~28 MB)…`).
+	 */
 	setProgress: (progress: string) => void
-	/** Set the staged-loader step labels (e.g. `["Loading classifier", "Loading FST gazetteer"]`). */
+	/**
+	 * Set the staged-loader step labels (e.g. `["Loading classifier", "Loading FST gazetteer"]`).
+	 */
 	setStepLabels: (labels: string[]) => void
-	/** Advance the staged-loader step index (0-based). */
+	/**
+	 * Advance the staged-loader step index (0-based).
+	 */
 	setStepIndex: (index: number) => void
-	/** Report the backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`). */
+	/**
+	 * Report the backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`).
+	 */
 	setBackend: (backend: string) => void
 }
 
-/** The injected loaders the hook orchestrates. Nothing here is model- or map-aware — the host owns all that. */
+/**
+ * The injected loaders the hook orchestrates. Nothing here is model- or map-aware — the host owns all that.
+ */
 export interface DemoRuntimeConfig<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase> {
 	/**
 	 * Fetch + normalize the releases manifest. Returns `null` when no manifest is available (the demo then shows nothing
@@ -68,7 +94,9 @@ export interface DemoRuntimeConfig<TAssets, TRelease extends DemoReleaseBase = D
 	 * `errorMessage`. Bail early when `ctx.signal.aborted` — the hook discards a superseded result regardless.
 	 */
 	loadAssets: (release: TRelease, ctx: DemoAssetsLoadContext) => Promise<TAssets>
-	/** The progress line shown before the manifest arrives. @default "Loading releases…" */
+	/**
+	 * The progress line shown before the manifest arrives. @default "Loading releases…"
+	 */
 	initialProgress?: string
 }
 
@@ -82,31 +110,57 @@ export interface DemoRuntimeConfig<TAssets, TRelease extends DemoReleaseBase = D
  * subpath's `DemoRuntime`.
  */
 export interface DemoLoaderState<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase> {
-	/** The releases manifest, once fetched. */
+	/**
+	 * The releases manifest, once fetched.
+	 */
 	manifest: DemoManifest<TRelease> | null
-	/** The currently-selected version, or `null` before the manifest resolves. */
+	/**
+	 * The currently-selected version, or `null` before the manifest resolves.
+	 */
 	selectedVersion: string | null
-	/** The release entry matching `selectedVersion` (convenience over `manifest.releases.find`). */
+	/**
+	 * The release entry matching `selectedVersion` (convenience over `manifest.releases.find`).
+	 */
 	selectedRelease: TRelease | null
-	/** The loaded asset bundle for the selected version, or `null` while (re)loading. */
+	/**
+	 * The loaded asset bundle for the selected version, or `null` while (re)loading.
+	 */
 	assets: TAssets | null
-	/** Whether the asset bundle is loaded and ready to use. */
+	/**
+	 * Whether the asset bundle is loaded and ready to use.
+	 */
 	ready: boolean
-	/** Human-readable load progress (`""` when idle/ready). */
+	/**
+	 * Human-readable load progress (`""` when idle/ready).
+	 */
 	loadingProgress: string
-	/** Staged-loader step index (0-based; `-1` before the first step). */
+	/**
+	 * Staged-loader step index (0-based; `-1` before the first step).
+	 */
 	loadingStepIndex: number
-	/** Staged-loader step labels. */
+	/**
+	 * Staged-loader step labels.
+	 */
 	loadingStepLabels: string[]
-	/** A load error (manifest or asset), distinct from any per-parse error a consumer tracks separately. */
+	/**
+	 * A load error (manifest or asset), distinct from any per-parse error a consumer tracks separately.
+	 */
 	errorMessage: string | null
-	/** The backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`), or `""` before it's known. */
+	/**
+	 * The backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`), or `""` before it's known.
+	 */
 	activeBackend: string
-	/** Whether the CPU/WASM backend is currently forced. */
+	/**
+	 * Whether the CPU/WASM backend is currently forced.
+	 */
 	forceWASM: boolean
-	/** Switch to a different version (clears any error, then reloads the asset bundle). */
+	/**
+	 * Switch to a different version (clears any error, then reloads the asset bundle).
+	 */
 	selectVersion: (version: string) => void
-	/** Force (or unforce) the CPU/WASM backend — reloads the asset bundle. */
+	/**
+	 * Force (or unforce) the CPU/WASM backend — reloads the asset bundle.
+	 */
 	setForceWASM: (forceWASM: boolean) => void
 }
 

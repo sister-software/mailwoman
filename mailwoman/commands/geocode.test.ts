@@ -29,9 +29,7 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-// ---------------------------------------------------------------------------
-// Paths
-// ---------------------------------------------------------------------------
+// MARK: Paths
 
 const CLI_PATH = repoRootPath("mailwoman", "out", "cli.js")
 
@@ -47,9 +45,7 @@ const hasCLICompiled = existsSync(CLI_PATH)
 const hasTxAddressPoints = existsSync(TX_ADDRESS_POINTS_DB)
 const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
 
-// ---------------------------------------------------------------------------
-// Argument-validation tests (unconditional — no DB required)
-// ---------------------------------------------------------------------------
+// MARK: Argument-validation tests (unconditional — no DB required)
 
 describe("geocode argument validation", () => {
 	test("missing address argument exits 1 with a descriptive error", () => {
@@ -115,9 +111,7 @@ describe("geocode argument validation", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// DB-gated integration tests
-// ---------------------------------------------------------------------------
+// MARK: DB-gated integration tests
 
 const hasTxShards = hasTxAddressPoints && hasTxInterpolation
 

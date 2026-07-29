@@ -15,7 +15,9 @@ import { describe, expect, test } from "vitest"
 
 import { resolveProposalOverlaps } from "./resolve-proposal-overlaps.ts"
 
-/** Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`). */
+/**
+ * Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`).
+ */
 function p(component: ComponentTag, body: string, start: number, confidence: number): ClassificationProposal {
 	return {
 		span: new Span(body, start),
@@ -27,7 +29,9 @@ function p(component: ComponentTag, body: string, start: number, confidence: num
 	} as ClassificationProposal
 }
 
-/** Assert no two spans in the result overlap. */
+/**
+ * Assert no two spans in the result overlap.
+ */
 function noOverlaps(out: readonly ClassificationProposal[]): boolean {
 	for (let i = 0; i < out.length; i++) {
 		for (let j = i + 1; j < out.length; j++) {

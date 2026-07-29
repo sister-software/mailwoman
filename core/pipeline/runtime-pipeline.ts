@@ -173,17 +173,23 @@ function isPostcodeFormatHit(hit: { format: string }): boolean {
 	return isPostcodeFormat(hit.format)
 }
 
-/** Pass-through normalize used when no `normalize` stage is wired. */
+/**
+ * Pass-through normalize used when no `normalize` stage is wired.
+ */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
 	return { raw, normalized: raw, appliedLocale: opts?.locale }
 }
 
-/** No-op query-shape used when no `computeQueryShape` stage is wired. */
+/**
+ * No-op query-shape used when no `computeQueryShape` stage is wired.
+ */
 function emptyQueryShape(): QueryShapeLite {
 	return { knownFormats: [] }
 }
 
-/** Default locale detector: trusts the caller's hint, or falls back to `und`. */
+/**
+ * Default locale detector: trusts the caller's hint, or falls back to `und`.
+ */
 async function defaultDetectLocale(
 	_input: NormalizedInputLite,
 	_shape: QueryShapeLite,
@@ -199,7 +205,9 @@ async function defaultDetectLocale(
 	}
 }
 
-/** Default kind classifier: always returns `structured_address` with low confidence (no fast-path). */
+/**
+ * Default kind classifier: always returns `structured_address` with low confidence (no fast-path).
+ */
 async function defaultClassifyKind(
 	_input: NormalizedInputLite,
 	_shape: QueryShapeLite,
@@ -593,7 +601,9 @@ function throwIfAborted(opts?: PipelineOpts): void {
 	}
 }
 
-/** Defensive wrapper: if the classifier throws, return an empty tree rather than abort the pipeline. */
+/**
+ * Defensive wrapper: if the classifier throws, return an empty tree rather than abort the pipeline.
+ */
 async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
@@ -658,7 +668,9 @@ function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?:
 		: {}
 }
 
-/** Defensive wrapper: a grouper failure returns an empty proposal list rather than abort. */
+/**
+ * Defensive wrapper: a grouper failure returns an empty proposal list rather than abort.
+ */
 async function safeGroupPhrases(
 	groupPhrases: NonNullable<RuntimePipelineStages["groupPhrases"]>,
 	normalized: NormalizedInputLite,
@@ -672,9 +684,7 @@ async function safeGroupPhrases(
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Grouper-audit pass
-// ---------------------------------------------------------------------------
+// MARK: Grouper-audit pass
 
 const GROUPER_TYPING_PENALTY = 0.55
 
@@ -800,7 +810,9 @@ export function grouperAudit(
 	return { raw: tree.raw, roots }
 }
 
-/** Defensive wrapper: a resolver failure leaves the classifier tree intact. */
+/**
+ * Defensive wrapper: a resolver failure leaves the classifier tree intact.
+ */
 async function safeResolve(
 	resolver: NonNullable<RuntimePipelineStages["resolver"]>,
 	tree: AddressTree,

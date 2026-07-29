@@ -100,7 +100,9 @@ export interface DebugControlProps {
 	map: MapLibreMap | null
 }
 
-/** Demo-page debug panel — the same idea as the dashboard's, wired to the demo's own runtime. */
+/**
+ * Demo-page debug panel — the same idea as the dashboard's, wired to the demo's own runtime.
+ */
 export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 	const [debugControl] = useState<DebugControlBase>(() => new DebugControlBase())
 

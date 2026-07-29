@@ -21,9 +21,7 @@ import type { ResultNode } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Stage taxonomy
-// ---------------------------------------------------------------------------
+// MARK: Stage taxonomy
 
 interface StageDef {
 	key: string
@@ -37,9 +35,13 @@ interface StageDef {
 	 * contributed to that node.
 	 */
 	sourceMatches: string[]
-	/** True when a node can carry this stage's badge AND a different source (displaced classifier). */
+	/**
+	 * True when a node can carry this stage's badge AND a different source (displaced classifier).
+	 */
 	coexists?: boolean
-	/** Pipeline-wide flag — not a per-node source. */
+	/**
+	 * Pipeline-wide flag — not a per-node source.
+	 */
 	isPipelineFlag?: boolean
 }
 
@@ -129,7 +131,9 @@ const STAGES: StageDef[] = [
 	},
 ]
 
-/** Fast lookup: source string → StageDef */
+/**
+ * Fast lookup: source string → StageDef
+ */
 const SOURCE_TO_STAGE: Map<string, StageDef> = new Map()
 
 for (const stage of STAGES) {
@@ -138,9 +142,7 @@ for (const stage of STAGES) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Tree-flattening with source preservation
-// ---------------------------------------------------------------------------
+// MARK: Tree-flattening with source preservation
 
 interface SourceNode {
 	tag: string
@@ -150,7 +152,9 @@ interface SourceNode {
 	end?: number
 	source?: string
 	sourceID?: string
-	/** Displaced classifier source when the resolver won (from metadata). */
+	/**
+	 * Displaced classifier source when the resolver won (from metadata).
+	 */
 	displacedSource?: string
 	displacedSourceID?: string
 }
@@ -207,17 +211,19 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	return out.toReversed()
 }
 
-// ---------------------------------------------------------------------------
-// Stage resolution for a node
-// ---------------------------------------------------------------------------
+// MARK: Stage resolution for a node
 
 interface StageContribution {
 	stage: StageDef
-	/** When true, this is a displaced classifier — the resolver overrode it. */
+	/**
+	 * When true, this is a displaced classifier — the resolver overrode it.
+	 */
 	displaced?: boolean
 }
 
-/** Determine which pipeline stages contributed to a node. */
+/**
+ * Determine which pipeline stages contributed to a node.
+ */
 function resolveStages(node: SourceNode): StageContribution[] {
 	const contributions: StageContribution[] = []
 
@@ -240,24 +246,28 @@ function resolveStages(node: SourceNode): StageContribution[] {
 	return contributions
 }
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
+// MARK: Props
 
 export interface ClassifierOverlayProps {
-	/** The parse tree with source provenance on nodes (AddressTree). */
+	/**
+	 * The parse tree with source provenance on nodes (AddressTree).
+	 */
 	tree: unknown
-	/** Flattened nodes for display ordering and cross-reference. */
+	/**
+	 * Flattened nodes for display ordering and cross-reference.
+	 */
 	nodes: ResultNode[]
-	/** Whether the FST gazetteer matcher was active for this parse. */
+	/**
+	 * Whether the FST gazetteer matcher was active for this parse.
+	 */
 	fstActive?: boolean
-	/** Display mode. Default: "dynamic". */
+	/**
+	 * Display mode. Default: "dynamic".
+	 */
 	mode?: "static" | "dynamic"
 }
 
-// ---------------------------------------------------------------------------
-// Static legend
-// ---------------------------------------------------------------------------
+// MARK: Static legend
 
 const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	<div className={styles.staticLegend}>
@@ -317,9 +327,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	</div>
 )
 
-// ---------------------------------------------------------------------------
-// Confidence tier
-// ---------------------------------------------------------------------------
+// MARK: Confidence tier
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
@@ -327,9 +335,7 @@ function tier(confidence?: number): "high" | "mid" | "low" {
 	return confidenceTier(confidence)
 }
 
-// ---------------------------------------------------------------------------
-// Dynamic per-component table
-// ---------------------------------------------------------------------------
+// MARK: Dynamic per-component table
 
 const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: boolean }> = ({
 	tree,
@@ -432,9 +438,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component
-// ---------------------------------------------------------------------------
+// MARK: Public component
 
 export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 	tree,

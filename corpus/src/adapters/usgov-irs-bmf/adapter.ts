@@ -39,7 +39,9 @@ export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
-/** PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12". */
+/**
+ * PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12".
+ */
 const PO_BOX = /^\s*(?:P\.?\s?O\.?\s*BOX|POB|BOX)\s+\w/i
 
 interface IrsBmfRow {
@@ -51,7 +53,9 @@ interface IrsBmfRow {
 	ZIP: string
 }
 
-/** Classify the street line into a `po_box` or a `{house_number?, street}` split. */
+/**
+ * Classify the street line into a `po_box` or a `{house_number?, street}` split.
+ */
 function splitStreetLine(street: string): { po_box: string } | { house_number?: string; street: string } | null {
 	const trimmed = street.trim()
 
@@ -160,5 +164,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovIrsBmfAdapter = createUsgovIrsBmfAdapter()

@@ -4,9 +4,13 @@ import type { ResultNode } from "../../shared/resources.tsx"
 import styles from "./styles.module.css"
 
 export interface SpanHighlightProps {
-	/** The raw text handed to the parser — `nodes[].start/end` index into this. */
+	/**
+	 * The raw text handed to the parser — `nodes[].start/end` index into this.
+	 */
 	input: string
-	/** Flattened parse nodes; only those with numeric `start`/`end` are rendered. */
+	/**
+	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
+	 */
 	nodes: ResultNode[]
 }
 
@@ -15,7 +19,9 @@ interface Segment {
 	node: ResultNode | null
 }
 
-/** ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync. */
+/**
+ * ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync.
+ */
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 

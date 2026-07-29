@@ -17,27 +17,45 @@ import type { DatabaseSync } from "node:sqlite"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { sql, type Kysely } from "kysely"
 
-/** One POI row. Clustered PK: h3_cell → category_id → neg_rank → rowid_key. */
+/**
+ * One POI row. Clustered PK: h3_cell → category_id → neg_rank → rowid_key.
+ */
 export interface POITable {
-	/** 48-bit short H3 cell at res 9 (`latLngToCell` → `shortenH3Cell`). */
+	/**
+	 * 48-bit short H3 cell at res 9 (`latLngToCell` → `shortenH3Cell`).
+	 */
 	h3_cell: number
-	/** Small int from {@link POICategoryCodeTable}; 0 = uncategorized. */
+	/**
+	 * Small int from {@link POICategoryCodeTable}; 0 = uncategorized.
+	 */
 	category_id: number
-	/** `-log10(confidence + epsilon)` so ASC = most-confident-first within a cell+category. */
+	/**
+	 * `-log10(confidence + epsilon)` so ASC = most-confident-first within a cell+category.
+	 */
 	neg_rank: number
-	/** Uniquifier within the clustered key (builder-assigned monotonic int). */
+	/**
+	 * Uniquifier within the clustered key (builder-assigned monotonic int).
+	 */
 	rowid_key: number
 	name: string | null
-	/** Lowercased, diacritic-flattened probe key for exact name lookups. */
+	/**
+	 * Lowercased, diacritic-flattened probe key for exact name lookups.
+	 */
 	name_key: string | null
 	brand_wikidata: string | null
 	latitude: number
 	longitude: number
-	/** ISO 3166-1 alpha-2 (from the Overture partition). */
+	/**
+	 * ISO 3166-1 alpha-2 (from the Overture partition).
+	 */
 	country: string
-	/** Overture existence confidence (already filtered ≥ 0.85 at build). */
+	/**
+	 * Overture existence confidence (already filtered ≥ 0.85 at build).
+	 */
 	confidence: number
-	/** GERS id — nullable METADATA ONLY, never a key (the #470 rule). */
+	/**
+	 * GERS id — nullable METADATA ONLY, never a key (the #470 rule).
+	 */
 	gers_id: string | null
 }
 
@@ -60,7 +78,9 @@ export interface POIStageTable {
 	gers_id: string | null
 }
 
-/** `(id → poi-taxonomy category id)` dictionary, e.g. `3 → "cafe"`. */
+/**
+ * `(id → poi-taxonomy category id)` dictionary, e.g. `3 → "cafe"`.
+ */
 export interface POICategoryCodeTable {
 	id: number
 	category: string
@@ -72,7 +92,9 @@ export interface POIDatabase extends LayerContractDatabase {
 	poi_category_codes: POICategoryCodeTable
 }
 
-/** Clustered-key-order column list shared by builder + `INSERT INTO poi SELECT … FROM poi_stage`. */
+/**
+ * Clustered-key-order column list shared by builder + `INSERT INTO poi SELECT … FROM poi_stage`.
+ */
 export const POI_COLUMNS = [
 	"h3_cell",
 	"category_id",
@@ -132,7 +154,9 @@ export async function createPOITable(db: Kysely<POIDatabase>): Promise<void> {
 		.execute()
 }
 
-/** Secondary index for the FTS-hydration path. Builders call this AFTER the bulk materialize (index-after-load). */
+/**
+ * Secondary index for the FTS-hydration path. Builders call this AFTER the bulk materialize (index-after-load).
+ */
 export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<void> {
 	await db.schema.createIndex("poi_name_key").on("poi").column("name_key").execute()
 }
@@ -154,10 +178,14 @@ export async function createPOIBrandIndex(db: Kysely<POIDatabase>): Promise<void
 		.execute()
 }
 
-/** FTS5 virtual table backing POI name search in poi.db. */
+/**
+ * FTS5 virtual table backing POI name search in poi.db.
+ */
 export const POI_FTS_TABLE = "poi_search"
 
-/** FTS5 stays raw SQL by project rule (Kysely can't express virtual tables). Content-keyed by name_key. */
+/**
+ * FTS5 stays raw SQL by project rule (Kysely can't express virtual tables). Content-keyed by name_key.
+ */
 export function createPOISearchFTS(db: DatabaseSync): void {
 	db.exec(
 		`CREATE VIRTUAL TABLE ${POI_FTS_TABLE} USING fts5(name, name_key UNINDEXED, h3_cell UNINDEXED, tokenize = 'unicode61')`

@@ -39,17 +39,25 @@ export function weightsCacheDir(): string {
 	return resolve(homedir(), ".cache", "mailwoman", "weights")
 }
 
-/** The weights package for a locale tag, normalized to the all-lowercase BCP-47 package convention. */
+/**
+ * The weights package for a locale tag, normalized to the all-lowercase BCP-47 package convention.
+ */
 export function weightsPackageName(locale?: string): string {
 	return `@mailwoman/neural-weights-${(locale ?? "en-us").toLowerCase()}`
 }
 
 export interface ResolveWeightsOpts {
-	/** BCP-47-ish locale tag, e.g. "en-us" or "fr-fr". Used to pick the weights package. */
+	/**
+	 * BCP-47-ish locale tag, e.g. "en-us" or "fr-fr". Used to pick the weights package.
+	 */
 	locale?: string
-	/** Explicit model.onnx path; takes precedence over package auto-resolve. */
+	/**
+	 * Explicit model.onnx path; takes precedence over package auto-resolve.
+	 */
 	modelPath?: string
-	/** Explicit tokenizer.model path; takes precedence over package auto-resolve. */
+	/**
+	 * Explicit tokenizer.model path; takes precedence over package auto-resolve.
+	 */
 	tokenizerPath?: string
 	/**
 	 * Explicit `model-card.json` path (for the label vocab) on the explicit model+tokenizer path. When omitted, falls
@@ -117,7 +125,9 @@ export interface ResolvedWeights {
 	 * ships at the promote whose model requires the bundle channels.
 	 */
 	streetTypeLexiconPath?: string
-	/** Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v6.json`. */
+	/**
+	 * Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v6.json`.
+	 */
 	localitySurfaceLexiconPath?: string
 	/**
 	 * Path to the per-locale FST gazetteer (`fst-<locale>.bin`) shipped beside the resolved model. `undefined` when the
@@ -145,7 +155,9 @@ export interface ResolvedWeights {
 	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
 	 */
 	pairIndexPath?: string
-	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
+	/**
+	 * "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve.
+	 */
 	source: string
 }
 
@@ -448,21 +460,37 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
  * the #566/#685 trap). Each channel is optional; a missing channel means "not declared" (treated as not-required).
  */
 export interface RequiredChannels {
-	/** Postcode-anchor channel (#239/#240). */
+	/**
+	 * Postcode-anchor channel (#239/#240).
+	 */
 	anchor?: { required: boolean }
-	/** Gazetteer-anchor channel (#464). */
+	/**
+	 * Gazetteer-anchor channel (#464).
+	 */
 	gazetteer?: { required: boolean }
-	/** Country-lexicon channel (#1104). */
+	/**
+	 * Country-lexicon channel (#1104).
+	 */
 	country?: { required: boolean }
-	/** Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`. */
+	/**
+	 * Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`.
+	 */
 	conventions?: { required: boolean; mode?: "auto" | string }
-	/** Punctuation-gap span bridge (v4.4.0 corrective). */
+	/**
+	 * Punctuation-gap span bridge (v4.4.0 corrective).
+	 */
 	bridge?: { required: boolean }
-	/** Near-postcode gazetteer choreography (#464, v0.9.13). */
+	/**
+	 * Near-postcode gazetteer choreography (#464, v0.9.13).
+	 */
 	suppress_gazetteer_near_postcode?: boolean
-	/** Street-type evidence channel (Option-A bundle, Phase 3). */
+	/**
+	 * Street-type evidence channel (Option-A bundle, Phase 3).
+	 */
 	street_type?: { required: boolean }
-	/** Locality-surface evidence channel (Option-A bundle, Phase 3). */
+	/**
+	 * Locality-surface evidence channel (Option-A bundle, Phase 3).
+	 */
 	locality_surface?: { required: boolean }
 }
 
@@ -566,9 +594,13 @@ export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): 
  * loader's delta-gate consults it.
  */
 export interface TagCapability {
-	/** Measured per-tag F1 (percent) with the conventions mask OFF — the model's real capability. */
+	/**
+	 * Measured per-tag F1 (percent) with the conventions mask OFF — the model's real capability.
+	 */
 	maskOffF1: number
-	/** Measured per-tag F1 (percent) with the mask ON. Present only for codex-forbidden tags. */
+	/**
+	 * Measured per-tag F1 (percent) with the mask ON. Present only for codex-forbidden tags.
+	 */
 	maskOnF1?: number
 }
 

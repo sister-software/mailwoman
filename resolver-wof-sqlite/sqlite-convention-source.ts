@@ -22,7 +22,9 @@ import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from
 export class SqliteConventionSource implements ConventionSource {
 	readonly #db: DatabaseSync
 	readonly #schema: string
-	/** Memoize per-id lookups (including misses, as `null`) so a hot ancestor chain is queried once. */
+	/**
+	 * Memoize per-id lookups (including misses, as `null`) so a hot ancestor chain is queried once.
+	 */
 	readonly #cache = new Map<number, Convention | null>()
 
 	/**

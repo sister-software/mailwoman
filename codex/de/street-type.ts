@@ -25,7 +25,9 @@
  * spelling split). The full reference table, used for synthesis/expansion. For the "is this token part of a street"
  * test, use {@link DE_STREET_SUFFIXES} / {@link isGermanStreetToken}, which exclude the place-name-colliding suffixes.
  */
-/** Shortest token still plausible as a German street-type suffix (`weg`). */
+/**
+ * Shortest token still plausible as a German street-type suffix (`weg`).
+ */
 const MIN_STREET_TYPE_LENGTH = 3
 
 /**
@@ -48,7 +50,9 @@ export const DE_STREET_TYPE_VARIANTS = {
 	Twiete: [],
 } as const satisfies Record<string, readonly string[]>
 
-/** A canonical German street type (e.g. `Straße`, `Weg`, `Platz`). */
+/**
+ * A canonical German street type (e.g. `Straße`, `Weg`, `Platz`).
+ */
 export type GermanStreetType = keyof typeof DE_STREET_TYPE_VARIANTS
 
 /**

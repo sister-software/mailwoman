@@ -59,10 +59,14 @@ import { resolve } from "node:path"
 
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
-/** Hex characters in an md5 digest. */
+/**
+ * Hex characters in an md5 digest.
+ */
 const MD5_HEX_LENGTH = 32
 
-/** Workspace root the artifacts are linked into. Everything below resolves against it. */
+/**
+ * Workspace root the artifacts are linked into. Everything below resolves against it.
+ */
 const PKG_DIR = repoRootPath("neural-weights-en-nz")
 
 /**
@@ -82,7 +86,9 @@ function linkForce(src: string, dest: string): void {
 	renameSync(tmp, dest)
 }
 
-/** Remove a leftover local file/symlink so the #1179 base-weights fallback engages. */
+/**
+ * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
+ */
 function removeIfPresent(dest: string): void {
 	try {
 		lstatSync(dest)
@@ -161,9 +167,13 @@ function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD
 removeIfPresent(resolve(PKG_DIR, "model.onnx"))
 removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
 
-/** --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----. */
+/**
+ * --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----.
+ */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
-/** Country-surface lexicon generated into the repo by the codex build. */
+/**
+ * Country-surface lexicon generated into the repo by the codex build.
+ */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
@@ -188,9 +198,13 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
  * above.
  */
 const NZ_SOURCE_CSV = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
-/** Compiled CLI used to run the build steps below. Requires `yarn compile` to have run. */
+/**
+ * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
+ */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
-/** Where the placetype pair index is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
+ */
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-nz.bin")
 /**
  * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
@@ -278,7 +292,9 @@ if (pairIndexIsFresh) {
  * it. (en-nz ships no per-locale FST, but the morphology artifact is locale-general, so it ships here too.)
  */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-/** Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {

@@ -31,16 +31,24 @@ import {
 	searchQueryParams,
 } from "./schema.ts"
 
-/** Southern limit of latitude in WGS-84 degrees. */
+/**
+ * Southern limit of latitude in WGS-84 degrees.
+ */
 const MIN_LATITUDE = -90
 
-/** Northern limit of latitude in WGS-84 degrees. */
+/**
+ * Northern limit of latitude in WGS-84 degrees.
+ */
 const MAX_LATITUDE = 90
 
-/** Western limit of longitude in WGS-84 degrees. */
+/**
+ * Western limit of longitude in WGS-84 degrees.
+ */
 const MIN_LONGITUDE = -180
 
-/** Eastern limit of longitude in WGS-84 degrees. */
+/**
+ * Eastern limit of longitude in WGS-84 degrees.
+ */
 const MAX_LONGITUDE = 180
 
 const DEFAULT_LIMIT = 10
@@ -201,7 +209,9 @@ const statusRoute = createRoute({
 	responses: statusResponses,
 })
 
-/** Register the Nominatim-compatible routes against an injected engine. */
+/**
+ * Register the Nominatim-compatible routes against an injected engine.
+ */
 export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngine): void {
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 

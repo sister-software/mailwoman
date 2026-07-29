@@ -74,12 +74,16 @@ export class ConsoleFixture {
 		throw new Error(`Captured ${failures.length} console/page error(s):\n${lines}`)
 	}
 
-	/** Filter helper for ad-hoc test assertions. */
+	/**
+	 * Filter helper for ad-hoc test assertions.
+	 */
 	matching(pattern: RegExp): CapturedEvent[] {
 		return this.events.filter((e) => pattern.test(e.text))
 	}
 
-	/** Snapshot of all classifications, for debug. */
+	/**
+	 * Snapshot of all classifications, for debug.
+	 */
 	summary(): { failures: string[]; noise: string[] } {
 		const failures: string[] = []
 		const noise: string[] = []

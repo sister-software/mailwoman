@@ -36,7 +36,9 @@ import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 
 import { collectMatches } from "./postcode-repair.ts"
 
-/** A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet". */
+/**
+ * A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet".
+ */
 export interface PostcodePlace {
 	country: string
 	lat: number
@@ -49,22 +51,32 @@ export interface PostcodePlace {
  * future FST/WASM resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
-	/** Exact-match lookup of a normalized postcode string across every country shard. */
+	/**
+	 * Exact-match lookup of a normalized postcode string across every country shard.
+	 */
 	lookup(postcode: string): PostcodePlace[]
 }
 
 export interface PostcodeAnchor {
-	/** The shaped substring as it appeared in the raw text, with char offsets. */
+	/**
+	 * The shaped substring as it appeared in the raw text, with char offsets.
+	 */
 	span: { text: string; start: number; end: number }
-	/** The normalized form actually queried (uppercased, `D-` prefix stripped, whitespace collapsed). */
+	/**
+	 * The normalized form actually queried (uppercased, `D-` prefix stripped, whitespace collapsed).
+	 */
 	normalized: string
-	/** Coordinate-bearing gazetteer hits — best-effort centroid(s), one representative per country. */
+	/**
+	 * Coordinate-bearing gazetteer hits — best-effort centroid(s), one representative per country.
+	 */
 	candidates: PostcodePlace[]
 	/**
 	 * Uniform distribution over the countries the postcode exists in (membership, coordinate-independent).
 	 */
 	posterior: Record<string, number>
-	/** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
+	/**
+	 * `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer.
+	 */
 	confidence: number
 	/**
 	 * `exact` — the string is a real postcode; `outward` — a GB unit (`SO4 3RX`) resolved to its outward district
@@ -95,7 +107,9 @@ export interface ExtractPostcodeAnchorsOpts {
  */
 const MAX_COUNTRIES = 10
 
-/** A fuzzy (typo-corrected) match is less certain than an exact one — scale its confidence down. */
+/**
+ * A fuzzy (typo-corrected) match is less certain than an exact one — scale its confidence down.
+ */
 const FUZZY_PENALTY = 0.6
 
 /**
@@ -217,7 +231,9 @@ const NON_US_STREET_WORDS = new Set([
 	"contrada",
 ])
 
-/** Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice). */
+/**
+ * Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice).
+ */
 const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk", "steeg", "dreef"]
 
 /**

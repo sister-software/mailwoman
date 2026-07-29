@@ -72,60 +72,92 @@ import {
 	TILE_WORKER_URL,
 } from "./_map-helpers.ts"
 
-/** Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`. */
+/**
+ * Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`.
+ */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
 
-/** Spans that together make up the street name — assembled in source order for the situs/interp query. */
+/**
+ * Spans that together make up the street name — assembled in source order for the situs/interp query.
+ */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
-/** The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp. */
+/**
+ * The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp.
+ */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
 	interp: HTTPVFSInterpolator | undefined
 }
 
-/** Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`. */
+/**
+ * Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`.
+ */
 interface CandidateExtras {
 	bbox?: ResolvedHit["bbox"]
 	tier?: "address_point" | "interpolated"
 	uncertaintyM?: number
 }
 
-/** Device-location proximity-bias control (the "📍 Use my location" button state + toggle). */
+/**
+ * Device-location proximity-bias control (the "📍 Use my location" button state + toggle).
+ */
 export interface GeoBiasControl {
-	/** Whether a device location is currently applied as a soft bias. */
+	/**
+	 * Whether a device location is currently applied as a soft bias.
+	 */
 	active: boolean
-	/** Toggle the device-location bias on/off (prompts for geolocation when turning on). */
+	/**
+	 * Toggle the device-location bias on/off (prompts for geolocation when turning on).
+	 */
 	toggle: () => void
 }
 
 export interface UseDemoMapRuntime {
-	/** The composed runtime `<GeocoderDemo>` consumes, or `null` until the basemap style has loaded. */
+	/**
+	 * The composed runtime `<GeocoderDemo>` consumes, or `null` until the basemap style has loaded.
+	 */
 	runtime: DemoRuntime | null
-	/** The selectable releases (for the host compare panel that loads its own second classifier). */
+	/**
+	 * The selectable releases (for the host compare panel that loads its own second classifier).
+	 */
 	releases: ReleaseInfo[]
-	/** Whether the CPU/WASM backend is forced (threaded into the host compare classifier load). */
+	/**
+	 * Whether the CPU/WASM backend is forced (threaded into the host compare classifier load).
+	 */
 	forceWASM: boolean
-	/** The device-location proximity-bias control (the demo's "Use my location" row). */
+	/**
+	 * The device-location proximity-bias control (the demo's "Use my location" row).
+	 */
 	geoBias: GeoBiasControl
-	/** The version's isotonic calibrator (raw softmax → calibrated probability), or `null` if none loaded. */
+	/**
+	 * The version's isotonic calibrator (raw softmax → calibrated probability), or `null` if none loaded.
+	 */
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
 	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer). Resolves `null` when the
 	 * classifier bundle predates the `traceParse` seam or the trace fails. Feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
-	/** Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle). */
+	/**
+	 * Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle).
+	 */
 	supportsTrace: boolean
 }
 
 export interface UseDemoMapRuntimeOptions {
-	/** Same-origin base for the sql.js-httpvfs worker + wasm (e.g. `/mailwoman/sqljs`). */
+	/**
+	 * Same-origin base for the sql.js-httpvfs worker + wasm (e.g. `/mailwoman/sqljs`).
+	 */
 	sqljsBaseURL: string
-	/** Site base URL (for the range-cache service worker registration). */
+	/**
+	 * Site base URL (for the range-cache service worker registration).
+	 */
 	baseURL: string
-	/** Initial map center as `[lon, lat]` (the host's browser-geolocation result). */
+	/**
+	 * Initial map center as `[lon, lat]` (the host's browser-geolocation result).
+	 */
 	initialCenter: Coordinates2D
 }
 

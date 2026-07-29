@@ -12,16 +12,24 @@ import type { Kysely } from "kysely"
 
 import { LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
 
-/** Which spine columns a layer carries. At least one key is required. */
+/**
+ * Which spine columns a layer carries. At least one key is required.
+ */
 export interface SpineKeys {
 	h3?: { column: string; resolution: number }
-	/** Column name holding WOF ids, when present. */
+	/**
+	 * Column name holding WOF ids, when present.
+	 */
 	wofID?: string
-	/** Column name holding `@mailwoman/address-id` keys, when present. */
+	/**
+	 * Column name holding `@mailwoman/address-id` keys, when present.
+	 */
 	addressID?: string
 }
 
-/** Parsed manifest — see {@link LayerManifestTable} for the storage form. */
+/**
+ * Parsed manifest — see {@link LayerManifestTable} for the storage form.
+ */
 export interface LayerManifest {
 	name: string
 	version: string
@@ -61,7 +69,9 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 	}
 }
 
-/** Insert the single manifest row. Call exactly once, from the layer's build script. */
+/**
+ * Insert the single manifest row. Call exactly once, from the layer's build script.
+ */
 export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
 
@@ -85,7 +95,9 @@ export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, mani
 		.execute()
 }
 
-/** Read + validate the manifest. Throws if the table is empty, multi-row, or invalid. */
+/**
+ * Read + validate the manifest. Throws if the table is empty, multi-row, or invalid.
+ */
 export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
 

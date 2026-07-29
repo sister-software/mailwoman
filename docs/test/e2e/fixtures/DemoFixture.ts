@@ -10,11 +10,17 @@ import { expect, type Page } from "@playwright/test"
 import type { ConsoleFixture } from "./ConsoleFixture.ts"
 
 export interface ResolvedResult {
-	/** Component table rows: `{ tag, value, confidence }` per parsed BIO node. */
+	/**
+	 * Component table rows: `{ tag, value, confidence }` per parsed BIO node.
+	 */
 	parsedRows: Array<{ tag: string; value: string; confidence: string }>
-	/** Definition list under "Resolved place" — empty if the WOF cascade returned no hits. */
+	/**
+	 * Definition list under "Resolved place" — empty if the WOF cascade returned no hits.
+	 */
 	resolved: Record<string, string>
-	/** Count of `.maplibregl-marker` elements currently on the map. */
+	/**
+	 * Count of `.maplibregl-marker` elements currently on the map.
+	 */
 	markerCount: number
 }
 
@@ -24,14 +30,18 @@ export class DemoFixture {
 		public readonly console: ConsoleFixture
 	) {}
 
-	/** Navigate to the demo page and wait until the classifier is loaded (submit enables). */
+	/**
+	 * Navigate to the demo page and wait until the classifier is loaded (submit enables).
+	 */
 	async goto(query?: string): Promise<void> {
 		const path = query ? `/demo/?q=${encodeURIComponent(query)}` : "/demo/"
 		await this.page.goto(path, { waitUntil: "networkidle" })
 		await this.expectReady()
 	}
 
-	/** Wait for the cold-load (~25 MB ONNX + map style + sqlite-wasm) to complete. */
+	/**
+	 * Wait for the cold-load (~25 MB ONNX + map style + sqlite-wasm) to complete.
+	 */
 	async expectReady(): Promise<void> {
 		await this.page.waitForFunction(
 			() => {
@@ -60,12 +70,16 @@ export class DemoFixture {
 		return this.page.locator("#addr-suggest-list [role='option']").allTextContents()
 	}
 
-	/** Click the autocomplete suggestion whose text contains `name`. */
+	/**
+	 * Click the autocomplete suggestion whose text contains `name`.
+	 */
 	async pickSuggestion(name: string): Promise<void> {
 		await this.page.locator("#addr-suggest-list [role='option']", { hasText: name }).first().click()
 	}
 
-	/** Current value of the address input. */
+	/**
+	 * Current value of the address input.
+	 */
 	async addressValue(): Promise<string> {
 		return this.page.locator("#addr-input").inputValue()
 	}
@@ -106,7 +120,9 @@ export class DemoFixture {
 		})
 	}
 
-	/** Force Docusaurus's data-theme attribute to a specific value. */
+	/**
+	 * Force Docusaurus's data-theme attribute to a specific value.
+	 */
 	async setTheme(theme: "light" | "dark"): Promise<void> {
 		await this.page.evaluate((t) => {
 			document.documentElement.setAttribute("data-theme", t)
@@ -115,7 +131,9 @@ export class DemoFixture {
 		await this.page.waitForTimeout(2000)
 	}
 
-	/** Convenience matcher: passes when there's exactly one marker on the map. */
+	/**
+	 * Convenience matcher: passes when there's exactly one marker on the map.
+	 */
 	async expectMarkerVisible(): Promise<void> {
 		const count = await this.page.locator(".maplibregl-marker").count()
 		expect(count, "expected exactly one marker after submit").toBeGreaterThan(0)

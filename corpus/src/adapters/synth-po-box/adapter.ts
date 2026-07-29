@@ -202,5 +202,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const synthPoBoxAdapter = createSynthPoBoxAdapter()

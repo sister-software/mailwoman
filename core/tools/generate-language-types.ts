@@ -16,19 +16,27 @@ import { pascalCase } from "change-case"
 
 import { repoRootPath, resourceDictionaryPath } from "../utils/index.ts"
 
-/** Options for {@linkcode generateLanguageTypes}. */
+/**
+ * Options for {@linkcode generateLanguageTypes}.
+ */
 export interface GenerateLanguageTypesOptions {
-	/** Output path override. Default: `core/resources/languages/types.gen.ts` (the committed types). */
+	/**
+	 * Output path override. Default: `core/resources/languages/types.gen.ts` (the committed types).
+	 */
 	out?: string
 }
 
-/** Summary returned by {@linkcode generateLanguageTypes}. */
+/**
+ * Summary returned by {@linkcode generateLanguageTypes}.
+ */
 export interface GenerateLanguageTypesSummary {
 	languages: number
 	outPath: string
 }
 
-/** Regenerate the committed language-code types from `internal/languages.csv`. */
+/**
+ * Regenerate the committed language-code types from `internal/languages.csv`.
+ */
 export async function generateLanguageTypes(
 	options: GenerateLanguageTypesOptions = {},
 	report?: (line: string) => void

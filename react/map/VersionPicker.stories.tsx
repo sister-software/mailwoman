@@ -23,7 +23,9 @@ const meta: Meta<typeof VersionPicker> = { title: "Map/Panels/VersionPicker", co
 export default meta
 type Story = StoryObj<typeof VersionPicker>
 
-/** Three options, driven by local state. */
+/**
+ * Three options, driven by local state.
+ */
 export const ThreeOptions: Story = {
 	render: () => {
 		const [selected, setSelected] = useState("v7.2.0")
@@ -32,12 +34,16 @@ export const ThreeOptions: Story = {
 	},
 }
 
-/** Disabled (e.g. while a parse runs). */
+/**
+ * Disabled (e.g. while a parse runs).
+ */
 export const Disabled: Story = {
 	args: { versions: VERSIONS, selected: "v7.1.0", onSelect: () => {}, disabled: true },
 }
 
-/** A single version → the picker renders nothing. */
+/**
+ * A single version → the picker renders nothing.
+ */
 export const SingleHidden: Story = {
 	render: () => (
 		<>

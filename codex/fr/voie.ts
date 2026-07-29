@@ -55,7 +55,9 @@ export const FR_VOIE_TYPES = {
 	lotissement: ["lot"],
 } as const satisfies Record<string, readonly string[]>
 
-/** A canonical French voie type (e.g. `rue`, `avenue`, `boulevard`). */
+/**
+ * A canonical French voie type (e.g. `rue`, `avenue`, `boulevard`).
+ */
 export type FrenchVoieType = keyof typeof FR_VOIE_TYPES
 
 /**

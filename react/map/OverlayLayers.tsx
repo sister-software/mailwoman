@@ -19,11 +19,15 @@ import { Layer, Source } from "react-map-gl/maplibre"
 import type { OverlaySpec } from "./types.ts"
 
 export interface OverlayLayersProps {
-	/** The overlays to render, in draw order (first is drawn first / lowest). */
+	/**
+	 * The overlays to render, in draw order (first is drawn first / lowest).
+	 */
 	overlays?: OverlaySpec[]
 }
 
-/** Render each overlay as one `<Source>` and its `<Layer>`s, honoring the `visible` flag via `visibility`. */
+/**
+ * Render each overlay as one `<Source>` and its `<Layer>`s, honoring the `visible` flag via `visibility`.
+ */
 export function OverlayLayers({ overlays }: OverlayLayersProps): ReactNode {
 	if (!overlays || !overlays.length) return null
 

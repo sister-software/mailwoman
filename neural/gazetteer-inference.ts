@@ -24,15 +24,21 @@ import type { TokenizedPiece } from "./tokenizer.ts"
  */
 export const GAZETTEER_FEATURE_DIM = 5
 
-/** The loaded lexicon — the JSON shape from build-gazetteer-anchor-lexicon.mjs. */
+/**
+ * The loaded lexicon — the JSON shape from build-gazetteer-anchor-lexicon.mjs.
+ */
 export interface GazetteerLexicon {
 	featureDim: number
 	slots: readonly string[]
 	bits: Record<string, number>
 	maxNgram: number
-	/** Case-insensitive: key = word_norm lowercased → bitmask. */
+	/**
+	 * Case-insensitive: key = word_norm lowercased → bitmask.
+	 */
 	entries: Map<string, number>
-	/** Case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase). */
+	/**
+	 * Case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase).
+	 */
 	codeEntries: Map<string, number>
 	/**
 	 * V3.23 digit guard (`rules.digit_guard`): a matched span paints NOTHING when any span word or the nearest non-empty
@@ -42,7 +48,9 @@ export interface GazetteerLexicon {
 	digitGuard: boolean
 }
 
-/** Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; caller reads). */
+/**
+ * Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; caller reads).
+ */
 export function parseGazetteerLexicon(raw: {
 	feature_dim: number
 	slots: string[]
@@ -87,7 +95,9 @@ export function parseGazetteerLexicon(raw: {
 // Strict Unicode-Nd (mirrors Python str.isdecimal — isdigit would also accept superscripts \p{Nd} rejects).
 const hasDecimal = (word: string): boolean => /\p{Nd}/u.test(word)
 
-/** True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit. */
+/**
+ * True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit.
+ */
 function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number): boolean {
 	for (let k = i; k < i + matchedN; k++) {
 		if (hasDecimal(words[k]!.text)) return true
@@ -108,7 +118,9 @@ function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number):
 	return k < words.length && hasDecimal(words[k]!.text)
 }
 
-/** Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal). */
+/**
+ * Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal).
+ */
 function stripWord(word: string): string {
 	let start = 0
 	let end = word.length
@@ -135,7 +147,9 @@ interface NormWord {
 	text: string // the stripped surface (case-preserved)
 }
 
-/** Scan the raw surface and paint each char with its candidate-tag bitmask (mirrors Python). */
+/**
+ * Scan the raw surface and paint each char with its candidate-tag bitmask (mirrors Python).
+ */
 export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): number[] {
 	const charBits = new Array<number>(text.length).fill(0)
 	const wordRe = /\S+/g

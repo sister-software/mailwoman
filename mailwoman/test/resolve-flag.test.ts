@@ -152,7 +152,9 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 60_000)
 })
 
-/** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
+/**
+ * Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout.
+ */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()

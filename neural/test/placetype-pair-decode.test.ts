@@ -26,7 +26,9 @@ import { MailwomanTokenizer } from "../tokenizer.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Fake runner emitting a canned logits matrix regardless of input — the `trace-parse.test.ts` idiom. */
+/**
+ * Fake runner emitting a canned logits matrix regardless of input — the `trace-parse.test.ts` idiom.
+ */
 class FakeRunner implements NeuralRunner {
 	constructor(private readonly canned: number[][]) {}
 	async infer(_ids: number[]): Promise<InferResult> {
@@ -42,7 +44,9 @@ function col(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
 }
 
-/** A minimal `PairIndexLike` resolving exactly one (child, parent) pair, at the real artifact's delta (6.0). */
+/**
+ * A minimal `PairIndexLike` resolving exactly one (child, parent) pair, at the real artifact's delta (6.0).
+ */
 function fixedPairIndex(child: string, parent: string, tag: string, delta = 6, transitionBeta?: number): PairIndexLike {
 	return {
 		delta,

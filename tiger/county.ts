@@ -131,5 +131,7 @@ export interface TIGERCounty {
 	NAME: string
 }
 
-/** Brand symbol marking a value as a TIGER county record, so a bare object cannot be passed as one. */
+/**
+ * Brand symbol marking a value as a TIGER county record, so a bare object cannot be passed as one.
+ */
 export const TIGERCountySymbol = Symbol.for("TIGERCounty")

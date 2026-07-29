@@ -18,10 +18,14 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
-/** Confusions below this count are individually uninteresting and are summarised instead. */
+/**
+ * Confusions below this count are individually uninteresting and are summarised instead.
+ */
 const MIN_CONFUSION_COUNT = 20
 
-/** Off-map misses printed before the list is truncated. */
+/**
+ * Off-map misses printed before the list is truncated.
+ */
 const MAX_LISTED_MISSES = 8
 
 interface TestRow {
@@ -35,26 +39,42 @@ interface MultiScriptRow {
 	script: string
 }
 
-/** Options for {@linkcode evalCoarsePlacer}. */
+/**
+ * Options for {@linkcode evalCoarsePlacer}.
+ */
 export interface EvalCoarsePlacerOptions {
-	/** Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	model?: string
-	/** Abstention threshold. Default 0.5. */
+	/**
+	 * Abstention threshold. Default 0.5.
+	 */
 	abstain?: number
-	/** Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode evalCoarsePlacer}. */
+/**
+ * Result of {@linkcode evalCoarsePlacer}.
+ */
 export interface EvalCoarsePlacerResult {
 	n: number
-	/** Overall accuracy in percent. */
+	/**
+	 * Overall accuracy in percent.
+	 */
 	accuracy: number
-	/** 10-bucket expected calibration error. */
+	/**
+	 * 10-bucket expected calibration error.
+	 */
 	ece: number
 }
 
-/** Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout. */
+/**
+ * Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout.
+ */
 export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): Promise<EvalCoarsePlacerResult> {
 	const modelDir = options.model || dataRootPath("coarse-placer", "model")
 	const abstain = options.abstain ?? 0.5

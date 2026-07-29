@@ -10,13 +10,19 @@
  *   record honest (the source URL, the license, the required attribution string).
  */
 
-/** The BAN "latest" CSV export root. */
+/**
+ * The BAN "latest" CSV export root.
+ */
 export const BAN_CSV_BASE = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
-/** Licence Ouverte / Etalab 2.0 — attribution, NO share-alike (unlike ODbL). */
+/**
+ * Licence Ouverte / Etalab 2.0 — attribution, NO share-alike (unlike ODbL).
+ */
 export const BAN_LICENSE = "Licence Ouverte / Open Licence 2.0 (Etalab)"
 
-/** The attribution string a result resolved through a BAN point must surface. */
+/**
+ * The attribution string a result resolved through a BAN point must surface.
+ */
 export const BAN_ATTRIBUTION = "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)"
 
 /**
@@ -27,7 +33,9 @@ export function banDepartementURL(dept: string): string {
 	return `${BAN_CSV_BASE}/adresses-${dept}.csv.gz`
 }
 
-/** The download URL of the whole-country BAN dump (`adresses-france.csv.gz`). */
+/**
+ * The download URL of the whole-country BAN dump (`adresses-france.csv.gz`).
+ */
 export function banNationalURL(): string {
 	return `${BAN_CSV_BASE}/adresses-france.csv.gz`
 }

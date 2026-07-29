@@ -25,7 +25,9 @@ import { createReadStream } from "node:fs"
 
 import { parse, type Options } from "csv-parse"
 
-/** Csv-parse options approximating Python's default `csv.DictReader` dialect + leniency. */
+/**
+ * Csv-parse options approximating Python's default `csv.DictReader` dialect + leniency.
+ */
 const CSV_OPTS: Options = {
 	columns: true,
 	bom: true,
@@ -34,7 +36,9 @@ const CSV_OPTS: Options = {
 	skip_records_with_error: true,
 }
 
-/** Return the first `.csv` member name inside `zipPath` (Python `[n for n in namelist() ...][0]`). */
+/**
+ * Return the first `.csv` member name inside `zipPath` (Python `[n for n in namelist() ...][0]`).
+ */
 export function firstCSVEntry(zipPath: string): string {
 	const r = spawnSync("unzip", ["-Z1", zipPath], { encoding: "utf8", maxBuffer: 1 << 28 })
 	const names = (r.stdout || "")
@@ -48,7 +52,9 @@ export function firstCSVEntry(zipPath: string): string {
 	return csv
 }
 
-/** Stream header-keyed CSV records from a single member of a (possibly ZIP64) zip archive. */
+/**
+ * Stream header-keyed CSV records from a single member of a (possibly ZIP64) zip archive.
+ */
 export async function* csvRecordsFromZip(
 	zipPath: string,
 	entry: string
@@ -78,7 +84,9 @@ export async function* csvRecordsFromZip(
 	}
 }
 
-/** Stream header-keyed CSV records from a loose CSV file on disk. */
+/**
+ * Stream header-keyed CSV records from a loose CSV file on disk.
+ */
 export async function* csvRecordsFromFile(path: string): AsyncGenerator<Record<string, string | undefined>> {
 	const parser = createReadStream(path).pipe(parse(CSV_OPTS))
 

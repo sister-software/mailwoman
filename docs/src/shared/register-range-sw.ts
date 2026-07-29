@@ -12,10 +12,14 @@
  *   mode restrictions) silently degrades to plain network range fetches.
  */
 
-/** Message type understood by the range-cache service worker. */
+/**
+ * Message type understood by the range-cache service worker.
+ */
 const PRUNE_MESSAGE_TYPE = "mailwoman-prune-db-ranges"
 
-/** Register the range-cache service worker. Idempotent — repeat calls re-use the registration. */
+/**
+ * Register the range-cache service worker. Idempotent — repeat calls re-use the registration.
+ */
 export function registerRangeCacheServiceWorker(baseURL: string): void {
 	if (globalThis.window === undefined || !("serviceWorker" in navigator)) return
 	void navigator.serviceWorker.register(`${baseURL}range-cache-sw.js`).catch((error: unknown) => {

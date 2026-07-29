@@ -39,7 +39,9 @@ function tokens(): DecoderToken[] {
 	]
 }
 
-/** Stable structural fingerprint: each node as `tag(value)` with nested children. */
+/**
+ * Stable structural fingerprint: each node as `tag(value)` with nested children.
+ */
 function shape(nodes: { tag: string; value: string; children: unknown[] }[]): string {
 	return nodes.map((n) => `${n.tag}[${shape(n.children as never)}]`).join(",")
 }

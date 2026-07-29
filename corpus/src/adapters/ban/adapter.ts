@@ -190,5 +190,7 @@ export function createBanAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const banAdapter = createBanAdapter()

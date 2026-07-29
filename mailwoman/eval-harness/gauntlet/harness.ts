@@ -24,9 +24,13 @@ export interface GauntletDeps {
 	close(): void
 }
 
-/** Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}). */
+/**
+ * Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}).
+ */
 export interface GauntletGeocodeOpts {
-	/** Resolver country prior (ISO-3166 alpha-2) — geocodeAddress's `defaultCountry`. */
+	/**
+	 * Resolver country prior (ISO-3166 alpha-2) — geocodeAddress's `defaultCountry`.
+	 */
 	defaultCountry?: string
 }
 
@@ -155,7 +159,9 @@ export async function buildGauntletDeps(
 	}
 }
 
-/** The slice of the assembled result the Gauntlet asserts on. */
+/**
+ * The slice of the assembled result the Gauntlet asserts on.
+ */
 export interface GauntletResult {
 	lat: number | null
 	lon: number | null
@@ -164,7 +170,9 @@ export interface GauntletResult {
 	region: string | null
 	country: string | null
 	postcode: string | null
-	/** The parsed spans, populated regardless of tier (geocode-core #1041) — asserted by venue/name-trap cases. */
+	/**
+	 * The parsed spans, populated regardless of tier (geocode-core #1041) — asserted by venue/name-trap cases.
+	 */
 	house_number: string | null
 	street: string | null
 }

@@ -28,7 +28,9 @@ const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
-/** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
+/**
+ * Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout.
+ */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
@@ -37,9 +39,7 @@ function stripAnsiSpinner(stdout: string): string {
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
 }
 
-// ---------------------------------------------------------------------------
-// Error-path tests — run unconditionally, no real DB required.
-// ---------------------------------------------------------------------------
+// MARK: Error-path tests — run unconditionally, no real DB required.
 
 describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero with a clear message when lat/lon are missing", async () => {
@@ -86,9 +86,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// End-to-end tests against the real production DBs.
-// ---------------------------------------------------------------------------
+// MARK: End-to-end tests against the real production DBs.
 
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"mailwoman reverse — end-to-end against MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB",

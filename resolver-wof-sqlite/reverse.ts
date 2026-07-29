@@ -35,10 +35,14 @@ import { PLACE_BBOX_TABLE } from "./fts.ts"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.ts"
 import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
 
-/** Largest absolute latitude in WGS-84 degrees. */
+/**
+ * Largest absolute latitude in WGS-84 degrees.
+ */
 const MAX_ABS_LATITUDE = 90
 
-/** Largest absolute longitude in WGS-84 degrees. */
+/**
+ * Largest absolute longitude in WGS-84 degrees.
+ */
 const MAX_ABS_LONGITUDE = 180
 
 /**
@@ -58,7 +62,9 @@ export interface ReverseGeocodeResult {
 	 * ocean, or outside the gazetteer's coverage).
 	 */
 	hierarchy: PlaceCandidate[]
-	/** Containment kind of the DEEPEST place in `hierarchy` (see {@link ContainmentKind}). */
+	/**
+	 * Containment kind of the DEEPEST place in `hierarchy` (see {@link ContainmentKind}).
+	 */
 	containment: ContainmentKind
 }
 
@@ -68,14 +74,18 @@ export interface WOFReverseGeocoderOpts {
 	 * package-built `place_bbox` R*Tree (`mailwoman gazetteer build fts`). Mutually exclusive with `adminDatabase`.
 	 */
 	adminDBPath?: string
-	/** Pre-opened admin DB — primarily for tests against an inline fixture. */
+	/**
+	 * Pre-opened admin DB — primarily for tests against an inline fixture.
+	 */
 	adminDatabase?: DatabaseSync
 	/**
 	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`). OPTIONAL — without it every result
 	 * is `containment: "approximate"` (centroid-only mode). Mutually exclusive with `polygonDatabase`.
 	 */
 	polygonDBPath?: string
-	/** Pre-opened polygon DB — primarily for tests. */
+	/**
+	 * Pre-opened polygon DB — primarily for tests.
+	 */
 	polygonDatabase?: DatabaseSync
 }
 
@@ -114,7 +124,9 @@ const DESCENT_TIERS: readonly WOFPlacetype[] = [
 	"microhood",
 ]
 
-/** Internal candidate row off `spr` (+ optional bbox area / centroid distance bookkeeping). */
+/**
+ * Internal candidate row off `spr` (+ optional bbox area / centroid distance bookkeeping).
+ */
 interface CandidateRow {
 	id: number
 	name: string
@@ -346,7 +358,9 @@ export class WOFReverseGeocoder implements Disposable {
 		return { hierarchy, containment: currentConfirmed ? "polygon" : "approximate" }
 	}
 
-	/** Bbox candidates containing the point, smallest-area-first, via the `place_bbox` R*Tree. */
+	/**
+	 * Bbox candidates containing the point, smallest-area-first, via the `place_bbox` R*Tree.
+	 */
 	#bboxCandidates(lat: number, lon: number, opts: ReverseGeocodeOpts): CandidateRow[] {
 		const where: string[] = [
 			"bbox.min_lat <= ?",
@@ -408,7 +422,9 @@ export class WOFReverseGeocoder implements Disposable {
 			) as unknown as CandidateRow[]
 	}
 
-	/** Parsed GeoJSON geometry for a WOF id, or null when absent / unparseable / no polygon DB. */
+	/**
+	 * Parsed GeoJSON geometry for a WOF id, or null when absent / unparseable / no polygon DB.
+	 */
 	#geometry(id: number): GeojsonGeometry | null {
 		if (!this.#polygons) return null
 		const cached = this.#geometryCache.get(id)

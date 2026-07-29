@@ -55,7 +55,9 @@ import { dataRootPath, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
-/** Longest raw line still plausibly a single address rather than a concatenated record. */
+/**
+ * Longest raw line still plausibly a single address rather than a concatenated record.
+ */
 const MAX_CANDIDATE_LENGTH = 500
 
 interface CorpusRow {
@@ -93,21 +95,37 @@ interface GoldenCandidate {
 }
 
 export interface ExpandGoldenOptions {
-	/** Corpus test shard path(s), comma-separated. Default: the v0.2.0 test shard under the data root. */
+	/**
+	 * Corpus test shard path(s), comma-separated. Default: the v0.2.0 test shard under the data root.
+	 */
 	corpus?: string
-	/** Total seeds to process. Default `100` (pilot). */
+	/**
+	 * Total seeds to process. Default `100` (pilot).
+	 */
 	count?: number
-	/** Variants requested per seed. Default `5`. */
+	/**
+	 * Variants requested per seed. Default `5`.
+	 */
 	variants?: number
-	/** JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`. */
+	/**
+	 * JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 */
 	output?: string
-	/** LLM provider. Default `deepseek`. */
+	/**
+	 * LLM provider. Default `deepseek`.
+	 */
 	provider?: "deepseek" | "anthropic"
-	/** Model id. Default depends on provider. */
+	/**
+	 * Model id. Default depends on provider.
+	 */
 	model?: string
-	/** Parallel LLM calls. Default `4`. */
+	/**
+	 * Parallel LLM calls. Default `4`.
+	 */
 	concurrency?: number
-	/** Comma-separated source allow-list. */
+	/**
+	 * Comma-separated source allow-list.
+	 */
 	includeSources?: string
 }
 
@@ -400,7 +418,9 @@ function normalize(s: string): string {
 	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
-/** Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out. */
+/**
+ * Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+ */
 const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_number", "venue"])
 
 function validate(seed: Seed, candidate: Candidate): boolean {

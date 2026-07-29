@@ -61,11 +61,17 @@ export function normalizePostcodeName(raw: string): string {
 }
 
 export interface GeonamesPostalIngestResult {
-	/** Distinct postcodes inserted across all countries. */
+	/**
+	 * Distinct postcodes inserted across all countries.
+	 */
 	inserted: number
-	/** Per-country distinct-postcode counts. */
+	/**
+	 * Per-country distinct-postcode counts.
+	 */
 	byCountry: Record<string, number>
-	/** Countries whose `<CC>.txt` was missing under the postal dir (skipped, reported). */
+	/**
+	 * Countries whose `<CC>.txt` was missing under the postal dir (skipped, reported).
+	 */
 	missing: string[]
 }
 

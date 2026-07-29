@@ -96,7 +96,9 @@ interface Manifest {
 	notes: string
 }
 
-/** Mimic `numfmt --to=iec` for a friendly byte-size log line. */
+/**
+ * Mimic `numfmt --to=iec` for a friendly byte-size log line.
+ */
 function iec(bytes: number): string {
 	if (bytes < BYTES_PER_KIB) return String(bytes)
 	const units = ["K", "M", "G", "T", "P"]

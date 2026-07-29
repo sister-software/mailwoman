@@ -174,5 +174,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovNPPESAdapter = createUsgovNPPESAdapter()

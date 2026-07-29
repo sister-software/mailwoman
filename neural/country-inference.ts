@@ -48,9 +48,13 @@ import type { TokenizedPiece } from "./tokenizer.ts"
  */
 export const COUNTRY_FEATURE_DIM = 2
 
-/** Lexicon bit for "this surface is a recognized country surface". */
+/**
+ * Lexicon bit for "this surface is a recognized country surface".
+ */
 export const COUNTRY_SURFACE_BIT = 1
-/** Lexicon bit for "this surface is ambiguous" (homograph with a US region, or a common-word name). */
+/**
+ * Lexicon bit for "this surface is ambiguous" (homograph with a US region, or a common-word name).
+ */
 export const COUNTRY_AMBIGUOUS_BIT = 2
 
 /**
@@ -60,7 +64,9 @@ export const COUNTRY_AMBIGUOUS_BIT = 2
  */
 export type CountryLexicon = GazetteerLexicon
 
-/** Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; the caller reads). */
+/**
+ * Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; the caller reads).
+ */
 export function parseCountryLexicon(raw: {
 	feature_dim: number
 	slots: string[]

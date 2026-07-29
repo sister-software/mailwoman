@@ -19,7 +19,9 @@
  */
 
 export interface InterpCalibrationTable {
-	/** Uppercase USPS region code → conformal multiplier. */
+	/**
+	 * Uppercase USPS region code → conformal multiplier.
+	 */
 	byRegion: Record<string, number>
 	/**
 	 * Multiplier for regions not in the measured set. Deliberately high (near the rural end): under-coverage

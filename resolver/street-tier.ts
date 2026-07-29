@@ -19,7 +19,9 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import { foldName } from "./fold-name.ts"
 
-/** Street-name component tags that, with the street node itself, reconstruct the full street string. */
+/**
+ * Street-name component tags that, with the street node itself, reconstruct the full street string.
+ */
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
@@ -267,7 +269,9 @@ const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
 	"rond",
 ])
 
-/** Fold to lower-case, diacritic-stripped, punctuation-free tokens — mirrors `street-normalize.ts`'s `fold`. */
+/**
+ * Fold to lower-case, diacritic-stripped, punctuation-free tokens — mirrors `street-normalize.ts`'s `fold`.
+ */
 function foldVoieTokens(s: string): string[] {
 	return s
 		.normalize("NFKD")
@@ -279,14 +283,18 @@ function foldVoieTokens(s: string): string[] {
 		.filter(Boolean)
 }
 
-/** Does a string START with a French thoroughfare type token ("Rue …", "Place …")? */
+/**
+ * Does a string START with a French thoroughfare type token ("Rue …", "Place …")?
+ */
 function isVoieShaped(s: string): boolean {
 	const first = foldVoieTokens(s)[0]
 
 	return first !== undefined && FR_VOIE_TYPES.has(first)
 }
 
-/** Push `v` (trimmed, non-empty, deduped, capped) onto `list`. */
+/**
+ * Push `v` (trimmed, non-empty, deduped, capped) onto `list`.
+ */
 function pushCandidate(list: string[], v: string | undefined, cap: number): void {
 	const t = v?.trim()
 

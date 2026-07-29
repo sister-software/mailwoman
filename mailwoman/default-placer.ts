@@ -16,15 +16,21 @@
  *   degrades to plain resolution instead of throwing.
  */
 
-/** Structural shape of a place-country predictor — matches `RuntimePipelineStages["placeCountry"]`. */
+/**
+ * Structural shape of a place-country predictor — matches `RuntimePipelineStages["placeCountry"]`.
+ */
 export type PlaceCountryFn = (normalizedText: string) => {
 	country: string | null
 	confidence: number
-	/** Full per-in-map-country distribution (#244 residual). When set it IS the `anchorPosterior`. */
+	/**
+	 * Full per-in-map-country distribution (#244 residual). When set it IS the `anchorPosterior`.
+	 */
 	posterior?: Record<string, number>
 }
 
-/** Abstention threshold for the default prior — the open-set rule's flat-optimum operating point (#244 M2). */
+/**
+ * Abstention threshold for the default prior — the open-set rule's flat-optimum operating point (#244 M2).
+ */
 const DEFAULT_ABSTAIN_BELOW = 0.9
 
 let cached: Promise<PlaceCountryFn | null> | null = null

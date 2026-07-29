@@ -44,7 +44,9 @@ export interface SpanRescoreOptions {
 	 * penalizes a backend without postcode coverage). 0 disables. Default 50.
 	 */
 	gateKm?: number
-	/** Max contiguous raw tokens to treat as one locality span. Default 4. */
+	/**
+	 * Max contiguous raw tokens to treat as one locality span. Default 4.
+	 */
 	maxSpanTokens?: number
 	/**
 	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent. Default 0.7.
@@ -60,14 +62,22 @@ export interface SpanRescoreOptions {
 	postalCompoundRecovery?: boolean
 }
 
-/** The recovered locality: the raw span and the gazetteer place it resolved to. */
+/**
+ * The recovered locality: the raw span and the gazetteer place it resolved to.
+ */
 export interface RescoreCandidate {
-	/** The raw text of the winning span. */
+	/**
+	 * The raw text of the winning span.
+	 */
 	text: string
-	/** Char offsets of the span in the raw input. */
+	/**
+	 * Char offsets of the span in the raw input.
+	 */
 	start: number
 	end: number
-	/** The resolved gazetteer place (decorate a node with this). */
+	/**
+	 * The resolved gazetteer place (decorate a node with this).
+	 */
 	place: ResolvedPlace
 	/**
 	 * Whether the postcode-consistency gate FIRED for this recovery — i.e. the postcode resolved to a point and the match
@@ -80,7 +90,9 @@ export interface RescoreCandidate {
 	gated: boolean
 }
 
-/** Normalize for exact comparison: lowercase, strip diacritics + punctuation, collapse whitespace. */
+/**
+ * Normalize for exact comparison: lowercase, strip diacritics + punctuation, collapse whitespace.
+ */
 const norm = (s: string): string =>
 	s
 		.toLowerCase()
@@ -94,7 +106,9 @@ interface RawTok {
 	start: number
 	end: number
 }
-/** Whitespace/punctuation tokenization of the raw input, char offsets preserved, diacritics intact. */
+/**
+ * Whitespace/punctuation tokenization of the raw input, char offsets preserved, diacritics intact.
+ */
 function tokenizeRaw(raw: string): RawTok[] {
 	const toks: RawTok[] = []
 	const re = /[^\s,;/]+/g
@@ -120,7 +134,9 @@ export function postcodeCodeSubset(postcode: string): string {
 		.trim()
 }
 
-/** True if any node in the tree already carries a resolved place id — the #685 brake. */
+/**
+ * True if any node in the tree already carries a resolved place id — the #685 brake.
+ */
 export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	const stack: AddressNode[] = [...roots]
 

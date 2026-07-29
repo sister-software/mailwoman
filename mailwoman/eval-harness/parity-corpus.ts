@@ -31,16 +31,24 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
  * corpus stays reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints
  * which corpus + how many tombstones it skipped, so the denominator is never silent.
  */
-/** Examples a parity bucket needs before its rate is stable enough to compare across versions. */
+/**
+ * Examples a parity bucket needs before its rate is stable enough to compare across versions.
+ */
 const MIN_BUCKET_EXAMPLES = 8
 
-/** Parity corpus — the cases rescued from the legacy golden set, used to compare versions. */
+/**
+ * Parity corpus — the cases rescued from the legacy golden set, used to compare versions.
+ */
 export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
-/** The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`. */
+/**
+ * The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`.
+ */
 export const PARITY_FIXTURES_V1_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 
-/** Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates. */
+/**
+ * Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates.
+ */
 export const PARITY_FLOORS = [
 	{ label: "house_number", floor: 0.97, tags: ["house_number"] },
 	{ label: "postcode", floor: 0.97, tags: ["postcode"] },
@@ -70,7 +78,9 @@ export interface ParityEvalOptions {
 	 * gate grades the healed parse). Pass `false` to reproduce pre-heal baselines.
 	 */
 	wordConsistency?: boolean
-	/** List the first N disagreeing inputs per floor label. */
+	/**
+	 * List the first N disagreeing inputs per floor label.
+	 */
 	failing?: number
 }
 
@@ -87,7 +97,9 @@ function loadFixtures(path: string): ParityFixture[] {
 		.map((line) => JSON.parse(line) as ParityFixture)
 }
 
-/** Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout. */
+/**
+ * Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout.
+ */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)

@@ -30,7 +30,9 @@ import { layers, namedFlavor } from "@protomaps/basemaps"
 
 import type { EntityGeoData } from "./types.ts"
 
-/** MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major. */
+/**
+ * MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major.
+ */
 const MAPLIBRE_VERSION = "5.24.0"
 const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
@@ -50,13 +52,19 @@ const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
-/** Protomaps stock flavors (shipped by `@protomaps/basemaps`). */
+/**
+ * Protomaps stock flavors (shipped by `@protomaps/basemaps`).
+ */
 export type MapFlavor = "light" | "dark" | "white" | "grayscale" | "black"
 
 export interface MapHTMLOptions {
-	/** Document `<title>` + on-map heading. Default: "Mailwoman — resolved entities". */
+	/**
+	 * Document `<title>` + on-map heading. Default: "Mailwoman — resolved entities".
+	 */
 	title?: string
-	/** Protomaps basemap flavor. Default: "light" (data points read cleanly over it). */
+	/**
+	 * Protomaps basemap flavor. Default: "light" (data points read cleanly over it).
+	 */
 	flavor?: MapFlavor
 	/**
 	 * How to color the markers:
@@ -69,11 +77,17 @@ export interface MapHTMLOptions {
 	colorBy?: "auto" | "sources" | "bucket"
 }
 
-/** Categorical palette (reused for buckets; cycles if there are more buckets than entries). */
+/**
+ * Categorical palette (reused for buckets; cycles if there are more buckets than entries).
+ */
 const PALETTE = ["#2f9e44", "#f08c00", "#1971c2", "#e8590c", "#9c36b5", "#0c8599", "#e03131", "#5c940d"]
-/** Single-source entity. */
+/**
+ * Single-source entity.
+ */
 const SINGLE_COLOR = "#3388ff"
-/** Cross-dataset link (≥2 sources) */
+/**
+ * Cross-dataset link (≥2 sources)
+ */
 const CROSS_COLOR = "#e8590c"
 
 /**
@@ -85,7 +99,9 @@ function safeJSONForScript(value: unknown): string {
 	return JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
 }
 
-/** Escape text for the HTML document body (title/heading), not the inlined script. */
+/**
+ * Escape text for the HTML document body (title/heading), not the inlined script.
+ */
 function escapeHTML(text: string): string {
 	return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
 }

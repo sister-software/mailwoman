@@ -10,7 +10,9 @@
 import { createHash } from "node:crypto"
 import { createReadStream } from "node:fs"
 
-/** Streaming SHA-256 of a file, hex-encoded. */
+/**
+ * Streaming SHA-256 of a file, hex-encoded.
+ */
 export async function sha256File(path: string): Promise<string> {
 	const hash = createHash("sha256")
 
@@ -21,7 +23,9 @@ export async function sha256File(path: string): Promise<string> {
 	return hash.digest("hex")
 }
 
-/** SHA-256 of in-memory content, hex-encoded. */
+/**
+ * SHA-256 of in-memory content, hex-encoded.
+ */
 export function sha256Hex(data: string | NodeJS.ArrayBufferView): string {
 	return createHash("sha256").update(data).digest("hex")
 }

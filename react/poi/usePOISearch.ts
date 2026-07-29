@@ -20,11 +20,17 @@ import { loadPOIRuntime } from "./runtime.ts"
 import type { LiveSearchState, LoadPOIRuntime, POIExplorerResult, POILiveSearch, POIRuntime } from "./types.ts"
 
 export interface UsePOISearchOptions {
-	/** The current query text (controlled by the caller). */
+	/**
+	 * The current query text (controlled by the caller).
+	 */
 	text: string
-	/** Runtime loader. @default loadPOIRuntime */
+	/**
+	 * Runtime loader. @default loadPOIRuntime
+	 */
 	loadRuntime?: LoadPOIRuntime
-	/** Injected live-search probe. Absent ⇒ the live-results affordance is disabled. */
+	/**
+	 * Injected live-search probe. Absent ⇒ the live-results affordance is disabled.
+	 */
 	runLiveSearch?: POILiveSearch
 	/**
 	 * Whether the injected probe can serve BRAND subjects (fetch by Wikidata QID). Default false: brand subjects show the
@@ -33,24 +39,38 @@ export interface UsePOISearchOptions {
 	 * live search is unaffected either way.
 	 */
 	brandLiveSearch?: boolean
-	/** Debounce before (re)classifying. @default 250 */
+	/**
+	 * Debounce before (re)classifying. @default 250
+	 */
 	debounceMs?: number
 }
 
 export interface UsePOISearch {
-	/** True once the taxonomy runtime has loaded. */
+	/**
+	 * True once the taxonomy runtime has loaded.
+	 */
 	runtimeReady: boolean
-	/** The intent result for the current (debounced) query, or null for empty input. */
+	/**
+	 * The intent result for the current (debounced) query, or null for empty input.
+	 */
 	result: POIExplorerResult | null
-	/** State of the on-demand live poi.db search. */
+	/**
+	 * State of the on-demand live poi.db search.
+	 */
 	liveSearch: LiveSearchState
-	/** Whether a live search can run right now (a probe is wired + there's a resolved subject with an anchor). */
+	/**
+	 * Whether a live search can run right now (a probe is wired + there's a resolved subject with an anchor).
+	 */
 	canSearchLive: boolean
-	/** Kick off a live search for the current subject. No-op when {@link canSearchLive} is false. */
+	/**
+	 * Kick off a live search for the current subject. No-op when {@link canSearchLive} is false.
+	 */
 	searchLive: () => Promise<void>
 }
 
-/** Compute the OverpassQL export for a matched subject, capturing any emitter error rather than throwing. */
+/**
+ * Compute the OverpassQL export for a matched subject, capturing any emitter error rather than throwing.
+ */
 function buildOverpass(
 	runtime: POIRuntime,
 	categoryID: string,

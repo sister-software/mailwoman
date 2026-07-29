@@ -17,10 +17,14 @@ import { cors } from "hono/cors"
 import type { MailwomanAPIEngine } from "./engine.ts"
 import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "./routes.ts"
 
-/** 2 MiB — carried from the express server's `express.json({ limit: "2mb" })` (`mailwoman/server/index.ts`). */
+/**
+ * 2 MiB — carried from the express server's `express.json({ limit: "2mb" })` (`mailwoman/server/index.ts`).
+ */
 const DEFAULT_BODY_LIMIT_BYTES = 2 * 1024 * 1024
 
-/** Options for {@link createMailwomanAPI}. */
+/**
+ * Options for {@link createMailwomanAPI}.
+ */
 export interface MailwomanAPIOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -30,10 +34,14 @@ export interface MailwomanAPIOptions {
 	 */
 	cors?: boolean
 
-	/** Max request body size in bytes, enforced ahead of every `/v1/*` handler. Default 2 MiB. */
+	/**
+	 * Max request body size in bytes, enforced ahead of every `/v1/*` handler. Default 2 MiB.
+	 */
 	bodyLimitBytes?: number
 
-	/** Max `addresses` rows accepted by `POST /v1/batch`. Default 500 (see `routes.ts`'s `DEFAULT_BATCH_MAX`). */
+	/**
+	 * Max `addresses` rows accepted by `POST /v1/batch`. Default 500 (see `routes.ts`'s `DEFAULT_BATCH_MAX`).
+	 */
 	batchMax?: number
 }
 
@@ -72,7 +80,9 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the native Mailwoman app around an injected {@link MailwomanAPIEngine}. */
+/**
+ * Build the native Mailwoman app around an injected {@link MailwomanAPIEngine}.
+ */
 export function createMailwomanAPI(engine: MailwomanAPIEngine, options: MailwomanAPIOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono({
 		// This surface is ours (no vendor contract to preserve): every declared body/query schema is

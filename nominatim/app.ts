@@ -15,7 +15,9 @@ import { cors } from "hono/cors"
 import type { NominatimEngine } from "./engine.ts"
 import { registerNominatimRoutes } from "./routes.ts"
 
-/** Options for {@link createNominatimApp}. */
+/**
+ * Options for {@link createNominatimApp}.
+ */
 export interface NominatimAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -53,7 +55,9 @@ export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the Nominatim-compatible app around an injected {@link NominatimEngine}. */
+/**
+ * Build the Nominatim-compatible app around an injected {@link NominatimEngine}.
+ */
 export function createNominatimApp(engine: NominatimEngine, options: NominatimAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 

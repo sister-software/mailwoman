@@ -15,12 +15,16 @@ import { describe, expect, it } from "vitest"
 
 import { repairUnitLabels } from "./unit-repair.ts"
 
-/** Build a char-aligned token. */
+/**
+ * Build a char-aligned token.
+ */
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 
-/** The contiguous unit value implied by the repaired labels (first B-…I-* run). */
+/**
+ * The contiguous unit value implied by the repaired labels (first B-…I-* run).
+ */
 function unitValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1

@@ -32,20 +32,32 @@ import { identityMap } from "./offset-map.ts"
 export interface CjkResult {
 	text: string
 	map: number[]
-	/** Count of characters folded in place (full-width → ASCII, ideographic space → ' '). */
+	/**
+	 * Count of characters folded in place (full-width → ASCII, ideographic space → ' ').
+	 */
 	folded: number
-	/** Count of characters dropped (the postal mark). */
+	/**
+	 * Count of characters dropped (the postal mark).
+	 */
 	stripped: number
 }
 
-/** ！. */
+/**
+ * ！.
+ */
 const FULLWIDTH_START = 0xff_01
-/** ～. */
+/**
+ * ～.
+ */
 const FULLWIDTH_END = 0xff_5e
-/** U+FFxx − 0xFEE0 = U+00xx. */
+/**
+ * U+FFxx − 0xFEE0 = U+00xx.
+ */
 const FULLWIDTH_TO_ASCII = 0xfe_e0
 const IDEOGRAPHIC_SPACE = 0x30_00
-/** 〒. */
+/**
+ * 〒.
+ */
 const POSTAL_MARK = 0x30_12
 
 export function applyCjkNormalization(input: string): CjkResult {

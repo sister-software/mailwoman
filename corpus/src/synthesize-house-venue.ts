@@ -107,9 +107,7 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Forest Blvd",
 ]
 
-// ---------------------------------------------------------------------------------------------
-// House-number generator
-// ---------------------------------------------------------------------------------------------
+// MARK: House-number generator
 
 function randomHouseNumber(random: () => number): string {
 	// Generate a plain numeric house number 1-9999. No fractions/ranges — those land in
@@ -144,9 +142,7 @@ function countryToLocale(country: string): string {
 	}
 }
 
-// ---------------------------------------------------------------------------------------------
-// Synthesis
-// ---------------------------------------------------------------------------------------------
+// MARK: Synthesis
 
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,

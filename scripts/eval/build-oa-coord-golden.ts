@@ -50,7 +50,9 @@ function render(street: string, num: string, cp: string, city: string, order: st
 	return `${city}, ${cp}, ${street} ${num}`
 }
 
-/** Python `str.isupper()`: at least one cased char, and every cased char is uppercase. */
+/**
+ * Python `str.isupper()`: at least one cased char, and every cased char is uppercase.
+ */
 function pyIsUpper(s: string): boolean {
 	let hasCased = false
 
@@ -67,7 +69,9 @@ function pyIsUpper(s: string): boolean {
 	return hasCased
 }
 
-/** Python `str.title()`: titlecase the first cased char of each run of cased chars, lowercase rest. */
+/**
+ * Python `str.title()`: titlecase the first cased char of each run of cased chars, lowercase rest.
+ */
 function pyTitle(s: string): string {
 	let out = ""
 	let prevCased = false

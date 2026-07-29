@@ -59,7 +59,9 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 	return { lookup, lexicon, classify: createKindClassifier({ poiLexicon: lexicon }) }
 }
 
-/** Default example queries for the POI explorer — a mix of category, build-local, and chain-brand subjects. */
+/**
+ * Default example queries for the POI explorer — a mix of category, build-local, and chain-brand subjects.
+ */
 export const POI_PRESETS = [
 	{ label: "Drinking fountain", value: "drinking fountain near Springfield" },
 	{ label: "Fire hydrant", value: "fire hydrant" },
@@ -68,10 +70,14 @@ export const POI_PRESETS = [
 	{ label: "Applebee's (brand)", value: "applebee's near Chicago" },
 ] as const
 
-/** Query the POI explorer opens on — the first preset, so the two stay in step. */
+/**
+ * Query the POI explorer opens on — the first preset, so the two stay in step.
+ */
 export const POI_DEFAULT_TEXT = POI_PRESETS[0].value
 
-/** `742 m` under 1 km, `1.9 km` past it — matches the demo's distance captions. */
+/**
+ * `742 m` under 1 km, `1.9 km` past it — matches the demo's distance captions.
+ */
 export function formatDistance(distanceM: number): string {
 	if (distanceM < 1000) return `${Math.round(distanceM)} m`
 

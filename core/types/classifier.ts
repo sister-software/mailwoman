@@ -42,16 +42,24 @@ export type ClassificationProposalSource = "rule" | "neural" | "merged"
  * downstream code can identify the origin of each proposal without consulting external state.
  */
 export interface ClassificationProposal {
-	/** Span this proposal applies to. */
+	/**
+	 * Span this proposal applies to.
+	 */
 	span: Span
 
-	/** Component type the classifier thinks this span is. */
+	/**
+	 * Component type the classifier thinks this span is.
+	 */
 	component: ComponentTag
 
-	/** Classifier confidence in [0, 1]. */
+	/**
+	 * Classifier confidence in [0, 1].
+	 */
 	confidence: number
 
-	/** Provenance — which classifier family produced this proposal. */
+	/**
+	 * Provenance — which classifier family produced this proposal.
+	 */
 	source: ClassificationProposalSource
 
 	/**
@@ -78,13 +86,19 @@ export interface ClassificationProposal {
  * Per-request context handed to a classifier.
  */
 export interface ClassifierContext {
-	/** Locale for this classification request, if known. */
+	/**
+	 * Locale for this classification request, if known.
+	 */
 	locale?: string
 
-	/** Proposals already produced for this request (for composites). */
+	/**
+	 * Proposals already produced for this request (for composites).
+	 */
 	prior?: readonly ClassificationProposal[]
 
-	/** Cancellation signal. */
+	/**
+	 * Cancellation signal.
+	 */
 	signal?: AbortSignal
 }
 
@@ -95,7 +109,9 @@ export interface ClassifierContext {
  * warming up an ONNX session) belongs in the optional `ready()` step.
  */
 export interface ProposalClassifier {
-	/** Stable identifier. Used as `source_id` on emitted proposals. */
+	/**
+	 * Stable identifier. Used as `source_id` on emitted proposals.
+	 */
 	readonly id: string
 
 	/**
@@ -111,7 +127,9 @@ export interface ProposalClassifier {
 	 */
 	readonly locales: readonly (string | "*")[]
 
-	/** Optional async pre-flight. */
+	/**
+	 * Optional async pre-flight.
+	 */
 	ready?(): Promise<void>
 
 	/**

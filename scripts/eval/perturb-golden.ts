@@ -42,7 +42,9 @@ interface GoldenRow {
 	locale?: string
 }
 
-/** Collapse the space between a trailing region + postcode, e.g. "OR 97214" → "OR97214". */
+/**
+ * Collapse the space between a trailing region + postcode, e.g. "OR 97214" → "OR97214".
+ */
 function glue(raw: string): string {
 	return raw.replaceAll(/\b([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\b/g, "$1$2")
 }

@@ -34,7 +34,9 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 	return { synth, aligned }
 }
 
-/** The BIO tag on the FIRST token of raw (the leading 5-digit's label). */
+/**
+ * The BIO tag on the FIRST token of raw (the leading 5-digit's label).
+ */
 function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	if (aligned.kind !== "labeled") return null
 	const l = aligned.row.labels[0]

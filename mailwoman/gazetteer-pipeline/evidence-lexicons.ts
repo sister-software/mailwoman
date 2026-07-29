@@ -60,12 +60,18 @@ import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
 
-/** Letters at or below which a token reads as an abbreviation rather than a word. */
+/**
+ * Letters at or below which a token reads as an abbreviation rather than a word.
+ */
 const MAX_ABBREVIATION_LETTERS = 3
 
-/** Law 2: 1-token locality surfaces need population-backed importance ≥ this (≈11k population). */
+/**
+ * Law 2: 1-token locality surfaces need population-backed importance ≥ this (≈11k population).
+ */
 export const ONE_TOKEN_IMPORTANCE_FLOOR = 0.25
-/** Law 3: 1-token person-name surfaces need importance ≥ this (the metropolis tier). */
+/**
+ * Law 3: 1-token person-name surfaces need importance ≥ this (the metropolis tier).
+ */
 export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 
 const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
@@ -163,7 +169,9 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
 	return false
 }
 
-/** Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles). */
+/**
+ * Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles).
+ */
 export function loadPersonNameSurfaces(): Set<string> {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
 	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
@@ -211,16 +219,22 @@ export function clearsProminenceFloor(
 }
 
 export interface BuildLocalitySurfaceLexiconOpts {
-	/** Countries whose locality names become evidence. Default US+FR (the probe-validated pair). */
+	/**
+	 * Countries whose locality names become evidence. Default US+FR (the probe-validated pair).
+	 */
 	countries?: string[]
 	/**
 	 * Child placetypes. Default includes `neighbourhood` (the v4 register change); pass `["locality", "localadmin"]` for
 	 * a v3-parity build.
 	 */
 	placetypes?: string[]
-	/** WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`). */
+	/**
+	 * WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
+	 */
 	dbPath?: string
-	/** Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v6.json`). */
+	/**
+	 * Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v6.json`).
+	 */
 	output?: string
 	onProgress?: (line: string) => void
 }
@@ -230,9 +244,13 @@ export interface BuiltLexicon {
 	entries: number
 	homographs: number
 	skippedDegenerate: number
-	/** Law 4 (v5): surfaces refused as region vocabulary. */
+	/**
+	 * Law 4 (v5): surfaces refused as region vocabulary.
+	 */
 	skippedRegionVocabulary: number
-	/** Alt-name sub-phrase hygiene (v5): names-table aliases refused as sub-phrases of their primary. */
+	/**
+	 * Alt-name sub-phrase hygiene (v5): names-table aliases refused as sub-phrases of their primary.
+	 */
 	skippedSubPhrase: number
 	skippedProminence: number
 	maxNgram: number
@@ -418,12 +436,12 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Street-type lexicon (the bundle's first channel)
-// ---------------------------------------------------------------------------
+// MARK: Street-type lexicon (the bundle's first channel)
 
 export interface BuildStreetTypeLexiconOpts {
-	/** Output path (default `<repo>/data/gazetteer/street-type-lexicon-v3.json` — small, committed). */
+	/**
+	 * Output path (default `<repo>/data/gazetteer/street-type-lexicon-v3.json` — small, committed).
+	 */
 	output?: string
 }
 

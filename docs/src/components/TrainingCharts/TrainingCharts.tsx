@@ -25,32 +25,48 @@ import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────
 
-/** Residual bands the chart colours against, in the loss units plotted. Presentation only. */
+/**
+ * Residual bands the chart colours against, in the loss units plotted. Presentation only.
+ */
 const RESIDUAL_TIGHT = 1.5
 
-/** See {@link RESIDUAL_TIGHT}. */
+/**
+ * See {@link RESIDUAL_TIGHT}.
+ */
 const RESIDUAL_MODERATE = 3
 
-/** See {@link RESIDUAL_TIGHT}. */
+/**
+ * See {@link RESIDUAL_TIGHT}.
+ */
 const RESIDUAL_LOOSE = 7
 
-/** Magnitude below which a tick is rendered in scientific notation rather than as a decimal. */
+/**
+ * Magnitude below which a tick is rendered in scientific notation rather than as a decimal.
+ */
 const SCIENTIFIC_NOTATION_BELOW = 0.001
 
-/** Magnitude below which a tick keeps one decimal place; above it the value is abbreviated. */
+/**
+ * Magnitude below which a tick keeps one decimal place; above it the value is abbreviated.
+ */
 const COMPACT_NOTATION_ABOVE = 10_000
 
-/** Pixel radius within which the cursor snaps to a data point. */
+/**
+ * Pixel radius within which the cursor snaps to a data point.
+ */
 const MAX_HOVER_DISTANCE_PX = 40
 
 const TRACKIO_BASE = "https://sister-software-mailwoman-trackio.hf.space"
 const PROJECT = "mailwoman"
 const POLL_INTERVAL_MS = 30_000
 
-/** Default metrics to enable on first load. */
+/**
+ * Default metrics to enable on first load.
+ */
 const DEFAULT_METRICS = ["train_loss", "val_loss", "val_macro_f1"]
 
-/** All known metric keys — populated dynamically but these are the common ones. */
+/**
+ * All known metric keys — populated dynamically but these are the common ones.
+ */
 const KNOWN_METRICS: Array<{ key: string; label: string; group: "loss" | "f1" | "support" }> = [
 	{ key: "train_loss", label: "train loss", group: "loss" },
 	{ key: "val_loss", label: "val loss", group: "loss" },
@@ -99,7 +115,9 @@ interface RunSummary {
 	[key: string]: unknown
 }
 
-/** One rendered line on the chart. */
+/**
+ * One rendered line on the chart.
+ */
 interface ChartSeries {
 	run: string
 	metric: string
@@ -108,7 +126,9 @@ interface ChartSeries {
 	points: MetricPoint[]
 }
 
-/** Hover tooltip state — x/y are CSS-pixel offsets relative to the chart wrapper. */
+/**
+ * Hover tooltip state — x/y are CSS-pixel offsets relative to the chart wrapper.
+ */
 interface TooltipDatum {
 	series: ChartSeries
 	point: MetricPoint

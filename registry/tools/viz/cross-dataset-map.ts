@@ -33,19 +33,27 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-/** Distinct agencies a combination needs before it is plotted as a cross-agency cluster. */
+/**
+ * Distinct agencies a combination needs before it is plotted as a cross-agency cluster.
+ */
 const MIN_DISTINCT_AGENCIES = 3
 
-/** Options for {@linkcode crossDatasetMap}. */
+/**
+ * Options for {@linkcode crossDatasetMap}.
+ */
 export interface CrossDatasetMapOptions {
 	/**
 	 * The `cross-dataset-links` GeoJSON. Default
 	 * `$MAILWOMAN_DATA_ROOT/record-matcher/2026-06-16-cross-dataset-links.geojson`.
 	 */
 	in?: string
-	/** Output HTML path. Default `/tmp/cross-dataset-map.html`. */
+	/**
+	 * Output HTML path. Default `/tmp/cross-dataset-map.html`.
+	 */
 	outHtml?: string
-	/** Keep only entities whose sources span >1 agency (the two FCC datasets count as one). */
+	/**
+	 * Keep only entities whose sources span >1 agency (the two FCC datasets count as one).
+	 */
 	crossAgencyOnly?: boolean
 }
 
@@ -74,7 +82,9 @@ const agencyOf = (s: string) => SOURCE_AGENCY[s] ?? s
 const sourcesOf = (f: { properties: Record<string, unknown> | null }) =>
 	Array.isArray(f.properties?.["sources"]) ? (f.properties!["sources"] as string[]) : []
 
-/** Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre HTML page. */
+/**
+ * Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre HTML page.
+ */
 export function crossDatasetMap(
 	options: CrossDatasetMapOptions = {},
 	report?: (line: string) => void

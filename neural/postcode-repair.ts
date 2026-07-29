@@ -33,13 +33,19 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
-/** A detected postcode-shaped substring with its char range and confidence class. */
+/**
+ * A detected postcode-shaped substring with its char range and confidence class.
+ */
 export interface PostcodeMatch {
 	start: number
 	end: number
-	/** "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span. */
+	/**
+	 * "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span.
+	 */
 	kind: "alnum" | "numeric"
-	/** Pattern priority (lower = more specific, wins overlap resolution). */
+	/**
+	 * Pattern priority (lower = more specific, wins overlap resolution).
+	 */
 	priority: number
 }
 
@@ -91,12 +97,16 @@ function isPostcodeLabel(label: string): boolean {
 	return label === "B-postcode" || label === "I-postcode"
 }
 
-/** Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null). */
+/**
+ * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
+ */
 function tagOf(label: string): string | null {
 	return label === "O" ? null : label.slice(2)
 }
 
-/** Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns. */
+/**
+ * Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns.
+ */
 export function collectMatches(text: string): PostcodeMatch[] {
 	const candidates: PostcodeMatch[] = []
 	POSTCODE_PATTERNS.forEach((pat, priority) => {
@@ -122,7 +132,9 @@ export function collectMatches(text: string): PostcodeMatch[] {
 
 export interface RepairResult {
 	tokens: DecoderToken[]
-	/** Number of token labels changed — for telemetry / logging. */
+	/**
+	 * Number of token labels changed — for telemetry / logging.
+	 */
 	changed: number
 }
 

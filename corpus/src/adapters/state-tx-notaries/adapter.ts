@@ -37,7 +37,9 @@ export const STATE_TX_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 
-/** Match trailing "CITY, ST ZIP" or "CITY, ST" at the end of an address line. */
+/**
+ * Match trailing "CITY, ST ZIP" or "CITY, ST" at the end of an address line.
+ */
 const CITY_STATE_ZIP_SUFFIX = /[,]?\s*([^,]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)?\s*$/i
 
 interface TxNotaryRow {
@@ -165,5 +167,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const stateTxNotariesAdapter = createStateTxNotariesAdapter()

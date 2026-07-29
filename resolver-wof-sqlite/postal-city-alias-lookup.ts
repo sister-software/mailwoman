@@ -23,19 +23,31 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
 
 export interface WOFPostalCityAliasLookupOpts {
-	/** Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`. Opened read-only. */
+	/**
+	 * Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`. Opened read-only.
+	 */
 	databasePath?: string
-	/** Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`. */
+	/**
+	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 */
 	database?: DatabaseSync
 }
 
-/** One divergent alias edge: the postal-system name and the geographic locality it maps to. */
+/**
+ * One divergent alias edge: the postal-system name and the geographic locality it maps to.
+ */
 export interface PostalCityAlias {
-	/** The postal-system surface (what a user types). */
+	/**
+	 * The postal-system surface (what a user types).
+	 */
 	postalCity: string
-	/** The geographic locality name the postcode sits in (≈ the gazetteer's canonical name). */
+	/**
+	 * The geographic locality name the postcode sits in (≈ the gazetteer's canonical name).
+	 */
 	geoLocality: string
-	/** Observed usage count — the evidence weight. */
+	/**
+	 * Observed usage count — the evidence weight.
+	 */
 	n: number
 }
 

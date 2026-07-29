@@ -21,7 +21,9 @@ export function shardSourceID(adapterID: string, parts: Record<string, string | 
 	return stableSourceID(adapterID, parts as unknown as Parameters<typeof stableSourceID>[1])
 }
 
-/** A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes. */
+/**
+ * A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes.
+ */
 export interface ShardTuple {
 	locality?: string
 	region?: string
@@ -44,7 +46,9 @@ export function makeLcg(seed: number): () => number {
 	}
 }
 
-/** Back-compat alias for {@link makeLcg}. */
+/**
+ * Back-compat alias for {@link makeLcg}.
+ */
 export const makeRandom = makeLcg
 
 /**
@@ -64,7 +68,9 @@ export function makeMulberry32(seed: number): () => number {
 	}
 }
 
-/** Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped). */
+/**
+ * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
+ */
 export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 	// TextSpliterator (not JSONSpliterator) so a malformed line is SKIPPED, not thrown — the
 	// per-line try/catch below is the tolerance this reader has always had.
@@ -83,7 +89,9 @@ export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 	}
 }
 
-/** A canonical row as the recipes assemble it, before `alignRow` turns it into a `LabeledRow`. */
+/**
+ * A canonical row as the recipes assemble it, before `alignRow` turns it into a `LabeledRow`.
+ */
 export interface CanonicalShardRow {
 	raw: string
 	components: Record<string, string>
@@ -113,7 +121,9 @@ export function alignAndWrite(
 	return true
 }
 
-/** Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags. */
+/**
+ * Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags.
+ */
 export interface ShardRecipeOpts {
 	output: string
 	seed: number
@@ -130,7 +140,9 @@ export interface ShardRecipeOpts {
 	edgesDir?: string
 	country?: string
 	intlFraction?: number
-	/** `locale`: fraction of rows that append an explicit country surface form + a `country` component. Default 0. */
+	/**
+	 * `locale`: fraction of rows that append an explicit country surface form + a `country` component. Default 0.
+	 */
 	countryFraction?: number
 	/**
 	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping for this invocation. `undefined` (flag
@@ -143,7 +155,9 @@ export interface ShardRecipeOpts {
 	bareProb?: number
 	hnProb?: number
 	communes?: string
-	/** `fr-lieudit`: BAN `adresses-<dept>.csv` directory. Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`. */
+	/**
+	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory. Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`.
+	 */
 	banDir?: string
 	multilocaleCount?: number
 	/**
@@ -151,18 +165,24 @@ export interface ShardRecipeOpts {
 	 * recipes — a shard that trains on its own eval set measures memorization. See their docstrings.
 	 */
 	excludeSurfaces?: string
-	/** `no-fragment`: share of rows that are counter-distribution (bare locality OR bare postcode). */
+	/**
+	 * `no-fragment`: share of rows that are counter-distribution (bare locality OR bare postcode).
+	 */
 	counterProb?: number
 	/**
 	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >= longNumberMinDigits digits
 	 * (oversample the failing long-number class). Default 1 = no boost.
 	 */
 	longNumberBoost?: number
-	/** `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted. Default 3. */
+	/**
+	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted. Default 3.
+	 */
 	longNumberMinDigits?: number
 }
 
-/** Tally a recipe returns. */
+/**
+ * Tally a recipe returns.
+ */
 export interface ShardStats {
 	read?: number
 	emitted: number
@@ -175,21 +195,33 @@ export interface ShardStats {
 	contaminated?: number
 }
 
-/** A single declared recipe-specific option flag (for the command's --help). */
+/**
+ * A single declared recipe-specific option flag (for the command's --help).
+ */
 export interface ShardRecipeOption {
 	flag: string
 	description: string
 }
 
-/** A shard recipe: its identity, input mode, and its synthesis `run`. */
+/**
+ * A shard recipe: its identity, input mode, and its synthesis `run`.
+ */
 export interface ShardRecipe {
-	/** Recipe id, e.g. "street", "po-box" — the `<recipe>` positional. */
+	/**
+	 * Recipe id, e.g. "street", "po-box" — the `<recipe>` positional.
+	 */
 	name: string
-	/** One-line description for `--list` / help. */
+	/**
+	 * One-line description for `--list` / help.
+	 */
 	description: string
-	/** `tuples` reads `--input` JSONL; `generate` self-generates `--count` rows. */
+	/**
+	 * `tuples` reads `--input` JSONL; `generate` self-generates `--count` rows.
+	 */
 	mode: "tuples" | "generate"
-	/** Recipe-specific flags this recipe honors (documentation only). */
+	/**
+	 * Recipe-specific flags this recipe honors (documentation only).
+	 */
 	options?: ShardRecipeOption[]
 	/**
 	 * Do the build: create the recipe's PRNG from `opts.seed` (its LEGACY generator — `makeLcg` or `makeMulberry32` — for

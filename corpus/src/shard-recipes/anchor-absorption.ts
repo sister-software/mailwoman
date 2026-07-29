@@ -27,7 +27,9 @@ import { makeLcg, type ShardRecipe } from "./scaffold.ts"
  */
 const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-/** The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list). */
+/**
+ * The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list).
+ */
 function loadRealUsZips(path: string): string[] {
 	const d = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
 	const zips: string[] = []

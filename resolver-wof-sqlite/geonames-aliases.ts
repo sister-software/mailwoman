@@ -36,17 +36,27 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
  */
 export const GEONAMES_ID_BASE = 9_000_000_000_000
 
-/** Per-country progress for the ingest — one event per country dump processed (or skipped). */
+/**
+ * Per-country progress for the ingest — one event per country dump processed (or skipped).
+ */
 export interface GeonamesIngestProgress {
-	/** ISO 3166-1 alpha-2 code. */
+	/**
+	 * ISO 3166-1 alpha-2 code.
+	 */
 	country: string
-	/** Populated places ingested from this country's dump (0 when skipped). */
+	/**
+	 * Populated places ingested from this country's dump (0 when skipped).
+	 */
 	places: number
-	/** True when the country's `<CC>.txt` dump was missing — the country is skipped, not fatal. */
+	/**
+	 * True when the country's `<CC>.txt` dump was missing — the country is skipped, not fatal.
+	 */
 	skipped: boolean
 }
 
-/** One spelling's language attribution, as reconciled across every alternate-names row that carries it. */
+/**
+ * One spelling's language attribution, as reconciled across every alternate-names row that carries it.
+ */
 interface V2Alias {
 	language: string
 	privateuse: string

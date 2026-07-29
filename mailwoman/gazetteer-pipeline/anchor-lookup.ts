@@ -50,18 +50,26 @@ import { dataRootPath } from "@mailwoman/core/utils"
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
  * even, which is what keeps repeated centroid rounding unbiased.
  */
-/** Columns a US Census gazetteer row carries; short rows are truncated and skipped. */
+/**
+ * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
+ */
 const GAZETTEER_ROW_COLUMNS = 7
 
 const ROUND_HALF_DIGIT = 5
 
-/** Keep in sync with scripts/zcta-centroids.ts. */
+/**
+ * Keep in sync with scripts/zcta-centroids.ts.
+ */
 const ZCTA_SOURCE = "census-zcta-2024"
 
-/** (lat, lon, source): source is null when the row is a placeholder (membership only). */
+/**
+ * (lat, lon, source): source is null when the row is a placeholder (membership only).
+ */
 type Centroid = [number, number, string | null]
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -132,7 +140,9 @@ function pyRound(x: number, nd = 0): number {
 	return neg ? -num : num
 }
 
-/** Python `float()`: trimmed empty / non-numeric → null (the load_zcta try/except skip). */
+/**
+ * Python `float()`: trimmed empty / non-numeric → null (the load_zcta try/except skip).
+ */
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
@@ -153,7 +163,9 @@ function placed(lat: number, lon: number): boolean {
 	return lat !== 0 || lon !== 0
 }
 
-/** DE/FR postcodes → centroid from postalcode-intl.db (inline lat/lon). */
+/**
+ * DE/FR postcodes → centroid from postalcode-intl.db (inline lat/lon).
+ */
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
 	const con = new DatabaseSync(dataRootPath("wof", "postalcode-intl.db"))
@@ -231,7 +243,9 @@ function loadZCTA(path: string): Map<string, [number, number]> {
 	return out
 }
 
-/** Python `ensure_ascii=False` JSON string escape (quote, backslash, control chars). */
+/**
+ * Python `ensure_ascii=False` JSON string escape (quote, backslash, control chars).
+ */
 function pyJSONStr(s: string): string {
 	let out = '"'
 
@@ -258,14 +272,18 @@ function pyJSONStr(s: string): string {
 	return out + '"'
 }
 
-/** Python `repr`/`json` of a float — shortest round-trip, but integer-valued renders with `.0`. */
+/**
+ * Python `repr`/`json` of a float — shortest round-trip, but integer-valued renders with `.0`.
+ */
 function pyJSONNum(x: number): string {
 	if (Number.isInteger(x)) return Object.is(x, -0) ? "-0.0" : `${x}.0`
 
 	return String(x)
 }
 
-/** Serialize one lookup value `[posterior, lat, lon, source]` the way Python `json.dumps` would. */
+/**
+ * Serialize one lookup value `[posterior, lat, lon, source]` the way Python `json.dumps` would.
+ */
 function pyJSONValue(v: unknown): string {
 	if (v === null) return "null"
 

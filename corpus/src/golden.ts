@@ -28,7 +28,9 @@ import { reconcileComponents } from "./format.ts"
 
 const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 
-/** One entry in a golden `.jsonl` file. */
+/**
+ * One entry in a golden `.jsonl` file.
+ */
 export interface GoldenEntry {
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
@@ -37,21 +39,27 @@ export interface GoldenEntry {
 	notes?: string
 }
 
-/** Per-entry validation failure. */
+/**
+ * Per-entry validation failure.
+ */
 export interface GoldenIssue {
 	file: string
 	line: number
 	reason: string
 }
 
-/** Aggregate report from `validateGoldenDir`. */
+/**
+ * Aggregate report from `validateGoldenDir`.
+ */
 export interface GoldenReport {
 	entries: number
 	files: number
 	issues: GoldenIssue[]
 }
 
-/** Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations. */
+/**
+ * Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations.
+ */
 export function parseGoldenLine(line: string): GoldenEntry {
 	const obj = JSON.parse(line) as Partial<GoldenEntry> & Record<string, unknown>
 
@@ -85,7 +93,9 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	}
 }
 
-/** Check that every component in `entry` appears in `entry.raw` (reconciliation-equivalent). */
+/**
+ * Check that every component in `entry` appears in `entry.raw` (reconciliation-equivalent).
+ */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const reconciled = reconcileComponents(entry.components, entry.raw)
 	const missing: ComponentTag[] = []
@@ -99,7 +109,9 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	return missing
 }
 
-/** Validate one `.jsonl` file end-to-end, returning a list of issues. */
+/**
+ * Validate one `.jsonl` file end-to-end, returning a list of issues.
+ */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	const text = await readFile(path, "utf8")
 	const lines = text.split("\n")
@@ -129,7 +141,9 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	return issues
 }
 
-/** Validate every `.jsonl` in a golden directory. */
+/**
+ * Validate every `.jsonl` in a golden directory.
+ */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
 	const files = (await readdir(dir)).filter((n) => extname(n) === ".jsonl").toSorted()
 	const issues: GoldenIssue[] = []

@@ -43,27 +43,49 @@ import { $ } from "zx"
 const ANTIMERIDIAN_SPAN_DEGREES = 180
 
 export interface CoverageBuildOptions {
-	/** Comma-separated state slugs (e.g. "CA,TX") or "all" to glob the data root. */
+	/**
+	 * Comma-separated state slugs (e.g. "CA,TX") or "all" to glob the data root.
+	 */
 	states: string
-	/** State slugs to exclude (e.g. ["AK"] — antimeridian hex-wrap). */
+	/**
+	 * State slugs to exclude (e.g. ["AK"] — antimeridian hex-wrap).
+	 */
 	excludeStates: string[]
-	/** Root holding `address-points-us-<st>.db` shards. */
+	/**
+	 * Root holding `address-points-us-<st>.db` shards.
+	 */
 	dataRoot: string
-	/** Root holding `interpolation-us-<st>.db` shards, or null to skip the street-segment signal. */
+	/**
+	 * Root holding `interpolation-us-<st>.db` shards, or null to skip the street-segment signal.
+	 */
 	interpRoot: string | null
-	/** Finest H3 resolution (the fog floor). 9 ≈ 174 m (street/block). */
+	/**
+	 * Finest H3 resolution (the fog floor). 9 ≈ 174 m (street/block).
+	 */
 	fineRes: number
-	/** Coarser resolutions for lower zoom bands, finest-excluded (e.g. [7, 5]). */
+	/**
+	 * Coarser resolutions for lower zoom bands, finest-excluded (e.g. [7, 5]).
+	 */
 	rollup: number[]
-	/** Parent resolution whose data-bearing cells define the fog neighborhood (6 ≈ 3.2 km). */
+	/**
+	 * Parent resolution whose data-bearing cells define the fog neighborhood (6 ≈ 3.2 km).
+	 */
 	domainRes: number
-	/** Address-point count at/above which a fine cell fully clears. */
+	/**
+	 * Address-point count at/above which a fine cell fully clears.
+	 */
 	saturation: number
-	/** Street-segment count at/above which the interpolation signal saturates. */
+	/**
+	 * Street-segment count at/above which the interpolation signal saturates.
+	 */
 	satSeg: number
-	/** Weight (<1) of the street-segment signal relative to address points. */
+	/**
+	 * Weight (<1) of the street-segment signal relative to address points.
+	 */
 	interpWeight: number
-	/** Optimistic-mode exponent for `fog_opt = fog ** gamma`. */
+	/**
+	 * Optimistic-mode exponent for `fog_opt = fog ** gamma`.
+	 */
 	optimisticGamma: number
 	/**
 	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears the "where do we need
@@ -82,17 +104,29 @@ export interface CoverageBuildOptions {
 	 * Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full 1).
 	 */
 	postcodeCeiling: number
-	/** Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor. */
+	/**
+	 * Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor.
+	 */
 	salienceFloor: number
-	/** Country codes the global holes/postcode layer skips (US is handled by the rooftop fine map). */
+	/**
+	 * Country codes the global holes/postcode layer skips (US is handled by the rooftop fine map).
+	 */
 	postcodeExcludeCountries: string[]
-	/** Highest zoom baked; MapLibre overzooms above it. */
+	/**
+	 * Highest zoom baked; MapLibre overzooms above it.
+	 */
 	tileMaxZoom: number
-	/** Output `.pmtiles` path. */
+	/**
+	 * Output `.pmtiles` path.
+	 */
 	out: string
-	/** Keep the intermediate NDJSON (for re-tiling without re-aggregating). */
+	/**
+	 * Keep the intermediate NDJSON (for re-tiling without re-aggregating).
+	 */
 	keepNdjson: boolean
-	/** DuckDB worker-thread cap (omit for all cores). */
+	/**
+	 * DuckDB worker-thread cap (omit for all cores).
+	 */
 	threads?: number
 }
 
@@ -116,10 +150,14 @@ interface StateShard {
 	interp: string | null
 }
 
-/** The zoom at which each H3 resolution becomes the active fog granularity (hex edge ≈ tile detail there). */
+/**
+ * The zoom at which each H3 resolution becomes the active fog granularity (hex edge ≈ tile detail there).
+ */
 const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9: 10, 10: 12, 11: 14 }
 
-/** Resolve the shard set + matching interpolation shards. */
+/**
+ * Resolve the shard set + matching interpolation shards.
+ */
 function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
 	const files = readdirSync(opts.dataRoot).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))

@@ -27,27 +27,39 @@ import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// MARK: Types
 
-/** Importance at or above which an FST node is drawn as high. Presentation only. */
+/**
+ * Importance at or above which an FST node is drawn as high. Presentation only.
+ */
 const HIGH_IMPORTANCE_MIN = 0.7
 
-/** Importance at or above which an FST node is drawn as medium; below it, low. */
+/**
+ * Importance at or above which an FST node is drawn as medium; below it, low.
+ */
 const MID_IMPORTANCE_MIN = 0.3
 
-/** A single step in the FST walk — one token consumed, one state transition. */
+/**
+ * A single step in the FST walk — one token consumed, one state transition.
+ */
 interface WalkStep {
-	/** The normalized token consumed at this step. */
+	/**
+	 * The normalized token consumed at this step.
+	 */
 	token: string
-	/** The state after consuming this token (null = path broken). */
+	/**
+	 * The state after consuming this token (null = path broken).
+	 */
 	result: { stateID: number; accepted: boolean; depth: number } | null
-	/** Whether this is the first token in the walk. */
+	/**
+	 * Whether this is the first token in the walk.
+	 */
 	isFirst: boolean
 }
 
-/** A place entry surfaced from an accepting FST state. */
+/**
+ * A place entry surfaced from an accepting FST state.
+ */
 interface PlaceEntryLike {
 	wofID: number
 	placetype: string
@@ -55,7 +67,9 @@ interface PlaceEntryLike {
 	name?: string
 }
 
-/** A continuation — one token that extends from the current state. */
+/**
+ * A continuation — one token that extends from the current state.
+ */
 interface ContinuationLike {
 	token: string
 	targetState: number
@@ -63,13 +77,13 @@ interface ContinuationLike {
 }
 
 export interface FSTWalkerProps {
-	/** The raw text to walk through the FST. */
+	/**
+	 * The raw text to walk through the FST.
+	 */
 	input: string
 }
 
-// ---------------------------------------------------------------------------
-// Token normalization (matches FSTMatcher.normalizeTokens)
-// ---------------------------------------------------------------------------
+// MARK: Token normalization (matches FSTMatcher.normalizeTokens)
 
 /**
  * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. Mirrors `normalizeTokens` in
@@ -84,21 +98,25 @@ function normalizeTokens(text: string): string[] {
 		.filter((t) => t.length > 0)
 }
 
-// ---------------------------------------------------------------------------
-// Formatting helpers
-// ---------------------------------------------------------------------------
+// MARK: Formatting helpers
 
-/** Format a WOF ID as a compact 8-digit string. */
+/**
+ * Format a WOF ID as a compact 8-digit string.
+ */
 function fmtWOFID(id: number): string {
 	return String(id).padStart(8, "0").slice(-8)
 }
 
-/** Format importance as a 1-3 digit percentage. */
+/**
+ * Format importance as a 1-3 digit percentage.
+ */
 function fmtImportance(imp: number): string {
 	return `${(imp * 100).toFixed(0)}%`
 }
 
-/** Importance tier for color coding. */
+/**
+ * Importance tier for color coding.
+ */
 function importanceTier(imp: number): "high" | "mid" | "low" {
 	if (imp >= HIGH_IMPORTANCE_MIN) return "high"
 
@@ -107,9 +125,7 @@ function importanceTier(imp: number): "high" | "mid" | "low" {
 	return "low"
 }
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
+// MARK: Sub-components
 
 const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 	const tier = importanceTier(place.importance)
@@ -143,9 +159,7 @@ const ContinuationChip: React.FC<{ cont: ContinuationLike }> = ({ cont }) => (
 	</span>
 )
 
-// ---------------------------------------------------------------------------
-// Inner component (below BrowserOnly boundary)
-// ---------------------------------------------------------------------------
+// MARK: Inner component (below BrowserOnly boundary)
 
 const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	const { fstMatcher, fstProvenance, ready } = useDemoEmbed()
@@ -218,9 +232,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		return null
 	}, [fstMatcher, walkSteps])
 
-	// -------------------------------------------------------------------
-	// Render: FST not loaded
-	// -------------------------------------------------------------------
+	// MARK: Render: FST not loaded
 
 	if (!ready || !fstMatcher) {
 		return (
@@ -236,9 +248,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		)
 	}
 
-	// -------------------------------------------------------------------
-	// Render: no tokens
-	// -------------------------------------------------------------------
+	// MARK: Render: no tokens
 
 	if (!tokens.length) {
 		return (
@@ -256,9 +266,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		)
 	}
 
-	// -------------------------------------------------------------------
-	// Render: walk visualization
-	// -------------------------------------------------------------------
+	// MARK: Render: walk visualization
 
 	return (
 		<div className={styles.fstWalker}>
@@ -368,9 +376,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component (with BrowserOnly SSR boundary)
-// ---------------------------------------------------------------------------
+// MARK: Public component (with BrowserOnly SSR boundary)
 
 /**
  * FSTWalker — interactive FST gazetteer trie walker.

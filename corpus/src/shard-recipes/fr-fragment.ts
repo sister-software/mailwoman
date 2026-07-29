@@ -73,7 +73,9 @@ import { readFileSync } from "node:fs"
 import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
-/** House numbers, weighted toward the small values that dominate real BAN rows. */
+/**
+ * House numbers, weighted toward the small values that dominate real BAN rows.
+ */
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
@@ -83,7 +85,9 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
 const HOUSE_NUMBERS = [
 	1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 21, 24, 27, 30, 33, 42, 57, 68, 84, 102, 115, 140,
 ]
-/** FR alphanumeric house-number forms. `bis`/`ter` are separated; a bare letter is suffixed. */
+/**
+ * FR alphanumeric house-number forms. `bis`/`ter` are separated; a bare letter is suffixed.
+ */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
 const norm = (value: string): string =>
@@ -136,9 +140,13 @@ export function frTitleCase(value: string): string {
 		.join(" ")
 }
 
-/** Does the street name carry a particle? Decides the particle vs bare classification. */
+/**
+ * Does the street name carry a particle? Decides the particle vs bare classification.
+ */
 const PARTICLE = /\b(de la|de l'|du|des|de|d'|le|la|les)\b/i
-/** Does the street name carry date material (a year, or a day + French month)? */
+/**
+ * Does the street name carry date material (a year, or a day + French month)?
+ */
 const DATEISH =
 	/\b(1[0-9]|20)\d{2}\b|\b\d{1,2}\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\b/i
 

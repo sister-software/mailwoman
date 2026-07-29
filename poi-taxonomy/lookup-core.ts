@@ -12,9 +12,13 @@ import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "./types.ts"
 
 export interface CategoryMatch {
 	category: CategoryRecord
-	/** The lexicon phrase that matched (lowercased). */
+	/**
+	 * The lexicon phrase that matched (lowercased).
+	 */
 	matchedPhrase: string
-	/** 1.0 = ungated or exact-locale; 0.5 = language-only locale match. */
+	/**
+	 * 1.0 = ungated or exact-locale; 0.5 = language-only locale match.
+	 */
 	confidence: number
 }
 
@@ -116,17 +120,23 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 		return [...best.values()].toSorted((a, b) => b.confidence - a.confidence)
 	}
 
-	/** Fetch a category by id. */
+	/**
+	 * Fetch a category by id.
+	 */
 	function getPOICategory(id: string): CategoryRecord | undefined {
 		return byID.get(id)
 	}
 
-	/** Enumerate the full table (corpus synthesis, builders, docs). */
+	/**
+	 * Enumerate the full table (corpus synthesis, builders, docs).
+	 */
 	function getAllCategories(): ReadonlyArray<CategoryRecord> {
 		return table.categories
 	}
 
-	/** True when the category's data exists only in ODbL sources — answering needs a build-local layer. */
+	/**
+	 * True when the category's data exists only in ODbL sources — answering needs a build-local layer.
+	 */
 	function requiresBuildLocalLayer(category: CategoryRecord): boolean {
 		return category.source === "mailwoman-infra"
 	}

@@ -27,33 +27,49 @@ import { SeededRandom } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair-index-resolver"
 
-/** The one tag this arc's GB extraction ever emits — CITY-under-DISTRICT is always a dependent_locality candidate. */
+/**
+ * The one tag this arc's GB extraction ever emits — CITY-under-DISTRICT is always a dependent_locality candidate.
+ */
 const PAIR_TAG = "dependent_locality" as const
 
-/** One row-length bucket: `words` whitespace-split tokens, seen on `rows` raw CITY values. */
+/**
+ * One row-length bucket: `words` whitespace-split tokens, seen on `rows` raw CITY values.
+ */
 export interface WordLengthBucket {
 	words: number
 	rows: number
 }
 
-/** Percentile summary of the raw (pre-fold) CITY word-length distribution, plus the full per-length histogram. */
+/**
+ * Percentile summary of the raw (pre-fold) CITY word-length distribution, plus the full per-length histogram.
+ */
 export interface CityWordLengthDistribution {
-	/** Non-empty CITY rows the distribution was computed over. */
+	/**
+	 * Non-empty CITY rows the distribution was computed over.
+	 */
 	totalRows: number
 	p50: number
 	p90: number
 	p99: number
 	max: number
-	/** Sorted ascending by `words`. */
+	/**
+	 * Sorted ascending by `words`.
+	 */
 	counts: WordLengthBucket[]
 }
 
 export interface PairIndexBuildResult {
-	/** Deduplicated (child, parent) pairs, ready for `serializePairIndex`. */
+	/**
+	 * Deduplicated (child, parent) pairs, ready for `serializePairIndex`.
+	 */
 	entries: PairIndexEntry[]
-	/** Rows that contributed a pair (non-empty CITY after trim). */
+	/**
+	 * Rows that contributed a pair (non-empty CITY after trim).
+	 */
 	rowsKept: number
-	/** Rows dropped for an empty CITY. */
+	/**
+	 * Rows dropped for an empty CITY.
+	 */
 	rowsSkipped: number
 	distribution: CityWordLengthDistribution
 }
@@ -118,7 +134,9 @@ export class PairIndexBuilder {
 		}
 	}
 
-	/** Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution. */
+	/**
+	 * Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution.
+	 */
 	finish(): PairIndexBuildResult {
 		const sortedLengths = [...this.#wordLengths].toSorted((a, b) => a - b)
 		const histogram = new Map<number, number>()
@@ -152,9 +170,13 @@ export class PairIndexBuilder {
 }
 
 export interface PairIndexHoldoutResult {
-	/** Entries to actually serialize into the index — the full set MINUS the held-out fraction. */
+	/**
+	 * Entries to actually serialize into the index — the full set MINUS the held-out fraction.
+	 */
 	kept: PairIndexEntry[]
-	/** Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6). */
+	/**
+	 * Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6).
+	 */
 	heldOut: PairIndexEntry[]
 }
 

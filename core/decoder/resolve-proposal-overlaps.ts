@@ -40,7 +40,9 @@
 
 import type { ClassificationProposal } from "../types/index.ts"
 
-/** Half-open interval overlap: `[aStart,aEnd)` and `[bStart,bEnd)` share at least one position. */
+/**
+ * Half-open interval overlap: `[aStart,aEnd)` and `[bStart,bEnd)` share at least one position.
+ */
 function spansOverlap(a: ClassificationProposal["span"], b: ClassificationProposal["span"]): boolean {
 	return a.start < b.end && b.start < a.end
 }

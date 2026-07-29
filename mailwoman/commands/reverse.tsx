@@ -23,10 +23,14 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 
-/** Largest absolute latitude in WGS-84 degrees. */
+/**
+ * Largest absolute latitude in WGS-84 degrees.
+ */
 const MAX_ABS_LATITUDE = 90
 
-/** Largest absolute longitude in WGS-84 degrees. */
+/**
+ * Largest absolute longitude in WGS-84 degrees.
+ */
 const MAX_ABS_LONGITUDE = 180
 
 const ArgumentsSchema = zod

@@ -14,11 +14,17 @@ import type { KnownFormat, KnownFormatHit, TokenClass } from "./types.ts"
  */
 interface FormatPattern {
 	format: KnownFormat
-	/** Pattern matched against a single token's body, or against a 2-token joined body. */
+	/**
+	 * Pattern matched against a single token's body, or against a 2-token joined body.
+	 */
 	pattern: RegExp
-	/** Tokens per match (1 or 2). */
+	/**
+	 * Tokens per match (1 or 2).
+	 */
 	tokenSpan: 1 | 2
-	/** Base confidence when no locale context. Ambiguous patterns score lower. */
+	/**
+	 * Base confidence when no locale context. Ambiguous patterns score lower.
+	 */
 	confidence: number
 }
 

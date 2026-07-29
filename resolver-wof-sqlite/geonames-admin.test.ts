@@ -17,7 +17,9 @@ import { afterAll, beforeAll, expect, test } from "vitest"
 
 import { ingestGeonamesAliases } from "./geonames-aliases.ts"
 
-/** A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any). */
+/**
+ * A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any).
+ */
 type Row = Record<string, string | number | null>
 
 let dir: string

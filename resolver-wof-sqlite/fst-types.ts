@@ -67,9 +67,13 @@ export interface FSTProvenance {
 	importanceMatches: number
 	sourceDB?: string
 	modelCardVersion?: string
-	/** Degenerate-surface curation policy applied at build time (absent = uncurated build). */
+	/**
+	 * Degenerate-surface curation policy applied at build time (absent = uncurated build).
+	 */
 	exclusionPolicy?: string
-	/** Name insertions refused by the curation policy. */
+	/**
+	 * Name insertions refused by the curation policy.
+	 */
 	excludedInsertions?: number
 }
 
@@ -92,7 +96,9 @@ export interface BuildFSTOpts {
 	 * street-type words ("Avenue Road" is a real name; "de la" is not).
 	 */
 	excludeAllTokensOf?: ReadonlySet<string>
-	/** Recorded verbatim into provenance when either exclusion set is supplied. */
+	/**
+	 * Recorded verbatim into provenance when either exclusion set is supplied.
+	 */
 	exclusionPolicy?: string
 	/**
 	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of DISTINCT countries

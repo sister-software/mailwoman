@@ -36,18 +36,30 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Distinct sources an entity needs to count toward the triple-corroborated tally. */
+/**
+ * Distinct sources an entity needs to count toward the triple-corroborated tally.
+ */
 const MIN_TRIPLE_SOURCES = 3
 
-/** Options for {@linkcode crossDatasetCorrelation}. */
+/**
+ * Options for {@linkcode crossDatasetCorrelation}.
+ */
 export interface CrossDatasetCorrelationOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Rows kept per source for geocoding (state-scoped). Default 300. */
+	/**
+	 * Rows kept per source for geocoding (state-scoped). Default 300.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
 	/**
 	 * The inverse-address-frequency lever is a CORPUS statistic — it can't be synthesized from the geocoded sample. By
@@ -57,9 +69,13 @@ export interface CrossDatasetCorrelationOptions {
 	 * default (#86). Default true.
 	 */
 	corpusFrequency?: boolean
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
-	/** Also write the entity FeatureCollection here (the reconciliation artifact, QGIS-ready). */
+	/**
+	 * Also write the entity FeatureCollection here (the reconciliation artifact, QGIS-ready).
+	 */
 	outGeojson?: string
 }
 
@@ -88,9 +104,13 @@ interface SourceSpec {
 	source: string
 	path: string
 	mapping: ColumnMapping
-	/** Keep only rows in-state (reads the row's state column). */
+	/**
+	 * Keep only rows in-state (reads the row's state column).
+	 */
 	inState: (row: Record<string, string>) => boolean
-	/** Optional: a row carries ≥1 addressable entity — yield each as its own row. Default identity. */
+	/**
+	 * Optional: a row carries ≥1 addressable entity — yield each as its own row. Default identity.
+	 */
 	explode?: (row: Record<string, string>) => Record<string, string>[]
 }
 
@@ -182,7 +202,9 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	},
 ]
 
-/** Cross-dataset correlation (#618) — see the module doc. Emits the markdown report to stdout. */
+/**
+ * Cross-dataset correlation (#618) — see the module doc. Emits the markdown report to stdout.
+ */
 export async function crossDatasetCorrelation(
 	options: CrossDatasetCorrelationOptions,
 	report?: (line: string) => void

@@ -20,7 +20,9 @@ import { z } from "@hono/zod-openapi"
 
 export { APIErrorSchema } from "@mailwoman/api-kit"
 
-/** `POST /v1/parse` request body. */
+/**
+ * `POST /v1/parse` request body.
+ */
 /**
  * The input register (Decision A / GTM B10): `fragmented` = the map-search register (evidence-bundle channels feed);
  * `formatted` = the validation/record register (channels off). Unset → the engine derives it from the input's shape.
@@ -28,7 +30,9 @@ export { APIErrorSchema } from "@mailwoman/api-kit"
  */
 export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
 
-/** `POST /v1/parse` request body. */
+/**
+ * `POST /v1/parse` request body.
+ */
 export const ParseRequestSchema = z
 	.object({
 		address: z.string(),
@@ -37,7 +41,9 @@ export const ParseRequestSchema = z
 	})
 	.openapi("ParseRequest")
 
-/** One `ParseOutcome.components` entry — mirrors {@linkcode ParseComponent} (`engine.ts`). */
+/**
+ * One `ParseOutcome.components` entry — mirrors {@linkcode ParseComponent} (`engine.ts`).
+ */
 export const ParseComponentSchema = z.object({ tag: z.string(), value: z.string() }).openapi("ParseComponent")
 
 /**
@@ -54,7 +60,9 @@ export const ParseOutcomeSchema = z
 	})
 	.openapi("ParseOutcome")
 
-/** `POST /v1/geocode` request body. */
+/**
+ * `POST /v1/geocode` request body.
+ */
 export const GeocodeRequestSchema = z
 	.object({
 		address: z.string(),
@@ -122,22 +130,32 @@ export const GeocodeOutcomeSchema = z
 	.loose()
 	.openapi("GeocodeOutcome")
 
-/** `POST /v1/batch` request body. */
+/**
+ * `POST /v1/batch` request body.
+ */
 export const BatchRequestSchema = z
 	.object({
 		addresses: z.array(z.string()),
-		/** Register override for every row. DEFAULT `"formatted"` — batch rows are the record register by nature. */
+		/**
+		 * Register override for every row. DEFAULT `"formatted"` — batch rows are the record register by nature.
+		 */
 		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("BatchRequest")
 
-/** The failure slot for one batch row. A row that throws does not fail its neighbours. */
+/**
+ * The failure slot for one batch row. A row that throws does not fail its neighbours.
+ */
 const BatchRowErrorSchema = z.object({ input: z.string(), error: z.string() })
 
-/** One batch row: the geocode outcome, or the failure slot that stands in for it. */
+/**
+ * One batch row: the geocode outcome, or the failure slot that stands in for it.
+ */
 const BatchRowSchema = z.union([GeocodeOutcomeSchema, BatchRowErrorSchema])
 
-/** `POST /v1/batch` response — one `GeocodeOutcome`, or an `{ input, error }` slot, per row (per-row isolation). */
+/**
+ * `POST /v1/batch` response — one `GeocodeOutcome`, or an `{ input, error }` slot, per row (per-row isolation).
+ */
 export const BatchResponseSchema = z
 	.object({
 		results: z.array(BatchRowSchema),
@@ -155,7 +173,9 @@ export const ResolveRequestSchema = z
 	})
 	.openapi("ResolveRequest")
 
-/** `POST /v1/resolve` response — the same tree, decorated in place with gazetteer coords + attribution. */
+/**
+ * `POST /v1/resolve` response — the same tree, decorated in place with gazetteer coords + attribution.
+ */
 export const ResolveResponseSchema = z
 	.object({
 		tree: z.looseObject({ roots: z.array(z.unknown()) }),
@@ -182,7 +202,9 @@ export const FormatRequestSchema = z
 	})
 	.openapi("FormatRequest")
 
-/** `POST /v1/format` response — the rendered string plus the deterministic canonical match key. */
+/**
+ * `POST /v1/format` response — the rendered string plus the deterministic canonical match key.
+ */
 export const FormatResponseSchema = z
 	.object({
 		formatted: z.string(),

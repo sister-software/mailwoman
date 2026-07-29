@@ -47,25 +47,39 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Independent sources that must agree before a cluster counts as cross-source corroborated. */
+/**
+ * Independent sources that must agree before a cluster counts as cross-source corroborated.
+ */
 const MIN_CROSS_SOURCE_AGREEMENT = 3
 
-/** Options for {@linkcode crossSourceThresholdSweep}. */
+/**
+ * Options for {@linkcode crossSourceThresholdSweep}.
+ */
 export interface CrossSourceThresholdSweepOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Rows kept per source. Default 2000. */
+	/**
+	 * Rows kept per source. Default 2000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
 	/**
 	 * #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
 	 * at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
 	 */
 	candidate?: string
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
@@ -126,11 +140,15 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	},
 ]
 
-/** Distinct provenance labels an entity's records span. */
+/**
+ * Distinct provenance labels an entity's records span.
+ */
 const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
-/** Last-10-digit phone key (drops formatting / country code). */
+/**
+ * Last-10-digit phone key (drops formatting / country code).
+ */
 const normPhone = (p?: string | null): string => {
 	if (!p) return ""
 	const d = p.replaceAll(/\D/g, "")
@@ -224,7 +242,9 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 	}
 }
 
-/** #655 cross-source threshold sweep — see the module doc. Emits the markdown report to stdout. */
+/**
+ * #655 cross-source threshold sweep — see the module doc. Emits the markdown report to stdout.
+ */
 export async function crossSourceThresholdSweep(
 	options: CrossSourceThresholdSweepOptions,
 	report?: (line: string) => void

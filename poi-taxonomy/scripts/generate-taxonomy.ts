@@ -50,23 +50,33 @@ import { parseArgs } from "node:util"
 
 import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "../types.ts"
 
-/** The Overture schema release the committed `overture-categories.csv` snapshot was taken from. */
+/**
+ * The Overture schema release the committed `overture-categories.csv` snapshot was taken from.
+ */
 export const OVERTURE_RELEASE = "v1.17.0"
 
-/** This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change. */
+/**
+ * This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change.
+ */
 export const TAXONOMY_VERSION = "0.2.0"
 
-/** Source URL for `--fetch` and provenance. */
+/**
+ * Source URL for `--fetch` and provenance.
+ */
 export const OVERTURE_CATEGORIES_URL =
 	"https://raw.githubusercontent.com/OvertureMaps/schema/main/docs/schema/concepts/by-theme/places/overture_categories.csv"
 
-/** One parsed Overture snapshot row: a category code plus its top-down hierarchy path (ending with the code). */
+/**
+ * One parsed Overture snapshot row: a category code plus its top-down hierarchy path (ending with the code).
+ */
 export interface OvertureSnapshotRow {
 	code: string
 	path: string[]
 }
 
-/** The hand-maintained curated overlay — the shape of `data/curated-overlay.json`. */
+/**
+ * The hand-maintained curated overlay — the shape of `data/curated-overlay.json`.
+ */
 export interface CuratedOverlay {
 	categories: CategoryRecord[]
 	synonyms: SynonymEntry[]
@@ -121,7 +131,9 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	return rows
 }
 
-/** Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`. */
+/**
+ * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
+ */
 export function humanizeCode(code: string): string {
 	const spaced = code.replaceAll("_", " ")
 
@@ -155,7 +167,9 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 	return { version: TAXONOMY_VERSION, overtureRelease: OVERTURE_RELEASE, categories, synonyms }
 }
 
-/** Stable serialization — tab-indented, trailing newline. Matches `build-brands.ts`'s `serializeBrandTable`. */
+/**
+ * Stable serialization — tab-indented, trailing newline. Matches `build-brands.ts`'s `serializeBrandTable`.
+ */
 export function serializeTaxonomyTable(table: POITaxonomyTable): string {
 	return `${JSON.stringify(table, null, "\t")}\n`
 }
@@ -177,7 +191,9 @@ export function taxonomyPaths() {
 	}
 }
 
-/** Read the committed CSV + overlay, merge, and return the table (no write). */
+/**
+ * Read the committed CSV + overlay, merge, and return the table (no write).
+ */
 export function generateTaxonomyTable(): POITaxonomyTable {
 	const paths = taxonomyPaths()
 	const snapshot = parseOvertureCSV(readFileSync(paths.csv, "utf8"))

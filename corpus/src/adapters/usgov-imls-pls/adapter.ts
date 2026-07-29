@@ -157,5 +157,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovImlsPlsAdapter = createUsgovImlsPlsAdapter()

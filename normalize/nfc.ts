@@ -16,7 +16,9 @@ import { identityMap } from "./offset-map.ts"
 
 export interface NFCResult {
 	text: string
-	/** `text[i]` came from `input[map[i]]`. */
+	/**
+	 * `text[i]` came from `input[map[i]]`.
+	 */
 	map: number[]
 	changed: boolean
 }

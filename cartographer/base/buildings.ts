@@ -15,13 +15,21 @@ import { MailwomanBaseTileSetID } from "./theme.ts"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
 
-/** Zoom where buildings start rising. */
+/**
+ * Zoom where buildings start rising.
+ */
 const POP_START = 12.5
-/** Zoom where they reach full height (Protomaps fully loaded here) */
+/**
+ * Zoom where they reach full height (Protomaps fully loaded here)
+ */
 const POP_END = 13
-/** Meters: tiny lift so the band clears the roof (kills z-fight) */
+/**
+ * Meters: tiny lift so the band clears the roof (kills z-fight)
+ */
 const ROOF_GAP = 0.1
-/** Meters: band thickness. */
+/**
+ * Meters: band thickness.
+ */
 const ROOF_CAP = 1
 
 const buildingHeight = (offset = 0): ExpressionSpecification => [
@@ -30,7 +38,9 @@ const buildingHeight = (offset = 0): ExpressionSpecification => [
 	offset,
 ]
 
-/** Wrap a target-height expression in the zoom-driven pop interpolation. */
+/**
+ * Wrap a target-height expression in the zoom-driven pop interpolation.
+ */
 const popHeight = (target: ExpressionSpecification): ExpressionSpecification => [
 	"interpolate",
 	["linear"],

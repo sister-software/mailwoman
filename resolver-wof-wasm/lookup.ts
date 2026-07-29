@@ -26,7 +26,9 @@ import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
 export interface WOFWasmPlaceLookupOpts {
-	/** Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWOFDatabase`). */
+	/**
+	 * Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWOFDatabase`).
+	 */
 	db: Database
 }
 
@@ -40,7 +42,9 @@ export interface WOFWasmPlaceLookupOpts {
 const POPULATION_BOOST = 4
 const POPULATION_SCALE_LOG10 = 6
 
-/** Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace. */
+/**
+ * Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace.
+ */
 function normalizeName(s: string): string {
 	return s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 }
@@ -58,7 +62,9 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		this.#db = opts.db
 	}
 
-	/** Lazily probe (once) whether the slim DB carries the `place_population` aux table. */
+	/**
+	 * Lazily probe (once) whether the slim DB carries the `place_population` aux table.
+	 */
 	#hasPopulation(): boolean {
 		if (this.#hasPopulationCache === undefined) {
 			const r = this.#db.selectObjects(
@@ -70,7 +76,9 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		return this.#hasPopulationCache
 	}
 
-	/** Lazily probe (once) whether the slim DB carries the `place_abbr` aux table (build-slim ≥ #189). */
+	/**
+	 * Lazily probe (once) whether the slim DB carries the `place_abbr` aux table (build-slim ≥ #189).
+	 */
 	#hasPlaceAbbr(): boolean {
 		if (this.#hasPlaceAbbrCache === undefined) {
 			const r = this.#db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_abbr' LIMIT 1`)

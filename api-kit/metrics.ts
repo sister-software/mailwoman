@@ -12,13 +12,17 @@
  *   state: under `node:cluster` each worker reports its own snapshot — aggregate at the scraper.
  */
 
-/** Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory. */
+/**
+ * Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory.
+ */
 const MAX_SAMPLES = 2048
 
 const latencies: number[] = []
 let writeIdx = 0
 
-/** Null-prototype: tier keys are created lazily on first use, not eagerly pre-populated. */
+/**
+ * Null-prototype: tier keys are created lazily on first use, not eagerly pre-populated.
+ */
 const tierCounts: Record<string, number> = Object.create(null)
 let total = 0
 let errors = 0
@@ -67,7 +71,9 @@ export interface MetricsSnapshot {
 	}
 }
 
-/** Current metrics snapshot — sorted-reservoir percentiles + counters. */
+/**
+ * Current metrics snapshot — sorted-reservoir percentiles + counters.
+ */
 export function metricsSnapshot(): MetricsSnapshot {
 	const sorted = [...latencies].toSorted((a, b) => a - b)
 
@@ -90,7 +96,9 @@ export function metricsSnapshot(): MetricsSnapshot {
 	}
 }
 
-/** Test-only reset of all counters + the reservoir. */
+/**
+ * Test-only reset of all counters + the reservoir.
+ */
 export function resetMetricsForTest(): void {
 	latencies.length = 0
 	writeIdx = 0

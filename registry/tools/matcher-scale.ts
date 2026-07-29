@@ -20,19 +20,31 @@ import { writeFileSync } from "node:fs"
 
 import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
 
-/** Options for {@linkcode matcherScale}. */
+/**
+ * Options for {@linkcode matcherScale}.
+ */
 export interface MatcherScaleOptions {
-	/** Record counts to sweep. Default `[10000, 50000, 100000, 250000, 500000]`. */
+	/**
+	 * Record counts to sweep. Default `[10000, 50000, 100000, 250000, 500000]`.
+	 */
 	sizes?: number[]
-	/** Average records per distinct place. Default 3. */
+	/**
+	 * Average records per distinct place. Default 3.
+	 */
 	dup?: number
-	/** Fit the FS m/u with EM per size (slower). Default false. */
+	/**
+	 * Fit the FS m/u with EM per size (slower). Default false.
+	 */
 	em?: boolean
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
-/** Deterministic LCG so the eval is reproducible run to run (no Math.random). */
+/**
+ * Deterministic LCG so the eval is reproducible run to run (no Math.random).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0
 
@@ -81,7 +93,9 @@ function generate(n: number, dup: number, seed = 1): SourceRecord[] {
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`
 const sec = (ms: number) => `${(ms / 1000).toFixed(2)} s`
 
-/** Pure-Node matcher scale eval — see the module doc. Emits the markdown report to stdout. */
+/**
+ * Pure-Node matcher scale eval — see the module doc. Emits the markdown report to stdout.
+ */
 export async function matcherScale(
 	options: MatcherScaleOptions = {},
 	report?: (line: string) => void

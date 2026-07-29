@@ -57,7 +57,9 @@ export interface TraceRepairLike {
 	after: string[]
 }
 
-/** Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03). */
+/**
+ * Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03).
+ */
 export interface ParseTraceLike {
 	text: string
 	caseNormalized: boolean
@@ -66,7 +68,9 @@ export interface ParseTraceLike {
 	gazetteer?: TraceChannelLike
 	logits: number[][]
 	localeLogits?: number[]
-	/** The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order. */
+	/**
+	 * The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order.
+	 */
 	localeCountries?: string[]
 	detectedSystem: string | null
 	systemSource: "off" | "auto" | "pinned"
@@ -89,7 +93,9 @@ export interface MailwomanLookupLike {
 		 */
 		placetype?: string | string[] | undefined
 		country?: string
-		/** Point-in-bbox filter — constrains candidates to a parsed region/state's bounds. */
+		/**
+		 * Point-in-bbox filter — constrains candidates to a parsed region/state's bounds.
+		 */
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		limit?: number
 		postcode?: string
@@ -136,24 +142,38 @@ export interface ResultNode {
 	tag: string
 	value?: unknown
 	confidence?: number
-	/** Inclusive start char offset into `DemoResult.input`, when the decoder emits one. */
+	/**
+	 * Inclusive start char offset into `DemoResult.input`, when the decoder emits one.
+	 */
 	start?: number
-	/** Exclusive end char offset into the raw input. */
+	/**
+	 * Exclusive end char offset into the raw input.
+	 */
 	end?: number
 }
 
-/** Per-stage wall-clock for one parse (ms). `resolve` is absent when the lookup is skipped. */
+/**
+ * Per-stage wall-clock for one parse (ms). `resolve` is absent when the lookup is skipped.
+ */
 export interface StageTiming {
-	/** QueryShape + kind classification (pure, ~µs). */
+	/**
+	 * QueryShape + kind classification (pure, ~µs).
+	 */
 	shape: number
-	/** Neural BIO classify + tree decode — the model inference. */
+	/**
+	 * Neural BIO classify + tree decode — the model inference.
+	 */
 	classify: number
-	/** WOF cascade lookup. Excludes the one-time DB load. */
+	/**
+	 * WOF cascade lookup. Excludes the one-time DB load.
+	 */
 	resolve?: number
 }
 
 export interface DemoResult {
-	/** The raw text handed to the parser — the offsets in `nodes[].start/end` index into this string. */
+	/**
+	 * The raw text handed to the parser — the offsets in `nodes[].start/end` index into this string.
+	 */
 	input: string
 	tree: unknown
 	nodes: ResultNode[]
@@ -161,7 +181,9 @@ export interface DemoResult {
 	candidates: ResolvedHit[]
 	stateHint?: string
 	kindResult?: KindResult
-	/** Per-stage timing for the breakdown panel; absent on older render paths. */
+	/**
+	 * Per-stage timing for the breakdown panel; absent on older render paths.
+	 */
 	timing?: StageTiming
 	fstActive: boolean
 	fstProvenance?: FSTProvenanceLike | null
@@ -242,10 +264,14 @@ export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
  */
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 
-/** Dated national-shard release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335). */
+/**
+ * Dated national-shard release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335).
+ */
 export const NATIONAL_STREET_SHARD_VERSION = "2026-07-10"
 
-/** The single national slug the demo's street tier falls back to when no hosted US state claims the query. */
+/**
+ * The single national slug the demo's street tier falls back to when no hosted US state claims the query.
+ */
 export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 
 /**

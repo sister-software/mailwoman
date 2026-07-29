@@ -39,7 +39,9 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-/** A minimal admin WOF with the tables `buildCandidateTable` reads (mirrors `build-candidate.test.ts`). */
+/**
+ * A minimal admin WOF with the tables `buildCandidateTable` reads (mirrors `build-candidate.test.ts`).
+ */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
@@ -59,7 +61,9 @@ function buildFixtureAdmin(path: string): void {
 	db.close()
 }
 
-/** Build a real (unsealed) candidate DB in the scratch dir and return its path. */
+/**
+ * Build a real (unsealed) candidate DB in the scratch dir and return its path.
+ */
 async function buildFixtureCandidate(): Promise<string> {
 	const input = join(scratch, "admin.db")
 	const output = join(scratch, "candidate.db")

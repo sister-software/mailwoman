@@ -25,7 +25,9 @@ import { TRACE_PRIOR_KINDS } from "../trace.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Fake runner emitting a canned logits matrix (and optional locale head) regardless of input. */
+/**
+ * Fake runner emitting a canned logits matrix (and optional locale head) regardless of input.
+ */
 class FakeRunner implements NeuralRunner {
 	constructor(
 		private readonly canned: number[][],
@@ -40,7 +42,9 @@ class FakeRunner implements NeuralRunner {
 	}
 }
 
-/** Uniform-noise logits with a boost on one label at one token index. */
+/**
+ * Uniform-noise logits with a boost on one label at one token index.
+ */
 function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string, magnitude = 3): number[][] {
 	const labelIdx = STAGE2_BIO_LABELS.indexOf(boostLabel as (typeof STAGE2_BIO_LABELS)[number])
 	const matrix: number[][] = []

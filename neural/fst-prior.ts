@@ -30,7 +30,9 @@ const FST_MATCH_LENGTH_SCALE: ReadonlyMap<number, number> = new Map([
 	[2, 0.7],
 ])
 
-/** Scale applied once a match is long enough to stand on its own. */
+/**
+ * Scale applied once a match is long enough to stand on its own.
+ */
 const FULL_FST_MATCH_SCALE = 1
 
 const SPACE_SENTINEL = "▁"
@@ -46,7 +48,9 @@ const SPACE_SENTINEL = "▁"
  */
 const BYTE_FALLBACK_RE = /^<0x[0-9A-Fa-f]{2}>$/
 
-/** Is `piece` real word content, ignoring a leading `▁` sentinel? False for a byte-fallback placeholder — see above. */
+/**
+ * Is `piece` real word content, ignoring a leading `▁` sentinel? False for a byte-fallback placeholder — see above.
+ */
 function hasWordContent(piece: string): boolean {
 	const literal = piece.startsWith(SPACE_SENTINEL) ? piece.slice(SPACE_SENTINEL.length) : piece
 
@@ -55,9 +59,7 @@ function hasWordContent(piece: string): boolean {
 	return /[\p{L}\p{N}]/u.test(piece)
 }
 
-// ---------------------------------------------------------------------------
-// Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
-// ---------------------------------------------------------------------------
+// MARK: Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
 
 export interface FSTMatchLike {
 	stateID: number
@@ -77,9 +79,7 @@ export interface FSTMatcherLike {
 	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
-// ---------------------------------------------------------------------------
-// Placetype → BIO label mapping
-// ---------------------------------------------------------------------------
+// MARK: Placetype → BIO label mapping
 
 const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -88,9 +88,7 @@ const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["postalcode", "postcode"],
 ])
 
-// ---------------------------------------------------------------------------
-// Internals
-// ---------------------------------------------------------------------------
+// MARK: Internals
 
 export interface WordGroup {
 	fstToken: string
@@ -124,7 +122,9 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * FR regression).
  */
 export interface StreetContextGateOpts {
-	/** The street-morphology FST matcher (same instance the street-morphology prior consumes). */
+	/**
+	 * The street-morphology FST matcher (same instance the street-morphology prior consumes).
+	 */
 	fst: FSTMatcherLike
 	/**
 	 * Multiplier applied to the positive `impBias` when the gate fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
@@ -140,7 +140,9 @@ export interface FSTPriorOpts {
 	 */
 	maxBias?: number
 	suppressionScale?: number
-	/** See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller). */
+	/**
+	 * See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller).
+	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
 	 * See {@link StreetContextGateOpts}. Absent → current behavior (default-safe no-op).
@@ -148,7 +150,9 @@ export interface FSTPriorOpts {
 	streetContext?: StreetContextGateOpts
 }
 
-/** House-number shape for the street-context gate (#1143: "the house number is the license"). */
+/**
+ * House-number shape for the street-context gate (#1143: "the house number is the license").
+ */
 const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
 
 /**
@@ -388,7 +392,9 @@ function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
 	return fst.accepting(match.stateID).some((e) => e.placetype === "street_affix")
 }
 
-/** Nearest non-empty word-group index adjacent to a matched span, or -1 when none exists in that direction. */
+/**
+ * Nearest non-empty word-group index adjacent to a matched span, or -1 when none exists in that direction.
+ */
 function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 | -1): number {
 	for (let i = from + direction; i >= 0 && i < groups.length; i += direction) {
 		if (groups[i]!.fstToken !== "") return i

@@ -30,7 +30,9 @@ const grammar = (): SemiCRFTransitions => {
 	}
 }
 
-/** A trace over "Rue Corsier" (2 tokens). `spanScores` optional — omit to exercise the fallback. */
+/**
+ * A trace over "Rue Corsier" (2 tokens). `spanScores` optional — omit to exercise the fallback.
+ */
 const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 	({
 		text: "Rue Corsier",

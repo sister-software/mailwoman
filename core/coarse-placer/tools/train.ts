@@ -19,13 +19,19 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "../featurize.ts"
 
-/** Lowest calibration temperature swept. */
+/**
+ * Lowest calibration temperature swept.
+ */
 const MIN_TEMPERATURE = 0.5
 
-/** Highest calibration temperature swept — just past 4 so the endpoint is included despite float drift. */
+/**
+ * Highest calibration temperature swept — just past 4 so the endpoint is included despite float drift.
+ */
 const MAX_TEMPERATURE = 4.01
 
-/** Temperature sweep granularity. */
+/**
+ * Temperature sweep granularity.
+ */
 const TEMPERATURE_STEP = 0.1
 
 interface Sample {
@@ -33,21 +39,35 @@ interface Sample {
 	y: number
 }
 
-/** Options for {@linkcode trainCoarsePlacer}. */
+/**
+ * Options for {@linkcode trainCoarsePlacer}.
+ */
 export interface TrainCoarsePlacerOptions {
-	/** SGD epochs. Default 12. */
+	/**
+	 * SGD epochs. Default 12.
+	 */
 	epochs?: number
-	/** Initial learning rate (decays per epoch). Default 0.1. */
+	/**
+	 * Initial learning rate (decays per epoch). Default 0.1.
+	 */
 	lr?: number
-	/** L2 regularization. Default 1e-6. */
+	/**
+	 * L2 regularization. Default 1e-6.
+	 */
 	l2?: number
-	/** Artifact output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Artifact output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	out?: string
-	/** Dataset dir (`{train,val}.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`{train,val}.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode trainCoarsePlacer}. */
+/**
+ * Result of {@linkcode trainCoarsePlacer}.
+ */
 export interface TrainCoarsePlacerResult {
 	outDir: string
 	trainRows: number
@@ -56,7 +76,9 @@ export interface TrainCoarsePlacerResult {
 	valNLL: number
 }
 
-/** Coarse-placer SGD trainer — see the module doc. */
+/**
+ * Coarse-placer SGD trainer — see the module doc.
+ */
 export async function trainCoarsePlacer(
 	options: TrainCoarsePlacerOptions = {},
 	report?: (line: string) => void

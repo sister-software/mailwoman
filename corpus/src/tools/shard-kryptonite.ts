@@ -31,9 +31,13 @@ export interface ShardKryptoniteOptions {
 	jsonl: string
 	baseManifest: string
 	outDir: string
-	/** Default `"0.4.0"`. */
+	/**
+	 * Default `"0.4.0"`.
+	 */
 	corpusVersion?: string
-	/** Default `"deepseek-kryptonite"`. */
+	/**
+	 * Default `"deepseek-kryptonite"`.
+	 */
 	source?: string
 }
 

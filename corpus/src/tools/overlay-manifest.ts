@@ -51,7 +51,9 @@ interface BaseManifest {
 	total_rows: number
 }
 
-/** Escape a path for single-quoted SQL string literals. */
+/**
+ * Escape a path for single-quoted SQL string literals.
+ */
 function sqlString(value: string): string {
 	return value.replaceAll("'", "''")
 }

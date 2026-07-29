@@ -20,19 +20,27 @@ import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
  */
 const VERSION_WIDE_STATE_COUNTERS = 4
 
-/** State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}. */
+/**
+ * State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
 const WIDE_STATE_ENTRY_SIZE = 16
 
-/** State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}. */
+/**
+ * State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
 const NARROW_STATE_ENTRY_SIZE = 12
 
-/** First format version carrying the trailing metadata block; older files simply have none. */
+/**
+ * First format version carrying the trailing metadata block; older files simply have none.
+ */
 const VERSION_WITH_METADATA = 3
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
-/** "FST\0". */
+/**
+ * "FST\0".
+ */
 const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00]
 /**
  * Must track the serializer's VERSION (fst-serialize.ts, currently 4). The v3 provenance + v4 16-byte-state/u32-count

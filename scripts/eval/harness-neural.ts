@@ -49,9 +49,7 @@ import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-m
 import { createRuntimePipeline } from "mailwoman"
 import ts from "typescript"
 
-// -------------------------------------------------------------------------------------------------
-// Args
-// -------------------------------------------------------------------------------------------------
+// MARK: Args
 
 interface Args {
 	testsDir: string
@@ -184,9 +182,7 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-// -------------------------------------------------------------------------------------------------
-// Assertion extraction — TS AST → list of (input, expected[])
-// -------------------------------------------------------------------------------------------------
+// MARK: Assertion extraction — TS AST → list of (input, expected[])
 
 interface ExtractedAssertion {
 	file: string
@@ -309,9 +305,7 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 	return all
 }
 
-// -------------------------------------------------------------------------------------------------
-// Neural output → the visible ClassificationRecord vocabulary
-// -------------------------------------------------------------------------------------------------
+// MARK: Neural output → the visible ClassificationRecord vocabulary
 
 /**
  * Visible classification labels in the assertion vocabulary — the fixture format inherited from the retired rule-based
@@ -402,9 +396,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 	return { record: out as ClassificationRecord, dropped }
 }
 
-// -------------------------------------------------------------------------------------------------
-// Comparison — case-insensitive superset match
-// -------------------------------------------------------------------------------------------------
+// MARK: Comparison — case-insensitive superset match
 
 function normalize(s: string): string {
 	return s.toLowerCase().trim()
@@ -449,9 +441,7 @@ function anyExpectedMatches(expected: ClassificationRecord[], actual: Classifica
 	return false
 }
 
-// -------------------------------------------------------------------------------------------------
-// Per-assertion runner
-// -------------------------------------------------------------------------------------------------
+// MARK: Per-assertion runner
 
 interface AssertionResult {
 	file: string
@@ -513,9 +503,7 @@ async function runAssertion(
 	}
 }
 
-// -------------------------------------------------------------------------------------------------
-// Falsehoods JSONL loader
-// -------------------------------------------------------------------------------------------------
+// MARK: Falsehoods JSONL loader
 
 interface FalsehoodRow {
 	input: string
@@ -555,9 +543,7 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 	return out
 }
 
-// -------------------------------------------------------------------------------------------------
-// Report
-// -------------------------------------------------------------------------------------------------
+// MARK: Report
 
 interface FileStats {
 	total: number
@@ -664,9 +650,7 @@ function printReport(results: AssertionResult[]): void {
 	}
 }
 
-// -------------------------------------------------------------------------------------------------
-// Main
-// -------------------------------------------------------------------------------------------------
+// MARK: Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()

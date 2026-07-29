@@ -48,7 +48,9 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 const DEFAULT_COMMUNES = "/tmp/reg/fr-communes.tsv"
 const LICENSE = "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE"
 
-/** One distinct commune row from the TSV, with the département derived from its postcode. */
+/**
+ * One distinct commune row from the TSV, with the département derived from its postcode.
+ */
 interface CommuneRow {
 	commune: string
 	postcode: string
@@ -57,14 +59,18 @@ interface CommuneRow {
 	lat: string | undefined
 }
 
-/** One rendered admin-split variant. */
+/**
+ * One rendered admin-split variant.
+ */
 interface AdminSplitVariant {
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
 	order: string
 }
 
-/** Read the distinct commune TSV (commune, postcode, lon, lat); derive the département name. */
+/**
+ * Read the distinct commune TSV (commune, postcode, lon, lat); derive the département name.
+ */
 async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
 

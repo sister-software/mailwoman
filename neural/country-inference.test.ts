@@ -44,7 +44,9 @@ const LEXICON = parseCountryLexicon({
 	},
 })
 
-/** Bits painted on the first kept char of each whitespace word (shared paint with the gazetteer). */
+/**
+ * Bits painted on the first kept char of each whitespace word (shared paint with the gazetteer).
+ */
 function paintedWords(raw: string): Record<string, number> {
 	const charBits = gazetteerCharPaint(raw, LEXICON)
 	const out: Record<string, number> = {}

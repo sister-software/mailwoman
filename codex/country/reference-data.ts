@@ -8,13 +8,17 @@
  *   Regenerate with: mailwoman dev generate country-reference
  */
 
-/** Static per-country reference: calling code + currency. */
+/**
+ * Static per-country reference: calling code + currency.
+ */
 export interface CountryReference {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
 }
 
-/** ISO 3166-1 alpha-2 → reference. */
+/**
+ * ISO 3166-1 alpha-2 → reference.
+ */
 export const COUNTRY_REFERENCE: Record<string, CountryReference> = {
 	AD: { callingCode: 376, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
 	AE: { callingCode: 971, currency: { isoCode: "AED", name: "United Arab Emirates dirham", symbol: "د.إ" } },

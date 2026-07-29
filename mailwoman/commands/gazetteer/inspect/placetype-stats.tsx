@@ -22,7 +22,9 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
-/** Row count below which a trained placetype is flagged as thin relative to its peers. */
+/**
+ * Row count below which a trained placetype is flagged as thin relative to its peers.
+ */
 const UNDERTRAINED_PLACETYPE_COUNT = 200_000
 
 const OptionsSchema = zod.object({
@@ -40,9 +42,13 @@ export { OptionsSchema as options }
 interface PlacetypeStat {
 	placetype: string
 	count: number
-	/** How this placetype relates upward: its parent placetype distribution, as fractions summing to ~1. */
+	/**
+	 * How this placetype relates upward: its parent placetype distribution, as fractions summing to ~1.
+	 */
 	parents: Array<{ placetype: string; fraction: number }>
-	/** The modal ancestor-placetype chain (most common ancestor placetypes, ordered by frequency). */
+	/**
+	 * The modal ancestor-placetype chain (most common ancestor placetypes, ordered by frequency).
+	 */
 	ancestors: Array<{ placetype: string; fraction: number }>
 	/**
 	 * True iff this WOF placetype maps to a trained `ComponentTag` (via core/types/mapping) — the ones the model must
@@ -51,7 +57,9 @@ interface PlacetypeStat {
 	trained: boolean
 }
 
-/** WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones). */
+/**
+ * WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones).
+ */
 const PLACETYPE_TO_TAG: Record<string, string> = {
 	country: "country",
 	region: "region",

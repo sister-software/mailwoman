@@ -26,7 +26,9 @@ interface Result {
 	input: string
 }
 
-/** Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away). */
+/**
+ * Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away).
+ */
 function pyFixed(x: number, d: number): string {
 	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
 	const neg = x < 0 || Object.is(x, -0)

@@ -15,7 +15,9 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-/** Samples a bucket needs before its flip rate is worth reporting rather than noise. */
+/**
+ * Samples a bucket needs before its flip rate is worth reporting rather than noise.
+ */
 const MIN_REPORTABLE_SAMPLES = 4
 
 const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()

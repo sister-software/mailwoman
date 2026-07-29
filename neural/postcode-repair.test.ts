@@ -14,12 +14,16 @@ import { describe, expect, it } from "vitest"
 
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 
-/** Build a char-aligned token. */
+/**
+ * Build a char-aligned token.
+ */
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 
-/** The contiguous postcode value implied by the repaired labels (first B-…I-* run). */
+/**
+ * The contiguous postcode value implied by the repaired labels (first B-…I-* run).
+ */
 function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1
@@ -40,7 +44,9 @@ function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 	return start === -1 ? null : text.slice(start, end)
 }
 
-/** The contiguous locality value implied by the repaired labels (first B-…I-locality run). */
+/**
+ * The contiguous locality value implied by the repaired labels (first B-…I-locality run).
+ */
 function localityValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1

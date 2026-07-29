@@ -30,7 +30,9 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
-/** Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from. */
+/**
+ * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
+ */
 const MIN_OUTLIER_LENGTH = 6
 
 interface LatinTestRow {
@@ -40,17 +42,27 @@ interface LatinTestRow {
 	srcCountry: string
 }
 
-/** Options for {@linkcode buildOutlierLatin}. */
+/**
+ * Options for {@linkcode buildOutlierLatin}.
+ */
 export interface BuildOutlierLatinOptions {
-	/** Rows sampled per off-map country. Default 6000. */
+	/**
+	 * Rows sampled per off-map country. Default 6000.
+	 */
 	perCountry?: number
-	/** Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`. */
+	/**
+	 * Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`.
+	 */
 	overture?: string
-	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildOutlierLatin}. */
+/**
+ * Result of {@linkcode buildOutlierLatin}.
+ */
 export interface BuildOutlierLatinResult {
 	train: number
 	val: number
@@ -69,7 +81,9 @@ export interface BuildOutlierLatinResult {
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
 
-/** Address_levels arrives as a list (node-api) or its string repr; pull the value strings out. */
+/**
+ * Address_levels arrives as a list (node-api) or its string repr; pull the value strings out.
+ */
 function levelValues(al: unknown): string[] {
 	if (Array.isArray(al)) return al.map((x) => (x && x.value ? String(x.value) : "")).filter(Boolean)
 	const s = String(al ?? "")
@@ -88,7 +102,9 @@ function levelValues(al: unknown): string[] {
 	return out
 }
 
-/** Assemble a plausible address string from an Overture address row. Deterministic variant by hash. */
+/**
+ * Assemble a plausible address string from an Overture address row. Deterministic variant by hash.
+ */
 function assemble(r: Record<string, unknown>): string | null {
 	const num = (r.number ?? "").toString().trim()
 	const street = (r.street ?? "").toString().trim()
@@ -111,7 +127,9 @@ function assemble(r: Record<string, unknown>): string | null {
 	}
 }
 
-/** Coarse-placer Overture Latin-off-map outlier builder — see the module doc. */
+/**
+ * Coarse-placer Overture Latin-off-map outlier builder — see the module doc.
+ */
 export async function buildOutlierLatin(
 	options: BuildOutlierLatinOptions = {},
 	report?: (line: string) => void

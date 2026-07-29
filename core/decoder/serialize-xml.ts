@@ -34,17 +34,29 @@ import type { AddressNode, AddressTree } from "./types.ts"
 import { unknownSpans } from "./unknown-spans.ts"
 
 export interface SerializeXMLOpts {
-	/** Pretty-print with line breaks and indentation. Default true. */
+	/**
+	 * Pretty-print with line breaks and indentation. Default true.
+	 */
 	pretty?: boolean
-	/** Include `conf` attribute on every component. Default true. */
+	/**
+	 * Include `conf` attribute on every component. Default true.
+	 */
 	includeConf?: boolean
-	/** Include `start` + `end` char-offset attributes. Default true. */
+	/**
+	 * Include `start` + `end` char-offset attributes. Default true.
+	 */
 	includeOffsets?: boolean
-	/** Include `src` provenance attribute when the node carries source info. Default true. */
+	/**
+	 * Include `src` provenance attribute when the node carries source info. Default true.
+	 */
 	includeSrc?: boolean
-	/** Include `lat` + `lon` resolver-supplied centroid attrs when set on the node. Default true. */
+	/**
+	 * Include `lat` + `lon` resolver-supplied centroid attrs when set on the node. Default true.
+	 */
 	includeGeo?: boolean
-	/** Include `place` resolver-supplied normalized place URI when set. Default true. */
+	/**
+	 * Include `place` resolver-supplied normalized place URI when set. Default true.
+	 */
 	includePlace?: boolean
 	/**
 	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node. When set +
@@ -170,7 +182,9 @@ function serializeNode(node: AddressNode, indent: string, opts: Required<Seriali
 	return `${indent}<${node.tag}${a}>${text}${nl}${inner}${nl}${indent}</${node.tag}>`
 }
 
-/** Project an `AddressTree` to nested XML with optional confidence/offset attributes. */
+/**
+ * Project an `AddressTree` to nested XML with optional confidence/offset attributes.
+ */
 export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): string {
 	const full: Required<SerializeXMLOpts> = {
 		pretty: opts.pretty ?? true,

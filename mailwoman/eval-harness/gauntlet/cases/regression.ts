@@ -22,15 +22,21 @@ export interface SeedCase {
 	addressKind: AddressKind
 	country: string
 	status: CaseStatus
-	/** Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively). */
+	/**
+	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively).
+	 */
 	expectComponents?: Record<string, string>
-	/** Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`. */
+	/**
+	 * Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`.
+	 */
 	defaultCountry?: string
 	expectPlaceID?: string
 	expectPlaceName?: string
 	expectLat?: number
 	expectLon?: number
-	/** Great-circle tolerance (m). Defaults at runtime when absent. */
+	/**
+	 * Great-circle tolerance (m). Defaults at runtime when absent.
+	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	addedAt: string
@@ -38,7 +44,9 @@ export interface SeedCase {
 	note?: string
 }
 
-/** Seed cases for the regression leg — each is a parse that broke once, kept so it cannot break again. */
+/**
+ * Seed cases for the regression leg — each is a parse that broke once, kept so it cannot break again.
+ */
 export const REGRESSION_CASES: SeedCase[] = [
 	{
 		// Entry #1 — the FR OSM rooftop tier + the v1.9.4 parse fix, guarded via the WITH-postcode demo form.

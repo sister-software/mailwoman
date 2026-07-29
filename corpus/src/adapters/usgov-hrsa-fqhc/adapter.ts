@@ -60,7 +60,9 @@ interface HrsaSiteRow {
 	"Site City": string
 	"Site State Abbreviation": string
 	"Site Postal Code": string
-	/** Optional. Falls back to `stableSourceID` derived from components when missing. */
+	/**
+	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 */
 	"Site ID"?: string
 }
 
@@ -194,5 +196,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovHrsaFqhcAdapter = createUsgovHrsaFqhcAdapter()

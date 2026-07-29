@@ -46,10 +46,14 @@ import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/i
 import type { SplitName } from "./split.ts"
 import type { LabeledRow } from "./types.ts"
 
-/** Row groups flush at this many rows (parquetjs internal cadence within a shard). */
+/**
+ * Row groups flush at this many rows (parquetjs internal cadence within a shard).
+ */
 export const ROW_GROUP_SIZE = 50_000
 
-/** Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0. */
+/**
+ * Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0.
+ */
 export const SHARD_COMPRESSION = "SNAPPY" as const
 
 /**
@@ -74,7 +78,9 @@ export interface ParquetRow {
 	[key: string]: unknown
 }
 
-/** Column names emitted into every shard. Matches `ParquetRow`. */
+/**
+ * Column names emitted into every shard. Matches `ParquetRow`.
+ */
 export const PARQUET_COLUMNS = [
 	"raw",
 	"tokens",
@@ -120,7 +126,9 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	synth_base_id: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
 }
 
-/** Per-shard metadata captured in `MANIFEST.json`. */
+/**
+ * Per-shard metadata captured in `MANIFEST.json`.
+ */
 export interface ShardDescriptor {
 	split: SplitName
 	path: string
@@ -144,13 +152,19 @@ export interface ShardManifest {
 }
 
 export interface WriteShardsOptions {
-	/** Root output directory; corpus version dir is created beneath. */
+	/**
+	 * Root output directory; corpus version dir is created beneath.
+	 */
 	outputDir: string
 
-	/** Corpus version stamped onto rows + into the output directory name. */
+	/**
+	 * Corpus version stamped onto rows + into the output directory name.
+	 */
 	corpusVersion: string
 
-	/** Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan. */
+	/**
+	 * Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan.
+	 */
 	rowsPerShard?: number
 }
 
@@ -351,7 +365,9 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 	return manifest
 }
 
-/** Single-pass SHA-256 over the file at `path`. Cheap relative to Parquet write throughput. */
+/**
+ * Single-pass SHA-256 over the file at `path`. Cheap relative to Parquet write throughput.
+ */
 async function hashFile(path: string): Promise<string> {
 	const hash = createHash("sha256")
 	const stream = createReadStream(path)

@@ -45,7 +45,9 @@ import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
  */
 const CALIBRATION_METHOD = "split-conformal:2026-06-14"
 
-/** State abbreviation → state FIPS prefix, for picking county files out of --edges-dir. */
+/**
+ * State abbreviation → state FIPS prefix, for picking county files out of --edges-dir.
+ */
 const STATE_FIPS: Record<string, string> = {
 	// Original entries preserved
 	VT: "50",
@@ -118,7 +120,9 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-/** Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped). */
+/**
+ * Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped).
+ */
 function parseHn(raw: unknown): number | null {
 	if (raw === null || raw === undefined) return null
 	const s = String(raw).trim()

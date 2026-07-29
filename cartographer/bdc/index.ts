@@ -84,7 +84,9 @@ export function createBDCLayer<T extends BDCLayerSpecificationInput>(spec: BaseB
 
 const GIGABIT_BROADBAND_SPEED = 1000
 
-/** Layer definitions for the FCC Broadband Data Collection overlay, styled by reported service tier. */
+/**
+ * Layer definitions for the FCC Broadband Data Collection overlay, styled by reported service tier.
+ */
 export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 	{
 		afterID: "earth",

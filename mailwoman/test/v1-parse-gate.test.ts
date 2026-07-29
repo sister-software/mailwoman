@@ -89,10 +89,14 @@ import { describe, expect, test } from "vitest"
 
 import { v0RecordToTree } from "../eval-harness/v0-tree-adapter.ts"
 
-/** The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions. */
+/**
+ * The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions.
+ */
 const PARITY_RAW_GOLDEN = "mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl"
 
-/** A captured rules solution's flat classification record (the shape `solutions[0].classifications` had). */
+/**
+ * A captured rules solution's flat classification record (the shape `solutions[0].classifications` had).
+ */
 type RulesRecord = Partial<Record<string, string[]>>
 
 /**
@@ -111,7 +115,9 @@ function loadRulesGolden(): Map<string, RulesRecord> {
 	return byInput
 }
 
-/** A live parity fixture: input + the per-label rules-golden expectation. */
+/**
+ * A live parity fixture: input + the per-label rules-golden expectation.
+ */
 interface ParityFixture {
 	id: string
 	input: string
@@ -120,10 +126,14 @@ interface ParityFixture {
 	expect?: Partial<Record<string, string[]>>
 }
 
-/** The street family assembles into one span for parse-tag agreement (matches `scratchpad/coord-parity.mjs`). */
+/**
+ * The street family assembles into one span for parse-tag agreement (matches `scratchpad/coord-parity.mjs`).
+ */
 const STREET_TAGS = ["street_prefix", "street", "street_prefix_particle", "street_suffix"]
 
-/** WOF shards the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`). */
+/**
+ * WOF shards the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
+ */
 const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
 const POSTCODE_DB = dataRootPath("wof", "postcode-locality-intl.db")
 
@@ -139,7 +149,9 @@ function weightsPresent(): boolean {
 
 const gazetteerPresent = () => existsSync(ADMIN_DB) && existsSync(POSTCODE_DB)
 
-/** Flatten a tree to its node list, depth-first. */
+/**
+ * Flatten a tree to its node list, depth-first.
+ */
 function flatten(tree: AddressTree): AddressTree["roots"] {
 	const out: AddressTree["roots"] = []
 	const stack = [...tree.roots]
@@ -153,7 +165,9 @@ function flatten(tree: AddressTree): AddressTree["roots"] {
 	return out
 }
 
-/** Assemble the folded value of `tags` from a parsed tree, in document order. */
+/**
+ * Assemble the folded value of `tags` from a parsed tree, in document order.
+ */
 function labelValue(tree: AddressTree, tags: readonly string[]): string {
 	return fold(
 		flatten(tree)
@@ -181,7 +195,9 @@ interface Measured {
 	both: boolean
 	delta: number | null
 	implausible: boolean
-	/** Per-label parse-tag agreement (informational): true/false when the fixture carries that label. */
+	/**
+	 * Per-label parse-tag agreement (informational): true/false when the fixture carries that label.
+	 */
 	agree: Partial<Record<string, boolean>>
 }
 

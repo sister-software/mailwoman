@@ -18,13 +18,19 @@
  *       trains offline once and ships as a data file.
  */
 
-/** Distinct values at or below which every split point is tried exactly rather than by quantile. */
+/**
+ * Distinct values at or below which every split point is tried exactly rather than by quantile.
+ */
 const MAX_EXACT_SPLIT_VALUES = 5
 
-/** Quantile split points evaluated for a continuous feature. */
+/**
+ * Quantile split points evaluated for a continuous feature.
+ */
 const QUANTILE_SPLIT_COUNT = 6
 
-/** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */
+/**
+ * A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value.
+ */
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
@@ -63,7 +69,9 @@ export function buildThresholds(X: number[][]): number[][] {
 	return out
 }
 
-/** Weighted SSE of target `g` over `rows` around their weighted mean. */
+/**
+ * Weighted SSE of target `g` over `rows` around their weighted mean.
+ */
 function nodeSSE(rows: number[], g: number[], w: number[]): number {
 	let wsum = 0
 	let wg = 0
@@ -83,7 +91,9 @@ function nodeSSE(rows: number[], g: number[], w: number[]): number {
 	return sse
 }
 
-/** Greedy depth-limited weighted regression tree on target `g` (the boosting residual). */
+/**
+ * Greedy depth-limited weighted regression tree on target `g` (the boosting residual).
+ */
 function fitRegTree(
 	rows: number[],
 	X: number[][],
@@ -152,14 +162,18 @@ function predictTree(t: TreeNode, x: number[]): number {
 	return n.leaf
 }
 
-/** A trained gradient-boosted-tree model: an additive ensemble over a base log-odds. Plain JSON. */
+/**
+ * A trained gradient-boosted-tree model: an additive ensemble over a base log-odds. Plain JSON.
+ */
 export interface GBT {
 	trees: TreeNode[]
 	lr: number
 	base: number
 }
 
-/** Hyperparameters for {@link trainGBT}. */
+/**
+ * Hyperparameters for {@link trainGBT}.
+ */
 export interface GBTOpts {
 	rounds: number
 	depth: number
@@ -167,7 +181,9 @@ export interface GBTOpts {
 	minLeaf: number
 }
 
-/** Gradient-boosted regression trees on logistic loss, with per-sample class weights `w`. */
+/**
+ * Gradient-boosted regression trees on logistic loss, with per-sample class weights `w`.
+ */
 export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts): GBT {
 	const N = X.length
 	const thresholds = buildThresholds(X)
@@ -203,7 +219,9 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 	return { trees, lr: opts.lr, base }
 }
 
-/** GBT score (logit) for one feature vector. Threshold-comparable like the FS weight. */
+/**
+ * GBT score (logit) for one feature vector. Threshold-comparable like the FS weight.
+ */
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base
 

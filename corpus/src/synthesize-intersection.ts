@@ -21,9 +21,13 @@
 
 import type { CanonicalRow } from "./types.ts"
 
-/** Street name cores (no suffix) — proper-noun streets that often appear bare. */
+/**
+ * Street name cores (no suffix) — proper-noun streets that often appear bare.
+ */
 
-/** Attempts to draw a second street distinct from the first before giving up on the pair. */
+/**
+ * Attempts to draw a second street distinct from the first before giving up on the pair.
+ */
 const MAX_DISTINCT_STREET_TRIES = 8
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -56,7 +60,9 @@ const STREET_CORES = [
 	"Spring",
 ] as const
 
-/** Bare proper-noun streets that idiomatically take NO suffix. */
+/**
+ * Bare proper-noun streets that idiomatically take NO suffix.
+ */
 const BARE_NAMES = ["Broadway", "Wall", "Bourbon", "Esplanade", "Riverside", "Lakeshore"] as const
 
 const ORDINALS = [
@@ -88,7 +94,9 @@ const CONNECTORS = [" & ", " and ", " at ", " / ", " @ "] as const
 export interface IntersectionBaseTuple {
 	locality: string
 	region: string
-	/** ZIP — optional; ~30% of synthetic intersections omit it (idiomatic). */
+	/**
+	 * ZIP — optional; ~30% of synthetic intersections omit it (idiomatic).
+	 */
 	postcode?: string
 	country: string
 }
@@ -107,7 +115,9 @@ function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!
 }
 
-/** Build a single street surface form, e.g. "W 42nd St", "Broadway", "Main St", "N Oak Ave". */
+/**
+ * Build a single street surface form, e.g. "W 42nd St", "Broadway", "Main St", "N Oak Ave".
+ */
 function buildStreetName(random: () => number): string {
 	// ~20% bare proper-noun street (no suffix), else directional? + core/ordinal + suffix.
 	if (random() < 0.2) return pick(BARE_NAMES, random)
@@ -177,7 +187,9 @@ export function synthesizeIntersectionRow(
 	return { raw, components, locale: "en-US" }
 }
 
-/** A small built-in US city/region/zip pool for standalone shard generation + tests. */
+/**
+ * A small built-in US city/region/zip pool for standalone shard generation + tests.
+ */
 export const DEFAULT_US_BASES: ReadonlyArray<IntersectionBaseTuple> = [
 	{ locality: "New York", region: "NY", postcode: "10036", country: "US" },
 	{ locality: "Chicago", region: "IL", postcode: "60613", country: "US" },
@@ -191,7 +203,9 @@ export const DEFAULT_US_BASES: ReadonlyArray<IntersectionBaseTuple> = [
 	{ locality: "Atlanta", region: "GA", postcode: "30303", country: "US" },
 ]
 
-/** Generate `count` intersection rows over the provided bases (round-robin). */
+/**
+ * Generate `count` intersection rows over the provided bases (round-robin).
+ */
 export function generateIntersectionRows(
 	count: number,
 	bases: ReadonlyArray<IntersectionBaseTuple> = DEFAULT_US_BASES,

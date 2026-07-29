@@ -29,7 +29,9 @@ import type { Tagged } from "type-fest"
 
 import type { CanadianProvinceCode } from "./province.ts"
 
-/** Characters in a Canadian postal code once spaces are stripped: `A1A1A1`. */
+/**
+ * Characters in a Canadian postal code once spaces are stripped: `A1A1A1`.
+ */
 const POSTAL_CODE_LENGTH = 6
 
 /**
@@ -66,7 +68,9 @@ export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	return CA_POSTAL_CODE_PATTERN.test(spaced) ? (spaced as PostalCode) : null
 }
 
-/** Type-predicate for a Canadian postal code (accepts the spaced or unspaced surface form). */
+/**
+ * Type-predicate for a Canadian postal code (accepts the spaced or unspaced surface form).
+ */
 export function isCaPostalCode(input: unknown): input is PostalCode {
 	return typeof input === "string" && CA_POSTAL_CODE_PATTERN.test(input)
 }

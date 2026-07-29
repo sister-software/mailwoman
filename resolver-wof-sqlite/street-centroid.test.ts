@@ -35,7 +35,9 @@ interface Seed {
 	point_count: number
 }
 
-/** Seed a temp-file `street_centroid` shard and return its path (the reader opens by path, read-only). */
+/**
+ * Seed a temp-file `street_centroid` shard and return its path (the reader opens by path, read-only).
+ */
 async function seedShard(rows: Seed[]): Promise<string> {
 	const path = join(mkdtempSync(join(tmpdir(), "sc-test-")), "street-centroids.db")
 	const db = new DatabaseSync(path)

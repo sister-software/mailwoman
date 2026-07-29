@@ -34,9 +34,7 @@ import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+// MARK: Helpers
 
 function statusBadgeLabel(badge: StatusBadge): string {
 	switch (badge) {
@@ -84,9 +82,7 @@ const ConfidenceMini: React.FC<{ confidence?: number }> = ({ confidence }) => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// State per stop
-// ---------------------------------------------------------------------------
+// MARK: State per stop
 
 interface StopParseState {
 	address: string
@@ -95,9 +91,7 @@ interface StopParseState {
 	error: string | null
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+// MARK: Component
 
 export const GuidedTour: React.FC = () => {
 	const { classifier, ready, loadingProgress } = useDemoEmbed()

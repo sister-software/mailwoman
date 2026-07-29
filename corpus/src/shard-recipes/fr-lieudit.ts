@@ -38,10 +38,14 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
-/** Matches the `ban` adapter's Tier-B election for BAN data. */
+/**
+ * Matches the `ban` adapter's Tier-B election for BAN data.
+ */
 const DEFAULT_LICENSE = "Licence Ouverte 2.0"
 
-/** One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds. */
+/**
+ * One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds.
+ */
 interface LieuDitTuple {
 	numero: string
 	rep: string | null
@@ -80,7 +84,9 @@ function departementFiles(banDir: string): string[] {
 	return [...byDept.keys()].toSorted().map((dept) => byDept.get(dept)!)
 }
 
-/** Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`). */
+/**
+ * Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`).
+ */
 async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 	const files = departementFiles(banDir)
 
@@ -120,7 +126,9 @@ async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 	return pool
 }
 
-/** `house_number` = `numero` + folded `rep` ("10 bis"), matching the `ban` adapter's own composition. */
+/**
+ * `house_number` = `numero` + folded `rep` ("10 bis"), matching the `ban` adapter's own composition.
+ */
 function composeHouseNumber(numero: string, rep: string | null): string {
 	return rep ? `${numero} ${rep}` : numero
 }
@@ -153,7 +161,9 @@ function composeRaw(
 	return lines.join("\n")
 }
 
-/** Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement. */
+/**
+ * Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement.
+ */
 function shuffleInPlace<T>(arr: T[], random: () => number): void {
 	for (let i = arr.length - 1; i > 0; i--) {
 		const j = Math.floor(random() * (i + 1))

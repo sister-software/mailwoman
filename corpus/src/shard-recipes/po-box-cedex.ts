@@ -72,24 +72,38 @@ const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
 const GEONAMES_POSTAL_AU = { zip: "/tmp/geonames-cache/AU-postal.zip", txt: "AU.txt" }
 const GEONAMES_POSTAL_NZ = { zip: "/tmp/geonames-cache/NZ-postal.zip", txt: "NZ.txt" }
 
-/** ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────. */
+/**
+ * ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────.
+ */
 const T: Record<string, LocaleTemplate> = Object.fromEntries(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 // US: the corpus en-US leaders carry the common mass; the codex-only USPS Pub-28 designators
 // (Caller/Drawer/Lockbox — firm-holdout and rural forms) ride at low weight. "Box" is in both.
-/** PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box. */
+/**
+ * PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box.
+ */
 const US_LEADERS_COMMON = T["en-US"]!.leaders
-/** Codex US_PO_BOX_DESIGNATORS tail. */
+/**
+ * Codex US_PO_BOX_DESIGNATORS tail.
+ */
 const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"]
 // "#" EXCLUDED (v4.4.0 probe finding): bare "#N" is a secondary-unit designator per USPS Pub 28 and
 // the shipped unit lever labels it `unit` — the corpus template's po_box reading CONTRADICTS a
 // shipped convention. PMB stays — a genuine commercial-mail-receiving designator, no unit collision.
-/** PMB. */
+/**
+ * PMB.
+ */
 const US_PMB_LEADERS = T["en-US"]!.pmb!.filter((l) => l !== "#")
-/** BP, B.P., Boîte Postale, BP. */
+/**
+ * BP, B.P., Boîte Postale, BP.
+ */
 const FR_LEADERS = T["fr-FR"]!.leaders
-/** CP, C.P., Case Postale, BP, B.P. */
+/**
+ * CP, C.P., Case Postale, BP, B.P.
+ */
 const CA_FR_LEADERS = T["fr-CA"]!.leaders
-/** PO Box, P.O. Box, POB, Post Office Box. */
+/**
+ * PO Box, P.O. Box, POB, Post Office Box.
+ */
 const CA_EN_LEADERS = T["en-CA"]!.leaders
 /**
  * AU (#517): codex/au is the vocabulary truth. Current designators (live auspost.com.au pages) at full weight; the
@@ -97,7 +111,9 @@ const CA_EN_LEADERS = T["en-CA"]!.leaders
  * must round-trip the codex matcher (makeAuNzPoBoxPhrase).
  */
 const AU_LEADERS_CURRENT = ["PO Box", "P.O. Box", "Post Office Box", "GPO Box", "Locked Bag", "Private Bag"]
-/** Codex legacy: true (recognize-only forms) */
+/**
+ * Codex legacy: true (recognize-only forms)
+ */
 const AU_LEADERS_LEGACY = ["RMB", "RSD", "CMB"]
 /**
  * NZ (#517): the ADV358 box/bag types that carry an identifier. CMB rides rare (its "CMB B99" identifier shape is
@@ -136,7 +152,9 @@ const CLASS_MIX: ReadonlyArray<[string, number]> = [
 	["po-box-nz", 0.06],
 ]
 
-/** Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern. */
+/**
+ * Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern.
+ */
 const VENUES_EN = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 const VENUES_FR = ["Société Dupont", "Cabinet Martin", "Hôpital Central", "Mairie Annexe", "Imprimerie Moderne"]
 
@@ -171,7 +189,9 @@ interface Rendered {
 
 // ── Holdout + CSV helpers ────────────────────────────────────────────────────────────────────────
 
-/** Stable locality hash for the FR/CA train↔golden split (djb2; hash%10===0 → golden-only). */
+/**
+ * Stable locality hash for the FR/CA train↔golden split (djb2; hash%10===0 → golden-only).
+ */
 function localityHash(name: string): number {
 	let h = 5381
 	const s = name.toLowerCase()
@@ -184,7 +204,9 @@ function localityHash(name: string): number {
 }
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -223,7 +245,9 @@ const MAX_LOCALITY_LENGTH = 40
 const cleanLocality = (loc: string) =>
 	loc && loc.length <= MAX_LOCALITY_LENGTH && !/\d|,/.test(loc) && !/cedex/i.test(loc)
 
-/** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
+/**
+ * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
+ */
 function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
@@ -381,7 +405,9 @@ function readPostalTuples(
 
 // ── Rendering helpers ────────────────────────────────────────────────────────────────────────────
 
-/** Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits). */
+/**
+ * Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits).
+ */
 function pickBoxNumber(random: () => number): string {
 	const r = random()
 
@@ -394,7 +420,9 @@ function pickBoxNumber(random: () => number): string {
 	return String(10_000 + Math.floor(random() * 90_000))
 }
 
-/** Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower. */
+/**
+ * Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower.
+ */
 function caseDial(random: () => number, s: string): string {
 	const r = random()
 
@@ -413,7 +441,9 @@ const CODEX_COVERED_LEADERS = new Set(
 	["PO Box", "P.O. Box", "P.O.Box", "PO BOX", "Post Office Box", "Box", ...US_LEADERS_RARE].map((l) => l.toLowerCase())
 )
 
-/** Compose a po_box phrase. "#" joins without a space ("#500", the golden PMB variant). */
+/**
+ * Compose a po_box phrase. "#" joins without a space ("#500", the golden PMB variant).
+ */
 function makePoBoxPhrase(
 	random: () => number,
 	leaders: ReadonlyArray<string>,
@@ -492,7 +522,9 @@ function makeAuNzPoBoxPhrase(
 	return phrase
 }
 
-/** Synthesize a codex-valid Canadian postcode for a province's FSA letters ("H2X 3V4"). */
+/**
+ * Synthesize a codex-valid Canadian postcode for a province's FSA letters ("H2X 3V4").
+ */
 function makeCaPostcode(random: () => number, fsaLetters: string[]): string {
 	const L = () => CA_INTERIOR_LETTERS[Math.floor(random() * CA_INTERIOR_LETTERS.length)]!
 	const D = () => String(Math.floor(random() * 10))

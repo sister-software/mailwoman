@@ -42,13 +42,19 @@ import {
 } from "./candidate-schema.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
-/** Boundary-preserving alias-bag separator (#523, U+E000). */
+/**
+ * Boundary-preserving alias-bag separator (#523, U+E000).
+ */
 const ALIAS_SEP = "\u{E000}"
 
 export interface BuildCandidateOptions {
-	/** Source unified admin DB — needs spr, place_population, place_search, place_abbr, ancestors. */
+	/**
+	 * Source unified admin DB — needs spr, place_population, place_search, place_abbr, ancestors.
+	 */
 	input: string
-	/** Output candidate DB path (overwritten if present). */
+	/**
+	 * Output candidate DB path (overwritten if present).
+	 */
 	output: string
 	/**
 	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
@@ -56,7 +62,9 @@ export interface BuildCandidateOptions {
 	 * path; the postcode-*.bin anchor stays the fallback). Matches the slim wof-hot.db, which took one such postcode DB.
 	 */
 	postcodes?: string[]
-	/** Optional progress callback for CLI / test introspection. */
+	/**
+	 * Optional progress callback for CLI / test introspection.
+	 */
 	onProgress?: (phase: string, message: string) => void
 }
 

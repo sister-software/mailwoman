@@ -9,7 +9,9 @@ import { expect, test } from "vitest"
 
 import { attachOpenAPIDocs, emitOpenAPIDocuments, serveNode, type ServerHandle } from "./index.ts"
 
-/** A minimal one-route app shared by the doc + serve tests. */
+/**
+ * A minimal one-route app shared by the doc + serve tests.
+ */
 function createPingApp(): OpenAPIHono {
 	const app = new OpenAPIHono()
 

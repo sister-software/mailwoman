@@ -53,11 +53,15 @@ interface ParityCheck {
 	name: string
 	value: string
 	ok: boolean
-	/** What the value was compared against — printed on failure. */
+	/**
+	 * What the value was compared against — printed on failure.
+	 */
 	expected: string
 }
 
-/** Strip a leading `v` so demo-manifest versions (`v5.1.0`) compare against npm versions (`5.1.0`). */
+/**
+ * Strip a leading `v` so demo-manifest versions (`v5.1.0`) compare against npm versions (`5.1.0`).
+ */
 function normalizeVersion(version: string): string {
 	return version.replace(/^v/, "").trim()
 }

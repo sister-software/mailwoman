@@ -13,7 +13,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite"
 
 import { DemoMap, type DemoMapStyle } from "./DemoMap.tsx"
 
-/** An offline style: one solid `background` layer. No glyphs, sprite, sources, or tiles → no network. */
+/**
+ * An offline style: one solid `background` layer. No glyphs, sprite, sources, or tiles → no network.
+ */
 const STUB_STYLE: DemoMapStyle = {
 	version: 8,
 	name: "demo-map-stub",
@@ -35,10 +37,14 @@ const meta: Meta<typeof DemoMap> = {
 export default meta
 type Story = StoryObj<typeof DemoMap>
 
-/** The bare shell over the stub style. */
+/**
+ * The bare shell over the stub style.
+ */
 export const StubStyle: Story = {}
 
-/** A child slot demo — later phases fill this with `<Source>`/`<Layer>`/`<Marker>` overlays. */
+/**
+ * A child slot demo — later phases fill this with `<Source>`/`<Layer>`/`<Marker>` overlays.
+ */
 export const WithChildrenSlot: Story = {
 	args: {
 		children: (

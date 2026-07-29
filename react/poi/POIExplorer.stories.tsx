@@ -41,7 +41,9 @@ export const BrandIntentOnly: Story = {
 	args: { defaultText: "chevron near Houston", loadRuntime: async () => makeBrandPOIRuntime() },
 }
 
-/** A chain-brand subject with a brand-capable probe wired — the live block appears and searches by QID. */
+/**
+ * A chain-brand subject with a brand-capable probe wired — the live block appears and searches by QID.
+ */
 export const BrandWithLiveSearch: Story = {
 	args: {
 		defaultText: "chevron near Houston",

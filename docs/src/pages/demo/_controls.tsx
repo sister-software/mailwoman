@@ -16,13 +16,19 @@ import type React from "react"
 import demoStyles from "./styles.module.css"
 
 export interface GeoBiasRowProps {
-	/** Whether a device location is currently applied as a bias. */
+	/**
+	 * Whether a device location is currently applied as a bias.
+	 */
 	active: boolean
-	/** Toggle the device-location bias. */
+	/**
+	 * Toggle the device-location bias.
+	 */
 	onToggle: () => void
 }
 
-/** The "Bias: 📍 Use my location" row + the "map view already biases" helper text. Mirrors `_app.tsx`. */
+/**
+ * The "Bias: 📍 Use my location" row + the "map view already biases" helper text. Mirrors `_app.tsx`.
+ */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, onToggle }) => (
 	<div className={demoStyles.examples}>
 		<span className={demoStyles.examplesLabel}>Bias:</span>
@@ -57,7 +63,9 @@ export interface CalibrationToggleProps {
 	onChange: (checked: boolean) => void
 }
 
-/** The opt-in "Calibrated confidence" display toggle. Mirrors `_app.tsx`. */
+/**
+ * The opt-in "Calibrated confidence" display toggle. Mirrors `_app.tsx`.
+ */
 export const CalibrationToggle: React.FC<CalibrationToggleProps> = ({ checked, onChange }) => (
 	<label
 		style={TOGGLE_STYLE}
@@ -76,7 +84,9 @@ export interface DevModeToggleProps {
 	onChange: (checked: boolean) => void
 }
 
-/** The "🐛 Dev mode" toggle that opens the decode-path model-visualizer drawer. Mirrors `_app.tsx`. */
+/**
+ * The "🐛 Dev mode" toggle that opens the decode-path model-visualizer drawer. Mirrors `_app.tsx`.
+ */
 export const DevModeToggle: React.FC<DevModeToggleProps> = ({ checked, onChange }) => (
 	<label
 		style={TOGGLE_STYLE}

@@ -19,7 +19,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { REGRESSION_CASES } from "./cases/regression.ts"
 import { createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
 
-/** Build the curated regression DB from the committed seed and swap it into place. */
+/**
+ * Build the curated regression DB from the committed seed and swap it into place.
+ */
 export async function buildRegressionDB(): Promise<void> {
 	const output = dataRootPath("gauntlet", "regression.db")
 	const tmp = `${output}.tmp-${process.pid}`

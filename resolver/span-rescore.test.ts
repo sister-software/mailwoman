@@ -23,7 +23,9 @@ const norm = (s: string): string =>
 		.replaceAll(/\s+/g, " ")
 		.trim()
 
-/** A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments). */
+/**
+ * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments).
+ */
 const PLACES: ResolvedPlace[] = [
 	{
 		id: 1,

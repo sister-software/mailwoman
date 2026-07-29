@@ -10,10 +10,14 @@ import type { PolygonLiteral, SolidPolygonPath } from "./geometries/polygon.ts"
 import { clampLatitude, wrapLongitude } from "./position.ts"
 import { CoordinateProjection } from "./projection.ts"
 
-/** Arity of a 2D bounding box: `[west, south, east, north]`. */
+/**
+ * Arity of a 2D bounding box: `[west, south, east, north]`.
+ */
 const BBOX_2D_LENGTH = 4
 
-/** Arity of a 3D bounding box: `[west, south, minElevation, east, north, maxElevation]`. */
+/**
+ * Arity of a 3D bounding box: `[west, south, minElevation, east, north, maxElevation]`.
+ */
 const BBOX_3D_LENGTH = 6
 
 //#region Bounding Box Literals

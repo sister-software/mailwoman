@@ -61,7 +61,9 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-/** The street-normalize key function, threaded in after a dynamic import of the optional peer. */
+/**
+ * The street-normalize key function, threaded in after a dynamic import of the optional peer.
+ */
 type NormalizeKey = (value: string) => string
 
 /**
@@ -69,7 +71,9 @@ type NormalizeKey = (value: string) => string
  */
 const SYNTH_ID_BASE = 8_000_000_000
 
-/** One postcode's accumulated GeoNames points (one row per place sharing the code). */
+/**
+ * One postcode's accumulated GeoNames points (one row per place sharing the code).
+ */
 interface PostcodeAcc {
 	cc: string
 	pc: string
@@ -82,7 +86,9 @@ interface PostcodeAcc {
 	maxLon: number
 }
 
-/** Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode). */
+/**
+ * Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode).
+ */
 async function readGeonames(file: string, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
 	const acc = new Map<string, PostcodeAcc>()
 

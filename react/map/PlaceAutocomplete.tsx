@@ -18,23 +18,39 @@ import { cx } from "../common/cx.ts"
 import type { Suggestion } from "./types.ts"
 
 export interface PlaceAutocompleteProps {
-	/** The suggestions to render (from {@link usePlaceAutocomplete}). */
+	/**
+	 * The suggestions to render (from {@link usePlaceAutocomplete}).
+	 */
 	suggestions: Suggestion[]
-	/** The keyboard-highlighted index; `-1` for none. */
+	/**
+	 * The keyboard-highlighted index; `-1` for none.
+	 */
 	activeIndex: number
-	/** Fired (with the suggestion `value`) when one is clicked. */
+	/**
+	 * Fired (with the suggestion `value`) when one is clicked.
+	 */
 	onPick: (value: string) => void
-	/** Fired with the index a pointer entered, so hover matches keyboard highlight. */
+	/**
+	 * Fired with the index a pointer entered, so hover matches keyboard highlight.
+	 */
 	onHover?: (index: number) => void
-	/** The listbox element id — pass `listboxId` from the hook (matches the input's `aria-controls`). */
+	/**
+	 * The listbox element id — pass `listboxId` from the hook (matches the input's `aria-controls`).
+	 */
 	listboxId: string
-	/** Build the option element id — pass `optionId` from the hook. */
+	/**
+	 * Build the option element id — pass `optionId` from the hook.
+	 */
 	optionId: (index: number) => string
-	/** Leading label. @default "Did you mean:" */
+	/**
+	 * Leading label. @default "Did you mean:"
+	 */
 	caption?: string
 }
 
-/** The suggestion listbox. */
+/**
+ * The suggestion listbox.
+ */
 export function PlaceAutocomplete({
 	suggestions,
 	activeIndex,

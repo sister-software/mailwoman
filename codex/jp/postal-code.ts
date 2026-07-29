@@ -36,7 +36,9 @@ import type { Tagged } from "type-fest"
  */
 export type PostalCode = Tagged<string, "JpPostalCode">
 
-/** The postal-code shape: `NNN-NNNN`, the hyphen optional on input (`1000001` or `100-0001`). */
+/**
+ * The postal-code shape: `NNN-NNNN`, the hyphen optional on input (`1000001` or `100-0001`).
+ */
 export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
 
 /**
@@ -54,7 +56,9 @@ export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 	return `${digits.slice(0, 3)}-${digits.slice(3)}` as PostalCode
 }
 
-/** Type-predicate for a Japanese postal code (hyphen optional, `100-0001` or `1000001`). */
+/**
+ * Type-predicate for a Japanese postal code (hyphen optional, `100-0001` or `1000001`).
+ */
 export function isJpPostalCode(input: unknown): input is PostalCode {
 	return typeof input === "string" && JP_POSTAL_CODE_PATTERN.test(input)
 }

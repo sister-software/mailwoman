@@ -29,10 +29,14 @@ import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/
 import { Box, Text, useInput, useStdin } from "ink"
 import React, { useEffect, useState } from "react"
 
-/** How the guard resolved, handed to the render prop. */
+/**
+ * How the guard resolved, handed to the render prop.
+ */
 export type WeightsOutcome = "neural" | "declined" | "unavailable"
 
-/** Probe whether weights resolve for a locale without loading the model. Cheap (fs checks only). */
+/**
+ * Probe whether weights resolve for a locale without loading the model. Cheap (fs checks only).
+ */
 export function probeWeights(locale?: string, cacheRoot?: string): { ok: boolean; detail?: string } {
 	try {
 		resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
@@ -43,7 +47,9 @@ export function probeWeights(locale?: string, cacheRoot?: string): { ok: boolean
 	}
 }
 
-/** The npm invocation that populates the weights cache. Pure — unit-tested; `spec` defaults to `latest`. */
+/**
+ * The npm invocation that populates the weights cache. Pure — unit-tested; `spec` defaults to `latest`.
+ */
 export function buildWeightsInstallArgs(locale: string | undefined, cacheRoot: string, spec = "latest"): string[] {
 	return [
 		"install",
@@ -117,15 +123,25 @@ export function downloadWeights(
 }
 
 export interface WeightsGuardProps {
-	/** Locale whose weights package guards this command (defaults to en-US resolution rules). */
+	/**
+	 * Locale whose weights package guards this command (defaults to en-US resolution rules).
+	 */
 	locale?: string
-	/** `--download-weights`: skip the prompt, download immediately. */
+	/**
+	 * `--download-weights`: skip the prompt, download immediately.
+	 */
 	autoDownload?: boolean
-	/** `--degraded`: skip the prompt, hand the caller the declined outcome directly. */
+	/**
+	 * `--degraded`: skip the prompt, hand the caller the declined outcome directly.
+	 */
 	forceDegraded?: boolean
-	/** Test seam / non-default cache root. */
+	/**
+	 * Test seam / non-default cache root.
+	 */
 	cacheRoot?: string
-	/** Renders once the guard settles. */
+	/**
+	 * Renders once the guard settles.
+	 */
 	children: (outcome: WeightsOutcome) => React.ReactElement
 }
 

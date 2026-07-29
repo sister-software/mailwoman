@@ -20,13 +20,21 @@
 
 import type { Comparison, TermFrequencyAdjustment } from "./fellegi-sunter.ts"
 
-/** A lookup of how common each value is, in (0, 1], built from a column of observed values. */
+/**
+ * A lookup of how common each value is, in (0, 1], built from a column of observed values.
+ */
 export interface TermFrequencyTable {
-	/** Relative frequency of a value (its normalized form), or 0 if never seen. */
+	/**
+	 * Relative frequency of a value (its normalized form), or 0 if never seen.
+	 */
 	frequency(value: string): number
-	/** Total observations the table was built from. */
+	/**
+	 * Total observations the table was built from.
+	 */
 	readonly total: number
-	/** Number of distinct normalized values. */
+	/**
+	 * Number of distinct normalized values.
+	 */
 	readonly distinct: number
 }
 
@@ -76,11 +84,17 @@ export function withTermFrequency<R>(
 	config: {
 		table: TermFrequencyTable
 		value: (a: R, b: R) => string | null | undefined
-		/** Level indices to adjust. Default `[0]` (the exact level). */
+		/**
+		 * Level indices to adjust. Default `[0]` (the exact level).
+		 */
 		levels?: Iterable<number>
-		/** Scale in [0, 1]. Default 1. */
+		/**
+		 * Scale in [0, 1]. Default 1.
+		 */
 		weight?: number
-		/** Frequency floor bounding the boost on ultra-rare values. Default 1e-4. */
+		/**
+		 * Frequency floor bounding the boost on ultra-rare values. Default 1e-4.
+		 */
 		minimumFrequency?: number
 	}
 ): Comparison<R> {

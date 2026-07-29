@@ -14,13 +14,19 @@ export interface SpanRange {
 	body: string
 }
 
-/** Per-token character classification. */
+/**
+ * Per-token character classification.
+ */
 export type TokenCharacterClass = "digit" | "alpha" | "mixed" | "punct" | "cjk" | "cyrillic" | "arabic"
 
-/** Whole-input character class — folded from `TokenCharacterClass`. */
+/**
+ * Whole-input character class — folded from `TokenCharacterClass`.
+ */
 export type CharacterClass = "numeric" | "alpha" | "alphanumeric" | "cjk" | "cyrillic" | "arabic" | "mixed"
 
-/** Known-format identifier. The set is intentionally small + universal. */
+/**
+ * Known-format identifier. The set is intentionally small + universal.
+ */
 export type KnownFormat =
 	| "us_zip"
 	| "us_zip4"
@@ -32,10 +38,14 @@ export type KnownFormat =
 	| "nl_postcode"
 	| "po_box"
 
-/** Punctuation grammar separator between consecutive segments. */
+/**
+ * Punctuation grammar separator between consecutive segments.
+ */
 export type SegmentSeparator = "comma" | "newline" | "tab" | "whitespace" | "japanese-style" | null
 
-/** Whitespace pattern of the whole input. */
+/**
+ * Whitespace pattern of the whole input.
+ */
 export type WhitespacePattern = "single" | "double" | "tab" | "mixed" | "none"
 
 export interface TokenClass {
@@ -47,16 +57,22 @@ export interface TokenClass {
 export interface Segment {
 	span: SpanRange
 	body: string
-	/** Position in the segment list, 0-indexed. */
+	/**
+	 * Position in the segment list, 0-indexed.
+	 */
 	index: number
-	/** The separator that preceded this segment, or `null` for the first segment. */
+	/**
+	 * The separator that preceded this segment, or `null` for the first segment.
+	 */
 	separator: SegmentSeparator
 }
 
 export interface KnownFormatHit {
 	format: KnownFormat
 	span: SpanRange
-	/** 0..1. Ambiguous patterns (`fr_postcode`/`de_postcode` overlap with `us_zip`) score lower. */
+	/**
+	 * 0..1. Ambiguous patterns (`fr_postcode`/`de_postcode` overlap with `us_zip`) score lower.
+	 */
 	confidence: number
 }
 
@@ -65,9 +81,13 @@ export interface KnownFormatHit {
  * tokens toward `B-locality`.
  */
 export interface RegionAbbreviationHit {
-	/** Character offset into the normalized input. */
+	/**
+	 * Character offset into the normalized input.
+	 */
 	start: number
-	/** The abbreviation text (e.g., "DC", "NY"). */
+	/**
+	 * The abbreviation text (e.g., "DC", "NY").
+	 */
 	span: string
 }
 
@@ -102,6 +122,8 @@ export interface NormalizedInputLite {
 }
 
 export interface ComputeQueryShapeOpts {
-	/** Locale hint for segmentation grammar (default: comma-based Western). */
+	/**
+	 * Locale hint for segmentation grammar (default: comma-based Western).
+	 */
 	locale?: string
 }

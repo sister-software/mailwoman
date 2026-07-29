@@ -35,7 +35,9 @@ import {
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 
-/** Every fixture row's h3_cell is computed here, with h3-js, from its own lat/lon — never hardcoded. */
+/**
+ * Every fixture row's h3_cell is computed here, with h3-js, from its own lat/lon — never hardcoded.
+ */
 function cellFor(latitude: number, longitude: number): number {
 	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION) as H3Cell
 
@@ -48,7 +50,9 @@ function nameKeyFor(name: string): string {
 
 interface FixtureRow {
 	name: string
-	/** Poi-taxonomy category string, or `null` for an uncategorized row (category_id 0). */
+	/**
+	 * Poi-taxonomy category string, or `null` for an uncategorized row (category_id 0).
+	 */
 	category: string | null
 	brandWikidata: string | null
 	latitude: number

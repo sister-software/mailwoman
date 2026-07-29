@@ -38,7 +38,9 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-/** The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface. */
+/**
+ * The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface.
+ */
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
 vi.mock("@mailwoman/neural/browser", async (importOriginal) => {
@@ -65,7 +67,9 @@ const { loadNeuralClassifierFromURLs } = await import("./loader.ts")
 
 const SEQ = 128
 
-/** A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings). */
+/**
+ * A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings).
+ */
 function installMockSession(): void {
 	sessionCreateMock.mockReset()
 	sessionCreateMock.mockResolvedValue({

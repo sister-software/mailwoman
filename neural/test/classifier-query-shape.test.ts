@@ -20,7 +20,9 @@ import { MailwomanTokenizer } from "../tokenizer.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Fake runner that emits a pre-canned logits matrix regardless of input. */
+/**
+ * Fake runner that emits a pre-canned logits matrix regardless of input.
+ */
 class FakeRunner implements NeuralRunner {
 	constructor(private readonly canned: number[][]) {}
 	async infer(_ids: number[]): Promise<InferResult> {
@@ -28,7 +30,9 @@ class FakeRunner implements NeuralRunner {
 	}
 }
 
-/** Build a uniform-noise logits matrix with a small boost on the named label for the given index. */
+/**
+ * Build a uniform-noise logits matrix with a small boost on the named label for the given index.
+ */
 function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string, boostMagnitude = 0.3): number[][] {
 	const numLabels = STAGE2_BIO_LABELS.length
 	const labelIdx = STAGE2_BIO_LABELS.indexOf(boostLabel as (typeof STAGE2_BIO_LABELS)[number])

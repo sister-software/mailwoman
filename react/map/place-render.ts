@@ -23,10 +23,14 @@ import type { ResolvedPlaceView } from "../pipeline/types.ts"
 import { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "./geometry.ts"
 import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "./geometry.ts"
 
-/** `[longitude, latitude]`. */
+/**
+ * `[longitude, latitude]`.
+ */
 export type LngLat = [number, number]
 
-/** The street-level resolution tier (#377): `address_point` = exact building; `interpolated` = TIGER estimate. */
+/**
+ * The street-level resolution tier (#377): `address_point` = exact building; `interpolated` = TIGER estimate.
+ */
 export type PlaceTier = "address_point" | "interpolated"
 
 /**
@@ -35,11 +39,17 @@ export type PlaceTier = "address_point" | "interpolated"
  * `ResolvedPlaceView` keeps the map render aligned with the shared parse result; the extras are additive.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
-	/** The place's bounding box, when the gazetteer carries one (admin places). Absent for anchor-centroid postcodes. */
+	/**
+	 * The place's bounding box, when the gazetteer carries one (admin places). Absent for anchor-centroid postcodes.
+	 */
 	bbox?: PlaceBBox
-	/** Street-level tier, when this hit came from the situs/interp tier rather than the WOF admin cascade. */
+	/**
+	 * Street-level tier, when this hit came from the situs/interp tier rather than the WOF admin cascade.
+	 */
 	tier?: PlaceTier
-	/** Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated interp). */
+	/**
+	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated interp).
+	 */
 	uncertaintyM?: number
 	/**
 	 * The crisp admin polygon, when the host has ALREADY fetched it from the sibling polygon DB. Its presence drives the
@@ -57,17 +67,27 @@ export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
 	| { kind: "bounds"; bounds: BoundsTuple; padding: number }
 
-/** The declarative render spec for one resolved place — the pure output of {@link computeMapPlaceRenderSpec}. */
+/**
+ * The declarative render spec for one resolved place — the pure output of {@link computeMapPlaceRenderSpec}.
+ */
 export interface MapPlaceRenderSpec {
-	/** Marker position(s) as `[lon, lat]`. Single-element today; an array leaves room for multi-marker later. */
+	/**
+	 * Marker position(s) as `[lon, lat]`. Single-element today; an array leaves room for multi-marker later.
+	 */
 	markers: LngLat[]
-	/** The outline geometry (polygon / circle) to draw, or `null` when the place renders as a bare point. */
+	/**
+	 * The outline geometry (polygon / circle) to draw, or `null` when the place renders as a bare point.
+	 */
 	outline: PlaceGeometry | null
-	/** The camera target — animate or fit to this. */
+	/**
+	 * The camera target — animate or fit to this.
+	 */
 	camera: MapCameraTarget
 }
 
-/** Zoom levels the imperative effect flew to, kept named so the cascade reads as intent, not magic numbers. */
+/**
+ * Zoom levels the imperative effect flew to, kept named so the cascade reads as intent, not magic numbers.
+ */
 const ZOOM = {
 	addressPoint: 17,
 	interpolated: 15,
@@ -75,10 +95,14 @@ const ZOOM = {
 	point: 12,
 } as const
 
-/** Padding (px) `fitBounds` insets a fitted box by, matching the ported effect. */
+/**
+ * Padding (px) `fitBounds` insets a fitted box by, matching the ported effect.
+ */
 const FIT_PADDING = 40
 
-/** The minimum lat/lon span (degrees) a bbox must exceed to be treated as a real extent rather than a point. */
+/**
+ * The minimum lat/lon span (degrees) a bbox must exceed to be treated as a real extent rather than a point.
+ */
 const MIN_EXTENT_DEG = 0.001
 
 /**

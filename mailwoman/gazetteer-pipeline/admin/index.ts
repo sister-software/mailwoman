@@ -37,19 +37,29 @@ import { freezeAdmin } from "./freeze.ts"
 import { ingestWOF } from "./ingest-wof.ts"
 
 export interface BuildAdminOptions {
-	/** WOF repos root. Default `<data-root>/wof/repos`. */
+	/**
+	 * WOF repos root. Default `<data-root>/wof/repos`.
+	 */
 	dataDir?: string
-	/** Output artifact path. Default `<data-root>/wof/admin-global-priority.REBUILD.db` (staging — swap deliberately). */
+	/**
+	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.REBUILD.db` (staging — swap deliberately).
+	 */
 	out?: string
 	overtureCountries?: readonly string[]
 	geonamesCountries?: readonly string[]
 	overtureRelease?: string
-	/** Skip the verify gate (fixture/dev runs ONLY — an unverified artifact must never be promoted). */
+	/**
+	 * Skip the verify gate (fixture/dev runs ONLY — an unverified artifact must never be promoted).
+	 */
 	skipVerify?: boolean
-	/** Skip the WOF geojson ingest concurrency/batch tuning. */
+	/**
+	 * Skip the WOF geojson ingest concurrency/batch tuning.
+	 */
 	concurrency?: number
 	batchCommitSize?: number
-	/** Build-log path. Default `<repo>/scripts/wof-build-manifest.json`; absent file → the append is skipped. */
+	/**
+	 * Build-log path. Default `<repo>/scripts/wof-build-manifest.json`; absent file → the append is skipped.
+	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -64,7 +74,9 @@ export interface BuildAdminResult {
 	elapsedSeconds: number
 }
 
-/** Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed. */
+/**
+ * Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed.
+ */
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
@@ -212,7 +224,9 @@ export * from "./fold-overture.ts"
 export * from "./freeze.ts"
 export * from "./ingest-wof.ts"
 
-/** Byte-size of the built artifact — a convenience for command summaries. */
+/**
+ * Byte-size of the built artifact — a convenience for command summaries.
+ */
 export function artifactSizeMB(path: string): number {
 	return Math.round((statSync(path).size / 1024 / 1024) * 10) / 10
 }

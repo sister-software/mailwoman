@@ -93,7 +93,9 @@ export interface POIIntentStageDeps {
 	execute?: (intent: POIIntent) => POIIntentOutcome
 }
 
-/** Build the `stages.poiIntent` implementation. */
+/**
+ * Build the `stages.poiIntent` implementation.
+ */
 export function createPOIIntentStage(
 	deps: POIIntentStageDeps
 ): (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null> {

@@ -51,45 +51,77 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Smallest mean gap counted as a real difference rather than seed noise. */
+/**
+ * Smallest mean gap counted as a real difference rather than seed noise.
+ */
 const MIN_MEANINGFUL_DELTA = 0.005
 
-/** Mean gap at which a win is called outright rather than leaning. */
+/**
+ * Mean gap at which a win is called outright rather than leaning.
+ */
 const CLEAR_WIN_DELTA = 0.01
 
-/** F1 gap at which a win is called outright. */
+/**
+ * F1 gap at which a win is called outright.
+ */
 const CLEAR_WIN_F1_DELTA = 0.02
 
-/** Z at or above which the difference is treated as strong evidence rather than suggestive. */
+/**
+ * Z at or above which the difference is treated as strong evidence rather than suggestive.
+ */
 const STRONG_EVIDENCE_Z = 3
 
-/** Share of NPIs assigned to train; the rest are held out for test. */
+/**
+ * Share of NPIs assigned to train; the rest are held out for test.
+ */
 const TRAIN_SPLIT_FRACTION = 0.67
 
-/** Groups below this size are too small for a held-out split to mean anything. */
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
 const MIN_GROUP_SIZE = 5
 
-/** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
+/**
+ * Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable.
+ */
 const TRAINING_EPOCHS = 400
 
-/** Highest k swept when scanning cluster counts. */
+/**
+ * Highest k swept when scanning cluster counts.
+ */
 const MAX_K = 32
 
-/** Options for {@linkcode scorerPairwiseEval}. */
+/**
+ * Options for {@linkcode scorerPairwiseEval}.
+ */
 export interface ScorerPairwiseEvalOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 1500. */
+	/**
+	 * NPIs sampled. Default 1500.
+	 */
 	npis?: number
-	/** Base PRNG seed. Default 1. */
+	/**
+	 * Base PRNG seed. Default 1.
+	 */
 	seed?: number
-	/** Train/test splits averaged. Default 8. */
+	/**
+	 * Train/test splits averaged. Default 8.
+	 */
 	seeds?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
@@ -114,7 +146,9 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
-/** Deterministic LCG (no Math.random — reproducible split). */
+/**
+ * Deterministic LCG (no Math.random — reproducible split).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
@@ -132,7 +166,9 @@ interface MessyRow {
 	address: string
 }
 
-/** The address-frequency table the collapsed-spatial model needs: how common each normalized address is. */
+/**
+ * The address-frequency table the collapsed-spatial model needs: how common each normalized address is.
+ */
 interface AddressFrequency {
 	total: number
 	distinct: number
@@ -225,7 +261,9 @@ async function generateMessyRows(paths: {
 	return { rows, keptNPIs: kept, addressFrequency }
 }
 
-/** Learned-scorer pairwise probe (#603) — see the module doc. Emits the markdown report to stdout. */
+/**
+ * Learned-scorer pairwise probe (#603) — see the module doc. Emits the markdown report to stdout.
+ */
 export async function scorerPairwiseEval(
 	options: ScorerPairwiseEvalOptions,
 	report?: (line: string) => void

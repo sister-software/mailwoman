@@ -69,10 +69,14 @@ import { resolve } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
-/** Hex characters in an md5 digest. */
+/**
+ * Hex characters in an md5 digest.
+ */
 const MD5_HEX_LENGTH = 32
 
-/** Workspace root the artifacts are linked into. Everything below resolves against it. */
+/**
+ * Workspace root the artifacts are linked into. Everything below resolves against it.
+ */
 const PKG_DIR = repoRootPath("neural-weights-en-gb")
 /**
  * In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this pair identical to
@@ -81,7 +85,9 @@ const PKG_DIR = repoRootPath("neural-weights-en-gb")
  */
 const SRC_MODEL =
 	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
-/** Tokenizer actually linked — the environment override if set, otherwise the card's default. */
+/**
+ * Tokenizer actually linked — the environment override if set, otherwise the card's default.
+ */
 const SRC_TOKENIZER =
 	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 
@@ -232,7 +238,9 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
  * `scripts/copy-weights.ts` copies verbatim at publish time).
  */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
-/** Country-surface lexicon generated into the repo by the codex build. */
+/**
+ * Country-surface lexicon generated into the repo by the codex build.
+ */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
@@ -256,9 +264,13 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
  * failure) so a worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
  */
 const GB_WOF_DB = dataRootPath("wof", "postalcode-gb.db")
-/** Compiled CLI used to run the build steps below. Requires `yarn compile` to have run. */
+/**
+ * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
+ */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
-/** Where the postcode binary is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
+ */
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
 
 if (!existsSync(CLI)) {
@@ -297,7 +309,9 @@ if (!existsSync(CLI)) {
  * changed PPD snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
  */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
-/** Where the placetype pair index is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
+ */
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
 /**
  * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
@@ -404,7 +418,9 @@ if (pairIndexIsFresh) {
  * (release-sequenced).
  */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-gb.bin")
-/** Where the locale FST is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const FST_DEST = resolve(PKG_DIR, "fst-en-gb.bin")
 
 if (existsSync(FST_SRC)) {
@@ -422,7 +438,9 @@ if (existsSync(FST_SRC)) {
  * it.
  */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-/** Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install. */
+/**
+ * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {

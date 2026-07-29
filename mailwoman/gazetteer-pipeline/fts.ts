@@ -12,7 +12,9 @@
 import type { DatabaseSync } from "node:sqlite"
 
 export interface BuildFTSOptions {
-	/** Drop + rebuild existing FTS/bbox tables (a staging DB from a prior partial run). Default false. */
+	/**
+	 * Drop + rebuild existing FTS/bbox tables (a staging DB from a prior partial run). Default false.
+	 */
 	drop?: boolean
 	onProgress?: (phase: string, detail?: string) => void
 }
@@ -22,7 +24,9 @@ export interface BuildFTSResult {
 	bboxRows: number
 }
 
-/** Build `place_search` + `place_bbox` on an open (unsealed) admin DB. */
+/**
+ * Build `place_search` + `place_bbox` on an open (unsealed) admin DB.
+ */
 export async function buildFTS(db: DatabaseSync, opts: BuildFTSOptions = {}): Promise<BuildFTSResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")

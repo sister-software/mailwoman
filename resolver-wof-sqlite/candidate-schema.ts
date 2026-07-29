@@ -23,19 +23,29 @@ import { sql, type Kysely } from "kysely"
  * level (a postcode shard row may lack a bbox).
  */
 export interface CandidateTable {
-	/** The shared {@link normalizeLocalityForKey} of the name/alias — the probe key. */
+	/**
+	 * The shared {@link normalizeLocalityForKey} of the name/alias — the probe key.
+	 */
 	name_key: string
-	/** Small int from {@link CountryCodeTable} (shrinks the clustered key). */
+	/**
+	 * Small int from {@link CountryCodeTable} (shrinks the clustered key).
+	 */
 	country_id: number
-	/** The place's region-tier ancestor id, or 0 (carried for the future region 2-step). */
+	/**
+	 * The place's region-tier ancestor id, or 0 (carried for the future region 2-step).
+	 */
 	region_id: number
-	/** Small int from {@link PlacetypeCodeTable}. */
+	/**
+	 * Small int from {@link PlacetypeCodeTable}.
+	 */
 	placetype_id: number
 	/**
 	 * `-log10(population + 1)` — ASC order = highest-population first. 0 for postcodes (no population).
 	 */
 	neg_rank: number
-	/** WOF id of the place this row resolves to. */
+	/**
+	 * WOF id of the place this row resolves to.
+	 */
 	spr_id: number
 	name: string | null
 	latitude: number | null
@@ -45,27 +55,39 @@ export interface CandidateTable {
 	max_lat: number | null
 	max_lon: number | null
 	population: number | null
-	/** 1 when the row is the place's canonical name (vs an alias/abbrev). */
+	/**
+	 * 1 when the row is the place's canonical name (vs an alias/abbrev).
+	 */
 	is_primary: number | null
 }
 
-/** `(id → ISO country code)` dictionary. */
+/**
+ * `(id → ISO country code)` dictionary.
+ */
 export interface CountryCodeTable {
 	id: number
 	code: string
 }
 
-/** `(id → placetype)` dictionary. */
+/**
+ * `(id → placetype)` dictionary.
+ */
 export interface PlacetypeCodeTable {
 	id: number
 	placetype: string
 }
 
-/** The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`. */
+/**
+ * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`.
+ */
 export interface CandidateDatabase {
-	/** The clustered `WITHOUT ROWID` lookup table the reader probes. */
+	/**
+	 * The clustered `WITHOUT ROWID` lookup table the reader probes.
+	 */
 	candidate: CandidateTable
-	/** Transient staging table (same columns); dropped once `candidate` is materialized. */
+	/**
+	 * Transient staging table (same columns); dropped once `candidate` is materialized.
+	 */
 	cand_stage: CandidateTable
 	country_codes: CountryCodeTable
 	placetype_codes: PlacetypeCodeTable

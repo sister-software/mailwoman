@@ -23,13 +23,19 @@ interface SeedPlace {
 	name: string
 	country: string
 	population?: number
-	/** Plain aliases (official = 0). */
+	/**
+	 * Plain aliases (official = 0).
+	 */
 	aliases?: string[]
-	/** Official-language aliases (official = 1) — the #940 ingest bit. */
+	/**
+	 * Official-language aliases (official = 1) — the #940 ingest bit.
+	 */
 	officialAliases?: string[]
 }
 
-/** Same production shape as the exact-match-tiering fixture, plus the #940 `official` column. */
+/**
+ * Same production shape as the exact-match-tiering fixture, plus the #940 `official` column.
+ */
 function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 

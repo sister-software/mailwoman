@@ -131,7 +131,9 @@ function departementFiles(csvDir: string, depts: string[] | null): Map<string, s
 	return byDept
 }
 
-/** Streaming md5 of a file (never buffer a multi-GB artifact). */
+/**
+ * Streaming md5 of a file (never buffer a multi-GB artifact).
+ */
 async function fileMD5(path: string): Promise<string> {
 	const hash = createHash("md5")
 

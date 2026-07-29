@@ -210,5 +210,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const wofPostalcodeAdapter = createWOFPostalcodeAdapter()

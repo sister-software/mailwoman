@@ -39,9 +39,13 @@ import { distance as levenshteinDistance } from "fastest-levenshtein"
 import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "./tokenize.ts"
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.ts"
 
-/** Options for `alignRow`. */
+/**
+ * Options for `alignRow`.
+ */
 export interface AlignOptions {
-	/** Tokenizer to use. Defaults to `whitespaceTokenizer()`. */
+	/**
+	 * Tokenizer to use. Defaults to `whitespaceTokenizer()`.
+	 */
 	tokenizer?: Tokenizer
 
 	/**
@@ -60,7 +64,9 @@ export interface AlignOptions {
 	caseInsensitive?: boolean
 }
 
-/** Either a successful labeled row or a quarantined one. */
+/**
+ * Either a successful labeled row or a quarantined one.
+ */
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
@@ -73,7 +79,9 @@ export interface ComponentSpan {
 	end: number
 }
 
-/** Align a single row. */
+/**
+ * Align a single row.
+ */
 export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentResult {
 	const tokenizer = opts.tokenizer ?? whitespaceTokenizer()
 	const maxEditDistance = opts.maxEditDistance ?? 2
@@ -267,7 +275,9 @@ function locateSpan(args: {
 
 const WORD_CHAR = /[\p{L}\p{N}]/u
 
-/** Both needle edges sit on word boundaries of the haystack (string edges count as boundaries). */
+/**
+ * Both needle edges sit on word boundaries of the haystack (string edges count as boundaries).
+ */
 function isBoundaryAligned(haystack: string, start: number, end: number): boolean {
 	const before = start === 0 || !WORD_CHAR.test(haystack[start - 1]!)
 	const after = end === haystack.length || !WORD_CHAR.test(haystack[end]!)

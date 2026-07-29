@@ -50,10 +50,14 @@ const COUNTRY_FORM_POOL = (() => {
 	// all ~249 ISO canonical English names (breadth)
 	return { surface, names }
 })()
-/** Negatives: rows with NO country token → teach golden precision. */
+/**
+ * Negatives: rows with NO country token → teach golden precision.
+ */
 const COUNTRY_ABSENT_PROB = 0.3
 
-/** A cached OpenAddresses extract + the implied iso2/region/render-order. */
+/**
+ * A cached OpenAddresses extract + the implied iso2/region/render-order.
+ */
 interface CountrySource {
 	zip: string
 	csv: string
@@ -78,13 +82,17 @@ const SOURCES: readonly CountrySource[] = [
 	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
 	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
 ]
-/** Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained. */
+/**
+ * Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained.
+ */
 const EVAL_SOURCES: readonly CountrySource[] = [
 	{ zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", iso2: "US", region: "VT", order: "us" },
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
-/** A real tuple read out of a cached OA zip (+ the source's iso2/render-order). */
+/**
+ * A real tuple read out of a cached OA zip (+ the source's iso2/render-order).
+ */
 interface CountryTuple {
 	house_number: string
 	street: string
@@ -182,7 +190,9 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	return tuples
 }
 
-/** Pick a country token from the BROAD pool, or null (a country-absent negative). v2. */
+/**
+ * Pick a country token from the BROAD pool, or null (a country-absent negative). v2.
+ */
 function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
 	// 60% curated surface forms (endonym/abbrev variety), 40% broad ISO canonical names (coverage).
@@ -191,7 +201,9 @@ function pickCountry(random: () => number): string | null {
 	return pool[Math.floor(random() * pool.length)]!
 }
 
-/** Render the address body in native-ish order. `country` null → a country-ABSENT negative row. */
+/**
+ * Render the address body in native-ish order. `country` null → a country-ABSENT negative row.
+ */
 function renderCountry(
 	random: () => number,
 	t: CountryTuple,
@@ -363,7 +375,9 @@ function renderHomograph(random: () => number): {
 	}
 }
 
-/** An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, NO country. */
+/**
+ * An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, NO country.
+ */
 function renderAbbrevRegion(random: () => number): {
 	fmt: string
 	raw: string
@@ -384,9 +398,13 @@ function renderAbbrevRegion(random: () => number): {
 	}
 }
 
-/** Share of rows that are homograph contrast pairs. */
+/**
+ * Share of rows that are homograph contrast pairs.
+ */
 const HOMOGRAPH_FRAC = 0.22
-/** Share that are code-as-region negatives (cumulative with HOMOGRAPH_FRAC) */
+/**
+ * Share that are code-as-region negatives (cumulative with HOMOGRAPH_FRAC)
+ */
 const ABBREV_FRAC = 0.08
 
 /**

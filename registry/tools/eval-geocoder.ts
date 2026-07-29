@@ -13,31 +13,49 @@
 
 import type { ColumnMapping, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 
-/** The raw single-address geocode surface (the probe tools) — mirrors `mailwoman/geocode-core`'s wire shape. */
+/**
+ * The raw single-address geocode surface (the probe tools) — mirrors `mailwoman/geocode-core`'s wire shape.
+ */
 export interface EvalGeocodeResult {
 	lat: number | null
 	lon: number | null
-	/** Wire key — mirrors `GeocodeResult.resolution_tier`. */
+	/**
+	 * Wire key — mirrors `GeocodeResult.resolution_tier`.
+	 */
 	resolution_tier?: string | null
 }
 
-/** A constructed geocoder: the matcher's ingest seam, the raw geocode, and the handle release. */
+/**
+ * A constructed geocoder: the matcher's ingest seam, the raw geocode, and the handle release.
+ */
 export interface EvalGeocoder {
-	/** The matcher's ingest seam (parse + geocode → `PostalAddress`), built via `geocodeAddressVia`. */
+	/**
+	 * The matcher's ingest seam (parse + geocode → `PostalAddress`), built via `geocodeAddressVia`.
+	 */
 	seam: GeocodeAddress
-	/** Raw single-address geocode — lat/lon + resolution tier. */
+	/**
+	 * Raw single-address geocode — lat/lon + resolution tier.
+	 */
 	geocode: (address: string) => Promise<EvalGeocodeResult>
-	/** Release the DB handles (shards + WOF lookup). */
+	/**
+	 * Release the DB handles (shards + WOF lookup).
+	 */
 	close: () => void
 }
 
-/** Per-construction toggles a tool may need to control (the command owns model/WOF/data-root wiring). */
+/**
+ * Per-construction toggles a tool may need to control (the command owns model/WOF/data-root wiring).
+ */
 export interface EvalGeocoderInit {
-	/** #690 all-caps case normalization. Default on; `nppes-benchmark --legacy-join` turns it off for the A/B. */
+	/**
+	 * #690 all-caps case normalization. Default on; `nppes-benchmark --legacy-join` turns it off for the A/B.
+	 */
 	normalizeCase?: boolean
 }
 
-/** Build a geocoder on demand — tools construct late and `close()` as soon as geocoding is done. */
+/**
+ * Build a geocoder on demand — tools construct late and `close()` as soon as geocoding is done.
+ */
 export type EvalGeocoderFactory = (init?: EvalGeocoderInit) => Promise<EvalGeocoder>
 
 /**

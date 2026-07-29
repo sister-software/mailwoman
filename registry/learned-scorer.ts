@@ -41,7 +41,9 @@ import type { SourceRecord } from "./types.ts"
  */
 const OFFICIAL_NAME_AGREEMENT = 0.93
 
-/** Inputs shared by the featurizer + the scorer factory. */
+/**
+ * Inputs shared by the featurizer + the scorer factory.
+ */
 export interface LearnedFeatureConfig {
 	/**
 	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial: true,

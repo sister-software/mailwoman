@@ -91,12 +91,16 @@ interface ConfRecord {
 const STREET_FAMILY = new Set(["street", "street_prefix", "street_suffix"])
 const OA_GRADABLE = new Set(["locality", "region", "postcode"])
 
-/** Collapse the street decomposition into one matching class; everything else maps to itself. */
+/**
+ * Collapse the street decomposition into one matching class; everything else maps to itself.
+ */
 function tagClass(tag: string): string {
 	return STREET_FAMILY.has(tag) ? "street" : tag
 }
 
-/** Lowercase, strip non-alphanumeric (unicode-aware) to single spaces, collapse + trim. */
+/**
+ * Lowercase, strip non-alphanumeric (unicode-aware) to single spaces, collapse + trim.
+ */
 function norm(s: string): string {
 	return s
 		.toLowerCase()
@@ -125,7 +129,9 @@ function valueMatch(pred: string, gold: string): boolean {
 	return subset(at, bset) || subset(bt, aset)
 }
 
-/** Flatten the decoded tree to a list of (tag, value, confidence) spans. */
+/**
+ * Flatten the decoded tree to a list of (tag, value, confidence) spans.
+ */
 function flattenSpans(tree: AddressTree): { tag: string; value: string; conf: number }[] {
 	const out: { tag: string; value: string; conf: number }[] = []
 	const walk = (n: AddressNode): void => {

@@ -21,9 +21,7 @@ import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-match
 import { serializeFST } from "../../resolver-wof-sqlite/fst-serialize.ts"
 import { resolveFSTPath, runAutocomplete } from "./autocomplete.tsx"
 
-// ---------------------------------------------------------------------------
-// Fixture helpers
-// ---------------------------------------------------------------------------
+// MARK: Fixture helpers
 
 interface FixturePlace {
 	wofID: number
@@ -39,7 +37,9 @@ interface FSTNodeInternal {
 }
 type FixtureEntry = FixturePlace & { lat: number; lon: number }
 
-/** Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder. */
+/**
+ * Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder.
+ */
 function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 	const entries: FixtureEntry[] = places.map((p) => ({ ...p, lat: 0, lon: 0 }))
 	const nodes: FSTNodeInternal[] = [{ edges: new Map(), places: [] }]
@@ -117,9 +117,7 @@ beforeAll(() => {
 	writeFileSync(fixtureBinPath, buf)
 })
 
-// ---------------------------------------------------------------------------
-// normalizeTokens symmetry smoke-test
-// ---------------------------------------------------------------------------
+// MARK: normalizeTokens symmetry smoke-test
 
 describe("normalizeTokens symmetry", () => {
 	it("lowercases ASCII", () => {
@@ -143,9 +141,7 @@ describe("normalizeTokens symmetry", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// In-memory autocomplete (FSTMatcher directly, no disk I/O)
-// ---------------------------------------------------------------------------
+// MARK: In-memory autocomplete (FSTMatcher directly, no disk I/O)
 
 describe("autocomplete — in-memory fixture", () => {
 	it("returns suggestions for prefix 'New'", () => {
@@ -199,9 +195,7 @@ describe("autocomplete — in-memory fixture", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// runAutocomplete — disk round-trip
-// ---------------------------------------------------------------------------
+// MARK: runAutocomplete — disk round-trip
 
 describe("runAutocomplete — disk round-trip", () => {
 	it("reads the fixture bin and returns completions for 'New'", async () => {
@@ -242,9 +236,7 @@ describe("runAutocomplete — disk round-trip", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// resolveFSTPath
-// ---------------------------------------------------------------------------
+// MARK: resolveFSTPath
 
 describe("resolveFSTPath", () => {
 	it("returns the explicit path when given one", () => {

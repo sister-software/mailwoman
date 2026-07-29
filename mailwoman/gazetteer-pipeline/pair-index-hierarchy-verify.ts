@@ -38,7 +38,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import { PairIndexResolver, peekPairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
 
-/** Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header). */
+/**
+ * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
+ */
 const PARENT_PLACETYPES_BY_COUNTRY: Readonly<Record<string, string[]>> = {
 	us: ["region"],
 	fr: ["region", "macroregion"],
@@ -74,7 +76,9 @@ const NAMED_PROBES_BY_COUNTRY: Readonly<Record<string, readonly NamedProbe[]>> =
 	],
 }
 
-/** Read the PIX1 entry count straight from the documented layout: magic u32, headerLen u32, header, pairCount u32. */
+/**
+ * Read the PIX1 entry count straight from the documented layout: magic u32, headerLen u32, header, pairCount u32.
+ */
 function readPairCount(bytes: Uint8Array): number {
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const headerLen = view.getUint32(4, true)

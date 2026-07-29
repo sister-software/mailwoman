@@ -53,17 +53,29 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 
-/** Options for {@linkcode maskRegressionGate}. */
+/**
+ * Options for {@linkcode maskRegressionGate}.
+ */
 export interface MaskRegressionOptions {
-	/** ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	model?: string
-	/** SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	tokenizer?: string
-	/** Model card JSON. Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model card JSON. Default `neural-weights-en-us/model-card.json`.
+	 */
 	modelCard?: string
-	/** Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	anchorLookup?: string
-	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	/**
+	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 */
 	gazetteerLexicon?: string
 	/**
 	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
@@ -71,18 +83,22 @@ export interface MaskRegressionOptions {
 	 * its mask-off F1 is considered unharmed by the mask. Default 0.02.
 	 */
 	threshold?: number
-	/** Write the full per-tag delta table JSON here. */
+	/**
+	 * Write the full per-tag delta table JSON here.
+	 */
 	json?: string
 }
 
-// -------------------------------------------------------------------------------------------------
-// Locale matrix (mirrors capability-manifest.ts)
-// -------------------------------------------------------------------------------------------------
+// MARK: Locale matrix (mirrors capability-manifest.ts)
 
 interface LocaleEvalSpec {
-	/** The codex address-system this locale maps to (`us`, `fr`, …). */
+	/**
+	 * The codex address-system this locale maps to (`us`, `fr`, …).
+	 */
 	system: SystemCode
-	/** Eval JSONL files (raw + components). Multiple files are concatenated. */
+	/**
+	 * Eval JSONL files (raw + components). Multiple files are concatenated.
+	 */
 	files: string[]
 }
 
@@ -119,9 +135,7 @@ const TAGS = [
 	"subregion",
 ] as const
 
-// -------------------------------------------------------------------------------------------------
-// Scoring (unfolded exact-match per-tag F1 — score-affix.ts / capability-manifest.ts machinery)
-// -------------------------------------------------------------------------------------------------
+// MARK: Scoring (unfolded exact-match per-tag F1 — score-affix.ts / capability-manifest.ts machinery)
 
 interface Row {
 	raw: string
@@ -145,14 +159,18 @@ function loadRows(files: string[]): Row[] {
 
 const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
 
-/** Whether any gold row carries this tag — distinguishes a real 0 F1 from a tag never in scope. */
+/**
+ * Whether any gold row carries this tag — distinguishes a real 0 F1 from a tag never in scope.
+ */
 function rowsHaveTag(rows: Row[], tag: string): boolean {
 	for (const r of rows) if (norm(r.components[tag])) return true
 
 	return false
 }
 
-/** Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts. */
+/**
+ * Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts.
+ */
 async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
 	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
@@ -194,22 +212,26 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	return out
 }
 
-// -------------------------------------------------------------------------------------------------
-// The gate
-// -------------------------------------------------------------------------------------------------
+// MARK: The gate
 
 interface Delta {
 	locale: SystemCode
 	tag: string
 	maskOff: number
 	maskOn: number
-	/** MaskOff − maskOn, in pp. Positive = the mask HURT the tag. */
+	/**
+	 * MaskOff − maskOn, in pp. Positive = the mask HURT the tag.
+	 */
 	delta: number
-	/** Whether this tag is even in scope (any gold row carries it under this locale). */
+	/**
+	 * Whether this tag is even in scope (any gold row carries it under this locale).
+	 */
 	inScope: boolean
 }
 
-/** Run the mask-off vs mask-on per-tag battery. Returns `pass` (no tag regresses beyond the threshold). */
+/**
+ * Run the mask-off vs mask-on per-tag battery. Returns `pass` (no tag regresses beyond the threshold).
+ */
 export async function maskRegressionGate(
 	options: MaskRegressionOptions = {},
 	report: (line: string) => void = console.error

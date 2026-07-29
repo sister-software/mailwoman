@@ -47,7 +47,9 @@ export const OVERTURE_ADAPTER_ID = "overture"
  */
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
 
-/** The flattened per-row shape emitted by `ingest-overture-addresses.ts --corpus-jsonl`. */
+/**
+ * The flattened per-row shape emitted by `ingest-overture-addresses.ts --corpus-jsonl`.
+ */
 interface OvertureCorpusRow {
 	street?: string
 	number?: string
@@ -154,5 +156,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const overtureAdapter = createOvertureAdapter()

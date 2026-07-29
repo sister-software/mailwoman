@@ -29,7 +29,9 @@ export const DirectionalAbbreviation = {
 
 export type DirectionalAbbreviation = (typeof DirectionalAbbreviation)[keyof typeof DirectionalAbbreviation]
 
-/** The 8 directional names accepted by the USPS (intercardinals spaced, per the publication). */
+/**
+ * The 8 directional names accepted by the USPS (intercardinals spaced, per the publication).
+ */
 export const DirectionalNames = [
 	"NORTH",
 	"EAST",
@@ -43,7 +45,9 @@ export const DirectionalNames = [
 
 export type DirectionalName = (typeof DirectionalNames)[number]
 
-/** Surface forms a US directional can take (`N`, `N.`, `North`), for both parsing and formatting. */
+/**
+ * Surface forms a US directional can take (`N`, `N.`, `North`), for both parsing and formatting.
+ */
 export const DirectionalNameVariations = [
 	...DirectionalNames,
 	// Without spaces (the common US street form: "Northeast Main St")…
@@ -153,9 +157,13 @@ export function lookupDirectionalAbbreviation(input: unknown): DirectionalAbbrev
  * Result of a directional lookup: the canonical full name + its preferred abbreviation.
  */
 export interface DirectionalMatch {
-	/** The matched directional name, e.g. "NORTH", "NORTH EAST". */
+	/**
+	 * The matched directional name, e.g. "NORTH", "NORTH EAST".
+	 */
 	directional: DirectionalName
-	/** The corresponding USPS abbreviation, e.g. "N", "NE". */
+	/**
+	 * The corresponding USPS abbreviation, e.g. "N", "NE".
+	 */
 	abbreviation: DirectionalAbbreviation
 }
 

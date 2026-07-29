@@ -28,9 +28,13 @@ export interface PhotonForwardInput {
 	lat: number
 	lon: number
 	postcode?: string | null
-	/** The resolved country, mapped by the caller (ISO2 → canonical name via `@mailwoman/codex`). */
+	/**
+	 * The resolved country, mapped by the caller (ISO2 → canonical name via `@mailwoman/codex`).
+	 */
 	country?: { name?: string; code?: string } | null
-	/** Resolved admin ancestry, most-specific first, each carrying the gazetteer's canonical name (not the parsed span). */
+	/**
+	 * Resolved admin ancestry, most-specific first, each carrying the gazetteer's canonical name (not the parsed span).
+	 */
 	places: ReadonlyArray<{ tag: string; name: string }>
 	/**
 	 * A HOUSE-GRADE result (#1041): set only when the resolver produced a specific building coordinate — the
@@ -81,7 +85,9 @@ const FORWARD_TAG_PROJECTION: Record<
 	country: { key: "country", osmKey: "place", osmValue: "country", type: "country" },
 }
 
-/** Fallback OSM tags — a Photon client reads `osm_key`/`osm_value`/`type` unconditionally, so they must never be absent. */
+/**
+ * Fallback OSM tags — a Photon client reads `osm_key`/`osm_value`/`type` unconditionally, so they must never be absent.
+ */
 const DEFAULT_OSM_TAGS = { osm_key: "place", osm_value: "yes", type: "other" } as const
 
 /**
@@ -163,16 +169,24 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 	return props
 }
 
-/** {@link photonForwardProperties}, wrapped as a Photon Point `Feature` at the resolved coordinate. #1014. */
+/**
+ * {@link photonForwardProperties}, wrapped as a Photon Point `Feature` at the resolved coordinate. #1014.
+ */
 export function photonForwardFeature(input: PhotonForwardInput): PhotonFeature {
 	return photonFeature(input.lon, input.lat, photonForwardProperties(input))
 }
 
-/** The winning place plus its ranked alternatives — the input to {@link photonForwardCollection}. #1016. */
+/**
+ * The winning place plus its ranked alternatives — the input to {@link photonForwardCollection}. #1016.
+ */
 export interface PhotonForwardResult {
-	/** The winning place, with full admin ancestry (from the resolved hierarchy). */
+	/**
+	 * The winning place, with full admin ancestry (from the resolved hierarchy).
+	 */
 	primary: PhotonForwardInput
-	/** Ranked alternative places (Springfield MA / IL / …), each a single-place input; excludes the primary. */
+	/**
+	 * Ranked alternative places (Springfield MA / IL / …), each a single-place input; excludes the primary.
+	 */
 	alternatives: PhotonForwardInput[]
 }
 
@@ -215,7 +229,9 @@ export function photonFeatureToSchemaOrg(feature: PhotonFeature): SchemaOrgPlace
 	})
 }
 
-/** Project a whole Photon `FeatureCollection` into an array of schema.org `Place` objects (`format=jsonld`). #1052. */
+/**
+ * Project a whole Photon `FeatureCollection` into an array of schema.org `Place` objects (`format=jsonld`). #1052.
+ */
 export function photonToSchemaOrg(collection: PhotonFeatureCollection): SchemaOrgPlace[] {
 	return collection.features.map(photonFeatureToSchemaOrg)
 }

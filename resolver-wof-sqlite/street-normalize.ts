@@ -69,7 +69,9 @@ const SPELLED_ORDINAL_TO_DIGIT = new Map<string, string>([
 	["hundredth", "100th"],
 ])
 
-/** Lowercase + diacritic-fold + punctuation strip + whitespace collapse. */
+/**
+ * Lowercase + diacritic-fold + punctuation strip + whitespace collapse.
+ */
 function fold(input: string): string {
 	return input
 		.normalize("NFKD")
@@ -235,7 +237,9 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	return tokens.join(" ")
 }
 
-/** Normalize a locality name for address-point keying (fold only — no street semantics). */
+/**
+ * Normalize a locality name for address-point keying (fold only — no street semantics).
+ */
 export function normalizeLocalityForKey(locality: string): string {
 	return fold(locality)
 }

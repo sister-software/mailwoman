@@ -10,7 +10,9 @@ import type { BIOLabel } from "../types/component.ts"
 import { buildAddressTree } from "./build-tree.ts"
 import type { AddressNode, DecoderToken } from "./types.ts"
 
-/** Construct a DecoderToken — confidence defaults to 1.0 for fixture brevity. */
+/**
+ * Construct a DecoderToken — confidence defaults to 1.0 for fixture brevity.
+ */
 function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
 	return { piece, start, end, label, confidence }
 }

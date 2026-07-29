@@ -47,12 +47,16 @@ const RESOLUTION_TIER: Partial<Record<ComponentTag, number>> = {
 	house_number: 5,
 }
 
-/** A resolved place lifted off the tree — the coordinate a caller would serve, plus its granularity tag. */
+/**
+ * A resolved place lifted off the tree — the coordinate a caller would serve, plus its granularity tag.
+ */
 export interface ResolvedCoordinate {
 	tag: ComponentTag
 	lat: number
 	lon: number
-	/** Canonical place URI (`wof:…`) when the resolver supplied one. */
+	/**
+	 * Canonical place URI (`wof:…`) when the resolver supplied one.
+	 */
 	placeID?: string
 }
 
@@ -149,7 +153,9 @@ export function outsideExpectedCountry(
 	return lat < b[0] || lat > b[1] || lon < b[2] || lon > b[3]
 }
 
-/** Result of {@link isImplausibleResolution} — the boolean plus the reason, for telemetry + fallback logs. */
+/**
+ * Result of {@link isImplausibleResolution} — the boolean plus the reason, for telemetry + fallback logs.
+ */
 export interface PlausibilityVerdict {
 	implausible: boolean
 	/**
@@ -157,7 +163,9 @@ export interface PlausibilityVerdict {
 	 * `outside-expected-country` = the served coordinate lies outside the expected country's bbox (guard B).
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
-	/** The coordinate the verdict was drawn from, when anything resolved. */
+	/**
+	 * The coordinate the verdict was drawn from, when anything resolved.
+	 */
 	coordinate?: ResolvedCoordinate
 }
 

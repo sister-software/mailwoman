@@ -41,7 +41,9 @@ import type { ClassificationRecord } from "mailwoman"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-/** Percentage-point collision reduction the split must deliver to be judged effective. */
+/**
+ * Percentage-point collision reduction the split must deliver to be judged effective.
+ */
 const MIN_COLLISION_REDUCTION = 5
 
 const { values: rawValues } = parseArgs({
@@ -51,7 +53,9 @@ const { values: rawValues } = parseArgs({
 })
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
-/** --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------. */
+/**
+ * --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------.
+ */
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
 	locality: 5,
@@ -109,9 +113,13 @@ const pct = (xs: number[], p: number): number => {
 }
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
 
-/** --- args ----------------------------------------------------------------------------------------. */
+/**
+ * --- args ----------------------------------------------------------------------------------------.
+ */
 const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
-/** Per stratum. */
+/**
+ * Per stratum.
+ */
 const N = Number(values["n"] || "200")
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------

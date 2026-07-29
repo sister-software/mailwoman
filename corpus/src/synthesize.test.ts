@@ -509,7 +509,9 @@ describe("registry + defaults", () => {
 // A future refactor that rebuilds raw from tokens would fail these.
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
-	/** Apply the augmentation, align the copy, and return the labeled row (asserting both steps). */
+	/**
+	 * Apply the augmentation, align the copy, and return the labeled row (asserting both steps).
+	 */
 	const augmentAndAlign = (id: string, row: CanonicalRow) => {
 		const out = AUGMENTATIONS[id]!(row)
 		expect(out, `${id} should apply to its fixture`).not.toBeNull()
@@ -527,7 +529,9 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		return aligned.row
 	}
 
-	/** The dotted po_box surface on the augmented copy — slice the span, not the tokens. */
+	/**
+	 * The dotted po_box surface on the augmented copy — slice the span, not the tokens.
+	 */
 	const poBoxSurface = (row: LabeledRow): string => {
 		const i = row.span_tags!.indexOf("po_box")
 		expect(i).toBeGreaterThanOrEqual(0)

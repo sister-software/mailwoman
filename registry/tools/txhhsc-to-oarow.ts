@@ -18,29 +18,45 @@ import { readFileSync, writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** Texas bounding box, used to reject rows whose coordinates landed in the wrong state. */
+/**
+ * Texas bounding box, used to reject rows whose coordinates landed in the wrong state.
+ */
 const TX_MIN_LATITUDE = 25
 
-/** See {@link TX_MIN_LATITUDE}. */
+/**
+ * See {@link TX_MIN_LATITUDE}.
+ */
 const TX_MAX_LATITUDE = 37
 
-/** See {@link TX_MIN_LATITUDE}. */
+/**
+ * See {@link TX_MIN_LATITUDE}.
+ */
 const TX_MIN_LONGITUDE = -107
 
-/** See {@link TX_MIN_LATITUDE}. */
+/**
+ * See {@link TX_MIN_LATITUDE}.
+ */
 const TX_MAX_LONGITUDE = -93
 
-/** Options for {@linkcode convertTXHHSC}. */
+/**
+ * Options for {@linkcode convertTXHHSC}.
+ */
 export interface TXHHSCConvertOptions {
-	/** The TX HHSC nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`. */
+	/**
+	 * The TX HHSC nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
+	 */
 	src?: string
-	/** Output OaRow JSONL path. Default `/tmp/txhhsc-oarow.jsonl`. */
+	/**
+	 * Output OaRow JSONL path. Default `/tmp/txhhsc-oarow.jsonl`.
+	 */
 	out?: string
 }
 
 const GEO = /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/
 
-/** Convert the TX HHSC nursing-facilities TSV into OaRow JSONL for `oa-resolver-eval`. */
+/**
+ * Convert the TX HHSC nursing-facilities TSV into OaRow JSONL for `oa-resolver-eval`.
+ */
 export function convertTXHHSC(
 	options: TXHHSCConvertOptions = {},
 	report?: (line: string) => void

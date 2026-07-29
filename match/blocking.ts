@@ -19,10 +19,14 @@
  *   default, and any block too large to scan is _reported_, never silently dropped.
  */
 
-/** Maps a record to zero or more block keys. Two records sharing any key become a candidate pair. */
+/**
+ * Maps a record to zero or more block keys. Two records sharing any key become a candidate pair.
+ */
 export type BlockingKey<R> = (record: R) => string[]
 
-/** A geographic coordinate (WGS84 decimal degrees). */
+/**
+ * A geographic coordinate (WGS84 decimal degrees).
+ */
 export interface LatLon {
 	latitude: number
 	longitude: number
@@ -109,11 +113,17 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 	}
 }
 
-/** The outcome of a blocking pass. */
+/**
+ * The outcome of a blocking pass.
+ */
 export interface BlockResult<R> {
-	/** Deduplicated candidate pairs (no self-pairs; a pair caught by multiple keys appears once). */
+	/**
+	 * Deduplicated candidate pairs (no self-pairs; a pair caught by multiple keys appears once).
+	 */
 	pairs: Array<[R, R]>
-	/** Blocks that exceeded `maxBlockSize` and were skipped — surfaced so coverage limits are visible. */
+	/**
+	 * Blocks that exceeded `maxBlockSize` and were skipped — surfaced so coverage limits are visible.
+	 */
 	droppedBlocks: Array<{ key: string; size: number }>
 }
 

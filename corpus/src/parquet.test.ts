@@ -47,7 +47,9 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 	}
 }
 
-/** Read every row from a `.parquet` file in on-disk order. */
+/**
+ * Read every row from a `.parquet` file in on-disk order.
+ */
 async function readParquet(path: string): Promise<ParquetRow[]> {
 	const reader = await ParquetReader.openFile<ParquetRow>(path)
 	const cursor = reader.getCursor()

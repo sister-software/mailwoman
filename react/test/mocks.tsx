@@ -23,7 +23,9 @@ import type { ResolvedMapPlace } from "../map/place-render.ts"
 
 const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } as unknown as CategoryRecord
 
-/** A fake taxonomy-runtime that classifies everything as a POI query and matches "drinking fountain". */
+/**
+ * A fake taxonomy-runtime that classifies everything as a POI query and matches "drinking fountain".
+ */
 export function makePOIRuntime(): POIRuntime {
 	const lookup = {
 		getPOICategory: (id: string) => (id === "drinking_water" ? DRINKING_FOUNTAIN : undefined),
@@ -64,7 +66,9 @@ export function makeBrandPOIRuntime(): POIRuntime {
 	}
 }
 
-/** A live-search probe that always returns two hits near "Springfield, IL". */
+/**
+ * A live-search probe that always returns two hits near "Springfield, IL".
+ */
 export const mockLiveSearchSuccess: POILiveSearch = async () => ({
 	status: "success",
 	centerName: "Springfield, IL",
@@ -94,7 +98,9 @@ export const mockBrandLiveSearchSuccess: POILiveSearch = async ({ brandWikidata 
 	],
 })
 
-/** An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook. */
+/**
+ * An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook.
+ */
 export const STUB_MAP_STYLE: DemoMapStyle = {
 	version: 8,
 	name: "demo-runtime-stub",
@@ -102,7 +108,9 @@ export const STUB_MAP_STYLE: DemoMapStyle = {
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-/** Canned place-autocomplete suggestions — a synchronous fake for the FST prefix-walk. */
+/**
+ * Canned place-autocomplete suggestions — a synchronous fake for the FST prefix-walk.
+ */
 export const FAKE_SUGGESTIONS: Suggestion[] = [
 	{ value: "New York", placetype: "locality" },
 	{ value: "New Orleans", placetype: "locality" },
@@ -152,7 +160,9 @@ export function makeDemoRuntime(overrides: Partial<DemoRuntime> = {}): DemoRunti
 	}
 }
 
-/** A fixed, fully-populated parse+resolve result — the shared fixture behind the pipeline runtime + the result panel. */
+/**
+ * A fixed, fully-populated parse+resolve result — the shared fixture behind the pipeline runtime + the result panel.
+ */
 export function makeFakeParseResult(input = "350 5th Ave, New York, NY 10118"): ParseResult {
 	return {
 		input,
@@ -174,7 +184,9 @@ export function makeFakeParseResult(input = "350 5th Ave, New York, NY 10118"): 
 	}
 }
 
-/** A fake parse+resolve runtime that returns a fixed, fully-populated result. */
+/**
+ * A fake parse+resolve runtime that returns a fixed, fully-populated result.
+ */
 export function makePipelineRuntime(overrides: Partial<PipelineRuntime> = {}): PipelineRuntime {
 	return {
 		ready: true,

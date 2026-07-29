@@ -31,11 +31,15 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
-/** A detected secondary-unit substring with its char range. */
+/**
+ * A detected secondary-unit substring with its char range.
+ */
 interface UnitMatch {
 	start: number
 	end: number
-	/** Pattern priority (lower = more specific, wins overlap resolution). */
+	/**
+	 * Pattern priority (lower = more specific, wins overlap resolution).
+	 */
 	priority: number
 }
 
@@ -83,12 +87,16 @@ function isUnitLabel(label: string): boolean {
 	return label === "B-unit" || label === "I-unit"
 }
 
-/** Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null). */
+/**
+ * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
+ */
 function tagOf(label: string): string | null {
 	return label === "O" ? null : label.slice(2)
 }
 
-/** Collect non-overlapping unit matches, preferring more-specific (earlier) patterns + longest. */
+/**
+ * Collect non-overlapping unit matches, preferring more-specific (earlier) patterns + longest.
+ */
 function collectMatches(text: string): UnitMatch[] {
 	const candidates: UnitMatch[] = []
 	UNIT_PATTERNS.forEach((pat, priority) => {
@@ -112,7 +120,9 @@ function collectMatches(text: string): UnitMatch[] {
 
 export interface RepairResult {
 	tokens: DecoderToken[]
-	/** Number of token labels changed — for telemetry / logging. */
+	/**
+	 * Number of token labels changed — for telemetry / logging.
+	 */
 	changed: number
 }
 

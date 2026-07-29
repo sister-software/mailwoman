@@ -12,30 +12,34 @@
  *   "not applicable", never as a violation.
  */
 
-/** A perturbation class: a name, a one-line literature anchor, and the pure transform itself. */
+/**
+ * A perturbation class: a name, a one-line literature anchor, and the pure transform itself.
+ */
 export interface Transform {
 	id: string
 	label: string
-	/** One-line citation grounding the class in the metamorphic-testing / NLP-robustness literature. */
+	/**
+	 * One-line citation grounding the class in the metamorphic-testing / NLP-robustness literature.
+	 */
 	literatureAnchor: string
-	/** Returns the perturbed string, or `null` when the class doesn't apply to this input. */
+	/**
+	 * Returns the perturbed string, or `null` when the class doesn't apply to this input.
+	 */
 	apply: (raw: string) => string | null
 }
 
-// -------------------------------------------------------------------------------------------------
-// comma-drop
-// -------------------------------------------------------------------------------------------------
+// MARK: comma-drop
 
-/** Remove every comma. Applicable only when the input carries at least one. */
+/**
+ * Remove every comma. Applicable only when the input carries at least one.
+ */
 function commaDrop(raw: string): string | null {
 	if (!raw.includes(",")) return null
 
 	return raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 }
 
-// -------------------------------------------------------------------------------------------------
-// abbreviation-swap
-// -------------------------------------------------------------------------------------------------
+// MARK: abbreviation-swap
 
 /**
  * Small, deliberately narrow EN street-suffix table (Ave↔Avenue, St↔Street, Rd↔Road) — the spec's own wording, not the
@@ -164,23 +168,23 @@ export function canonicalizeAbbreviations(value: string): string {
 		.join("")
 }
 
-// -------------------------------------------------------------------------------------------------
-// case-fold (ALL-CAPS) / lowercase
-// -------------------------------------------------------------------------------------------------
+// MARK: case-fold (ALL-CAPS) / lowercase
 
-/** ALL-CAPS the input. Always applicable — every string has a casing. */
+/**
+ * ALL-CAPS the input. Always applicable — every string has a casing.
+ */
 function caseFold(raw: string): string | null {
 	return raw.toUpperCase()
 }
 
-/** All-lowercase the input. Always applicable. */
+/**
+ * All-lowercase the input. Always applicable.
+ */
 function lowercase(raw: string): string | null {
 	return raw.toLowerCase()
 }
 
-// -------------------------------------------------------------------------------------------------
-// whitespace-jitter
-// -------------------------------------------------------------------------------------------------
+// MARK: whitespace-jitter
 
 /**
  * Double every literal space character. Applicable only when the input carries a literal space — the guard checks the
@@ -194,18 +198,16 @@ function whitespaceJitter(raw: string): string | null {
 	return raw.replaceAll(" ", "  ")
 }
 
-// -------------------------------------------------------------------------------------------------
-// trailing-punct
-// -------------------------------------------------------------------------------------------------
+// MARK: trailing-punct
 
-/** Append a trailing period. Always applicable. */
+/**
+ * Append a trailing period. Always applicable.
+ */
 function trailingPunct(raw: string): string | null {
 	return `${raw}.`
 }
 
-// -------------------------------------------------------------------------------------------------
-// paired-punct (Task 9 audit — quotes, brackets, braces, parens, guillemets)
-// -------------------------------------------------------------------------------------------------
+// MARK: paired-punct (Task 9 audit — quotes, brackets, braces, parens, guillemets)
 
 /**
  * Wrap the WHOLE input in a matching straight-quote pair — the same "wrap the whole thing" idiom as `trailing-punct`,
@@ -231,9 +233,7 @@ function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`
 }
 
-// -------------------------------------------------------------------------------------------------
-// idempotence
-// -------------------------------------------------------------------------------------------------
+// MARK: idempotence
 
 /**
  * Identity — the text is NOT perturbed. The runner special-cases this id: it parses the ORIGINAL string twice (two
@@ -245,9 +245,7 @@ function identity(raw: string): string | null {
 	return raw
 }
 
-// -------------------------------------------------------------------------------------------------
-// registry
-// -------------------------------------------------------------------------------------------------
+// MARK: registry
 
 /**
  * Metamorphic transforms applied to an input. Each one must leave the parse unchanged, so a differing result is a bug
@@ -314,7 +312,9 @@ export const TRANSFORMS: readonly Transform[] = [
 
 const BY_ID = new Map(TRANSFORMS.map((t) => [t.id, t]))
 
-/** Look up a transform by id. Throws on an unknown id — a typo in `suite.jsonl` should fail loudly. */
+/**
+ * Look up a transform by id. Throws on an unknown id — a typo in `suite.jsonl` should fail loudly.
+ */
 export function getTransform(id: string): Transform {
 	const t = BY_ID.get(id)
 

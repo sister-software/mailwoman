@@ -13,7 +13,9 @@ import { describe, expect, it } from "vitest"
 import { CheckStatus, type DoctorCheck } from "./checks.ts"
 import { runDoctor, type DoctorDeps } from "./runner.ts"
 
-/** A fully-healthy set of seams; individual tests override just the fields they exercise. */
+/**
+ * A fully-healthy set of seams; individual tests override just the fields they exercise.
+ */
 function healthyDeps(): DoctorDeps {
 	return {
 		existsSync: () => true,

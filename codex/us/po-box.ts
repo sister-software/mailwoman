@@ -46,11 +46,17 @@ export function isPOBox(input: unknown): boolean {
 	return typeof input === "string" && PO_BOX_RE.test(input)
 }
 
-/** Result of a PO-box parse: the matched designator phrase and the box identifier. */
+/**
+ * Result of a PO-box parse: the matched designator phrase and the box identifier.
+ */
 export interface PoBoxMatch {
-	/** The designator phrase as it appeared, e.g. "P.O. Box", "Post Office Box". */
+	/**
+	 * The designator phrase as it appeared, e.g. "P.O. Box", "Post Office Box".
+	 */
 	matched: string
-	/** The box identifier, e.g. "123", "12-A". */
+	/**
+	 * The box identifier, e.g. "123", "12-A".
+	 */
 	id: string
 }
 

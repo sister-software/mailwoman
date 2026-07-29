@@ -22,18 +22,28 @@ import * as path from "node:path"
 import { dataRootPath } from "../../utils/data-root.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
-/** Largest magnitude representable in the symmetric int8 range the weights quantize into. */
+/**
+ * Largest magnitude representable in the symmetric int8 range the weights quantize into.
+ */
 const INT8_MAX = 127
 
-/** Options for {@linkcode quantizeCoarsePlacer}. */
+/**
+ * Options for {@linkcode quantizeCoarsePlacer}.
+ */
 export interface QuantizeCoarsePlacerOptions {
-	/** Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	in?: string
-	/** Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`. */
+	/**
+	 * Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 */
 	out?: string
 }
 
-/** Result of {@linkcode quantizeCoarsePlacer}. */
+/**
+ * Result of {@linkcode quantizeCoarsePlacer}.
+ */
 export interface QuantizeCoarsePlacerResult {
 	outDir: string
 	fp32Bytes: number
@@ -42,7 +52,9 @@ export interface QuantizeCoarsePlacerResult {
 	rmse: number
 }
 
-/** Coarse-placer int8 quantizer — see the module doc. */
+/**
+ * Coarse-placer int8 quantizer — see the module doc.
+ */
 export async function quantizeCoarsePlacer(
 	options: QuantizeCoarsePlacerOptions = {},
 	report?: (line: string) => void

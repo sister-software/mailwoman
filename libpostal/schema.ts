@@ -10,7 +10,9 @@
 
 import { z } from "@hono/zod-openapi"
 
-/** `POST /parse` JSON body — `address` is accepted as an alias for `query`. */
+/**
+ * `POST /parse` JSON body — `address` is accepted as an alias for `query`.
+ */
 export const ParseRequestSchema = z
 	.object({
 		query: z.string().optional(),
@@ -18,14 +20,18 @@ export const ParseRequestSchema = z
 	})
 	.openapi("ParseRequest")
 
-/** `POST /expand` JSON body. */
+/**
+ * `POST /expand` JSON body.
+ */
 export const ExpandRequestSchema = z
 	.object({
 		address: z.string().optional(),
 	})
 	.openapi("ExpandRequest")
 
-/** A libpostal `parse_address` component — label + covered text, in order. */
+/**
+ * A libpostal `parse_address` component — label + covered text, in order.
+ */
 export const LibpostalComponentSchema = z
 	.object({
 		label: z.string(),
@@ -33,17 +39,23 @@ export const LibpostalComponentSchema = z
 	})
 	.openapi("LibpostalComponent")
 
-/** Response body of `/parse`, matching libpostal's own shape so existing clients need no change. */
+/**
+ * Response body of `/parse`, matching libpostal's own shape so existing clients need no change.
+ */
 export const ParseResponseSchema = z.array(LibpostalComponentSchema)
 
-/** Response body of `/expand` — the expanded address permutations, as libpostal returns them. */
+/**
+ * Response body of `/expand` — the expanded address permutations, as libpostal returns them.
+ */
 export const ExpandResponseSchema = z
 	.object({
 		expansions: z.array(z.string()),
 	})
 	.openapi("ExpandResponse")
 
-/** Mirrors libpostal's JSON error envelope. */
+/**
+ * Mirrors libpostal's JSON error envelope.
+ */
 export const ErrorSchema = z
 	.object({
 		error: z.string(),

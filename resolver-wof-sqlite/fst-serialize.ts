@@ -33,31 +33,49 @@ import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
  */
 const VERSION_WIDE_STATE_COUNTERS = 4
 
-/** State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}. */
+/**
+ * State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
 const WIDE_STATE_ENTRY_SIZE = 16
 
-/** State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}. */
+/**
+ * State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
 const NARROW_STATE_ENTRY_SIZE = 12
 
-/** First format version carrying the trailing metadata block; older files simply have none. */
+/**
+ * First format version carrying the trailing metadata block; older files simply have none.
+ */
 const VERSION_WITH_METADATA = 3
 
-/** File magic. A reader rejects anything not starting with these four bytes before parsing further. */
+/**
+ * File magic. A reader rejects anything not starting with these four bytes before parsing further.
+ */
 const MAGIC = Buffer.from("FST\0", "ascii")
 
-/** Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed. */
+/**
+ * Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed.
+ */
 const VERSION = 4
 
-/** Fixed header size in bytes: magic, version, and the section offsets that follow it. */
+/**
+ * Fixed header size in bytes: magic, version, and the section offsets that follow it.
+ */
 const HEADER_SIZE = 32
 
-/** State-table entry: edge offset, place offset, and the two 32-bit counters (v4 widths). */
+/**
+ * State-table entry: edge offset, place offset, and the two 32-bit counters (v4 widths).
+ */
 const STATE_ENTRY_SIZE = 16
 
-/** Edge-table entry: the transition label and the target state index. */
+/**
+ * Edge-table entry: the transition label and the target state index.
+ */
 const EDGE_ENTRY_SIZE = 8
 
-/** Place-table entry: the place id, its placetype, coordinates, and importance. */
+/**
+ * Place-table entry: the place id, its placetype, coordinates, and importance.
+ */
 const PLACE_ENTRY_SIZE = 56
 
 /**

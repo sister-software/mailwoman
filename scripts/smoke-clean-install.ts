@@ -107,7 +107,9 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/mcp": "mcp",
 }
 
-/** Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap). */
+/**
+ * Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap).
+ */
 const IMPORT_CHECK = [
 	"@mailwoman/annotations",
 	"@mailwoman/timezone-lookup",
@@ -131,7 +133,9 @@ const IMPORT_CHECK = [
  */
 const STANDALONE_LEAVES = ["@mailwoman/core"]
 
-/** The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count. */
+/**
+ * The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count.
+ */
 const MCP_EXPECTED_TOOL_COUNT = 5
 
 /**

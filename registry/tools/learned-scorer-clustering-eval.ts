@@ -53,32 +53,56 @@ import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
  */
 const MIN_MEANINGFUL_F1_DELTA = 0.02
 
-/** Groups below this size are too small for a held-out split to mean anything. */
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
 const MIN_GROUP_SIZE = 5
 
-/** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
+/**
+ * Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable.
+ */
 const TRAINING_EPOCHS = 400
 
-/** Highest k swept when scanning cluster counts. */
+/**
+ * Highest k swept when scanning cluster counts.
+ */
 const MAX_K = 32
 
-/** Options for {@linkcode scorerClusteringEval}. */
+/**
+ * Options for {@linkcode scorerClusteringEval}.
+ */
 export interface ScorerClusteringEvalOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 2000. */
+	/**
+	 * NPIs sampled. Default 2000.
+	 */
 	npis?: number
-	/** Train fraction of the NPI split. Default 0.67. */
+	/**
+	 * Train fraction of the NPI split. Default 0.67.
+	 */
 	split?: number
-	/** Base PRNG seed. Default 1. */
+	/**
+	 * Base PRNG seed. Default 1.
+	 */
 	seed?: number
-	/** Held-out-NPI splits averaged. Default 4. */
+	/**
+	 * Held-out-NPI splits averaged. Default 4.
+	 */
 	seeds?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
@@ -103,7 +127,9 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
-/** Deterministic LCG (no Math.random — reproducible split). */
+/**
+ * Deterministic LCG (no Math.random — reproducible split).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
@@ -123,7 +149,9 @@ interface MessyRow {
 
 const choose2 = (n: number) => (n * (n - 1)) / 2
 
-/** The dedup benchmark's pairwise clustering metric vs the NPI grouping (record.id = NPI). */
+/**
+ * The dedup benchmark's pairwise clustering metric vs the NPI grouping (record.id = NPI).
+ */
 function scoreClusters(
 	entities: ResolvedEntity[],
 	n: number
@@ -164,7 +192,9 @@ function scoreClusters(
 	return { precision, recall, f1, overMerged }
 }
 
-/** Learned-scorer clustering A/B (#603 Tier 2) — see the module doc. Emits the markdown report to stdout. */
+/**
+ * Learned-scorer clustering A/B (#603 Tier 2) — see the module doc. Emits the markdown report to stdout.
+ */
 export async function scorerClusteringEval(
 	options: ScorerClusteringEvalOptions,
 	report?: (line: string) => void

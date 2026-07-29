@@ -36,13 +36,17 @@ import { userEvent } from "@vitest/browser/context"
 import { act } from "react"
 import { vi } from "vitest"
 
-/** Marker so a repeat import can't wrap an already-wrapped method (which would nest act() pointlessly). */
+/**
+ * Marker so a repeat import can't wrap an already-wrapped method (which would nest act() pointlessly).
+ */
 const WRAPPED = Symbol.for("mailwoman.react.act-wrapped")
 
 type AnyFn = (...args: unknown[]) => unknown
 type TaggableFn = AnyFn & { [WRAPPED]?: true }
 
-/** Run `fn` inside act() and return its resolved value — the shared primitive both wrappers build on. */
+/**
+ * Run `fn` inside act() and return its resolved value — the shared primitive both wrappers build on.
+ */
 async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 	let result: T
 
@@ -53,7 +57,9 @@ async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 	return result!
 }
 
-/** One drained macrotask tick — lets a fire-and-forget handler's trailing microtasks flush inside act(). */
+/**
+ * One drained macrotask tick — lets a fire-and-forget handler's trailing microtasks flush inside act().
+ */
 function nextTick(): Promise<void> {
 	return new Promise((resolve) => {
 		setTimeout(resolve, 0)
@@ -88,7 +94,9 @@ function wrapUserEvent(): void {
 	}
 }
 
-/** Vitest's own `vi.waitFor` defaults (see its `WaitForOptions`) — reproduced so the poll matches. */
+/**
+ * Vitest's own `vi.waitFor` defaults (see its `WaitForOptions`) — reproduced so the poll matches.
+ */
 const DEFAULT_WAIT_TIMEOUT = 1000
 const DEFAULT_WAIT_INTERVAL = 50
 
@@ -147,7 +155,9 @@ async function actWaitFor<T>(
 	}
 }
 
-/** Swap `vi.waitFor` for the act-advancing poll above. */
+/**
+ * Swap `vi.waitFor` for the act-advancing poll above.
+ */
 function wrapWaitFor(): void {
 	const original = vi.waitFor as TaggableFn
 
@@ -173,7 +183,9 @@ export async function actDelay(ms = 0): Promise<void> {
 	})
 }
 
-/** Install the act() wrappers on the shared `userEvent` / `vi` singletons. Idempotent. */
+/**
+ * Install the act() wrappers on the shared `userEvent` / `vi` singletons. Idempotent.
+ */
 export function installActWrappers(): void {
 	wrapUserEvent()
 	wrapWaitFor()

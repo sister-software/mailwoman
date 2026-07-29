@@ -9,7 +9,9 @@ import { describe, expect, it } from "vitest"
 import { enforceWordConsistency } from "./word-consistency.ts"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const
-/** A logit row peaking at `idx` (softmaxes to high prob there). */
+/**
+ * A logit row peaking at `idx` (softmaxes to high prob there).
+ */
 const peak = (idx: number, hi: number): number[] => LABELS.map((_l, i) => (i === idx ? hi : 0))
 
 describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {

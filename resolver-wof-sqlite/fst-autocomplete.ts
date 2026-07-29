@@ -55,7 +55,9 @@ interface BfsItem {
 	tokens: string[]
 }
 
-/** Max accepting entries collected per BFS branch — keeps one dense branch from starving the search. */
+/**
+ * Max accepting entries collected per BFS branch — keeps one dense branch from starving the search.
+ */
 const PER_BRANCH = 4
 
 /**

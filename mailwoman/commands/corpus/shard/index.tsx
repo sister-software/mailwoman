@@ -19,7 +19,9 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../../cli-kit/index.ts"
 
-/** Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands. */
+/**
+ * Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands.
+ */
 export const isDefault = true
 
 const ArgumentsSchema = zod

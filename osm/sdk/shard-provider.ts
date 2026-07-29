@@ -18,7 +18,9 @@ import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 
 import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.ts"
 
-/** What the cascade needs from an OSM shard — structurally a subset of mailwoman's `StateShards`. */
+/**
+ * What the cascade needs from an OSM shard — structurally a subset of mailwoman's `StateShards`.
+ */
 export interface OSMShards {
 	addressPoints?: AddressPointSqliteLookup
 }
@@ -39,7 +41,9 @@ export class OSMShardProvider {
 		return `${this.#dataRoot}/osm/address-points-${countryCode}-${countryCode}.db`
 	}
 
-	/** Resolve the OSM shards for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered. */
+	/**
+	 * Resolve the OSM shards for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered.
+	 */
 	readonly for = (country: string): OSMShards => {
 		const cc = country.toLowerCase()
 		const cached = this.#cache.get(cc)

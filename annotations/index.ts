@@ -13,47 +13,61 @@
  *   own shape. One schema, two serializers (the hybrid decision).
  */
 
-/** Degrees-minutes-seconds, rendered. */
+/**
+ * Degrees-minutes-seconds, rendered.
+ */
 export interface DMS {
 	lat: string
 	lon: string
 }
 
-/** Web Mercator (EPSG:3857) coordinate. */
+/**
+ * Web Mercator (EPSG:3857) coordinate.
+ */
 export interface Mercator {
 	x: number
 	y: number
 }
 
-/** ISO 4217 currency. */
+/**
+ * ISO 4217 currency.
+ */
 export interface CurrencyInfo {
 	isoCode: string
 	name?: string
 	symbol?: string
 }
 
-/** IANA timezone + current offset. */
+/**
+ * IANA timezone + current offset.
+ */
 export interface TimezoneInfo {
 	name: string
 	offsetSec?: number
 	offsetString?: string
 }
 
-/** Solar event times, epoch seconds (UTC) for the queried date. */
+/**
+ * Solar event times, epoch seconds (UTC) for the queried date.
+ */
 export interface SunTimes {
 	rise?: number
 	set?: number
 	noon?: number
 }
 
-/** ISO 3166 codes for the resolved country. */
+/**
+ * ISO 3166 codes for the resolved country.
+ */
 export interface Iso3166 {
 	alpha2?: string
 	alpha3?: string
 	numeric?: string
 }
 
-/** EU NUTS statistical-region codes. */
+/**
+ * EU NUTS statistical-region codes.
+ */
 export interface Nuts {
 	level1?: string
 	level2?: string
@@ -70,40 +84,64 @@ export interface AnnotationSet {
 	maidenhead?: string
 	geohash?: string
 	mercator?: Mercator
-	/** Initial bearing (degrees) to Mecca. */
+	/**
+	 * Initial bearing (degrees) to Mecca.
+	 */
 	qiblaBearing?: number
 	sun?: SunTimes
-	/** E.164 country calling code (e.g. 1, 44). */
+	/**
+	 * E.164 country calling code (e.g. 1, 44).
+	 */
 	callingCode?: number
 	currency?: CurrencyInfo
-	/** Country flag emoji. */
+	/**
+	 * Country flag emoji.
+	 */
 	flag?: string
 	timezone?: TimezoneInfo
 	iso3166?: Iso3166
 	nuts?: Nuts
-	/** UN/LOCODE, e.g. "US NYC". */
+	/**
+	 * UN/LOCODE, e.g. "US NYC".
+	 */
 	unLocode?: string
-	/** US county FIPS. */
+	/**
+	 * US county FIPS.
+	 */
 	fips?: string
-	/** Wikidata QID. */
+	/**
+	 * Wikidata QID.
+	 */
 	wikidata?: string
 }
 
-/** The input every annotator receives: a coordinate, and the resolved place when one is available. */
+/**
+ * The input every annotator receives: a coordinate, and the resolved place when one is available.
+ */
 export interface AnnotatorInput {
 	lat: number
 	lon: number
-	/** The resolved place (ancestry, country, region…); shape owned by the resolver. */
+	/**
+	 * The resolved place (ancestry, country, region…); shape owned by the resolver.
+	 */
 	place?: unknown
-	/** ISO 3166-1 alpha-2 of the resolved country, when known — feeds country-reference annotators. */
+	/**
+	 * ISO 3166-1 alpha-2 of the resolved country, when known — feeds country-reference annotators.
+	 */
 	countryCode?: string
-	/** The resolved place's name (locality), when known — feeds name-keyed annotators (UN/LOCODE). */
+	/**
+	 * The resolved place's name (locality), when known — feeds name-keyed annotators (UN/LOCODE).
+	 */
 	placeName?: string
-	/** The queried date for time-dependent annotations (sun times); defaults to "now" per annotator. */
+	/**
+	 * The queried date for time-dependent annotations (sun times); defaults to "now" per annotator.
+	 */
 	date?: Date
 }
 
-/** A unit of enrichment: takes a coordinate/place, returns the slice of the set it can fill. */
+/**
+ * A unit of enrichment: takes a coordinate/place, returns the slice of the set it can fill.
+ */
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
 
 /**
@@ -127,7 +165,9 @@ export function composeAnnotators(annotators: Annotator[]): (input: AnnotatorInp
 	}
 }
 
-/** OpenCage's `annotations` block, keyed and cased as OpenCage documents it. */
+/**
+ * OpenCage's `annotations` block, keyed and cased as OpenCage documents it.
+ */
 export interface OpenCageAnnotations {
 	DMS?: { lat: string; lng: string }
 	MGRS?: string
@@ -252,14 +292,14 @@ export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	return out
 }
 
-/** Return the native set (the stable public native shape). */
+/**
+ * Return the native set (the stable public native shape).
+ */
 export function toNative(set: AnnotationSet): AnnotationSet {
 	return set
 }
 
-// ---------------------------------------------------------------------------
-// schema.org Place / PostalAddress / GeoCoordinates — a JSON-LD OUTPUT projection (#1052)
-// ---------------------------------------------------------------------------
+// MARK: schema.org Place / PostalAddress / GeoCoordinates — a JSON-LD OUTPUT projection (#1052)
 
 /**
  * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node — the resolved coordinate, embedded under a
@@ -283,7 +323,9 @@ export interface SchemaOrgPostalAddress {
 	addressLocality?: string
 	addressRegion?: string
 	postalCode?: string
-	/** ISO-3166 alpha-2 (e.g. `"FR"`). */
+	/**
+	 * ISO-3166 alpha-2 (e.g. `"FR"`).
+	 */
 	addressCountry?: string
 }
 
@@ -307,19 +349,25 @@ export interface SchemaOrgPlace {
 export interface SchemaOrgInput {
 	lat?: number | null
 	lon?: number | null
-	/** The resolved POI / venue name, when one exists. Omitted for a bare street address. */
+	/**
+	 * The resolved POI / venue name, when one exists. Omitted for a bare street address.
+	 */
 	name?: string
 	/**
 	 * The rendered street line (house number + street + unit) as ONE string. Compose it with the locale-aware
 	 * `@mailwoman/formatter` (`formatAddress`) where available, or {@link composeStreetAddress} for a plain join.
 	 */
 	streetAddress?: string
-	/** PO box number, when the address is a PO box (→ `postOfficeBoxNumber`). */
+	/**
+	 * PO box number, when the address is a PO box (→ `postOfficeBoxNumber`).
+	 */
 	poBox?: string
 	locality?: string
 	region?: string
 	postalCode?: string
-	/** ISO-3166 alpha-2 (any case); emitted uppercased as `addressCountry`. */
+	/**
+	 * ISO-3166 alpha-2 (any case); emitted uppercased as `addressCountry`.
+	 */
 	countryCode?: string
 }
 

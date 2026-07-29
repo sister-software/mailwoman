@@ -48,28 +48,48 @@ import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
  */
 const MIN_MEANINGFUL_F1_DELTA = 0.02
 
-/** Groups below this size are too small for a held-out split to mean anything. */
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
 const MIN_GROUP_SIZE = 5
 
-/** Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable. */
+/**
+ * Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable.
+ */
 const TRAINING_EPOCHS = 400
 
-/** Highest k swept when scanning cluster counts. */
+/**
+ * Highest k swept when scanning cluster counts.
+ */
 const MAX_K = 32
 
-/** Options for {@linkcode scorerCrossStateEval}. */
+/**
+ * Options for {@linkcode scorerCrossStateEval}.
+ */
 export interface ScorerCrossStateEvalOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State the GBT/LR train on. Default TX. */
+	/**
+	 * State the GBT/LR train on. Default TX.
+	 */
 	trainState?: string
-	/** Held-out state clustered. Default CA. */
+	/**
+	 * Held-out state clustered. Default CA.
+	 */
 	evalState?: string
-	/** NPIs sampled per state. Default 2000. */
+	/**
+	 * NPIs sampled per state. Default 2000.
+	 */
 	npis?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
@@ -101,7 +121,9 @@ interface MessyRow {
 	address: string
 }
 
-/** The dedup benchmark's pairwise clustering metric vs the NPI grouping (record.id = NPI). */
+/**
+ * The dedup benchmark's pairwise clustering metric vs the NPI grouping (record.id = NPI).
+ */
 function scoreClusters(entities: ResolvedEntity[]): {
 	precision: number
 	recall: number
@@ -143,7 +165,9 @@ function scoreClusters(entities: ResolvedEntity[]): {
 	return { precision, recall, f1, overMerged }
 }
 
-/** Learned-scorer cross-state generalization (#603 Tier 2) — see the module doc. Emits the report to stdout. */
+/**
+ * Learned-scorer cross-state generalization (#603 Tier 2) — see the module doc. Emits the report to stdout.
+ */
 export async function scorerCrossStateEval(
 	options: ScorerCrossStateEvalOptions,
 	report?: (line: string) => void

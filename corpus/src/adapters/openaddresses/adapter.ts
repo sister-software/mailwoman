@@ -71,7 +71,9 @@ interface OaProperties {
 	license?: string
 }
 
-/** Return a lowercase-keyed view of a Feature's properties so case variants both work. */
+/**
+ * Return a lowercase-keyed view of a Feature's properties so case variants both work.
+ */
 function normalizeProperties(raw: unknown): OaProperties {
 	if (!raw || typeof raw !== "object") return {}
 	const out: Record<string, string> = {}
@@ -87,7 +89,9 @@ function normalizeProperties(raw: unknown): OaProperties {
 	return out as OaProperties
 }
 
-/** Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes. */
+/**
+ * Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes.
+ */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
 
@@ -242,5 +246,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 	}
 }
 
-/** The configured adapter instance registered with the corpus builder. */
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const openaddressesAdapter = createOpenaddressesAdapter()

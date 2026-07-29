@@ -96,7 +96,9 @@ export async function extractPPDTuples(
 	return stats
 }
 
-/** Stream `inputPath` (PPD CSV) → `outputPath` (OA-shaped tuples CSV), returning the row-count stats. */
+/**
+ * Stream `inputPath` (PPD CSV) → `outputPath` (OA-shaped tuples CSV), returning the row-count stats.
+ */
 export async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPDExtractStats> {
 	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself (see readTuples in
 	// shard-recipes/locale.ts). `header: false` yields every row as data — PPD ships no header row.

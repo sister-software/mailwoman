@@ -57,7 +57,9 @@ export interface WebONNXRunnerOpts {
  */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
-/** Apply `wasmPathsRoot` once at module init. Safe to call multiple times. */
+/**
+ * Apply `wasmPathsRoot` once at module init. Safe to call multiple times.
+ */
 function configureWASMPaths(root: string | undefined): void {
 	if (!root) return
 	// onnxruntime-web ships this on `ort.env.wasm`. We assign directly rather than calling
@@ -84,7 +86,9 @@ export class WebONNXRunner implements NeuralRunner {
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
 
-	/** Construct from already-fetched model bytes. */
+	/**
+	 * Construct from already-fetched model bytes.
+	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
 		configureWASMPaths(opts.wasmPathsRoot)
 		const runner = new WebONNXRunner(modelBytes, opts)
@@ -92,7 +96,9 @@ export class WebONNXRunner implements NeuralRunner {
 		return runner
 	}
 
-	/** Fetch the model from a URL and construct. */
+	/**
+	 * Fetch the model from a URL and construct.
+	 */
 	static async fromURL(modelURL: string, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
 		const res = await fetch(modelURL)
 
