@@ -3630,6 +3630,9 @@ def sync_jp_probe():
     cmds = [
         f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
         f"rclone copy :s3:{BUCKET}/corpus/v8-jp-probe/ {VOL_MOUNT}/corpus/versioned/v8-jp-probe/ {R}",
+        # Leg 2 (the unification bake-off): just the sealed Latin char vocab — the latam corpus +
+        # multisplice tokenizer already persist on the volume from the v3.8.x runs.
+        f"rclone copy :s3:{BUCKET}/corpus/v8-leg2/ {VOL_MOUNT}/corpus/versioned/v8-leg2/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
@@ -3654,3 +3657,10 @@ def sync_jp_probe():
     print("  val shard present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
     print("  char vocab present:", os.path.isfile(f"{corpus}/char-vocab-jp-v1.json"))
     print("  board present:", os.path.isfile(f"{corpus}/jp-probe-board.jsonl"))
+    print(
+        "  leg2 latin vocab present:", os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v8-leg2/char-vocab-latin-v1.json")
+    )
+    print(
+        "  leg2 configs present:",
+        os.path.isfile(f"{src}/configs/v8-leg2-charword.yaml") and os.path.isfile(f"{src}/configs/v8-leg2-sp.yaml"),
+    )
