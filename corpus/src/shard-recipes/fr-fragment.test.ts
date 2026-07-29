@@ -23,6 +23,21 @@ import { describe, expect, it } from "vitest"
 
 import { frFragmentRecipe, frTitleCase } from "./fr-fragment.ts"
 
+/**
+ * The fields these assertions read off a shard row. `JSON.parse` hands back `any`; naming the shape is what lets the
+ * assertions be checked at all — the previous `Record<string, never>` typed every property as `never`, so nothing could
+ * be read without a cast and nothing was ever verified.
+ */
+interface ShardRow {
+	raw: string
+	synth_method?: string
+	source?: string
+	source_id?: string
+	components?: Partial<Record<string, string>>
+	labels?: string[]
+	tokens?: string[]
+}
+
 const TUPLES = [
 	{ street: "Rue Montmartre", locality: "paris", postcode: "75002" },
 	{ street: "Rue de la Paix", locality: "paris", postcode: "75002" },
@@ -50,7 +65,7 @@ async function run(tuples: object[], surfaces: string[], opts: Record<string, un
 		(line) => lines.push(line)
 	)
 
-	return { stats, rows: lines.map((line) => JSON.parse(line) as Record<string, never>) }
+	return { stats, rows: lines.map((line) => JSON.parse(line) as ShardRow) }
 }
 
 describe("frTitleCase", () => {
@@ -158,7 +173,7 @@ describe("fr-fragment: the counter-distribution", () => {
 		const none = await run(TUPLES, ["nothing"], { bareProb: 0 })
 		const lots = await run(TUPLES, ["nothing"], { bareProb: 0.5 })
 
-		const count = (r: { rows: Array<Record<string, never>> }) =>
+		const count = (r: { rows: ShardRow[] }) =>
 			r.rows.filter((x) => String(x.synth_method) === "fr-fragment:bare-locality").length
 
 		expect(count(none)).toBe(0)

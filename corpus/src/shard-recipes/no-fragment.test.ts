@@ -22,6 +22,21 @@ import { describe, expect, it } from "vitest"
 
 import { noFragmentRecipe } from "./no-fragment.ts"
 
+/**
+ * The fields these assertions read off a shard row. `JSON.parse` hands back `any`; naming the shape is what lets the
+ * assertions be checked at all — the previous `Record<string, never>` typed every property as `never`, so nothing could
+ * be read without a cast and nothing was ever verified.
+ */
+interface ShardRow {
+	raw: string
+	synth_method?: string
+	source?: string
+	source_id?: string
+	components?: Partial<Record<string, string>>
+	labels?: string[]
+	tokens?: string[]
+}
+
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
 	{ street: "Hallingrudveien", locality: "vikersund", number: "32", postcode: "3370" },
@@ -50,7 +65,7 @@ async function run(tuples: object[], surfaces: string[], opts: Record<string, un
 		(line) => lines.push(line)
 	)
 
-	return { stats, rows: lines.map((line) => JSON.parse(line) as Record<string, never>) }
+	return { stats, rows: lines.map((line) => JSON.parse(line) as ShardRow) }
 }
 
 describe("no-fragment", () => {
@@ -78,12 +93,12 @@ describe("no-fragment", () => {
 		// counterProb 0 so every non-reserved row is a street fragment; bareStreetProb 0 so it carries
 		// its number. The point of the shard: the street stands alone.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
-		const signal = rows.filter((r) => (r as { components: { street?: string } }).components.street)
+		const signal = rows.filter((r) => r.components!.street)
 
 		expect(signal.length).toBeGreaterThan(0)
 
 		for (const r of signal) {
-			const c = (r as { components: Record<string, string> }).components
+			const c = r.components!
 
 			// A signal row has a street and MAY have a house_number, but NEVER a postcode or locality —
 			// that is the whole licence: read the street without its partners.
@@ -99,7 +114,7 @@ describe("no-fragment", () => {
 
 		const kinds = new Set(
 			rows.map((r) => {
-				const c = (r as { components: Record<string, string> }).components
+				const c = r.components!
 
 				return c.locality ? "loc" : c.postcode ? "pc" : "?"
 			})
@@ -110,7 +125,7 @@ describe("no-fragment", () => {
 
 		// A counter row NEVER carries a street — else it is not a counter.
 		for (const r of rows) {
-			expect((r as { components: { street?: string } }).components.street).toBeUndefined()
+			expect(r.components!.street).toBeUndefined()
 		}
 	})
 
@@ -119,10 +134,10 @@ describe("no-fragment", () => {
 			counterProb: 1,
 		})
 
-		const locRows = rows.filter((r) => (r as { components: { locality?: string } }).components.locality)
+		const locRows = rows.filter((r) => r.components!.locality)
 
 		for (const r of locRows) {
-			expect((r as { components: { locality: string } }).components.locality).toBe("Hellvik")
+			expect(r.components!.locality).toBe("Hellvik")
 		}
 	})
 })

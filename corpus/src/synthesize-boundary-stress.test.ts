@@ -33,7 +33,15 @@ function mulberry32(seed: number): () => number {
 }
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
-	return { ...r, source: "synth-boundary-stress", source_id: "synth-boundary-stress:test" } as CanonicalRow
+	return {
+		...r,
+		source: "synth-boundary-stress",
+		source_id: "synth-boundary-stress:test",
+		// CanonicalRow requires a country; the synthesized row carries only the locale it was minted for.
+		country: r.locale.split("-")[1] ?? "DE",
+		corpus_version: "0.0.0-test",
+		license: "synthetic fixture — not distributed",
+	}
 }
 
 const labelsFor = (template: BoundaryStressTemplate, seed: number): readonly string[] => {

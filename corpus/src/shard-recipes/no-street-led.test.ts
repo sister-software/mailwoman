@@ -24,6 +24,21 @@ import { describe, expect, it } from "vitest"
 
 import { noStreetLedRecipe } from "./no-street-led.ts"
 
+/**
+ * The fields these assertions read off a shard row. `JSON.parse` hands back `any`; naming the shape is what lets the
+ * assertions be checked at all — the previous `Record<string, never>` typed every property as `never`, so nothing could
+ * be read without a cast and nothing was ever verified.
+ */
+interface ShardRow {
+	raw: string
+	synth_method?: string
+	source?: string
+	source_id?: string
+	components?: Partial<Record<string, string>>
+	labels?: string[]
+	tokens?: string[]
+}
+
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
 	{ street: "Hallingrudveien", locality: "vikersund", number: "32", postcode: "3370" },
@@ -50,7 +65,7 @@ async function run(tuples: object[], surfaces: string[]) {
 		(line) => lines.push(line)
 	)
 
-	return { stats, rows: lines.map((line) => JSON.parse(line) as Record<string, never>) }
+	return { stats, rows: lines.map((line) => JSON.parse(line) as ShardRow) }
 }
 
 describe("no-street-led board split", () => {
@@ -85,7 +100,7 @@ describe("no-street-led board split", () => {
 		expect(stats.contaminated).toBe(1)
 
 		for (const row of rows) {
-			expect((row as { raw: string }).raw.toLowerCase()).not.toContain("tømmerlien")
+			expect(row.raw.toLowerCase()).not.toContain("tømmerlien")
 		}
 	})
 

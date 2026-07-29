@@ -46,7 +46,9 @@ describe("synthesizeGermanRow", () => {
 		const canonical = { ...row, country: "DE", source: "synth-german", source_id: "synth-german:test" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
-		const labels = aligned.row!.labels
+
+		if (aligned.kind !== "labeled") throw new Error("expected a labeled row")
+		const labels = aligned.row.labels
 		const firstOf = (tag: string) => labels.findIndex((l) => l.includes(tag))
 		expect(firstOf("street")).toBeGreaterThanOrEqual(0)
 		expect(firstOf("house_number")).toBeGreaterThan(firstOf("street"))
@@ -108,7 +110,9 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 		const canonical = { ...row, country: "DE", source: "synth-german", source_id: "synth-german:intl" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
-		const labels = aligned.row!.labels
+
+		if (aligned.kind !== "labeled") throw new Error("expected a labeled row")
+		const labels = aligned.row.labels
 		const firstOf = (tag: string) => labels.findIndex((l) => l.includes(tag))
 		expect(firstOf("house_number")).toBeLessThan(firstOf("street")) // inverse of the native test
 		expect(firstOf("region")).toBeGreaterThan(firstOf("locality")) // region in the tail, after the city
@@ -155,7 +159,9 @@ describe("NZ dependent_locality (suburb below city)", () => {
 		const canonical = { ...row, country: "NZ", source: "synth-nz", source_id: "synth-nz:test" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
-		const labels = aligned.row!.labels
+
+		if (aligned.kind !== "labeled") throw new Error("expected a labeled row")
+		const labels = aligned.row.labels
 		// Exact tag match after stripping the B-/I- prefix — "dependent_locality" contains "locality" as a
 		// substring, so a naive `.includes` would conflate the two.
 		const firstOf = (tag: string) => labels.findIndex((l) => l.replace(/^[BI]-/, "") === tag)

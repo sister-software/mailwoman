@@ -176,7 +176,15 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 		// Seeds chosen to cover a box-bearing (PSC/CMR) and a bare (Unit) line.
 		for (const seed of [11, 23, 42, 7, 100]) {
 			const row = synthesizeMilitaryPoBoxRow({ random: seededRandom(seed) })
-			const canonical = { ...row, source: "synth-po-box", source_id: `mil:${seed}` } as CanonicalRow
+			const canonical: CanonicalRow = {
+				...row,
+				source: "synth-po-box",
+				source_id: `mil:${seed}`,
+				// CanonicalRow requires a country; the military row carries only the locale it was minted for.
+				country: row.locale.split("-")[1] ?? "US",
+				corpus_version: "0.0.0-test",
+				license: "synthetic fixture — not distributed",
+			}
 			const result = alignRow(canonical)
 			expect(result.kind, `should align, raw=${row.raw}`).toBe("labeled")
 

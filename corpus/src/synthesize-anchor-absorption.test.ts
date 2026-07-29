@@ -30,6 +30,8 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 		country: synth.locale.slice(-2),
 		source: "test",
 		source_id: "t",
+		corpus_version: "0.0.0-test",
+		license: "synthetic fixture — not distributed",
 	})
 
 	return { synth, aligned }
