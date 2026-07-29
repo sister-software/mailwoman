@@ -772,6 +772,31 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         _restamp_resume_lrs(optim, scheduler, live_group_lrs, live_group_labels)
         print(f"resumed at step={resume_step}")
 
+    # Fisher capture + EWC (v8.3.0 Phase 1 — fisher.py has the design pointers). Capture is armed
+    # for the FINAL window of the run; EWC loads the artifact + reference once, up front, loudly.
+    fisher_acc = None
+    fisher_window_start = None
+    if getattr(cfg.train, "fisher_capture", False):
+        from .fisher import FisherAccumulator
+
+        fisher_acc = FisherAccumulator(model)
+        fisher_window_start = cfg.train.max_steps - int(getattr(cfg.train, "fisher_capture_last_n_steps", 2000))
+        print(f"[fisher] capture armed for steps >= {max(0, fisher_window_start)}")
+    ewc = None
+    if float(getattr(cfg.train, "ewc_lambda", 0.0)) > 0.0:
+        from .fisher import EWCPenalty
+
+        ewc_reference = getattr(cfg.train, "ewc_reference", None) or getattr(cfg.train, "init_from", "")
+        if not getattr(cfg.train, "ewc_fisher_path", None) or not ewc_reference:
+            raise ValueError("train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from")
+        ewc = EWCPenalty(
+            cfg.train.ewc_fisher_path,
+            ewc_reference,
+            lam=float(cfg.train.ewc_lambda),
+            device=device,
+        )
+        print(f"[ewc] λ={cfg.train.ewc_lambda:g}, {ewc.covered_params:,} params braked against {ewc_reference}")
+
     csv_path = csv_log_path(cfg)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     # On resume, append to the existing CSV instead of clobbering.
@@ -864,11 +889,19 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         out = model(**tb)
                 else:
                     out = model(**tb)
-                loss = out.loss / accum
+                # EWC brake (fine-tunes only): the quadratic penalty rides the loss INSIDE the
+                # accum division so effective-batch scaling matches the data loss.
+                loss_total = out.loss if ewc is None else out.loss + ewc.penalty(model)
+                loss = loss_total / accum
                 loss.backward()
                 micro_step += 1
                 if not is_accum_boundary:
                     continue
+                # Fisher capture window (base runs): read the accumulated gradient BEFORE clipping
+                # (the empirical Fisher is defined on ∂L/∂θ; the clipped surrogate understates
+                # curvature exactly where it is largest). Read-only — trajectory unaffected.
+                if fisher_acc is not None and step >= fisher_window_start:
+                    fisher_acc.accumulate(model)
                 # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
                 # during warmup, especially under bf16. Clip global norm to 1.0 before
                 # stepping. The v0.2.0 (CE-only) Stage 1 run trained stably to 50k steps
@@ -990,7 +1023,22 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             },
             "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
         }
-        save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+        final_ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+        # Fisher artifact lands BESIDE the final checkpoint (the weights-bundle contract: versioned
+        # filename + provenance sidecar, the lexicon discipline). Zero-count capture (a run shorter
+        # than its window says it was armed for) raises in finalize — loud, never a silent absence.
+        if fisher_acc is not None:
+            fisher_path = fisher_acc.save(
+                final_ck,
+                meta={
+                    "captured_at_step": step,
+                    "window_last_n_steps": int(getattr(cfg.train, "fisher_capture_last_n_steps", 2000)),
+                    "corpus_dir": cfg.data.corpus_dir,
+                    "seed": cfg.train.seed,
+                    "output_dir": str(output_dir),
+                },
+            )
+            print(f"[fisher] artifact → {fisher_path} ({fisher_acc.count} batches)")
     finally:
         csv_fh.close()
         tracker.finish()
