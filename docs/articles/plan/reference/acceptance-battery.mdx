@@ -1,0 +1,84 @@
+---
+title: The acceptance battery
+description: The packaged promotion harness — what a model must survive to ship, and how a fine-tune engagement instantiates the same battery as its delivery gate.
+---
+
+# The acceptance battery
+
+The battery is the promotion harness the v6→v8.2 arcs built run by run, packaged as ONE
+procedure with two consumers:
+
+1. **Our own promotes** — every candidate model (the v8.3.0 from-scratch retrain is the first
+   consumer of the packaged form; its exit criterion IS this battery).
+2. **A fine-tune engagement (B11)** — the same battery, instantiated per customer, run at
+   delivery. "Your fine-tune cannot break core parsing" is this battery passing at the calibrated
+   EWC λ, not a promise.
+
+This page composes instruments that live elsewhere — it adds the procedure and the engagement
+instantiation, not new mechanics. The contributor-facing gate mechanics stay in
+[Contributing model work](../CONTRIBUTING_MODEL_WORK.mdx) (the iron rules, the lever taxonomy,
+floor policy, the standard gate set); read that first if you are promoting a model yourself.
+
+## The instrument inventory
+
+| Instrument                                                         | What it protects                                                              | Where it lives                                                |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Golden floors (per-locale, noise-honest margins)                   | the shipped baseline everywhere                                               | `mailwoman eval gate` + `mailwoman/eval-harness/gates/*.json` |
+| P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                     | eval-harness fragment boards                                  |
+| Invariance suite vs the shipped reference                          | no silent behavior drift                                                      | `--baseline` legs of the gate runner                          |
+| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness; label-preserving perturbations must not move the coordinate | `mailwoman eval gauntlet`                                     |
+| Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model must not launder capability through a retrieval channel             | standing since the v3.16 curriculum work                      |
+| Ablated-vs-fed columns (per channel)                               | what each evidence channel actually contributes                               | the capability manifest + the Modal per-channel contrast      |
+| Canary fixtures with receipts                                      | named past failures stay fixed (zero-flip)                                    | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)       |
+| Presets byte-check + demo smoke                                    | the user-visible surface                                                      | `mailwoman eval preset-compare` + the demo smoke              |
+| Capability manifest (register-pinned)                              | the card's published capability block is measured, not asserted               | `mailwoman eval capability-manifest`                          |
+| Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                      | the release choreography                                      |
+
+Margins are **noise-honest**: `max(1.0pp, 2 × the metric's 95% binomial half-width)` at each
+metric's support, cut from the reference model's own readings. Floors ratchet at re-scores and
+never drift on promotes (see the floor policy in the contributor runbook).
+
+## The procedure
+
+1. **Pre-register.** The gate sheet — every bar, every baseline identity (model md5, tokenizer,
+   lexicon versions, register) — is written into the run's config header or plan doc **before**
+   any GPU spend. Bars are bars: a below-bar number is a miss to confront (re-baseline with a
+   stated reason, or iterate), never a quiet pass; a deviation from the sheet is recorded, never
+   silently re-read.
+2. **Run the battery on the candidate artifact production will actually load** (the int8 export,
+   through the ship-config channels — a scorer invoked without the declared channels grades a
+   crippled model; the zero-fill trap has bitten twice).
+3. **Verdict.** PASS → ledger-append + the dated eval report. FAIL → the pre-registered
+   contingency (a named, single-delta fix and one re-run), then stop-and-report.
+
+## Instantiating the battery for a fine-tune engagement (B11)
+
+A customer engagement adds three things to the standing battery and changes nothing else:
+
+1. **Customer canaries.** Golden rows drawn from the customer's own address stock (they nominate
+   or we sample; they confirm the gold labels). These become gauntlet fixtures with receipts —
+   the customer-facing zero-flip set. Noise-honest margins need support: below ~200 rows per
+   class, the margin is the binomial half-width and will be wide — say so in the report rather
+   than pretending precision.
+2. **The base-capability legs run unchanged.** The customer's fine-tune must hold every standing
+   floor — the golden floors, the fragment boards, the gauntlet — within the noise-honest margins.
+   Rare-class forgetting is structural to fine-tuning (the fr.cedex receipt), which is exactly why
+   the battery, not good intentions, is the gate.
+3. **The Fisher guarantee gate.** The fine-tune trains with the base model's Fisher artifact
+   (`fisher-diag-v1.npz`, shipped beside the base checkpoint) as an EWC brake at the calibrated λ
+   (`train.ewc_lambda` / `ewc_fisher_path` / `ewc_reference`). The parameter-space brake and this
+   behavior-space battery are the guarantee **together**; neither alone is. A battery
+   failure at the calibrated λ is a finding about the customer data, surfaced before delivery —
+   the product working, not failing.
+
+λ calibration happens once, on our own next fine-tune: sweep λ ∈ {0, 1e2, 1e4, 1e6} on a 2k-step
+probe, keep the largest λ that leaves the increment's target metric within noise of λ=0. That λ
+is the template default; an engagement inherits it and revisits only on a battery failure.
+
+## What stays out (for now)
+
+- **A `mailwoman eval battery <config>` CLI.** The runbook is the packaging until a second
+  consumer exists (the recorded leaning); the commands above already compose. When the first B11
+  engagement runs this page end-to-end, promote the pain points into the CLI.
+- **Per-locale Fisher slices** ("protect only what this customer doesn't touch") — the v2
+  refinement, filed until a real engagement asks.

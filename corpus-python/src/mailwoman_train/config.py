@@ -351,6 +351,19 @@ class TrainConfig:
     # Global-norm gradient clip. 0 disables clipping. Defaults to 1.0; the CRF NLL leg of
     # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
     grad_clip_norm: float = 1.0
+    # --- Fisher capture + EWC (v8.3.0 Phase 1, the B11 consolidation artifact — see fisher.py). ---
+    # Capture side (base runs): accumulate the diagonal empirical Fisher over the FINAL
+    # fisher_capture_last_n_steps optimizer steps (the memo's "last N batches" at the
+    # effective-batch grain) and write fisher-diag-v1.npz + sidecar beside the final checkpoint.
+    # Read-only on p.grad — byte-identical trajectory with the flag on or off (pinned by test).
+    fisher_capture: bool = False
+    fisher_capture_last_n_steps: int = 2000
+    # Consumption side (fine-tunes): ewc_lambda > 0 adds λ/2·ΣF_i(θ_i−θ*_i)² against
+    # ewc_reference (a checkpoint dir; defaults to train.init_from — the base the fine-tune
+    # starts from). Params absent from the Fisher artifact (fresh heads) are unpenalized.
+    ewc_lambda: float = 0.0
+    ewc_fisher_path: str | None = None
+    ewc_reference: str | None = None
     # LR schedule after warmup. ``"cosine"`` = decay to 0 across max_steps (v0.4.0 default,
     # right for full-length production runs). ``"constant"`` = hold ``learning_rate`` flat
     # for the rest of the run after warmup — the smoke-window default per v0.5.0 process
