@@ -6,7 +6,12 @@
 
 // Moved to @mailwoman/resolver-wof-wasm so the packages that resolve through a browser lookup can
 // reach them without importing from the docs site. Re-exported here so demo code is unchanged.
-export type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+// Imported rather than re-exported straight through: `DualRole` is used locally below, and a bare
+// re-export does not bind the name in this module.
+// oxlint-disable-next-line unicorn/prefer-export-from -- see above
+import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+
+export type { DualRole, MailwomanLookupLike }
 
 export interface FSTProvenanceLike {
 	builtAt: string

@@ -2,8 +2,24 @@
 // It is here to improve your IDE experience (type-checking, autocompletion...),
 // and can also run the package.json "typecheck" script manually.
 {
-	"extends": "@docusaurus/tsconfig",
+	// NOT `"extends": "@docusaurus/tsconfig"`. Playwright loads playwright.config.ts (this folder) with
+	// its own loader, which resolves `extends` only against the config's own directory — so a hoisted
+	// dependency it cannot see fails the whole config load. Node and tsc both resolve it fine, which is
+	// why the breakage appears under Playwright alone.
+	//
+	// The first block below IS @docusaurus/tsconfig, inlined. Only what this file did not already
+	// override is kept, so nothing changed for the Docusaurus build.
 	"compilerOptions": {
+		"allowJs": true,
+		"esModuleInterop": true,
+		"jsx": "preserve",
+		"moduleResolution": "bundler",
+		"module": "esnext",
+		"noEmit": true,
+		"baseUrl": ".",
+		"paths": { "@site/*": ["./*"] },
+		"skipLibCheck": true,
+
 		"ignoreDeprecations": "6.0",
 		"strict": true,
 		"allowImportingTsExtensions": true,
