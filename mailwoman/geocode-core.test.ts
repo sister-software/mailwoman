@@ -15,6 +15,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import {
+	geocodeAddress,
 	countryFromPostcodeFormat,
 	extractGeocodeResult,
 	type GeocodeClassifier,
@@ -403,5 +404,66 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 
 		expect(calls[0]!.text).toBe("Damrak 1, 1012 LG Amsterdam")
 		expect(calls[0]!.opts!.queryShape).toEqual(computeQueryShape("Damrak 1, 1012 LG Amsterdam"))
+	})
+})
+
+describe("the Decision-A retry rider (retryAlternateRegister)", () => {
+	const zeroHitResult = { lat: null, lon: null, candidates: [], hierarchy: [] }
+
+	function riderDeps(parses: Array<{ inputMode?: string }>, resolveHits: boolean[]) {
+		let call = 0
+		const classifier = {
+			parse: async (_text: string, opts?: { inputMode?: "fragmented" | "formatted" }) => {
+				parses.push({ inputMode: opts?.inputMode })
+
+				return { raw: _text, roots: [] }
+			},
+		}
+		const resolver = {
+			resolveTree: async (tree: unknown) => {
+				const hit = resolveHits[call++] ?? false
+
+				return hit
+					? {
+							roots: [
+								{
+									tag: "locality",
+									value: "Testville",
+									children: [],
+									placeID: "wof:1",
+									metadata: { lat: 1, lon: 2 },
+								},
+							],
+						}
+					: { roots: [] }
+			},
+		}
+
+		return { classifier, resolver } as never
+	}
+
+	it("zero-hit in a derived register retries ONCE in the alternative register", async () => {
+		const parses: Array<{ inputMode?: string }> = []
+		const result = await geocodeAddress("Fragmentville", riderDeps(parses, [false, false]))
+
+		expect(parses).toHaveLength(2)
+		// "Fragmentville" derives fragmented (locality_only); the retry flips to formatted, explicitly.
+		expect(parses[1]!.inputMode).toBe("formatted")
+		expect(result.lat).toBeNull()
+	})
+
+	it("an explicit register is never second-guessed", async () => {
+		const parses: Array<{ inputMode?: string }> = []
+		await geocodeAddress("Fragmentville", { ...riderDeps(parses, [false, false]), inputMode: "fragmented" } as never)
+		expect(parses).toHaveLength(1)
+	})
+
+	it("retryAlternateRegister: false pins single-pass", async () => {
+		const parses: Array<{ inputMode?: string }> = []
+		await geocodeAddress("Fragmentville", {
+			...riderDeps(parses, [false, false]),
+			retryAlternateRegister: false,
+		} as never)
+		expect(parses).toHaveLength(1)
 	})
 })
