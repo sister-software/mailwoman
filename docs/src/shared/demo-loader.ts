@@ -91,9 +91,12 @@ export async function loadDemoAssets(
 
 	ctx.setStepLabels(steps)
 
-	// Same-origin base for the staged placetype-pair indexes (#1278) — mirrors how `sqljsBaseURL` names the sql.js
-	// worker dir (`…/mailwoman/sqljs`); the plugin stages the pair binaries as its sibling (`…/mailwoman/pair-index`).
-	const pairIndexBaseURL = sqljsBaseURL.replace(/sqljs\/?$/, "pair-index")
+	// R2 base for the placetype-pair indexes (#1278) — the release-train repoint the same-origin
+	// staging always anticipated (2026-07-29, with the 8.2.0 demo flip): the binaries live on the
+	// public bucket beside every other model asset, so a CI docs build with no dev weights no longer
+	// 404s them (the standing GB/NZ pair-index gap since v8.0.0). The same-origin plugin staging
+	// remains a dev-preview fallback in the plugin, but the demo now reads the bucket.
+	const pairIndexBaseURL = "https://public.sister.software/mailwoman/pair-index"
 
 	// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the browser-safe entry. The runtime
 	// API is wider than its TS types (the bundle ships `postcodeAnchorLookup` the declaration omits), so we reach the
@@ -106,10 +109,10 @@ export async function loadDemoAssets(
 				hasAnchor: release.hasAnchor,
 				forceWASM: ctx.forceWASM,
 			}),
-			// Placetype-pair prior (#1278): the GB/NZ dependent_locality retrieval channel. Staged SAME-ORIGIN by the
-			// demo-assets plugin (the `pair-index-<cc>.bin` files are not on R2 yet — that's the release-train repoint).
-			// Load ALL of them; the loader keeps each live and `selectPairIndexForText` picks per parse via locale-gate.
-			// Fetched tolerantly — a 404 (e.g. a build with no staged binary) is skipped, so this is byte-stable when absent.
+			// Placetype-pair prior (#1278): the GB/NZ dependent_locality retrieval channel, served from R2
+			// (the release-train repoint, 2026-07-29). Load ALL of them; the loader keeps each live and
+			// `selectPairIndexForText` picks per parse via locale-gate. Fetched tolerantly — a 404 is
+			// skipped, so this is byte-stable if the bucket path ever regresses.
 			pairIndexURLs: pairIndexStagedURLs(pairIndexBaseURL),
 		})) as unknown as {
 			classifier: MailwomanClassifierLike
