@@ -4595,6 +4595,7 @@ __metadata:
     "@mailwoman/react": "workspace:^"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.62.0"
     "@storybook/addon-docs": "npm:^10.5.4"
@@ -5022,6 +5023,7 @@ __metadata:
   resolution: "@mailwoman/un-locode-lookup@workspace:un-locode-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     csv-parse: "npm:^7.0.1"
   bin:
     un-locode-lookup: ./out/cli.js

@@ -12,6 +12,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { haversineKm } from "@mailwoman/spatial"
 
 /**
  * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.
@@ -36,19 +37,6 @@ export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } |
 	const lon = (Number(m[4]) + Number(m[5]) / 60) * (m[6] === "W" ? -1 : 1)
 
 	return { lat, lon }
-}
-
-const EARTH_R_KM = 6371
-
-function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-	const dLat = ((bLat - aLat) * Math.PI) / 180
-	const dLon = ((bLon - aLon) * Math.PI) / 180
-
-	const s =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-
-	return 2 * EARTH_R_KM * Math.asin(Math.sqrt(s))
 }
 
 /**

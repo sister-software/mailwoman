@@ -8,5 +8,5 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../annotations" }]
+	"references": [{ "path": "../spatial" }, { "path": "../annotations" }]
 }

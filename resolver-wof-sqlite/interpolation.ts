@@ -29,6 +29,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import type { InterpolationLookup } from "@mailwoman/resolver"
+import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 import { haversineKm } from "./geo.ts"
 import { hasTable } from "./sqlite-utils.ts"
@@ -212,7 +213,7 @@ export class StreetInterpolator implements InterpolationLookup {
 
 		const polyline = JSON.parse(best.geometry) as [number, number][]
 		const span = best.to_hn - best.from_hn
-		const t = span === 0 ? 0.5 : clamp01((n - best.from_hn) / span)
+		const t = span === 0 ? 0.5 : clampFraction((n - best.from_hn) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)
 
 		return {
@@ -232,51 +233,4 @@ export class StreetInterpolator implements InterpolationLookup {
 			this.#db.close()
 		}
 	}
-}
-
-function clamp01(t: number): number {
-	return t < 0 ? 0 : Math.min(1, t)
-}
-
-/**
- * Point at fraction `t` of the polyline's total arc length (haversine), plus the total length in km. `t` is assumed
- * clamped to [0, 1].
- */
-function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
-	const legs: number[] = []
-	let total = 0
-
-	for (let i = 1; i < polyline.length; i++) {
-		const [aLon, aLat] = polyline[i - 1]!
-		const [bLon, bLat] = polyline[i]!
-		const d = haversineKm(aLat, aLon, bLat, bLon)
-		legs.push(d)
-		total += d
-	}
-
-	if (total === 0) {
-		const [lon, lat] = polyline[0]!
-
-		return [lon, lat, 0]
-	}
-
-	let remaining = t * total
-
-	for (let i = 0; i < legs.length; i++) {
-		const leg = legs[i]!
-
-		if (remaining <= leg || i === legs.length - 1) {
-			const f = leg === 0 ? 0 : clamp01(remaining / leg)
-			const [aLon, aLat] = polyline[i]!
-			const [bLon, bLat] = polyline[i + 1]!
-
-			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
-		}
-
-		remaining -= leg
-	}
-
-	const [lon, lat] = polyline.at(-1)!
-
-	return [lon, lat, total]
 }

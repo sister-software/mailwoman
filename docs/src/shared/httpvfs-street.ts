@@ -8,9 +8,9 @@
  *   (#483). They run the SAME SQL + the SAME shared normalizer (`street-normalize.ts`) as the node
  *   classes, just ASYNC over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
  *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
- *   parity-preference + polyline interpolation in `HTTPVFSInterpolator` mirrors
- *   `StreetInterpolator` line-for-line — KEEP THE TWO IN LOCKSTEP (the same lockstep contract the
- *   WOF resolvers hold).
+ *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
+ *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
+ *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
  *
  *   These power the demo's street tier against byte-ranged per-state situs/interp shards: a lookup
  *   touches ~KB of a multi-GB shard (measured, see the spec), so the file size is irrelevant to
@@ -26,6 +26,7 @@ import {
 	type StreetLocale,
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 /**
  * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
@@ -225,7 +226,7 @@ export class HTTPVFSInterpolator {
 
 		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
 		const span = Number(best.to_hn) - Number(best.from_hn)
-		const t = span === 0 ? 0.5 : clamp01((n - Number(best.from_hn)) / span)
+		const t = span === 0 ? 0.5 : clampFraction((n - Number(best.from_hn)) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)
 
 		return {
@@ -239,50 +240,4 @@ export class HTTPVFSInterpolator {
 			release: String(best.release),
 		}
 	}
-}
-
-function clamp01(t: number): number {
-	return t < 0 ? 0 : Math.min(1, t)
-}
-
-/**
- * Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors StreetInterpolator.
- */
-function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
-	const legs: number[] = []
-	let total = 0
-
-	for (let i = 1; i < polyline.length; i++) {
-		const [aLon, aLat] = polyline[i - 1]!
-		const [bLon, bLat] = polyline[i]!
-		const d = haversineKm(aLat, aLon, bLat, bLon)
-		legs.push(d)
-		total += d
-	}
-
-	if (total === 0) {
-		const [lon, lat] = polyline[0]!
-
-		return [lon, lat, 0]
-	}
-
-	let remaining = t * total
-
-	for (let i = 0; i < legs.length; i++) {
-		const leg = legs[i]!
-
-		if (remaining <= leg || i === legs.length - 1) {
-			const f = leg === 0 ? 0 : clamp01(remaining / leg)
-			const [aLon, aLat] = polyline[i]!
-			const [bLon, bLat] = polyline[i + 1]!
-
-			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
-		}
-
-		remaining -= leg
-	}
-
-	const [lon, lat] = polyline.at(-1)!
-
-	return [lon, lat, total]
 }
