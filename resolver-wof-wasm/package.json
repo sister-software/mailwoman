@@ -30,6 +30,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./browser-cascade": {
+			"node": "./browser-cascade.ts",
+			"default": "./out/browser-cascade.js",
+			"types": "./out/browser-cascade.d.ts"
 		}
 	},
 	"publishConfig": {

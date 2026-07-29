@@ -18,6 +18,9 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
 
+// Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
+export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+
 //#region Types
 
 /**
@@ -505,8 +508,6 @@ const PIN_RANK: Record<string, number> = {
 	country: 1,
 }
 
-type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-
 /**
  * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
  */
@@ -533,136 +534,6 @@ interface ResolvedTreeNode {
  * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
  * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
  */
-/**
- * Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter.
- */
-export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
-
-export async function runCascade(
-	lookup: MailwomanLookupLike,
-	tree: { roots: unknown[] },
-	rawText: string,
-	bias?: ResolveBias
-): Promise<CascadeHits> {
-	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
-
-	const backend = new CandidateResolverBackend(lookup)
-	const resolver = createWOFResolver(backend as never)
-
-	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
-	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
-	// global by design (the placer/population ranking routes, never a hardcoded country).
-	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
-	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
-	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
-	const resolved = (await resolver.resolveTree(tree as never, {
-		adminCoherence: true,
-		...(bias && bias.length ? { bias } : {}),
-	})) as unknown as {
-		roots: ResolvedTreeNode[]
-	}
-
-	// Collect every resolver-decorated node, best-pin first.
-	const collected: Array<{ hit: CascadeHits[number]; rank: number }> = []
-	const alternativesOf = new Map<number, CascadeHits>()
-
-	const visit = (node: ResolvedTreeNode): void => {
-		if (node.source === "resolver" && node.sourceID && typeof node.lat === "number" && typeof node.lon === "number") {
-			const sep = node.sourceID.indexOf(":")
-			const placetype = sep === -1 ? node.sourceID : node.sourceID.slice(0, sep)
-			const id = Number(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))
-			const meta = backend.metaFor(id)
-
-			const hit: CascadeHits[number] = {
-				id,
-				name: String(node.metadata?.["resolver_name"] ?? node.value ?? ""),
-				placetype,
-				country: meta?.country,
-				lat: node.lat,
-				lon: node.lon,
-				score: typeof node.metadata?.["resolver_score"] === "number" ? (node.metadata["resolver_score"] as number) : 0,
-				exactMatch: true,
-				bbox: meta?.bbox,
-			}
-
-			if (!(hit.lat === 0 && hit.lon === 0)) {
-				collected.push({ hit, rank: PIN_RANK[placetype] ?? 0 })
-
-				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
-
-				alternativesOf.set(
-					id,
-					usable(
-						alts.map((a) => ({
-							id: Number(a.id),
-							name: String(a.name ?? ""),
-							placetype: String(a.placetype ?? placetype),
-							country: typeof a.country === "string" && a.country ? a.country : undefined,
-							lat: Number(a.lat),
-							lon: Number(a.lon),
-							score: typeof a.score === "number" ? a.score : 0,
-							exactMatch: a.exactMatch === true,
-							bbox: backend.metaFor(Number(a.id))?.bbox,
-						}))
-					)
-				)
-			}
-		}
-
-		for (const child of node.children ?? []) {
-			visit(child)
-		}
-	}
-
-	for (const root of resolved.roots) {
-		visit(root)
-	}
-
-	if (!collected.length) {
-		// Nothing in the tree resolved (span-rescore included) — the old cascade's last resort.
-		return usable(await lookup.findPlace({ text: rawText, limit: 5 }))
-	}
-
-	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
-
-	// Cross-country postcode gate, carried over from the old cascade: an ambiguous INTERNATIONAL
-	// postcode (10115 = Berlin DE and a New York US ZIP shape) must not out-pin the parsed city
-	// across countries. When the top pin is a postcode whose country differs from the resolved
-	// locality's, the locality wins the pin; the postcode stays in the list.
-	const top = collected[0]!
-	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)
-
-	let pinOrder = collected
-
-	if (
-		top.hit.placetype === "postalcode" &&
-		localityEntry &&
-		top.hit.country &&
-		localityEntry.hit.country &&
-		top.hit.country !== localityEntry.hit.country
-	) {
-		pinOrder = [localityEntry, ...collected.filter((c) => c !== localityEntry)]
-	}
-
-	const seen = new Set<number>()
-	const hits: CascadeHits = []
-
-	for (const { hit } of pinOrder) {
-		if (!seen.has(hit.id)) {
-			seen.add(hit.id)
-			hits.push(hit)
-		}
-
-		for (const alt of alternativesOf.get(hit.id) ?? []) {
-			if (!seen.has(alt.id)) {
-				seen.add(alt.id)
-				hits.push(alt)
-			}
-		}
-	}
-
-	return hits
-}
 
 //#endregion
 

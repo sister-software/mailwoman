@@ -2,13 +2,6 @@
 	// Non-emitting companion to ./tsconfig.json — see ../tsconfig.test-base.json for why it exists.
 	"extends": ["./tsconfig.json", "../tsconfig.test-base.json"],
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
-	"exclude": [
-		"./out/**/*",
-		// hot-db.test.ts imports `runCascade` from `../docs/src/shared/demo-helpers.ts`. `docs` is a private
-		// Docusaurus app, not a referenced project, so TypeScript reads it — and the React graph behind it —
-		// as source outside this project's rootDir. No compiler option makes that legal; the fix is to move
-		// `runCascade` into a workspace this package may depend on. Checked by vitest at runtime only.
-		"./hot-db.test.ts"
-	],
+	"exclude": ["./out/**/*"],
 	"references": [{ "path": "./tsconfig.json" }]
 }

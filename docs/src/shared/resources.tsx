@@ -4,6 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+// Moved to @mailwoman/resolver-wof-wasm so the packages that resolve through a browser lookup can
+// reach them without importing from the docs site. Re-exported here so demo code is unchanged.
+export type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+
 export interface FSTProvenanceLike {
 	builtAt: string
 	stateCount: number
@@ -83,55 +87,6 @@ export interface ParseTraceLike {
 	tokens: TraceTokenLike[]
 }
 
-export interface MailwomanLookupLike {
-	findPlace: (q: {
-		text: string
-		/**
-		 * Requested placetype(s). Widened from the demo's original locality/postalcode/region union for the #861
-		 * shared-resolver convergence: `resolveTree` + its coherence passes also query `country`, `county`, and pass arrays
-		 * (the placetype-equivalence groups).
-		 */
-		placetype?: string | string[] | undefined
-		country?: string
-		/**
-		 * Point-in-bbox filter — constrains candidates to a parsed region/state's bounds.
-		 */
-		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-		limit?: number
-		postcode?: string
-		/**
-		 * Soft proximity hints (#938 — the demo's map viewport / user location). With bias present, exact-tier candidates
-		 * near a hint sort ahead of distant ones; never a hard filter. Absent → population-first order.
-		 */
-		bias?: Array<{ lat: number; lon: number; weight?: number }>
-	}) => Promise<
-		Array<{
-			id: number
-			name: string
-			placetype: string
-			/**
-			 * ISO country code of the resolved place — lets the cascade country-gate an ambiguous postcode.
-			 */
-			country?: string
-			lat: number
-			lon: number
-			score: number
-			/**
-			 * True when the candidate's name, abbreviation, or an alias EXACTLY matched the query (vs a partial token match).
-			 * The cascade accepts alias-exact hits ("New York City" → New York) the same way it accepts canonical-name
-			 * matches.
-			 */
-			exactMatch?: boolean
-			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-		}>
-	>
-	/**
-	 * Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from a slim DB that
-	 * predates the `coincident_roles` relation.
-	 */
-	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
-}
-
 export interface KindResult {
 	kind: string
 	confidence: number
@@ -191,19 +146,6 @@ export interface DemoResult {
 	 * Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state etc.).
 	 */
 	dualRoles?: DualRole[]
-}
-
-/**
- * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation (#402). Berlin resolves
- * as a locality but `role: "region"` here surfaces that it is also a federal state. `relationshipType` is the
- * gazetteer-derived class (`city-state`, `capital-seat`, …).
- */
-export interface DualRole {
-	id: number
-	name: string
-	placetype: string
-	relationshipType: string
-	role: "region" | "locality"
 }
 
 export interface ResolvedHit {
