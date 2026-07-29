@@ -31,7 +31,17 @@ if [ -n "$STAGED" ]; then
 	# `yarn lint` anyway).
 	FMT=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx|json|jsonc|md|mdx|toml|css|html)$' || true)
 	if [ -n "$FMT" ]; then
-		printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --check
+		# oxfmt exits nonzero when EVERY listed path is excluded by its ignore rules (e.g. a commit
+		# staging only generated JSON under docs/static/sbom/ — bit the 8.2.0 SBOM commit). That case
+		# is a no-op, not a failure; real format issues still fail via the output check.
+		FMT_OUT=$(printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --check 2>&1) || {
+			if printf '%s' "$FMT_OUT" | grep -q "may have been excluded by ignore rules"; then
+				echo "pre-commit: all staged format targets are oxfmt-excluded — skipping format check"
+			else
+				printf '%s\n' "$FMT_OUT"
+				exit 1
+			fi
+		}
 	fi
 
 	# Python: ruff on staged corpus-python sources; the pin-consistency check runs whenever
