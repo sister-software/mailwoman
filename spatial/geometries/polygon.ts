@@ -132,6 +132,7 @@ export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> e
 	 */
 	coordinates: P[][]
 }
+
 /**
  * Predicate for checking if a GeoJSON object is a `MultiPolygon` geometry.
  */

@@ -135,10 +135,12 @@ export async function probeFrontier(
 	// Build `<City>, <Country>` queries from cities15000 for the recoverable set, shortest first.
 	const CITIES = dataRootPath("geonames", "cities15000.txt")
 	const want = new Set(RECOVERABLE)
+
 	interface Q {
 		q: string
 		cc: string
 	}
+
 	const all: Q[] = []
 
 	for (const line of readFileSync(CITIES, "utf8").split("\n")) {
@@ -164,6 +166,7 @@ export async function probeFrontier(
 		top1Correct: number
 		probs: number[]
 	}
+
 	const per = new Map<string, Stat>()
 
 	for (const { q, cc } of queries) {

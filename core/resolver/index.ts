@@ -18,6 +18,7 @@ export {
 	hardCountrySafelistFromCoverage,
 	isPlacetypeFallback,
 } from "./types.ts"
+
 export type {
 	AddressPointHit,
 	AddressPointLookup,

@@ -14,6 +14,7 @@ const meta: Meta<typeof CopyButton> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof CopyButton>
 
 export const Default: Story = { args: { value: "copied text" } }

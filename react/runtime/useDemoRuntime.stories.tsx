@@ -126,6 +126,7 @@ const meta: Meta<typeof DemoRuntimeInspector> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof DemoRuntimeInspector>
 
 /**

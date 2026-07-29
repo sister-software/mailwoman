@@ -47,6 +47,7 @@ export type { QueryInputProps } from "./poi/QueryInput.tsx"
 export { formatDistance, loadPOIRuntime, POI_DEFAULT_TEXT, POI_PRESETS } from "./poi/runtime.ts"
 export { SubjectPanel } from "./poi/SubjectPanel.tsx"
 export type { SubjectPanelProps } from "./poi/SubjectPanel.tsx"
+
 export type {
 	CategoryRecord,
 	LiveSearchState,
@@ -62,6 +63,7 @@ export type {
 	POISubjectBase,
 	TaxonomyLookup,
 } from "./poi/types.ts"
+
 export { usePOISearch } from "./poi/usePOISearch.ts"
 export type { UsePOISearch, UsePOISearchOptions } from "./poi/usePOISearch.ts"
 
@@ -80,6 +82,7 @@ export { QueryForm } from "./pipeline/QueryForm.tsx"
 export type { QueryFormProps } from "./pipeline/QueryForm.tsx"
 export { ResolvedPlace } from "./pipeline/ResolvedPlace.tsx"
 export type { ResolvedPlaceProps } from "./pipeline/ResolvedPlace.tsx"
+
 export type {
 	DualRoleView,
 	FSTProvenance,
@@ -91,11 +94,13 @@ export type {
 	ResolvedPlaceView,
 	StageTiming,
 } from "./pipeline/types.ts"
+
 export { useParsePipeline } from "./pipeline/useParsePipeline.ts"
 export type { UseParsePipeline, UseParsePipelineOptions } from "./pipeline/useParsePipeline.ts"
 
 // ── Demo runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
 export { useDemoRuntime } from "./runtime/useDemoRuntime.ts"
+
 export type {
 	DemoAssetsLoadContext,
 	DemoLoaderState,

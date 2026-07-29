@@ -35,6 +35,7 @@ describe("distanceComparison", () => {
 	interface R {
 		coord?: LatLon
 	}
+
 	const cmp = distanceComparison<R>({ name: "geo", extract: (r) => r.coord, levels: DEFAULT_DISTANCE_LEVELS })
 	const at = (latitude: number) => ({ coord: { latitude, longitude: 0 } })
 

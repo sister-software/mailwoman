@@ -497,4 +497,5 @@ export type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
+
 export type { ParseOpts } from "@mailwoman/neural"

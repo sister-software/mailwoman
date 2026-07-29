@@ -29,6 +29,7 @@ export const LayerTier = {
 	 */
 	Private: "private",
 } as const
+
 export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
 
 /**
@@ -44,6 +45,7 @@ export const LayerFreshnessPolicy = {
 	 */
 	VersionedRefresh: "versioned-refresh",
 } as const
+
 export type LayerFreshnessPolicy = (typeof LayerFreshnessPolicy)[keyof typeof LayerFreshnessPolicy]
 
 /**

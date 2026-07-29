@@ -118,6 +118,7 @@ interface ShapeResult {
 	streetPct: number
 	pass: boolean
 }
+
 const results: ShapeResult[] = []
 
 for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {

@@ -171,21 +171,25 @@ interface USTuple {
 	region: string
 	postcode: string
 }
+
 interface FrTuple {
 	house_number: string
 	street: string
 	locality: string
 	postcode: string
 }
+
 interface AuTuple {
 	locality: string
 	region: string
 	postcode: string
 }
+
 interface NzTuple {
 	locality: string
 	postcode: string
 }
+
 interface Rendered {
 	fmt: string
 	raw: string

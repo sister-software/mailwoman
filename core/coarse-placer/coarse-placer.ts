@@ -14,6 +14,7 @@ import { $public } from "../env/index.ts"
 import { featurize } from "./featurize.ts"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
+
 export interface CoarsePlacerArtifact {
 	/**
 	 * The coarse placer's classes (the country/region codes it routes to).

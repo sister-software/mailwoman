@@ -590,6 +590,7 @@ export function parseGeoID(input: FIPSCountySubDivisionCode): ParsedGeoIDCountyS
 export function parseGeoID(input: FIPSCountyCode): ParsedGeoIDCountyLevel
 export function parseGeoID(input: AdminLevel1Code): ParsedGeoIDStateLevel
 export function parseGeoID(input: unknown): ParsedGeoID | null
+
 export function parseGeoID(input: unknown): ParsedGeoID | null {
 	if (!input) return null
 
@@ -643,6 +644,7 @@ export function formatGeoID(input: ParsedGeoIDBlockLevel): FIPSBlockGeoID
  * @category FIPS
  */
 export function formatGeoID(input: ParsedGeoIDPartial): string
+
 export function formatGeoID(input: unknown): string | null {
 	if (!input || typeof input !== "object") return null
 

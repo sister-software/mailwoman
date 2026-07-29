@@ -17,6 +17,7 @@ const meta: Meta<typeof ResolvedPlace> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof ResolvedPlace>
 
 export const Default: Story = {}

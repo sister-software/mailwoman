@@ -73,6 +73,7 @@ export interface RaceDotsResult {
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const
 
 type Ring = number[][]
+
 type PolygonCoords = Ring[]
 
 function bbox(rings: PolygonCoords): [number, number, number, number] {

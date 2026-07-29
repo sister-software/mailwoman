@@ -75,6 +75,7 @@ export async function renderPlotlyHTMLToPNG(
 			_fullLayout?: unknown
 			on?: (event: string, cb: () => void) => void
 		}
+
 		const doc = (globalThis as unknown as { document: { querySelectorAll(s: string): Iterable<unknown> } }).document
 
 		const divs = [...doc.querySelectorAll("div")]

@@ -19,6 +19,7 @@ const meta: Meta<typeof PipelineExplorer> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof PipelineExplorer>
 
 export const Ready: Story = { args: { runtime: makePipelineRuntime() } }

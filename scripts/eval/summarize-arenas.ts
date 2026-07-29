@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+
 interface Result {
 	neural_pass: boolean
 	neural_tree_valid?: boolean

@@ -195,6 +195,7 @@ export async function goldSetSample(
 		programmaticVerdict: "same-entity" | "distinct"
 		adjudication: null // ← to be filled: "same-entity" | "distinct"
 	}
+
 	const hard: HardPair[] = []
 
 	for (const provs of byAddr.values()) {

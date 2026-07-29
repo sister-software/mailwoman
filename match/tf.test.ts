@@ -43,6 +43,7 @@ describe("withTermFrequency + scorePair", () => {
 	interface Person {
 		given: string
 	}
+
 	const table = buildTermFrequencyTable(NAMES)
 
 	const model: FellegiSunterModel<Person> = {
@@ -81,6 +82,7 @@ describe("term-frequency composes with EM", () => {
 	interface Person {
 		given: string
 	}
+
 	const table = buildTermFrequencyTable(NAMES)
 
 	it("keeps the adjustment on the fitted comparison after EM re-estimates the base u", () => {

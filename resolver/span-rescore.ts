@@ -264,6 +264,7 @@ export async function findRescoreCandidate(
 		end: number
 		len: number
 	}
+
 	const spans: Span[] = []
 
 	for (let len = Math.min(maxSpan, toks.length); len >= 1; len--) {

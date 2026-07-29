@@ -356,10 +356,12 @@ export async function scorerPairwiseEval(
 		y: number
 		fs: number
 	}
+
 	interface Scored {
 		s: number
 		y: number
 	}
+
 	interface SplitScored {
 		seed: number
 		trainN: number

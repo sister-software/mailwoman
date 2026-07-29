@@ -14,6 +14,7 @@ export {
 	type LoadFromURLsOptions,
 	type LoadResult,
 } from "./loader.ts"
+
 export { DEFAULT_FIXED_SEQ_LEN, WebONNXRunner, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
 // Re-export the public neural surface so callers don't need both packages on the typed path.
@@ -29,4 +30,5 @@ export {
 	type PairIndexHeader,
 	type PlacetypePairPriorOpts,
 } from "@mailwoman/neural/browser"
+
 export type { InferResult } from "@mailwoman/neural/browser"

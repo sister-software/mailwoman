@@ -13,6 +13,7 @@ import type { POIPhraseLookup, QueryKindResult, createKindClassifier } from "@ma
 import type { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
 export type TaxonomyLookup = ReturnType<typeof createPOITaxonomyLookup>
+
 export type CategoryRecord = NonNullable<ReturnType<TaxonomyLookup["getPOICategory"]>>
 
 /**

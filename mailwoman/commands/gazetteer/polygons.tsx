@@ -78,6 +78,7 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 type Position = number[]
+
 type LinearRing = Position[]
 
 interface SprRow {

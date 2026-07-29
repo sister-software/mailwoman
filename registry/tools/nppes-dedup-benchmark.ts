@@ -731,6 +731,7 @@ export async function nppesDedupBenchmark(
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
+
 	interface LeverConfig {
 		addressFrequency?: typeof addressFrequency | false
 		collapseSpatial?: boolean

@@ -21,6 +21,7 @@ const VERSIONS: DemoVersionOption[] = [
 
 const meta: Meta<typeof VersionPicker> = { title: "Map/Panels/VersionPicker", component: VersionPicker }
 export default meta
+
 type Story = StoryObj<typeof VersionPicker>
 
 /**

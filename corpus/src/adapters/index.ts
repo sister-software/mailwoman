@@ -81,55 +81,68 @@ for (const adapter of BUILTIN_ADAPTERS) {
 
 export { BAN_ADAPTER_ID, banAdapter } from "./ban/adapter.ts"
 export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "./fcc-bdc/adapter.ts"
+
 export {
 	GEONAMES_POSTAL_ADAPTER_ID,
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 	geonamesPostalAdapter,
 } from "./geonames-postal/adapter.ts"
+
 export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "./geonames/adapter.ts"
+
 export {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
 	openaddressesAdapter,
 } from "./openaddresses/adapter.ts"
+
 export {
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 	stateHiSchoolsAdapter,
 } from "./state-hi-schools/adapter.ts"
+
 export {
 	STATE_IA_CONTRACTORS_ADAPTER_ID,
 	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 	stateIaContractorsAdapter,
 } from "./state-ia-contractors/adapter.ts"
+
 export {
 	STATE_NY_NOTARIES_ADAPTER_ID,
 	STATE_NY_NOTARIES_DEFAULT_LICENSE,
 	stateNyNotariesAdapter,
 } from "./state-ny-notaries/adapter.ts"
+
 export {
 	STATE_TX_NOTARIES_ADAPTER_ID,
 	STATE_TX_NOTARIES_DEFAULT_LICENSE,
 	stateTxNotariesAdapter,
 } from "./state-tx-notaries/adapter.ts"
+
 export { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, tigerAdapter } from "./tiger/adapter.ts"
+
 export {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 	usgovHrsaFqhcAdapter,
 } from "./usgov-hrsa-fqhc/adapter.ts"
+
 export {
 	USGOV_IMLS_PLS_ADAPTER_ID,
 	USGOV_IMLS_PLS_DEFAULT_LICENSE,
 	usgovImlsPlsAdapter,
 } from "./usgov-imls-pls/adapter.ts"
+
 export { USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAULT_LICENSE, usgovIrsBmfAdapter } from "./usgov-irs-bmf/adapter.ts"
 export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNADAdapter } from "./usgov-nad/adapter.ts"
 export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNPPESAdapter } from "./usgov-nppes/adapter.ts"
+
 export {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	usgovSamhsaTreatmentLocatorAdapter,
 } from "./usgov-samhsa-treatment-locator/adapter.ts"
+
 export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "./wof-admin-json/adapter.ts"
 export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.ts"

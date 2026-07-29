@@ -105,16 +105,19 @@ function tagHit(expected: string, actual: string | undefined): boolean {
  * A geocoder property bag — we only ever read string fields off it.
  */
 type Props = Record<string, string | undefined>
+
 /**
  * Photon / geocode.earth GeoJSON-ish response (only the bits we read).
  */
 interface FeatureResp {
 	features?: Array<{ properties?: Props }>
 }
+
 /**
  * Nominatim response: array of results, each with an `address` bag.
  */
 type NominatimResp = Array<{ address?: Props }>
+
 /**
  * One extracted assertion from the harness JSON sidecar.
  */
@@ -125,11 +128,13 @@ interface HarnessRow {
 	locale: string
 	expected: Array<Record<string, string[]>>
 }
+
 interface ScoreResult {
 	hits: number
 	total: number
 	hitTags: string[]
 }
+
 interface ResultRow {
 	locale: string
 	input: string

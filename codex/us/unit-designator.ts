@@ -213,6 +213,7 @@ export interface UnitDesignatorMatch<D extends USUnitDesignator = USUnitDesignat
  */
 export function lookupUnitDesignator<D extends USUnitDesignator>(designator: D): UnitDesignatorMatch<D>
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null
+
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null {
 	if (!input || typeof input !== "string") return null
 	const designator = US_UNIT_DESIGNATOR_LOOKUP.get(input.trim().toLowerCase())

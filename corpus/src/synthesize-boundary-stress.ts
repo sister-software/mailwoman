@@ -65,7 +65,9 @@ export type BoundaryStressTemplate =
 	// Added 2026-06-18 after the v1.6.0 probes (the shard's NARROW distribution over-fit "full structured
 	// address" and regressed OOD). These two re-balance the contexts the model actually sees:
 	| "bare-locality" // the ship-blocker fix: locality with NO street (the 84%-dropped "City, STATE" rows)
-	| "house-number-before-street" // the confounding mirror of house-number-after-street (number position)
+	| "house-number-before-street"
+
+// the confounding mirror of house-number-after-street (number position)
 
 export interface BoundaryStressBaseTuple {
 	locality: string

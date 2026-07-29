@@ -47,6 +47,7 @@ import type { Check } from "../cli-kit/index.ts"
  * (the new fourth module).
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
+
 export type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
 /**
@@ -54,6 +55,7 @@ export type ClientSurface = (typeof CLIENT_SURFACES)[number]
  * understands 3.0.x).
  */
 const FLAVORS = ["3.1", "3.0"] as const
+
 type Flavor = (typeof FLAVORS)[number]
 
 /**

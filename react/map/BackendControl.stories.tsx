@@ -13,6 +13,7 @@ import { BackendControl } from "./BackendControl.tsx"
 
 const meta: Meta<typeof BackendControl> = { title: "Map/Panels/BackendControl", component: BackendControl }
 export default meta
+
 type Story = StoryObj<typeof BackendControl>
 
 /**

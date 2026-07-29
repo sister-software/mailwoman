@@ -27,6 +27,7 @@ const meta: Meta<typeof POIExplorer> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof POIExplorer>
 
 export const IntentOnly: Story = {}

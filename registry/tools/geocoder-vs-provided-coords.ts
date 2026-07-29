@@ -97,10 +97,12 @@ export async function geocoderVsProvidedCoords(
 	const geocoder = await options.createGeocoder()
 
 	report?.(`[B] geocoding ≤${MAX} TX nursing facilities + measuring delta to provided coords…`)
+
 	interface Row {
 		deltaM: number
 		tier: string
 	}
+
 	const results: Row[] = []
 	let scanned = 0
 	let noCoord = 0

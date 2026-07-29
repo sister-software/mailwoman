@@ -13,6 +13,7 @@ import type { Tagged } from "type-fest"
  * The tilesets available in the Nexus Tile API.
  */
 export type TileSetSourceID<T extends string = string> = Tagged<string, "TileSetSourceID", T>
+
 /**
  * Declares a tileset identifier.
  */

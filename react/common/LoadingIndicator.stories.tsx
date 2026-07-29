@@ -14,6 +14,7 @@ const meta: Meta<typeof LoadingIndicator> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof LoadingIndicator>
 
 export const Spinner: Story = { args: { mode: "spinner", label: "Loading…" } }

@@ -41,7 +41,9 @@ export interface WOFBaseProperties {
  * which wins over a colloquial one.
  */
 export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
+
 export type WOFNameKind = (typeof WOFNameKinds)[number]
+
 export type LanguageSpecificKey = `name:${Alpha3bLanguageCode}_x_${WOFNameKind}`
 
 export type WOFLanguageProperties = Partial<Record<LanguageSpecificKey, string | string[]>>

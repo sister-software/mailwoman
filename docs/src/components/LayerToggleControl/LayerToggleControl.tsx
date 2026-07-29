@@ -111,6 +111,7 @@ export class LayerToggleControl implements IControl {
 			layerIds: string[]
 			visible: boolean
 		}
+
 		const buckets = new Map<string, Bucket>()
 
 		for (const layer of style.layers) {

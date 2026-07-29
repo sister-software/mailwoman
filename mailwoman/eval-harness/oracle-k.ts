@@ -246,6 +246,7 @@ export function segmentDecodeKBest(
 		score: number
 		segments: Array<[number, number, string]>
 	}
+
 	const dp: Array<Map<string, Entry[]>> = Array.from({ length: wordCount + 1 }, () => new Map())
 	dp[0]!.set("START", [{ score: 0, segments: [] }])
 

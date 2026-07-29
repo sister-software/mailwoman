@@ -21,6 +21,7 @@ const meta: Meta<typeof ResultPanel> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof ResultPanel>
 
 /**

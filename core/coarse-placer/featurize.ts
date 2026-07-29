@@ -64,6 +64,7 @@ export const COARSE_CLASSES = [
 	"AU",
 	"OTHER",
 ] as const
+
 export type CoarseClass = (typeof COARSE_CLASSES)[number]
 
 /**

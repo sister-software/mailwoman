@@ -132,6 +132,7 @@ const N = Number(values["n"] || "200")
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------
 const db = new DatabaseSync(DB, { readOnly: true })
+
 interface Commune {
 	id: number
 	commune: string
@@ -177,6 +178,7 @@ const resolveOpts = { defaultCountry: "FR" }
  * instead of averaging over different resolved subsets.
  */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
+
 type State = "dropped" | "merged" | "split"
 
 async function resolveState(c: Commune, state: State): Promise<{ km: number; resolved: boolean }> {

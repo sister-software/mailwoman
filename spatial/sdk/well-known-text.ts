@@ -27,6 +27,7 @@ export function wellKnownGeometryToGeoJSON<T = GeometryLiteral>(wellKnownText: s
  * @category Geo
  */
 export function wellKnownGeometryToGeoJSON<T = GeometryLiteral>(input: Buffer | string): T
+
 export function wellKnownGeometryToGeoJSON<T = GeometryLiteral>(input: Buffer | string) {
 	return wkx.Geometry.parse(input).toGeoJSON() as T
 }

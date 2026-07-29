@@ -301,6 +301,7 @@ export function matchTrailingSuffix(street: string): { canonical: USStreetSuffix
  * The USPS suffix record, under its original isp-nexus name. Aliases {@link US_STREET_SUFFIX_VARIANTS}.
  */
 export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
+
 export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
 
 /**
@@ -337,6 +338,7 @@ export interface StreetSuffixMatch<S extends StreetSuffix = StreetSuffix> {
  */
 export function lookupStreetSuffix<S extends StreetSuffix>(suffix: S): StreetSuffixMatch<S>
 export function lookupStreetSuffix(input: string | null | undefined): StreetSuffixMatch | null
+
 export function lookupStreetSuffix(input: string | null | undefined): StreetSuffixMatch | null {
 	if (!input || typeof input !== "string") return null
 	const suffix = US_STREET_SUFFIX_LOOKUP.get(input.trim().toLowerCase())

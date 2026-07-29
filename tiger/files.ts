@@ -89,6 +89,7 @@ export const TIGERLevelOrder = [
  * @internal
  */
 export const TIGERCurrentVintage = 2023
+
 export type TIGERCurrentVintage = typeof TIGERCurrentVintage
 
 //#endregion

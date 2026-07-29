@@ -40,6 +40,7 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
  * substituted instead.
  */
 const MAX_REAL_UNIT_ID_LENGTH = 6
+
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff

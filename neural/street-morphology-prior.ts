@@ -104,6 +104,7 @@ export function buildStreetMorphologyEmissionPriors(
 		startGroupIdx: number
 		endGroupIdx: number // inclusive
 	}
+
 	const affixMatches: AffixMatch[] = []
 
 	// Pass 1 — walk every contiguous subpath, collect accepting morphology matches, and apply

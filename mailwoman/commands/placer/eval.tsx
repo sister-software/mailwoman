@@ -47,6 +47,7 @@ const OptionsSchema = zod.object({
 export { ArgsSchema as args, OptionsSchema as options }
 
 type Options = zod.infer<typeof OptionsSchema>
+
 type Kind = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)

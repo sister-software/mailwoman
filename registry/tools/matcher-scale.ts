@@ -115,6 +115,7 @@ export async function matcherScale(
 		wallMs: number
 		rssBytes: number
 	}
+
 	const rows: Measurement[] = []
 
 	for (const n of SIZES) {

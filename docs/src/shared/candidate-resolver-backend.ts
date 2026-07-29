@@ -30,6 +30,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
 type LookupHit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
+
 type BBox = NonNullable<LookupHit["bbox"]>
 
 /**

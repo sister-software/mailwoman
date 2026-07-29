@@ -81,6 +81,7 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 
 	return state
 }
+
 /* oxlint-enable react-hooks/exhaustive-deps */
 
 /**

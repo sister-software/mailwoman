@@ -67,6 +67,7 @@ const meta: Meta<typeof StatefulDemo> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof StatefulDemo>
 
 /**

@@ -35,6 +35,7 @@ const MIN_DIGITS_FOR_COMMA_GROUPING = 4
  * Digits a box number needs before a hyphen group is plausible (`12-34`).
  */
 const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
+
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff

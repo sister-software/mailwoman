@@ -38,6 +38,7 @@ function flatten(node: AddressNode, out: AddressNode[]): void {
  */
 export function decodeAsTuples(tree: AddressTree): Array<[ComponentTag, string]>
 export function decodeAsTuples(tree: AddressTree, opts: SerializeTuplesOpts): Array<[ComponentTag | "unknown", string]>
+
 export function decodeAsTuples(
 	tree: AddressTree,
 	opts: SerializeTuplesOpts = {}

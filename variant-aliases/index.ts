@@ -17,6 +17,7 @@
  */
 
 export { VARIANT_ALIAS_VERSION, getAllAliases, lookupVariantAliases } from "./lookup.ts"
+
 export type {
 	AliasLookupResult,
 	AmenityAlias,

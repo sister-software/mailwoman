@@ -41,7 +41,9 @@ export interface HouseVenueBaseTuple {
 
 export type HouseVenueTemplate =
 	| "venue-after-street" // "123 Main St, Sunrise Bakery, Springfield, IL 02101"
-	| "venue-before-street" // "Sunrise Bakery, 123 Main St, Springfield, IL 02101"
+	| "venue-before-street"
+
+// "Sunrise Bakery, 123 Main St, Springfield, IL 02101"
 
 export interface HouseVenueSynthesisOpts {
 	random?: () => number

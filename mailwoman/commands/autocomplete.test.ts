@@ -35,6 +35,7 @@ interface FSTNodeInternal {
 	edges: Map<string, number>
 	places: FixtureEntry[]
 }
+
 type FixtureEntry = FixturePlace & { lat: number; lon: number }
 
 /**

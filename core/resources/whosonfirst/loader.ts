@@ -21,6 +21,7 @@ import { parsePlacetypeSource } from "./placetypes/admin.ts"
  * If a value is present in this index, it means that the value is a valid value in at least one language.
  */
 export type WhosOnFirstLocaleIndex = Map<string, Set<string>>
+
 export type ReadonlyWhosOnFirstIndex = ReadonlyMap<string, ReadonlySet<string>>
 
 export interface WOFCacheOptions {

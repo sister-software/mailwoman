@@ -42,6 +42,7 @@ import { vi } from "vitest"
 const WRAPPED = Symbol.for("mailwoman.react.act-wrapped")
 
 type AnyFn = (...args: unknown[]) => unknown
+
 type TaggableFn = AnyFn & { [WRAPPED]?: true }
 
 /**

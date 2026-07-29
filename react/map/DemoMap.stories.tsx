@@ -35,6 +35,7 @@ const meta: Meta<typeof DemoMap> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof DemoMap>
 
 /**

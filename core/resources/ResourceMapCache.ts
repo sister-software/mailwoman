@@ -10,6 +10,7 @@
 export type DisposableLike = Disposable | AsyncDisposable
 
 export type ResourceConstructor<K extends PropertyKey, R extends DisposableLike> = new (key: K) => R
+
 export type ResourceFactory<K extends PropertyKey, R extends DisposableLike> = (key: K) => R | Promise<R>
 
 export type ResourceFactoryLike<K extends PropertyKey = PropertyKey, R extends DisposableLike = DisposableLike> =

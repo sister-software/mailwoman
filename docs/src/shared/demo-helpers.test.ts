@@ -18,6 +18,7 @@ import { runCascade } from "./demo-helpers.ts"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
 type FindPlaceQuery = Parameters<MailwomanLookupLike["findPlace"]>[0]
+
 type Hit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
 
 interface StubPlace extends Hit {

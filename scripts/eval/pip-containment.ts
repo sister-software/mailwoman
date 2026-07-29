@@ -47,6 +47,7 @@ function adminRoots(): string[] {
 const ADMIN_ROOTS = adminRoots()
 
 type Ring = number[][]
+
 type Geometry = { type?: string; coordinates?: unknown } | null
 
 const geomCache = new Map<number, Geometry>()

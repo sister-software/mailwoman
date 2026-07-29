@@ -15,6 +15,7 @@ const meta: Meta<typeof PresetChips> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof PresetChips>
 
 export const Default: Story = {

@@ -21,6 +21,7 @@ const VERSIONS: DemoVersionOption[] = [
 
 const meta: Meta<typeof CompareToggle> = { title: "Map/Panels/CompareToggle", component: CompareToggle }
 export default meta
+
 type Story = StoryObj<typeof CompareToggle>
 
 /**

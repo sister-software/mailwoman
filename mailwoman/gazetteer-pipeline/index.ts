@@ -365,6 +365,7 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 
 	return `${y}-${m}-${d}${suffix}`
 }
+
 export * from "./coverage-manifest.ts"
 export * from "./defaults.ts"
 export * from "./fts.ts"

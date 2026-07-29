@@ -336,6 +336,7 @@ export async function scorerCrossStateEval(
 	const lrScorer = (a: SourceRecord, b: SourceRecord) => lrSc(featurize(a, b))
 
 	report?.(`[E] clustering ${EVAL_STATE} records (FS baseline vs GBT vs LR, trained on ${TRAIN_STATE})…`)
+
 	interface ArmScore {
 		precision: number
 		recall: number

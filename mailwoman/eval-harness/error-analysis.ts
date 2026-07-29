@@ -180,6 +180,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		confused: number
 		hallucinated: number
 	}
+
 	const perTag = new Map<string, TagStats>()
 
 	function tagStat(tag: string): TagStats {

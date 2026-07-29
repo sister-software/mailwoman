@@ -684,6 +684,7 @@ export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>
 export function expandPlacetypeFilter(placetypes: null): null
 export function expandPlacetypeFilter(placetypes: readonly string[]): string[]
 export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null
+
 export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null {
 	if (!placetypes) return null
 	const out: string[] = []

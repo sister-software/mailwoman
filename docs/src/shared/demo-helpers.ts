@@ -687,6 +687,7 @@ interface SitusLike {
 		locality?: string
 	}): Promise<{ lat: number; lon: number } | null>
 }
+
 interface InterpLike {
 	find(q: {
 		street: string

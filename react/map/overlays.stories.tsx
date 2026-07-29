@@ -73,6 +73,7 @@ const meta: Meta<typeof OverlayScene> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof OverlayScene>
 
 /**

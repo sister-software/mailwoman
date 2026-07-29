@@ -47,6 +47,7 @@ export interface LocaleBaseTuple {
 	region?: string
 	postcode?: string
 }
+
 /**
  * @deprecated Alias — use LocaleBaseTuple.
  */
@@ -57,6 +58,7 @@ export interface SynthesizedLocaleRow {
 	components: CanonicalRow["components"]
 	locale: string
 }
+
 /**
  * @deprecated Alias — use SynthesizedLocaleRow.
  */
@@ -92,6 +94,7 @@ export interface LocaleSynthesisOpts {
 	 */
 	nativeHouseJoin?: "template" | "space"
 }
+
 /**
  * @deprecated Alias — use LocaleSynthesisOpts.
  */

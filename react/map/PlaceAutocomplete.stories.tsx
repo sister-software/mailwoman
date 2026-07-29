@@ -15,6 +15,7 @@ import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 
 const meta: Meta<typeof PlaceAutocomplete> = { title: "Map/Panels/PlaceAutocomplete", component: PlaceAutocomplete }
 export default meta
+
 type Story = StoryObj<typeof PlaceAutocomplete>
 
 /**

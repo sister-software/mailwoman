@@ -37,6 +37,7 @@ export const CategorySource = {
 	 */
 	MailwomanInfra: "mailwoman-infra",
 } as const
+
 export type CategorySource = (typeof CategorySource)[keyof typeof CategorySource]
 
 /**

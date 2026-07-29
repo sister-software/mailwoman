@@ -88,6 +88,7 @@ const PLACETYPE_RANK: Record<string, number> = {
  * The pre-epoch (postcode-point) convention — continuity runs against pre-2026-07-04 dumps only.
  */
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
+
 interface Resolved {
 	id: number
 	name: string

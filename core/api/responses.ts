@@ -69,6 +69,7 @@ export type ExtractResponseBodyData<Body> = Body extends {
  * @internal
  */
 export function pluckResponseData<Body>(responseContainer: ResponseContainer<Body>): ExtractResponseBodyData<Body>
+
 export function pluckResponseData<Body>(input: ResponseContainer<Body> | Body): ExtractResponseBodyData<Body> {
 	const body = pluckResponseBody(input)
 

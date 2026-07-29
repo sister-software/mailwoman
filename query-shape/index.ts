@@ -18,6 +18,7 @@ export { computeQueryShape } from "./compute.ts"
 export { detectKnownFormats } from "./known-formats.ts"
 export { detectRegionAbbreviations } from "./region-abbreviations.ts"
 export { segment } from "./segmentation.ts"
+
 export type {
 	CharacterClass,
 	ComputeQueryShapeOpts,

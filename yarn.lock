@@ -6943,14 +6943,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@sister.software/oxlint-config@npm:10.0.0"
+"@sister.software/oxlint-config@portal:../universe/oxlint-config::locator=%40mailwoman%2Funiverse%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@sister.software/oxlint-config@portal:../universe/oxlint-config::locator=%40mailwoman%2Funiverse%40workspace%3A."
   peerDependencies:
     oxlint: ">=1.75.0 <2"
-  checksum: 10/6dcce90e3ba15036eea6581b878085a9009e144ad82362be04e3d1310d87a9688d5b09bffe82b64e7f383cde926661e8cc244ed31bab925313309524c49bae20
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@sister.software/tsconfig@npm:^10.0.0":
   version: 10.0.0

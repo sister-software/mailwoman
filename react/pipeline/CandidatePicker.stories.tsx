@@ -23,6 +23,7 @@ const meta: Meta<typeof CandidatePicker> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof CandidatePicker>
 
 export const Default: Story = {}

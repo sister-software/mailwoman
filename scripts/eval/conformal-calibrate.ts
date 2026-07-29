@@ -289,6 +289,7 @@ async function main(): Promise<void> {
 		claimedRadiusM: number
 		tier: "address_point" | "interpolated"
 	}
+
 	const resolved: Row[] = []
 	let nTotal = 0
 	let nNoStreetHit = 0
