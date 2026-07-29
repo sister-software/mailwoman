@@ -132,9 +132,22 @@ export function buildSoftFeatures(
 		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
 		: undefined
 
-	const localitySurface = sources.localitySurfaceLexicon
-		? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
-		: undefined
+	// STREET-CONTEXT GATE for the locality channel (2026-07-29, the 8.2.0 pre-ship gauntlet catch;
+	// precedent: the #1315 FST street-context gate). Locality-surface evidence feeds ONLY when the
+	// street painter found context on this input. On a bare place-name lookup ("Melbourne",
+	// "Sydney, Australia") homograph-flagged locality evidence ROTATES the parse (locality → region/
+	// street — the Washington-DC class, surviving in the fragment register on world-city homographs)
+	// while the resolver already owns that register outright; withholding = the curriculum-trained
+	// absence identity, the same declared-ablation semantics as formatted mode. Street-bearing
+	// fragments — every measured win class (homonym/bare-street/particle rows all carry a street-type
+	// word) — keep the full bundle. The street channel itself needs no gate: it paints nothing on a
+	// street-word-less input by construction.
+	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
+
+	const localitySurface =
+		sources.localitySurfaceLexicon && (streetContext || sources.streetTypeLexicon === undefined)
+			? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
+			: undefined
 
 	return {
 		...(anchor ? { anchor } : {}),

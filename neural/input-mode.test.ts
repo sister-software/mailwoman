@@ -60,6 +60,22 @@ describe("inputMode register gating (Decision A)", () => {
 		expect(seen.evidence[0]).toBeUndefined()
 	})
 
+	it("street-context gate: a bare place name feeds NO locality evidence even in fragmented mode", async () => {
+		// The 8.2.0 pre-ship gauntlet catch: homograph-flagged locality evidence on a bare world-city
+		// lookup rotates the parse (locality → region/street). No street context → locality channel
+		// withheld (the declared-ablation identity); the street channel is inert on such input anyway.
+		const seen = { evidence: [] as unknown[] }
+		const classifier = await makeClassifier(seen)
+
+		await classifier.parse("Springfield", { inputMode: "fragmented" })
+		expect(seen.evidence).toHaveLength(1)
+		// The street channel rides (all-zero confidence on a street-word-less input — inert by
+		// construction); the LOCALITY channel is what the gate withholds.
+		const evidence = seen.evidence[0] as { streetType?: unknown; localitySurface?: unknown }
+		expect(evidence.localitySurface).toBeUndefined()
+		expect(evidence.streetType).toBeDefined()
+	})
+
 	it("fragmented mode (and the bare-library default) feeds them", async () => {
 		const seen = { evidence: [] as unknown[] }
 		const classifier = await makeClassifier(seen)

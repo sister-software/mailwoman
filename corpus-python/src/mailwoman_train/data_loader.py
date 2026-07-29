@@ -450,6 +450,7 @@ def iter_rows(
     augment_case_prob: float = 0.0,
     augment_punct_drop_prob: float = 0.0,
     augment_upper_case_prob: float = 0.0,
+    augment_ordinal_prob: float = 0.0,
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
@@ -506,6 +507,7 @@ def iter_rows(
         or augment_case_prob > 0
         or augment_punct_drop_prob > 0
         or augment_upper_case_prob > 0
+        or augment_ordinal_prob > 0
     )
 
     def _emit(row: dict) -> Iterator[dict]:
@@ -522,6 +524,7 @@ def iter_rows(
                 augment_case_prob,
                 augment_punct_drop_prob,
                 augment_upper_case_prob,
+                augment_ordinal_prob,
             ):
                 if affix_relabel_lexicon is not None:
                     augmented = {**augmented, "labels": list(augmented["labels"])}
@@ -614,6 +617,7 @@ def iter_encoded(
         augment_case_prob=getattr(cfg_data, "augment_case_prob", 0.0),
         augment_punct_drop_prob=getattr(cfg_data, "augment_punct_drop_prob", 0.0),
         augment_upper_case_prob=getattr(cfg_data, "augment_upper_case_prob", 0.0),
+        augment_ordinal_prob=getattr(cfg_data, "augment_ordinal_prob", 0.0),
         affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code

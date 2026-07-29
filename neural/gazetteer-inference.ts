@@ -25,6 +25,16 @@ import type { TokenizedPiece } from "./tokenizer.ts"
 export const GAZETTEER_FEATURE_DIM = 5
 
 /**
+ * Street-type evidence channel width (Option-A bundle) — the runner zero-fallback + lexicon feature_dim contract.
+ */
+export const STREET_TYPE_FEATURE_DIM = 1
+
+/**
+ * Locality-surface evidence channel width (locality + locality_homograph).
+ */
+export const LOCALITY_SURFACE_FEATURE_DIM = 2
+
+/**
  * The loaded lexicon — the JSON shape from build-gazetteer-anchor-lexicon.mjs.
  */
 export interface GazetteerLexicon {

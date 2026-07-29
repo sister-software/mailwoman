@@ -48,12 +48,12 @@ import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 /**
- * --- current default (npm v5.9.0 = demo defaultVersion v5.9.0) -------------- 6.5.0 ships the v381-punct-fix-full
- * (step-8000) int8 model + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED since 6.1.0; only the model moved —
- * the no-fragment digit-ownership shard + the #1101 punct-drop augmentation). Bump these two paths on each ship; the
- * expected md5s live in model-card.json `files_md5` (single source — see the header).
+ * --- current default -------------- 6.7.0-bundle ships the v3.23.0-bundle-guard step-4000 int8 (the Option-A evidence
+ * bundle; digit-guarded lexicons + inputMode register gating) + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED
+ * since 6.1.0). Bump these two paths on each ship; the expected md5s live in model-card.json `files_md5` (single source
+ * — see the header).
  */
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v3240-ordinal-step-004000-int8.onnx")
 /**
  * Tokenizer the workspace links when `$MAILWOMAN_DEV_TOKENIZER` is unset.
  */

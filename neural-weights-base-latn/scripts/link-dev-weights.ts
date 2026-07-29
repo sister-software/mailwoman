@@ -30,7 +30,7 @@ function linkForce(src: string, dest: string): void {
  * Model + tokenizer: same source as the en-us workspace uses ($MAILWOMAN_DEV_MODEL env override supported).
  */
 const SRC_MODEL =
-	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
+	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v3240-ordinal-step-004000-int8.onnx")
 
 /**
  * Tokenizer actually linked — the environment override if set, otherwise the card's default.
