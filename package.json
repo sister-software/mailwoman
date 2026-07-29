@@ -85,7 +85,8 @@
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
 		"test:unit": "vitest --exclude ./mailwoman/test",
-		"typecheck": "run-s compile typecheck:tests",
+		"typecheck": "run-s compile typecheck:tests typecheck:docs",
+		"typecheck:docs": "tsc -p docs/tsconfig.json --noEmit",
 		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
 		"typecheck:tests": "node scripts/typecheck-tests.ts"
 	},

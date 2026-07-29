@@ -138,7 +138,7 @@ export const GuidedTour: React.FC = () => {
 				if (!existing) return prev
 				next.set(stopID, { ...existing, busy: true, error: null, result: null })
 
-				return innerNext
+				return next
 			})
 
 			try {
@@ -180,7 +180,7 @@ export const GuidedTour: React.FC = () => {
 					const next = new Map(prev)
 					next.set(stopID, { ...next.get(stopID)!, result, busy: false, error: null })
 
-					return innerNext
+					return next
 				})
 			} catch (error) {
 				console.error("Tour parse error", error)
@@ -191,7 +191,7 @@ export const GuidedTour: React.FC = () => {
 					const next = new Map(prev)
 					next.set(stopID, { ...next.get(stopID)!, result: null, busy: false, error: message })
 
-					return innerNext
+					return next
 				})
 			}
 		},

@@ -43,11 +43,12 @@ const DashboardMap: React.FC = () => {
 		return styleComposer.toJSON()
 	}, [tileSetSources])
 
-	const persistenceFrameRef = useRef<number>(-1)
+	// Whatever setTimeout returns here — a number in the DOM lib, a Timeout under @types/node.
+	const persistenceFrameRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	const handleViewStateChange = useCallback(
 		(event: ViewStateChangeEvent) => {
-			globalThis.clearTimeout(persistenceFrameRef.current)
+			if (persistenceFrameRef.current !== null) globalThis.clearTimeout(persistenceFrameRef.current)
 
 			persistenceFrameRef.current = globalThis.setTimeout(() => {
 				persistWebviewState((currentWebViewState) => ({

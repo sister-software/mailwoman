@@ -87,6 +87,13 @@ jobs:
       - name: Typecheck tests
         run: yarn typecheck:tests
 
+      # docs/ is a Docusaurus app, so it is not in `tsc -b` — which meant nothing checked it. Three real
+      # bugs were sitting there when this step was added: a ReferenceError in a React state updater, a
+      # shorthand property key renamed out from under its consumer, and a timer ref typed for the wrong
+      # runtime. Same gap as the test files, one workspace over.
+      - name: Typecheck docs
+        run: yarn typecheck:docs
+
       # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
       # "command not found: uvx", exit 127).
       - name: Setup uv (ruff for lint:python)
