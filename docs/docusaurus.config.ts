@@ -271,6 +271,11 @@ const config: Config = {
 					position: "left",
 				},
 				{
+					to: "/docs/licensing/pricing/",
+					label: "Pricing",
+					position: "left",
+				},
+				{
 					to: "/docs/licensing/",
 					label: "Licensing",
 					position: "left",
