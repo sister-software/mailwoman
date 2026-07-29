@@ -12,7 +12,10 @@
 		"noEmit": true,
 		"emitDeclarationOnly": false,
 		"composite": false,
-		"incremental": false
+		"incremental": false,
+		// The loader tests stub browser fetch (RequestInfo, Response), which the build project does not
+		// need — loader.ts is dual-target and its node path uses Buffer. Only the tests are browser-only.
+		"lib": ["ESNext", "DOM", "DOM.Iterable"]
 	},
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"exclude": ["./out/**/*"],

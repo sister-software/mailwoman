@@ -143,14 +143,14 @@ describe("LABELED_ROW_SCHEMA", () => {
 	})
 
 	it("marks locale / synth_method / synth_base_id optional", () => {
-		expect(LABELED_ROW_SCHEMA.locale.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_method.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_base_id.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.locale!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.synth_method!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.synth_base_id!.optional).toBe(true)
 	})
 
 	it("marks tokens / labels REPEATED", () => {
-		expect(LABELED_ROW_SCHEMA.tokens.repeated).toBe(true)
-		expect(LABELED_ROW_SCHEMA.labels.repeated).toBe(true)
+		expect(LABELED_ROW_SCHEMA.tokens!.repeated).toBe(true)
+		expect(LABELED_ROW_SCHEMA.labels!.repeated).toBe(true)
 	})
 
 	it("marks the span triple REPEATED, offsets as INT32 (#519)", () => {

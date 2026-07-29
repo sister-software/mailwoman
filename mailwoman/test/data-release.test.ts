@@ -33,7 +33,11 @@ afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
  */
 class FakeAddressPoints {
 	closed = false
-	constructor(public dbPath: string) {}
+	dbPath: string
+
+	constructor(dbPath: string) {
+		this.dbPath = dbPath
+	}
 	find() {
 		return null
 	}
@@ -44,7 +48,11 @@ class FakeAddressPoints {
 
 class FakeInterp {
 	closed = false
-	constructor(public opts: { dbPath: string }) {}
+	opts: { dbPath: string }
+
+	constructor(opts: { dbPath: string }) {
+		this.opts = opts
+	}
 	find() {
 		return null
 	}

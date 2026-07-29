@@ -151,7 +151,7 @@ describe("tokenizeForClass", () => {
 	it("splits on script boundaries (CJK vs Latin)", () => {
 		const tokens = tokenizeForClass("東京Tokyo")
 		expect(tokens).toHaveLength(2)
-		expect(tokens[0].body).toBe("東京")
-		expect(tokens[1].body).toBe("Tokyo")
+		expect(tokens[0]!.body).toBe("東京")
+		expect(tokens[1]!.body).toBe("Tokyo")
 	})
 })

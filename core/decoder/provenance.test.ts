@@ -137,24 +137,24 @@ describe("Phase 4.1 source provenance", () => {
 
 		test("omits source when only sourceID is set", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { sourceID: "anon" })
-			expect(tree.roots[0].source).toBeUndefined()
-			expect(tree.roots[0].sourceID).toBe("anon")
+			expect(tree.roots[0]!.source).toBeUndefined()
+			expect(tree.roots[0]!.sourceID).toBe("anon")
 			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="anon"`)
 		})
 
 		test("omits sourceID when only source is set", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { source: "rule" })
-			expect(tree.roots[0].source).toBe("rule")
-			expect(tree.roots[0].sourceID).toBeUndefined()
+			expect(tree.roots[0]!.source).toBe("rule")
+			expect(tree.roots[0]!.sourceID).toBeUndefined()
 			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="rule"`)
 		})
 
 		test("no opts → no src attribute (backwards compatible)", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS)
-			expect(tree.roots[0].source).toBeUndefined()
-			expect(tree.roots[0].sourceID).toBeUndefined()
+			expect(tree.roots[0]!.source).toBeUndefined()
+			expect(tree.roots[0]!.sourceID).toBeUndefined()
 			const xml = decodeAsXML(tree)
 			expect(xml).not.toContain(`src=`)
 		})

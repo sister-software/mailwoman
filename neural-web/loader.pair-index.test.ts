@@ -22,11 +22,15 @@ const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
 	class Tensor {
-		constructor(
-			public readonly type: string,
-			public readonly data: BigInt64Array | Float32Array,
-			public readonly dims: readonly number[]
-		) {}
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
 	}
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
@@ -117,7 +121,7 @@ function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch 
 			return new Response(null, { status: outcome, statusText: outcome === 404 ? "Not Found" : "Server Error" })
 		}
 
-		return new Response(outcome)
+		return new Response(outcome.slice().buffer)
 	}) as unknown as typeof fetch
 }
 

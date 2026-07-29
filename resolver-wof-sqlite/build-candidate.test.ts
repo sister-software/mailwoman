@@ -158,12 +158,12 @@ describe("buildCandidateTable", () => {
 			const [chi] = probe(db, normalizeLocalityForKey("Chicago"))
 			expect(chi).toBeDefined()
 			// Denormalized: the row carries everything the resolver needs, no join to spr.
-			expect(chi.name).toBe("Chicago")
-			expect(chi.country).toBe("US")
-			expect(chi.placetype).toBe("locality")
-			expect(chi.latitude).toBeCloseTo(41.88, 2)
-			expect(chi.min_lat).toBeCloseTo(41.6, 2)
-			expect(chi.is_primary).toBe(1)
+			expect(chi!.name).toBe("Chicago")
+			expect(chi!.country).toBe("US")
+			expect(chi!.placetype).toBe("locality")
+			expect(chi!.latitude).toBeCloseTo(41.88, 2)
+			expect(chi!.min_lat).toBeCloseTo(41.6, 2)
+			expect(chi!.is_primary).toBe(1)
 
 			// Deprecated row must not resolve.
 			expect(probe(db, normalizeLocalityForKey("Old Town"))).toHaveLength(0)

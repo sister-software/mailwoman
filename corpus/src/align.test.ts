@@ -394,8 +394,8 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		expect(result.row.raw).toBe(nfcRaw)
 
 		// Spans located over the NFC raw → slicing by each span yields the component text.
-		const located = result.row.span_tags.map(
-			(tag, i) => `${tag}:${nfcRaw.slice(result.row.span_starts[i]!, result.row.span_ends[i]!)}`
+		const located = result.row.span_tags!.map(
+			(tag, i) => `${tag}:${nfcRaw.slice(result.row.span_starts![i]!, result.row.span_ends![i]!)}`
 		)
 
 		expect(located).toContain("locality:Paris")

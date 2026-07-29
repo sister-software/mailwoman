@@ -28,11 +28,15 @@ const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
 	class Tensor {
-		constructor(
-			public readonly type: string,
-			public readonly data: BigInt64Array | Float32Array,
-			public readonly dims: readonly number[]
-		) {}
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
 	}
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
@@ -99,11 +103,15 @@ function makeFetch(statusFor: (url: string) => number): typeof fetch {
 		}
 
 		if (url.includes("postcode-us")) {
-			return new Response(serializePostcodeBinary([{ postcode: "10001", country: "US", lat: 40.7478, lon: -73.985 }]))
+			return new Response(
+				serializePostcodeBinary([{ postcode: "10001", country: "US", lat: 40.7478, lon: -73.985 }]).slice().buffer
+			)
 		}
 
 		if (url.includes("postcode-de")) {
-			return new Response(serializePostcodeBinary([{ postcode: "10115", country: "DE", lat: 52.53, lon: 13.38 }]))
+			return new Response(
+				serializePostcodeBinary([{ postcode: "10115", country: "DE", lat: 52.53, lon: 13.38 }]).slice().buffer
+			)
 		}
 
 		return new Response(new Uint8Array([1, 2, 3])) // model / tokenizer — mocked downstream

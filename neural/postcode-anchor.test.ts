@@ -23,9 +23,13 @@ import {
  * A fake gazetteer: exact-match map from normalized postcode → hits.
  */
 class FakeResolver implements PostcodeResolver {
-	constructor(private readonly map: Record<string, PostcodePlace[]>) {}
+	readonly #map: Record<string, PostcodePlace[]>
+
+	constructor(map: Record<string, PostcodePlace[]>) {
+		this.#map = map
+	}
 	lookup(postcode: string): PostcodePlace[] {
-		return this.map[postcode] ?? []
+		return this.#map[postcode] ?? []
 	}
 }
 

@@ -99,14 +99,14 @@ describe("fr-fragment: the split", () => {
 describe("fr-fragment: the forms", () => {
 	it("mints streets with NO house number — the class the existing recipe cannot reach", async () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 0 })
-		const streetRows = rows.filter((r) => String(r.synth_method).startsWith("fr-fragment:") && r.components.street)
+		const streetRows = rows.filter((r) => String(r.synth_method).startsWith("fr-fragment:") && r.components!.street)
 
 		expect(streetRows.length).toBeGreaterThan(0)
 
 		for (const row of streetRows) {
-			expect(row.components.house_number, `${row.raw} carries a house number at hnProb=0`).toBeUndefined()
+			expect(row.components!.house_number, `${row.raw} carries a house number at hnProb=0`).toBeUndefined()
 			// The whole point: the street stands alone, no locality to lean on either.
-			expect(row.components.locality).toBeUndefined()
+			expect(row.components!.locality).toBeUndefined()
 		}
 	})
 
@@ -114,18 +114,18 @@ describe("fr-fragment: the forms", () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 0 })
 		const montmartre = rows.find((r) => String(r.raw) === "Rue de la Paix")!
 
-		expect(montmartre.labels[0]).toBe("B-street_prefix")
-		expect(String(montmartre.labels.join(" "))).not.toContain("locality")
+		expect(montmartre.labels![0]).toBe("B-street_prefix")
+		expect(String(montmartre.labels!.join(" "))).not.toContain("locality")
 	})
 
 	it("still mints numbered rows so the licence is not UNLEARNED", async () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 1 })
-		const numbered = rows.filter((r) => r.components.house_number)
+		const numbered = rows.filter((r) => r.components!.house_number)
 
 		expect(numbered.length).toBeGreaterThan(0)
 
 		for (const row of numbered) {
-			expect(row.labels[0]).toBe("B-house_number")
+			expect(row.labels![0]).toBe("B-house_number")
 		}
 	})
 })
@@ -138,8 +138,8 @@ describe("fr-fragment: the counter-distribution", () => {
 		expect(negative.length).toBeGreaterThan(0)
 
 		for (const row of negative) {
-			expect(String(row.labels.join(" ")), `${row.raw} leaked a street label`).not.toContain("street")
-			expect(row.components.locality).toBeDefined()
+			expect(String(row.labels!.join(" ")), `${row.raw} leaked a street label`).not.toContain("street")
+			expect(row.components!.locality).toBeDefined()
 		}
 	})
 

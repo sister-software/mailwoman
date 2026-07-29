@@ -30,9 +30,13 @@ const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.
  * Fake runner emitting a canned logits matrix regardless of input — the `trace-parse.test.ts` idiom.
  */
 class FakeRunner implements NeuralRunner {
-	constructor(private readonly canned: number[][]) {}
+	readonly #canned: number[][]
+
+	constructor(canned: number[][]) {
+		this.#canned = canned
+	}
 	async infer(_ids: number[]): Promise<InferResult> {
-		return { logits: this.canned, numLabels: this.canned[0]?.length ?? 0 }
+		return { logits: this.#canned, numLabels: this.#canned[0]?.length ?? 0 }
 	}
 }
 

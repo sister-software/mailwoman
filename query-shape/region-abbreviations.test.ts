@@ -25,7 +25,7 @@ describe("detectRegionAbbreviations", () => {
 		const segs = segment(text)
 		const hits = detectRegionAbbreviations(tokens, segs)
 		expect(hits).toHaveLength(1)
-		expect(hits[0].span).toBe("DC")
+		expect(hits[0]!.span).toBe("DC")
 	})
 
 	it("detects 'NY' after comma in '350 5th Ave, New York, NY 10118'", () => {
@@ -34,7 +34,7 @@ describe("detectRegionAbbreviations", () => {
 		const segs = segment(text)
 		const hits = detectRegionAbbreviations(tokens, segs)
 		expect(hits).toHaveLength(1)
-		expect(hits[0].span).toBe("NY")
+		expect(hits[0]!.span).toBe("NY")
 	})
 
 	it("returns empty for inputs without commas", () => {
@@ -82,12 +82,12 @@ describe("detectRegionAbbreviations", () => {
 	it("integrates with computeQueryShape", () => {
 		const shape = computeQueryShape("1600 Pennsylvania Ave NW, Washington, DC 20500")
 		expect(shape.regionAbbreviations).toHaveLength(1)
-		expect(shape.regionAbbreviations[0].span).toBe("DC")
+		expect(shape.regionAbbreviations[0]!.span).toBe("DC")
 	})
 
 	it("detects 'CA' in 'Pier 39, San Francisco, CA 94133'", () => {
 		const shape = computeQueryShape("Pier 39, San Francisco, CA 94133")
 		expect(shape.regionAbbreviations).toHaveLength(1)
-		expect(shape.regionAbbreviations[0].span).toBe("CA")
+		expect(shape.regionAbbreviations[0]!.span).toBe("CA")
 	})
 })

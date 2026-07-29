@@ -27,11 +27,15 @@ const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
 	class Tensor {
-		constructor(
-			public readonly type: string,
-			public readonly data: BigInt64Array | Float32Array,
-			public readonly dims: readonly number[]
-		) {}
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
 	}
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
@@ -100,7 +104,7 @@ function makeFetch(): typeof fetch {
 
 		if (url === TOKENIZER_URL) return new Response(new Uint8Array(readFileSync(TOKENIZER_FIXTURE)))
 
-		if (url === GB_INDEX) return new Response(gbIndexBytes())
+		if (url === GB_INDEX) return new Response(gbIndexBytes().slice().buffer)
 
 		return new Response(new Uint8Array([1, 2, 3])) // model bytes — the ORT session is mocked
 	}) as unknown as typeof fetch
