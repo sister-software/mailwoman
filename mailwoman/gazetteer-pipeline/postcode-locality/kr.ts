@@ -43,13 +43,27 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
+import { haversineKm } from "@mailwoman/spatial"
 
-const MATCH_RADIUS_KM = 20.0 // KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net
+/**
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * even, which is what keeps repeated centroid rounding unbiased.
+ */
+const ROUND_HALF_DIGIT = 5
+
+/**
+ * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
+ */
+const MATCH_RADIUS_KM = 20
 const HANGUL = /[가-힣]/
-// Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc.
+/**
+ * Korean administrative suffixes, stripped to a bare stem so 추자면 ~ 추자, 강남구 ~ 강남, etc.
+ */
 const SUFFIX = /(특별자치도|특별자치시|광역시|특별시|면|동|읍|시|군|구|리)$/
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -59,6 +73,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -76,7 +91,7 @@ function incDecimalString(s: string): string {
  * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
  * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
-function pyRound(x: number, nd: number = 0): number {
+function pyRound(x: number, nd = 0): number {
 	if (!Number.isFinite(x)) return x
 
 	if (nd === 0) {
@@ -89,6 +104,7 @@ function pyRound(x: number, nd: number = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -99,9 +115,9 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) {
+	if (first > ROUND_HALF_DIGIT) {
 		roundUp = true
-	} else if (first === 5) {
+	} else if (first === ROUND_HALF_DIGIT) {
 		if (/[1-9]/.test(rest.slice(1))) {
 			roundUp = true
 		} else {
@@ -110,22 +126,28 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
 }
 
-/** Python `str(float)` — integer-valued floats render with a trailing `.0` (e.g. `1.0`, `0.0`). */
+/**
+ * Python `str(float)` — integer-valued floats render with a trailing `.0` (e.g. `1.0`, `0.0`).
+ */
 function pyStrFloat(x: number): string {
 	return Number.isInteger(x) ? `${x}.0` : String(x)
 }
 
-/** Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip). */
+/**
+ * Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip).
+ */
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
@@ -137,30 +159,23 @@ function pyFloat(s: string | undefined): number | null {
 }
 
 function norm(s: string | null | undefined): string {
-	return (s || "").normalize("NFKC").replace(/[\s-]/g, "").toLowerCase()
+	return (s || "").normalize("NFKC").replaceAll(/[\s-]/g, "").toLowerCase()
 }
 
 function bare(s: string | null | undefined): string {
 	return norm(s).replace(SUFFIX, "")
 }
 
-/** Python `math.radians`. */
+/**
+ * Python `math.radians`.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form). */
-function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371.0
-	const p1 = toRad(aLat)
-	const p2 = toRad(cLat)
-	const dp = toRad(cLat - aLat)
-	const dl = toRad(dLon - bLon)
-
-	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
-}
-
-/** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
+/**
+ * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
@@ -178,6 +193,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	const loc = admin
 		.prepare("SELECT id,name,latitude,longitude FROM spr WHERE placetype='locality' AND (latitude!=0 OR longitude!=0)")
 		.all() as Array<{ id: number; name: string; latitude: number; longitude: number }>
+
 	const xy = new Map<number, [number, number]>()
 	const sprName = new Map<number, string>()
 	const grid = new Map<string, Array<{ pid: number; la: number; lo: number }>>()
@@ -220,6 +236,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	// Province (admin1) anchor: Hangul region name -> region id (records coarse-anchor coverage in meta).
 	const regionIdx = new Set<string>()
+
 	const regionRows = admin
 		.prepare(
 			"SELECT s.id,n.name FROM spr s JOIN names n ON n.id=s.id AND n.language IN ('kor','und') WHERE s.placetype='region'"
@@ -232,6 +249,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 			regionIdx.add(bare(nm))
 		}
 	}
+
 	admin.close()
 
 	/**
@@ -255,6 +273,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				}
 			}
 		}
+
 		out.sort((a, b) => a.d - b.d || a.pid - b.pid)
 
 		return out
@@ -282,6 +301,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	const db = new DatabaseSync(args.output)
 	const kdb = new DatabaseClient({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.addColumn("postcode", "text", (c) => c.notNull())
@@ -302,7 +322,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	for (const [pc, [place, admin1, lat, lon]] of postal) {
 		const nb = nearby(lat, lon)
 
-		if (nb.length === 0) continue
+		if (!nb.length) continue
+
 		resolved++
 		const { d: d0, pid: pid0 } = nb[0]! // point-nearest
 		dists.push(d0)
@@ -310,6 +331,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) {
 			provinceOk++
 		}
+
 		// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
 		// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
 		const nameIds = nameIdx.get(bare(place)) ?? new Set<number>()
@@ -334,6 +356,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	for (const r of rows) {
 		insert.run(...r)
 	}
+
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -343,7 +366,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		.execute()
 
 	dists.sort((a, b) => a - b)
-	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0.0)
+	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
 	const total = postal.size
 
 	await kdb.schema
@@ -352,6 +375,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-kr"],
 		[
@@ -379,6 +403,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		],
 		["built_at", isoSeconds()],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
@@ -391,8 +416,10 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.

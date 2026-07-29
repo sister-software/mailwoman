@@ -31,11 +31,15 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
-/** A detected secondary-unit substring with its char range. */
+/**
+ * A detected secondary-unit substring with its char range.
+ */
 interface UnitMatch {
 	start: number
 	end: number
-	/** Pattern priority (lower = more specific, wins overlap resolution). */
+	/**
+	 * Pattern priority (lower = more specific, wins overlap resolution).
+	 */
 	priority: number
 }
 
@@ -83,14 +87,19 @@ function isUnitLabel(label: string): boolean {
 	return label === "B-unit" || label === "I-unit"
 }
 
-/** Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null). */
+/**
+ * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
+ */
 function tagOf(label: string): string | null {
 	return label === "O" ? null : label.slice(2)
 }
 
-/** Collect non-overlapping unit matches, preferring more-specific (earlier) patterns + longest. */
+/**
+ * Collect non-overlapping unit matches, preferring more-specific (earlier) patterns + longest.
+ */
 function collectMatches(text: string): UnitMatch[] {
 	const candidates: UnitMatch[] = []
+
 	UNIT_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
 
@@ -98,6 +107,7 @@ function collectMatches(text: string): UnitMatch[] {
 			candidates.push({ start: m.index, end: m.index + m[0].length, priority })
 		}
 	})
+
 	// Longest-match-wins, then most-specific; reject anything overlapping an accepted match.
 	candidates.sort((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
 	const accepted: UnitMatch[] = []
@@ -112,7 +122,9 @@ function collectMatches(text: string): UnitMatch[] {
 
 export interface RepairResult {
 	tokens: DecoderToken[]
-	/** Number of token labels changed — for telemetry / logging. */
+	/**
+	 * Number of token labels changed — for telemetry / logging.
+	 */
 	changed: number
 }
 
@@ -124,12 +136,14 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 	const matches = collectMatches(text)
 	const tokens = input.map((t) => ({ ...t }))
 
-	if (matches.length === 0) return { tokens, changed: 0 }
+	if (!matches.length) return { tokens, changed: 0 }
 
 	let changed = 0
+
 	const setLabel = (i: number, label: DecoderToken["label"]): void => {
 		if (tokens[i]!.label !== label) {
 			tokens[i]!.label = label
+
 			changed++
 		}
 	}
@@ -146,7 +160,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 			}
 		}
 
-		if (overlap.length === 0) continue
+		if (!overlap.length) continue
 
 		const hasUnit = overlap.some((i) => isUnitLabel(tokens[i]!.label))
 
@@ -172,7 +186,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 			setLabel(j, OUTSIDE)
 		}
 
-		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
+		for (let j = overlap.at(-1)! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
 			setLabel(j, OUTSIDE)
 		}
 	}

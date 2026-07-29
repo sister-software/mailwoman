@@ -91,17 +91,29 @@ export type LevelDesignatorKind =
 	| "special"
 	| "fixedOrdinal"
 
-/** One row of a per-language-family level-designator lexicon. */
+/**
+ * One row of a per-language-family level-designator lexicon.
+ */
 export interface LevelDesignatorRow {
-	/** Canonical designator key (the language's native canonical spelling, uppercase). */
+	/**
+	 * Canonical designator key (the language's native canonical spelling, uppercase).
+	 */
 	code: string
-	/** Human-readable name — the native word plus an English gloss in parentheses. */
+	/**
+	 * Human-readable name — the native word plus an English gloss in parentheses.
+	 */
 	name: string
-	/** Recognized surface variants, including the canonical code itself and common ASCII-folded / abbreviated spellings. */
+	/**
+	 * Recognized surface variants, including the canonical code itself and common ASCII-folded / abbreviated spellings.
+	 */
 	variants: readonly string[]
-	/** How this designator maps to an ordinal — see {@link LevelDesignatorKind}. */
+	/**
+	 * How this designator maps to an ordinal — see {@link LevelDesignatorKind}.
+	 */
 	kind: LevelDesignatorKind
-	/** True when a secondary number typically follows ("FL 3", "B 2"); false for standalone designators ("EG", "RDC"). */
+	/**
+	 * True when a secondary number typically follows ("FL 3", "B 2"); false for standalone designators ("EG", "RDC").
+	 */
 	requiresNumber: boolean
 	/**
 	 * Only present when `kind` is `"fixedOrdinal"` — the designator's own fixed ordinal, independent of any passed
@@ -158,7 +170,9 @@ export const EN_LEVEL_DESIGNATORS = [
 	{ code: "ROOF", name: "Roof", variants: ["ROOF", "RF"], kind: "special", requiresNumber: false },
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** French (France, and — for the vocabulary, not the numbering convention — Francophone Canada) floor/level vocabulary. */
+/**
+ * French (France, and — for the vocabulary, not the numbering convention — Francophone Canada) floor/level vocabulary.
+ */
 export const FR_LEVEL_DESIGNATORS = [
 	{
 		code: "ÉTAGE",
@@ -190,7 +204,9 @@ export const FR_LEVEL_DESIGNATORS = [
 	},
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** German floor/level vocabulary (the -geschoss family). */
+/**
+ * German floor/level vocabulary (the -geschoss family).
+ */
 export const DE_LEVEL_DESIGNATORS = [
 	{
 		code: "OBERGESCHOSS",
@@ -273,7 +289,9 @@ export const ES_LEVEL_DESIGNATORS = [
 	},
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** Italian floor/level vocabulary. */
+/**
+ * Italian floor/level vocabulary.
+ */
 export const IT_LEVEL_DESIGNATORS = [
 	{ code: "PIANO", name: "Piano (Floor)", variants: ["PIANO"], kind: "numbered", requiresNumber: true },
 	{
@@ -299,7 +317,9 @@ export const IT_LEVEL_DESIGNATORS = [
 	},
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** Portuguese floor/level vocabulary. */
+/**
+ * Portuguese floor/level vocabulary.
+ */
 export const PT_LEVEL_DESIGNATORS = [
 	{ code: "ANDAR", name: "Andar (Floor)", variants: ["ANDAR"], kind: "numbered", requiresNumber: true },
 	{
@@ -312,7 +332,9 @@ export const PT_LEVEL_DESIGNATORS = [
 	{ code: "CAVE", name: "Cave (Basement)", variants: ["CAVE"], kind: "basement", requiresNumber: true },
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** Dutch floor/level vocabulary. */
+/**
+ * Dutch floor/level vocabulary.
+ */
 export const NL_LEVEL_DESIGNATORS = [
 	{
 		code: "VERDIEPING",
@@ -344,7 +366,9 @@ export const JA_LEVEL_DESIGNATORS = [
 	{ code: "RF", name: "屋上 (Rooftop)", variants: ["RF", "屋上", "ROOFTOP"], kind: "special", requiresNumber: false },
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** Swedish floor/level vocabulary. */
+/**
+ * Swedish floor/level vocabulary.
+ */
 export const SV_LEVEL_DESIGNATORS = [
 	{ code: "VÅNING", name: "Våning (Floor)", variants: ["VÅNING", "VANING"], kind: "numbered", requiresNumber: true },
 	{
@@ -379,7 +403,9 @@ export const NO_LEVEL_DESIGNATORS = [
 	{ code: "KJELLER", name: "Kjeller (Basement)", variants: ["KJELLER"], kind: "basement", requiresNumber: true },
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** Danish floor/level vocabulary. STUEN/STUEETAGE ("st.") is the standard ground-floor term seen on Danish addresses. */
+/**
+ * Danish floor/level vocabulary. STUEN/STUEETAGE ("st.") is the standard ground-floor term seen on Danish addresses.
+ */
 export const DA_LEVEL_DESIGNATORS = [
 	{ code: "ETAGE", name: "Etage (Floor)", variants: ["ETAGE"], kind: "numbered", requiresNumber: true },
 	{
@@ -398,10 +424,14 @@ export const DA_LEVEL_DESIGNATORS = [
 	},
 ] as const satisfies readonly LevelDesignatorRow[]
 
-/** A bare language-family tag — the key into {@link LEVEL_DESIGNATORS_BY_FAMILY}. */
+/**
+ * A bare language-family tag — the key into {@link LEVEL_DESIGNATORS_BY_FAMILY}.
+ */
 export type LevelLocaleFamily = "en" | "fr" | "de" | "es" | "it" | "pt" | "nl" | "ja" | "sv" | "no" | "da"
 
-/** Every language family's level-designator lexicon, keyed by bare language tag. */
+/**
+ * Every language family's level-designator lexicon, keyed by bare language tag.
+ */
 export const LEVEL_DESIGNATORS_BY_FAMILY: Readonly<Record<LevelLocaleFamily, readonly LevelDesignatorRow[]>> = {
 	en: EN_LEVEL_DESIGNATORS,
 	fr: FR_LEVEL_DESIGNATORS,
@@ -434,7 +464,7 @@ const LEVEL_DESIGNATOR_LOOKUP_BY_FAMILY: ReadonlyMap<
 		const lookup = new Map<string, LevelDesignatorRow>()
 
 		for (const row of rows) {
-			if (row.variants.length === 0) {
+			if (!row.variants.length) {
 				throw new Error(`[codex/level-semantics] family "${family}" designator "${row.code}" has no variants`)
 			}
 
@@ -468,7 +498,9 @@ const LEVEL_LOCALE_FAMILIES: ReadonlySet<LevelLocaleFamily> = new Set(
 	Object.keys(LEVEL_DESIGNATORS_BY_FAMILY) as LevelLocaleFamily[]
 )
 
-/** BCP-47-ish language tags that fold into the Norwegian family (Bokmål, Nynorsk, and the deprecated macrolanguage tag). */
+/**
+ * BCP-47-ish language tags that fold into the Norwegian family (Bokmål, Nynorsk, and the deprecated macrolanguage tag).
+ */
 const NORWEGIAN_LANGUAGE_TAGS: ReadonlySet<string> = new Set(["no", "nb", "nn"])
 
 /**
@@ -481,7 +513,9 @@ function splitLocaleTag(locale: string): { language: string; region: string | un
 	return { language: (language ?? "").toLowerCase(), region: region?.toUpperCase() }
 }
 
-/** Resolve a BCP-47-ish locale tag to its {@link LevelLocaleFamily}, or `undefined` if this module has no lexicon for it. */
+/**
+ * Resolve a BCP-47-ish locale tag to its {@link LevelLocaleFamily}, or `undefined` if this module has no lexicon for it.
+ */
 function localeFamily(locale: string): LevelLocaleFamily | undefined {
 	const { language } = splitLocaleTag(locale)
 	const family = NORWEGIAN_LANGUAGE_TAGS.has(language) ? "no" : language
@@ -568,7 +602,9 @@ export function lookupLevelDesignator(designator: string, locale: string): Level
 	return LEVEL_DESIGNATOR_LOOKUP_BY_FAMILY.get(family)?.get(designator.trim().toLowerCase())
 }
 
-/** True when `input` is a recognized level designator (case-insensitive) in `locale`'s language family. */
+/**
+ * True when `input` is a recognized level designator (case-insensitive) in `locale`'s language family.
+ */
 export function isLevelDesignatorToken(input: unknown, locale: string): boolean {
 	return typeof input === "string" && lookupLevelDesignator(input, locale) !== undefined
 }

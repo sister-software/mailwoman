@@ -24,54 +24,94 @@ import type { Kysely } from "kysely"
  */
 export type AddressKind = string
 
-/** Pelias-style status: tracked as a DELTA (regression / improvement), never as a raw pass-rate gauge. */
+/**
+ * Pelias-style status: tracked as a DELTA (regression / improvement), never as a raw pass-rate gauge.
+ */
 export type CaseStatus = "pass" | "known_fail" | "improvement_target"
 
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin"
 
-/** One Gauntlet case: a raw input and its expected ASSEMBLED output (parse + place + coordinate + tier). */
+/**
+ * One Gauntlet case: a raw input and its expected ASSEMBLED output (parse + place + coordinate + tier).
+ */
 export interface GauntletCaseTable {
-	/** Stable case id, e.g. `fr-bare-chevaleret`. */
+	/**
+	 * Stable case id, e.g. `fr-bare-chevaleret`.
+	 */
 	id: string
-	/** The raw address string fed to the pipeline. */
+	/**
+	 * The raw address string fed to the pipeline.
+	 */
 	input: string
-	/** Provenance: where this case came from — `bug:#828`, `demo`, `nppes`, `golden`, `manual`. */
+	/**
+	 * Provenance: where this case came from — `bug:#828`, `demo`, `nppes`, `golden`, `manual`.
+	 */
 	source: string
-	/** The address KIND this case exercises (coverage is tracked by this). */
+	/**
+	 * The address KIND this case exercises (coverage is tracked by this).
+	 */
 	address_kind: AddressKind
-	/** ISO-3166 alpha-2 country. */
+	/**
+	 * ISO-3166 alpha-2 country.
+	 */
 	country: string
-	/** Expected status — the baseline the runner diffs against to report regressions vs improvements. */
+	/**
+	 * Expected status — the baseline the runner diffs against to report regressions vs improvements.
+	 */
 	status: CaseStatus
-	/** Expected parse components as JSON `{ tag: value }` (null = parse not asserted for this case). */
+	/**
+	 * Expected parse components as JSON `{ tag: value }` (null = parse not asserted for this case).
+	 */
 	expect_components: string | null
-	/** Expected resolved place id (null = place not asserted). */
+	/**
+	 * Expected resolved place id (null = place not asserted).
+	 */
 	expect_place_id: string | null
-	/** Expected resolved place canonical name (null = not asserted). */
+	/**
+	 * Expected resolved place canonical name (null = not asserted).
+	 */
 	expect_place_name: string | null
-	/** Expected coordinate (null = coordinate not asserted — e.g. a parse-only case). */
+	/**
+	 * Expected coordinate (null = coordinate not asserted — e.g. a parse-only case).
+	 */
 	expect_lat: number | null
 	expect_lon: number | null
-	/** Accepted great-circle tolerance in METERS (Pelias's distanceThresh; null defaults at runtime). */
+	/**
+	 * Accepted great-circle tolerance in METERS (Pelias's distanceThresh; null defaults at runtime).
+	 */
 	expect_tolerance_m: number | null
-	/** Expected resolution tier — a result that drifts `address_point`→`admin` is a regression even within tolerance. */
+	/**
+	 * Expected resolution tier — a result that drifts `address_point`→`admin` is a regression even within tolerance.
+	 */
 	expect_tier: ResolutionTier | null
-	/** Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`. */
+	/**
+	 * Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`.
+	 */
 	default_country: string | null
-	/** When the case entered the corpus (ISO date). */
+	/**
+	 * When the case entered the corpus (ISO date).
+	 */
 	added_at: string
-	/** Linked bug / PR / issue, when the case is a fixed regression. */
+	/**
+	 * Linked bug / PR / issue, when the case is a fixed regression.
+	 */
 	bug_ref: string | null
-	/** Human note — what failure this case pins. */
+	/**
+	 * Human note — what failure this case pins.
+	 */
 	note: string | null
 }
 
-/** The Gauntlet DB schema for `new DatabaseClient<GauntletDatabase>(...)`. */
+/**
+ * The Gauntlet DB schema for `new DatabaseClient<GauntletDatabase>(...)`.
+ */
 export interface GauntletDatabase {
 	gauntlet_case: GauntletCaseTable
 }
 
-/** Column order for the positional INSERT — derived once so the builder + writer can't drift. */
+/**
+ * Column order for the positional INSERT — derived once so the builder + writer can't drift.
+ */
 export const GAUNTLET_CASE_COLUMNS = [
 	"id",
 	"input",
@@ -92,7 +132,9 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"note",
 ] as const
 
-/** Create the `gauntlet_case` table (the curated regression corpus). */
+/**
+ * Create the `gauntlet_case` table (the curated regression corpus).
+ */
 export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise<void> {
 	await db.schema
 		.createTable("gauntlet_case")
@@ -114,6 +156,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("bug_ref", "text")
 		.addColumn("note", "text")
 		.execute()
+
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"
 	await db.schema.createIndex("idx_gauntlet_kind").on("gauntlet_case").columns(["country", "address_kind"]).execute()
 }

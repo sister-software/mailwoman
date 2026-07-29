@@ -66,6 +66,7 @@ describe("viterbi — basic", () => {
 			emissions: [[-1, 5, -10, -10, -10]],
 			transitions: buildBIOTransitionMask(LABELS),
 		})
+
 		expect(result.path).toEqual([1]) // B-locality
 	})
 
@@ -76,6 +77,7 @@ describe("viterbi — basic", () => {
 			[5, -1, -10, -10, -10], // t=0: O wins
 			[-1, -1, 5, -10, -10], // t=1: I-locality wins naively, but invalid after O
 		]
+
 		const path = viterbi({
 			emissions,
 			transitions: buildBIOTransitionMask(LABELS),
@@ -100,14 +102,16 @@ describe("viterbi — basic", () => {
 		// Naive argmax: O, I-locality (invalid)
 		// Viterbi: B-locality, I-locality (valid + globally best)
 		const emissions = [
-			[0.45, 0.4, 0.1, 0.05, 0.0], // O, B-loc, I-loc, B-reg, I-reg
-			[0.1, 0.2, 0.65, 0.05, 0.0],
+			[0.45, 0.4, 0.1, 0.05, 0], // O, B-loc, I-loc, B-reg, I-reg
+			[0.1, 0.2, 0.65, 0.05, 0],
 		]
+
 		const path = viterbi({
 			emissions,
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
 		}).path
+
 		expect(LABELS[path[0]!]).toBe("B-locality")
 		expect(LABELS[path[1]!]).toBe("I-locality")
 	})
@@ -118,29 +122,34 @@ describe("viterbi — basic", () => {
 			[0.01, 0.01, 0.97, 0.005, 0.005],
 			[0.01, 0.01, 0.97, 0.005, 0.005],
 		]
+
 		const path = viterbi({
 			emissions,
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
 			endTransitions: buildBIOEndMask(LABELS),
 		}).path
+
 		// First label can't be I-locality (start mask forbids).
 		expect(LABELS[path[0]!]).not.toBe("I-locality")
 	})
 
 	it("agrees with argmax when transitions are all zero (no structural constraints)", () => {
 		const allZero = LABELS.map(() => LABELS.map(() => 0))
+
 		const emissions = [
 			[0.1, 0.5, 0.1, 0.2, 0.1],
 			[0.7, 0.05, 0.05, 0.1, 0.1],
 			[0.1, 0.1, 0.1, 0.6, 0.1],
 		]
+
 		const viterbiPath = viterbi({
 			emissions,
 			transitions: allZero,
 			startTransitions: LABELS.map(() => 0),
 			endTransitions: LABELS.map(() => 0),
 		}).path
+
 		const argmaxPath = perTokenArgmax(emissions)
 		expect(viterbiPath).toEqual(argmaxPath)
 	})
@@ -158,6 +167,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 		[0, 0, 3, 4, NEG_INF], // t=1: I-locality 3 vs B-region 4 — local win for B-region
 		[0, 0, 5, 0, 1], // t=2: I-locality 5 vs I-region 1 — the continuation toll
 	]
+
 	// Fused: 6 + 3 + 5 = 14. Split (B-loc, B-reg, I-reg): 6 + 4 + 1 = 11 — margin 3.
 
 	it("a bonus on the entry transition flips a fused path (before/after on the same lattice)", () => {
@@ -166,6 +176,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
 		})
+
 		expect(base.path.map((k) => LABELS[k])).toEqual(["B-locality", "I-locality", "I-locality"])
 
 		const boosted = viterbi({
@@ -175,6 +186,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			// +4 into B-region at t=1: split path 11 + 4 = 15 > 14 — flips.
 			transitionAdjustments: [{ timestep: 1, toLabel: 3, bonus: 4 }],
 		})
+
 		expect(boosted.path.map((k) => LABELS[k])).toEqual(["B-locality", "B-region", "I-region"])
 		expect(boosted.score).toBeCloseTo(15, 6)
 	})
@@ -186,6 +198,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			startTransitions: buildBIOStartMask(LABELS),
 			transitionAdjustments: [{ timestep: 1, toLabel: 3, bonus: 2 }], // 11 + 2 = 13 < 14
 		})
+
 		expect(under.path.map((k) => LABELS[k])).toEqual(["B-locality", "I-locality", "I-locality"])
 	})
 
@@ -194,11 +207,13 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			[0, 3, NEG_INF, 1, NEG_INF], // B-locality 3 vs B-region 1
 			[5, 0, 0, 0, 0], // O everywhere after
 		]
+
 		const base = viterbi({
 			emissions,
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
 		})
+
 		expect(LABELS[base.path[0]!]).toBe("B-locality")
 
 		const boosted = viterbi({
@@ -207,6 +222,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			startTransitions: buildBIOStartMask(LABELS),
 			transitionAdjustments: [{ timestep: 0, toLabel: 3, bonus: 3 }], // B-region 1 + 3 = 4 > 3
 		})
+
 		expect(LABELS[boosted.path[0]!]).toBe("B-region")
 	})
 
@@ -215,6 +231,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			[5, 0, NEG_INF, 0, NEG_INF], // t=0: O
 			[0, 0, 10, 0, 0], // t=1: I-locality wins on emissions — but O → I-locality is forbidden
 		]
+
 		const boosted = viterbi({
 			emissions,
 			transitions: buildBIOTransitionMask(LABELS),
@@ -237,6 +254,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 				{ timestep: 1, toLabel: 3, bonus: 2 },
 			],
 		})
+
 		expect(withDupes.path.map((k) => LABELS[k])).toEqual(["B-locality", "I-locality", "I-locality"])
 	})
 
@@ -246,12 +264,14 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
 		})
+
 		const withEmpty = viterbi({
 			emissions: FUSION_EMISSIONS,
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
 			transitionAdjustments: [],
 		})
+
 		expect(withEmpty.path).toEqual(without.path)
 		expect(withEmpty.score).toBe(without.score)
 	})
@@ -263,7 +283,7 @@ describe("perTokenArgmax", () => {
 	})
 
 	it("handles ties by picking the first", () => {
-		expect(perTokenArgmax([[0.5, 0.5, 0.0]])).toEqual([0])
+		expect(perTokenArgmax([[0.5, 0.5, 0]])).toEqual([0])
 	})
 })
 

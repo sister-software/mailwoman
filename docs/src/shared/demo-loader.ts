@@ -38,7 +38,9 @@ import {
  */
 export interface DocsDemoAssets {
 	classifier: MailwomanClassifierLike
-	/** Postcode-anchor centroid lookup (US ZIP → real centroid), for the postcode-only dead-end fallback. */
+	/**
+	 * Postcode-anchor centroid lookup (US ZIP → real centroid), for the postcode-only dead-end fallback.
+	 */
 	anchorLookup: Map<string, { lat: number; lon: number }> | null
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null
@@ -86,6 +88,7 @@ export async function loadDemoAssets(
 	if (release.hasWOFDb) {
 		steps.push("Loading WOF database")
 	}
+
 	ctx.setStepLabels(steps)
 
 	// Same-origin base for the staged placetype-pair indexes (#1278) — mirrors how `sqljsBaseURL` names the sql.js
@@ -96,6 +99,7 @@ export async function loadDemoAssets(
 	// API is wider than its TS types (the bundle ships `postcodeAnchorLookup` the declaration omits), so we reach the
 	// runtime shape through `unknown`.
 	const neuralWeb = await import("@mailwoman/neural-web")
+
 	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } =
 		(await neuralWeb.loadNeuralClassifierFromURLs({
 			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {

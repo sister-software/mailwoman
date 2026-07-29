@@ -51,6 +51,12 @@ import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
 // corpus defaultHoldout). FR comes from the BAN-derived countrywide extract (stride-sampled — the
 // file is 2.5 GB and insee-ordered, so a head-only read would be all département 01).
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const US_TRAIN_SOURCES = [
 	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
 	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
@@ -60,49 +66,85 @@ const US_TRAIN_SOURCES = [
 	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
 	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
 ]
+
 const US_EVAL_SOURCE = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 const FR_SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
 const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
 const GEONAMES_POSTAL_AU = { zip: "/tmp/geonames-cache/AU-postal.zip", txt: "AU.txt" }
 const GEONAMES_POSTAL_NZ = { zip: "/tmp/geonames-cache/NZ-postal.zip", txt: "NZ.txt" }
 
-// ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────
+/**
+ * ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────.
+ */
 const T: Record<string, LocaleTemplate> = Object.fromEntries(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 // US: the corpus en-US leaders carry the common mass; the codex-only USPS Pub-28 designators
 // (Caller/Drawer/Lockbox — firm-holdout and rural forms) ride at low weight. "Box" is in both.
-const US_LEADERS_COMMON = T["en-US"]!.leaders // PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box
-const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"] // codex US_PO_BOX_DESIGNATORS tail
+/**
+ * PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box.
+ */
+const US_LEADERS_COMMON = T["en-US"]!.leaders
+/**
+ * Codex US_PO_BOX_DESIGNATORS tail.
+ */
+const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"]
 // "#" EXCLUDED (v4.4.0 probe finding): bare "#N" is a secondary-unit designator per USPS Pub 28 and
 // the shipped unit lever labels it `unit` — the corpus template's po_box reading CONTRADICTS a
 // shipped convention. PMB stays — a genuine commercial-mail-receiving designator, no unit collision.
-const US_PMB_LEADERS = T["en-US"]!.pmb!.filter((l) => l !== "#") // PMB
-const FR_LEADERS = T["fr-FR"]!.leaders // BP, B.P., Boîte Postale, BP.
-const CA_FR_LEADERS = T["fr-CA"]!.leaders // CP, C.P., Case Postale, BP, B.P.
-const CA_EN_LEADERS = T["en-CA"]!.leaders // PO Box, P.O. Box, POB, Post Office Box
-// AU (#517): codex/au is the vocabulary truth. Current designators (live auspost.com.au pages) at
-// full weight; the AMAS-legacy rural/community tail rides at the same 10% rare-dial as the US
-// Caller/Drawer tail. Every emitted phrase must round-trip the codex matcher (makeAuNzPoBoxPhrase).
+/**
+ * PMB.
+ */
+const US_PMB_LEADERS = T["en-US"]!.pmb!.filter((l) => l !== "#")
+/**
+ * BP, B.P., Boîte Postale, BP.
+ */
+const FR_LEADERS = T["fr-FR"]!.leaders
+/**
+ * CP, C.P., Case Postale, BP, B.P.
+ */
+const CA_FR_LEADERS = T["fr-CA"]!.leaders
+/**
+ * PO Box, P.O. Box, POB, Post Office Box.
+ */
+const CA_EN_LEADERS = T["en-CA"]!.leaders
+/**
+ * AU (#517): codex/au is the vocabulary truth. Current designators (live auspost.com.au pages) at full weight; the
+ * AMAS-legacy rural/community tail rides at the same 10% rare-dial as the US Caller/Drawer tail. Every emitted phrase
+ * must round-trip the codex matcher (makeAuNzPoBoxPhrase).
+ */
 const AU_LEADERS_CURRENT = ["PO Box", "P.O. Box", "Post Office Box", "GPO Box", "Locked Bag", "Private Bag"]
-const AU_LEADERS_LEGACY = ["RMB", "RSD", "CMB"] // codex legacy: true (recognize-only forms)
-// NZ (#517): the ADV358 box/bag types that carry an identifier. CMB rides rare (its "CMB B99"
-// identifier shape is alpha-led, covered by makeAuNzPoBoxPhrase). Counter Delivery / Poste Restante
-// are identifier-less counter services — no number to learn, excluded from synthesis.
+/**
+ * Codex legacy: true (recognize-only forms)
+ */
+const AU_LEADERS_LEGACY = ["RMB", "RSD", "CMB"]
+/**
+ * NZ (#517): the ADV358 box/bag types that carry an identifier. CMB rides rare (its "CMB B99" identifier shape is
+ * alpha-led, covered by makeAuNzPoBoxPhrase). Counter Delivery / Poste Restante are identifier-less counter services —
+ * no number to learn, excluded from synthesis.
+ */
 const NZ_LEADERS_COMMON = ["PO Box", "Private Bag"]
 const NZ_LEADERS_RARE = ["CMB"]
 
-// Canadian postcode synthesis: valid first letters per province from the codex FSA prior, interior
-// letters per the codex pattern (excludes the visually ambiguous D F I O Q U). The LDU digits are
-// random — the SHAPE is the training signal, not the (unknowable) live assignment.
+/**
+ * Canadian postcode synthesis: valid first letters per province from the codex FSA prior, interior letters per the
+ * codex pattern (excludes the visually ambiguous D F I O Q U). The LDU digits are random — the SHAPE is the training
+ * signal, not the (unknowable) live assignment.
+ */
 const QC_FSA_LETTERS = Object.entries(FSA_LETTER_TO_PROVINCE)
 	.filter(([, p]) => p === "QC")
-	.map(([l]) => l) // G H J
+	.map(([l]) => l)
+
+// G H J
 const ON_FSA_LETTERS = Object.entries(FSA_LETTER_TO_PROVINCE)
 	.filter(([, p]) => p === "ON")
-	.map(([l]) => l) // K L M N P
+	.map(([l]) => l)
+
+// K L M N P
 const CA_INTERIOR_LETTERS = "ABCEGHJKLMNPRSTVWXYZ"
 
-// Class mix — po_box mass leans US (the production arena), cedex gets a real block, and the CA-fr
-// class exists because the #511 Montréal rows ("Case Postale 200, H3A 1B9 Montréal, QC") fail today.
+/**
+ * Class mix — po_box mass leans US (the production arena), cedex gets a real block, and the CA-fr class exists because
+ * the #511 Montréal rows ("Case Postale 200, H3A 1B9 Montréal, QC") fail today.
+ */
 const CLASS_MIX: ReadonlyArray<[string, number]> = [
 	["po-box-us", 0.27],
 	["po-box-us-military", 0.05], // #517: CMR/PSC/Unit + Box, APO/FPO/DPO + AA/AE/AP — the arena's 0/3 class
@@ -115,7 +157,9 @@ const CLASS_MIX: ReadonlyArray<[string, number]> = [
 	["po-box-nz", 0.06],
 ]
 
-/** Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern. */
+/**
+ * Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern.
+ */
 const VENUES_EN = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 const VENUES_FR = ["Société Dupont", "Cabinet Martin", "Hôpital Central", "Mairie Annexe", "Imprimerie Moderne"]
 
@@ -127,21 +171,25 @@ interface USTuple {
 	region: string
 	postcode: string
 }
+
 interface FrTuple {
 	house_number: string
 	street: string
 	locality: string
 	postcode: string
 }
+
 interface AuTuple {
 	locality: string
 	region: string
 	postcode: string
 }
+
 interface NzTuple {
 	locality: string
 	postcode: string
 }
+
 interface Rendered {
 	fmt: string
 	raw: string
@@ -150,7 +198,9 @@ interface Rendered {
 
 // ── Holdout + CSV helpers ────────────────────────────────────────────────────────────────────────
 
-/** Stable locality hash for the FR/CA train↔golden split (djb2; hash%10===0 → golden-only). */
+/**
+ * Stable locality hash for the FR/CA train↔golden split (djb2; hash%10===0 → golden-only).
+ */
 function localityHash(name: string): number {
 	let h = 5381
 	const s = name.toLowerCase()
@@ -161,9 +211,12 @@ function localityHash(name: string): number {
 
 	return h
 }
+
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -176,6 +229,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -192,14 +246,20 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
 }
 
-const cleanLocality = (loc: string) => loc && loc.length <= 40 && !/\d|,/.test(loc) && !/cedex/i.test(loc)
+const MAX_LOCALITY_LENGTH = 40
 
-/** Stream real US tuples (number/street/city/postcode) out of a cached OA zip. */
+const cleanLocality = (loc: string) =>
+	loc && loc.length <= MAX_LOCALITY_LENGTH && !/\d|,/.test(loc) && !/cedex/i.test(loc)
+
+/**
+ * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
+ */
 function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
@@ -208,15 +268,18 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string) => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
@@ -228,8 +291,10 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 
 		if (!cleanLocality(locality)) continue
 		const key = locality.toLowerCase()
+
 		const street = get(cells, iStreet),
 			house_number = get(cells, iNum)
+
 		// One tuple per (locality, street) pair keeps the pool varied without ballooning memory.
 		const pairKey = `${key}|${street}`.toLowerCase()
 
@@ -253,20 +318,23 @@ function readFrTuples(limit: number): FrTuple[] {
 		{ maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" }
 	)
 
-	if (r.status !== 0 && r.stdout.length === 0) {
+	if (r.status !== 0 && !r.stdout.length) {
 		console.error(`  WARN: unzip failed for ${FR_SOURCE.zip}`)
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string) => header.indexOf(n)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
@@ -274,6 +342,7 @@ function readFrTuples(limit: number): FrTuple[] {
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
 		const cells = splitCSV(lines[li]!)
+
 		const locality = get(cells, iCity),
 			postcode = get(cells, iPost),
 			street = get(cells, iStreet),
@@ -331,6 +400,7 @@ function readPostalTuples(
 
 		return []
 	}
+
 	const tuples: Array<AuTuple | NzTuple> = []
 	const seen = new Set<string>()
 	const validPostcode = opts.withState ? isAuPostcode : isNzPostcode
@@ -357,7 +427,9 @@ function readPostalTuples(
 
 // ── Rendering helpers ────────────────────────────────────────────────────────────────────────────
 
-/** Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits). */
+/**
+ * Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits).
+ */
 function pickBoxNumber(random: () => number): string {
 	const r = random()
 
@@ -367,10 +439,12 @@ function pickBoxNumber(random: () => number): string {
 
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
 
-	return String(10000 + Math.floor(random() * 90000))
+	return String(10_000 + Math.floor(random() * 90_000))
 }
 
-/** Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower. */
+/**
+ * Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower.
+ */
 function caseDial(random: () => number, s: string): string {
 	const r = random()
 
@@ -381,13 +455,17 @@ function caseDial(random: () => number, s: string): string {
 	return s.toLowerCase()
 }
 
-// Leaders the codex PO_BOX_RE genuinely covers (everything en-US except "POB"; PMB/"#" are the
-// corpus's CMRA forms, outside USPS Pub-28 §29). Used to scope the isPOBox round-trip assertion.
+/**
+ * Leaders the codex PO_BOX_RE genuinely covers (everything en-US except "POB"; PMB/"#" are the corpus's CMRA forms,
+ * outside USPS Pub-28 §29). Used to scope the isPOBox round-trip assertion.
+ */
 const CODEX_COVERED_LEADERS = new Set(
 	["PO Box", "P.O. Box", "P.O.Box", "PO BOX", "Post Office Box", "Box", ...US_LEADERS_RARE].map((l) => l.toLowerCase())
 )
 
-/** Compose a po_box phrase. "#" joins without a space ("#500", the golden PMB variant). */
+/**
+ * Compose a po_box phrase. "#" joins without a space ("#500", the golden PMB variant).
+ */
 function makePoBoxPhrase(
 	random: () => number,
 	leaders: ReadonlyArray<string>,
@@ -398,6 +476,7 @@ function makePoBoxPhrase(
 	if (rareLeaders && random() < 0.1) {
 		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	}
+
 	const num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 	const phrase = leader === "#" ? `#${num}` : `${caseDial(random, leader)} ${num}`
 
@@ -418,6 +497,7 @@ function makePoBoxPhrase(
 function makeCedex(random: () => number): string {
 	const r = random()
 	const word = r < 0.6 ? "CEDEX" : r < 0.9 ? "Cedex" : "cedex"
+
 	const phrase = (() => {
 		if (random() < 0.2) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
 		const n = 1 + Math.floor(random() * 20)
@@ -448,12 +528,14 @@ function makeAuNzPoBoxPhrase(
 	if (rareLeaders && random() < 0.1) {
 		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	}
+
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 
 	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
 	if (leader === "CMB" && validate === isNzDeliveryService) {
 		num = `B${num}`
 	}
+
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
@@ -466,7 +548,9 @@ function makeAuNzPoBoxPhrase(
 	return phrase
 }
 
-/** Synthesize a codex-valid Canadian postcode for a province's FSA letters ("H2X 3V4"). */
+/**
+ * Synthesize a codex-valid Canadian postcode for a province's FSA letters ("H2X 3V4").
+ */
 function makeCaPostcode(random: () => number, fsaLetters: string[]): string {
 	const L = () => CA_INTERIOR_LETTERS[Math.floor(random() * CA_INTERIOR_LETTERS.length)]!
 	const D = () => String(Math.floor(random() * 10))
@@ -505,6 +589,7 @@ function renderPoBoxUs(random: () => number, t: USTuple): Rendered {
 			components: { venue: v, ...base, ...(pc ? { postcode: pc } : {}) },
 		}
 	}
+
 	// USPS label form: comma-less, all-caps ("PO BOX 123 BURLINGTON VT 05401").
 	const up = (s: string) => s.toUpperCase()
 
@@ -556,6 +641,7 @@ function renderBpFr(random: () => number, t: FrTuple): Rendered {
 			components: { po_box: phrase, postcode: pc, locality: locUp, cedex },
 		}
 	}
+
 	const v = pick(random, VENUES_FR)
 
 	return {
@@ -676,6 +762,7 @@ function renderNzPoBox(random: () => number, t: NzTuple): Rendered {
  * `locality` before `region: "ON"` goes looking.
  */
 const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
+
 function orderComponents(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
 
@@ -690,6 +777,10 @@ function orderComponents(components: Record<string, string>): Record<string, str
 	return out
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const poBoxCedexRecipe: ShardRecipe = {
 	name: "po-box-cedex",
 	description: "PO box / CEDEX coverage rows (US/FR/CA/AU/NZ) — self-generated from cached OA + GeoNames pools",
@@ -697,7 +788,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 	options: [{ flag: "--golden", description: "Emit the leakage-safe holdout variant ({raw, components, country})" }],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 50000
+		const count = opts.count ?? 50_000
 		const source = opts.sourceName ?? "synth-po-box-cedex"
 
 		// US pool: VT only for golden, non-VT for train (the established geographic holdout).
@@ -705,36 +796,36 @@ export const poBoxCedexRecipe: ShardRecipe = {
 
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
 			const t = readUsTuples(s)
+
 			console.error(`  ${s.csv}: ${t.length} tuples`)
 
 			for (const x of t) {
 				usPool.push(x)
 			}
 		}
+
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
-		const frAll = readFrTuples(80000)
+		const frAll = readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
+
 		console.error(`  ${FR_SOURCE.csv}: ${frAll.length} tuples (${frPool.length} after holdout split)`)
+
 		const qcAll = readCaLocalities("10")
 		const onAll = readCaLocalities("08")
 		const qcPool = qcAll.filter((l) => isHoldoutLocality(l) === opts.golden)
 		const onPool = onAll.filter((l) => isHoldoutLocality(l) === opts.golden)
+
 		console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
+
 		// AU/NZ pools: same stable locality-hash holdout as FR/CA.
 		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AuTuple[]
 		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NzTuple[]
 		const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
+
 		console.error(`  GeoNames postal: AU ${auAll.length}→${auPool.length}, NZ ${nzAll.length}→${nzPool.length}`)
 
-		if (
-			usPool.length === 0 ||
-			frPool.length === 0 ||
-			qcPool.length === 0 ||
-			onPool.length === 0 ||
-			auPool.length === 0 ||
-			nzPool.length === 0
-		) {
+		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length) {
 			throw new Error(
 				"A base pool is empty — check /tmp/oa-cache and /tmp/geonames-cache (CA.zip, AU-postal.zip, NZ-postal.zip)."
 			)
@@ -749,7 +840,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				if (r < acc) return name
 			}
 
-			return CLASS_MIX[CLASS_MIX.length - 1]![0]
+			return CLASS_MIX.at(-1)![0]
 		}
 
 		let emitted = 0
@@ -806,19 +897,24 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country = "CA"
 				locale = "en-CA"
 			}
+
 			const { raw, components } = rendered
 
 			// Every component surface must survive verbatim in raw, else alignment can't label it.
 			if (!Object.values(components).every((s) => raw.includes(s))) {
 				skipped++
+
 				continue
 			}
 
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components: orderComponents(components), country }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const canonical: CanonicalShardRow = {
 				raw,
 				components: orderComponents(components),
@@ -838,13 +934,17 @@ export const poBoxCedexRecipe: ShardRecipe = {
 									? "GeoNames NZ postal dump (CC-BY 4.0) locality/postcode tails + NZ Post ADV358 Delivery Service Types (@mailwoman/codex/nz)"
 									: "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: cls, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

@@ -66,6 +66,7 @@ import { NeuralAddressClassifier, resolveWeights } from "../index.ts"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "../pair-index-resolver.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+
 const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
@@ -176,6 +177,7 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 			modelPath: MODEL_PATH,
 			tokenizerPath: TOKENIZER_PATH,
 		})
+
 		const tree = await cls.parse("75004 Paris")
 		expect(tree.roots.length).toBeGreaterThan(0)
 	})
@@ -346,6 +348,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			// identical, so the emission delta at the child token isolates the placetype-pair prior's own
 			// contribution from the model's own (margin-dependent) belief and from every other prior.
 			const biasedTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
+
 			const unbiasedTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, {
 				placetypePair: { index: NO_MATCH_PAIR_INDEX },
 			})
@@ -388,6 +391,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 
 			// `placetypePair: false` — inert regardless of the auto-wired default.
 			const disabledTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS, { placetypePair: false })
+
 			expect(disabledTrace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 				kind: "placetypePair",
 				applied: false,
@@ -425,9 +429,11 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			// sub-window behavior on purpose, so `probeMode: "window"` (the now-opt-in mode) is passed
 			// explicitly, reusing the SAME real resolver already probed above as the per-parse override.
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
+
 			const json = await cls.parseJSON(GB_WIDE_MARGIN_ADDRESS, {
 				placetypePair: { index: resolver, probeMode: "window" },
 			})
+
 			expect(json.dependent_locality).toBe("Holland Fen")
 		},
 		LINK_SCRIPT_TIMEOUT_MS

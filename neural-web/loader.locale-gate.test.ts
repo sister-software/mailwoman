@@ -31,7 +31,9 @@ const here = dirname(fileURLToPath(import.meta.url))
 
 // ── Browser-safety scope ─────────────────────────────────────────────────────────────────────────────
 
-/** Every non-test `.ts` under `dir`, recursively (the runtime source the browser bundle would pull). */
+/**
+ * Every non-test `.ts` under `dir`, recursively (the runtime source the browser bundle would pull).
+ */
 function sourceFiles(dir: string): string[] {
 	const out: string[] = []
 
@@ -49,7 +51,9 @@ function sourceFiles(dir: string): string[] {
 	return out
 }
 
-/** A runtime `import`/`export … from` line (not a `type`-only one, which erases). */
+/**
+ * A runtime `import`/`export … from` line (not a `type`-only one, which erases).
+ */
 function isRuntimeImportLine(line: string): boolean {
 	const trimmed = line.trim()
 
@@ -61,7 +65,9 @@ function isRuntimeImportLine(line: string): boolean {
 	return !/^(import|export)\s+type\b/.test(trimmed)
 }
 
-/** The module specifier of an import/export-from line. */
+/**
+ * The module specifier of an import/export-from line.
+ */
 function specifierOf(line: string): string {
 	return /from\s+["']([^"']+)["']/.exec(line)?.[1] ?? ""
 }
@@ -148,6 +154,7 @@ function indexFor(country: string): LoadedPairIndex {
 		sourceMD5s: [],
 		buildDate: "2026-07-24",
 	}
+
 	const bytes = serializePairIndex(header, [{ child: "shoreditch", parent: "london", tag: "dependent_locality" }])
 
 	return { url: `https://cdn.example/pair-index-${country}.bin`, country, resolver: new PairIndexResolver(bytes) }

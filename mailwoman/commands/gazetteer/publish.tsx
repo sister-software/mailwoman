@@ -31,6 +31,7 @@ import {
 const ArgumentsSchema = zod.array(
 	zod.string().describe(`Candidate DB to publish. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)
 )
+
 const OptionsSchema = zod.object({
 	gazetteerVersion: zod
 		.string()
@@ -50,14 +51,17 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 		const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 		const uploadScript = String(repoRootPathBuilder("scripts", "publish-demo-assets-to-r2.py"))
+
 		const resourcesFile = options.bumpDemo
 			? String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx"))
 			: undefined
+
 		const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
 
 		console.error(
 			`▸ publish ${candidateDb} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
 		)
+
 		const r = publishGazetteer({
 			candidateDb,
 			version,

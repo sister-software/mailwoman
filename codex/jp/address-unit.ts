@@ -43,7 +43,9 @@
  */
 export const JP_ADMIN_SUFFIXES = ["都", "道", "府", "県", "市", "区", "郡", "町", "村"] as const
 
-/** A single administrative-area suffix kanji (`都`, `市`, `区`, …). */
+/**
+ * A single administrative-area suffix kanji (`都`, `市`, `区`, …).
+ */
 export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
 
 /**
@@ -57,7 +59,9 @@ export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
  */
 export const JP_BLOCK_MARKERS = ["丁目", "番地", "番", "号"] as const
 
-/** A numbered-tail marker (`丁目`, `番地`, `番`, `号`). */
+/**
+ * A numbered-tail marker (`丁目`, `番地`, `番`, `号`).
+ */
 export type JapaneseBlockMarker = (typeof JP_BLOCK_MARKERS)[number]
 
 const ADMIN_SUFFIX_SET: ReadonlySet<string> = new Set(JP_ADMIN_SUFFIXES)
@@ -78,10 +82,10 @@ export function isJapaneseAdminSuffix(ch: unknown): ch is JapaneseAdminSuffix {
  * than clipped to `北海` — mirroring the same carve-out in `prefecture.ts`.
  */
 export function stripAdminSuffix(name: string): string {
-	if (typeof name !== "string" || name.length === 0) return name
+	if (typeof name !== "string" || !name.length) return name
 
 	if (name === "北海道") return name
-	const last = name[name.length - 1]!
+	const last = name.at(-1)!
 
 	return ADMIN_SUFFIX_SET.has(last) ? name.slice(0, -1) : name
 }

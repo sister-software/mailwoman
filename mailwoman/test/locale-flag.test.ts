@@ -12,6 +12,7 @@ import { promisify } from "node:util"
 
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
+import { ZodError } from "zod"
 
 import { options as parseOptions } from "../commands/parse.tsx"
 
@@ -27,9 +28,9 @@ describe("--locale schema validation", () => {
 	})
 
 	test("parse command rejects malformed locale tags", () => {
-		expect(() => parseOptions.parse({ locale: "english" })).toThrow()
-		expect(() => parseOptions.parse({ locale: "EN-us" })).toThrow()
-		expect(() => parseOptions.parse({ locale: "en_US" })).toThrow()
+		expect(() => parseOptions.parse({ locale: "english" })).toThrow(ZodError)
+		expect(() => parseOptions.parse({ locale: "EN-us" })).toThrow(ZodError)
+		expect(() => parseOptions.parse({ locale: "en_US" })).toThrow(ZodError)
 	})
 
 	test("locale is optional", () => {

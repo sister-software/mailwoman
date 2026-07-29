@@ -62,12 +62,14 @@ describe("state-hi-schools adapter", () => {
 		const p = writeCSV(
 			"335,Ahuimanu Elem School,47-470 Hui Aeko Place,Kaneohe,96744,808.305.4800,808.239.3127,Kimi Ikeda,K,6,Elementary,http://example,Castle,Castle-Kahuku,Windward,Oahu,False"
 		)
+
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.country).toBe("US")
@@ -87,12 +89,14 @@ describe("state-hi-schools adapter", () => {
 		const p = writeCSV(
 			"540,Halau Ku Mana - PCS,2101 Makiki Heights Drive,Honolulu,96822,808.945.1600,808.945.1604,Lori Pereia,4,12,K - 12,http://example,Roosevelt,Kaimuki-McKinley-Roosevelt,Honolulu,Oahu,True"
 		)
+
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
 		for await (const r of a.rows({ inputPath: p, limit: 5 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		const r = rows[0]!
 		expect(r.components.venue).toBe("Halau Ku Mana - PCS")
@@ -117,18 +121,21 @@ describe("state-hi-schools adapter", () => {
 			// good
 			"123,Real School,500 Real Street,Honolulu,96813,,,,,,,,,,,,"
 		)
+
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
 		for await (const r of a.rows({ inputPath: p, limit: 10 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.components.venue).toBe("Real School")
 	})
 
 	it("rejects non-US country filter", async () => {
 		const a = createStateHiSchoolsAdapter()
+
 		await expect(
 			(async () => {
 				for await (const _ of a.rows({ inputPath: "/dev/null", country: "FR" }));
@@ -148,12 +155,14 @@ describe("state-hi-schools adapter", () => {
 			"101,B School,200 B St,Honolulu,96813,,,,,,,,,,,,",
 			"102,C School,300 C St,Honolulu,96813,,,,,,,,,,,,"
 		)
+
 		const a = createStateHiSchoolsAdapter()
 		const rows = []
 
 		for await (const r of a.rows({ inputPath: p, limit: 2 })) {
 			rows.push(r)
 		}
+
 		expect(rows).toHaveLength(2)
 	})
 })

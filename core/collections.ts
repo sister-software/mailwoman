@@ -47,7 +47,7 @@ export function* take<T>(collection: Iterable<T>, batchSize: number): Iterable<T
 		}
 	}
 
-	if (batch.length > 0) {
+	if (batch.length) {
 		yield batch
 	}
 }
@@ -116,7 +116,7 @@ export function pivot<T extends PropertyKey, C extends (value: T) => Promise<unk
  * @category Object
  */
 export function isIterable<T>(input: unknown): input is Iterable<T> {
-	return Symbol.iterator in Object(input)
+	return Symbol.iterator in new Object(input)
 }
 
 /**

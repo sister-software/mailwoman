@@ -18,9 +18,11 @@ import { WOF_POSTALCODE_ADAPTER_ID, createWOFPostalcodeAdapter, postcodeVariants
 const fixtureRoot = repoRootPath("corpus", "fixtures", "wof-postalcode-json")
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-wof-postalcode-json-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -55,12 +57,14 @@ describe("postcodeVariantsFor (pure)", () => {
 			],
 			"97214"
 		)
+
 		expect(v.map((x) => x.suffix)).toEqual([
 			"self",
 			"with-locality",
 			"with-locality-region",
 			"with-locality-region-country",
 		])
+
 		expect(v[3]!.components).toEqual({
 			postcode: "97214",
 			locality: "Portland",
@@ -89,13 +93,16 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows.length).toBeGreaterThan(0)
+
 		// The FR template drops region (encoded in postcode) and emits "75008 Paris, France".
 		// Reconciliation drops region from components because it isn't in raw.
 		const parisFull = rows.find(
 			(r) => r.components.postcode === "75008" && r.components.locality === "Paris" && r.components.country === "France"
 		)
+
 		expect(parisFull).toBeDefined()
 		expect(parisFull!.raw).toMatch(/75008\s+Paris/)
 		expect(parisFull!.raw).toContain("France")
@@ -109,6 +116,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const portlandUS = rows.find((r) => /Portland,\s+OR\s+97214/.test(r.raw))
 		expect(portlandUS).toBeDefined()
@@ -128,6 +136,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const stPetePost = rows.filter((r) => r.source_id.startsWith("wof-postalcode-5003-"))
 		expect(stPetePost.some((r) => r.components.locality === "Saint Petersburg")).toBe(true)
@@ -142,6 +151,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows.some((r) => r.raw.includes("00000"))).toBe(false)
 	})
@@ -153,6 +163,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 
 		// Every postcode row should be of the form wof-postalcode-<id>-<name-slot>-<hierarchy>.
@@ -168,13 +179,16 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, WOF_POSTALCODE_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

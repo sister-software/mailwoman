@@ -14,6 +14,7 @@ const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
 	span: { start, end },
 	confidence,
 })
+
 const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
 
 test("scoreByScript: each non-Latin script maps to its default locale", () => {
@@ -22,11 +23,13 @@ test("scoreByScript: each non-Latin script maps to its default locale", () => {
 		confidence: 0.8,
 		reason: "characterClass=cjk",
 	})
+
 	expect(scoreByScript(shape({ characterClass: "cyrillic" }))).toEqual({
 		locale: "ru-RU",
 		confidence: 0.85,
 		reason: "characterClass=cyrillic",
 	})
+
 	expect(scoreByScript(shape({ characterClass: "arabic" }))).toEqual({
 		locale: "ar",
 		confidence: 0.85,
@@ -48,11 +51,13 @@ test("scoreByPostcode: an unambiguous high-confidence hit maps to its implied co
 		confidence: 0.95,
 		reason: "format=us_zip4",
 	})
+
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("uk_postcode", 0.95)] }))).toEqual({
 		locale: "en-GB",
 		confidence: 0.95,
 		reason: "format=uk_postcode",
 	})
+
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("jp_postcode", 0.9)] }))).toEqual({
 		locale: "ja-JP",
 		confidence: 0.95,
@@ -75,6 +80,7 @@ test("scoreByPostcode: confidence boundary — exactly 0.9 counts as unambiguous
 		confidence: 0.95,
 		reason: "format=us_zip4",
 	})
+
 	// Just below the boundary: not unambiguous. `us_zip4` is not in the ambiguous-5digit fallback set,
 	// so nothing fires.
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.89)] }))).toBeNull()
@@ -90,6 +96,7 @@ test("scoreByPostcode: ambiguous 5-digit (us_zip / fr_postcode) falls back to lo
 		confidence: 0.5,
 		reason: "ambiguous-5digit-postcode",
 	})
+
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("fr_postcode", 0.6)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.5,
@@ -115,6 +122,7 @@ test("scoreByPostcode: unambiguous hit wins over a co-present ambiguous 5-digit"
 
 test("scoreFallback: always en-US at low confidence (gate is never null)", () => {
 	expect(scoreFallback(shape())).toEqual({ locale: "en-US", confidence: 0.3, reason: "fallback" })
+
 	// Shape contents are ignored — it's the always-decisive whole-input fallback.
 	expect(scoreFallback(shape({ characterClass: "cjk", knownFormats: [fmt("jp_postcode", 0.95)] }))).toEqual({
 		locale: "en-US",

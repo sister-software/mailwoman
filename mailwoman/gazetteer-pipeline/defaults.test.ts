@@ -25,6 +25,7 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 			expect(cc).toMatch(/^[A-Z]{2}$/)
 		}
 	}
+
 	expect(DEFAULT_OVERTURE_COUNTRIES).toContain("BE") // the #1015 case
 	expect(DEFAULT_GEONAMES_COUNTRIES).toContain("GE") // the #1023/#1026 case
 })

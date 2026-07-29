@@ -36,8 +36,7 @@ import { globSync, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
 
-import { pyJSONDumps } from "@mailwoman/core/utils"
-import { SeededRandom } from "@mailwoman/core/utils"
+import { pyJSONDumps, SeededRandom } from "@mailwoman/core/utils"
 
 import { csvRecordsFromFile, csvRecordsFromZip } from "./lib/zip-csv.ts"
 
@@ -51,7 +50,9 @@ function render(street: string, num: string, cp: string, city: string, order: st
 	return `${city}, ${cp}, ${street} ${num}`
 }
 
-/** Python `str.isupper()`: at least one cased char, and every cased char is uppercase. */
+/**
+ * Python `str.isupper()`: at least one cased char, and every cased char is uppercase.
+ */
 function pyIsUpper(s: string): boolean {
 	let hasCased = false
 
@@ -68,7 +69,9 @@ function pyIsUpper(s: string): boolean {
 	return hasCased
 }
 
-/** Python `str.title()`: titlecase the first cased char of each run of cased chars, lowercase rest. */
+/**
+ * Python `str.title()`: titlecase the first cased char of each run of cased chars, lowercase rest.
+ */
 function pyTitle(s: string): string {
 	let out = ""
 	let prevCased = false
@@ -135,6 +138,7 @@ async function main(): Promise<void> {
 			process.exit(2)
 		}
 	}
+
 	const country = values.country!
 	const out = values.out!
 	const n = Number(values.n)
@@ -150,7 +154,7 @@ async function main(): Promise<void> {
 		if (values.zip) {
 			yield* csvRecordsFromZip(values.zip, values.entry!)
 		} else {
-			for (const path of globSync(values["csv-glob"]!).sort()) {
+			for (const path of globSync(values["csv-glob"]!).toSorted()) {
 				yield* csvRecordsFromFile(path)
 			}
 		}
@@ -209,10 +213,11 @@ async function main(): Promise<void> {
 	const rows: Record<string, unknown>[] = []
 	let i = 0
 
-	for (const key of [...buckets.keys()].sort()) {
+	for (const key of [...buckets.keys()].toSorted()) {
 		for (const r of buckets.get(key)!) {
 			const order = ORDERS[i % 3]!
 			i += 1
+
 			rows.push({
 				raw: render(r.street, r.num, r.cp, r.city, order),
 				components: { house_number: r.num, street: r.street, postcode: r.cp, locality: r.city },
@@ -223,11 +228,13 @@ async function main(): Promise<void> {
 			})
 		}
 	}
+
 	rng.shuffle(rows)
 	const trimmed = rows.slice(0, n)
 
 	mkdirSync(dirname(out), { recursive: true })
 	writeFileSync(out, trimmed.map((r) => pyJSONDumps(r, { ensureAscii: false }) + "\n").join(""))
+
 	process.stderr.write(
 		`wrote ${trimmed.length} ${country.toUpperCase()} rows across ${buckets.size} buckets -> ${out}\n`
 	)

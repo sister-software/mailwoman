@@ -34,29 +34,47 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 
 import { isImplausibleResolution } from "./plausibility.ts"
 
-/** One candidate parse from the k-best decode, with its (within-input comparable) score. */
+/**
+ * One candidate parse from the k-best decode, with its (within-input comparable) score.
+ */
 export interface RerankCandidate<T = unknown> {
-	/** The parse's own score. Comparable to its siblings from the SAME input; not across inputs. */
+	/**
+	 * The parse's own score. Comparable to its siblings from the SAME input; not across inputs.
+	 */
 	score: number
-	/** The parse tree, UNRESOLVED — `rerankByResolution` resolves it via the injected resolver. */
+	/**
+	 * The parse tree, UNRESOLVED — `rerankByResolution` resolves it via the injected resolver.
+	 */
 	tree: AddressTree
-	/** Opaque caller payload carried through to the result (the segmentation, a surface string, …). */
+	/**
+	 * Opaque caller payload carried through to the result (the segmentation, a surface string, …).
+	 */
 	payload?: T
 }
 
 export interface RerankedCandidate<T = unknown> extends RerankCandidate<T> {
-	/** The resolved tree (the resolver's output), or null when resolution threw. */
+	/**
+	 * The resolved tree (the resolver's output), or null when resolution threw.
+	 */
 	resolved: AddressTree | null
-	/** True when the resolution is implausible (today: resolves no finer than a country centroid). */
+	/**
+	 * True when the resolution is implausible (today: resolves no finer than a country centroid).
+	 */
 	implausible: boolean
-	/** Why it was vetoed, when it was. */
+	/**
+	 * Why it was vetoed, when it was.
+	 */
 	reason?: string
 }
 
 export interface RerankResult<T = unknown> {
-	/** Candidates in FINAL order: plausible ones first (model order preserved), vetoed ones after. */
+	/**
+	 * Candidates in FINAL order: plausible ones first (model order preserved), vetoed ones after.
+	 */
 	ranked: Array<RerankedCandidate<T>>
-	/** The winner — the first plausible candidate, or the model's rank-1 when ALL were vetoed. */
+	/**
+	 * The winner — the first plausible candidate, or the model's rank-1 when ALL were vetoed.
+	 */
 	best: RerankedCandidate<T>
 	/**
 	 * True when the winner is NOT the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
@@ -66,7 +84,9 @@ export interface RerankResult<T = unknown> {
 	changed: boolean
 }
 
-/** Resolve a tree. Structural — any `Resolver`-shaped thing satisfies it. */
+/**
+ * Resolve a tree. Structural — any `Resolver`-shaped thing satisfies it.
+ */
 export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
@@ -94,7 +114,7 @@ export async function rerankByResolution<T>(
 	resolveTree: ResolveTree,
 	opts: RerankOpts = {}
 ): Promise<RerankResult<T>> {
-	if (candidates.length === 0) throw new Error("rerankByResolution: candidates must not be empty")
+	if (!candidates.length) throw new Error("rerankByResolution: candidates must not be empty")
 	const maxResolve = Math.max(1, Math.min(opts.maxResolve ?? 5, candidates.length))
 	const ranked: Array<RerankedCandidate<T>> = []
 
@@ -104,9 +124,11 @@ export async function rerankByResolution<T>(
 		if (i >= maxResolve) {
 			// Beyond the resolve budget: carried through unresolved, never vetoed.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
+
 			continue
 		}
-		let resolved: AddressTree | null = null
+
+		let resolved: AddressTree | null
 
 		try {
 			resolved = await resolveTree(candidate.tree)
@@ -114,9 +136,12 @@ export async function rerankByResolution<T>(
 			// A resolver failure is NOT evidence against the parse — treat it as "no evidence" and let
 			// the model's rank stand, rather than vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
+
 			continue
 		}
+
 		const verdict = isImplausibleResolution(resolved)
+
 		ranked.push({
 			...candidate,
 			resolved,

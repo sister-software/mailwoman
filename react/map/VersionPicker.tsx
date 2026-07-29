@@ -17,19 +17,31 @@ import type { ReactNode } from "react"
 import type { DemoVersionOption } from "./types.ts"
 
 export interface VersionPickerProps {
-	/** The selectable model bundles. */
+	/**
+	 * The selectable model bundles.
+	 */
 	versions: ReadonlyArray<DemoVersionOption>
-	/** The currently-selected version tag. */
+	/**
+	 * The currently-selected version tag.
+	 */
 	selected: string | null
-	/** Fired with the chosen version tag. */
+	/**
+	 * Fired with the chosen version tag.
+	 */
 	onSelect: (version: string) => void
-	/** Disable the control (e.g. while a parse is running). */
+	/**
+	 * Disable the control (e.g. while a parse is running).
+	 */
 	disabled?: boolean
-	/** Field label. @default "Model version" */
+	/**
+	 * Field label. @default "Model version"
+	 */
 	label?: string
 }
 
-/** The model-version selector. Renders `null` when there is nothing meaningful to pick. */
+/**
+ * The model-version selector. Renders `null` when there is nothing meaningful to pick.
+ */
 export function VersionPicker({
 	versions,
 	selected,

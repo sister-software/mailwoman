@@ -25,23 +25,38 @@ import { writeFileSync } from "node:fs"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-/** Options for {@linkcode goldSetSample}. */
+/**
+ * Options for {@linkcode goldSetSample}.
+ */
 export interface GoldSetSampleOptions {
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Providers sampled from the registry. Default 200000. */
+	/**
+	 * Providers sampled from the registry. Default 200000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** Org-name Jaccard collision threshold. Default 0.7. */
+	/**
+	 * Org-name Jaccard collision threshold. Default 0.7.
+	 */
 	tau?: number
-	/** Adjudication sample size. Default 300. */
+	/**
+	 * Adjudication sample size. Default 300.
+	 */
 	n?: number
-	/** Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout). */
+	/**
+	 * Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout).
+	 */
 	outJsonl?: string
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const STOP = new Set([
 	"llc",
 	"inc",
@@ -59,17 +74,19 @@ const STOP = new Set([
 	"of",
 	"and",
 ])
+
 function orgTokens(s: string): Set<string> {
 	return new Set(
 		s
 			.toLowerCase()
-			.replace(/[^a-z0-9 ]/g, " ")
+			.replaceAll(/[^a-z0-9 ]/g, " ")
 			.split(/\s+/)
 			.filter((t) => t && !STOP.has(t))
 	)
 }
+
 function jaccard(a: Set<string>, b: Set<string>): number {
-	if (a.size === 0 || b.size === 0) return 0
+	if (!a.size || !b.size) return 0
 	let inter = 0
 
 	for (const t of a)
@@ -79,6 +96,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 	return inter / (a.size + b.size - inter)
 }
+
 const C = {
 	npi: "NPI",
 	entityType: "Entity Type Code",
@@ -106,13 +124,15 @@ interface Prov {
 	parent: string
 }
 
-/** Gold-set P3 (#625) — sample the HARD co-located name-collision slice for adjudication. */
+/**
+ * Gold-set P3 (#625) — sample the HARD co-located name-collision slice for adjudication.
+ */
 export async function goldSetSample(
 	options: GoldSetSampleOptions = {},
 	report?: (line: string) => void
 ): Promise<{ hardPairs: number; sampled: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const CAP = options.cap ?? 200000
+	const CAP = options.cap ?? 200_000
 	const STATE = (options.state || "TX").toUpperCase()
 	const TAU = options.tau ?? 0.7
 	const N = options.n ?? 300
@@ -135,6 +155,7 @@ export async function goldSetSample(
 		const addrKey = addressFrequencyKey(address)
 
 		if (!addrKey) continue
+
 		const p: Prov = {
 			npi: norm(r[C.npi]),
 			org,
@@ -149,11 +170,14 @@ export async function goldSetSample(
 		if (!byAddr.has(addrKey)) {
 			byAddr.set(addrKey, [])
 		}
+
 		byAddr.get(addrKey)!.push(p)
+
 		kept++
 
 		if (kept >= CAP) break
 	}
+
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
 	// Hard pairs: co-located, name-similar (≥τ), DISTINCT NPIs that programmatic truth can't confidently
@@ -171,6 +195,7 @@ export async function goldSetSample(
 		programmaticVerdict: "same-entity" | "distinct"
 		adjudication: null // ← to be filled: "same-entity" | "distinct"
 	}
+
 	const hard: HardPair[] = []
 
 	for (const provs of byAddr.values()) {
@@ -180,6 +205,7 @@ export async function goldSetSample(
 			if (!distinct.has(p.npi)) {
 				distinct.set(p.npi, p)
 			}
+
 		const list = [...distinct.values()]
 
 		if (list.length < 2) continue
@@ -196,6 +222,7 @@ export async function goldSetSample(
 				if (sameParent) continue // programmatic truth already collapses these — not the hard slice
 				const sameAuth = a.auth !== "" && a.auth === b.auth
 				const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
+
 				hard.push({
 					npiA: a.npi,
 					npiB: b.npi,
@@ -215,6 +242,7 @@ export async function goldSetSample(
 			}
 		}
 	}
+
 	report?.(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)
 
 	// Deterministic spread sample of N (stride, not head — avoid file-order bias, the dedup-ceiling lesson).

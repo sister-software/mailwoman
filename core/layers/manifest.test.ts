@@ -79,10 +79,12 @@ describe("layer manifest IO", () => {
 describe("layer coverage IO", () => {
 	it("round-trips cells and returns undefined for unsurveyed cells", async () => {
 		using db = await openContractDB()
+
 		await writeLayerCoverage(db, [
 			{ h3Cell: 1001, completeness: 0.9, observedRows: 240 },
 			{ h3Cell: 1002, completeness: 0.1, observedRows: 3 },
 		])
+
 		expect(await readLayerCoverage(db, 1001)).toEqual({ h3Cell: 1001, completeness: 0.9, observedRows: 240 })
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN (undefined), never a zero-completeness record.
 		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
@@ -98,29 +100,35 @@ describe("layer coverage IO", () => {
 		using db = await openContractDB()
 		// Continental-scale coverage: spans two full batches plus a partial third, per COVERAGE_INSERT_BATCH.
 		const cellCount = COVERAGE_INSERT_BATCH * 2 + 17
+
 		const cells = Array.from({ length: cellCount }, (_, i) => ({
 			h3Cell: i,
 			completeness: i / cellCount,
 			observedRows: i,
 		}))
+
 		await writeLayerCoverage(db, cells)
 
 		// First cell.
 		expect(await readLayerCoverage(db, 0)).toEqual({ h3Cell: 0, completeness: 0, observedRows: 0 })
 		// Mid-second-batch cell.
 		const midSecondBatch = COVERAGE_INSERT_BATCH + Math.floor(COVERAGE_INSERT_BATCH / 2)
+
 		expect(await readLayerCoverage(db, midSecondBatch)).toEqual({
 			h3Cell: midSecondBatch,
 			completeness: midSecondBatch / cellCount,
 			observedRows: midSecondBatch,
 		})
+
 		// Final cell (in the trailing partial batch).
 		const lastCell = cellCount - 1
+
 		expect(await readLayerCoverage(db, lastCell)).toEqual({
 			h3Cell: lastCell,
 			completeness: lastCell / cellCount,
 			observedRows: lastCell,
 		})
+
 		// Missing cell.
 		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
 	})

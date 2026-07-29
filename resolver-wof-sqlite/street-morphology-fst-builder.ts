@@ -40,7 +40,9 @@ const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 const STREET_TYPES_FILENAME = "street_types.txt"
 
 export interface BuildStreetMorphologyFSTOpts {
-	/** Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders. */
+	/**
+	 * Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders.
+	 */
 	dictionariesDir: string
 	/**
 	 * Optional locale filter — only ingest these locale subfolders. Defaults to all that have a `street_types.txt`.
@@ -56,7 +58,9 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * `rue`, `str`) while filtering out the noise.
 	 */
 	minVariantLength?: number
-	/** Optional progress callback. */
+	/**
+	 * Optional progress callback.
+	 */
 	onProgress?: (phase: string, detail?: string) => void
 }
 
@@ -78,13 +82,14 @@ export interface BuildStreetMorphologyFSTResult {
 function parseLine(line: string): { canonical: string; variants: string[] } | null {
 	const trimmed = line.trim()
 
-	if (trimmed.length === 0 || trimmed.startsWith("#")) return null
+	if (!trimmed.length || trimmed.startsWith("#")) return null
+
 	const parts = trimmed
 		.split("|")
 		.map((s) => s.trim())
 		.filter((s) => s.length > 0)
 
-	if (parts.length === 0) return null
+	if (!parts.length) return null
 
 	return { canonical: parts[0]!, variants: parts }
 }
@@ -96,7 +101,8 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
 
-	if (opts.locales && opts.locales.length > 0) {
+	// oxlint-disable-next-line unicorn/prefer-ternary -- the else branch is a multi-line directory scan
+	if (opts.locales && opts.locales.length) {
 		locales = opts.locales
 	} else {
 		locales = readdirSync(opts.dictionariesDir).filter((entry) => {
@@ -113,6 +119,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			}
 		})
 	}
+
 	progress("discover", `Found ${locales.length} locales with ${STREET_TYPES_FILENAME}`)
 
 	// Collect canonical → set-of-variants across all locales. Same canonical form may appear in
@@ -132,13 +139,15 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			for (const variant of parsed.variants) {
 				existing.add(variant)
 			}
+
 			canonicalToVariants.set(parsed.canonical, existing)
 		}
 	}
+
 	progress("collect", `Collected ${canonicalToVariants.size} canonical affixes`)
 
 	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
-	const sortedCanonicals = [...canonicalToVariants.keys()].sort()
+	const sortedCanonicals = [...canonicalToVariants.keys()].toSorted()
 	const canonicalToWOFID = new Map<string, number>()
 
 	for (let i = 0; i < sortedCanonicals.length; i++) {
@@ -150,7 +159,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
-		if (tokens.length === 0) return
+		if (!tokens.length) return
 		let stateID = 0
 
 		for (const t of tokens) {
@@ -162,8 +171,10 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
+
 			stateID = next
 		}
+
 		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
@@ -177,6 +188,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	for (const canonical of sortedCanonicals) {
 		const variants = canonicalToVariants.get(canonical)!
 		const wofID = canonicalToWOFID.get(canonical)!
+
 		const entry: PlaceEntry = {
 			wofID,
 			placetype: "street_affix",
@@ -185,7 +197,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			// Fixed importance: street affixes are structurally unambiguous (Avenue is almost never
 			// anything but street-typing). The morphology prior caps bias separately; this value
 			// just feeds the cap formula `importance * cap`.
-			importance: 1.0,
+			importance: 1,
 			lat: 0,
 			lon: 0,
 		}
@@ -193,21 +205,25 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 		for (const variant of variants) {
 			const tokens = normalizeTokens(variant)
 
-			if (tokens.length === 0) continue
+			if (!tokens.length) continue
 			// Filter out collision-prone short surface forms — see `minVariantLength` docstring.
 			// We measure against the joined token form (no spaces) since FST keys are token sequences.
 			const joined = tokens.join("")
 
 			if (joined.length < minVariantLength) continue
 			insertName(tokens, entry)
+
 			insertCount++
+
 			variantCount++
 		}
 	}
+
 	progress("trie", `Built trie: ${nodes.length} states, ${insertCount} variant insertions`)
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
+
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries: locales, // Reuse `countries` slot for locale provenance — semantics differ from admin FST.

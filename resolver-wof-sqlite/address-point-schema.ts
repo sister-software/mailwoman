@@ -24,27 +24,43 @@ import type { Kysely } from "kysely"
  * non-finite coords). `unit`/`postcode`/`locality_norm` are nullable (not every source carries all three).
  */
 export interface AddressPointTable {
-	/** Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key. */
+	/**
+	 * Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key.
+	 */
 	street_norm: string
-	/** `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2). */
+	/**
+	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2).
+	 */
 	street_key: string
-	/** House number, normalized lower-case (kept TEXT — "123-A", "12 1/2" must survive). */
+	/**
+	 * House number, normalized lower-case (kept TEXT — "123-A", "12 1/2" must survive).
+	 */
 	number: string
 	unit: string | null
 	postcode: string | null
-	/** Shared {@link normalizeLocalityForKey} of the locality — the fallback scope. */
+	/**
+	 * Shared {@link normalizeLocalityForKey} of the locality — the fallback scope.
+	 */
 	locality_norm: string | null
-	/** The street as it appeared in the source (kept for display / debugging). */
+	/**
+	 * The street as it appeared in the source (kept for display / debugging).
+	 */
 	street_raw: string
 	lat: number
 	lon: number
-	/** Provenance: the dataset this point came from (e.g. `overture:us`, `openaddresses`). */
+	/**
+	 * Provenance: the dataset this point came from (e.g. `overture:us`, `openaddresses`).
+	 */
 	source: string
-	/** The pinned data release the point was ingested from. */
+	/**
+	 * The pinned data release the point was ingested from.
+	 */
 	release: string
 }
 
-/** The address-point database schema for `new DatabaseClient<AddressPointDatabase>(...)`. */
+/**
+ * The address-point database schema for `new DatabaseClient<AddressPointDatabase>(...)`.
+ */
 export interface AddressPointDatabase {
 	address_point: AddressPointTable
 }
@@ -67,7 +83,9 @@ export const ADDRESS_POINT_COLUMNS = [
 	"release",
 ] as const
 
-/** Create the `address_point` table — called before the streaming bulk load. */
+/**
+ * Create the `address_point` table — called before the streaming bulk load.
+ */
 export async function createAddressPointTable(db: Kysely<AddressPointDatabase>): Promise<void> {
 	await db.schema
 		.createTable("address_point")
@@ -86,18 +104,22 @@ export async function createAddressPointTable(db: Kysely<AddressPointDatabase>):
 		.execute()
 }
 
-/** Create the three probe indexes the reader relies on (postcode-scope, locality-scope, route-key). */
+/**
+ * Create the three probe indexes the reader relies on (postcode-scope, locality-scope, route-key).
+ */
 export async function createAddressPointIndexes(db: Kysely<AddressPointDatabase>): Promise<void> {
 	await db.schema
 		.createIndex("idx_ap_postcode")
 		.on("address_point")
 		.columns(["postcode", "street_norm", "number"])
 		.execute()
+
 	await db.schema
 		.createIndex("idx_ap_locality")
 		.on("address_point")
 		.columns(["locality_norm", "street_norm", "number"])
 		.execute()
+
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
 	// Street-first index for the BBOX scope (#247): OSM points often carry no postcode/locality, so the
 	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon BETWEEN). The

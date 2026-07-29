@@ -29,9 +29,13 @@ function input(text: string): NormalizedInputLite {
 interface Assertion {
 	kind: PhraseKind
 	body: string
-	/** Confidence floor — the proposal's confidence must be ≥ this value. */
+	/**
+	 * Confidence floor — the proposal's confidence must be ≥ this value.
+	 */
 	minConfidence?: number
-	/** Confidence ceiling — the proposal's confidence must be ≤ this value. */
+	/**
+	 * Confidence ceiling — the proposal's confidence must be ≤ this value.
+	 */
 	maxConfidence?: number
 }
 

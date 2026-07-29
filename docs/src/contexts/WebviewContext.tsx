@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { createContext, SetStateAction, useCallback, useContext } from "react"
+import type { SetStateAction } from "react"
+import { createContext, useCallback, useContext, useMemo } from "react"
 import type { ViewState } from "react-map-gl"
 
 export interface NexusWebviewState {
@@ -66,7 +67,7 @@ function validateSerializedState(input: unknown): asserts input is NexusWebviewS
  * Should be called once on startup.
  */
 export function pluckSerializedState(): NexusWebviewState {
-	let serializedState: unknown = null
+	let serializedState: unknown
 
 	try {
 		serializedState = JSON.parse(localStorage.getItem("webview-state") || "null")
@@ -107,17 +108,15 @@ export const NexusStateProvider: React.FC<NexusStateProviderProps> = ({ initialW
 			validateSerializedState(value)
 		} catch (error) {
 			console.warn("Failed to persist serialized state", error)
-
-			return
 		}
 
 		// vscode.setState(value)
 	}, [])
 
-	const value = {
-		persistWebviewState,
-		initialWebviewState,
-	}
+	const value = useMemo(
+		() => ({ persistWebviewState, initialWebviewState }),
+		[persistWebviewState, initialWebviewState]
+	)
 
 	return (
 		<>

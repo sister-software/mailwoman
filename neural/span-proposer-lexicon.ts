@@ -36,10 +36,14 @@ const WEAK_CANONICALS: ReadonlySet<string> = new Set([
 	"STOP",
 ])
 
-/** USPS canonicals that name a LEVEL of the building rather than a numbered unit on it. */
+/**
+ * USPS canonicals that name a LEVEL of the building rather than a numbered unit on it.
+ */
 const LEVEL_CANONICALS: ReadonlySet<string> = new Set(["FLOOR", "BASEMENT", "PENTHOUSE", "LOBBY"])
 
-/** AU/NZ delivery types excluded from the scan regex (no required number / two-letter ambiguity). */
+/**
+ * AU/NZ delivery types excluded from the scan regex (no required number / two-letter ambiguity).
+ */
 const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
 	"MS",
 	"CARE PO",
@@ -65,7 +69,7 @@ function phraseToPattern(phrase: string): string {
 						.split("")
 						.map((ch) => `${ch}\\.?`)
 						.join("\\s*")
-				: word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+				: word.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 		)
 		.join("\\s+")
 }
@@ -120,11 +124,12 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	}
 
 	// Longest-first so "GPO Box" beats "Box", "Private Bag" beats "Bag".
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const alternatives = [...deliveryPhrases].sort((a, b) => b.length - a.length).map(phraseToPattern)
-	const deliveryService =
-		alternatives.length > 0
-			? new RegExp(String.raw`\b(?:${alternatives.join("|")})\s*#?\s*([A-Za-z]?\d[\dA-Za-z-]*)\b`, "gi")
-			: undefined
+
+	const deliveryService = alternatives.length
+		? new RegExp(String.raw`\b(?:${alternatives.join("|")})\s*#?\s*([A-Za-z]?\d[\dA-Za-z-]*)\b`, "gi")
+		: undefined
 
 	return {
 		systems: sys,

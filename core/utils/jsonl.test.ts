@@ -30,6 +30,7 @@ describe("jsonl", () => {
 		for await (const row of iterateJSONL(path)) {
 			streamed.push(row)
 		}
+
 		expect(streamed).toEqual(rows)
 	})
 })

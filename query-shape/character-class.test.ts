@@ -44,19 +44,19 @@ describe("classifyCodepoint", () => {
 	})
 
 	it("recognizes CJK ranges", () => {
-		expect(classifyCodepoint(0x4e2d)).toBe("cjk") // 中
-		expect(classifyCodepoint(0x6771)).toBe("cjk") // 東
-		expect(classifyCodepoint(0xac00)).toBe("cjk") // 가 (Hangul)
+		expect(classifyCodepoint(0x4e_2d)).toBe("cjk") // 中
+		expect(classifyCodepoint(0x67_71)).toBe("cjk") // 東
+		expect(classifyCodepoint(0xac_00)).toBe("cjk") // 가 (Hangul)
 	})
 
 	it("recognizes Cyrillic", () => {
-		expect(classifyCodepoint(0x041c)).toBe("cyrillic") // М
-		expect(classifyCodepoint(0x0431)).toBe("cyrillic") // б
+		expect(classifyCodepoint(0x04_1c)).toBe("cyrillic") // М
+		expect(classifyCodepoint(0x04_31)).toBe("cyrillic") // б
 	})
 
 	it("recognizes Arabic", () => {
-		expect(classifyCodepoint(0x062f)).toBe("arabic") // د
-		expect(classifyCodepoint(0x0628)).toBe("arabic") // ب
+		expect(classifyCodepoint(0x06_2f)).toBe("arabic") // د
+		expect(classifyCodepoint(0x06_28)).toBe("arabic") // ب
 	})
 })
 
@@ -150,8 +150,8 @@ describe("tokenizeForClass", () => {
 
 	it("splits on script boundaries (CJK vs Latin)", () => {
 		const tokens = tokenizeForClass("東京Tokyo")
-		expect(tokens.length).toBe(2)
-		expect(tokens[0].body).toBe("東京")
-		expect(tokens[1].body).toBe("Tokyo")
+		expect(tokens).toHaveLength(2)
+		expect(tokens[0]!.body).toBe("東京")
+		expect(tokens[1]!.body).toBe("Tokyo")
 	})
 })

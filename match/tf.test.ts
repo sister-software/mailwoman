@@ -11,12 +11,12 @@ import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityCom
 import { buildTermFrequencyTable, withTermFrequency } from "./tf.ts"
 
 const EXACT_DIFF: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.9, u: 0.05 },
+	{ label: "exact", minSimilarity: 1, m: 0.9, u: 0.05 },
 	{ label: "different", minSimilarity: 0, m: 0.1, u: 0.95 },
 ]
 
 // A column dominated by "Smith", with a single rare "Vijayan".
-const NAMES = [...Array(900).fill("Smith"), ...Array(99).fill("Jones"), "Vijayan"]
+const NAMES = [...new Array(900).fill("Smith"), ...new Array(99).fill("Jones"), "Vijayan"]
 
 describe("buildTermFrequencyTable", () => {
 	const table = buildTermFrequencyTable(NAMES)
@@ -40,8 +40,12 @@ describe("buildTermFrequencyTable", () => {
 })
 
 describe("withTermFrequency + scorePair", () => {
-	type Person = { given: string }
+	interface Person {
+		given: string
+	}
+
 	const table = buildTermFrequencyTable(NAMES)
+
 	const model: FellegiSunterModel<Person> = {
 		lambda: 0.001,
 		comparisons: [
@@ -75,7 +79,10 @@ describe("withTermFrequency + scorePair", () => {
 })
 
 describe("term-frequency composes with EM", () => {
-	type Person = { given: string }
+	interface Person {
+		given: string
+	}
+
 	const table = buildTermFrequencyTable(NAMES)
 
 	it("keeps the adjustment on the fitted comparison after EM re-estimates the base u", () => {

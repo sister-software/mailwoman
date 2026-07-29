@@ -25,7 +25,9 @@ import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
  * pipeline (see `synthesize.ts`).
  */
 export interface SourceProvenance {
-	/** Adapter id that emitted this row, e.g. `"wof-admin"`, `"ban"`, `"openaddresses"`. */
+	/**
+	 * Adapter id that emitted this row, e.g. `"wof-admin"`, `"ban"`, `"openaddresses"`.
+	 */
 	source: string
 
 	/**
@@ -77,7 +79,9 @@ export interface SynthMarker {
  * that can't be sure leave it empty and let the runner default by country.
  */
 export interface CanonicalRow extends SourceProvenance {
-	/** Address string as it might appear in source data. */
+	/**
+	 * Address string as it might appear in source data.
+	 */
 	raw: string
 
 	/**
@@ -86,13 +90,19 @@ export interface CanonicalRow extends SourceProvenance {
 	 */
 	components: Partial<Record<ComponentTag, string>>
 
-	/** ISO 3166-1 alpha-2 country code. */
+	/**
+	 * ISO 3166-1 alpha-2 country code.
+	 */
 	country: string
 
-	/** Optional BCP-47 locale. Defaulted by country if absent. */
+	/**
+	 * Optional BCP-47 locale. Defaulted by country if absent.
+	 */
 	locale?: string
 
-	/** Present only on synthetic rows. */
+	/**
+	 * Present only on synthetic rows.
+	 */
 	synth?: SynthMarker
 }
 
@@ -106,10 +116,14 @@ export interface CanonicalRow extends SourceProvenance {
  * direction (punctuation-mute).
  */
 export interface LabeledRow extends CanonicalRow {
-	/** SentencePiece subword tokens for `raw`. */
+	/**
+	 * SentencePiece subword tokens for `raw`.
+	 */
 	tokens: readonly string[]
 
-	/** BIO labels, one per token. Same length as `tokens`. */
+	/**
+	 * BIO labels, one per token. Same length as `tokens`.
+	 */
 	labels: readonly BIOLabel[]
 
 	/**
@@ -123,10 +137,14 @@ export interface LabeledRow extends CanonicalRow {
 	 */
 	span_starts?: readonly number[]
 
-	/** Exclusive end offsets, parallel to `span_starts`. */
+	/**
+	 * Exclusive end offsets, parallel to `span_starts`.
+	 */
 	span_ends?: readonly number[]
 
-	/** Component tags, parallel to `span_starts`. */
+	/**
+	 * Component tags, parallel to `span_starts`.
+	 */
 	span_tags?: readonly ComponentTag[]
 }
 
@@ -157,19 +175,29 @@ export interface QuarantinedRow {
  * `signal` allows the runner to cancel a long-running scan cleanly.
  */
 export interface AdapterOptions {
-	/** Path to the adapter's input data (file, directory, or URL — adapter-specific). */
+	/**
+	 * Path to the adapter's input data (file, directory, or URL — adapter-specific).
+	 */
 	inputPath: string
 
-	/** Optional output directory, available to adapters that maintain side state (rare). */
+	/**
+	 * Optional output directory, available to adapters that maintain side state (rare).
+	 */
 	outputDir?: string
 
-	/** ISO 3166-1 alpha-2 country filter. */
+	/**
+	 * ISO 3166-1 alpha-2 country filter.
+	 */
 	country?: string
 
-	/** Soft row cap. Adapters should stop iterating once this is reached. */
+	/**
+	 * Soft row cap. Adapters should stop iterating once this is reached.
+	 */
 	limit?: number
 
-	/** Cancellation hook. Adapters should respect this on every iteration boundary. */
+	/**
+	 * Cancellation hook. Adapters should respect this on every iteration boundary.
+	 */
 	signal?: AbortSignal
 }
 
@@ -184,13 +212,19 @@ export interface AdapterOptions {
  * (e.g. OpenAddresses, which carries per-source licenses).
  */
 export interface CorpusAdapter {
-	/** Stable, machine-friendly id used in paths and CLI args. E.g. `"wof-admin"`. */
+	/**
+	 * Stable, machine-friendly id used in paths and CLI args. E.g. `"wof-admin"`.
+	 */
 	readonly id: string
 
-	/** Default SPDX-ish license label for rows from this adapter. Per-row overrides allowed. */
+	/**
+	 * Default SPDX-ish license label for rows from this adapter. Per-row overrides allowed.
+	 */
 	readonly defaultLicense: string
 
-	/** One-sentence description shown by `npx mailwoman corpus list`. */
+	/**
+	 * One-sentence description shown by `npx mailwoman corpus list`.
+	 */
 	readonly description: string
 
 	/**

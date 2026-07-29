@@ -27,26 +27,36 @@ const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/count
  */
 const DEFAULT_OUT = fileURLToPath(new URL("../country/reference-data.ts", import.meta.url))
 
-/** A single country record from mledoze/countries, narrowed to the fields this tool reads. */
+/**
+ * A single country record from mledoze/countries, narrowed to the fields this tool reads.
+ */
 interface MledozeCountry {
 	cca2?: string
 	idd?: { root?: string; suffixes?: string[] }
 	currencies?: Record<string, { name?: string; symbol?: string }>
 }
 
-/** The emitted per-country reference row. */
+/**
+ * The emitted per-country reference row.
+ */
 interface CountryReferenceEntry {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
 }
 
-/** Options for {@linkcode generateCountryReference}. */
+/**
+ * Options for {@linkcode generateCountryReference}.
+ */
 export interface GenerateCountryReferenceOptions {
-	/** Output path override. Default: `codex/country/reference-data.ts` (the committed table). */
+	/**
+	 * Output path override. Default: `codex/country/reference-data.ts` (the committed table).
+	 */
 	out?: string
 }
 
-/** Summary returned by {@linkcode generateCountryReference}. */
+/**
+ * Summary returned by {@linkcode generateCountryReference}.
+ */
 export interface GenerateCountryReferenceSummary {
 	countries: number
 	outPath: string
@@ -65,6 +75,7 @@ function callingCode(country: MledozeCountry): number | undefined {
 
 		return Number.isFinite(n) ? n : undefined
 	}
+
 	const n = Number(root)
 
 	return Number.isFinite(n) ? n : undefined
@@ -72,13 +83,15 @@ function callingCode(country: MledozeCountry): number | undefined {
 
 const serialize = (o: CountryReferenceEntry): string =>
 	JSON.stringify(o, null, 0)
-		.replace(/"isoCode"/g, "isoCode")
-		.replace(/"callingCode"/g, "callingCode")
-		.replace(/"currency"/g, "currency")
-		.replace(/"name"/g, "name")
-		.replace(/"symbol"/g, "symbol")
+		.replaceAll('"isoCode"', "isoCode")
+		.replaceAll('"callingCode"', "callingCode")
+		.replaceAll('"currency"', "currency")
+		.replaceAll('"name"', "name")
+		.replaceAll('"symbol"', "symbol")
 
-/** Fetch mledoze/countries and regenerate the committed `COUNTRY_REFERENCE` table. */
+/**
+ * Fetch mledoze/countries and regenerate the committed `COUNTRY_REFERENCE` table.
+ */
 export async function generateCountryReference(
 	options: GenerateCountryReferenceOptions = {},
 	report?: (line: string) => void
@@ -101,7 +114,8 @@ export async function generateCountryReference(
 		if (cc != null) {
 			entry.callingCode = cc
 		}
-		const currencyCodes = Object.keys(country.currencies ?? {}).sort()
+
+		const currencyCodes = Object.keys(country.currencies ?? {}).toSorted()
 
 		if (currencyCodes.length) {
 			const code = currencyCodes[0]!
@@ -123,7 +137,7 @@ export async function generateCountryReference(
 	}
 
 	const body = Object.keys(rows)
-		.sort()
+		.toSorted()
 		.map((k) => `\t${k}: ${serialize(rows[k]!)},`)
 		.join("\n")
 

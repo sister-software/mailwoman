@@ -73,6 +73,7 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 	const p = sqlite3.wasm.alloc(bytes.byteLength)
 	const heap = sqlite3.wasm.heap8u()
 	heap.set(bytes, p)
+
 	const rc = sqlite3.capi.sqlite3_deserialize(
 		db.pointer!,
 		"main",

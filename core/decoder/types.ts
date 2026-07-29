@@ -28,7 +28,7 @@
 
 import type { BIOLabel, ComponentTag } from "../types/component.ts"
 
-export type { BIOLabel, ComponentTag }
+export { type BIOLabel, type ComponentTag } from "../types/component.ts"
 
 /**
  * A single token emitted by the model, paired with its predicted label and confidence.
@@ -37,15 +37,25 @@ export type { BIOLabel, ComponentTag }
  * (SentencePiece's `encode` returns offsets); they are NOT recomputed by the decoder.
  */
 export interface DecoderToken {
-	/** The token piece as the tokenizer emitted it (with any leading-space sentinel preserved). */
+	/**
+	 * The token piece as the tokenizer emitted it (with any leading-space sentinel preserved).
+	 */
 	piece: string
-	/** Inclusive start char offset in the original raw text. */
+	/**
+	 * Inclusive start char offset in the original raw text.
+	 */
 	start: number
-	/** Exclusive end char offset in the original raw text. */
+	/**
+	 * Exclusive end char offset in the original raw text.
+	 */
 	end: number
-	/** The argmax BIO label for this token. */
+	/**
+	 * The argmax BIO label for this token.
+	 */
 	label: BIOLabel
-	/** Softmax confidence for the chosen label, in [0, 1]. */
+	/**
+	 * Softmax confidence for the chosen label, in [0, 1].
+	 */
 	confidence: number
 }
 
@@ -74,9 +84,13 @@ export interface AddressNode {
 	 * `"neural-v0.3.1-en-us"`, or a resolver-supplied place id like `"wof-admin:101751119"`.
 	 */
 	sourceID?: string
-	/** Resolver-supplied centroid latitude (Phase 4.3). Optional — only set when a resolver wins. */
+	/**
+	 * Resolver-supplied centroid latitude (Phase 4.3). Optional — only set when a resolver wins.
+	 */
 	lat?: number
-	/** Resolver-supplied centroid longitude (Phase 4.3). Optional — only set when a resolver wins. */
+	/**
+	 * Resolver-supplied centroid longitude (Phase 4.3). Optional — only set when a resolver wins.
+	 */
 	lon?: number
 	/**
 	 * Resolver-supplied normalized place URI (Phase 4.3) — `"wof:101751119"` for a WOF place. Distinct from `sourceID`
@@ -112,13 +126,19 @@ export interface AddressNode {
 	interpretations?: ReadonlyArray<Interpretation>
 }
 
-/** One additional role a span plays (#413) — see {@link AddressNode.interpretations}. */
+/**
+ * One additional role a span plays (#413) — see {@link AddressNode.interpretations}.
+ */
 export interface Interpretation {
 	tag: ComponentTag
-	/** Resolver-supplied normalized place URI for this role (e.g. `wof:101909779`). */
+	/**
+	 * Resolver-supplied normalized place URI for this role (e.g. `wof:101909779`).
+	 */
 	placeID?: string
 	sourceID?: string
-	/** Centroid for this role's place (a capital-seat comune differs from its province). */
+	/**
+	 * Centroid for this role's place (a capital-seat comune differs from its province).
+	 */
 	lat?: number
 	lon?: number
 	confidence?: number
@@ -132,7 +152,9 @@ export interface Interpretation {
  * labeled output become roots themselves (e.g. a bare "house_number" with no labeled street parent).
  */
 export interface AddressTree {
-	/** The original raw input text — preserved for round-trip and XML root @raw attribute. */
+	/**
+	 * The original raw input text — preserved for round-trip and XML root @raw attribute.
+	 */
 	raw: string
 	roots: AddressNode[]
 	/**

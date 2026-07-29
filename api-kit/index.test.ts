@@ -9,7 +9,9 @@ import { expect, test } from "vitest"
 
 import { attachOpenAPIDocs, emitOpenAPIDocuments, serveNode, type ServerHandle } from "./index.ts"
 
-/** A minimal one-route app shared by the doc + serve tests. */
+/**
+ * A minimal one-route app shared by the doc + serve tests.
+ */
 function createPingApp(): OpenAPIHono {
 	const app = new OpenAPIHono()
 
@@ -55,6 +57,7 @@ test("emitOpenAPIDocuments: returns both 3.1 and 3.0 flavors from the same route
 
 test("emitOpenAPIDocuments: full-info options land servers/security/license/tags on the v31 document", () => {
 	const app = createPingApp()
+
 	const { v31 } = emitOpenAPIDocuments(app, {
 		title: "@mailwoman/api-kit test",
 		version: "0.0.0",
@@ -88,7 +91,7 @@ test("serveNode: binds, answers over real HTTP, closes cleanly", async () => {
 				fetch: app.fetch,
 				port: 0, // ephemeral
 				hostname: "127.0.0.1",
-				onListen: (info) => resolve(info.port),
+				onListen: (listened) => resolve(listened.port),
 			})
 		})
 

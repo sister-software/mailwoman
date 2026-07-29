@@ -31,6 +31,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 				}
 			},
 		})
+
 		matcher = built.matcher
 	}, 60_000)
 
@@ -61,7 +62,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 
 	it("returns no suggestions for garbage input", () => {
 		const result = autocomplete(matcher, "Xyzzyplugh")
-		expect(result.suggestions.length).toBe(0)
+		expect(result.suggestions).toHaveLength(0)
 		expect(result.depth).toBe(0)
 	})
 
@@ -93,6 +94,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		lat: 0,
 		lon: 0,
 	})
+
 	const matcher = new FSTMatcher([
 		{
 			edges: new Map([
@@ -138,9 +140,9 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 
 	it("dedupeByName collapses same-name places (two New Londons → one)", () => {
 		const without = autocomplete(matcher, "new london")
-		expect(without.suggestions.filter((s) => s.name === "New London").length).toBe(2)
+		expect(without.suggestions.filter((s) => s.name === "New London")).toHaveLength(2)
 		const withDedupe = autocomplete(matcher, "new london", { dedupeByName: true })
-		expect(withDedupe.suggestions.filter((s) => s.name === "New London").length).toBe(1)
+		expect(withDedupe.suggestions.filter((s) => s.name === "New London")).toHaveLength(1)
 		// keeps the higher-importance one (the locality, 0.5 > the county's 0.4)
 		expect(withDedupe.suggestions[0]?.placetype).toBe("locality")
 	})
@@ -168,6 +170,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 			},
 			{ edges: new Map(), places: [place(200, "Gotham", "locality", 0.9)] },
 		])
+
 		const r = autocomplete(dense, "go", { maxSuggestions: 3 })
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
@@ -192,7 +195,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	it("respects maxSuggestions (caps a branch with more matches than the limit)", () => {
 		// "new" → New York + two New Londons (3 places); cap to 1.
 		const r = autocomplete(matcher, "new", { maxSuggestions: 1 })
-		expect(r.suggestions.length).toBe(1)
+		expect(r.suggestions).toHaveLength(1)
 	})
 
 	it("never throws on single-character input", () => {

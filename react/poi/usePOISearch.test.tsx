@@ -26,7 +26,9 @@ import { usePOISearch } from "./usePOISearch.ts"
 const loadRuntime = async () => makePOIRuntime()
 const loadBrandRuntime = async () => makeBrandPOIRuntime()
 
-/** A subject's display label, whichever variant it is — the union-safe accessor the harness renders. */
+/**
+ * A subject's display label, whichever variant it is — the union-safe accessor the harness renders.
+ */
 function subjectLabel(subject: POISubject | undefined): string {
 	if (!subject) return "no-subject"
 

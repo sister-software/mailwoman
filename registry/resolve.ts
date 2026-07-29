@@ -17,8 +17,8 @@
  *   layer that sits in front of this.
  */
 
-import type { ComparisonLevel } from "@mailwoman/match"
 import {
+	type ComparisonLevel,
 	type BlockingKey,
 	type FellegiSunterModel,
 	type GBT,
@@ -55,14 +55,16 @@ import type { ResolvedEntity, SourceRecord } from "./types.ts"
 export function addressFrequencyKey(raw: string): string {
 	return raw
 		.toUpperCase()
-		.replace(/[^A-Z0-9]+/g, " ")
+		.replaceAll(/[^A-Z0-9]+/g, " ")
 		.trim()
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 }
 
-/** Default tiered levels for a name-like text field. `m`/`u` are EM-estimable seeds. */
+/**
+ * Default tiered levels for a name-like text field. `m`/`u` are EM-estimable seeds.
+ */
 const NAME_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.8, u: 0.01 },
+	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
@@ -71,7 +73,7 @@ const NAME_LEVELS: ComparisonLevel[] = [
  * Exact-vs-different levels for a normalized phone. A shared line is strong, rarely-coincidental evidence.
  */
 const PHONE_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.6, u: 0.002 },
+	{ label: "exact", minSimilarity: 1, m: 0.6, u: 0.002 },
 	{ label: "different", minSimilarity: 0, m: 0.4, u: 0.998 },
 ]
 
@@ -81,11 +83,13 @@ const PHONE_LEVELS: ComparisonLevel[] = [
  * share a specialty far more often than a phone line (dermatologists cluster in dermatology buildings).
  */
 const CODE_SET_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.75, u: 0.08 },
+	{ label: "exact", minSimilarity: 1, m: 0.75, u: 0.08 },
 	{ label: "different", minSimilarity: 0, m: 0.25, u: 0.92 },
 ]
 
-/** 1 when the whitespace-joined code sets share ANY code, else 0 (order/count-insensitive, case-folded). */
+/**
+ * 1 when the whitespace-joined code sets share ANY code, else 0 (order/count-insensitive, case-folded).
+ */
 function codeSetOverlap(a: string, b: string): number {
 	const sa = new Set(a.toUpperCase().split(/\s+/).filter(Boolean))
 
@@ -94,10 +98,12 @@ function codeSetOverlap(a: string, b: string): number {
 	return 0
 }
 
-/** Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions). */
+/**
+ * Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions).
+ */
 function normalizePhone(raw: string | null | undefined): string | null {
 	if (!raw) return null
-	const digits = raw.replace(/\D+/g, "")
+	const digits = raw.replaceAll(/\D+/g, "")
 
 	return digits.length >= 10 ? digits.slice(-10) : digits || null
 }
@@ -241,7 +247,9 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
 	}
 }
 
-/** The default blocking keys: a union of location, canonical address, phone, and email. */
+/**
+ * The default blocking keys: a union of location, canonical address, phone, and email.
+ */
 export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	return [
 		geoCellKey((r) => r.address?.geocode?.coordinate),
@@ -251,15 +259,25 @@ export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	]
 }
 
-/** Options for {@link resolveEntities}. */
+/**
+ * Options for {@link resolveEntities}.
+ */
 export interface ResolveConfig {
-	/** Scoring model. Default {@link buildDefaultModel}. */
+	/**
+	 * Scoring model. Default {@link buildDefaultModel}.
+	 */
 	model?: FellegiSunterModel<SourceRecord>
-	/** Blocking keys (their union). Default {@link defaultBlockingKeys}. */
+	/**
+	 * Blocking keys (their union). Default {@link defaultBlockingKeys}.
+	 */
 	blockingKeys?: BlockingKey<SourceRecord>[]
-	/** Link two records into the same entity at or above this match weight (bits). Default 0. */
+	/**
+	 * Link two records into the same entity at or above this match weight (bits). Default 0.
+	 */
 	threshold?: number
-	/** Skip and report blocks larger than this rather than scanning them. */
+	/**
+	 * Skip and report blocks larger than this rather than scanning them.
+	 */
 	maxBlockSize?: number
 	/**
 	 * Fit the model's `m`/`u` to the candidate pairs with EM before scoring (label-free). Default false.
@@ -334,12 +352,18 @@ export interface ResolveConfig {
 	learnedScorer?: boolean | GBT
 }
 
-/** The outcome of a resolve pass. */
+/**
+ * The outcome of a resolve pass.
+ */
 export interface ResolveResult {
 	entities: ResolvedEntity[]
-	/** Number of candidate pairs blocking produced. */
+	/**
+	 * Number of candidate pairs blocking produced.
+	 */
 	candidatePairs: number
-	/** Blocks too large to scan, surfaced so coverage limits are visible. */
+	/**
+	 * Blocks too large to scan, surfaced so coverage limits are visible.
+	 */
 	droppedBlocks: Array<{ key: string; size: number }>
 }
 
@@ -359,7 +383,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 					records.map((r) => r.address?.raw),
 					{ normalize: addressFrequencyKey }
 				))
+
 	const collapseSpatial = config.collapseSpatial ?? true
+
 	const model =
 		config.model ??
 		buildDefaultModel({
@@ -369,6 +395,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			discriminators: config.discriminators,
 			exactDiscriminators: config.exactDiscriminators,
 		})
+
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 
 	// #603: the learned scorer is DEFAULT-ON. An explicit `scorer` overrides everything; otherwise
@@ -382,13 +409,16 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	if (!scorer && config.learnedScorer !== false) {
 		const gbt =
 			config.learnedScorer === undefined || config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
+
 		usingBundledModel = gbt === DEDUP_GBT_MODEL
+
 		scorer = createGbtScorer({
 			model: gbt,
 			comparisons: buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons,
 			addressFrequency: addressFrequency ?? buildTermFrequencyTable([], { normalize: addressFrequencyKey }),
 		})
 	}
+
 	// Threshold: an explicit value wins; else the bundled model's CALIBRATED threshold when it's active
 	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS baseline or a custom model).
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
@@ -397,7 +427,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	let scoringModel = model
 
-	if (config.trainEM && pairs.length > 0) {
+	if (config.trainEM && pairs.length) {
 		const patterns = pairs.map(([a, b]) => agreementPattern(model.comparisons, a, b))
 		scoringModel = estimateParameters(model, patterns).model
 	}
@@ -429,11 +459,13 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	// in ONE pass over links via a record→cluster index, not by filtering every link for every cluster —
 	// the latter is O(clusters × links) and dominates the resolve at scale.
 	const clusterOf = new Map<SourceRecord, number>()
+
 	clusters.forEach((group, i) => {
 		for (const record of group) {
 			clusterOf.set(record, i)
 		}
 	})
+
 	const minIntraWeight = new Array<number>(clusters.length).fill(Infinity)
 
 	for (const link of links) {

@@ -80,6 +80,7 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 // Terrain + DEM-source tests parked (mobile performance): the `terrain` getter and the terrain DEM
 // source are commented out in `composition.ts`. Re-enable the code and these tests together when DEM
 // is reconsidered. (The hillshade DEM source is still injected.)
+/* oxlint-disable vitest/no-commented-out-tests -- parked deliberately; see the note above */
 /*
 test("Composer: terrain source defaults to the terrain tileset id", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
@@ -172,7 +173,7 @@ test("Composer.toJSON: carries the composed light, sky, terrain, sources and lay
 
 	expect(style.light).toEqual(createLightSpec(composer.light))
 	expect(style.sky).toEqual(createSkySpec(composer.sky))
-	expect(style.terrain).toEqual(composer.terrain)
+	// `terrain` is parked with the tests below — the getter is commented out in composition.ts.
 	expect(style.sources).toBe(composer.sources)
 	expect(style.layers).toEqual(composer.layers)
 })
@@ -189,8 +190,8 @@ test("Composer: two instances from the shared BaseLayers have independent layer 
 	const a = new StyleSpecificationComposer({ sources: {} })
 	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })
-	expect(b.layers.length).toBe(baseCount) // b built a full list, not a corrupted remnant
-	expect(a.layers.length).toBe(baseCount) // a's list wasn't mutated by b's construction
+	expect(b.layers).toHaveLength(baseCount) // b built a full list, not a corrupted remnant
+	expect(a.layers).toHaveLength(baseCount) // a's list wasn't mutated by b's construction
 })
 
 //#endregion

@@ -34,6 +34,7 @@ test("placetypeDepth: depth strictly increases from country down to microhood", 
 		"neighbourhood",
 		"microhood",
 	]
+
 	const depths = order.map(placetypeDepth)
 
 	for (let i = 1; i < depths.length; i++) {
@@ -54,7 +55,7 @@ test("placetypeDepth: unknown / never-resolved placetypes map to 0 (sort coarses
 test("placetypeDepth: descending-depth sort yields nearest-first (deepest placetype first)", () => {
 	// The lineage walk sorts by placetypeDepth(b) - placetypeDepth(a); reproduce that ordering.
 	const mixed = ["country", "neighbourhood", "region", "locality"]
-	const nearestFirst = [...mixed].sort((a, b) => placetypeDepth(b) - placetypeDepth(a))
+	const nearestFirst = [...mixed].toSorted((a, b) => placetypeDepth(b) - placetypeDepth(a))
 	expect(nearestFirst).toEqual(["neighbourhood", "locality", "region", "country"])
 })
 
@@ -62,6 +63,7 @@ test("PLACETYPE_DEPTH: the exported table matches placetypeDepth for every known
 	for (const [placetype, depth] of Object.entries(PLACETYPE_DEPTH)) {
 		expect(placetypeDepth(placetype)).toBe(depth)
 	}
+
 	// Each depth is unique (no two placetypes collide at the same rank).
 	const depths = Object.values(PLACETYPE_DEPTH)
 	expect(new Set(depths).size).toBe(depths.length)

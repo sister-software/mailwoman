@@ -16,7 +16,9 @@ import { identityMap } from "./offset-map.ts"
 
 export interface NFCResult {
 	text: string
-	/** `text[i]` came from `input[map[i]]`. */
+	/**
+	 * `text[i]` came from `input[map[i]]`.
+	 */
 	map: number[]
 	changed: boolean
 }
@@ -43,18 +45,18 @@ function estimateNFCMap(input: string, output: string): number[] {
 	for (let outIdx = 0; outIdx < output.length; outIdx++) {
 		map.push(inIdx)
 		const outCp = output.codePointAt(outIdx)!
-		const outStep = outCp > 0xffff ? 2 : 1
+		const outStep = outCp > 0xff_ff ? 2 : 1
 
 		// Walk the input forward by at least one codepoint; absorb any combining marks (0x0300–0x036f).
 		if (inIdx < input.length) {
 			const inCp = input.codePointAt(inIdx)!
-			inIdx += inCp > 0xffff ? 2 : 1
+			inIdx += inCp > 0xff_ff ? 2 : 1
 
 			while (inIdx < input.length) {
 				const nextCp = input.codePointAt(inIdx)!
 
-				if (nextCp >= 0x0300 && nextCp <= 0x036f) {
-					inIdx += nextCp > 0xffff ? 2 : 1
+				if (nextCp >= 0x03_00 && nextCp <= 0x03_6f) {
+					inIdx += nextCp > 0xff_ff ? 2 : 1
 				} else {
 					break
 				}

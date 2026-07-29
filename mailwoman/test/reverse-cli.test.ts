@@ -28,7 +28,9 @@ const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
-/** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
+/**
+ * Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout.
+ */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
@@ -37,9 +39,7 @@ function stripAnsiSpinner(stdout: string): string {
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
 }
 
-// ---------------------------------------------------------------------------
-// Error-path tests — run unconditionally, no real DB required.
-// ---------------------------------------------------------------------------
+// MARK: Error-path tests — run unconditionally, no real DB required.
 
 describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero with a clear message when lat/lon are missing", async () => {
@@ -86,9 +86,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// End-to-end tests against the real production DBs.
-// ---------------------------------------------------------------------------
+// MARK: End-to-end tests against the real production DBs.
 
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"mailwoman reverse — end-to-end against MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB",
@@ -104,12 +102,14 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				env: ENV,
 				maxBuffer: 4 * 1024 * 1024,
 			})
+
 			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
 				lat: number
 				lon: number
 				containment: string
 				hierarchy: Array<{ id: number; name: string; placetype: string; country: string }>
 			}
+
 			expect(json.lat).toBe(40.7128)
 			expect(json.lon).toBe(-74.006)
 			expect(["polygon", "approximate"]).toContain(json.containment)
@@ -126,6 +126,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				[cliBin, "reverse", "40.7128", "-74.0060", "--admin-db", ADMIN_DB!, "--polygons-db", POLYGONS_DB!],
 				{ env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 			)
+
 			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: Array<{ name: string }> }
 			const names = json.hierarchy.map((p) => p.name)
 			expect(names).toContain("United States")
@@ -136,6 +137,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				env: ENV,
 				maxBuffer: 4 * 1024 * 1024,
 			})
+
 			const out = result.stdout
 			expect(out).toMatch(/containment:/)
 			expect(out).toMatch(/wof:\d+/)
@@ -147,6 +149,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				env: ENV,
 				maxBuffer: 4 * 1024 * 1024,
 			})
+
 			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: unknown[] }
 			expect(json.hierarchy).toEqual([])
 		}, 60_000)
@@ -157,10 +160,12 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				env: { ...ENV, MAILWOMAN_WOF_POLYGONS_DB: "" },
 				maxBuffer: 4 * 1024 * 1024,
 			})
+
 			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
 				containment: string
 				hierarchy: Array<{ name: string }>
 			}
+
 			expect(json.containment).toBe("approximate")
 			expect(json.hierarchy.map((p) => p.name)).toContain("United States")
 		}, 60_000)

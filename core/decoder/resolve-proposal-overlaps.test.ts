@@ -15,7 +15,9 @@ import { describe, expect, test } from "vitest"
 
 import { resolveProposalOverlaps } from "./resolve-proposal-overlaps.ts"
 
-/** Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`). */
+/**
+ * Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`).
+ */
 function p(component: ComponentTag, body: string, start: number, confidence: number): ClassificationProposal {
 	return {
 		span: new Span(body, start),
@@ -27,7 +29,9 @@ function p(component: ComponentTag, body: string, start: number, confidence: num
 	} as ClassificationProposal
 }
 
-/** Assert no two spans in the result overlap. */
+/**
+ * Assert no two spans in the result overlap.
+ */
 function noOverlaps(out: readonly ClassificationProposal[]): boolean {
 	for (let i = 0; i < out.length; i++) {
 		for (let j = i + 1; j < out.length; j++) {
@@ -68,6 +72,7 @@ describe("resolveProposalOverlaps — overlap resolution", () => {
 			p("street", "350 5th Ave", 0, 0.8), // coarse, lower conf
 			p("house_number", "350", 0, 0.9), // finer, higher conf
 		])
+
 		expect(out).toHaveLength(1)
 		expect(out[0]!.component).toBe("house_number")
 		expect(noOverlaps(out)).toBe(true)
@@ -81,10 +86,12 @@ describe("resolveProposalOverlaps — overlap resolution", () => {
 			p("house_number", "350", 0, 0.9),
 			p("street", "5th Ave", 4, 0.9),
 		])
+
 		expect(out.map((x) => `${x.component}[${x.span.start},${x.span.end}]`)).toEqual([
 			"house_number[0,3]",
 			"street[4,11]",
 		])
+
 		expect(noOverlaps(out)).toBe(true)
 	})
 
@@ -107,6 +114,7 @@ describe("resolveProposalOverlaps — overlap resolution", () => {
 			p("house_number", "350", 0, 0.7),
 			p("street", "5th Ave", 4, 0.7),
 		])
+
 		expect(out).toHaveLength(1)
 		expect(out[0]!.span.start).toBe(0)
 		expect(out[0]!.span.end).toBe(11)
@@ -121,6 +129,7 @@ describe("resolveProposalOverlaps — coherence invariant", () => {
 			p("locality", "New York", 12, 0.9),
 			p("region", "NY", 21, 0.9),
 		])
+
 		expect(out).toHaveLength(4)
 		expect(noOverlaps(out)).toBe(true)
 		expect(out.map((x) => x.span.start)).toEqual([0, 4, 12, 21]) // span-start order
@@ -134,6 +143,7 @@ describe("resolveProposalOverlaps — coherence invariant", () => {
 			p("street", "5th", 4, 0.5),
 			p("locality", "5th Ave New", 4, 0.4),
 		])
+
 		expect(noOverlaps(out)).toBe(true)
 	})
 })

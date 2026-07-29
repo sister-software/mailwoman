@@ -25,27 +25,27 @@ describe("segment", () => {
 	it("splits on tabs", () => {
 		const segs = segment("Apt 4B\t350 5th Ave")
 		expect(segs.map((s) => s.body)).toEqual(["Apt 4B", "350 5th Ave"])
-		expect(segs[1].separator).toBe("tab")
+		expect(segs[1]!.separator).toBe("tab")
 	})
 
 	it("treats semicolon as comma-equivalent", () => {
 		const segs = segment("350 5th Ave; New York")
 		expect(segs.map((s) => s.body)).toEqual(["350 5th Ave", "New York"])
-		expect(segs[1].separator).toBe("comma")
+		expect(segs[1]!.separator).toBe("comma")
 	})
 
 	it("trims whitespace inside segments but preserves span offsets", () => {
 		const text = "350 5th Ave,   New York"
 		const segs = segment(text)
-		expect(segs[1].body).toBe("New York")
+		expect(segs[1]!.body).toBe("New York")
 		// The trimmed segment should start at the 'N' position, not at the comma.
-		expect(text[segs[1].span.start]).toBe("N")
+		expect(text[segs[1]!.span.start]).toBe("N")
 	})
 
 	it("returns one segment for a comma-free input", () => {
 		const segs = segment("350 5th Ave New York NY 10118")
-		expect(segs.length).toBe(1)
-		expect(segs[0].separator).toBe(null)
+		expect(segs).toHaveLength(1)
+		expect(segs[0]!.separator).toBeNull()
 	})
 
 	it("returns empty for empty input", () => {

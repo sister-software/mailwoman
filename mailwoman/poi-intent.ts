@@ -35,7 +35,7 @@ import { lookupVariantAliases } from "@mailwoman/variant-aliases"
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	const categoryHits = lookupPOICategory(phrase, locale)
 
-	if (categoryHits.length > 0) {
+	if (categoryHits.length) {
 		return categoryHits.map((m) => ({
 			kind: "category",
 			categoryID: m.category.id,
@@ -46,7 +46,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 
 	const brandHits = lookupPOIBrand(phrase)
 
-	if (brandHits.length > 0) {
+	if (brandHits.length) {
 		return brandHits.map(
 			(m): POIPhraseMatch => ({
 				kind: "brand",
@@ -63,6 +63,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 
 	const isBrandAlias = (hit: AliasLookupResult): hit is AliasLookupResult & { alias: BrandAlias } =>
 		hit.alias.kind === "brand"
+
 	const aliasHits = lookupVariantAliases(phrase, locale).filter(isBrandAlias)
 
 	return aliasHits.map(({ alias, confidence }): POIPhraseMatch => {
@@ -93,7 +94,9 @@ export interface POIIntentStageDeps {
 	execute?: (intent: POIIntent) => POIIntentOutcome
 }
 
-/** Build the `stages.poiIntent` implementation. */
+/**
+ * Build the `stages.poiIntent` implementation.
+ */
 export function createPOIIntentStage(
 	deps: POIIntentStageDeps
 ): (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null> {

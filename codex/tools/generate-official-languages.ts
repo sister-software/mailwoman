@@ -30,17 +30,27 @@ import { fileURLToPath } from "node:url"
  */
 const DEFAULT_OUT = fileURLToPath(new URL("../country/official-languages.ts", import.meta.url))
 
-/** Options for {@linkcode generateOfficialLanguages}. */
+/**
+ * Options for {@linkcode generateOfficialLanguages}.
+ */
 export interface GenerateOfficialLanguagesOptions {
-	/** Read cldr-territoryInfo.json + cldr-aliases.json from this directory instead of fetching. */
+	/**
+	 * Read cldr-territoryInfo.json + cldr-aliases.json from this directory instead of fetching.
+	 */
 	cldrDir?: string
-	/** Pinned cldr-core release fetched from jsdelivr when {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent. */
+	/**
+	 * Pinned cldr-core release fetched from jsdelivr when {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent.
+	 */
 	cldrVersion?: string
-	/** Output path override. Default: `codex/country/official-languages.ts` (the committed table). */
+	/**
+	 * Output path override. Default: `codex/country/official-languages.ts` (the committed table).
+	 */
 	out?: string
 }
 
-/** Summary returned by {@linkcode generateOfficialLanguages}. */
+/**
+ * Summary returned by {@linkcode generateOfficialLanguages}.
+ */
 export interface GenerateOfficialLanguagesSummary {
 	territories: number
 	cldrVersion: string
@@ -61,7 +71,9 @@ async function loadCLDR(file: string, cldrDir: string | undefined, cldrVersion: 
 	return res.json()
 }
 
-/** Regenerate the committed `OFFICIAL_LANGUAGES` table from CLDR supplemental data. */
+/**
+ * Regenerate the committed `OFFICIAL_LANGUAGES` table from CLDR supplemental data.
+ */
 export async function generateOfficialLanguages(
 	options: GenerateOfficialLanguagesOptions = {},
 	report?: (line: string) => void
@@ -75,9 +87,11 @@ export async function generateOfficialLanguages(
 			Record<string, Record<string, unknown>>
 		>
 	).supplemental!.territoryInfo as Record<string, { languagePopulation?: Record<string, LanguagePopulation> }>
+
 	const aliasesDoc = (await loadCLDR("aliases", options.cldrDir, cldrVersion)) as {
 		supplemental: { metadata: { alias: { languageAlias: Record<string, { _replacement?: string }> } } }
 	}
+
 	const languageAlias = aliasesDoc.supplemental.metadata.alias.languageAlias
 
 	// canonical code → every plain 2-3 letter alias spelling that maps to it (fi gains "fin")
@@ -92,12 +106,13 @@ export async function generateOfficialLanguages(
 		if (!set) {
 			spellingsOf.set(canon, (set = new Set()))
 		}
+
 		set.add(alias)
 	}
 
 	const table: Record<string, { official: string[]; regional?: string[] }> = {}
 
-	for (const territory of Object.keys(territoryInfo).sort()) {
+	for (const territory of Object.keys(territoryInfo).toSorted()) {
 		if (!/^[A-Z]{2}$/.test(territory)) continue
 		const pops = territoryInfo[territory]!.languagePopulation
 
@@ -111,7 +126,7 @@ export async function generateOfficialLanguages(
 			if (!status) continue
 			// CLDR keys can carry script subtags ("zh_Hant") — name tags use the base language.
 			const base = lang.split("_")[0]!
-			const spellings = [base, ...(spellingsOf.get(base) ?? [])].sort()
+			const spellings = [base, ...(spellingsOf.get(base) ?? [])].toSorted()
 
 			if (status === "official" || status === "de_facto_official") {
 				for (const s of spellings) {
@@ -124,11 +139,11 @@ export async function generateOfficialLanguages(
 			}
 		}
 
-		if (official.size === 0 && regional.size === 0) continue
-		table[territory] = { official: [...official].sort() }
+		if (!official.size && !regional.size) continue
+		table[territory] = { official: [...official].toSorted() }
 
-		if (regional.size > 0) {
-			table[territory]!.regional = [...regional].sort()
+		if (regional.size) {
+			table[territory]!.regional = [...regional].toSorted()
 		}
 	}
 

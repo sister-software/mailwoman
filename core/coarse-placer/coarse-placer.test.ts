@@ -20,20 +20,24 @@ import { CoarsePlacer, dequantizeInt8Weights, FEATURE_DIM, featurize, inMapPoste
 const tmpRoot = mkdtempSync(join(tmpdir(), "coarse-placer-test-"))
 afterAll(() => rmSync(tmpRoot, { recursive: true, force: true }))
 
-/** Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible. */
+/**
+ * Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible.
+ */
 function seededWeights(classCount: number, dim: number, seed: number): Float32Array {
 	const w = new Float32Array(classCount * dim)
 	let s = seed >>> 0
 
 	for (let i = 0; i < w.length; i++) {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
-		w[i] = (s / 0xffffffff - 0.5) * 0.1
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
+		w[i] = (s / 0xff_ff_ff_ff - 0.5) * 0.1
 	}
 
 	return w
 }
 
-/** Per-row symmetric int8 quantization (mirrors scripts/coarse-placer/quantize.mjs). */
+/**
+ * Per-row symmetric int8 quantization (mirrors scripts/coarse-placer/quantize.mjs).
+ */
 function quantize(w: Float32Array, classCount: number, dim: number) {
 	const int8 = new Int8Array(classCount * dim)
 	const scales: number[] = []
@@ -45,6 +49,7 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 		for (let i = 0; i < dim; i++) {
 			maxAbs = Math.max(maxAbs, Math.abs(w[base + i]!))
 		}
+
 		const scale = maxAbs / 127 || 1
 		scales.push(scale)
 
@@ -56,7 +61,9 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 	return { int8, scales }
 }
 
-/** Write an fp32 and an int8 artifact dir for the same weights; return both paths. */
+/**
+ * Write an fp32 and an int8 artifact dir for the same weights; return both paths.
+ */
 function writeArtifacts(classes: string[], dim: number, weights: Float32Array, bias: number[], temperature = 1) {
 	const fp32Dir = join(tmpRoot, `fp32-${classes.join("")}-${dim}`)
 	const int8Dir = join(tmpRoot, `int8-${classes.join("")}-${dim}`)
@@ -110,20 +117,21 @@ describe("dequantizeInt8Weights", () => {
 		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) {
 			expect(out[i]).toBeCloseTo(want, 6)
 		}
+
 		expect(out[4]).toBeCloseTo(5, 6)
 		expect(out[7]).toBeCloseTo(-25, 6)
 	})
 
 	test("rejects length / scale-count mismatch", () => {
-		expect(() => dequantizeInt8Weights(new Int8Array(8), [1], 2, 4)).toThrow()
-		expect(() => dequantizeInt8Weights(new Int8Array(7), [1, 1], 2, 4)).toThrow()
+		expect(() => dequantizeInt8Weights(new Int8Array(8), [1], 2, 4)).toThrow(/dequantize:/)
+		expect(() => dequantizeInt8Weights(new Int8Array(7), [1, 1], 2, 4)).toThrow(/dequantize:/)
 	})
 })
 
 describe("CoarsePlacer.fromArtifactDir", () => {
 	const classes = ["AA", "BB", "CC"]
 	const bias = [0.1, -0.2, 0.05]
-	const weights = seededWeights(classes.length, FEATURE_DIM, 12345)
+	const weights = seededWeights(classes.length, FEATURE_DIM, 12_345)
 	const { fp32Dir, int8Dir } = writeArtifacts(classes, FEATURE_DIM, weights, bias)
 	const samples = ["123 Main St", "10 Rue de la Paix", "1-2-3 Chiyoda Tokyo", "Calle Mayor 7"]
 
@@ -154,10 +162,12 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	test("int8 artifact missing scales is rejected", async () => {
 		const badDir = join(tmpRoot, "int8-noscales")
 		mkdirSync(badDir, { recursive: true })
+
 		writeFileSync(
 			join(badDir, "meta.json"),
 			JSON.stringify({ classes, featureDim: FEATURE_DIM, temperature: 1, bias, quantization: "int8-per-row" })
 		)
+
 		writeFileSync(join(badDir, "weights.bin"), Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer))
 		await expect(CoarsePlacer.fromArtifactDir(badDir)).rejects.toThrow(/scales/)
 	})
@@ -170,6 +180,7 @@ describe("open-set reject rule (#244 M2)", () => {
 	// dim MUST be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
 	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
 	const dim = FEATURE_DIM
+
 	const make = (bias: number[], opts: { abstainBelow?: number; openSet?: boolean }) =>
 		new CoarsePlacer(
 			{ classes, featureDim: dim, temperature: 1, bias, weights: new Float32Array(classes.length * dim) },
@@ -217,6 +228,7 @@ describe("abstention", () => {
 	test("abstains when no class clears the threshold", () => {
 		// All-zero weights → logits are the (equal) bias → near-uniform softmax → top prob ≈ 1/C < 0.5.
 		const classes = ["AA", "BB", "CC", "DD"]
+
 		const placer = new CoarsePlacer(
 			{
 				classes,
@@ -227,6 +239,7 @@ describe("abstention", () => {
 			},
 			{ abstainBelow: 0.5 }
 		)
+
 		const p = placer.predict("anything at all")
 		expect(p.abstained).toBe(true)
 		expect(p.country).toBeNull()

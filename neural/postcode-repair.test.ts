@@ -14,12 +14,16 @@ import { describe, expect, it } from "vitest"
 
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 
-/** Build a char-aligned token. */
+/**
+ * Build a char-aligned token.
+ */
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 
-/** The contiguous postcode value implied by the repaired labels (first B-…I-* run). */
+/**
+ * The contiguous postcode value implied by the repaired labels (first B-…I-* run).
+ */
 function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1
@@ -40,7 +44,9 @@ function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 	return start === -1 ? null : text.slice(start, end)
 }
 
-/** The contiguous locality value implied by the repaired labels (first B-…I-locality run). */
+/**
+ * The contiguous locality value implied by the repaired labels (first B-…I-locality run).
+ */
 function localityValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1
@@ -73,6 +79,7 @@ describe("repairPostcodeLabels", () => {
 
 	it("SNAPs a fragmented IE Eircode to the full shape (F91 Y5CY — the 2026-07-06 diagnostic)", () => {
 		const text = "Ballysadare, F91 Y5CY"
+
 		// model truncates the routing key: only "91" carries a postcode label.
 		const tokens = [
 			tok("Ballysadare", 0, 11, "B-locality"),
@@ -81,6 +88,7 @@ describe("repairPostcodeLabels", () => {
 			tok("91", 14, 16, "B-postcode"),
 			tok("Y5CY", 17, 21, "O"),
 		]
+
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("F91 Y5CY")
 	})
@@ -99,6 +107,7 @@ describe("repairPostcodeLabels", () => {
 
 	it("SNAPs a truncated postcode to the full shape (CA M5V 2T6)", () => {
 		const text = "Toronto ON M5V 2T6"
+
 		// model labeled only "2T6" as postcode (truncation).
 		const tokens = [
 			tok("Toronto", 0, 7, "B-locality"),
@@ -106,17 +115,20 @@ describe("repairPostcodeLabels", () => {
 			tok("M5V", 11, 14, "O"),
 			tok("2T6", 15, 18, "B-postcode"),
 		]
+
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("M5V 2T6")
 	})
 
 	it("longest-match-wins: US ZIP+4 beats the NL-shaped tail (94610-2737 CA → not 2737 CA)", () => {
 		const text = "Oakland 94610-2737 CA"
+
 		const tokens = [
 			tok("Oakland", 0, 7, "B-locality"),
 			tok("94610-2737", 8, 18, "B-postcode"), // model got it right
 			tok("CA", 19, 21, "B-region"),
 		]
+
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("94610-2737")
 		// CA must NOT have been pulled into the postcode.
@@ -125,12 +137,14 @@ describe("repairPostcodeLabels", () => {
 
 	it("clips smear: postcode label bleeding onto a neighbour is trimmed to the match", () => {
 		const text = "Paris 75008 France"
+
 		// model smeared the postcode onto "France".
 		const tokens = [
 			tok("Paris", 0, 5, "B-locality"),
 			tok("75008", 6, 11, "B-postcode"),
 			tok("France", 12, 18, "I-postcode"),
 		]
+
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("75008")
 		expect(out.find((t) => t.piece === "France")!.label).toBe("O")
@@ -139,11 +153,13 @@ describe("repairPostcodeLabels", () => {
 	it("hands a trailing over-extension BACK to the city (DE postcode→city absorption)", () => {
 		// The model swallowed the city's leading "Pl" into the postcode span ("08523 Pl|auen").
 		const text = "08523 Plauen"
+
 		const tokens = [
 			tok("08523", 0, 5, "B-postcode"),
 			tok("Pl", 6, 8, "I-postcode"), // over-extension: the city's first chars
 			tok("auen", 8, 12, "B-locality"), // the city remainder
 		]
+
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("08523")
 		// "Pl" is reassigned to locality and merged with "auen" into one span → "Plauen".
@@ -169,11 +185,13 @@ describe("repairPostcodeLabels", () => {
 
 	it("is a no-op when no postcode shape is present", () => {
 		const text = "Main Street Springfield"
+
 		const tokens = [
 			tok("Main", 0, 4, "B-street"),
 			tok("Street", 5, 11, "I-street"),
 			tok("Springfield", 12, 23, "B-locality"),
 		]
+
 		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
 		expect(changed).toBe(0)
 		expect(out.map((t) => t.label)).toEqual(tokens.map((t) => t.label))

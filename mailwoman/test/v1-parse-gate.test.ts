@@ -89,10 +89,14 @@ import { describe, expect, test } from "vitest"
 
 import { v0RecordToTree } from "../eval-harness/v0-tree-adapter.ts"
 
-/** The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions. */
+/**
+ * The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions.
+ */
 const PARITY_RAW_GOLDEN = "mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl"
 
-/** A captured rules solution's flat classification record (the shape `solutions[0].classifications` had). */
+/**
+ * A captured rules solution's flat classification record (the shape `solutions[0].classifications` had).
+ */
 type RulesRecord = Partial<Record<string, string[]>>
 
 /**
@@ -111,7 +115,9 @@ function loadRulesGolden(): Map<string, RulesRecord> {
 	return byInput
 }
 
-/** A live parity fixture: input + the per-label rules-golden expectation. */
+/**
+ * A live parity fixture: input + the per-label rules-golden expectation.
+ */
 interface ParityFixture {
 	id: string
 	input: string
@@ -120,14 +126,18 @@ interface ParityFixture {
 	expect?: Partial<Record<string, string[]>>
 }
 
-/** The street family assembles into one span for parse-tag agreement (matches `scratchpad/coord-parity.mjs`). */
+/**
+ * The street family assembles into one span for parse-tag agreement (matches `scratchpad/coord-parity.mjs`).
+ */
 const STREET_TAGS = ["street_prefix", "street", "street_prefix_particle", "street_suffix"]
 
-/** WOF shards the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`). */
+/**
+ * WOF shards the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
+ */
 const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
 const POSTCODE_DB = dataRootPath("wof", "postcode-locality-intl.db")
 
-const fold = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function weightsPresent(): boolean {
 	try {
@@ -139,7 +149,9 @@ function weightsPresent(): boolean {
 
 const gazetteerPresent = () => existsSync(ADMIN_DB) && existsSync(POSTCODE_DB)
 
-/** Flatten a tree to its node list, depth-first. */
+/**
+ * Flatten a tree to its node list, depth-first.
+ */
 function flatten(tree: AddressTree): AddressTree["roots"] {
 	const out: AddressTree["roots"] = []
 	const stack = [...tree.roots]
@@ -153,12 +165,14 @@ function flatten(tree: AddressTree): AddressTree["roots"] {
 	return out
 }
 
-/** Assemble the folded value of `tags` from a parsed tree, in document order. */
+/**
+ * Assemble the folded value of `tags` from a parsed tree, in document order.
+ */
 function labelValue(tree: AddressTree, tags: readonly string[]): string {
 	return fold(
 		flatten(tree)
 			.filter((n) => tags.includes(n.tag))
-			.sort((a, b) => a.start - b.start)
+			.toSorted((a, b) => a.start - b.start)
 			.map((n) => n.value)
 			.join(" ")
 	)
@@ -181,7 +195,9 @@ interface Measured {
 	both: boolean
 	delta: number | null
 	implausible: boolean
-	/** Per-label parse-tag agreement (informational): true/false when the fixture carries that label. */
+	/**
+	 * Per-label parse-tag agreement (informational): true/false when the fixture carries that label.
+	 */
 	agree: Partial<Record<string, boolean>>
 }
 
@@ -245,6 +261,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				}
 
 				const both = !!neuralCoord && !!rulesCoord
+
 				rows.push({
 					hasStreet: !!expect_.street,
 					streetFail: expect_.street ? agree.street === false : false,
@@ -256,7 +273,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				})
 			}
 
-			// ---- INFORMATIONAL: the old parse-tag agreement (non-gating; drives Track B) ----
+			// INFORMATIONAL: the old parse-tag agreement (non-gating; drives Track B)
 			const agreement = (label: string) => {
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
@@ -266,20 +283,21 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 
 			for (const label of ["street", "house_number", "postcode"]) {
 				const a = agreement(label)
+
 				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-gating)`)
 			}
 
-			// ---- P1. Coordinate acceptability ----
+			// P1. Coordinate acceptability
 			const both = rows.filter((r) => r.both)
 			const streetPass = both.filter((r) => r.hasStreet && !r.streetFail)
 			const streetPassWithin1km = streetPass.filter((r) => r.delta! <= 1).length
 			const acceptRate = streetPass.length ? streetPassWithin1km / streetPass.length : 1
 
-			// ---- P2. Guard false positives on the coordinate-safe structured set ----
+			// P2. Guard false positives on the coordinate-safe structured set
 			const safeStructured = both.filter((r) => r.delta! <= 5 && r.kind === "structured_address")
 			const guardFalsePositives = safeStructured.filter((r) => r.implausible).length
 
-			// ---- P3. Garbage-tail residual after kind-router + plausibility guard ----
+			// P3. Garbage-tail residual after kind-router + plausibility guard
 			const tail = both.filter((r) => r.hasStreet && r.streetFail && r.delta! > 25)
 			const tailStructured = tail.filter((r) => r.kind === "structured_address")
 			const residual = tailStructured.filter((r) => !r.implausible).length

@@ -48,25 +48,36 @@ export async function extractPPDTuples(
 	write("NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE")
 
 	for await (const cells of input) {
-		const [, , , postcode, , , , paon, saon, street, locality, town, , county] = cells
+		// HM Land Registry Price Paid Data column order (see the PPD FAQ for the full field list).
+		const postcode = cells[3]
+		const paon = cells[7]
+		const saon = cells[8]
+		const street = cells[9]
+		const locality = cells[10]
+		const town = cells[11]
+		const county = cells[13]
 
 		if (saon) {
 			stats.skippedSAON++
+
 			continue
 		}
 
 		if (!paon || !HOUSE_NUMBER_PATTERN.test(paon)) {
 			stats.skippedPAON++
+
 			continue
 		}
 
 		if (!street) {
 			stats.skippedNoStreet++
+
 			continue
 		}
 
 		if (!postcode) {
 			stats.skippedNoPostcode++
+
 			continue
 		}
 
@@ -83,13 +94,16 @@ export async function extractPPDTuples(
 				postcode,
 			].join(",")
 		)
+
 		stats.kept++
 	}
 
 	return stats
 }
 
-/** Stream `inputPath` (PPD CSV) → `outputPath` (OA-shaped tuples CSV), returning the row-count stats. */
+/**
+ * Stream `inputPath` (PPD CSV) → `outputPath` (OA-shaped tuples CSV), returning the row-count stats.
+ */
 export async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPDExtractStats> {
 	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself (see readTuples in
 	// shard-recipes/locale.ts). `header: false` yields every row as data — PPD ships no header row.
@@ -98,10 +112,13 @@ export async function runPPDExtract(inputPath: string, outputPath: string): Prom
 		header: false,
 		enableQuoteHandling: true,
 	})
+
 	const out = createWriteStream(outputPath, { encoding: "utf8" })
 	const stats = await extractPPDTuples(rows, (line) => out.write(line + "\n"))
 
-	await new Promise<void>((res) => out.end(res))
+	await new Promise<void>((res) => {
+		out.end(res)
+	})
 
 	return stats
 }
@@ -113,6 +130,8 @@ runIfScript(import.meta, async () => {
 			output: { type: "string", default: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") },
 		},
 	})
+
 	const stats = await runPPDExtract(values.input!, values.output!)
+
 	console.log(`[ppd] ${JSON.stringify(stats)}`)
 })

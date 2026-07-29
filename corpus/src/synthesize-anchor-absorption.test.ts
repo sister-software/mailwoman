@@ -15,26 +15,31 @@ function seeded(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
-		s = (s * 1664525 + 1013904223) >>> 0
+		s = (s * 1_664_525 + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 	const synth = synthesizeAnchorAbsorptionRow({ random: seeded(seed), forceTemplate: template })
+
 	const aligned = alignRow({
 		raw: synth.raw,
 		components: synth.components,
 		country: synth.locale.slice(-2),
 		source: "test",
 		source_id: "t",
+		corpus_version: "0.0.0-test",
+		license: "synthetic fixture — not distributed",
 	})
 
 	return { synth, aligned }
 }
 
-/** The BIO tag on the FIRST token of raw (the leading 5-digit's label). */
+/**
+ * The BIO tag on the FIRST token of raw (the leading 5-digit's label).
+ */
 function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	if (aligned.kind !== "labeled") return null
 	const l = aligned.row.labels[0]

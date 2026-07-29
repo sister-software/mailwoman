@@ -30,6 +30,7 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 		import("@mailwoman/poi-taxonomy/data/taxonomy.json").then((m) => m.default),
 		import("@mailwoman/poi-taxonomy/data/brands.json").then((m) => m.default),
 	])
+
 	const lookup = createPOITaxonomyLookup(table as unknown as Parameters<typeof createPOITaxonomyLookup>[0])
 	const brands = createPOIBrandLookup(brandTable as unknown as Parameters<typeof createPOIBrandLookup>[0])
 
@@ -38,7 +39,7 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 	const lexicon: POIPhraseLookup = (phrase, locale) => {
 		const categoryHits = lookup.lookupPOICategory(phrase, locale)
 
-		if (categoryHits.length > 0) {
+		if (categoryHits.length) {
 			return categoryHits.map((match) => ({
 				kind: "category",
 				categoryID: match.category.id,
@@ -59,7 +60,9 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 	return { lookup, lexicon, classify: createKindClassifier({ poiLexicon: lexicon }) }
 }
 
-/** Default example queries for the POI explorer — a mix of category, build-local, and chain-brand subjects. */
+/**
+ * Default example queries for the POI explorer — a mix of category, build-local, and chain-brand subjects.
+ */
 export const POI_PRESETS = [
 	{ label: "Drinking fountain", value: "drinking fountain near Springfield" },
 	{ label: "Fire hydrant", value: "fire hydrant" },
@@ -68,9 +71,14 @@ export const POI_PRESETS = [
 	{ label: "Applebee's (brand)", value: "applebee's near Chicago" },
 ] as const
 
+/**
+ * Query the POI explorer opens on — the first preset, so the two stay in step.
+ */
 export const POI_DEFAULT_TEXT = POI_PRESETS[0].value
 
-/** `742 m` under 1 km, `1.9 km` past it — matches the demo's distance captions. */
+/**
+ * `742 m` under 1 km, `1.9 km` past it — matches the demo's distance captions.
+ */
 export function formatDistance(distanceM: number): string {
 	if (distanceM < 1000) return `${Math.round(distanceM)} m`
 

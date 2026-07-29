@@ -15,9 +15,13 @@
 import { type ReactNode, useEffect, useState } from "react"
 
 export interface ClientOnlyProps {
-	/** Rendered once mounted in the browser. A thunk so its (browser-only) imports never run on the server. */
+	/**
+	 * Rendered once mounted in the browser. A thunk so its (browser-only) imports never run on the server.
+	 */
 	children: () => ReactNode
-	/** Rendered on the server and until the first client mount. */
+	/**
+	 * Rendered on the server and until the first client mount.
+	 */
 	fallback?: ReactNode
 }
 

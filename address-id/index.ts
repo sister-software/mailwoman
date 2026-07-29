@@ -32,7 +32,9 @@ import { us } from "@mailwoman/codex"
 import { normalize } from "@mailwoman/normalize"
 import { latLngToCell } from "h3-js"
 
-/** A geographic coordinate (the geocoder/resolver shape). */
+/**
+ * A geographic coordinate (the geocoder/resolver shape).
+ */
 export interface LatLng {
 	latitude: number
 	longitude: number
@@ -51,7 +53,9 @@ export const ADDRESS_H3_RESOLUTION = 9
  */
 export type PostalAddressID = string & { readonly __postalAddressID: unique symbol }
 
-/** `<2-letter-state>.<hex-cell>.<hex-hash>` — lowercase, dot-delimited. */
+/**
+ * `<2-letter-state>.<hex-cell>.<hex-hash>` — lowercase, dot-delimited.
+ */
 const POSTAL_ADDRESS_ID_PATTERN = /^([a-z]{2})\.([0-9a-f]{1,15})\.([0-9a-f]{8,})$/
 
 /**
@@ -59,19 +63,31 @@ const POSTAL_ADDRESS_ID_PATTERN = /^([a-z]{2})\.([0-9a-f]{1,15})\.([0-9a-f]{8,})
  */
 const HASH_LENGTH = 16
 
-/** Inputs for {@link createPostalAddressID}. */
+/**
+ * Inputs for {@link createPostalAddressID}.
+ */
 export interface CreatePostalAddressIDInput {
-	/** The resolved coordinate (the geocoder's output) — drives the locality cell. */
+	/**
+	 * The resolved coordinate (the geocoder's output) — drives the locality cell.
+	 */
 	coordinate: LatLng
-	/** The address string to content-hash. Canonicalized via {@link normalize} before hashing. */
+	/**
+	 * The address string to content-hash. Canonicalized via {@link normalize} before hashing.
+	 */
 	address: string
-	/** 2-letter region/state for the prefix. When omitted, plucked from the address's ZIP; else `xx`. */
+	/**
+	 * 2-letter region/state for the prefix. When omitted, plucked from the address's ZIP; else `xx`.
+	 */
 	state?: string
-	/** H3 resolution for the cell. Default {@link ADDRESS_H3_RESOLUTION} (jitter-stable). */
+	/**
+	 * H3 resolution for the cell. Default {@link ADDRESS_H3_RESOLUTION} (jitter-stable).
+	 */
 	resolution?: number
 }
 
-/** The parsed parts of a {@link PostalAddressID}. */
+/**
+ * The parsed parts of a {@link PostalAddressID}.
+ */
 export interface ParsedPostalAddressID {
 	state: string
 	cell: string
@@ -116,13 +132,16 @@ export function createPostalAddressID(input: CreatePostalAddressIDInput): Postal
 		input.coordinate.longitude,
 		input.resolution ?? ADDRESS_H3_RESOLUTION
 	)
+
 	const hash = createHash("sha256").update(canonicalizeForHash(input.address)).digest("hex").slice(0, HASH_LENGTH)
 	const state = (input.state ?? deriveState(input.address) ?? "xx").toLowerCase()
 
 	return `${state}.${cell}.${hash}` as PostalAddressID
 }
 
-/** Parse a {@link PostalAddressID} into its parts, or null if it isn't one. */
+/**
+ * Parse a {@link PostalAddressID} into its parts, or null if it isn't one.
+ */
 export function parsePostalAddressID(id: string): ParsedPostalAddressID | null {
 	const match = POSTAL_ADDRESS_ID_PATTERN.exec(id)
 
@@ -131,7 +150,9 @@ export function parsePostalAddressID(id: string): ParsedPostalAddressID | null {
 	return { state: match[1]!, cell: match[2]!, hash: match[3]! }
 }
 
-/** Type guard: is `value` a well-formed {@link PostalAddressID}? */
+/**
+ * Type guard: is `value` a well-formed {@link PostalAddressID}?
+ */
 export function isPostalAddressID(value: string): value is PostalAddressID {
 	return POSTAL_ADDRESS_ID_PATTERN.test(value)
 }

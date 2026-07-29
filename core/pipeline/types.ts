@@ -19,7 +19,9 @@ import type { Section } from "../types/classifier.ts"
 
 export type LocaleTag = string
 
-/** Optional user-location signal for Stage 6 resolver scoring. */
+/**
+ * Optional user-location signal for Stage 6 resolver scoring.
+ */
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
 
 /**
@@ -31,7 +33,9 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
  */
 export type PlacetypePairPassthrough = object | false
 
-/** Common opts threaded through every stage. */
+/**
+ * Common opts threaded through every stage.
+ */
 export interface PipelineOpts {
 	locale?: LocaleTag
 	userLocation?: UserLocation
@@ -60,7 +64,9 @@ export interface PipelineOpts {
 	 * docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	 */
 	jointReconcile?: boolean
-	/** Hard cap on lookups the resolver may issue; passed through. */
+	/**
+	 * Hard cap on lookups the resolver may issue; passed through.
+	 */
 	resolveOpts?: ResolveOpts
 	/**
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
@@ -100,14 +106,18 @@ export interface PipelineOpts {
 	signal?: AbortSignal
 }
 
-/** Minimal structural shape `NormalizedInput` must satisfy. Compatible with @mailwoman/normalize. */
+/**
+ * Minimal structural shape `NormalizedInput` must satisfy. Compatible with @mailwoman/normalize.
+ */
 export interface NormalizedInputLite {
 	raw: string
 	normalized: string
 	appliedLocale?: string
 }
 
-/** Minimal structural shape `QueryShape` must satisfy. Compatible with @mailwoman/query-shape. */
+/**
+ * Minimal structural shape `QueryShape` must satisfy. Compatible with @mailwoman/query-shape.
+ */
 export interface QueryShapeLite {
 	knownFormats: ReadonlyArray<{
 		format: string
@@ -119,7 +129,9 @@ export interface QueryShapeLite {
 	totalLength?: number
 }
 
-/** Detected (or asserted) locale + alternatives. */
+/**
+ * Detected (or asserted) locale + alternatives.
+ */
 export interface LocaleHint {
 	locale: LocaleTag
 	confidence: number
@@ -127,7 +139,9 @@ export interface LocaleHint {
 	source: "caller" | "detected" | "ensemble"
 }
 
-/** Kind classifier output. */
+/**
+ * Kind classifier output.
+ */
 export type QueryKind =
 	| "postcode_only"
 	| "locality_only"
@@ -183,18 +197,24 @@ export interface POIIntent {
 		| { kind: "category"; categoryID: string; matched: string }
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }
-	/** Spatial anchor: the split-off remainder text and its parse, when the query carried one. */
+	/**
+	 * Spatial anchor: the split-off remainder text and its parse, when the query carried one.
+	 */
 	anchor?: {
 		text?: string
 		tree?: AddressTree
-		/** Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved. */
+		/**
+		 * Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved.
+		 */
 		biasPoint?: { latitude: number; longitude: number }
 		radiusM?: number
 	}
 	limit?: number
 }
 
-/** One executed POI search result (spec §3.4; produced by the executor, absent pre-execution). */
+/**
+ * One executed POI search result (spec §3.4; produced by the executor, absent pre-execution).
+ */
 export interface POIResult {
 	name: string | null
 	categoryID: string | null
@@ -203,7 +223,9 @@ export interface POIResult {
 	longitude: number
 	country: string
 	confidence: number
-	/** Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule). */
+	/**
+	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule).
+	 */
 	gersID: string | null
 	/**
 	 * Read-time WOF ancestry, deepest-first — the paid-down half of the poiQueryKind register row's debt. Attached by the
@@ -305,9 +327,13 @@ export interface ClassifierOpts {
 	 * `classifier.parse` for measured, opt-in use.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
-	/** Magnitude overrides for the morphology emission prior — the pipeline always passes the zeroed pair. */
+	/**
+	 * Magnitude overrides for the morphology emission prior — the pipeline always passes the zeroed pair.
+	 */
 	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number }
-	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
+	/**
+	 * Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels.
+	 */
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance data is partly
@@ -408,11 +434,11 @@ export interface RuntimePipelineStages {
 	resolverBackend?: ResolverBackend
 }
 
-export interface PipelineTiming {
-	[stage: string]: number // ms
-}
+export type PipelineTiming = Record<string, number>
 
-/** Result of one `runPipeline` call. */
+/**
+ * Result of one `runPipeline` call.
+ */
 export interface PipelineResult {
 	input: string
 	normalized: NormalizedInputLite
@@ -426,9 +452,13 @@ export interface PipelineResult {
 	 */
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
-	/** Present only when the poi-intent stage produced an outcome (path === "poi"). */
+	/**
+	 * Present only when the poi-intent stage produced an outcome (path === "poi").
+	 */
 	poiIntent?: POIIntentOutcome
 	timing: PipelineTiming
-	/** Which path the coordinator took. `"fast-path"` skipped stages 3-5; `"poi"` took the intent branch. */
+	/**
+	 * Which path the coordinator took. `"fast-path"` skipped stages 3-5; `"poi"` took the intent branch.
+	 */
 	path: "fast-path" | "full" | "poi"
 }

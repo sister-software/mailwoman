@@ -35,45 +35,74 @@ import { sql, type Kysely } from "kysely"
 
 import { hasTable } from "./sqlite-utils.ts"
 
-/** One country's hard-filter coverage measurement — the storage form of {@link CountryCoverageFact}. */
+/**
+ * One country's hard-filter coverage measurement — the storage form of {@link CountryCoverageFact}.
+ */
 export interface CountryCoverageTable {
-	/** ISO 3166-1 alpha-2, uppercase (PK). */
+	/**
+	 * ISO 3166-1 alpha-2, uppercase (PK).
+	 */
 	country: string
-	/** 0/1 — the promote-gate verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring). */
+	/**
+	 * 0/1 — the promote-gate verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring).
+	 */
 	hard_filter_safe: number
-	/** Measured hard-resolve rate 0..1 on the panel named in `source`; NULL when the receipt recorded none. */
+	/**
+	 * Measured hard-resolve rate 0..1 on the panel named in `source`; NULL when the receipt recorded none.
+	 */
 	hard_resolve_rate: number | null
-	/** Panel size behind `hard_resolve_rate`; NULL when unrecorded. */
+	/**
+	 * Panel size behind `hard_resolve_rate`; NULL when unrecorded.
+	 */
 	sample_size: number | null
-	/** ISO-8601 date of the measurement / promote gate. */
+	/**
+	 * ISO-8601 date of the measurement / promote gate.
+	 */
 	measured_at: string
-	/** The receipt: which panel/gate produced this row. */
+	/**
+	 * The receipt: which panel/gate produced this row.
+	 */
 	source: string
 }
 
-/** One country's coarse guard-B bounding box — the storage form of {@link CountryBBoxFact}. */
+/**
+ * One country's coarse guard-B bounding box — the storage form of {@link CountryBBoxFact}.
+ */
 export interface CountryBBoxTable {
-	/** ISO 3166-1 alpha-2, uppercase (PK). */
+	/**
+	 * ISO 3166-1 alpha-2, uppercase (PK).
+	 */
 	country: string
 	lat_min: number
 	lat_max: number
 	lon_min: number
 	lon_max: number
-	/** Provenance of the box (harness + date). */
+	/**
+	 * Provenance of the box (harness + date).
+	 */
 	source: string
 }
 
-/** The coverage-manifest schema for `new DatabaseClient<GazetteerCoverageDatabase>(...)`. */
+/**
+ * The coverage-manifest schema for `new DatabaseClient<GazetteerCoverageDatabase>(...)`.
+ */
 export interface GazetteerCoverageDatabase {
 	country_coverage: CountryCoverageTable
 	country_bbox: CountryBBoxTable
 }
 
-/** Table names the lookup probes (existence-gated, so a candidate.db built before the manifest is byte-stable). */
+/**
+ * Table names the lookup probes (existence-gated, so a candidate.db built before the manifest is byte-stable).
+ */
 export const COUNTRY_COVERAGE_TABLE = "country_coverage"
+/**
+ * Table of per-country bounding boxes, used to reject a placement that fell outside its own country.
+ */
 export const COUNTRY_BBOX_TABLE = "country_bbox"
 
-/** Create `country_coverage` — a handful of small PK-probed rows, the WITHOUT ROWID sweet spot. */
+/**
+ * Create `country_coverage` — a handful of small PK-probed rows, the WITHOUT ROWID sweet spot.
+ */
 export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDatabase>): Promise<void> {
 	await db.schema
 		.createTable(COUNTRY_COVERAGE_TABLE)
@@ -89,7 +118,9 @@ export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDat
 		.execute()
 }
 
-/** Create `country_bbox` — same shape discipline as {@link createCountryCoverageTable}. */
+/**
+ * Create `country_bbox` — same shape discipline as {@link createCountryCoverageTable}.
+ */
 export async function createCountryBBoxTable(db: Kysely<GazetteerCoverageDatabase>): Promise<void> {
 	await db.schema
 		.createTable(COUNTRY_BBOX_TABLE)
@@ -115,7 +146,7 @@ export async function writeGazetteerCoverageManifest(
 	await createCountryCoverageTable(db)
 	await createCountryBBoxTable(db)
 
-	if (facts.coverage.length > 0) {
+	if (facts.coverage.length) {
 		await db
 			.insertInto(COUNTRY_COVERAGE_TABLE)
 			.values(
@@ -131,7 +162,7 @@ export async function writeGazetteerCoverageManifest(
 			.execute()
 	}
 
-	if (facts.bboxes.length > 0) {
+	if (facts.bboxes.length) {
 		await db
 			.insertInto(COUNTRY_BBOX_TABLE)
 			.values(
@@ -171,6 +202,7 @@ export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifa
 
 		for (const row of rows) {
 			const country = String(row.country).toUpperCase()
+
 			countryCoverage.set(country, {
 				country,
 				hardFilterSafe: Number(row.hard_filter_safe) !== 0,
@@ -191,6 +223,7 @@ export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifa
 
 		for (const row of rows) {
 			const country = String(row.country).toUpperCase()
+
 			countryBBoxes.set(country, {
 				country,
 				latMin: Number(row.lat_min),

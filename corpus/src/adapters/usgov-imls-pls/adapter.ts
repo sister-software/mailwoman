@@ -27,7 +27,15 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_IMLS_PLS_ADAPTER_ID = "usgov-imls-pls"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_IMLS_PLS_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
@@ -65,6 +73,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -113,6 +122,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [
 						libName,
 						streetPart,
@@ -126,6 +136,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const fscsKey = (record.FSCSKEY ?? "").trim()
+
 					const sourceID = fscsKey
 						? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`
 						: stableSourceID(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
@@ -140,6 +151,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -149,4 +161,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovImlsPlsAdapter = createUsgovImlsPlsAdapter()

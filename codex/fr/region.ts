@@ -13,15 +13,23 @@
  *   `code-postal.ts`).
  */
 
-/** Per-region record: ISO 3166-2:FR code (sans `FR-` prefix) + French name. */
+/**
+ * Per-region record: ISO 3166-2:FR code (sans `FR-` prefix) + French name.
+ */
 export interface FrenchRegionInfo {
-	/** ISO 3166-2:FR region code without the `FR-` prefix (e.g. `IDF` for `FR-IDF`). */
+	/**
+	 * ISO 3166-2:FR region code without the `FR-` prefix (e.g. `IDF` for `FR-IDF`).
+	 */
 	code: string
-	/** French name (e.g. `Île-de-France`). */
+	/**
+	 * French name (e.g. `Île-de-France`).
+	 */
 	name: string
 }
 
-/** ISO 3166-2:FR region code → info, for all 18 régions (13 metropolitan + 5 overseas). */
+/**
+ * ISO 3166-2:FR region code → info, for all 18 régions (13 metropolitan + 5 overseas).
+ */
 export const FR_REGIONS = {
 	ARA: { code: "ARA", name: "Auvergne-Rhône-Alpes" },
 	BFC: { code: "BFC", name: "Bourgogne-Franche-Comté" },
@@ -43,23 +51,29 @@ export const FR_REGIONS = {
 	MAY: { code: "MAY", name: "Mayotte" },
 } as const satisfies Record<string, FrenchRegionInfo>
 
-/** An ISO 3166-2:FR region code (`ARA`, `IDF`, `PAC`, …). */
+/**
+ * An ISO 3166-2:FR region code (`ARA`, `IDF`, `PAC`, …).
+ */
 export type FrenchRegionCode = keyof typeof FR_REGIONS
 
 const REGION_CODE_SET: ReadonlySet<string> = new Set(Object.keys(FR_REGIONS))
 
-/** Type-predicate for an ISO 3166-2:FR region code. Case-insensitive. */
+/**
+ * Type-predicate for an ISO 3166-2:FR region code. Case-insensitive.
+ */
 export function isFrenchRegionCode(input: unknown): input is FrenchRegionCode {
 	return typeof input === "string" && REGION_CODE_SET.has(input.toUpperCase())
 }
 
-/** Strip diacritics + lowercase so `Île-de-France`, `ile-de-france`, `Ile de France` all key alike. */
+/**
+ * Strip diacritics + lowercase so `Île-de-France`, `ile-de-france`, `Ile de France` all key alike.
+ */
 function foldName(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 

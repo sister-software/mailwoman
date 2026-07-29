@@ -31,6 +31,7 @@ function loadTable(): VariantAliasTable {
 			// try next
 		}
 	}
+
 	throw new Error("variant-aliases: could not find data/aliases.json")
 }
 
@@ -74,16 +75,18 @@ export function lookupVariantAliases(text: string, locale: string): AliasLookupR
 
 	const candidates = INDEX.get(norm)
 
-	if (!candidates || candidates.length === 0) return []
+	if (!candidates || !candidates.length) return []
 
 	const language = locale.split(/[-_]/)[0]
 	const results: AliasLookupResult[] = []
 
 	for (const alias of candidates) {
 		if (alias.locales.includes(locale)) {
-			results.push({ alias, confidence: 1.0 })
+			results.push({ alias, confidence: 1 })
+
 			continue
 		}
+
 		// Relaxed match: any locale in `locales` that shares the same language part.
 		const langMatch = alias.locales.some((l) => l.split(/[-_]/)[0] === language)
 
@@ -97,9 +100,14 @@ export function lookupVariantAliases(text: string, locale: string): AliasLookupR
 	return results
 }
 
-/** Pure-data accessor for callers that want to enumerate the table (e.g. corpus synthesis). */
+/**
+ * Pure-data accessor for callers that want to enumerate the table (e.g. corpus synthesis).
+ */
 export function getAllAliases(): ReadonlyArray<VariantAlias> {
 	return TABLE.aliases
 }
 
+/**
+ * Version of the bundled variant-alias table, for cache keys and diagnostics.
+ */
 export const VARIANT_ALIAS_VERSION = TABLE.version

@@ -39,6 +39,7 @@ const report = (line: string): void => console.error(line)
 
 const TIGERRaceDotsMap: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [serving, setServing] = useState<{ dir: string; port: number } | null>(null)
+
 	const state = useCommandTask(async () => {
 		// Optional `@mailwoman/tiger` (operator census tooling) — lazy-imported so a geocoding-only
 		// install of the CLI degrades to a friendly message instead of crashing (see `tiger fetch`).

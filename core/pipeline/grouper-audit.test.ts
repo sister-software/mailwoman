@@ -10,15 +10,20 @@ import { describe, expect, it } from "vitest"
 import type { AddressTree } from "../decoder/types.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
 import { grouperAudit, runPipeline } from "./runtime-pipeline.ts"
-import type { PhraseProposal, RuntimePipelineStages } from "./types.ts"
+import type { NormalizedInputLite, PhraseProposal, QueryShapeLite, RuntimePipelineStages } from "./types.ts"
 
 function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipelineStages {
 	return {
-		normalize: (raw) => ({ normalized: raw, originalToNormalized: (i: number) => i }),
-		computeQueryShape: (input) => ({
-			knownFormats: [],
-			segments: [{ body: input.normalized, span: { start: 0, end: input.normalized.length } }],
-		}),
+		normalize: (raw) => ({ normalized: raw, originalToNormalized: (i: number) => i }) as unknown as NormalizedInputLite,
+		computeQueryShape: (input) => {
+			// The stage contract accepts a bare string as well as a normalized input.
+			const normalized = typeof input === "string" ? input : input.normalized
+
+			return {
+				knownFormats: [],
+				segments: [{ body: normalized, span: { start: 0, end: normalized.length } }],
+			} as unknown as QueryShapeLite
+		},
 		...overrides,
 	}
 }
@@ -97,7 +102,7 @@ describe("grouper-audit pass", () => {
 
 		const result = await runPipeline("Portland, OR", stages, {})
 		const localities = result.tree.roots.filter((n) => n.tag === "locality")
-		expect(localities.length).toBe(1)
+		expect(localities).toHaveLength(1)
 		expect(localities[0]!.source).toBeUndefined()
 	})
 
@@ -152,8 +157,8 @@ describe("grouper-audit pass", () => {
 
 		const result = await runPipeline("400 Broad St, Seattle, WA 98109", stages, {})
 		const auditNodes = result.tree.roots.filter((n) => n.source === "grouper-audit")
-		expect(auditNodes.length).toBe(0)
-		expect(result.tree.roots.length).toBe(1)
+		expect(auditNodes).toHaveLength(0)
+		expect(result.tree.roots).toHaveLength(1)
 		expect(result.tree.roots[0]!.tag).toBe("region")
 	})
 
@@ -166,6 +171,7 @@ describe("grouper-audit pass", () => {
 			raw: "Via Trento, SORBOLO",
 			roots: [{ tag: "locality", value: "SORBOLO", start: 12, end: 19, confidence: 0.9, children: [] }],
 		}
+
 		const proposals = [
 			{ span: Span.from("Via", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
 		] as PhraseProposal[]
@@ -186,6 +192,7 @@ describe("grouper-audit pass", () => {
 				raw: "Via Trento, SORBOLO",
 				roots: [{ tag: "postcode", value: "00000", start: 12, end: 19, confidence: 0.9, children: [] }],
 			}
+
 			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 3 }, tag: "street", score: 0.2 }]
 			const out = grouperAudit(bareTree, proposals, bareTree.raw, classifierTopK)
 			expect(out.roots.find((n) => n.value === "Via")!.tag).toBe("locality")
@@ -204,10 +211,12 @@ describe("grouper-audit pass", () => {
 			const props = [
 				{ span: Span.from("Francesca", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
 			] as PhraseProposal[]
+
 			const treeWithCity: AddressTree = {
 				raw: "Francesca, MONSUMMANO TERME",
 				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
 			}
+
 			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 9 }, tag: "locality", score: 0.3 }]
 			const out = grouperAudit(treeWithCity, props, treeWithCity.raw, classifierTopK)
 			expect(out.roots.filter((n) => n.tag === "locality").map((n) => n.value)).toEqual(["MONSUMMANO TERME"])
@@ -218,12 +227,14 @@ describe("grouper-audit pass", () => {
 			const props = [
 				{ span: Span.from("Francesca", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
 			] as PhraseProposal[]
+
 			const treeWithCity: AddressTree = {
 				raw: "Francesca, MONSUMMANO TERME",
 				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
 			}
+
 			const out = grouperAudit(treeWithCity, props, treeWithCity.raw)
-			expect(out.roots.filter((n) => n.tag === "locality").length).toBe(2)
+			expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(2)
 		})
 	})
 
@@ -244,6 +255,6 @@ describe("grouper-audit pass", () => {
 		})
 
 		const result = await runPipeline("NY-NY", stages, {})
-		expect(result.tree.roots.length).toBe(0)
+		expect(result.tree.roots).toHaveLength(0)
 	})
 })

@@ -34,7 +34,16 @@ import {
 
 import type { SourceRecord } from "./types.ts"
 
-/** Inputs shared by the featurizer + the scorer factory. */
+/**
+ * Similarity at which two official names count as the same organisation. Set high because the feature is a near-exact
+ * agreement signal, not a fuzzy one — the fuzzy comparison is a separate feature and this one exists to distinguish
+ * it.
+ */
+const OFFICIAL_NAME_AGREEMENT = 0.93
+
+/**
+ * Inputs shared by the featurizer + the scorer factory.
+ */
 export interface LearnedFeatureConfig {
 	/**
 	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial: true,
@@ -76,8 +85,10 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 				f.push(lvl === l ? 1 : 0)
 			}
 		}
+
 		// Interaction: co-located (spatial exact = level 0) AND names/org disagree (catch-all level).
 		const spatialExact = spatialI !== undefined && pat[spatialI] === 0 ? 1 : 0
+
 		const nameDisagree =
 			givenI !== undefined &&
 			familyI !== undefined &&
@@ -85,6 +96,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 			pat[familyI] === lastLevel(familyI)
 				? 1
 				: 0
+
 		const orgDisagree = orgI !== undefined && pat[orgI] === lastLevel(orgI) ? 1 : 0
 		f.push(spatialExact * nameDisagree) // the over-merge signature: same place, names disagree
 		f.push(spatialExact * orgDisagree)
@@ -101,7 +113,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		// without them (the cross-source GBT) keep scoring unchanged (trailing features are ignored).
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()
 		const offB = b.attributes?.["authorizedOfficial"]?.trim()
-		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= 0.93 ? 1 : 0
+		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= OFFICIAL_NAME_AGREEMENT ? 1 : 0
 		f.push(officialAgree)
 		f.push(officialAgree * orgDisagree) // the roll-up core: same signer, different brand
 		f.push(officialAgree * orgDisagree * spatialExact)

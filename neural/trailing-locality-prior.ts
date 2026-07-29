@@ -43,7 +43,9 @@
 import { groupPiecesIntoWords, type FSTMatcherLike, type FSTPlaceEntryLike, type WordGroup } from "./fst-prior.ts"
 import type { TokenLike } from "./query-shape-prior.ts"
 
-/** House-number shape — "45 Cours Lafayette": the number before a prefix affix must not count as street-name evidence. */
+/**
+ * House-number shape — "45 Cours Lafayette": the number before a prefix affix must not count as street-name evidence.
+ */
 const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
 
 /**
@@ -89,9 +91,13 @@ const STREET_NAME_PARTICLES: ReadonlySet<string> = new Set([
 ])
 
 export interface TrailingLocalityPriorOpts {
-	/** Gazetteer matcher (the admin FST). Span acceptance requires a `locality`-placetype entry. */
+	/**
+	 * Gazetteer matcher (the admin FST). Span acceptance requires a `locality`-placetype entry.
+	 */
 	fst: FSTMatcherLike
-	/** Street-morphology matcher — the street-affix signal source. */
+	/**
+	 * Street-morphology matcher — the street-affix signal source.
+	 */
 	streetMorphology: FSTMatcherLike
 	/**
 	 * Positive bias magnitude (logits) toward `B/I-locality` on the span. Default 6.0 — the W1 cell, the only sweep
@@ -99,9 +105,13 @@ export interface TrailingLocalityPriorOpts {
 	 * B-locality (the FR fused rows hold out below it).
 	 */
 	bias?: number
-	/** Negative bias magnitude (logits) toward `B/I-street` on the span. Default 1.5 (the W1 cell). */
+	/**
+	 * Negative bias magnitude (logits) toward `B/I-street` on the span. Default 1.5 (the W1 cell).
+	 */
 	streetPenalty?: number
-	/** Maximum span length in word-groups. Default 3 ("New York", "Sainte-Livrade-sur-Lot" are 1–2). */
+	/**
+	 * Maximum span length in word-groups. Default 3 ("New York", "Sainte-Livrade-sur-Lot" are 1–2).
+	 */
 	maxSpanGroups?: number
 	/**
 	 * The classifier's current emission matrix (R3). When provided and the argmax of ANY piece is already `B/I-locality`,
@@ -125,7 +135,7 @@ function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
  * ADMIN-placetype entry (the R1 "place match" definition), else null.
  */
 function matchAdminEntries(fst: FSTMatcherLike, tokens: string[]): FSTPlaceEntryLike[] | null {
-	if (tokens.length === 0) return null
+	if (!tokens.length) return null
 
 	let current = fst.walk([tokens[0]!])
 
@@ -142,10 +152,12 @@ function matchAdminEntries(fst: FSTMatcherLike, tokens: string[]): FSTPlaceEntry
 
 	const entries = fst.accepting(current.stateID).filter((e) => ADMIN_PLACETYPES.has(e.placetype))
 
-	return entries.length > 0 ? entries : null
+	return entries.length ? entries : null
 }
 
-/** Index of the first non-particle word at or left of `fromWord`, or -1. (R2 particle transparency.) */
+/**
+ * Index of the first non-particle word at or left of `fromWord`, or -1. (R2 particle transparency.)
+ */
 function effectivePredecessor(words: ReadonlyArray<{ group: WordGroup; idx: number }>, fromWord: number): number {
 	for (let i = fromWord; i >= 0; i--) {
 		if (!STREET_NAME_PARTICLES.has(words[i]!.group.fstToken)) return i
@@ -165,7 +177,7 @@ export function buildTrailingLocalityPriors(
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
-	const bias = opts.bias ?? 6.0
+	const bias = opts.bias ?? 6
 	const streetPenalty = opts.streetPenalty ?? 1.5
 	const maxSpanGroups = opts.maxSpanGroups ?? 3
 
@@ -234,6 +246,7 @@ export function buildTrailingLocalityPriors(
 		if (localityPositive || (localityAny && !regionPositive)) {
 			span = { startWord, endWord: words.length - 1 }
 		}
+
 		// else: a non-locality admin match at this length BLOCKS shorter spans (R1) — stop.
 		break
 	}
@@ -248,7 +261,7 @@ export function buildTrailingLocalityPriors(
 	const spanFirstPiece = words[span.startWord]!.group.pieceIndices[0]!
 	const prevPieces = words[span.startWord - 1]!.group.pieceIndices
 
-	for (let pi = prevPieces[prevPieces.length - 1]!; pi < spanFirstPiece; pi++) {
+	for (let pi = prevPieces.at(-1)!; pi < spanFirstPiece; pi++) {
 		if (pieces[pi]!.piece.includes(",")) return matrix
 	}
 
@@ -281,6 +294,7 @@ export function buildTrailingLocalityPriors(
 				!STREET_NAME_PARTICLES.has(token)
 			) {
 				suffixPosition = true
+
 				break
 			}
 		}

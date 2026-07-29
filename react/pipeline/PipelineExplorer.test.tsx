@@ -37,7 +37,7 @@ test("selecting an alternate candidate updates the resolved panel", async () => 
 
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)
-	await vi.waitFor(() => expect(container.querySelectorAll(".mw-candidates__btn").length).toBe(2))
+	await vi.waitFor(() => expect(container.querySelectorAll(".mw-candidates__btn")).toHaveLength(2))
 
 	// Pick the second candidate (the region) — the resolved panel should now show "region".
 	await userEvent.click(container.querySelectorAll(".mw-candidates__btn")[1] as HTMLElement)

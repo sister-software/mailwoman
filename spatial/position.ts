@@ -6,8 +6,28 @@
  *   This file contains types and utilities for working with geographic positions.
  */
 
-import { type LatLngLiteral } from "@googlemaps/google-maps-services-js"
+import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { GeoPoint, type GeoPointInput } from "@mailwoman/spatial"
+
+/**
+ * Southern limit of latitude in WGS84 degrees. Outside it a value cannot be a latitude.
+ */
+const LATITUDE_MIN = -90
+
+/**
+ * Northern limit of latitude in WGS84 degrees.
+ */
+const LATITUDE_MAX = 90
+
+/**
+ * Arity of a `[lon, lat]` coordinate tuple.
+ */
+const COORD_PAIR_LENGTH = 2
+
+/**
+ * Arity of a `[lon, lat, elevation]` coordinate tuple.
+ */
+const COORD_TRIPLE_LENGTH = 3
 
 /**
  * An ordered pair of coordinates in the form of [longitude, latitude].
@@ -71,8 +91,8 @@ export function orderGeoJSONToCoordPair([longitude, latitude]: Coordinates2D): [
  */
 export function inferGeoJSONCoordOrder([coordA, coordB]: [number, number]): Coordinates2D {
 	// Latitude values typically range from -90 to 90
-	const isCoordALat = coordA >= -90 && coordA <= 90
-	const isCoordBLat = coordB >= -90 && coordB <= 90
+	const isCoordALat = coordA >= LATITUDE_MIN && coordA <= LATITUDE_MAX
+	const isCoordBLat = coordB >= LATITUDE_MIN && coordB <= LATITUDE_MAX
 
 	if (isCoordALat && !isCoordBLat) {
 		// coordA is latitude, coordB is longitude
@@ -120,7 +140,7 @@ export type Coordinates3D = [
 /**
  * A record of internal coordinates, typically used by the US Census.
  */
-export type InternalPointCoordinates = {
+export interface InternalPointCoordinates {
 	/**
 	 * Internal Longitude (X) Coordinates
 	 *
@@ -146,7 +166,7 @@ export type InternalPointCoordinates = {
 export function isCoordPairLiteral(input: unknown): input is [number, number] | [number, number, number] {
 	if (!Array.isArray(input)) return false
 
-	if (input.length !== 2 && input.length !== 3) return false
+	if (input.length !== COORD_PAIR_LENGTH && input.length !== COORD_TRIPLE_LENGTH) return false
 
 	return input.every((coord) => typeof coord === "number")
 }
@@ -229,7 +249,7 @@ export type EarthRadiusUnit = "km" | "miles" | "meters"
 const RADII = {
 	km: 6371,
 	miles: 3958.8,
-	meters: 6371000,
+	meters: 6_371_000,
 } as const satisfies Record<EarthRadiusUnit, number>
 
 /**
@@ -242,7 +262,9 @@ const RADII = {
  *
  * @returns The distance between the two points in the specified unit.
  */
-/** Shared great-circle math (no sentinel handling). `unit` selects the Earth radius. */
+/**
+ * Shared great-circle math (no sentinel handling). `unit` selects the Earth radius.
+ */
 function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, unit: EarthRadiusUnit): number {
 	const dLat = (lat2 - lat1) * ConversionFactor.DegreesToRadians
 	const dLon = (lon2 - lon1) * ConversionFactor.DegreesToRadians
@@ -260,7 +282,7 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 	const p1 = GeoPoint.from(point1)
 	const p2 = GeoPoint.from(point2)
 
-	if (!p1 || !p2) return NaN
+	if (!p1 || !p2) return Number.NaN
 
 	return greatCircle(p1.latitude, p1.longitude, p2.latitude, p2.longitude, unit)
 }

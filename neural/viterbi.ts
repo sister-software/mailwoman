@@ -46,13 +46,16 @@ export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 			const toLabel = labels[to]!
 			row[to] = isValidTransition(fromLabel, toLabel) ? 0 : NEG_INF
 		}
+
 		mask.push(row)
 	}
 
 	return mask
 }
 
-/** Returns the per-label vector of valid start-of-sequence transitions (0 or -inf). */
+/**
+ * Returns the per-label vector of valid start-of-sequence transitions (0 or -inf).
+ */
 export function buildBIOStartMask(labels: readonly string[]): number[] {
 	return labels.map((l) => (l.startsWith("I-") ? NEG_INF : 0))
 }
@@ -93,22 +96,36 @@ function isValidTransition(from: string, to: string): boolean {
  * toll directly).
  */
 export interface ViterbiTransitionAdjustment {
-	/** Timestep whose INCOMING transition is adjusted. */
+	/**
+	 * Timestep whose INCOMING transition is adjusted.
+	 */
 	timestep: number
-	/** Label index (into the emission row / transition matrix axes) the adjusted transition lands on. */
+	/**
+	 * Label index (into the emission row / transition matrix axes) the adjusted transition lands on.
+	 */
 	toLabel: number
-	/** Additive bonus (log-score units, like the transition matrix itself). */
+	/**
+	 * Additive bonus (log-score units, like the transition matrix itself).
+	 */
 	bonus: number
 }
 
 export interface ViterbiInput {
-	/** `emissions[t][k]` — log-emission for label k at timestep t. Pass raw logits or log-softmaxes. */
+	/**
+	 * `emissions[t][k]` — log-emission for label k at timestep t. Pass raw logits or log-softmaxes.
+	 */
 	emissions: number[][]
-	/** `transitions[from][to]` — additive log-score. Use `buildBIOTransitionMask` if unsure. */
+	/**
+	 * `transitions[from][to]` — additive log-score. Use `buildBIOTransitionMask` if unsure.
+	 */
 	transitions: number[][]
-	/** Per-label log-score for being the FIRST label. */
+	/**
+	 * Per-label log-score for being the FIRST label.
+	 */
 	startTransitions?: number[]
-	/** Per-label log-score for being the LAST label. */
+	/**
+	 * Per-label log-score for being the LAST label.
+	 */
 	endTransitions?: number[]
 	/**
 	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}). Omitted/empty = the exact
@@ -118,9 +135,13 @@ export interface ViterbiInput {
 }
 
 export interface ViterbiResult {
-	/** Best label index per timestep. */
+	/**
+	 * Best label index per timestep.
+	 */
 	path: number[]
-	/** Total path score (log-prob). */
+	/**
+	 * Total path score (log-prob).
+	 */
 	score: number
 }
 
@@ -153,6 +174,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				byLabel = new Map()
 				adjustAt.set(adj.timestep, byLabel)
 			}
+
 			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX, not sum — the
 			// emission side's `applyWindowBias` uses the same Math.max discipline, and overlapping window-mode
 			// candidates must not stack the bonus.
@@ -172,6 +194,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	for (let k = 0; k < numLabels; k++) {
 		first[k] = startTrans[k]! + (firstAdjust?.get(k) ?? 0) + emissions[0]![k]!
 	}
+
 	dp.push(first)
 	back.push(new Array<number>(numLabels).fill(-1))
 
@@ -192,11 +215,13 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 					bestPrev = j
 				}
 			}
+
 			// The bonus is predecessor-independent, so it distributes over the max — adding it AFTER the
 			// argmax over j is exact, not an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}
+
 		dp.push(cur)
 		back.push(ptr)
 	}
@@ -258,6 +283,7 @@ export function softmax(row: readonly number[]): number[] {
 		if (row[i]! > max) {
 			max = row[i]!
 		}
+
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)
 

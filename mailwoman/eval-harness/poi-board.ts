@@ -44,6 +44,9 @@ import { createRuntimePipeline } from "mailwoman"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
 
+/**
+ * Fixture set backing the POI query board.
+ */
 export const POI_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/poi-board.jsonl"
 
 export interface PoiBoardResultsExpect {
@@ -77,7 +80,9 @@ export interface PoiBoardFixture {
 	expect: PoiBoardExpect
 }
 
-/** The slice of a `PipelineResult` grading needs — kept narrow so tests can hand in a fake without building a tree. */
+/**
+ * The slice of a `PipelineResult` grading needs — kept narrow so tests can hand in a fake without building a tree.
+ */
 export interface PoiBoardOutcome {
 	path: PipelineResult["path"]
 	poiIntent?: POIIntentOutcome
@@ -89,7 +94,9 @@ export interface CaseGrade {
 	expectKind: PoiBoardExpect["kind"]
 	pass: boolean
 	detail: string
-	/** Distance (km) from the fixture's `anchorGold` to the NEAREST returned result — `results` cases only. */
+	/**
+	 * Distance (km) from the fixture's `anchorGold` to the NEAREST returned result — `results` cases only.
+	 */
 	nearestKm?: number
 	resultCount?: number
 }
@@ -172,7 +179,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 
 	const results = poiOutcome.results ?? []
 
-	if (results.length === 0) {
+	if (!results.length) {
 		return {
 			id: fixture.id,
 			query: fixture.query,
@@ -186,6 +193,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	const nearestKm = Math.min(
 		...results.map((r) => haversineKm(r.latitude, r.longitude, expect.anchorGold.latitude, expect.anchorGold.longitude))
 	)
+
 	const withinRange = nearestKm <= expect.maxNearestKm
 
 	// Brand and category checks use the SAME "top field, mismatch phrase" shape (`top <field> <got> !== expected <want>`)
@@ -193,14 +201,18 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	// against v1 assertions (`top category X !== expected Y`).
 	const topCategoryID = results[0]!.categoryID
 	const topBrandWikidata = results[0]!.brandWikidata
+
 	const topMatches =
 		expect.brandWikidata !== undefined ? topBrandWikidata === expect.brandWikidata : topCategoryID === expect.categoryID
+
 	const topSummary =
 		expect.brandWikidata !== undefined ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
+
 	const mismatchDetail =
 		expect.brandWikidata !== undefined
 			? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
 			: `top category ${topCategoryID} !== expected ${expect.categoryID}`
+
 	const pass = withinRange && topMatches
 
 	const detail = pass
@@ -227,18 +239,26 @@ export interface PoiBoardOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath?: string
-	/** Sealed poi.db to query. Defaults to the standard data-root layer path — see `gazetteer build poi`'s own default. */
+	/**
+	 * Sealed poi.db to query. Defaults to the standard data-root layer path — see `gazetteer build poi`'s own default.
+	 */
 	db?: string
-	/** WOF admin shard path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`. */
+	/**
+	 * WOF admin shard path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
+	 */
 	resolveDb?: string
 	/**
 	 * Byte-range candidate.db for anchor resolution (demo-parity backend) — same semantics as `mailwoman poi
 	 * --candidate-db`.
 	 */
 	candidateDb?: string
-	/** Suppress the human-readable table (the CLI's `--json` mode prints the full report instead). */
+	/**
+	 * Suppress the human-readable table (the CLI's `--json` mode prints the full report instead).
+	 */
 	quiet?: boolean
-	/** Enforce the pre-registered floors: return a non-zero exit code on any breach (floors are always printed). */
+	/**
+	 * Enforce the pre-registered floors: return a non-zero exit code on any breach (floors are always printed).
+	 */
 	enforce?: boolean
 }
 
@@ -254,7 +274,7 @@ async function loadResolver(options: PoiBoardOptions): Promise<{ resolver: Resol
 				existsSync(p)
 			)
 
-	if (!options.candidateDb && wofPaths.length === 0) {
+	if (!options.candidateDb && !wofPaths.length) {
 		console.error(
 			"note: no WOF resolver configured — anchor localities will not resolve to coordinates, so anchored " +
 				"category/brand cases will abstain anchor_required. Set --resolve-db/--candidate-db to fix."
@@ -296,33 +316,51 @@ export interface QuantileStats {
  */
 export const POI_BOARD_FLOORS = {
 	overall: 0.9,
-	abstain: 1.0,
-	address: 1.0,
+	abstain: 1,
+	address: 1,
 } as const
 
-/** One graded floor line — printed on every run, and the breach unit `--enforce` keys its exit code off. */
+/**
+ * One graded floor line — printed on every run, and the breach unit `--enforce` keys its exit code off.
+ */
 export interface FloorLine {
-	/** The floor key (`overall` / `abstain` / `address`). */
+	/**
+	 * The floor key (`overall` / `abstain` / `address`).
+	 */
 	key: keyof typeof POI_BOARD_FLOORS
-	/** Human label for the printed line. */
+	/**
+	 * Human label for the printed line.
+	 */
 	label: string
-	/** Observed pass rate (0..1) for this slice. */
+	/**
+	 * Observed pass rate (0..1) for this slice.
+	 */
 	observed: number
-	/** The required floor (0..1). */
+	/**
+	 * The required floor (0..1).
+	 */
 	floor: number
-	/** `observed >= floor` — a missing slice (no cases of that kind) counts as NOT met. */
+	/**
+	 * `observed >= floor` — a missing slice (no cases of that kind) counts as NOT met.
+	 */
 	met: boolean
-	/** `pass/total` for the slice (or `0/0` when the slice is absent), for the printed line. */
+	/**
+	 * `pass/total` for the slice (or `0/0` when the slice is absent), for the printed line.
+	 */
 	fraction: string
 }
 
 export interface FloorEvaluation {
 	lines: FloorLine[]
-	/** True when ANY floor line is unmet — the signal `--enforce` turns into a non-zero exit. */
+	/**
+	 * True when ANY floor line is unmet — the signal `--enforce` turns into a non-zero exit.
+	 */
 	breached: boolean
 }
 
-/** The slice of a report `evaluateFloors` reads — kept narrow so tests can hand in a synthetic result set. */
+/**
+ * The slice of a report `evaluateFloors` reads — kept narrow so tests can hand in a synthetic result set.
+ */
 export interface FloorInput {
 	overallPassRate: number
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
@@ -347,6 +385,7 @@ export function evaluateFloors(report: FloorInput): FloorEvaluation {
 
 	const overallTotal = Object.values(report.byExpectKind).reduce((sum, b) => sum + b.total, 0)
 	const overallPass = Object.values(report.byExpectKind).reduce((sum, b) => sum + b.pass, 0)
+
 	const overallLine: FloorLine = {
 		key: "overall",
 		label: "overall",
@@ -367,9 +406,13 @@ export interface PoiBoardReport {
 	totalCases: number
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
 	overallPassRate: number
-	/** Pre-registered floors graded against this report (spec §3.6). Printed on every run; enforced under `--enforce`. */
+	/**
+	 * Pre-registered floors graded against this report (spec §3.6). Printed on every run; enforced under `--enforce`.
+	 */
 	floors: FloorEvaluation
-	/** Report-only metrics over every `POIResult` row returned across ALL cases (any expect kind). */
+	/**
+	 * Report-only metrics over every `POIResult` row returned across ALL cases (any expect kind).
+	 */
 	resultRowCount: number
 	gersIDPresentRate: number
 	ancestryPresentRate: number
@@ -383,7 +426,7 @@ export interface PoiBoardRunResult {
 }
 
 function quantile(sorted: number[], q: number): number {
-	if (sorted.length === 0) return NaN
+	if (!sorted.length) return Number.NaN
 
 	if (sorted.length === 1) return sorted[0]!
 	const idx = q * (sorted.length - 1)
@@ -396,15 +439,15 @@ function quantile(sorted: number[], q: number): number {
 }
 
 function computeStats(values: number[]): QuantileStats | null {
-	if (values.length === 0) return null
-	const sorted = [...values].sort((a, b) => a - b)
+	if (!values.length) return null
+	const sorted = [...values].toSorted((a, b) => a - b)
 
 	return {
 		count: sorted.length,
 		min: sorted[0]!,
 		p50: quantile(sorted, 0.5),
 		p95: quantile(sorted, 0.95),
-		max: sorted[sorted.length - 1]!,
+		max: sorted.at(-1)!,
 	}
 }
 
@@ -415,14 +458,16 @@ function computeStats(values: number[]): QuantileStats | null {
  */
 export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoardRunResult> {
 	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
+
 	const fixtures = readFileSync(fixturesPath, "utf8")
 		.split("\n")
 		.filter(Boolean)
 		.map((line) => JSON.parse(line) as PoiBoardFixture)
 
-	if (fixtures.length === 0) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
+	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 
 	const db = options.db ?? dataRootPath("poi", "poi.db")
+
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
 		cacheRoot: options.weightsCacheRoot,
@@ -462,7 +507,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 						gersIDPresent++
 					}
 
-					if (r.ancestry && r.ancestry.length > 0) {
+					if (r.ancestry && r.ancestry.length) {
 						ancestryPresent++
 					}
 				}
@@ -476,11 +521,13 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 
 	for (const grade of cases) {
 		const bucket = byExpectKind[grade.expectKind] ?? { total: 0, pass: 0, rate: 0 }
+
 		bucket.total++
 
 		if (grade.pass) {
 			bucket.pass++
 		}
+
 		byExpectKind[grade.expectKind] = bucket
 	}
 
@@ -489,7 +536,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 	}
 
 	const totalPass = cases.filter((c) => c.pass).length
-	const overallPassRate = cases.length > 0 ? totalPass / cases.length : 0
+	const overallPassRate = cases.length ? totalPass / cases.length : 0
 
 	const report: PoiBoardReport = {
 		generatedAt: new Date().toISOString(),
@@ -518,7 +565,7 @@ function printReport(report: PoiBoardReport): void {
 	console.log(`${report.totalCases} cases, ${(report.overallPassRate * 100).toFixed(1)}% overall pass rate\n`)
 	console.log("  expect kind     n     pass    rate")
 
-	for (const [kind, bucket] of Object.entries(report.byExpectKind).sort()) {
+	for (const [kind, bucket] of Object.entries(report.byExpectKind).toSorted()) {
 		console.log(
 			`  ${kind.padEnd(14)} ${String(bucket.total).padStart(4)}   ${String(bucket.pass).padStart(4)}    ${(bucket.rate * 100).toFixed(1)}%`
 		)
@@ -530,6 +577,7 @@ function printReport(report: PoiBoardReport): void {
 
 	if (report.nearestKmStats) {
 		const s = report.nearestKmStats
+
 		console.log(
 			`\nnearest-distance distribution (km, results-cases with ≥1 result, n=${s.count}): min ${s.min.toFixed(2)}  p50 ${s.p50.toFixed(2)}  p95 ${s.p95.toFixed(2)}  max ${s.max.toFixed(2)}`
 		)
@@ -539,6 +587,7 @@ function printReport(report: PoiBoardReport): void {
 
 	for (const line of report.floors.lines) {
 		const mark = line.met ? "✓" : "✗"
+
 		console.log(
 			`  ${mark} ${line.label.padEnd(14)} ${(line.observed * 100).toFixed(1)}% (${line.fraction})  floor ${(line.floor * 100).toFixed(0)}%`
 		)
@@ -552,7 +601,7 @@ function printReport(report: PoiBoardReport): void {
 
 	const failures = report.cases.filter((c) => !c.pass)
 
-	if (failures.length > 0) {
+	if (failures.length) {
 		console.log(`\n--- ${failures.length} failing cases ---`)
 
 		for (const f of failures) {

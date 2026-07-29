@@ -6,34 +6,36 @@
 
 import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.ts"
 
-/** Codepoint-level character class. */
+/**
+ * Codepoint-level character class.
+ */
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
-	[0x3040, 0x30ff], // Hiragana + Katakana
-	[0x31f0, 0x31ff], // Katakana phonetic extensions
-	[0x3400, 0x4dbf], // CJK Unified Ideographs Extension A
-	[0x4e00, 0x9fff], // CJK Unified Ideographs
-	[0xa000, 0xa4cf], // Yi
-	[0xac00, 0xd7af], // Hangul Syllables
-	[0xf900, 0xfaff], // CJK Compatibility Ideographs
-	[0xff00, 0xffef], // Halfwidth + Fullwidth forms
-	[0x20000, 0x2a6df], // CJK Unified Ideographs Extension B
+	[0x30_40, 0x30_ff], // Hiragana + Katakana
+	[0x31_f0, 0x31_ff], // Katakana phonetic extensions
+	[0x34_00, 0x4d_bf], // CJK Unified Ideographs Extension A
+	[0x4e_00, 0x9f_ff], // CJK Unified Ideographs
+	[0xa0_00, 0xa4_cf], // Yi
+	[0xac_00, 0xd7_af], // Hangul Syllables
+	[0xf9_00, 0xfa_ff], // CJK Compatibility Ideographs
+	[0xff_00, 0xff_ef], // Halfwidth + Fullwidth forms
+	[0x2_00_00, 0x2_a6_df], // CJK Unified Ideographs Extension B
 ]
 
 const CYRILLIC_RANGES: ReadonlyArray<[number, number]> = [
-	[0x0400, 0x04ff],
-	[0x0500, 0x052f], // Cyrillic Supplement
-	[0x2de0, 0x2dff], // Cyrillic Extended-A
-	[0xa640, 0xa69f], // Cyrillic Extended-B
+	[0x04_00, 0x04_ff],
+	[0x05_00, 0x05_2f], // Cyrillic Supplement
+	[0x2d_e0, 0x2d_ff], // Cyrillic Extended-A
+	[0xa6_40, 0xa6_9f], // Cyrillic Extended-B
 ]
 
 const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
-	[0x0600, 0x06ff],
-	[0x0750, 0x077f], // Arabic Supplement
-	[0x08a0, 0x08ff], // Arabic Extended-A
-	[0xfb50, 0xfdff], // Arabic Presentation Forms-A
-	[0xfe70, 0xfeff], // Arabic Presentation Forms-B
+	[0x06_00, 0x06_ff],
+	[0x07_50, 0x07_7f], // Arabic Supplement
+	[0x08_a0, 0x08_ff], // Arabic Extended-A
+	[0xfb_50, 0xfd_ff], // Arabic Presentation Forms-A
+	[0xfe_70, 0xfe_ff], // Arabic Presentation Forms-B
 ]
 
 function inRange(cp: number, ranges: ReadonlyArray<[number, number]>): boolean {
@@ -73,14 +75,14 @@ const PUNCT_CODEPOINTS = new Set<number>([
 	0x7c, // |
 	0x7d, // }
 	0x7e, // ~
-	0x00a1, // ¡
-	0x00bf, // ¿
-	0x201c, // “
-	0x201d, // ”
-	0x2013, // –
-	0x2014, // —
-	0x3001, // 、 (CJK comma)
-	0x3002, // 。 (CJK period)
+	0x00_a1, // ¡
+	0x00_bf, // ¿
+	0x20_1c, // “
+	0x20_1d, // ”
+	0x20_13, // –
+	0x20_14, // —
+	0x30_01, // 、 (CJK comma)
+	0x30_02, // 。 (CJK period)
 ])
 
 /**
@@ -91,18 +93,20 @@ const CONNECTOR_CODEPOINTS = new Set<number>([
 	0x2d, // -
 	0x27, // '
 	0x5f, // _
-	0x2018, // ‘
-	0x2019, // ’
+	0x20_18, // ‘
+	0x20_19, // ’
 ])
 
-/** Classify a single Unicode codepoint. */
+/**
+ * Classify a single Unicode codepoint.
+ */
 export function classifyCodepoint(cp: number): CodepointClass {
 	if (cp >= 0x30 && cp <= 0x39) return "digit"
 
 	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a)) return "alpha"
 
 	// Latin-1 letters with diacritics + Latin Extended-A/B
-	if ((cp >= 0x00c0 && cp <= 0x024f) || (cp >= 0x1e00 && cp <= 0x1eff)) return "alpha"
+	if ((cp >= 0x00_c0 && cp <= 0x02_4f) || (cp >= 0x1e_00 && cp <= 0x1e_ff)) return "alpha"
 
 	if (cp === 0x20 || cp === 0x09 || cp === 0x0a || cp === 0x0d || cp === 0xa0) return "whitespace"
 
@@ -133,7 +137,7 @@ export function classifyToken(text: string): TokenCharacterClass {
 
 	for (let i = 0; i < text.length;) {
 		const cp = text.codePointAt(i)!
-		i += cp > 0xffff ? 2 : 1
+		i += cp > 0xff_ff ? 2 : 1
 		const cls = classifyCodepoint(cp)
 
 		switch (cls) {
@@ -179,9 +183,11 @@ export function classifyToken(text: string): TokenCharacterClass {
 	return "mixed"
 }
 
-/** Fold per-token classes into the whole-input character class. */
+/**
+ * Fold per-token classes into the whole-input character class.
+ */
 export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClass {
-	if (tokens.length === 0) return "alpha"
+	if (!tokens.length) return "alpha"
 
 	let hasDigit = false
 	let hasAlpha = false
@@ -244,13 +250,15 @@ export function tokenizeForClass(text: string): SpanRange[] {
 		const cls = classifyCodepoint(cp)
 
 		if (cls === "whitespace" || cls === "punct") {
-			i += cp > 0xffff ? 2 : 1
+			i += cp > 0xff_ff ? 2 : 1
+
 			continue
 		}
 
 		// A leading connector (rare — most inputs don't start with `-`/`'`) is consumed as whitespace.
 		if (cls === "connector") {
-			i += cp > 0xffff ? 2 : 1
+			i += cp > 0xff_ff ? 2 : 1
+
 			continue
 		}
 
@@ -262,15 +270,17 @@ export function tokenizeForClass(text: string): SpanRange[] {
 
 		while (cur < N) {
 			const ncp = text.codePointAt(cur)!
-			const nstep = ncp > 0xffff ? 2 : 1
+			const nstep = ncp > 0xff_ff ? 2 : 1
 			const ncls = classifyCodepoint(ncp)
 
 			if (ncls === "whitespace" || ncls === "punct") break
 
 			if (ncls === "connector") {
 				cur += nstep
+
 				continue
 			}
+
 			// Break tokens across script transitions (digit↔alpha is fine; alpha↔cjk is a boundary).
 			const isLatinPair = (a: CodepointClass, b: CodepointClass) =>
 				(a === "digit" || a === "alpha") && (b === "digit" || b === "alpha")
@@ -282,6 +292,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 			) {
 				break
 			}
+
 			cur += nstep
 		}
 

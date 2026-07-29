@@ -55,8 +55,10 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 
 				if (options.finalize) {
 					await finalizePostcodeLocality(options.output)
+
 					break
 				}
+
 				await buildPostcodeLocalityBase({
 					country: need("country", options.country),
 					adminRepo: need("admin-repo", options.adminRepo),
@@ -66,10 +68,12 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 					maxCandidates: Number.parseInt(options.maxCandidates ?? "4", 10),
 					finalize: false,
 				})
+
 				break
 			}
 			case "jp": {
 				const { buildPostcodeLocalityJP } = await import("../../../gazetteer-pipeline/postcode-locality/jp.ts")
+
 				await buildPostcodeLocalityJP({
 					country: options.country ?? "JP",
 					postalNames: need("postal-names", options.postalNames),
@@ -77,25 +81,30 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 					adminDb: need("admin-db", options.adminDb),
 					output: options.output,
 				})
+
 				break
 			}
 			case "kr": {
 				const { buildPostcodeLocalityKR } = await import("../../../gazetteer-pipeline/postcode-locality/kr.ts")
+
 				await buildPostcodeLocalityKR({
 					geonames: need("geonames", options.geonames),
 					adminDb: need("admin-db", options.adminDb),
 					output: options.output,
 				})
+
 				break
 			}
 			case "tw": {
 				const { buildPostcodeLocalityTW } = await import("../../../gazetteer-pipeline/postcode-locality/tw.ts")
+
 				await buildPostcodeLocalityTW({
 					postalXml: need("postal-xml", options.postalXml),
 					divisions: need("divisions", options.divisions),
 					adminDb: need("admin-db", options.adminDb),
 					output: options.output,
 				})
+
 				break
 			}
 		}

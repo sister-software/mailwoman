@@ -51,6 +51,12 @@
 
 import type { CanonicalRow } from "./types.ts"
 
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 export type BoundaryStressTemplate =
 	| "street-eats-affix"
 	| "comma-less-city-state"
@@ -59,7 +65,9 @@ export type BoundaryStressTemplate =
 	// Added 2026-06-18 after the v1.6.0 probes (the shard's NARROW distribution over-fit "full structured
 	// address" and regressed OOD). These two re-balance the contexts the model actually sees:
 	| "bare-locality" // the ship-blocker fix: locality with NO street (the 84%-dropped "City, STATE" rows)
-	| "house-number-before-street" // the confounding mirror of house-number-after-street (number position)
+	| "house-number-before-street"
+
+// the confounding mirror of house-number-after-street (number position)
 
 export interface BoundaryStressBaseTuple {
 	locality: string
@@ -70,7 +78,9 @@ export interface BoundaryStressBaseTuple {
 
 export interface BoundaryStressSynthesisOpts {
 	random?: () => number
-	/** Force a specific shape (tests + balanced shard composition). */
+	/**
+	 * Force a specific shape (tests + balanced shard composition).
+	 */
 	forceTemplate?: BoundaryStressTemplate
 }
 
@@ -85,10 +95,12 @@ function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!
 }
 
-// Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the
-// name. Single-word names alone teach nothing about the suffix edge.
-// Multi-word names are what make the suffix boundary BITE (the model must not read the trailing
-// suffix word as part of the name). Kept diverse so the shard teaches the boundary, not the lexeme.
+/**
+ * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name. Single-word
+ * names alone teach nothing about the suffix edge. Multi-word names are what make the suffix boundary BITE (the model
+ * must not read the trailing suffix word as part of the name). Kept diverse so the shard teaches the boundary, not the
+ * lexeme.
+ */
 const MULTIWORD_STREETS = [
 	"Country Club",
 	"Martin Luther King",
@@ -136,6 +148,7 @@ const MULTIWORD_STREETS = [
 	"Queens Gate",
 	"Princeton Junction",
 ] as const
+
 const SINGLE_STREETS = [
 	"Main",
 	"Oak",
@@ -177,6 +190,7 @@ const SINGLE_STREETS = [
 	"12th",
 	"42nd",
 ] as const
+
 const SUFFIXES = [
 	"St",
 	"Street",
@@ -209,10 +223,13 @@ const SUFFIXES = [
 	"Row",
 	"Walk",
 ] as const
+
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
-// FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental; the boundary
-// stress is the prefix↔name split + the number-after-street order).
+/**
+ * FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental; the boundary stress is the
+ * prefix↔name split + the number-after-street order).
+ */
 const FR_PREFIXES = [
 	"Rue",
 	"Avenue",
@@ -229,6 +246,7 @@ const FR_PREFIXES = [
 	"Sentier",
 	"Promenade",
 ] as const
+
 const FR_NAMES = [
 	"Jean-Baptiste Lebas",
 	"Neuve-des-Capucines",
@@ -256,19 +274,18 @@ const FR_NAMES = [
 	"Aristide-Briand",
 ] as const
 
-// Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-PREFIXED real rows
-// hardest ("LISBON PUBLIC LIBRARY, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality WITH a
-// leading venue keeps the model emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a
-// base ComponentTag.
-//
-// #511-LINTED 2026-06-18 (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token
-// here is venue-DOMINANT in the base, so the shard agrees with it. The first draft was naive — 9 terms
-// were dropped because their tokens are dominantly street/locality and would CONTRADICT the base the way
-// Madison-as-street did (#511): "Fire" 93% street, "Veterans" 94% street, "City" 68% locality, "Hall" 63%
-// street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79% street, "Town" 48% locality, "Library" 51%
-// street, "County" 68% street, "Arts"/"Courthouse"/"Municipal" dependent_locality. Kept tokens: Clinic 98%,
-// Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%, Department 90%, Group 87%, Center 65%,
-// School 70%, Public 89%, Elementary/Family 97% (all venue).
+/**
+ * Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-PREFIXED real rows hardest ("LISBON
+ * PUBLIC LIBRARY, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality WITH a leading venue keeps the model
+ * emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-LINTED 2026-06-18
+ * (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token here is venue-DOMINANT in the base,
+ * so the shard agrees with it. The first draft was naive — 9 terms were dropped because their tokens are dominantly
+ * street/locality and would CONTRADICT the base the way Madison-as-street did (#511): "Fire" 93% street, "Veterans" 94%
+ * street, "City" 68% locality, "Hall" 63% street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79% street, "Town"
+ * 48% locality, "Library" 51% street, "County" 68% street, "Arts"/"Courthouse"/"Municipal" dependent_locality. Kept
+ * tokens: Clinic 98%, Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%, Department 90%, Group 87%,
+ * Center 65%, School 70%, Public 89%, Elementary/Family 97% (all venue).
+ */
 const VENUES = [
 	"Community Center",
 	"Health Center",
@@ -286,10 +303,12 @@ const VENUES = [
 	"Public School",
 ] as const
 
-// Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the
-// training data (B-locality ≫ I-street), so the shard agrees with the base instead of fighting it. The
-// night's targeted scan caught the prior vocab (Madison, Portland, Springfield IL…) at 92–100% STREET
-// in the base ("Madison Ave"), the "5th Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
+/**
+ * Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the training data
+ * (B-locality ≫ I-street), so the shard agrees with the base instead of fighting it. The night's targeted scan caught
+ * the prior vocab (Madison, Portland, Springfield IL…) at 92–100% STREET in the base ("Madison Ave"), the "5th Avenue
+ * Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
+ */
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Albuquerque", region: "NM", postcode: "87102", country: "US" },
 	{ locality: "Indianapolis", region: "IN", postcode: "46203", country: "US" },
@@ -320,11 +339,14 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Chicago", region: "IL", postcode: "60625", country: "US" },
 	{ locality: "Springfield", region: "MA", postcode: "01108", country: "US" },
 ]
-// FR localities DERIVED from the FR (ban) shards specifically — where these famous cities are 95–99%
-// locality-DOMINANT (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-shard
-// scan falsely flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in
-// US street-contexts; the FR-block scan is the honest distribution. Dept-diverse (28 depts), region
-// empty (French addresses carry no region token; the generator's region-optional path handles it).
+
+/**
+ * FR localities DERIVED from the FR (ban) shards specifically — where these famous cities are 95–99% locality-DOMINANT
+ * (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-shard scan falsely flagged them
+ * street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts; the FR-block scan is
+ * the honest distribution. Dept-diverse (28 depts), region empty (French addresses carry no region token; the
+ * generator's region-optional path handles it).
+ */
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
 	{ locality: "Marseille", region: "", postcode: "13016", country: "FR" },
@@ -345,6 +367,7 @@ const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Brunoy", region: "", postcode: "91800", country: "FR" },
 	{ locality: "Rambouillet", region: "", postcode: "78120", country: "FR" },
 ]
+
 // NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"), and the base yielded
 // zero locality-dominant DE towns in the scan, so house-number-after-street is FR-only here. DE's
 // native-order number-after-street is covered by the dedicated synth-german shard.
@@ -400,6 +423,7 @@ export function synthesizeBoundaryStressRow(
 				template,
 			}
 		}
+
 		const withZip = random() < 0.5
 		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
 		// "United States" (United 98% / States 98% country in the base), NOT "USA" — the #511 lint found
@@ -465,6 +489,7 @@ export function synthesizeBoundaryStressRow(
 				template,
 			}
 		}
+
 		// house-number-after-street: "{name} {hn}, {postcode} {locality}" — number FOLLOWS the street.
 		const raw = `${name} ${hn}, ${b.postcode} ${b.locality}`
 
@@ -484,6 +509,7 @@ export function synthesizeBoundaryStressRow(
 	const name = random() < 0.7 ? pick(MULTIWORD_STREETS, random) : pick(SINGLE_STREETS, random)
 	const suffix = pick(SUFFIXES, random)
 	const streetCore = `${dir ? `${dir} ` : ""}${name} ${suffix}`
+
 	const components: CanonicalRow["components"] = {
 		house_number: hn,
 		...(dir ? { street_prefix: dir } : {}),
@@ -493,6 +519,7 @@ export function synthesizeBoundaryStressRow(
 		region: b.region,
 		postcode: b.postcode,
 	}
+
 	const raw =
 		template === "comma-less-city-state"
 			? // no commas anywhere — the segmentation cue is gone

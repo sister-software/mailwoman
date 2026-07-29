@@ -73,11 +73,17 @@ import { cellToParent, latLngToCell } from "h3-js"
  */
 export const DEFAULT_RELEASE = "2026-05-20.0"
 
-/** Coverage is aggregated one level coarser than the row spine — a res-6 cell covers a whole metro area. */
+/**
+ * Coverage is aggregated one level coarser than the row spine — a res-6 cell covers a whole metro area.
+ */
 const COVERAGE_H3_RESOLUTION = 6
-/** Confidence floor already applied by `ingestPlaces`'s Parquet predicate — restated here as the loader's own gate. */
+/**
+ * Confidence floor already applied by `ingestPlaces`'s Parquet predicate — restated here as the loader's own gate.
+ */
 const MIN_CONFIDENCE = 0.85
-/** Rows committed per `BEGIN`/`COMMIT` batch during the staging load (the candidate-builder discipline). */
+/**
+ * Rows committed per `BEGIN`/`COMMIT` batch during the staging load (the candidate-builder discipline).
+ */
 const STAGE_BATCH_SIZE = 10_000
 
 const S3_GLOB = (release: string) => `s3://overturemaps-us-west-2/release/${release}/theme=places/type=place/*.parquet`
@@ -100,16 +106,24 @@ export function chooseCategoryColumn(
 	return describeRows.some((r) => r.column_name === "taxonomy") ? "taxonomy.primary" : "categories.primary"
 }
 
-/** PURE: whether the `brand` STRUCT column is present in this release's places schema. */
+/**
+ * PURE: whether the `brand` STRUCT column is present in this release's places schema.
+ */
 export function hasBrandColumn(describeRows: readonly DescribeColumn[]): boolean {
 	return describeRows.some((r) => r.column_name === "brand")
 }
 
-/** The expression pair {@link chooseCountryExpression} resolves — one for the `WHERE`, one for the `SELECT`. */
+/**
+ * The expression pair {@link chooseCountryExpression} resolves — one for the `WHERE`, one for the `SELECT`.
+ */
 export interface CountryExpression {
-	/** Bare expression to compare against `'<cc>'` in the `WHERE` clause (a column or a struct/list access). */
+	/**
+	 * Bare expression to compare against `'<cc>'` in the `WHERE` clause (a column or a struct/list access).
+	 */
 	filterExpr: string
-	/** The same expression, aliased to `country` for the `SELECT` list. */
+	/**
+	 * The same expression, aliased to `country` for the `SELECT` list.
+	 */
 	selectExpr: string
 }
 
@@ -142,13 +156,21 @@ export function chooseCountryExpression(describeRows: readonly DescribeColumn[])
 }
 
 export interface IngestPlacesOptions {
-	/** Pinned Overture release. Default {@link DEFAULT_RELEASE} (the same pin `overture-ingest.tsx` uses). */
+	/**
+	 * Pinned Overture release. Default {@link DEFAULT_RELEASE} (the same pin `overture-ingest.tsx` uses).
+	 */
 	release?: string
-	/** ISO 3166-1 alpha-2 codes to materialize. */
+	/**
+	 * ISO 3166-1 alpha-2 codes to materialize.
+	 */
 	countries: readonly string[]
-	/** Output root for the per-country Parquet. Default `<data-root>/overture/<release>/places`. */
+	/**
+	 * Output root for the per-country Parquet. Default `<data-root>/overture/<release>/places`.
+	 */
 	out?: string
-	/** Cap rows per country (debug). */
+	/**
+	 * Cap rows per country (debug).
+	 */
 	limit?: number
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -156,7 +178,9 @@ export interface IngestPlacesOptions {
 export interface IngestPlacesResult {
 	release: string
 	outDir: string
-	/** ISO country code → the local Parquet path materialized for it. */
+	/**
+	 * ISO country code → the local Parquet path materialized for it.
+	 */
 	countryParquet: Record<string, string>
 	categoryColumn: "taxonomy.primary" | "categories.primary"
 	hasBrand: boolean
@@ -193,6 +217,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	const categoryColumn = chooseCategoryColumn(describeRows)
 	const hasBrand = hasBrandColumn(describeRows)
 	const countryExpression = chooseCountryExpression(describeRows)
+
 	phase(
 		"probe",
 		`category column: ${categoryColumn}; brand: ${hasBrand ? "present" : "absent"}; country: ${countryExpression.filterExpr}`
@@ -208,6 +233,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 		const dest = join(outDir, `places-${cc.toLowerCase()}.parquet`)
 		const limitClause = opts.limit ? `LIMIT ${opts.limit}` : ""
 		const started = Date.now()
+
 		await db.run(`
 			COPY (
 				SELECT
@@ -224,6 +250,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 				${limitClause}
 			) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
 		`)
+
 		const secs = ((Date.now() - started) / 1000).toFixed(0)
 		phase("ingest", `${cc} -> ${dest} (${secs}s)`)
 		countryParquet[cc] = dest
@@ -234,7 +261,9 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	return { release, outDir, countryParquet, categoryColumn, hasBrand }
 }
 
-/** One Overture Places row, decoded to the flat shape the loader consumes — the injected-iterator testability seam. */
+/**
+ * One Overture Places row, decoded to the flat shape the loader consumes — the injected-iterator testability seam.
+ */
 export interface POISourceRow {
 	name: string | null
 	category: string | null
@@ -246,7 +275,9 @@ export interface POISourceRow {
 	gersID: string | null
 }
 
-/** Reads a country Parquet materialized by {@link ingestPlaces} back into {@link POISourceRow}s via DuckDB. */
+/**
+ * Reads a country Parquet materialized by {@link ingestPlaces} back into {@link POISourceRow}s via DuckDB.
+ */
 async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<POISourceRow> {
 	// Lazy DuckDB import — this generator is only invoked when the caller didn't inject `rows`
 	// (buildPOIDatabase's test path never reaches here), preserving the "DuckDB touches only the
@@ -266,6 +297,7 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 				`SELECT name, category, brand_wikidata, lat, lon, country, confidence, gers_id
 				 FROM read_parquet('${parquetPath}')`
 			)
+
 			// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 			const colNames = stream.columnNames()
 
@@ -311,30 +343,50 @@ export interface BuildPOIOptions {
 	 * DuckDB).
 	 */
 	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
-	/** Output `poi.db` path. Removed + rebuilt if already present (build-on-copy at the file level; see module docstring). */
+	/**
+	 * Output `poi.db` path. Removed + rebuilt if already present (build-on-copy at the file level; see module docstring).
+	 */
 	out: string
-	/** Overture release this build's rows came from — becomes the manifest's `sourceVintage`. */
+	/**
+	 * Overture release this build's rows came from — becomes the manifest's `sourceVintage`.
+	 */
 	release: string
-	/** `git rev-parse --short HEAD` — passed in by the command, not read from the repo here. */
+	/**
+	 * `git rev-parse --short HEAD` — passed in by the command, not read from the repo here.
+	 */
 	buildSHA: string
-	/** Layer manifest's own `version` field. Defaults to `release` — the layer has no independent versioning yet. */
+	/**
+	 * Layer manifest's own `version` field. Defaults to `release` — the layer has no independent versioning yet.
+	 */
 	version?: string
-	/** ISO-8601 manifest timestamp. Defaults to `new Date().toISOString()` — callers wanting reproducible builds pass it. */
+	/**
+	 * ISO-8601 manifest timestamp. Defaults to `new Date().toISOString()` — callers wanting reproducible builds pass it.
+	 */
 	createdAt?: string
 	onProgress?: (phase: string, message: string) => void
 }
 
 export interface BuildPOIResult {
 	out: string
-	/** Rows materialized into the final `poi` table. */
+	/**
+	 * Rows materialized into the final `poi` table.
+	 */
 	rows: number
-	/** Rows dropped for non-finite lat/lon — never inserted. */
+	/**
+	 * Rows dropped for non-finite lat/lon — never inserted.
+	 */
 	skipped: number
-	/** Distinct categories dictionary-encoded (excludes the reserved `0` uncategorized code). */
+	/**
+	 * Distinct categories dictionary-encoded (excludes the reserved `0` uncategorized code).
+	 */
 	categories: number
-	/** ISO country code → rows kept for it (skipped rows are NOT counted). */
+	/**
+	 * ISO country code → rows kept for it (skipped rows are NOT counted).
+	 */
 	countries: Map<string, number>
-	/** Res-6 coverage cells written. */
+	/**
+	 * Res-6 coverage cells written.
+	 */
 	coverageCells: number
 }
 
@@ -368,7 +420,7 @@ function asContractDB(kdb: DatabaseClient<POIDatabase>): DatabaseClient<LayerCon
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
 	const progress = opts.onProgress ?? (() => {})
 
-	if (!opts.rows && (!opts.parquetPaths || opts.parquetPaths.length === 0)) {
+	if (!opts.rows && (!opts.parquetPaths || !opts.parquetPaths.length)) {
 		throw new Error("buildPOIDatabase: pass either `rows` (test/injected source) or `parquetPaths` (from ingestPlaces)")
 	}
 
@@ -392,6 +444,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	await createLayerCoverageTable(asContractDB(kdb))
 
 	const categoryCodes = new Map<string, number>()
+
 	const categoryID = (category: string | null): number => {
 		if (!category) return 0
 		let id = categoryCodes.get(category)
@@ -405,9 +458,13 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		return id
 	}
 
-	/** ISO country code → rows kept for it (skipped rows are NOT counted). */
+	/**
+	 * ISO country code → rows kept for it (skipped rows are NOT counted).
+	 */
 	const countries = new Map<string, number>()
-	/** Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan). */
+	/**
+	 * Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan).
+	 */
 	const coverage = new Map<number, number>()
 
 	const insStage = db.prepare(`INSERT INTO poi_stage VALUES (${POI_COLUMNS.map(() => "?").join(", ")})`)
@@ -423,6 +480,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	for await (const row of rowSource) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) {
 			skipped++
+
 			continue
 		}
 
@@ -431,6 +489,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		const catID = categoryID(row.category)
 		const negRank = -Math.log10(row.confidence + 1e-6)
 		const nameKey = row.name ? normalizeLocalityForKey(row.name) : null
+
 		rowidKey++
 
 		insStage.run(
@@ -447,6 +506,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			row.confidence,
 			row.gersID
 		)
+
 		inserted++
 		countries.set(row.country, (countries.get(row.country) ?? 0) + 1)
 
@@ -462,10 +522,11 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			batch = 0
 		}
 	}
+
 	db.exec("COMMIT")
 	progress("load", `${inserted.toLocaleString()} staged, ${skipped.toLocaleString()} skipped (non-finite coords)`)
 
-	if (categoryCodes.size > 0) {
+	if (categoryCodes.size) {
 		await kdb
 			.insertInto("poi_category_codes")
 			.values([...categoryCodes].map(([category, id]) => ({ id, category })))
@@ -484,11 +545,13 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	progress("fts", "building FTS5 name index")
 	createPOISearchFTS(db)
+
 	db.exec(
 		`INSERT INTO ${POI_FTS_TABLE} (name, name_key, h3_cell) SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL;`
 	)
 
 	progress("manifest", "writing layer manifest + coverage")
+
 	await writeLayerManifest(asContractDB(kdb), {
 		name: "poi",
 		version: opts.version ?? opts.release,
@@ -515,6 +578,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		completeness: 1,
 		observedRows,
 	}))
+
 	await writeLayerCoverage(asContractDB(kdb), coverageCells)
 
 	progress("finalize", "ANALYZE + VACUUM")

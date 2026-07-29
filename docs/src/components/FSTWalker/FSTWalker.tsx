@@ -20,6 +20,9 @@
  * ```
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useMemo } from "react"
 
@@ -27,21 +30,39 @@ import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+//#region Types
 
-/** A single step in the FST walk — one token consumed, one state transition. */
+/**
+ * Importance at or above which an FST node is drawn as high. Presentation only.
+ */
+const HIGH_IMPORTANCE_MIN = 0.7
+
+/**
+ * Importance at or above which an FST node is drawn as medium; below it, low.
+ */
+const MID_IMPORTANCE_MIN = 0.3
+
+/**
+ * A single step in the FST walk — one token consumed, one state transition.
+ */
 interface WalkStep {
-	/** The normalized token consumed at this step. */
+	/**
+	 * The normalized token consumed at this step.
+	 */
 	token: string
-	/** The state after consuming this token (null = path broken). */
+	/**
+	 * The state after consuming this token (null = path broken).
+	 */
 	result: { stateID: number; accepted: boolean; depth: number } | null
-	/** Whether this is the first token in the walk. */
+	/**
+	 * Whether this is the first token in the walk.
+	 */
 	isFirst: boolean
 }
 
-/** A place entry surfaced from an accepting FST state. */
+/**
+ * A place entry surfaced from an accepting FST state.
+ */
 interface PlaceEntryLike {
 	wofID: number
 	placetype: string
@@ -49,7 +70,9 @@ interface PlaceEntryLike {
 	name?: string
 }
 
-/** A continuation — one token that extends from the current state. */
+/**
+ * A continuation — one token that extends from the current state.
+ */
 interface ContinuationLike {
 	token: string
 	targetState: number
@@ -57,13 +80,15 @@ interface ContinuationLike {
 }
 
 export interface FSTWalkerProps {
-	/** The raw text to walk through the FST. */
+	/**
+	 * The raw text to walk through the FST.
+	 */
 	input: string
 }
 
-// ---------------------------------------------------------------------------
-// Token normalization (matches FSTMatcher.normalizeTokens)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Token normalization (matches FSTMatcher.normalizeTokens)
 
 /**
  * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. Mirrors `normalizeTokens` in
@@ -73,37 +98,43 @@ function normalizeTokens(text: string): string[] {
 	return text
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[\p{P}\p{S}]/gu, "")
+		.replaceAll(/[\p{P}\p{S}]/gu, "")
 		.split(/\s+/)
 		.filter((t) => t.length > 0)
 }
 
-// ---------------------------------------------------------------------------
-// Formatting helpers
-// ---------------------------------------------------------------------------
+//#endregion
 
-/** Format a WOF ID as a compact 8-digit string. */
+//#region Formatting helpers
+
+/**
+ * Format a WOF ID as a compact 8-digit string.
+ */
 function fmtWOFID(id: number): string {
 	return String(id).padStart(8, "0").slice(-8)
 }
 
-/** Format importance as a 1-3 digit percentage. */
+/**
+ * Format importance as a 1-3 digit percentage.
+ */
 function fmtImportance(imp: number): string {
 	return `${(imp * 100).toFixed(0)}%`
 }
 
-/** Importance tier for color coding. */
+/**
+ * Importance tier for color coding.
+ */
 function importanceTier(imp: number): "high" | "mid" | "low" {
-	if (imp >= 0.7) return "high"
+	if (imp >= HIGH_IMPORTANCE_MIN) return "high"
 
-	if (imp >= 0.3) return "mid"
+	if (imp >= MID_IMPORTANCE_MIN) return "mid"
 
 	return "low"
 }
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Sub-components
 
 const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 	const tier = importanceTier(place.importance)
@@ -137,9 +168,9 @@ const ContinuationChip: React.FC<{ cont: ContinuationLike }> = ({ cont }) => (
 	</span>
 )
 
-// ---------------------------------------------------------------------------
-// Inner component (below BrowserOnly boundary)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Inner component (below BrowserOnly boundary)
 
 const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	const { fstMatcher, fstProvenance, ready } = useDemoEmbed()
@@ -149,7 +180,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 
 	// Walk the FST token by token, collecting step results
 	const walkSteps = useMemo((): WalkStep[] => {
-		if (!fstMatcher || tokens.length === 0) return []
+		if (!fstMatcher || !tokens.length) return []
 
 		const steps: WalkStep[] = []
 
@@ -164,8 +195,10 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 			if (!prev) {
 				// Previous token already broke the path — all subsequent steps are null
 				steps.push({ token: tokens[i]!, result: null, isFirst: false })
+
 				continue
 			}
+
 			const nextResult = fstMatcher.walkFrom(prev, tokens[i]!)
 			steps.push({ token: tokens[i]!, result: nextResult, isFirst: false })
 		}
@@ -194,6 +227,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		for (let i = walkSteps.length - 1; i >= 0; i--) {
 			if (walkSteps[i]!.result) {
 				lastValidStep = walkSteps[i]!
+
 				break
 			}
 		}
@@ -212,9 +246,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		return null
 	}, [fstMatcher, walkSteps])
 
-	// -------------------------------------------------------------------
-	// Render: FST not loaded
-	// -------------------------------------------------------------------
+	// MARK: Render: FST not loaded
 
 	if (!ready || !fstMatcher) {
 		return (
@@ -230,11 +262,9 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		)
 	}
 
-	// -------------------------------------------------------------------
-	// Render: no tokens
-	// -------------------------------------------------------------------
+	// MARK: Render: no tokens
 
-	if (tokens.length === 0) {
+	if (!tokens.length) {
 		return (
 			<div className={styles.fstWalker}>
 				<div className={styles.header}>
@@ -250,9 +280,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		)
 	}
 
-	// -------------------------------------------------------------------
-	// Render: walk visualization
-	// -------------------------------------------------------------------
+	// MARK: Render: walk visualization
 
 	return (
 		<div className={styles.fstWalker}>
@@ -307,7 +335,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 							)}
 
 							{/* Places at accepting state */}
-							{places && places.length > 0 ? (
+							{places && places.length ? (
 								<div className={styles.placesPanel}>
 									<div className={styles.placesHeader}>
 										{places.length} place{places.length !== 1 ? "s" : ""} at depth {step.result!.depth}
@@ -323,7 +351,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 			</div>
 
 			{/* Continuations from final valid state */}
-			{continuations && continuations.length > 0 ? (
+			{continuations && continuations.length ? (
 				<div className={styles.continuationsPanel}>
 					<div className={styles.continuationsHeader}>Valid continuations ({continuations.length})</div>
 					<div className={styles.continuationsList}>
@@ -362,9 +390,9 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component (with BrowserOnly SSR boundary)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Public component (with BrowserOnly SSR boundary)
 
 /**
  * FSTWalker — interactive FST gazetteer trie walker.
@@ -387,3 +415,5 @@ export const FSTWalker: React.FC<FSTWalkerProps> = ({ input }) => {
 		</BrowserOnly>
 	)
 }
+
+//#endregion

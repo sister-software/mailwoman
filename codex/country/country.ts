@@ -11,8 +11,10 @@
  *   the other codex matchers (street-suffix, directional, po-box).
  */
 
-import { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "./codes.ts"
-import { type CountryName } from "./names.ts"
+import { Alpha3ToCountryRecord, CountryISO2 } from "./codes.ts"
+import type { CountryName } from "./names.ts"
+
+export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "./codes.ts"
 
 /**
  * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English name first** then endonym +
@@ -41,7 +43,9 @@ export const COUNTRY_SURFACE_FORMS = {
 
 export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS
 
-/** Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum). */
+/**
+ * Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum).
+ */
 export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [code as string, name as CountryName])
 )
@@ -53,6 +57,7 @@ export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
  */
 export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	const out = new Map<string, string>()
+
 	const put = (k: string, iso2: string) => {
 		const key = k.trim().toLowerCase()
 
@@ -89,7 +94,9 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	return out
 })()
 
-/** Result of a country match: the alpha-2 code, the canonical English name, and the matched surface. */
+/**
+ * Result of a country match: the alpha-2 code, the canonical English name, and the matched surface.
+ */
 export interface CountryMatch {
 	iso2: string
 	canonical: CountryName | undefined
@@ -110,7 +117,9 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
 	return { iso2, canonical: ISO2_TO_NAME.get(iso2), matched: token.trim() }
 }
 
-/** Case-insensitive check: is the token any recognized country form? */
+/**
+ * Case-insensitive check: is the token any recognized country form?
+ */
 export function isCountryToken(token: unknown): boolean {
 	return typeof token === "string" && COUNTRY_LOOKUP.has(token.trim().toLowerCase())
 }
@@ -121,6 +130,3 @@ export function isCountryToken(token: unknown): boolean {
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []
 }
-
-export { Alpha3ToCountryRecord, CountryISO2 }
-export type { CountryISO3, CountryName }

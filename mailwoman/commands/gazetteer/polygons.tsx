@@ -37,6 +37,16 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
+/**
+ * Vertices below which a ring cannot be simplified further without collapsing it.
+ */
+const MIN_RING_VERTICES = 3
+
+/**
+ * Vertices a closed ring needs — three corners plus the repeated closing point.
+ */
+const MIN_CLOSED_RING_VERTICES = 4
+
 const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
 
 const OptionsSchema = zod.object({
@@ -68,6 +78,7 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 type Position = number[]
+
 type LinearRing = Position[]
 
 interface SprRow {
@@ -82,7 +93,9 @@ interface RawGeometry {
 	coordinates: LinearRing[] | LinearRing[][]
 }
 
-/** WOF shard path: id split into 3-char chunks, then the full id. */
+/**
+ * WOF shard path: id split into 3-char chunks, then the full id.
+ */
 function geojsonPath(repos: string, country: string, id: number): string {
 	const s = String(id)
 	const shard = s.match(/.{1,3}/g)!.join("/")
@@ -90,7 +103,9 @@ function geojsonPath(repos: string, country: string, id: number): string {
 	return `${repos}/whosonfirst-data-admin-${country.toLowerCase()}/data/${shard}/${s}.geojson`
 }
 
-/** Perpendicular distance from point p to segment a–b (planar — fine at admin scale). */
+/**
+ * Perpendicular distance from point p to segment a–b (planar — fine at admin scale).
+ */
 function segDist(p: Position, a: Position, b: Position): number {
 	const dx = b[0]! - a[0]!
 	const dy = b[1]! - a[1]!
@@ -102,9 +117,11 @@ function segDist(p: Position, a: Position, b: Position): number {
 	return Math.hypot(p[0]! - (a[0]! + tc * dx), p[1]! - (a[1]! + tc * dy))
 }
 
-/** Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints; preserves closure. */
+/**
+ * Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints; preserves closure.
+ */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
-	if (ring.length <= 3) return ring
+	if (ring.length <= MIN_RING_VERTICES) return ring
 	const keep = new Uint8Array(ring.length)
 	keep[0] = keep[ring.length - 1] = 1
 	const stack: Array<[number, number]> = [[0, ring.length - 1]]
@@ -128,6 +145,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 			stack.push([lo, idx], [idx, hi])
 		}
 	}
+
 	const out: LinearRing = []
 
 	for (let i = 0; i < ring.length; i++)
@@ -136,7 +154,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 		}
 
 	// A degenerate ring (<4 pts after simplify) can't render — drop it by signalling null.
-	return out.length >= 4 ? out : null
+	return out.length >= MIN_CLOSED_RING_VERTICES ? out : null
 }
 
 /**
@@ -176,25 +194,30 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		if ((!points && !admin) || (points && admin)) {
 			throw commandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 		}
+
 		const countries = options.countries
 			? options.countries
 					.split(",")
 					.map((c) => c.trim().toUpperCase())
 					.filter(Boolean)
 			: null
+
 		const repos = options.repos
 		const tol = options.tol
 
 		const srcPath = points || admin
 		const src = new DatabaseSync(srcPath, { readOnly: true })
+
 		const where = countries
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
 			: `placetype NOT IN ('postalcode')`
+
 		const rows = (
 			src
 				.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
 				.all(...(countries ?? [])) as unknown as SprRow[]
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
+
 		src.close()
 
 		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
@@ -211,11 +234,13 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		const dbOut = new DatabaseSync(tmpOut)
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
 		const kdb = new DatabaseClient({ database: dbOut })
+
 		await kdb.schema
 			.createTable("polygons")
 			.addColumn("id", "integer", (c) => c.primaryKey())
 			.addColumn("geom", "text", (c) => c.notNull())
 			.execute()
+
 		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 
 		let done = 0
@@ -228,6 +253,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 			if (!existsSync(path)) {
 				missing++
+
 				continue
 			}
 
@@ -237,9 +263,12 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 				if (!simp) {
 					dropped++
+
 					continue
 				}
+
 				insert.run(r.id, JSON.stringify(simp))
+
 				done++
 			} catch {
 				dropped++
@@ -249,12 +278,15 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
 			}
 		}
+
 		dbOut.exec("COMMIT")
 		dbOut.exec("VACUUM")
+
 		const bytes = dbOut.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
 			n: number
 			b: number | null
 		}
+
 		await kdb.destroy() // closes the underlying `dbOut` handle
 
 		// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
@@ -263,6 +295,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		if (existsSync(out)) {
 			renameSync(out, backup)
 		}
+
 		renameSync(tmpOut, out)
 
 		if (existsSync(backup)) {

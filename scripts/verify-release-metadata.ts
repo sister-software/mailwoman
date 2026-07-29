@@ -61,23 +61,38 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 
+/**
+ * Cells a markdown table row needs before it carries a version/date/status triple.
+ */
+const MIN_TABLE_CELLS = 3
+
 const repoRoot = repoRootPath()
 
-/** Escape a version string for use as a literal inside a RegExp (the dots are the concern). */
+/**
+ * Escape a version string for use as a literal inside a RegExp (the dots are the concern).
+ */
 function escapeRegExp(literal: string): string {
-	return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+	return literal.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
-/** A word-boundary matcher for an exact version token (so `6.5.0` does not match `6.5.01`). */
+/**
+ * A word-boundary matcher for an exact version token (so `6.5.0` does not match `6.5.01`).
+ */
 function versionMatcher(version: string): RegExp {
 	return new RegExp(`(?<![\\w.])${escapeRegExp(version)}(?![\\w.])`)
 }
 
-/** One parsed data row of the releases.mdx version matrix, in file order (newest-first). */
+/**
+ * One parsed data row of the releases.mdx version matrix, in file order (newest-first).
+ */
 interface MatrixRow {
-	/** First column (the npm-version cell), with markdown bold stripped. */
+	/**
+	 * First column (the npm-version cell), with markdown bold stripped.
+	 */
 	versionCell: string
-	/** Third column (the "Model lineage" cell). */
+	/**
+	 * Third column (the "Model lineage" cell).
+	 */
 	lineageCell: string
 }
 
@@ -91,7 +106,9 @@ interface VerifyOptions {
 interface SurfaceResult {
 	surface: string
 	ok: boolean
-	/** On OK: a one-line summary. On failure: the actionable remediation (may be multi-line). */
+	/**
+	 * On OK: a one-line summary. On failure: the actionable remediation (may be multi-line).
+	 */
 	message: string
 }
 
@@ -108,11 +125,14 @@ function readModelVersion(cardPath: string): string {
 	return card.version
 }
 
-/** Check 1 — the eval ledger carries a run for this model version. */
+/**
+ * Check 1 — the eval ledger carries a run for this model version.
+ */
 function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 	const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
 		runs?: Array<{ model_version?: string }>
 	}
+
 	const runs = ledger.runs ?? []
 	const found = runs.some((run) => run.model_version === version)
 
@@ -149,13 +169,14 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 		const trimmed = line.trim()
 
 		if (!trimmed.startsWith("|")) continue
+
 		// Split into cells, dropping the leading/trailing empties from the outer pipes.
 		const cells = trimmed
 			.split("|")
 			.slice(1, -1)
 			.map((cell) => cell.trim())
 
-		if (cells.length < 3) continue
+		if (cells.length < MIN_TABLE_CELLS) continue
 
 		const versionCell = cells[0]!.replaceAll("**", "")
 		const lineageCell = cells[2]!
@@ -213,7 +234,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 		const newerRows = rows.slice(currentIndex, vIndex)
 		const nonCodeOnly = newerRows.filter((row) => !/unchanged/i.test(row.lineageCell))
 
-		if (nonCodeOnly.length === 0) {
+		if (!nonCodeOnly.length) {
 			return {
 				surface,
 				ok: true,
@@ -241,7 +262,9 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 	}
 }
 
-/** Check 3 — the status.mdx info box cites this model version. */
+/**
+ * Check 3 — the status.mdx info box cites this model version.
+ */
 function checkStatus(version: string, statusPath: string): SurfaceResult {
 	const surface = "status-infobox"
 	const markdown = readFileSync(statusPath, "utf8")
@@ -257,6 +280,7 @@ function checkStatus(version: string, statusPath: string): SurfaceResult {
 				`      Add / restore the info box and cite release ${version}.`,
 		}
 	}
+
 	const end = markdown.indexOf(":::", start + 1)
 	const infoBox = markdown.slice(start, end === -1 ? undefined : end)
 
@@ -291,6 +315,7 @@ async function main() {
 	}
 
 	const version = readModelVersion(options.cardPath)
+
 	console.log(`verify-release-metadata: shipped MODEL version (from model card) = ${version}\n`)
 
 	const results: SurfaceResult[] = [
@@ -309,11 +334,12 @@ async function main() {
 
 	const failures = results.filter((result) => !result.ok)
 
-	if (failures.length > 0) {
+	if (failures.length) {
 		console.error(
 			`\nverify-release-metadata FAILED: ${failures.length} surface(s) stale for model ${version}. ` +
 				`Fix the item(s) above (each surface is independent), commit, then re-dispatch the publish.`
 		)
+
 		process.exitCode = 1
 
 		return

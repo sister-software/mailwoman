@@ -26,21 +26,31 @@ import { existsSync, readFileSync } from "node:fs"
  */
 const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
 
-/** Options for {@linkcode lintMDXAngles}. */
+/**
+ * Options for {@linkcode lintMDXAngles}.
+ */
 export interface LintMDXAnglesOptions {
-	/** Files to check. Default: staged `docs/**` markdown (the pre-commit mode). */
+	/**
+	 * Files to check. Default: staged `docs/**` markdown (the pre-commit mode).
+	 */
 	files?: string[]
 }
 
-/** One flagged file: its path + the offending 1-based `line:text` hits. */
+/**
+ * One flagged file: its path + the offending 1-based `line:text` hits.
+ */
 export interface MDXAngleFinding {
 	file: string
 	hits: string[]
 }
 
-/** Findings summary returned by {@linkcode lintMDXAngles}. */
+/**
+ * Findings summary returned by {@linkcode lintMDXAngles}.
+ */
 export interface LintMDXAnglesSummary {
-	/** Number of files flagged — the command exits 1 when nonzero. */
+	/**
+	 * Number of files flagged — the command exits 1 when nonzero.
+	 */
 	errors: number
 	warnings: number
 	filesChecked: number
@@ -67,11 +77,12 @@ function violations(file: string): string[] {
 	for (const [i, line] of lines.entries()) {
 		if (line.startsWith("```")) {
 			fenced = !fenced
+
 			continue
 		}
 
 		if (fenced) continue
-		const stripped = line.replace(/`[^`]*`/g, "")
+		const stripped = line.replaceAll(/`[^`]*`/g, "")
 
 		if (RAW_ANGLE.test(stripped)) {
 			hits.push(`${i + 1}:${line}`)
@@ -81,7 +92,9 @@ function violations(file: string): string[] {
 	return hits
 }
 
-/** Lint the given (or staged) docs markdown for build-breaking raw angles/braces. */
+/**
+ * Lint the given (or staged) docs markdown for build-breaking raw angles/braces.
+ */
 export function lintMDXAngles(
 	options: LintMDXAnglesOptions = {},
 	report?: (line: string) => void
@@ -92,20 +105,22 @@ export function lintMDXAngles(
 
 	for (const f of targets) {
 		if (!existsSync(f)) continue
+
 		filesChecked++
 		const hits = violations(f)
 
-		if (hits.length > 0) {
+		if (hits.length) {
 			report?.(`✗ ${f} — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):`)
 
 			for (const h of hits.slice(0, 5)) {
 				report?.(`    ${h}`)
 			}
+
 			findings.push({ file: f, hits })
 		}
 	}
 
-	if (findings.length > 0) {
+	if (findings.length) {
 		report?.("")
 		report?.("Fix: backtick the expression, spell it out, or escape the brace/angle.")
 	}

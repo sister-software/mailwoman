@@ -17,7 +17,9 @@ import type { ComponentTag } from "../types/component.ts"
 import type { AddressNode, AddressTree } from "./types.ts"
 import { type UnknownSpan, unknownSpans } from "./unknown-spans.ts"
 
-/** Options for {@link decodeAsJSON}. */
+/**
+ * Options for {@link decodeAsJSON}.
+ */
 export interface SerializeJSONOpts {
 	/**
 	 * Add an `unknown` array of the all-O spans the model left unclassified (#493). Default false — keeps the output
@@ -44,12 +46,16 @@ function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>): v
 	}
 }
 
-/** Project an `AddressTree` to a flat libpostal-style component map. */
+/**
+ * Project an `AddressTree` to a flat libpostal-style component map.
+ */
 export function decodeAsJSON(tree: AddressTree): Partial<Record<ComponentTag, string>>
+
 export function decodeAsJSON(
 	tree: AddressTree,
 	opts: SerializeJSONOpts
 ): Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[] }
+
 export function decodeAsJSON(
 	tree: AddressTree,
 	opts: SerializeJSONOpts = {}

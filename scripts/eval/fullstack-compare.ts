@@ -34,6 +34,7 @@ interface Args {
 	geocodeEarthKey?: string
 	backoffMs: number
 }
+
 function parseArgs(): Args {
 	const out: Partial<Args> = { backoffMs: 3000 }
 
@@ -72,6 +73,7 @@ function parseArgs(): Args {
 
 	if (!out.harnessPath) {
 		console.error("--harness <harness.json> required")
+
 		process.exit(1)
 	}
 
@@ -79,27 +81,46 @@ function parseArgs(): Args {
 }
 
 type Rec = Record<string, string>
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+const sleep = (ms: number) =>
+	new Promise((r) => {
+		setTimeout(r, ms)
+	})
+
 const norm = (s: string | undefined) => (s ?? "").toLowerCase().trim()
 
-/** Lenient: did the stack produce a value matching expected (substring either way), per tag? */
+/**
+ * Lenient: did the stack produce a value matching expected (substring either way), per tag?
+ */
 function tagHit(expected: string, actual: string | undefined): boolean {
 	if (!actual) return false
+
 	const e = norm(expected),
 		x = norm(actual)
 
 	return e === x || e.includes(x) || x.includes(e)
 }
 
-/** A geocoder property bag — we only ever read string fields off it. */
+/**
+ * A geocoder property bag — we only ever read string fields off it.
+ */
 type Props = Record<string, string | undefined>
-/** Photon / geocode.earth GeoJSON-ish response (only the bits we read). */
+
+/**
+ * Photon / geocode.earth GeoJSON-ish response (only the bits we read).
+ */
 interface FeatureResp {
 	features?: Array<{ properties?: Props }>
 }
-/** Nominatim response: array of results, each with an `address` bag. */
+
+/**
+ * Nominatim response: array of results, each with an `address` bag.
+ */
 type NominatimResp = Array<{ address?: Props }>
-/** One extracted assertion from the harness JSON sidecar. */
+
+/**
+ * One extracted assertion from the harness JSON sidecar.
+ */
 interface HarnessRow {
 	v0_pass: boolean
 	neural_pass: boolean
@@ -107,11 +128,13 @@ interface HarnessRow {
 	locale: string
 	expected: Array<Record<string, string[]>>
 }
+
 interface ScoreResult {
 	hits: number
 	total: number
 	hitTags: string[]
 }
+
 interface ResultRow {
 	locale: string
 	input: string
@@ -126,7 +149,7 @@ interface ResultRow {
 	geocodeEarthScore?: ScoreResult
 }
 
-// ---- mappers: each geocoder's response → our component schema --------------------------------
+// MARK: mappers: each geocoder's response → our component schema.
 
 function mapPhoton(p: Props | undefined): Rec {
 	if (!p) return {}
@@ -167,6 +190,7 @@ function mapPhoton(p: Props | undefined): Rec {
 	// POI fallback
 	return out
 }
+
 function mapNominatim(a: Props | undefined): Rec {
 	if (!a) return {}
 	const out: Rec = {}
@@ -178,6 +202,7 @@ function mapNominatim(a: Props | undefined): Rec {
 	if (a.road) {
 		out.street = a.road
 	}
+
 	const loc = a.city || a.town || a.village || a.municipality || a.suburb
 
 	if (loc) {
@@ -198,6 +223,7 @@ function mapNominatim(a: Props | undefined): Rec {
 
 	return out
 }
+
 function mapGeocodeEarth(props: Props | undefined): Rec {
 	if (!props) return {}
 	const out: Rec = {}
@@ -233,13 +259,13 @@ function mapGeocodeEarth(props: Props | undefined): Rec {
 
 async function fetchJSON(url: string, headers: Record<string, string> = {}): Promise<unknown> {
 	try {
-		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) })
+		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) })
 
 		if (!res.ok) return { __error: `HTTP ${res.status}` }
 
 		return await res.json()
-	} catch (err) {
-		return { __error: (err as Error).message }
+	} catch (error) {
+		return { __error: (error as Error).message }
 	}
 }
 
@@ -247,6 +273,7 @@ async function main(): Promise<void> {
 	const args = parseArgs()
 	const harness = JSON.parse(readFileSync(args.harnessPath, "utf8")) as HarnessRow[]
 	const bothFail = harness.filter((r) => !r.v0_pass && !r.neural_pass)
+
 	console.error(`Both-fail cases: ${bothFail.length}`)
 	console.error(`Geocoders: Photon, Nominatim${args.geocodeEarthKey ? ", geocode.earth(Pelias)" : ""}`)
 
@@ -264,12 +291,14 @@ async function main(): Promise<void> {
 		}
 
 		const photonRaw = (await fetchJSON(`https://photon.komoot.io/api/?q=${q}&limit=1`)) as FeatureResp | null
+
 		const nomRaw = (await fetchJSON(
 			`https://nominatim.openstreetmap.org/search?q=${q}&format=jsonv2&addressdetails=1&limit=1`,
 			{
 				"User-Agent": UA,
 			}
 		)) as NominatimResp | null
+
 		let geRaw: FeatureResp | null = null
 
 		if (args.geocodeEarthKey) {
@@ -292,6 +321,7 @@ async function main(): Promise<void> {
 
 			return { hits: hits.length, total: tags.length, hitTags: hits }
 		}
+
 		const row = {
 			locale: c.locale,
 			input: c.input,
@@ -304,7 +334,9 @@ async function main(): Promise<void> {
 			nominatimRaw: nomRaw?.[0]?.address ?? nomRaw,
 			...(geocodeEarth ? { geocodeEarth, geocodeEarthScore: score(geocodeEarth) } : {}),
 		}
+
 		results.push(row)
+
 		console.error(`  [${i + 1}/${bothFail.length}] ${c.input}`)
 		console.error(
 			`       photon ${row.photonScore.hits}/${row.photonScore.total}  nominatim ${row.nominatimScore.hits}/${row.nominatimScore.total}`
@@ -316,26 +348,33 @@ async function main(): Promise<void> {
 	}
 
 	// Markdown report
-	const md: string[] = []
-	md.push("# Full-stack capability probe — both-fail cases\n")
-	md.push("Cases where BOTH the v0 rule parser AND the neural model fail, fired at free OSM-backed")
-	md.push("full-stack geocoders (Photon = open-source Pelias peer; Nominatim = OSM). Lenient match.")
-	md.push("Not a fair head-to-head — a capability ceiling: what a gazetteer stack can recover.\n")
+	const md: string[] = [
+		"# Full-stack capability probe — both-fail cases\n",
+		"Cases where BOTH the v0 rule parser AND the neural model fail, fired at free OSM-backed",
+		"full-stack geocoders (Photon = open-source Pelias peer; Nominatim = OSM). Lenient match.",
+		"Not a fair head-to-head — a capability ceiling: what a gazetteer stack can recover.\n",
+	]
+
 	const tot = results.length
 	const pSolved = results.filter((r) => r.photonScore.hits === r.photonScore.total && r.photonScore.total > 0).length
+
 	const nSolved = results.filter(
 		(r) => r.nominatimScore.hits === r.nominatimScore.total && r.nominatimScore.total > 0
 	).length
+
 	const eitherStreet = results.filter((r) => {
 		if (!r.expected.street) return false
 
 		return tagHit(r.expected.street, r.photon.street) || tagHit(r.expected.street, r.nominatim.street)
 	}).length
+
 	const withStreet = results.filter((r) => r.expected.street).length
 	md.push(`**Fully recovered (all expected tags, lenient):** Photon ${pSolved}/${tot} · Nominatim ${nSolved}/${tot}`)
+
 	md.push(
 		`**Street kept whole (the fragmentation we fail on):** ${eitherStreet}/${withStreet} cases with an expected street\n`
 	)
+
 	md.push("| Locale | Input | Expected | Photon (mapped) | Nominatim (mapped) | P | N |")
 	md.push("|---|---|---|---|---|--:|--:|")
 
@@ -344,10 +383,12 @@ async function main(): Promise<void> {
 			Object.entries(o)
 				.map(([k, v]) => `${k}=${v}`)
 				.join(", ") || "—"
+
 		md.push(
 			`| ${r.locale} | \`${r.input}\` | ${fmt(r.expected)} | ${fmt(r.photon)} | ${fmt(r.nominatim)} | ${r.photonScore.hits}/${r.photonScore.total} | ${r.nominatimScore.hits}/${r.nominatimScore.total} |`
 		)
 	}
+
 	const mdText = md.join("\n") + "\n"
 
 	if (args.outMd) {
@@ -357,6 +398,7 @@ async function main(): Promise<void> {
 	if (args.outJson) {
 		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
 	}
+
 	console.log(mdText)
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }

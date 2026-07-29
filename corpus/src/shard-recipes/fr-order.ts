@@ -39,16 +39,30 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
 
-// Ordinal suffixes used in French house numbers (BAN corpus), to cover the "8 bis" sub-mode.
+/**
+ * Ordinal suffixes used in French house numbers (BAN corpus), to cover the "8 bis" sub-mode.
+ */
 const ORDINAL_SUFFIXES: readonly string[] = ["bis", "ter", "quater"]
-// Probability that a row gets an ordinal suffix injected (matches the golden's ~10-15% rate).
+/**
+ * Probability that a row gets an ordinal suffix injected (matches the golden's ~10-15% rate).
+ */
 const ORDINAL_PROB = 0.12
-// Probability that a locality renders ALL-CAPS (another sub-mode: "SAINTE-LIVRADE-SUR-LOT").
+/**
+ * Probability that a locality renders ALL-CAPS (another sub-mode: "SAINTE-LIVRADE-SUR-LOT").
+ */
 const ALLCAPS_PROB = 0.1
 
-/** A real FR tuple read out of the cached OA zip. */
+/**
+ * A real FR tuple read out of the cached OA zip.
+ */
 interface FrTuple {
 	house_number: string
 	street: string
@@ -56,7 +70,9 @@ interface FrTuple {
 	postcode: string
 }
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields with doubled-quote escaping). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields with doubled-quote escaping).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -69,6 +85,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -85,6 +102,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -96,7 +114,8 @@ function splitCSV(line: string): string[] {
  * reversed-order rendering to be meaningful).
  */
 function readTuples(limit: number): FrTuple[] {
-	const maxLines = Math.max(limit * 8, 40000) + 1
+	const maxLines = Math.max(limit * 8, 40_000) + 1
+
 	const r = spawnSync("bash", ["-c", `unzip -p "${SOURCE.zip}" "${SOURCE.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
@@ -107,15 +126,18 @@ function readTuples(limit: number): FrTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
@@ -152,7 +174,9 @@ function maybeAddOrdinal(random: () => number, house_number: string): string {
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`
 }
 
-/** Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes". */
+/**
+ * Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes".
+ */
 function renderCanonical(
 	hn: string,
 	street: string,
@@ -164,6 +188,10 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frOrderRecipe: ShardRecipe = {
 	name: "fr-order",
 	description: "French reversed-order rows (#560): real OA FR tuples rendered canonical + 4 postcode-first variants",
@@ -182,11 +210,12 @@ export const frOrderRecipe: ShardRecipe = {
 		const reversedFraction = opts.reversedFraction ?? 0.5
 
 		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
-		const poolLimit = Math.max(count * 8, 40000)
+		const poolLimit = Math.max(count * 8, 40_000)
 		const pool = readTuples(poolLimit)
+
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No FR tuples found — is /tmp/oa-cache/fr__countrywide.zip present?")
 		}
 
@@ -223,6 +252,7 @@ export const frOrderRecipe: ShardRecipe = {
 					// Variant D: postcode, HN+street, city (reversed top-to-bottom)
 					raw = `${postcode}, ${house_number} ${street}, ${locality}`
 				}
+
 				rendered = { raw, components: { house_number, street, postcode, locality } }
 			} else {
 				rendered = renderCanonical(house_number, street, postcode, locality)
@@ -235,13 +265,16 @@ export const frOrderRecipe: ShardRecipe = {
 
 			if (!componentValues.every((v) => raw.includes(v))) {
 				skipped++
+
 				continue
 			}
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components, country:"FR"}).
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: "FR" }) + "\n")
+
 				emitted++
+
 				continue
 			}
 
@@ -251,6 +284,7 @@ export const frOrderRecipe: ShardRecipe = {
 				locality: components.locality,
 				postcode: components.postcode,
 			})
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -261,12 +295,15 @@ export const frOrderRecipe: ShardRecipe = {
 				corpus_version: "0.5.0",
 				license: "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(
 				JSON.stringify({
 					...aligned.row,
@@ -275,6 +312,7 @@ export const frOrderRecipe: ShardRecipe = {
 					synth_base_id: null,
 				}) + "\n"
 			)
+
 			emitted++
 		}
 

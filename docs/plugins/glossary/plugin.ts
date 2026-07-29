@@ -25,43 +25,59 @@
 import path from "node:path"
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
-import baseGlossaryPlugin, { GlossaryData, GlossaryPluginOptions, GlossaryTerm } from "docusaurus-plugin-glossary"
+import type { GlossaryData, GlossaryPluginOptions, GlossaryTerm } from "docusaurus-plugin-glossary"
+import baseGlossaryPlugin from "docusaurus-plugin-glossary"
 import { load as parseYAML } from "js-yaml"
 
-/** A glossary term carrying the `tags` extension this wrapper enforces. */
+export { type GlossaryPluginOptions } from "docusaurus-plugin-glossary"
+
+/**
+ * A glossary term carrying the `tags` extension this wrapper enforces.
+ */
 export interface TaggedGlossaryTerm extends GlossaryTerm {
 	tags?: string[]
 }
 
-/** One entry of the tags.yml registry, as consumed by the glossary page. */
+/**
+ * One entry of the tags.yml registry, as consumed by the glossary page.
+ */
 export interface GlossaryTagMeta {
 	key: string
 	label: string
 	description: string
-	/** Number of glossary terms carrying this tag (primary or secondary). */
+	/**
+	 * Number of glossary terms carrying this tag (primary or secondary).
+	 */
 	count: number
 }
 
-/** A docs page that references a glossary term. */
+/**
+ * A docs page that references a glossary term.
+ */
 export interface GlossaryBacklink {
 	title: string
 	permalink: string
 }
 
-/** Per-term backlinks, keyed by the term's `term` string. */
-export interface GlossaryBacklinks {
-	[term: string]: {
+/**
+ * Per-term backlinks, keyed by the term's `term` string.
+ */
+export type GlossaryBacklinks = Record<
+	string,
+	{
 		refs: GlossaryBacklink[]
 		total: number
 	}
-}
+>
 
 interface TagRegistryEntry {
 	label?: string
 	description?: string
 }
 
-/** Shape of the docs-plugin content we consume in allContentLoaded. */
+/**
+ * Shape of the docs-plugin content we consume in allContentLoaded.
+ */
 interface DocsPluginContent {
 	loadedVersions?: {
 		docs: {
@@ -74,7 +90,9 @@ interface DocsPluginContent {
 	}[]
 }
 
-/** Backlinks shown per term card; the rest is summarized as "+N more". */
+/**
+ * Backlinks shown per term card; the rest is summarized as "+N more".
+ */
 const MAX_BACKLINKS_PER_TERM = 8
 
 /**
@@ -120,14 +138,16 @@ function referencesPhrase(text: string, textLower: string, needle: string, commo
 	return false
 }
 
-/** Strip the parts of a markdown source the remark auto-linker never links. */
+/**
+ * Strip the parts of a markdown source the remark auto-linker never links.
+ */
 function stripUnlinkableMarkdown(source: string): string {
 	return source
 		.replace(/^---\n[\s\S]*?\n---/, "") // frontmatter
-		.replace(/```[\s\S]*?```/g, " ") // fenced code
-		.replace(/`[^`\n]*`/g, " ") // inline code
-		.replace(/^import\s.*$/gm, " ") // MDX imports
-		.replace(/^#{1,6}\s.*$/gm, " ") // headings (skipped by the auto-linker)
+		.replaceAll(/```[\s\S]*?```/g, " ") // fenced code
+		.replaceAll(/`[^`\n]*`/g, " ") // inline code
+		.replaceAll(/^import\s.*$/gm, " ") // MDX imports
+		.replaceAll(/^#{1,6}\s.*$/gm, " ") // headings (skipped by the auto-linker)
 }
 
 export default function mailwomanGlossaryPlugin(context: LoadContext, options: GlossaryPluginOptions): Plugin {
@@ -163,21 +183,24 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 			const counts = new Map<string, number>()
 
 			for (const term of glossary.terms as TaggedGlossaryTerm[]) {
-				if (!term.tags || term.tags.length === 0) {
+				if (!term.tags || !term.tags.length) {
 					problems.push(`"${term.term}" has no tags`)
+
 					continue
 				}
 
 				for (const tag of term.tags) {
 					if (!registered.has(tag)) {
 						problems.push(`"${term.term}" uses unregistered tag "${tag}"`)
+
 						continue
 					}
+
 					counts.set(tag, (counts.get(tag) ?? 0) + 1)
 				}
 			}
 
-			if (problems.length > 0) {
+			if (problems.length) {
 				throw new Error(
 					`[mailwoman-glossary] Every glossary term needs tags registered in tags.yml:\n  - ${problems.join("\n  - ")}`
 				)
@@ -207,6 +230,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 			// remark auto-linker is wired to the docs preset, so these are the pages that render
 			// tooltips back to the glossary.
 			const docsContent = allContent["docusaurus-plugin-content-docs"]?.default as DocsPluginContent | undefined
+
 			const docs = (docsContent?.loadedVersions ?? [])
 				.flatMap((version) => version.docs)
 				.filter((doc) => !doc.draft && !doc.unlisted)
@@ -269,5 +293,3 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 		},
 	}
 }
-
-export type { GlossaryPluginOptions }

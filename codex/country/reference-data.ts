@@ -8,13 +8,17 @@
  *   Regenerate with: mailwoman dev generate country-reference
  */
 
-/** Static per-country reference: calling code + currency. */
+/**
+ * Static per-country reference: calling code + currency.
+ */
 export interface CountryReference {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
 }
 
-/** ISO 3166-1 alpha-2 → reference. */
+/**
+ * ISO 3166-1 alpha-2 → reference.
+ */
 export const COUNTRY_REFERENCE: Record<string, CountryReference> = {
 	AD: { callingCode: 376, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
 	AE: { callingCode: 971, currency: { isoCode: "AED", name: "United Arab Emirates dirham", symbol: "د.إ" } },
@@ -29,7 +33,7 @@ export const COUNTRY_REFERENCE: Record<string, CountryReference> = {
 	AT: { callingCode: 43, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
 	AU: { callingCode: 61, currency: { isoCode: "AUD", name: "Australian dollar", symbol: "$" } },
 	AW: { callingCode: 297, currency: { isoCode: "AWG", name: "Aruban florin", symbol: "ƒ" } },
-	AX: { callingCode: 35818, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
+	AX: { callingCode: 35_818, currency: { isoCode: "EUR", name: "Euro", symbol: "€" } },
 	AZ: { callingCode: 994, currency: { isoCode: "AZN", name: "Azerbaijani manat", symbol: "₼" } },
 	BA: { callingCode: 387, currency: { isoCode: "BAM", name: "Bosnia and Herzegovina convertible mark", symbol: "KM" } },
 	BB: { callingCode: 1, currency: { isoCode: "BBD", name: "Barbadian dollar", symbol: "$" } },

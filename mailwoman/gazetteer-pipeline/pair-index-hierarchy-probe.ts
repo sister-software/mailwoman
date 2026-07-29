@@ -96,11 +96,17 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ch
 	],
 }
 
-/** The PIX1 header this probe writes: the shipped shape plus the absence-tolerant hierarchy extension keys. */
+/**
+ * The PIX1 header this probe writes: the shipped shape plus the absence-tolerant hierarchy extension keys.
+ */
 export interface HierarchyPairIndexHeader extends PairIndexHeader {
-	/** The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit; parent is context). */
+	/**
+	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit; parent is context).
+	 */
 	edge: { child: "locality"; parent: "region" }
-	/** WOF extraction provenance — enough to re-derive the artifact from the named DB. */
+	/**
+	 * WOF extraction provenance — enough to re-derive the artifact from the named DB.
+	 */
 	source: {
 		kind: "wof-ancestors"
 		db: string
@@ -108,7 +114,9 @@ export interface HierarchyPairIndexHeader extends PairIndexHeader {
 		parentWOFPlacetypes: string[]
 		namePolicy: "spr-name+official-names-v1"
 	}
-	/** TRUE on every artifact this module writes: uncalibrated (delta 0), never for shipping as-is. */
+	/**
+	 * TRUE on every artifact this module writes: uncalibrated (delta 0), never for shipping as-is.
+	 */
 	probeArtifact: true
 }
 
@@ -122,7 +130,9 @@ interface SurfaceRow {
 	name: string
 }
 
-/** Collect `id → Set<surface>` from spr names + official names for the given country/placetype set. */
+/**
+ * Collect `id → Set<surface>` from spr names + official names for the given country/placetype set.
+ */
 function collectSurfaces(db: DatabaseSync, country: string, placetypes: string[]): Map<number, Set<string>> {
 	const placeholder = placetypes.map(() => "?").join(",")
 	const surfaces = new Map<number, Set<string>>()

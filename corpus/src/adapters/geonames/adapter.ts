@@ -37,10 +37,20 @@ import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const GEONAMES_ADAPTER_ID = "geonames"
+/**
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
-// GeoNames main-table column indices (0-based; see the export README).
+/**
+ * GeoNames main-table column indices (0-based; see the export README).
+ */
 const COL = {
 	geonameid: 0,
 	name: 1,
@@ -51,10 +61,14 @@ const COL = {
 	admin1: 10,
 } as const
 
-// Populated-place feature codes that are NOT current real places — skip them.
+/**
+ * Populated-place feature codes that are NOT current real places — skip them.
+ */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
-/** Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent. */
+/**
+ * Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent.
+ */
 function loadAdmin1(dir: string): Map<string, string> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "admin1CodesASCII.txt")
@@ -73,7 +87,9 @@ function loadAdmin1(dir: string): Map<string, string> {
 	return map
 }
 
-/** Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented. */
+/**
+ * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented.
+ */
 function loadCountries(dir: string): Map<string, string> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "countryInfo.txt")
@@ -106,6 +122,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			const countries = loadCountries(dir)
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({ delimiter: "\t", quote: false, relax_column_count: true, skip_empty_lines: true })
 			)
@@ -159,10 +176,12 @@ export function createGeonamesAdapter(): CorpusAdapter {
 						if (opts.limit !== undefined && emitted >= opts.limit) break
 						const aligned = reconcileComponents(v.comp, v.raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
+
 						const sourceID = geonameid
 							? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`
 							: stableSourceID(GEONAMES_ADAPTER_ID, aligned)
+
 						yield {
 							raw: v.raw,
 							components: aligned,
@@ -172,6 +191,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: GEONAMES_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}
@@ -182,4 +202,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const geonamesAdapter = createGeonamesAdapter()

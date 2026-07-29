@@ -32,7 +32,15 @@ import {
 } from "../../synthesize-po-box.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
+/**
+ * License for the synthetic PO-box rows. The output is generated, but it inherits the terms of the real tuples it is
+ * derived from, so the attribution travels with it.
+ */
 export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
 export interface PoBoxInputRow extends PoBoxBaseTuple {
@@ -69,9 +77,9 @@ function makeRandom(seed: number): () => number {
 	let s = seed
 
 	return () => {
-		s = (s * 1664525 + 1013904223) % 4294967296
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
 
-		return s / 4294967296
+		return s / 4_294_967_296
 	}
 }
 
@@ -113,6 +121,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					input = JSON.parse(trimmed) as PoBoxInputRow
 				} catch {
 					skipped++
+
 					continue
 				}
 
@@ -123,6 +132,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {
 					skipped++
+
 					continue
 				}
 
@@ -152,6 +162,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
 					}
+
 					emitted++
 
 					if (options.limit !== undefined && emitted >= options.limit) break
@@ -171,12 +182,14 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					random() < militaryRatio
 				) {
 					const mil = synthesizeMilitaryPoBoxRow({ random })
+
 					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
 						po_box: `${mil.components.po_box}#mil${militarySeq++}`,
 						locality: mil.components.locality!,
 						region: mil.components.region!,
 						postcode: mil.components.postcode!,
 					})
+
 					yield {
 						raw: mil.raw,
 						components: mil.components,
@@ -187,6 +200,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
 					}
+
 					emitted++
 				}
 			}
@@ -194,4 +208,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const synthPoBoxAdapter = createSynthPoBoxAdapter()

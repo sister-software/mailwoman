@@ -89,6 +89,7 @@ function parse(): BuildArgs {
 	if (!existsSync(csvDir)) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"
 	const output = values.out ?? dataRootPath("ban", `address-points-${country}.db`)
+
 	const depts = values.depts
 		? values.depts
 				.split(",")
@@ -108,7 +109,7 @@ function departementFiles(csvDir: string, depts: string[] | null): Map<string, s
 	const byDept = new Map<string, string>()
 	const wanted = depts ? new Set(depts.map((d) => d.toLowerCase())) : null
 
-	for (const name of readdirSync(csvDir).sort()) {
+	for (const name of readdirSync(csvDir).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -131,7 +132,9 @@ function departementFiles(csvDir: string, depts: string[] | null): Map<string, s
 	return byDept
 }
 
-/** Streaming md5 of a file (never buffer a multi-GB artifact). */
+/**
+ * Streaming md5 of a file (never buffer a multi-GB artifact).
+ */
 async function fileMD5(path: string): Promise<string> {
 	const hash = createHash("md5")
 
@@ -148,7 +151,7 @@ async function main(): Promise<void> {
 	const source = `ban:${args.country}`
 	const files = departementFiles(args.csvDir, args.depts)
 
-	if (files.size === 0) throw new Error(`no BAN département dumps found in ${args.csvDir}`)
+	if (!files.size) throw new Error(`no BAN département dumps found in ${args.csvDir}`)
 	const tmp = `${args.output}.building-${process.pid}.db`
 
 	mkdirSync(dirname(args.output), { recursive: true })
@@ -168,9 +171,10 @@ async function main(): Promise<void> {
 	let written = 0
 	let noStreet = 0
 	const BATCH = 50_000
-	const deptList = [...files.keys()].sort()
+	const deptList = [...files.keys()].toSorted()
 
 	console.error(`[ban] building ${args.country} rooftop shard from ${files.size} départements in ${args.csvDir}`)
+
 	out.exec("BEGIN")
 
 	for (const dept of deptList) {
@@ -183,10 +187,13 @@ async function main(): Promise<void> {
 
 			if (!streetNorm || !numTrim) {
 				noStreet++
+
 				continue
 			}
+
 			// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
 			const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
+
 			// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
 			// locality_norm, street_raw, lat, lon, source, release.
 			insert.run(
@@ -205,6 +212,7 @@ async function main(): Promise<void> {
 				source,
 				args.release
 			)
+
 			written++
 
 			if (written % BATCH === 0) {
@@ -216,11 +224,14 @@ async function main(): Promise<void> {
 				}
 			}
 		}
+
 		console.error(`[ban]   dept ${dept}: ${written.toLocaleString()} cumulative`)
 	}
+
 	out.exec("COMMIT")
 
 	console.error(`[ban] indexing…`)
+
 	await createAddressPointIndexes(kdb)
 	out.exec("ANALYZE")
 	await kdb.destroy()
@@ -233,11 +244,13 @@ async function main(): Promise<void> {
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(args.output + sfx, { force: true })
 	}
+
 	renameSync(tmp, args.output)
 
 	if (existsSync(`${args.output}.prev`)) {
 		rmSync(`${args.output}.prev`, { force: true })
 	}
+
 	sealDatabase(args.output)
 
 	const md5 = await fileMD5(args.output)
@@ -247,6 +260,7 @@ async function main(): Promise<void> {
 	// (the fast --depts validation builds are transient and don't rewrite the record).
 	if (!args.depts) {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
+
 		writeFileSync(
 			attributionPath,
 			JSON.stringify(
@@ -267,6 +281,7 @@ async function main(): Promise<void> {
 				2
 			) + "\n"
 		)
+
 		console.error(`[ban] wrote ${attributionPath}`)
 	}
 

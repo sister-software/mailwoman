@@ -14,7 +14,9 @@
 import { scoreByPostcode, scoreByScript, scoreFallback, type LocaleCandidate } from "./rules.ts"
 import type { DetectLocaleOpts, LocaleHint, NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
-/** Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract. */
+/**
+ * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract.
+ */
 export function detectLocaleSync(
 	_input: NormalizedInputLite,
 	shape: QueryShapeLike,
@@ -26,11 +28,13 @@ export function detectLocaleSync(
 	if (script) {
 		scored.push(script)
 	}
+
 	const postcode = scoreByPostcode(shape)
 
 	if (postcode) {
 		scored.push(postcode)
 	}
+
 	scored.push(scoreFallback(shape))
 
 	// Sort descending by confidence; preserve scorer order on ties (stable sort).
@@ -39,6 +43,7 @@ export function detectLocaleSync(
 	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins; the other
 	// contributes nothing useful as an alternative.
 	const seen = new Set<string>()
+
 	const deduped = scored.filter((c) => {
 		if (seen.has(c.locale)) return false
 		seen.add(c.locale)
@@ -50,7 +55,7 @@ export function detectLocaleSync(
 		// Caller's hint wins. Detector results surface as alternatives.
 		return {
 			locale: opts.hint,
-			confidence: 1.0,
+			confidence: 1,
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "caller",
 		}

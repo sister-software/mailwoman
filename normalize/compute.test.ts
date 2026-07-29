@@ -71,7 +71,7 @@ describe("normalize — offsetMap invariants", () => {
 
 		for (const inp of inputs) {
 			const r = normalize(inp)
-			expect(r.offsetMap.length).toBe(r.normalized.length)
+			expect(r.offsetMap).toHaveLength(r.normalized.length)
 		}
 	})
 

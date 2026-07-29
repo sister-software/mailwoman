@@ -31,7 +31,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
-export type { WebONNXRunnerDiagnostics }
+export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"
 
 /**
  * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader retained it.
@@ -44,10 +44,19 @@ export type { WebONNXRunnerDiagnostics }
  * construct only the one matching index — is superseded; the `country` load-option survives as an optional
  * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
  */
+/**
+ * Absent asset — a soft-feed sibling that was never published, not a failure.
+ */
+const HTTP_NOT_FOUND = 404
+
 export interface LoadedPairIndex {
-	/** URL the binary was fetched from. */
+	/**
+	 * URL the binary was fetched from.
+	 */
 	url: string
-	/** The header's ISO country code — the key the per-parse selection matches a detected country against. */
+	/**
+	 * The header's ISO country code — the key the per-parse selection matches a detected country against.
+	 */
 	country: string
 	/**
 	 * The constructed, live resolver. The SAME instance the per-parse selection returns (and, for a posture-pinned load,
@@ -69,7 +78,7 @@ export interface LoadResult {
 	 * consumers (the demo's anchor-centroid map fallback) can reuse the SAME artifact the model channel feeds from — WOF
 	 * ships placeholder (0,0) for ~22% of US postcodes; this lookup has a real centroid for every covered ZIP.
 	 */
-	postcodeAnchorLookup?: import("@mailwoman/neural").AnchorLookup
+	postcodeAnchorLookup?: AnchorLookup
 	/**
 	 * Every placetype-pair index that fetched + parsed, each with its header country and a live resolver — see
 	 * {@link LoadedPairIndex}. Empty when `pairIndexURLs` was omitted or every fetch failed. Exposed so consumers (the
@@ -98,9 +107,13 @@ export interface LoadResult {
 }
 
 export interface LoadFromURLsOptions {
-	/** URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`). */
+	/**
+	 * URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`).
+	 */
 	modelURL: string
-	/** URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`). */
+	/**
+	 * URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`).
+	 */
 	tokenizerURL: string
 	/**
 	 * URL to `model-card.json`. When provided, its `labels` field is threaded into the classifier so post-Stage-2 bundles
@@ -111,7 +124,9 @@ export interface LoadFromURLsOptions {
 	 * logits and viterbi crashes with "Cannot read properties of undefined".
 	 */
 	modelCardURL?: string
-	/** Runner options (WebGPU toggle, fixed sequence length, WASM path override). */
+	/**
+	 * Runner options (WebGPU toggle, fixed sequence length, WASM path override).
+	 */
 	runner?: WebONNXRunnerOpts
 	/**
 	 * URLs to one or more PCB1 postcode binaries (`postcode-<cc>.bin`). For anchor-trained models (#239/#240) these are
@@ -202,7 +217,9 @@ export interface LoadFromURLsOptions {
 	 * disable for pre-bridge bundles where gate parity matters.
 	 */
 	bridgePunctuationGaps?: boolean
-	/** Optional fetch override. Defaults to `globalThis.fetch`. */
+	/**
+	 * Optional fetch override. Defaults to `globalThis.fetch`.
+	 */
 	fetchImpl?: typeof fetch
 }
 
@@ -241,12 +258,15 @@ async function loadPostcodeAnchorLookup(
 			}
 		})
 	)
+
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
 	return lookups.length ? mergeAnchorLookups(lookups) : undefined
 }
 
-/** Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. */
+/**
+ * Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids.
+ */
 function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 	if (lookups.length === 1) return lookups[0]!
 	const merged: AnchorLookup = new Map()
@@ -257,6 +277,7 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 
 			if (!existing) {
 				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
+
 				continue
 			}
 
@@ -358,7 +379,7 @@ export function resolvePairIndexForText(
 	text: string,
 	opts?: { country?: string }
 ): PlacetypePairPriorOpts | undefined {
-	if (pairIndexes.length === 0) return undefined
+	if (!pairIndexes.length) return undefined
 	const country = opts?.country != null ? resolvePairGateCountry(opts.country) : detectPairIndexCountry(text)
 	const match = pairIndexes.find((index) => index.country === country)
 
@@ -391,12 +412,16 @@ export function defaultCountryLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "country-surface-lexicon-v1.json")
 }
 
-/** Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout). */
+/**
+ * Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout).
+ */
 function defaultStreetTypeLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "street-type-lexicon-v3.json")
 }
 
-/** Default location of the locality-surface evidence lexicon: a sibling of the model file. */
+/**
+ * Default location of the locality-surface evidence lexicon: a sibling of the model file.
+ */
 function defaultLocalitySurfaceLexiconURL(modelURL: string): string {
 	return siblingURL(modelURL, "locality-surface-lexicon-v6.json")
 }
@@ -420,12 +445,15 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const gazetteerLexiconURL =
 		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
+
 	const countryLexiconURL =
 		opts.countryLexiconURL === null ? null : (opts.countryLexiconURL ?? defaultCountryLexiconURL(opts.modelURL))
+
 	const streetTypeLexiconURL =
 		opts.streetTypeLexiconURL === null
 			? null
 			: (opts.streetTypeLexiconURL ?? defaultStreetTypeLexiconURL(opts.modelURL))
+
 	const localitySurfaceLexiconURL =
 		opts.localitySurfaceLexiconURL === null
 			? null
@@ -468,7 +496,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	// Omitted country = no config default → the byte-stable no-prior decode when nothing is selected per parse.
 	let configPairIndex: PairIndexResolver | undefined
 
-	if (opts.country != null && pairIndexes.length > 0) {
+	if (opts.country != null && pairIndexes.length) {
 		const pinnedCountry = resolvePairGateCountry(opts.country)
 		const pinned = pairIndexes.find((index) => index.country === pinnedCountry)
 
@@ -484,6 +512,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	}
 
 	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
+
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -498,7 +527,9 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(conventions ? { addressSystemConventions: conventions } : {}),
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
 	})
+
 	await runner.infer([0])
+
 	warnOnUnfedTrainedChannels(runner, {
 		gazetteerLexicon,
 		gazetteerLexiconURL,
@@ -650,15 +681,16 @@ async function fetchLabelsFromModelCard(url: string, fetchImpl: typeof fetch): P
 	const res = await fetchImpl(url)
 
 	if (!res.ok) {
-		if (res.status === 404) return null
+		if (res.status === HTTP_NOT_FOUND) return null
 		throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`)
 	}
+
 	const parsed = (await res.json()) as { labels?: unknown }
 	const labels = parsed.labels
 
 	if (labels === undefined) return null
 
-	if (!Array.isArray(labels) || labels.length === 0 || !labels.every((l) => typeof l === "string")) {
+	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
 			`model-card at ${url} has a malformed \`labels\` field — ` +
 				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`
@@ -682,7 +714,7 @@ async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Uint8Ar
  * than imported because both browser and Node need it and adding a dep for ~5 lines is silly.
  */
 function toBase64(bytes: Uint8Array): string {
-	const chunkSize = 0x8000
+	const chunkSize = 0x80_00
 	let binary = ""
 
 	for (let i = 0; i < bytes.length; i += chunkSize) {

@@ -40,12 +40,12 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 
 		for (const [name, abbr] of DirectionalToAbbreviationMap) {
 			directionals[abbr.toLowerCase()] = abbr
-			directionals[name.replace(/\s+/g, "").toLowerCase()] = abbr
+			directionals[name.replaceAll(/\s+/g, "").toLowerCase()] = abbr
 		}
 
 		for (const [abbr, name] of AbbreviationToDirectional) {
 			directionals[abbr.toLowerCase()] = abbr
-			directionals[name.replace(/\s+/g, "").toLowerCase()] = abbr
+			directionals[name.replaceAll(/\s+/g, "").toLowerCase()] = abbr
 		}
 
 		// Suffixes: the codex lookup already maps every Pub-28 variant (lowercase) → canonical suffix.

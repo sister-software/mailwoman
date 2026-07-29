@@ -40,7 +40,7 @@ test.describe("Demo — resolution cascade", () => {
 		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
 		expect(lat, `resolved lat ${lat} should be in Berlin`).toBeGreaterThan(52.3)
 		expect(lat).toBeLessThan(52.7)
-		expect(lon, `resolved lon ${lon} should be in Berlin`).toBeGreaterThan(13.0)
+		expect(lon, `resolved lon ${lon} should be in Berlin`).toBeGreaterThan(13)
 		expect(lon).toBeLessThan(13.8)
 		demo.console.assertNoFailEvents()
 	})
@@ -75,7 +75,7 @@ test.describe("Demo — resolution cascade", () => {
 		expect(lat, `resolved lat ${lat} should be Moscow RU`).toBeGreaterThan(55.3)
 		expect(lat).toBeLessThan(56.1)
 		expect(lon).toBeGreaterThan(37.2)
-		expect(lon).toBeLessThan(38.0)
+		expect(lon).toBeLessThan(38)
 		demo.console.assertNoFailEvents()
 	})
 
@@ -88,7 +88,7 @@ test.describe("Demo — resolution cascade", () => {
 		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
 		expect(lat, `resolved lat ${lat} should be Cairo EG`).toBeGreaterThan(29.7)
 		expect(lat).toBeLessThan(30.4)
-		expect(lon).toBeGreaterThan(31.0)
+		expect(lon).toBeGreaterThan(31)
 		expect(lon).toBeLessThan(31.6)
 		demo.console.assertNoFailEvents()
 	})
@@ -115,15 +115,15 @@ test.describe("Demo — resolution cascade", () => {
 			name: "Portuguese postcode 1000-001 → Lisbon",
 			query: "Lisboa 1000-001, Portugal",
 			lat: [38.6, 38.9],
-			lon: [-9.3, -9.0],
+			lon: [-9.3, -9],
 		},
 		{ name: "Polish postcode 00-002 → Warsaw", query: "Warszawa 00-002, Poland", lat: [52.1, 52.4], lon: [20.9, 21.2] },
 		{ name: "Czech postcode 100 00 → Prague", query: "Praha 100 00, Czechia", lat: [49.9, 50.2], lon: [14.3, 14.6] },
 		{
 			name: "Australian postcode 2000 → Sydney",
 			query: "Sydney NSW 2000, Australia",
-			lat: [-34.0, -33.7],
-			lon: [151.0, 151.4],
+			lat: [-34, -33.7],
+			lon: [151, 151.4],
 		},
 	]
 

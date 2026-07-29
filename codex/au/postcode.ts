@@ -34,10 +34,14 @@ import type { Tagged } from "type-fest"
  */
 export type AuPostcode = Tagged<string, "AuPostcode">
 
-/** The AU postcode shape: exactly four digits. */
+/**
+ * The AU postcode shape: exactly four digits.
+ */
 export const AU_POSTCODE_PATTERN = /^\d{4}$/
 
-/** Normalize a postcode surface form (trim only — AU has no country-prefix courtesy form). */
+/**
+ * Normalize a postcode surface form (trim only — AU has no country-prefix courtesy form).
+ */
 export function normalizeAuPostcode(raw: unknown): AuPostcode | null {
 	if (typeof raw !== "string") return null
 	const s = raw.trim()
@@ -45,7 +49,9 @@ export function normalizeAuPostcode(raw: unknown): AuPostcode | null {
 	return AU_POSTCODE_PATTERN.test(s) ? (s as AuPostcode) : null
 }
 
-/** Type-predicate for a (normalized) Australian postcode. */
+/**
+ * Type-predicate for a (normalized) Australian postcode.
+ */
 export function isAuPostcode(input: unknown): input is AuPostcode {
 	return typeof input === "string" && AU_POSTCODE_PATTERN.test(input)
 }

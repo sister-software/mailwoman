@@ -18,6 +18,17 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
 
+/**
+ * Share of a shard one source may hold before the mix is flagged as dominated by it.
+ */
+const DOMINANT_SOURCE_SHARE = 0.4
+
+/**
+ * How far the leading source may outweigh the runner-up before the mix is flagged. Catches the case where no single
+ * source clears {@link DOMINANT_SOURCE_SHARE} but the distribution is still lopsided.
+ */
+const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
+
 export interface AuditOpts {
 	corpusDir: string
 	configPath?: string
@@ -30,11 +41,17 @@ export interface AuditOpts {
 }
 
 interface ShardStats {
-	/** Shards per source per split */
+	/**
+	 * Shards per source per split
+	 */
 	bySplit: Record<string, Record<string, number>>
-	/** Total shards counted (may be less than file count if sampleShardCount caps reads) */
+	/**
+	 * Total shards counted (may be less than file count if sampleShardCount caps reads)
+	 */
 	totalShards: number
-	/** Total shards on disk (file count) — equals totalShards unless capped */
+	/**
+	 * Total shards on disk (file count) — equals totalShards unless capped
+	 */
 	totalFiles: number
 }
 
@@ -61,6 +78,7 @@ function parseConfig(configPath: string): ParsedConfig | null {
 		if (sourceWeightsMatch) {
 			inBlock = true
 			blockIndent = sourceWeightsMatch[1]!.length
+
 			continue
 		}
 
@@ -73,12 +91,14 @@ function parseConfig(configPath: string): ParsedConfig | null {
 
 		if (indent <= blockIndent) {
 			inBlock = false
+
 			continue
 		}
+
 		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
 
 		if (m) {
-			weights[m[1]!] = parseFloat(m[2]!)
+			weights[m[1]!] = Number.parseFloat(m[2]!)
 		}
 	}
 
@@ -96,9 +116,11 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 		const splitDir = join(corpusDir, split)
 
 		if (!existsSync(splitDir)) continue
+
 		const files = readdirSync(splitDir)
 			.filter((f) => f.endsWith(".parquet"))
-			.sort()
+			.toSorted()
+
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
 		const sampled = files.filter((_, i) => i % sampleEvery === 0).slice(0, sampleCount)
@@ -112,12 +134,14 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 			const inferred = inferSourceFromFilename(f)
 			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
 		}
+
 		// Scale to estimated full-shard counts.
 		const scale = files.length / Math.max(sampled.length, 1)
 
 		for (const k of Object.keys(splitMap)) {
 			splitMap[k] = Math.round(splitMap[k]! * scale)
 		}
+
 		stats.bySplit[split] = splitMap
 		stats.totalShards += files.length
 	}
@@ -165,10 +189,12 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"deepseek-translit-armn",
 ]
 
-/** Extract the source-name prefix from a `first_source_id` value. */
+/**
+ * Extract the source-name prefix from a `first_source_id` value.
+ */
 function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): string {
 	// Sort longest-first so usgov-nad beats usgov, wof-admin beats wof.
-	const sorted = [...knownPrefixes].sort((a, b) => b.length - a.length)
+	const sorted = [...knownPrefixes].toSorted((a, b) => b.length - a.length)
 
 	for (const prefix of sorted) {
 		if (sourceID.startsWith(prefix + "-") || sourceID === prefix) return prefix
@@ -190,6 +216,7 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 	const manifestPath = join(corpusDir, "MANIFEST.json")
 
 	if (!existsSync(manifestPath)) return null
+
 	const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
 		shards?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
 	}
@@ -203,6 +230,7 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 		bySplit[split] ??= {}
 		bySplit[split][src] = (bySplit[split][src] ?? 0) + 1
 	}
+
 	const total = Object.values(bySplit).reduce((sum, m) => sum + Object.values(m).reduce((a, b) => a + b, 0), 0)
 
 	return { bySplit, totalShards: total, totalFiles: total }
@@ -231,12 +259,14 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 		const effective = weight !== undefined ? shards * weight : 0
 		sampleWeights.push([src, effective])
 	}
+
 	const totalSampleWeight = sampleWeights.reduce((a, [, w]) => a + w, 0)
 
 	for (const src of allSources) {
 		const shards = stats[src] ?? 0
 		const weight = weights[src] ?? "—"
 		const effective = typeof weight === "number" ? (shards * weight) / Math.max(totalSampleWeight, 1) : "—"
+
 		rows.push({
 			source: src,
 			shards,
@@ -245,6 +275,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 			effectiveSamplePct: typeof effective === "number" ? effective : "—",
 		})
 	}
+
 	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
 	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
 	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
@@ -252,16 +283,21 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
 		AuditRow & { effectiveSamplePct: number }
 	>
+
 	numeric.sort((a, b) => b.effectiveSamplePct - a.effectiveSamplePct)
 
-	if (numeric.length >= 1) {
+	if (numeric.length) {
 		const top = numeric[0]!
 		const next = numeric[1]?.effectiveSamplePct ?? 0
 
-		if (top.effectiveSamplePct > 0.4 || (next > 0 && top.effectiveSamplePct / next > 1.5)) {
+		if (
+			top.effectiveSamplePct > DOMINANT_SOURCE_SHARE ||
+			(next > 0 && top.effectiveSamplePct / next > MAX_TOP_TO_RUNNER_UP_RATIO)
+		) {
 			top.overweightFactor = next > 0 ? top.effectiveSamplePct / next : Infinity
 		}
 	}
+
 	rows.sort((a, b) => b.shards - a.shards)
 
 	return rows
@@ -279,19 +315,24 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 	if (configPath) {
 		console.log(`Config:        ${configPath}`)
 	}
+
 	console.log(
 		`Total shards:  ${stats.totalShards}${stats.totalFiles !== stats.totalShards ? ` (${stats.totalFiles} files on disk)` : ""}`
 	)
 	console.log("")
+
 	const trainStats = stats.bySplit["train"]
 
 	if (trainStats) {
 		const total = Object.values(trainStats).reduce((a, b) => a + b, 0)
+
 		console.log(`Train split: ${total} shards`)
 		console.log("")
+
 		const headers = ["source", "shards", "shard %", "weight", "eff. sample %"]
 		const widths = [22, 8, 10, 8, 14]
 		const fmtRow = (cells: string[]) => cells.map((c, i) => c.padEnd(widths[i]!)).join("  ")
+
 		console.log(fmtRow(headers))
 		console.log(fmtRow(widths.map((w) => "─".repeat(w))))
 
@@ -306,12 +347,15 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 				])
 			)
 		}
+
 		console.log("")
+
 		const dominator = rows.find((r) => r.overweightFactor !== undefined)
 
 		if (dominator) {
 			const factor = dominator.overweightFactor
 			const factorStr = factor === Infinity ? "∞" : factor?.toFixed(1)
+
 			console.error(
 				`⚠ Concentration: ${dominator.source} would sample ${formatPct(dominator.effectiveSamplePct)} ` +
 					`of training rows (${factorStr}× the next-highest). ` +
@@ -321,17 +365,19 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 		} else {
 			console.log("✓ No single-source concentration (top source < 40% effective sample AND < 1.5× next).")
 		}
+
 		const missingWeights = rows.filter((r) => r.weight === "—" && r.shards > 0)
 
-		if (missingWeights.length > 0 && configPath) {
+		if (missingWeights.length && configPath) {
 			console.error(
 				`⚠ Sources present in corpus but absent from config.source_weights ` +
 					`(loader will skip them): ${missingWeights.map((r) => r.source).join(", ")}`
 			)
 		}
+
 		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.shards === 0)
 
-		if (orphanWeights.length > 0) {
+		if (orphanWeights.length) {
 			console.error(
 				`⚠ Sources weighted in config but no shards found in corpus ` +
 					`(no-op weights): ${orphanWeights.map((r) => r.source).join(", ")}`

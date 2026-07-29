@@ -166,6 +166,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			options.holdoutFraction,
 			options.holdoutSeed
 		)
+
 		const sourceMD5 = await md5File(sourcePath)
 
 		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
@@ -196,6 +197,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 					`PROBE_PAIRS_BY_COUNTRY (probing another country's names verifies nothing).`
 			)
 		}
+
 		const probeLines = countryProbePairs.map(([city, district]) => {
 			const child = normalizeFSTToken(city)
 			const parent = normalizeFSTToken(district)
@@ -222,6 +224,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		// future source refresh against this cycle's raw count). Not the cross-check target; see
 		// `EXPECTED_GB_PAIR_COUNT`'s doc comment for the 221-group collision receipt that separates the two numbers.
 		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
+
 		const gateLine =
 			country === "gb"
 				? options.holdoutFraction > 0

@@ -38,9 +38,13 @@ import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normal
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
 export interface WOFCandidateTableLookupOpts {
-	/** Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only. */
+	/**
+	 * Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only.
+	 */
 	databasePath?: string
-	/** Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`. */
+	/**
+	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 */
 	database?: DatabaseSync
 }
 
@@ -92,7 +96,7 @@ const FUZZY_MIN = 0.34
  *    ("Los Angeles" over La, Ghana — gap 1.6; "Las Vegas" over Vegas, Cuba — gap 2.4) while a near-tie coincidental
  *    collision defers to the primary (Cancún over Changchun — gap 0.7).
  */
-const PRIMARY_PREFERENCE_LOG10 = 1.0
+const PRIMARY_PREFERENCE_LOG10 = 1
 
 /**
  * Over-fetch cap for {@link rankByPrimaryPreference}: the candidate rows for one `name_key` (all same-name places
@@ -102,7 +106,9 @@ const PRIMARY_PREFERENCE_LOG10 = 1.0
  */
 const RERANK_FETCH = 64
 
-/** A candidate row annotated with the {@link rankByPrimaryPreference} effective rank + the exact-tier demotion flag. */
+/**
+ * A candidate row annotated with the {@link rankByPrimaryPreference} effective rank + the exact-tier demotion flag.
+ */
 export type RankedRow<R> = R & {
 	/**
 	 * `neg_rank` plus the bounded cross-country alias penalty — the value the row is ORDERED by, and the base the emitted
@@ -144,10 +150,12 @@ export function rankByPrimaryPreference<R extends Pick<CandidateRow, "neg_rank" 
 	}
 
 	const topCountry = topPrimary?.country_id
+
 	// A cross-country alias (different country than the top primary) is penalized; it is DEMOTED when even after — i.e.
 	// the penalty leaves its effective rank behind the primary's raw rank (it lost the bounded population contest).
 	const isCrossCountryAlias = (r: R): boolean =>
 		topCountry !== undefined && r.is_primary !== 1 && r.country_id !== topCountry
+
 	const annotate = (r: R): RankedRow<R> => {
 		const penalized = isCrossCountryAlias(r)
 		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
@@ -159,6 +167,7 @@ export function rankByPrimaryPreference<R extends Pick<CandidateRow, "neg_rank" 
 		rows
 			.map((r, i) => ({ row: annotate(r), i }))
 			// Effective rank ASC; ties keep population order, then original index (stable).
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((a, b) => a.row.effectiveNegRank - b.row.effectiveNegRank || a.row.neg_rank - b.row.neg_rank || a.i - b.i)
 			.slice(0, limit)
 			.map((x) => x.row)
@@ -260,6 +269,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			this.#ftsProbe = this.#db.prepare(
 				`SELECT name_key FROM ${CANDIDATE_FTS_TABLE} WHERE ${CANDIDATE_FTS_TABLE} MATCH ? ORDER BY bm25(${CANDIDATE_FTS_TABLE}) LIMIT ?`
 			)
+
 			this.#nameKeyExistsProbe = this.#db.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
 		}
 
@@ -269,7 +279,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
 	}
 
-	/** Does this query want a locality-tier place? Postal-city aliases (#741) are all localities. */
+	/**
+	 * Does this query want a locality-tier place? Postal-city aliases (#741) are all localities.
+	 */
 	#wantsLocality(placetype: FindPlaceQuery["placetype"]): boolean {
 		if (!placetype) return true
 		const want = Array.isArray(placetype) ? placetype : [placetype]
@@ -286,8 +298,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// form at build (the GeoNames fold normalizes '624 66' → '62466'), so a postcode-typed query
 		// strips internal whitespace before keying. Postcode-only — locality names keep their spaces.
 		if ([query.placetype].flat().includes("postalcode")) {
-			text = text.replace(/\s+/g, "")
+			text = text.replaceAll(/\s+/g, "")
 		}
+
 		const nameKey = normalizeLocalityForKey(text)
 
 		if (!nameKey) return []
@@ -337,11 +350,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
 			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows.
 			const want = Array.isArray(query.placetype) ? query.placetype : [query.placetype]
+
 			const ids = expandPlacetypeFilter(want as readonly string[])
 				.map((t) => this.#placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
 
-			if (ids.length === 0) return []
+			if (!ids.length) return []
 			filters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
 			filterParams.push(...ids)
 		}
@@ -360,7 +374,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// Kept OUT of the shared `filters` so a region MISS falls back to the unscoped cascade below: a
 		// country/non-region parent (no `region_id` match), a `region_id=0` row (place with no region
 		// ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
-		const regionParentID = query.parentID ? query.parentID : undefined
+		const regionParentID = query.parentID || undefined
 
 		const probe = (nk: string, regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]
@@ -379,6 +393,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary " +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
+
 			const fetched = this.#db.prepare(sql).all(...params, Math.max(limit, RERANK_FETCH)) as unknown as CandidateRow[]
 
 			return rankByPrimaryPreference(fetched, limit)
@@ -390,7 +405,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
-			if (rows.length === 0) {
+			if (!rows.length) {
 				// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 				// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried ONLY on an exact
 				// miss; the cascade's region bbox disambiguates any base-name ambiguity.
@@ -412,15 +427,18 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
 			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
 			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
-			if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
+			if (!rows.length && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
 				const match = ftsTrigramQuery(nameKey)
 
 				if (match) {
 					const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
+
 					const ranked = hits
 						.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
 						.filter((h) => h.s >= FUZZY_MIN)
+						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 						.sort((a, b) => b.s - a.s)
+
 					const seen = new Set<string>()
 
 					for (const h of ranked) {
@@ -430,6 +448,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 						if (rows.length >= limit) break
 					}
+
 					rows = rows.slice(0, limit)
 				}
 			}
@@ -442,7 +461,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// Region-scope fallback: if scoping to the parent region found nothing across the whole cascade, retry
 		// unscoped so a place with no in-region row (missing ancestry, or a country/non-region parent) still
 		// resolves exactly as it does today. Only when a region scope was actually applied.
-		if (rows.length === 0 && regionParentID !== undefined) {
+		if (!rows.length && regionParentID !== undefined) {
 			rows = cascade(undefined)
 		}
 
@@ -492,9 +511,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// log10(population + 1), so popTerm is the server formula read straight off it. Constants MIRROR
 		// lookup.ts's DEFAULT_WEIGHTS (biasBoost 4, populationBoost 4, populationScaleLog10 6,
 		// proximityScaleKm 100) — the #861 server↔demo parity contract; keep them in lockstep.
-		if (query.bias && query.bias.length > 0) {
-			const BIAS_BOOST = 4.0
-			const POP_BOOST = 4.0
+		if (query.bias && query.bias.length) {
+			const BIAS_BOOST = 4
+			const POP_BOOST = 4
 			const POP_SCALE_LOG10 = 6
 			// SHARPER than lookup.ts's 100 km on purpose: this backend's `score` is log-population ALONE
 			// (no bm25 document term), so the population signal is weaker relative to the bias and the
@@ -503,6 +522,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// candidates the user is actually LOOKING at — an in-view namesake still wins (Dublin, OH from
 			// an Ohio view), a distant one no longer does (Paris stays FR from a Michigan view).
 			const PROX_SCALE_KM = 30
+
 			const combinedProminence = (c: PlaceCandidate): number => {
 				// Population base is the PENALIZED `prominence` (set above = -effectiveNegRank), not raw `score`, so
 				// the cross-country primary preference carries into the bias-weighted order too — a coincidental
@@ -524,6 +544,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 				return popTerm + proxTerm
 			}
+
 			// Persist the combined value into `prominence` so the resolver walk's `prominence ?? score` sort (and any
 			// other node consumer) honors the bias order — then sort. Stable within equal prominence (preserves the
 			// population order the B-tree already gave).
@@ -533,6 +554,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 					return { c, i, p: c.prominence }
 				})
+				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 				.sort((a, b) => b.p - a.p || a.i - b.i)
 				.forEach((x, j) => (candidates[j] = x.c))
 		}

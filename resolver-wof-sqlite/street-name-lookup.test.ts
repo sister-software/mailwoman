@@ -26,14 +26,17 @@ beforeAll(() => {
 	dir = mkdtempSync(join(tmpdir(), "mw-street-name-"))
 	dbPath = join(dir, "street-centroids-fr.db")
 	const seed = new DatabaseSync(dbPath)
+
 	// The real shard shape: the geocoding `street_norm` PLUS the #727 phase-4c `name_key` (contract fold). The reader must
 	// prefer `name_key`; each row carries a DELIBERATELY WRONG street_norm, so a passing lookup proves it read name_key.
 	seed.exec(
 		"CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL, name_key TEXT NOT NULL)"
 	)
+
 	const ins = seed.prepare(
 		"INSERT INTO street_centroid (street_norm, postcode, locality_base, name_key) VALUES (?, ?, ?, ?)"
 	)
+
 	const rows: Array<[string, string, string]> = [
 		["Rue Corsier", "75001", "Paris"],
 		["Rue Pillet-Will", "75009", "Paris"],
@@ -44,6 +47,7 @@ beforeAll(() => {
 	for (const [raw, pc, loc] of rows) {
 		ins.run("ZZ-wrong-street-norm", pc, foldStreetSurface(loc), foldStreetSurface(raw))
 	}
+
 	seed.close()
 
 	emptyPath = join(dir, "empty.db")
@@ -105,9 +109,11 @@ describe("SQLiteStreetNameLookup", () => {
 		const legacyPath = join(dir, "legacy.db")
 		const legacy = new DatabaseSync(legacyPath)
 		legacy.exec("CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL)")
+
 		legacy
 			.prepare("INSERT INTO street_centroid (street_norm, postcode, locality_base) VALUES (?, ?, ?)")
 			.run(foldStreetSurface("Rue Corsier"), "75001", foldStreetSurface("Paris"))
+
 		legacy.close()
 		const lk = new SQLiteStreetNameLookup(legacyPath)
 		expect(lk.hasStreetName("Rue Corsier")).toBe(true)

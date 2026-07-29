@@ -46,11 +46,23 @@ import { dirname, resolve } from "node:path"
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
 
+/**
+ * Ambiguous entries printed before the list is truncated.
+ */
+const MAX_LISTED_AMBIGUOUS = 12
+
+/**
+ * Letters at or below which a token reads as an abbreviation rather than a word.
+ */
+const MAX_ABBREVIATION_LETTERS = 3
+
 const BIT = { country_surface: 1, country_ambiguous: 2 }
 const SLOTS = ["country_surface", "country_ambiguous"]
 
-// Committed output path (a codex-derived artifact, like export-country-surfaces.ts — no argv, so the
-// no-process-globals lint policy holds; codex stays zero-runtime-dep).
+/**
+ * Committed output path (a codex-derived artifact, like export-country-surfaces.ts — no argv, so the no-process-globals
+ * lint policy holds; codex stays zero-runtime-dep).
+ */
 const OUTPUT = resolve(import.meta.dirname, "../../data/gazetteer/country-surface-lexicon-v1.json")
 
 /**
@@ -62,17 +74,19 @@ const OUTPUT = resolve(import.meta.dirname, "../../data/gazetteer/country-surfac
 const wordNorm = (s: string): string =>
 	s
 		.split(/\s+/)
-		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.join(" ")
 
 const norm = (s: string): string => wordNorm(s).toLowerCase()
 
-/** Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching. */
+/**
+ * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
+ */
 const isShortCode = (s: string): boolean => {
-	const letters = s.replace(/[^\p{L}]/gu, "")
+	const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
-	return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
+	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
 // Homograph set: a single-word country surface that is ALSO a US region (name or abbreviation) reads
@@ -81,9 +95,11 @@ const isShortCode = (s: string): boolean => {
 const usStateNames = new Set(US_STATE_NAMES.map((n) => n.toLowerCase()))
 const usStateAbbrevs = new Set<string>(US_STATE_ABBREVIATIONS as readonly string[])
 
-// Curated common-word country surfaces — single tokens that appear far more often as ordinary
-// street/venue/locality words than as a trailing country. A SOFT flag (the model still decides), the
-// model-first analogue of Pelias's blacklist (north/south/east/west/street/city/king). Tunable.
+/**
+ * Curated common-word country surfaces — single tokens that appear far more often as ordinary street/venue/locality
+ * words than as a trailing country. A SOFT flag (the model still decides), the model-first analogue of Pelias's
+ * blacklist (north/south/east/west/street/city/king). Tunable.
+ */
 const COMMON_WORD_AMBIGUOUS = new Set(["america", "england", "britain", "turkey", "chad", "jordan", "jersey", "guinea"])
 
 const isAmbiguousName = (lowerKey: string): boolean => usStateNames.has(lowerKey) || COMMON_WORD_AMBIGUOUS.has(lowerKey)
@@ -108,6 +124,7 @@ function add(surface: string): void {
 
 		return
 	}
+
 	const key = norm(s)
 
 	if (!key) return
@@ -154,13 +171,14 @@ const lexicon = {
 		feature:
 			"emitted per-piece row = [country_surface, country_ambiguous] (the raw bits); confidence = 1.0 where country_surface fires.",
 	},
-	entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
-	code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),
+	entries: Object.fromEntries([...entries].toSorted(([a], [b]) => a.localeCompare(b))),
+	code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 }
 
 mkdirSync(dirname(OUTPUT), { recursive: true })
 writeFileSync(OUTPUT, JSON.stringify(lexicon, null, 1) + "\n")
+
 process.stderr.write(
 	`wrote ${OUTPUT}: ${entries.size} entries + ${codeEntries.size} code_entries, ` +
-		`max_ngram=${maxNgram}, ${ambiguousEntries.length} ambiguous: ${ambiguousEntries.slice(0, 12).join(", ")}${ambiguousEntries.length > 12 ? ", …" : ""}\n`
+		`max_ngram=${maxNgram}, ${ambiguousEntries.length} ambiguous: ${ambiguousEntries.slice(0, MAX_LISTED_AMBIGUOUS).join(", ")}${ambiguousEntries.length > MAX_LISTED_AMBIGUOUS ? ", …" : ""}\n`
 )

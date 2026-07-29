@@ -15,21 +15,33 @@
 import type { ReactNode } from "react"
 import { Marker } from "react-map-gl/maplibre"
 
-/** The house pink the demo has always drawn the resolved-place marker in. */
+/**
+ * The house pink the demo has always drawn the resolved-place marker in.
+ */
 const MARKER_COLOR = "#e0367c"
 
 export interface PlaceMarkerProps {
-	/** Marker longitude. */
+	/**
+	 * Marker longitude.
+	 */
 	longitude: number
-	/** Marker latitude. */
+	/**
+	 * Marker latitude.
+	 */
 	latitude: number
-	/** Pin color. @default the house pink. */
+	/**
+	 * Pin color. @default the house pink.
+	 */
 	color?: string
-	/** Which part of the marker sits on the coordinate. @default "center" (a symmetric dot). */
+	/**
+	 * Which part of the marker sits on the coordinate. @default "center" (a symmetric dot).
+	 */
 	anchor?: "center" | "top" | "bottom" | "left" | "right"
 }
 
-/** A single resolved-place marker. Wraps `react-map-gl`'s `<Marker>` with the demo's default color. */
+/**
+ * A single resolved-place marker. Wraps `react-map-gl`'s `<Marker>` with the demo's default color.
+ */
 export function PlaceMarker({
 	longitude,
 	latitude,

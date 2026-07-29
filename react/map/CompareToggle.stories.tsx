@@ -21,9 +21,12 @@ const VERSIONS: DemoVersionOption[] = [
 
 const meta: Meta<typeof CompareToggle> = { title: "Map/Panels/CompareToggle", component: CompareToggle }
 export default meta
+
 type Story = StoryObj<typeof CompareToggle>
 
-/** Interactive: flip the toggle to reveal the compare-version select (the primary version is filtered out). */
+/**
+ * Interactive: flip the toggle to reveal the compare-version select (the primary version is filtered out).
+ */
 export const OffThenOn: Story = {
 	render: () => {
 		const [mode, setMode] = useState(false)
@@ -42,7 +45,9 @@ export const OffThenOn: Story = {
 	},
 }
 
-/** On, with a chosen compare version + a status line. */
+/**
+ * On, with a chosen compare version + a status line.
+ */
 export const OnWithStatus: Story = {
 	render: () => (
 		<CompareToggle

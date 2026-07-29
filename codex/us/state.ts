@@ -75,7 +75,9 @@ export const US_STATE_ABBREVIATIONS = [
 	"AS",
 ] as const satisfies readonly string[]
 
-/** A USPS two-letter state-or-territory abbreviation. */
+/**
+ * A USPS two-letter state-or-territory abbreviation.
+ */
 export type USStateAbbreviation = (typeof US_STATE_ABBREVIATIONS)[number]
 
 const STATE_ABBREVIATION_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
@@ -152,5 +154,7 @@ export const US_STATE_BY_ABBREVIATION = {
 	AS: "American Samoa",
 } as const satisfies Record<USStateAbbreviation, string>
 
-/** The full state/territory names, derived from {@link US_STATE_BY_ABBREVIATION}. */
+/**
+ * The full state/territory names, derived from {@link US_STATE_BY_ABBREVIATION}.
+ */
 export const US_STATE_NAMES: readonly string[] = Object.values(US_STATE_BY_ABBREVIATION)

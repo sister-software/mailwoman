@@ -27,33 +27,49 @@ import { SeededRandom } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair-index-resolver"
 
-/** The one tag this arc's GB extraction ever emits — CITY-under-DISTRICT is always a dependent_locality candidate. */
+/**
+ * The one tag this arc's GB extraction ever emits — CITY-under-DISTRICT is always a dependent_locality candidate.
+ */
 const PAIR_TAG = "dependent_locality" as const
 
-/** One row-length bucket: `words` whitespace-split tokens, seen on `rows` raw CITY values. */
+/**
+ * One row-length bucket: `words` whitespace-split tokens, seen on `rows` raw CITY values.
+ */
 export interface WordLengthBucket {
 	words: number
 	rows: number
 }
 
-/** Percentile summary of the raw (pre-fold) CITY word-length distribution, plus the full per-length histogram. */
+/**
+ * Percentile summary of the raw (pre-fold) CITY word-length distribution, plus the full per-length histogram.
+ */
 export interface CityWordLengthDistribution {
-	/** Non-empty CITY rows the distribution was computed over. */
+	/**
+	 * Non-empty CITY rows the distribution was computed over.
+	 */
 	totalRows: number
 	p50: number
 	p90: number
 	p99: number
 	max: number
-	/** Sorted ascending by `words`. */
+	/**
+	 * Sorted ascending by `words`.
+	 */
 	counts: WordLengthBucket[]
 }
 
 export interface PairIndexBuildResult {
-	/** Deduplicated (child, parent) pairs, ready for `serializePairIndex`. */
+	/**
+	 * Deduplicated (child, parent) pairs, ready for `serializePairIndex`.
+	 */
 	entries: PairIndexEntry[]
-	/** Rows that contributed a pair (non-empty CITY after trim). */
+	/**
+	 * Rows that contributed a pair (non-empty CITY after trim).
+	 */
 	rowsKept: number
-	/** Rows dropped for an empty CITY. */
+	/**
+	 * Rows dropped for an empty CITY.
+	 */
 	rowsSkipped: number
 	distribution: CityWordLengthDistribution
 }
@@ -64,7 +80,7 @@ export interface PairIndexBuildResult {
  * hide the empty-input bug from the caller.
  */
 export function nearestRankPercentile(sortedAscending: readonly number[], p: number): number {
-	if (sortedAscending.length === 0) {
+	if (!sortedAscending.length) {
 		throw new Error("nearestRankPercentile: empty input")
 	}
 
@@ -118,9 +134,11 @@ export class PairIndexBuilder {
 		}
 	}
 
-	/** Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution. */
+	/**
+	 * Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution.
+	 */
 	finish(): PairIndexBuildResult {
-		const sortedLengths = [...this.#wordLengths].sort((a, b) => a - b)
+		const sortedLengths = [...this.#wordLengths].toSorted((a, b) => a - b)
 		const histogram = new Map<number, number>()
 
 		for (const w of sortedLengths) {
@@ -128,20 +146,19 @@ export class PairIndexBuilder {
 		}
 
 		const counts: WordLengthBucket[] = [...histogram.entries()]
-			.sort(([a], [b]) => a - b)
+			.toSorted(([a], [b]) => a - b)
 			.map(([words, rows]) => ({ words, rows }))
 
-		const distribution: CityWordLengthDistribution =
-			sortedLengths.length > 0
-				? {
-						totalRows: sortedLengths.length,
-						p50: nearestRankPercentile(sortedLengths, 50),
-						p90: nearestRankPercentile(sortedLengths, 90),
-						p99: nearestRankPercentile(sortedLengths, 99),
-						max: sortedLengths[sortedLengths.length - 1]!,
-						counts,
-					}
-				: { totalRows: 0, p50: 0, p90: 0, p99: 0, max: 0, counts: [] }
+		const distribution: CityWordLengthDistribution = sortedLengths.length
+			? {
+					totalRows: sortedLengths.length,
+					p50: nearestRankPercentile(sortedLengths, 50),
+					p90: nearestRankPercentile(sortedLengths, 90),
+					p99: nearestRankPercentile(sortedLengths, 99),
+					max: sortedLengths.at(-1)!,
+					counts,
+				}
+			: { totalRows: 0, p50: 0, p90: 0, p99: 0, max: 0, counts: [] }
 
 		return {
 			entries: [...this.#seen.values()],
@@ -153,9 +170,13 @@ export class PairIndexBuilder {
 }
 
 export interface PairIndexHoldoutResult {
-	/** Entries to actually serialize into the index — the full set MINUS the held-out fraction. */
+	/**
+	 * Entries to actually serialize into the index — the full set MINUS the held-out fraction.
+	 */
 	kept: PairIndexEntry[]
-	/** Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6). */
+	/**
+	 * Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6).
+	 */
 	heldOut: PairIndexEntry[]
 }
 
@@ -180,11 +201,11 @@ export function applyPairIndexHoldout(
 ): PairIndexHoldoutResult {
 	const clamped = Math.min(1, Math.max(0, fraction))
 
-	if (clamped === 0 || entries.length === 0) {
+	if (clamped === 0 || !entries.length) {
 		return { kept: [...entries], heldOut: [] }
 	}
 
-	const sorted = [...entries].sort((a, b) =>
+	const sorted = [...entries].toSorted((a, b) =>
 		a.child < b.child ? -1 : a.child > b.child ? 1 : a.parent < b.parent ? -1 : a.parent > b.parent ? 1 : 0
 	)
 

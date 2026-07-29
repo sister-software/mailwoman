@@ -33,13 +33,17 @@ import styles from "./styles.module.css"
 
 const ISO_DATE_PATTERN = /(\d{4}-\d{2}-\d{2})/
 
-/** Display labels for the `status:` frontmatter vocabulary. Unknown values render no chrome. */
+/**
+ * Display labels for the `status:` frontmatter vocabulary. Unknown values render no chrome.
+ */
 const STATUS_LABELS: Record<string, string> = {
 	"active-decision": "Active decision",
 	superseded: "Superseded",
 }
 
-/** Taglines rendered after the status label. */
+/**
+ * Taglines rendered after the status label.
+ */
 const STATUS_TAGLINES: Record<string, string> = {
 	"active-decision": "An open design decision — current until a successor supersedes it.",
 }
@@ -88,7 +92,7 @@ function DocRecordChrome(): ReactNode {
 		<aside className={clsx("alert", "alert--info", styles.recordChrome)} role="note">
 			<strong>{STATUS_LABELS[status]}.</strong>
 			{tagline ? <> {tagline}</> : null}
-			{typeof supersededBy === "string" && supersededBy.length > 0 ? (
+			{typeof supersededBy === "string" && supersededBy.length ? (
 				<>
 					{" "}
 					Superseded by <Link to={supersededBy}>{supersededBy}</Link>.

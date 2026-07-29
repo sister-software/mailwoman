@@ -14,7 +14,7 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod.string().describe(
 		argument({
 			name: "corpus-dir",
@@ -28,9 +28,9 @@ const OptionsSchema = zod.object({
 	sample: zod.number().default(100).describe("Max shards sampled per split when scanning without a MANIFEST"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
-const CorpusAudit: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const CorpusAudit: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		audit({ corpusDir: args[0], configPath: options.config, sampleShardCount: options.sample })
 	})

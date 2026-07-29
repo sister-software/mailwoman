@@ -41,13 +41,35 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
+import { haversineKm } from "@mailwoman/spatial"
 
-const MATCH_RADIUS_KM = 15.0
-const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set
+/**
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * even, which is what keeps repeated centroid rounding unbiased.
+ */
+/**
+ * Columns a Japan Post KEN_ALL row needs before it is usable.
+ */
+const MIN_KEN_ALL_COLUMNS = 6
+
+/**
+ * Digits in a JIS local-government code, the first KEN_ALL field.
+ */
+const JIS_CODE_LENGTH = 7
+
+const ROUND_HALF_DIGIT = 5
+
+const MATCH_RADIUS_KM = 15
+/**
+ * Extra non-containing candidates kept for the soft-score set.
+ */
+const NEARBY_KEEP = 2
 const PLACETYPES = ["locality", "county", "localadmin", "borough"] as const
 const SUFFIX = /(shi|ku|cho|machi|gun|ken|fu|to|son|mura|ward|si|gu|dong|eup|myeon|ri)$/
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -57,6 +79,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -74,7 +97,7 @@ function incDecimalString(s: string): string {
  * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
  * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
-function pyRound(x: number, nd: number = 0): number {
+function pyRound(x: number, nd = 0): number {
 	if (!Number.isFinite(x)) return x
 
 	if (nd === 0) {
@@ -87,6 +110,7 @@ function pyRound(x: number, nd: number = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -97,9 +121,9 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) {
+	if (first > ROUND_HALF_DIGIT) {
 		roundUp = true
-	} else if (first === 5) {
+	} else if (first === ROUND_HALF_DIGIT) {
 		if (/[1-9]/.test(rest.slice(1))) {
 			roundUp = true
 		} else {
@@ -108,17 +132,21 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
 }
 
-/** Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip). */
+/**
+ * Python `float()`: trimmed-empty / non-numeric → null (the build's try/except skip).
+ */
 function pyFloat(s: string | undefined): number | null {
 	if (s === undefined) return null
 	const t = s.trim()
@@ -130,7 +158,7 @@ function pyFloat(s: string | undefined): number | null {
 }
 
 function norm(s: string): string {
-	return s.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[\s-]/g, "")
+	return s.normalize("NFKD").replaceAll(/\p{M}/gu, "").toLowerCase().replaceAll(/[\s-]/g, "")
 }
 
 /**
@@ -143,23 +171,16 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 	return nw.length >= 2 && norm(postalMuni).includes(nw)
 }
 
-/** Python `math.radians`. */
+/**
+ * Python `math.radians`.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine distance in km, ported from the Python `haversine(a, b, c, d)` (asin form). */
-function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371.0
-	const p1 = toRad(aLat)
-	const p2 = toRad(cLat)
-	const dp = toRad(cLat - aLat)
-	const dl = toRad(dLon - bLon)
-
-	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
-}
-
-/** JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}. */
+/**
+ * JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}.
+ */
 function loadKenall(path: string): Map<string, string> {
 	const out = new Map<string, string>()
 	const text = new TextDecoder("shift_jis").decode(readFileSync(path))
@@ -168,7 +189,7 @@ function loadKenall(path: string): Map<string, string> {
 		const line = raw.replace(/[\r\n]+$/, "")
 		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))
 
-		if (f.length >= 6 && f[0]!.length === 7 && /^[0-9]+$/.test(f[0]!)) {
+		if (f.length >= MIN_KEN_ALL_COLUMNS && f[0]!.length === JIS_CODE_LENGTH && /^[0-9]+$/.test(f[0]!)) {
 			out.set(`${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`, f[5]!)
 		}
 	}
@@ -176,7 +197,9 @@ function loadKenall(path: string): Map<string, string> {
 	return out
 }
 
-/** GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins). */
+/**
+ * GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins).
+ */
 function loadGeonamesPoints(path: string): Map<string, [number, number]> {
 	const out = new Map<string, [number, number]>()
 
@@ -195,7 +218,9 @@ function loadGeonamesPoints(path: string): Map<string, [number, number]> {
 	return out
 }
 
-/** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
+/**
+ * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
@@ -211,20 +236,24 @@ export interface PostcodeLocalityJPOptions {
 export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): Promise<void> {
 	const postal = args.country === "JP" ? loadKenall(args.postalNames) : new Map<string, string>()
 
-	if (postal.size === 0) {
+	if (!postal.size) {
 		console.error(`no postal names loaded for ${args.country} (only KEN_ALL/JP wired so far)`)
+
 		process.exit(1)
 	}
+
 	const points = loadGeonamesPoints(args.geonames)
 
 	const admin = new DatabaseSync(args.adminDb)
 	const ph = PLACETYPES.map(() => "?").join(",")
+
 	const places = admin
 		.prepare(
 			`SELECT id,name,latitude,longitude FROM spr WHERE country=? AND placetype IN (${ph}) ` +
 				`AND latitude IS NOT NULL AND NOT (latitude=0 AND longitude=0)`
 		)
 		.all(args.country, ...PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
+
 	admin.close()
 
 	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
@@ -257,6 +286,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 				}
 			}
 		}
+
 		out.sort((a, b) => a.d - b.d || a.pid - b.pid || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))
 
 		return out
@@ -265,6 +295,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	const db = new DatabaseSync(args.output)
 	const kdb = new DatabaseClient({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.addColumn("postcode", "text", (c) => c.notNull())
@@ -285,7 +316,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		const [lat, lon] = points.get(pc)!
 		const cands = nearby(lat, lon)
 
-		if (cands.length === 0) continue
+		if (!cands.length) continue
 		const hit = cands.find((c) => nameMatches(c.nm, muni))
 
 		if (hit) {
@@ -310,6 +341,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	for (const r of rows) {
 		insert.run(...r)
 	}
+
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -324,7 +356,9 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+
 	const matchRate = `${((100 * matched) / keys.length).toFixed(1)}%`
+
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-cjk"],
 		["description", "CJK postcode -> WOF locality via authoritative-name + proximity match (no polygons)"],
@@ -336,6 +370,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		["match_rate", matchRate],
 		["built_at", isoSeconds()],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
@@ -348,12 +383,15 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
+
 	console.log(
 		`${args.country}: ${keys.length.toLocaleString("en-US")} postcodes (KEN_ALL∩GeoNames), ` +
 			`${matched.toLocaleString("en-US")} name-matched (${matchRate}), ` +

@@ -5,6 +5,7 @@
  */
 
 import "./styles.css"
+import type { TileSetSourceID, TileSetSourceRecord } from "@mailwoman/cartographer"
 import {
 	fetchTileSetSources,
 	MailwomanBaseTileSetID,
@@ -12,13 +13,12 @@ import {
 	TIGERBlocksTileSetID,
 	TIGERLayers,
 	TIGERTractsTileSetID,
-	TileSetSourceID,
-	TileSetSourceRecord,
 } from "@mailwoman/cartographer"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Map, MapRef, NavigationControl, ViewStateChangeEvent } from "react-map-gl/maplibre"
+import type { MapRef, ViewStateChangeEvent } from "react-map-gl/maplibre"
+import { Map, NavigationControl } from "react-map-gl/maplibre"
 
 import { useWebviewContext } from "../../contexts/WebviewContext.tsx"
 import { SplashScreen } from "../SplashScreen/index.tsx"
@@ -43,12 +43,16 @@ const DashboardMap: React.FC = () => {
 		return styleComposer.toJSON()
 	}, [tileSetSources])
 
-	const persistenceFrameRef = useRef<number>(-1)
+	// Whatever setTimeout returns here — a number in the DOM lib, a Timeout under @types/node.
+	const persistenceFrameRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	const handleViewStateChange = useCallback(
 		(event: ViewStateChangeEvent) => {
-			self.clearTimeout(persistenceFrameRef.current)
-			persistenceFrameRef.current = self.setTimeout(() => {
+			if (persistenceFrameRef.current !== null) {
+				globalThis.clearTimeout(persistenceFrameRef.current)
+			}
+
+			persistenceFrameRef.current = globalThis.setTimeout(() => {
 				persistWebviewState((currentWebViewState) => ({
 					...currentWebViewState,
 					mapView: event.viewState,
@@ -90,7 +94,7 @@ const DashboardMap: React.FC = () => {
 }
 
 function exposeMapRef(ref: MapRef) {
-	Object.assign(window, { map: ref })
+	Object.assign(globalThis, { map: ref })
 }
 
 export default memo(DashboardMap)

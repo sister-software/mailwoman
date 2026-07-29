@@ -36,13 +36,21 @@ import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-
 import { STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 
 export interface BuildStreetMorphologyArtifactOpts {
-	/** Libpostal dictionaries root (default: core's bundled `data/libpostal/dictionaries`). */
+	/**
+	 * Libpostal dictionaries root (default: core's bundled `data/libpostal/dictionaries`).
+	 */
 	dictionariesDir?: string
-	/** Locale-subfolder filter (default: every locale shipping a `street_types.txt`). */
+	/**
+	 * Locale-subfolder filter (default: every locale shipping a `street_types.txt`).
+	 */
 	locales?: string[]
-	/** Minimum post-normalization variant length (default: the builder's 3 — the state-abbreviation collision guard). */
+	/**
+	 * Minimum post-normalization variant length (default: the builder's 3 — the state-abbreviation collision guard).
+	 */
 	minVariantLength?: number
-	/** Output path (default: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`). */
+	/**
+	 * Output path (default: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`).
+	 */
 	output?: string
 	onProgress?: (line: string) => void
 }
@@ -55,7 +63,9 @@ export interface BuiltStreetMorphologyArtifact {
 	localeCount: number
 }
 
-/** Build + seal the street-morphology FST artifact. Returns the written path and build counts. */
+/**
+ * Build + seal the street-morphology FST artifact. Returns the written path and build counts.
+ */
 export function buildStreetMorphologyArtifact(
 	opts: BuildStreetMorphologyArtifactOpts = {}
 ): BuiltStreetMorphologyArtifact {
@@ -64,9 +74,10 @@ export function buildStreetMorphologyArtifact(
 	const outPath = resolve(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
+
 	const result = buildStreetMorphologyFST({
 		dictionariesDir,
-		...(opts.locales && opts.locales.length > 0 ? { locales: opts.locales } : {}),
+		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
 		...(opts.minVariantLength !== undefined ? { minVariantLength: opts.minVariantLength } : {}),
 		onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 	})

@@ -78,13 +78,21 @@ export const PublicEnvSchema = z.object({
 
 	// Eval scripts (`scripts/eval/*`) — diagnostic toggles + DB/probe overrides.
 	MAILWOMAN_WOF_HOT_DB: z.string().optional(),
-	/** Override the admin gazetteer used by the default-country test panel. */
+	/**
+	 * Override the admin gazetteer used by the default-country test panel.
+	 */
 	MAILWOMAN_WOF_GLOBAL_DB: z.string().optional(),
-	/** Deployed demo URL for the docs e2e suite (skips the local build+serve machinery). */
+	/**
+	 * Deployed demo URL for the docs e2e suite (skips the local build+serve machinery).
+	 */
 	MAILWOMAN_DEMO_URL: z.string().optional(),
-	/** Override the ONNX model exercised by the neural test suites. */
+	/**
+	 * Override the ONNX model exercised by the neural test suites.
+	 */
 	MAILWOMAN_TEST_ONNX_MODEL: z.string().optional(),
-	/** Override the ONNX model exercised by the capability gate. */
+	/**
+	 * Override the ONNX model exercised by the capability gate.
+	 */
 	MAILWOMAN_CAPABILITY_ONNX_MODEL: z.string().optional(),
 	MAILWOMAN_DIAG_INTERP: z.string().optional(),
 	MAILWOMAN_DUMP_MISS_TAG: z.string().optional(),

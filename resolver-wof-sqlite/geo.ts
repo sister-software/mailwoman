@@ -22,7 +22,9 @@
 // readers keep importing it from "./geo.ts" (the spatial dep is transitive via @mailwoman/resolver).
 export { haversineKm } from "@mailwoman/spatial"
 
-/** WGS-84 degrees → radians. */
+/**
+ * WGS-84 degrees → radians.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
@@ -61,10 +63,14 @@ export function bboxAround(lat: number, lon: number, radiusKm: number): Bbox {
  */
 export type GeojsonPosition = [number, number, ...number[]]
 
-/** The two areal GeoJSON geometry types PIP can test, plus an open fallback (Point etc.). */
+/**
+ * The two areal GeoJSON geometry types PIP can test, plus an open fallback (Point etc.).
+ */
 export interface GeojsonPolygon {
 	type: "Polygon"
-	/** `[outerRing, hole1, hole2, …]` — each ring a closed list of positions. */
+	/**
+	 * `[outerRing, hole1, hole2, …]` — each ring a closed list of positions.
+	 */
 	coordinates: GeojsonPosition[][]
 }
 

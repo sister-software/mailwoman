@@ -1,5 +1,4 @@
 import Link from "@docusaurus/Link"
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import CodeBlock from "@theme/CodeBlock"
 import Heading from "@theme/Heading"
 import Layout from "@theme/Layout"

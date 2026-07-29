@@ -33,6 +33,7 @@ test("pointInPolygonRings: a hole punches a void (even-odd handles holes, no ori
 		[10, 0],
 		[0, 0],
 	]
+
 	const hole: GeojsonPosition[] = [
 		[4, 4],
 		[4, 6],
@@ -40,6 +41,7 @@ test("pointInPolygonRings: a hole punches a void (even-odd handles holes, no ori
 		[6, 4],
 		[4, 4],
 	]
+
 	// inside outer, NOT in the hole → contained
 	expect(pointInPolygonRings(1, 1, [outer, hole])).toBe(true)
 	// inside the hole → an odd-count void → NOT contained
@@ -68,6 +70,7 @@ test("geometryContains: Polygon / MultiPolygon test; non-areal and null geometry
 			],
 		],
 	}
+
 	expect(geometryContains(multi, 0.5, 0.5)).toBe(true) // in the first polygon
 	expect(geometryContains(multi, 10.5, 10.5)).toBe(true) // in the second polygon
 	expect(geometryContains(multi, 5, 5)).toBe(false) // in neither

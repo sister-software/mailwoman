@@ -45,6 +45,7 @@ export { OptionsSchema as options }
 
 const GNAFAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [progress, setProgress] = useState<string>()
+
 	const state = useCommandTask(async () => {
 		return assembleGNAF({
 			standardDir: options.standardDir,

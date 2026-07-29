@@ -39,7 +39,7 @@ export interface SerializedSpan {
  * A span of text, i.e. a token or a phrase.
  */
 export class Span extends Graph<Span> {
-	#body: string = ""
+	#body = ""
 	/**
 	 * The start index of the span.
 	 */

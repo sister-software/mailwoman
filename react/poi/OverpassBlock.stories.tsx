@@ -14,6 +14,7 @@ const meta: Meta<typeof OverpassBlock> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof OverpassBlock>
 
 export const Query: Story = {

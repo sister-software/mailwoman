@@ -32,7 +32,7 @@
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -41,14 +41,23 @@ import type { ClassificationRecord } from "mailwoman"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+/**
+ * Percentage-point collision reduction the split must deliver to be judged effective.
+ */
+const MIN_COLLISION_REDUCTION = 5
+
 const { values: rawValues } = parseArgs({
 	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
-// --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------
+
+/**
+ * --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------.
+ */
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
 	locality: 5,
@@ -58,6 +67,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 	region: 2,
 	country: 0,
 }
+
 interface Resolved {
 	id: number
 	name: string
@@ -65,8 +75,10 @@ interface Resolved {
 	lat: number
 	lon: number
 }
+
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
+
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
@@ -87,6 +99,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 
 	return out
 }
+
 function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
@@ -98,20 +111,28 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 
 	return best
 }
+
 const pct = (xs: number[], p: number): number => {
-	if (xs.length === 0) return NaN
-	const s = [...xs].sort((a, b) => a - b)
+	if (!xs.length) return Number.NaN
+	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
-const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
 
-// --- args ----------------------------------------------------------------------------------------
+const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
+
+/**
+ * --- args ----------------------------------------------------------------------------------------.
+ */
 const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
-const N = Number(values["n"] || "200") // per stratum
+/**
+ * Per stratum.
+ */
+const N = Number(values["n"] || "200")
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------
 const db = new DatabaseSync(DB, { readOnly: true })
+
 interface Commune {
 	id: number
 	commune: string
@@ -120,6 +141,7 @@ interface Commune {
 	lon: number
 	collisionCount: number
 }
+
 // Communes with their département (placetype 'region' in WOF-FR) + how many distinct départements
 // share the same commune NAME (the collision degree — the disambiguation pressure).
 const rows = db
@@ -139,7 +161,7 @@ const rows = db
 	.all() as unknown as Commune[]
 
 // Deterministic shuffle (no Math.random in this env) — order by id hash.
-const shuffled = [...rows].sort((a, b) => ((a.id * 2654435761) % 1e9) - ((b.id * 2654435761) % 1e9))
+const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 db.close()
@@ -150,11 +172,15 @@ const backend = new WOFSqlitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend as never)
 const resolveOpts = { defaultCountry: "FR" }
 
-// Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't
-// found: the country centroid. Makes the three states comparable on ONE error metric (resolved
-// point if found, else country-centroid) instead of averaging over different resolved subsets.
+/**
+ * Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't found: the country
+ * centroid. Makes the three states comparable on ONE error metric (resolved point if found, else country-centroid)
+ * instead of averaging over different resolved subsets.
+ */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
+
 type State = "dropped" | "merged" | "split"
+
 async function resolveState(c: Commune, state: State): Promise<{ km: number; resolved: boolean }> {
 	let raw: string
 	let record: ClassificationRecord
@@ -169,6 +195,7 @@ async function resolveState(c: Commune, state: State): Promise<{ km: number; res
 		raw = `${c.commune}, ${c.dept}`
 		record = { locality: [c.commune], region: [c.dept] } as ClassificationRecord
 	}
+
 	const { tree } = v0RecordToTree(raw, record)
 	const decorated = await resolver.resolveTree(tree, resolveOpts)
 	const best = mostSpecific(collectResolved(decorated))
@@ -187,6 +214,7 @@ interface StratumAgg {
 	splitBeatsDroppedBy2km: number
 	n: number
 }
+
 async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg> {
 	const agg: StratumAgg = {
 		dropped: [],
@@ -203,6 +231,7 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 			resolveState(c, "merged"),
 			resolveState(c, "split"),
 		])
+
 		agg.n++
 		agg.dropped.push(d.km)
 		agg.merged.push(m.km)
@@ -224,12 +253,14 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 			agg.splitBeatsDroppedBy2km++
 		}
 	}
+
 	console.error(`  ${label}: n=${agg.n} resolve-rate(d/m/s)=${agg.res.dropped}/${agg.res.merged}/${agg.res.split}`)
 
 	return agg
 }
 
 console.error(`[fr-split] collision=${collision.length} unique=${unique.length} (from ${rows.length} FR communes)`)
+
 const collAgg = await runStratum("collision", collision)
 const uniqAgg = await runStratum("unique", unique)
 
@@ -237,6 +268,7 @@ const uniqAgg = await runStratum("unique", unique)
 const row = (label: string, a: StratumAgg): string => {
 	const dM = mean(a.dropped),
 		sM = mean(a.split)
+
 	const reduction = dM > 0 ? (100 * (dM - sM)) / dM : 0
 	const rr = (k: number): string => `${((100 * k) / a.n).toFixed(0)}%`
 
@@ -253,10 +285,12 @@ const row = (label: string, a: StratumAgg): string => {
 		"",
 	].join("\n")
 }
+
 const collReduction =
 	mean(collAgg.dropped) > 0 ? (100 * (mean(collAgg.dropped) - mean(collAgg.split))) / mean(collAgg.dropped) : 0
+
 const verdict =
-	collReduction >= 5
+	collReduction >= MIN_COLLISION_REDUCTION
 		? `✅ LEVER REAL — collision SPLIT-vs-DROPPED reduction ${collReduction.toFixed(1)}% ≥ 5%. The resolver uses the région tag. Retrain premise holds.`
 		: `❌ LEVER FALSE — collision reduction ${collReduction.toFixed(1)}% < 5%. The resolver lands the same place without the région. STOP — no retrain fixes this.`
 
@@ -278,6 +312,8 @@ const outPath = values["out"] || ""
 if (outPath) {
 	const { writeFileSync } = await import("node:fs")
 	writeFileSync(outPath, out)
+
 	console.error(`[fr-split] wrote ${outPath}`)
 }
+
 console.log(out)

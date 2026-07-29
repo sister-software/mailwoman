@@ -29,12 +29,16 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
-/** A fully-parsed US address with confidence-tinted spans across every component. */
+/**
+ * A fully-parsed US address with confidence-tinted spans across every component.
+ */
 export const WhiteHouse: Story = {
 	args: { input: WHITE_HOUSE, nodes: whiteHouseNodes },
 }
 
-/** A low-confidence parse — most spans land in the amber/red tiers. */
+/**
+ * A low-confidence parse — most spans land in the amber/red tiers.
+ */
 export const LowConfidence: Story = {
 	args: {
 		input: "pier 39 sf",
@@ -45,7 +49,9 @@ export const LowConfidence: Story = {
 	},
 }
 
-/** No spans carry offsets, so nothing is highlighted — the empty/degenerate case. */
+/**
+ * No spans carry offsets, so nothing is highlighted — the empty/degenerate case.
+ */
 export const NoSpans: Story = {
 	args: { input: "90210", nodes: [{ tag: "postcode", value: "90210", confidence: 0.99 }] },
 }

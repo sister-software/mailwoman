@@ -31,6 +31,7 @@ let candidatePath: string
 
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -49,14 +50,18 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (1, 700000);
 		INSERT INTO place_population VALUES (2, 117000);
 	`)
+
 	db.close()
 }
 
-/** Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1). */
+/**
+ * Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1).
+ */
 async function attachPostalCityIndex(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
 	const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: raw })
 	await createPostalCityCandidateTable(kdb)
+
 	await kdb
 		.insertInto(POSTAL_CITY_CANDIDATE_TABLE)
 		.values({
@@ -68,6 +73,7 @@ async function attachPostalCityIndex(path: string): Promise<void> {
 			longitude: -86.78,
 		})
 		.execute()
+
 	await kdb.destroy() // closes the underlying `raw` handle
 }
 
@@ -90,7 +96,7 @@ describe("WOFCandidateTableLookup postal-city side-index (#741)", () => {
 		try {
 			const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 			expect(hits[0]!.name).toBe("Antioch") // the CA distractor — no side-index to redirect
-			expect(hits[0]!.lat).toBeCloseTo(38.0, 1)
+			expect(hits[0]!.lat).toBeCloseTo(38, 1)
 		} finally {
 			lk.close()
 		}
@@ -121,7 +127,7 @@ describe("WOFCandidateTableLookup postal-city side-index (#741)", () => {
 			// leaks into bare-name resolution.
 			const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 			expect(hits[0]!.name).toBe("Antioch")
-			expect(hits[0]!.lat).toBeCloseTo(38.0, 1)
+			expect(hits[0]!.lat).toBeCloseTo(38, 1)
 		} finally {
 			lk.close()
 		}

@@ -16,8 +16,10 @@ import { identityMap } from "./offset-map.ts"
 
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
-// Trailing NOISE trimmed off the END of the input: whitespace + the sentence-punctuation that a user
-// commonly appends. NOT leading (a leading token is load-bearing) and NOT quotes/brackets/parens.
+/**
+ * Trailing NOISE trimmed off the END of the input: whitespace + the sentence-punctuation that a user commonly appends.
+ * NOT leading (a leading token is load-bearing) and NOT quotes/brackets/parens.
+ */
 const TRAILING_NOISE = /[ \t\n\r.,;:]/
 
 export interface WhitespaceResult {
@@ -41,6 +43,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 			out.push(ch)
 			map.push(i)
 			i += 1
+
 			continue
 		}
 
@@ -58,13 +61,15 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				changed = true
 				runs += 1
 			}
+
 			continue
 		}
 
 		// Collapse \r\n into one
-		if (ch === "\n" && out[out.length - 1] === "\r") {
+		if (ch === "\n" && out.at(-1) === "\r") {
 			// Already handled in CR branch above by emitting both; skip combiner check
 		}
+
 		out.push(ch)
 		map.push(i)
 		i += 1
@@ -76,6 +81,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 	while (lead < out.length && ANY_SPACE.test(out[lead]!)) {
 		lead += 1
 	}
+
 	let trail = out.length
 
 	while (trail > lead && TRAILING_NOISE.test(out[trail - 1]!)) {
@@ -85,6 +91,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 	if (lead > 0 || trail < out.length) {
 		changed = true
 	}
+
 	const trimmedOut = out.slice(lead, trail)
 	const trimmedMap = map.slice(lead, trail)
 

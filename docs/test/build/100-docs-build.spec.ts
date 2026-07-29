@@ -15,17 +15,26 @@
 
 import { execFile } from "node:child_process"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { fileURLToPath } from "node:url"
+import { join, resolve } from "node:path"
 import { promisify } from "node:util"
 
-import { childEnv } from "@mailwoman/core/scripting/utils"
 import { expect, test } from "@playwright/test"
 
 const execFileAsync = promisify(execFile)
 
-/** Docs/ workspace root — this file lives at docs/test/build/. */
-const DOCS_ROOT = fileURLToPath(new URL("../..", import.meta.url))
+/**
+ * Docs/ workspace root — this file lives at docs/test/build/.
+ */
+// `__dirname`, not `import.meta.url`: Playwright transpiles these specs for a package with no
+// `"type": "module"`, so import.meta is a syntax error at load time. This was masked while the whole
+// config failed to load — the file never got far enough to be parsed.
+const DOCS_ROOT = resolve(__dirname, "../..")
+
+// Not `childEnv` from @mailwoman/core: importing workspace TypeScript pulls Playwright's loader into
+// the module graph, and it handles neither `.ts`-extension imports nor the project references behind
+// them. The helper is a spread over process.env; Playwright loads this spec outside the repo's helpers.
+// oxlint-disable-next-line sister-software/no-process-globals -- see above
+const processEnv = process.env
 
 /**
  * Build into a throwaway dir, not the workspace `build/`. The Playwright webServer serves `build/` for the browser
@@ -46,16 +55,17 @@ test.describe("docs build", () => {
 	test.setTimeout(600_000)
 
 	test("completes with no warnings or errors", async () => {
-		let stdout = ""
-		let stderr = ""
+		let stdout: string
+		let stderr: string
 		let failed = false
 
 		try {
 			const result = await execFileAsync("yarn", ["build", "--out-dir", CHECK_OUT_DIR], {
 				cwd: DOCS_ROOT,
 				maxBuffer: 64 * 1024 * 1024,
-				env: childEnv({ CI: "true" }),
+				env: { ...processEnv, CI: "true" },
 			})
+
 			stdout = result.stdout
 			stderr = result.stderr
 		} catch (error) {

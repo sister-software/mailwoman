@@ -47,25 +47,41 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode coverageReconciliation}. */
+/**
+ * Options for {@linkcode coverageReconciliation}.
+ */
 export interface CoverageReconciliationOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Rows kept per source. Default 2000. */
+	/**
+	 * Rows kept per source. Default 2000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
-	/** Also write the bucket-tagged GeoJSON here. */
+	/**
+	 * Also write the bucket-tagged GeoJSON here.
+	 */
 	outGeojson?: string
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
-/** Which kind of source a record's provenance label denotes. */
+/**
+ * Which kind of source a record's provenance label denotes.
+ */
 const ELIGIBILITY = new Set(["nppes", "txhhsc-nursing"])
 const FUNDING = new Set(["fcc-rhc"])
 
@@ -124,7 +140,9 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	},
 ]
 
-/** Coverage reconciliation (#621) — see the module doc. Emits the markdown report to stdout. */
+/**
+ * Coverage reconciliation (#621) — see the module doc. Emits the markdown report to stdout.
+ */
 export async function coverageReconciliation(
 	options: CoverageReconciliationOptions,
 	report?: (line: string) => void
@@ -149,6 +167,7 @@ export async function coverageReconciliation(
 
 			if (kept.length >= CAP) break
 		}
+
 		rawBySource.set(spec.source, kept)
 		report?.(`    ${spec.source}: ${kept.length} rows`)
 	}
@@ -158,9 +177,11 @@ export async function coverageReconciliation(
 
 	let geo = 0
 	let total = 0
+
 	// Count placements at the seam (parity with the retired in-script counter).
 	const seam: GeocodeAddress = async (raw) => {
 		const g = await geocoder.seam(raw)
+
 		total++
 
 		if (g?.geocode) {
@@ -179,8 +200,10 @@ export async function coverageReconciliation(
 		for (const r of recs) {
 			r.id = `${spec.source}:${r.id}`
 		}
+
 		records.push(...recs)
 	}
+
 	geocoder.close()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
@@ -213,6 +236,7 @@ export async function coverageReconciliation(
 			`finding**. At full scale the anti-join tightens, but it is STILL only a set of candidates.`,
 		spotCheckLimit: 15,
 	})
+
 	console.log(md)
 
 	if (OUT_MD) {

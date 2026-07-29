@@ -12,11 +12,17 @@ import type { ReactNode } from "react"
 import { useClipboard } from "./useClipboard.ts"
 
 export interface CopyButtonProps {
-	/** The text to copy. If a thunk, it's evaluated at click time (so callers can copy the latest value). */
+	/**
+	 * The text to copy. If a thunk, it's evaluated at click time (so callers can copy the latest value).
+	 */
 	value: string | (() => string)
-	/** Label in the idle state. @default "Copy" */
+	/**
+	 * Label in the idle state. @default "Copy"
+	 */
 	label?: ReactNode
-	/** Label shown briefly after a successful copy. @default "✓ Copied" */
+	/**
+	 * Label shown briefly after a successful copy. @default "✓ Copied"
+	 */
 	copiedLabel?: ReactNode
 	className?: string
 	disabled?: boolean

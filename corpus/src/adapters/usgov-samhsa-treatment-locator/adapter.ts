@@ -37,7 +37,15 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_SAMHSA_ADAPTER_ID = "usgov-samhsa-treatment-locator"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_SAMHSA_DEFAULT_LICENSE = "Public Domain"
 
 /**
@@ -52,7 +60,9 @@ interface SamhsaSiteRow {
 	city: string
 	state: string
 	zip: string
-	/** Optional. Falls back to `stableSourceID` derived from components when missing. */
+	/**
+	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 */
 	frid?: string
 }
 
@@ -109,7 +119,9 @@ function composeVenue(name1: string, name2: string | undefined): string {
 	return `${n1} - ${n2}`
 }
 
-/** Same envelope-style format as HRSA: venue prefix, street body, city/state/zip suffix. */
+/**
+ * Same envelope-style format as HRSA: venue prefix, street body, city/state/zip suffix.
+ */
 function composeRaw(
 	venue: string,
 	house: string | undefined,
@@ -137,6 +149,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -182,9 +195,10 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 
 					const aligned = reconcileComponents(components, raw)
 
-					if (Object.keys(aligned).length === 0) continue
+					if (!Object.keys(aligned).length) continue
 
 					const frID = (record.frid ?? "").trim()
+
 					const sourceID = frID
 						? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}`
 						: stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
@@ -199,6 +213,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_SAMHSA_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -208,4 +223,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovSamhsaTreatmentLocatorAdapter = createUsgovSamhsaTreatmentLocatorAdapter()

@@ -26,19 +26,25 @@ const STUB_STYLE: DemoMapStyle = {
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-/** Poll `get` until it returns a truthy value or `timeout` ms elapse. Never throws — returns null on timeout. */
+/**
+ * Poll `get` until it returns a truthy value or `timeout` ms elapse. Never throws — returns null on timeout.
+ */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 
 	// Flush react-map-gl's async map creation (dynamic import + effects) inside act() so React state
 	// updates don't warn and the DOM is current when we query.
 	let found: T | null = null
+
 	await act(async () => {
 		while (Date.now() - start < timeout) {
 			found = get()
 
 			if (found) break
-			await new Promise((resolve) => setTimeout(resolve, 50))
+
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50)
+			})
 		}
 	})
 

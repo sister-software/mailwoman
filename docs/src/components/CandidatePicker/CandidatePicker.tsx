@@ -1,4 +1,4 @@
-import { ResolvedHit } from "../../shared/resources.tsx"
+import type { ResolvedHit } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 

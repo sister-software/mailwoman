@@ -16,9 +16,7 @@ import React from "react"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Inner component (below BrowserOnly boundary)
-// ---------------------------------------------------------------------------
+//#region Inner component (below BrowserOnly boundary)
 
 const AboutDemoInner: React.FC = () => {
 	return (
@@ -101,11 +99,16 @@ const AboutDemoInner: React.FC = () => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component (SSR-safe via BrowserOnly — Docusaurus renders <details> as
-// plain HTML on the server, but the collapsible behavior needs the client.)
-// ---------------------------------------------------------------------------
+//#endregion
 
+//#region Public component
+
+/**
+ * SSR-safe via `BrowserOnly`: Docusaurus renders `<details>` as plain HTML on the server, but the collapsible behavior
+ * needs the client.
+ */
 export const AboutDemo: React.FC = () => {
 	return <BrowserOnly fallback={<p>Loading demo info…</p>}>{() => <AboutDemoInner />}</BrowserOnly>
 }
+
+//#endregion

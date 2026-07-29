@@ -23,7 +23,9 @@ import type { DatabaseSync } from "node:sqlite"
 import { corePackagePath } from "@mailwoman/core/utils"
 
 export interface EnrichAdminOptions {
-	/** Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`. */
+	/**
+	 * Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`.
+	 */
 	specsDir?: string
 }
 
@@ -33,11 +35,15 @@ export interface EnrichAdminResult {
 	placeAbbrRows: number
 }
 
-/** Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent. */
+/**
+ * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent.
+ */
 export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): EnrichAdminResult {
 	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
 
-	db.exec("DELETE FROM names WHERE language = 'abbr'") // idempotent re-run
+	db.exec("DELETE FROM names WHERE language = 'abbr'")
+
+	// idempotent re-run
 
 	const countries = (
 		db.prepare("SELECT DISTINCT country FROM spr WHERE placetype='region'").all() as Array<{ country: string }>
@@ -69,10 +75,12 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 				nameToAbbr.set(n, keys[i]!)
 			}
 		}
+
 		const regions = db.prepare("SELECT id, name FROM spr WHERE placetype='region' AND country = ?").all(cc) as Array<{
 			id: number
 			name: string
 		}>
+
 		db.exec("BEGIN")
 
 		for (const r of regions) {
@@ -80,9 +88,11 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 
 			if (abbr && abbr.toLowerCase() !== String(r.name).toLowerCase()) {
 				insert.run(r.id, abbr, cc)
+
 				added++
 			}
 		}
+
 		db.exec("COMMIT")
 	}
 

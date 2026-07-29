@@ -18,19 +18,31 @@ import { Layer, Source } from "react-map-gl/maplibre"
 
 import type { PlaceGeometry } from "./geometry.ts"
 
-/** The house pink, matched to {@link PlaceMarker}. */
+/**
+ * The house pink, matched to {@link PlaceMarker}.
+ */
 const OUTLINE_COLOR = "#e0367c"
 
 export interface ResultOverlayProps {
-	/** The outline geometry to draw, or `null` to draw nothing (the bare-point result). */
+	/**
+	 * The outline geometry to draw, or `null` to draw nothing (the bare-point result).
+	 */
 	outline: PlaceGeometry | null
-	/** Source/layer id prefix — override to render more than one outline on a map. @default "mw-result" */
+	/**
+	 * Source/layer id prefix — override to render more than one outline on a map. @default "mw-result"
+	 */
 	id?: string
-	/** Fill color. @default the house pink. */
+	/**
+	 * Fill color. @default the house pink.
+	 */
 	color?: string
-	/** Fill opacity. @default 0.12 */
+	/**
+	 * Fill opacity. @default 0.12
+	 */
 	fillOpacity?: number
-	/** Outline stroke width (px). @default 2 */
+	/**
+	 * Outline stroke width (px). @default 2
+	 */
 	lineWidth?: number
 }
 

@@ -38,6 +38,7 @@ describe("compareComponents", () => {
 	it("is LOST when a critical tag's value changes — the Pennsylvania Ave comma-drop shape", () => {
 		// Reproduces the feed-8k finding: comma-drop pulls "NW" out of `street` and into `locality`.
 		const a = { house_number: "1600", street: "Pennsylvania Ave NW", locality: "Washington", region: "DC" }
+
 		const b = {
 			house_number: "1600",
 			street: "Pennsylvania",

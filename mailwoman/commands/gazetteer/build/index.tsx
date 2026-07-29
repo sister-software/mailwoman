@@ -38,6 +38,7 @@ export { OptionsSchema as options }
 const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		console.error("▸ build admin (staging)")
+
 		const admin = await buildAdmin({
 			dataDir: options.data,
 			skipVerify: options.skipVerify,
@@ -45,8 +46,11 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 		})
 
 		const candidateOut = join(wofDir(), DEFAULT_CANDIDATE_OUT)
+
 		console.error(`▸ build candidate ← ${admin.out}`)
+
 		const shards = resolvePostcodeShards()
+
 		const candidate = await buildCandidate({
 			adminDb: admin.out,
 			out: candidateOut,

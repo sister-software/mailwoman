@@ -30,35 +30,41 @@ export { OptionsSchema as options }
 
 const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		if (args.length === 0) throw commandError("pass at least one query")
+		if (!args.length) throw commandError("pass at least one query")
 		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
 		const maxResults = Number.parseInt(options.max ?? "10", 10)
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
 
 		console.error(`Building FST from ${dbPath}...`)
+
 		const start = performance.now()
+
 		const { matcher, result } = buildFSTFromWOF({
 			dbPath,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
 			languages: ["eng", ""],
 		})
+
 		console.error(
 			`Built: ${result.stateCount} states, ${result.placeCount} places, ${result.edgeCount} edges (${((performance.now() - start) / 1000).toFixed(1)}s)\n`
 		)
 
 		for (const query of args) {
 			const q = matcher.query(query)
+
 			console.log(`"${query}" → path: [${q.path.map((t) => `"${t}"`).join(", ")}]`)
 			console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
-			if (q.accepting.length > 0) {
-				const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)
+			if (q.accepting.length) {
+				const sorted = [...q.accepting].toSorted((a, b) => b.importance - a.importance)
+
 				console.log(`  Top by importance:`)
 
 				for (const p of sorted.slice(0, maxResults)) {
 					const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
-					const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
+					const chain = p.parentChain.length ? ` chain=[${p.parentChain.join("→")}]` : ""
+
 					console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
 				}
 
@@ -67,14 +73,16 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 				}
 			}
 
-			if (options.showContinuations && q.continuations.length > 0) {
-				const shown = q.continuations.sort((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
+			if (options.showContinuations && q.continuations.length) {
+				const shown = q.continuations.toSorted((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
+
 				console.log(`  Continuations (${q.continuations.length} total):`)
 
 				for (const c of shown) {
 					console.log(`    "${c.token}"${c.acceptingCount > 0 ? ` → ${c.acceptingCount} places` : ""}`)
 				}
 			}
+
 			console.log()
 		}
 	})

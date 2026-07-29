@@ -37,6 +37,7 @@ describe("ModelVisualizer helpers", () => {
 				[-1e9, 3],
 			])
 		).toBe(3)
+
 		expect(matrixAbsMax([])).toBe(1)
 	})
 

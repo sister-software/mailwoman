@@ -36,7 +36,7 @@ test("VersionPicker renders options and fires onSelect", async () => {
 
 	const select = container.querySelector("#mw-demo-version") as HTMLSelectElement
 	expect(select).not.toBeNull()
-	expect(select.querySelectorAll("option").length).toBe(2)
+	expect(select.querySelectorAll("option")).toHaveLength(2)
 
 	await userEvent.selectOptions(select, "v7.1.0")
 	expect(onSelect).toHaveBeenCalledWith("v7.1.0")
@@ -89,6 +89,7 @@ test("CompareToggle reveals the compare select (primary excluded) when turned on
 
 test("BackendControl shows the backend and toggles forceWASM", async () => {
 	const onForceWASMChange = vi.fn()
+
 	const { container } = renderComponent(
 		<BackendControl activeBackend="webgpu (28 MB int8)" forceWASM={false} onForceWASMChange={onForceWASMChange} />
 	)
@@ -130,6 +131,7 @@ test("ResultPanel renders components + resolved place, and switches candidate", 
 
 test("ResultPanel renders the injected failure slot when nothing resolved", () => {
 	const result = { ...makeFakeParseResult(), resolved: null, candidates: [] }
+
 	const { container } = renderComponent(
 		<ResultPanel
 			result={result}
@@ -181,13 +183,13 @@ test("usePlaceAutocomplete suggests on type and rewrites the input on pick", asy
 	await userEvent.type(input, "New")
 
 	// Debounced fetch → the listbox appears with the three "New*" suggestions.
-	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]').length).toBe(3))
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(3))
 	expect(input.getAttribute("aria-expanded")).toBe("true")
 
 	// Pick the first (New York) → input rewritten (no comma → whole value replaced), listbox closes.
 	await userEvent.click(container.querySelectorAll('[role="option"]')[0] as HTMLElement)
 	await vi.waitFor(() => expect(input.value).toBe("New York"))
-	expect(container.querySelectorAll('[role="option"]').length).toBe(0)
+	expect(container.querySelectorAll('[role="option"]')).toHaveLength(0)
 })
 
 test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () => {
@@ -201,5 +203,5 @@ test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () 
 	// debounce's own state update + the abstaining effect (which DO run) settle in-scope, not unwrapped.
 	await actDelay(60)
 	expect(autocomplete).not.toHaveBeenCalled()
-	expect(container.querySelectorAll('[role="option"]').length).toBe(0)
+	expect(container.querySelectorAll('[role="option"]')).toHaveLength(0)
 })

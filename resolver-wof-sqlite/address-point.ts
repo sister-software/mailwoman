@@ -63,10 +63,12 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
+
 			this.#byLocality = this.#db.prepare(
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
+
 			this.#byBbox = this.#db.prepare(
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE street_norm = ? AND number = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? LIMIT 1`
@@ -101,6 +103,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
 					: normalizeLocalityForKey(query.locality)
+
 			row = this.#byLocality.get(localityKey, streetNorm, number) as AddressPointRow | undefined
 		}
 

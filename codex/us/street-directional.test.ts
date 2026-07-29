@@ -41,11 +41,13 @@ test("lookupDirectional: resolves abbreviation OR name to both forms", () => {
 
 test("matchLeadingDirectional: matches the first word only, preserving its surface", () => {
 	expect(matchLeadingDirectional("N Main St")).toEqual({ canonical: "NORTH", abbreviation: "N", matched: "N" })
+
 	expect(matchLeadingDirectional("Northeast Blvd")).toEqual({
 		canonical: "NORTH EAST",
 		abbreviation: "NE",
 		matched: "Northeast",
 	})
+
 	// a street whose first word is not a directional
 	expect(matchLeadingDirectional("Main St")).toBeNull()
 	// directional NOT at the start is not a leading match

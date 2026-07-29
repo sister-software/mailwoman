@@ -18,7 +18,9 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
-/** A confident structured-address verdict with a couple of weaker alternatives. */
+/**
+ * A confident structured-address verdict with a couple of weaker alternatives.
+ */
 export const StructuredAddress: Story = {
 	args: {
 		kindResult: {
@@ -32,7 +34,9 @@ export const StructuredAddress: Story = {
 	},
 }
 
-/** A bare ZIP code — the classifier's `postcode_only` bucket, here with no alternatives. */
+/**
+ * A bare ZIP code — the classifier's `postcode_only` bucket, here with no alternatives.
+ */
 export const PostcodeOnly: Story = {
 	args: {
 		kindResult: {
@@ -43,7 +47,9 @@ export const PostcodeOnly: Story = {
 	},
 }
 
-/** A genuinely ambiguous single-token input where the top two kinds are close. */
+/**
+ * A genuinely ambiguous single-token input where the top two kinds are close.
+ */
 export const Ambiguous: Story = {
 	args: {
 		kindResult: {

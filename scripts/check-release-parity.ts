@@ -30,17 +30,22 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { "warn-only"?: boolean }
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
-// The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads,
-// not what the publisher believes it wrote.
+/**
+ * The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads, not what the
+ * publisher believes it wrote.
+ */
 const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
 
-// Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" —
-// the version-parity workflow runs it WITHOUT installing; a @mailwoman/core import here crashed
-// every CI run with ERR_MODULE_NOT_FOUND while local runs silently resolved via repo node_modules,
-// which is how the 2026-07-2x dailies were red without anyone seeing a version comparison at all).
+/**
+ * Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" — the version-parity
+ * workflow runs it WITHOUT installing; a @mailwoman/core import here crashed every CI run with ERR_MODULE_NOT_FOUND
+ * while local runs silently resolved via repo node_modules, which is how the 2026-07-2x dailies were red without anyone
+ * seeing a version comparison at all).
+ */
 const REPO_ROOT = resolve(import.meta.dirname, "..")
 const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "articles", "releases.mdx")
 const MODEL_CARD_PATH = resolve(REPO_ROOT, "neural-weights-en-us", "model-card.json")
@@ -49,11 +54,15 @@ interface ParityCheck {
 	name: string
 	value: string
 	ok: boolean
-	/** What the value was compared against — printed on failure. */
+	/**
+	 * What the value was compared against — printed on failure.
+	 */
 	expected: string
 }
 
-/** Strip a leading `v` so demo-manifest versions (`v5.1.0`) compare against npm versions (`5.1.0`). */
+/**
+ * Strip a leading `v` so demo-manifest versions (`v5.1.0`) compare against npm versions (`5.1.0`).
+ */
 function normalizeVersion(version: string): string {
 	return version.replace(/^v/, "").trim()
 }
@@ -112,6 +121,7 @@ const localCard = JSON.parse(readFileSync(MODEL_CARD_PATH, "utf8")) as {
 	version: string
 	files_md5?: Record<string, string>
 }
+
 const cardModelVersion = normalizeVersion(localCard.version)
 
 const demoDefault = await readDemoDefaultVersion()
@@ -130,6 +140,7 @@ let demoNote = `${cardModelVersion} (model-card version)`
 if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 	try {
 		const trailingCardURL = `https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${demoDefault}/model-card.json`
+
 		const trailingCard = (await (await fetch(trailingCardURL)).json()) as {
 			files_md5?: Record<string, string>
 		}
@@ -137,6 +148,7 @@ if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 		if (trailingCard.files_md5?.["model.onnx"] === localCard.files_md5["model.onnx"]) {
 			demoOK = true
 			demoNote = `${cardModelVersion} — demo trails on a bundle revision with IDENTICAL model bytes (model.onnx md5 match); acceptable until the demo repoint (#1278)`
+
 			console.log(
 				`  note: demo defaultVersion ${demoDefault} trails card ${cardModelVersion} but model.onnx bytes are identical — bundle-only revision, parity holds`
 			)
@@ -145,6 +157,7 @@ if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 		// Fetch failure → keep the strict verdict; the check stays honest rather than silently passing.
 	}
 }
+
 checks.push({
 	name: `demo manifest defaultVersion (${DEMO_MANIFEST_URL})`,
 	value: demoDefault,
@@ -153,6 +166,7 @@ checks.push({
 })
 
 const docsCurrent = readDocsCurrentVersion()
+
 checks.push({
 	name: "docs/articles/releases.mdx (current) row",
 	value: docsCurrent,
@@ -170,6 +184,7 @@ for (const check of checks) {
 	if (!check.ok) {
 		failed = true
 	}
+
 	console.log(`${mark} ${check.name}: ${check.value}${check.ok ? "" : ` (expected ${check.expected})`}`)
 }
 
@@ -178,6 +193,7 @@ if (failed && !warnOnly) {
 		`\nVersion parity FAILED — a surface trails npm ${npmLatest}. Repoint the demo (mailwoman-release Step 5) ` +
 			`and/or update the releases.mdx (current) row. See #894 / #203.`
 	)
+
 	process.exit(1)
 }
 

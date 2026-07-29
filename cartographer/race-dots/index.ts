@@ -26,12 +26,19 @@ import type { CircleLayerSpecification, VectorSourceSpecification } from "@mapli
 
 import { TileSetSourceID } from "../styles/sources.ts"
 
+/**
+ * Tile set id for the dot-density race layer, one dot per N people (see `tiger/tools/race-dots.ts`).
+ */
 export const RaceDotsTileSetID = TileSetSourceID("race-dots-la")
 
-/** The single source-layer the race-dots PMTiles ships (tippecanoe `-l dots`). */
+/**
+ * The single source-layer the race-dots PMTiles ships (tippecanoe `-l dots`).
+ */
 export const RACE_DOTS_SOURCE_LAYER = "dots"
 
-/** The togglable categories. Each becomes its own default-off layer + LayerToggleControl checkbox. */
+/**
+ * The togglable categories. Each becomes its own default-off layer + LayerToggleControl checkbox.
+ */
 export const RaceDotsCategories = [
 	{ id: "race-dots-white", label: "Race · White", color: "#1f78b4", match: ["white"] },
 	{ id: "race-dots-black", label: "Race · Black", color: "#33a02c", match: ["black"] },
@@ -40,7 +47,9 @@ export const RaceDotsCategories = [
 	{ id: "race-dots-other", label: "Race · Other", color: "#8c6d31", match: ["aian", "nhpi", "other", "multi"] },
 ] as const
 
-/** Build the race-dots source spec from the tile worker's TileJSON endpoint. */
+/**
+ * Build the race-dots source spec from the tile worker's TileJSON endpoint.
+ */
 export function createRaceDotsSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }
 }

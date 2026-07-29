@@ -10,7 +10,9 @@ export interface SpanRange {
 	body: string
 }
 
-/** A single normalization step, as recorded on `NormalizedInput.transforms`. */
+/**
+ * A single normalization step, as recorded on `NormalizedInput.transforms`.
+ */
 export type NormalizationTransform =
 	| { kind: "nfc"; changed: boolean }
 	| { kind: "case_fold"; locale: string }
@@ -27,32 +29,50 @@ export type NormalizationTransform =
  * convention.
  */
 export interface NormalizedInput {
-	/** The input as the caller sent it. */
+	/**
+	 * The input as the caller sent it.
+	 */
 	raw: string
 
-	/** Canonical form, all transforms applied. */
+	/**
+	 * Canonical form, all transforms applied.
+	 */
 	normalized: string
 
-	/** Ordered record of what was done. */
+	/**
+	 * Ordered record of what was done.
+	 */
 	transforms: NormalizationTransform[]
 
-	/** `normalized[i]` came from `raw[offsetMap[i]]`. Length === normalized.length. */
+	/**
+	 * `normalized[i]` came from `raw[offsetMap[i]]`. Length === normalized.length.
+	 */
 	offsetMap: number[]
 
-	/** The locale used for case-folding + abbreviation rules. */
+	/**
+	 * The locale used for case-folding + abbreviation rules.
+	 */
 	appliedLocale?: string
 }
 
 export interface NormalizeOpts {
-	/** Locale hint for case-folding + abbreviation dictionaries. */
+	/**
+	 * Locale hint for case-folding + abbreviation dictionaries.
+	 */
 	locale?: string
 
-	/** Apply locale-aware lowercasing. Default: false (preserve case for downstream consumers). */
+	/**
+	 * Apply locale-aware lowercasing. Default: false (preserve case for downstream consumers).
+	 */
 	caseFold?: boolean
 
-	/** Expand known abbreviations (`St` → `Street`, `NW` → `Northwest`, etc.). Default: false. */
+	/**
+	 * Expand known abbreviations (`St` → `Street`, `NW` → `Northwest`, etc.). Default: false.
+	 */
 	expandAbbreviations?: boolean
 
-	/** Skip Unicode NFC. Only use for debugging — production callers should leave on. */
+	/**
+	 * Skip Unicode NFC. Only use for debugging — production callers should leave on.
+	 */
 	skipNFC?: boolean
 }

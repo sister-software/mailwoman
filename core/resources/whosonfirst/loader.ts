@@ -5,7 +5,7 @@
  */
 
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
-import { TextNormalizer } from "@mailwoman/core/tokenization"
+import type { TextNormalizer } from "@mailwoman/core/tokenization"
 import FastGlob, { type Entry } from "fast-glob"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -21,6 +21,7 @@ import { parsePlacetypeSource } from "./placetypes/admin.ts"
  * If a value is present in this index, it means that the value is a valid value in at least one language.
  */
 export type WhosOnFirstLocaleIndex = Map<string, Set<string>>
+
 export type ReadonlyWhosOnFirstIndex = ReadonlyMap<string, ReadonlySet<string>>
 
 export interface WOFCacheOptions {

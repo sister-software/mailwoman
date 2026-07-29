@@ -25,6 +25,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import { flattenTree } from "../../shared/demo-helpers.ts"
 import type { DemoResult } from "../../shared/resources.tsx"
 import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
@@ -33,9 +34,7 @@ import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+//#region Helpers
 
 function statusBadgeLabel(badge: StatusBadge): string {
 	switch (badge) {
@@ -66,7 +65,7 @@ function statusBadgeClass(badge: StatusBadge): string {
 function confTier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
 const ConfidenceMini: React.FC<{ confidence?: number }> = ({ confidence }) => {
@@ -83,9 +82,9 @@ const ConfidenceMini: React.FC<{ confidence?: number }> = ({ confidence }) => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// State per stop
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region State per stop
 
 interface StopParseState {
 	address: string
@@ -94,9 +93,9 @@ interface StopParseState {
 	error: string | null
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Component
 
 export const GuidedTour: React.FC = () => {
 	const { classifier, ready, loadingProgress } = useDemoEmbed()
@@ -160,6 +159,7 @@ export const GuidedTour: React.FC = () => {
 					groupPhrases,
 					classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
 				})
+
 				const tClassify = performance.now()
 
 				const tree = pipelineResult.tree
@@ -182,9 +182,11 @@ export const GuidedTour: React.FC = () => {
 
 					return next
 				})
-			} catch (err) {
-				console.error("Tour parse error", err)
-				const message = err instanceof Error ? err.message : String(err)
+			} catch (error) {
+				console.error("Tour parse error", error)
+
+				const message = error instanceof Error ? error.message : String(error)
+
 				setStopStates((prev) => {
 					const next = new Map(prev)
 					next.set(stopID, { ...next.get(stopID)!, result: null, busy: false, error: message })
@@ -222,12 +224,13 @@ export const GuidedTour: React.FC = () => {
 	const onInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.target.value
-			setStopStates((prev) => {
-				const next = new Map(prev)
-				const existing = next.get(currentStop.id)!
-				next.set(currentStop.id, { ...existing, address: value, result: null, error: null })
 
-				return next
+			setStopStates((innerPrev) => {
+				const innerNext = new Map(innerPrev)
+				const existing = innerNext.get(currentStop.id)!
+				innerNext.set(currentStop.id, { ...existing, address: value, result: null, error: null })
+
+				return innerNext
 			})
 		},
 		[currentStop.id]
@@ -402,3 +405,5 @@ export const GuidedTour: React.FC = () => {
 		</div>
 	)
 }
+
+//#endregion

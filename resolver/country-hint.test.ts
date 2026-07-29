@@ -21,21 +21,23 @@ const MESSINA = {
 	name: "Messina",
 	placetype: "region",
 	country: "IT",
-	lat: 38.0,
+	lat: 38,
 	lon: 14.9,
 	score: 9,
 	exactMatch: true,
 }
+
 const MAINE = {
 	id: 20,
 	name: "Maine",
 	placetype: "region",
 	country: "US",
 	lat: 45.3,
-	lon: -69.0,
+	lon: -69,
 	score: 7,
 	exactMatch: true,
 }
+
 const AUGUSTA_ME: ResolvedPlace = {
 	id: 21,
 	name: "Augusta",
@@ -47,6 +49,7 @@ const AUGUSTA_ME: ResolvedPlace = {
 	score: 8,
 	exactMatch: true,
 }
+
 const AUGUSTA_IT: ResolvedPlace = {
 	id: 11,
 	name: "Augusta",
@@ -59,7 +62,9 @@ const AUGUSTA_IT: ResolvedPlace = {
 	exactMatch: true,
 }
 
-/** Backend filtered by name + placetype + country + parentID. Regions match any 2-letter token (abbrev). */
+/**
+ * Backend filtered by name + placetype + country + parentID. Regions match any 2-letter token (abbrev).
+ */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {
@@ -81,6 +86,7 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	children: [],
 	...over,
 })
+
 // region(ME) → locality(Augusta), with the hint set or not.
 const augustaMeTree = (hint: boolean): AddressTree => ({
 	raw: "Augusta, ME",

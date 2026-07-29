@@ -8,19 +8,29 @@
  *   and allowlist only when the collision/orphan is deliberate or belongs to another workstream.
  */
 
-/** A known-intentional exact `title:` collision. */
+/**
+ * A known-intentional exact `title:` collision.
+ */
 export interface DuplicateTitleAllowance {
 	title: string
 	reason: string
 }
 
-/** A page deliberately reachable by URL but absent from every sidebar. */
+/**
+ * A page deliberately reachable by URL but absent from every sidebar.
+ */
 export interface OrphanAllowance {
-	/** The Docusaurus doc id (see `DocPage.id`). */
+	/**
+	 * The Docusaurus doc id (see `DocPage.id`).
+	 */
 	id: string
 	reason: string
 }
 
+/**
+ * Titles allowed to appear on more than one page. Each entry needs a reason — the check exists to catch accidental
+ * duplicates, and an unexplained allowance defeats it.
+ */
 export const allowedDuplicateTitles: DuplicateTitleAllowance[] = [
 	{
 		title: "Retrospectives",
@@ -29,6 +39,9 @@ export const allowedDuplicateTitles: DuplicateTitleAllowance[] = [
 	},
 ]
 
+/**
+ * Pages allowed to sit outside the sidebar tree, e.g. ones reached only by direct link.
+ */
 export const allowedOrphans: OrphanAllowance[] = [
 	{
 		id: "sotm-2026-talk-proposal",

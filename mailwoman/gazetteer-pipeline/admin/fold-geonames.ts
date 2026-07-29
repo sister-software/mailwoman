@@ -15,11 +15,17 @@ import type { DatabaseSync } from "node:sqlite"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 export interface FoldGeonamesOptions {
-	/** ISO-2 codes for the alias fold (`<CC>.txt` under {@link FoldGeonamesOptions.geonamesDir}). */
+	/**
+	 * ISO-2 codes for the alias fold (`<CC>.txt` under {@link FoldGeonamesOptions.geonamesDir}).
+	 */
 	countries: readonly string[]
-	/** GeoNames per-country dump dir (download.geonames.org/export/dump). Default `<data-root>/geonames`. */
+	/**
+	 * GeoNames per-country dump dir (download.geonames.org/export/dump). Default `<data-root>/geonames`.
+	 */
 	geonamesDir?: string
-	/** AlternateNamesV2 dir (…/export/dump/alternatenames). Default `<data-root>/geonames-alternate`. */
+	/**
+	 * AlternateNamesV2 dir (…/export/dump/alternatenames). Default `<data-root>/geonames-alternate`.
+	 */
 	alternateDir?: string
 	/**
 	 * #267/#1026: countries for which to ALSO fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link
@@ -27,9 +33,13 @@ export interface FoldGeonamesOptions {
 	 * Omitting this is what flattened 95 countries' nodes (#1026).
 	 */
 	adminForCountries?: ReadonlySet<string>
-	/** ISO-2 codes for the POSTAL fold (#920). Omit to skip. */
+	/**
+	 * ISO-2 codes for the POSTAL fold (#920). Omit to skip.
+	 */
 	postalCountries?: readonly string[]
-	/** GeoNames postal dump dir (…/export/zip). Default `<data-root>/geonames-postal`. */
+	/**
+	 * GeoNames postal dump dir (…/export/zip). Default `<data-root>/geonames-postal`.
+	 */
 	postalDir?: string
 }
 
@@ -38,24 +48,26 @@ export interface FoldGeonamesResult {
 	postalIngested: number
 }
 
-/** Fold GeoNames aliases (+ optionally postal codes) into an open unified staging DB. */
+/**
+ * Fold GeoNames aliases (+ optionally postal codes) into an open unified staging DB.
+ */
 export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): Promise<FoldGeonamesResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
 	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
 	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))
 	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
-	const placesIngested =
-		opts.countries.length > 0
-			? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
-					alternateDir,
-					adminForCountries: opts.adminForCountries,
-				})
-			: 0
+
+	const placesIngested = opts.countries.length
+		? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
+				alternateDir,
+				adminForCountries: opts.adminForCountries,
+			})
+		: 0
 
 	let postalIngested = 0
 
-	if (opts.postalCountries && opts.postalCountries.length > 0) {
+	if (opts.postalCountries && opts.postalCountries.length) {
 		const postalDir = opts.postalDir ?? String(dataRootPath("geonames-postal"))
 		postalIngested = ingestGeonamesPostal(db, [...opts.postalCountries], postalDir).inserted
 	}

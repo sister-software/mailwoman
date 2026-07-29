@@ -21,19 +21,33 @@ import type { AddressTree, ComponentTag } from "../decoder/types.ts"
  * `ResolvedPlace` is expected.
  */
 export interface ResolvedPlace {
-	/** Resolver-specific place identifier (e.g. WOF id). */
+	/**
+	 * Resolver-specific place identifier (e.g. WOF id).
+	 */
 	id: number | string
-	/** Canonical name of the place as the resolver knows it. */
+	/**
+	 * Canonical name of the place as the resolver knows it.
+	 */
 	name: string
-	/** Resolver's placetype taxonomy label (e.g. WOF's `country` / `region` / `locality`). */
+	/**
+	 * Resolver's placetype taxonomy label (e.g. WOF's `country` / `region` / `locality`).
+	 */
 	placetype: string
-	/** ISO 3166-1 alpha-2 country code, if known. */
+	/**
+	 * ISO 3166-1 alpha-2 country code, if known.
+	 */
 	country: string
-	/** Centroid latitude in WGS-84 decimal degrees. */
+	/**
+	 * Centroid latitude in WGS-84 decimal degrees.
+	 */
 	lat: number
-	/** Centroid longitude in WGS-84 decimal degrees. */
+	/**
+	 * Centroid longitude in WGS-84 decimal degrees.
+	 */
 	lon: number
-	/** Parent place id within the resolver's hierarchy, if any. */
+	/**
+	 * Parent place id within the resolver's hierarchy, if any.
+	 */
 	parent_id?: number | string
 	/**
 	 * Resolver-defined ranking score. Higher = better fit for the query. Scale is implementation- defined; callers should
@@ -93,7 +107,9 @@ export interface ResolvedPlace {
  * negative result is a first-class record, distinguishable from ignorance.
  */
 export interface CountryCoverageFact {
-	/** ISO 3166-1 alpha-2, uppercase. */
+	/**
+	 * ISO 3166-1 alpha-2, uppercase.
+	 */
 	country: string
 	/**
 	 * The promote-gate VERDICT: hard-filtering this country is a pure win (a hard-filter miss is almost always a genuine
@@ -102,25 +118,39 @@ export interface CountryCoverageFact {
 	 * postcode-format-prior rationale despite a sub-95% panel resolve rate).
 	 */
 	hardFilterSafe: boolean
-	/** Measured hard-resolve rate (0..1) on the panel named in `source`, when the receipt recorded one. */
+	/**
+	 * Measured hard-resolve rate (0..1) on the panel named in `source`, when the receipt recorded one.
+	 */
 	hardResolveRate?: number
-	/** Panel size behind `hardResolveRate`, when recorded. */
+	/**
+	 * Panel size behind `hardResolveRate`, when recorded.
+	 */
 	sampleSize?: number
-	/** ISO-8601 date of the measurement / promote gate. */
+	/**
+	 * ISO-8601 date of the measurement / promote gate.
+	 */
 	measuredAt: string
-	/** The receipt: which panel/gate produced this row (issue + date, human-readable). */
+	/**
+	 * The receipt: which panel/gate produced this row (issue + date, human-readable).
+	 */
 	source: string
 }
 
-/** One country's coarse guard-B bounding box, as carried by the gazetteer artifact's `country_bbox` table. */
+/**
+ * One country's coarse guard-B bounding box, as carried by the gazetteer artifact's `country_bbox` table.
+ */
 export interface CountryBBoxFact {
-	/** ISO 3166-1 alpha-2, uppercase. */
+	/**
+	 * ISO 3166-1 alpha-2, uppercase.
+	 */
 	country: string
 	latMin: number
 	latMax: number
 	lonMin: number
 	lonMax: number
-	/** Provenance of the box (harness + date). */
+	/**
+	 * Provenance of the box (harness + date).
+	 */
 	source: string
 }
 
@@ -131,15 +161,23 @@ export interface CountryBBoxFact {
  * the code constants (byte-identical legacy behavior).
  */
 export interface GazetteerArtifactCoverage {
-	/** Country → measured coverage fact. ABSENCE = never measured (meaning-of-zero), never "failed". */
+	/**
+	 * Country → measured coverage fact. ABSENCE = never measured (meaning-of-zero), never "failed".
+	 */
 	countryCoverage: ReadonlyMap<string, CountryCoverageFact>
-	/** Country → guard-B bbox. ABSENCE = no box → the plausibility guard fails open for that country. */
+	/**
+	 * Country → guard-B bbox. ABSENCE = no box → the plausibility guard fails open for that country.
+	 */
 	countryBBoxes: ReadonlyMap<string, CountryBBoxFact>
-	/** Derived at load: the countries whose fact says `hardFilterSafe` — the artifact's hard-country safelist. */
+	/**
+	 * Derived at load: the countries whose fact says `hardFilterSafe` — the artifact's hard-country safelist.
+	 */
 	hardCountrySafelist: ReadonlySet<string>
 }
 
-/** Derive the hard-country safelist from coverage facts — the ONE derivation both the reader and the build share. */
+/**
+ * Derive the hard-country safelist from coverage facts — the ONE derivation both the reader and the build share.
+ */
 export function hardCountrySafelistFromCoverage(facts: Iterable<CountryCoverageFact>): ReadonlySet<string> {
 	const out = new Set<string>()
 
@@ -164,7 +202,9 @@ export interface ResolverBackend {
 		 * recovering localities the name-match alone misses. Backends without postcode support ignore it.
 		 */
 		postcode?: string
-		/** Proximity-bias points — a SOFT prominence re-rank; backends without support ignore it. */
+		/**
+		 * Proximity-bias points — a SOFT prominence re-rank; backends without support ignore it.
+		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
 		limit?: number
 	}): Promise<ResolvedPlace[]>
@@ -189,7 +229,9 @@ export interface ResolverBackend {
 	artifactCoverage?: GazetteerArtifactCoverage
 }
 
-/** One link in a resolved place's containment lineage ({@link ResolverBackend.ancestors}, #404). */
+/**
+ * One link in a resolved place's containment lineage ({@link ResolverBackend.ancestors}, #404).
+ */
 export interface Ancestor {
 	id: number | string
 	placetype: string
@@ -205,9 +247,13 @@ export interface CoincidentLocality extends ResolvedPlace {
 	 * `city-state` / `capital-seat` / `consolidated-county` — surfaced as `metadata.relationship_type`.
 	 */
 	relationshipType: string
-	/** Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several. */
+	/**
+	 * Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several.
+	 */
 	population: number
-	/** Centroid distance (km) admin↔locality from the relation — the population tiebreak. */
+	/**
+	 * Centroid distance (km) admin↔locality from the relation — the population tiebreak.
+	 */
 	distanceKm: number
 }
 
@@ -221,9 +267,13 @@ export interface CoincidentLocality extends ResolvedPlace {
 export interface AddressPointHit {
 	lat: number
 	lon: number
-	/** Provenance, e.g. `"overture:NAD"`. */
+	/**
+	 * Provenance, e.g. `"overture:NAD"`.
+	 */
 	source: string
-	/** Pinned data release the point came from, e.g. `"2026-05-20.0"`. */
+	/**
+	 * Pinned data release the point came from, e.g. `"2026-05-20.0"`.
+	 */
 	release: string
 }
 
@@ -261,11 +311,17 @@ export interface InterpolatedPointHit {
 	 * `address_point` = bracketed between real neighbor points; `tiger_range` = linear within a segment range.
 	 */
 	method: "address_point" | "tiger_range"
-	/** False when only the opposite side's range contained the number (right block, wrong side). */
+	/**
+	 * False when only the opposite side's range contained the number (right block, wrong side).
+	 */
 	parityMatched?: boolean
-	/** `both` = neighbors bracketed it; `single` = one-sided extrapolation (larger uncertainty). */
+	/**
+	 * `both` = neighbors bracketed it; `single` = one-sided extrapolation (larger uncertainty).
+	 */
 	bracket?: "both" | "single"
-	/** Honest uncertainty radius in METERS (half the matched segment length). */
+	/**
+	 * Honest uncertainty radius in METERS (half the matched segment length).
+	 */
 	uncertaintyM: number
 	source: string
 	release: string
@@ -301,7 +357,9 @@ export interface InterpolationLookup {
 export interface StreetCentroidHit {
 	lat: number
 	lon: number
-	/** Honest coarse radius in METERS — half the street's bounding-box diagonal. */
+	/**
+	 * Honest coarse radius in METERS — half the street's bounding-box diagonal.
+	 */
 	uncertaintyM: number
 	source: string
 	release: string
@@ -541,7 +599,9 @@ export interface ResolveOpts {
 	 */
 	adminCoherence?: boolean
 	hierarchyCompletion?: boolean
-	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
+	/**
+	 * @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored.
+	 */
 	cityStateFallback?: boolean
 	/**
 	 * Attach each resolved node's ancestor lineage (#404) — the containment chain (county → region → country) the
@@ -567,6 +627,10 @@ export interface ResolveOpts {
  */
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 
+/**
+ * Placetype equivalences applied when a backend does not supply its own. A `locality` query must also reach `borough`
+ * and `localadmin` rows — Brooklyn is a borough, and a strict filter made it unreachable.
+ */
 export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	country: "country",
 	region: "region",
@@ -620,6 +684,7 @@ export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>
 export function expandPlacetypeFilter(placetypes: null): null
 export function expandPlacetypeFilter(placetypes: readonly string[]): string[]
 export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null
+
 export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null {
 	if (!placetypes) return null
 	const out: string[] = []

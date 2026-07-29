@@ -60,7 +60,9 @@ export const COMPONENT_TAGS = [
 	"building_name",
 ] as const
 
-/** Union of every recognized address component tag. */
+/**
+ * Union of every recognized address component tag.
+ */
 export type ComponentTag = (typeof COMPONENT_TAGS)[number]
 
 /**
@@ -71,5 +73,7 @@ export type ComponentTag = (typeof COMPONENT_TAGS)[number]
  */
 export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, `I-${tag}`] as const)] as const
 
-/** Union of every BIO label. */
+/**
+ * Union of every BIO label.
+ */
 export type BIOLabel = (typeof BIO_LABELS)[number]

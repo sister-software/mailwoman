@@ -294,7 +294,7 @@ const ANCHORED_CHILD_MAX_WORDS = 4
  * calibrated per-country delta from the artifact header, 5.0 for GB as of the 2026-07-22 calibration; see task-7
  * sweep), so this is a defensive fallback, not a tuned value.
  */
-const DEFAULT_DELTA = 1.0
+const DEFAULT_DELTA = 1
 
 /**
  * Structural-marker words: a candidate window immediately followed by one of these is the HEAD of a street/venue name,
@@ -378,7 +378,9 @@ export interface PlacetypePairProbeTrace {
 }
 
 export interface PlacetypePairPriorOpts {
-	/** The PIX1 pair index to probe. */
+	/**
+	 * The PIX1 pair index to probe.
+	 */
 	index: PairIndexLike
 	/**
 	 * Fallback bias magnitude when `index.delta` is absent (a hand-built test double). Default 1.0 — see
@@ -424,11 +426,17 @@ export interface PlacetypePairPriorOpts {
  * decoder's axis.
  */
 export interface TransitionAdjustment {
-	/** Piece position whose INCOMING transition is adjusted — the child span's first piece. */
+	/**
+	 * Piece position whose INCOMING transition is adjusted — the child span's first piece.
+	 */
 	pieceIndex: number
-	/** Full BIO label the adjusted transition lands on (e.g. `"B-dependent_locality"`). */
+	/**
+	 * Full BIO label the adjusted transition lands on (e.g. `"B-dependent_locality"`).
+	 */
 	toLabel: string
-	/** Additive bonus (log-score units) — the index header's `transitionBeta`. */
+	/**
+	 * Additive bonus (log-score units) — the index header's `transitionBeta`.
+	 */
 	bonus: number
 }
 
@@ -448,7 +456,9 @@ export interface PlacetypePairPriorResult {
  * segment (segment mode).
  */
 interface CandidateWindow {
-	/** The space-joined fold — see the module docstring's "St Helens" → "st helens" note. */
+	/**
+	 * The space-joined fold — see the module docstring's "St Helens" → "st helens" note.
+	 */
 	key: string
 	/**
 	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note. Identical to
@@ -464,7 +474,9 @@ interface CandidateWindow {
 	pieceIndices: number[]
 }
 
-/** Build every contiguous 1..maxWords window over the non-punctuation word groups (window mode). */
+/**
+ * Build every contiguous 1..maxWords window over the non-punctuation word groups (window mode).
+ */
 function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: number): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
@@ -546,7 +558,9 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
 	["nz", NZ_POSTCODE_PATTERN],
 ])
 
-/** The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip). */
+/**
+ * The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip).
+ */
 function segmentParentPostcodeShape(country: string | undefined): RegExp | undefined {
 	return country ? SEGMENT_PARENT_POSTCODE_SHAPES.get(country.toLowerCase()) : undefined
 }
@@ -597,13 +611,14 @@ function buildSegmentWindows(
 ): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
-	if (nonEmptyGroups.length === 0) return windows
+	if (!nonEmptyGroups.length) return windows
 
 	let segStart = 0
 
 	for (let i = 1; i <= nonEmptyGroups.length; i++) {
 		if (i === nonEmptyGroups.length || groupSegments[i] !== groupSegments[segStart]) {
 			const slice = nonEmptyGroups.slice(segStart, i)
+
 			const keyTokens = stripTrailingSegmentPostcode(
 				slice.map((g) => g.fstToken),
 				parentPostcodeShape
@@ -616,6 +631,7 @@ function buildSegmentWindows(
 				endPos: i - 1,
 				pieceIndices: slice.flatMap((g) => g.pieceIndices),
 			})
+
 			segStart = i
 		}
 	}
@@ -623,7 +639,9 @@ function buildSegmentWindows(
 	return windows
 }
 
-/** Two windows are disjoint iff their word-group position ranges don't overlap (also excludes a window from itself). */
+/**
+ * Two windows are disjoint iff their word-group position ranges don't overlap (also excludes a window from itself).
+ */
 function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.endPos < b.startPos || b.endPos < a.startPos
 }
@@ -662,7 +680,9 @@ function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateW
 	return undefined
 }
 
-/** Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector). */
+/**
+ * Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector).
+ */
 function makeCandidateWindow(nonEmptyGroups: readonly WordGroup[], startPos: number, endPos: number): CandidateWindow {
 	const slice = nonEmptyGroups.slice(startPos, endPos + 1)
 	const tokens = slice.map((g) => g.fstToken)
@@ -698,7 +718,7 @@ function resolveAnchorParentEnd(
 
 	const matches = collectMatches(inputText)
 
-	if (matches.length === 0) return lastPos
+	if (!matches.length) return lastPos
 
 	let anchor = matches[0]!
 
@@ -711,7 +731,7 @@ function resolveAnchorParentEnd(
 	for (let i = 0; i < nonEmptyGroups.length; i++) {
 		const group = nonEmptyGroups[i]!
 		const start = pieces[group.pieceIndices[0]!]!.start
-		const end = pieces[group.pieceIndices[group.pieceIndices.length - 1]!]!.end
+		const end = pieces[group.pieceIndices.at(-1)!]!.end
 
 		if (start < anchor.end && anchor.start < end) return i - 1
 	}
@@ -821,7 +841,7 @@ function applyWindowBias(
 		matrix[pi]![col] = Math.max(matrix[pi]![col]!, bias)
 	}
 
-	if (transitionBeta === undefined || window.pieceIndices.length === 0) return
+	if (transitionBeta === undefined || !window.pieceIndices.length) return
 
 	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
 
@@ -882,6 +902,7 @@ export function buildPlacetypePairPriors(
 	// codex shape. Resolved on the segment path only — anchored and window modes never see it (they build their own
 	// candidates), so their behavior is byte-identical to pre-#1308.
 	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country) : undefined
+
 	const segmentWindows = groupSegments
 		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape)
 		: undefined
@@ -952,6 +973,7 @@ export function buildPlacetypePairPriors(
 
 			if (tag) {
 				matchedTag = tag
+
 				break
 			}
 		}

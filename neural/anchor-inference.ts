@@ -23,10 +23,14 @@ import type { TokenizedPiece } from "./tokenizer.ts"
  */
 export const LOCALE_ORDER = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
-/** Anchor feature width = posterior over the locale set + a 2-d centroid. */
+/**
+ * Anchor feature width = posterior over the locale set + a 2-d centroid.
+ */
 export const ANCHOR_FEATURE_DIM = LOCALE_ORDER.length + 2
 
-/** One postcode's anchor record (from the pilot lookup): country posterior + a single centroid. */
+/**
+ * One postcode's anchor record (from the pilot lookup): country posterior + a single centroid.
+ */
 export interface AnchorEntry {
 	posterior: Record<string, number>
 	lat: number
@@ -47,7 +51,7 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 	for (const [country, weight] of Object.entries(posterior)) {
 		const idx = LOCALE_ORDER.indexOf(country.toUpperCase() as (typeof LOCALE_ORDER)[number])
 
-		if (idx >= 0) {
+		if (idx !== -1) {
 			vec[idx] = weight
 			total += weight
 		}
@@ -58,6 +62,7 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 			vec[i]! /= total
 		}
 	}
+
 	vec[LOCALE_ORDER.length] = Math.max(-1, Math.min(1, lat / 90))
 	vec[LOCALE_ORDER.length + 1] = Math.max(-1, Math.min(1, lon / 180))
 
@@ -117,8 +122,9 @@ export function buildAnchorFeatures(
 				if (c < text.length && !/\s/.test(text[c]!)) {
 					if (c >= spanBegin && c < spanEnd) {
 						features[i] = vec
-						confidence[i] = 1.0
+						confidence[i] = 1
 					}
+
 					break // first non-whitespace char of the piece decides (mirrors realign_anchor_to_pieces)
 				}
 			}

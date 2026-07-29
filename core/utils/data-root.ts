@@ -21,7 +21,9 @@ import { $public } from "../env/index.ts"
  */
 const DEFAULT_MAILWOMAN_DATA_ROOT = "/mnt/playpen/mailwoman-data"
 
-/** The Mailwoman data root: `$MAILWOMAN_DATA_ROOT` when set, else the lab default. */
+/**
+ * The Mailwoman data root: `$MAILWOMAN_DATA_ROOT` when set, else the lab default.
+ */
 export function mailwomanDataRoot(): string {
 	return $public.MAILWOMAN_DATA_ROOT ?? DEFAULT_MAILWOMAN_DATA_ROOT
 }

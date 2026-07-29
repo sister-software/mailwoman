@@ -22,7 +22,10 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { scratch, shardRunner } from "../../test-kit/shard-recipe.ts"
 import { noStreetLedRecipe } from "./no-street-led.ts"
+
+const run = shardRunner("no-street-led", noStreetLedRecipe, 901)
 
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
@@ -30,31 +33,9 @@ const TUPLES = [
 	{ street: "Øvrabø", locality: "hellvik", number: "124/1", postcode: "4375" },
 ]
 
-function scratch(tuples: object[], surfaces: string[]): { input: string; exclude: string } {
-	const dir = mkdtempSync(join(tmpdir(), "no-street-led-"))
-	const input = join(dir, "tuples.jsonl")
-	const exclude = join(dir, "surfaces.txt")
-
-	writeFileSync(input, tuples.map((t) => JSON.stringify(t)).join("\n") + "\n")
-	writeFileSync(exclude, "# reserved\n" + surfaces.join("\n") + "\n")
-
-	return { input, exclude }
-}
-
-async function run(tuples: object[], surfaces: string[]) {
-	const { input, exclude } = scratch(tuples, surfaces)
-	const lines: string[] = []
-	const stats = await noStreetLedRecipe.run(
-		{ output: "", seed: 901, variants: 1, input, excludeSurfaces: exclude },
-		(line) => lines.push(line)
-	)
-
-	return { stats, rows: lines.map((line) => JSON.parse(line) as Record<string, never>) }
-}
-
 describe("no-street-led board split", () => {
 	it("REFUSES to run without an exclusion list", async () => {
-		const { input } = scratch(TUPLES, [])
+		const { input } = scratch("no-street-led", TUPLES, [])
 
 		await expect(noStreetLedRecipe.run({ output: "", seed: 901, variants: 1, input }, () => {})).rejects.toThrow(
 			/--exclude-surfaces is REQUIRED/
@@ -62,7 +43,7 @@ describe("no-street-led board split", () => {
 	})
 
 	it("REFUSES an exclusion list that resolves to zero surfaces", async () => {
-		const { input, exclude } = scratch(TUPLES, [])
+		const { input, exclude } = scratch("no-street-led", TUPLES, [])
 		writeFileSync(exclude, "# only a comment\n")
 
 		await expect(
@@ -84,7 +65,7 @@ describe("no-street-led board split", () => {
 		expect(stats.contaminated).toBe(1)
 
 		for (const row of rows) {
-			expect((row as { raw: string }).raw.toLowerCase()).not.toContain("tømmerlien")
+			expect(row.raw.toLowerCase()).not.toContain("tømmerlien")
 		}
 	})
 

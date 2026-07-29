@@ -42,8 +42,17 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
+import { haversineKm } from "@mailwoman/spatial"
 
-/** Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000"). */
+/**
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * even, which is what keeps repeated centroid rounding unbiased.
+ */
+const ROUND_HALF_DIGIT = 5
+
+/**
+ * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
+ */
 function incDecimalString(s: string): string {
 	const a = s.split("")
 	let i = a.length - 1
@@ -53,6 +62,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -70,7 +80,7 @@ function incDecimalString(s: string): string {
  * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
  * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
-function pyRound(x: number, nd: number = 0): number {
+function pyRound(x: number, nd = 0): number {
 	if (!Number.isFinite(x)) return x
 
 	if (nd === 0) {
@@ -83,6 +93,7 @@ function pyRound(x: number, nd: number = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -93,9 +104,9 @@ function pyRound(x: number, nd: number = 0): number {
 	let roundUp = false
 	const first = rest.charCodeAt(0) - 48
 
-	if (first > 5) {
+	if (first > ROUND_HALF_DIGIT) {
 		roundUp = true
-	} else if (first === 5) {
+	} else if (first === ROUND_HALF_DIGIT) {
 		if (/[1-9]/.test(rest.slice(1))) {
 			roundUp = true
 		} else {
@@ -104,36 +115,33 @@ function pyRound(x: number, nd: number = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
 }
 
-/** Python `math.radians`. */
+/**
+ * Python `math.radians`.
+ */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine great-circle distance in km — ported from the Python `haversine` (asin form). */
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6371.0
-	const p1 = toRad(lat1)
-	const p2 = toRad(lat2)
-	const dp = toRad(lat2 - lat1)
-	const dl = toRad(lon2 - lon1)
-	const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2
+/**
+ * Plus name:* / label:* props, gathered below.
+ */
+const ALT_NAME_KEYS = new Set(["wof:label"])
 
-	return 2 * R * Math.asin(Math.sqrt(a))
-}
-
-const ALT_NAME_KEYS = new Set(["wof:label"]) // plus name:* / label:* props, gathered below
-
-/** WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical. */
+/**
+ * WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical.
+ */
 function aliasesFor(props: Record<string, unknown>, canonical: string): string[] {
 	const out = new Set<string>()
 
@@ -149,12 +157,15 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 				}
 		}
 	}
+
 	out.delete(canonical)
 
-	return [...out].sort()
+	return [...out].toSorted()
 }
 
-/** Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`). */
+/**
+ * Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`).
+ */
 function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	const a = m.get(k)
 
@@ -165,7 +176,9 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	}
 }
 
-/** UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`. */
+/**
+ * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
@@ -197,6 +210,7 @@ export interface PostcodeLocalityBaseOptions {
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const db = new DatabaseSync(output)
+
 	const counts = db
 		.prepare(
 			"SELECT country AS country, COUNT(*) AS n, SUM(is_containing) AS con FROM postcode_locality GROUP BY country ORDER BY country"
@@ -215,7 +229,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const countriesJson =
 		"{" +
 		[...summary.keys()]
-			.sort()
+			.toSorted()
 			.map((c) => {
 				const s = summary.get(c)!
 
@@ -225,6 +239,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		"}"
 
 	const kdb = new DatabaseClient({ database: db })
+
 	await kdb.schema
 		.createTable("meta")
 		.ifNotExists()
@@ -249,6 +264,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		],
 		["countries", countriesJson],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
 	for (const [k, v] of meta) {
@@ -261,8 +277,10 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 
@@ -271,10 +289,13 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		"{" +
 		[...summary.entries()].map(([c, s]) => `'${c}': {'rows': ${s.rows}, 'containing': ${s.containing}}`).join(", ") +
 		"}"
+
 	console.log(`finalized ${output}: integrity=ok, countries=${summaryRepr}`)
 }
 
-/** Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`). */
+/**
+ * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
+ */
 function geojsonFiles(dir: string): string[] {
 	if (!existsSync(dir)) return []
 
@@ -287,6 +308,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	const { country, adminRepo, postcodeDB, output, radiusKm, maxCandidates } = args
 
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
+
 	const locs: Locality[] = []
 
 	for (const fp of geojsonFiles(join(adminRepo!, "data"))) {
@@ -300,6 +322,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 			if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue
 			const xs: number[] = []
 			const ys: number[] = []
+
 			const walk = (c: unknown): void => {
 				if (typeof (c as unknown[])[0] === "number") {
 					const pos = c as number[]
@@ -311,12 +334,14 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 					}
 				}
 			}
+
 			walk((geom as { coordinates: unknown }).coordinates)
 			const name = (p["wof:name"] as string) ?? ""
 			const lblLat = p["lbl:latitude"]
 			const lblLon = p["lbl:longitude"]
 			const clat = typeof lblLat === "number" ? lblLat : (Math.min(...ys) + Math.max(...ys)) / 2
 			const clon = typeof lblLon === "number" ? lblLon : (Math.min(...xs) + Math.max(...xs)) / 2
+
 			locs.push({
 				id: Number(p["wof:id"]),
 				name,
@@ -330,6 +355,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 			// ignore unreadable / malformed files (Python's bare except: pass)
 		}
 	}
+
 	console.log(`  ${locs.length} localities`)
 
 	// Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set; `bgrid`
@@ -353,10 +379,13 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	}
 
 	const con = new DatabaseSync(postcodeDB!)
+
 	const postcodes = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
+
 	con.close()
+
 	console.log(`  ${postcodes.length} ${country} postcode centroids`)
 
 	const out = new DatabaseSync(output)
@@ -364,6 +393,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
 	// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 	const kdb = new DatabaseClient({ database: out })
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.ifNotExists()
@@ -375,6 +405,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		.addColumn("distance_km", "real", (c) => c.notNull())
 		.addColumn("is_containing", "integer", (c) => c.notNull())
 		.execute()
+
 	out.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
 
 	const insert = out.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
@@ -404,6 +435,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				geometryContains(l.geom, plon, plat) === true
 			) {
 				containingIdx = idx
+
 				break
 			}
 		}
@@ -424,12 +456,14 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				}
 			}
 		}
+
 		cand.sort((a, b) => a.d - b.d || a.idx - b.idx)
 
 		const chosen: Array<{ d: number; idx: number; isc: number }> = []
 
 		if (containingIdx !== null) {
-			chosen.push({ d: 0.0, idx: containingIdx, isc: 1 })
+			chosen.push({ d: 0, idx: containingIdx, isc: 1 })
+
 			nContained++
 		}
 
@@ -443,9 +477,11 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		for (const { d, idx, isc } of chosen) {
 			const l = locs[idx]!
 			insert.run(pc, country!, l.id, l.name, l.aliases.join("|"), pyRound(d, 3), isc)
+
 			rows++
 		}
 	}
+
 	out.exec("COMMIT")
 
 	await kdb.schema
@@ -454,9 +490,11 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		.on("postcode_locality")
 		.columns(["postcode", "country"])
 		.execute()
+
 	console.log(
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
 	)
+
 	out.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(output)

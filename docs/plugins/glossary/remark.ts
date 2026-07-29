@@ -39,9 +39,13 @@ interface TextNode extends Node {
 	value: string
 }
 
-/** Does this text end with a capitalized word (plus optional trailing whitespace)? */
+/**
+ * Does this text end with a capitalized word (plus optional trailing whitespace)?
+ */
 const ENDS_WITH_CAPITALIZED_WORD = /(?:^|[\s([{"'–—-])[A-Z][\w'.]*[\s]*$/
-/** Does this text begin with (whitespace and) a capitalized word? */
+/**
+ * Does this text begin with (whitespace and) a capitalized word?
+ */
 const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
 
 function isGlossaryTermNode(node: Node): node is GlossaryTermNode {

@@ -11,15 +11,27 @@
 // usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
+import { clampConfidence } from "@mailwoman/core/decoder"
 import type { ParseResult } from "@mailwoman/react"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
+export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+
+//#region Types
+
+/**
+ * WOF hierarchy rank of a locality.
+ */
+const WOF_RANK_LOCALITY = 5
+
+/**
+ * WOF hierarchy rank of a region, one step up from a locality.
+ */
+const WOF_RANK_REGION = 4
 
 export interface ReleaseInfo {
 	version: string
@@ -40,11 +52,15 @@ export interface ReleasesManifest {
 	releases: ReleaseInfo[]
 }
 
-/** The raw wire shape of one releases.json entry — either key generation may appear. */
+/**
+ * The raw wire shape of one releases.json entry — either key generation may appear.
+ */
 interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
 	hasFST?: boolean
 	hasWOFDb?: boolean
-	/** Pre-2026-07-04 manifests published lowercase-acronym keys. */
+	/**
+	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
+	 */
 	hasFst?: boolean
 	hasWofDb?: boolean
 }
@@ -76,9 +92,13 @@ export function normalizeReleasesManifest(raw: {
 	}
 }
 
-export type ParsedNode = { tag: string; value?: unknown; confidence?: number }
+export interface ParsedNode {
+	tag: string
+	value?: unknown
+	confidence?: number
+}
 
-export type TreeNode = {
+export interface TreeNode {
 	tag?: string
 	value?: unknown
 	confidence?: number
@@ -87,12 +107,18 @@ export type TreeNode = {
 	children?: unknown[]
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+//#endregion
 
+//#region Constants
+
+/**
+ * Locale the demo opens on.
+ */
 export const DEFAULT_LOCALE = "en-us"
 
+/**
+ * Address the demo opens on — it exercises house number, street, directional, locality and region in one line.
+ */
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**
@@ -145,9 +171,9 @@ export function pairCountryForInput(input: string): string | undefined {
 	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
 }
 
-// ---------------------------------------------------------------------------
-// US state abbreviation expansion
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region US state abbreviation expansion
 
 const US_STATE_ABBREV: Record<string, string> = {
 	AL: "Alabama",
@@ -204,7 +230,7 @@ const US_STATE_ABBREV: Record<string, string> = {
 	PR: "Puerto Rico",
 }
 
-export const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+export const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 
 /**
  * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French département) before
@@ -215,9 +241,9 @@ export function expandUSRegion(text: string): string {
 	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
 }
 
-// ---------------------------------------------------------------------------
-// Tree flattening
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Tree flattening
 
 /**
  * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
@@ -243,25 +269,37 @@ export function flattenTree(
 		}
 	}
 
-	return out.reverse()
+	return out.toReversed()
 }
 
-// ---------------------------------------------------------------------------
-// Parse orchestration — the shared classify → resolve front-half (#861 / #1278)
-// ---------------------------------------------------------------------------
+//#endregion
 
-/** A source-order parsed node, as {@link flattenTree} yields it. */
+//#region Parse orchestration
+
+/**
+ * A source-order parsed node, as {@link flattenTree} yields it.
+ */
 export type FlatNode = ReturnType<typeof flattenTree>[number]
 
-/** What both demo parse paths need out of the neural classify stage before resolution. */
+/**
+ * What both demo parse paths need out of the neural classify stage before resolution.
+ */
 export interface ClassifyStageResult {
-	/** The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`). */
+	/**
+	 * The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`).
+	 */
 	tree: unknown
-	/** Source-order flattened nodes. */
+	/**
+	 * Source-order flattened nodes.
+	 */
 	nodes: FlatNode[]
-	/** The query-shape kind hypothesis (`postcode_only` / `structured_address` / …). */
+	/**
+	 * The query-shape kind hypothesis (`postcode_only` / `structured_address` / …).
+	 */
 	kindResult: ParseResult["kindResult"]
-	/** Wall-clock timing for the two front-half stages, in ms. */
+	/**
+	 * Wall-clock timing for the two front-half stages, in ms.
+	 */
 	timing: { shape: number; classify: number }
 }
 
@@ -285,9 +323,13 @@ export interface ClassifyStageResult {
 export type SelectPairIndex = (text: string, opts?: { country?: string }) => object | undefined
 
 export interface ClassifyStageDeps {
-	/** The loaded neural classifier (must be ready — the caller guards `null`). */
+	/**
+	 * The loaded neural classifier (must be ready — the caller guards `null`).
+	 */
 	classifier: MailwomanClassifierLike
-	/** The optional FST gazetteer prior. */
+	/**
+	 * The optional FST gazetteer prior.
+	 */
 	fst?: FSTMatcherLike | null
 	/**
 	 * The optional street-morphology matcher — the #1315 street-context gate's signal source. The gate only fires when
@@ -355,6 +397,7 @@ export async function runClassifyStage(
 		// fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
 		{ inputMode: "fragmented", ...(placetypePair !== undefined ? { placetypePair } : {}) }
 	)
+
 	const tClassify = performance.now()
 
 	return {
@@ -379,18 +422,20 @@ export async function resolveDualRoles(
 	try {
 		const roles = await lookup.coincidentRolesFor(primaryHit.id)
 
-		return roles.length > 0 ? roles : undefined
+		return roles.length ? roles : undefined
 	} catch {
 		// relation absent / query failed → no dual-role badge
 		return undefined
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Confidence calibration (browser-safe mirror)
-// ---------------------------------------------------------------------------
+//#endregion
 
-/** Maps a raw span confidence in [0, 1] to its calibrated probability of correctness. */
+//#region Confidence calibration (browser-safe mirror)
+
+/**
+ * Maps a raw span confidence in [0, 1] to its calibrated probability of correctness.
+ */
 export type Calibrator = (raw: number) => number
 
 interface CalibrationBin {
@@ -408,14 +453,14 @@ interface CalibrationBin {
 export function createCalibrator(table: { table: CalibrationBin[] } | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
 
-	if (!bins || bins.length === 0) throw new Error("createCalibrator: empty calibration table")
-	const sorted = [...bins].sort((a, b) => a.center - b.center)
+	if (!bins || !bins.length) throw new Error("createCalibrator: empty calibration table")
+	const sorted = [...bins].toSorted((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
-	const cals = sorted.map((b) => clamp01(b.calibrated))
+	const cals = sorted.map((b) => clampConfidence(b.calibrated))
 	const n = centers.length
 
 	return (raw: number): number => {
-		const x = clamp01(raw)
+		const x = clampConfidence(raw)
 
 		if (x <= centers[0]!) return cals[0]!
 
@@ -432,6 +477,7 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 				hi = mid
 			}
 		}
+
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!
 		const t = x1 === x0 ? 0 : (x - x0) / (x1 - x0)
@@ -440,19 +486,9 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 	}
 }
 
-function clamp01(v: number): number {
-	if (Number.isNaN(v)) return 0
+//#endregion
 
-	if (v < 0) return 0
-
-	if (v > 1) return 1
-
-	return v
-}
-
-// ---------------------------------------------------------------------------
-// WOF resolution — the shared resolver over the demo's candidate lookup (#861)
-// ---------------------------------------------------------------------------
+//#region WOF resolution
 
 /**
  * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
@@ -472,9 +508,9 @@ const PIN_RANK: Record<string, number> = {
 	country: 1,
 }
 
-type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-
-/** Minimal structural view of a decorated `AddressTree` node (decoupled from core's types). */
+/**
+ * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
+ */
 interface ResolvedTreeNode {
 	source?: string
 	sourceID?: string
@@ -498,139 +534,14 @@ interface ResolvedTreeNode {
  * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
  * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
  */
-/** Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter. */
-export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
 
-export async function runCascade(
-	lookup: MailwomanLookupLike,
-	tree: { roots: unknown[] },
-	rawText: string,
-	bias?: ResolveBias
-): Promise<CascadeHits> {
-	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+//#endregion
 
-	const backend = new CandidateResolverBackend(lookup)
-	const resolver = createWOFResolver(backend as never)
+//#region Street-level resolution
 
-	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
-	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
-	// global by design (the placer/population ranking routes, never a hardcoded country).
-	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
-	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
-	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
-	const resolved = (await resolver.resolveTree(tree as never, {
-		adminCoherence: true,
-		...(bias && bias.length > 0 ? { bias } : {}),
-	})) as unknown as {
-		roots: ResolvedTreeNode[]
-	}
-
-	// Collect every resolver-decorated node, best-pin first.
-	const collected: Array<{ hit: CascadeHits[number]; rank: number }> = []
-	const alternativesOf = new Map<number, CascadeHits>()
-
-	const visit = (node: ResolvedTreeNode): void => {
-		if (node.source === "resolver" && node.sourceID && typeof node.lat === "number" && typeof node.lon === "number") {
-			const sep = node.sourceID.indexOf(":")
-			const placetype = sep === -1 ? node.sourceID : node.sourceID.slice(0, sep)
-			const id = Number(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))
-			const meta = backend.metaFor(id)
-			const hit: CascadeHits[number] = {
-				id,
-				name: String(node.metadata?.["resolver_name"] ?? node.value ?? ""),
-				placetype,
-				country: meta?.country,
-				lat: node.lat,
-				lon: node.lon,
-				score: typeof node.metadata?.["resolver_score"] === "number" ? (node.metadata["resolver_score"] as number) : 0,
-				exactMatch: true,
-				bbox: meta?.bbox,
-			}
-
-			if (!(hit.lat === 0 && hit.lon === 0)) {
-				collected.push({ hit, rank: PIN_RANK[placetype] ?? 0 })
-
-				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
-
-				alternativesOf.set(
-					id,
-					usable(
-						alts.map((a) => ({
-							id: Number(a.id),
-							name: String(a.name ?? ""),
-							placetype: String(a.placetype ?? placetype),
-							country: typeof a.country === "string" && a.country ? a.country : undefined,
-							lat: Number(a.lat),
-							lon: Number(a.lon),
-							score: typeof a.score === "number" ? a.score : 0,
-							exactMatch: a.exactMatch === true,
-							bbox: backend.metaFor(Number(a.id))?.bbox,
-						}))
-					)
-				)
-			}
-		}
-
-		for (const child of node.children ?? []) {
-			visit(child)
-		}
-	}
-
-	for (const root of resolved.roots) {
-		visit(root)
-	}
-
-	if (collected.length === 0) {
-		// Nothing in the tree resolved (span-rescore included) — the old cascade's last resort.
-		return usable(await lookup.findPlace({ text: rawText, limit: 5 }))
-	}
-
-	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
-
-	// Cross-country postcode gate, carried over from the old cascade: an ambiguous INTERNATIONAL
-	// postcode (10115 = Berlin DE and a New York US ZIP shape) must not out-pin the parsed city
-	// across countries. When the top pin is a postcode whose country differs from the resolved
-	// locality's, the locality wins the pin; the postcode stays in the list.
-	const top = collected[0]!
-	const localityEntry = collected.find((c) => c.rank === 5 || c.rank === 4)
-
-	let pinOrder = collected
-
-	if (
-		top.hit.placetype === "postalcode" &&
-		localityEntry &&
-		top.hit.country &&
-		localityEntry.hit.country &&
-		top.hit.country !== localityEntry.hit.country
-	) {
-		pinOrder = [localityEntry, ...collected.filter((c) => c !== localityEntry)]
-	}
-
-	const seen = new Set<number>()
-	const hits: CascadeHits = []
-
-	for (const { hit } of pinOrder) {
-		if (!seen.has(hit.id)) {
-			seen.add(hit.id)
-			hits.push(hit)
-		}
-
-		for (const alt of alternativesOf.get(hit.id) ?? []) {
-			if (!seen.has(alt.id)) {
-				seen.add(alt.id)
-				hits.push(alt)
-			}
-		}
-	}
-
-	return hits
-}
-
-// ---------------------------------------------------------------------------
-// Street-level resolution (situs → interpolation), in front of the admin cascade
-// ---------------------------------------------------------------------------
-
-/** A street-level coordinate + which tier produced it + an honest radius. */
+/**
+ * A street-level coordinate + which tier produced it + an honest radius.
+ */
 export interface StreetResolution {
 	lat: number
 	lon: number
@@ -641,7 +552,9 @@ export interface StreetResolution {
 	uncertaintyM: number
 }
 
-/** Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes). */
+/**
+ * Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes).
+ */
 interface SitusLike {
 	find(q: {
 		street: string
@@ -650,6 +563,7 @@ interface SitusLike {
 		locality?: string
 	}): Promise<{ lat: number; lon: number } | null>
 }
+
 interface InterpLike {
 	find(q: {
 		street: string
@@ -704,3 +618,5 @@ export async function resolveStreet(
 
 	return null
 }
+
+//#endregion

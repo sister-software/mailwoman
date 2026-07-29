@@ -11,10 +11,12 @@ import { decomposeFrStreet } from "./street-decompose.ts"
 describe("decomposeFrStreet", () => {
 	it("single-word street type prefix", () => {
 		expect(decomposeFrStreet("Rue de Rivoli")).toEqual({ prefix: "Rue", street: "de Rivoli" })
+
 		expect(decomposeFrStreet("Avenue des Champs-Élysées")).toEqual({
 			prefix: "Avenue",
 			street: "des Champs-Élysées",
 		})
+
 		expect(decomposeFrStreet("Boulevard Voltaire")).toEqual({ prefix: "Boulevard", street: "Voltaire" })
 	})
 

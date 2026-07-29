@@ -23,6 +23,7 @@ export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpt
 
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
 export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "./candidate-lookup.ts"
+
 export {
 	COUNTRY_BBOX_TABLE,
 	COUNTRY_COVERAGE_TABLE,
@@ -31,6 +32,7 @@ export {
 	readGazetteerCoverageManifest,
 	writeGazetteerCoverageManifest,
 } from "./coverage-manifest-schema.ts"
+
 export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "./coverage-manifest-schema.ts"
 export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "./street-name-lookup.ts"
 
@@ -38,17 +40,21 @@ export { GEONAMES_ID_BASE, ingestGeonamesAliases, type GeonamesIngestProgress } 
 
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.ts"
 export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.ts"
+
 export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
 } from "./postal-city-alias-lookup.ts"
+
 export type { PostalCityAliasDatabase, PostalCityAliasTable } from "./postal-city-alias-schema.ts"
+
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	createPostalCityCandidateTable,
 } from "./postal-city-candidate-schema.ts"
+
 export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
 
 export {
@@ -104,19 +110,23 @@ export {
 
 export { AddressPointInterpolator } from "./address-point-interpolation.ts"
 export { AddressPointSqliteLookup } from "./address-point.ts"
+
 export {
 	STREET_CENTROID_COLUMNS,
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
 } from "./street-centroid-schema.ts"
+
 export type { StreetCentroidDatabase, StreetCentroidTable } from "./street-centroid-schema.ts"
 export { StreetCentroidSqliteLookup } from "./street-centroid.ts"
+
 export {
 	StreetInterpolator,
 	type InterpolatedHit,
 	type InterpolationMethod,
 	type InterpolationQuery,
 } from "./interpolation.ts"
+
 export {
 	deriveSchemaName,
 	pickShardForPlacetype,

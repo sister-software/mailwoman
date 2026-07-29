@@ -23,7 +23,9 @@
  *   applies in `flush()`.
  */
 
-/** One row of the lookup table: a confidence bin and the calibrated value at its center. */
+/**
+ * One row of the lookup table: a confidence bin and the calibrated value at its center.
+ */
 export interface CalibrationBin {
 	lo: number
 	hi: number
@@ -31,7 +33,9 @@ export interface CalibrationBin {
 	calibrated: number
 }
 
-/** The full calibration artifact emitted by `fit-isotonic-calibration.py`. */
+/**
+ * The full calibration artifact emitted by `fit-isotonic-calibration.py`.
+ */
 export interface CalibrationTable {
 	model: string
 	model_version: string
@@ -41,7 +45,9 @@ export interface CalibrationTable {
 	[key: string]: unknown
 }
 
-/** Maps a raw span confidence in [0, 1] to its calibrated probability of correctness. */
+/**
+ * Maps a raw span confidence in [0, 1] to its calibrated probability of correctness.
+ */
 export type Calibrator = (rawConfidence: number) => number
 
 /**
@@ -52,17 +58,19 @@ export type Calibrator = (rawConfidence: number) => number
 export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
 
-	if (!bins || bins.length === 0) {
+	if (!bins || !bins.length) {
 		throw new Error("createCalibrator: empty calibration table")
 	}
+
 	// Sort by center and extract parallel arrays for interpolation.
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
-	const cals = sorted.map((b) => clamp01(b.calibrated))
+	const cals = sorted.map((b) => clampConfidence(b.calibrated))
 	const n = centers.length
 
 	return (raw: number): number => {
-		const x = clamp01(raw)
+		const x = clampConfidence(raw)
 
 		if (x <= centers[0]!) return cals[0]!
 
@@ -80,6 +88,7 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 				hi = mid
 			}
 		}
+
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!
 		const y0 = cals[lo]!
@@ -90,7 +99,14 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 	}
 }
 
-function clamp01(v: number): number {
+/**
+ * Clamp a confidence into `[0, 1]`, mapping NaN to 0.
+ *
+ * Distinct from `clampFraction` (`@mailwoman/spatial`), which lets NaN through on purpose: a confidence that cannot be
+ * computed is no confidence, while an interpolation fraction that cannot be computed must stay detectable rather than
+ * silently snapping to a segment's start.
+ */
+export function clampConfidence(v: number): number {
 	if (Number.isNaN(v)) return 0
 
 	if (v < 0) return 0

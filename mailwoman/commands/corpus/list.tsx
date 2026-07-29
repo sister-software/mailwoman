@@ -20,7 +20,7 @@ import { Box, Text } from "ink"
 const CorpusList = () => {
 	const adapters = defaultAdapterRegistry.list()
 
-	if (adapters.length === 0) {
+	if (!adapters.length) {
 		return <Text dimColor>No adapters registered.</Text>
 	}
 

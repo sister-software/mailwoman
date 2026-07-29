@@ -11,21 +11,36 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import type { Context } from "hono"
 
-import {
-	type PhotonEngine,
-	type PhotonFeatureCollection,
-	type PhotonReverseParams,
-	type PhotonSearchParams,
-} from "./engine.ts"
+import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "./engine.ts"
 import { photonToSchemaOrg } from "./projection.ts"
 import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "./schema.ts"
+
+/**
+ * Southern limit of latitude in WGS-84 degrees.
+ */
+const MIN_LATITUDE = -90
+
+/**
+ * Northern limit of latitude in WGS-84 degrees.
+ */
+const MAX_LATITUDE = 90
+
+/**
+ * Western limit of longitude in WGS-84 degrees.
+ */
+const MIN_LONGITUDE = -180
+
+/**
+ * Eastern limit of longitude in WGS-84 degrees.
+ */
+const MAX_LONGITUDE = 180
 
 const DEFAULT_LIMIT = 15
 
 const EMPTY: PhotonFeatureCollection = { type: "FeatureCollection", features: [] }
 
 function asString(raw: unknown): string | undefined {
-	return typeof raw === "string" && raw.length > 0 ? raw : undefined
+	return typeof raw === "string" && raw.length ? raw : undefined
 }
 
 function asStringArray(raw: unknown): string[] | undefined {
@@ -136,7 +151,9 @@ const reverseRoute = createRoute({
 	responses: collectionResponses,
 })
 
-/** Register the Photon-compatible routes against an injected engine. */
+/**
+ * Register the Photon-compatible routes against an injected engine.
+ */
 export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): void {
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
@@ -146,6 +163,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 		const query = asString(q["q"])
 
 		if (!query) return c.json({ ...EMPTY, message: "q is required" }, 400)
+
 		const params: PhotonSearchParams = {
 			q: query,
 			limit: Number(q["limit"] ?? DEFAULT_LIMIT) || DEFAULT_LIMIT,
@@ -155,6 +173,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			osmTag: asStringArray(q["osm_tag"]),
 			layer: asStringArray(q["layer"]),
 		}
+
 		const collection = await engine.search(params)
 
 		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD. The
@@ -178,9 +197,10 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			return c.json({ ...EMPTY, message: "lat and lon are required" }, 400)
 		}
 
-		if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+		if (lat < MIN_LATITUDE || lat > MAX_LATITUDE || lon < MIN_LONGITUDE || lon > MAX_LONGITUDE) {
 			return c.json({ ...EMPTY, message: "lat must be in [-90, 90] and lon in [-180, 180]" }, 400)
 		}
+
 		const params: PhotonReverseParams = {
 			lat,
 			lon,
@@ -188,6 +208,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			lang: asString(q["lang"]),
 			radius: q["radius"] != null ? Number(q["radius"]) : undefined,
 		}
+
 		const collection = await engine.reverse(params)
 
 		// #1052: `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD. See

@@ -32,7 +32,10 @@ const MANIFEST: DemoManifest<StoryRelease> = {
 	],
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const sleep = (ms: number) =>
+	new Promise((resolve) => {
+		setTimeout(resolve, ms)
+	})
 
 function makeLoaders(delayMs: number, fail: boolean) {
 	const loadManifest = async (): Promise<DemoManifest<StoryRelease>> => {
@@ -123,13 +126,20 @@ const meta: Meta<typeof DemoRuntimeInspector> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof DemoRuntimeInspector>
 
-/** Instant fake loader — flip versions / WASM and watch the bundle reload. */
+/**
+ * Instant fake loader — flip versions / WASM and watch the bundle reload.
+ */
 export const Interactive: Story = { args: { delayMs: 0 } }
 
-/** Artificial latency so the staged loading + progress state is visible. */
+/**
+ * Artificial latency so the staged loading + progress state is visible.
+ */
 export const SlowLoad: Story = { args: { delayMs: 600 } }
 
-/** The asset-load failure branch — `errorMessage` set, `ready` stays false. */
+/**
+ * The asset-load failure branch — `errorMessage` set, `ready` stays false.
+ */
 export const AssetError: Story = { args: { delayMs: 200, fail: true } }

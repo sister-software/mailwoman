@@ -17,10 +17,14 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
-/** Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string. */
+/**
+ * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.
+ */
 export type DataReleaseManifest = Record<string, string>
 
-/** Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed. */
+/**
+ * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed.
+ */
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {
 		const raw = JSON.parse(readFileSync(`${dataRoot}/releases.json`, "utf8")) as unknown
@@ -34,7 +38,7 @@ export function readReleaseManifest(dataRoot: string): DataReleaseManifest | nul
 			}
 		}
 
-		return Object.keys(out).length > 0 ? out : null
+		return Object.keys(out).length ? out : null
 	} catch {
 		return null
 	}
@@ -57,6 +61,7 @@ export function resolveShardPath(
 
 		if (existsSync(versioned)) return versioned
 	}
+
 	const legacy = `${dataRoot}/${family}/${family}-us-${slug}.db`
 
 	return existsSync(legacy) ? legacy : null

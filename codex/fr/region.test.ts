@@ -20,6 +20,7 @@ describe("FR_DEPARTEMENTS", () => {
 	it("covers all 101 départements", () => {
 		expect(Object.keys(FR_DEPARTEMENTS)).toHaveLength(101)
 	})
+
 	it("every département points at a real région", () => {
 		for (const d of Object.values(FR_DEPARTEMENTS)) {
 			expect(FR_REGIONS[d.region]).toBeDefined()

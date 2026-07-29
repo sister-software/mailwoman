@@ -19,7 +19,9 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../../cli-kit/index.ts"
 
-/** Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands. */
+/**
+ * Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands.
+ */
 export const isDefault = true
 
 const ArgumentsSchema = zod
@@ -70,7 +72,7 @@ const num = (s: string | undefined): number | undefined => (s == null ? undefine
 
 const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		if (options.list || args.length === 0) {
+		if (options.list || !args.length) {
 			return [
 				"recipes:",
 				...listShardRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
@@ -93,6 +95,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		if (recipe.mode === "generate" && !options.count) throw commandError(`recipe "${name}" needs --count <N>`)
 
 		const seed = options.seed != null ? Number(options.seed) : Date.now()
+
 		const opts: ShardRecipeOpts = {
 			output: options.output,
 			seed,
@@ -119,13 +122,19 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		}
 
 		console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
+
 		const stream = createWriteStream(options.output, { encoding: "utf8" })
+
 		const write = (line: string): void => {
 			stream.write(line)
 		}
+
 		const stats = await recipe.run(opts, write)
 		stream.end()
-		await new Promise<void>((res) => stream.on("finish", () => res()))
+
+		await new Promise<void>((res) => {
+			stream.on("finish", () => res())
+		})
 
 		return [
 			`recipe: ${name}`,

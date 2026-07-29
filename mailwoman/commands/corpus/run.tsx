@@ -44,7 +44,7 @@ const RunConfigSchema = zod.object({
 		.int()
 		.positive()
 		.optional()
-		.default(1_000)
+		.default(1000)
 		.describe("Yield count between progress ticks (smaller = chattier, larger = quieter)"),
 })
 
@@ -56,6 +56,7 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 		written: 0,
 		bytes: 0,
 	})
+
 	const state = useCommandTask(async () => {
 		const adapterID = args[0]
 
@@ -67,7 +68,7 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
-			const hint = ids.length === 0 ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
+			const hint = !ids.length ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
 			throw commandError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
 		}
 

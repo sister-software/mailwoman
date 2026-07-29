@@ -27,14 +27,67 @@ import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
+/**
+ * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12
+ * to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
+ */
+const VERSION_WIDE_STATE_COUNTERS = 4
+
+/**
+ * State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
+const WIDE_STATE_ENTRY_SIZE = 16
+
+/**
+ * State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
+const NARROW_STATE_ENTRY_SIZE = 12
+
+/**
+ * First format version carrying the trailing metadata block; older files simply have none.
+ */
+const VERSION_WITH_METADATA = 3
+
+/**
+ * File magic. A reader rejects anything not starting with these four bytes before parsing further.
+ */
 const MAGIC = Buffer.from("FST\0", "ascii")
+
+/**
+ * Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed.
+ */
 const VERSION = 4
+
+/**
+ * Fixed header size in bytes: magic, version, and the section offsets that follow it.
+ */
 const HEADER_SIZE = 32
+
+/**
+ * State-table entry: edge offset, place offset, and the two 32-bit counters (v4 widths).
+ */
 const STATE_ENTRY_SIZE = 16
+
+/**
+ * Edge-table entry: the transition label and the target state index.
+ */
 const EDGE_ENTRY_SIZE = 8
+
+/**
+ * Place-table entry: the place id, its placetype, coordinates, and importance.
+ */
 const PLACE_ENTRY_SIZE = 56
+
+/**
+ * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end, since the specific end of
+ * the chain is what disambiguates and the country end is recoverable anyway.
+ */
 const MAX_CHAIN_LEN = 8
 
+/**
+ * Placetypes in hierarchy order, largest first. The index into this array is what gets written into a place entry, so
+ * REORDERING IT BREAKS EVERY EXISTING FILE — append instead, and bump the version.
+ */
 const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",
 	"region",
@@ -135,11 +188,12 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	// --- String table ---
 	let strOffset = 0
 
-	for (let i = 0; i < encodedStrings.length; i++) {
+	for (const encoded of encodedStrings) {
 		buf.writeUInt32LE(strOffset, pos)
 		pos += 4
-		strOffset += encodedStrings[i]!.length
+		strOffset += encoded.length
 	}
+
 	buf.writeUInt32LE(strOffset, pos)
 	pos += 4
 
@@ -171,6 +225,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			const ep = edgeTableStart + edgeIdx * EDGE_ENTRY_SIZE
 			buf.writeUInt32LE(intern(token), ep)
 			buf.writeUInt32LE(target, ep + 4)
+
 			edgeIdx++
 		}
 
@@ -193,6 +248,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			for (let ci = 0; ci < MAX_CHAIN_LEN; ci++) {
 				buf.writeUInt32LE(ci < chainLen ? validChain[ci]! : 0, pp + 24 + ci * 4)
 			}
+
 			placeIdx++
 		}
 	}
@@ -233,6 +289,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		strOffsets[i] = buf.readUInt32LE(pos)
 		pos += 4
 	}
+
 	const strDataStart = pos
 	const strings: string[] = new Array(stringCount)
 
@@ -241,10 +298,11 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const end = strDataStart + strOffsets[i + 1]!
 		strings[i] = buf.toString("utf8", start, end)
 	}
+
 	pos += stringBytes
 
 	// --- State table ---
-	const stateEntrySize = version >= 4 ? 16 : 12
+	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
@@ -255,8 +313,12 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = buf.readUInt32LE(sp)
 		const placeStart = buf.readUInt32LE(sp + 4)
-		const edgeCountForState = version >= 4 ? buf.readUInt32LE(sp + 8) : buf.readUInt16LE(sp + 8)
-		const placeCountForState = version >= 4 ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
+
+		const edgeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? buf.readUInt32LE(sp + 8) : buf.readUInt16LE(sp + 8)
+
+		const placeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
 
 		const edges = new Map<string, number>()
 
@@ -277,9 +339,11 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
+
 			const rawImportance = isV2
 				? buf.readFloatLE(pp + 12)
-				: Math.min(1.0, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
+				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
+
 			places[pi] = {
 				wofID: buf.readUInt32LE(pp),
 				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",
@@ -305,7 +369,7 @@ export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
 	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
 	const version = buf.readUInt16LE(4)
 
-	if (version < 3) return undefined
+	if (version < VERSION_WITH_METADATA) return undefined
 	const provenanceOffset = buf.readUInt32LE(28)
 
 	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return undefined

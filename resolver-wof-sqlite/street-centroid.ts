@@ -31,7 +31,9 @@ import {
 	stripArrondissement,
 } from "./street-normalize.ts"
 
-/** The weighted-centroid + extent + provenance an aggregate probe projects. `lat` is null when nothing matched. */
+/**
+ * The weighted-centroid + extent + provenance an aggregate probe projects. `lat` is null when nothing matched.
+ */
 interface AggRow {
 	lat: number | null
 	lon: number | null
@@ -43,14 +45,18 @@ interface AggRow {
 	release: string | null
 }
 
-/** Weighted-centroid aggregate over a WHERE-filtered set. `SUM(coord*n)/SUM(n)` reconstructs the grand centroid. */
+/**
+ * Weighted-centroid aggregate over a WHERE-filtered set. `SUM(coord*n)/SUM(n)` reconstructs the grand centroid.
+ */
 const AGG_SELECT =
 	"SUM(lat * point_count) / SUM(point_count) AS lat, " +
 	"SUM(lon * point_count) / SUM(point_count) AS lon, " +
 	"MIN(min_lat) AS min_lat, MAX(max_lat) AS max_lat, MIN(min_lon) AS min_lon, MAX(max_lon) AS max_lon, " +
 	"MAX(source) AS source, MAX(release) AS release"
 
-/** Half the bbox diagonal, in METERS — an honest coarse radius for a street centroid. */
+/**
+ * Half the bbox diagonal, in METERS — an honest coarse radius for a street centroid.
+ */
 function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: number): number {
 	const R = 6_371_000
 	const toRad = (d: number): number => (d * Math.PI) / 180
@@ -84,6 +90,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 			this.#byPostcode = this.#db.prepare(
 				`SELECT ${AGG_SELECT} FROM street_centroid WHERE postcode = ? AND street_norm = ?`
 			)
+
 			this.#byLocality = this.#db.prepare(
 				`SELECT ${AGG_SELECT} FROM street_centroid WHERE locality_base = ? AND street_norm = ?`
 			)

@@ -41,7 +41,9 @@ export interface StreetLocalityEvidence {
 	 * {@link pickByStreetEvidence} fails open to the model's ranking. Absence is never a veto.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
-	/** ISO-2 (upper-case) countries this instance can answer for. Anything else → no evidence, never a veto. */
+	/**
+	 * ISO-2 (upper-case) countries this instance can answer for. Anything else → no evidence, never a veto.
+	 */
 	readonly countries: ReadonlySet<string>
 }
 
@@ -58,10 +60,10 @@ export interface StreetEvidenceScope {
 export function foldStreetSurface(surface: string): string {
 	return surface
 		.normalize("NFD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
-		.replace(/['’‐-―-]/g, " ")
-		.replace(/\s+/g, " ")
+		.replaceAll(/['’‐-―-]/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 
@@ -107,27 +109,39 @@ const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 	"sous",
 ])
 
-/** True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} — i.e. it is pure type/particle. */
+/**
+ * True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} — i.e. it is pure type/particle.
+ */
 export function isPureTypeVocabulary(foldedSurface: string): boolean {
 	const tokens = foldedSurface.split(" ").filter(Boolean)
 
-	if (tokens.length === 0) return true
+	if (!tokens.length) return true
 
 	return tokens.every((t) => FR_STREET_TYPE_WORDS.has(t))
 }
 
-/** One candidate parse for the street-evidence rerank — its street surface + its (within-input comparable) score. */
+/**
+ * One candidate parse for the street-evidence rerank — its street surface + its (within-input comparable) score.
+ */
 export interface StreetCandidate<T = unknown> {
-	/** The candidate's street surface (raw; folded internally). Empty string = no street parsed → never the evidence pick. */
+	/**
+	 * The candidate's street surface (raw; folded internally). Empty string = no street parsed → never the evidence pick.
+	 */
 	streetSurface: string
-	/** The parse score, comparable to its siblings from the SAME input. Higher is better. */
+	/**
+	 * The parse score, comparable to its siblings from the SAME input. Higher is better.
+	 */
 	score: number
-	/** Opaque caller payload carried through to the result (the segmentation, the tree, …). */
+	/**
+	 * Opaque caller payload carried through to the result (the segmentation, the tree, …).
+	 */
 	payload?: T
 }
 
 export interface PickByStreetEvidenceOpts {
-	/** Locality/postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName} (fragments usually carry none). */
+	/**
+	 * Locality/postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName} (fragments usually carry none).
+	 */
 	scope?: StreetEvidenceScope
 	/**
 	 * G2 — the margin cap. A candidate whose score is more than this far below rank-1 is never promoted by evidence
@@ -140,11 +154,17 @@ export interface PickByStreetEvidenceOpts {
 }
 
 export interface StreetEvidencePick<T = unknown> {
-	/** The chosen candidate — the first evidence-passing sibling, or rank-1 when none passes (fail-open). */
+	/**
+	 * The chosen candidate — the first evidence-passing sibling, or rank-1 when none passes (fail-open).
+	 */
 	candidate: StreetCandidate<T>
-	/** Index of the chosen candidate in the input array. */
+	/**
+	 * Index of the chosen candidate in the input array.
+	 */
 	index: number
-	/** True when evidence MOVED the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal). */
+	/**
+	 * True when evidence MOVED the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
+	 */
 	moved: boolean
 }
 
@@ -164,9 +184,10 @@ export function pickByStreetEvidence<T>(
 ): StreetEvidencePick<T> {
 	const marginCap = opts.marginCap ?? 2.5
 
-	if (candidates.length === 0) {
+	if (!candidates.length) {
 		throw new Error("pickByStreetEvidence: no candidates")
 	}
+
 	const rank1 = candidates[0]!
 	const topScore = rank1.score
 

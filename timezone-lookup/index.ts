@@ -18,7 +18,9 @@ import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
  */
 export type MultiPolygonCoords = number[][][][]
 
-/** Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`. */
+/**
+ * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
+ */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
 
@@ -36,7 +38,9 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	return inside
 }
 
-/** Inside the outer ring and outside every hole. */
+/**
+ * Inside the outer ring and outside every hole.
+ */
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
 
@@ -45,7 +49,9 @@ function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolea
 	return true
 }
 
-/** Inside any polygon of a (multi)polygon feature. */
+/**
+ * Inside any polygon of a (multi)polygon feature.
+ */
 export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPolygonCoords): boolean {
 	return polygons.some((polygon) => pointInPolygon(lon, lat, polygon))
 }
@@ -71,13 +77,16 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 	}
 }
 
-/** A timezone lookup over a built `node:sqlite` polygon DB. */
+/**
+ * A timezone lookup over a built `node:sqlite` polygon DB.
+ */
 export class TimezoneLookup {
 	#db: DatabaseSync
 	#stmt: ReturnType<DatabaseSync["prepare"]>
 
 	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
 		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+
 		// Candidate features whose bbox contains the point; PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
 			`SELECT tzid, geom FROM timezone_polygons
@@ -85,7 +94,9 @@ export class TimezoneLookup {
 		)
 	}
 
-	/** The IANA timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans). */
+	/**
+	 * The IANA timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
+	 */
 	find(lat: number, lon: number): string | null {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>
 
@@ -101,9 +112,12 @@ export class TimezoneLookup {
 	}
 }
 
-/** Build an `Annotator` that fills `AnnotationSet.timezone` (name + current offset) from a lookup. */
+/**
+ * Build an `Annotator` that fills `AnnotationSet.timezone` (name + current offset) from a lookup.
+ */
 export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 	return ({ lat, lon, date }): Partial<AnnotationSet> => {
+		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 		const name = lookup.find(lat, lon)
 
 		if (!name) return {}

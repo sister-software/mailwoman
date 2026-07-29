@@ -45,6 +45,7 @@ export function applyPunctuation(input: string): PunctuationResult {
 			changed = true
 			replacements += 1
 
+			// oxlint-disable-next-line typescript/prefer-for-of -- code units, so the offset map stays aligned
 			for (let k = 0; k < sub.length; k++) {
 				out.push(sub[k]!)
 				map.push(i)

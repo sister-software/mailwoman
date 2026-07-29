@@ -19,7 +19,7 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)"),
-	cap: zod.number().default(200000).describe("Providers sampled from the registry"),
+	cap: zod.number().default(200_000).describe("Providers sampled from the registry"),
 	state: zod.string().default("TX").describe("State filter"),
 	tau: zod.number().default(0.7).describe("Org-name Jaccard collision threshold"),
 	n: zod.number().default(300).describe("Adjudication sample size (deterministic stride sample)"),

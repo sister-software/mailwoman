@@ -4,6 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+// Moved to @mailwoman/resolver-wof-wasm so the packages that resolve through a browser lookup can
+// reach them without importing from the docs site. Re-exported here so demo code is unchanged.
+// Imported rather than re-exported straight through: `DualRole` is used locally below, and a bare
+// re-export does not bind the name in this module.
+// oxlint-disable-next-line unicorn/prefer-export-from -- see above
+import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+
+export type { DualRole, MailwomanLookupLike }
+
 export interface FSTProvenanceLike {
 	builtAt: string
 	stateCount: number
@@ -57,7 +66,9 @@ export interface TraceRepairLike {
 	after: string[]
 }
 
-/** Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03). */
+/**
+ * Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03).
+ */
 export interface ParseTraceLike {
 	text: string
 	caseNormalized: boolean
@@ -66,7 +77,9 @@ export interface ParseTraceLike {
 	gazetteer?: TraceChannelLike
 	logits: number[][]
 	localeLogits?: number[]
-	/** The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order. */
+	/**
+	 * The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order.
+	 */
 	localeCountries?: string[]
 	detectedSystem: string | null
 	systemSource: "off" | "auto" | "pinned"
@@ -79,53 +92,6 @@ export interface ParseTraceLike {
 	tokens: TraceTokenLike[]
 }
 
-export interface MailwomanLookupLike {
-	findPlace: (q: {
-		text: string
-		/**
-		 * Requested placetype(s). Widened from the demo's original locality/postalcode/region union for the #861
-		 * shared-resolver convergence: `resolveTree` + its coherence passes also query `country`, `county`, and pass arrays
-		 * (the placetype-equivalence groups).
-		 */
-		placetype?: string | string[] | undefined
-		country?: string
-		/** Point-in-bbox filter — constrains candidates to a parsed region/state's bounds. */
-		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-		limit?: number
-		postcode?: string
-		/**
-		 * Soft proximity hints (#938 — the demo's map viewport / user location). With bias present, exact-tier candidates
-		 * near a hint sort ahead of distant ones; never a hard filter. Absent → population-first order.
-		 */
-		bias?: Array<{ lat: number; lon: number; weight?: number }>
-	}) => Promise<
-		Array<{
-			id: number
-			name: string
-			placetype: string
-			/**
-			 * ISO country code of the resolved place — lets the cascade country-gate an ambiguous postcode.
-			 */
-			country?: string
-			lat: number
-			lon: number
-			score: number
-			/**
-			 * True when the candidate's name, abbreviation, or an alias EXACTLY matched the query (vs a partial token match).
-			 * The cascade accepts alias-exact hits ("New York City" → New York) the same way it accepts canonical-name
-			 * matches.
-			 */
-			exactMatch?: boolean
-			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-		}>
-	>
-	/**
-	 * Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from a slim DB that
-	 * predates the `coincident_roles` relation.
-	 */
-	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
-}
-
 export interface KindResult {
 	kind: string
 	confidence: number
@@ -136,24 +102,38 @@ export interface ResultNode {
 	tag: string
 	value?: unknown
 	confidence?: number
-	/** Inclusive start char offset into `DemoResult.input`, when the decoder emits one. */
+	/**
+	 * Inclusive start char offset into `DemoResult.input`, when the decoder emits one.
+	 */
 	start?: number
-	/** Exclusive end char offset into the raw input. */
+	/**
+	 * Exclusive end char offset into the raw input.
+	 */
 	end?: number
 }
 
-/** Per-stage wall-clock for one parse (ms). `resolve` is absent when the lookup is skipped. */
+/**
+ * Per-stage wall-clock for one parse (ms). `resolve` is absent when the lookup is skipped.
+ */
 export interface StageTiming {
-	/** QueryShape + kind classification (pure, ~µs). */
+	/**
+	 * QueryShape + kind classification (pure, ~µs).
+	 */
 	shape: number
-	/** Neural BIO classify + tree decode — the model inference. */
+	/**
+	 * Neural BIO classify + tree decode — the model inference.
+	 */
 	classify: number
-	/** WOF cascade lookup. Excludes the one-time DB load. */
+	/**
+	 * WOF cascade lookup. Excludes the one-time DB load.
+	 */
 	resolve?: number
 }
 
 export interface DemoResult {
-	/** The raw text handed to the parser — the offsets in `nodes[].start/end` index into this string. */
+	/**
+	 * The raw text handed to the parser — the offsets in `nodes[].start/end` index into this string.
+	 */
 	input: string
 	tree: unknown
 	nodes: ResultNode[]
@@ -161,7 +141,9 @@ export interface DemoResult {
 	candidates: ResolvedHit[]
 	stateHint?: string
 	kindResult?: KindResult
-	/** Per-stage timing for the breakdown panel; absent on older render paths. */
+	/**
+	 * Per-stage timing for the breakdown panel; absent on older render paths.
+	 */
 	timing?: StageTiming
 	fstActive: boolean
 	fstProvenance?: FSTProvenanceLike | null
@@ -169,19 +151,6 @@ export interface DemoResult {
 	 * Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state etc.).
 	 */
 	dualRoles?: DualRole[]
-}
-
-/**
- * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation (#402). Berlin resolves
- * as a locality but `role: "region"` here surfaces that it is also a federal state. `relationshipType` is the
- * gazetteer-derived class (`city-state`, `capital-seat`, …).
- */
-export interface DualRole {
-	id: number
-	name: string
-	placetype: string
-	relationshipType: string
-	role: "region" | "locality"
 }
 
 export interface ResolvedHit {
@@ -204,11 +173,13 @@ export interface ResolvedHit {
 	uncertaintyM?: number
 }
 
-// All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain.
-// R2 + Cloudflare gives a stable clean URL, raw byte ranges (no gzip mangling), configurable CORS,
-// low RTT, and free egress — the combination GitHub Pages (force-gzips ranges) and HF (per-request
-// presigned redirect) couldn't. The DBs are range-loaded via sql.js-httpvfs from here; the rest is
-// one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL swap.
+/**
+ * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain. R2 + Cloudflare gives a
+ * stable clean URL, raw byte ranges (no gzip mangling), configurable CORS, low RTT, and free egress — the combination
+ * GitHub Pages (force-gzips ranges) and HF (per-request presigned redirect) couldn't. The DBs are range-loaded via
+ * sql.js-httpvfs from here; the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
+ * swap.
+ */
 const ASSET_BASE_URL = "https://public.sister.software/mailwoman/"
 
 export function assetURL(locale: string, version: string, filename: string): string {
@@ -240,10 +211,14 @@ export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
  */
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 
-/** Dated national-shard release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335). */
+/**
+ * Dated national-shard release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335).
+ */
 export const NATIONAL_STREET_SHARD_VERSION = "2026-07-10"
 
-/** The single national slug the demo's street tier falls back to when no hosted US state claims the query. */
+/**
+ * The single national slug the demo's street tier falls back to when no hosted US state claims the query.
+ */
 export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 
 /**
@@ -476,6 +451,7 @@ export async function loadFSTGazetteer(
 			return r.arrayBuffer()
 		}),
 	])
+
 	const matcher = fstModule.deserializeFSTWeb(fstBinary) as FSTMatcherLike
 	let provenance: FSTProvenanceLike | undefined
 

@@ -27,8 +27,12 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
  * check would never match the board's reserved `tømmerlien` and the split would leak silently. Diacritic street heads
  * (…vegen/…veien with ø/å/æ) are the whole point of this shard's boundary; folding them away is not an option.
  */
-const norm = (value: string): string => value.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim()
+const norm = (value: string): string => value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const noStreetLedRecipe: ShardRecipe = {
 	name: "no-street-led",
 	description: "NO street-led boundary form (#901 family): '«st» «n», «pc» «city»' — diacritic street heads",
@@ -81,16 +85,20 @@ export const noStreetLedRecipe: ShardRecipe = {
 
 			if (!street || !city || !number || !postcode) {
 				skipped++
+
 				continue
 			}
 
 			// A surface on the digit board never enters training.
 			if (excluded.has(norm(street))) {
 				contaminated++
+
 				continue
 			}
+
 			const order = read % 3
 			let raw: string
+
 			const components: Record<string, string> = {
 				street,
 				house_number: number,
@@ -105,7 +113,9 @@ export const noStreetLedRecipe: ShardRecipe = {
 			} else {
 				raw = `${postcode} ${city}, ${street} ${number}`
 			}
+
 			const source_id = shardSourceID("synth-no-street-led", { ...components, o: String(order), v: String(read) })
+
 			const canonical = {
 				raw,
 				components,

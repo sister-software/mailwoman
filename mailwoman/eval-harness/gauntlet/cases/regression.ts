@@ -9,6 +9,10 @@
  *   Add an entry whenever a bug is fixed; never pad it to feel "thorough" (that's curated-set capture).
  */
 
+/* oxlint-disable max-lines -- 826 lines of flat seed cases (54 entries). The length IS the number of
+   regressions guarded; splitting it by country would scramble the chronological entry numbering the
+   comments reference, and buy no legibility — nothing here is control flow. */
+
 import type { AddressKind, CaseStatus, ResolutionTier } from "../schema.ts"
 
 export interface SeedCase {
@@ -18,15 +22,21 @@ export interface SeedCase {
 	addressKind: AddressKind
 	country: string
 	status: CaseStatus
-	/** Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively). */
+	/**
+	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively).
+	 */
 	expectComponents?: Record<string, string>
-	/** Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`. */
+	/**
+	 * Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`.
+	 */
 	defaultCountry?: string
 	expectPlaceID?: string
 	expectPlaceName?: string
 	expectLat?: number
 	expectLon?: number
-	/** Great-circle tolerance (m). Defaults at runtime when absent. */
+	/**
+	 * Great-circle tolerance (m). Defaults at runtime when absent.
+	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	addedAt: string
@@ -34,6 +44,9 @@ export interface SeedCase {
 	note?: string
 }
 
+/**
+ * Seed cases for the regression leg — each is a parse that broke once, kept so it cannot break again.
+ */
 export const REGRESSION_CASES: SeedCase[] = [
 	{
 		// Entry #1 — the FR OSM rooftop tier + the v1.9.4 parse fix, guarded via the WITH-postcode demo form.
@@ -99,7 +112,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "NY", locality: "New York" },
 		expectLat: 40.74858,
 		expectLon: -73.98526,
-		expectToleranceM: 500000,
+		expectToleranceM: 500_000,
 		addedAt: "2026-06-29",
 		bugRef: "span-rescore confidentRanges (street affix); NYC disambiguation = #832",
 		note: "Pre-fix the span-rescore recovered 'Ave' as a same-named French locality (48.57,0.28). Guards IN NY not France; currently lands upstate NY not NYC (#832).",
@@ -118,7 +131,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "NY", locality: "New York" },
 		expectLat: 40.6945,
 		expectLon: -73.9304,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		bugRef: "#832",
 		note: "Was: 'New York, NY' → New York Mills (upstate, 43.10). Root cause was NOT the FTS window (NYC was in it) — it was NYC's broken ancestry (parent_id=-4). Fixed via the wof:hierarchy ancestry backfill.",
@@ -137,7 +150,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "ME", locality: "Portland" },
 		expectLat: 43.647,
 		expectLon: -70.168,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		bugRef: "#833",
 		note: "Was Messina, Italy. Fixed by joint-consistency (adminCoherence) — Portland descends from Maine, not Messina. Earlier deterministic country-prior patch shelved; this is the structural fix.",
@@ -154,7 +167,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "OR", locality: "Portland" },
 		expectLat: 45.537,
 		expectLon: -122.65,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		bugRef: "#833",
 		note: "Was Ourense, Spain ('OR' province). Fixed by adminCoherence — Portland descends from Oregon. Guards the country-agnostic generalization of the joint-consistency fix.",
@@ -172,7 +185,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "ME", locality: "Augusta" },
 		expectLat: 44.31,
 		expectLon: -69.78,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		bugRef: "#833",
 		note: "Was Augusta, Sicily — the two-consistent-pairs case (Augusta under both Maine and Messina). Fixed by the abbrev-only country_hint forward linkage (recognizeUSRegions → resolver country=US), not the descendant-consistency pass.",
@@ -189,7 +202,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "IL", locality: "Springfield" },
 		expectLat: 39.7817,
 		expectLon: -89.6501,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		note: "Tuned exact-match case (2026-05-30-resolver-exact-match.md). Guards the working bare-City-ST path.",
 	},
@@ -203,7 +216,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "IL", locality: "Chicago" },
 		expectLat: 41.8781,
 		expectLon: -87.6298,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		note: "A large unambiguous US city — guards the working bare-City-ST path.",
 	},
@@ -220,7 +233,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Tbilisi" },
 		expectLat: 41.6938,
 		expectLon: 44.8015,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-29",
 		bugRef: "#266 / #267",
 		note: "Was US Georgia (32.6,-83.4). Fixed by the #267 GeoNames admin fold (Tbilisi > K'alak'i T'bilisi > Georgia) + reconcileAdminPair's country-candidate fall-through (a foreign capital under its country out-votes the US-state namesake).",
@@ -239,7 +252,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Batumi" },
 		expectLat: 41.6168,
 		expectLon: 41.6367,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-07",
 		bugRef: "#1023",
 		note: "Was US Georgia after the 2026-07-07 admin rebuild (#1015) flattened GE to localities-only (no country node; Tbilisi/Batumi orphaned, parent_id -1) — the country-node + parentID fall-through could no longer reach the Georgian city. Fixed by reconcileAdminPair's matchCountry fall-through (#1023): the token → ISO-3166 GE, then scope the locality by the gazetteer's `country` COLUMN.",
@@ -258,7 +271,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "Georgia", locality: "Savannah" },
 		expectLat: 32.0809,
 		expectLon: -81.0912,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-07",
 		bugRef: "#1023",
 		note: "Guards that the #1023 matchCountry fall-through stays inert on a domestic pair — Savannah GA must NOT flip to Georgia the country. Resolves in the walk (locality never falls through), so the coherence pass is untouched.",
@@ -278,7 +291,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Beirut" },
 		expectLat: 33.8938,
 		expectLon: 35.5018,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-07",
 		bugRef: "#1023",
 		note: "The explicit-country coherence sibling of the region-parsed Tbilisi case — the resolved coordinate must stay in LB, not a US Lebanon namesake. Broadens the namesake guard beyond the Georgia collision.",
@@ -296,7 +309,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Vienna" },
 		expectLat: 48.2083,
 		expectLon: 16.3725,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-30",
 		bugRef: "#822",
 		note: "Was Vienna WV (39.32,-81.54). The country was correctly PARSED as `country` but ignored by the population-first greedy walk; the explicit-country reconcile fixes it with no list — the country code comes from the parser's own emission via codex's ISO-3166 table.",
@@ -312,7 +325,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Sydney" },
 		expectLat: -33.8696,
 		expectLon: 151.2094,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-30",
 		bugRef: "#822",
 		note: "Was a non-AU Sydney. Lat is negative (southern hemisphere) — guards the sign too.",
@@ -328,7 +341,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Toronto" },
 		expectLat: 43.6532,
 		expectLon: -79.3832,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-30",
 		bugRef: "#822",
 		note: "Was Toronto OH. Toronto CA and the US namesakes share the western-hemisphere longitude sign, so this guards the magnitude, not just the sign.",
@@ -344,7 +357,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Zurich" },
 		expectLat: 47.3667,
 		expectLon: 8.55,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-30",
 		bugRef: "#822",
 		note: "Was Zurich KS. Guards the exonym fold (Zurich → Zürich) under the country filter.",
@@ -362,7 +375,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { region: "IL", locality: "Springfield" },
 		expectLat: 39.7817,
 		expectLon: -89.6501,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-06-30",
 		bugRef: "#822",
 		note: "Region present ⇒ applyExplicitCountryCoherence skips ⇒ the region-scoped Springfield IL stands. Guards against the country filter coarsely re-picking the most-populous US Springfield.",
@@ -388,7 +401,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Paris" },
 		expectLat: 48.8566,
 		expectLon: 2.3522,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-02",
 		bugRef: "#912",
 		note: "Was Paris Township, Ohio post-alias-fold. The 2.19M-pop capital must beat 30k-pop namesakes when unscoped.",
@@ -403,7 +416,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Dublin" },
 		expectLat: 53.3498,
 		expectLon: -6.2603,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-02",
 		bugRef: "#912",
 		note: "Was Dublin, Ohio. Guards the class across countries (IE vs US namesakes).",
@@ -418,7 +431,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Melbourne" },
 		expectLat: -37.8136,
 		expectLon: 144.9631,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-02",
 		bugRef: "#912",
 		note: "Was Melbourne, Florida. Southern-hemisphere leg of the namesake class.",
@@ -433,7 +446,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Vancouver" },
 		expectLat: 49.2827,
 		expectLon: -123.1207,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-02",
 		bugRef: "#912",
 		note: "Was Vancouver, Washington (or Colombia mid-fix). The 3.4x-pop CA city must win unscoped.",
@@ -448,7 +461,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Turku" },
 		expectLat: 60.4518,
 		expectLon: 22.2666,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-02",
 		bugRef: "#912",
 		note: "COORDINATE FIXED (#910/#936, re-graded 2026-07-04): resolves to Turku's location within tolerance. Residual is NAME-CANONICALIZATION only — the resolver returns the alias name 'Åbo' instead of canonical 'Turku', so the component check ('Åbo' ≠ 'Turku') still holds it here. Distinct from the ranking bug #912 closed; belongs to the #897 exonym/name family.",
@@ -469,7 +482,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Zabiče" },
 		expectLat: 45.5150988,
 		expectLon: 14.3438828,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-03",
 		bugRef: "#901",
 		note: "Knife-edge sentinel 1/5: the v1.9.8 signature row. Resolved by the SHIPPED encoder; any encoder drift from partial fine-tunes breaks it first.",
@@ -484,7 +497,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Apače" },
 		expectLat: 46.3785077,
 		expectLon: 15.8010729,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-03",
 		bugRef: "#901",
 		note: "Knife-edge sentinel 2/5 (the '#723 would have relabeled this' row — house 108 must stay whole).",
@@ -499,7 +512,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Mlinše" },
 		expectLat: 46.1467054,
 		expectLon: 14.8834054,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-03",
 		bugRef: "#901",
 		note: "Knife-edge sentinel 3/5: letter-suffixed house number (35C) on the no-street form.",
@@ -514,7 +527,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Žikarce" },
 		expectLat: 46.5237521,
 		expectLon: 15.7950198,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-03",
 		bugRef: "#901",
 		note: "Knife-edge sentinel 4/5: leading Ž diacritic + letter-suffixed number.",
@@ -529,7 +542,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Ljubljana", house_number: "54" },
 		expectLat: 46.0745,
 		expectLon: 14.479,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-03",
 		bugRef: "#901",
 		note: "Knife-edge sentinel 5/5 — PROMOTED 2026-07-24 (operator decision). The runner's promote-flag fired the moment the GauntletResult slice learned to carry house_number/street: the shipped pipeline DOES emit '54' whole, and the prior 'house_number null ≠ 54' failure was a harness artifact (the slice never carried the field), so this may have been passing invisibly for some time. Original framing: retrain acceptance row — the shipped pair yields NO house_number; probes split it mid-digit ('…Učakar 5' + '4'). Now gated so the digit-split can't silently return.",
@@ -563,7 +576,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		status: "improvement_target",
 		expectLat: 48.87735,
 		expectLon: 2.35157,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-10",
 		bugRef: "#1039",
 		note: "Bare venue name. Live at intake: Comer, Georgia US — a THIRD namesake (Spanish verb = US town). Needs POI tier or the #1039 confidence floor; a confident cross-continent pin is the failure being tracked.",
@@ -577,7 +590,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		status: "pass",
 		expectLat: 48.88029,
 		expectLon: 2.34309,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-10",
 		bugRef: "#1039",
 		note: "Venue at 52 Rue Condorcet 75009. Two toponyms in the name (Tokyo ward + Paris district); the bare form resolved to Shinjuku JP live at intake, but WITH the explicit ', Paris' the pipeline out-votes the venue span — promoted to pass at first run (2026-07-10), now pinned.",
@@ -592,13 +605,12 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectComponents: { locality: "Shinjuku" },
 		expectLat: 35.701175,
 		expectLon: 139.708848,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-10",
 		bugRef: "#1039",
 		note: "CONTROL: a bare lone toponym plausibly MEANS Tokyo; resolving it there is correct default behavior. This row pins that the venue-trap work must NOT overcorrect bare toponyms into no-results. (The Ivry-sur-Seine venue of the same name is only recoverable from conversational context no geocoder has.)",
 	},
 
-	// ---------------------------------------------------------------------------------------------
 	// FR street-name homonyms (operator's Paris list, 2026-07-15). The street's NAME is a major
 	// foreign city; the tolerance is what makes these mean something — Paris→Rome is ~1100 km, so a
 	// 50 km band FAILS LOUD if the toponym ever out-competes the street reading. These PASS today;
@@ -609,7 +621,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 	// gazetteer places, so raising importance would start biasing STREET-TYPE WORDS toward locality).
 	// The 30 currently-FAILING bare-fragment forms deliberately do NOT live here — this file is the
 	// executable bug log, not a wish list; they live in eval-harness/fixtures/paris-streets.jsonl.
-	// ---------------------------------------------------------------------------------------------
 	{
 		id: "fr-rue-de-rome-homonym",
 		input: "8 Rue de Rome, Paris",
@@ -667,7 +678,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "Passes on the staged v3.11.x candidates (task-8 record) — flip to pass WHEN a lineage successor promotes; shipped v385 still fails (verified 2026-07-23). The street/locality boundary that swallowed 'Paris' on 2026-07-15 has since flipped in experimental lineages (#727 span-head). Was the only miss in the operator's 10-row tricky list (9/10 passed at the time); tracked as span-head's class. See final-review fix-wave report / #1189 adjudication for context.",
 	},
 
-	// ---------------------------------------------------------------------------------------------
 	// Venue-name traps, carried-address form (operator's venue list, 2026-07-24). Sibling family of
 	// the 2026-07-10 venue-toponym traps, but the venue NAMES here are mostly NOT foreign toponyms —
 	// they're honorifics, digit-words, slashes, CJK script, and one Korean city. Seven of thirteen
@@ -690,7 +700,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 	// same venue-span/address-span separation defect the #1039 family tracks. These rows gate that
 	// the carried address keeps out-voting the venue name — tolerance is metro-scale, the win
 	// condition is 'lands the rooftop or declines'.
-	// ---------------------------------------------------------------------------------------------
 	{
 		id: "venue-mr-mrs-crab-huchette",
 		input: "MR & MRS CRAB, 20 Rue de la Huchette, 75005 Paris",
@@ -855,7 +864,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		status: "improvement_target",
 		expectLat: 48.8386,
 		expectLon: 2.3789,
-		expectToleranceM: 25000,
+		expectToleranceM: 25_000,
 		addedAt: "2026-07-24",
 		bugRef: "#1039",
 		note: "The worst live miss of the batch: resolves to American, OHIO (40.7691,-84.1732, countryCode US) — the brand's demonym matched a US locality literally named 'American', and the explicit 75012 postcode was ignored. A confident cross-continent pin, the exact #1039 failure mode. Contributing traps: brand-name venue, duplicated 'Live Bar Live Bar', a NUMBERLESS esplanade (no house number to anchor the BAN tier), the 'Espl.' abbreviation, and a person-name street. Even the venue-free 'Esplanade Johnny Hallyday, 75012 Paris' only reaches the Paris admin centroid (the numberless esplanade is no BAN street), so no address_point tier is asserted — expected coords are the real esplanade (Accor Arena, Bercy) at metro tolerance: the win condition is 'lands in greater Paris or declines', identical shape to venue-toponym-comer-bare. Needs the #1039 confidence floor + POI tier.",

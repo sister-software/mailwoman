@@ -16,10 +16,10 @@ export function parseRangeHeader(headerContent: string | null): { offset: number
 		throw new Error(`Unknown unit in Range header: ${unit}`)
 	}
 
-	const [start, end] = range!.split("-").map((num) => parseInt(num, 10))
+	const [start, end] = range!.split("-").map((num) => Number.parseInt(num, 10))
 
-	if (isNaN(start!) || isNaN(end!)) {
-		throw new Error(`Invalid Range header: ${headerContent}`)
+	if (Number.isNaN(start!) || Number.isNaN(end!)) {
+		throw new TypeError(`Invalid Range header: ${headerContent}`)
 	}
 
 	return {

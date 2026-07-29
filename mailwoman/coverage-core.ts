@@ -36,28 +36,56 @@ import * as path from "node:path"
 
 import { $ } from "zx"
 
+/**
+ * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely wrap more than half the
+ * globe — the standard heuristic for splitting a bbox at ±180.
+ */
+const ANTIMERIDIAN_SPAN_DEGREES = 180
+
 export interface CoverageBuildOptions {
-	/** Comma-separated state slugs (e.g. "CA,TX") or "all" to glob the data root. */
+	/**
+	 * Comma-separated state slugs (e.g. "CA,TX") or "all" to glob the data root.
+	 */
 	states: string
-	/** State slugs to exclude (e.g. ["AK"] — antimeridian hex-wrap). */
+	/**
+	 * State slugs to exclude (e.g. ["AK"] — antimeridian hex-wrap).
+	 */
 	excludeStates: string[]
-	/** Root holding `address-points-us-<st>.db` shards. */
+	/**
+	 * Root holding `address-points-us-<st>.db` shards.
+	 */
 	dataRoot: string
-	/** Root holding `interpolation-us-<st>.db` shards, or null to skip the street-segment signal. */
+	/**
+	 * Root holding `interpolation-us-<st>.db` shards, or null to skip the street-segment signal.
+	 */
 	interpRoot: string | null
-	/** Finest H3 resolution (the fog floor). 9 ≈ 174 m (street/block). */
+	/**
+	 * Finest H3 resolution (the fog floor). 9 ≈ 174 m (street/block).
+	 */
 	fineRes: number
-	/** Coarser resolutions for lower zoom bands, finest-excluded (e.g. [7, 5]). */
+	/**
+	 * Coarser resolutions for lower zoom bands, finest-excluded (e.g. [7, 5]).
+	 */
 	rollup: number[]
-	/** Parent resolution whose data-bearing cells define the fog neighborhood (6 ≈ 3.2 km). */
+	/**
+	 * Parent resolution whose data-bearing cells define the fog neighborhood (6 ≈ 3.2 km).
+	 */
 	domainRes: number
-	/** Address-point count at/above which a fine cell fully clears. */
+	/**
+	 * Address-point count at/above which a fine cell fully clears.
+	 */
 	saturation: number
-	/** Street-segment count at/above which the interpolation signal saturates. */
+	/**
+	 * Street-segment count at/above which the interpolation signal saturates.
+	 */
 	satSeg: number
-	/** Weight (<1) of the street-segment signal relative to address points. */
+	/**
+	 * Weight (<1) of the street-segment signal relative to address points.
+	 */
 	interpWeight: number
-	/** Optimistic-mode exponent for `fog_opt = fog ** gamma`. */
+	/**
+	 * Optimistic-mode exponent for `fog_opt = fog ** gamma`.
+	 */
 	optimisticGamma: number
 	/**
 	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears the "where do we need
@@ -76,17 +104,29 @@ export interface CoverageBuildOptions {
 	 * Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full 1).
 	 */
 	postcodeCeiling: number
-	/** Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor. */
+	/**
+	 * Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor.
+	 */
 	salienceFloor: number
-	/** Country codes the global holes/postcode layer skips (US is handled by the rooftop fine map). */
+	/**
+	 * Country codes the global holes/postcode layer skips (US is handled by the rooftop fine map).
+	 */
 	postcodeExcludeCountries: string[]
-	/** Highest zoom baked; MapLibre overzooms above it. */
+	/**
+	 * Highest zoom baked; MapLibre overzooms above it.
+	 */
 	tileMaxZoom: number
-	/** Output `.pmtiles` path. */
+	/**
+	 * Output `.pmtiles` path.
+	 */
 	out: string
-	/** Keep the intermediate NDJSON (for re-tiling without re-aggregating). */
+	/**
+	 * Keep the intermediate NDJSON (for re-tiling without re-aggregating).
+	 */
 	keepNdjson: boolean
-	/** DuckDB worker-thread cap (omit for all cores). */
+	/**
+	 * DuckDB worker-thread cap (omit for all cores).
+	 */
 	threads?: number
 }
 
@@ -110,14 +150,19 @@ interface StateShard {
 	interp: string | null
 }
 
-// The zoom at which each H3 resolution becomes the active fog granularity (hex edge ≈ tile detail there).
+/**
+ * The zoom at which each H3 resolution becomes the active fog granularity (hex edge ≈ tile detail there).
+ */
 const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9: 10, 10: 12, 11: 14 }
 
-/** Resolve the shard set + matching interpolation shards. */
+/**
+ * Resolve the shard set + matching interpolation shards.
+ */
 function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
 	const files = readdirSync(opts.dataRoot).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
-	const bySlug = new Map(files.map((f) => [f.replace(/^address-points-us-|\.db$/g, ""), f]))
+	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
+
 	const slugs =
 		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
 
@@ -141,7 +186,7 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
  * Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single tile-max).
  */
 function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number, number]> {
-	const asc = [...allRes].sort((a, b) => a - b)
+	const asc = [...allRes].toSorted((a, b) => a - b)
 
 	return new Map(
 		asc.map((res, i) => {
@@ -180,7 +225,7 @@ function antimeridianWrapped(geojson: string): boolean {
 		}
 	}
 
-	return max - min > 180
+	return max - min > ANTIMERIDIAN_SPAN_DEGREES
 }
 
 export async function buildCoverageTiles(
@@ -199,6 +244,7 @@ export async function buildCoverageTiles(
 	const bands = buildBands(ALL_RES, opts.tileMaxZoom)
 	const states = resolveStates(opts)
 	const interpCount = states.filter((s) => s.interp).length
+
 	onProgress(
 		"init",
 		`${states.length} shard(s)${opts.interpRoot ? ` (+${interpCount} interp)` : ""} · fine res ${opts.fineRes} · rollup ${opts.rollup.join(",")} · domain res ${opts.domainRes}`
@@ -210,6 +256,7 @@ export async function buildCoverageTiles(
 	if (opts.threads) {
 		await duck.run(`SET threads TO ${opts.threads}`)
 	}
+
 	await duck.run("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite;")
 
 	// ATTACH every shard read-only (address-points as st<i>, interpolation as ip<i> when present).
@@ -232,6 +279,7 @@ export async function buildCoverageTiles(
 	// cells. Raw-then-aggregate is correct.
 	onProgress("aggregate", "address points → fine cells…")
 	const ptAgg = states.map((_, i) => `SELECT lat, lon FROM st${i}.address_point`).join("\nUNION ALL\n")
+
 	await duck.run(
 		`CREATE TEMP TABLE data_pt AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${ptAgg}) GROUP BY 1`
 	)
@@ -240,14 +288,16 @@ export async function buildCoverageTiles(
 	// vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
 
-	if (segIdx.length > 0) {
+	if (segIdx.length) {
 		const segAgg = segIdx
 			.map(
 				(i) =>
 					`SELECT json_extract(geometry, '$[0][1]')::DOUBLE AS lat, json_extract(geometry, '$[0][0]')::DOUBLE AS lon FROM ip${i}.street_segment WHERE geometry IS NOT NULL`
 			)
 			.join("\nUNION ALL\n")
+
 		onProgress("aggregate", `street segments → fine cells (${segIdx.length} interp shard(s))…`)
+
 		await duck.run(
 			`CREATE TEMP TABLE data_seg AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${segAgg}) GROUP BY 1`
 		)
@@ -258,6 +308,7 @@ export async function buildCoverageTiles(
 	// domain9: every fine child of a domain-res parent holding EITHER signal, with the address-point count
 	// (pt), segment count (seg), and a blended coverage score cov ∈ [0,1] (points strong, segments weak).
 	onProgress("domain", "expanding fog neighborhood + blending signals…")
+
 	await duck.run(`
 		CREATE TEMP TABLE domain9 AS
 		WITH sig AS (SELECT cell FROM data_pt UNION SELECT cell FROM data_seg),
@@ -274,15 +325,18 @@ export async function buildCoverageTiles(
 		LEFT JOIN data_pt p USING (cell)
 		LEFT JOIN data_seg s USING (cell)
 	`)
+
 	const summary = (
 		await duck.runAndReadAll(
 			"SELECT count(*) AS domain, count(*) FILTER (WHERE pt>0) AS pt_cov, count(*) FILTER (WHERE pt=0 AND seg>0) AS seg_only FROM domain9"
 		)
 	).getRowObjects()[0] as Record<string, bigint>
+
 	const domainCells = Number(summary.domain)
 	const withPoints = Number(summary.pt_cov)
 	const streetOnly = Number(summary.seg_only)
 	let postcodeCells = 0
+
 	onProgress(
 		"domain",
 		`${domainCells.toLocaleString()} cells · ${withPoints.toLocaleString()} with points · ${streetOnly.toLocaleString()} street-only`
@@ -293,6 +347,7 @@ export async function buildCoverageTiles(
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = createWriteStream(ndjsonPath)
 	let featureCount = 0
+
 	const emitResolution = async (res: number, sql: string, bandOverride?: [number, number]): Promise<void> => {
 		const [minzoom, maxzoom] = bandOverride ?? bands.get(res) ?? [0, opts.tileMaxZoom]
 		const prefix = `{"type":"Feature","tippecanoe":{"layer":"coverage","minzoom":${minzoom},"maxzoom":${maxzoom}},"properties":`
@@ -305,6 +360,7 @@ export async function buildCoverageTiles(
 
 				if (antimeridianWrapped(String(r.geom))) continue
 				const fog = Number(r.fog)
+
 				const props = {
 					fog: Math.round(fog * 1000) / 1000,
 					fog_opt: Math.round(fog ** opts.optimisticGamma * 1000) / 1000,
@@ -313,10 +369,13 @@ export async function buildCoverageTiles(
 					pc: Number(r.pc ?? 0),
 					res,
 				}
+
 				sink.write(`${prefix}${JSON.stringify(props)},"geometry":${String(r.geom)}}\n`)
+
 				featureCount++
 			}
 		}
+
 		onProgress("emit", `res ${res} → zoom ${minzoom}–${maxzoom} · ${featureCount.toLocaleString()} features`)
 	}
 
@@ -348,6 +407,7 @@ export async function buildCoverageTiles(
 	if (opts.geonamesPostalFile && opts.wofDB) {
 		const exclude = opts.postcodeExcludeCountries.map((c) => `'${c.toUpperCase()}'`).join(", ") || "''"
 		onProgress("holes", "postcode coverage + civilization salience → holes…")
+
 		// pc_cov: postcode COVERAGE per domain cell — flat presence (postcode ∪ 1-ring), clears the hole.
 		await duck.run(`
 			CREATE TEMP TABLE pc_cov AS
@@ -362,6 +422,7 @@ export async function buildCoverageTiles(
 			)
 			SELECT DISTINCT UNNEST(h3_grid_disk(cell, 1)) AS cell, ${opts.postcodeCeiling}::DOUBLE AS cov FROM data_pc
 		`)
+
 		// sal: CIVILIZATION salience per domain cell — WOF settlement places weighted by IMPORTANCE
 		// (Wikipedia notability via place_importance, with a population fallback baked in by
 		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it IS the
@@ -383,6 +444,7 @@ export async function buildCoverageTiles(
 			spread AS (SELECT UNNEST(h3_grid_disk(h3_latlng_to_cell(lat, lon, ${opts.domainRes}), 1)) AS cell, sal FROM places)
 			SELECT cell, max(sal) AS salience FROM spread GROUP BY cell
 		`)
+
 		// holes: fog = salience·(1−cov). Keep only residual fog > 0.05 (the actual holes); covered +
 		// empty cells are dropped → clear basemap.
 		await duck.run(`
@@ -392,17 +454,21 @@ export async function buildCoverageTiles(
 			FROM sal s LEFT JOIN pc_cov c USING (cell)
 			WHERE s.salience * (1.0 - COALESCE(c.cov, 0)) > 0.05
 		`)
+
 		postcodeCells = Number(
 			(await duck.runAndReadAll("SELECT count(*) AS n FROM pc_cells")).getRowObjects()[0]!.n as bigint
 		)
+
 		const pcOnset = RES_ONSET_ZOOM[opts.domainRes] ?? 5
 		onProgress("holes", `${postcodeCells.toLocaleString()} uncovered-civilization holes → res ${opts.domainRes}`)
+
 		// res-domainRes holes, visible from their onset zoom up through the tile max (overzoomed above).
 		await emitResolution(
 			opts.domainRes,
 			`SELECT pc, fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cell))) AS geom FROM pc_cells`,
 			[pcOnset, opts.tileMaxZoom]
 		)
+
 		// res-4 low-zoom rollup (mean child fog) for the world/continent view.
 		await emitResolution(
 			4,
@@ -412,10 +478,13 @@ export async function buildCoverageTiles(
 		)
 	}
 
-	await new Promise<void>((resolve, reject) => sink.end((err?: Error | null) => (err ? reject(err) : resolve())))
+	await new Promise<void>((resolve, reject) => {
+		sink.end((err?: Error | null) => (err ? reject(err) : resolve()))
+	})
 
 	// --- tippecanoe → PMTiles ---
 	onProgress("tile", `tiling ${featureCount.toLocaleString()} features → pmtiles…`)
+
 	const tipArgs = [
 		"-o",
 		opts.out,
@@ -436,6 +505,7 @@ export async function buildCoverageTiles(
 		"--force",
 		ndjsonPath,
 	]
+
 	// quiet: tippecanoe's stderr must not leak into the Ink render; we surface it only on failure.
 	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${tipArgs}`
 

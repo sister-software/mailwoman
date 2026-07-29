@@ -22,17 +22,23 @@ const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
 	class Tensor {
-		constructor(
-			public readonly type: string,
-			public readonly data: BigInt64Array | Float32Array,
-			public readonly dims: readonly number[]
-		) {}
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
 	}
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-/** The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface. */
+/**
+ * The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface.
+ */
 let capturedConfig: {
 	placetypePair?: {
 		index: { probe(c: string, p: string): string | undefined; delta?: number; transitionBeta?: number }
@@ -62,9 +68,12 @@ const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import(".
 
 const SEQ = 128
 
-/** A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings). */
+/**
+ * A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings).
+ */
 function installMockSession(): void {
 	sessionCreateMock.mockReset()
+
 	sessionCreateMock.mockResolvedValue({
 		inputNames: ["input_ids", "attention_mask"],
 		run: vi.fn(() => Promise.resolve({ logits: { data: new Float32Array(SEQ * 3), dims: [1, SEQ, 3] } })),
@@ -88,7 +97,9 @@ function pairHeader(country: string, transitionBeta?: number): PairIndexHeader {
 	}
 }
 
-/** Real PIX1 bytes: one (shoreditch, london) → dependent_locality entry under the given header. */
+/**
+ * Real PIX1 bytes: one (shoreditch, london) → dependent_locality entry under the given header.
+ */
 function gbIndexBytes(): Uint8Array {
 	return serializePairIndex(pairHeader("gb", 5), [{ child: "shoreditch", parent: "london", tag: "dependent_locality" }])
 }
@@ -110,7 +121,7 @@ function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch 
 			return new Response(null, { status: outcome, statusText: outcome === 404 ? "Not Found" : "Server Error" })
 		}
 
-		return new Response(outcome)
+		return new Response(outcome.slice().buffer)
 	}) as unknown as typeof fetch
 }
 
@@ -231,6 +242,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 	test("CONFIG DEFAULT requested but no matching index → warn, no default; the other indexes still load LIVE", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		// Pin 'fr' but only ship gb + nz — the pin can't be honored.
 		const fetchImpl = makeFetch((url) =>
 			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
@@ -253,6 +265,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 	test("multi-locale LOAD-ALL: gb + nz both load LIVE; a 'en-gb' pin makes gb the config default, nz stays available", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		const fetchImpl = makeFetch((url) =>
 			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
 		)

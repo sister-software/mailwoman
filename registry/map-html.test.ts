@@ -8,17 +8,19 @@ import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 import { toMapHTML } from "./map-html.ts"
+import type { EntityGeoData } from "./types.ts"
 
-// The collection shape `toMapHTML` consumes (map-html.ts renders a GeoFeatureCollection of points).
+// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData, not an open record —
+// typing them loosely meant every call site in this file was passing something toMapHTML rejects.
 // Was a dead `GeoJsonFeatureCollection` import from ./types.ts (never exported there); repointed to the
 // real @mailwoman/spatial type as part of the #875 casing sweep.
-type MapFeatureCollection = GeoFeatureCollection<PointLiteral, Record<string, unknown>>
+type EntityFeatureCollection = GeoFeatureCollection<PointLiteral, EntityGeoData>
 
-function fc(features: MapFeatureCollection["features"]): MapFeatureCollection {
+function fc(features: EntityFeatureCollection["features"]): EntityFeatureCollection {
 	return { type: "FeatureCollection", features }
 }
 
-function point(lon: number, lat: number, props: Record<string, unknown>): MapFeatureCollection["features"][number] {
+function point(lon: number, lat: number, props: EntityGeoData): EntityFeatureCollection["features"][number] {
 	return { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties: props }
 }
 
@@ -27,6 +29,7 @@ describe("toMapHTML", () => {
 		const html = toMapHTML(
 			fc([point(-97.7431, 30.2672, { entityID: "e1", recordCount: 2, sources: ["a", "b"], name: "Acme" })])
 		)
+
 		expect(html.startsWith("<!doctype html>")).toBe(true)
 		expect(html.trimEnd().endsWith("</html>")).toBe(true)
 		// MapLibre GL, not Leaflet, pinned with SRI.
@@ -43,7 +46,7 @@ describe("toMapHTML", () => {
 	})
 
 	it("inlines a real Protomaps basemap (many generated layers) plus the entity circle layer", () => {
-		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1 })]))
+		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1, sources: ["x"], name: null })]))
 		// @protomaps/basemaps generates ~70 layer specs; they + our layer are inlined in the style.
 		expect(html).toContain('"id":"mw-entities"')
 		expect(html).toContain('"id":"earth"')
@@ -57,7 +60,10 @@ describe("toMapHTML", () => {
 	})
 
 	it("escapes `</script>` inside record values so a string can't break out of the inlined data", () => {
-		const html = toMapHTML(fc([point(0, 0, { entityID: "x", recordCount: 1, name: "</script><script>alert(1)" })]))
+		const html = toMapHTML(
+			fc([point(0, 0, { entityID: "x", recordCount: 1, name: "</script><script>alert(1)", sources: ["x"] })])
+		)
+
 		expect(html).not.toContain("</script><script>alert(1)")
 		expect(html).toContain("\\u003c/script")
 	})
@@ -65,25 +71,27 @@ describe("toMapHTML", () => {
 	it("auto-selects bucket coloring when any feature carries a `bucket`, else cross-dataset coloring", () => {
 		const withBuckets = toMapHTML(
 			fc([
-				point(0, 0, { entityID: "a", recordCount: 1, bucket: "enrolled", sources: ["x"] }),
-				point(1, 1, { entityID: "b", recordCount: 1, bucket: "eligible-not-enrolled", sources: ["y"] }),
+				point(0, 0, { entityID: "a", recordCount: 1, bucket: "enrolled", sources: ["x"], name: null }),
+				point(1, 1, { entityID: "b", recordCount: 1, bucket: "eligible-not-enrolled", sources: ["y"], name: null }),
 			])
 		)
+
 		// Bucket labels render verbatim in the legend (neutral — straight from the data).
 		expect(withBuckets).toContain("enrolled")
 		expect(withBuckets).toContain("eligible-not-enrolled")
 		// Each feature gets a precomputed `_color`.
 		expect(withBuckets).toContain('"_color"')
 
-		const noBuckets = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x", "y"] })]))
+		const noBuckets = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x", "y"], name: null })]))
 		expect(noBuckets).toContain("cross-dataset link")
 	})
 
 	it("honors the flavor + title options", () => {
-		const html = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1 })]), {
+		const html = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x"], name: null })]), {
 			title: "Coverage reconciliation",
 			flavor: "dark",
 		})
+
 		expect(html).toContain("<title>Coverage reconciliation</title>")
 		// A dark Protomaps flavor produces a dark background fill in the inlined style.
 		expect(html).toMatch(/"background"/)

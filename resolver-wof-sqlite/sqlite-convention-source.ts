@@ -22,7 +22,9 @@ import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from
 export class SqliteConventionSource implements ConventionSource {
 	readonly #db: DatabaseSync
 	readonly #schema: string
-	/** Memoize per-id lookups (including misses, as `null`) so a hot ancestor chain is queried once. */
+	/**
+	 * Memoize per-id lookups (including misses, as `null`) so a hot ancestor chain is queried once.
+	 */
 	readonly #cache = new Map<number, Convention | null>()
 
 	/**
@@ -54,6 +56,7 @@ export class SqliteConventionSource implements ConventionSource {
 			// WORLD_DEFAULT). The build script validates structure, so this is purely defensive.
 			value = null
 		}
+
 		this.#cache.set(wofID, value)
 
 		return value ?? undefined

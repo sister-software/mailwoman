@@ -39,6 +39,12 @@ import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
 /**
+ * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank and are skipped. See the
+ * allCountries.zip readme for the field list.
+ */
+const GEONAMES_POSTAL_COLUMNS = 11
+
+/**
  * Synthetic id base for GeoNames-POSTAL rows — its own namespace above the alias fold's {@link GEONAMES_ID_BASE} (9e12)
  * allocation so all four sources (WOF, Overture, GeoNames-alias, GeoNames-postal) coexist collision-free in a combined
  * DB.
@@ -51,15 +57,21 @@ export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
  * `"11-041"` → `"11041"`, `"AD500"` → `"AD500"`.
  */
 export function normalizePostcodeName(raw: string): string {
-	return raw.replace(/[^\p{L}\p{N}]/gu, "")
+	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "")
 }
 
 export interface GeonamesPostalIngestResult {
-	/** Distinct postcodes inserted across all countries. */
+	/**
+	 * Distinct postcodes inserted across all countries.
+	 */
 	inserted: number
-	/** Per-country distinct-postcode counts. */
+	/**
+	 * Per-country distinct-postcode counts.
+	 */
 	byCountry: Record<string, number>
-	/** Countries whose `<CC>.txt` was missing under the postal dir (skipped, reported). */
+	/**
+	 * Countries whose `<CC>.txt` was missing under the postal dir (skipped, reported).
+	 */
 	missing: string[]
 }
 
@@ -77,6 +89,7 @@ export function ingestGeonamesPostal(
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', ?, '', 0)`
 	)
@@ -92,18 +105,21 @@ export function ingestGeonamesPostal(
 
 		if (!existsSync(file)) {
 			missing.push(cc)
+
 			console.error(
 				`  GeoNames postal ${cc}: ${file} missing — download from download.geonames.org/export/zip/${cc}.zip; skipped`
 			)
+
 			continue
 		}
+
 		// Group member settlement points per NORMALIZED code; remember one display form.
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
 		for (const line of readFileSync(file, "utf8").split("\n")) {
 			const cols = line.split("\t")
 
-			if (cols.length < 11) continue
+			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
 			const display = cols[1]!.trim()
 			const name = normalizePostcodeName(display)
 			const lat = Number(cols[9])
@@ -132,6 +148,7 @@ export function ingestGeonamesPostal(
 					best = p
 				}
 			}
+
 			const id = nextID++
 			sprInsert.run(id, name, cc, best[0], best[1], best[0], best[1], best[0], best[1])
 			namesInsert.run(id, name, cc)
@@ -139,10 +156,13 @@ export function ingestGeonamesPostal(
 			if (m.display !== name) {
 				namesInsert.run(id, m.display, cc)
 			}
+
 			inserted++
 		}
+
 		db.exec("COMMIT")
 		byCountry[cc] = members.size
+
 		console.error(`  GeoNames postal ${cc}: ${members.size.toLocaleString()} distinct codes (medoid centroids)`)
 	}
 

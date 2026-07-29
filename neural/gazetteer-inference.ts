@@ -24,15 +24,21 @@ import type { TokenizedPiece } from "./tokenizer.ts"
  */
 export const GAZETTEER_FEATURE_DIM = 5
 
-/** The loaded lexicon — the JSON shape from build-gazetteer-anchor-lexicon.mjs. */
+/**
+ * The loaded lexicon — the JSON shape from build-gazetteer-anchor-lexicon.mjs.
+ */
 export interface GazetteerLexicon {
 	featureDim: number
 	slots: readonly string[]
 	bits: Record<string, number>
 	maxNgram: number
-	/** Case-insensitive: key = word_norm lowercased → bitmask. */
+	/**
+	 * Case-insensitive: key = word_norm lowercased → bitmask.
+	 */
 	entries: Map<string, number>
-	/** Case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase). */
+	/**
+	 * Case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase).
+	 */
 	codeEntries: Map<string, number>
 	/**
 	 * V3.23 digit guard (`rules.digit_guard`): a matched span paints NOTHING when any span word or the nearest non-empty
@@ -42,7 +48,9 @@ export interface GazetteerLexicon {
 	digitGuard: boolean
 }
 
-/** Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; caller reads). */
+/**
+ * Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; caller reads).
+ */
 export function parseGazetteerLexicon(raw: {
 	feature_dim: number
 	slots: string[]
@@ -59,7 +67,7 @@ export function parseGazetteerLexicon(raw: {
 		throw new Error(`gazetteer lexicon: feature_dim must be a positive number, got ${raw?.feature_dim}`)
 	}
 
-	if (!Array.isArray(raw.slots) || raw.slots.length === 0) {
+	if (!Array.isArray(raw.slots) || !raw.slots.length) {
 		throw new Error("gazetteer lexicon: slots must be a non-empty array")
 	}
 
@@ -87,11 +95,14 @@ export function parseGazetteerLexicon(raw: {
 // Strict Unicode-Nd (mirrors Python str.isdecimal — isdigit would also accept superscripts \p{Nd} rejects).
 const hasDecimal = (word: string): boolean => /\p{Nd}/u.test(word)
 
-/** True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit. */
+/**
+ * True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit.
+ */
 function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number): boolean {
 	for (let k = i; k < i + matchedN; k++) {
 		if (hasDecimal(words[k]!.text)) return true
 	}
+
 	let k = i - 1
 
 	while (k >= 0 && !words[k]!.text) {
@@ -108,7 +119,9 @@ function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number):
 	return k < words.length && hasDecimal(words[k]!.text)
 }
 
-/** Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal). */
+/**
+ * Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal).
+ */
 function stripWord(word: string): string {
 	let start = 0
 	let end = word.length
@@ -135,7 +148,9 @@ interface NormWord {
 	text: string // the stripped surface (case-preserved)
 }
 
-/** Scan the raw surface and paint each char with its candidate-tag bitmask (mirrors Python). */
+/**
+ * Scan the raw surface and paint each char with its candidate-tag bitmask (mirrors Python).
+ */
 export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): number[] {
 	const charBits = new Array<number>(text.length).fill(0)
 	const wordRe = /\S+/g
@@ -148,14 +163,17 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 
 		if (!stripped) {
 			words.push({ begin: m.index, end: m.index, text: "" })
+
 			continue
 		}
+
 		let head = 0
 		const alnum = (c: string) => /[\p{L}\p{N}]/u.test(c)
 
 		while (head < surface.length && !alnum(surface[head]!)) {
 			head++
 		}
+
 		words.push({ begin: m.index + head, end: m.index + head + stripped.length, text: stripped })
 	}
 
@@ -164,8 +182,10 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 	while (i < words.length) {
 		if (!words[i]!.text) {
 			i++
+
 			continue
 		}
+
 		let matchedN = 0
 		let matchedBits = 0
 		const maxN = Math.min(lexicon.maxNgram, words.length - i)
@@ -177,8 +197,10 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			for (let k = i; k < i + n; k++) {
 				if (!words[k]!.text) {
 					ok = false
+
 					break
 				}
+
 				parts.push(words[k]!.text)
 			}
 
@@ -188,12 +210,14 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 
 			// code_entries is case-SENSITIVE: the surface must already BE uppercase ("IN" ≠ "in").
 			if (n === 1) {
+				// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bitmask accumulation, not a mistyped logical or
 				bits |= lexicon.codeEntries.get(parts[0]!) ?? 0
 			}
 
 			if (bits) {
 				matchedN = n
 				matchedBits = bits
+
 				break
 			}
 		}
@@ -203,14 +227,17 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			// Python painter exactly) but paints nothing.
 			if (lexicon.digitGuard && digitAdjacent(words, i, matchedN)) {
 				i += matchedN
+
 				continue
 			}
+
 			const begin = words[i]!.begin
 			const end = words[i + matchedN - 1]!.end
 
 			for (let c = begin; c < Math.min(end, text.length); c++) {
 				charBits[c] = matchedBits
 			}
+
 			i += matchedN
 		} else {
 			i++
@@ -248,6 +275,7 @@ export function suppressGazetteerNearPostcode(
 			}
 		}
 	}
+
 	const dim = gazetteer.features[0]?.length ?? 0
 
 	return {
@@ -277,11 +305,13 @@ export function buildGazetteerFeatures(
 		for (let c = p.start; c < p.end; c++) {
 			if (c < text.length && !/\s/.test(text[c]!)) {
 				bits = charBits[c]!
+
 				break
 			}
 		}
+
 		features.push(bits ? bitsToRow(bits, lexicon) : zero())
-		confidence.push(bits ? 1.0 : 0)
+		confidence.push(bits ? 1 : 0)
 	}
 
 	return { features, confidence }

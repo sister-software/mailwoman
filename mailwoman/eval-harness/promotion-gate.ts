@@ -72,19 +72,33 @@ interface ModelCard {
 	training: { tokenizer_version: string }
 }
 
-/** Options for {@linkcode runPromotionGate}. */
+/**
+ * Options for {@linkcode runPromotionGate}.
+ */
 export interface PromotionGateOptions {
-	/** Candidate fp32 ONNX (required). */
+	/**
+	 * Candidate fp32 ONNX (required).
+	 */
 	model?: string
-	/** Quantized int8 sibling — re-runs the per-tag battery and enforces the delta cap. */
+	/**
+	 * Quantized int8 sibling — re-runs the per-tag battery and enforces the delta cap.
+	 */
 	int8?: string
-	/** Gate-spec JSON: a path, or a bare spec name resolved against the bundled `gates/` dir (required). */
+	/**
+	 * Gate-spec JSON: a path, or a bare spec name resolved against the bundled `gates/` dir (required).
+	 */
 	gate?: string
-	/** Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	tokenizer?: string
-	/** Model-card JSON. Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model-card JSON. Default `neural-weights-en-us/model-card.json`.
+	 */
 	card?: string
-	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	/**
+	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 */
 	gazetteerLexicon?: string
 	/**
 	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us` — the #718-safe path
@@ -92,7 +106,9 @@ export interface PromotionGateOptions {
 	 * (v6.2.0+). Alternative to --model/--int8; takes precedence.
 	 */
 	weightsCache?: string
-	/** Battery output dir. Default `/tmp/gate-<label>-<hhmm>`. */
+	/**
+	 * Battery output dir. Default `/tmp/gate-<label>-<hhmm>`.
+	 */
 	outDir?: string
 }
 
@@ -125,17 +141,136 @@ export function resolveGateSpecPath(gate: string): string {
 	throw new Error(`Gate spec not found: "${gate}". Known specs: ${listGateSpecs().join(", ") || "(none)"}`)
 }
 
-/** Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling. */
+/**
+ * Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling.
+ */
 export function listGateSpecs(): string[] {
 	for (const dir of [new URL("./gates/", import.meta.url), new URL("../../eval-harness/gates/", import.meta.url)]) {
 		if (!existsSync(dir)) continue
 
 		return readdirSync(fileURLToPath(dir))
 			.filter((file) => file.endsWith(".json"))
-			.sort()
+			.toSorted()
 	}
 
 	return []
+}
+
+/**
+ * The three pre-flight guards, run before any battery: the tokenizer must be comparable to the card's, `core/out` must
+ * not be stale, and every graded artifact's md5 + dynamic-quant fingerprint is recorded to `provenance.txt`. Returns an
+ * exit code to propagate, or `null` when the run may proceed.
+ *
+ * A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run false-FAILed (us.postcode
+ * 86.9) because it graded a stale/mislabeled artifact — the real model scored 97.5 under every config.
+ */
+async function runLoreGuards(env: {
+	WC: string
+	WC_MODEL: string
+	MODEL: string
+	INT8: string
+	TOK: string
+	OUT_DIR: string
+	card: ModelCard
+}): Promise<number | null> {
+	const { WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
+	// --- lore guard: tokenizer comparability -----------------------------------
+	const CARD_TOK = card.training.tokenizer_version
+
+	// Skipped for --weights-cache: loadFromWeights pairs the package's own tokenizer + card internally,
+	// so the (unused) explicit TOK path won't contain the card's version string.
+	if (!WC && !TOK.includes(CARD_TOK)) {
+		console.error(
+			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
+		)
+
+		return 2
+	}
+
+	// --- lore guard: recompile-before-eval --------------------------------------
+	if (existsSync("core/out")) {
+		const found = await $({ nothrow: true })`find core -maxdepth 2 -name ${"*.ts"} -newer core/out -print -quit`
+
+		if (found.stdout.trim()) {
+			console.error("⚠ core/ sources newer than core/out — run 'yarn compile' or the harness grades stale code")
+		}
+	}
+
+	// --- lore guard: artifact provenance ----------------------------------------
+	// A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run
+	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
+	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
+	// DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
+	// obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
+	// grep -c prints 0 + exits 1 on no-match; nothrow keeps the single "0".
+	const dql = async (p: string): Promise<string> => {
+		const r = await $({ nothrow: true })`grep -c -a DynamicQuantizeLinear ${p}`
+
+		return r.stdout.trim()
+	}
+
+	const md5 = async (p: string): Promise<string> => {
+		const r = await $`md5sum ${p}`
+
+		return r.stdout.trim().split(/\s+/)[0] ?? ""
+	}
+
+	// --weights-cache: one artifact (the shipped package int8) — log its provenance, skip the
+	// fp32/int8 dual-artifact assertions (they exist for the --model fp32 + --int8 sibling flow).
+	if (WC) {
+		const wcDql = await dql(WC_MODEL)
+
+		const provenance =
+			[
+				`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
+				`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
+			].join("\n") + "\n"
+
+		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance)
+		process.stdout.write(provenance)
+	} else {
+		const modelDql = await dql(MODEL)
+
+		const provLines = [
+			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
+			`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
+		]
+
+		let int8Dql = ""
+
+		if (INT8) {
+			int8Dql = await dql(INT8)
+			provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
+		}
+
+		const provenance = provLines.join("\n") + "\n"
+		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
+		process.stdout.write(provenance)
+
+		//                       … and stdout
+
+		if (modelDql !== "0") {
+			console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
+
+			return 2
+		}
+
+		if (INT8) {
+			if (int8Dql === "0") {
+				console.error(`✗ --int8 '${INT8}' has no quant nodes — it is not a quantized artifact`)
+
+				return 2
+			}
+
+			if ((await md5(MODEL)) === (await md5(INT8))) {
+				console.error("✗ --model and --int8 are byte-identical — one is mislabeled")
+
+				return 2
+			}
+		}
+	}
+
+	return null
 }
 
 /**
@@ -178,104 +313,20 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	if (!OUT_DIR) {
 		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
 	}
+
 	mkdirSync(OUT_DIR, { recursive: true })
 
-	// --- lore guard: tokenizer comparability -----------------------------------
 	const card = JSON.parse(readFileSync(EFF_CARD, "utf8")) as ModelCard
-	const CARD_TOK = card.training.tokenizer_version
+	const guardExit = await runLoreGuards({ WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card })
 
-	// Skipped for --weights-cache: loadFromWeights pairs the package's own tokenizer + card internally,
-	// so the (unused) explicit TOK path won't contain the card's version string.
-	if (!WC && !TOK.includes(CARD_TOK)) {
-		console.error(
-			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
-		)
-
-		return 2
-	}
-
-	// --- lore guard: recompile-before-eval --------------------------------------
-	if (existsSync("core/out")) {
-		const found = await $({ nothrow: true })`find core -maxdepth 2 -name ${"*.ts"} -newer core/out -print -quit`
-
-		if (found.stdout.trim()) {
-			console.error("⚠ core/ sources newer than core/out — run 'yarn compile' or the harness grades stale code")
-		}
-	}
-
-	// --- lore guard: artifact provenance ----------------------------------------
-	// A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run
-	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
-	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
-	// DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
-	// obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
-	// grep -c prints 0 + exits 1 on no-match; nothrow keeps the single "0".
-	const dql = async (p: string): Promise<string> => {
-		const r = await $({ nothrow: true })`grep -c -a DynamicQuantizeLinear ${p}`
-
-		return r.stdout.trim()
-	}
-	const md5 = async (p: string): Promise<string> => {
-		const r = await $`md5sum ${p}`
-
-		return r.stdout.trim().split(/\s+/)[0] ?? ""
-	}
-
-	// --weights-cache: one artifact (the shipped package int8) — log its provenance, skip the
-	// fp32/int8 dual-artifact assertions (they exist for the --model fp32 + --int8 sibling flow).
-	if (WC) {
-		const wcDql = await dql(WC_MODEL)
-		const provenance =
-			[
-				`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
-				`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
-			].join("\n") + "\n"
-		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance)
-		process.stdout.write(provenance)
-	} else {
-		const modelDql = await dql(MODEL)
-		const provLines = [
-			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
-			`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
-		]
-		let int8Dql = ""
-
-		if (INT8) {
-			int8Dql = await dql(INT8)
-			provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
-		}
-		const provenance = provLines.join("\n") + "\n"
-		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
-		process.stdout.write(provenance)
-
-		//                       … and stdout
-
-		if (modelDql !== "0") {
-			console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
-
-			return 2
-		}
-
-		if (INT8) {
-			if (int8Dql === "0") {
-				console.error(`✗ --int8 '${INT8}' has no quant nodes — it is not a quantized artifact`)
-
-				return 2
-			}
-
-			if ((await md5(MODEL)) === (await md5(INT8))) {
-				console.error("✗ --model and --int8 are byte-identical — one is mislabeled")
-
-				return 2
-			}
-		}
-	}
+	if (guardExit !== null) return guardExit
 
 	const GAZ_ARGS: string[] = []
 
 	if (gate.requires_gazetteer_lexicon === true) {
 		GAZ_ARGS.push("--gazetteer-lexicon", GAZ, "--suppress-gaz-near-postcode")
 	}
+
 	// Conventions channel (#511 Tier A): when the gate spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
 	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
@@ -284,6 +335,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	if (CONV_MODE) {
 		GAZ_ARGS.push("--conventions", CONV_MODE)
 	}
+
 	// Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
 	let BRIDGE_MODE = ""
 
@@ -296,44 +348,64 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	const runBattery = async (m: string, tag: string): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
+
 		// Package-shaped (#718): the metric probes (which support --weights-cache) load ALL channels —
 		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = WC_MODEL when WC.
 		const plFlags = WC
 			? ["--weights-cache", WC]
 			: ["--model", m, "--tokenizer", TOK, "--model-card", CARD, "--model-anchor-lookup", String(LK)]
+
 		const probeFlags = WC ? ["--weights-cache", WC] : ["--model", m]
+
 		const perLocale =
 			await $`node scripts/eval/per-locale-f1.ts ${plFlags} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, perLocale.stdout)
+
 		const affix =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-affix.md`, affix.stdout)
+
 		const unit =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-unit.md`, unit.stdout)
+
 		const country =
 			await $`node scripts/eval/score-country-homograph.ts ${probeFlags} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-country.md`, country.stdout)
+
 		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
 		const pobox =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-pobox.md`, pobox.stdout)
+
 		const intersection =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-intersection.md`, intersection.stdout)
+
 		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
 		const watchVt =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-watch-intersection-vt.md`, watchVt.stdout)
+
 		const watchGlue =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-watch-glue.md`, watchGlue.stdout)
+
 		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — nothrow,
 		// combine stdout+stderr like the bash `> … 2>&1 || true`.
 		const deorder = await $({
 			nothrow: true,
 		})`node scripts/eval/de-order-eval.ts --model ${m} --card ${EFF_CARD} --tokenizer ${EFF_TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${deorder.stdout}${deorder.stderr}`)
 	}
 
@@ -349,6 +421,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			await runBattery(INT8, "int8")
 		}
 	}
+
 	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
 	// same capture: the report lines land in presets.md, a failure is tolerated like the old child's
 	// self-caught `.catch(console.error)` (partial output kept, gate continues).
@@ -359,6 +432,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	} catch (error) {
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}
+
 	writeFileSync(`${OUT_DIR}/presets.md`, presetLines.map((line) => `${line}\n`).join(""))
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
@@ -373,6 +447,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		const cascade = await $({
 			nothrow: true,
 		})`node scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${EFF_TOK} --card ${EFF_CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
+
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, cascade.stdout)
 
 		if (cascade.exitCode !== 0) {
@@ -383,6 +458,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	} else {
 		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, msg + "\n")
+
 		console.error(msg)
 	}
 
@@ -410,9 +486,11 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			...(CONV_MODE ? ["--conventions", CONV_MODE] : []),
 			...(BRIDGE_MODE ? ["--bridge-gaps"] : []),
 		]
+
 		const arena = await $({
 			nothrow: true,
 		})`node scripts/eval/external-arenas.ts ${arenaArgs}`
+
 		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
@@ -432,6 +510,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			nothrow: true,
 			env: childEnv(),
 		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${EFF_TOK} --model-card ${EFF_CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
+
 		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${bare.stdout}${bare.stderr}`)
 
 		if (bare.exitCode !== 0) {
@@ -455,6 +534,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	if (CONV_MODE) {
 		console.log("== mask-regression gate (#718) ==")
+
 		const maskLines: string[] = []
 
 		try {
@@ -469,11 +549,13 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 				},
 				(line) => maskLines.push(line)
 			)
+
 			MASK_GATE_STATUS = mask.pass ? 0 : 1
 		} catch (error) {
 			maskLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			MASK_GATE_STATUS = 1
 		}
+
 		writeFileSync(`${OUT_DIR}/mask-regression.md`, maskLines.map((line) => `${line}\n`).join(""))
 
 		if (MASK_GATE_STATUS === 0) {
@@ -489,7 +571,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// --- collect + verify --------------------------------------------------------
 	// Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
-	let VERDICT_STATUS = 0
+	let VERDICT_STATUS: number
 
 	try {
 		const { failed } = assemblePromotionVerdict({
@@ -498,9 +580,11 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			withInt8: Boolean(INT8),
 			...(options.weightsCache ? { gradedArtifact: "weights-cache" as const } : {}),
 		})
+
 		VERDICT_STATUS = failed ? 1 : 0
 	} catch (error) {
 		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
+
 		VERDICT_STATUS = 1
 	}
 
@@ -523,7 +607,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		`\nledger (#885): on promote, append this run —\n` +
 			`  node mailwoman/out/cli.js eval ledger-append \\\n` +
 			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
-			`    --run-id ${LABEL.replace(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
+			`    --run-id ${LABEL.replaceAll(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${EFF_CARD}`
 	)
 

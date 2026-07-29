@@ -16,6 +16,7 @@ import { createUsgovIrsBmfAdapter, USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAU
 const HEADER = "EIN,NAME,STREET,CITY,STATE,ZIP"
 
 let scratch: string
+
 beforeEach(() => {
 	scratch = mkdtempSync(join(tmpdir(), "mailwoman-irsbmf-"))
 })
@@ -50,12 +51,14 @@ describe("usgov-irs-bmf adapter", () => {
 		const r = rows[0]!
 		expect(r.components.po_box).toBe("PO BOX 3869")
 		expect(r.components.street).toBeUndefined()
+
 		expect(r.components).toMatchObject({
 			venue: "IGLESIA FUENTE DE AGUA VIVA",
 			locality: "CAROLINA",
 			region: "PR",
 			postcode: "00984",
 		})
+
 		expect(r.country).toBe("US")
 		expect(r.source).toBe(USGOV_IRS_BMF_ADAPTER_ID)
 		expect(r.source_id).toBe("usgov-irs-bmf-010674605")
@@ -64,6 +67,7 @@ describe("usgov-irs-bmf adapter", () => {
 	it("splits a numbered street into house_number + street", async () => {
 		const rows = await collect(writeCSV("123456789,COMMUNITY FOUNDATION INC,1234 MAIN ST,SAN JUAN,PR,00901"))
 		const r = rows[0]!
+
 		expect(r.components).toMatchObject({
 			house_number: "1234",
 			street: "MAIN ST",
@@ -71,6 +75,7 @@ describe("usgov-irs-bmf adapter", () => {
 			region: "PR",
 			postcode: "00901",
 		})
+
 		expect(r.components.po_box).toBeUndefined()
 	})
 
@@ -83,6 +88,7 @@ describe("usgov-irs-bmf adapter", () => {
 		const rows = await collect(
 			writeCSV("1,NO CITY,PO BOX 1,,PR,00901", "2,NO ZIP,PO BOX 2,SAN JUAN,PR,", "3,OK ORG,PO BOX 3,SAN JUAN,PR,00901")
 		)
+
 		expect(rows).toHaveLength(1)
 		expect(rows[0]?.components.locality).toBe("SAN JUAN")
 	})
@@ -91,11 +97,13 @@ describe("usgov-irs-bmf adapter", () => {
 		const rows = await collect(writeCSV("1,A,PO BOX 1,SAN JUAN,PR,00901", "2,B,PO BOX 2,SAN JUAN,PR,00901"), {
 			limit: 1,
 		})
+
 		expect(rows).toHaveLength(1)
 	})
 
 	it("rejects a non-US country filter", async () => {
 		const p = writeCSV("1,A,PO BOX 1,SAN JUAN,PR,00901")
+
 		await expect(async () => {
 			for await (const _ of createUsgovIrsBmfAdapter().rows({ inputPath: p, country: "FR" })) {
 				void _

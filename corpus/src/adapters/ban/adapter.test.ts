@@ -18,9 +18,11 @@ import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.ts"
 const fixtureCSV = repoRootPath("corpus", "fixtures", "ban", "sample.csv")
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-ban-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -33,12 +35,15 @@ describe("ban adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(7)
 		const jsonl = await readFile(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 		const rows = jsonl
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as CanonicalRow)
+
 		expect(rows).toHaveLength(7)
 		expect(rows.every((r) => r.country === "FR")).toBe(true)
 		expect(rows.every((r) => r.locale === "fr-FR")).toBe(true)
@@ -53,7 +58,9 @@ describe("ban adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const jsonl = await readFile(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 		const rows = jsonl
 			.trim()
 			.split("\n")
@@ -61,6 +68,7 @@ describe("ban adapter against fixture sample.csv", () => {
 
 		const rivoli = rows.find((r) => r.raw.includes("Rivoli") && r.components.house_number === "1")
 		expect(rivoli?.raw).toBe("1 Rue de Rivoli, 75001 Paris")
+
 		expect(rivoli?.components).toEqual({
 			house_number: "1",
 			street_prefix: "Rue",
@@ -92,6 +100,7 @@ describe("ban adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(2)
 		expect(manifest.written).toBe(2)
 	})
@@ -103,11 +112,14 @@ describe("ban adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const jsonl = await readFile(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"), "utf8")
+
 		const rows = jsonl
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as CanonicalRow)
+
 		expect(rows[0]!.source_id).toBe("ban-75108_0001_00001")
 	})
 
@@ -118,13 +130,16 @@ describe("ban adapter against fixture sample.csv", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, BAN_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

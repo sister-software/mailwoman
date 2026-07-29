@@ -8,7 +8,7 @@
  *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
@@ -17,7 +17,9 @@ import { afterAll, beforeAll, expect, test } from "vitest"
 
 import { ingestGeonamesAliases } from "./geonames-aliases.ts"
 
-/** A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any). */
+/**
+ * A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any).
+ */
 type Row = Record<string, string | number | null>
 
 let dir: string
@@ -26,7 +28,7 @@ let db: DatabaseSync
 // One GeoNames row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass, fcode, country, cc2,
 // admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
 function row(over: Record<number, string>): string {
-	const f = Array(19).fill("")
+	const f = new Array(19).fill("")
 
 	for (const [i, v] of Object.entries(over)) {
 		f[Number(i)] = v
@@ -37,6 +39,7 @@ function row(over: Record<number, string>): string {
 
 beforeAll(() => {
 	dir = mkdtempSync(join(tmpdir(), "geonames-admin-"))
+
 	const lines = [
 		// PCLI country: Georgia
 		row({ 0: "614540", 1: "Georgia", 2: "Georgia", 4: "42.0", 5: "43.5", 6: "A", 7: "PCLI", 8: "GE" }),
@@ -56,17 +59,21 @@ beforeAll(() => {
 			14: "1049498",
 		}),
 	].join("\n")
+
 	writeFileSync(join(dir, "GE.txt"), lines)
 
 	db = new DatabaseSync(":memory:")
+
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
 		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`
 	)
+
 	db.exec(
 		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
 	)
+
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 
@@ -82,6 +89,7 @@ test("folds the country (PCLI) and region (ADM1) as admin spr rows", () => {
 	const country = db
 		.prepare("SELECT name, placetype, country FROM spr WHERE placetype='country' AND country='GE'")
 		.get() as Row
+
 	const region = db.prepare("SELECT name, placetype FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 
 	expect(country?.name).toBe("Georgia")
@@ -95,28 +103,35 @@ test("links the locality → region → country ancestry so parentID scoping rea
 
 	// Locality is parented to its region; the ancestor chain carries both region and country.
 	expect(loc.parent_id).toBe(region.id)
+
 	const ancestorIds = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? ORDER BY ancestor_id")
-		.all(loc.id)
+		.all(loc.id!)
 		.map((r) => (r as Row).ancestor_id)
+
 	expect(ancestorIds).toContain(region.id)
 	expect(ancestorIds).toContain(country.id)
+
 	// The region itself ancestors to the country (so a region→country query works too).
 	const regionAnc = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ?")
-		.all(region.id)
+		.all(region.id!)
 		.map((r) => (r as Row).ancestor_id)
+
 	expect(regionAnc).toContain(country.id)
 })
 
 test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", () => {
 	const db2 = new DatabaseSync(":memory:")
+
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
 		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`)
+
 	db2.exec(
 		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
 	)
+
 	db2.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db2.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	ingestGeonamesAliases(db2, ["GE"], dir, () => {})
@@ -129,6 +144,7 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", () => {
 	const d = mkdtempSync(join(tmpdir(), "geonames-pcls-"))
+
 	writeFileSync(
 		join(d, "HK.txt"),
 		[
@@ -146,13 +162,17 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 			}),
 		].join("\n")
 	)
+
 	const hk = new DatabaseSync(":memory:")
+
 	hk.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
 		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`)
+
 	hk.exec(
 		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
 	)
+
 	hk.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
@@ -161,6 +181,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)
+
 	hk.close()
 	rmSync(d, { recursive: true, force: true })
 })

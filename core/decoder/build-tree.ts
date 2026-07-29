@@ -106,6 +106,7 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 	if (attribution.sourceID !== undefined) {
 		node.sourceID = attribution.sourceID
 	}
+
 	out.push(node)
 
 	return null
@@ -127,6 +128,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
 			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
 			open = flush(open, raw, out, attribution)
+
 			continue
 		}
 
@@ -143,10 +145,13 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end
 				open.confidences.push(tok.confidence)
+
 				continue
 			}
-			open = flush(open, raw, out, attribution)
+
+			flush(open, raw, out, attribution)
 			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence] }
+
 			continue
 		}
 
@@ -178,9 +183,17 @@ function findParent(
 	for (const parentTag of candidates) {
 		const matches = all.filter((s) => s !== span && s.tag === parentTag)
 
-		if (matches.length === 0) continue
+		if (!matches.length) continue
 
-		return matches.reduce((best, cur) => (distance(cur, span) < distance(best, span) ? cur : best))
+		let closest = matches[0]!
+
+		for (const candidate of matches) {
+			if (distance(candidate, span) < distance(closest, span)) {
+				closest = candidate
+			}
+		}
+
+		return closest
 	}
 
 	return null

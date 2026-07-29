@@ -14,24 +14,38 @@ import type { ResultNode } from "../../shared/resources.tsx"
 import styles from "./styles.module.css"
 
 export interface BIOHighlightProps {
-	/** The raw text handed to the parser — `nodes[].start/end` index into this. */
+	/**
+	 * The raw text handed to the parser — `nodes[].start/end` index into this.
+	 */
 	input: string
-	/** Flattened parse nodes; only those with numeric `start`/`end` are rendered. */
+	/**
+	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
+	 */
 	nodes: ResultNode[]
 }
 
 interface BIOWord {
-	/** The word text as it appears in the input. */
+	/**
+	 * The word text as it appears in the input.
+	 */
 	text: string
-	/** Leading whitespace before this word. */
+	/**
+	 * Leading whitespace before this word.
+	 */
 	whitespace: string
-	/** BIO label for this word. */
+	/**
+	 * BIO label for this word.
+	 */
 	label: string
-	/** The tag this label refers to (e.g. "street", "locality", "house_number"). */
+	/**
+	 * The tag this label refers to (e.g. "street", "locality", "house_number").
+	 */
 	tag: string | null
 }
 
-/** Tokenize the raw input into words, preserving leading whitespace for each token. */
+/**
+ * Tokenize the raw input into words, preserving leading whitespace for each token.
+ */
 function tokenizeWords(input: string): Array<{ text: string; start: number; end: number; whitespace: string }> {
 	const words: Array<{ text: string; start: number; end: number; whitespace: string }> = []
 	let i = 0
@@ -42,6 +56,7 @@ function tokenizeWords(input: string): Array<{ text: string; start: number; end:
 
 		while (i < input.length && /\s/.test(input[i])) {
 			ws += input[i]
+
 			i++
 		}
 
@@ -53,6 +68,7 @@ function tokenizeWords(input: string): Array<{ text: string; start: number; end:
 		while (i < input.length && !/\s/.test(input[i])) {
 			i++
 		}
+
 		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
 	}
 
@@ -88,6 +104,7 @@ function assignBIOLabels(
 				best = s
 			}
 		}
+
 		owner[w] = best
 	}
 
@@ -99,8 +116,10 @@ function assignBIOLabels(
 
 		if (spanIdx === -1) {
 			result.push({ text: words[w].text, whitespace: words[w].whitespace, label: "O", tag: null })
+
 			continue
 		}
+
 		const span = spans[spanIdx]
 		// Check if this is the first word of this span (B) or continuation (I).
 		const isFirst = w === 0 || owner[w - 1] !== spanIdx
@@ -135,7 +154,7 @@ export const BIOHighlight: React.FC<BIOHighlightProps> = ({ input, nodes }) => {
 			n.end <= input.length
 	)
 
-	if (spans.length === 0) return null
+	if (!spans.length) return null
 
 	const words = tokenizeWords(input)
 	const bioWords = assignBIOLabels(words, spans)

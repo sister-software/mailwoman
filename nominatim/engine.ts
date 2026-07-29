@@ -37,7 +37,9 @@ export interface NominatimAddressDetails {
 	[key: string]: string | undefined
 }
 
-/** A single Nominatim result object (the shape geopy and friends parse). */
+/**
+ * A single Nominatim result object (the shape geopy and friends parse).
+ */
 export interface NominatimResult {
 	place_id: number | string
 	licence: string
@@ -46,20 +48,28 @@ export interface NominatimResult {
 	lat: string
 	lon: string
 	display_name: string
-	/** `[south, north, west, east]` as strings, per Nominatim. */
+	/**
+	 * `[south, north, west, east]` as strings, per Nominatim.
+	 */
 	boundingbox?: [string, string, string, string]
 	class?: string
 	type?: string
 	importance?: number
 	place_rank?: number
 	address?: NominatimAddressDetails
-	/** Present when `format=geojson` or `polygon_geojson=1`. */
+	/**
+	 * Present when `format=geojson` or `polygon_geojson=1`.
+	 */
 	geojson?: unknown
-	/** OpenCage-style enrichment block (timezone, coordinate formats, …); attached by the engine. */
+	/**
+	 * OpenCage-style enrichment block (timezone, coordinate formats, …); attached by the engine.
+	 */
 	annotations?: OpenCageAnnotations
 }
 
-/** Parsed `/search` parameters (free-text OR structured; never both). */
+/**
+ * Parsed `/search` parameters (free-text OR structured; never both).
+ */
 export interface NominatimSearchParams {
 	q?: string
 	street?: string
@@ -77,7 +87,9 @@ export interface NominatimSearchParams {
 	acceptLanguage?: string
 }
 
-/** Parsed `/reverse` parameters. */
+/**
+ * Parsed `/reverse` parameters.
+ */
 export interface NominatimReverseParams {
 	lat: number
 	lon: number
@@ -87,14 +99,18 @@ export interface NominatimReverseParams {
 	acceptLanguage?: string
 }
 
-/** Parsed `/lookup` parameters. */
+/**
+ * Parsed `/lookup` parameters.
+ */
 export interface NominatimLookupParams {
 	osmIds: string[]
 	addressdetails?: boolean
 	format: NominatimFormat
 }
 
-/** Nominatim `/status` payload. */
+/**
+ * Nominatim `/status` payload.
+ */
 export interface NominatimStatus {
 	status: number
 	message: string

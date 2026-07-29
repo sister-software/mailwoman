@@ -34,6 +34,11 @@
  * Minimal subset of `QueryShape` this module consumes. Compatible with `@mailwoman/query-shape`'s exported `QueryShape`
  * type by shape — no import required.
  */
+/**
+ * Candidate count above which the shape prior is too diffuse to be worth applying.
+ */
+const MAX_PRIOR_CANDIDATES = 4
+
 export interface QueryShapeLike {
 	knownFormats: ReadonlyArray<KnownFormatHitLike>
 	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
@@ -47,11 +52,15 @@ export interface RegionAbbreviationHitLike {
 export interface KnownFormatHitLike {
 	format: string
 	span: { start: number; end: number }
-	/** 0..1; ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower. */
+	/**
+	 * 0..1; ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
+	 */
 	confidence: number
 }
 
-/** Minimal subset of `TokenizedPiece` this module consumes. */
+/**
+ * Minimal subset of `TokenizedPiece` this module consumes.
+ */
 export interface TokenLike {
 	start: number
 	end: number
@@ -103,7 +112,7 @@ export function buildEmissionPriors(
 ): number[][] {
 	const T = tokens.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 1.0
+	const biasScale = opts.biasScale ?? 1
 	const matrix: number[][] = []
 
 	for (let t = 0; t < T; t++) {
@@ -117,7 +126,7 @@ export function buildEmissionPriors(
 		labelToCol.set(labels[k]!, k)
 	}
 
-	if (shape.knownFormats.length === 0 && !shape.regionAbbreviations?.length) {
+	if (!shape.knownFormats.length && !shape.regionAbbreviations?.length) {
 		return matrix
 	}
 
@@ -183,7 +192,7 @@ function applyScopedLocalityBias(
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
 		// Guard 3: the doubleton shape — a short leading name, not a sentence.
-		if (candidates.length === 0 || candidates.length > 4) continue
+		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
 
 		for (let i = 0; i < candidates.length; i++) {
 			const col = i === 0 ? bLocCol : iLocCol
@@ -194,16 +203,20 @@ function applyScopedLocalityBias(
 	}
 }
 
-/** Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton. */
-const SCOPED_LOCALITY_BIAS = 2.0
+/**
+ * Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton.
+ */
+const SCOPED_LOCALITY_BIAS = 2
 
 function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end
 }
 
-/** Element-wise add two matrices of equal shape. Returns a new matrix. */
+/**
+ * Element-wise add two matrices of equal shape. Returns a new matrix.
+ */
 export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
-	if (priors.length === 0) return emissions.map((row) => row.slice())
+	if (!priors.length) return emissions.map((row) => row.slice())
 	const out: number[][] = []
 
 	for (let t = 0; t < emissions.length; t++) {
@@ -214,6 +227,7 @@ export function addEmissionMatrix(emissions: number[][], priors: number[][]): nu
 		for (let k = 0; k < e.length; k++) {
 			row[k] = e[k]! + (p[k] ?? 0)
 		}
+
 		out.push(row)
 	}
 

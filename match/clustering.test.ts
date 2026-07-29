@@ -19,7 +19,7 @@ const shape = (clusters: { id: string }[][]) =>
 		.map((g) =>
 			g
 				.map((r) => r.id)
-				.sort()
+				.toSorted()
 				.join("")
 		)
 		.sort()
@@ -34,6 +34,7 @@ describe("cluster", () => {
 			],
 			{ threshold: 1 }
 		)
+
 		expect(shape(clusters)).toEqual(["123", "4"])
 	})
 
@@ -46,6 +47,7 @@ describe("cluster", () => {
 			],
 			{ threshold: 1 }
 		)
+
 		expect(shape(clusters)).toEqual(["12", "34"])
 	})
 
@@ -90,6 +92,7 @@ describe("cluster average-linkage (A4)", () => {
 			{ a: r2, b: r3, weight: 8 },
 			{ a: r1, b: r3, weight: 9 },
 		]
+
 		expect(shape(cluster(records, triangle, { threshold: 4, linkage: "average" }))).toEqual(["123", "4"])
 	})
 })

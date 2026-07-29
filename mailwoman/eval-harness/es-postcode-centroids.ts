@@ -21,27 +21,39 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** Options for {@linkcode buildESPostcodeCentroids}. */
+/**
+ * Options for {@linkcode buildESPostcodeCentroids}.
+ */
 export interface ESPostcodeCentroidsOptions {
-	/** ISO country code selecting the Overture addresses parquet + output name. Default `ES`. */
+	/**
+	 * ISO country code selecting the Overture addresses parquet + output name. Default `ES`.
+	 */
 	country?: string
 	/**
 	 * Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK. `0` = no lpad
 	 * (use the raw Overture form). Default 5.
 	 */
 	pcLen?: number
-	/** Overture addresses parquet. Default: the pinned 2026-05-20.0 release under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Overture addresses parquet. Default: the pinned 2026-05-20.0 release under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	parquet?: string
-	/** Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postcode-<cc>-overture.db`. */
+	/**
+	 * Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postcode-<cc>-overture.db`.
+	 */
 	out?: string
 }
 
-/** Build the per-postcode-centroid `spr` DB from the Overture addresses parquet. */
+/**
+ * Build the per-postcode-centroid `spr` DB from the Overture addresses parquet.
+ */
 export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptions = {}): Promise<void> {
 	const CC = options.country || "ES"
 	const PC_LEN = options.pcLen ?? 5
+
 	const PARQUET =
 		options.parquet || String(dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`))
+
 	const OUT_DB = options.out || String(dataRootPath("wof", `postcode-${CC.toLowerCase()}-overture.db`))
 
 	// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load it
@@ -52,6 +64,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 
 	// Confirm the parquet columns first (the ingest output extracts ST_X/ST_Y → lat/lon).
 	const desc = await conn.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${PARQUET}') LIMIT 1`)
+
 	console.error(
 		"columns:",
 		desc
@@ -70,6 +83,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 		PC_LEN > 0
 			? `CASE WHEN regexp_full_match(trim(CAST(postcode AS VARCHAR)), '[0-9]{1,${PC_LEN}}') THEN lpad(trim(CAST(postcode AS VARCHAR)), ${PC_LEN}, '0') ELSE trim(CAST(postcode AS VARCHAR)) END`
 			: `trim(CAST(postcode AS VARCHAR))`
+
 	const sql = `
 WITH base AS (
   SELECT
@@ -87,8 +101,10 @@ FROM base b JOIN stats s ON b.pc = s.pc
 WHERE (s.sl = 0 OR abs(b.lat - s.ml) <= 3 * s.sl) AND (s.so = 0 OR abs(b.lon - s.mo) <= 3 * s.so)
 GROUP BY b.pc
 `
+
 	const res = await conn.runAndReadAll(sql)
 	const rows = res.getRowObjects() as Array<{ postcode: string; lat: number; lon: number; n: bigint }>
+
 	console.error(`extracted ${rows.length} ${CC} postcode centroids from Overture`)
 
 	// Emit the spr table the WOFPostcodeLookup query consumes:
@@ -98,6 +114,7 @@ GROUP BY b.pc
 	// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
 	// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
 	out.exec(`PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;`)
+
 	out.exec(`
 DROP TABLE IF EXISTS spr;
 CREATE TABLE spr (
@@ -112,18 +129,22 @@ CREATE TABLE spr (
   source TEXT DEFAULT NULL, point_count INTEGER DEFAULT 0
 );
 `)
+
 	const ins = out.prepare(
 		`INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current, source, point_count)
 		 VALUES (?, ?, 'postalcode', ?, ?, ?, 1, 'overture:2026-05-20.0', ?)`
 	)
+
 	let id = 1
 	out.exec("BEGIN")
 
 	for (const r of rows) {
 		ins.run(id++, String(r.postcode), CC, Number(r.lat), Number(r.lon), Number(r.n))
 	}
+
 	out.exec("COMMIT")
 	out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)
 	out.close()
+
 	console.error(`wrote ${rows.length} rows → ${OUT_DB}`)
 }

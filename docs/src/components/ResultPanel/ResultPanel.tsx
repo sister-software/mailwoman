@@ -1,7 +1,8 @@
 import CodeBlock from "@theme/CodeBlock"
 import { Fragment, useCallback, useState } from "react"
 
-import { DemoResult } from "../../shared/resources.tsx"
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
+import type { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
@@ -22,7 +23,7 @@ export interface ConfidenceCellProps {
 export const ConfidenceCell: React.FC<ConfidenceCellProps> = ({ confidence }) => {
 	if (confidence == null) return <span className={styles.confDash}>—</span>
 	const pct = Math.max(0, Math.min(1, confidence)) * 100
-	const tier = confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	const tier = confidenceTier(confidence)
 
 	return (
 		<div className={styles.confCell}>
@@ -50,6 +51,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 
 			return
 		}
+
 		const { decodeAsXML } = await import("@mailwoman/core/decoder")
 		setXml(decodeAsXML(result.tree as Parameters<typeof decodeAsXML>[0]))
 		setShowXml(true)
@@ -78,6 +80,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 					}
 				: null,
 		}
+
 		const json = JSON.stringify(payload, null, 2)
 
 		try {
@@ -95,10 +98,12 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 			} catch {
 				/* nothing more we can do */
 			}
+
 			document.body.removeChild(ta)
 		}
+
 		setCopied(true)
-		window.setTimeout(() => setCopied(false), 1500)
+		globalThis.setTimeout(() => setCopied(false), 1500)
 	}, [result, selected])
 
 	return (
@@ -192,7 +197,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 							<dt>score</dt>
 							<dd>{selected.score.toFixed(3)}</dd>
 						</dl>
-						{result.dualRoles && result.dualRoles.length > 0 ? (
+						{result.dualRoles && result.dualRoles.length ? (
 							<p
 								style={{
 									margin: "0.5rem 0 0",
@@ -205,7 +210,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 								🏛️ <strong>Dual-role place.</strong> {selected.name} also resolves as{" "}
 								{result.dualRoles.map((r, i) => (
 									<Fragment key={`${r.role}-${r.id}`}>
-										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replace(/-/g, " ")})
+										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replaceAll("-", " ")})
 									</Fragment>
 								))}
 								.

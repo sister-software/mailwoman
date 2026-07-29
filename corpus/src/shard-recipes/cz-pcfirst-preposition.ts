@@ -16,6 +16,10 @@
 
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const czPcFirstPrepositionRecipe: ShardRecipe = {
 	name: "cz-pcfirst-preposition",
 	description:
@@ -36,10 +40,13 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 
 			if (!street || !city || !number || !postcode) {
 				skipped++
+
 				continue
 			}
+
 			const order = read % 3
 			let raw: string
+
 			const components: Record<string, string> = {
 				street,
 				house_number: number,
@@ -54,11 +61,13 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 			} else {
 				raw = `${city}, ${postcode}, ${street} ${number}`
 			}
+
 			const source_id = shardSourceID("synth-cz-pcfirst-preposition", {
 				...components,
 				o: String(order),
 				v: String(read),
 			})
+
 			const canonical = {
 				raw,
 				components,

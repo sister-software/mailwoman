@@ -36,7 +36,9 @@ import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 
 import { collectMatches } from "./postcode-repair.ts"
 
-/** A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet". */
+/**
+ * A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet".
+ */
 export interface PostcodePlace {
 	country: string
 	lat: number
@@ -49,22 +51,32 @@ export interface PostcodePlace {
  * future FST/WASM resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
-	/** Exact-match lookup of a normalized postcode string across every country shard. */
+	/**
+	 * Exact-match lookup of a normalized postcode string across every country shard.
+	 */
 	lookup(postcode: string): PostcodePlace[]
 }
 
 export interface PostcodeAnchor {
-	/** The shaped substring as it appeared in the raw text, with char offsets. */
+	/**
+	 * The shaped substring as it appeared in the raw text, with char offsets.
+	 */
 	span: { text: string; start: number; end: number }
-	/** The normalized form actually queried (uppercased, `D-` prefix stripped, whitespace collapsed). */
+	/**
+	 * The normalized form actually queried (uppercased, `D-` prefix stripped, whitespace collapsed).
+	 */
 	normalized: string
-	/** Coordinate-bearing gazetteer hits — best-effort centroid(s), one representative per country. */
+	/**
+	 * Coordinate-bearing gazetteer hits — best-effort centroid(s), one representative per country.
+	 */
 	candidates: PostcodePlace[]
 	/**
 	 * Uniform distribution over the countries the postcode exists in (membership, coordinate-independent).
 	 */
 	posterior: Record<string, number>
-	/** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
+	/**
+	 * `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer.
+	 */
 	confidence: number
 	/**
 	 * `exact` — the string is a real postcode; `outward` — a GB unit (`SO4 3RX`) resolved to its outward district
@@ -95,7 +107,9 @@ export interface ExtractPostcodeAnchorsOpts {
  */
 const MAX_COUNTRIES = 10
 
-/** A fuzzy (typo-corrected) match is less certain than an exact one — scale its confidence down. */
+/**
+ * A fuzzy (typo-corrected) match is less certain than an exact one — scale its confidence down.
+ */
 const FUZZY_PENALTY = 0.6
 
 /**
@@ -107,6 +121,7 @@ const FUZZY_PENALTY = 0.6
 export function editDistance1Variants(s: string): string[] {
 	const classOf = (ch: string): string =>
 		/[0-9]/.test(ch) ? "0123456789" : /[A-Z]/.test(ch) ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : ""
+
 	const variants = new Set<string>()
 
 	for (let i = 0; i < s.length; i++) {
@@ -129,7 +144,9 @@ export function editDistance1Variants(s: string): string[] {
 
 	for (let i = 0; i + 1 < s.length; i++) {
 		variants.add(s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2))
-	} // transpositions
+	}
+
+	// transpositions
 	variants.delete(s)
 
 	return [...variants]
@@ -140,7 +157,7 @@ export function editDistance1Variants(s: string): string[] {
  * and strip the German `D-` courtesy prefix (the shards store `68161`, not `D-68161`).
  */
 export function normalizePostcode(raw: string): string {
-	let s = raw.trim().toUpperCase().replace(/\s+/g, " ")
+	let s = raw.trim().toUpperCase().replaceAll(/\s+/g, " ")
 
 	if (/^D-\d{5}$/.test(s)) {
 		s = s.slice(2)
@@ -217,7 +234,9 @@ const NON_US_STREET_WORDS = new Set([
 	"contrada",
 ])
 
-/** Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice). */
+/**
+ * Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice).
+ */
 const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk", "steeg", "dreef"]
 
 /**
@@ -235,7 +254,7 @@ const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk",
  * `it`, `nl`).
  */
 function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boolean {
-	const t = token.toLowerCase().replace(/[^\p{L}]/gu, "")
+	const t = token.toLowerCase().replaceAll(/[^\p{L}]/gu, "")
 
 	if (t.length < 2) return false
 
@@ -297,7 +316,7 @@ export function extractPostcodeAnchors(
 
 		// Exact first; then the GB outward fallback (structural, not a guess); then edit-distance-1.
 		let hits = resolver.lookup(normalized)
-		let matchType: PostcodeAnchor["matchType"] = hits.length > 0 ? "exact" : "none"
+		let matchType: PostcodeAnchor["matchType"] = hits.length ? "exact" : "none"
 
 		if (matchType === "none") {
 			const outward = gbOutwardCode(normalized)
@@ -305,7 +324,7 @@ export function extractPostcodeAnchors(
 			if (outward) {
 				const outwardHits = resolver.lookup(outward)
 
-				if (outwardHits.length > 0) {
+				if (outwardHits.length) {
 					hits = outwardHits
 					matchType = "outward"
 				}
@@ -321,13 +340,14 @@ export function extractPostcodeAnchors(
 				}
 			}
 
-			if (fuzzyHits.length > 0) {
+			if (fuzzyHits.length) {
 				hits = fuzzyHits
 				matchType = "fuzzy"
 			}
 		}
 
 		// Membership: distinct countries the postcode exists in (regardless of whether we have a centroid).
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 		const countries = [...new Set(hits.map((h) => h.country))].sort()
 		const k = countries.length
 
@@ -351,10 +371,10 @@ export function extractPostcodeAnchors(
 		// Gate the street-word check to the systems this code plausibly belongs to: its gazetteer
 		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
 		// format-shape candidates from codex (for a code in no gazetteer; its confidence is 0 anyway).
-		const systems =
-			countries.length > 0
-				? new Set(countries.map((c) => c.toLowerCase()))
-				: new Set<string>(candidateSystemsForPostcode(normalized))
+		const systems = countries.length
+			? new Set(countries.map((c) => c.toLowerCase()))
+			: new Set<string>(candidateSystemsForPostcode(normalized))
+
 		const position = positionFactor(text, match.start, normalized, systems)
 		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1) * position
 

@@ -14,6 +14,7 @@ const meta: Meta<typeof KindBadge> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof KindBadge>
 
 export const WithAlternatives: Story = {

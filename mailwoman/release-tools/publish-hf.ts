@@ -39,10 +39,14 @@ import { resolve } from "node:path"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
-/** The parseArgs option names of the required per-release artifacts. */
+/**
+ * The parseArgs option names of the required per-release artifacts.
+ */
 type RequiredFileOption = "model" | "tokenizer" | "model-card"
 
-/** The camelCase {@linkcode PublishHFOptions} field for each required-file option id. */
+/**
+ * The camelCase {@linkcode PublishHFOptions} field for each required-file option id.
+ */
 const OPTION_TO_FIELD = {
 	model: "model",
 	tokenizer: "tokenizer",
@@ -76,9 +80,12 @@ const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
 	return false
 }
+
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
-/** Options for {@linkcode publishReleaseToHF} — the retired `wofHot` is accepted and ignored. */
+/**
+ * Options for {@linkcode publishReleaseToHF} — the retired `wofHot` is accepted and ignored.
+ */
 export interface PublishHFOptions {
 	version?: string
 	locale?: string
@@ -99,7 +106,9 @@ export interface PublishHFOptions {
 	localitySurfaceLexicon?: string
 	polygons?: string
 	setDefault?: boolean
-	/** Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail. */
+	/**
+	 * Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail.
+	 */
 	wofHot?: string
 }
 
@@ -134,6 +143,67 @@ interface ReleaseManifest {
 	defaultVersion?: string
 }
 
+/**
+ * Resolve one comma-separated `--<artifact>` flag into a verified path list. Every listed file must exist and be
+ * non-empty — a staged-but-truncated binary is a silent 404 at runtime, so it fails here instead.
+ */
+function stageBinaryList(spec: string | undefined, label: string): string[] {
+	const paths = spec
+		? spec
+				.split(",")
+				.map((s: string) => s.trim())
+				.filter(Boolean)
+		: []
+
+	for (const localPath of paths) {
+		if (!existsSync(localPath) || !statSync(localPath).size) {
+			fail(`${label} ${localPath} missing/empty`)
+		}
+	}
+
+	return paths
+}
+
+/**
+ * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty. `null` when the flag was not passed —
+ * every caller of this is an artifact a locale MAY ship, not one it must.
+ */
+function stageOptionalBinary(spec: string | undefined, label: string): string | null {
+	const localPath = spec || null
+
+	if (localPath && (!existsSync(localPath) || !statSync(localPath).size)) {
+		fail(`${label} ${localPath} missing/empty`)
+	}
+
+	return localPath
+}
+
+/**
+ * Phase 1: every REQUIRED_FILES entry must be present and non-empty before a single byte is uploaded. The last point at
+ * which a bad release can be stopped for free — after this the bucket has partial state.
+ */
+function verifyRequiredFiles(args: PublishHFOptions): void {
+	for (const f of REQUIRED_FILES) {
+		const localPath = args[OPTION_TO_FIELD[f.option]]
+
+		if (!localPath) {
+			fail(`--${f.option} (${f.description}) is required`)
+		}
+
+		if (!existsSync(localPath)) {
+			fail(`${localPath} does not exist`)
+		}
+
+		const size = statSync(localPath).size
+
+		if (size === 0) {
+			fail(`${localPath} is empty`)
+		}
+
+		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
+	}
+}
+
 export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> {
 	if (!args.version) {
 		fail("version argument required (e.g. mailwoman release hf v5.9.0 …)")
@@ -158,133 +228,55 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		.split("-")
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
 		.join("-")
+
 	const fstRemoteName = `fst-${bcp47}.bin`
-	const fstPath = args.fst
-
-	if (fstPath) {
-		if (!existsSync(fstPath)) {
-			fail(`${fstPath} does not exist`)
-		}
-
-		if (statSync(fstPath).size === 0) {
-			fail(`${fstPath} is empty`)
-		}
-	}
+	const fstPath = stageOptionalBinary(args.fst, "FST gazetteer")
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
 	// --- Phase 1: verify all local files exist ---
-	for (const f of REQUIRED_FILES) {
-		const localPath = args[OPTION_TO_FIELD[f.option]]
-
-		if (!localPath) {
-			fail(`--${f.option} (${f.description}) is required`)
-		}
-
-		if (!existsSync(localPath)) {
-			fail(`${localPath} does not exist`)
-		}
-		const size = statSync(localPath).size
-
-		if (size === 0) {
-			fail(`${localPath} is empty`)
-		}
-		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
-	}
+	verifyRequiredFiles(args)
 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
 	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename; the demo
 	// fetches them when the release's `hasAnchor` flag is set.
-	const postcodeBins = args.postcodes
-		? args.postcodes
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter(Boolean)
-		: []
-
-	for (const localPath of postcodeBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) {
-			fail(`postcode binary ${localPath} missing/empty`)
-		}
-	}
+	const postcodeBins = stageBinaryList(args.postcodes, "postcode binary")
 
 	// Optional placetype-pair-index binaries (placetype-pair-prior arc, Task 8): comma-separated
 	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
 	// postcodeBins exactly, but this artifact never falls back to a base package (see
 	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.
-	const pairIndexBins = args.pairIndexes
-		? args.pairIndexes
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter(Boolean)
-		: []
-
-	for (const localPath of pairIndexBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) {
-			fail(`pair-index binary ${localPath} missing/empty`)
-		}
-	}
+	const pairIndexBins = stageBinaryList(args.pairIndexes, "pair-index binary")
 
 	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution): comma-separated
 	// --fsts paths (e.g. fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin). Uploaded flat under the version dir
 	// by their LOWERCASE npm basename — this is what publish.yml fetches into each weights workspace so
 	// the published tarball carries its `fst-<locale>.bin` (files-guard requires it). Distinct from the
 	// singular --fst above, which stages the demo's BCP-47-cased `fst-en-US.bin`. en-nz ships no FST.
-	const fstBins = args.fsts
-		? args.fsts
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter(Boolean)
-		: []
-
-	for (const localPath of fstBins) {
-		if (!existsSync(localPath) || statSync(localPath).size === 0) {
-			fail(`FST binary ${localPath} missing/empty`)
-		}
-	}
+	const fstBins = stageBinaryList(args.fsts, "FST binary")
 
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
-	const gazetteerLexicon = args.gazetteerLexicon || null
-
-	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
-		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
-	}
+	const gazetteerLexicon = stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
 
 	// country-surface-lexicon-v1.json (#1104). REQUIRED for country-channel models (v6.2.0+, ONNX
 	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
-	const countryLexicon = args.countryLexicon || null
-
-	if (countryLexicon && (!existsSync(countryLexicon) || statSync(countryLexicon).size === 0)) {
-		fail(`country lexicon ${countryLexicon} missing/empty`)
-	}
+	const countryLexicon = stageOptionalBinary(args.countryLexicon, "country lexicon")
 
 	// Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type-lexicon-v3.json +
 	// locality-surface-lexicon-v6.json. REQUIRED for bundle-trained models (ONNX declares
 	// street_type_features/locality_surface_features + the card requires them); the browser loader
 	// fetches them beside model.onnx and degrades LOUDLY (channel-off fragment parses) on a 404.
-	const streetTypeLexicon = args.streetTypeLexicon || null
-
-	if (streetTypeLexicon && (!existsSync(streetTypeLexicon) || statSync(streetTypeLexicon).size === 0)) {
-		fail(`street-type lexicon ${streetTypeLexicon} missing/empty`)
-	}
-	const localitySurfaceLexicon = args.localitySurfaceLexicon || null
-
-	if (localitySurfaceLexicon && (!existsSync(localitySurfaceLexicon) || statSync(localitySurfaceLexicon).size === 0)) {
-		fail(`locality-surface lexicon ${localitySurfaceLexicon} missing/empty`)
-	}
+	const streetTypeLexicon = stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
+	const localitySurfaceLexicon = stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
 
 	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
-	const polygonsDb = args.polygons || null
-
-	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {
-		fail(`polygon DB ${polygonsDb} missing/empty`)
-	}
+	const polygonsDb = stageOptionalBinary(args.polygons, "polygon DB")
 
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
@@ -293,21 +285,27 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		// Existence already enforced in Phase 1's guard loop, so this flag is present.
 		const localPath = args[OPTION_TO_FIELD[f.option]]!
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
 	for (const localPath of postcodeBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
 	for (const localPath of pairIndexBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
@@ -316,7 +314,9 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	for (const localPath of fstBins) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
@@ -324,37 +324,49 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// the lowercase --fsts above; the demo fetcher expects `fst-en-US.bin`.
 	if (fstPath) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", fstPath, dst])
 	}
 
 	if (gazetteerLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
 	}
 
 	if (countryLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/country-surface-lexicon-v1.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", countryLexicon, dst])
 	}
 
 	if (streetTypeLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/street-type-lexicon-v3.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", streetTypeLexicon, dst])
 	}
 
 	if (localitySurfaceLexicon) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/locality-surface-lexicon-v6.json`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", localitySurfaceLexicon, dst])
 	}
 
 	if (polygonsDb) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
+
 		console.error(`  → ${dst}`)
+
 		run("hf", ["buckets", "cp", polygonsDb, dst])
 	}
 
@@ -368,6 +380,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		if (!ok) {
 			fail(`${f.remoteName} unreachable at ${url}`)
 		}
+
 		console.error(`  ✓ ${url}`)
 	}
 
@@ -379,6 +392,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		if (!fstOK) {
 			fail(`${fstRemoteName} unreachable at ${fstURL}`)
 		}
+
 		console.error(`  ✓ ${fstURL}`)
 	}
 
@@ -391,6 +405,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		if (!ok) {
 			fail(`${remoteName} unreachable at ${url}`)
 		}
+
 		console.error(`  ✓ ${url}`)
 	}
 
@@ -401,6 +416,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	if (!res.ok) {
 		fail(`failed to fetch ${releasesURL}`)
 	}
+
 	const releases = (await res.json()) as ReleaseManifest
 
 	const newEntry: Record<string, unknown> = {
@@ -408,8 +424,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		label: args.label,
 		description: args.description,
 		modelSize: args.modelSize ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
-		tokenizerVocab: 48000,
-		steps: args.steps ?? 100000,
+		tokenizerVocab: 48_000,
+		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
 		hasWOFDb: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
@@ -436,6 +452,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)
 	writeFileSync(tmpReleases, JSON.stringify(releases, null, 2))
 	run("hf", ["buckets", "cp", tmpReleases, `${BUCKET_PATH}/${args.locale}/releases.json`])
+
 	console.error(`  ✓ releases.json updated, defaultVersion=${releases.defaultVersion}`)
 
 	console.error(`\n✓ ${args.version} (${args.locale}) published successfully.`)

@@ -22,15 +22,28 @@ import * as path from "node:path"
 import { dataRootPath } from "../../utils/data-root.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
-/** Options for {@linkcode quantizeCoarsePlacer}. */
+/**
+ * Largest magnitude representable in the symmetric int8 range the weights quantize into.
+ */
+const INT8_MAX = 127
+
+/**
+ * Options for {@linkcode quantizeCoarsePlacer}.
+ */
 export interface QuantizeCoarsePlacerOptions {
-	/** Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	in?: string
-	/** Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`. */
+	/**
+	 * Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 */
 	out?: string
 }
 
-/** Result of {@linkcode quantizeCoarsePlacer}. */
+/**
+ * Result of {@linkcode quantizeCoarsePlacer}.
+ */
 export interface QuantizeCoarsePlacerResult {
 	outDir: string
 	fp32Bytes: number
@@ -39,7 +52,9 @@ export interface QuantizeCoarsePlacerResult {
 	rmse: number
 }
 
-/** Coarse-placer int8 quantizer — see the module doc. */
+/**
+ * Coarse-placer int8 quantizer — see the module doc.
+ */
 export async function quantizeCoarsePlacer(
 	options: QuantizeCoarsePlacerOptions = {},
 	report?: (line: string) => void
@@ -72,29 +87,34 @@ export async function quantizeCoarsePlacer(
 				maxAbs = a
 			}
 		}
+
 		const scale = maxAbs / 127 || 1 // all-zero row → scale 1 (q stays 0)
 		scales.push(scale)
 
 		for (let i = 0; i < dim; i++) {
 			let q = Math.round(w[base + i]! / scale)
 
-			if (q > 127) {
+			if (q > INT8_MAX) {
 				q = 127
-			} else if (q < -127) {
+			} else if (q < -INT8_MAX) {
 				q = -127
-			} // symmetric range; avoid -128 so |q|≤127
+			}
+
+			// symmetric range; avoid -128 so |q|≤127
 			int8[base + i] = q
 			const err = Math.abs(q * scale - w[base + i]!)
 
 			if (err > maxAbsErr) {
 				maxAbsErr = err
 			}
+
 			sumSqErr += err * err
 		}
 	}
 
 	mkdirSync(outDir, { recursive: true })
 	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(int8.buffer))
+
 	writeFileSync(
 		path.join(outDir, "meta.json"),
 		JSON.stringify({ ...meta, quantization: "int8-per-row", scales }, null, 2)
@@ -106,9 +126,11 @@ export async function quantizeCoarsePlacer(
 	report?.(`coarse-placer int8 quantization`)
 	report?.(`  in:  ${inDir}`)
 	report?.(`  out: ${outDir}`)
+
 	report?.(
 		`  weights: ${(fp32Bytes / 1e6).toFixed(2)} MB fp32 → ${(int8Bytes / 1e6).toFixed(2)} MB int8 (${(fp32Bytes / int8Bytes).toFixed(1)}×)`
 	)
+
 	report?.(`  per-class scales: [${scales.map((s) => s.toExponential(2)).join(", ")}]`)
 	report?.(`  weight reconstruction error: max ${maxAbsErr.toExponential(2)}, rmse ${rmse.toExponential(2)}`)
 

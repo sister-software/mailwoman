@@ -40,7 +40,9 @@
 
 import type { ClassificationProposal } from "../types/index.ts"
 
-/** Half-open interval overlap: `[aStart,aEnd)` and `[bStart,bEnd)` share at least one position. */
+/**
+ * Half-open interval overlap: `[aStart,aEnd)` and `[bStart,bEnd)` share at least one position.
+ */
 function spansOverlap(a: ClassificationProposal["span"], b: ClassificationProposal["span"]): boolean {
 	return a.start < b.end && b.start < a.end
 }
@@ -56,6 +58,7 @@ function spansOverlap(a: ClassificationProposal["span"], b: ClassificationPropos
 export function resolveProposalOverlaps(proposals: readonly ClassificationProposal[]): ClassificationProposal[] {
 	if (proposals.length <= 1) return [...proposals]
 
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const ranked = [...proposals].sort((a, b) => {
 		if (b.confidence !== a.confidence) return b.confidence - a.confidence // higher confidence first
 		const lenA = a.span.end - a.span.start
@@ -75,5 +78,6 @@ export function resolveProposalOverlaps(proposals: readonly ClassificationPropos
 		}
 	}
 
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	return kept.sort((a, b) => a.span.start - b.span.start)
 }

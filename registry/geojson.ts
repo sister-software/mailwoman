@@ -14,11 +14,14 @@ import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/
 
 import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.ts"
 
-/** Assemble a display name from a record's parsed person name, if any. */
+/**
+ * Assemble a display name from a record's parsed person name, if any.
+ */
 function displayName(record: SourceRecord): string | null {
 	const name = record.name
 
 	if (!name) return null
+
 	const joined = [name.prefix, name.given, name.middle, name.familyParticle, name.family, name.suffix]
 		.filter(Boolean)
 		.join(" ")
@@ -27,7 +30,9 @@ function displayName(record: SourceRecord): string | null {
 	return joined || null
 }
 
-/** One entity → one GeoJSON Point feature. */
+/**
+ * One entity → one GeoJSON Point feature.
+ */
 function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoData> {
 	const rep = entity.representative
 
@@ -44,7 +49,7 @@ function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoDa
 			cohesion: entity.cohesion,
 			sourceIds: entity.records.map((r) => r.id),
 			// Distinct provenance labels the entity's records span — an entity with ≥2 is a cross-dataset link.
-			sources: [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort(),
+			sources: [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].toSorted(),
 			name: displayName(rep),
 			organization: rep.organization?.canonical ?? null,
 			address: rep.address?.formatted ?? null,

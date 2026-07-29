@@ -55,6 +55,7 @@ describe("fr-lieudit recipe", () => {
 		const banDir = fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
+
 		const lines: string[] = []
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
@@ -82,6 +83,7 @@ describe("fr-lieudit recipe", () => {
 				row("4", "10", "Route de Pomaret", "48800", "Altier", "Altier"), // exact dup
 			],
 		})
+
 		const lines: string[] = []
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
@@ -96,6 +98,7 @@ describe("fr-lieudit recipe", () => {
 				row(String(i), String(i + 1), "Route de Pomaret", "48800", "Altier", `Lieu ${i}`)
 			),
 		})
+
 		const opts = baseOpts({ banDir, count: 10 })
 		const linesA: string[] = []
 		const linesB: string[] = []
@@ -110,6 +113,7 @@ describe("fr-lieudit recipe", () => {
 		const banDir = fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
+
 		const lines: string[] = []
 
 		await frLieuditRecipe.run(baseOpts({ banDir, countryFraction: 1 }), (l) => lines.push(l))
@@ -125,6 +129,7 @@ describe("fr-lieudit recipe", () => {
 				row(String(i), String(i + 1), "Route de Pomaret", "48800", "Altier", `Lieu ${i}`)
 			),
 		})
+
 		const lines: string[] = []
 
 		await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
@@ -138,6 +143,7 @@ describe("fr-lieudit recipe", () => {
 		const banDir = fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
+
 		const lines: string[] = []
 
 		await frLieuditRecipe.run(baseOpts({ banDir, sourceName: "synth-fr-lieudit-test" }), (l) => lines.push(l))
@@ -159,6 +165,7 @@ describe("fr-lieudit recipe", () => {
 			merged: [row("2", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 			france: [row("3", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
+
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 
 		expect(stats.emitted).toBe(1)
@@ -168,10 +175,12 @@ describe("fr-lieudit recipe", () => {
 		const banDir = fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
+
 		const csvBody = [
 			HEADER,
 			row("2", "8", "Route de Pomaret", "48800", "Altier", "Le Village"), // different id/lieu-dit
 		].join("\n")
+
 		writeFileSync(join(banDir, "adresses-48.csv.gz"), gzipSync(csvBody + "\n"))
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})

@@ -89,8 +89,10 @@ function aggregateGbOutward(
 			a.lonSum += Number(r.lon)
 			a.placed += 1
 		}
+
 		acc.set(out, a)
 	}
+
 	const entries: PostcodeBinaryEntry[] = []
 
 	for (const [out, a] of acc) {
@@ -120,7 +122,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 			}
 		}
 
-		if (locales.length === 0) {
+		if (!locales.length) {
 			locales.push(
 				{ country: "US", db: join(wof, "postalcode-us.db") },
 				{ country: "NL", db: join(wof, "postalcode-intl.db") },
@@ -137,15 +139,19 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 		for (const { country, db } of locales) {
 			if (!existsSync(db)) {
 				console.error(`skip ${country}: missing ${db}`)
+
 				continue
 			}
+
 			const conn = new DatabaseSync(db, { readOnly: true })
+
 			const rows = conn
 				.prepare(
 					`SELECT name, country, latitude AS lat, longitude AS lon FROM spr
 					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`
 				)
 				.all(country) as Array<{ name: string; country: string; lat: number; lon: number }>
+
 			conn.close()
 
 			const entries: PostcodeBinaryEntry[] =
@@ -157,11 +163,14 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 							lat: Number(r.lat),
 							lon: Number(r.lon),
 						}))
+
 			const bytes = serializePostcodeBinary(entries)
 			const outPath = join(outDir, `postcode-${country.toLowerCase()}.bin`)
 			writeFileSync(outPath, bytes)
+
 			written++
 			const placed = entries.filter((e) => e.lat !== 0 || e.lon !== 0).length
+
 			console.error(
 				`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
 			)

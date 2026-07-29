@@ -21,15 +21,17 @@ async function fixtureDB(): Promise<DatabaseSync> {
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const db = new DatabaseSync(":memory:")
 	await createUnifiedSchema(db)
+
 	// Non-zero coords + real extents — the place_bbox R*Tree insert skips all-zero placeholder rows.
 	const ins = db.prepare(
 		"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)"
 	)
+
 	ins.run(1, -1, "Testland", "country", "TL", 2, 2, 1, 1, 3, 3)
 	ins.run(2, 1, "Testregion", "region", "TL", 1.5, 1.5, 1, 1, 2, 2)
 	ins.run(3, 2, "Testtown", "locality", "TL", 1.5, 1.5, 1.4, 1.4, 1.6, 1.6)
 	// The US spot-check target (VT→Vermont) — every real admin DB carries US.
-	ins.run(85688763, -1, "Vermont", "region", "US", 44.0, -72.7, 42.7, -73.4, 45.0, -71.5)
+	ins.run(85_688_763, -1, "Vermont", "region", "US", 44, -72.7, 42.7, -73.4, 45, -71.5)
 	enrichAdmin(db)
 	await buildFTS(db)
 
@@ -39,6 +41,7 @@ async function fixtureDB(): Promise<DatabaseSync> {
 test("verifyAdmin passes a complete fixture", async () => {
 	const db = await fixtureDB()
 	const r = verifyAdmin(db, TINY_BASELINE)
+
 	expect(r.checks.map((c) => `${c.check}:${c.ok}`)).toEqual([
 		"node-census:true",
 		"coverage-floor:true",
@@ -47,6 +50,7 @@ test("verifyAdmin passes a complete fixture", async () => {
 		"fts-bbox:true",
 		"bbox-extents:true",
 	])
+
 	expect(r.ok).toBe(true)
 	db.close()
 })

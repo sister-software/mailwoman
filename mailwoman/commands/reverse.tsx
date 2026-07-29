@@ -23,6 +23,16 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 
+/**
+ * Largest absolute latitude in WGS-84 degrees.
+ */
+const MAX_ABS_LATITUDE = 90
+
+/**
+ * Largest absolute longitude in WGS-84 degrees.
+ */
+const MAX_ABS_LONGITUDE = 180
+
 const ArgumentsSchema = zod
 	.array(zod.string())
 	.describe("Positional args: <lat> <lon> — WGS-84 decimal degrees (e.g. 40.7128 -74.0060).")
@@ -91,10 +101,9 @@ async function runReverse(lat: number, lon: number, options: zod.infer<typeof Op
 		const result = await geocoder.reverseGeocode(lat, lon)
 
 		if (options.format === "text") {
-			const lines: string[] = []
-			lines.push(`containment: ${result.containment}`)
+			const lines: string[] = [`containment: ${result.containment}`]
 
-			if (result.hierarchy.length === 0) {
+			if (!result.hierarchy.length) {
 				lines.push("(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)")
 			} else {
 				for (const place of result.hierarchy) {
@@ -144,11 +153,11 @@ const ReverseCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 		const lat = Number(rawLat)
 		const lon = Number(rawLon)
 
-		if (!Number.isFinite(lat) || Math.abs(lat) > 90) {
+		if (!Number.isFinite(lat) || Math.abs(lat) > MAX_ABS_LATITUDE) {
 			throw commandError(`Invalid latitude ${JSON.stringify(rawLat)} — must be a number in [-90, 90].`)
 		}
 
-		if (!Number.isFinite(lon) || Math.abs(lon) > 180) {
+		if (!Number.isFinite(lon) || Math.abs(lon) > MAX_ABS_LONGITUDE) {
 			throw commandError(`Invalid longitude ${JSON.stringify(rawLon)} — must be a number in [-180, 180].`)
 		}
 

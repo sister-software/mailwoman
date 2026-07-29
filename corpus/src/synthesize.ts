@@ -47,7 +47,9 @@ export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
 
 type ComponentDict = Partial<Record<ComponentTag, string>>
 
-/** Helper: build the augmented row with synth marker + chained source_id. */
+/**
+ * Helper: build the augmented row with synth marker + chained source_id.
+ */
 function withAugmentation(
 	source: CanonicalRow,
 	method: string,
@@ -69,7 +71,9 @@ function withAugmentation(
 // Locale-agnostic augmentations
 // ===========================================================================
 
-/** Upper-case raw + every component value. Returns null if already all-upper. */
+/**
+ * Upper-case raw + every component value. Returns null if already all-upper.
+ */
 export const caseUpper: Augmentation = (row) => {
 	if (row.raw === row.raw.toUpperCase()) return null
 	const upRaw = row.raw.toUpperCase()
@@ -84,7 +88,9 @@ export const caseUpper: Augmentation = (row) => {
 	return withAugmentation(row, "case-upper", upRaw, upComponents)
 }
 
-/** Lower-case raw + every component value. Returns null if already all-lower. */
+/**
+ * Lower-case raw + every component value. Returns null if already all-lower.
+ */
 export const caseLower: Augmentation = (row) => {
 	if (row.raw === row.raw.toLowerCase()) return null
 	const downRaw = row.raw.toLowerCase()
@@ -99,10 +105,12 @@ export const caseLower: Augmentation = (row) => {
 	return withAugmentation(row, "case-lower", downRaw, downComponents)
 }
 
-/** Drop commas from `raw`. Components unchanged (they didn't carry commas). */
+/**
+ * Drop commas from `raw`. Components unchanged (they didn't carry commas).
+ */
 export const dropCommas: Augmentation = (row) => {
 	if (!row.raw.includes(",")) return null
-	const newRaw = row.raw.replace(/,/g, "").replace(/\s+/g, " ").trim()
+	const newRaw = row.raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 
 	return withAugmentation(row, "drop-commas", newRaw, { ...row.components })
 }
@@ -115,12 +123,12 @@ export const dropCommas: Augmentation = (row) => {
  */
 export const doubleSpace: Augmentation = (row) => {
 	if (!/ /.test(row.raw)) return null
-	const newRaw = row.raw.replace(/ /g, "  ")
+	const newRaw = row.raw.replaceAll(" ", "  ")
 	const newComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
 		if (v) {
-			newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+			newComponents[k as ComponentTag] = v.replaceAll(" ", "  ")
 		}
 	}
 
@@ -147,7 +155,7 @@ export const accentStrip: Augmentation = (row) => {
 }
 
 function stripAccents(s: string): string {
-	return s.normalize("NFD").replace(/\p{M}/gu, "")
+	return s.normalize("NFD").replaceAll(/\p{M}/gu, "")
 }
 
 // --- typo injection (#530) -------------------------------------------------
@@ -155,7 +163,9 @@ function stripAccents(s: string): string {
 // seed the PRNG from the row's own `source_id` — deterministic per row, no global state, fits the
 // existing `(row) => CanonicalRow | null` signature unchanged.
 
-/** QWERTY adjacency for realistic single-key substitutions (lowercase; case is restored on apply). */
+/**
+ * QWERTY adjacency for realistic single-key substitutions (lowercase; case is restored on apply).
+ */
 const QWERTY_ADJACENCY: Record<string, string> = {
 	a: "qwsz",
 	b: "vghn",
@@ -203,16 +213,18 @@ function hashString(s: string): number {
 	return h >>> 0
 }
 
-/** Mulberry32 — a tiny seeded PRNG. Same seed → same stream → reproducible typos. */
+/**
+ * Mulberry32 — a tiny seeded PRNG. Same seed → same stream → reproducible typos.
+ */
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
 
 	return () => {
-		a = (a + 0x6d2b79f5) | 0
+		a = (a + 0x6d_2b_79_f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
 
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 }
 
@@ -225,6 +237,7 @@ function mulberry32(seed: number): () => number {
  */
 export const typoInject: Augmentation = (row) => {
 	const rng = mulberry32(hashString(`${row.source_id}:typo`))
+
 	// Count occurrences so we only edit an UNAMBIGUOUS target — a value that appears exactly once in
 	// raw and isn't a substring of another component. (e.g. "Cupertino" the locality is a substring of
 	// "Cupertino Avenue" the street; editing it would `replace` the street's occurrence and break the
@@ -238,12 +251,14 @@ export const typoInject: Augmentation = (row) => {
 
 		return n
 	}
+
 	const values = Object.values(row.components).filter(Boolean) as string[]
+
 	const eligible = (Object.entries(row.components) as Array<[ComponentTag, string]>).filter(
 		([, v]) => v && ALPHA_NAME.test(v) && occurs(v) === 1 && !values.some((o) => o !== v && o.includes(v))
 	)
 
-	if (eligible.length === 0) return null
+	if (!eligible.length) return null
 	const [tag, value] = eligible[Math.floor(rng() * eligible.length)]!
 	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
 	const positions: number[] = []
@@ -253,7 +268,7 @@ export const typoInject: Augmentation = (row) => {
 			positions.push(i)
 		}
 
-	if (positions.length === 0) return null
+	if (!positions.length) return null
 	const i = positions[Math.floor(rng() * positions.length)]!
 	const ch = value[i]!
 	let typed: string
@@ -283,7 +298,9 @@ export const typoInject: Augmentation = (row) => {
 // US-specific augmentations
 // ===========================================================================
 
-/** US state full ↔ alpha-2 mapping. Two-way: `STATE_TO_ABBR["Oregon"] = "OR"`. */
+/**
+ * US state full ↔ alpha-2 mapping. Two-way: `STATE_TO_ABBR["Oregon"] = "OR"`.
+ */
 const STATE_NAME_TO_ABBR: Record<string, string> = {
 	Alabama: "AL",
 	Alaska: "AK",
@@ -342,7 +359,9 @@ const STATE_ABBR_TO_NAME: Record<string, string> = Object.fromEntries(
 	Object.entries(STATE_NAME_TO_ABBR).map(([k, v]) => [v, k])
 )
 
-/** US: substitute the full state name for its alpha-2 abbreviation. */
+/**
+ * US: substitute the full state name for its alpha-2 abbreviation.
+ */
 export const stateExpand: Augmentation = (row) => {
 	if (row.country !== "US") return null
 	const region = row.components.region
@@ -356,13 +375,15 @@ export const stateExpand: Augmentation = (row) => {
 	const re = new RegExp(`\\b${region}\\b`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(new RegExp(`\\b${region}\\b`, "g"), full)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${region}\\b`, "g"), full)
 	const newComponents: ComponentDict = { ...row.components, region: full }
 
 	return withAugmentation(row, "state-expand", newRaw, newComponents)
 }
 
-/** US: substitute the alpha-2 abbreviation for the full state name. */
+/**
+ * US: substitute the alpha-2 abbreviation for the full state name.
+ */
 export const stateAbbreviate: Augmentation = (row) => {
 	if (row.country !== "US") return null
 	const region = row.components.region
@@ -374,7 +395,7 @@ export const stateAbbreviate: Augmentation = (row) => {
 	const re = new RegExp(`\\b${region}\\b`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(new RegExp(`\\b${region}\\b`, "g"), abbr)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${region}\\b`, "g"), abbr)
 	const newComponents: ComponentDict = { ...row.components, region: abbr }
 
 	return withAugmentation(row, "state-abbreviate", newRaw, newComponents)
@@ -390,11 +411,14 @@ const DIRECTIONAL_FULL_TO_ABBR: Record<string, string> = {
 	Southeast: "SE",
 	Southwest: "SW",
 }
+
 const DIRECTIONAL_ABBR_TO_FULL: Record<string, string> = Object.fromEntries(
 	Object.entries(DIRECTIONAL_FULL_TO_ABBR).map(([k, v]) => [v, k])
 )
 
-/** US: expand directional abbreviations in `street`/`street_suffix` (NW → Northwest). */
+/**
+ * US: expand directional abbreviations in `street`/`street_suffix` (NW → Northwest).
+ */
 export const directionalExpand: Augmentation = (row) => {
 	if (row.country !== "US") return null
 	const tagsToCheck: ComponentTag[] = ["street", "street_suffix", "street_prefix"]
@@ -406,11 +430,11 @@ export const directionalExpand: Augmentation = (row) => {
 		const v = newComponents[tag]
 
 		if (!v) continue
-		const replaced = v.replace(/\b(N|S|E|W|NE|NW|SE|SW)\b/g, (m) => DIRECTIONAL_ABBR_TO_FULL[m] ?? m)
+		const replaced = v.replaceAll(/\b(N|S|E|W|NE|NW|SE|SW)\b/g, (m) => DIRECTIONAL_ABBR_TO_FULL[m] ?? m)
 
 		if (replaced !== v) {
 			newComponents[tag] = replaced
-			newRaw = newRaw.replace(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
+			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
 			changed = true
 		}
 	}
@@ -420,7 +444,9 @@ export const directionalExpand: Augmentation = (row) => {
 	return withAugmentation(row, "directional-expand", newRaw, newComponents)
 }
 
-/** US: abbreviate directional words (Northwest → NW). */
+/**
+ * US: abbreviate directional words (Northwest → NW).
+ */
 export const directionalAbbreviate: Augmentation = (row) => {
 	if (row.country !== "US") return null
 	const tagsToCheck: ComponentTag[] = ["street", "street_suffix", "street_prefix"]
@@ -432,14 +458,15 @@ export const directionalAbbreviate: Augmentation = (row) => {
 		const v = newComponents[tag]
 
 		if (!v) continue
-		const replaced = v.replace(
+
+		const replaced = v.replaceAll(
 			/\b(North|South|East|West|Northeast|Northwest|Southeast|Southwest)\b/g,
 			(m) => DIRECTIONAL_FULL_TO_ABBR[m] ?? m
 		)
 
 		if (replaced !== v) {
 			newComponents[tag] = replaced
-			newRaw = newRaw.replace(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
+			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
 			changed = true
 		}
 	}
@@ -477,7 +504,7 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
 	if (newStreet === street) return null
 
 	const newComponents: ComponentDict = { ...row.components, street: newStreet }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
 
 	if (newRaw === row.raw) return null
 
@@ -510,7 +537,7 @@ export const streetSuffixExpand: Augmentation = (row) => {
 	if (newStreet === street) return null
 
 	const newComponents: ComponentDict = { ...row.components, street: newStreet }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
 
 	if (newRaw === row.raw) return null
 
@@ -545,7 +572,7 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
 	if (newUnit === unit) return null
 
 	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
 
 	if (newRaw === row.raw) return null
 
@@ -576,14 +603,16 @@ export const unitDesignatorExpand: Augmentation = (row) => {
 	if (newUnit === unit) return null
 
 	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
-	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
 
 	if (newRaw === row.raw) return null
 
 	return withAugmentation(row, "us-unit-designator-expand", newRaw, newComponents)
 }
 
-/** US: ZIP+4 form `12345-6789` → `123456789` (dash dropped). */
+/**
+ * US: ZIP+4 form `12345-6789` → `123456789` (dash dropped).
+ */
 export const zipPlus4DashDrop: Augmentation = (row) => {
 	if (row.country !== "US") return null
 	const postcode = row.components.postcode
@@ -601,7 +630,9 @@ export const zipPlus4DashDrop: Augmentation = (row) => {
 // FR-specific augmentations
 // ===========================================================================
 
-/** FR: drop the article particle from a street ("Rue de la République" → "Rue République"). */
+/**
+ * FR: drop the article particle from a street ("Rue de la République" → "Rue République").
+ */
 export const particleStrip: Augmentation = (row) => {
 	if (row.country !== "FR") return null
 	const particle = row.components.street_prefix_particle
@@ -613,7 +644,7 @@ export const particleStrip: Augmentation = (row) => {
 	const re = new RegExp(`\\s+${escapeRegex(particle)}\\s+`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(re, " ").replace(/\s+/g, " ").trim()
+	const newRaw = row.raw.replace(re, " ").replaceAll(/\s+/g, " ").trim()
 
 	return withAugmentation(row, "particle-strip", newRaw, newComponents)
 }
@@ -622,7 +653,9 @@ export const particleStrip: Augmentation = (row) => {
 // Registry + default policies
 // ===========================================================================
 
-/** Stable id → augmentation table. */
+/**
+ * Stable id → augmentation table.
+ */
 export const AUGMENTATIONS: Record<string, Augmentation> = {
 	"case-upper": caseUpper,
 	"case-lower": caseLower,
@@ -642,7 +675,9 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 	"typo-inject": typoInject,
 }
 
-/** Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set. */
+/**
+ * Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set.
+ */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
 	// `typoInject` (#530) is deliberately NOT in the default set. It is implemented, tested, and
 	// registered in {@link AUGMENTATIONS} so callers can opt in (add it here or compose it directly),
@@ -690,7 +725,7 @@ export function* synthesizeRow(
 }
 
 function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+	return s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 // ===========================================================================
@@ -724,7 +759,9 @@ function escapeRegex(s: string): string {
 // See `DECISIONS.md` for the rationale on why composition lives alongside augmentation but is
 // not part of the `AUGMENTATIONS` registry.
 
-/** Options accepted by `composeAdversarialRow`. */
+/**
+ * Options accepted by `composeAdversarialRow`.
+ */
 export interface ComposeAdversarialOptions {
 	/**
 	 * Stable pattern label written into the emitted row's `synth.method` field (as `compose:<pattern>`). Free-form but
@@ -752,7 +789,9 @@ export interface ComposeAdversarialOptions {
 	tokenizer?: Tokenizer
 }
 
-/** Either a successful labeled composition or a quarantined attempt. */
+/**
+ * Either a successful labeled composition or a quarantined attempt.
+ */
 export type ComposeResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
@@ -814,7 +853,7 @@ export function composeAdversarialRow(
 
 	const venueTokens = tokenizer.tokenize(venueTrimmed)
 
-	if (venueTokens.length === 0) {
+	if (!venueTokens.length) {
 		return { kind: "quarantined", row: { row: address, reason: "venue-no-tokens" } }
 	}
 
@@ -824,6 +863,7 @@ export function composeAdversarialRow(
 	const labels: BIOLabel[] = [...venueLabels, ...addressAligned.row.labels]
 
 	const composedRaw = `${venueTrimmed}${separator}${address.raw}`
+
 	const composedComponents = {
 		venue: venueTrimmed,
 		...address.components,
@@ -841,7 +881,9 @@ export function composeAdversarialRow(
 				`(source=${address.source}, source_id=${address.source_id}) — alignment contract violation`
 		)
 	}
+
 	const offset = venueTrimmed.length + separator.length
+
 	const spans: ComponentSpan[] = [
 		{ tag: "venue", start: 0, end: venueTrimmed.length },
 		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
@@ -866,6 +908,7 @@ export function composeAdversarialRow(
 		span_ends: spans.map((s) => s.end),
 		span_tags: spans.map((s) => s.tag),
 	}
+
 	assertSpanInvariants(spans, composed)
 
 	return { kind: "labeled", row: composed }

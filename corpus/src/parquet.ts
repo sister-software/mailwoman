@@ -46,10 +46,14 @@ import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/i
 import type { SplitName } from "./split.ts"
 import type { LabeledRow } from "./types.ts"
 
-/** Row groups flush at this many rows (parquetjs internal cadence within a shard). */
+/**
+ * Row groups flush at this many rows (parquetjs internal cadence within a shard).
+ */
 export const ROW_GROUP_SIZE = 50_000
 
-/** Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0. */
+/**
+ * Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0.
+ */
 export const SHARD_COMPRESSION = "SNAPPY" as const
 
 /**
@@ -74,7 +78,9 @@ export interface ParquetRow {
 	[key: string]: unknown
 }
 
-/** Column names emitted into every shard. Matches `ParquetRow`. */
+/**
+ * Column names emitted into every shard. Matches `ParquetRow`.
+ */
 export const PARQUET_COLUMNS = [
 	"raw",
 	"tokens",
@@ -91,6 +97,10 @@ export const PARQUET_COLUMNS = [
 	"synth_method",
 	"synth_base_id",
 ] as const
+
+/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member,
+   not a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition,
+   and the rule has no way to tell the two apart. */
 
 /**
  * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8 columns capture
@@ -116,7 +126,9 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	synth_base_id: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
 }
 
-/** Per-shard metadata captured in `MANIFEST.json`. */
+/**
+ * Per-shard metadata captured in `MANIFEST.json`.
+ */
 export interface ShardDescriptor {
 	split: SplitName
 	path: string
@@ -140,13 +152,19 @@ export interface ShardManifest {
 }
 
 export interface WriteShardsOptions {
-	/** Root output directory; corpus version dir is created beneath. */
+	/**
+	 * Root output directory; corpus version dir is created beneath.
+	 */
 	outputDir: string
 
-	/** Corpus version stamped onto rows + into the output directory name. */
+	/**
+	 * Corpus version stamped onto rows + into the output directory name.
+	 */
 	corpusVersion: string
 
-	/** Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan. */
+	/**
+	 * Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan.
+	 */
 	rowsPerShard?: number
 }
 
@@ -274,9 +292,11 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			const splitDir = join(corpusDir, split)
 			await mkdir(splitDir, { recursive: true })
 			path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
+
 			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
 				rowGroupSize: ROW_GROUP_SIZE,
 			})
+
 			writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
 			writer.setMetadata("mailwoman.split", split)
 			writer.setMetadata("mailwoman.shard_index", String(shardIndex))
@@ -292,6 +312,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			if (shardRows > 0) {
 				const fileStat = await stat(path)
 				const sha256 = await hashFile(path)
+
 				shards.push({
 					split,
 					path,
@@ -304,6 +325,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 					last_source_id: lastSourceID,
 				})
 			}
+
 			writer = null
 		}
 
@@ -311,19 +333,25 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			if (!writer) {
 				await openShard()
 			}
+
 			const pq = rowToParquet(row)
 			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
 
 			if (shardRows === 0) {
 				firstSourceID = row.source_id
 			}
+
 			lastSourceID = row.source_id
+
 			shardRows++
+
 			counts[split]++
+
 			totalRows++
 
 			if (shardRows >= rowsPerShard) {
 				await closeShard()
+
 				shardIndex++
 			}
 		}
@@ -342,12 +370,15 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		counts,
 		total_rows: totalRows,
 	}
+
 	await writeFile(join(corpusDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
 
 	return manifest
 }
 
-/** Single-pass SHA-256 over the file at `path`. Cheap relative to Parquet write throughput. */
+/**
+ * Single-pass SHA-256 over the file at `path`. Cheap relative to Parquet write throughput.
+ */
 async function hashFile(path: string): Promise<string> {
 	const hash = createHash("sha256")
 	const stream = createReadStream(path)

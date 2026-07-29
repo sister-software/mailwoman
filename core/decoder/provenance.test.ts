@@ -49,6 +49,7 @@ describe("Phase 4.1 source provenance", () => {
 				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
 				proposal("FR", 13, "country", "neural", "neural-v0.3.1-en-us"),
 			])
+
 			expect(tree.roots).toHaveLength(3)
 			expect(tree.roots[0]).toMatchObject({ tag: "postcode", source: "rule", sourceID: "postcode" })
 			expect(tree.roots[1]).toMatchObject({ tag: "locality", source: "rule", sourceID: "whos_on_first" })
@@ -79,6 +80,7 @@ describe("Phase 4.1 source provenance", () => {
 				proposal("75004", 0, "postcode", "rule", "postcode"),
 				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
 			])
+
 			expect(decodeAsJSON(tree)).toEqual({ postcode: "75004", locality: "Paris" })
 		})
 
@@ -87,6 +89,7 @@ describe("Phase 4.1 source provenance", () => {
 				proposal("75004", 0, "postcode", "rule", "postcode"),
 				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
 			])
+
 			expect(decodeAsTuples(tree)).toEqual([
 				["postcode", "75004"],
 				["locality", "Paris"],
@@ -96,6 +99,7 @@ describe("Phase 4.1 source provenance", () => {
 
 	describe("buildAddressTree", () => {
 		const NYC_RAW = "New York NY"
+
 		const NYC_TOKENS: DecoderToken[] = [
 			tok("New", 0, 3, "B-locality"),
 			tok("York", 4, 8, "I-locality"),
@@ -107,6 +111,7 @@ describe("Phase 4.1 source provenance", () => {
 				source: "neural",
 				sourceID: "neural-v0.3.1-en-us",
 			})
+
 			// Locality is wrapped by region per containment rules; walk both.
 			const all = [...tree.roots, ...tree.roots.flatMap((r) => r.children)]
 
@@ -121,6 +126,7 @@ describe("Phase 4.1 source provenance", () => {
 				source: "neural",
 				sourceID: "neural-v0.3.1-en-us",
 			})
+
 			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`<region`)
 			expect(xml).toContain(`<locality`)
@@ -131,24 +137,24 @@ describe("Phase 4.1 source provenance", () => {
 
 		test("omits source when only sourceID is set", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { sourceID: "anon" })
-			expect(tree.roots[0].source).toBeUndefined()
-			expect(tree.roots[0].sourceID).toBe("anon")
+			expect(tree.roots[0]!.source).toBeUndefined()
+			expect(tree.roots[0]!.sourceID).toBe("anon")
 			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="anon"`)
 		})
 
 		test("omits sourceID when only source is set", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { source: "rule" })
-			expect(tree.roots[0].source).toBe("rule")
-			expect(tree.roots[0].sourceID).toBeUndefined()
+			expect(tree.roots[0]!.source).toBe("rule")
+			expect(tree.roots[0]!.sourceID).toBeUndefined()
 			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`src="rule"`)
 		})
 
 		test("no opts → no src attribute (backwards compatible)", () => {
 			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS)
-			expect(tree.roots[0].source).toBeUndefined()
-			expect(tree.roots[0].sourceID).toBeUndefined()
+			expect(tree.roots[0]!.source).toBeUndefined()
+			expect(tree.roots[0]!.sourceID).toBeUndefined()
 			const xml = decodeAsXML(tree)
 			expect(xml).not.toContain(`src=`)
 		})

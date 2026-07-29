@@ -33,18 +33,26 @@ import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERData
 
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"
+
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
-// P.L. 94-171 (2020) pipe-delimited field offsets (0-based).
-// Geographic header: …|SUMLEV(2)|…|LOGRECNO(7)|GEOID(8)|GEOCODE(9)|… — GEOCODE is the bare 15-char
-// block FIPS (matches TIGER GEOID20); SUMLEV 750 = tabulation block.
+/**
+ * P.L. 94-171 (2020) pipe-delimited field offsets (0-based). Geographic header:
+ * …|SUMLEV(2)|…|LOGRECNO(7)|GEOID(8)|GEOCODE(9)|… — GEOCODE is the bare 15-char block FIPS (matches TIGER GEOID20);
+ * SUMLEV 750 = tabulation block.
+ */
 const GEO_SUMLEV = 2
 const GEO_LOGRECNO = 7
 const GEO_GEOCODE = 9
-// Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76.
+/**
+ * Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76.
+ */
 const SEG_LOGRECNO = 4
 const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
-// The eight P2 categories that partition the total (P0020001), in `pl_block` column order.
+
+/**
+ * The eight P2 categories that partition the total (P0020001), in `pl_block` column order.
+ */
 const CATEGORY_INDEX = {
 	pop_total: P2(1),
 	hispanic: P2(2), // Hispanic or Latino (any race)
@@ -58,17 +66,29 @@ const CATEGORY_INDEX = {
 } as const
 
 export interface FetchRedistrictingOptions {
-	/** Two-digit state FIPS, e.g. `"06"`. */
+	/**
+	 * Two-digit state FIPS, e.g. `"06"`.
+	 */
 	stateFIPS: string
-	/** Decennial vintage. Default 2020 (the only P.L. 94-171 release this parses). */
+	/**
+	 * Decennial vintage. Default 2020 (the only P.L. 94-171 release this parses).
+	 */
 	vintage?: number
-	/** Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`). */
+	/**
+	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
+	 */
 	outPath?: string
-	/** Download cache + default output root. */
+	/**
+	 * Download cache + default output root.
+	 */
 	dataRoot?: string
-	/** Optional three-digit county FIPS filter, e.g. `"059"`. */
+	/**
+	 * Optional three-digit county FIPS filter, e.g. `"059"`.
+	 */
 	county?: string
-	/** Rows per insert. Default 2000. */
+	/**
+	 * Rows per insert. Default 2000.
+	 */
 	batchSize?: number
 }
 
@@ -92,6 +112,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 		child.stdout.on("data", (d) => (out += d))
 		child.stderr.on("data", (d) => (err += d))
 		child.on("error", reject)
+
 		child.on("close", (code) =>
 			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
 		)
@@ -108,6 +129,7 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 			// corrupt cache — re-download
 		}
 	}
+
 	const tmp = dest + ".tmp"
 	const res = await fetch(url, { redirect: "follow" })
 
@@ -145,7 +167,7 @@ export async function* fetchRedistricting(
 
 	if (!abbr) throw new Error(`Unknown state FIPS "${state}"`)
 	const stateName = StateName[abbr as keyof typeof StateName]
-	const dirName = stateName.replace(/ /g, "_")
+	const dirName = stateName.replaceAll(" ", "_")
 	const fileAbbr = abbr.toLowerCase()
 
 	const cacheDir = join(dataRoot, "census", "redistricting", String(vintage), state)
@@ -169,6 +191,7 @@ export async function* fetchRedistricting(
 	// Pass 1: header → LOGRECNO → GEOID for the blocks we want.
 	const prefix = options.county ? state + options.county : state
 	const logToGeoid = new Map<string, string>()
+
 	await eachLine(geoPath, (line) => {
 		const f = line.split("|")
 
@@ -178,6 +201,7 @@ export async function* fetchRedistricting(
 		if (!geoid.startsWith(prefix)) return
 		logToGeoid.set(f[GEO_LOGRECNO] ?? "", geoid)
 	})
+
 	const total = logToGeoid.size
 	yield { phase: "header", blocks: total }
 
@@ -195,6 +219,7 @@ export async function* fetchRedistricting(
 
 		let inserted = 0
 		let batch: PLBlockTable[] = []
+
 		const flush = async () => {
 			if (!batch.length) return
 			const rows = batch
@@ -210,6 +235,7 @@ export async function* fetchRedistricting(
 			const geoid = logToGeoid.get(f[SEG_LOGRECNO] ?? "")
 
 			if (!geoid) continue
+
 			batch.push({
 				GEOID: geoid,
 				pop_total: Number(f[CATEGORY_INDEX.pop_total] ?? 0),
@@ -228,6 +254,7 @@ export async function* fetchRedistricting(
 				yield { phase: "load", inserted, total }
 			}
 		}
+
 		await flush()
 
 		yield { phase: "load", inserted, total }

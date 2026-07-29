@@ -25,7 +25,9 @@ import { useMap } from "react-map-gl/maplibre"
 import type { MapCameraTarget } from "./place-render.ts"
 
 export interface ResultCameraProps {
-	/** The camera target to animate to. `null` leaves the camera untouched (no result yet). */
+	/**
+	 * The camera target to animate to. `null` leaves the camera untouched (no result yet).
+	 */
 	target: MapCameraTarget | null
 	/**
 	 * Animate (`flyTo`/`fitBounds`) vs jump. @default true. When false, a `center` target jumps with `jumpTo`; a `bounds`
@@ -34,7 +36,9 @@ export interface ResultCameraProps {
 	animate?: boolean
 }
 
-/** Drive the live map to `target`. No DOM of its own — it is a behavior mounted as a `<Map>` child. */
+/**
+ * Drive the live map to `target`. No DOM of its own — it is a behavior mounted as a `<Map>` child.
+ */
 export function ResultCamera({ target, animate = true }: ResultCameraProps): ReactNode {
 	const map = useMap()
 

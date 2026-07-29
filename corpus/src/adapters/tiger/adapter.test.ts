@@ -77,9 +77,11 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const salmon = rows.find((r) => r.source_id === "tiger-st-110000001-zip-97215")
 		expect(salmon).toBeDefined()
+
 		expect(salmon!.components).toMatchObject({
 			street_prefix: "SE",
 			street: "Salmon",
@@ -87,6 +89,7 @@ describe("tiger adapter against fixture.sql", () => {
 			region: "OR",
 			postcode: "97215",
 		})
+
 		expect(salmon!.raw).toContain("SE Salmon St")
 		expect(salmon!.raw).toContain("OR")
 		expect(salmon!.raw).toContain("97215")
@@ -99,9 +102,11 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const portlandVariants = rows.filter((r) => r.source_id.startsWith("tiger-pl-4159000-"))
-		expect(portlandVariants.map((r) => r.source_id).sort()).toEqual([
+
+		expect(portlandVariants.map((r) => r.source_id).toSorted()).toEqual([
 			"tiger-pl-4159000-locality-only",
 			"tiger-pl-4159000-with-region",
 			"tiger-pl-4159000-with-region-country",
@@ -124,6 +129,7 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const burlingtonFull = rows.find((r) => r.source_id === "tiger-pl-5010675-with-region-country")
 		expect(burlingtonFull).toBeDefined()
@@ -137,11 +143,13 @@ describe("tiger adapter against fixture.sql", () => {
 		// Build a mini DB with one segment whose left and right ZIPs differ.
 		const inline = join(scratch, "split-zip.db")
 		const db = new DatabaseSync(inline)
+
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099999', 'Border Rd', '10001', '10002', '36');
 		`)
+
 		db.close()
 
 		await runAdapter({
@@ -150,12 +158,15 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows).toHaveLength(2)
-		expect(rows.map((r) => r.source_id).sort()).toEqual([
+
+		expect(rows.map((r) => r.source_id).toSorted()).toEqual([
 			"tiger-st-110099999-zipl-10001",
 			"tiger-st-110099999-zipr-10002",
 		])
+
 		expect(rows[0]!.components.postcode).toBe("10001")
 		expect(rows[1]!.components.postcode).toBe("10002")
 	})
@@ -163,11 +174,13 @@ describe("tiger adapter against fixture.sql", () => {
 	it("street with no ZIPs emits a single zipless variant", async () => {
 		const inline = join(scratch, "no-zip.db")
 		const db = new DatabaseSync(inline)
+
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099998', 'Unnamed Rd', NULL, NULL, '41');
 		`)
+
 		db.close()
 
 		await runAdapter({
@@ -176,6 +189,7 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.source_id).toBe("tiger-st-110099998-no-zip")
@@ -186,12 +200,14 @@ describe("tiger adapter against fixture.sql", () => {
 	it("rows with an unrecognized state FIPS code are dropped", async () => {
 		const inline = join(scratch, "bad-fips.db")
 		const db = new DatabaseSync(inline)
+
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099997', 'Phantom St', '00000', '00000', '99');
 			INSERT INTO tiger_places  VALUES ('9999000', 'Phantomville', '99', '25');
 		`)
+
 		db.close()
 
 		await runAdapter({
@@ -200,6 +216,7 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows).toHaveLength(0)
 	})
@@ -222,6 +239,7 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(m.yielded).toBe(5)
 		expect(m.written).toBe(5)
 	})
@@ -233,13 +251,16 @@ describe("tiger adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, TIGER_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

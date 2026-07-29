@@ -14,7 +14,18 @@
 
 import type { VectorSourceSpecification } from "maplibre-gl"
 
+/**
+ * Segments used to approximate a circle as a polygon ring.
+ */
+const CIRCLE_SEGMENTS = 64
+
+/**
+ * Origin of the tile worker serving basemap and overlay tiles. CORS-restricted to localhost and the docs domains.
+ */
 export const TILE_WORKER_URL = "https://tiles.sister.software"
+/**
+ * TileJSON the map reads before requesting basemap tiles.
+ */
 export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
 
 /**
@@ -35,13 +46,16 @@ export function approxCircleGeometry(
 ): PlaceGeometry {
 	const kmPerDegLat = 111.32
 	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
+
 	const halfDiagKm = bbox
 		? Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
-		: 3 // anchor-centroid postcodes carry no extent; ~ZIP-sized default
+		: 3
+
+	// anchor-centroid postcodes carry no extent; ~ZIP-sized default
 	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
 	const ring: number[][] = []
 
-	for (let i = 0; i <= 64; i++) {
+	for (let i = 0; i <= CIRCLE_SEGMENTS; i++) {
 		const theta = (2 * Math.PI * i) / 64
 		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
 	}
@@ -49,7 +63,9 @@ export function approxCircleGeometry(
 	return { type: "Polygon", coordinates: [ring] }
 }
 
-/** Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays. */
+/**
+ * Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays.
+ */
 export function geomBounds(geometry: PlaceGeometry): {
 	minLon: number
 	minLat: number
@@ -60,6 +76,7 @@ export function geomBounds(geometry: PlaceGeometry): {
 	let minLat = Infinity
 	let maxLon = -Infinity
 	let maxLat = -Infinity
+
 	const visit = (node: unknown): void => {
 		if (Array.isArray(node) && typeof node[0] === "number") {
 			const [lon, lat] = node as number[]
@@ -89,6 +106,7 @@ export function geomBounds(geometry: PlaceGeometry): {
 			}
 		}
 	}
+
 	visit(geometry.coordinates)
 
 	return { minLon, minLat, maxLon, maxLat }
@@ -116,13 +134,16 @@ export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<
 	}
 }
 
-/** Fetch + normalize the protomaps v4 basemap tilejson into a MapLibre vector source spec. */
+/**
+ * Fetch + normalize the protomaps v4 basemap tilejson into a MapLibre vector source spec.
+ */
 export async function fetchBasemapSource(): Promise<VectorSourceSpecification> {
 	const response = await fetch(BASEMAP_TILEJSON_URL)
 
 	if (!response.ok) {
 		throw new Error(`Failed to load basemap tilejson (${response.status})`)
 	}
+
 	const meta = (await response.json()) as {
 		scheme?: string
 		tiles: string[]

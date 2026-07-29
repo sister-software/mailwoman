@@ -37,7 +37,7 @@ function tokensPerSegment(
 ): Array<{ tokens: SegmentToken[]; isFirst: boolean; isLast: boolean }> {
 	const segs = shape.segments
 
-	if (segs && segs.length > 0) {
+	if (segs && segs.length) {
 		return segs.map((s, idx) => {
 			const start = s.span?.start ?? 0
 			const end = s.span?.end ?? text.length
@@ -71,16 +71,14 @@ export function groupPhrasesSync(
 ): PhraseProposal[] {
 	const text = input.normalized
 
-	if (text.length === 0) return []
-
-	const proposals: PhraseProposal[] = []
+	if (!text.length) return []
 
 	// Postcode rule consumes QueryShape directly (segment-agnostic).
-	proposals.push(...scorePostcode(shape, text))
+	const proposals: PhraseProposal[] = [...scorePostcode(shape, text)]
 
 	// Per-segment rules.
 	for (const { tokens, isFirst, isLast } of tokensPerSegment(text, shape)) {
-		if (tokens.length === 0) continue
+		if (!tokens.length) continue
 		proposals.push(...scoreNumeric(tokens, text))
 		proposals.push(...scoreRegionAbbreviation(tokens, text, isLast))
 		proposals.push(...scoreHyphenatedCompound(tokens, text))

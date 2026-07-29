@@ -15,7 +15,9 @@ import { cors } from "hono/cors"
 import type { NominatimEngine } from "./engine.ts"
 import { registerNominatimRoutes } from "./routes.ts"
 
-/** Options for {@link createNominatimApp}. */
+/**
+ * Options for {@link createNominatimApp}.
+ */
 export interface NominatimAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -53,14 +55,16 @@ export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the Nominatim-compatible app around an injected {@link NominatimEngine}. */
+/**
+ * Build the Nominatim-compatible app around an injected {@link NominatimEngine}.
+ */
 export function createNominatimApp(engine: NominatimEngine, options: NominatimAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
 	// Browser-embedded geocoder clients need CORS or their cross-origin XHR is blocked before completing (#1017).
 	// GET-only — nominatim has no mutating routes, so unlike libpostal's CORS there is no POST in the methods list.
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: a malformed query or an engine fault must never crash the process into a stack-trace 500 — the

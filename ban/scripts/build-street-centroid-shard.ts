@@ -84,7 +84,9 @@ function parse(): BuildArgs {
 	return { country, source, release, output }
 }
 
-/** Streaming md5 of a file (never buffer a multi-GB artifact). */
+/**
+ * Streaming md5 of a file (never buffer a multi-GB artifact).
+ */
 async function fileMD5(path: string): Promise<string> {
 	const hash = createHash("md5")
 
@@ -95,7 +97,9 @@ async function fileMD5(path: string): Promise<string> {
 	return hash.digest("hex")
 }
 
-/** The md5 the #1012 build recorded for the sealed rooftop input, for the derivation provenance chain. */
+/**
+ * The md5 the #1012 build recorded for the sealed rooftop input, for the derivation provenance chain.
+ */
 function sourceMD5(country: string): string | null {
 	try {
 		const rec = JSON.parse(readFileSync(dataRootPath("ban", "ATTRIBUTION.json"), "utf8")) as {
@@ -157,6 +161,7 @@ async function main(): Promise<void> {
 	const BATCH = 50_000
 
 	console.error(`[ban] deriving ${args.country} street-centroid tier from ${args.source}`)
+
 	out.exec("BEGIN")
 
 	for (const row of agg.iterate() as Iterable<{
@@ -189,8 +194,9 @@ async function main(): Promise<void> {
 			args.release,
 			// #727 phase-4c name-existence key: the contract fold of the display name, quotes stripped (a rare CSV
 			// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
-			foldStreetSurface(row.street_raw.replace(/"/g, ""))
+			foldStreetSurface(row.street_raw.replaceAll('"', ""))
 		)
+
 		written++
 
 		if (written % BATCH === 0) {
@@ -202,10 +208,12 @@ async function main(): Promise<void> {
 			}
 		}
 	}
+
 	out.exec("COMMIT")
 	src.close()
 
 	console.error(`[ban] indexing…`)
+
 	await createStreetCentroidIndexes(kdb)
 	out.exec("ANALYZE")
 	await kdb.destroy()
@@ -218,11 +226,13 @@ async function main(): Promise<void> {
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(args.output + sfx, { force: true })
 	}
+
 	renameSync(tmp, args.output)
 
 	if (existsSync(`${args.output}.prev`)) {
 		rmSync(`${args.output}.prev`, { force: true })
 	}
+
 	sealDatabase(args.output)
 
 	const md5 = await fileMD5(args.output)
@@ -259,6 +269,7 @@ async function main(): Promise<void> {
 			2
 		) + "\n"
 	)
+
 	console.error(`[ban] wrote ${attributionPath}`)
 
 	console.error(

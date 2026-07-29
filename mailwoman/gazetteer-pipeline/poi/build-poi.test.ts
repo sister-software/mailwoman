@@ -23,8 +23,10 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { Kysely } from "kysely"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { buildPOIDatabase, type POISourceRow } from "./build-poi.ts"
@@ -32,7 +34,9 @@ import { buildPOIDatabase, type POISourceRow } from "./build-poi.ts"
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as const }
 const PARIS = { latitude: 48.8566, longitude: 2.3522, country: "FR" as const }
 const CATEGORIES = ["cafe", "restaurant", "museum"] as const
-/** ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category) group clusters into one cell. */
+/**
+ * ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category) group clusters into one cell.
+ */
 const JITTER_DEG = 0.00003
 
 function* fixtureRows(): Iterable<POISourceRow> {
@@ -42,6 +46,7 @@ function* fixtureRows(): Iterable<POISourceRow> {
 		for (const category of CATEGORIES) {
 			for (let n = 0; n < 5; n++) {
 				gersCounter++
+
 				yield {
 					name: `${loc.country} ${category} #${n}`,
 					category,
@@ -67,6 +72,7 @@ function* fixtureRows(): Iterable<POISourceRow> {
 		confidence: 0.9,
 		gersID: "bad-nan",
 	}
+
 	yield {
 		name: "Bad Infinity",
 		category: "cafe",
@@ -118,7 +124,7 @@ describe("buildPOIDatabase", () => {
 
 		// --- dictionary round-trip: insert-on-first-sight, 0 reserved for uncategorized ---
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
-		expect(codes.map((c) => c.category).sort()).toEqual(["cafe", "museum", "restaurant"])
+		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 
@@ -130,9 +136,12 @@ describe("buildPOIDatabase", () => {
 			.where("category_id", "=", cafeID)
 			.where("country", "=", "US")
 			.execute()
-		expect(group.length).toBe(5)
+
+		expect(group).toHaveLength(5)
 		const clusterCell = group[0]!.h3_cell
-		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true) // all 5 jittered into one res-9 cell
+		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true)
+
+		// all 5 jittered into one res-9 cell
 
 		const firstPhysicalRow = await kdb
 			.selectFrom("poi")
@@ -140,11 +149,13 @@ describe("buildPOIDatabase", () => {
 			.where("h3_cell", "=", clusterCell)
 			.where("category_id", "=", cafeID)
 			.executeTakeFirstOrThrow()
+
 		const maxConfidence = Math.max(...group.map((r) => r.confidence))
 		expect(firstPhysicalRow.confidence).toBeCloseTo(maxConfidence, 10)
 
 		// --- manifest reads back valid ---
-		const manifest = await readLayerManifest(kdb)
+		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
+
 		expect(manifest).toMatchObject({
 			name: "poi",
 			tier: "shipped",
@@ -162,12 +173,12 @@ describe("buildPOIDatabase", () => {
 		// --- coverage rows exist at res 6 ---
 		expect(result.coverageCells).toBeGreaterThan(0)
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
-		expect(coverageRows.length).toBe(result.coverageCells)
+		expect(coverageRows).toHaveLength(result.coverageCells)
 		expect(coverageRows.every((c) => c.observed_rows > 0 && c.completeness === 1)).toBe(true)
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(30)
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
-		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
+		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
 
 		// --- end-to-end via Task 2's POILookup reader ---
 		using lookup = new POILookup({ databasePath: out })

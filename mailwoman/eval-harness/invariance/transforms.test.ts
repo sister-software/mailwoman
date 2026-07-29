@@ -12,7 +12,7 @@ import { canonicalizeAbbreviations, getTransform, TRANSFORMS } from "./transform
 
 describe("TRANSFORMS registry", () => {
 	it("carries the seven spec-named classes plus the two Task-9 paired-punct classes", () => {
-		const ids = TRANSFORMS.map((t) => t.id).sort()
+		const ids = TRANSFORMS.map((t) => t.id).toSorted()
 
 		expect(ids).toEqual(
 			[
@@ -25,7 +25,7 @@ describe("TRANSFORMS registry", () => {
 				"trailing-punct",
 				"whitespace-jitter",
 				"wrap-in-quotes",
-			].sort()
+			].toSorted()
 		)
 	})
 
@@ -96,6 +96,7 @@ describe("abbreviation-swap", () => {
 
 	it("does NOT treat 'St' followed by a secondary-address designator (Apt/Ste) as a Saint-prefix", () => {
 		expect(swap("123 Main St Apt 4B, Springfield, IL 62701")).toBe("123 Main Street Apt 4B, Springfield, IL 62701")
+
 		expect(swap("500 W 7th St Ste 1100, Cincinnati, OH 45203-1234")).toBe(
 			"500 W 7th Street Ste 1100, Cincinnati, OH 45203-1234"
 		)

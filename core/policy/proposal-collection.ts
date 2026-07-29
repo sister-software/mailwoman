@@ -17,7 +17,7 @@
  */
 
 import type { Section } from "../types/classifier.ts"
-import { type ClassificationProposal, type ClassifierContext, type ProposalClassifier } from "../types/index.ts"
+import type { ClassificationProposal, ClassifierContext, ProposalClassifier } from "../types/index.ts"
 import type { PolicyRegistry } from "./policy.ts"
 
 /**
@@ -37,14 +37,15 @@ export async function collectProposals(
 	for (const classifier of classifiers) {
 		for (const section of sections) {
 			tasks.push(
-				classifier.classify(section, context).catch((err) => {
-					console.warn(`[proposal-collection] ${classifier.id} threw on section "${section.body}":`, err)
+				classifier.classify(section, context).catch((error) => {
+					console.warn(`[proposal-collection] ${classifier.id} threw on section "${section.body}":`, error)
 
 					return []
 				})
 			)
 		}
 	}
+
 	const results = await Promise.all(tasks)
 
 	return results.flat()

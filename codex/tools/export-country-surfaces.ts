@@ -32,6 +32,7 @@ for (const [iso2, name] of ISO2_TO_NAME) {
 }
 
 const out = resolve(import.meta.dirname, "../../corpus-python/src/mailwoman_train/data/country-surfaces.json")
+
 writeFileSync(
 	out,
 	JSON.stringify(
@@ -43,4 +44,5 @@ writeFileSync(
 		2
 	) + "\n"
 )
+
 process.stderr.write(`wrote ${Object.keys(surfaces).length} countries → ${out}\n`)

@@ -14,15 +14,23 @@
  *   postcode is the thing that actually carries the geography.
  */
 
-/** Per-country record: ISO 3166-2:GB code (sans `GB-` prefix) + English name. */
+/**
+ * Per-country record: ISO 3166-2:GB code (sans `GB-` prefix) + English name.
+ */
 export interface UkCountryInfo {
-	/** ISO 3166-2:GB country code without the `GB-` prefix (e.g. `ENG` for `GB-ENG`). */
+	/**
+	 * ISO 3166-2:GB country code without the `GB-` prefix (e.g. `ENG` for `GB-ENG`).
+	 */
 	code: string
-	/** English name (e.g. `Scotland`). */
+	/**
+	 * English name (e.g. `Scotland`).
+	 */
 	name: string
 }
 
-/** ISO 3166-2:GB country code → info, for all four constituent countries. */
+/**
+ * ISO 3166-2:GB country code → info, for all four constituent countries.
+ */
 export const GB_COUNTRIES = {
 	ENG: { code: "ENG", name: "England" },
 	SCT: { code: "SCT", name: "Scotland" },
@@ -30,25 +38,33 @@ export const GB_COUNTRIES = {
 	NIR: { code: "NIR", name: "Northern Ireland" },
 } as const satisfies Record<string, UkCountryInfo>
 
-/** An ISO 3166-2:GB constituent-country code (`ENG`, `SCT`, `WLS`, `NIR`). */
+/**
+ * An ISO 3166-2:GB constituent-country code (`ENG`, `SCT`, `WLS`, `NIR`).
+ */
 export type UkCountryCode = keyof typeof GB_COUNTRIES
 
 const COUNTRY_CODE_SET: ReadonlySet<string> = new Set(Object.keys(GB_COUNTRIES))
 
-/** Type-predicate for an ISO 3166-2:GB country code. Case-insensitive. */
+/**
+ * Type-predicate for an ISO 3166-2:GB country code. Case-insensitive.
+ */
 export function isUkCountryCode(input: unknown): input is UkCountryCode {
 	return typeof input === "string" && COUNTRY_CODE_SET.has(input.toUpperCase())
 }
 
-/** Lowercase + collapse non-alphanumerics so `Northern Ireland`, `northern-ireland` key alike. */
+/**
+ * Lowercase + collapse non-alphanumerics so `Northern Ireland`, `northern-ireland` key alike.
+ */
 function foldName(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 
-/** Folded country name / code → ISO 3166-2:GB code, so a surface form maps regardless of casing. */
+/**
+ * Folded country name / code → ISO 3166-2:GB code, so a surface form maps regardless of casing.
+ */
 const COUNTRY_NAME_TO_CODE: ReadonlyMap<string, UkCountryCode> = (() => {
 	const out = new Map<string, UkCountryCode>()
 

@@ -13,7 +13,7 @@ import type { Segment, SegmentSeparator } from "./types.ts"
 export function segment(text: string, _locale?: string): Segment[] {
 	const segments: Segment[] = []
 
-	if (text.length === 0) return segments
+	if (!text.length) return segments
 
 	let start = 0
 	let lastSeparator: SegmentSeparator = null
@@ -34,8 +34,10 @@ export function segment(text: string, _locale?: string): Segment[] {
 				index,
 				separator: lastSeparator,
 			})
+
 			index += 1
 		}
+
 		lastSeparator = separator
 	}
 
@@ -56,6 +58,7 @@ export function segment(text: string, _locale?: string): Segment[] {
 			start = i + 1
 		}
 	}
+
 	flush(text.length, null)
 
 	return segments

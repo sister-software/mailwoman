@@ -31,9 +31,12 @@ const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
 	span: { start, end },
 	confidence,
 })
+
 const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
 
-/** Reduce a proposal to the load-bearing fields for comparison. */
+/**
+ * Reduce a proposal to the load-bearing fields for comparison.
+ */
 const summarize = (p: PhraseProposal) => ({
 	body: p.span.body,
 	start: p.span.start,
@@ -69,6 +72,7 @@ test("tokenizeSegment: collapses runs of whitespace and respects a non-zero segm
 		{ body: "A", start: 102, end: 103 },
 		{ body: "B", start: 105, end: 106 },
 	])
+
 	// Empty / whitespace-only segments yield no tokens.
 	expect(tokenizeSegment("", 0)).toEqual([])
 	expect(tokenizeSegment("   ", 5)).toEqual([])
@@ -79,6 +83,7 @@ test("tokenizeSegment: collapses runs of whitespace and respects a non-zero segm
 test("scoreNumeric: 1-4 digit runs are confident house numbers; 5+ drop to the neutral baseline", () => {
 	const text = "350 12345"
 	const out = scoreNumeric(tokens(text), text)
+
 	expect(out.map(summarize)).toEqual([
 		{ body: "350", start: 0, end: 3, kind: "NUMERIC", confidence: 0.95 },
 		// 5 digits → ambiguous with POSTCODE → NEUTRAL_PROPOSAL_CONFIDENCE (0.55), still emitted.
@@ -107,11 +112,13 @@ test("scorePostcode: lifts each non-po_box format hit, carrying its confidence t
 test("scorePostcode: po_box hits are skipped (the kind classifier owns that signal)", () => {
 	const text = "PO Box 12"
 	expect(scorePostcode(shape({ knownFormats: [fmt("po_box", 0, 6, 0.9)] }), text)).toEqual([])
+
 	// A mixed bag emits only the postcode.
 	const out = scorePostcode(
 		shape({ knownFormats: [fmt("po_box", 0, 6, 0.9), fmt("us_zip", 7, 12, 0.8)] }),
 		"PO Box 90210"
 	)
+
 	// "PO Box " is 7 chars; the [7,12) slice is the ZIP "90210".
 	expect(out.map(summarize)).toEqual([{ body: "90210", start: 7, end: 12, kind: "POSTCODE", confidence: 0.8 }])
 })
@@ -127,6 +134,7 @@ test("scoreRegionAbbreviation: tail-of-segment region code scores highest", () =
 	// "NYC" is 3 uppercase letters → also region-shaped, but "NY" follows it and is itself a region
 	// abbreviation, so the suppression guard does NOT trigger for NYC (after must be NON-region content).
 	const out = scoreRegionAbbreviation(tokens(text), text, true)
+
 	expect(out.map(summarize)).toEqual([
 		// NYC is not at tail, but is in the last segment → 0.7
 		{ body: "NYC", start: 0, end: 3, kind: "REGION_ABBREVIATION", confidence: 0.7 },
@@ -162,6 +170,7 @@ test("scoreRegionAbbreviation: lowercase / 4-letter / 1-letter tokens are not re
 test("scoreHyphenatedCompound: interior hyphen fires; leading/trailing hyphens do not", () => {
 	const text = "Saint-Denis -lead trail-"
 	const out = scoreHyphenatedCompound(tokens(text), text)
+
 	expect(out.map(summarize)).toEqual([
 		{ body: "Saint-Denis", start: 0, end: 11, kind: "HYPHENATED_COMPOUND", confidence: 0.88 },
 	])
@@ -171,6 +180,7 @@ test("scoreHyphenatedCompound: ZIP+4 single token and double-hyphen edge", () =>
 	expect(scoreHyphenatedCompound(tokens("10118-1234"), "10118-1234").map(summarize)).toEqual([
 		{ body: "10118-1234", start: 0, end: 10, kind: "HYPHENATED_COMPOUND", confidence: 0.88 },
 	])
+
 	// A token with no interior single hyphen (only a leading hyphen) is rejected.
 	expect(scoreHyphenatedCompound(tokens("-abc"), "-abc")).toEqual([])
 	// No hyphen at all.
@@ -189,6 +199,7 @@ test("scoreStreetPhrase: house-number + name + suffix excludes the house number 
 test("scoreStreetPhrase: a capitalized name + suffix with no house number scores 0.75", () => {
 	const text = "Hill Street"
 	const out = scoreStreetPhrase(tokens(text), text)
+
 	expect(out.map(summarize)).toEqual([
 		{ body: "Hill Street", start: 0, end: 11, kind: "STREET_PHRASE", confidence: 0.75 },
 	])
@@ -215,6 +226,7 @@ test("scoreStreetPhrase: a '<number> <suffix>' run with no street name emits not
 test("scoreStreetPhrase: Romance prefix-led street walks right and scores 0.72", () => {
 	const text = "Via Trento"
 	const out = scoreStreetPhrase(tokens(text), text)
+
 	expect(out.map(summarize)).toEqual([
 		{ body: "Via Trento", start: 0, end: 10, kind: "STREET_PHRASE", confidence: 0.72 },
 	])
@@ -232,6 +244,7 @@ test("scoreStreetPhrase: a Romance prefix does not end on a trailing connective 
 	// trailing particle but here ends on "Mayor". Span covers prefix..Mayor.
 	const text = "Calle de Mayor"
 	const out = scoreStreetPhrase(tokens(text), text)
+
 	expect(out.map(summarize)).toEqual([
 		{ body: "Calle de Mayor", start: 0, end: 14, kind: "STREET_PHRASE", confidence: 0.72 },
 	])
@@ -242,6 +255,7 @@ test("scoreStreetPhrase: a Romance prefix does not end on a trailing connective 
 test("scoreLocalityPhrase: a two-token place name proposes every prefix length", () => {
 	const text = "Saint Petersburg"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
+
 	// From i=0: len1 "Saint" (not at tail), len2 "Saint Petersburg" (at tail, last segment).
 	// From i=1: len1 "Petersburg" (at tail, last segment).
 	// base 0.55; len2 bonus +0.15; atTail +0.05; atTail&&last +0.1.
@@ -250,6 +264,7 @@ test("scoreLocalityPhrase: a two-token place name proposes every prefix length",
 		{ body: "Saint Petersburg", start: 0, end: 16, kind: "LOCALITY_PHRASE" },
 		{ body: "Petersburg", start: 6, end: 16, kind: "LOCALITY_PHRASE" },
 	])
+
 	expect(out[0]!.confidence).toBeCloseTo(0.55, 10) // "Saint" not at tail
 	expect(out[1]!.confidence).toBeCloseTo(0.85, 10) // "Saint Petersburg": 0.55 + 0.15 + 0.05 + 0.1
 	expect(out[2]!.confidence).toBeCloseTo(0.7, 10) // "Petersburg": 0.55 + 0.05 + 0.1
@@ -270,11 +285,13 @@ test("scoreLocalityPhrase: a known US region name not at segment-tail is penaliz
 	// Tower" (at tail, last) → 0.55 + 0.15 + 0.05 + 0.1 = 0.85. From i=1: len1 "Tower" (at tail, last).
 	const text = "Texas Tower"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
+
 	expect(out.map(spanShape)).toEqual([
 		{ body: "Texas", start: 0, end: 5, kind: "LOCALITY_PHRASE" },
 		{ body: "Texas Tower", start: 0, end: 11, kind: "LOCALITY_PHRASE" },
 		{ body: "Tower", start: 6, end: 11, kind: "LOCALITY_PHRASE" },
 	])
+
 	expect(out[0]!.confidence).toBeCloseTo(0.35, 10) // "Texas" region-name, not at tail: 0.55 − 0.2
 	expect(out[1]!.confidence).toBeCloseTo(0.85, 10) // "Texas Tower": 0.55 + 0.15 + 0.05 + 0.1
 	expect(out[2]!.confidence).toBeCloseTo(0.7, 10) // "Tower" (at tail, last): 0.55 + 0.05 + 0.1
@@ -341,6 +358,7 @@ test("scoreLocalityPhrase: no capitalized content → no proposals", () => {
 test("scoreVenuePhrase: a venue-marker noun lifts the whole capitalized run to its marker weight", () => {
 	const text = "Grand Hotel"
 	const out = scoreVenuePhrase(tokens(text), text, false)
+
 	// "hotel" weight = 0.9.
 	expect(out.map(summarize)).toEqual([
 		{ body: "Grand Hotel", start: 0, end: 11, kind: "VENUE_PHRASE", confidence: 0.9 },
@@ -356,11 +374,13 @@ test("scoreVenuePhrase: a hyphenated compound inside a 2+ capitalized run fires 
 	// Use a cleaner hyphen-only case with no marker word:
 	const text2 = "Mont-Blanc Estates"
 	const out2 = scoreVenuePhrase(tokens(text2), text2, false)
+
 	expect(out2.map(summarize)).toEqual([
 		{ body: "Mont-Blanc Estates", start: 0, end: 18, kind: "VENUE_PHRASE", confidence: 0.65 },
 	])
+
 	// (smoke) Coca-Cola Tower still emits a venue proposal.
-	expect(out.length).toBe(1)
+	expect(out).toHaveLength(1)
 })
 
 test("scoreVenuePhrase: venue-by-exclusion fires only in the first segment for a plain capitalized run", () => {
@@ -376,6 +396,7 @@ test("scoreVenuePhrase: venue-by-exclusion fires only in the first segment for a
 test("scoreVenuePhrase: venue-by-exclusion gives a 3+ token run the neutral baseline (0.55)", () => {
 	const text = "Acme Holding Group"
 	const out = scoreVenuePhrase(tokens(text), text, true)
+
 	expect(out.map(summarize)).toEqual([
 		{ body: "Acme Holding Group", start: 0, end: 18, kind: "VENUE_PHRASE", confidence: 0.55 },
 	])

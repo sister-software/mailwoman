@@ -25,17 +25,29 @@ import { createGunzip } from "node:zlib"
 
 import { CSVSpliterator } from "spliterator"
 
-/** One BAN address point. Every field but `rep`/`postcode`/`city`/`lieuDit` is guaranteed present by the source. */
+/**
+ * One BAN address point. Every field but `rep`/`postcode`/`city`/`lieuDit` is guaranteed present by the source.
+ */
 export interface BANAddrRecord {
-	/** `numero` — the house number (numeric in BAN; the `rep` suffix is carried separately). */
+	/**
+	 * `numero` — the house number (numeric in BAN; the `rep` suffix is carried separately).
+	 */
 	numero: string
-	/** `rep` — the repetition indicator (`bis`, `ter`, `quater`, `a`, `b`, …), or null when absent. */
+	/**
+	 * `rep` — the repetition indicator (`bis`, `ter`, `quater`, `a`, `b`, …), or null when absent.
+	 */
 	rep: string | null
-	/** `nom_voie` — the street/voie name, already in full form ("Route de …", "Rue du …"). */
+	/**
+	 * `nom_voie` — the street/voie name, already in full form ("Route de …", "Rue du …").
+	 */
 	street: string
-	/** `code_postal` — the 5-digit postcode (nullable: a handful of lieu-dit rows omit it). */
+	/**
+	 * `code_postal` — the 5-digit postcode (nullable: a handful of lieu-dit rows omit it).
+	 */
 	postcode: string | null
-	/** `nom_commune` — the commune (locality) name. */
+	/**
+	 * `nom_commune` — the commune (locality) name.
+	 */
 	city: string | null
 	/**
 	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune, cleaned via {@link cleanLieuDit}. Filled on
@@ -48,7 +60,9 @@ export interface BANAddrRecord {
 	lat: number
 }
 
-/** The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails LOUDLY). */
+/**
+ * The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails LOUDLY).
+ */
 const REQUIRED_COLUMNS = ["numero", "rep", "nom_voie", "code_postal", "nom_commune", "nom_ld", "lon", "lat"] as const
 
 /**
@@ -92,7 +106,9 @@ export function cleanLieuDit(raw: string | undefined, commune: string | null): s
 	return trimmed
 }
 
-/** Throw if the dump's header is missing a required column — a rename upstream must not silently skip every row. */
+/**
+ * Throw if the dump's header is missing a required column — a rename upstream must not silently skip every row.
+ */
 function assertRequiredColumns(row: Record<string, unknown>): void {
 	for (const name of REQUIRED_COLUMNS) {
 		if (!(name in row)) {
@@ -101,7 +117,9 @@ function assertRequiredColumns(row: Record<string, unknown>): void {
 	}
 }
 
-/** A readable stream over `csvPath`, transparently gunzipping a `.csv.gz` input. */
+/**
+ * A readable stream over `csvPath`, transparently gunzipping a `.csv.gz` input.
+ */
 function openCSV(csvPath: string): NodeJS.ReadableStream {
 	const raw = createReadStream(csvPath)
 
@@ -130,6 +148,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 			assertRequiredColumns(row)
 			checkedHeader = true
 		}
+
 		const numero = row.numero?.trim()
 		const street = row.nom_voie?.trim()
 

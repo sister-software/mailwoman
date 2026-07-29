@@ -20,14 +20,18 @@
  *   across the whole dataset.
  */
 
-/** A scored candidate pair: two records and the match weight (bits) the scorer assigned them. */
+/**
+ * A scored candidate pair: two records and the match weight (bits) the scorer assigned them.
+ */
 export interface ScoredLink<R> {
 	a: R
 	b: R
 	weight: number
 }
 
-/** Options for {@link cluster}. */
+/**
+ * Options for {@link cluster}.
+ */
 export interface ClusterOptions {
 	/**
 	 * Link two records only when their match weight is at or above this (bits) — the precision/recall knob.
@@ -58,6 +62,7 @@ export interface ClusterOptions {
  */
 function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, number]>, threshold: number): R[][] {
 	const clusters = members.map((_, i) => [i])
+
 	const crossAverage = (a: number[], b: number[]): number | null => {
 		const inA = new Set(a)
 		const inB = new Set(b)
@@ -67,6 +72,7 @@ function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, num
 		for (const [i, j, w] of edges) {
 			if ((inA.has(i) && inB.has(j)) || (inA.has(j) && inB.has(i))) {
 				sum += w
+
 				count++
 			}
 		}
@@ -139,6 +145,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 			parent[ry] = rx
 		} else {
 			parent[ry] = rx
+
 			rank[rx]!++
 		}
 	}
@@ -161,6 +168,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	}
 
 	const groups = new Map<number, R[]>()
+
 	records.forEach((record, i) => {
 		const root = find(i)
 		const group = groups.get(root)
@@ -183,6 +191,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	for (const members of groups.values()) {
 		members.forEach((m, i) => localOf.set(m, i))
 	}
+
 	const groupEdges = new Map<number, Array<[number, number, number]>>()
 
 	for (const link of allLinks) {
@@ -199,6 +208,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	for (const [root, members] of groups) {
 		if (members.length <= 1 || members.length > maxComponent) {
 			result.push(members)
+
 			continue
 		}
 

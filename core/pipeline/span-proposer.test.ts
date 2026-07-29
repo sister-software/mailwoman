@@ -13,7 +13,9 @@ import { describe, expect, it } from "vitest"
 
 import { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans, type SpanProposerLexicon } from "./span-proposer.ts"
 
-/** Codex-shaped fixture lexicon (the real one is built from @mailwoman/codex in neural). */
+/**
+ * Codex-shaped fixture lexicon (the real one is built from @mailwoman/codex in neural).
+ */
 const LEXICON: SpanProposerLexicon = {
 	systems: new Set(["us", "au", "nz"]),
 	unitDesignators: new Set(["apt", "apartment", "suite", "ste", "unit", "rm", "room", "bldg", "building"]),
@@ -186,6 +188,6 @@ describe("degenerate inputs", () => {
 	it("returns proposals sorted by start", () => {
 		const spans = proposeSpans("PO Box 19 (rear), Apt 4B", LEXICON)
 		const starts = spans.map((s) => s.start)
-		expect(starts).toEqual([...starts].sort((a, b) => a - b))
+		expect(starts).toEqual([...starts].toSorted((a, b) => a - b))
 	})
 })

@@ -24,12 +24,22 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const STATE_TX_NOTARIES_ADAPTER_ID = "state-tx-notaries"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const STATE_TX_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 
-/** Match trailing "CITY, ST ZIP" or "CITY, ST" at the end of an address line. */
+/**
+ * Match trailing "CITY, ST ZIP" or "CITY, ST" at the end of an address line.
+ */
 const CITY_STATE_ZIP_SUFFIX = /[,]?\s*([^,]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)?\s*$/i
 
 interface TxNotaryRow {
@@ -63,6 +73,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -90,7 +101,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 					// Parse embedded city/state/zip from the trailing portion of the address.
 					// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
-					const addrSingleLine = rawAddress.replace(/\n/g, ", ")
+					const addrSingleLine = rawAddress.replaceAll("\n", ", ")
 					const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
 
 					if (!cszMatch) continue
@@ -126,6 +137,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
 						.filter(Boolean)
 						.join(", ")
@@ -148,6 +160,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -157,4 +170,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const stateTxNotariesAdapter = createStateTxNotariesAdapter()

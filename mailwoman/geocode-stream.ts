@@ -34,20 +34,32 @@ import type { ColumnMapping, SourceRecord } from "@mailwoman/registry"
 import { parallelMap } from "spliterator"
 
 export interface GeocodeStreamConfig {
-	/** Path to the WOF admin SQLite DB. Opened read-only per worker (shared OS page cache). */
+	/**
+	 * Path to the WOF admin SQLite DB. Opened read-only per worker (shared OS page cache).
+	 */
 	wofDBPath: string
-	/** Mailwoman data root (geometry shards live under here). */
+	/**
+	 * Mailwoman data root (geometry shards live under here).
+	 */
 	dataRoot: string
-	/** Classifier weights locale, e.g. `"en-US"`. */
+	/**
+	 * Classifier weights locale, e.g. `"en-US"`.
+	 */
 	locale: string
-	/** Default country for resolution, e.g. `"US"`. */
+	/**
+	 * Default country for resolution, e.g. `"US"`.
+	 */
 	country?: string
 }
 
 export interface GeocodeStreamOptions {
-	/** The same {@link ColumnMapping} used to normalize — the worker recomputes the address from it. */
+	/**
+	 * The same {@link ColumnMapping} used to normalize — the worker recomputes the address from it.
+	 */
 	mapping: ColumnMapping
-	/** Serializable geocoder config the worker rebuilds its deps from. */
+	/**
+	 * Serializable geocoder config the worker rebuilds its deps from.
+	 */
 	geocode: GeocodeStreamConfig
 	/**
 	 * Worker pool size. Keep it small — geocoding is I/O/memory-bound, so throughput peaks at ~2 workers and degrades
@@ -56,13 +68,19 @@ export interface GeocodeStreamOptions {
 	 * @default Math.min(4, availableParallelism())
 	 */
 	concurrency?: number
-	/** Records per dispatched batch. @default 32 */
+	/**
+	 * Records per dispatched batch. @default 32
+	 */
 	batchSize?: number
-	/** Override the worker module — tests inject a fake. Defaults to the real geocode worker. */
+	/**
+	 * Override the worker module — tests inject a fake. Defaults to the real geocode worker.
+	 */
 	worker?: string | URL
 }
 
-/** The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests). */
+/**
+ * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests).
+ */
 const GEOCODE_WORKER_URL = new URL(
 	import.meta.url.includes("/out/") ? "./geocode-worker.js" : "./out/geocode-worker.js",
 	import.meta.url

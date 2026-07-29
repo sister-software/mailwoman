@@ -22,17 +22,25 @@ export interface UseParsePipeline {
 	text: string
 	setText: (text: string) => void
 	busy: boolean
-	/** 0-based index into `runtime.parseStageLabels`; -1 when idle. */
+	/**
+	 * 0-based index into `runtime.parseStageLabels`; -1 when idle.
+	 */
 	parseStage: number
 	result: ParseResult | null
 	parseError: string | null
 	selectedCandidateIndex: number
 	selectCandidate: (index: number) => void
-	/** The currently-selected candidate (falls back to the first), or null. */
+	/**
+	 * The currently-selected candidate (falls back to the first), or null.
+	 */
 	selectedCandidate: ResolvedPlaceView | null
-	/** Run a parse for the current text. Safe to bind to a form's `onSubmit`. */
+	/**
+	 * Run a parse for the current text. Safe to bind to a form's `onSubmit`.
+	 */
 	submit: () => Promise<void>
-	/** Clear the result (used when a preset replaces the input). */
+	/**
+	 * Clear the result (used when a preset replaces the input).
+	 */
 	reset: () => void
 }
 
@@ -55,8 +63,8 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 			const parsed = await runtime.runParse(text, { onStage: setParseStage })
 			setSelectedCandidateIndex(0)
 			setResult(parsed)
-		} catch (err) {
-			setParseError(err instanceof Error ? err.message : String(err))
+		} catch (error) {
+			setParseError(error instanceof Error ? error.message : String(error))
 		} finally {
 			setBusy(false)
 			setParseStage(-1)

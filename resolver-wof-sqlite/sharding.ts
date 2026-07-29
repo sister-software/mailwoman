@@ -47,7 +47,7 @@ export function deriveSchemaName(path: string): string {
 		.replace(/^whosonfirst-data-/u, "")
 		.replace(/-latest\.db$/u, "")
 		.replace(/\.db$/u, "")
-		.replace(/[^a-zA-Z0-9_]/g, "_")
+		.replaceAll(/[^a-zA-Z0-9_]/g, "_")
 
 	if (!stem) {
 		throw new Error(`deriveSchemaName: could not derive a SQL schema name from path ${JSON.stringify(path)}`)
@@ -86,7 +86,9 @@ export interface ResolvedShard {
 	placetypes: readonly string[]
 }
 
-/** SQLite identifier regex — `[A-Za-z_][A-Za-z0-9_]*`. */
+/**
+ * SQLite identifier regex — `[A-Za-z_][A-Za-z0-9_]*`.
+ */
 const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
 
 /**
@@ -99,7 +101,7 @@ const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
 export function resolveShards(input: string | ReadonlyArray<string | ShardConfig>): ResolvedShard[] {
 	const list = typeof input === "string" ? [input] : input
 
-	if (list.length === 0) throw new Error("resolveShards: at least one shard is required")
+	if (!list.length) throw new Error("resolveShards: at least one shard is required")
 
 	const seen = new Set<string>()
 	const out: ResolvedShard[] = []
@@ -116,6 +118,7 @@ export function resolveShards(input: string | ReadonlyArray<string | ShardConfig
 					`{ path, schemaName } to override.`
 			)
 		}
+
 		// The first shard is always main per SQLite semantics — its derived name is informational
 		// only. Subsequent shards must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
@@ -126,7 +129,9 @@ export function resolveShards(input: string | ReadonlyArray<string | ShardConfig
 					`(either with "main" or another shard). Pass an explicit { path, schemaName }.`
 			)
 		}
+
 		seen.add(schemaName)
+
 		out.push({
 			path: cfg.path,
 			schemaName,
@@ -179,7 +184,7 @@ export function pickShardsForPlacetype(shards: ResolvedShard[], placetype: strin
 		}
 	}
 
-	return matches.length > 0 ? matches : [shards[0]!]
+	return matches.length ? matches : [shards[0]!]
 }
 
 export function pickShardForPlacetype(
@@ -194,7 +199,9 @@ export function pickShardForPlacetype(
 		 * order remains the tiebreak when no shard claims the country (or none was probed).
 		 */
 		country?: string
-		/** Per-schema probed country sets (see `WOFSqlitePlaceLookup`'s construction probe). */
+		/**
+		 * Per-schema probed country sets (see `WOFSqlitePlaceLookup`'s construction probe).
+		 */
 		countriesBySchema?: ReadonlyMap<string, ReadonlySet<string>>
 	}
 ): ResolvedShard {
@@ -223,7 +230,7 @@ export function pickShardForPlacetype(
 		}
 	}
 
-	if (matches.length === 0) return shards[0]!
+	if (!matches.length) return shards[0]!
 
 	if (opts?.country && opts.countriesBySchema) {
 		for (const s of matches) {

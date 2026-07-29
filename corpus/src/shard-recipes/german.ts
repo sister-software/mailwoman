@@ -31,15 +31,19 @@ interface GermanSource {
 	region: string
 }
 
-// `region` is the Bundesland the source covers. OA's REGION column is empty for DE, but the region is
-// implied by the per-state file — the international order needs it for the "City, Region Postcode" tail
-// (v0.9.3 / #327). berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
+/**
+ * `region` is the Bundesland the source covers. OA's REGION column is empty for DE, but the region is implied by the
+ * per-state file — the international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327). berlin.csv →
+ * Berlin (a city-state, region==locality); sn/statewide → Sachsen.
+ */
 const SOURCES: GermanSource[] = [
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
 	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields). */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields).
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -52,6 +56,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -68,12 +73,15 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
 }
 
-/** Stream real German tuples out of a cached OA zip (buffered `unzip -p`). */
+/**
+ * Stream real German tuples out of a cached OA zip (buffered `unzip -p`).
+ */
 function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
@@ -82,16 +90,19 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iRegion = idx("region"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
@@ -119,6 +130,10 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	return tuples
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const germanRecipe: ShardRecipe = {
 	name: "german",
 	description: "German coverage rows from real OA tuples (Berlin/Saxony), both orders → synthesizeGermanRow",
@@ -133,6 +148,7 @@ export const germanRecipe: ShardRecipe = {
 		if (!(intlFraction >= 0 && intlFraction <= 1)) {
 			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
 		}
+
 		const count = opts.count ?? 4000
 
 		// Pool real tuples from every German source, then sample `count` rows from it.
@@ -140,6 +156,7 @@ export const germanRecipe: ShardRecipe = {
 
 		for (const s of SOURCES) {
 			const t = readGermanTuples(s)
+
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
 			for (const x of t) {
@@ -147,7 +164,7 @@ export const germanRecipe: ShardRecipe = {
 			} // NOT pool.push(...t) — spreading ~840K args overflows the stack
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No German tuples found — are the cached zips present in /tmp/oa-cache?")
 		}
 
@@ -165,6 +182,7 @@ export const germanRecipe: ShardRecipe = {
 
 			if (!synth) {
 				skipped++
+
 				continue
 			}
 
@@ -172,15 +190,19 @@ export const germanRecipe: ShardRecipe = {
 			// rides along so the eval can stratify native vs international.
 			if (opts.golden) {
 				write(JSON.stringify({ raw: synth.raw, components: synth.components, country: "DE", order }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const sourceID = stableSourceID(source, {
 				street: synth.components.street,
 				house_number: synth.components.house_number,
 				locality: synth.components.locality,
 				postcode: synth.components.postcode,
 			})
+
 			const canonical = {
 				raw: synth.raw,
 				components: synth.components,
@@ -191,13 +213,17 @@ export const germanRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered ${order}-order — see ingest SOURCES`,
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "german", synth_order: order, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

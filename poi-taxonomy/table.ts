@@ -23,7 +23,9 @@ export function createPOITaxonomyLookup(table: POITaxonomyTable) {
 	return createLookupCore(table)
 }
 
-/** Builds a {@link POIBrandLookup} bound to `table` — same matching semantics as the node entry's `brands.ts`. */
+/**
+ * Builds a {@link POIBrandLookup} bound to `table` — same matching semantics as the node entry's `brands.ts`.
+ */
 export function createPOIBrandLookup(table: POIBrandTable) {
 	return createBrandLookupCore(table)
 }

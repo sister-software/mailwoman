@@ -26,8 +26,9 @@ import { existsSync } from "node:fs"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { deriveInputMode, type InputMode } from "@mailwoman/core/pipeline"
 import {
+	deriveInputMode,
+	type InputMode,
 	type ClassifierOpts,
 	hardCountryFor,
 	isBareLocalityTree,
@@ -64,7 +65,9 @@ export interface GeocodeResult {
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
-	/** Uncertainty radius in meters. null for the admin tier. */
+	/**
+	 * Uncertainty radius in meters. null for the admin tier.
+	 */
 	uncertainty_m: number | null
 	locality: string | null
 	region: string | null
@@ -121,10 +124,14 @@ export interface StateShards {
 	streetCentroids?: StreetCentroidLookup
 }
 
-/** Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards. */
+/**
+ * Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards.
+ */
 export type ShardResolver = (stateSlug: string | null) => StateShards
 
-/** The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it). */
+/**
+ * The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it).
+ */
 export interface GeocodeClassifier {
 	parse(
 		text: string,
@@ -147,7 +154,9 @@ export interface GeocodeDeps {
 	 * (`/v1/batch` + CSV → `"formatted"`, autocomplete drop-ins → `"fragmented"`).
 	 */
 	inputMode?: InputMode
-	/** Per-state shard resolver. Omit for admin-only geocoding. */
+	/**
+	 * Per-state shard resolver. Omit for admin-only geocoding.
+	 */
 	shards?: ShardResolver
 	/**
 	 * Authoritative national open-register rooftop shards keyed by ISO-3166 alpha-2 country (#1012) — the government
@@ -164,7 +173,9 @@ export interface GeocodeDeps {
 	 * `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
 	osmShards?: (country: string) => StateShards
-	/** Country constraint passed to the resolver (e.g. `"US"`). */
+	/**
+	 * Country constraint passed to the resolver (e.g. `"US"`).
+	 */
 	defaultCountry?: string
 	/**
 	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin pass through
@@ -255,7 +266,7 @@ export interface GeocodeDeps {
  * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a whole-string country
  * guess is broader/softer than a postcode anchor (2.0), so it blends gently.
  */
-const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
+const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
  * #928: distinctive postcode FORMATS that unambiguously indicate a country — a stronger country signal than the
@@ -277,7 +288,9 @@ const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly cou
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
 ]
 
-/** The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}. */
+/**
+ * The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}.
+ */
 export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
 	const p = postcode?.trim()
 
@@ -288,7 +301,9 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 	return null
 }
 
-/** Lowercase 2-letter state slug from a parsed region value / resolver name, else null. */
+/**
+ * Lowercase 2-letter state slug from a parsed region value / resolver name, else null.
+ */
 export function regionToStateSlug(
 	regionValue: string | null | undefined,
 	resolverName: string | null | undefined
@@ -311,13 +326,14 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionResolverName: string | null = null
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop()!
 
 		if (node.tag === "region" && !regionValue) {
 			regionValue = node.value.trim() || null
 			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
 		}
+
 		stack.push(...node.children)
 	}
 
@@ -334,7 +350,9 @@ export function selectAddressPointsDB(dataRoot: string, stateSlug: string | null
 	return existsSync(candidate) ? candidate : null
 }
 
-/** Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent. */
+/**
+ * Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent.
+ */
 export function selectInterpolationDB(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
@@ -342,7 +360,9 @@ export function selectInterpolationDB(dataRoot: string, stateSlug: string | null
 	return existsSync(candidate) ? candidate : null
 }
 
-/** The lookup-class surface a {@link ShardProvider} needs from `@mailwoman/resolver-wof-sqlite`. */
+/**
+ * The lookup-class surface a {@link ShardProvider} needs from `@mailwoman/resolver-wof-sqlite`.
+ */
 export interface ShardLookupFactory {
 	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & { close(): void }
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & { close(): void }
@@ -351,7 +371,9 @@ export interface ShardLookupFactory {
 interface ShardCacheEntry extends StateShards {
 	_ap?: { close(): void }
 	_ip?: { close(): void }
-	/** The resolved on-disk paths this entry was opened from — reload() diffs against these. */
+	/**
+	 * The resolved on-disk paths this entry was opened from — reload() diffs against these.
+	 */
 	apPath: string | null
 	ipPath: string | null
 }
@@ -366,7 +388,9 @@ export class ShardProvider {
 	readonly #factory: ShardLookupFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, ShardCacheEntry>()
-	/** Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace). */
+	/**
+	 * Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace).
+	 */
 	#retired: Array<{ close(): void }> = []
 	#manifest: DataReleaseManifest | null
 
@@ -397,7 +421,9 @@ export class ShardProvider {
 		return { addressPoints: entry.addressPoints, interpolation: entry.interpolation }
 	}
 
-	/** The current data-release versions ({@link readReleaseManifest}), or null in legacy mode. */
+	/**
+	 * The current data-release versions ({@link readReleaseManifest}), or null in legacy mode.
+	 */
 	versions(): DataReleaseManifest | null {
 		return this.#manifest ? { ...this.#manifest } : null
 	}
@@ -412,6 +438,7 @@ export class ShardProvider {
 		for (const h of this.#retired) {
 			h.close()
 		}
+
 		this.#retired = []
 		this.#manifest = readReleaseManifest(this.#dataRoot)
 
@@ -443,6 +470,7 @@ export class ShardProvider {
 		for (const h of this.#retired) {
 			h.close()
 		}
+
 		this.#cache.clear()
 		this.#retired = []
 	}
@@ -477,6 +505,7 @@ export async function parseForGeocode(
 	// matrix — so both bare-form and well-formed inputs are byte-stable; it earns its keep only on the ambiguous
 	// digit-span / region-abbrev cases the model isn't already confident about.
 	const queryShape = computeQueryShape(parseInput)
+
 	// Decision A: explicit register wins; otherwise the kind verdict decides (same derivation as the
 	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline).
 	const inputMode =
@@ -506,27 +535,30 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
 	const parseInput =
 		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const stateSlug = regionSlugFromTree(tree)
 	const usShards = deps.shards?.(stateSlug) ?? {}
 	let addressPoints = usShards.addressPoints
 	const interpolation = usShards.interpolation
 
-	const opts: ResolveOpts = {}
-
-	// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment graph.
-	// Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation here keeps
-	// `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would otherwise re-default
-	// ON downstream). Fixes the "Portland, ME → Messina IT" class structurally, without a prior or safelist.
-	opts.adminCoherence = deps.adminCoherence !== false
+	const opts: ResolveOpts = {
+		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
+		// graph. Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation
+		// here keeps `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would
+		// otherwise re-default ON downstream). Fixes the "Portland, ME → Messina IT" class structurally,
+		// without a prior or safelist.
+		adminCoherence: deps.adminCoherence !== false,
+	}
 
 	if (deps.defaultCountry) {
 		opts.defaultCountry = deps.defaultCountry
 	}
 
-	if (deps.bias && deps.bias.length > 0) {
+	if (deps.bias && deps.bias.length) {
 		opts.bias = deps.bias
 	}
+
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
 	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
 	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
@@ -541,6 +573,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// country hint (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree — the only reliable
 	// FR signal there is this ungated placer). Byte-stable: the anchor/hardCountry logic stays gated exactly as before.
 	const placerResult = placeCountry ? placeCountry(parseInput) : null
+
 	const streetPlacerCountry =
 		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
 
@@ -560,13 +593,14 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 		if (pcCountry) {
 			placedCountry = pcCountry
-			opts.anchorPosterior = { [pcCountry]: 1.0 }
+			opts.anchorPosterior = { [pcCountry]: 1 }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+
 			// Safelist precedence (survey candidate #2): per-call override (the eval instrument) → the loaded
 			// gazetteer artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
 			const hardCountry = hardCountryFor(
 				pcCountry,
-				1.0,
+				1,
 				opts,
 				deps.hardPlaceCountry ?? true,
 				deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist
@@ -589,6 +623,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
 			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+
 			// #743/#194: default-on coverage-guarded HARD country filter (same gate as the runtime pipeline,
 			// via the shared helper so the two production paths can't drift). Same safelist precedence as
 			// above: per-call override → the artifact's coverage manifest → the code-constant fallback.
@@ -665,7 +700,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			}
 		}
 
-		if (hints.length > 0) {
+		if (hints.length) {
 			opts.streetCountryHints = hints
 		}
 	}
@@ -680,10 +715,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		//   2. a shard predating the metadata table (the shipped fleet) falls back to the in-code
 		//      per-region table selected by the parsed region (`stateSlug`) — byte-identical to before.
 		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
+
 		const fallback =
 			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
 				: undefined
+
 		const calibration = explicit ?? fallback
 
 		// A factor of 1 is a no-op — skipped, EXCEPT as an explicit override of an artifact value ("force raw").
@@ -704,19 +741,23 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
  */
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
-/** Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041. */
+/**
+ * Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041.
+ */
 function assembleStreetName(streetNode: AddressNode): string {
 	const parts: AddressNode[] = []
 	const stack = [streetNode]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
 			parts.push(n)
 		}
+
 		stack.push(...n.children)
 	}
+
 	parts.sort((a, b) => a.start - b.start)
 
 	return parts.map((n) => n.value.trim()).join(" ")
@@ -728,12 +769,14 @@ function assembleStreetName(streetNode: AddressNode): string {
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
 	const allNodes: AddressNode[] = []
+
 	const flatten = (nodes: readonly AddressNode[]) => {
 		for (const n of nodes) {
 			allNodes.push(n)
 			flatten(n.children)
 		}
 	}
+
 	flatten(tree.roots)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
@@ -791,11 +834,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// resolver's hit is the FULL code, not the 4-digit-stem fallback (the stem is area-class — the
 		// lookup ladder can coarsen to it, and a stem hit must NOT outrank the locality).
 		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
-		const alnum = (s: string): string => s.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+		const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+
 		const pc6Exact =
 			pcNode !== undefined &&
 			/^\d{4}\s?[A-Z]{2}$/i.test(pcNode.value.trim()) &&
 			alnum(String(pcNode.metadata?.["resolver_name"] ?? "")) === alnum(pcNode.value)
+
 		const adminPriority: ReadonlyArray<string> = pc6Exact
 			? ["postcode", "locality", "dependent_locality", "region", "country"]
 			: ["locality", "dependent_locality", "postcode", "region", "country"]
@@ -806,6 +851,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			if (node) {
 				lat = node.lat!
 				lon = node.lon!
+
 				break
 			}
 		}
@@ -818,10 +864,12 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	// "Bordeaux", not "Rue"). Unset for postcode-scoped hits (no commune evidence) and other tiers.
 	const streetLocality =
 		tier === "street" ? (streetNode?.metadata?.["street_locality"] as string | undefined)?.trim() || null : null
+
 	const locality =
 		streetLocality ??
 		allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() ??
 		null
+
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
 
@@ -831,9 +879,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
+
 	const hierarchy = allNodes
 		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
-		.sort((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
+		.toSorted((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
@@ -860,6 +909,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 		if (c) {
 			countryCode = c.toUpperCase()
+
 			break
 		}
 	}
@@ -871,6 +921,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const primaryNode =
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
+
 	const candidates: GeocodeResult["candidates"] = []
 
 	if (primaryNode?.lat != null) {
@@ -880,6 +931,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		const seen = new Set<string>()
 		const coordKey = (lt: number, ln: number): string => `${lt.toFixed(4)},${ln.toFixed(4)}`
 		seen.add(coordKey(primaryNode.lat, primaryNode.lon!))
+
 		candidates.push({
 			name: (primaryNode.metadata?.["resolver_name"] as string | undefined)?.trim() || primaryNode.value.trim(),
 			tag: primaryNode.tag,
@@ -907,6 +959,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 			if (seen.has(key)) continue
 			seen.add(key)
+
 			candidates.push({
 				name: String(a.name).trim(),
 				tag: a.placetype ?? primaryNode.tag,

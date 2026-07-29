@@ -33,6 +33,15 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain.
+ */
+const MAX_ANCESTRY_DEPTH = 6
+
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
 
 interface PlaceRow {
@@ -49,13 +58,15 @@ interface NameRow {
 	language: string
 }
 
-/** Walk parent chain up to 6 levels. */
+/**
+ * Walk parent chain up to 6 levels.
+ */
 function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, string>): PlaceRow[] {
 	const stmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 	const out: PlaceRow[] = []
 	let id = startID
 
-	for (let i = 0; i < 6 && id > 0; i++) {
+	for (let i = 0; i < MAX_ANCESTRY_DEPTH && id > 0; i++) {
 		const row = stmt.get(id) as PlaceRow | undefined
 
 		if (!row) break
@@ -66,7 +77,9 @@ function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, strin
 	return out
 }
 
-/** Pick the best display name for a place: prefer Japanese variant, fall back to English. */
+/**
+ * Pick the best display name for a place: prefer Japanese variant, fall back to English.
+ */
 function pickName(row: PlaceRow, jpnNames: Map<number, string>): string {
 	return jpnNames.get(row.id) ?? row.name
 }
@@ -164,6 +177,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: "CC-BY-4.0",
 					}
+
 					emitted++
 				}
 			} finally {
@@ -173,4 +187,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const wofAdminJpAdapter = createWOFAdminJpAdapter()

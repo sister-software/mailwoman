@@ -8,9 +8,9 @@ import { readdir } from "node:fs/promises"
 import { availableParallelism } from "node:os"
 
 import { tryStat } from "@mailwoman/core/fs"
-import { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
+import type { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
 import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
-import { PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
 import { TextSpliterator } from "spliterator"
 
@@ -94,6 +94,7 @@ export async function prepareLocaleIndex(
 	options?: LibPostalNormalizerInit
 ): Promise<LocaleIndex<LibPostalLanguageCode>> {
 	const normalizer = new TextNormalizer(options)
+
 	const index = new LocaleIndex<LibPostalLanguageCode>([], {
 		displayName: "libpostal",
 		normalizer,
@@ -107,6 +108,7 @@ export async function prepareLocaleIndex(
 
 	for await (const batch of fileEntries) {
 		await Promise.all(
+			// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 			batch.map(async ({ filePath, languageCode }) => {
 				const lines = TextSpliterator.fromAsync(filePath)
 
@@ -127,6 +129,7 @@ export async function prepareLocaleIndex(
 
 	for await (const batch of internalFileEntries) {
 		await Promise.all(
+			// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 			batch.map(async ({ filePath, languageCode }) => {
 				const lines = TextSpliterator.fromAsync(filePath)
 
@@ -155,7 +158,7 @@ export async function prepareLocaleIndex(
 		)
 	}
 
-	if (index.size === 0 && !inserted) {
+	if (!index.size && !inserted) {
 		throw new Error(
 			`No index matches found for ${filename} in ${libPostalDataDirectory} for languages ${languageCodes}`
 		)

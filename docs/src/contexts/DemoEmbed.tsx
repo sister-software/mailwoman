@@ -35,29 +35,39 @@ import type {
 } from "../shared/resources.tsx"
 import { assetURL } from "../shared/resources.tsx"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+//#region Types
 
 export type { ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
 
 export interface DemoEmbedState {
-	/** The releases manifest (fetched once on mount). */
+	/**
+	 * The releases manifest (fetched once on mount).
+	 */
 	manifest: ReleasesManifest | null
-	/** Currently selected version string. */
+	/**
+	 * Currently selected version string.
+	 */
 	selectedVersion: string | null
-	/** The loaded neural classifier (onnxruntime-web). */
+	/**
+	 * The loaded neural classifier (onnxruntime-web).
+	 */
 	classifier: MailwomanClassifierLike | null
-	/** The loaded FST gazetteer matcher. */
+	/**
+	 * The loaded FST gazetteer matcher.
+	 */
 	fstMatcher: FSTMatcherLike | null
-	/** Provenance metadata for the FST binary. */
+	/**
+	 * Provenance metadata for the FST binary.
+	 */
 	fstProvenance: FSTProvenanceLike | null
 	/**
 	 * The street-morphology matcher (#1315 street-context gate) — `null` when the release ships no
 	 * `fst-street-morphology.bin`. `PipelineExplorer` threads it into `runClassifyStage` beside `fstMatcher`.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
-	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
+	/**
+	 * The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider.
+	 */
 	lookup: MailwomanLookupLike | null
 	/**
 	 * Per-parse placetype-pair prior selector (#1278) — locale-gate over the input picks the GB/NZ dependent_locality
@@ -71,31 +81,49 @@ export interface DemoEmbedState {
 	 * (`docs/articles/evals/calibration/*-calibration-*.md`).
 	 */
 	calibrator: Calibrator | null
-	/** Human-readable loading progress string. */
+	/**
+	 * Human-readable loading progress string.
+	 */
 	loadingProgress: string
-	/** Current loading step index (0-based). Used by staged LoadingIndicator. */
+	/**
+	 * Current loading step index (0-based). Used by staged LoadingIndicator.
+	 */
 	loadingStepIndex: number
-	/** Step labels for the staged loading indicator. */
+	/**
+	 * Step labels for the staged loading indicator.
+	 */
 	loadingStepLabels: string[]
-	/** Error message if loading failed. */
+	/**
+	 * Error message if loading failed.
+	 */
 	errorMessage: string | null
-	/** Whether ALL selected-version assets (classifier + FST) are loaded and ready. */
+	/**
+	 * Whether ALL selected-version assets (classifier + FST) are loaded and ready.
+	 */
 	ready: boolean
-	/** Backend diagnostic string (e.g. "webgpu (27 MB int8)"). */
+	/**
+	 * Backend diagnostic string (e.g. "webgpu (27 MB int8)").
+	 */
 	activeBackend: string
-	/** Switch to a different version. Triggers asset reload. */
+	/**
+	 * Switch to a different version. Triggers asset reload.
+	 */
 	selectVersion: (version: string) => void
-	/** Force CPU WASM backend instead of WebGPU. */
+	/**
+	 * Force CPU WASM backend instead of WebGPU.
+	 */
 	setForceWASM: (v: boolean) => void
-	/** Whether WASM is forced. */
+	/**
+	 * Whether WASM is forced.
+	 */
 	forceWASM: boolean
 }
 
 const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
 
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Hook
 
 export function useDemoEmbed(): DemoEmbedState {
 	const ctx = useContext(DemoEmbedContext)
@@ -107,12 +135,14 @@ export function useDemoEmbed(): DemoEmbedState {
 	return ctx
 }
 
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Provider
 
 export interface DemoEmbedProviderProps {
-	/** Base URL for the sql.js-httpvfs worker + wasm (same-origin, e.g. `/mailwoman/sqljs`). */
+	/**
+	 * Base URL for the sql.js-httpvfs worker + wasm (same-origin, e.g. `/mailwoman/sqljs`).
+	 */
 	sqljsBaseURL: string
 	children: React.ReactNode
 }
@@ -128,6 +158,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			return res.ok ? normalizeReleasesManifest(await res.json()) : null
 		} catch (error) {
 			console.error("Failed to load releases manifest", error)
+
 			throw error
 		}
 	}, [])
@@ -142,6 +173,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				return await loadDemoAssets(release, ctx, sqljsBaseURL)
 			} catch (error) {
 				console.error("Error loading resources", error)
+
 				throw error
 			}
 		},
@@ -192,3 +224,5 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 	return <DemoEmbedContext.Provider value={value}>{children}</DemoEmbedContext.Provider>
 }
+
+//#endregion

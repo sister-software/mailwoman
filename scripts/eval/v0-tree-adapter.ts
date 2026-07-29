@@ -34,11 +34,15 @@ import type { ClassificationRecord } from "mailwoman"
 
 export interface AdaptResult {
 	tree: AddressTree
-	/** Component values that could not be located in raw and were dropped. */
+	/**
+	 * Component values that could not be located in raw and were dropped.
+	 */
 	dropped: number
 }
 
-/** Find `value` in `raw` at or after `from`, case-insensitive fallback. Returns [start,end) or null. */
+/**
+ * Find `value` in `raw` at or after `from`, case-insensitive fallback. Returns [start,end) or null.
+ */
 function locate(raw: string, value: string, from: number): [number, number] | null {
 	if (!value) return null
 	let i = raw.indexOf(value, from)
@@ -47,11 +51,11 @@ function locate(raw: string, value: string, from: number): [number, number] | nu
 		// case-insensitive fallback (v0 may upper/lower-case components)
 		const lower = raw.toLowerCase().indexOf(value.toLowerCase(), from)
 
-		if (lower < 0) {
+		if (lower === -1) {
 			// last resort: search from the start (value may appear before the cursor)
 			const any = raw.toLowerCase().indexOf(value.toLowerCase())
 
-			if (any < 0) return null
+			if (any === -1) return null
 			i = any
 		} else {
 			i = lower
@@ -79,14 +83,16 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 
 	const placements: Array<{ tag: string; start: number; end: number }> = []
 	let dropped = 0
+
 	// Greedy left-to-right: for each pair (sorted by earliest possible position), claim the next
 	// free occurrence past the cursor. Sorting by first-occurrence keeps multi-value order sane.
 	pairs.sort((a, b) => {
 		const ia = raw.toLowerCase().indexOf(a.value.toLowerCase())
 		const ib = raw.toLowerCase().indexOf(b.value.toLowerCase())
 
-		return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib)
+		return (ia === -1 ? 1e9 : ia) - (ib === -1 ? 1e9 : ib)
 	})
+
 	let cursor = 0
 
 	for (const { tag, value } of pairs) {
@@ -94,13 +100,16 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 
 		if (!span) {
 			dropped++
+
 			continue
 		}
+
 		placements.push({ tag, start: span[0], end: span[1] })
 		cursor = Math.max(cursor, span[1])
 	}
 
 	placements.sort((a, b) => a.start - b.start)
+
 	const tokens: DecoderToken[] = placements.map((p) => ({
 		piece: raw.slice(p.start, p.end),
 		start: p.start,

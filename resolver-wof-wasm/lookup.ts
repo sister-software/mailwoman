@@ -26,7 +26,9 @@ import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
 export interface WOFWasmPlaceLookupOpts {
-	/** Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWOFDatabase`). */
+	/**
+	 * Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWOFDatabase`).
+	 */
 	db: Database
 }
 
@@ -37,12 +39,14 @@ export interface WOFWasmPlaceLookupOpts {
  * over "West New York") without steamrolling a clearly-better text match, because exact-name tiering is consulted
  * FIRST.
  */
-const POPULATION_BOOST = 4.0
-const POPULATION_SCALE_LOG10 = 6.0
+const POPULATION_BOOST = 4
+const POPULATION_SCALE_LOG10 = 6
 
-/** Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace. */
+/**
+ * Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace.
+ */
 function normalizeName(s: string): string {
-	return s.toLowerCase().trim().replace(/\s+/g, " ")
+	return s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 }
 
 export class WOFWasmPlaceLookup implements PlaceLookup {
@@ -58,19 +62,24 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		this.#db = opts.db
 	}
 
-	/** Lazily probe (once) whether the slim DB carries the `place_population` aux table. */
+	/**
+	 * Lazily probe (once) whether the slim DB carries the `place_population` aux table.
+	 */
 	#hasPopulation(): boolean {
 		if (this.#hasPopulationCache === undefined) {
 			const r = this.#db.selectObjects(
 				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_population' LIMIT 1`
 			)
+
 			this.#hasPopulationCache = r.length > 0
 		}
 
 		return this.#hasPopulationCache
 	}
 
-	/** Lazily probe (once) whether the slim DB carries the `place_abbr` aux table (build-slim ≥ #189). */
+	/**
+	 * Lazily probe (once) whether the slim DB carries the `place_abbr` aux table (build-slim ≥ #189).
+	 */
 	#hasPlaceAbbr(): boolean {
 		if (this.#hasPlaceAbbrCache === undefined) {
 			const r = this.#db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_abbr' LIMIT 1`)
@@ -88,6 +97,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		const t = text.trim()
 
 		if (!t || !this.#hasPlaceAbbr()) return new Set()
+
 		const rows = this.#db.selectObjects(`SELECT id FROM place_abbr WHERE abbr = ? COLLATE NOCASE`, [t]) as Array<{
 			id: number
 		}>
@@ -122,7 +132,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// uses — the two backends can't drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
 
-		if (placetypes && placetypes.length > 0) {
+		if (placetypes && placetypes.length) {
 			conditions.push(`spr.placetype IN (${placetypes.map(() => "?").join(",")})`)
 			params.push(...placetypes)
 		}
@@ -148,6 +158,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// bm25, which is why the demo targeted West New York for "New York, NY".)
 		const hasPop = this.#hasPopulation()
 		const pool = Math.max(limit, 50)
+
 		const sql =
 			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
 			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, ` +
@@ -158,6 +169,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			`WHERE ${conditions.join(" AND ")} ` +
 			`ORDER BY bm25(place_search) ASC ` +
 			`LIMIT ?`
+
 		params.push(pool)
 
 		const rows = this.#db.selectObjects(sql, params) as Array<{
@@ -185,10 +197,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
 		// replacement for the demo's hardcoded `expandUSRegion` map; it also generalizes beyond US.
 		const abbrIds = this.#abbrExactIds(text)
+
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
 			normalizeName(row.name) === normQuery || abbrIds.has(row.id)
+
 		const anyStrictExact = rows.some(strictExact)
 
 		return rows
@@ -202,16 +216,18 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				// (`WOFSqlitePlaceLookup.#exactMatchIds`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
+
 				const popBoost =
 					row.population && row.population > 0
 						? POPULATION_BOOST * Math.min(1, Math.log10(1 + row.population) / POPULATION_SCALE_LOG10)
 						: 0
+
 				// Lower adjScore = better, matching SQLite's bm25 convention (more negative = better).
 				const adjScore = row.bm25 - popBoost
 
 				return { row, exactTier, adjScore }
 			})
-			.sort((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
+			.toSorted((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
 			.slice(0, limit)
 			.map(({ row, adjScore, exactTier }) => ({
 				id: row.id,
@@ -252,11 +268,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		if (!this.#coincidentRolesCache) {
 			const map = new Map<number, CoincidentLocality[]>()
+
 			const exists = this.#db.selectObjects(
 				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1`
 			)
 
-			if (exists.length > 0) {
+			if (exists.length) {
 				const rows = this.#db.selectObjects(
 					`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
 						s.latitude AS lat, s.longitude AS lon, cr.relationship_type AS relationshipType,
@@ -287,6 +304,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 						population: r.population,
 						distanceKm: r.distanceKm,
 					}
+
 					const list = map.get(r.adminID)
 
 					if (list) {
@@ -296,6 +314,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 					}
 				}
 			}
+
 			this.#coincidentRolesCache = map
 		}
 
@@ -323,10 +342,11 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 		// #920 name law (postcode-typed queries): delete intra-token punctuation and fuse.
 		if (opts?.fuseTokens) {
-			const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
 			if (!body) continue
-			out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
+
 			continue
 		}
 
@@ -335,10 +355,10 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
 
 		for (let i = 0; i < parts.length; i++) {
-			const body = parts[i]!.replace(/\*/g, "")
+			const body = parts[i]!.replaceAll("*", "")
 
 			if (!body) continue
-			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
 		}
 	}
 

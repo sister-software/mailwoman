@@ -36,7 +36,9 @@ import { unitRecipe } from "./unit.ts"
 
 export * from "./scaffold.ts"
 
-/** Every registered recipe, in display order. */
+/**
+ * Every registered recipe, in display order.
+ */
 const RECIPES: readonly ShardRecipe[] = [
 	streetRecipe,
 	streetBareRecipe,
@@ -64,15 +66,21 @@ const RECIPES: readonly ShardRecipe[] = [
 	anchorAbsorptionRecipe,
 ]
 
-/** Recipe name → recipe. */
+/**
+ * Recipe name → recipe.
+ */
 export const SHARD_RECIPES: ReadonlyMap<string, ShardRecipe> = new Map(RECIPES.map((r) => [r.name, r]))
 
-/** Look up a recipe by its `<recipe>` name. */
+/**
+ * Look up a recipe by its `<recipe>` name.
+ */
 export function getShardRecipe(name: string): ShardRecipe | undefined {
 	return SHARD_RECIPES.get(name)
 }
 
-/** All recipes (for `--list` / help). */
+/**
+ * All recipes (for `--list` / help).
+ */
 export function listShardRecipes(): readonly ShardRecipe[] {
 	return RECIPES
 }

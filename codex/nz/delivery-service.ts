@@ -42,14 +42,22 @@
  * @see {@link https://www.nzpost.co.nz/personal/sending-in-nz/how-to-address-mail NZ Post — how to address mail}
  */
 
-/** Identifier requirement per ADV358's Delivery Service Elements rules. */
+/**
+ * Identifier requirement per ADV358's Delivery Service Elements rules.
+ */
 export type NzIdentifierRule = "required-if-allocated" | "optional" | "not-used"
 
-/** One Delivery Service Type row from ADV358. */
+/**
+ * One Delivery Service Type row from ADV358.
+ */
 export interface NzDeliveryServiceType {
-	/** The Delivery Service Type, verbatim casing per ADV358 ("PO Box", "Private Bag", "CMB"). */
+	/**
+	 * The Delivery Service Type, verbatim casing per ADV358 ("PO Box", "Private Bag", "CMB").
+	 */
 	type: string
-	/** The ADV358 description, verbatim. */
+	/**
+	 * The ADV358 description, verbatim.
+	 */
 	description: string
 	/**
 	 * Identifier rule: PO Box/Response Bag/CMB identifiers are mandatory if allocated; Private Bag may legitimately have
@@ -59,7 +67,9 @@ export interface NzDeliveryServiceType {
 	identifier: NzIdentifierRule
 }
 
-/** The six Delivery Service Types, verbatim from ADV358 (see the module header). */
+/**
+ * The six Delivery Service Types, verbatim from ADV358 (see the module header).
+ */
 export const NZ_DELIVERY_SERVICE_TYPES = [
 	{ type: "PO Box", description: "Post Box, PO Box", identifier: "required-if-allocated" },
 	{ type: "Private Bag", description: "Private Bag", identifier: "optional" },
@@ -81,7 +91,9 @@ export const NZ_DELIVERY_SERVICE_TYPES = [
 	},
 ] as const satisfies readonly NzDeliveryServiceType[]
 
-/** A canonical NZ Delivery Service Type. */
+/**
+ * A canonical NZ Delivery Service Type.
+ */
 export type NzDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[number]["type"]
 
 /**
@@ -97,14 +109,18 @@ export type NzDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[numbe
  * treat it as a non-prescriptive form.
  */
 export const NZ_PRIVATE_BOX_ALIAS = {
-	/** The surface form as it appears on real mail and in postal-arena gold rows. */
+	/**
+	 * The surface form as it appears on real mail and in postal-arena gold rows.
+	 */
 	type: "Private Box",
 	/**
 	 * The description of validity status — NOT a valid ADV358 Delivery Service Type; a colloquial NZ synonym for a
 	 * numbered PO Box (same format as "PO Box <number>").
 	 */
 	description: "Colloquial NZ synonym for a numbered PO Box — NOT a valid ADV358 Delivery Service Type",
-	/** Identifier rule mirrors PO Box: a number is expected when the alias is used with one. */
+	/**
+	 * Identifier rule mirrors PO Box: a number is expected when the alias is used with one.
+	 */
 	identifier: "required-if-allocated" satisfies NzIdentifierRule,
 	/**
 	 * True — this form is NOT valid per ADV358 or NZ Post's live standards pages (accessed 2026-06-11).
@@ -130,7 +146,9 @@ const TYPE_PATTERNS: ReadonlyArray<readonly [NzDeliveryServiceTypeName | "Privat
 	["Poste Restante", String.raw`poste\s+restante`],
 ]
 
-/** Extended type name union including the colloquial alias recognized for parsing. */
+/**
+ * Extended type name union including the colloquial alias recognized for parsing.
+ */
 export type NzDeliveryServiceMatchTypeName = NzDeliveryServiceTypeName | "Private Box"
 
 const IDENTIFIER_RULES = new Map<NzDeliveryServiceMatchTypeName, NzIdentifierRule>([
@@ -139,8 +157,10 @@ const IDENTIFIER_RULES = new Map<NzDeliveryServiceMatchTypeName, NzIdentifierRul
 	["Private Box", NZ_PRIVATE_BOX_ALIAS.identifier],
 ])
 
-// One anchored regex per type. The identifier shape follows ADV358 (alphanumeric, no spaces or
-// separators — `24999`, `B99`); the identifier-less counter services take no tail at all.
+/**
+ * One anchored regex per type. The identifier shape follows ADV358 (alphanumeric, no spaces or separators — `24999`,
+ * `B99`); the identifier-less counter services take no tail at all.
+ */
 const MATCHERS: ReadonlyArray<{ type: NzDeliveryServiceMatchTypeName; re: RegExp }> = TYPE_PATTERNS.map(
 	([type, src]) => {
 		const rule = IDENTIFIER_RULES.get(type)!
@@ -150,9 +170,13 @@ const MATCHERS: ReadonlyArray<{ type: NzDeliveryServiceMatchTypeName; re: RegExp
 	}
 )
 
-/** Result of an NZ delivery-service parse. */
+/**
+ * Result of an NZ delivery-service parse.
+ */
 export interface NzDeliveryServiceMatch {
-	/** The designator phrase as it appeared ("PO Box", "private bag", "Private Box"). */
+	/**
+	 * The designator phrase as it appeared ("PO Box", "private bag", "Private Box").
+	 */
 	matched: string
 	/**
 	 * The canonical Delivery Service Type or recognized alias ("PO Box", "Private Bag", "CMB", …, "Private Box"). When
@@ -160,7 +184,9 @@ export interface NzDeliveryServiceMatch {
 	 * type.
 	 */
 	type: NzDeliveryServiceMatchTypeName
-	/** The Delivery Service Identifier when present ("24999", "B99"). */
+	/**
+	 * The Delivery Service Identifier when present ("24999", "B99").
+	 */
 	id?: string
 	/**
 	 * True when the matched form is the colloquial "Private Box" alias — not a valid ADV358 Delivery Service Type. Absent
@@ -193,7 +219,9 @@ export function matchNzDeliveryService(input: unknown): NzDeliveryServiceMatch |
 	return null
 }
 
-/** Type-predicate: does the input look like a standalone NZ delivery-service address line? */
+/**
+ * Type-predicate: does the input look like a standalone NZ delivery-service address line?
+ */
 export function isNzDeliveryService(input: unknown): boolean {
 	return matchNzDeliveryService(input) !== null
 }

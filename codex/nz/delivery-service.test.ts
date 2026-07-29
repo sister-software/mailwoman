@@ -16,8 +16,8 @@ import {
 
 describe("NZ_DELIVERY_SERVICE_TYPES", () => {
 	it("carries exactly the six ADV358 types", () => {
-		expect(NZ_DELIVERY_SERVICE_TYPES.map((t) => t.type).sort()).toEqual(
-			["CMB", "Counter Delivery", "PO Box", "Poste Restante", "Private Bag", "Response Bag"].sort()
+		expect(NZ_DELIVERY_SERVICE_TYPES.map((t) => t.type).toSorted()).toEqual(
+			["CMB", "Counter Delivery", "PO Box", "Poste Restante", "Private Bag", "Response Bag"].toSorted()
 		)
 	})
 
@@ -84,11 +84,13 @@ describe("matchNzDeliveryService", () => {
 			id: "102",
 			colloquial: true,
 		})
+
 		expect(matchNzDeliveryService("private box 24999")).toMatchObject({
 			type: "Private Box",
 			id: "24999",
 			colloquial: true,
 		})
+
 		expect(isNzDeliveryService("Private Box 102")).toBe(true)
 	})
 

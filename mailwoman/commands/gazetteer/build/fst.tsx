@@ -26,6 +26,7 @@ export { OptionsSchema as options }
 const GazetteerBuildFST: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildLocaleFSTs } = await import("../../../gazetteer-pipeline/fst.ts")
+
 		const built = buildLocaleFSTs({
 			locales: options.locales?.split(",").map((s) => s.trim()),
 			dbPath: options.db,

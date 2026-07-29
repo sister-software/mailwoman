@@ -12,15 +12,23 @@
  *   Regenerate with: mailwoman dev generate official-languages
  */
 
-/** Official-language spellings for one territory. */
+/**
+ * Official-language spellings for one territory.
+ */
 export interface OfficialLanguageEntry {
-	/** CLDR `official` + `de_facto_official`, in every ISO-639 spelling. */
+	/**
+	 * CLDR `official` + `de_facto_official`, in every ISO-639 spelling.
+	 */
 	official: readonly string[]
-	/** CLDR `official_regional` (e.g. Catalan in ES) — opt-in for consumers. */
+	/**
+	 * CLDR `official_regional` (e.g. Catalan in ES) — opt-in for consumers.
+	 */
 	regional?: readonly string[]
 }
 
-/** ISO 3166-1 alpha-2 → official languages. */
+/**
+ * ISO 3166-1 alpha-2 → official languages.
+ */
 export const OFFICIAL_LANGUAGES: Record<string, OfficialLanguageEntry> = {
 	AD: { official: ["ca", "cat"] },
 	AE: { official: ["ar", "ara", "arb"] },

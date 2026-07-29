@@ -26,30 +26,55 @@ import { corePackagePath } from "../../utils/repo.ts"
 import { median } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 
-/** Options for {@linkcode probeFrontier}. */
+/**
+ * False-positive rate above which the in-class frontier is judged to have degraded.
+ */
+const MAX_IN_CLASS_FALSE_RATE = 0.05
+
+/**
+ * Top-1 accuracy below which the in-class frontier is judged to have degraded.
+ */
+const MIN_IN_CLASS_TOP1 = 0.8
+
+/**
+ * Options for {@linkcode probeFrontier}.
+ */
 export interface ProbeFrontierOptions {
 	/**
 	 * Model artifact dir. Default: the DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the
 	 * `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
 	 */
 	model?: string
-	/** Queries sampled (shortest first). Default 2000. */
+	/**
+	 * Queries sampled (shortest first). Default 2000.
+	 */
 	n?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	out?: string
 }
 
-/** Result of {@linkcode probeFrontier}. */
+/**
+ * Result of {@linkcode probeFrontier}.
+ */
 export interface ProbeFrontierResult {
-	/** The Phase-2 branch verdict line. */
+	/**
+	 * The Phase-2 branch verdict line.
+	 */
 	branch: string
 	n: number
 	markdown: string
 }
 
-const HARD_PLACE_COUNTRY_MIN_CONF = 0.9 // mirrors core/pipeline/runtime-pipeline.ts
+/**
+ * Mirrors core/pipeline/runtime-pipeline.ts.
+ */
+const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-// The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them).
+/**
+ * The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them).
+ */
 const RECOVERABLE = [
 	"AO",
 	"AR",
@@ -89,7 +114,9 @@ const RECOVERABLE = [
 	"VE",
 ]
 
-/** Coarse-placer frontier probe (#822) — see the module doc. Emits the report head to stdout. */
+/**
+ * Coarse-placer frontier probe (#822) — see the module doc. Emits the report head to stdout.
+ */
 export async function probeFrontier(
 	options: ProbeFrontierOptions = {},
 	report?: (line: string) => void
@@ -108,10 +135,12 @@ export async function probeFrontier(
 	// Build `<City>, <Country>` queries from cities15000 for the recoverable set, shortest first.
 	const CITIES = dataRootPath("geonames", "cities15000.txt")
 	const want = new Set(RECOVERABLE)
+
 	interface Q {
 		q: string
 		cc: string
 	}
+
 	const all: Q[] = []
 
 	for (const line of readFileSync(CITIES, "utf8").split("\n")) {
@@ -126,6 +155,7 @@ export async function probeFrontier(
 		if (!country) continue
 		all.push({ q: `${name}, ${country}`, cc })
 	}
+
 	all.sort((a, b) => a.q.length - b.q.length)
 	const queries = all.slice(0, maxN)
 
@@ -136,11 +166,13 @@ export async function probeFrontier(
 		top1Correct: number
 		probs: number[]
 	}
+
 	const per = new Map<string, Stat>()
 
 	for (const { q, cc } of queries) {
 		const p = placer.predict(q)
 		const s = per.get(cc) ?? { cc, n: 0, inClass: 0, top1Correct: 0, probs: [] }
+
 		s.n++
 
 		if (classSet.has(cc)) {
@@ -151,10 +183,11 @@ export async function probeFrontier(
 			s.top1Correct++
 			s.probs.push(p.confidence)
 		}
+
 		per.set(cc, s)
 	}
 
-	const rows = [...per.values()].sort((a, b) => a.cc.localeCompare(b.cc))
+	const rows = [...per.values()].toSorted((a, b) => a.cc.localeCompare(b.cc))
 	const N = queries.length
 	const inClass = rows.reduce((t, r) => t + r.inClass, 0)
 	const top1 = rows.reduce((t, r) => t + r.top1Correct, 0)
@@ -167,35 +200,32 @@ export async function probeFrontier(
 	const inClassN = rows.reduce((t, r) => t + r.inClass, 0)
 
 	const branch =
-		inClassFalseRate > 0.05
+		inClassFalseRate > MAX_IN_CLASS_FALSE_RATE
 			? "DATA GAP — class set does not cover the recoverable tranche; defer to a class-set-widening retrain."
-			: top1OfInClass / Math.max(1, inClassN) < 0.8
+			: top1OfInClass / Math.max(1, inClassN) < MIN_IN_CLASS_TOP1
 				? "LOW-QUALITY SIGNAL — in-set top1 < 80%; lowering the threshold would hard-filter wrong guesses. Defer."
 				: (median(inClassCorrectProbs) ?? 0) < HARD_PLACE_COUNTRY_MIN_CONF
 					? "UNDER-CONFIDENT — in-set + top1 ≥ 80% but median prob_1 < 0.9; the M2 mass rule is the CPU fix (default-off)."
 					: "NO CHANGE — in-set, confident, correct; the recoverable countries already clear the bar."
 
-	const L: string[] = []
-	L.push("# #822 placer-frontier probe — can the deployed placer emit the recoverable tranche?")
-	L.push("")
-	L.push(`_Model: \`${modelDir}\` (${meta.classes.length} classes). ${N} \`City, Country\` queries (shortest`)
-	L.push(
-		`first) across ${RECOVERABLE.length} placer-recoverable countries. prob_1 vs HARD_PLACE_COUNTRY_MIN_CONF = 0.9._`
-	)
-	L.push("")
-	L.push(
-		`- in_class_set: **${pct(inClass, N)}%** (${inClass}/${N}) — false rate **${(100 * inClassFalseRate).toFixed(1)}%**`
-	)
-	L.push(`- top1_correct (all): **${pct(top1, N)}%** (${top1}/${N})`)
-	L.push(`- top1_correct (in-set only): **${pct(top1OfInClass, inClassN)}%** (${top1OfInClass}/${inClassN})`)
-	L.push(`- median prob_1 (in-set correct): **${(median(inClassCorrectProbs) ?? 0).toFixed(3)}**`)
-	L.push("")
-	L.push(`## Branch: ${branch}`)
-	L.push("")
-	L.push(`Classes (${meta.classes.length}): \`${meta.classes.join(" ")}\``)
-	L.push("")
-	L.push("| Country | ISO2 | in-class | n | top1-correct | median prob_1 |")
-	L.push("| --- | --- | :---: | ---: | ---: | ---: |")
+	const L: string[] = [
+		"# #822 placer-frontier probe — can the deployed placer emit the recoverable tranche?",
+		"",
+		`_Model: \`${modelDir}\` (${meta.classes.length} classes). ${N} \`City, Country\` queries (shortest`,
+		`first) across ${RECOVERABLE.length} placer-recoverable countries. prob_1 vs HARD_PLACE_COUNTRY_MIN_CONF = 0.9._`,
+		"",
+		`- in_class_set: **${pct(inClass, N)}%** (${inClass}/${N}) — false rate **${(100 * inClassFalseRate).toFixed(1)}%**`,
+		`- top1_correct (all): **${pct(top1, N)}%** (${top1}/${N})`,
+		`- top1_correct (in-set only): **${pct(top1OfInClass, inClassN)}%** (${top1OfInClass}/${inClassN})`,
+		`- median prob_1 (in-set correct): **${(median(inClassCorrectProbs) ?? 0).toFixed(3)}**`,
+		"",
+		`## Branch: ${branch}`,
+		"",
+		`Classes (${meta.classes.length}): \`${meta.classes.join(" ")}\``,
+		"",
+		"| Country | ISO2 | in-class | n | top1-correct | median prob_1 |",
+		"| --- | --- | :---: | ---: | ---: | ---: |",
+	]
 
 	for (const r of rows) {
 		L.push(
@@ -204,6 +234,7 @@ export async function probeFrontier(
 	}
 
 	const md = L.join("\n")
+
 	console.log(md.split("\n").slice(0, 12).join("\n"))
 	console.log("…")
 

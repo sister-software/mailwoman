@@ -40,7 +40,7 @@ import {
 } from "./reconcile.ts"
 import type { PhraseProposal } from "./types.ts"
 
-// ---------- Test helpers ----------
+//#region Test Helpers
 
 function span(text: string, start: number, end: number) {
 	return Span.from(text.slice(start, end), { start })
@@ -77,6 +77,8 @@ function place(
 	return { id, name, placetype, country, lat, lon, parent_id, score }
 }
 
+//#endregion
+
 /**
  * Build a `ResolverCandidatesLookup` from a list of `(spanStart, spanEnd, tag, ResolvedPlace[])` tuples. Order in the
  * place array is preserved — first place wins ties.
@@ -91,8 +93,8 @@ function mockResolver(
 	}
 
 	return {
-		candidatesFor(span, tag) {
-			return table.get(`${span.start}:${span.end}:${tag}`) ?? []
+		candidatesFor(innerSpan, tag) {
+			return table.get(`${innerSpan.start}:${innerSpan.end}:${tag}`) ?? []
 		},
 	}
 }
@@ -109,9 +111,9 @@ function mockChain(places: ResolvedPlace[]): ParentChainLookup {
 	}
 
 	return {
-		parentsOf(place) {
+		parentsOf(innerPlace) {
 			const chain: ResolvedPlace[] = []
-			let cur: ResolvedPlace | undefined = place
+			let cur: ResolvedPlace | undefined = innerPlace
 
 			while (cur && cur.parent_id !== undefined && cur.parent_id !== null) {
 				const next = byID.get(String(cur.parent_id))
@@ -137,7 +139,7 @@ function preReconcileTags(
 ): Array<{ start: number; end: number; tag: ComponentTag }> {
 	const seen = new Set<string>()
 	const out: Array<{ start: number; end: number; tag: ComponentTag }> = []
-	const ordered = classifierTopK.slice().sort((a, b) => b.score - a.score)
+	const ordered = classifierTopK.slice().toSorted((a, b) => b.score - a.score)
 
 	for (const c of ordered) {
 		const key = `${c.span.start}:${c.span.end}`
@@ -150,12 +152,13 @@ function preReconcileTags(
 		seen.add(key)
 		out.push({ start: c.span.start, end: c.span.end, tag: c.tag })
 	}
+
 	out.sort((a, b) => a.start - b.start)
 
 	return out
 }
 
-// ---------- Contract tests ----------
+//#region Contract Tests
 
 describe("reconcileSpans — contract", () => {
 	it("returns an empty tree when classifierTopK is empty", () => {
@@ -164,6 +167,7 @@ describe("reconcileSpans — contract", () => {
 			phraseProposals: [proposal({ start: 0, end: 8, body: "anything" }, "LOCALITY_PHRASE", 0.7)],
 			classifierTopK: [],
 		})
+
 		expect(result.tree.roots).toEqual([])
 		expect(result.confidence).toBe(0)
 		expect(result.runnersUp).toEqual([])
@@ -171,11 +175,13 @@ describe("reconcileSpans — contract", () => {
 
 	it("returns a tree with one root when one slot survives", () => {
 		const raw = "10118"
+
 		const result = reconcileSpans({
 			raw,
 			phraseProposals: [proposal({ start: 0, end: 5, body: raw }, "POSTCODE", 0.9)],
 			classifierTopK: [tagC(0, 5, "postcode", 0.95)],
 		})
+
 		expect(result.tree.roots).toHaveLength(1)
 		expect(result.tree.roots[0]?.tag).toBe("postcode")
 		expect(result.tree.roots[0]?.value).toBe("10118")
@@ -183,6 +189,7 @@ describe("reconcileSpans — contract", () => {
 
 	it("non-overlapping span pruning keeps left-most + best-scoring", () => {
 		const raw = "New York"
+
 		// Two overlapping phrase proposals: "New York" (whole) vs "York" (right half).
 		// Classifier prefers the whole-locality reading.
 		const result = reconcileSpans({
@@ -193,12 +200,14 @@ describe("reconcileSpans — contract", () => {
 			],
 			classifierTopK: [tagC(0, 8, "locality", 0.92), tagC(4, 8, "locality", 0.4)],
 		})
+
 		expect(result.tree.roots).toHaveLength(1)
 		expect(result.tree.roots[0]?.value).toBe("New York")
 	})
 
 	it("opts.beamWidth = 1 still produces a valid tree (greedy mode)", () => {
 		const raw = "Paris, FR"
+
 		const result = reconcileSpans({
 			raw,
 			phraseProposals: [
@@ -208,12 +217,15 @@ describe("reconcileSpans — contract", () => {
 			classifierTopK: [tagC(0, 5, "locality", 0.9), tagC(7, 9, "country", 0.9)],
 			opts: { beamWidth: 1 },
 		})
+
 		expect(result.tree.roots.length).toBeGreaterThan(0)
 	})
 })
 
-// ---------- Kryptonite catalogue ----------
-//
+//#endregion
+
+//#region Kryptonite Catalogue
+
 // Each fixture below is one of the operator's adversarial examples — inputs where the existing
 // Stage 5 (argmax-per-span, sorted) produces a known-wrong parse because the per-span argmax
 // happens to be internally inconsistent. Joint decode picks the second-best tag interpretation
@@ -221,6 +233,7 @@ describe("reconcileSpans — contract", () => {
 
 describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile picks venue over region)", () => {
 	const raw = "NY-NY Steakhouse, Houston, TX"
+
 	// Phrase grouper output (subset of what Thread E's kryptonite.test.ts asserts):
 	//   "NY-NY"            HYPHENATED_COMPOUND  0.85
 	//   "NY-NY Steakhouse" VENUE_PHRASE         0.85
@@ -232,6 +245,7 @@ describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile
 		proposal({ start: 18, end: 25, body: "Houston" }, "LOCALITY_PHRASE", 0.65),
 		proposal({ start: 27, end: 29, body: "TX" }, "REGION_ABBREVIATION", 0.95),
 	]
+
 	// Classifier top-k: argmax for "NY-NY" wants `region` (matches the surface form NY=New York),
 	// but the venue interpretation is second-best — and the only one consistent with `Houston, TX`.
 	const classifierTopK: ClassifierCandidate[] = [
@@ -241,17 +255,20 @@ describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile
 		tagC(18, 25, "locality", 0.85),
 		tagC(27, 29, "region", 0.95),
 	]
+
 	// WOF mock: New York region (id 1), Texas region (id 2), Houston locality (parent=Texas).
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const ny = place(1, "New York", "region", "US", 43, -75, 0)
 	const tx = place(2, "Texas", "region", "US", 31, -100, 0)
 	const houston = place(3, "Houston", "locality", "US", 29.76, -95.37, 2)
+
 	const resolver = mockResolver([
 		[0, 5, "region", [ny]],
 		[18, 25, "locality", [houston]],
 		[27, 29, "region", [tx]],
 		// VENUE has no gazetteer entry — slot survives with place=null, no concordance contribution.
 	])
+
 	const chain = mockChain([usa, ny, tx, houston])
 
 	it("pre-reconcile (argmax) tags NY-NY as region — incongruent with Houston, TX", () => {
@@ -268,6 +285,7 @@ describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const ny5 = result.tree.roots.find((r) => r.start === 0 && (r.end === 5 || r.end === 16))
 		// Either the venue-marker reads "NY-NY" as venue OR the whole "NY-NY Steakhouse" wins as venue.
 		expect(ny5?.tag).toBe("venue")
@@ -281,6 +299,7 @@ describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const houstonNode = result.tree.roots.find((r) => r.value === "Houston")
 		const txNode = result.tree.roots.find((r) => r.value === "TX")
 		expect(houstonNode?.placeID).toContain(":3")
@@ -290,10 +309,12 @@ describe("kryptonite catalogue — NY-NY Steakhouse, Houston, TX (post-reconcile
 
 describe("kryptonite catalogue — Paris, Texas (post-reconcile picks Paris-TX over Paris-FR)", () => {
 	const raw = "Paris, Texas"
+
 	const phraseProposals: PhraseProposal[] = [
 		proposal({ start: 0, end: 5, body: "Paris" }, "LOCALITY_PHRASE", 0.7),
 		proposal({ start: 7, end: 12, body: "Texas" }, "LOCALITY_PHRASE", 0.8),
 	]
+
 	// Classifier top-k: "Paris" can be locality or country (in the FR=Paris-as-capital sense
 	// the classifier sometimes does); "Texas" is region.
 	const classifierTopK: ClassifierCandidate[] = [
@@ -302,17 +323,20 @@ describe("kryptonite catalogue — Paris, Texas (post-reconcile picks Paris-TX o
 		tagC(7, 12, "region", 0.9),
 		tagC(7, 12, "locality", 0.3),
 	]
+
 	// Two competing resolutions for Paris: Paris, France (well-known) and Paris, Texas (less so).
 	// Resolver returns them in popularity order.
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const fra = place(1, "France", "country", "FR", 46, 2)
 	const tx = place(2, "Texas", "region", "US", 31, -100, 0)
-	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, /* score */ 1.0)
+	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, /* score */ 1)
 	const parisTX = place(11, "Paris", "locality", "US", 33.66, -95.55, 2, /* score */ 0.5)
+
 	const resolver = mockResolver([
 		[0, 5, "locality", [parisFR, parisTX]],
 		[7, 12, "region", [tx]],
 	])
+
 	const chain = mockChain([usa, fra, tx, parisFR, parisTX])
 
 	it("pre-reconcile (argmax + first resolver candidate) lands on Paris, France — wrong", () => {
@@ -331,6 +355,7 @@ describe("kryptonite catalogue — Paris, Texas (post-reconcile picks Paris-TX o
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const parisNode = result.tree.roots.find((r) => r.value === "Paris")
 		expect(parisNode?.placeID).toContain(":11") // Paris, TX
 	})
@@ -338,6 +363,7 @@ describe("kryptonite catalogue — Paris, Texas (post-reconcile picks Paris-TX o
 
 describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks the joint span)", () => {
 	const raw = "Saint Petersburg, FL"
+
 	// Phrase grouper offers both the joint "Saint Petersburg" and the individual tokens.
 	const phraseProposals: PhraseProposal[] = [
 		proposal({ start: 0, end: 16, body: "Saint Petersburg" }, "LOCALITY_PHRASE", 0.75),
@@ -345,22 +371,26 @@ describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks th
 		proposal({ start: 6, end: 16, body: "Petersburg" }, "LOCALITY_PHRASE", 0.55),
 		proposal({ start: 18, end: 20, body: "FL" }, "REGION_ABBREVIATION", 0.95),
 	]
+
 	const classifierTopK: ClassifierCandidate[] = [
 		tagC(0, 16, "locality", 0.88), // joint reading: Saint Petersburg, FL
 		tagC(0, 5, "locality", 0.5),
 		tagC(6, 16, "locality", 0.7), // higher single-token score for Petersburg (Russia)
 		tagC(18, 20, "region", 0.95),
 	]
+
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const rus = place(1, "Russia", "country", "RU", 61, 105)
 	const fl = place(2, "Florida", "region", "US", 28, -82, 0)
 	const stPete = place(10, "Saint Petersburg", "locality", "US", 27.77, -82.64, 2, 0.6)
-	const petersburgRU = place(11, "Saint Petersburg", "locality", "RU", 59.93, 30.35, 1, 1.0)
+	const petersburgRU = place(11, "Saint Petersburg", "locality", "RU", 59.93, 30.35, 1, 1)
+
 	const resolver = mockResolver([
 		[0, 16, "locality", [stPete]],
 		[6, 16, "locality", [petersburgRU]],
 		[18, 20, "region", [fl]],
 	])
+
 	const chain = mockChain([usa, rus, fl, stPete, petersburgRU])
 
 	it("post-reconcile prefers the joint Saint Petersburg over the split Petersburg-Russia", () => {
@@ -371,6 +401,7 @@ describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks th
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const stPeteNode = result.tree.roots.find((r) => r.value === "Saint Petersburg")
 		const petersburgNode = result.tree.roots.find((r) => r.value === "Petersburg")
 		expect(stPeteNode).toBeDefined()
@@ -385,6 +416,7 @@ describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks th
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const stPeteNode = result.tree.roots.find((r) => r.value === "Saint Petersburg")
 		expect(stPeteNode?.placeID).toContain(":10") // US St Pete
 	})
@@ -392,26 +424,31 @@ describe("kryptonite catalogue — Saint Petersburg, FL (post-reconcile picks th
 
 describe("kryptonite catalogue — Buffalo Buffalo (post-reconcile keeps both as locality)", () => {
 	const raw = "Buffalo Buffalo"
+
 	const phraseProposals: PhraseProposal[] = [
 		// Single-token and combined locality proposals (mirroring phrase-grouper's surfacing).
 		proposal({ start: 0, end: 7, body: "Buffalo" }, "LOCALITY_PHRASE", 0.7),
 		proposal({ start: 8, end: 15, body: "Buffalo" }, "LOCALITY_PHRASE", 0.7),
 		proposal({ start: 0, end: 15, body: "Buffalo Buffalo" }, "LOCALITY_PHRASE", 0.75),
 	]
+
 	// Classifier prefers the combined reading; the individual tokens are second-best.
 	const classifierTopK: ClassifierCandidate[] = [
 		tagC(0, 15, "locality", 0.82),
 		tagC(0, 7, "locality", 0.5),
 		tagC(8, 15, "locality", 0.5),
 	]
+
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const ny = place(1, "New York", "region", "US", 43, -75, 0)
-	const buffaloNY = place(10, "Buffalo", "locality", "US", 42.88, -78.87, 1, 1.0)
+	const buffaloNY = place(10, "Buffalo", "locality", "US", 42.88, -78.87, 1, 1)
+
 	const resolver = mockResolver([
 		[0, 15, "locality", [buffaloNY]],
 		[0, 7, "locality", [buffaloNY]],
 		[8, 15, "locality", [buffaloNY]],
 	])
+
 	const chain = mockChain([usa, ny, buffaloNY])
 
 	it("post-reconcile picks ONE coherent locality span (no double-count)", () => {
@@ -422,6 +459,7 @@ describe("kryptonite catalogue — Buffalo Buffalo (post-reconcile keeps both as
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const localityRoots = result.tree.roots.filter((r) => r.tag === "locality")
 		// Either one combined span (length 15) OR two non-overlapping spans (lengths 7+7).
 		expect(localityRoots.length).toBeGreaterThan(0)
@@ -445,6 +483,7 @@ describe("kryptonite catalogue — Buffalo Buffalo (post-reconcile keeps both as
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		const combined = result.tree.roots.find((r) => r.start === 0 && r.end === 15)
 		expect(combined).toBeDefined()
 	})
@@ -464,6 +503,7 @@ describe("kryptonite catalogue — New York City (bare multiword famous name, no
 	// `scripts/diag-nyc-reconcile.ts`. No resolver / parent chain — the demo passes no backend, so
 	// the reconciler must rank these on classifier + phrase evidence alone.
 	const raw = "New York City"
+
 	const phraseProposals: PhraseProposal[] = [
 		proposal({ start: 4, end: 13, body: "York City" }, "LOCALITY_PHRASE", 0.85),
 		proposal({ start: 0, end: 13, body: "New York City" }, "LOCALITY_PHRASE", 0.82),
@@ -473,6 +513,7 @@ describe("kryptonite catalogue — New York City (bare multiword famous name, no
 		proposal({ start: 0, end: 13, body: "New York City" }, "VENUE_PHRASE", 0.55),
 		proposal({ start: 4, end: 8, body: "York" }, "LOCALITY_PHRASE", 0.55),
 	]
+
 	const classifierTopK: ClassifierCandidate[] = [
 		tagC(4, 13, "locality", 0.603),
 		tagC(4, 13, "region", 0.2397),
@@ -516,6 +557,7 @@ describe("kryptonite catalogue — New York City (bare multiword famous name, no
 
 describe("reconcile — concordance hard veto", () => {
 	const raw = "Paris, Texas"
+
 	// Setup: classifier wants Paris=locality + Texas=region. Resolver candidates are *all*
 	// inconsistent — Paris's only candidate is FR, Texas's is US. WOF chain explicitly says
 	// Paris-FR's parent is France, not Texas. The reconciler should hard-veto this combination.
@@ -523,15 +565,18 @@ describe("reconcile — concordance hard veto", () => {
 		proposal({ start: 0, end: 5, body: "Paris" }, "LOCALITY_PHRASE", 0.7),
 		proposal({ start: 7, end: 12, body: "Texas" }, "LOCALITY_PHRASE", 0.8),
 	]
+
 	const classifierTopK: ClassifierCandidate[] = [tagC(0, 5, "locality", 0.85), tagC(7, 12, "region", 0.9)]
 	const usa = place(0, "United States", "country", "US", 39, -97)
 	const fra = place(1, "France", "country", "FR", 46, 2)
 	const tx = place(2, "Texas", "region", "US", 31, -100, 0)
-	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, 1.0)
+	const parisFR = place(10, "Paris", "locality", "FR", 48.86, 2.34, 1, 1)
+
 	const resolver = mockResolver([
 		[0, 5, "locality", [parisFR]],
 		[7, 12, "region", [tx]],
 	])
+
 	const chain = mockChain([usa, fra, tx, parisFR])
 
 	it("hard veto: contradictory parent chain forces the empty / single-slot interpretation", () => {
@@ -542,6 +587,7 @@ describe("reconcile — concordance hard veto", () => {
 			resolverCandidates: resolver,
 			parentChain: chain,
 		})
+
 		// The contradictory combination (paris-FR + Texas) should not coexist as roots.
 		const parisFRNode = result.tree.roots.find((r) => r.placeID?.includes(":10"))
 		const txNode = result.tree.roots.find((r) => r.placeID?.includes(":2"))
@@ -551,6 +597,7 @@ describe("reconcile — concordance hard veto", () => {
 
 describe("reconcile — opts knobs are respected", () => {
 	const raw = "10118"
+
 	const inputs = {
 		raw,
 		phraseProposals: [proposal({ start: 0, end: 5, body: raw }, "POSTCODE", 0.9)],
@@ -582,16 +629,20 @@ describe("reconcile — opts knobs are respected", () => {
 describe("reconcile — score breakdown surfaces each factor", () => {
 	it("breakdown.phrase × classifier × concordance ≈ total when resolver is absent", () => {
 		const raw = "10118"
+
 		const result = reconcileSpans({
 			raw,
 			phraseProposals: [proposal({ start: 0, end: 5, body: raw }, "POSTCODE", 0.9)],
 			classifierTopK: [tagC(0, 5, "postcode", 0.8)],
 		})
+
 		const { phrase, classifier, resolver: res, concordance, total } = result.scoreBreakdown
 		expect(phrase).toBeCloseTo(0.9)
 		expect(classifier).toBeCloseTo(0.8)
-		expect(res).toBeCloseTo(1.0)
-		expect(concordance).toBeCloseTo(1.0)
+		expect(res).toBeCloseTo(1)
+		expect(concordance).toBeCloseTo(1)
 		expect(total).toBeCloseTo(phrase * classifier * res * concordance, 5)
 	})
 })
+
+//#endregion

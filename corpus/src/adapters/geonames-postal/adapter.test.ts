@@ -14,6 +14,7 @@ import type { CanonicalRow } from "../../types.ts"
 import { createGeonamesPostalAdapter, GEONAMES_POSTAL_ADAPTER_ID, GEONAMES_POSTAL_DEFAULT_LICENSE } from "./adapter.ts"
 
 let scratch: string
+
 beforeEach(() => {
 	scratch = mkdtempSync(join(tmpdir(), "mailwoman-gnpostal-"))
 })
@@ -60,9 +61,11 @@ describe("geonames-postal adapter", () => {
 		const rows = await collect(
 			writeFixture(row("DE", "10115", "Berlin", "Berlin"), row("FR", "75001", "Paris", "Île-de-France"))
 		)
+
 		const fr = rows.filter((r) => r.country === "FR")
 		const byRaw = Object.fromEntries(fr.map((r) => [r.raw, r]))
 		expect(byRaw["75001 Paris"]?.components).toEqual({ postcode: "75001", locality: "Paris" })
+
 		expect(byRaw["75001 Paris, Île-de-France"]?.components).toEqual({
 			postcode: "75001",
 			locality: "Paris",
@@ -91,6 +94,7 @@ describe("geonames-postal adapter", () => {
 				row("DE", "80331", "München", "Bayern")
 			)
 		)
+
 		expect(rows.every((r) => r.components.locality === "München")).toBe(true)
 	})
 

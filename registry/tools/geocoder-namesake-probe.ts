@@ -17,13 +17,19 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode geocoderNamesakeProbe}. */
+/**
+ * Options for {@linkcode geocoderNamesakeProbe}.
+ */
 export interface GeocoderNamesakeProbeOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
 }
 
-// TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for.
+/**
+ * TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for.
+ */
 const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: string }> = [
 	{ city: "Paris", zip: "75460", tx: [33.66, -95.55], namesake: "Paris, France (48.85, 2.35)" },
 	{ city: "Athens", zip: "75751", tx: [32.2, -95.85], namesake: "Athens, Greece (37.98, 23.72)" },
@@ -35,12 +41,17 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
 	{ city: "Odessa", zip: "79761", tx: [31.85, -102.37], namesake: "Odessa, Ukraine (46.48, 30.72)" },
 ]
 
-// Texas bounding box (generous).
+/**
+ * Texas bounding box (generous).
+ */
 const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
+
 const inTexas = (lat: number, lon: number) =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
-/** Admin-tier wrong-region probe (#619 tail) — see the module doc. Prints one line per variant to stdout. */
+/**
+ * Admin-tier wrong-region probe (#619 tail) — see the module doc. Prints one line per variant to stdout.
+ */
 export async function geocoderNamesakeProbe(
 	options: GeocoderNamesakeProbeOptions,
 	report?: (line: string) => void
@@ -60,21 +71,26 @@ export async function geocoderNamesakeProbe(
 
 			if (g.lat === null || g.lon === null) {
 				console.log(`  ✗ "${variant}"  → UNPLACED`)
+
 				continue
 			}
+
 			const ok = inTexas(g.lat, g.lon)
 			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
 
 			if (!ok) {
 				wrongRegion++
 			}
+
 			console.log(
 				`  ${ok ? "✓" : "✗ WRONG-REGION"}  "${variant}"  → ${g.lat.toFixed(3)},${g.lon.toFixed(3)} ` +
 					`[${g.resolution_tier ?? "?"}]  ${km > 100 ? `${km.toFixed(0)}km off TX (cf ${c.namesake})` : `${(km * 1000).toFixed(0)}m off`}`
 			)
 		}
 	}
+
 	geocoder.close()
+
 	console.log(`\n  ${wrongRegion}/${total} variants resolved OUTSIDE Texas (wrong-region).`)
 
 	return { wrongRegion, total }

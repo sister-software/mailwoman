@@ -25,6 +25,12 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+const BYTES_PER_KIB = 1024
+
 export type FetchStateSourcesOptions = BaseFetchOptions
 
 interface Source {
@@ -106,21 +112,26 @@ export async function fetchStateSources(
 				headers: { "Accept-Encoding": "gzip, br" },
 				report,
 			}))
-		} catch (err) {
-			report?.(`  ✗ download failed for ${url}: ${(err as Error).message}`)
+		} catch (error) {
+			report?.(`  ✗ download failed for ${url}: ${(error as Error).message}`)
+
 			failed++
 			failedCodes.push(slug)
+
 			continue
 		}
 
-		if (bytes < 1024) {
+		if (bytes < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${bytes} bytes) — probable 404 / error page`)
+
 			failed++
 			failedCodes.push(slug)
+
 			continue
 		}
 
 		const sha = await sha256File(dest)
+
 		const manifest: SourceManifest = {
 			source_url: url,
 			downloaded_at: new Date().toISOString(),
@@ -128,9 +139,11 @@ export async function fetchStateSources(
 			sha256: sha,
 			bytes,
 		}
+
 		await writeManifest(join(destDir, "MANIFEST.json"), manifest)
 
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
+
 		fetched++
 	}
 

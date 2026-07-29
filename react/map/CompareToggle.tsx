@@ -16,25 +16,43 @@ import type { ReactNode } from "react"
 import type { DemoVersionOption } from "./types.ts"
 
 export interface CompareToggleProps {
-	/** The selectable model bundles (the primary version is filtered out of the compare list). */
+	/**
+	 * The selectable model bundles (the primary version is filtered out of the compare list).
+	 */
 	versions: ReadonlyArray<DemoVersionOption>
-	/** The primary version, excluded from the compare options. */
+	/**
+	 * The primary version, excluded from the compare options.
+	 */
 	primaryVersion: string | null
-	/** Whether compare mode is on. */
+	/**
+	 * Whether compare mode is on.
+	 */
 	compareMode: boolean
-	/** Fired when the visitor flips compare mode. */
+	/**
+	 * Fired when the visitor flips compare mode.
+	 */
 	onCompareModeChange: (compareMode: boolean) => void
-	/** The version chosen to compare against, or `null` when none is chosen. */
+	/**
+	 * The version chosen to compare against, or `null` when none is chosen.
+	 */
 	compareVersion: string | null
-	/** Fired with the chosen compare version (or `null` when the empty option is picked). */
+	/**
+	 * Fired with the chosen compare version (or `null` when the empty option is picked).
+	 */
 	onCompareVersionChange: (version: string | null) => void
-	/** Disable the compare-version select (e.g. while a parse or compare load runs). */
+	/**
+	 * Disable the compare-version select (e.g. while a parse or compare load runs).
+	 */
 	disabled?: boolean
-	/** A status line rendered under the select (e.g. the compare backend, or a "Loading…" line). */
+	/**
+	 * A status line rendered under the select (e.g. the compare backend, or a "Loading…" line).
+	 */
 	status?: ReactNode
 }
 
-/** The compare toggle + (when on) the compare-version selector. Renders `null` with fewer than two versions. */
+/**
+ * The compare toggle + (when on) the compare-version selector. Renders `null` with fewer than two versions.
+ */
 export function CompareToggle({
 	versions,
 	primaryVersion,

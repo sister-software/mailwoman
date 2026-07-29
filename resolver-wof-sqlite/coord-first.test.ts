@@ -19,6 +19,7 @@ import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
@@ -28,33 +29,37 @@ function buildDB(): DatabaseSync {
 		CREATE TABLE postcode_locality (postcode TEXT, country TEXT, locality_id INTEGER, locality_name TEXT,
 			aliases TEXT, distance_km REAL, is_containing INTEGER);
 	`)
+
 	const spr = db.prepare(
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
+
 	// Berlin (unambiguous city, large pop), its Ortsteil "Koepenick" (borough-as-locality), and the
 	// small Saxon town "Plauen".
-	spr.run(1, 0, "Berlin", "locality", "DE", 52.52, 13.4, 52.3, 52.7, 13.0, 13.8)
+	spr.run(1, 0, "Berlin", "locality", "DE", 52.52, 13.4, 52.3, 52.7, 13, 13.8)
 	spr.run(2, 1, "Koepenick", "locality", "DE", 52.44, 13.58, 52.4, 52.5, 13.5, 13.7)
-	spr.run(3, 0, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
-	spr.run(4, 0, "Muenchen", "locality", "DE", 48.14, 11.58, 48.0, 48.3, 11.4, 11.8) // ~500 km from Berlin
+	spr.run(3, 0, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12, 12.3)
+	spr.run(4, 0, "Muenchen", "locality", "DE", 48.14, 11.58, 48, 48.3, 11.4, 11.8) // ~500 km from Berlin
 	// Brooklyn — a borough of New York City, added for the placetype-stamp regression guard (#523).
 	spr.run(5, 0, "Brooklyn", "borough", "US", 40.65, -73.95, 40.57, 40.74, -74.04, -73.86)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 3_600_000)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(4, 1_500_000)
 	const pl = db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`)
-	pl.run("10115", "DE", 2, "Koepenick", "", 0.0, 1) // a Berlin postcode's centroid lands in the Ortsteil
-	pl.run("08523", "DE", 3, "Plauen", "", 0.0, 1) // Plauen's postcode → Plauen
-	pl.run("11201", "US", 5, "Brooklyn", "", 0.0, 1)
+	pl.run("10115", "DE", 2, "Koepenick", "", 0, 1) // a Berlin postcode's centroid lands in the Ortsteil
+	pl.run("08523", "DE", 3, "Plauen", "", 0, 1) // Plauen's postcode → Plauen
+	pl.run("11201", "US", 5, "Brooklyn", "", 0, 1)
 
 	// (#523) a Brooklyn postcode → the borough
 	return db
 }
 
 let lookup: WOFSqlitePlaceLookup
+
 beforeEach(() => {
 	lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
 })
+
 afterEach(() => {
 	lookup.close()
 })

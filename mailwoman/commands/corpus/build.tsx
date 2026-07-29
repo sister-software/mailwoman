@@ -40,6 +40,7 @@ const AdapterInputSchema = zod.union([
 		limit: zod.number().int().positive().optional(),
 	}),
 ])
+
 const InputsSchema = zod.record(zod.string(), AdapterInputSchema)
 
 const BuildConfigSchema = zod.object({
@@ -66,13 +67,14 @@ export { BuildConfigSchema as options }
 
 const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
+
 	const state = useCommandTask(async () => {
 		let inputsParsed: Record<string, zod.infer<typeof AdapterInputSchema>>
 
 		try {
 			inputsParsed = InputsSchema.parse(JSON.parse(options.inputs))
-		} catch (err) {
-			throw commandError(`invalid --inputs JSON: ${(err as Error).message}`)
+		} catch (error) {
+			throw commandError(`invalid --inputs JSON: ${(error as Error).message}`)
 		}
 
 		const adapterInputs: Record<string, AdapterOptions> = Object.fromEntries(
@@ -80,6 +82,7 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 		)
 
 		const adapters = defaultAdapterRegistry.list()
+
 		const m = await buildCorpus({
 			outputDir: options.output,
 			corpusVersion: options.corpusVersion,

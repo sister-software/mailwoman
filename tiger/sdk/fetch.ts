@@ -52,6 +52,7 @@ const LEVEL_DIR: Record<TIGERFetchLevel, string> = {
 	place: "PLACE",
 	addrfeat: "ADDRFEAT",
 }
+
 const LEVEL_TABLE: Record<TIGERFetchLevel, keyof TIGERDatabase> = {
 	tabblock20: "tabblock20",
 	place: "tiger_places",
@@ -59,21 +60,33 @@ const LEVEL_TABLE: Record<TIGERFetchLevel, keyof TIGERDatabase> = {
 }
 
 export interface FetchTIGEROptions {
-	/** Two-digit state FIPS, e.g. `"06"`. */
+	/**
+	 * Two-digit state FIPS, e.g. `"06"`.
+	 */
 	stateFIPS: string
-	/** TIGER level. Default `tabblock20`. */
+	/**
+	 * TIGER level. Default `tabblock20`.
+	 */
 	level?: TIGERFetchLevel
-	/** Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current). */
+	/**
+	 * Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current).
+	 */
 	vintage?: number
 	/**
 	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter reads).
 	 */
 	outPath?: string
-	/** Download cache + default output root. */
+	/**
+	 * Download cache + default output root.
+	 */
 	dataRoot?: string
-	/** Optional three-digit county FIPS filter (blocks only — addrfeat is already per-county). */
+	/**
+	 * Optional three-digit county FIPS filter (blocks only — addrfeat is already per-county).
+	 */
 	county?: string
-	/** Rows per insert. Default 1000. */
+	/**
+	 * Rows per insert. Default 1000.
+	 */
 	batchSize?: number
 }
 
@@ -88,7 +101,9 @@ export interface FetchTIGERResult {
 	inserted: number
 }
 
-/** The isp-nexus column map for `tabblock20`. Geometry rides along implicitly. */
+/**
+ * The isp-nexus column map for `tabblock20`. Geometry rides along implicitly.
+ */
 function blockSelectSQL(layer: string, county?: string): string {
 	const where = county ? ` WHERE COUNTYFP20 = '${county}'` : ""
 
@@ -162,6 +177,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 		child.stdout.on("data", (d) => (out += d))
 		child.stderr.on("data", (d) => (err += d))
 		child.on("error", reject)
+
 		child.on("close", (code) =>
 			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
 		)
@@ -178,6 +194,7 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 			// corrupt cache — re-download
 		}
 	}
+
 	const tmp = dest + ".tmp"
 	const res = await fetch(url, { redirect: "follow" })
 
@@ -188,7 +205,9 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	return false
 }
 
-/** Scrape the ADDRFEAT directory listing for a state's county FIPS codes. */
+/**
+ * Scrape the ADDRFEAT directory listing for a state's county FIPS codes.
+ */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
 	const res = await fetch(`${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, { redirect: "follow" })
 
@@ -201,7 +220,7 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 		counties.add(m[1]!)
 	}
 
-	return [...counties].sort()
+	return [...counties].toSorted()
 }
 
 /**
@@ -227,7 +246,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	// Source units: one (per-state) for block/place; one per county for addrfeat.
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]
 
-	if (level === "addrfeat" && geoCodes.length === 0) {
+	if (level === "addrfeat" && !geoCodes.length) {
 		throw new Error(`No ADDRFEAT counties found for state ${state} vintage ${vintage}`)
 	}
 
@@ -267,6 +286,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 		let inserted = 0
 		let batch: Row[] = []
+
 		const flush = async () => {
 			if (!batch.length) return
 			const rows = batch
@@ -303,9 +323,13 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 				],
 				{ stdio: ["ignore", "pipe", "pipe"] }
 			)
+
 			let stderr = ""
 			child.stderr.on("data", (d) => (stderr += d))
-			const exited = new Promise<number>((resolve) => child.on("close", (code) => resolve(code ?? 0)))
+
+			const exited = new Promise<number>((resolve) => {
+				child.on("close", (code) => resolve(code ?? 0))
+			})
 
 			// GeoJSONSeq is line-delimited; keep the per-line `JSON.parse` in a try/catch so a malformed
 			// record is tolerated (skipped), not thrown.
@@ -329,6 +353,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 					yield { phase: "load", inserted, total: 0 }
 				}
 			}
+
 			await flush()
 
 			const code = await exited

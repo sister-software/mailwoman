@@ -25,21 +25,35 @@ import { ResolvedPlace } from "../pipeline/ResolvedPlace.tsx"
 import type { ParseResult, ResolvedPlaceView } from "../pipeline/types.ts"
 
 export interface ResultPanelProps {
-	/** The parse+resolve result to render. */
+	/**
+	 * The parse+resolve result to render.
+	 */
 	result: ParseResult
-	/** The selected candidate (falls back to the first), used for the resolved-place detail + copy payload. */
+	/**
+	 * The selected candidate (falls back to the first), used for the resolved-place detail + copy payload.
+	 */
 	selectedCandidate: ResolvedPlaceView | null
-	/** The selected candidate index, for the picker's active state. */
+	/**
+	 * The selected candidate index, for the picker's active state.
+	 */
 	selectedCandidateIndex: number
-	/** Fired when a candidate in the picker is chosen. */
+	/**
+	 * Fired when a candidate in the picker is chosen.
+	 */
 	onSelectCandidate: (index: number) => void
-	/** Host-injected heavy visualizers (span highlight, tree, timing, …), rendered from the result. */
+	/**
+	 * Host-injected heavy visualizers (span highlight, tree, timing, …), rendered from the result.
+	 */
 	extras?: (result: ParseResult) => ReactNode
-	/** Host-injected no-resolve diagnostic, rendered when nothing resolved. */
+	/**
+	 * Host-injected no-resolve diagnostic, rendered when nothing resolved.
+	 */
 	failure?: (result: ParseResult) => ReactNode
 }
 
-/** The composed result block for the geocoder demo. */
+/**
+ * The composed result block for the geocoder demo.
+ */
 export function ResultPanel({
 	result,
 	selectedCandidate,

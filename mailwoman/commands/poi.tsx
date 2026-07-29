@@ -90,7 +90,9 @@ const OptionsSchema = zod.object({
 		),
 })
 
-/** Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run. */
+/**
+ * Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run.
+ */
 async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | undefined> {
 	try {
 		return await NeuralAddressClassifier.loadFromWeights({ locale })
@@ -110,13 +112,14 @@ async function tryLoadResolver(
 	options: zod.infer<typeof OptionsSchema>
 ): Promise<{ resolver: Resolver; close: () => void } | undefined> {
 	const candidateDb = resolveCandidateDBPath(options.candidateDb)
+
 	const wofPaths = candidateDb
 		? []
 		: (options.resolveDb ? options.resolveDb.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
 				existsSync(p)
 			)
 
-	if (!candidateDb && wofPaths.length === 0) {
+	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			"note: no WOF resolver configured — anchor localities ('near Springfield IL') will not resolve to " +
 				"coordinates, so --db category/brand queries will abstain anchor_required. Set $MAILWOMAN_WOF_DB " +
@@ -153,7 +156,9 @@ function formatSubject(subject: POIIntent["subject"]): string {
 	}
 }
 
-/** Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping. */
+/**
+ * Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping.
+ */
 function formatOverpassBlock(intent: POIIntent): string {
 	if (intent.subject.kind === "category") {
 		const category = getPOICategory(intent.subject.categoryID)
@@ -175,15 +180,15 @@ function formatOverpassBlock(intent: POIIntent): string {
  * open-ocean/approximate misses).
  */
 function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
-	if (!ancestry || ancestry.length === 0) return ""
+	if (!ancestry || !ancestry.length) return ""
 	const byPlacetype = new Map(ancestry.map((a) => [a.placetype, a.name]))
 	const parts = ["locality", "region", "country"].map((t) => byPlacetype.get(t)).filter((name) => name !== undefined)
 
-	return parts.length > 0 ? ` · ${parts.join(", ")}` : ""
+	return parts.length ? ` · ${parts.join(", ")}` : ""
 }
 
 function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { type: "intent" }>["results"]>): string[] {
-	if (results.length === 0) return ["(no results)"]
+	if (!results.length) return ["(no results)"]
 
 	const lines = [
 		"name                            category            distance_m  lat          lon",
@@ -268,7 +273,7 @@ const PoiCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
-		if (!input || input.trim().length === 0) {
+		if (!input || !input.trim().length) {
 			throw commandError(
 				'mailwoman poi requires a positional query (e.g. mailwoman poi "fire hydrant near Springfield")'
 			)

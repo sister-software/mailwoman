@@ -43,7 +43,15 @@ import { formatAddress, reconcileComponents } from "../../format.ts"
 import { SHARE_ALIKE_PATTERN } from "../../license.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
+/**
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
@@ -63,7 +71,9 @@ interface OaProperties {
 	license?: string
 }
 
-/** Return a lowercase-keyed view of a Feature's properties so case variants both work. */
+/**
+ * Return a lowercase-keyed view of a Feature's properties so case variants both work.
+ */
 function normalizeProperties(raw: unknown): OaProperties {
 	if (!raw || typeof raw !== "object") return {}
 	const out: Record<string, string> = {}
@@ -79,7 +89,9 @@ function normalizeProperties(raw: unknown): OaProperties {
 	return out as OaProperties
 }
 
-/** Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes. */
+/**
+ * Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes.
+ */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
 
@@ -135,6 +147,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					"openaddresses adapter: --country is required (OpenAddresses files are country-partitioned but rows lack a country field)"
 				)
 			}
+
 			const country = adapterOpts.country
 
 			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating blank/`#`/
@@ -172,6 +185,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					if (!allowShareAlike && SHARE_ALIKE_PATTERN.test(license)) {
 						shareAlikeBlocked++
+
 						continue
 					}
 
@@ -207,9 +221,10 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					const aligned = reconcileComponents(components, raw)
 
-					if (Object.keys(aligned).length === 0) continue
+					if (!Object.keys(aligned).length) continue
 
 					const sourceIDSeed = props.hash?.trim() || props.id?.trim()
+
 					const sourceID = sourceIDSeed
 						? `${OPENADDRESSES_ADAPTER_ID}-${sourceIDSeed}`
 						: stableSourceID(OPENADDRESSES_ADAPTER_ID, aligned)
@@ -223,6 +238,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 						corpus_version: "",
 						license,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -234,4 +250,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const openaddressesAdapter = createOpenaddressesAdapter()

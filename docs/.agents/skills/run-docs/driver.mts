@@ -26,6 +26,13 @@ import { parseArgs } from "node:util"
 import { chromium, type Page } from "@playwright/test"
 
 // oxlint-disable-next-line sister-software/no-process-globals
+/**
+ * Lowest 4xx status — at or above it the page failed to render.
+ */
+const HTTP_CLIENT_ERROR_MIN = 400
+
+// oxlint-disable-next-line sister-software/no-process-globals -- a standalone skill driver, run outside the repo's env helpers
+// oxlint-disable-next-line sister-software/no-process-globals -- a standalone skill driver, run outside the repo's env helpers
 const BASE = process.env.MAILWOMAN_DOCS_URL ?? "http://localhost:7770"
 const SCREENSHOT_DIR = "/tmp/mailwoman-docs"
 
@@ -38,6 +45,7 @@ async function withPage<T>(fn: PageCallback<T>): Promise<T> {
 	const consoleErrors: string[] = []
 
 	page.on("pageerror", (e) => consoleErrors.push(`pageerror: ${e.message}`))
+
 	page.on("console", (m) => {
 		if (m.type() === "error") {
 			consoleErrors.push(`console.error: ${m.text()}`)
@@ -56,26 +64,30 @@ function url(path: string | URL) {
 }
 
 async function cmdScreenshot(path: string, outArg?: string) {
-	const out = resolve(outArg ?? `${SCREENSHOT_DIR}/${path.replace(/[/]+/g, "_") || "root"}.png`)
+	const out = resolve(outArg ?? `${SCREENSHOT_DIR}/${path.replaceAll(/[/]+/g, "_") || "root"}.png`)
 	await mkdir(dirname(out), { recursive: true })
+
 	const result = await withPage(async (page) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
 		await page.screenshot({ path: out, fullPage: true })
 
 		return { status: resp?.status() ?? 0, title: await page.title() }
 	})
+
 	console.log(`screenshot ${path} → ${out} (HTTP ${result.status}, "${result.title}")`)
 }
 
 async function checkRoute(path: string) {
 	return await withPage(async (page: Page, consoleErrors: string[]) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
+
 		// Docusaurus serves its 404 with HTTP 200, so detect the soft-404 by reading the rendered <h1>.
 		const heading = await page
 			.locator("h1")
 			.first()
 			.textContent()
 			.catch(() => null)
+
 		const soft404 = (heading ?? "").trim() === "Page Not Found"
 
 		return {
@@ -101,6 +113,7 @@ function reportRoute(path: string, result: RouteResult) {
 	if (result.soft404) {
 		flags.push("SOFT-404")
 	}
+
 	console.log(`check ${path}: ${flags.join(", ")}`)
 
 	for (const e of result.errors) {
@@ -112,7 +125,7 @@ async function cmdCheck(path: string) {
 	const result = await checkRoute(path)
 	reportRoute(path, result)
 
-	if (result.status >= 400 || result.errors.length || result.soft404) {
+	if (result.status >= HTTP_CLIENT_ERROR_MIN || result.errors.length || result.soft404) {
 		process.exit(1)
 	}
 }
@@ -127,16 +140,16 @@ async function cmdSmoke() {
 			const result = await checkRoute(r)
 			reportRoute(r, result)
 
-			if (result.status >= 400 || result.errors.length || result.soft404) {
+			if (result.status >= HTTP_CLIENT_ERROR_MIN || result.errors.length || result.soft404) {
 				fail++
 			}
-		} catch (e) {
+		} catch (error) {
 			fail++
 
-			if (e instanceof Error) {
-				console.log(`check ${r}: THREW ${e.message.split("\n")[0]}`)
+			if (error instanceof Error) {
+				console.log(`check ${r}: THREW ${error.message.split("\n")[0]}`)
 			} else {
-				console.log(`check ${r}: THREW ${String(e).split("\n")[0]}`)
+				console.log(`check ${r}: THREW ${String(error).split("\n")[0]}`)
 			}
 		}
 	}
@@ -152,6 +165,7 @@ async function cmdEval(path: string, js: string) {
 
 		return await page.evaluate(`(async () => { ${js} })()`)
 	})
+
 	console.log(JSON.stringify(result, null, 2))
 }
 
@@ -178,11 +192,14 @@ if (values.smoke) {
 
 	if (!path || !jsParts.length) {
 		console.error(`eval requires a path and JS code\nsee header of ${import.meta.url} for usage`)
+
 		process.exit(2)
 	}
+
 	const js = jsParts.join(" ")
 	await cmdEval(path, js)
 } else {
 	console.error(`no command provided\nsee header of ${import.meta.url} for usage`)
+
 	process.exit(2)
 }

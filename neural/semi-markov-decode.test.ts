@@ -27,14 +27,16 @@ function grammar(overrides: Partial<SemiCRFTransitions> = {}): SemiCRFTransition
 	}
 }
 
-/** Deterministic pseudo-random scores — a fixed table beats a seeded RNG for reproducibility. */
+/**
+ * Deterministic pseudo-random scores — a fixed table beats a seeded RNG for reproducibility.
+ */
 function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	let s = seed
 
 	const next = (): number => {
-		s = (s * 1103515245 + 12345) % 2147483648
+		s = (s * 1_103_515_245 + 12_345) % 2_147_483_648
 
-		return (s / 2147483648) * 4 - 2
+		return (s / 2_147_483_648) * 4 - 2
 	}
 
 	return Array.from({ length: seqLen }, () =>
@@ -42,7 +44,9 @@ function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	)
 }
 
-/** Every valid segmentation of [0, seqLen) — O segments length 1, others up to maxSpan. */
+/**
+ * Every valid segmentation of [0, seqLen) — O segments length 1, others up to maxSpan.
+ */
 function bruteForce(seqLen: number, maxSpan: number): Array<Array<[number, number, number]>> {
 	const out: Array<Array<[number, number, number]>> = []
 
@@ -62,6 +66,7 @@ function bruteForce(seqLen: number, maxSpan: number): Array<Array<[number, numbe
 			}
 		}
 	}
+
 	rec(0, [])
 
 	return out
@@ -91,10 +96,18 @@ describe("decodeSegmentationsKBest", () => {
 			startTransitions: [0.3, -0.1, 0.6],
 			endTransitions: [-0.5, 0.4, 0.2],
 		})
+
 		const sc = scores(4, 2, 7)
 		const got = decodeSegmentationsKBest(sc, 4, g, 1)[0]!
 		const all = bruteForce(4, 2)
-		const best = all.reduce((a, b) => (scoreOne(b, sc, g) > scoreOne(a, sc, g) ? b : a))
+		let best = all[0]!
+
+		for (const candidate of all) {
+			if (scoreOne(candidate, sc, g) > scoreOne(best, sc, g)) {
+				best = candidate
+			}
+		}
+
 		expect(got.score).toBeCloseTo(scoreOne(best, sc, g), 6)
 		expect(got.segments.map((s) => [s.start, s.length, s.typeID])).toEqual(best)
 	})
@@ -109,13 +122,16 @@ describe("decodeSegmentationsKBest", () => {
 			startTransitions: [0.1, 0.5, -0.2],
 			endTransitions: [0.25, -0.3, 0.45],
 		})
+
 		const sc = scores(4, 2, 11)
 		const k = 5
 		const got = decodeSegmentationsKBest(sc, 4, g, k)
+
 		const expected = bruteForce(4, 2)
 			.map((s) => scoreOne(s, sc, g))
-			.sort((a, b) => b - a)
+			.toSorted((a, b) => b - a)
 			.slice(0, k)
+
 		expect(got).toHaveLength(k)
 		got.forEach((h, i) => expect(h.score).toBeCloseTo(expected[i]!, 6))
 	})
@@ -151,7 +167,7 @@ describe("decodeSegmentationsKBest", () => {
 		for (const h of decodeSegmentationsKBest(sc, 6, grammar({ maxSpan: 3 }), 3)) {
 			for (const s of h.segments)
 				if (s.typeID === 0) {
-					expect(s.length).toBe(1)
+					expect(s).toHaveLength(1)
 				}
 		}
 	})
@@ -164,7 +180,7 @@ describe("decodeSegmentationsKBest", () => {
 		// Grammar says 1; the tensor offers 3. Nothing longer than 1 may be emitted.
 		for (const h of decodeSegmentationsKBest(scores(4, 3, 17), 4, grammar({ maxSpan: 1 }), 4)) {
 			for (const s of h.segments) {
-				expect(s.length).toBe(1)
+				expect(s).toHaveLength(1)
 			}
 		}
 	})

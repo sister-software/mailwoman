@@ -16,7 +16,9 @@ export interface SubjectPanelProps {
 	subject: POISubject
 }
 
-/** The shared match-detail list (matched phrase, confidence, anchor) — identical for category + brand subjects. */
+/**
+ * The shared match-detail list (matched phrase, confidence, anchor) — identical for category + brand subjects.
+ */
 function MatchDetail({ subject }: SubjectPanelProps): ReactNode {
 	return (
 		<dl className="mw-subject__detail">
@@ -27,7 +29,7 @@ function MatchDetail({ subject }: SubjectPanelProps): ReactNode {
 			<dt>confidence</dt>
 			<dd>{Math.round(subject.confidence * 100)}%</dd>
 			<dt>anchor</dt>
-			<dd>{subject.remainder ? subject.remainder : <em>none — global query</em>}</dd>
+			<dd>{subject.remainder || <em>none — global query</em>}</dd>
 		</dl>
 	)
 }

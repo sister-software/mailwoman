@@ -34,13 +34,15 @@ const { values: args } = parseArgs({
 		n: { type: "string", default: "800" },
 	},
 })
+
 const N = Number(args.n)
 
 for (const k of ["baseline", "candidate", "tokenizer"] as const) if (!args[k]) throw new Error(`--${k} required`)
 
-const norm = (s?: string) => (s ?? "").toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim()
+const norm = (s?: string) => (s ?? "").toLowerCase().replaceAll(/[.,]/g, "").replaceAll(/\s+/g, " ").trim()
+
 const wordIncludes = (hay: string, needle: string) =>
-	needle.length > 0 && new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
+	needle.length > 0 && new RegExp(`\\b${needle.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
 
 // All street-family text the candidate emitted (folded), for the "did street eat it" test.
 const streetFamily = (p: Record<string, string>) =>
@@ -53,6 +55,7 @@ const load = (modelPath: string) =>
 		tokenizerPath: args.tokenizer,
 		modelCardPath: args["model-card"],
 	})
+
 const [base, cand] = await Promise.all([load(args.baseline!), load(args.candidate!)])
 
 const rows = readFileSync(args.golden!, "utf8")
@@ -108,6 +111,7 @@ for (const row of rows) {
 		} else {
 			mode = "other (org/venue name or unrelated span)"
 		}
+
 		failMode[mode] = (failMode[mode] ?? 0) + 1
 
 		if (examples.length < 10) {
@@ -119,17 +123,19 @@ for (const row of rows) {
 }
 
 const scored = rows.filter((r) => norm(r.components.locality)).length
+
 console.log(`\n== locality-regression probe — v1.5.1 base vs v1.6.0, US golden (${scored} rows w/ gold locality) ==\n`)
 console.log(`  base (v1.5.1) locality exact: ${baseLocOk}/${scored} (${((100 * baseLocOk) / scored).toFixed(1)}%)`)
 console.log(`  cand (v1.6.0) locality exact: ${candLocOk}/${scored} (${((100 * candLocOk) / scored).toFixed(1)}%)`)
 console.log(`  net: ${improvements} improved, ${regressions} regressed  (Δ ${candLocOk - baseLocOk})`)
 console.log(`\n  REGRESSION failure modes (base-right → v1.6.0-wrong, ${regressions} rows):`)
 
-for (const [m, c] of Object.entries(failMode).sort((a, b) => b[1] - a[1])) {
+for (const [m, c] of Object.entries(failMode).toSorted((a, b) => b[1] - a[1])) {
 	console.log(`    ${((100 * c) / regressions).toFixed(0).padStart(3)}%  ${m}  (${c})`)
 }
 
 if (examples.length) {
 	console.log(`\n  examples:\n${examples.join("\n")}`)
 }
+
 console.log()

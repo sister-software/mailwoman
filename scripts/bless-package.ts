@@ -14,6 +14,11 @@ import { parseArgs } from "node:util"
 
 import { $ } from "zx"
 
+/**
+ * OTP entry attempts before giving up — npm codes expire in about 30 seconds.
+ */
+const MAX_OTP_ATTEMPTS = 3
+
 const { values: flags, positionals: dirs } = parseArgs({
 	options: {
 		otp: { type: "string" }, // seed code for first write op
@@ -31,6 +36,7 @@ if (!dirs.length) {
 	console.error(
 		"usage: node ./bless-package.ts <dir...> [--otp 123456] [--version x.y.z] [--file workflow.yml] [--env name]"
 	)
+
 	process.exit(1)
 }
 
@@ -46,7 +52,8 @@ async function nextOTP(): Promise<string> {
 // Run an npm write op. attempt 0 leans on the grace window (or seeded otp);
 // on EOTP/invalid, prompt for a fresh code and retry.
 async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<void> {
-	for (let attempt = 0; attempt < 3; attempt++) {
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch continues to the next attempt on an OTP error
+	for (let attempt = 0; attempt < MAX_OTP_ATTEMPTS; attempt++) {
 		let otpArgs: string[] = []
 
 		if (attempt === 0 && pendingOTP) {
@@ -60,22 +67,27 @@ async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<vo
 			await run(otpArgs)
 
 			return
-		} catch (err: unknown) {
-			const msg = err instanceof Error ? err.message : String(err)
+		} catch (error: unknown) {
+			const msg = error instanceof Error ? error.message : String(error)
 
 			if (/EOTP|one-time|invalid otp/i.test(msg)) {
 				console.error("⚠ OTP needed/invalid — retry")
+
 				continue
 			}
 
-			throw err
+			throw error
 		}
 	}
 
 	throw new Error("OTP attempts exhausted")
 }
 
-type Pkg = { name: string; version: string; repository?: string | { url?: string } }
+interface Pkg {
+	name: string
+	version: string
+	repository?: string | { url?: string }
+}
 
 async function readPkg(dir: string): Promise<Pkg> {
 	return JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"))
@@ -116,7 +128,7 @@ async function packAndPublish(dir: string): Promise<void> {
 		return
 	}
 
-	const tgz = `/tmp/${pkg.name.replace(/[@/]/g, "-")}.tgz`
+	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
 	await $({ cwd: dir })`yarn pack -o ${tgz}`
 
 	if (flags["dry-run"]) {
@@ -162,15 +174,17 @@ async function trust(dir: string): Promise<void> {
 	// on it — if it can't auth here, print the exact command to run by hand in an interactive shell.
 	try {
 		await $`npm ${args}`
+
 		console.log(`• ${pkg.name}: trusted publisher configured`)
-	} catch (err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error)
 
 		if (/already|exists|configured/i.test(msg)) {
 			console.log(`• ${pkg.name}: trusted publisher already configured — skip`)
 
 			return
 		}
+
 		console.warn(`⚠ ${pkg.name}: trust not set (needs interactive 2FA). Run by hand:`)
 		console.warn(`    npm ${args.join(" ")}`)
 	}
@@ -179,7 +193,9 @@ async function trust(dir: string): Promise<void> {
 async function main(): Promise<void> {
 	for (const dir of dirs) {
 		const d = path.resolve(dir)
+
 		console.log(`\n=== ${dir} ===`)
+
 		await packAndPublish(d)
 
 		// `npm trust` needs interactive browser 2FA, which can't run here — `--no-trust` skips it so the
@@ -198,8 +214,9 @@ main()
 		rl.close()
 		process.exit(0)
 	})
-	.catch((e) => {
-		console.error(e)
+	.catch((error) => {
+		console.error(error)
+
 		rl.close()
 		process.exit(1)
 	})

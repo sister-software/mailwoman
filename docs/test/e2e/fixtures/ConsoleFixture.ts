@@ -22,6 +22,7 @@ export class ConsoleFixture {
 
 	constructor(page: Page) {
 		this.#baseHost = ""
+
 		const wireBaseURL = (): void => {
 			try {
 				const url = new URL(page.url())
@@ -35,6 +36,7 @@ export class ConsoleFixture {
 			const text = msg.text()
 
 			if (isIgnored(text)) return
+
 			this.events.push({
 				kind: "console",
 				severity: msg.type() as CapturedEvent["severity"],
@@ -54,6 +56,7 @@ export class ConsoleFixture {
 			// Third-party CDN flakiness shouldn't fail the suite.
 			if (!url.includes(this.#baseHost) && !url.includes("/mailwoman/")) return
 			const err = req.failure()?.errorText ?? "unknown"
+
 			this.events.push({
 				kind: "requestfailed",
 				severity: "error",
@@ -69,17 +72,21 @@ export class ConsoleFixture {
 	assertNoFailEvents(): void {
 		const failures = listFailures(this.events.map((e) => e.text))
 
-		if (failures.length === 0) return
+		if (!failures.length) return
 		const lines = failures.map((f, i) => `  ${i + 1}. ${f}`).join("\n")
 		throw new Error(`Captured ${failures.length} console/page error(s):\n${lines}`)
 	}
 
-	/** Filter helper for ad-hoc test assertions. */
+	/**
+	 * Filter helper for ad-hoc test assertions.
+	 */
 	matching(pattern: RegExp): CapturedEvent[] {
 		return this.events.filter((e) => pattern.test(e.text))
 	}
 
-	/** Snapshot of all classifications, for debug. */
+	/**
+	 * Snapshot of all classifications, for debug.
+	 */
 	summary(): { failures: string[]; noise: string[] } {
 		const failures: string[] = []
 		const noise: string[] = []

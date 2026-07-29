@@ -17,7 +17,8 @@
  *       needs; without it "new yor" returns nothing useful. (#587)
  */
 
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
+import type { FSTMatcher } from "./fst-matcher.ts"
+import { normalizeTokens } from "./fst-matcher.ts"
 import type { PlaceEntry } from "./fst-types.ts"
 
 export interface AutocompleteResult {
@@ -54,7 +55,9 @@ interface BfsItem {
 	tokens: string[]
 }
 
-/** Max accepting entries collected per BFS branch — keeps one dense branch from starving the search. */
+/**
+ * Max accepting entries collected per BFS branch — keeps one dense branch from starving the search.
+ */
 const PER_BRANCH = 4
 
 /**
@@ -63,7 +66,7 @@ const PER_BRANCH = 4
 function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
 
-	return [...entries].sort((a, b) => b.importance - a.importance).slice(0, k)
+	return [...entries].toSorted((a, b) => b.importance - a.importance).slice(0, k)
 }
 
 /**
@@ -74,13 +77,13 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	const maxExpansionDepth = opts.maxExpansionDepth ?? 2
 	const normalizedTokens = normalizeTokens(query)
 
-	if (normalizedTokens.length === 0) {
+	if (!normalizedTokens.length) {
 		return { query, normalizedTokens: [], depth: 0, suggestions: [] }
 	}
 
 	const seen = new Map<number, AutocompleteSuggestion>()
 	const queue: BfsItem[] = []
-	let depth = 0
+	let depth: number
 
 	const match = fst.walk(normalizedTokens)
 
@@ -98,12 +101,13 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	} else {
 		// PARTIAL last token — walk the complete prefix, complete the partial by prefix-filtering edges.
 		const complete = normalizedTokens.slice(0, -1)
-		const partial = normalizedTokens[normalizedTokens.length - 1]!
-		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateID ?? undefined)
+		const partial = normalizedTokens.at(-1)!
+		const prefixState = !complete.length ? 0 : (fst.walk(complete)?.stateID ?? undefined)
 
 		if (prefixState === undefined) {
 			return { query, normalizedTokens, depth: 0, suggestions: [] }
 		}
+
 		depth = complete.length
 
 		for (const cont of fst.continuations(prefixState)) {
@@ -113,6 +117,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH)) {
 				addSuggestion(seen, entry, complete.length + 1, [cont.token])
 			}
+
 			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
 			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
@@ -122,7 +127,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	// branch contributes only its top PER_BRANCH places: a state like "new london" has dozens of
 	// accepting entries and would otherwise blow the budget before the BFS ever reaches "new york"
 	// (the "new" state has 311 continuations). Per-branch capping keeps the search broad. (#587)
-	while (queue.length > 0 && seen.size < maxSuggestions * 4) {
+	while (queue.length && seen.size < maxSuggestions * 4) {
 		const item = queue.shift()!
 
 		if (item.depth > maxExpansionDepth) continue
@@ -138,7 +143,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		}
 	}
 
-	let suggestions = [...seen.values()].sort((a, b) => b.importance - a.importance)
+	let suggestions = [...seen.values()].toSorted((a, b) => b.importance - a.importance)
 
 	if (opts.dedupeByName) {
 		suggestions = dedupeByName(suggestions)
@@ -156,6 +161,7 @@ function addSuggestion(
 	const existing = seen.get(entry.wofID)
 
 	if (existing && existing.matchDepth <= matchDepth) return
+
 	seen.set(entry.wofID, {
 		name: entry.name,
 		placetype: entry.placetype,

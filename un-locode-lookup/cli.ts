@@ -35,9 +35,12 @@ const { values, positionals } = parseArgs({
 if (positionals[0] === "build") {
 	if (!values.csv || !values.out) {
 		console.error("Usage: mailwoman-un-locode build --csv <code-list.csv> --out <db>")
+
 		process.exit(1)
 	}
+
 	const { rows, withCoords } = buildUnLocodeDB(values.csv, values.out)
+
 	console.error(`built ${values.out} (${rows} rows, ${withCoords} with coordinates)`)
 } else {
 	const lat = Number(positionals[0])
@@ -47,10 +50,14 @@ if (positionals[0] === "build") {
 
 	if (!values.db || (!byName && !byCoord)) {
 		console.error("Usage: mailwoman-un-locode --db <db> (--country CC --name NAME | -- <lat> <lon>)")
+
 		process.exit(1)
 	}
+
 	const lookup = new UnLocodeLookup({ databasePath: values.db })
 	const code = byName ? lookup.byName(values.country!, values.name!) : lookup.nearest(lat, lon)
+
 	console.log(JSON.stringify({ unLocode: code }))
+
 	lookup.close()
 }

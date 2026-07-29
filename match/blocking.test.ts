@@ -8,9 +8,14 @@ import { describe, expect, it } from "vitest"
 
 import { type LatLon, block, conjunction, exactKey, geoCellKey } from "./blocking.ts"
 
-type Rec = { id: string; coord?: LatLon; canonical?: string; postcode?: string }
+interface Rec {
+	id: string
+	coord?: LatLon
+	canonical?: string
+	postcode?: string
+}
 
-const pairIds = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].sort().join("-")).sort()
+const pairIds = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].toSorted().join("-")).sort()
 const intersects = (a: string[], b: string[]) => a.some((k) => b.includes(k))
 
 describe("geoCellKey", () => {
@@ -18,7 +23,7 @@ describe("geoCellKey", () => {
 
 	it("produces no key for a missing or non-finite coordinate", () => {
 		expect(key({ id: "x" })).toEqual([])
-		expect(key({ id: "x", coord: { latitude: NaN, longitude: 0 } })).toEqual([])
+		expect(key({ id: "x", coord: { latitude: Number.NaN, longitude: 0 } })).toEqual([])
 	})
 
 	it("co-locates two nearby coordinates", () => {
@@ -65,6 +70,7 @@ describe("conjunction", () => {
 			geoCellKey<Rec>((r) => r.coord, { neighbors: false }),
 			exactKey<Rec>((r) => r.canonical)
 		)
+
 		const k = key({ id: "a", coord: { latitude: 45.5, longitude: -122.6 }, canonical: "main" })
 		expect(k).toHaveLength(1)
 		expect(k[0]).toContain("&main")
@@ -75,6 +81,7 @@ describe("conjunction", () => {
 			geoCellKey<Rec>((r) => r.coord),
 			exactKey<Rec>((r) => r.canonical)
 		)
+
 		expect(key({ id: "a", canonical: "main" })).toEqual([]) // no coordinate
 	})
 })
@@ -86,6 +93,7 @@ describe("block", () => {
 			{ id: "b", coord: { latitude: 45.5153, longitude: -122.6785 } },
 			{ id: "c", coord: { latitude: 47.6, longitude: -122.33 } },
 		]
+
 		expect(
 			pairIds(
 				block(
@@ -101,6 +109,7 @@ describe("block", () => {
 			{ id: "a", coord: { latitude: 45.5, longitude: -122.6 }, canonical: "123 main" },
 			{ id: "b", coord: { latitude: 45.5, longitude: -122.6 }, canonical: "123 main" },
 		]
+
 		const result = block(records, [geoCellKey((r) => r.coord), exactKey((r) => r.canonical)])
 		expect(result.pairs).toHaveLength(1)
 	})
@@ -111,22 +120,26 @@ describe("block", () => {
 			{ id: "a", coord: { latitude: 45.5, longitude: -122.6 }, canonical: "shared" },
 			{ id: "b", coord: { latitude: 19.4, longitude: -99.1 }, canonical: "shared" },
 		]
+
 		expect(pairIds(block(records, [geoCellKey((r) => r.coord), exactKey((r) => r.canonical)]).pairs)).toEqual(["a-b"])
 	})
 
 	it("reports an oversized block instead of scanning it", () => {
 		const records: Rec[] = Array.from({ length: 5 }, (_, i) => ({ id: `r${i}`, canonical: "same" }))
+
 		const result = block(
 			records,
 			exactKey((r) => r.canonical),
 			{ maxBlockSize: 4 }
 		)
+
 		expect(result.pairs).toEqual([])
 		expect(result.droppedBlocks).toEqual([{ key: "same", size: 5 }])
 	})
 
 	it("emits no self-pairs", () => {
 		const records: Rec[] = [{ id: "only", canonical: "x" }]
+
 		expect(
 			block(
 				records,

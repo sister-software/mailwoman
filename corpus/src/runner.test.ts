@@ -33,7 +33,9 @@ function makeAdapter(opts: {
 				if (opts.throwAfter !== undefined && i >= opts.throwAfter) {
 					throw new Error("adapter exploded")
 				}
+
 				yield { ...row, source: id, license: row.license || license }
+
 				i++
 			}
 		},
@@ -86,10 +88,12 @@ describe("runAdapter", () => {
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
 		const jsonl = await readFile(join(scratch, "syn", "canonical.jsonl"), "utf8")
+
 		const lines = jsonl
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as CanonicalRow)
+
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
 		expect(lines[0]!.source).toBe("syn")
@@ -129,6 +133,7 @@ describe("runAdapter", () => {
 		})
 
 		const ticks: RunnerProgress[] = []
+
 		await runAdapter({
 			adapter,
 			adapterOptions: { inputPath: "ignored" },
@@ -157,6 +162,7 @@ describe("runAdapter", () => {
 				yield { ...baseRow({}), source: "different" }
 			},
 		}
+
 		await expect(
 			runAdapter({
 				adapter: bad,
@@ -176,6 +182,7 @@ describe("runAdapter", () => {
 				yield baseRow({ source: "syn", raw: "" })
 			},
 		}
+
 		await expect(
 			runAdapter({
 				adapter: bad,
@@ -193,8 +200,10 @@ describe("runAdapter", () => {
 				baseRow({ source_id: `syn-${i}`, raw: `r${i}`, components: { locality: `L${i}` } })
 			),
 		})
+
 		const ac = new AbortController()
 		queueMicrotask(() => ac.abort())
+
 		await expect(
 			runAdapter({
 				adapter,
@@ -225,6 +234,7 @@ describe("runAdapter", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const firstJsonl = await readFile(join(scratch, "syn", "canonical.jsonl"), "utf8")
 		await rm(join(scratch, "syn"), { recursive: true, force: true })
 
@@ -234,6 +244,7 @@ describe("runAdapter", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const secondJsonl = await readFile(join(scratch, "syn", "canonical.jsonl"), "utf8")
 
 		expect(firstJsonl).toBe(secondJsonl)

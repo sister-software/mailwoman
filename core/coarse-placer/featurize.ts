@@ -64,6 +64,7 @@ export const COARSE_CLASSES = [
 	"AU",
 	"OTHER",
 ] as const
+
 export type CoarseClass = (typeof COARSE_CLASSES)[number]
 
 /**
@@ -72,7 +73,9 @@ export type CoarseClass = (typeof COARSE_CLASSES)[number]
  */
 export const FEATURE_DIM = 1 << 16
 
-/** Coarse Unicode-script buckets — strong priors the n-grams refine. */
+/**
+ * Coarse Unicode-script buckets — strong priors the n-grams refine.
+ */
 const SCRIPTS = [
 	"latin",
 	"cjk",
@@ -85,43 +88,47 @@ const SCRIPTS = [
 	"digit",
 	"other",
 ] as const
+
 type Script = (typeof SCRIPTS)[number]
 
 function scriptOf(cp: number): Script {
 	if (cp >= 0x30 && cp <= 0x39) return "digit"
 
-	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x24f)) return "latin"
+	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x2_4f)) return "latin"
 
 	if (
-		(cp >= 0x3040 && cp <= 0x30ff) ||
-		(cp >= 0x4e00 && cp <= 0x9fff) ||
-		(cp >= 0xac00 && cp <= 0xd7af) ||
-		(cp >= 0x3400 && cp <= 0x4dbf)
+		(cp >= 0x30_40 && cp <= 0x30_ff) ||
+		(cp >= 0x4e_00 && cp <= 0x9f_ff) ||
+		(cp >= 0xac_00 && cp <= 0xd7_af) ||
+		(cp >= 0x34_00 && cp <= 0x4d_bf)
 	)
 		return "cjk"
 
-	if ((cp >= 0x400 && cp <= 0x52f) || (cp >= 0x2de0 && cp <= 0x2dff)) return "cyrillic"
+	if ((cp >= 0x4_00 && cp <= 0x5_2f) || (cp >= 0x2d_e0 && cp <= 0x2d_ff)) return "cyrillic"
 
-	if ((cp >= 0x600 && cp <= 0x6ff) || (cp >= 0x750 && cp <= 0x77f) || (cp >= 0xfb50 && cp <= 0xfeff)) return "arabic"
+	if ((cp >= 0x6_00 && cp <= 0x6_ff) || (cp >= 0x7_50 && cp <= 0x7_7f) || (cp >= 0xfb_50 && cp <= 0xfe_ff))
+		return "arabic"
 
-	if (cp >= 0x370 && cp <= 0x3ff) return "greek"
+	if (cp >= 0x3_70 && cp <= 0x3_ff) return "greek"
 
-	if (cp >= 0x590 && cp <= 0x5ff) return "hebrew"
+	if (cp >= 0x5_90 && cp <= 0x5_ff) return "hebrew"
 
-	if (cp >= 0x900 && cp <= 0x97f) return "devanagari"
+	if (cp >= 0x9_00 && cp <= 0x9_7f) return "devanagari"
 
-	if (cp >= 0xe00 && cp <= 0xe7f) return "thai"
+	if (cp >= 0xe_00 && cp <= 0xe_7f) return "thai"
 
 	return "other"
 }
 
-/** FNV-1a → a feature bucket in [0, FEATURE_DIM). */
+/**
+ * FNV-1a → a feature bucket in [0, FEATURE_DIM).
+ */
 function bucket(s: string, salt: number): number {
-	let h = (2166136261 ^ salt) >>> 0
+	let h = (2_166_136_261 ^ salt) >>> 0
 
 	for (let i = 0; i < s.length; i++) {
 		h ^= s.charCodeAt(i)
-		h = Math.imul(h, 16777619)
+		h = Math.imul(h, 16_777_619)
 	}
 
 	return (h >>> 0) % FEATURE_DIM
@@ -133,7 +140,7 @@ function bucket(s: string, salt: number): number {
  * PRESERVED (lowercasing only touches cased scripts).
  */
 export function featurize(text: string): number[] {
-	const norm = text.toLowerCase().replace(/\s+/g, " ").trim()
+	const norm = text.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 	if (!norm) return []
 	const active = new Set<number>()
@@ -145,6 +152,7 @@ export function featurize(text: string): number[] {
 		const sc = scriptOf(ch.codePointAt(0)!)
 		counts.set(sc, (counts.get(sc) ?? 0) + 1)
 	}
+
 	let dominant: Script = "other"
 	let max = -1
 
@@ -156,6 +164,7 @@ export function featurize(text: string): number[] {
 			dominant = sc
 		}
 	}
+
 	active.add(bucket(`__dom_${dominant}`, 2))
 
 	// Char n-grams (3,4,5) over the boundary-marked string.

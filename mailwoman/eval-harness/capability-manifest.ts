@@ -46,27 +46,41 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 
-/** Options for {@linkcode generateCapabilityManifest}. */
+/**
+ * Options for {@linkcode generateCapabilityManifest}.
+ */
 export interface CapabilityManifestOptions {
-	/** ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	model?: string
-	/** SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	tokenizer?: string
-	/** Model card JSON. Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model card JSON. Default `neural-weights-en-us/model-card.json`.
+	 */
 	modelCard?: string
-	/** Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 */
 	anchorLookup?: string
-	/** Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`. */
+	/**
+	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 */
 	gazetteerLexicon?: string
-	/** Surgically insert the `capabilities` block into the model card (else dry run). */
+	/**
+	 * Surgically insert the `capabilities` block into the model card (else dry run).
+	 */
 	write?: boolean
 }
 
-// -------------------------------------------------------------------------------------------------
-// Tier + locale matrix
-// -------------------------------------------------------------------------------------------------
+//#region Tier + locale matrix
 
-/** Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides). */
+/**
+ * Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides).
+ */
 const TIERS: Record<string, ScorerOverrides> = {
 	// Production default — anchor + gazetteer both fed (no override needed; createScorer's defaults).
 	server: {},
@@ -76,28 +90,34 @@ const TIERS: Record<string, ScorerOverrides> = {
 }
 
 interface LocaleEvalSpec {
-	/** The codex address-system this locale maps to (`us`, `fr`, …). */
+	/**
+	 * The codex address-system this locale maps to (`us`, `fr`, …).
+	 */
 	system: SystemCode
-	/** Eval JSONL files (raw + components). Multiple files are concatenated. */
+	/**
+	 * Eval JSONL files (raw + components). Multiple files are concatenated.
+	 */
 	files: string[]
 }
 
-// One eval spec per locale that has an eval set. The eval rows carry split street parts so the
-// affix capability (`street_prefix`/`street_suffix`) is measurable — the whole point of the
-// manifest (the folded `per-locale-f1.ts` joins the three street parts and cannot see it).
-//
-// FR uses the dedicated street-prefix slice (`fr-street-prefix-real.jsonl`, the #719 reproduction),
-// NOT the broad golden dev set, for the essential tags: golden FR carries only ~7 `street_prefix`
-// rows against ~1535 without it, so the unfolded `street_prefix` F1 there is dominated by absent-gold
-// rows (measured 5.3) — it would UNDER-certify the very capability the gate exists to protect. On the
-// purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the figure the #719 fix cites),
-// which is the honest capability number the loader must guard.
+/**
+ * One eval spec per locale that has an eval set. The eval rows carry split street parts so the affix capability
+ * (`street_prefix`/`street_suffix`) is measurable — the whole point of the manifest (the folded `per-locale-f1.ts`
+ * joins the three street parts and cannot see it). FR uses the dedicated street-prefix slice
+ * (`fr-street-prefix-real.jsonl`, the #719 reproduction), NOT the broad golden dev set, for the essential tags: golden
+ * FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded `street_prefix` F1 there is
+ * dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability the gate exists to protect.
+ * On the purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the figure the #719 fix cites), which is
+ * the honest capability number the loader must guard.
+ */
 const LOCALES: LocaleEvalSpec[] = [
 	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
 	{ system: "fr", files: ["data/eval/external/fr-street-prefix-real.jsonl"] },
 ]
 
-// The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
+/**
+ * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
+ */
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -117,16 +137,18 @@ const TAGS = [
 	"subregion",
 ] as const
 
-// The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta-gate
-// reads, so the ONLY tags that NEED a paired `maskOnF1`. Derived from the codex so a new forbid row
-// automatically widens the manifest the next time it's regenerated.
+/**
+ * The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta-gate reads, so the ONLY
+ * tags that NEED a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
+ * next time it's regenerated.
+ */
 const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-// -------------------------------------------------------------------------------------------------
-// Scoring (unfolded exact-match per-tag F1 — score-affix.ts machinery)
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Scoring
 
 interface Row {
 	raw: string
@@ -150,7 +172,9 @@ function loadRows(files: string[]): Row[] {
 
 const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
 
-/** Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts. */
+/**
+ * Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts.
+ */
 async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
 	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
@@ -179,6 +203,7 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 			}
 		}
 	}
+
 	const out: Record<string, number> = {}
 
 	for (const t of TAGS) {
@@ -192,11 +217,13 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	return out
 }
 
-// -------------------------------------------------------------------------------------------------
-// Build the manifest
-// -------------------------------------------------------------------------------------------------
+//#endregion
 
-/** `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits. */
+//#region Build the manifest
+
+/**
+ * `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits.
+ */
 interface TagCapability {
 	maskOffF1: number
 	maskOnF1?: number
@@ -220,6 +247,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 		for (const spec of LOCALES) {
 			const rows = loadRows(spec.files)
+
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 			// mask-OFF: conventions disabled. createScorer warns (declared-required override) — expected.
@@ -236,6 +264,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				// trips the gate (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
 				overrides: { ...tierOverrides, conventions: false },
 			})
+
 			const off = await perTagF1(offScorer, rows)
 
 			// mask-ON: conventions in `auto` mode (reads the model's locale head → applies the detected
@@ -249,6 +278,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				strict: true,
 				overrides: { ...tierOverrides, conventions: "auto" },
 			})
+
 			const on = await perTagF1(onScorer, rows)
 
 			const perTag: Record<string, TagCapability> = {}
@@ -264,14 +294,17 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				if (FORBIDDEN_TAGS.has(t)) {
 					cap.maskOnF1 = on[t]!
 				}
+
 				perTag[t] = cap
 			}
+
 			capabilities[tier]![spec.system] = perTag
 
 			// Diagnostic: surface the forbidden-tag deltas (the decisive rows).
 			for (const t of FORBIDDEN_TAGS) {
 				if (perTag[t]) {
 					const delta = (perTag[t]!.maskOffF1 - (perTag[t]!.maskOnF1 ?? 0)).toFixed(1)
+
 					console.error(`  forbid-tag ${t}: maskOff ${off[t]} maskOn ${on[t]}  Δ=${delta}pp`)
 				}
 			}
@@ -287,11 +320,13 @@ function rowsHaveTag(rows: Row[], tag: string): boolean {
 	return false
 }
 
-// -------------------------------------------------------------------------------------------------
-// Entry
-// -------------------------------------------------------------------------------------------------
+//#endregion
 
-/** Measure the per-tier × system × tag capability manifest; optionally patch it into the model card. */
+//#region Entry
+
+/**
+ * Measure the per-tier × system × tag capability manifest; optionally patch it into the model card.
+ */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
 		model: options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),
@@ -300,6 +335,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		anchorLookup: options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json")),
 		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 	}
+
 	const WRITE = options.write ?? false
 
 	const capabilities = await buildManifest(paths)
@@ -325,7 +361,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		const original = readFileSync(paths.modelCard, "utf8")
 		const lastBrace = original.lastIndexOf("}")
 
-		if (lastBrace < 0) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
+		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
 		if (JSON.parse(original).capabilities !== undefined) {
 			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
@@ -334,15 +370,20 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 					`(the surgical insert appends; it does not replace).`
 			)
 		}
+
 		const block = JSON.stringify(capabilities, null, "\t")
 			.split("\n")
 			.map((line) => "\t" + line)
 			.join("\n")
+
 		const before = original.slice(0, lastBrace).replace(/\s*$/, "")
 		const after = original.slice(lastBrace) // the final "}\n"
 		writeFileSync(paths.modelCard, `${before},\n\t"capabilities": ${block.trimStart()}\n${after}`)
+
 		console.error(`\nSurgically inserted the \`capabilities\` block into ${paths.modelCard}`)
 	} else {
 		console.error("\n(dry run — pass --write to patch the model card)")
 	}
 }
+
+//#endregion

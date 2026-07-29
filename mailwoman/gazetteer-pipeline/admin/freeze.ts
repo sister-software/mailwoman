@@ -30,12 +30,15 @@ export interface FreezeAdminResult {
 	coincidentRoles: number
 }
 
-/** Freeze an ingested admin staging DB (see the module docstring for the exact order and why it matters). */
+/**
+ * Freeze an ingested admin staging DB (see the module docstring for the exact order and why it matters).
+ */
 export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {}): Promise<FreezeAdminResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — import it lazily (the gazetteer-pipeline
 	// convention) so eagerly loading this module (pastel imports every command) never faults without it.
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry-backfill")
+
 	const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
 	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
@@ -74,7 +77,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 		phase("hierarchy-backfill", "multi-parent -4 places")
 		const geojsonRoots = discoverAdminDataRoots(opts.dataDir)
 
-		if (geojsonRoots.length === 0) {
+		if (!geojsonRoots.length) {
 			phase(
 				"hierarchy-backfill",
 				`WARNING: no */data geojson roots under ${opts.dataDir} — orphans like NYC stay unreachable`

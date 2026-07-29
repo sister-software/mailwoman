@@ -6,13 +6,13 @@
 
 import type { GeometryLiteral, MultiPolygonLiteral } from "@mailwoman/spatial"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk"
-import {
+import type {
 	FIPSStateCode,
-	type FIPSBlockGeoID,
-	type FIPSTractCode,
-	type TIGERBlockFeature,
-	type TIGERBlockFeatureCollection,
-	type TIGERTabulatedBlockProperties,
+	FIPSBlockGeoID,
+	FIPSTractCode,
+	TIGERBlockFeature,
+	TIGERBlockFeatureCollection,
+	TIGERTabulatedBlockProperties,
 } from "@mailwoman/tiger"
 
 export interface StateBlockIntersectionCriteria {
@@ -57,6 +57,7 @@ export function parseTIGERBlockFromRow({ serializedGeometry, ...properties }: TI
  */
 export function parseTIGERBlockFeatureCollectionFromRows(rows: TIGERBlockRow[]): TIGERBlockFeatureCollection {
 	const features = rows.map(parseTIGERBlockFromRow)
+
 	const featureCollection: TIGERBlockFeatureCollection = {
 		type: "FeatureCollection",
 		features,

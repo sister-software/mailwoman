@@ -9,33 +9,43 @@
  *   package's browser graph (it lives in the docs site, which knows where the layer is served).
  */
 
-import type { POIPhraseLookup, QueryKindResult } from "@mailwoman/kind-classifier"
-import type { createKindClassifier } from "@mailwoman/kind-classifier"
+import type { POIPhraseLookup, QueryKindResult, createKindClassifier } from "@mailwoman/kind-classifier"
 import type { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
 export type TaxonomyLookup = ReturnType<typeof createPOITaxonomyLookup>
+
 export type CategoryRecord = NonNullable<ReturnType<TaxonomyLookup["getPOICategory"]>>
 
-/** The lazily-loaded POI runtime: the taxonomy lookup, the adapted lexicon, and the kind classifier over it. */
+/**
+ * The lazily-loaded POI runtime: the taxonomy lookup, the adapted lexicon, and the kind classifier over it.
+ */
 export interface POIRuntime {
 	lookup: TaxonomyLookup
 	lexicon: POIPhraseLookup
 	classify: ReturnType<typeof createKindClassifier>
 }
 
-/** Fields shared by every resolved POI subject, category or brand. */
+/**
+ * Fields shared by every resolved POI subject, category or brand.
+ */
 export interface POISubjectBase {
 	matchedPhrase: string
 	confidence: number
-	/** The non-subject remainder of the query (the location anchor, e.g. "near Springfield"). */
+	/**
+	 * The non-subject remainder of the query (the location anchor, e.g. "near Springfield").
+	 */
 	remainder: string
 }
 
-/** A resolved POI subject that names a taxonomy CATEGORY (`cafe`, `hospital`, `drinking fountain`). */
+/**
+ * A resolved POI subject that names a taxonomy CATEGORY (`cafe`, `hospital`, `drinking fountain`).
+ */
 export interface POICategorySubject extends POISubjectBase {
 	kind: "category"
 	category: CategoryRecord
-	/** Whether this category needs the locally-built OSM (ODbL) layer — precomputed off the runtime. */
+	/**
+	 * Whether this category needs the locally-built OSM (ODbL) layer — precomputed off the runtime.
+	 */
 	buildLocal: boolean
 }
 
@@ -46,16 +56,24 @@ export interface POICategorySubject extends POISubjectBase {
  */
 export interface POIBrandSubject extends POISubjectBase {
 	kind: "brand"
-	/** The brand's canonical display name. */
+	/**
+	 * The brand's canonical display name.
+	 */
 	name: string
-	/** Wikidata QID, when the lexicon carried one (`Q319642` = Chevron). Absent ⇒ matched by name alone. */
+	/**
+	 * Wikidata QID, when the lexicon carried one (`Q319642` = Chevron). Absent ⇒ matched by name alone.
+	 */
 	wikidata?: string
 }
 
-/** A resolved POI subject — a taxonomy category or a chain brand — plus its match metadata. */
+/**
+ * A resolved POI subject — a taxonomy category or a chain brand — plus its match metadata.
+ */
 export type POISubject = POICategorySubject | POIBrandSubject
 
-/** The intent-only result: the kind verdict plus (when a subject was detected) its OverpassQL export (category only). */
+/**
+ * The intent-only result: the kind verdict plus (when a subject was detected) its OverpassQL export (category only).
+ */
 export interface POIExplorerResult {
 	kindResult: QueryKindResult
 	subject?: POISubject
@@ -63,7 +81,9 @@ export interface POIExplorerResult {
 	overpassError?: string
 }
 
-/** One live poi.db hit, as the results list renders it. */
+/**
+ * One live poi.db hit, as the results list renders it.
+ */
 export interface POISearchHit {
 	name: string
 	lat: number
@@ -97,16 +117,22 @@ export type POILiveSearch = (params: {
 	categoryID: string
 	overtureCategoryIDs: string[]
 	anchor: string
-	/** Present when the subject is a chain brand — the probe fetches by this QID, not a category k-ring. */
+	/**
+	 * Present when the subject is a chain brand — the probe fetches by this QID, not a category k-ring.
+	 */
 	brandWikidata?: string
 }) => Promise<POILiveSearchResult>
 
-/** "Search live" state machine. */
+/**
+ * "Search live" state machine.
+ */
 export type LiveSearchState =
 	| { status: "idle" }
 	| { status: "loading" }
 	| { status: "error"; message: string }
 	| { status: "success"; hits: POISearchHit[]; centerName: string }
 
-/** A single-argument runtime loader — injectable so stories/tests can substitute a mock taxonomy. */
+/**
+ * A single-argument runtime loader — injectable so stories/tests can substitute a mock taxonomy.
+ */
 export type LoadPOIRuntime = () => Promise<POIRuntime>

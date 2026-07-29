@@ -12,28 +12,28 @@ describe("computeQueryShape — end-to-end", () => {
 	it("classifies a US ZIP correctly", () => {
 		const shape = computeQueryShape("10118")
 		expect(shape.characterClass).toBe("numeric")
-		expect(shape.tokenClasses.length).toBe(1)
-		expect(shape.tokenClasses[0].class).toBe("digit")
+		expect(shape.tokenClasses).toHaveLength(1)
+		expect(shape.tokenClasses[0]!.class).toBe("digit")
 		expect(shape.knownFormats.some((f) => f.format === "us_zip")).toBe(true)
-		expect(shape.segments.length).toBe(1)
+		expect(shape.segments).toHaveLength(1)
 	})
 
 	it("classifies a single-word locality", () => {
 		const shape = computeQueryShape("Paris")
 		expect(shape.characterClass).toBe("alpha")
-		expect(shape.tokenClasses.length).toBe(1)
-		expect(shape.tokenClasses[0].class).toBe("alpha")
-		expect(shape.knownFormats.length).toBe(0)
+		expect(shape.tokenClasses).toHaveLength(1)
+		expect(shape.tokenClasses[0]!.class).toBe("alpha")
+		expect(shape.knownFormats).toHaveLength(0)
 	})
 
 	it("classifies a structured US address", () => {
 		const text = "350 5th Ave, New York, NY 10118"
 		const shape = computeQueryShape(text)
 		expect(shape.characterClass).toBe("alphanumeric")
-		expect(shape.segments.length).toBe(3)
-		expect(shape.segments[0].body).toBe("350 5th Ave")
-		expect(shape.segments[1].body).toBe("New York")
-		expect(shape.segments[2].body).toBe("NY 10118")
+		expect(shape.segments).toHaveLength(3)
+		expect(shape.segments[0]!.body).toBe("350 5th Ave")
+		expect(shape.segments[1]!.body).toBe("New York")
+		expect(shape.segments[2]!.body).toBe("NY 10118")
 		expect(shape.knownFormats.some((f) => f.format === "us_zip")).toBe(true)
 		expect(shape.totalLength).toBe(text.length)
 	})
@@ -41,13 +41,13 @@ describe("computeQueryShape — end-to-end", () => {
 	it("classifies a CJK input", () => {
 		const shape = computeQueryShape("東京駅")
 		expect(shape.characterClass).toBe("cjk")
-		expect(shape.tokenClasses[0].class).toBe("cjk")
+		expect(shape.tokenClasses[0]!.class).toBe("cjk")
 	})
 
 	it("classifies a short locality-only query", () => {
 		const shape = computeQueryShape("NYC NY")
 		expect(shape.characterClass).toBe("alpha")
-		expect(shape.tokenClasses.length).toBe(2)
+		expect(shape.tokenClasses).toHaveLength(2)
 	})
 
 	it("classifies a PO Box input", () => {

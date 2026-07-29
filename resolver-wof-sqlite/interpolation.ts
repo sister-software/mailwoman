@@ -29,6 +29,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import type { InterpolationLookup } from "@mailwoman/resolver"
+import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 import { haversineKm } from "./geo.ts"
 import { hasTable } from "./sqlite-utils.ts"
@@ -44,13 +45,19 @@ import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
 
-/** One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`. */
+/**
+ * One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`.
+ */
 export interface InterpolatedHit {
 	lat: number
 	lon: number
-	/** Always true — the tier's honesty flag, mirrored into `resolution_tier` when wired. */
+	/**
+	 * Always true — the tier's honesty flag, mirrored into `resolution_tier` when wired.
+	 */
 	interpolated: true
-	/** Which rung answered — see {@link InterpolationMethod}. */
+	/**
+	 * Which rung answered — see {@link InterpolationMethod}.
+	 */
 	method: InterpolationMethod
 	/**
 	 * `tiger_range` only. True when the matched segment side's parity agrees with the house number (or the side is
@@ -67,16 +74,22 @@ export interface InterpolatedHit {
 	 * span (`address_point`/`both`), or the explicitly larger extrapolation penalty (`address_point`/`single`).
 	 */
 	uncertaintyM: number
-	/** Provenance, e.g. `"tiger:edges"`. */
+	/**
+	 * Provenance, e.g. `"tiger:edges"`.
+	 */
 	source: string
-	/** Pinned data vintage, e.g. `"TIGER2023"`. */
+	/**
+	 * Pinned data vintage, e.g. `"TIGER2023"`.
+	 */
 	release: string
 }
 
 export interface InterpolationQuery {
 	street: string
 	number: string
-	/** ZIP scope — strongly preferred; without it common street names abstain (see module doc). */
+	/**
+	 * ZIP scope — strongly preferred; without it common street names abstain (see module doc).
+	 */
 	postcode?: string
 }
 
@@ -114,10 +127,12 @@ export class StreetInterpolator implements InterpolationLookup {
 		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
 		if (hasTable(this.#db, "street_segment")) {
 			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
+
 			this.#byPostcode = this.#db.prepare(
 				`SELECT ${columns} FROM street_segment
 				 WHERE postcode = ? AND street_norm = ? AND min_hn <= ? AND max_hn >= ?`
 			)
+
 			this.#byStreet = this.#db.prepare(
 				`SELECT ${columns} FROM street_segment
 				 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
@@ -133,6 +148,7 @@ export class StreetInterpolator implements InterpolationLookup {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
 				| { radius_multiplier: unknown }
 				| undefined
+
 			const value = row?.radius_multiplier
 
 			if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -175,23 +191,29 @@ export class StreetInterpolator implements InterpolationLookup {
 			if (postcodes.size > 1) return null
 		}
 
-		if (rows.length === 0) return null
+		if (!rows.length) return null
 
 		// Parity preference: exact side first, then 'mixed' (matches either), then the
 		// opposite side as a flagged fallback.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
-		const preferred = exact.length > 0 ? exact : mixed
-		const pool = preferred.length > 0 ? preferred : rows
+		const preferred = exact.length ? exact : mixed
+		const pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins — the most specific claim about where this number lives.
-		const best = pool.reduce((a, b) => (b.max_hn - b.min_hn < a.max_hn - a.min_hn ? b : a))
+		let best = pool[0]!
+
+		for (const candidate of pool) {
+			if (candidate.max_hn - candidate.min_hn < best.max_hn - best.min_hn) {
+				best = candidate
+			}
+		}
 
 		const polyline = JSON.parse(best.geometry) as [number, number][]
 		const span = best.to_hn - best.from_hn
-		const t = span === 0 ? 0.5 : clamp01((n - best.from_hn) / span)
+		const t = span === 0 ? 0.5 : clampFraction((n - best.from_hn) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)
 
 		return {
@@ -211,48 +233,4 @@ export class StreetInterpolator implements InterpolationLookup {
 			this.#db.close()
 		}
 	}
-}
-
-function clamp01(t: number): number {
-	return t < 0 ? 0 : t > 1 ? 1 : t
-}
-
-/**
- * Point at fraction `t` of the polyline's total arc length (haversine), plus the total length in km. `t` is assumed
- * clamped to [0, 1].
- */
-function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
-	const legs: number[] = []
-	let total = 0
-
-	for (let i = 1; i < polyline.length; i++) {
-		const [aLon, aLat] = polyline[i - 1]!
-		const [bLon, bLat] = polyline[i]!
-		const d = haversineKm(aLat, aLon, bLat, bLon)
-		legs.push(d)
-		total += d
-	}
-
-	if (total === 0) {
-		const [lon, lat] = polyline[0]!
-
-		return [lon, lat, 0]
-	}
-	let remaining = t * total
-
-	for (let i = 0; i < legs.length; i++) {
-		const leg = legs[i]!
-
-		if (remaining <= leg || i === legs.length - 1) {
-			const f = leg === 0 ? 0 : clamp01(remaining / leg)
-			const [aLon, aLat] = polyline[i]!
-			const [bLon, bLat] = polyline[i + 1]!
-
-			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
-		}
-		remaining -= leg
-	}
-	const [lon, lat] = polyline[polyline.length - 1]!
-
-	return [lon, lat, total]
 }

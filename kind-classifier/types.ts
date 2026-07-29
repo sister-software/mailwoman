@@ -4,7 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-/** Re-exports of the canonical types from `@mailwoman/core/pipeline`. */
+/**
+ * Re-exports of the canonical types from `@mailwoman/core/pipeline`.
+ */
 export type { LocaleHint, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
 
 /**

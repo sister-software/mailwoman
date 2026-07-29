@@ -50,6 +50,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ optio
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+
 		const countries = options.countries
 			? options.countries
 					.split(",")
@@ -61,7 +62,9 @@ const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ optio
 
 		if (options.fold) {
 			const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
+
 			console.error(`▸ GeoNames upstream fold (${countries.join(",")}) → ${foldOut}`)
+
 			const f = await foldGeonamesIntoAdmin({
 				adminIn,
 				adminOut: foldOut,
@@ -72,14 +75,18 @@ const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ optio
 					),
 				onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
 			})
+
 			console.error(
 				`  folded ${f.ingested.toLocaleString()} places; place_search ${f.placeSearchRows.toLocaleString()} rows`
 			)
+
 			adminDb = foldOut
 		}
 
 		const shards = resolvePostcodeShards(undefined, root)
+
 		console.error(`▸ candidate build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+
 		const r = await buildCandidate({
 			adminDb,
 			out,

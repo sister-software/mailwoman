@@ -22,7 +22,9 @@ import { useControl, useMap } from "react-map-gl/maplibre"
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
 import { DebugControl } from "./_debug.tsx"
 
-/** Mounts the layer-toggle + feature-inspector controls on the surrounding `<Map>`. */
+/**
+ * Mounts the layer-toggle + feature-inspector controls on the surrounding `<Map>`.
+ */
 export const DemoMapControls: React.FC = () => {
 	// The layer-toggle panel: a maplibre `IControl` mounted top-right (matches `_app.tsx`'s `addControl(..., "top-right")`).
 	useControl(() => new LayerToggleControl(), { position: "top-right" })

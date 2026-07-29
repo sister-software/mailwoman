@@ -74,8 +74,8 @@ export function buildSpanProposalPriors(
 ): number[][] {
 	const T = tokens.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 5.0
-	const annotationBiasScale = opts.annotationBiasScale ?? 12.0
+	const biasScale = opts.biasScale ?? 5
+	const annotationBiasScale = opts.annotationBiasScale ?? 12
 	const annotationFloor = opts.annotationConfidenceFloor ?? 0.6
 
 	const matrix: number[][] = []
@@ -84,13 +84,14 @@ export function buildSpanProposalPriors(
 		matrix.push(new Array<number>(L).fill(0))
 	}
 
-	if (proposals.length === 0) return matrix
+	if (!proposals.length) return matrix
 
 	const labelToCol = new Map<string, number>()
 
 	for (let k = 0; k < labels.length; k++) {
 		labelToCol.set(labels[k]!, k)
 	}
+
 	const oCol = labelToCol.get("O")
 
 	for (const proposal of proposals) {
@@ -105,6 +106,7 @@ export function buildSpanProposalPriors(
 					matrix[t]![oCol] = Math.max(matrix[t]![oCol]!, bias)
 				}
 			}
+
 			continue
 		}
 

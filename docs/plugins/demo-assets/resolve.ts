@@ -17,9 +17,7 @@ import { dirname, resolve } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-// ---------------------------------------------------------------------------
-// Workspace resolution helpers
-// ---------------------------------------------------------------------------
+//#region Workspace resolution helpers
 
 const requireFromPlugin = createRequire(import.meta.url)
 
@@ -71,9 +69,9 @@ export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): str
 	return resolve(workspaceDir, "out", sub, "index.js")
 }
 
-// ---------------------------------------------------------------------------
-// Webpack alias builder
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Webpack alias builder
 
 /**
  * Build the full workspace alias map for webpack. Centralises the alias logic that was previously inlined in
@@ -174,6 +172,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		]) {
 			aliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDirEntry(coreDir, sub)
 		}
+
 		// Barrel-bypass for @mailwoman/resolver — resolve it straight to its `types` module (where
 		// `expandPlacetypeFilter`, `DEFAULT_PLACETYPE_MAP`, and `PLACETYPE_FILTER_GROUPS` are DIRECTLY
 		// defined) instead of the package barrel `resolver/index.ts`, which RE-EXPORTS them from
@@ -214,9 +213,9 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	return aliases
 }
 
-// ---------------------------------------------------------------------------
-// Model artifact resolution + validation
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Model artifact resolution + validation
 
 /**
  * Read the model-card.json from the weights package to get version metadata.
@@ -275,6 +274,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 		return false
 	}
+
 	const sourceSize = statSync(sourcePath).size
 
 	if (existsSync(destPath)) {
@@ -285,6 +285,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 	copyFileSync(sourcePath, destPath)
 	const sizeMB = (sourceSize / 1024 / 1024).toFixed(1)
+
 	console.log(`[demo-assets] ${label}: synced (${sizeMB} MB)`)
 
 	return true
@@ -308,6 +309,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 
 		return false
 	}
+
 	const files = ["index.js", "sqlite.worker.js", "sql-wasm.wasm"]
 	let copied = 0
 
@@ -319,6 +321,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 
 			return false
 		}
+
 		const dest = resolve(destDir, f)
 
 		// Idempotent stage: skip when the destination already matches (by size). This runs in
@@ -330,6 +333,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 		// so it was never affected.)
 		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
 		copyFileSync(src, dest)
+
 		copied++
 	}
 
@@ -359,6 +363,7 @@ export function stagePairIndexes(destDir: string): boolean {
 		{ pkg: "@mailwoman/neural-weights-en-gb", file: "pair-index-gb.bin" },
 		{ pkg: "@mailwoman/neural-weights-en-nz", file: "pair-index-nz.bin" },
 	]
+
 	let copied = 0
 
 	for (const { pkg, file } of sources) {
@@ -366,8 +371,10 @@ export function stagePairIndexes(destDir: string): boolean {
 
 		if (!pkgDir) {
 			console.warn(`[demo-assets] pair-index: ${pkg} not resolvable — ${file} not staged`)
+
 			continue
 		}
+
 		const src = resolve(pkgDir, file)
 
 		if (!existsSync(src)) {
@@ -375,13 +382,16 @@ export function stagePairIndexes(destDir: string): boolean {
 				`[demo-assets] pair-index: ${file} missing at ${src} — not staged ` +
 					`(run ${pkg}'s scripts/link-dev-weights.ts to build it; the demo tolerates its absence — that country's pair prior stays OFF).`
 			)
+
 			continue
 		}
+
 		const dest = resolve(destDir, file)
 
 		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
 		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
 		copyFileSync(src, dest)
+
 		copied++
 	}
 
@@ -392,9 +402,9 @@ export function stagePairIndexes(destDir: string): boolean {
 	return true
 }
 
-// ---------------------------------------------------------------------------
-// FST builder
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region FST builder
 
 /**
  * Build the FST binary from the WOF admin SQLite database.
@@ -434,6 +444,7 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?
 	`
 
 	console.log(`[demo-assets] FST: building from ${wofDB}`)
+
 	const result = spawnSync("node", ["--input-type=module", "-e", script], {
 		cwd: opts.repoRoot,
 		stdio: ["pipe", "inherit", "inherit"],
@@ -450,3 +461,5 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?
 
 	return true
 }
+
+//#endregion

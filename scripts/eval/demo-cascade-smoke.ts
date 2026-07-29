@@ -72,6 +72,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	card?: string
@@ -110,11 +111,12 @@ const missing = Object.entries({
 	.filter(([, p]) => !existsSync(p))
 	.map(([k, p]) => `  ${k}: ${p}`)
 
-if (missing.length > 0) {
+if (missing.length) {
 	console.error(
 		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
 			"  Stage a demo release (yarn start/build in docs/ — the demo-assets plugin stages the artifacts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
 	)
+
 	process.exit(2)
 }
 
@@ -124,6 +126,7 @@ try {
 	rows = parseSmokeRows(readFileSync(FILE, "utf8"), FILE)
 } catch (error) {
 	console.error(`✗ ${(error as Error).message}`)
+
 	process.exit(2)
 }
 
@@ -142,6 +145,7 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 
 			if (!existing) {
 				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
+
 				continue
 			}
 
@@ -168,15 +172,16 @@ const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin
 	.map((f) => path.join(STAGE, f))
 	.filter((p) => existsSync(p))
 
-if (postcodeBinaries.length === 0) {
+if (!postcodeBinaries.length) {
 	console.warn(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
 }
-const anchorLookup =
-	postcodeBinaries.length > 0
-		? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
-		: undefined
+
+const anchorLookup = postcodeBinaries.length
+	? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
+	: undefined
 
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
+
 const classifier = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -187,6 +192,7 @@ const classifier = new NeuralAddressClassifier({
 	addressSystemConventions: "auto",
 	bridgePunctuationGaps: true,
 })
+
 const fst = deserializeFST(readFileSync(FST))
 const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
 
@@ -213,9 +219,11 @@ for (const row of rows) {
 	// locality/city filter, same highest-confidence region pick, same postcode find.
 	const nodes = flattenTree(tree)
 	const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+
 	const stateNode = nodes
 		.filter((n) => n.tag === "region" || n.tag === "state")
-		.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+		.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+
 	const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 	// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
@@ -231,7 +239,7 @@ for (const row of rows) {
 	// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.
 	let anchorCentroid = false
 
-	if (hits.length === 0 && postcodeNode?.value && anchorLookup) {
+	if (!hits.length && postcodeNode?.value && anchorLookup) {
 		const anchorHit = anchorLookup.get(String(postcodeNode.value).toUpperCase())
 
 		if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
@@ -240,6 +248,7 @@ for (const row of rows) {
 	}
 
 	const top = hits[0]
+
 	const actual = top
 		? { id: top.id, name: top.name, placetype: String(top.placetype) }
 		: anchorCentroid
@@ -260,6 +269,7 @@ for (const row of rows) {
 		}
 	}
 }
+
 lookup.close()
 
 // ── Report ───────────────────────────────────────────────────────────────────────────────────────
@@ -272,17 +282,21 @@ console.log(`db: ${DB}`)
 console.log("")
 console.log("| # | input | expected | actual | result |")
 console.log("| - | ----- | -------- | ------ | ------ |")
+
 results.forEach((r, i) => {
 	const exp = r.expected.anchor_centroid
 		? "anchor centroid"
 		: `${r.expected.id} (${r.expected.name ?? "?"}${r.expected.placetype ? `, ${r.expected.placetype}` : ""})`
+
 	const act = r.actual
 		? r.actual.anchorCentroid
 			? "anchor centroid"
 			: `${r.actual.id} (${r.actual.name}, ${r.actual.placetype})`
 		: "NO HIT"
+
 	console.log(`| ${i + 1} | ${r.input} | ${exp} | ${act} | ${r.pass ? "PASS" : "FAIL"} |`)
 })
+
 console.log("")
 console.log(`**${passCount}/${results.length} pass (${passRate}%)**`)
 
@@ -296,6 +310,8 @@ if (JSON_OUT) {
 		rows: results,
 		summary: { total: results.length, pass: passCount, fail: results.length - passCount, pass_rate_pct: passRate },
 	}
+
 	writeFileSync(JSON_OUT, JSON.stringify(sidecar, null, "\t"))
+
 	console.log(`\nsidecar: ${JSON_OUT}`)
 }

@@ -19,7 +19,7 @@ import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 export const description = "Evaluate the coarse placer (#244): in-distribution | openset | latin-offmap | quant-compare"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod.enum(["in-distribution", "openset", "latin-offmap", "quant-compare"]).describe(
 		argument({
 			name: "kind",
@@ -44,10 +44,11 @@ const OptionsSchema = zod.object({
 		.describe("quant-compare: int8 artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model-int8)"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
 type Options = zod.infer<typeof OptionsSchema>
-type Kind = zod.infer<typeof args>[0]
+
+type Kind = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)
 
@@ -84,7 +85,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const PlacerEval: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const PlacerEval: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(() => runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

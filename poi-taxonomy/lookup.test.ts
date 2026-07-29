@@ -39,11 +39,11 @@ describe("lookupPOICategory", () => {
 	})
 
 	it("gates locale-restricted synonyms like variant-aliases does", () => {
-		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1.0)
+		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1)
 		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookupPOICategory("chemist", "fr-FR")).toEqual([])
 		// Ungated synonyms match any locale at full confidence.
-		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1.0)
+		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1)
 	})
 
 	it("returns [] for unknown phrases", () => {
@@ -107,7 +107,7 @@ describe("resolveOvertureCategories", () => {
 		for (const category of getAllCategories()) {
 			const leaves = resolveOvertureCategories(category.id)
 
-			if (category.overtureCategories && category.overtureCategories.length > 0) {
+			if (category.overtureCategories && category.overtureCategories.length) {
 				expect(leaves).toEqual([...category.overtureCategories])
 			} else {
 				expect(leaves).toEqual([category.id])
@@ -119,7 +119,7 @@ describe("resolveOvertureCategories", () => {
 describe("lookup without a locale", () => {
 	it("hides locale-gated synonyms and keeps ungated ones", () => {
 		expect(lookupPOICategory("chemist")).toEqual([])
-		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1.0)
+		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1)
 	})
 })
 
@@ -195,8 +195,10 @@ describe("taxonomy integrity — malformed table", () => {
 
 	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
 		vi.resetModules()
+
 		vi.doMock("node:fs", async () => {
 			const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
+
 			const malformed = JSON.stringify({
 				version: "0.0.0",
 				overtureRelease: null,

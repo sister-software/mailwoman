@@ -52,9 +52,7 @@ import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
 import { resolverDefaultCountry } from "./parse.tsx"
 
-// ---------------------------------------------------------------------------
-// CLI contract — args + options
-// ---------------------------------------------------------------------------
+//#region CLI contract — args + options
 
 const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address to geocode"))
 export { ArgumentsSchema as args, OptionsSchema as options }
@@ -152,15 +150,16 @@ const OptionsSchema = zod.object({
 		),
 })
 
-// ---------------------------------------------------------------------------
-// Path helpers
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Path helpers
 
 function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
 	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
 	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
 	const raw = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+
 	const paths = (
 		raw
 			? raw
@@ -170,7 +169,7 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 			: wofShardPaths()
 	).filter((p: string) => existsSync(p))
 
-	if (paths.length === 0) {
+	if (!paths.length) {
 		throw commandError(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
@@ -180,9 +179,9 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	return paths
 }
 
-// ---------------------------------------------------------------------------
-// Core geocode logic
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Core geocode logic
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
@@ -223,12 +222,15 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
 	// normalizer, and a "us"-keyed probe against an FR shard silently misses wherever the rules diverge.
 	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
+
 	const explicitAp = options.addressPointsDb
 		? new mod.AddressPointSqliteLookup(options.addressPointsDb, { streetLocale: explicitApLocale })
 		: undefined
+
 	const explicitIp = options.interpolationDb
 		? new mod.StreetInterpolator({ dbPath: options.interpolationDb })
 		: undefined
+
 	const shards: ShardResolver =
 		explicitAp || explicitIp
 			? (slug) => {
@@ -262,6 +264,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	try {
 		const resolver = createWOFResolver(lookup)
+
 		// #912 lever 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
 		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
 		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
@@ -279,15 +282,17 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 				return { lat: lat!, lon: lon!, ...(w !== undefined ? { weight: Number(w) } : {}) }
 			})
+
 		const parsedTree = await parseForGeocode(input, { classifier })
 		const inferredScopeOK = options.defaultCountry || !isBareLocalityTree(parsedTree)
+
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,
 			shards,
 			...(nationalShards ? { nationalShards } : {}),
 			parsedTree,
-			...(bias.length > 0 ? { bias } : {}),
+			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
@@ -308,9 +313,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	}
 }
 
-// ---------------------------------------------------------------------------
-// schema.org JSON-LD projection (#1052)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region schema.org JSON-LD projection (#1052)
 
 /**
  * Project a {@link GeocodeResult} into a schema.org `Place` JSON-LD object (`--format jsonld`, #1052). `streetAddress`
@@ -340,14 +345,12 @@ function geocodeToSchemaOrg(result: GeocodeResult): SchemaOrgPlace {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Text formatter
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Text formatter
 
 function formatText(result: GeocodeResult): string {
-	const lines: string[] = []
-	lines.push(`input:            ${result.input}`)
-	lines.push(`resolution_tier:  ${result.resolution_tier}`)
+	const lines: string[] = [`input:            ${result.input}`, `resolution_tier:  ${result.resolution_tier}`]
 
 	if (result.lat != null && result.lon != null) {
 		lines.push(`coordinate:       ${result.lat.toFixed(6)}, ${result.lon.toFixed(6)}`)
@@ -371,7 +374,7 @@ function formatText(result: GeocodeResult): string {
 		lines.push(`postcode:         ${result.postcode}`)
 	}
 
-	if (result.hierarchy.length > 0) {
+	if (result.hierarchy.length) {
 		lines.push("hierarchy:")
 
 		for (const h of result.hierarchy) {
@@ -384,15 +387,15 @@ function formatText(result: GeocodeResult): string {
 	return lines.join("\n")
 }
 
-// ---------------------------------------------------------------------------
-// React command component
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region React command component
 
 const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
-		if (!input || input.trim().length === 0) {
+		if (!input || !input.trim().length) {
 			throw commandError(
 				'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 			)
@@ -413,3 +416,5 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 }
 
 export default GeocodeCommand
+
+//#endregion

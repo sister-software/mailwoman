@@ -18,9 +18,11 @@ import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddr
 const fixtureGeojsonl = repoRootPath("corpus", "fixtures", "openaddresses", "sample-us.geojson")
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-oa-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -42,6 +44,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row is KEPT — exclusion is a deliberate
 		// build-level act now (`--exclude-share-alike`), not a silent adapter default (#26) → 6 rows.
 		expect(manifest.yielded).toBe(6)
@@ -58,6 +61,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 
 		// Per-row licenses from the fixture
@@ -78,6 +82,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const austin = rows.find((r) => r.source_id === "openaddresses-f60718293041526a")
 		expect(austin?.license).toBe("ODbL-1.0")
@@ -90,12 +95,14 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const fifth = rows.find((r) => r.source_id === "openaddresses-a1b2c3d4e5f60718")
 		expect(fifth?.raw).toMatch(/^350 5th Avenue/)
 		expect(fifth?.raw).toContain("New York")
 		expect(fifth?.raw).toMatch(/\bNY\b/)
 		expect(fifth?.raw).toContain("10118")
+
 		expect(fifth?.components).toMatchObject({
 			house_number: "350",
 			street: "5th Avenue",
@@ -112,6 +119,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const wThirtyFourth = rows.find((r) => r.source_id === "openaddresses-b2c3d4e5f6071829")
 		expect(wThirtyFourth?.raw).toContain("Apt 12B")
@@ -136,6 +144,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(3)
 		expect(manifest.written).toBe(3)
 	})
@@ -143,6 +152,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	it("source_id prefers `hash`; falls back to `id`; then to a content hash", async () => {
 		// Build a tiny fixture with one of each shape inline.
 		const inline = join(scratch, "edge.geojsonl")
+
 		const lines = [
 			JSON.stringify({
 				type: "Feature",
@@ -180,6 +190,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 				},
 			}),
 		]
+
 		await writeFile(inline, `${lines.join("\n")}\n`, "utf8")
 
 		await runAdapter({
@@ -188,6 +199,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows).toHaveLength(3)
 		expect(rows[0]!.source_id).toBe("openaddresses-deadbeefcafef00d")
@@ -198,6 +210,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("skips blank lines, comments, and non-Feature objects without crashing", async () => {
 		const messy = join(scratch, "messy.geojsonl")
+
 		const lines = [
 			"",
 			"# this is a comment",
@@ -217,6 +230,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			}),
 			"",
 		]
+
 		await writeFile(messy, `${lines.join("\n")}\n`, "utf8")
 
 		const manifest = await runAdapter({
@@ -225,6 +239,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(1)
 		const rows = await loadRows()
 		expect(rows[0]?.components.street).toBe("Only Real Street")
@@ -237,13 +252,16 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, OPENADDRESSES_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 
@@ -256,7 +274,9 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect((await loadRows()).find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeDefined()
+
 		// The explicit adapter-scoped drop still works (vestigial fallback; build-level is the norm).
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
@@ -264,6 +284,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const dropped = await loadRows()
 		expect(dropped.find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeUndefined()
 
@@ -279,6 +300,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows).toHaveLength(6)
 		expect(rows.find((r) => r.source_id === "openaddresses-e5f6071829304152")?.license).toBe("CC-BY-SA-4.0")
@@ -286,6 +308,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {
 		const upper = join(scratch, "upper.geojsonl")
+
 		const line = JSON.stringify({
 			type: "Feature",
 			geometry: { type: "Point", coordinates: [0, 0] },
@@ -299,6 +322,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 				LICENSE: "CC-BY-3.0",
 			},
 		})
+
 		await writeFile(upper, `${line}\n`, "utf8")
 
 		await runAdapter({
@@ -307,6 +331,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows).toHaveLength(1)
 		expect(rows[0]?.source_id).toBe("openaddresses-upper1234")

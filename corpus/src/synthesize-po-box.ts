@@ -26,6 +26,22 @@
 
 import type { CanonicalRow } from "./types.ts"
 
+/**
+ * Digits a box number needs before a thousands comma is plausible (`1,234`).
+ */
+const MIN_DIGITS_FOR_COMMA_GROUPING = 4
+
+/**
+ * Digits a box number needs before a hyphen group is plausible (`12-34`).
+ */
+const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
+
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 export interface PoBoxBaseTuple {
 	locality: string
 	region: string
@@ -99,14 +115,16 @@ const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATE
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
+
 	const variants: Array<(s: string) => string> = [
 		// Thousand-separator comma (real input: "Box 1,234")
-		(s) => (s.length >= 4 ? `${s.slice(0, -3)},${s.slice(-3)}` : s),
+		(s) => (s.length >= MIN_DIGITS_FOR_COMMA_GROUPING ? `${s.slice(0, -3)},${s.slice(-3)}` : s),
 		// Embedded dash (real input: "PMB-200")
-		(s) => (s.length >= 3 ? `${s.slice(0, -2)}-${s.slice(-2)}` : s),
+		(s) => (s.length >= MIN_DIGITS_FOR_HYPHEN_GROUPING ? `${s.slice(0, -2)}-${s.slice(-2)}` : s),
 		// Embedded spaces (real input from OCR: "1 2 3 4")
 		(s) => s.split("").join(" "),
 	]
+
 	const f = variants[Math.floor(random() * variants.length)]!
 
 	return f(num)
@@ -129,11 +147,17 @@ export interface SynthesizedPoBoxRow {
 }
 
 export interface PoBoxSynthesisOpts {
-	/** Random function — pass deterministic seed for tests. Default Math.random. */
+	/**
+	 * Random function — pass deterministic seed for tests. Default Math.random.
+	 */
 	random?: () => number
-	/** Number generator. Default uniform over 1..99999. */
+	/**
+	 * Number generator. Default uniform over 1..99999.
+	 */
 	pickNumber?: (random: () => number) => string
-	/** PMB probability when locale supports it (and a street is provided in the base tuple). */
+	/**
+	 * PMB probability when locale supports it (and a street is provided in the base tuple).
+	 */
 	pmbRatio?: number
 }
 
@@ -150,7 +174,7 @@ function defaultPickNumber(random: () => number): string {
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
 
 	// 1000-9999
-	return String(10000 + Math.floor(random() * 90000)) // 10000-99999
+	return String(10_000 + Math.floor(random() * 90_000)) // 10000-99999
 }
 
 /**
@@ -163,7 +187,7 @@ export function synthesizePoBoxRow(
 ): SynthesizedPoBoxRow | null {
 	const random = opts.random ?? Math.random
 	const pickNumber = opts.pickNumber ?? defaultPickNumber
-	const pmbRatio = opts.pmbRatio ?? 0.0
+	const pmbRatio = opts.pmbRatio ?? 0
 
 	const locale = countryToLocale(base.country)
 	const tpl = LEADERS_BY_LOCALE.get(locale)
@@ -231,15 +255,21 @@ const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
 	{ code: "CMR", boxRequired: true },
 	{ code: "Unit", boxRequired: false },
 ]
+
 const MIL_PO_CODES = ["APO", "FPO", "DPO"] as const
-// region → plausible ZIP prefix (AE Europe 09xxx, AP Pacific 962-966xx, AA Americas 340xx).
+
+/**
+ * Region → plausible ZIP prefix (AE Europe 09xxx, AP Pacific 962-966xx, AA Americas 340xx).
+ */
 const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => string }> = [
 	{ region: "AE", zip: (r) => `09${String(Math.floor(r() * 1000)).padStart(3, "0")}` },
 	{ region: "AP", zip: (r) => `96${String(200 + Math.floor(r() * 100)).padStart(3, "0")}` },
 	{ region: "AA", zip: (r) => `340${String(Math.floor(r() * 100)).padStart(2, "0")}` },
 ]
 
-/** Generate one US military/diplomatic PO-box row (#517). Self-contained — draws no base tuple. */
+/**
+ * Generate one US military/diplomatic PO-box row (#517). Self-contained — draws no base tuple.
+ */
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random
 	const unit = MIL_UNITS[Math.floor(random() * MIL_UNITS.length)]!
@@ -293,7 +323,9 @@ export function countryToLocale(country: string): string {
 	return "en-US"
 }
 
-/** All locales we synthesize for. Exposed for tests and for source-weight tuning. */
+/**
+ * All locales we synthesize for. Exposed for tests and for source-weight tuning.
+ */
 export function supportedLocales(): ReadonlyArray<string> {
 	return PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale)
 }

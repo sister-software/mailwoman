@@ -125,6 +125,7 @@ export function createLogger(prefix?: string, ...args: string[][]): Logger {
  *
  * @implements {IRuntimeLogger}
  */
+// oxlint-disable-next-line unicorn/no-static-only-class -- a static façade whose members are bound to console's own methods
 export class ConsoleLogger {
 	static info: typeof console.info
 	static warn: typeof console.warn

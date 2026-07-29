@@ -18,16 +18,20 @@ interface NutsFeature {
 	geometry: { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] }
 }
 
-/** Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`. */
+/**
+ * Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
+ */
 export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: number } {
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NutsFeature[] }
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
+
 	// `nutsId` is a string contract with every shipped nuts.db — the acronym-casing convention applies
 	// to TS identifiers, not DB columns (readers alias it: `SELECT nutsId AS nutsID`).
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsId TEXT NOT NULL, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)"
 	)
+
 	const insert = db.prepare(
 		"INSERT INTO nuts_regions (nutsId, level, minLat, maxLat, minLon, maxLon, geom) VALUES (?,?,?,?,?,?,?)"
 	)
@@ -39,6 +43,7 @@ export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: num
 			feature.geometry.type === "Polygon"
 				? [feature.geometry.coordinates as number[][][]]
 				: (feature.geometry.coordinates as number[][][][])
+
 		let minLat = 90
 		let maxLat = -90
 		let minLon = 180
@@ -68,6 +73,7 @@ export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: num
 				}
 			}
 		}
+
 		insert.run(
 			feature.properties.NUTS_ID,
 			feature.properties.LEVL_CODE,
@@ -78,6 +84,7 @@ export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: num
 			JSON.stringify(polygons)
 		)
 	}
+
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_nuts_level_bbox ON nuts_regions (level, minLat, maxLat, minLon, maxLon)")
 	db.close()

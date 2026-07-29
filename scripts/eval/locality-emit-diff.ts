@@ -30,6 +30,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { base?: string; cand?: string; "default-country"?: string; golden?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -40,13 +41,16 @@ const WOF = dataRootPath("wof", "admin-global-priority.db")
 async function main() {
 	const n = Number(values["n"] || "30")
 	const cc = values["default-country"] || "PT"
+
 	const rows = readFileSync(values["golden"] || "", "utf8")
 		.trim()
 		.split("\n")
 		.slice(0, n)
 		.map((l) => JSON.parse(l))
+
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+
 	const mk = (m: string) =>
 		createScorer({
 			modelPath: m,
@@ -56,14 +60,17 @@ async function main() {
 			strict: true,
 			tier: "server",
 		})
+
 	const base = await mk(values["base"] || "")
 	const cand = await mk(values["cand"] || "")
 	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: WOF }) as never)
 	const opts = { defaultCountry: cc }
+
 	const didResolve = async (tree: unknown): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree as never, opts)
-		const has = (n: { placeID?: string; children: unknown[] }): boolean =>
-			!!n.placeID?.startsWith("wof:") || (n.children as { placeID?: string; children: unknown[] }[]).some(has)
+
+		const has = (node: { placeID?: string; children: unknown[] }): boolean =>
+			!!node.placeID?.startsWith("wof:") || (node.children as { placeID?: string; children: unknown[] }[]).some(has)
 
 		return (r.roots as { placeID?: string; children: unknown[] }[]).some(has)
 	}
@@ -96,14 +103,18 @@ async function main() {
 		if (br && !cr) {
 			candLostThatBaseHad++
 		}
+
 		const flag = br && !cr ? " <<< base resolved, cand DIDN'T" : ""
+
 		console.log(
 			`gold=${(row.components.locality ?? "").padEnd(22)} | v180="${bl}"[${br ? "R" : "-"}]  v190="${cl}"[${cr ? "R" : "-"}]${flag}`
 		)
 	}
+
 	console.log(
 		`\n${cc}: n=${rows.length} | locality differs v180≠v190: ${diff} (${((100 * diff) / rows.length).toFixed(0)}%)`
 	)
 	console.log(`resolve: v180=${baseRes} v190=${candRes} | rows v180-resolved-but-v190-didn't: ${candLostThatBaseHad}`)
 }
+
 await main()

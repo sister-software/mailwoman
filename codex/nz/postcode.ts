@@ -25,10 +25,14 @@ import type { Tagged } from "type-fest"
  */
 export type NzPostcode = Tagged<string, "NzPostcode">
 
-/** The NZ postcode shape: exactly four digits. */
+/**
+ * The NZ postcode shape: exactly four digits.
+ */
 export const NZ_POSTCODE_PATTERN = /^\d{4}$/
 
-/** Normalize a postcode surface form (trim only — NZ has no country-prefix courtesy form). */
+/**
+ * Normalize a postcode surface form (trim only — NZ has no country-prefix courtesy form).
+ */
 export function normalizeNzPostcode(raw: unknown): NzPostcode | null {
 	if (typeof raw !== "string") return null
 	const s = raw.trim()
@@ -36,7 +40,9 @@ export function normalizeNzPostcode(raw: unknown): NzPostcode | null {
 	return NZ_POSTCODE_PATTERN.test(s) ? (s as NzPostcode) : null
 }
 
-/** Type-predicate for a (normalized) New Zealand postcode. */
+/**
+ * Type-predicate for a (normalized) New Zealand postcode.
+ */
 export function isNzPostcode(input: unknown): input is NzPostcode {
 	return typeof input === "string" && NZ_POSTCODE_PATTERN.test(input)
 }

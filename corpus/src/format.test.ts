@@ -20,6 +20,7 @@ describe("formatAddress", () => {
 			},
 			"US"
 		)
+
 		expect(out).toBe("1600 Pennsylvania Ave NW\nWashington, DC 20500")
 	})
 
@@ -35,6 +36,7 @@ describe("formatAddress", () => {
 			"US",
 			{ separator: ", " }
 		)
+
 		expect(out).toBe("1600 Pennsylvania Ave NW, Washington, DC 20500")
 	})
 
@@ -50,6 +52,7 @@ describe("formatAddress", () => {
 			},
 			"FR"
 		)
+
 		expect(out).toBe("10 Rue de la République\n75008 Paris")
 	})
 
@@ -66,6 +69,7 @@ describe("formatAddress", () => {
 			"FR",
 			{ separator: ", " }
 		)
+
 		expect(out).toContain("75008 CEDEX 08")
 		expect(out).toContain("Avenue des Champs-Élysées")
 	})
@@ -80,6 +84,7 @@ describe("formatAddress", () => {
 			},
 			"US"
 		)
+
 		expect(out).toContain("PO Box 123")
 		expect(out).toContain("Portland, OR 97215")
 	})
@@ -95,6 +100,7 @@ describe("formatAddress", () => {
 			"US",
 			{ separator: ", " }
 		)
+
 		expect(out).toBe("Main St & 5th Ave, Portland, OR")
 	})
 
@@ -111,6 +117,7 @@ describe("formatAddress", () => {
 			"US",
 			{ separator: ", " }
 		)
+
 		expect(out).toBe("1600 Pennsylvania Ave NW Apt 4B, Washington, DC 20500")
 	})
 
@@ -127,6 +134,7 @@ describe("formatAddress", () => {
 			"US",
 			{ appendCountry: true, separator: ", " }
 		)
+
 		expect(out).toMatch(/United States of America$/u)
 	})
 
@@ -142,6 +150,7 @@ describe("formatAddress", () => {
 			"US",
 			{ separator: ", ", abbreviate: false }
 		)
+
 		const withAbbr = formatAddress(
 			{
 				house_number: "1600",
@@ -153,6 +162,7 @@ describe("formatAddress", () => {
 			"US",
 			{ separator: ", ", abbreviate: true }
 		)
+
 		expect(noAbbr).toContain("Avenue")
 		// US template's abbreviate rules turn "Avenue" into "Ave". Don't assert the exact
 		// transformation set — the OpenCage table evolves — only that something shrank.
@@ -184,6 +194,7 @@ describe("toOpenCageComponents", () => {
 			},
 			"US"
 		)
+
 		expect(oc).toEqual({
 			house_number: "1600",
 			road: "Pennsylvania Ave NW",

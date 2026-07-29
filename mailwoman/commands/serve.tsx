@@ -66,12 +66,14 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 		const forward = (signal: NodeJS.Signals) => {
 			const alive = Object.values(cluster.workers ?? {}).filter(Boolean) as Worker[]
 
-			if (alive.length === 0) {
+			if (!alive.length) {
 				process.exit(0)
 			}
+
 			let remaining = alive.length
 
 			for (const worker of alive) {
+				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				worker.once("exit", () => {
 					remaining--
 
@@ -79,8 +81,10 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 						process.exit(0)
 					}
 				})
+
 				worker.process.kill(signal)
 			}
+
 			setTimeout(() => {
 				// A wedged worker must not survive the primary holding the port.
 				for (const worker of alive) {
@@ -88,6 +92,7 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 						worker.process.kill("SIGKILL")
 					}
 				}
+
 				process.exit(0)
 			}, 10_000).unref()
 		}
@@ -192,6 +197,7 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 				if (cluster.worker?.id === 1) {
 					console.error(preflight.message)
 				}
+
 				process.exit(1)
 			}
 
@@ -214,6 +220,7 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 				draining = true
 
 				console.error(`[serve] worker ${process.pid} draining`)
+
 				void handle?.close().finally(() => process.exit(0))
 			}
 

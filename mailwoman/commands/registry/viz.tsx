@@ -17,7 +17,7 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod.enum(["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"]).describe(
 		argument({
 			name: "figure",
@@ -49,10 +49,11 @@ const OptionsSchema = zod.object({
 		.describe("yardstick-figure: output SVG path (default docs/articles/evals/charts/dedup-yardstick.svg)"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
 type Options = zod.infer<typeof OptionsSchema>
-type Figure = zod.infer<typeof args>[0]
+
+type Figure = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)
 
@@ -82,7 +83,7 @@ function runFigure(figure: Figure, options: Options): string {
 	}
 }
 
-const RegistryViz: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const RegistryViz: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => runFigure(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

@@ -16,13 +16,26 @@
  *   under test/build/. Shape originally ported from sister-software/authentik's web/playwright.config.js.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { defineConfig, devices } from "@playwright/test"
 
-const CI = !!$public.CI
+// Playwright loads this file with its OWN loader, which walks up from every import to find a tsconfig.
+// Importing `$public` from @mailwoman/core drags core/tsconfig.json into that walk, and Playwright
+// handles neither of the things it relies on — a package-name `extends` resolved from hoisted
+// node_modules, nor directory-style `references` ("../codex", which TypeScript reads as
+// "../codex/tsconfig.json"). Both are fine under Node and tsc; only this loader chokes, and it does so
+// before it ever reads the `tsconfig` option below.
+//
+// So this file reads the two variables it needs directly, the same carve-out the run-docs skill driver
+// takes for the same reason: an external runner loads it before the repo's helpers are reachable.
+// oxlint-disable-next-line sister-software/no-process-globals -- see above; Playwright loads this outside the module graph
+const env = process.env
 
-/** When set, run against a deployed URL and skip the local build+serve machinery. */
-const remoteURL = $public.MAILWOMAN_DEMO_URL
+const CI = !!env.CI
+
+/**
+ * When set, run against a deployed URL and skip the local build+serve machinery.
+ */
+const remoteURL = env.MAILWOMAN_DEMO_URL
 const LOCAL_PORT = 7770
 const baseURL = remoteURL ?? `http://localhost:${LOCAL_PORT}`
 

@@ -91,6 +91,7 @@ function openapi(): void {
 	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
 		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
 		console.error("Usage: mailwoman-libpostal openapi [--flavor 3.1|3.0] [--out <path>]")
+
 		process.exit(1)
 	}
 

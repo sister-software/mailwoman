@@ -12,6 +12,7 @@ import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
 import type React from "react"
@@ -20,6 +21,11 @@ import zod from "zod"
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
+
+/**
+ * Bytes per KiB, for human-readable sizes.
+ */
+const BYTES_PER_KIB = 1024
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -144,7 +150,7 @@ const ParseConfigSchema = zod.object({
 		.number()
 		.int()
 		.min(1)
-		.max(10000)
+		.max(10_000)
 		.optional()
 		.describe(
 			"Run the pipeline N times against the input and emit per-stage p50/p95/p99 + total wall + heap delta. " +
@@ -169,6 +175,7 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 		if (!POLICY_MODES.includes(mode as PolicyMode)) {
 			throw commandError(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
 		}
+
 		out.push({ component: component as ComponentTag, mode: mode as PolicyMode })
 	}
 
@@ -181,7 +188,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
 		options.benchmark === undefined &&
-		!(options.policy && options.policy.length > 0) &&
+		!(options.policy && options.policy.length) &&
 		!options.neural &&
 		!options.noNeural &&
 		!options.model &&
@@ -198,7 +205,9 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	return <ParseTask options={options} args={args} weightsOutcome="neural" />
 }
 
-/** The actual parse work, one hook-owning component below the guard so the prompt can render first. */
+/**
+ * The actual parse work, one hook-owning component below the guard so the prompt can render first.
+ */
 function ParseTask({
 	options,
 	args,
@@ -212,7 +221,7 @@ function ParseTask({
 		const input = args[0]!
 
 		if (options.benchmark !== undefined) {
-			if ((options.policy && options.policy.length > 0) || options.neural) {
+			if ((options.policy && options.policy.length) || options.neural) {
 				throw commandError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --policy / --neural)"
 				)
@@ -222,7 +231,7 @@ function ParseTask({
 		}
 
 		// --policy implies the neural proposal/policy path.
-		if (options.policy && options.policy.length > 0) {
+		if (options.policy && options.policy.length) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
 			return runNeural(input, options, policyOverrides)
@@ -262,7 +271,7 @@ function ParseTask({
 export function localeToCountry(locale: string | undefined): string | undefined {
 	if (!locale) return undefined
 	const parts = locale.split("-")
-	const region = parts.length > 1 ? parts[parts.length - 1] : undefined
+	const region = parts.length > 1 ? parts.at(-1) : undefined
 
 	return region && /^[A-Za-z]{2}$/.test(region) ? region.toUpperCase() : undefined
 }
@@ -303,9 +312,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
-async function tryBuildFST(
-	options: zod.infer<typeof ParseConfigSchema>
-): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined> {
+async function tryBuildFST(options: zod.infer<typeof ParseConfigSchema>): Promise<FSTMatcher | undefined> {
 	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined
@@ -338,6 +345,7 @@ async function resolveWithCandidates(
 	if (options.candidates !== undefined) {
 		opts.candidatesPerLookup = options.candidates + 1
 	}
+
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) {
@@ -482,6 +490,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 			resolveOpts.defaultCountry = dc
 		}
 	}
+
 	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
 		locale: options.locale,
 	}
@@ -518,7 +527,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 const BENCHMARK_WARMUP_ITERATIONS = 5
 
 function percentile(sortedAsc: ReadonlyArray<number>, p: number): number {
-	if (sortedAsc.length === 0) return 0
+	if (!sortedAsc.length) return 0
 	const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length))
 
 	return sortedAsc[idx]!
@@ -538,7 +547,7 @@ function formatBytes(b: number): string {
 	const sign = b < 0 ? "-" : "+"
 	const abs = Math.abs(b)
 
-	if (abs < 1024) return `${sign}${abs}B`
+	if (abs < BYTES_PER_KIB) return `${sign}${abs}B`
 
 	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
 
@@ -579,9 +588,10 @@ async function runBenchmark(
 			await runOne(pipeline)
 		}
 
-		if (typeof global.gc === "function") {
-			global.gc()
+		if (typeof globalThis.gc === "function") {
+			globalThis.gc()
 		}
+
 		const heapBefore = process.memoryUsage().heapUsed
 
 		const stageRuns = new Map<string, number[]>()
@@ -600,6 +610,7 @@ async function runBenchmark(
 					arr = []
 					stageRuns.set(stage, arr)
 				}
+
 				arr.push(ms)
 			}
 		}
@@ -615,43 +626,48 @@ async function runBenchmark(
 			)
 		: await collect(createRuntimePipeline({ classifier, poiQueryKind: options.poi }))
 
-	const lines: string[] = []
-	lines.push(`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`)
-	lines.push(`input: ${JSON.stringify(input)}`)
-	lines.push(
-		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`
-	)
+	const lines: string[] = [
+		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,
+		`input: ${JSON.stringify(input)}`,
+		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`,
+	]
+
 	const pathSummary = Array.from(collected.paths.entries())
 		.map(([p, n]) => `${p}=${n}`)
 		.join(" ")
+
 	lines.push(`path breakdown: ${pathSummary}`)
 	lines.push("")
 	lines.push("stage              p50       p95       p99       max")
 	lines.push("─────────────────  ────────  ────────  ────────  ────────")
 
-	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).sort()) {
-		const sorted = [...ms].sort((a, b) => a - b)
+	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).toSorted()) {
+		const sorted = [...ms].toSorted((a, b) => a - b)
+
 		lines.push(
 			[
 				stage.padEnd(17),
 				formatMs(percentile(sorted, 50)).padStart(8),
 				formatMs(percentile(sorted, 95)).padStart(8),
 				formatMs(percentile(sorted, 99)).padStart(8),
-				formatMs(sorted[sorted.length - 1] ?? 0).padStart(8),
+				formatMs(sorted.at(-1) ?? 0).padStart(8),
 			].join("  ")
 		)
 	}
-	const totalsSorted = [...collected.totals].sort((a, b) => a - b)
+
+	const totalsSorted = [...collected.totals].toSorted((a, b) => a - b)
 	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+
 	lines.push(
 		[
 			"TOTAL".padEnd(17),
 			formatMs(percentile(totalsSorted, 50)).padStart(8),
 			formatMs(percentile(totalsSorted, 95)).padStart(8),
 			formatMs(percentile(totalsSorted, 99)).padStart(8),
-			formatMs(totalsSorted[totalsSorted.length - 1] ?? 0).padStart(8),
+			formatMs(totalsSorted.at(-1) ?? 0).padStart(8),
 		].join("  ")
 	)
+
 	lines.push("")
 	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
 
@@ -736,7 +752,7 @@ async function runNeural(
 
 	// Fast path: no policy AND no resolve → preserve containment nesting via NeuralAddressClassifier
 	// 's direct projection helpers (returns the serialized string in one call).
-	if (policyOverrides.length === 0 && !options.resolve) {
+	if (!policyOverrides.length && !options.resolve) {
 		switch (options.format) {
 			case "xml":
 				return neural.parseXML(input, { inputMode: options.inputMode })
@@ -750,7 +766,7 @@ async function runNeural(
 	// Slow paths build the tree explicitly so we can resolve / re-project before serialization.
 	let tree: AddressTree
 
-	if (policyOverrides.length > 0) {
+	if (policyOverrides.length) {
 		// Policy path: containment nesting is lost — see proposals-to-tree.ts for why.
 		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
 		// Without rule classifiers in the CLI loop, the registry's default rule_only would drop every

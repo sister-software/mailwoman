@@ -31,9 +31,12 @@ const { values, positionals } = parseArgs({
 if (positionals[0] === "build") {
 	if (!values.geojson || !values.out) {
 		console.error("Usage: mailwoman-nuts build --geojson <path> --out <db>")
+
 		process.exit(1)
 	}
+
 	const { regions } = buildNutsDB(values.geojson, values.out)
+
 	console.error(`built ${values.out} (${regions} regions)`)
 } else {
 	const lat = Number(positionals[0])
@@ -41,9 +44,14 @@ if (positionals[0] === "build") {
 
 	if (!values.db || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 		console.error("Usage: mailwoman-nuts --db <db> -- <lat> <lon>")
+
 		process.exit(1)
 	}
+
 	const lookup = new NutsLookup({ databasePath: values.db })
+
+	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	console.log(JSON.stringify({ nuts: lookup.find(lat, lon) }))
+
 	lookup.close()
 }

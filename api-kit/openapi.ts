@@ -35,7 +35,9 @@ export interface OpenAPIDocInfo {
 	security?: unknown[]
 }
 
-/** Split an `OpenAPIDocInfo` into the document's `info` block and its top-level sibling fields. */
+/**
+ * Split an `OpenAPIDocInfo` into the document's `info` block and its top-level sibling fields.
+ */
 function toDocumentConfig(info: OpenAPIDocInfo) {
 	const { title, version, description, summary, license, contact, externalDocs, servers, tags, security } = info
 
@@ -48,14 +50,18 @@ function toDocumentConfig(info: OpenAPIDocInfo) {
 	}
 }
 
-/** Mount the OpenAPI 3.1 document endpoint on `app` (default `/openapi.json`). */
+/**
+ * Mount the OpenAPI 3.1 document endpoint on `app` (default `/openapi.json`).
+ */
 export function attachOpenAPIDocs(app: OpenAPIHono, info: OpenAPIDocInfo, path = "/openapi.json"): void {
 	// openapi3-ts's InfoObject/OpenAPIObject carry an `x-${string}` extension index signature that
 	// a plain interface can't satisfy — cast at the boundary rather than widening the public type.
 	app.doc31(path, { openapi: "3.1.0", ...toDocumentConfig(info) } as never)
 }
 
-/** Emit both document flavors programmatically (build artifacts, parity tests, client generation). */
+/**
+ * Emit both document flavors programmatically (build artifacts, parity tests, client generation).
+ */
 export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { v31: object; v30: object } {
 	return {
 		v31: app.getOpenAPI31Document({ openapi: "3.1.0", ...toDocumentConfig(info) } as never),

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ResultNode } from "../../shared/resources.tsx"
+import type { ResultNode } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 
@@ -42,7 +42,7 @@ export const FailureDiagnostic: React.FC<FailureDiagnosticProps> = ({ nodes }) =
 		)
 	}
 
-	if (hints.length === 0) {
+	if (!hints.length) {
 		hints.push(
 			"The parsed components look reasonable, but the WOF slim subset (~35 MB, top-1k US localities + all postcodes) doesn't index this entry. The full WOF gazetteer (~1.5 GB) would likely resolve it."
 		)

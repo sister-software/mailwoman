@@ -13,7 +13,7 @@
 import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { WebONNXRunner } from "./web-onnx-runner.ts"
 
@@ -31,6 +31,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 			for (let i = 0; i < 8; i++) {
 				await runner.infer(ids)
 			}
+
 			const t0 = performance.now()
 			const N = 40
 			let spans = false
@@ -41,11 +42,19 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 
 			return { ms: (performance.now() - t0) / N, spans }
 		}
+
 		const a = await bench(V264)
 		const b = await bench(V301)
+
 		console.log(`\n  v264 (no spans) : ${a.ms.toFixed(2)} ms/infer  spans=${a.spans}`)
 		console.log(`  v301 (spans)    : ${b.ms.toFixed(2)} ms/infer  spans=${b.spans}`)
 		console.log(`  delta           : ${(b.ms - a.ms).toFixed(2)} ms (${((100 * (b.ms - a.ms)) / a.ms).toFixed(1)}%)`)
 		console.log(`  NOTE: v301 unflattens spans on EVERY infer here — the full cost, not logits-only.\n`)
+
+		// Timing is reported rather than asserted, being machine-dependent. What the comparison is
+		// actually for — that v264 emits no span scores and v301 does — is an invariant, and was
+		// going unchecked.
+		expect(a.spans).toBe(false)
+		expect(b.spans).toBe(true)
 	}, 300_000)
 })

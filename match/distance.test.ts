@@ -32,7 +32,10 @@ describe("haversineKm", () => {
 })
 
 describe("distanceComparison", () => {
-	type R = { coord?: LatLon }
+	interface R {
+		coord?: LatLon
+	}
+
 	const cmp = distanceComparison<R>({ name: "geo", extract: (r) => r.coord, levels: DEFAULT_DISTANCE_LEVELS })
 	const at = (latitude: number) => ({ coord: { latitude, longitude: 0 } })
 
@@ -45,18 +48,23 @@ describe("distanceComparison", () => {
 
 	it("yields no evidence when a coordinate is missing or invalid", () => {
 		expect(cmp.assess(at(0), {})).toBe(-1)
-		expect(cmp.assess(at(0), { coord: { latitude: NaN, longitude: 0 } })).toBe(-1)
+		expect(cmp.assess(at(0), { coord: { latitude: Number.NaN, longitude: 0 } })).toBe(-1)
 	})
 })
 
 describe("spatialComparison (collapsed key + distance, A1)", () => {
-	type R = { key?: string; coord?: LatLon }
+	interface R {
+		key?: string
+		coord?: LatLon
+	}
+
 	const cmp = spatialComparison<R>({
 		name: "spatial",
 		key: (r) => r.key,
 		coordinate: (r) => r.coord,
 		levels: DEFAULT_SPATIAL_LEVELS,
 	})
+
 	const rec = (key: string | undefined, latitude: number, longitude = 0): R => ({ key, coord: { latitude, longitude } })
 
 	it("scores an exact canonical-key match as the top tier regardless of coordinate", () => {

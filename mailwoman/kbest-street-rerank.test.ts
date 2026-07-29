@@ -30,7 +30,9 @@ const grammar = (): SemiCRFTransitions => {
 	}
 }
 
-/** A trace over "Rue Corsier" (2 tokens). `spanScores` optional — omit to exercise the fallback. */
+/**
+ * A trace over "Rue Corsier" (2 tokens). `spanScores` optional — omit to exercise the fallback.
+ */
 const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 	({
 		text: "Rue Corsier",
@@ -105,7 +107,7 @@ describe("rerankByStreetEvidence", () => {
 		// Same tuned k-best that WOULD move (see the G1-skip test), but the argmax now carries a region token. The input
 		// is structured; the rerank must not steal the region-labeled token. It returns the argmax tree, not moved.
 		const t = trace(tunedSpanScores())
-		t.tokens[1] = { ...t.tokens[1], label: "B-region" }
+		t.tokens[1] = { ...t.tokens[1]!, label: "B-region" }
 		const res = await rerankByStreetEvidence(mockClassifier(t), "Rue Corsier", mockEvidence(["Rue Corsier"]), grammar())
 		expect(res.moved).toBe(false)
 		expect(res.rank).toBe(0)

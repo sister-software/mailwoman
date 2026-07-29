@@ -33,15 +33,22 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  * - House-number fragments on six FR golden rows (the model double-labels the number; the comma is the only thing keeping
  *   the spans honest). A comma between same-tag spans is a list/separator, never the inside of a surface form.
  */
+/**
+ * Tokens a gap may span and still be bridged. Wider gaps are separate spans, not one interrupted span.
+ */
+const MAX_BRIDGEABLE_GAP = 3
+
 function bridgeable(gap: string): boolean {
-	if (gap.length === 0 || gap.length > 3) return false
+	if (!gap.length || gap.length > MAX_BRIDGEABLE_GAP) return false
 
 	if (!/^[.\-/'\u2019\s]*$/.test(gap)) return false
 
 	return /[^\s]/.test(gap)
 }
 
-/** Options for {@link bridgePunctuationGaps}. */
+/**
+ * Options for {@link bridgePunctuationGaps}.
+ */
 export interface BridgePunctuationOpts {
 	/**
 	 * Structural spans (from the Stage 2.7 span proposer — ANNOTATION/QUOTED groups, delimiters inclusive) whose
@@ -54,7 +61,9 @@ export interface BridgePunctuationOpts {
 	blockedSpans?: ReadonlyArray<{ start: number; end: number }>
 }
 
-/** True when a structural boundary falls inside the closed gap interval `[gapStart, gapEnd]`. */
+/**
+ * True when a structural boundary falls inside the closed gap interval `[gapStart, gapEnd]`.
+ */
 function crossesBlockedBoundary(
 	gapStart: number,
 	gapEnd: number,
@@ -93,6 +102,7 @@ export function bridgePunctuationGaps(
 			while (back >= 0 && out[back]!.label === "O" && out[back]!.start >= (out[back - 1]?.end ?? 0)) {
 				back--
 			}
+
 			const prev = back >= 0 ? out[back]! : undefined
 			const tag = token.label.replace(/^[BI]-/, "")
 			const prevTag = prev?.label.replace(/^[BI]-/, "")
@@ -111,15 +121,18 @@ export function bridgePunctuationGaps(
 				// Widen the previous fragment through the gap (absorbing the punctuation O tokens);
 				// keep the lower confidence so the merged span never overstates its weakest piece.
 				out.length = back + 1
+
 				out[back] = {
 					...prev,
 					end: token.end,
 					piece: text.slice(prev.start, token.end),
 					confidence: Math.min(prev.confidence, token.confidence),
 				}
+
 				continue
 			}
 		}
+
 		out.push(token)
 	}
 

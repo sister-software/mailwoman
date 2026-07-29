@@ -36,6 +36,11 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
+/**
+ * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
+ */
+const MIN_OUTLIER_LENGTH = 6
+
 interface OaTestRow {
 	raw: string
 	country: string
@@ -44,17 +49,27 @@ interface OaTestRow {
 	family: string
 }
 
-/** Options for {@linkcode buildOutlierOA}. */
+/**
+ * Options for {@linkcode buildOutlierOA}.
+ */
 export interface BuildOutlierOAOptions {
-	/** Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`. */
+	/**
+	 * Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
+	 */
 	oaDir?: string
-	/** Row cap per off-map country. Default 6000. */
+	/**
+	 * Row cap per off-map country. Default 6000.
+	 */
 	perCountry?: number
-	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildOutlierOA}. */
+/**
+ * Result of {@linkcode buildOutlierOA}.
+ */
 export interface BuildOutlierOAResult {
 	train: number
 	val: number
@@ -63,14 +78,18 @@ export interface BuildOutlierOAResult {
 	heldoutCountries: number
 }
 
-// The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts)
+/**
+ * The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts)
+ */
 const IN_MAP = new Set(["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"])
 
-// Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips
-// plausibly carry; the actual TRAIN/HELDOUT set is intersected with what's on disk at runtime. HELDOUT
-// families are the generalization probe (the model never sees a single row from them).
-// Off-map families, intersected at runtime with what OA's europe+asia zips actually carry (verified
-// on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
+/**
+ * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry;
+ * the actual TRAIN/HELDOUT set is intersected with what's on disk at runtime. HELDOUT families are the generalization
+ * probe (the model never sees a single row from them). Off-map families, intersected at runtime with what OA's
+ * europe+asia zips actually carry (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro
+ * sa se sg si sk).
+ */
 const FAMILIES: Record<string, string[]> = {
 	slavic_latin: ["PL", "CZ", "SK", "SI"],
 	romance_offmap: ["PT", "RO"],
@@ -83,11 +102,16 @@ const FAMILIES: Record<string, string[]> = {
 	oceania: ["AU", "NZ", "NC"],
 	middle_east: ["AE", "IL", "KW", "QA", "SA"],
 }
-// Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row
-// from — Baltic (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+
+/**
+ * Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row from — Baltic
+ * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+ */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
-/** Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin. */
+/**
+ * Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin.
+ */
 function assemble(r: Record<string, unknown>): string | null {
 	const num = (r.number ?? "").toString().trim()
 	const street = (r.street ?? "").toString().trim()
@@ -112,7 +136,9 @@ function assemble(r: Record<string, unknown>): string | null {
 	}
 }
 
-/** Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc. */
+/**
+ * Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc.
+ */
 export async function buildOutlierOA(
 	options: BuildOutlierOAOptions = {},
 	report?: (line: string) => void
@@ -141,11 +167,12 @@ export async function buildOutlierOA(
 				// number both resolve. Pull a generous superset, dedup+cap in JS.
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
-		} catch (e) {
-			report?.(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+		} catch (error) {
+			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
 
 			return []
 		}
+
 		const seen = new Set<string>()
 		const out: string[] = []
 
@@ -156,16 +183,17 @@ export async function buildOutlierOA(
 			for (const [k, v] of Object.entries(r)) {
 				row[k.toLowerCase()] = v
 			}
+
 			const raw = assemble(row)
 
-			if (!raw || raw.length < 6 || seen.has(raw)) continue
+			if (!raw || raw.length < MIN_OUTLIER_LENGTH || seen.has(raw)) continue
 			seen.add(raw)
 			out.push(raw)
 
 			if (out.length >= PER) break
 		}
 
-		return out.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
+		return out.toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	}
 
 	const trainAppend: string[] = []
@@ -181,12 +209,13 @@ export async function buildOutlierOA(
 			if (IN_MAP.has(cc)) continue
 			const rows = await rowsFor(cc)
 
-			if (rows.length === 0) continue
+			if (!rows.length) continue
 
 			if (heldout) {
 				for (const raw of rows) {
 					testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
 				}
+
 				heldCC++
 				report?.(`  HELDOUT ${cc} (${family}): ${rows.length} (test-only)`)
 			} else {
@@ -204,11 +233,13 @@ export async function buildOutlierOA(
 				for (const raw of rows.slice(nVal + nTest)) {
 					trainAppend.push(raw)
 				}
+
 				trainCC++
 				report?.(`  TRAIN ${cc} (${family}): ${rows.length}`)
 			}
 		}
 	}
+
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
@@ -217,6 +248,7 @@ export async function buildOutlierOA(
 	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
 	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+
 	report?.(
 		`wrote test-latin-offmap.jsonl: ${testRows.length} (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
 	)

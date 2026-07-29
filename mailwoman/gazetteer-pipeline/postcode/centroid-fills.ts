@@ -27,11 +27,17 @@ import type { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 export interface CentroidFillOptions {
-	/** GeoNames postal dump dir (`<CC>.txt`). Omit to skip pass 2. */
+	/**
+	 * GeoNames postal dump dir (`<CC>.txt`). Omit to skip pass 2.
+	 */
 	geonamesDir?: string
-	/** The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only). Omit to skip passes 3–4. */
+	/**
+	 * The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only). Omit to skip passes 3–4.
+	 */
 	adminPath?: string
-	/** WOF repos root for the pass-4 `wof:hierarchy` read. Omit to skip pass 4. */
+	/**
+	 * WOF repos root for the pass-4 `wof:hierarchy` read. Omit to skip pass 4.
+	 */
 	reposDir?: string
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -91,6 +97,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 			if (cur) {
 				cur.lat += lat
 				cur.lon += lon
+
 				cur.n++
 			} else {
 				acc.set(pc, { lat, lon, n: 1 })
@@ -105,13 +112,16 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 			const res = update.run(lat, lon, lat, lat, lon, lon, cc, pc)
 			fixed += Number(res.changes)
 		}
+
 		db.exec("COMMIT")
 	}
 
 	return fixed
 }
 
-/** WOF id → repo-relative GeoJSON path: chunk the id into groups of 3, then `<id>.geojson`. */
+/**
+ * WOF id → repo-relative GeoJSON path: chunk the id into groups of 3, then `<id>.geojson`.
+ */
 function wofIDPath(id: number): string {
 	const s = String(id)
 	const parts: string[] = []
@@ -136,6 +146,7 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	const adminCentroid = db.prepare(
 		`SELECT latitude AS lat, longitude AS lon FROM adm.spr WHERE id=? AND latitude!=0 AND longitude!=0 LIMIT 1`
 	)
+
 	const update = db.prepare(
 		`UPDATE spr SET latitude=?, longitude=?, min_latitude=?, max_latitude=?, min_longitude=?, max_longitude=? WHERE id=?`
 	)
@@ -164,31 +175,37 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 
 			if (c) {
 				update.run(c.lat, c.lon, c.lat, c.lat, c.lon, c.lon, row.id)
+
 				fixed++
+
 				break
 			}
 		}
 	}
+
 	db.exec("COMMIT")
 
 	return fixed
 }
 
-/** Run the fill ladder (passes 2–4) on an OPEN staging postcode DB. See the module docstring for priorities. */
+/**
+ * Run the fill ladder (passes 2–4) on an OPEN staging postcode DB. See the module docstring for priorities.
+ */
 export async function fillPostcodeCentroids(
 	db: DatabaseSync,
 	opts: CentroidFillOptions = {}
 ): Promise<CentroidFillResult> {
 	const phase = opts.onPhase ?? (() => {})
+
 	const placed = () =>
 		(
 			db.prepare(`SELECT COUNT(*) n FROM spr WHERE placetype='postalcode' AND is_current!=0 AND latitude!=0`).get() as {
 				n: number
 			}
 		).n
+
 	const placedBefore = placed()
 	let geonamesFixed = 0
-	let parentBorrowFixed = 0
 	let ancestorFixed = 0
 
 	// Pass 2: GeoNames postal — runs FIRST so the postcode's own centroid wins over the coarser parent-borrow.
@@ -198,13 +215,14 @@ export async function fillPostcodeCentroids(
 	}
 
 	if (opts.adminPath && existsSync(opts.adminPath)) {
-		db.exec(`ATTACH '${opts.adminPath.replace(/'/g, "''")}' AS adm`)
+		db.exec(`ATTACH '${opts.adminPath.replaceAll("'", "''")}' AS adm`)
 
 		try {
 			// Pass 3: borrow the parent locality's centroid. A single correlated UPDATE keeps the WOF id
 			// and every other column intact.
 			phase("fill-parent-borrow")
 			db.exec("BEGIN")
+
 			const res = db.exec(`
 				UPDATE spr
 				SET latitude = (SELECT a.latitude FROM adm.spr a WHERE a.id = spr.parent_id),
@@ -222,6 +240,7 @@ export async function fillPostcodeCentroids(
 				      WHERE a.id = spr.parent_id AND a.latitude != 0 AND a.longitude != 0
 				  )
 			`)
+
 			db.exec("COMMIT")
 			void res
 
@@ -234,8 +253,10 @@ export async function fillPostcodeCentroids(
 			db.exec("DETACH adm")
 		}
 	}
+
 	const placedAfter = placed()
-	parentBorrowFixed = placedAfter - placedBefore - geonamesFixed - ancestorFixed
+	const parentBorrowFixed = placedAfter - placedBefore - geonamesFixed - ancestorFixed
+
 	const total = (
 		db.prepare(`SELECT COUNT(*) n FROM spr WHERE placetype='postalcode' AND is_current!=0`).get() as { n: number }
 	).n

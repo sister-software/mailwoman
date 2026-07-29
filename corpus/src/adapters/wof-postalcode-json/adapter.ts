@@ -136,6 +136,10 @@ export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string
 	return slots
 }
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const WOF_POSTALCODE_ADAPTER_ID = "wof-postalcode"
 
 export function createWOFPostalcodeAdapter(): CorpusAdapter {
@@ -163,7 +167,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit postcode rows only, sorted by id for determinism.
-			const ids = [...byID.keys()].sort((a, b) => a - b)
+			const ids = [...byID.keys()].toSorted((a, b) => a - b)
 			let emitted = 0
 
 			for (const id of ids) {
@@ -186,7 +190,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
 
 						yield {
 							raw,
@@ -198,6 +202,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: "CC0-1.0",
 						}
+
 						emitted++
 					}
 				}
@@ -206,4 +211,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const wofPostalcodeAdapter = createWOFPostalcodeAdapter()

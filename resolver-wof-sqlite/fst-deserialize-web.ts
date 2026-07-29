@@ -14,13 +14,39 @@ import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
+/**
+ * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12
+ * to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
+ */
+const VERSION_WIDE_STATE_COUNTERS = 4
+
+/**
+ * State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
+const WIDE_STATE_ENTRY_SIZE = 16
+
+/**
+ * State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}.
+ */
+const NARROW_STATE_ENTRY_SIZE = 12
+
+/**
+ * First format version carrying the trailing metadata block; older files simply have none.
+ */
+const VERSION_WITH_METADATA = 3
+
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
-const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00] // "FST\0"
-// Must track the serializer's VERSION (fst-serialize.ts, currently 4). The v3 provenance + v4
-// 16-byte-state/u32-count layout logic below already matches the Node deserializer; only this gate
-// was left stale at 2, so the browser FST loader rejected every real (v4) artifact.
+/**
+ * "FST\0".
+ */
+const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00]
+/**
+ * Must track the serializer's VERSION (fst-serialize.ts, currently 4). The v3 provenance + v4 16-byte-state/u32-count
+ * layout logic below already matches the Node deserializer; only this gate was left stale at 2, so the browser FST
+ * loader rejected every real (v4) artifact.
+ */
 const MAX_VERSION = 4
 
 const PLACETYPE_ORDER: readonly PlacetypeID[] = [
@@ -58,6 +84,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	if (version < 1 || version > MAX_VERSION) {
 		throw new Error(`FST version ${version} unsupported (expected 1..${MAX_VERSION})`)
 	}
+
 	const isV2 = version >= 2
 	// flags bit0 (survey #4, mirrors fst-serialize.ts): place rows carry surface-ambiguity data.
 	const hasAmbiguity = (view.getUint16(6, true) & 1) === 1
@@ -77,6 +104,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		strOffsets[i] = view.getUint32(pos, true)
 		pos += 4
 	}
+
 	const strDataStart = pos
 	const strings: string[] = new Array(stringCount)
 
@@ -85,10 +113,11 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		const end = strDataStart + strOffsets[i + 1]!
 		strings[i] = decoder.decode(bytes.subarray(start, end))
 	}
+
 	pos += stringBytes
 
 	// --- State table ---
-	const stateEntrySize = version >= 4 ? 16 : 12
+	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
@@ -99,8 +128,12 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = view.getUint32(sp, true)
 		const placeStart = view.getUint32(sp + 4, true)
-		const edgeCountForState = version >= 4 ? view.getUint32(sp + 8, true) : view.getUint16(sp + 8, true)
-		const placeCountForState = version >= 4 ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
+
+		const edgeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? view.getUint32(sp + 8, true) : view.getUint16(sp + 8, true)
+
+		const placeCountForState =
+			version >= VERSION_WIDE_STATE_COUNTERS ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
 
 		const edges = new Map<string, number>()
 
@@ -121,9 +154,10 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(view.getUint32(pp + 24 + ci * 4, true))
 			}
+
 			const rawImportance = isV2
 				? view.getFloat32(pp + 12, true)
-				: Math.min(1.0, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)
+				: Math.min(1, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)
 
 			places[pi] = {
 				wofID: view.getUint32(pp, true),
@@ -151,7 +185,7 @@ export function readFSTProvenanceWeb(input: ArrayBuffer | Uint8Array): FSTProven
 	if (bytes.byteLength < HEADER_SIZE) return undefined
 	const version = view.getUint16(4, true)
 
-	if (version < 3) return undefined
+	if (version < VERSION_WITH_METADATA) return undefined
 	const provenanceOffset = view.getUint32(28, true)
 
 	if (provenanceOffset === 0 || provenanceOffset >= bytes.byteLength) return undefined

@@ -92,6 +92,7 @@ function parseArgs(): Args {
 
 	if (!out.manifestPath) {
 		console.error("Usage: verify-shard-acks.ts --manifest <MANIFEST.json> [--verbose]")
+
 		process.exit(2)
 	}
 
@@ -115,11 +116,13 @@ function main(): void {
 
 		if (flags === undefined) {
 			untracked++
+
 			continue
 		}
 
 		if (flags === 0) {
 			clean.push(s)
+
 			continue
 		}
 
@@ -140,18 +143,20 @@ function main(): void {
 	console.log(`- **Flagged + UNACKNOWLEDGED:** ${unacknowledged.length}`)
 	console.log("")
 
-	if (args.verbose && acknowledged.length > 0) {
+	if (args.verbose && acknowledged.length) {
 		console.log(`## Acknowledged flagged shards (${acknowledged.length})`)
 		console.log("")
 
 		for (const s of acknowledged) {
 			const note = s.lint_ack_note ? ` — _${s.lint_ack_note}_` : ""
+
 			console.log(`- \`${s.path}\` (${s.lint_flags} flags)${note}`)
 		}
+
 		console.log("")
 	}
 
-	if (unacknowledged.length > 0) {
+	if (unacknowledged.length) {
 		console.log(`## ❌ UNACKNOWLEDGED FLAGGED SHARDS (${unacknowledged.length})`)
 		console.log("")
 		console.log("These shards have lint flags but no `lint_acknowledged: true`. Training will be blocked. Either:")
@@ -164,8 +169,10 @@ function main(): void {
 		for (const s of unacknowledged) {
 			console.log(`- \`${s.path}\` (${s.lint_flags} flag(s), source=${s.first_source_id ?? "?"})`)
 		}
+
 		console.log("")
 		console.error(`VERIFY FAILED: ${unacknowledged.length} unacknowledged flagged shard(s).`)
+
 		process.exit(1)
 	}
 

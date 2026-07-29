@@ -23,7 +23,9 @@ import { registerLibpostalRoutes } from "./routes.ts"
  */
 const MAX_BODY_BYTES = 102_400
 
-/** Options for {@link createLibpostalApp}. */
+/**
+ * Options for {@link createLibpostalApp}.
+ */
 export interface LibpostalAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -62,12 +64,14 @@ export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the libpostal-compatible app around an injected {@link LibpostalEngine}. */
+/**
+ * Build the libpostal-compatible app around an injected {@link LibpostalEngine}.
+ */
 export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire contract).
@@ -79,6 +83,7 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 		maxSize: MAX_BODY_BYTES,
 		onError: (c) => c.json({ error: "request body too large" }, 413),
 	})
+
 	app.use("/parse", guardBodySize)
 	app.use("/expand", guardBodySize)
 

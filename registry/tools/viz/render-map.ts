@@ -23,15 +23,23 @@
  *   fn (the corpus-tools lazy-import convention).
  */
 
-/** Options for {@linkcode renderServedMapToPNG}. */
+/**
+ * Options for {@linkcode renderServedMapToPNG}.
+ */
 export interface RenderMapOptions {
-	/** The served localhost URL of the map page (NOT a file:// path — see the module doc). */
+	/**
+	 * The served localhost URL of the map page (NOT a file:// path — see the module doc).
+	 */
 	url: string
-	/** Output PNG path. */
+	/**
+	 * Output PNG path.
+	 */
 	outPNG: string
 }
 
-/** Screenshot a served MapLibre map page once the tiles + marker layer settle. */
+/**
+ * Screenshot a served MapLibre map page once the tiles + marker layer settle.
+ */
 export async function renderServedMapToPNG(
 	options: RenderMapOptions,
 	report?: (line: string) => void
@@ -42,6 +50,7 @@ export async function renderServedMapToPNG(
 	const browser = await chromium.launch({
 		args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 	})
+
 	const page = await browser.newPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 2 })
 
 	const errors: string[] = []
@@ -50,7 +59,7 @@ export async function renderServedMapToPNG(
 
 	await page.goto(options.url, { waitUntil: "networkidle", timeout: 30_000 })
 	// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
-	await page.waitForTimeout(4_000)
+	await page.waitForTimeout(4000)
 	await page.screenshot({ path: options.outPNG })
 	await browser.close()
 

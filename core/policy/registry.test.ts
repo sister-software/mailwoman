@@ -78,37 +78,41 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "both" })
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural", "rule"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural", "rule"])
 	})
 
 	test("neural_preferred drops rule when neural is present", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "neural_preferred" })
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural"])
 	})
 
 	test("neural_preferred falls back to rule when no neural proposal", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "neural_preferred" })
+
 		const only = [
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "merged", confidence: 0.85 }),
 		]
+
 		const out = registry.apply(only)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "rule"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "rule"])
 	})
 
 	test("merged-source proposals survive both preference modes (they are neither rule nor neural)", () => {
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred" })
-		const proposals = [
+
+		const cases = [
 			makeProposal({ component: "country", source: "neural", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "merged", confidence: 0.9 }),
 		]
+
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural"])
 	})
 
 	test("a below-threshold preferred source does NOT trigger dropping the dispreferred one", () => {
@@ -116,11 +120,13 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		// count as "neural present" — else rule proposals vanish with nothing to replace them.
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred", confidence_threshold: 0.8 })
-		const proposals = [
+
+		const cases = [
 			makeProposal({ component: "country", source: "neural", confidence: 0.5 }),
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 		]
-		const out = registry.apply(proposals)
+
+		const out = registry.apply(cases)
 		expect(out.map((p) => p.source)).toEqual(["rule"])
 	})
 
@@ -128,7 +134,7 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "rule_preferred" })
 		const out = registry.apply(proposals)
-		expect(out.map((p) => p.source).sort()).toEqual(["merged", "rule"])
+		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "rule"])
 	})
 })
 
@@ -155,6 +161,7 @@ describe("InMemoryPolicyRegistry — confidence threshold", () => {
 			makeProposal({ component: "region", source: "rule", confidence: 0.4 }),
 			makeProposal({ component: "region", source: "rule", confidence: 0.39 }),
 		])
+
 		expect(out.map((p) => p.confidence)).toEqual([0.4])
 	})
 })
@@ -162,10 +169,12 @@ describe("InMemoryPolicyRegistry — confidence threshold", () => {
 describe("InMemoryPolicyRegistry — pass-through behavior", () => {
 	test("proposals for components with no override flow through default rule_only", () => {
 		const registry = new InMemoryPolicyRegistry()
+
 		const out = registry.apply([
 			makeProposal({ component: "locality", source: "rule" }),
 			makeProposal({ component: "locality", source: "neural" }),
 		])
+
 		expect(out.map((p) => p.source)).toEqual(["rule"])
 	})
 
@@ -173,7 +182,7 @@ describe("InMemoryPolicyRegistry — pass-through behavior", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		const input = [makeProposal({ component: "country", source: "neural" })]
 		const out = registry.apply(input)
-		expect(input.length).toBe(1)
-		expect(out.length).toBe(0)
+		expect(input).toHaveLength(1)
+		expect(out).toHaveLength(0)
 	})
 })

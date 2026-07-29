@@ -151,7 +151,7 @@ describe("profiles", () => {
 			)
 
 			expect([...harnesses], `profile ${name} spans harnesses ${[...harnesses].join(" + ")}`).toHaveLength(
-				harnesses.size > 0 ? 1 : 0
+				harnesses.size ? 1 : 0
 			)
 		}
 	})

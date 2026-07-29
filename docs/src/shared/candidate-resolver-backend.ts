@@ -30,9 +30,12 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
 type LookupHit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
+
 type BBox = NonNullable<LookupHit["bbox"]>
 
-/** What the adapter remembers about every candidate it has surfaced, keyed by place id. */
+/**
+ * What the adapter remembers about every candidate it has surfaced, keyed by place id.
+ */
 interface CandidateMeta {
 	bbox?: BBox
 	country?: string
@@ -47,7 +50,9 @@ export class CandidateResolverBackend implements ResolverBackend {
 		this.#lookup = lookup
 	}
 
-	/** The memoized bbox/country/placetype of a previously returned candidate (for hit assembly). */
+	/**
+	 * The memoized bbox/country/placetype of a previously returned candidate (for hit assembly).
+	 */
 	metaFor(id: number): CandidateMeta | undefined {
 		return this.#meta.get(id)
 	}

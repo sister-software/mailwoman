@@ -14,29 +14,34 @@ import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
+import { FSTMatcher, normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst-types"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
-import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.ts"
-import { FSTMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.ts"
-import { serializeFST } from "../../resolver-wof-sqlite/fst-serialize.ts"
 import { resolveFSTPath, runAutocomplete } from "./autocomplete.tsx"
 
-// ---------------------------------------------------------------------------
-// Fixture helpers
-// ---------------------------------------------------------------------------
+// MARK: Fixture helpers
 
 interface FixturePlace {
 	wofID: number
-	placetype: string
+	placetype: PlacetypeID
 	name: string
 	importance: number
 	parentChain: number[]
 }
 
-type FSTNodeInternal = { edges: Map<string, number>; places: FixtureEntry[] }
+interface FSTNodeInternal {
+	edges: Map<string, number>
+	places: FixtureEntry[]
+}
+
 type FixtureEntry = FixturePlace & { lat: number; lon: number }
 
-/** Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder. */
+/**
+ * Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder.
+ */
 function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 	const entries: FixtureEntry[] = places.map((p) => ({ ...p, lat: 0, lon: 0 }))
 	const nodes: FSTNodeInternal[] = [{ edges: new Map(), places: [] }]
@@ -44,7 +49,7 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 	for (const entry of entries) {
 		const tokens = normalizeTokens(entry.name)
 
-		if (tokens.length === 0) continue
+		if (!tokens.length) continue
 		let stateID = 0
 
 		for (const t of tokens) {
@@ -56,8 +61,10 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
+
 			stateID = next
 		}
+
 		const node = nodes[stateID]!
 
 		if (!node.places.some((p) => p.wofID === entry.wofID)) {
@@ -69,18 +76,36 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 }
 
 const FIXTURE_PLACES: FixturePlace[] = [
-	{ wofID: 85977539, placetype: "locality", name: "New York City", importance: 0.9, parentChain: [85688543, 85633793] },
-	{ wofID: 85688543, placetype: "region", name: "New York", importance: 0.75, parentChain: [85633793] },
-	{ wofID: 85935903, placetype: "locality", name: "New Orleans", importance: 0.6, parentChain: [85688481, 85633793] },
 	{
-		wofID: 85922583,
+		wofID: 85_977_539,
+		placetype: "locality",
+		name: "New York City",
+		importance: 0.9,
+		parentChain: [85_688_543, 85_633_793],
+	},
+	{ wofID: 85_688_543, placetype: "region", name: "New York", importance: 0.75, parentChain: [85_633_793] },
+	{
+		wofID: 85_935_903,
+		placetype: "locality",
+		name: "New Orleans",
+		importance: 0.6,
+		parentChain: [85_688_481, 85_633_793],
+	},
+	{
+		wofID: 85_922_583,
 		placetype: "locality",
 		name: "San Francisco",
 		importance: 0.85,
-		parentChain: [102087579, 85633793],
+		parentChain: [102_087_579, 85_633_793],
 	},
-	{ wofID: 85919487, placetype: "locality", name: "San Jose", importance: 0.5, parentChain: [102087579, 85633793] },
-	{ wofID: 85633793, placetype: "country", name: "United States", importance: 0.99, parentChain: [] },
+	{
+		wofID: 85_919_487,
+		placetype: "locality",
+		name: "San Jose",
+		importance: 0.5,
+		parentChain: [102_087_579, 85_633_793],
+	},
+	{ wofID: 85_633_793, placetype: "country", name: "United States", importance: 0.99, parentChain: [] },
 ]
 
 let fixtureMatcher: FSTMatcher
@@ -96,9 +121,7 @@ beforeAll(() => {
 	writeFileSync(fixtureBinPath, buf)
 })
 
-// ---------------------------------------------------------------------------
-// normalizeTokens symmetry smoke-test
-// ---------------------------------------------------------------------------
+// MARK: normalizeTokens symmetry smoke-test
 
 describe("normalizeTokens symmetry", () => {
 	it("lowercases ASCII", () => {
@@ -122,9 +145,7 @@ describe("normalizeTokens symmetry", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// In-memory autocomplete (FSTMatcher directly, no disk I/O)
-// ---------------------------------------------------------------------------
+// MARK: In-memory autocomplete (FSTMatcher directly, no disk I/O)
 
 describe("autocomplete — in-memory fixture", () => {
 	it("returns suggestions for prefix 'New'", () => {
@@ -144,7 +165,7 @@ describe("autocomplete — in-memory fixture", () => {
 
 	it("returns no suggestions for an unknown prefix", () => {
 		const result = autocomplete(fixtureMatcher, "Xyzzyplugh")
-		expect(result.suggestions.length).toBe(0)
+		expect(result.suggestions).toHaveLength(0)
 	})
 
 	it("ranks by importance (prominent places first)", () => {
@@ -178,9 +199,7 @@ describe("autocomplete — in-memory fixture", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------
-// runAutocomplete — disk round-trip
-// ---------------------------------------------------------------------------
+// MARK: runAutocomplete — disk round-trip
 
 describe("runAutocomplete — disk round-trip", () => {
 	it("reads the fixture bin and returns completions for 'New'", async () => {
@@ -214,16 +233,14 @@ describe("runAutocomplete — disk round-trip", () => {
 
 	it("round-trips importance and wofID through serialization", async () => {
 		const entries = await runAutocomplete("United", { fstPath: fixtureBinPath, limit: 5 })
-		const us = entries.find((e) => e.wofID === 85633793)
+		const us = entries.find((e) => e.wofID === 85_633_793)
 		expect(us).toBeDefined()
 		// Float32 round-trip may introduce tiny epsilon; check within tolerance.
 		expect(us!.importance).toBeCloseTo(0.99, 1)
 	})
 })
 
-// ---------------------------------------------------------------------------
-// resolveFSTPath
-// ---------------------------------------------------------------------------
+// MARK: resolveFSTPath
 
 describe("resolveFSTPath", () => {
 	it("returns the explicit path when given one", () => {

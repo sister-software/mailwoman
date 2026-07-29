@@ -27,7 +27,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 
-/** Synthetic id base — distinct from the GeoNames postal range (9500000000000). */
+/**
+ * Synthetic id base — distinct from the GeoNames postal range (9500000000000).
+ */
 const NL_PC6_ID_BASE = 9_600_000_000_000
 
 export interface BuildNLPC6Options {
@@ -36,7 +38,9 @@ export interface BuildNLPC6Options {
 	 * `<data-root>/cbs/pc6-centroids.csv`.
 	 */
 	csvPath?: string
-	/** Output shard. Default `<data-root>/wof/postalcode-nl-pc6.db`. */
+	/**
+	 * Output shard. Default `<data-root>/wof/postalcode-nl-pc6.db`.
+	 */
 	out?: string
 }
 
@@ -69,6 +73,7 @@ export async function buildNLPC6Shard(
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', 'NL', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', 'NL', '', 0)`
 	)
@@ -86,8 +91,10 @@ export async function buildNLPC6Shard(
 		// A valid PC6 is 4 digits + 2 letters; the CBS file is already normalized (no space).
 		if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 			skipped++
+
 			continue
 		}
+
 		const name = normalizePostcodeName(pc6) // identity for the CBS form; keeps the convention explicit
 		const display = `${pc6.slice(0, 4)} ${pc6.slice(4)}`
 		const id = NL_PC6_ID_BASE + inserted
@@ -98,8 +105,10 @@ export async function buildNLPC6Shard(
 		if (display !== name) {
 			namesInsert.run(id, display)
 		}
+
 		inserted++
 	}
+
 	db.exec("COMMIT")
 	await createUnifiedIndexes(db)
 
@@ -112,6 +121,7 @@ export async function buildNLPC6Shard(
 	if (existsSync(outPath)) {
 		renameSync(outPath, `${outPath}.prev`)
 	}
+
 	renameSync(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(outPath)

@@ -62,7 +62,9 @@ export const US_UNIT_DESIGNATOR_VARIANTS = {
 	UPPER: ["UPPR"],
 } as const satisfies Record<string, readonly string[]>
 
-/** Canonical USPS secondary unit designator (full word, uppercase per the publication). */
+/**
+ * Canonical USPS secondary unit designator (full word, uppercase per the publication).
+ */
 export type USUnitDesignator = keyof typeof US_UNIT_DESIGNATOR_VARIANTS
 
 /**
@@ -86,7 +88,9 @@ export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, USUnitDesignator> = 
 	return out
 })()
 
-/** Approved USPS abbreviation per canonical (`APARTMENT → "APT"`, `SUITE → "STE"`). */
+/**
+ * Approved USPS abbreviation per canonical (`APARTMENT → "APT"`, `SUITE → "STE"`).
+ */
 export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator, string>> = Object.fromEntries(
 	(Object.keys(US_UNIT_DESIGNATOR_VARIANTS) as USUnitDesignator[]).map((k) => [k, US_UNIT_DESIGNATOR_VARIANTS[k][0]])
 ) as Readonly<Record<USUnitDesignator, string>>
@@ -141,11 +145,17 @@ export function matchLeadingDesignator(unit: string): { canonical: USUnitDesigna
 	return { canonical, matched: first }
 }
 
-/** Result of {@link matchLeadingDesignatorWithRange}: the leading designator plus its optional secondary range. */
+/**
+ * Result of {@link matchLeadingDesignatorWithRange}: the leading designator plus its optional secondary range.
+ */
 export interface UnitDesignatorRangeMatch {
-	/** The matched canonical designator, i.e. "APARTMENT", "SUITE". */
+	/**
+	 * The matched canonical designator, i.e. "APARTMENT", "SUITE".
+	 */
 	canonical: USUnitDesignator
-	/** The designator's own matched surface form, i.e. "Apt". */
+	/**
+	 * The designator's own matched surface form, i.e. "Apt".
+	 */
 	matched: string
 	/**
 	 * The secondary range/identifier token immediately following the designator, i.e. "4B" in "Apt 4B". Undefined when
@@ -183,11 +193,17 @@ export function matchLeadingDesignatorWithRange(unit: string): UnitDesignatorRan
 	}
 }
 
-/** Result of a successful USPS secondary-unit designator lookup. */
+/**
+ * Result of a successful USPS secondary-unit designator lookup.
+ */
 export interface UnitDesignatorMatch<D extends USUnitDesignator = USUnitDesignator> {
-	/** The matched canonical designator, i.e. "APARTMENT", "SUITE". */
+	/**
+	 * The matched canonical designator, i.e. "APARTMENT", "SUITE".
+	 */
 	designator: D
-	/** The approved USPS abbreviation, i.e. "APT", "STE". */
+	/**
+	 * The approved USPS abbreviation, i.e. "APT", "STE".
+	 */
 	abbreviation: (typeof US_UNIT_DESIGNATOR_VARIANTS)[D][0]
 }
 
@@ -197,6 +213,7 @@ export interface UnitDesignatorMatch<D extends USUnitDesignator = USUnitDesignat
  */
 export function lookupUnitDesignator<D extends USUnitDesignator>(designator: D): UnitDesignatorMatch<D>
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null
+
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null {
 	if (!input || typeof input !== "string") return null
 	const designator = US_UNIT_DESIGNATOR_LOOKUP.get(input.trim().toLowerCase())

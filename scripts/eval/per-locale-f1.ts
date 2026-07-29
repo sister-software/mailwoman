@@ -57,25 +57,23 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-// Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
-// `oa-resolver-eval` runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs
-// `anchor_features`/`gazetteer_features`) were trained WITH these channels live, so honest inference
-// must feed them. The lookup is keyed by the input's own postcode — always available at eval time.
-//
-// Why this is a DEFAULT, not opt-in (the bug this file used to have): when these are omitted, the
-// ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
-// out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
-// (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0,
-// region↔locality flip — while the morphology tags (street/house_number/venue) that don't lean on
-// the anchor channel survive. The result LOOKS like a per-version model regression but is purely a
-// harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater identically without the feed and recover
-// identically with it. Pass `--no-anchor` to deliberately measure the anchor-off (zero-feed) path.
+/**
+ * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
+ * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs `anchor_features`/`gazetteer_features`)
+ * were trained WITH these channels live, so honest inference must feed them. The lookup is keyed by the input's own
+ * postcode — always available at eval time. Why this is a DEFAULT, not opt-in (the bug this file used to have): when
+ * these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
+ * out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
+ * (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0, region↔locality flip
+ * — while the morphology tags (street/house_number/venue) that don't lean on the anchor channel survive. The result
+ * LOOKS like a per-version model regression but is purely a harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater
+ * identically without the feed and recover identically with it. Pass `--no-anchor` to deliberately measure the
+ * anchor-off (zero-feed) path.
+ */
 const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
-// -------------------------------------------------------------------------------------------------
-// Args
-// -------------------------------------------------------------------------------------------------
+//#region Args
 
 interface Args {
 	goldenDir: string
@@ -91,7 +89,9 @@ interface Args {
 	conventions?: string
 	bridgeGaps?: boolean
 	outJson?: string
-	/** P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read. */
+	/**
+	 * P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read.
+	 */
 	rawCase: boolean
 }
 
@@ -186,9 +186,9 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-// -------------------------------------------------------------------------------------------------
-// Golden row + fold (shared semantics with harness-neural.ts)
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Golden row + fold (shared semantics with harness-neural.ts)
 
 interface GoldenRow {
 	raw: string
@@ -197,7 +197,9 @@ interface GoldenRow {
 	notes?: string
 }
 
-/** Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street). */
+/**
+ * Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street).
+ */
 function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<string, string> {
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
@@ -210,9 +212,10 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 		}
 	}
 
-	if (streetParts.length > 0) {
+	if (streetParts.length) {
 		out.street = streetParts.join(" ")
 	}
+
 	const xs: string[] = []
 
 	if (flat.intersection_a) {
@@ -223,7 +226,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 		xs.push(flat.intersection_b)
 	}
 
-	if (xs.length > 0) {
+	if (xs.length) {
 		out.street = [out.street, ...xs].filter(Boolean).join(" ")
 	}
 
@@ -256,9 +259,9 @@ function exactMatch(pred: Record<string, string>, gold: Record<string, string>):
 	return true
 }
 
-// -------------------------------------------------------------------------------------------------
-// Per-file metrics
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Per-file metrics
 
 interface TagMetric {
 	tp: number
@@ -268,6 +271,7 @@ interface TagMetric {
 	r: number
 	f1: number
 }
+
 interface FileReport {
 	file: string
 	n: number
@@ -295,6 +299,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 	const perTag: Record<string, TagMetric> = {}
 	let f1Sum = 0
+
 	let microTp = 0,
 		microFp = 0,
 		microFn = 0
@@ -318,6 +323,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 				fn++
 			}
 		}
+
 		const p = tp / Math.max(tp + fp, 1)
 		const r = tp / Math.max(tp + fn, 1)
 		const f1 = p + r > 0 ? (2 * p * r) / (p + r) : 0
@@ -327,6 +333,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 		microFp += fp
 		microFn += fn
 	}
+
 	const microP = microTp / Math.max(microTp + microFp, 1)
 	const microR = microTp / Math.max(microTp + microFn, 1)
 	const microF1 = microP + microR > 0 ? (2 * microP * microR) / (microP + microR) : 0
@@ -343,22 +350,23 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 		n: rows.length,
 		exactMatch: exact,
 		exactRate: exact / Math.max(rows.length, 1),
-		macroF1: tags.size > 0 ? f1Sum / tags.size : 0,
+		macroF1: tags.size ? f1Sum / tags.size : 0,
 		microF1,
 		perTag,
 	}
 }
 
-// -------------------------------------------------------------------------------------------------
-// Main
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()
+
 	console.error("--- per-locale-f1.ts ---")
 	console.error("Golden dir:", args.goldenDir)
-	console.error("Files:     ", args.files.join(", "))
-	console.error("Model:     ", args.modelPath ?? "(default weights)")
+	console.error("Files:", args.files.join(", "))
+	console.error("Model:", args.modelPath ?? "(default weights)")
 
 	let neural: NeuralAddressClassifier
 
@@ -369,6 +377,7 @@ async function main(): Promise<void> {
 	// over the explicit --model path.
 	if (args.weightsCache) {
 		console.error(`Weights:    package-shaped from ${args.weightsCache} (loadFromWeights cacheRoot)`)
+
 		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
 		// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
@@ -380,33 +389,40 @@ async function main(): Promise<void> {
 					`default weights). got: model=${!!args.modelPath} tokenizer=${!!args.tokenizerPath} model-card=${!!args.modelCardPath}`
 			)
 		}
+
 		const card = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			ONNXRunner.create(args.modelPath),
 		])
+
 		// Anchor + gazetteer feed. DEFAULT-ON (the standard paths) so an anchor-trained model is scored
 		// in-distribution — see the DEFAULT_* note above for why omitting these silently collapses the
 		// admin tags. `--no-anchor` opts out; an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
 		// overrides the default path. The runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
+
 		const postcodeAnchorLookup =
 			anchorLookupPath && existsSync(anchorLookupPath)
 				? parseAnchorLookup(JSON.parse(readFileSync(anchorLookupPath, "utf8")))
 				: undefined
+
 		// Gazetteer-anchor lexicon (#464): fed so a gazetteer-trained model gets its clues. Harmless for
 		// older models (the runner skips inputs the ONNX lacks).
 		const gazetteerLexicon =
 			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
 				? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
 				: undefined
+
 		console.error(
 			`Anchor:     ${postcodeAnchorLookup ? `${anchorLookupPath} (${postcodeAnchorLookup.size} codes)` : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${anchorLookupPath})`}`
 		)
 		console.error(
 			`Gazetteer:  ${gazetteerLexicon ? gazetteerLexiconPath : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${gazetteerLexiconPath})`}`
 		)
+
 		neural = new NeuralAddressClassifier({
 			tokenizer,
 			runner,
@@ -433,10 +449,12 @@ async function main(): Promise<void> {
 				.split("\n")
 				.filter(Boolean)
 				.map((l) => JSON.parse(l))
-		} catch (err) {
-			console.error(`  skip ${file}: ${(err as Error).message}`)
+		} catch (error) {
+			console.error(`  skip ${file}: ${(error as Error).message}`)
+
 			continue
 		}
+
 		const preds: Array<Record<string, string>> = []
 		const t0 = performance.now()
 		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction
@@ -446,6 +464,7 @@ async function main(): Promise<void> {
 
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
+
 			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
 			// this battery historically fed NEITHER — so the gate scored a config production doesn't run.
@@ -459,6 +478,7 @@ async function main(): Promise<void> {
 				// MODEL's own case handling (the shim would mask any augment_upper_case_prob effect).
 				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
+
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
 
@@ -472,8 +492,10 @@ async function main(): Promise<void> {
 				}
 			}
 		}
+
 		const rep = scoreFile(basename(file, ".jsonl"), rows, preds)
 		reports.push(rep)
+
 		console.error(
 			`  ${file}: n=${rep.n} macroF1=${(100 * rep.macroF1).toFixed(1)}% in ${((performance.now() - t0) / 1000).toFixed(1)}s`
 		)
@@ -493,6 +515,7 @@ async function main(): Promise<void> {
 			`| ${r.file} | ${r.n} | ${(100 * r.macroF1).toFixed(1)}% | ${(100 * r.microF1).toFixed(1)}% | ${(100 * r.exactRate).toFixed(1)}% |`
 		)
 	}
+
 	console.log("")
 	console.log(`**Cross-locale macro-F1 spread (interference signal):** ${(100 * spread).toFixed(1)}pp`)
 	console.log("")
@@ -505,24 +528,30 @@ async function main(): Promise<void> {
 			allTags.add(k)
 		}
 	}
+
 	console.log("## Per-tag F1 by locale\n")
 	console.log(`| Tag | ${localeReports.map((r) => r.file).join(" | ")} | Δ |`)
 	console.log(`|---|${localeReports.map(() => "--:").join("|")}|--:|`)
 
-	for (const tag of [...allTags].sort()) {
+	for (const tag of [...allTags].toSorted()) {
 		const cells = localeReports.map((r) => r.perTag[tag])
 		const f1s = cells.map((c) => (c ? c.f1 : 0))
 		const delta = f1s.length > 1 ? Math.max(...f1s) - Math.min(...f1s) : 0
+
 		console.log(
 			`| ${tag} | ${cells.map((c) => (c ? (100 * c.f1).toFixed(1) + "%" : "—")).join(" | ")} | ${(100 * delta).toFixed(1)}pp |`
 		)
 	}
+
 	console.log("")
 
 	if (args.outJson) {
 		writeFileSync(args.outJson, JSON.stringify({ reports, spread }, null, 2))
+
 		console.error(`Wrote ${args.outJson}`)
 	}
 }
 
 runIfScript(import.meta, main)
+
+//#endregion

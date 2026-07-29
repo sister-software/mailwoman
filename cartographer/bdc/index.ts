@@ -5,17 +5,17 @@
  */
 
 import { TIGERLevel } from "@mailwoman/tiger"
-import {
-	type CircleLayerSpecification,
-	type FillExtrusionLayerSpecification,
-	type FillLayerSpecification,
-	type HeatmapLayerSpecification,
-	type LineLayerSpecification,
-	type SymbolLayerSpecification,
+import type {
+	CircleLayerSpecification,
+	FillExtrusionLayerSpecification,
+	FillLayerSpecification,
+	HeatmapLayerSpecification,
+	LineLayerSpecification,
+	SymbolLayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 import { interpolateTurbo } from "d3-scale-chromatic"
 
-import { type LayerSpecificationListInput } from "../styles/layers.ts"
+import type { LayerSpecificationListInput } from "../styles/layers.ts"
 import { TileSetSourceID } from "../styles/sources.ts"
 
 /**
@@ -84,6 +84,9 @@ export function createBDCLayer<T extends BDCLayerSpecificationInput>(spec: BaseB
 
 const GIGABIT_BROADBAND_SPEED = 1000
 
+/**
+ * Layer definitions for the FCC Broadband Data Collection overlay, styled by reported service tier.
+ */
 export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 	{
 		afterID: "earth",
@@ -198,7 +201,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 			// ---
 
 			"all",
-			["==", ["get", "provider_id"], 131425],
+			["==", ["get", "provider_id"], 131_425],
 			// ["in", 50, ["get", "technology_codes"]],
 		],
 		type: "symbol",
@@ -302,7 +305,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 			// ---
 
 			"all",
-			["==", ["get", "provider_id"], 131425],
+			["==", ["get", "provider_id"], 131_425],
 		],
 		minzoom: 10,
 		type: "heatmap",

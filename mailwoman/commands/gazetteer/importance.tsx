@@ -29,6 +29,21 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
+/**
+ * Permanent redirect.
+ */
+const HTTP_MOVED_PERMANENTLY = 301
+
+/**
+ * Temporary redirect.
+ */
+const HTTP_FOUND = 302
+
+/**
+ * Columns a Wikidata concordance row needs before it carries a usable mapping.
+ */
+const MIN_WIKIDATA_COLUMNS = 5
+
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
 const OptionsSchema = zod.object({
@@ -41,29 +56,34 @@ export { OptionsSchema as options }
 function downloadToFile(url: string, dest: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		httpsGet(url, (res) => {
-			if (res.statusCode === 301 || res.statusCode === 302) {
+			if (res.statusCode === HTTP_MOVED_PERMANENTLY || res.statusCode === HTTP_FOUND) {
 				const location = res.headers.location
 
 				if (location) {
 					httpsGet(location, (res2) => {
 						const chunks: Buffer[] = []
 						res2.on("data", (chunk) => chunks.push(chunk))
+
 						res2.on("end", () => {
 							writeFileSync(dest, Buffer.concat(chunks))
 							resolve()
 						})
+
 						res2.on("error", reject)
 					}).on("error", reject)
 
 					return
 				}
 			}
+
 			const chunks: Buffer[] = []
 			res.on("data", (chunk) => chunks.push(chunk))
+
 			res.on("end", () => {
 				writeFileSync(dest, Buffer.concat(chunks))
 				resolve()
 			})
+
 			res.on("error", reject)
 		}).on("error", reject)
 	})
@@ -83,6 +103,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
+
 		let concordances: Map<string, number[]>
 
 		try {
@@ -95,6 +116,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				existing.push(row.id)
 				concordances.set(row.other_id, existing)
 			}
+
 			console.error(`  ${concordances.size} unique Wikidata IDs from ${rows.length} concordance rows`)
 		} catch {
 			throw commandError("No concordances table found. Run `mailwoman gazetteer build admin` first.")
@@ -110,13 +132,16 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				console.error(`  Using cached TSV: ${gzPath}`)
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)
+
 				await downloadToFile(IMPORTANCE_URL, gzPath)
+
 				console.error(`  Downloaded to ${gzPath}`)
 			}
 		}
 
 		// Step 3: Stream-parse TSV, filtering to matching Wikidata IDs
 		console.error("Parsing Wikipedia importance TSV...")
+
 		const importanceMap = new Map<string, number>()
 		let totalRows = 0
 
@@ -130,14 +155,14 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			if (totalRows === 1 && line.startsWith("language")) continue
 			const parts = line.split("\t")
 
-			if (parts.length < 5) continue
+			if (parts.length < MIN_WIKIDATA_COLUMNS) continue
 
 			const importance = Number(parts[3]!)
 			const wikidataID = parts[4]!
 
 			if (!wikidataID || !concordances.has(wikidataID)) continue
 
-			if (isNaN(importance)) continue
+			if (Number.isNaN(importance)) continue
 
 			const existing = importanceMap.get(wikidataID) ?? 0
 
@@ -150,7 +175,9 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		// Step 4: Build place_importance table
 		console.error("Building place_importance table...")
+
 		await kdb.schema.dropTable("place_importance").ifExists().execute()
+
 		await kdb.schema
 			.createTable("place_importance")
 			.addColumn("id", "integer", (c) => c.primaryKey())
@@ -183,12 +210,15 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		for (const [wofID, importance] of wofImportance) {
 			insertStmt.run(wofID, importance)
+
 			importanceCount++
 		}
+
 		db.exec("COMMIT")
 
 		// Step 5: Population fallback for places without Wikipedia data
 		console.error("Adding population fallback for unmatched places...")
+
 		let fallbackCount = 0
 
 		try {
@@ -199,11 +229,13 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 			for (const row of popRows) {
 				if (row.population > 0) {
-					const pseudoImportance = Math.min(1.0, Math.log2(1 + row.population / 1000) / 14)
+					const pseudoImportance = Math.min(1, Math.log2(1 + row.population / 1000) / 14)
 					fallbackInsert.run(row.id, pseudoImportance)
+
 					fallbackCount++
 				}
 			}
+
 			db.exec("COMMIT")
 		} catch {
 			console.error("  No place_population table — skipping fallback")

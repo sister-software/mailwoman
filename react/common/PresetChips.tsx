@@ -25,9 +25,13 @@ export interface PresetChipsProps {
 	presets: ReadonlyArray<Preset>
 	onPick: (value: string) => void
 	disabled?: boolean
-	/** Leading label. @default "Try:" */
+	/**
+	 * Leading label. @default "Try:"
+	 */
 	caption?: string
-	/** Optional trailing content rendered inside the chip row after the presets (e.g. an inline permalink button). */
+	/**
+	 * Optional trailing content rendered inside the chip row after the presets (e.g. an inline permalink button).
+	 */
 	trailing?: ReactNode
 }
 

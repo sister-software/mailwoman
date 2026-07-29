@@ -30,7 +30,7 @@ export function KindBadge({ kindResult }: KindBadgeProps): ReactNode {
 				<strong>Kind:</strong> <code>{kindResult.kind}</code>{" "}
 				<span className="mw-kind__confidence">({formatPct(kindResult.confidence)})</span>
 			</summary>
-			{kindResult.alternatives.length > 0 ? (
+			{kindResult.alternatives.length ? (
 				<ul className="mw-kind__alternatives">
 					{kindResult.alternatives.map((alt) => (
 						<li key={alt.kind}>

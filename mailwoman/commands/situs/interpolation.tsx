@@ -38,6 +38,31 @@ import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
+/**
+ * A successful response; anything else is an error page or an unfollowed redirect.
+ */
+const HTTP_OK = 200
+
+/**
+ * Lowest 3xx status.
+ */
+const HTTP_REDIRECT_MIN = 300
+
+/**
+ * Lowest 4xx status — the end of the redirect range.
+ */
+const HTTP_CLIENT_ERROR_MIN = 400
+
+/**
+ * Lowest 5xx status. Server-side failures are worth retrying; client errors are not.
+ */
+const HTTP_SERVER_ERROR_MIN = 500
+
+/**
+ * Failed GEOIDs printed before the list is truncated.
+ */
+const MAX_LISTED_FAILURES = 20
+
 const OptionsSchema = zod.object({
 	edgesDir: zod.string().default("/tmp/tiger-edges").describe("Download destination for TIGER ZIP + SHP files"),
 	outDir: zod.string().optional().describe("Directory for per-state shard DBs. Default <data-root>/interpolation"),
@@ -63,9 +88,7 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-// ---------------------------------------------------------------------------
-// State FIPS map (mirrors build-interpolation-shard.ts — single source in future)
-// ---------------------------------------------------------------------------
+//#region State FIPS map
 
 const STATE_FIPS: Record<string, string> = {
 	AL: "01",
@@ -121,22 +144,26 @@ const STATE_FIPS: Record<string, string> = {
 	WY: "56",
 }
 
-// Repo-relative anchor for the cached county-population ranking (resolves cleanly in both source +
-// compiled trees via the core repo-root builder).
+/**
+ * Repo-relative anchor for the cached county-population ranking (resolves cleanly in both source + compiled trees via
+ * the core repo-root builder).
+ */
 const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
-// The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
-// `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this
-// process was started from, so dev + published installs both resolve correctly.
+/**
+ * The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
+ * `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this process was
+ * started from, so dev + published installs both resolve correctly.
+ */
 const CLI_ENTRY = scriptEntryPath()
 const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 
-// ---------------------------------------------------------------------------
-// County population ranking
-// ---------------------------------------------------------------------------
+//#endregion
 
-type CountyRecord = {
+//#region County population ranking
+
+interface CountyRecord {
 	stateFips: string
 	countyFips: string
 	geoid: string
@@ -150,8 +177,10 @@ type CountyRecord = {
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
+
 	const url =
 		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
+
 	const csv = await fetchText(url)
 	const lines = csv.split("\n")
 	const header = lines[0]!.split(",")
@@ -193,58 +222,71 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (existsSync(RANKED_FILE)) {
 		return JSON.parse(readFileSync(RANKED_FILE, "utf8"))
 	}
+
 	const records = await fetchAndBuildRanking()
 	mkdirSync(path.dirname(RANKED_FILE), { recursive: true })
 	writeFileSync(RANKED_FILE, JSON.stringify(records, null, 2))
+
 	console.error(`Saved county ranking → ${RANKED_FILE} (${records.length} counties)`)
 
 	return records
 }
 
-// ---------------------------------------------------------------------------
-// HTTP utilities
-// ---------------------------------------------------------------------------
+//#endregion
 
-/** Simple GET-to-text over HTTPS with redirect following (≤3 hops). */
+//#region HTTP utilities
+
+/**
+ * Simple GET-to-text over HTTPS with redirect following (≤3 hops).
+ */
 function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const req = https.get(url, (res) => {
 			const status = res.statusCode ?? 0
 
-			if (status >= 300 && status < 400 && res.headers.location) {
+			if (status >= HTTP_REDIRECT_MIN && status < HTTP_CLIENT_ERROR_MIN && res.headers.location) {
 				if (redirectsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
 				resolve(fetchText(res.headers.location, redirectsLeft - 1))
 
 				return
 			}
 
-			if (status !== 200) {
+			if (status !== HTTP_OK) {
 				return reject(new Error(`HTTP ${status} for ${url}`))
 			}
+
 			const chunks: Buffer[] = []
 			res.on("data", (c) => chunks.push(c))
 			res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")))
 		})
+
 		req.on("error", reject)
 	})
 }
 
-/** Download a URL to a local file path, with retry on 5xx / network errors. */
+/**
+ * Download a URL to a local file path, with retry on 5xx / network errors.
+ */
 async function downloadFile(url: string, dest: string, retries = 3): Promise<void> {
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch falls through to the next attempt when the error is retryable
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
 			await _downloadOnce(url, dest)
 
 			return
-		} catch (err) {
-			const message = err instanceof Error ? err.message : String(err)
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error)
 			const status = message.match(/HTTP (\d+)/)?.[1]
-			const retryable = !status || Number(status) >= 500
+			const retryable = !status || Number(status) >= HTTP_SERVER_ERROR_MIN
 
-			if (!retryable || attempt === retries) throw err
+			if (!retryable || attempt === retries) throw error
 			const delay = attempt * 2000
+
 			console.error(`  [retry ${attempt}/${retries}] ${path.basename(dest)}: ${message} — waiting ${delay}ms`)
-			await new Promise((r) => setTimeout(r, delay))
+
+			await new Promise((r) => {
+				setTimeout(r, delay)
+			})
 		}
 	}
 }
@@ -253,33 +295,37 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const follow = (u: string, hopsLeft: number) => {
 			if (hopsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
+
 			const req = https.get(u, (res) => {
 				const status = res.statusCode ?? 0
 
-				if (status >= 300 && status < 400 && res.headers.location) {
+				if (status >= HTTP_REDIRECT_MIN && status < HTTP_CLIENT_ERROR_MIN && res.headers.location) {
 					res.resume()
 					follow(res.headers.location, hopsLeft - 1)
 
 					return
 				}
 
-				if (status !== 200) {
+				if (status !== HTTP_OK) {
 					res.resume()
 
 					return reject(new Error(`HTTP ${status} for ${u}`))
 				}
+
 				const out = createWriteStream(dest)
 				pipeline(res, out).then(resolve).catch(reject)
 			})
+
 			req.on("error", reject)
 		}
+
 		follow(url, 5)
 	})
 }
 
-// ---------------------------------------------------------------------------
-// ZIP extraction
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region ZIP extraction
 
 /**
  * Unpack a TIGER EDGES ZIP into --edges-dir using the system `unzip` command. Only extracts files whose names end with
@@ -297,13 +343,19 @@ function extractEdgesZip(zipPath: string, destDir: string): void {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Parallel download pool
-// ---------------------------------------------------------------------------
+//#endregion
 
-type DownloadTask = { geoid: string; zipURL: string; zipPath: string }
+//#region Parallel download pool
 
-/** Download and unpack a list of county ZIPs with capped parallelism. */
+interface DownloadTask {
+	geoid: string
+	zipURL: string
+	zipPath: string
+}
+
+/**
+ * Download and unpack a list of county ZIPs with capped parallelism.
+ */
 async function downloadParallel(
 	tasks: DownloadTask[],
 	concurrency: number,
@@ -323,6 +375,7 @@ async function downloadParallel(
 			// Idempotency: skip if the SHP is already present (the ZIP may be gone after extraction)
 			if (existsSync(shpPath)) {
 				skipped++
+
 				continue
 			}
 
@@ -330,19 +383,25 @@ async function downloadParallel(
 			if (existsSync(task.zipPath)) {
 				try {
 					extractEdgesZip(task.zipPath, edgesDir)
+
 					skipped++
+
 					continue
-				} catch (err) {
-					console.error(`  [warn] re-extract failed for ${task.geoid}: ${err instanceof Error ? err.message : err}`)
+				} catch (error) {
+					console.error(
+						`  [warn] re-extract failed for ${task.geoid}: ${error instanceof Error ? error.message : error}`
+					)
 				}
 			}
 
 			try {
 				await downloadFile(task.zipURL, task.zipPath)
 				extractEdgesZip(task.zipPath, edgesDir)
+
 				downloaded++
-			} catch (err) {
-				console.error(`  [fail] ${task.geoid}: ${err instanceof Error ? err.message : err}`)
+			} catch (error) {
+				console.error(`  [fail] ${task.geoid}: ${error instanceof Error ? error.message : error}`)
+
 				failed.push(task.geoid)
 			}
 		}
@@ -353,11 +412,15 @@ async function downloadParallel(
 	return { downloaded, skipped, failed }
 }
 
-// ---------------------------------------------------------------------------
-// Shard build (per state)
-// ---------------------------------------------------------------------------
+//#endregion
 
-type ShardBuildResult = { wallMs: number; segments: number; counties: number }
+//#region Shard build (per state)
+
+interface ShardBuildResult {
+	wallMs: number
+	segments: number
+	counties: number
+}
 
 /**
  * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's stdout, or `null`
@@ -380,6 +443,7 @@ function buildStateShard(
 
 	mkdirSync(outDir, { recursive: true })
 	const t0 = Date.now()
+
 	const result = spawnSync(
 		process.execPath,
 		[
@@ -400,6 +464,7 @@ function buildStateShard(
 			encoding: "utf8",
 		}
 	)
+
 	const wallMs = Date.now() - t0
 
 	if (result.status !== 0) {
@@ -438,7 +503,13 @@ function buildStateShard(
 	return { wallMs, segments, counties }
 }
 
-type StateResult = { state: string; counties: number; segments: number; wallMs: number; skipped?: boolean }
+interface StateResult {
+	state: string
+	counties: number
+	segments: number
+	wallMs: number
+	skipped?: boolean
+}
 
 const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -459,7 +530,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					.filter((s) => s in STATE_FIPS)
 			: Object.keys(STATE_FIPS)
 
-		if (TARGET_STATES.length === 0) {
+		if (!TARGET_STATES.length) {
 			throw commandError("No valid states specified. Check --states values against the STATE_FIPS map.")
 		}
 
@@ -473,6 +544,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (FORCE) {
 			console.error("force:       true (re-building existing shards)")
 		}
+
 		console.error("")
 
 		mkdirSync(EDGES_DIR, { recursive: true })
@@ -480,7 +552,9 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// ── Step 1: load county population ranking ─────────────────────────────
 		console.error("Step 1: county population ranking")
+
 		const allCounties = await loadRankedCounties()
+
 		console.error(`  ${allCounties.length} counties in ranking`)
 
 		// Filter to target states only
@@ -492,6 +566,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		if (topN !== null) {
 			counties = counties.slice(0, topN)
+
 			console.error(`  capped to top ${topN} counties by population`)
 		}
 
@@ -501,7 +576,9 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 		// ── Step 2: download ZIPs ──────────────────────────────────────────────
 		if (!BUILD_ONLY) {
 			console.error(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
+
 			const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
+
 			const tasks: DownloadTask[] = counties.map((c) => {
 				const geoid = c.geoid // 5-digit: stateFips + countyFips
 				const zipFile = `tl_2023_${geoid}_edges.zip`
@@ -512,12 +589,17 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					zipPath: path.join(EDGES_DIR, zipFile),
 				}
 			})
+
 			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
+
 			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
 
-			if (failed.length > 0) {
-				console.error(`  failed GEOIDs: ${failed.slice(0, 20).join(", ")}${failed.length > 20 ? " …" : ""}`)
+			if (failed.length) {
+				console.error(
+					`  failed GEOIDs: ${failed.slice(0, MAX_LISTED_FAILURES).join(", ")}${failed.length > MAX_LISTED_FAILURES ? " …" : ""}`
+				)
 			}
+
 			console.error("")
 		}
 
@@ -529,6 +611,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
 		console.error("Step 3: building per-state shards")
+
 		// States from our target list that have at least one downloaded county SHP
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]
@@ -537,9 +620,10 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			return readdirSync(EDGES_DIR).some((f) => pattern.test(f))
 		})
 
-		if (availableStates.length === 0) {
+		if (!availableStates.length) {
 			throw commandError("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
 		}
+
 		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)
 		console.error("")
 
@@ -554,22 +638,28 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		for (const abbr of availableStates) {
 			console.error(`Building ${abbr}…`)
+
 			const result = buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
 
 			if (result === null) {
 				// skipped (already exists, no --force)
 				stateResults.push({ state: abbr, counties: 0, segments: 0, wallMs: 0, skipped: true })
+
 				continue
 			}
+
 			builtStates++
 			totalSegments += result.segments
+
 			stateResults.push({
 				state: abbr,
 				counties: result.counties,
 				segments: result.segments,
 				wallMs: result.wallMs,
 			})
+
 			const elapsed = (result.wallMs / 1000).toFixed(1)
+
 			console.error(
 				`  ${abbr}: ${result.counties} counties, ${result.segments.toLocaleString()} segment-sides, ${elapsed}s`
 			)
@@ -578,6 +668,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// ── Summary ────────────────────────────────────────────────────────────
 		const totalWallMs = Date.now() - wallStart
+
 		const lines = [
 			`interpolation: ${OUT_DIR}`,
 			`States built:    ${builtStates} / ${availableStates.length}`,
@@ -618,3 +709,5 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 }
 
 export default SitusInterpolation
+
+//#endregion

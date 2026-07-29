@@ -22,19 +22,19 @@ function buildSyntheticFST(): FSTMatcher {
 			edges: new Map(),
 			places: [
 				{
-					wofID: 85977539,
+					wofID: 85_977_539,
 					placetype: "locality",
 					name: "New York City",
-					parentChain: [85688543, 85633793],
+					parentChain: [85_688_543, 85_633_793],
 					importance: 0.95,
 					lat: 40.7128,
 					lon: -74.006,
 				},
 				{
-					wofID: 85688543,
+					wofID: 85_688_543,
 					placetype: "region",
 					name: "New York",
-					parentChain: [85633793],
+					parentChain: [85_633_793],
 					importance: 0.85,
 					lat: 42.1657,
 					lon: -74.9481,
@@ -45,10 +45,10 @@ function buildSyntheticFST(): FSTMatcher {
 			edges: new Map(),
 			places: [
 				{
-					wofID: 85688735,
+					wofID: 85_688_735,
 					placetype: "locality",
 					name: "Portland",
-					parentChain: [85688513, 85633793],
+					parentChain: [85_688_513, 85_633_793],
 					importance: 0.72,
 					lat: 45.5152,
 					lon: -122.6784,
@@ -81,8 +81,8 @@ describe("FST binary serialization — unit (synthetic)", () => {
 	it("roundtrips 'New York' query", () => {
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
-		expect(rest.accepting.map((p) => p.wofID).sort()).toEqual(orig.accepting.map((p) => p.wofID).sort())
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
+		expect(rest.accepting.map((p) => p.wofID).toSorted()).toEqual(orig.accepting.map((p) => p.wofID).toSorted())
 	})
 
 	it("roundtrips place entry fields exactly", () => {
@@ -102,14 +102,14 @@ describe("FST binary serialization — unit (synthetic)", () => {
 	it("roundtrips 'Portland' query", () => {
 		const orig = original.query("Portland")
 		const rest = restored.query("Portland")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 		expect(rest.accepting[0]!.wofID).toBe(orig.accepting[0]!.wofID)
 	})
 
 	it("roundtrips continuations", () => {
 		const orig = original.query("New")
 		const rest = restored.query("New")
-		expect(rest.continuations.map((c) => c.token).sort()).toEqual(orig.continuations.map((c) => c.token).sort())
+		expect(rest.continuations.map((c) => c.token).toSorted()).toEqual(orig.continuations.map((c) => c.token).toSorted())
 	})
 
 	it("roundtrips negative evidence (unknown tokens)", () => {
@@ -147,6 +147,7 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 				}
 			},
 		})
+
 		original = matcher
 		buf = serializeFST(original)
 		restored = deserializeFST(buf)
@@ -163,31 +164,31 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 	it("'New York' produces identical interpretations", () => {
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
-		const origIds = orig.accepting.map((p) => p.wofID).sort()
-		const restIds = rest.accepting.map((p) => p.wofID).sort()
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
+		const origIds = orig.accepting.map((p) => p.wofID).toSorted()
+		const restIds = rest.accepting.map((p) => p.wofID).toSorted()
 		expect(restIds).toEqual(origIds)
 	})
 
 	it("NYC parent chain survives roundtrip", () => {
 		const rest = restored.query("New York")
-		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.wofID === 85977539)
+		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.wofID === 85_977_539)
 		expect(nyc).toBeDefined()
-		expect(nyc!.wofID).toBe(85977539)
-		expect(nyc!.parentChain).toContain(85688543)
+		expect(nyc!.wofID).toBe(85_977_539)
+		expect(nyc!.parentChain).toContain(85_688_543)
 	})
 
 	it("'Portland' produces identical localities", () => {
 		const orig = original.query("Portland")
 		const rest = restored.query("Portland")
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 	})
 
 	it("continuations match after roundtrip", () => {
 		const orig = original.query("New")
 		const rest = restored.query("New")
-		const origTokens = orig.continuations.map((c) => c.token).sort()
-		const restTokens = rest.continuations.map((c) => c.token).sort()
+		const origTokens = orig.continuations.map((c) => c.token).toSorted()
+		const restTokens = rest.continuations.map((c) => c.token).toSorted()
 		expect(restTokens).toEqual(origTokens)
 	})
 
@@ -195,12 +196,14 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		const orig = original.query("Buffalo Health Clinic")
 		const rest = restored.query("Buffalo Health Clinic")
 		expect(rest.path).toEqual(orig.path)
-		expect(rest.accepting.length).toBe(orig.accepting.length)
+		expect(rest.accepting).toHaveLength(orig.accepting.length)
 	})
 
 	it("binary size is reasonable", () => {
 		const mb = buf.length / (1024 * 1024)
+
 		console.log(`  FST binary: ${mb.toFixed(2)} MB (${buf.length} bytes)`)
+
 		expect(mb).toBeLessThan(30)
 		expect(mb).toBeGreaterThan(1)
 	})
@@ -226,6 +229,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 				],
 			},
 		]
+
 		nodes[0]!.edges.set("pierre", 1)
 
 		return FSTMatcher.fromNodes(nodes)
@@ -254,9 +258,11 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 
 	it("mixed presence still flags the header and defaults absent entries to 0 in-band", () => {
 		const m = ambiguousMatcher()
+
 		// an entry WITHOUT the field alongside one with it — the writer records 0 for it, and since the
 		// header flag is set the reader reports 0 (a build that opted in but had no count for a surface)
-		m.nodes[1]!.places.push({
+		// Reaching past `private` to seed a fixture the public surface cannot express.
+		;(m as unknown as { nodes: Array<{ places: unknown[] }> }).nodes[1]!.places.push({
 			wofID: 102,
 			placetype: "locality",
 			name: "Pierre Part",
@@ -265,6 +271,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 			lat: 29.96,
 			lon: -91.2,
 		})
+
 		const restored = deserializeFST(serializeFST(m))
 		const q = restored.query("Pierre")
 

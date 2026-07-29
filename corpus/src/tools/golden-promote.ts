@@ -38,6 +38,21 @@ import { readJSONL, sha256File, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+/**
+ * Components a candidate needs before it is rich enough to be worth a golden-set slot.
+ */
+const MIN_GOLDEN_COMPONENTS = 5
+
+/**
+ * Components an existing entry must still carry to survive promotion.
+ */
+const MIN_PROMOTABLE_COMPONENTS = 4
+
+/**
+ * Quote-delimited segments above which the raw line is malformed rather than merely quoted.
+ */
+const MAX_QUOTE_SEGMENTS = 3
+
 interface GoldenEntry {
 	raw: string
 	components: Record<string, string>
@@ -58,24 +73,36 @@ export interface PromoteStats {
 }
 
 export interface PromoteGoldenOptions {
-	/** Candidates JSONL (required). */
+	/**
+	 * Candidates JSONL (required).
+	 */
 	input: string
-	/** Target golden version dir (required, e.g. `v0.1.1`). */
+	/**
+	 * Target golden version dir (required, e.g. `v0.1.1`).
+	 */
 	bumpTo: string
-	/** Previous version to forward-copy + dedup against. Default `v0.1.0`. */
+	/**
+	 * Previous version to forward-copy + dedup against. Default `v0.1.0`.
+	 */
 	prior?: string
-	/** Golden dir root. Default `data/eval/golden`. */
+	/**
+	 * Golden dir root. Default `data/eval/golden`.
+	 */
 	goldenRoot?: string
-	/** Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator). */
+	/**
+	 * Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator).
+	 */
 	noFilters?: boolean
-	/** Report what would be written but don't touch disk. */
+	/**
+	 * Report what would be written but don't touch disk.
+	 */
 	dryRun?: boolean
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────
 
 function normalize(s: string): string {
-	return s.toLowerCase().replace(/\s+/g, " ").trim()
+	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
 /**
@@ -85,7 +112,7 @@ function normalize(s: string): string {
 function isComponentsGlued(entry: GoldenEntry): boolean {
 	const componentCount = Object.keys(entry.components).length
 
-	if (componentCount < 5) return false
+	if (componentCount < MIN_GOLDEN_COMPONENTS) return false
 	const separators = (entry.raw.match(/[,\n;]/g) ?? []).length
 
 	return separators < 2
@@ -97,7 +124,7 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
  * often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
-	if (Object.keys(entry.components).length < 4) return false
+	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false
 
 	if (entry.country === "FR" || entry.country === "France") return false
 	const postcode = entry.components.postcode
@@ -118,13 +145,13 @@ function isSuspicious(entry: GoldenEntry): boolean {
 	const raw = entry.raw
 
 	// eslint-disable-next-line no-control-regex
-	if (/[\x00-\x1f\x7f]/.test(raw)) return true
+	if (/[\u0000-\u001F\u007F]/.test(raw)) return true
 	const openBrackets = (raw.match(/[[({<]/g) ?? []).length
 	const closeBrackets = (raw.match(/[\])}>]/g) ?? []).length
 
 	if (openBrackets !== closeBrackets) return true
 
-	if (raw.split('"').length > 3) return true
+	if (raw.split('"').length > MAX_QUOTE_SEGMENTS) return true
 
 	// too many quote marks
 	return false
@@ -132,7 +159,9 @@ function isSuspicious(entry: GoldenEntry): boolean {
 
 // ── IO ─────────────────────────────────────────────────────────────────────
 
-/** Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket. */
+/**
+ * Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket.
+ */
 function readJSONLIfPresent<T>(path: string): T[] {
 	if (!existsSync(path)) return []
 
@@ -169,6 +198,7 @@ export async function promoteGolden(
 			for (const e of entries) {
 				seenNormalized.add(normalize(e.raw))
 			}
+
 			report?.(`  prior ${country}: ${entries.length} entries (forward-copy base)`)
 		}
 	} else {
@@ -182,6 +212,7 @@ export async function promoteGolden(
 		kept: 0,
 		perCountry: {},
 	}
+
 	const accepted: GoldenEntry[] = []
 	const seenInBatch = new Set<string>()
 
@@ -191,34 +222,40 @@ export async function promoteGolden(
 		// Dedup pass 1: against prior versioned golden
 		if (seenNormalized.has(norm)) {
 			stats.filteredOut.forwardDup++
+
 			continue
 		}
 
 		// Dedup pass 2: against this batch
 		if (seenInBatch.has(norm)) {
 			stats.filteredOut.duplicate++
+
 			continue
 		}
 
 		if (applyFilters) {
 			if (isComponentsGlued(cand)) {
 				stats.filteredOut.glued++
+
 				continue
 			}
 
 			if (isPostcodeBadlyLeading(cand)) {
 				stats.filteredOut.postcodeLeading++
+
 				continue
 			}
 
 			if (isSuspicious(cand)) {
 				stats.filteredOut.suspicious++
+
 				continue
 			}
 		}
 
 		accepted.push(cand)
 		seenInBatch.add(norm)
+
 		stats.kept++
 		const country = cand.country || "OTHER"
 		stats.perCountry[country] = (stats.perCountry[country] ?? 0) + 1
@@ -238,6 +275,7 @@ export async function promoteGolden(
 		if (!buckets.has(key)) {
 			buckets.set(key, [])
 		}
+
 		buckets.get(key)!.push(cand)
 	}
 
@@ -249,6 +287,7 @@ export async function promoteGolden(
 	for (const [key, entries] of buckets) {
 		report?.(`  ${key.toLowerCase()}.jsonl: ${entries.length} entries`)
 	}
+
 	report?.(`=== filter stats ===`)
 	report?.(`candidates in:        ${stats.candidatesIn}`)
 	report?.(`  filtered (glued):           ${stats.filteredOut.glued}`)
@@ -259,7 +298,7 @@ export async function promoteGolden(
 	report?.(`  kept:                       ${stats.kept}`)
 	report?.(`per-country (kept):`)
 
-	for (const [c, n] of Object.entries(stats.perCountry).sort((a, b) => b[1] - a[1])) {
+	for (const [c, n] of Object.entries(stats.perCountry).toSorted((a, b) => b[1] - a[1])) {
 		report?.(`  ${c}: ${n}`)
 	}
 
@@ -270,6 +309,7 @@ export async function promoteGolden(
 	}
 
 	mkdirSync(outDir, { recursive: true })
+
 	const manifest: {
 		promoted_at: string
 		from: string

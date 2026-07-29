@@ -19,7 +19,9 @@ import type { GlossaryBacklinks, GlossaryTagMeta, TaggedGlossaryTerm } from "../
 
 import styles from "./styles.module.css"
 
-/** Anchor on the page h1, used by the TOC's back-to-top entry. */
+/**
+ * Anchor on the page h1, used by the TOC's back-to-top entry.
+ */
 const TOP_ANCHOR = "glossary"
 
 interface GlossaryPageProps {
@@ -32,13 +34,15 @@ interface GlossaryPageProps {
 	backlinks: GlossaryBacklinks
 }
 
-/** Upstream anchor scheme — must not change or remark tooltip links break. */
+/**
+ * Upstream anchor scheme — must not change or remark tooltip links break.
+ */
 function termAnchor(term: TaggedGlossaryTerm): string {
-	return term.id || term.term.toLowerCase().replace(/\s+/g, "-")
+	return term.id || term.term.toLowerCase().replaceAll(/\s+/g, "-")
 }
 
 function relatedAnchor(related: string): string {
-	return related.toLowerCase().replace(/\s+/g, "-")
+	return related.toLowerCase().replaceAll(/\s+/g, "-")
 }
 
 export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: GlossaryPageProps): React.JSX.Element {
@@ -64,7 +68,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 	// Tooltip deep-links (/glossary#some-term) race the router's hash scroll against first render;
 	// the target doesn't exist yet when Docusaurus tries to scroll. Re-run the jump after mount.
 	useEffect(() => {
-		const hash = decodeURIComponent(window.location.hash.slice(1))
+		const hash = decodeURIComponent(globalThis.location.hash.slice(1))
 
 		if (!hash) return
 		document.getElementById(hash)?.scrollIntoView()
@@ -93,6 +97,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 			if (!term.tags?.some((tag) => enabled.has(tag))) return false
 
 			if (!lowerSearch) return true
+
 			const haystack = [term.term, term.definition, term.abbreviation, ...(term.aliases ?? [])]
 				.filter(Boolean)
 				.join(" ")
@@ -125,14 +130,14 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 				terms: byPrimary
 					.get(tag.key)!
 					.slice()
-					.sort((a, b) => a.term.localeCompare(b.term)),
+					.toSorted((a, b) => a.term.localeCompare(b.term)),
 			}))
 	}, [visibleTerms, tagMeta, enabled])
 
 	// TOC: a back-to-top "Glossary" entry, then categories (level 2) with their visible terms
 	// nested beneath (level 3). TOCItems renders `value` as HTML, so entity-escape the strings.
 	const toc = useMemo(() => {
-		const escapeHTML = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+		const escapeHTML = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
 		return [
 			{ value: "Glossary", id: TOP_ANCHOR, level: 2 },
@@ -196,7 +201,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 							</div>
 						</header>
 
-						{sections.length === 0 ? (
+						{!sections.length ? (
 							<div className={styles.noResults}>
 								<p>
 									No terms match{search.trim() ? ` "${search.trim()}"` : ""}
@@ -253,7 +258,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 													{term.tags?.length ? (
 														<div className={styles.termTags}>
 															{term.tags.map((key) => {
-																const tag = tagMeta.find((candidate) => candidate.key === key)
+																const innerTag = tagMeta.find((candidate) => candidate.key === key)
 
 																return (
 																	<button

@@ -30,6 +30,11 @@ import type { Tagged } from "type-fest"
 import type { CanadianProvinceCode } from "./province.ts"
 
 /**
+ * Characters in a Canadian postal code once spaces are stripped: `A1A1A1`.
+ */
+const POSTAL_CODE_LENGTH = 6
+
+/**
  * A Canadian postal code: `A1A 1A1`. Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit
  * pattern, conventionally written with a single space after the third. Unlike the other systems' bare five digits, the
  * shape alone already says "Canada".
@@ -55,15 +60,17 @@ export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
-	const compact = raw.trim().toUpperCase().replace(/\s+/g, "")
+	const compact = raw.trim().toUpperCase().replaceAll(/\s+/g, "")
 
-	if (compact.length !== 6) return null
+	if (compact.length !== POSTAL_CODE_LENGTH) return null
 	const spaced = `${compact.slice(0, 3)} ${compact.slice(3)}`
 
 	return CA_POSTAL_CODE_PATTERN.test(spaced) ? (spaced as PostalCode) : null
 }
 
-/** Type-predicate for a Canadian postal code (accepts the spaced or unspaced surface form). */
+/**
+ * Type-predicate for a Canadian postal code (accepts the spaced or unspaced surface form).
+ */
 export function isCaPostalCode(input: unknown): input is PostalCode {
 	return typeof input === "string" && CA_POSTAL_CODE_PATTERN.test(input)
 }

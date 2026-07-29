@@ -28,17 +28,23 @@ const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
 	class Tensor {
-		constructor(
-			public readonly type: string,
-			public readonly data: BigInt64Array | Float32Array,
-			public readonly dims: readonly number[]
-		) {}
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
 	}
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-/** The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface. */
+/**
+ * The config the (stubbed) `NeuralAddressClassifier` was constructed with — the assertion surface.
+ */
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
 vi.mock("@mailwoman/neural/browser", async (importOriginal) => {
@@ -65,9 +71,12 @@ const { loadNeuralClassifierFromURLs } = await import("./loader.ts")
 
 const SEQ = 128
 
-/** A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings). */
+/**
+ * A mocked ORT session with a plain graph (no soft-channel inputs → no unfed-channel warnings).
+ */
 function installMockSession(): void {
 	sessionCreateMock.mockReset()
+
 	sessionCreateMock.mockResolvedValue({
 		inputNames: ["input_ids", "attention_mask"],
 		run: vi.fn(() => Promise.resolve({ logits: { data: new Float32Array(SEQ * 3), dims: [1, SEQ, 3] } })),
@@ -94,11 +103,15 @@ function makeFetch(statusFor: (url: string) => number): typeof fetch {
 		}
 
 		if (url.includes("postcode-us")) {
-			return new Response(serializePostcodeBinary([{ postcode: "10001", country: "US", lat: 40.7478, lon: -73.985 }]))
+			return new Response(
+				serializePostcodeBinary([{ postcode: "10001", country: "US", lat: 40.7478, lon: -73.985 }]).slice().buffer
+			)
 		}
 
 		if (url.includes("postcode-de")) {
-			return new Response(serializePostcodeBinary([{ postcode: "10115", country: "DE", lat: 52.53, lon: 13.38 }]))
+			return new Response(
+				serializePostcodeBinary([{ postcode: "10115", country: "DE", lat: 52.53, lon: 13.38 }]).slice().buffer
+			)
 		}
 
 		return new Response(new Uint8Array([1, 2, 3])) // model / tokenizer — mocked downstream

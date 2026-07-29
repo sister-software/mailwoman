@@ -30,6 +30,7 @@ describe("buildEmissionPriors", () => {
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: 27, end: 32 }, confidence: 0.6 }],
 		}
+
 		// Three tokens; only the last overlaps the postcode span.
 		const toks = tokens([0, 3], [4, 7], [27, 32])
 		const m = buildEmissionPriors(shape, toks, LABELS)
@@ -43,6 +44,7 @@ describe("buildEmissionPriors", () => {
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
 		}
+
 		const m = buildEmissionPriors(shape, tokens([0, 5]), LABELS, { biasScale: 2 })
 		const postcodeCol = LABELS.indexOf("B-postcode")
 		expect(m[0]?.[postcodeCol]).toBeCloseTo(1.2, 6)
@@ -54,6 +56,7 @@ describe("buildEmissionPriors", () => {
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip4", span: { start: 0, end: 10 }, confidence: 0.95 }],
 		}
+
 		const toks = tokens([0, 5], [5, 6], [6, 10])
 		const m = buildEmissionPriors(shape, toks, LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
@@ -71,6 +74,7 @@ describe("buildEmissionPriors", () => {
 				{ format: "de_postcode", span: { start: 0, end: 5 }, confidence: 0.6 },
 			],
 		}
+
 		const m = buildEmissionPriors(shape, tokens([0, 5]), LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
 		// All three hits map to B-postcode; bias is the max (not sum) → 0.6, not 1.8
@@ -81,6 +85,7 @@ describe("buildEmissionPriors", () => {
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "po_box", span: { start: 0, end: 12 }, confidence: 0.85 }],
 		}
+
 		const m = buildEmissionPriors(shape, tokens([0, 2], [3, 6], [7, 12]), LABELS)
 		const poBoxCol = LABELS.indexOf("B-po_box")
 		expect(m[0]?.[poBoxCol]).toBeCloseTo(0.85, 6)
@@ -92,6 +97,7 @@ describe("buildEmissionPriors", () => {
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "made_up_format", span: { start: 0, end: 5 }, confidence: 0.9 }],
 		}
+
 		const m = buildEmissionPriors(shape, tokens([0, 5]), LABELS)
 		expect(m[0]?.every((x) => x === 0)).toBe(true)
 	})
@@ -99,9 +105,11 @@ describe("buildEmissionPriors", () => {
 	it("ignores hits whose target label is absent from the vocabulary", () => {
 		// Drop B-postcode from the vocab — bias has no column to land in.
 		const slim = ["O", "B-locality", "I-locality"]
+
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
 		}
+
 		const m = buildEmissionPriors(shape, tokens([0, 5]), slim)
 		expect(m[0]?.every((x) => x === 0)).toBe(true)
 	})
@@ -110,6 +118,7 @@ describe("buildEmissionPriors", () => {
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: 100, end: 105 }, confidence: 0.6 }],
 		}
+
 		const m = buildEmissionPriors(shape, tokens([0, 5], [6, 10]), LABELS)
 		expect(m[0]?.every((x) => x === 0)).toBe(true)
 		expect(m[1]?.every((x) => x === 0)).toBe(true)
@@ -199,6 +208,7 @@ describe("addEmissionMatrix", () => {
 			[1, 2, 3],
 			[4, 5, 6],
 		]
+
 		const result = addEmissionMatrix(e, [])
 		expect(result).toEqual(e)
 		expect(result).not.toBe(e) // new array
@@ -209,10 +219,12 @@ describe("addEmissionMatrix", () => {
 			[1, 2],
 			[3, 4],
 		]
+
 		const p = [
 			[0.5, 0.5],
 			[1, 1],
 		]
+
 		expect(addEmissionMatrix(e, p)).toEqual([
 			[1.5, 2.5],
 			[4, 5],
@@ -224,7 +236,9 @@ describe("addEmissionMatrix", () => {
 			[1, 2],
 			[3, 4],
 		]
+
 		const p = [[0.5, 0.5]]
+
 		expect(addEmissionMatrix(e, p)).toEqual([
 			[1.5, 2.5],
 			[3, 4],

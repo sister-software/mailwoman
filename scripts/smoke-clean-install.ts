@@ -31,12 +31,15 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 
 const repoRoot = repoRootPath()
-// The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load
-// at runtime MUST be packed here — otherwise `npm install` pulls it from the REGISTRY (the published,
-// possibly-stale version), and the smoke tests new-source-CLI against an old-registry dependency. That
-// exact skew shipped a red main after the v5.0.0 acronym rename: `mailwoman` imported the renamed
-// `createWOFResolver`, but `@mailwoman/resolver` wasn't packed, so npm resolved the pre-rename 4.16.2 and
-// the CLI crashed on a missing export. Packing the closure makes the test source-coherent (new-vs-new).
+
+/**
+ * The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load at runtime MUST
+ * be packed here — otherwise `npm install` pulls it from the REGISTRY (the published, possibly-stale version), and the
+ * smoke tests new-source-CLI against an old-registry dependency. That exact skew shipped a red main after the v5.0.0
+ * acronym rename: `mailwoman` imported the renamed `createWOFResolver`, but `@mailwoman/resolver` wasn't packed, so npm
+ * resolved the pre-rename 4.16.2 and the CLI crashed on a missing export. Packing the closure makes the test
+ * source-coherent (new-vs-new).
+ */
 const WORKSPACES: Record<string, string> = {
 	"@mailwoman/core": "core",
 	"@mailwoman/spatial": "spatial",
@@ -105,7 +108,9 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/mcp": "mcp",
 }
 
-// Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap).
+/**
+ * Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap).
+ */
 const IMPORT_CHECK = [
 	"@mailwoman/annotations",
 	"@mailwoman/timezone-lookup",
@@ -121,13 +126,17 @@ const IMPORT_CHECK = [
 	"@mailwoman/react",
 ]
 
-// Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep
-// guard the closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or
-// also packed by this script), else its `@mailwoman/*` dep resolves from the registry and skews the test.
-// `@mailwoman/core` qualifies: zero `@mailwoman/*` runtime deps.
+/**
+ * Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep guard the
+ * closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or also packed by this
+ * script), else its `@mailwoman/*` dep resolves from the registry and skews the test. `@mailwoman/core` qualifies: zero
+ * `@mailwoman/*` runtime deps.
+ */
 const STANDALONE_LEAVES = ["@mailwoman/core"]
 
-/** The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count. */
+/**
+ * The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count.
+ */
 const MCP_EXPECTED_TOOL_COUNT = 5
 
 /**
@@ -144,9 +153,11 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	const child = spawn(binPath, [], { cwd: projDir, stdio: ["pipe", "pipe", "pipe"] })
 
 	let stderr = ""
+
 	child.stderr.on("data", (d: Buffer) => {
 		stderr += d.toString()
 	})
+
 	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write; swallow it so
 	// the real failure surfaces via the `error`/`exit` events below, not an uncaught stream error.
 	child.stdin.on("error", () => {})
@@ -181,11 +192,16 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 
 	// Failure channels the handshake races against, so a missing/crashing bin fails FAST instead of hanging:
 	// `error` (spawn ENOENT — the bin path doesn't exist), `exit` (crashed before answering), the overall timeout.
-	const exited = new Promise<number | null>((res) => child.on("exit", (code) => res(code)))
-	const failed = new Promise<never>((_, rej) =>
+	const exited = new Promise<number | null>((res) => {
+		child.on("exit", (code) => res(code))
+	})
+
+	const failed = new Promise<never>((_, rej) => {
 		child.on("error", (err) => rej(new Error(`mailwoman-mcp failed to spawn (${binPath}): ${(err as Error).message}`)))
-	)
+	})
+
 	let overallTimer: NodeJS.Timeout | undefined
+
 	const timedOut = new Promise<never>((_, rej) => {
 		overallTimer = setTimeout(() => {
 			child.kill("SIGKILL")
@@ -198,8 +214,14 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 			new Promise<{ result?: { tools?: unknown[] }; error?: unknown }>((res, rej) => {
 				const existing = responses.get(id)
 
-				if (existing) return res(existing)
+				if (existing) {
+					res(existing)
+
+					return
+				}
+
 				waiters.set(id, res)
+
 				exited.then((code) =>
 					rej(new Error(`mailwoman-mcp exited (code ${code}) before responding to id ${id}; stderr:\n${stderr}`))
 				)
@@ -225,6 +247,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 				clientInfo: { name: "mw-smoke", version: "0.0.0" },
 			},
 		})
+
 		const initResp = await waitFor(1)
 
 		if (initResp.error) throw new Error(`initialize failed: ${JSON.stringify(initResp.error)}`)
@@ -245,6 +268,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		// Clean shutdown: closing stdin ends the stdio transport; the process (lazy deps, nothing loaded) must exit 0.
 		child.stdin.end()
 		let shutdownTimer: NodeJS.Timeout | undefined
+
 		const exitCode = await Promise.race([
 			exited,
 			timedOut,
@@ -252,7 +276,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 				shutdownTimer = setTimeout(() => {
 					child.kill("SIGKILL")
 					rej(new Error(`mailwoman-mcp did not exit within the shutdown window; stderr:\n${stderr}`))
-				}, 5_000)
+				}, 5000)
 			}),
 		]).finally(() => clearTimeout(shutdownTimer))
 
@@ -274,6 +298,7 @@ const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
 const tarDir = join(tmp, "tarballs")
 const proj = join(tmp, "proj")
 execFileSync("mkdir", ["-p", tarDir, proj])
+
 const run = (cmd: string, args: string[], cwd: string) =>
 	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 
@@ -303,7 +328,7 @@ function assertClosureComplete() {
 		}
 	}
 
-	if (missing.size > 0) {
+	if (missing.size) {
 		const edges = [...missing].map(([dep, users]) => `  ${dep} <- ${users.join(", ")}`).join("\n")
 
 		throw new Error(`[smoke] WORKSPACES closure incomplete — add these to the pack set:\n${edges}`)
@@ -312,7 +337,9 @@ function assertClosureComplete() {
 
 try {
 	assertClosureComplete()
+
 	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
+
 	const deps: Record<string, string> = {}
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
@@ -323,16 +350,20 @@ try {
 		packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 		deps[name] = `file:${tgz}`
 	}
+
 	writeFileSync(
 		join(proj, "package.json"),
 		JSON.stringify({ name: "mw-smoke", private: true, dependencies: deps }, null, 2)
 	)
 
 	console.log("[smoke] npm install (tarballs only — no hoisting)…")
+
 	run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], proj)
 
 	const cli = join(proj, "node_modules", "mailwoman", "out", "cli.js")
+
 	console.log("[smoke] mailwoman --help (loads every command module)…")
+
 	const help = run("node", [cli, "--help"], proj)
 
 	for (const c of ["parse", "geocode", "autocomplete", "reverse", "wof", "corpus", "registry"]) {
@@ -340,6 +371,7 @@ try {
 	}
 
 	console.log("[smoke] mailwoman parse (exercises bundled core/data dictionaries)…")
+
 	const out = run("node", [cli, "parse", "350 5th Ave, New York, NY 10118"], proj)
 
 	if (!out.includes("New York") || !out.includes("10118"))
@@ -352,7 +384,9 @@ try {
 	}
 
 	console.log("[smoke] mailwoman-mcp bin: JSON-RPC initialize + tools/list over stdio…")
+
 	const toolCount = await checkMCPBin(proj)
+
 	console.log(`[smoke]   → ${toolCount} tools listed, bin shut down cleanly`)
 
 	// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the WHOLE `mailwoman`
@@ -366,9 +400,12 @@ try {
 	// registry version (the source-skew this file's header warns about).
 	for (const leaf of STANDALONE_LEAVES) {
 		const leafDir = WORKSPACES[leaf]!
+
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
+
 		const solo = join(tmp, `solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
+
 		writeFileSync(
 			join(solo, "package.json"),
 			JSON.stringify(
@@ -382,17 +419,20 @@ try {
 				2
 			)
 		)
+
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)
 		run("node", ["--input-type=module", "-e", `await import("${leaf}")`], solo)
 	}
 
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
-} catch (err: unknown) {
-	const e = err as { stdout?: string; stderr?: string; message?: string }
+} catch (error: unknown) {
+	const e = error as { stdout?: string; stderr?: string; message?: string }
+
 	console.error("\n[smoke] ❌ FAILED — a published package does not clean-install/run:")
 	console.error(
-		e.stdout ? `${e.message}\n--- stdout ---\n${e.stdout}\n--- stderr ---\n${e.stderr}` : (e.message ?? err)
+		e.stdout ? `${e.message}\n--- stdout ---\n${e.stdout}\n--- stderr ---\n${e.stderr}` : (e.message ?? error)
 	)
+
 	process.exitCode = 1
 } finally {
 	rmSync(tmp, { recursive: true, force: true })

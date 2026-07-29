@@ -39,9 +39,13 @@ import { distance as levenshteinDistance } from "fastest-levenshtein"
 import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "./tokenize.ts"
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.ts"
 
-/** Options for `alignRow`. */
+/**
+ * Options for `alignRow`.
+ */
 export interface AlignOptions {
-	/** Tokenizer to use. Defaults to `whitespaceTokenizer()`. */
+	/**
+	 * Tokenizer to use. Defaults to `whitespaceTokenizer()`.
+	 */
 	tokenizer?: Tokenizer
 
 	/**
@@ -60,7 +64,9 @@ export interface AlignOptions {
 	caseInsensitive?: boolean
 }
 
-/** Either a successful labeled row or a quarantined one. */
+/**
+ * Either a successful labeled row or a quarantined one.
+ */
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
@@ -73,7 +79,9 @@ export interface ComponentSpan {
 	end: number
 }
 
-/** Align a single row. */
+/**
+ * Align a single row.
+ */
 export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentResult {
 	const tokenizer = opts.tokenizer ?? whitespaceTokenizer()
 	const maxEditDistance = opts.maxEditDistance ?? 2
@@ -107,7 +115,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
 	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
 	// re-sorted by start below.
-	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).sort(
+	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
 	)
 
@@ -220,7 +228,7 @@ function locateSpan(args: {
 }): { start: number; end: number } | undefined {
 	const { haystack, needle, claimed, maxEditDistance } = args
 
-	if (needle.length === 0) return undefined
+	if (!needle.length) return undefined
 
 	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
 	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
@@ -234,13 +242,14 @@ function locateSpan(args: {
 	while (true) {
 		const idx = haystack.indexOf(needle, from)
 
-		if (idx < 0) break
+		if (idx === -1) break
 		const end = idx + needle.length
 
 		if (!overlapsClaimed(idx, end, claimed)) {
 			if (isBoundaryAligned(haystack, idx, end)) return { start: idx, end }
 			intraWord ??= { start: idx, end }
 		}
+
 		from = idx + 1
 	}
 
@@ -267,7 +276,9 @@ function locateSpan(args: {
 
 const WORD_CHAR = /[\p{L}\p{N}]/u
 
-/** Both needle edges sit on word boundaries of the haystack (string edges count as boundaries). */
+/**
+ * Both needle edges sit on word boundaries of the haystack (string edges count as boundaries).
+ */
 function isBoundaryAligned(haystack: string, start: number, end: number): boolean {
 	const before = start === 0 || !WORD_CHAR.test(haystack[start - 1]!)
 	const after = end === haystack.length || !WORD_CHAR.test(haystack[end]!)
@@ -307,9 +318,11 @@ function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan
 				} else {
 					assigned = `I-${s.tag}` as BIOLabel
 				}
+
 				break
 			}
 		}
+
 		out.push(assigned)
 	}
 

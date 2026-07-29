@@ -49,6 +49,7 @@ export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLi
 	const scored = SCORERS.map((s) => ({ kind: s.kind, confidence: s.score(input, shape) })).filter(
 		(s) => s.confidence > 0
 	)
+
 	scored.sort((a, b) => b.confidence - a.confidence)
 
 	const top = scored[0] ?? { kind: "vague" as QueryKind, confidence: 0.3 }
@@ -74,7 +75,9 @@ export async function classifyKind(
 	return classifyKindSync(input, shape)
 }
 
-/** Options for {@link createKindClassifier}. */
+/**
+ * Options for {@link createKindClassifier}.
+ */
 export interface KindClassifierOpts {
 	/**
 	 * POI phrase lexicon (spec §3.1). When present, a `poi_query` scorer joins the rule set — injected, never imported,
@@ -114,7 +117,7 @@ export function createKindClassifier(
 
 		return {
 			...base,
-			alternatives: [...base.alternatives, poiAlternative].sort((a, b) => b.confidence - a.confidence),
+			alternatives: [...base.alternatives, poiAlternative].toSorted((a, b) => b.confidence - a.confidence),
 		}
 	}
 }

@@ -6,7 +6,11 @@
 
 import { TileType } from "pmtiles"
 
+/**
+ * File extensions a tile response may carry, used to pick the content type and reject anything else.
+ */
 export const TileTypeFileExtensions = new Set(["avif", "jpg", "mvt", "png", "webp"] as const)
+
 export type TileTypeFileExtension = typeof TileTypeFileExtensions extends Set<infer T> ? T : never
 
 /**

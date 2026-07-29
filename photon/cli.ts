@@ -42,7 +42,9 @@ import {
 	type PhotonProperties,
 } from "./index.ts"
 
-/** WOF placetype → Photon property key. */
+/**
+ * WOF placetype → Photon property key.
+ */
 const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 	street: "street",
 	locality: "city",
@@ -52,7 +54,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 	country: "country",
 }
 
-/** A real address fits comfortably; longer is malformed input (and would exceed the model's window). */
+/**
+ * A real address fits comfortably; longer is malformed input (and would exceed the model's window).
+ */
 const MAX_QUERY_LEN = 512
 
 async function serve(): Promise<void> {
@@ -85,8 +89,10 @@ async function serve(): Promise<void> {
 	// wrong gazetteer without a word).
 	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
 		console.error(`✗ --candidate-db not found: ${values["candidate-db"]}`)
+
 		process.exit(1)
 	}
+
 	const candidateDb =
 		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
@@ -95,7 +101,7 @@ async function serve(): Promise<void> {
 	// is required" — a stranger's first `npx @mailwoman/photon serve` must say exactly what data is
 	// missing and the one command that fixes it. Kept in sync with the docs' hosted-artifact layout
 	// (mailwoman.sister.software/docs/switching/photon — the maintained pointer).
-	if (!candidateDb && wofPaths.length === 0) {
+	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			[
 				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
@@ -112,6 +118,7 @@ async function serve(): Promise<void> {
 				"  Docs: https://mailwoman.sister.software/docs/switching/photon",
 			].join("\n")
 		)
+
 		process.exit(1)
 	}
 
@@ -134,6 +141,7 @@ async function serve(): Promise<void> {
 			// #1016: forward the client's viewport/user location as a proximity bias — a SOFT re-rank the resolver
 			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
+
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
@@ -160,6 +168,7 @@ async function serve(): Promise<void> {
 			// #1050: the street-centroid tier is STREET-GRADE — full assembled street name in `name`,
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
+
 			const primary: PhotonForwardInput = {
 				lat: result.lat,
 				lon: result.lon,
@@ -169,6 +178,7 @@ async function serve(): Promise<void> {
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
+
 			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
 			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
 			const alternatives = result.candidates.slice(1).map((c) => {
@@ -189,8 +199,9 @@ async function serve(): Promise<void> {
 			if (!reverseGeo) return photonCollection([])
 			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
 
-			if (hierarchy.length === 0) return photonCollection([])
+			if (!hierarchy.length) return photonCollection([])
 			const deepest = hierarchy[0]!
+
 			// #1014: carry osm_key/osm_value/type (from the deepest placetype) so /reverse matches /api's schema —
 			// no Photon client should dereference an undefined osm_key on a reverse result either.
 			const properties: PhotonProperties = {
@@ -250,6 +261,7 @@ function openapi(): void {
 	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
 		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
 		console.error("Usage: mailwoman-photon openapi [--flavor 3.1|3.0] [--out <path>]")
+
 		process.exit(1)
 	}
 

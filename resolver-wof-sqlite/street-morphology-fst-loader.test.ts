@@ -28,10 +28,14 @@ import { loadStreetMorphologyFST } from "./street-morphology-fst-loader.ts"
 
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
-/** Street-type probes across the served languages: fr, en, de. */
+/**
+ * Street-type probes across the served languages: fr, en, de.
+ */
 const PROBES = ["rue", "avenue", "straße"] as const
 
-/** Project the identity triple so comparisons ignore object identity. */
+/**
+ * Project the identity triple so comparisons ignore object identity.
+ */
 const keyOf = (entries: PlaceEntry[]) => entries.map((e) => [e.wofID, e.placetype, e.name])
 
 const tempDir = mkdtempSync(join(tmpdir(), "morphology-fst-loader-"))
@@ -96,6 +100,7 @@ describe("loadStreetMorphologyFST", () => {
 
 		writeFileSync(corruptPath, Buffer.from("not an FST artifact"))
 		const warnings: string[] = []
+
 		const loaded = loadStreetMorphologyFST({
 			artifactPath: corruptPath,
 			dictionariesDir: DICTIONARIES_DIR,
@@ -103,7 +108,7 @@ describe("loadStreetMorphologyFST", () => {
 		})
 
 		expect(loaded.source).toBe("built")
-		expect(warnings.length).toBe(1)
+		expect(warnings).toHaveLength(1)
 		expect(warnings[0]).toContain(corruptPath)
 		expect(loaded.matcher.query("rue").accepting.length).toBeGreaterThan(0)
 	})

@@ -24,7 +24,9 @@ export interface FragmentDevOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath: string
-	/** Cap rows for a fast read (0 = all). */
+	/**
+	 * Cap rows for a fast read (0 = all).
+	 */
 	limit?: number
 }
 
@@ -35,9 +37,11 @@ interface DevRow {
 	span_tags: string[]
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-/** Score fragment-dev; narrates the separator metrics and returns them for programmatic use. */
+/**
+ * Score fragment-dev; narrates the separator metrics and returns them for programmatic use.
+ */
 export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	spanExact: number
 	tagAccuracy: number
@@ -47,6 +51,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		.split("\n")
 		.filter(Boolean)
 		.map((line) => JSON.parse(line) as DevRow)
+
 	const sample = options.limit && options.limit > 0 ? rows.slice(0, options.limit) : rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({

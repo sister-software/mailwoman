@@ -69,22 +69,39 @@ import { resolve } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
+/**
+ * Hex characters in an md5 digest.
+ */
+const MD5_HEX_LENGTH = 32
+
+/**
+ * Workspace root the artifacts are linked into. Everything below resolves against it.
+ */
 const PKG_DIR = repoRootPath("neural-weights-en-gb")
-// In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this
-// pair identical to neural-weights-en-us/scripts/link-dev-weights.ts's DEFAULT_MODEL /
-// DEFAULT_TOKENIZER on every ship. The guard below fails loud on any future miss.
+
+/**
+ * In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this pair identical to
+ * neural-weights-en-us/scripts/link-dev-weights.ts's DEFAULT_MODEL / DEFAULT_TOKENIZER on every ship. The guard below
+ * fails loud on any future miss.
+ */
 const SRC_MODEL =
 	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
+
+/**
+ * Tokenizer actually linked — the environment override if set, otherwise the card's default.
+ */
 const SRC_TOKENIZER =
 	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 
 if (!existsSync(SRC_MODEL)) {
 	console.error(`missing source model: ${SRC_MODEL}`)
+
 	process.exit(1)
 }
 
 if (!existsSync(SRC_TOKENIZER)) {
 	console.error(`missing source tokenizer: ${SRC_TOKENIZER}`)
+
 	process.exit(1)
 }
 
@@ -123,7 +140,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
 				const [hash] = sidecarContent.split(/\s+/)
 
-				if (hash && hash.length === 32) {
+				if (hash && hash.length === MD5_HEX_LENGTH) {
 					// Valid md5 hash (32 hex chars)
 					console.log(`md5(${path}): read from sidecar`)
 
@@ -138,6 +155,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	const hash = await md5File(path)
 	const filename = path.split(/[/\\]/).pop() || path
 	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+
 	console.log(`md5(${path}): computed and cached in sidecar`)
 
 	return hash
@@ -166,6 +184,7 @@ function peekPairIndexHeaderFields(path: string): {
 	}
 
 	const headerLen = view.getUint32(4, true)
+
 	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
 		delta: number
 		transitionBeta?: number
@@ -187,6 +206,7 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 	const enUSCard = JSON.parse(
 		readFileSync(resolve(PKG_DIR, "..", "neural-weights-en-us", "model-card.json"), "utf8")
 	) as { files_md5?: Record<string, string> }
+
 	const checks: Array<[string, string, string | undefined]> = [
 		["model", resolve(PKG_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
 		["tokenizer", resolve(PKG_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
@@ -203,8 +223,10 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 			console.error(
 				`ERROR (#397 guard): en-us model-card.json has no files_md5 entry for ${label} — cannot verify the dev pin.`
 			)
+
 			process.exit(1)
 		}
+
 		const actual = createHash("md5").update(readFileSync(path)).digest("hex")
 
 		if (actual !== expected) {
@@ -212,6 +234,7 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 				`ERROR (#397 guard): linked default ${label} md5 ${actual} != shipped ${expected} (en-us card files_md5).`
 			)
 			console.error("  Bump this script's SRC_* defaults in lockstep with en-us on each ship.")
+
 			process.exit(1)
 		}
 	}
@@ -219,15 +242,20 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 
 // --- soft-feed siblings (the fresh-worktree anchor-OFF gap) -----------------------------
 
-// The gazetteer + country soft-feed lexicons are checked-in repo files — symlink straight
-// from `data/gazetteer/` (the same source `release.config.json`'s `softFeed.gazetteerLexicon` /
-// `softFeed.countryLexicon` name, and what `scripts/copy-weights.ts` copies verbatim at
-// publish time).
+/**
+ * The gazetteer + country soft-feed lexicons are checked-in repo files — symlink straight from `data/gazetteer/` (the
+ * same source `release.config.json`'s `softFeed.gazetteerLexicon` / `softFeed.countryLexicon` name, and what
+ * `scripts/copy-weights.ts` copies verbatim at publish time).
+ */
 const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
+/**
+ * Country-surface lexicon generated into the repo by the codex build.
+ */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
@@ -235,18 +263,26 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+
 	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
-// `postcode-gb.bin` has no committed source (it's derived from the WOF GB postcode shard),
-// so build it in place with the compiled `gazetteer postcode-binary` CLI — the same command
-// `scripts/copy-weights.ts` runs per-locale at publish time. Requires `yarn compile` to have
-// run first (mailwoman/out/cli.js must exist); skips with a warning (not a hard failure) so a
-// worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
+/**
+ * `postcode-gb.bin` has no committed source (it's derived from the WOF GB postcode shard), so build it in place with
+ * the compiled `gazetteer postcode-binary` CLI — the same command `scripts/copy-weights.ts` runs per-locale at publish
+ * time. Requires `yarn compile` to have run first (mailwoman/out/cli.js must exist); skips with a warning (not a hard
+ * failure) so a worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
+ */
 const GB_WOF_DB = dataRootPath("wof", "postalcode-gb.db")
+/**
+ * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
+ */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
+/**
+ * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
+ */
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
 
 if (!existsSync(CLI)) {
@@ -266,28 +302,35 @@ if (!existsSync(CLI)) {
 
 	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
 		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
+
 		process.exit(1)
 	}
+
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
-// `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's
-// derived from the HM Land Registry PPD tuples CSV) — build it the same way, via the compiled
-// `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the Task-7-CALIBRATED value baked into
-// the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header comment for
-// the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed,
-// not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard
-// failure) so a worktree without the PPD source CSV can still link everything else.
-//
-// UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds), the PPD tuples CSV is
-// ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min). `weights.test.ts`
-// invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING
-// UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact
-// is verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a
-// bumped delta or a changed PPD snapshot silently ship a byte-identical-looking but out-of-date
-// artifact into every test run.
+/**
+ * `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's derived from the HM Land
+ * Registry PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA`
+ * mirrors the Task-7-CALIBRATED value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this
+ * file's header comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule
+ * executed, not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a
+ * worktree without the PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard,
+ * rebuilds in seconds), the PPD tuples CSV is ~25.6M rows — a cold build takes several minutes (measured 2026-07-22:
+ * ~4-5 min). `weights.test.ts` invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so
+ * REBUILDING UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact is
+ * verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a bumped delta or a
+ * changed PPD snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
+ */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
+/**
+ * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
+ */
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
+/**
+ * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
+ * forces a loud rebuild rather than silently shipping a stale index.
+ */
 const PAIR_INDEX_DELTA = 10
 /**
  * The GB artifact's decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
@@ -321,6 +364,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 			// delta match (the "missing source, can't build" branch below would fire anyway if this were
 			// stale and needed a rebuild).
 			pairIndexIsFresh = true
+
 			console.log(
 				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta + transitionBeta (source CSV absent, md5 freshness unverifiable)`
 			)
@@ -329,6 +373,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 
 			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
 				pairIndexIsFresh = true
+
 				console.log(
 					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + transitionBeta + source md5 match)`
 				)
@@ -339,8 +384,8 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				)
 			}
 		}
-	} catch (err) {
-		console.log(`pair-index-gb.bin header unreadable (${(err as Error).message}) — rebuilding.`)
+	} catch (error) {
+		console.log(`pair-index-gb.bin header unreadable (${(error as Error).message}) — rebuilding.`)
 	}
 }
 
@@ -377,35 +422,49 @@ if (pairIndexIsFresh) {
 
 	if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
 		console.error(`ERROR: failed to build ${PAIR_INDEX_BIN_DEST} (exit ${result.status})`)
+
 		process.exit(1)
 	}
+
 	console.log(`built ${PAIR_INDEX_BIN_DEST}`)
 }
 
-// Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
-// ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath`
-// in dev and the runtime pipeline can auto-wire the gazetteer + street-context gate. The publish
-// flow stages the real binary (release-sequenced).
+/**
+ * Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath` in dev and the
+ * runtime pipeline can auto-wire the gazetteer + street-context gate. The publish flow stages the real binary
+ * (release-sequenced).
+ */
 const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-gb.bin")
+/**
+ * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const FST_DEST = resolve(PKG_DIR, "fst-en-gb.bin")
 
 if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
+
 	console.log(`linked fst-en-gb.bin ← ${FST_SRC}`)
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
 
-// Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general
-// artifact ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build
-// street-morphology`) so `resolveWeights` surfaces `streetMorphologyPath` in dev and the
-// street-context gate (#1315) deserializes the artifact instead of rebuilding from dictionaries.
-// Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+/**
+ * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
+ * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
+ * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
+ * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
+ * it.
+ */
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
+/**
+ * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
+ */
 const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {
 	console.error(

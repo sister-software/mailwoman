@@ -23,6 +23,10 @@
 import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frBareStreetRecipe: ShardRecipe = {
 	name: "fr-bare-street",
 	description:
@@ -43,24 +47,30 @@ export const frBareStreetRecipe: ShardRecipe = {
 
 			if (!fullStreet || !number || !locality) {
 				skipped++
+
 				continue
 			}
+
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
 			// The failing class is the prefix-led FR street; a no-prefix nom_voie ("La Ville Mois") isn't it.
 			if (!prefix || !street) {
 				skipped++
+
 				continue
 			}
+
 			const components: Record<string, string> = {
 				house_number: number,
 				street_prefix: prefix,
 				street,
 				locality,
 			}
+
 			// BARE comma form, number-before (FR's dominant order), NO postcode — the whole point.
 			const raw = `${number} ${prefix} ${street}, ${locality}`
 			const source_id = shardSourceID("synth-fr-bare-street", { ...components, v: String(read) })
+
 			const canonical = {
 				raw,
 				components,

@@ -43,7 +43,9 @@ import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
 import { createPOIExecutor, type POIAncestryEntry } from "./poi-executor.ts"
 import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
 
-/** Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls. */
+/**
+ * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.
+ */
 interface ReverseGeocoderLike {
 	reverseGeocodeSync(
 		latitude: number,
@@ -68,7 +70,7 @@ function buildSyncReverseGeocode(
 		try {
 			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)
 
-			if (hierarchy.length === 0) return undefined
+			if (!hierarchy.length) return undefined
 
 			return hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
 		} catch {
@@ -78,9 +80,13 @@ function buildSyncReverseGeocode(
 }
 
 export interface CreateRuntimePipelineOpts {
-	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
+	/**
+	 * The Stage 3 classifier — typically a `NeuralAddressClassifier`.
+	 */
 	classifier?: RuntimePipelineStages["classifier"]
-	/** The Stage 6 resolver — typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`. */
+	/**
+	 * The Stage 6 resolver — typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`.
+	 */
 	resolver?: RuntimePipelineStages["resolver"]
 	/**
 	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification.
@@ -240,8 +246,10 @@ function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"])
 
 	try {
 		return deserializeFST(readFileSync(fstPath))
-	} catch (err) {
-		console.warn(`[mailwoman] failed to load weights FST at ${fstPath}: ${(err as Error).message} — parsing without it`)
+	} catch (error) {
+		console.warn(
+			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
+		)
 
 		return undefined
 	}
@@ -266,8 +274,8 @@ function autoLoadStreetMorphology(classifier: CreateRuntimePipelineOpts["classif
 			...(artifactPath ? { artifactPath } : {}),
 			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
 		}).matcher
-	} catch (err) {
-		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(err as Error).message} — gate off`)
+	} catch (error) {
+		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — gate off`)
 
 		return undefined
 	}
@@ -281,6 +289,7 @@ export function createRuntimePipeline(
 	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
 	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
 	const poiQueryKindEffective = opts.poiQueryKind ?? true
+
 	const stages: RuntimePipelineStages = {
 		normalize,
 		computeQueryShape,
@@ -442,6 +451,7 @@ export function createRuntimePipeline(
 				}
 			}
 		}
+
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
 		// runOpts value overrides each. hardPlaceCountry is DEFAULT-ON (#743, 2026-06-22): the coverage
 		// safelist confines the hard filter to well-covered countries, so this is a pure win there and a
@@ -487,4 +497,5 @@ export type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
+
 export type { ParseOpts } from "@mailwoman/neural"

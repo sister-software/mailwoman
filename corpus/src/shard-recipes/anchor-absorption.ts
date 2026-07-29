@@ -21,11 +21,15 @@ import { alignRow } from "../align.ts"
 import { synthesizeAnchorAbsorptionRow } from "../synthesize-anchor-absorption.ts"
 import { makeLcg, type ShardRecipe } from "./scaffold.ts"
 
-// The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through
-// the data-root helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.
+/**
+ * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through the data-root
+ * helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.
+ */
 const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-/** The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list). */
+/**
+ * The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list).
+ */
 function loadRealUsZips(path: string): string[] {
 	const d = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
 	const zips: string[] = []
@@ -39,6 +43,10 @@ function loadRealUsZips(path: string): string[] {
 	return zips
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const anchorAbsorptionRecipe: ShardRecipe = {
 	name: "anchor-absorption",
 	description: "Anchor-absorption counter-augmentation (#220/#723): 6-slice mix → synthesizeAnchorAbsorptionRow",
@@ -47,8 +55,9 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 		// Emit PRNG: the legacy build-anchor-absorption-shard.mjs seeded an LCG (lcg(opts.seed)).
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-anchor-absorption"
-		const count = opts.count ?? 50000
+		const count = opts.count ?? 50_000
 		const realZips = loadRealUsZips(ANCHOR_LOOKUP)
+
 		console.error(`Loaded ${realZips.length} real US ZIPs from the anchor lookup (the leading-5-digit source).`)
 
 		let written = 0
@@ -57,7 +66,9 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 
 		for (let i = 0; i < count; i++) {
 			const synth = synthesizeAnchorAbsorptionRow({ random, realZips })
-			const country = synth.locale.split("-")[1] // "en-US" -> "US", "de-DE" -> "DE"
+			const country = synth.locale.split("-")[1]
+
+			// "en-US" -> "US", "de-DE" -> "DE"
 			const canonical = {
 				raw: synth.raw,
 				components: synth.components,
@@ -66,18 +77,23 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 				source,
 				source_id: stableSourceID(source, `${i}` as unknown as Parameters<typeof stableSourceID>[1]),
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled") {
 				quarantined++
+
 				continue
 			}
+
 			write(
 				JSON.stringify({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }) + "\n"
 			)
+
 			written++
 			byTemplate[synth.template] = (byTemplate[synth.template] ?? 0) + 1
 		}
+
 		console.error(`\nwrote ${written} rows (${quarantined} quarantined)`)
 		console.error("  by slice:", JSON.stringify(byTemplate))
 

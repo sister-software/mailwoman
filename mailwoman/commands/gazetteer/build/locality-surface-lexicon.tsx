@@ -29,6 +29,7 @@ export { OptionsSchema as options }
 const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildLocalitySurfaceLexicon } = await import("../../../gazetteer-pipeline/evidence-lexicons.ts")
+
 		const built = buildLocalitySurfaceLexicon({
 			countries: options.countries?.split(",").map((s) => s.trim()),
 			placetypes: options.placetypes?.split(",").map((s) => s.trim()),

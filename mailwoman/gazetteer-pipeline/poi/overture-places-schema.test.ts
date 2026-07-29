@@ -38,7 +38,9 @@ const NEWER_RELEASE_COLUMNS: DescribeColumn[] = [
 	{ column_name: "country" },
 ]
 
-/** The real 2026-05-20.0 places-theme shape: no top-level `country`, but an `addresses` LIST<STRUCT<...>>. */
+/**
+ * The real 2026-05-20.0 places-theme shape: no top-level `country`, but an `addresses` LIST<STRUCT<...>>.
+ */
 const PLACES_2026_05_20_COLUMNS: DescribeColumn[] = [
 	{ column_name: "id" },
 	{ column_name: "names" },
@@ -51,7 +53,9 @@ const PLACES_2026_05_20_COLUMNS: DescribeColumn[] = [
 	{ column_name: "sources" },
 ]
 
-/** Pathological: neither a top-level `country` nor an `addresses` column to derive one from. */
+/**
+ * Pathological: neither a top-level `country` nor an `addresses` column to derive one from.
+ */
 const NO_COUNTRY_SOURCE_COLUMNS: DescribeColumn[] = [
 	{ column_name: "id" },
 	{ column_name: "names" },
@@ -90,6 +94,7 @@ describe("chooseCountryExpression", () => {
 			filterExpr: "country",
 			selectExpr: "country",
 		})
+
 		expect(chooseCountryExpression(NEWER_RELEASE_COLUMNS)).toEqual({
 			filterExpr: "country",
 			selectExpr: "country",
@@ -104,12 +109,12 @@ describe("chooseCountryExpression", () => {
 	})
 
 	it("throws a clear error when neither country nor addresses is present", () => {
-		expect(() => chooseCountryExpression(NO_COUNTRY_SOURCE_COLUMNS)).toThrowError(
+		expect(() => chooseCountryExpression(NO_COUNTRY_SOURCE_COLUMNS)).toThrow(
 			/neither a top-level "country" column nor an "addresses" column/
 		)
 	})
 
 	it("throws on an empty column list", () => {
-		expect(() => chooseCountryExpression([])).toThrowError(/neither a top-level "country" column/)
+		expect(() => chooseCountryExpression([])).toThrow(/neither a top-level "country" column/)
 	})
 })

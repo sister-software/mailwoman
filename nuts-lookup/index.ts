@@ -16,6 +16,22 @@ import type { AnnotationSet, Annotator, Nuts } from "@mailwoman/annotations"
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
  */
+/**
+ * NUTS code lengths by level. The code is hierarchical and fixed-width per level — a two-letter country prefix plus one
+ * digit per level — so the length IS the level.
+ */
+const NUTS_1_LENGTH = 3
+
+/**
+ * See {@link NUTS_1_LENGTH}.
+ */
+const NUTS_2_LENGTH = 4
+
+/**
+ * See {@link NUTS_1_LENGTH}.
+ */
+const NUTS_3_LENGTH = 5
+
 export type MultiPolygonCoords = number[][][][]
 
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
@@ -43,7 +59,9 @@ function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolea
 	return true
 }
 
-/** Inside any polygon of a (multi)polygon feature. */
+/**
+ * Inside any polygon of a (multi)polygon feature.
+ */
 export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPolygonCoords): boolean {
 	return polygons.some((polygon) => pointInPolygon(lon, lat, polygon))
 }
@@ -54,28 +72,31 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 export function nutsFromID(id: string): Nuts {
 	const nuts: Nuts = {}
 
-	if (id.length >= 3) {
+	if (id.length >= NUTS_1_LENGTH) {
 		nuts.level1 = id.slice(0, 3)
 	}
 
-	if (id.length >= 4) {
+	if (id.length >= NUTS_2_LENGTH) {
 		nuts.level2 = id.slice(0, 4)
 	}
 
-	if (id.length >= 5) {
+	if (id.length >= NUTS_3_LENGTH) {
 		nuts.level3 = id.slice(0, 5)
 	}
 
 	return nuts
 }
 
-/** A NUTS lookup over a built `node:sqlite` polygon table. */
+/**
+ * A NUTS lookup over a built `node:sqlite` polygon table.
+ */
 export class NutsLookup {
 	#db: DatabaseSync
 	#byLevelBox: ReturnType<DatabaseSync["prepare"]>
 
 	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
 		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+
 		this.#byLevelBox = this.#db.prepare(
 			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
 			// SCHEMA's declared casing (`nutsId` in every shipped nuts.db — plus `nutsID` from builds made
@@ -105,9 +126,12 @@ export class NutsLookup {
 	}
 }
 
-/** Build an `Annotator` filling `AnnotationSet.nuts` for EU coordinates (abstains elsewhere). */
+/**
+ * Build an `Annotator` filling `AnnotationSet.nuts` for EU coordinates (abstains elsewhere).
+ */
 export function makeNutsAnnotator(lookup: NutsLookup): Annotator {
 	return ({ lat, lon }): Partial<AnnotationSet> => {
+		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 		const nuts = lookup.find(lat, lon)
 
 		return nuts ? { nuts } : {}

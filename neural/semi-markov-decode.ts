@@ -25,28 +25,44 @@
  *   reorders types would otherwise silently mislabel every decode).
  */
 
-/** The decode-time transition grammar, as shipped in `semi-crf-transitions.json`. */
+/**
+ * The decode-time transition grammar, as shipped in `semi-crf-transitions.json`.
+ */
 export interface SemiCRFTransitions {
-	/** Segment-type axis, index-aligned with the `span_scores` inner dim. Index 0 is always `O`. */
+	/**
+	 * Segment-type axis, index-aligned with the `span_scores` inner dim. Index 0 is always `O`.
+	 */
 	segmentTypes: string[]
-	/** Max span length in tokens — the `L` axis of `span_scores`. */
+	/**
+	 * Max span length in tokens — the `L` axis of `span_scores`.
+	 */
 	maxSpan: number
-	/** `transitions[from][to]` — additive score for a `from`→`to` segment-type transition. */
+	/**
+	 * `transitions[from][to]` — additive score for a `from`→`to` segment-type transition.
+	 */
 	transitions: number[][]
-	/** `startTransitions[t]` — additive score for a segmentation whose FIRST segment is type `t`. */
+	/**
+	 * `startTransitions[t]` — additive score for a segmentation whose FIRST segment is type `t`.
+	 */
 	startTransitions: number[]
-	/** `endTransitions[t]` — additive score for a segmentation whose LAST segment is type `t`. */
+	/**
+	 * `endTransitions[t]` — additive score for a segmentation whose LAST segment is type `t`.
+	 */
 	endTransitions: number[]
 }
 
-/** One decoded segment: tokens `[start, start + length)` carry type `segmentTypes[typeID]`. */
+/**
+ * One decoded segment: tokens `[start, start + length)` carry type `segmentTypes[typeID]`.
+ */
 export interface DecodedSegment {
 	start: number
 	length: number
 	typeID: number
 }
 
-/** One whole-segmentation hypothesis. `score` is comparable to its siblings from the SAME input. */
+/**
+ * One whole-segmentation hypothesis. `score` is comparable to its siblings from the SAME input.
+ */
 export interface SegmentationHypothesis {
 	score: number
 	segments: DecodedSegment[]
@@ -59,7 +75,9 @@ export interface SegmentationHypothesis {
  */
 const NEG_INF = -1e4
 
-/** `O` is index 0 by construction (`_derive_segment_types` in span_scorer.py). */
+/**
+ * `O` is index 0 by construction (`_derive_segment_types` in span_scorer.py).
+ */
 const O_TYPE_ID = 0
 
 /**
@@ -81,6 +99,7 @@ export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
 	if (typeof maxSpan !== "number" || maxSpan < 1) {
 		throw new Error(`semi-crf-transitions: max_span must be a positive number, got ${String(maxSpan)}`)
 	}
+
 	const n = segmentTypes.length
 
 	if (transitions.length !== n || transitions.some((row) => row.length !== n)) {
@@ -130,6 +149,7 @@ export function decodeSegmentationsKBest(
 
 			return
 		}
+
 		// Insertion sort into a k-bounded, descending list — cheaper than sort() per push at k ≤ 10.
 		let i = list.length
 
@@ -152,18 +172,24 @@ export function decodeSegmentationsKBest(
 
 			if (!perLength) continue
 
+			// Extend every partial path ending at `i` by the segment [i, j), once per candidate type.
+			const extend = (lastType: number, entry: SegmentationHypothesis): void => {
+				for (let t = 0; t < numTypes; t++) {
+					// O segments are length 1 by construction.
+					if (t === O_TYPE_ID && spanLen !== 1) continue
+					const segScore = perLength[t] ?? NEG_INF
+					const trans = lastType === -1 ? grammar.startTransitions[t]! : grammar.transitions[lastType]![t]!
+
+					push(dp[j]!, t, {
+						score: entry.score + segScore + trans,
+						segments: [...entry.segments, { start: i, length: spanLen, typeID: t }],
+					})
+				}
+			}
+
 			for (const [lastType, entries] of dp[i]!) {
 				for (const entry of entries) {
-					for (let t = 0; t < numTypes; t++) {
-						// O segments are length 1 by construction.
-						if (t === O_TYPE_ID && spanLen !== 1) continue
-						const segScore = perLength[t] ?? NEG_INF
-						const trans = lastType === -1 ? grammar.startTransitions[t]! : grammar.transitions[lastType]![t]!
-						push(dp[j]!, t, {
-							score: entry.score + segScore + trans,
-							segments: [...entry.segments, { start: i, length: spanLen, typeID: t }],
-						})
-					}
+					extend(lastType, entry)
 				}
 			}
 		}
@@ -180,6 +206,7 @@ export function decodeSegmentationsKBest(
 			finals.push({ score: entry.score + grammar.endTransitions[lastType]!, segments: entry.segments })
 		}
 	}
+
 	finals.sort((a, b) => b.score - a.score)
 
 	return finals.slice(0, k)

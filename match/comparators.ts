@@ -44,7 +44,9 @@ export function jaro(a: string, b: string): number {
 			if (bMatched[j] || a[i] !== b[j]) continue
 			aMatched[i] = true
 			bMatched[j] = true
+
 			matches++
+
 			break
 		}
 	}
@@ -65,8 +67,10 @@ export function jaro(a: string, b: string): number {
 		if (a[i] !== b[k]) {
 			transpositions++
 		}
+
 		k++
 	}
+
 	transpositions /= 2
 
 	return (matches / la + matches / lb + (matches - transpositions) / matches) / 3
@@ -100,7 +104,9 @@ export function jaroWinkler(
 	return base + prefix * weight * (1 - base)
 }
 
-/** Normalized Levenshtein similarity in [0, 1]: `1 - editDistance / max(len)`. */
+/**
+ * Normalized Levenshtein similarity in [0, 1]: `1 - editDistance / max(len)`.
+ */
 export function levenshteinSimilarity(a: string, b: string): number {
 	if (a === b) return 1
 	const longest = Math.max(a.length, b.length)
@@ -122,8 +128,8 @@ export function levenshteinSimilarity(a: string, b: string): number {
  * Case- and whitespace-insensitive. Empty input scores 0.
  */
 export function nameSimilarity(a: string, b: string): number {
-	const x = a.trim().toLowerCase().replace(/\s+/g, " ")
-	const y = b.trim().toLowerCase().replace(/\s+/g, " ")
+	const x = a.trim().toLowerCase().replaceAll(/\s+/g, " ")
+	const y = b.trim().toLowerCase().replaceAll(/\s+/g, " ")
 
 	if (!x || !y) return 0
 

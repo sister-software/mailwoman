@@ -46,23 +46,38 @@ import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
 const SLUG = "usgov-nad"
+
 const FEATURE_SERVICE_URL =
 	"https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/Address_Points_from_National_Address_Database_view/FeatureServer/0"
 
 export interface FetchNADOptions extends BaseFetchOptions {
-	/** Fetch strategy. Default `featureserver`. */
+	/**
+	 * Fetch strategy. Default `featureserver`.
+	 */
 	mode?: "featureserver" | "bulk"
-	/** Pre-signed S3 URL for bulk mode. */
+	/**
+	 * Pre-signed S3 URL for bulk mode.
+	 */
 	nadURL?: string
-	/** Records per output file. Default `100000`. */
+	/**
+	 * Records per output file. Default `100000`.
+	 */
 	chunkSize?: number
-	/** Records per HTTP request. Default `5000`. */
+	/**
+	 * Records per HTTP request. Default `5000`.
+	 */
 	pageSize?: number
-	/** Parallel page fetches within a chunk. Default `4`. */
+	/**
+	 * Parallel page fetches within a chunk. Default `4`.
+	 */
 	concurrency?: number
-	/** Start OBJECTID. Default `1`. */
+	/**
+	 * Start OBJECTID. Default `1`.
+	 */
 	startOID?: number
-	/** Stop before this OID. Default = total count. */
+	/**
+	 * Stop before this OID. Default = total count.
+	 */
 	endOID?: number
 }
 
@@ -138,7 +153,9 @@ async function fetchChunk(
 		rows: [],
 		error: null,
 	}))
+
 	let nextSlot = 0
+
 	const workers = Array.from({ length: Math.min(concurrency, pageRanges.length) }, async () => {
 		while (true) {
 			const slot = nextSlot++
@@ -148,12 +165,13 @@ async function fetchChunk(
 
 			try {
 				pageResults[slot]!.rows = await fetchPage(s, e, pageSize)
-			} catch (err) {
-				pageResults[slot]!.error = err as Error
-				report?.(`    ✗ page ${s}-${e}: ${(err as Error).message}`)
+			} catch (error) {
+				pageResults[slot]!.error = error as Error
+				report?.(`    ✗ page ${s}-${e}: ${(error as Error).message}`)
 			}
 		}
 	})
+
 	await Promise.all(workers)
 
 	// Single-writer phase — write all pages in OID order to keep NDJSON deterministic.
@@ -163,6 +181,7 @@ async function fetchChunk(
 	for (const { rows, error } of pageResults) {
 		if (error) {
 			errors++
+
 			continue
 		}
 
@@ -170,14 +189,15 @@ async function fetchChunk(
 			lines.push(JSON.stringify(row))
 		}
 	}
-	await writeFile(chunkPath, lines.length === 0 ? "" : lines.join("\n") + "\n")
+
+	await writeFile(chunkPath, !lines.length ? "" : lines.join("\n") + "\n")
 
 	return { recordCount: lines.length, errors }
 }
 
 async function featureserverMode(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const chunkSize = options.chunkSize ?? 100_000
-	const pageSize = options.pageSize ?? 5_000
+	const pageSize = options.pageSize ?? 5000
 	const concurrency = options.concurrency ?? 4
 	const startOID = options.startOID ?? 1
 
@@ -211,6 +231,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 
 			if (recorded?.complete) {
 				skipped++
+
 				continue
 			}
 		}
@@ -233,12 +254,15 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 			page_errors: errors,
 			complete: errors === 0,
 		}
+
 		await writeManifest(manifestPath, manifest)
 
 		const status = errors === 0 ? "✓" : `⚠ ${errors} page errors`
+
 		report?.(
 			`    ${status}  ${recordCount.toLocaleString()} records in ${elapsed}s  (${(bytes / 1024 / 1024).toFixed(1)} MB)`
 		)
+
 		fetched++
 		totalRecords += recordCount
 		totalErrors += errors
@@ -266,6 +290,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 				`accept the disclaimer, and re-run with the pre-signed S3 URL.`
 		)
 	}
+
 	const destDir = join(options.outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
@@ -277,6 +302,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 	const { bytes } = await downloadToFile({ url: options.nadURL, dest: destPath, timeoutMs: 3 * 3600 * 1000, report })
 
 	const sha = await sha256File(destPath)
+
 	await writeManifest(join(destDir, "MANIFEST.json"), {
 		source_url: options.nadURL,
 		downloaded_at: new Date().toISOString(),
@@ -284,6 +310,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 		sha256: sha,
 		bytes,
 	})
+
 	report?.(`  ✓ ${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB  sha256=${sha}`)
 
 	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }

@@ -53,19 +53,23 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+
 		const countries = options.countries
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
 					.filter(Boolean)
 			: DEFAULT_FOLD_COUNTRIES
+
 		const lines: string[] = []
 
 		let adminDb = adminIn
 
 		if (options.fold) {
 			const foldOut = adminIn.replace(/\.db$/, "-geonames.db")
+
 			console.error(`▸ fold (${countries.join(",")}) → ${foldOut}`)
+
 			const f = await foldGeonamesIntoAdmin({
 				adminIn,
 				adminOut: foldOut,
@@ -74,18 +78,22 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 					console.error(`  ${e.country}: ${e.skipped ? "(skipped)" : `${e.places.toLocaleString()} places`}`),
 				onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
 			})
+
 			lines.push(`folded ${f.ingested.toLocaleString()} GeoNames places`)
 			adminDb = foldOut
 		}
 
 		const shards = resolvePostcodeShards(undefined, root)
+
 		console.error(`▸ build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+
 		const r = await buildCandidate({
 			adminDb,
 			out,
 			postcodeShards: shards,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
+
 		lines.push(`built ${out} — ${r.rows.toLocaleString()} rows, ${r.postcodes.toLocaleString()} postcodes`)
 
 		if (options.promote) {
@@ -96,7 +104,9 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 		if (options.publish) {
 			const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 			const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
+
 			console.error(`▸ publish → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`)
+
 			const p = publishGazetteer({
 				candidateDb: out,
 				version,
@@ -107,6 +117,7 @@ const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) =
 				dryRun: options.dryRun,
 				onPhase: (ph, d) => console.error(`  [${ph}]${d ? ` ${d}` : ""}`),
 			})
+
 			lines.push(`published R2 ${p.key}${p.bumped ? ` + demo → ${version} (commit resources.tsx)` : ""}`)
 		}
 

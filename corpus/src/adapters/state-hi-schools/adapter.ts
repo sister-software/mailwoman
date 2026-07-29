@@ -38,7 +38,15 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
@@ -88,6 +96,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -132,6 +141,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [
 						name,
 						streetPart,
@@ -145,6 +155,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const code = (record.code ?? "").toString().trim()
+
 					const sourceID = code
 						? `${STATE_HI_SCHOOLS_ADAPTER_ID}-${code}`
 						: stableSourceID(STATE_HI_SCHOOLS_ADAPTER_ID, aligned)
@@ -159,6 +170,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -168,4 +180,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const stateHiSchoolsAdapter = createStateHiSchoolsAdapter()

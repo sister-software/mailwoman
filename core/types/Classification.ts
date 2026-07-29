@@ -88,7 +88,9 @@ export type VisibleClassification = typeof VisibleClassification extends Set<inf
 export function isVisibleClassification(
 	match: ClassificationMatch
 ): match is ClassificationMatch & { classification: VisibleClassification }
+
 export function isVisibleClassification(classification: Classification): classification is VisibleClassification
+
 export function isVisibleClassification(input: Classification | ClassificationMatch): input is VisibleClassification {
 	const classification = typeof input === "string" ? input : input.classification
 
@@ -96,8 +98,11 @@ export function isVisibleClassification(input: Classification | ClassificationMa
 }
 
 export type ClassificationMap = Map<VisibleClassification, string[]>
+
 export type ClassificationConfidenceMap = Map<VisibleClassification, number>
+
 export type ClassificationConfidenceRecord = Record<VisibleClassification, number | undefined>
+
 export type ClassificationRecord = Partial<Record<VisibleClassification, string[]>>
 
 /**

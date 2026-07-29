@@ -39,6 +39,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	"anchor-lookup"?: string
@@ -47,6 +48,7 @@ const values = rawValues as {
 	"model-card"?: string
 	tokenizer?: string
 }
+
 interface OaRow {
 	input: string
 	expected: { locality?: string; region?: string }
@@ -55,10 +57,11 @@ interface OaRow {
 function norm(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.replaceAll(/[^\p{L}\p{N}]+/gu, " ")
 		.trim()
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 }
+
 function valueMatch(pred: string, gold: string): boolean {
 	const a = norm(pred)
 	const b = norm(gold)
@@ -72,8 +75,10 @@ function valueMatch(pred: string, gold: string): boolean {
 
 	return subset(aset, bset) || subset(bset, aset)
 }
+
 function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 	let found: AddressNode | undefined
+
 	const walk = (n: AddressNode): void => {
 		if (found) return
 
@@ -95,6 +100,7 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 
 async function main(): Promise<void> {
 	const evalPath = values["eval"] || "data/eval/external/openaddresses-de-sample.jsonl"
+
 	const rows: OaRow[] = readFileSync(evalPath, "utf8")
 		.split("\n")
 		.filter((l) => l.trim())
@@ -106,12 +112,14 @@ async function main(): Promise<void> {
 	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
+
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(
 			values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 		),
 		ONNXRunner.create(values["model"] || "/tmp/v093-eval/model.onnx"),
 	])
+
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 
@@ -124,12 +132,14 @@ async function main(): Promise<void> {
 		if (i % 1000 === 0) {
 			console.error(`  ${i}/${rows.length}`)
 		}
+
 		const loc = row.expected.locality
 		const reg = row.expected.region
 
 		if (!loc) continue
 		const isDup = !!reg && norm(loc) === norm(reg)
 		const bucket = isDup ? acc.dup : acc.distinct
+
 		bucket.n++
 		let tree: AddressTree
 
@@ -138,6 +148,7 @@ async function main(): Promise<void> {
 		} catch {
 			continue
 		}
+
 		const pred = firstByTag(tree, "locality")
 
 		if (pred && valueMatch(pred.value, loc)) {
@@ -146,6 +157,7 @@ async function main(): Promise<void> {
 	}
 
 	const pct = (b: { ok: number; n: number }): string => (b.n ? ((100 * b.ok) / b.n).toFixed(1) : "0.0") + "%"
+
 	console.log(`# DE intl locality-parse — duplicate (locality==region) vs distinct`)
 	console.log(``)
 	console.log(`| bucket | n | locality-parse correct |`)

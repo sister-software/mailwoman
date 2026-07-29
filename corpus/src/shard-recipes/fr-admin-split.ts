@@ -39,10 +39,18 @@ import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const DEFAULT_COMMUNES = "/tmp/reg/fr-communes.tsv"
 const LICENSE = "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE"
 
-/** One distinct commune row from the TSV, with the département derived from its postcode. */
+/**
+ * One distinct commune row from the TSV, with the département derived from its postcode.
+ */
 interface CommuneRow {
 	commune: string
 	postcode: string
@@ -51,14 +59,18 @@ interface CommuneRow {
 	lat: string | undefined
 }
 
-/** One rendered admin-split variant. */
+/**
+ * One rendered admin-split variant.
+ */
 interface AdminSplitVariant {
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
 	order: string
 }
 
-/** Read the distinct commune TSV (commune, postcode, lon, lat); derive the département name. */
+/**
+ * Read the distinct commune TSV (commune, postcode, lon, lat); derive the département name.
+ */
 async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
 
@@ -129,6 +141,10 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	return out
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const frAdminSplitRecipe: ShardRecipe = {
 	name: "fr-admin-split",
 	description: "FR admin-split rows: BAN communes → split département into `region` (+ canonical-FR preservation)",
@@ -139,14 +155,15 @@ export const frAdminSplitRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Legacy build-fr-admin-split-shard.mjs seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 60000
+		const count = opts.count ?? 60_000
 		const source = opts.sourceName ?? "synth-fr-admin-split"
 		const communesPath = opts.communes ?? DEFAULT_COMMUNES
 
 		const pool = await readCommunes(communesPath)
+
 		console.error(`  ${communesPath}: ${pool.length} communes with derived département`)
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error("No communes — build the TSV from BAN first (see the recipe header).")
 		}
 
@@ -165,14 +182,17 @@ export const frAdminSplitRecipe: ShardRecipe = {
 
 			if (!values.every((v) => raw.includes(v))) {
 				skipped++
+
 				continue
 			}
 
 			if (opts.golden) {
 				// Held-out eval slice for the centroid gate — carries the truth coordinate.
 				write(JSON.stringify({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }) + "\n")
+
 				emitted++
 				orderCounts[order] = (orderCounts[order] ?? 0) + 1
+
 				continue
 			}
 
@@ -181,6 +201,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				region: components.region,
 				postcode: components.postcode,
 			})
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -191,16 +212,20 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				corpus_version: "0.5.0",
 				license: LICENSE,
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(
 				JSON.stringify({ ...aligned.row, synth_method: "fr-admin-split", synth_order: order, synth_base_id: null }) +
 					"\n"
 			)
+
 			emitted++
 			orderCounts[order] = (orderCounts[order] ?? 0) + 1
 		}

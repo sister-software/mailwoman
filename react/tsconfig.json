@@ -1,12 +1,10 @@
 {
-	"extends": "@sister.software/tsconfig",
+	"extends": "@sister.software/tsconfig/web",
 	"compilerOptions": {
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true,
-		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-		"types": ["node"]
+		"erasableSyntaxOnly": true
 	},
 	"include": ["./**/*"],
 	"exclude": [

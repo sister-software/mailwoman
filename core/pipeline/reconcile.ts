@@ -53,7 +53,9 @@ import type { PhraseProposal } from "./types.ts"
 export interface ClassifierCandidate {
 	span: { start: number; end: number }
 	tag: ComponentTag
-	/** Calibrated confidence in [0, 1]. */
+	/**
+	 * Calibrated confidence in [0, 1].
+	 */
 	score: number
 }
 
@@ -75,10 +77,14 @@ export interface ParentChainLookup {
 }
 
 export interface ReconcileInputs {
-	/** Raw input text — used to materialize `value` strings on the resulting tree. */
+	/**
+	 * Raw input text — used to materialize `value` strings on the resulting tree.
+	 */
 	raw: string
 	phraseProposals: ReadonlyArray<PhraseProposal>
-	/** Sorted descending by score. May be empty (returns an empty tree). */
+	/**
+	 * Sorted descending by score. May be empty (returns an empty tree).
+	 */
 	classifierTopK: ReadonlyArray<ClassifierCandidate>
 	resolverCandidates?: ResolverCandidatesLookup
 	parentChain?: ParentChainLookup
@@ -86,20 +92,30 @@ export interface ReconcileInputs {
 }
 
 export interface ReconcileOpts {
-	/** Top-k phrase span proposals retained per (start, end) — default 3. */
+	/**
+	 * Top-k phrase span proposals retained per (start, end) — default 3.
+	 */
 	kSpan?: number
-	/** Top-k classifier tag interpretations retained per span — default 3. */
+	/**
+	 * Top-k classifier tag interpretations retained per span — default 3.
+	 */
 	kTag?: number
-	/** Top-k resolver candidates retained per (span, tag) — default 5. */
+	/**
+	 * Top-k resolver candidates retained per (span, tag) — default 5.
+	 */
 	kResolver?: number
 	/**
 	 * Concordance bonus multiplier. 1.0 weights chain-consistency equal to one classifier-score factor; lower values
 	 * trust the classifier more, higher values trust the gazetteer more. Default 1.0.
 	 */
 	concordanceWeight?: number
-	/** Beam width during search — default 16. */
+	/**
+	 * Beam width during search — default 16.
+	 */
 	beamWidth?: number
-	/** Runner-up parses returned alongside the winner — default 3. */
+	/**
+	 * Runner-up parses returned alongside the winner — default 3.
+	 */
 	runnersUp?: number
 }
 
@@ -108,13 +124,17 @@ export interface ScoreBreakdown {
 	classifier: number
 	resolver: number
 	concordance: number
-	/** Composite multiplicative score in real space, [0, ∞). */
+	/**
+	 * Composite multiplicative score in real space, [0, ∞).
+	 */
 	total: number
 }
 
 export interface ParseTree {
 	tree: AddressTree
-	/** Softmaxed confidence in [0, 1] over the finalized beam. */
+	/**
+	 * Softmaxed confidence in [0, 1] over the finalized beam.
+	 */
 	confidence: number
 	runnersUp: AddressTree[]
 	scoreBreakdown: ScoreBreakdown
@@ -124,7 +144,7 @@ const DEFAULTS = {
 	kSpan: 3,
 	kTag: 3,
 	kResolver: 5,
-	concordanceWeight: 1.0,
+	concordanceWeight: 1,
 	beamWidth: 16,
 	runnersUp: 3,
 }
@@ -172,15 +192,21 @@ interface SlotChoice {
 	classifierScore: number
 	place: ResolvedPlace | null
 	resolverScore: number
-	/** Whitespace-delimited word count of the span's surface text — scales the inclusion bonus. */
+	/**
+	 * Whitespace-delimited word count of the span's surface text — scales the inclusion bonus.
+	 */
 	wordCount: number
 }
 
 interface Beam {
 	assignments: SlotChoice[]
-	/** Log-space score combining phrase × classifier × resolver × concordance (running). */
+	/**
+	 * Log-space score combining phrase × classifier × resolver × concordance (running).
+	 */
 	logScore: number
-	/** Cached last-end so we can extend left-to-right without re-scanning assignments. */
+	/**
+	 * Cached last-end so we can extend left-to-right without re-scanning assignments.
+	 */
 	lastEnd: number
 }
 
@@ -201,13 +227,14 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 
 	const slots = buildSlots(inputs, opts)
 
-	if (slots.length === 0) {
+	if (!slots.length) {
 		return emptyParseTree(inputs.raw)
 	}
 
 	// Beam search over left-to-right slot inclusion. Each slot is either accepted (if non-
 	// overlapping with the beam's claimed range) or skipped. Beam pruning keeps the top
 	// `beamWidth` by running log-score.
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const slotsByStart = slots.slice().sort((a, b) => a.span.start - b.span.start)
 	let beams: Beam[] = [{ assignments: [], logScore: 0, lastEnd: -1 }]
 
@@ -221,12 +248,14 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 				const concordanceDelta = concordanceDeltaFor(beam.assignments, slot, inputs, opts)
 
 				if (concordanceDelta === Number.NEGATIVE_INFINITY) continue
+
 				const slotLog =
 					logSafe(slot.phraseConf) +
 					logSafe(slot.classifierScore) +
 					logSafe(slot.resolverScore) +
 					concordanceDelta +
 					INCLUSION_LOG_BONUS * slot.wordCount
+
 				next.push({
 					assignments: [...beam.assignments, slot],
 					logScore: beam.logScore + slotLog,
@@ -234,6 +263,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 				})
 			}
 		}
+
 		next.sort((a, b) => b.logScore - a.logScore)
 		beams = next.slice(0, opts.beamWidth)
 	}
@@ -242,7 +272,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 	// Drop the empty beam if there's at least one non-empty competitor (the empty beam scores 0,
 	// which would otherwise dominate when all real candidates have very low log-scores).
 	const populated = beams.filter((b) => b.assignments.length > 0)
-	const ordered = populated.length > 0 ? populated : beams
+	const ordered = populated.length ? populated : beams
 
 	const top = ordered[0]!
 	const runners = ordered.slice(1, 1 + opts.runnersUp)
@@ -277,6 +307,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 			bySpanKey.set(k, p)
 		}
 	}
+
 	// `kSpan` limits the number of overlapping proposals anchored at each start position — NOT a
 	// global cap on phrase proposals. Two phrases at different starts (e.g. `Houston` at 18 +
 	// `TX` at 27) are independent candidates and both must survive `kSpan = 3`. Without this per-
@@ -289,6 +320,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 		arr.push(p)
 		byStart.set(p.span.start, arr)
 	}
+
 	const spans: PhraseProposal[] = []
 
 	for (const arr of byStart.values()) {
@@ -316,7 +348,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 				? inputs.resolverCandidates.candidatesFor(tagC.span, tagC.tag).slice(0, opts.kResolver)
 				: []
 
-			if (places.length === 0) {
+			if (!places.length) {
 				slots.push({
 					span: phrase.span,
 					phraseConf: phrase.confidence,
@@ -326,6 +358,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 					resolverScore: 1,
 					wordCount: words,
 				})
+
 				continue
 			}
 
@@ -353,7 +386,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 function wordCountOf(raw: string, span: { start: number; end: number }): number {
 	const text = raw.slice(span.start, span.end).trim()
 
-	if (text.length === 0) return 1
+	if (!text.length) return 1
 
 	return text.split(/\s+/).length
 }
@@ -394,12 +427,15 @@ function concordanceDeltaFor(
 
 		if (child === parent) continue
 		const chain = chainOf.parentsOf(child.place!)
+
 		pairs++
 
-		if (chain.length === 0) {
+		if (!chain.length) {
 			neutrals++
+
 			continue
 		}
+
 		const hit = chain.some((p) => idsEqual(p.id, parent.place!.id))
 
 		if (hit) {
@@ -437,6 +473,7 @@ function breakdownFor(beam: Beam, inputs: ReconcileInputs, opts: Required<Reconc
 		classifier *= Math.max(a.classifierScore, 0)
 		resolver *= Math.max(a.resolverScore, 0)
 	}
+
 	const concordanceLog = totalConcordanceLog(beam.assignments, inputs, opts)
 	const concordance = Math.exp(concordanceLog)
 	const total = phrase * classifier * resolver * concordance
@@ -469,6 +506,7 @@ function totalConcordanceLog(
 function buildTree(beam: Beam, raw: string): AddressTree {
 	const roots: AddressNode[] = beam.assignments
 		.slice()
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 		.sort((a, b) => a.span.start - b.span.start)
 		.map((slot) => ({
 			tag: slot.tag,
@@ -511,10 +549,13 @@ function spanKey(start: number, end: number): string {
 }
 
 function topN<T>(items: ReadonlyArray<T>, n: number, key: (t: T) => number): T[] {
-	return items
-		.slice()
-		.sort((a, b) => key(b) - key(a))
-		.slice(0, n)
+	return (
+		items
+			.slice()
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+			.sort((a, b) => key(b) - key(a))
+			.slice(0, n)
+	)
 }
 
 function logSafe(x: number): number {
@@ -533,7 +574,7 @@ function normalizeResolverScore(score: number): number {
 }
 
 function softmax(scores: number[]): number[] {
-	if (scores.length === 0) return []
+	if (!scores.length) return []
 	const max = Math.max(...scores)
 	const exps = scores.map((s) => Math.exp(s - max))
 	const sum = exps.reduce((a, b) => a + b, 0)

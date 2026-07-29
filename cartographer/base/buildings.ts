@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	type ExpressionSpecification,
-	type FillExtrusionLayerSpecification,
-	type LayerSpecification,
+import type {
+	ExpressionSpecification,
+	FillExtrusionLayerSpecification,
+	LayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { LayerID } from "../styles/layers.ts"
@@ -15,10 +15,22 @@ import { MailwomanBaseTileSetID } from "./theme.ts"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
 
-const POP_START = 12.5 // zoom where buildings start rising
-const POP_END = 13 // zoom where they reach full height (Protomaps fully loaded here)
-const ROOF_GAP = 0.1 // meters: tiny lift so the band clears the roof (kills z-fight)
-const ROOF_CAP = 1 // meters: band thickness
+/**
+ * Zoom where buildings start rising.
+ */
+const POP_START = 12.5
+/**
+ * Zoom where they reach full height (Protomaps fully loaded here)
+ */
+const POP_END = 13
+/**
+ * Meters: tiny lift so the band clears the roof (kills z-fight)
+ */
+const ROOF_GAP = 0.1
+/**
+ * Meters: band thickness.
+ */
+const ROOF_CAP = 1
 
 const buildingHeight = (offset = 0): ExpressionSpecification => [
 	"+",
@@ -26,7 +38,9 @@ const buildingHeight = (offset = 0): ExpressionSpecification => [
 	offset,
 ]
 
-/** Wrap a target-height expression in the zoom-driven pop interpolation. */
+/**
+ * Wrap a target-height expression in the zoom-driven pop interpolation.
+ */
 const popHeight = (target: ExpressionSpecification): ExpressionSpecification => [
 	"interpolate",
 	["linear"],

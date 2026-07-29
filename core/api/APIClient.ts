@@ -16,7 +16,7 @@ import {
 
 import { delegateAxiosError } from "./responses.ts"
 
-export type { IRuntimeLogger }
+export { type IRuntimeLogger } from "@mailwoman/core/logging"
 
 /**
  * Configuration for an API client.
@@ -78,6 +78,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			...config.axios,
 		})
 
+		// oxlint-disable-next-line unicorn/prefer-ternary -- the branches are multi-line client constructions
 		if (config.caching) {
 			this.axios = setupCache(axiosInstance, {
 				debug: (msg) => {
@@ -102,7 +103,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		this.axios.interceptors.response.use(undefined, delegateAxiosError)
 
-		this.#requestInterval = typeof config.requestsPerMinute === "number" ? 60000 / config.requestsPerMinute : 0
+		this.#requestInterval = typeof config.requestsPerMinute === "number" ? 60_000 / config.requestsPerMinute : 0
 
 		if (this.#requestInterval) {
 			this.axios.interceptors.response.use(this.updateCooldownAfterResponse)
@@ -165,8 +166,6 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		if (isAsyncDisposable(storedCache)) {
 			await storedCache[Symbol.asyncDispose]()
 		}
-
-		return Promise.resolve()
 	}
 
 	public override toString() {

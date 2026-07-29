@@ -62,7 +62,7 @@ const FIXTURE: FixtureRow[] = [
 	// Brandenburg — NOT dual-role: same-name town ~75 km W of the region centroid → beyond the relative
 	// tolerance (region bbox ⌀ ~313 km → 15 % ≈ 47 km). Mirrors the real gazetteer, where Brandenburg
 	// is correctly absent from the 128.
-	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13.0, d: 1.2 },
+	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13, d: 1.2 },
 	{
 		id: 31,
 		name: "Brandenburg",
@@ -117,6 +117,7 @@ let db: DatabaseSync
 
 beforeEach(() => {
 	db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -127,11 +128,13 @@ beforeEach(() => {
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL);
 	`)
+
 	const insSpr = db.prepare(
 		`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
 			min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated)
 			VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`
 	)
+
 	const insPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 
 	for (const r of FIXTURE) {
@@ -141,6 +144,7 @@ beforeEach(() => {
 			insPop.run(r.id, r.population)
 		}
 	}
+
 	const insAnc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, 'region')`)
 
 	for (const [id, anc] of ANCESTRY) {
@@ -189,7 +193,7 @@ describe("buildCoincidentRoles", () => {
 		buildCoincidentRoles(db)
 		const padova = rolesFor(60)
 		expect(padova).toHaveLength(2)
-		expect(padova.map((r) => r.localityID).sort()).toEqual([61, 62])
+		expect(padova.map((r) => r.localityID).toSorted()).toEqual([61, 62])
 	})
 
 	test("is idempotent — a rebuild yields the same row count", () => {

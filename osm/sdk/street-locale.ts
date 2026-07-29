@@ -10,9 +10,9 @@
  *   re-exports the normalizer so the OSM SDK is a self-contained surface.
  */
 
-import { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-export { normalizeStreetForKeyLocale, type StreetLocale }
+export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the countries we actually
@@ -44,7 +44,9 @@ export function streetLocaleForCountry(countryCode: string): StreetLocale {
 	return locale
 }
 
-/** The countries with a registered OSM rooftop street locale (for CLI validation / help text). */
+/**
+ * The countries with a registered OSM rooftop street locale (for CLI validation / help text).
+ */
 export function supportedOSMCountries(): string[] {
 	return [...COUNTRY_TO_STREET_LOCALE.keys()]
 }

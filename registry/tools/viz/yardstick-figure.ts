@@ -26,9 +26,13 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Options for {@linkcode yardstickFigure}. */
+/**
+ * Options for {@linkcode yardstickFigure}.
+ */
 export interface YardstickFigureOptions {
-	/** Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd). */
+	/**
+	 * Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd).
+	 */
 	outSvg?: string
 }
 
@@ -40,6 +44,7 @@ interface Grain {
 	classes: number
 	note: string
 }
+
 const GRAINS: Grain[] = [
 	{ key: "NPI", label: "NPI", classes: 1000, note: "one entity per registration\n(over-segments orgs)" },
 	{ key: "site", label: "site", classes: 1456, note: "subpart-collapse +\naddress-split (conservative)" },
@@ -52,12 +57,17 @@ const GRAINS: Grain[] = [
 	},
 ]
 
-// F1 per (model, grain), in %.
+/**
+ * F1 per (model, grain), in %.
+ */
 const F1: Record<string, [number, number, number, number]> = {
 	GBT: [53.6, 55.3, 60.7, 68.1], // shipped default
 	FS: [45.1, 42.7, 52.3, 60.3], // FS full stack baseline
 }
-// Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT.
+
+/**
+ * Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT.
+ */
 const OVERMERGE: Record<string, [number, number, number, number]> = {
 	GBT: [109, 208, 92, 76],
 	FS: [144, 253, 129, 114],
@@ -83,9 +93,11 @@ const MODELS = [
 	{ key: "FS", label: "FS full stack", color: "#9ca3af", width: 2, dash: "5 4" },
 ]
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
-/** Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc. */
+/**
+ * Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc.
+ */
 export function yardstickFigure(
 	options: YardstickFigureOptions = {},
 	report?: (line: string) => void
@@ -103,6 +115,7 @@ export function yardstickFigure(
 	push(
 		`<text x="${W / 2}" y="24" text-anchor="middle" font-size="15" font-weight="600">The dedup F1 climbs as the entity-truth gets honest</text>`
 	)
+
 	push(
 		`<text x="${W / 2}" y="42" text-anchor="middle" font-size="11.5" fill="#555">Identical matcher output (the same clusters) graded against four rulers — 1000 TX NPIs → 2757 records, NPI held out</text>`
 	)
@@ -110,11 +123,14 @@ export function yardstickFigure(
 	// Y gridlines + labels.
 	for (let v = Y_MIN; v <= Y_MAX; v += 5) {
 		const y = yFor(v)
+
 		push(
 			`<line x1="${plotL}" y1="${y.toFixed(1)}" x2="${plotR}" y2="${y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`
 		)
+
 		push(`<text x="${plotL - 8}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#374151">${v}%</text>`)
 	}
+
 	push(
 		`<text transform="translate(20, ${(plotT + plotB) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#374151">entity-resolution F1</text>`
 	)
@@ -122,15 +138,19 @@ export function yardstickFigure(
 	// X category ticks + labels + the class-count + note strip.
 	GRAINS.forEach((g, i) => {
 		const x = xFor(i)
+
 		push(
 			`<line x1="${x.toFixed(1)}" y1="${plotT}" x2="${x.toFixed(1)}" y2="${plotB}" stroke="#f1f1f1" stroke-width="1"/>`
 		)
+
 		push(
 			`<text x="${x.toFixed(1)}" y="${plotB + 20}" text-anchor="middle" font-size="12.5" font-weight="600">${esc(g.label)}</text>`
 		)
+
 		push(
 			`<text x="${x.toFixed(1)}" y="${plotB + 36}" text-anchor="middle" font-size="10" fill="#6b7280">${g.classes} classes</text>`
 		)
+
 		g.note.split("\n").forEach((line, k) => {
 			push(
 				`<text x="${x.toFixed(1)}" y="${plotB + 50 + k * 12}" text-anchor="middle" font-size="9" fill="#9ca3af">${esc(line)}</text>`
@@ -142,15 +162,18 @@ export function yardstickFigure(
 	for (const m of MODELS) {
 		const f1s = F1[m.key]!
 		const pts = f1s.map((f, i) => `${xFor(i).toFixed(1)},${yFor(f).toFixed(1)}`).join(" ")
+
 		push(
 			`<polyline points="${pts}" fill="none" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`
 		)
+
 		f1s.forEach((f, i) => {
 			const x = xFor(i)
 			const y = yFor(f)
 			push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${m.key === "GBT" ? 5 : 4}" fill="${m.color}"/>`)
 			// value label: above for GBT, below for FS, to avoid collision
 			const dy = m.key === "GBT" ? -10 : 16
+
 			push(
 				`<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="${m.key === "GBT" ? 700 : 400}" fill="${m.color}">${f.toFixed(1)}</text>`
 			)
@@ -165,6 +188,7 @@ export function yardstickFigure(
 		push(
 			`<line x1="${lx}" y1="${ly}" x2="${lx + 22}" y2="${ly}" stroke="${m.color}" stroke-width="${m.width}"${m.dash ? ` stroke-dasharray="${m.dash}"` : ""}/>`
 		)
+
 		push(`<text x="${lx + 28}" y="${ly + 3.5}" font-size="10.5" fill="#374151">${esc(m.label)}</text>`)
 		ly += 18
 	}
@@ -172,6 +196,7 @@ export function yardstickFigure(
 	// The headline callout — the full climb for the shipped model, ending at the geocode-first key.
 	const gCoord = yFor(F1.GBT![3])
 	const gNPI = yFor(F1.GBT![0])
+
 	push(
 		`<g font-size="10.5">` +
 			`<text x="${lx}" y="${ly + 18}" font-weight="700" fill="#3578e5">+14.5pp NPI → coord</text>` +
@@ -181,6 +206,7 @@ export function yardstickFigure(
 			`<text x="${lx}" y="${ly + 77}" fill="#555">precision 43.7% → 64.6%.</text>` +
 			`</g>`
 	)
+
 	// Bracket the GBT climb on the right edge of the plot (NPI → coord, the full honest range).
 	push(
 		`<path d="M ${(plotR - 4).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gCoord.toFixed(1)} L ${(plotR - 4).toFixed(1)} ${gCoord.toFixed(1)}" fill="none" stroke="#3578e5" stroke-width="1" opacity="0.5"/>`
@@ -195,9 +221,11 @@ export function yardstickFigure(
 
 	writeFileSync(OUT, parts.join(""))
 	report?.(`[written] ${OUT}`)
+
 	report?.(
 		`  GBT F1: NPI ${F1.GBT![0]} → site ${F1.GBT![1]} → org-name ${F1.GBT![2]} → coord ${F1.GBT![3]}  (+${(F1.GBT![3] - F1.GBT![0]).toFixed(1)}pp)`
 	)
+
 	report?.(`  over-merge: ${OVERMERGE.GBT!.join(" → ")}`)
 
 	return { outSvg: OUT }

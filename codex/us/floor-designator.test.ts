@@ -17,22 +17,24 @@ import {
 
 describe("US_FLOOR_DESIGNATORS", () => {
 	it("carries the four USPS Pub 28 C2 floor-class designators", () => {
-		const names = US_FLOOR_DESIGNATORS.map((r) => r.name).sort()
-		expect(names).toEqual(["BASEMENT", "FLOOR", "LOBBY", "PENTHOUSE"].sort())
+		const names = US_FLOOR_DESIGNATORS.map((r) => r.name).toSorted()
+		expect(names).toEqual(["BASEMENT", "FLOOR", "LOBBY", "PENTHOUSE"].toSorted())
 	})
 
 	it("marks FLOOR and BASEMENT as requiring a secondary number (Appendix C2)", () => {
 		const numbered = US_FLOOR_DESIGNATORS.filter((r) => r.requiresNumber)
 			.map((r) => r.name)
-			.sort()
-		expect(numbered).toEqual(["BASEMENT", "FLOOR"].sort())
+			.toSorted()
+
+		expect(numbered).toEqual(["BASEMENT", "FLOOR"].toSorted())
 	})
 
 	it("marks PENTHOUSE and LOBBY as standalone (Appendix C2)", () => {
 		const standalone = US_FLOOR_DESIGNATORS.filter((r) => !r.requiresNumber)
 			.map((r) => r.name)
-			.sort()
-		expect(standalone).toEqual(["LOBBY", "PENTHOUSE"].sort())
+			.toSorted()
+
+		expect(standalone).toEqual(["LOBBY", "PENTHOUSE"].toSorted())
 	})
 
 	it("every row has a non-empty name and abbreviation — structural integrity", () => {

@@ -39,7 +39,9 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-/** The status glyph + ink color for a check outcome. */
+/**
+ * The status glyph + ink color for a check outcome.
+ */
 function statusGlyph(status: CheckStatus): { glyph: string; color: string } {
 	switch (status) {
 		case CheckStatus.OK:
@@ -51,7 +53,9 @@ function statusGlyph(status: CheckStatus): { glyph: string; color: string } {
 	}
 }
 
-/** One check row: the glyph + label + detail, plus an indented `fix:` line and an `(optional)` tag for non-core gaps. */
+/**
+ * One check row: the glyph + label + detail, plus an indented `fix:` line and an `(optional)` tag for non-core gaps.
+ */
 function CheckRow({ check }: { check: DoctorCheck }): React.ReactElement {
 	const { glyph, color } = statusGlyph(check.status)
 	const optional = !check.core && check.status !== CheckStatus.OK ? " (optional)" : ""
@@ -67,7 +71,9 @@ function CheckRow({ check }: { check: DoctorCheck }): React.ReactElement {
 	)
 }
 
-/** The rendered checklist + PASS/FAIL summary. */
+/**
+ * The rendered checklist + PASS/FAIL summary.
+ */
 function Report({ report }: { report: DoctorReport }): React.ReactElement {
 	const pass = report.exitCode === 0
 

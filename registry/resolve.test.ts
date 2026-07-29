@@ -49,7 +49,7 @@ describe("resolveEntities", () => {
 		expect(entities).toHaveLength(2)
 
 		const merged = entities.find((e) => e.records.length > 1)!
-		expect(merged.records.map((r) => r.id).sort()).toEqual(["1", "2"])
+		expect(merged.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 		expect(merged.cohesion).not.toBeNull()
 		expect(merged.cohesion!).toBeGreaterThan(0)
 
@@ -83,7 +83,7 @@ describe("resolveEntities", () => {
 		// weight, not the FS weight; the far-away record (3) is never blocked with them, so it stays apart.
 		const merged = resolveEntities(records, { scorer: () => 100, threshold: 1 })
 		const big = merged.entities.find((e) => e.records.length > 1)
-		expect(big?.records.map((r) => r.id).sort()).toEqual(["1", "2"])
+		expect(big?.records.map((r) => r.id).toSorted()).toEqual(["1", "2"])
 	})
 
 	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {
@@ -106,6 +106,7 @@ describe("resolveEntities", () => {
 			learnedScorer: true,
 			scorer: () => Number.NEGATIVE_INFINITY,
 		})
+
 		expect(entities).toHaveLength(records.length)
 	})
 })
@@ -142,6 +143,7 @@ describe("address-frequency down-weighting (#617)", () => {
 			distinct: 1,
 			frequency: (v) => (addressFrequencyKey(v) === "100 PLAZA DR HOUSTON TX" ? 0.5 : 0),
 		}
+
 		const downWeighted = scorePair(buildDefaultModel({ addressFrequency: crowded }), a, b).weight
 
 		expect(downWeighted).toBeLessThan(plain)
@@ -188,23 +190,28 @@ describe("phone corroboration rescues name drift (A3, #625)", () => {
 describe("secondary-identifier discriminators (#625)", () => {
 	it("an agreeing discriminator corroborates a name-drifted shared-address link", () => {
 		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), attributes: { authorizedOfficial: "jane smith" } }
-		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), attributes: { authorizedOfficial: "jane smith" } } // same registrant
+		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), attributes: { authorizedOfficial: "jane smith" } }
+
+		// same registrant
 		const res = resolveEntities([a, b], {
 			threshold: -100,
 			requireCorroboration: true,
 			discriminators: ["authorizedOfficial"],
 		})
+
 		expect(res.entities).toHaveLength(1)
 	})
 
 	it("a disagreeing discriminator keeps distinct providers apart", () => {
 		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), attributes: { authorizedOfficial: "jane smith" } }
 		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), attributes: { authorizedOfficial: "bob jones" } }
+
 		const res = resolveEntities([a, b], {
 			threshold: -100,
 			requireCorroboration: true,
 			discriminators: ["authorizedOfficial"],
 		})
+
 		expect(res.entities).toHaveLength(2)
 	})
 })
@@ -217,6 +224,7 @@ describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 			...coLocated("1", "Acme", "Health"),
 			attributes: { taxonomy: "207R00000X 208D00000X" },
 		}
+
 		const b: SourceRecord = { ...coLocated("2", "Acme", "Health"), attributes: { taxonomy: "208D00000X" } } // shared 208D
 		const c: SourceRecord = { ...coLocated("3", "Acme", "Health"), attributes: { taxonomy: "207Q00000X" } } // disjoint
 		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })

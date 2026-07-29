@@ -12,16 +12,24 @@ import type { Kysely } from "kysely"
 
 import { LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
 
-/** Which spine columns a layer carries. At least one key is required. */
+/**
+ * Which spine columns a layer carries. At least one key is required.
+ */
 export interface SpineKeys {
 	h3?: { column: string; resolution: number }
-	/** Column name holding WOF ids, when present. */
+	/**
+	 * Column name holding WOF ids, when present.
+	 */
 	wofID?: string
-	/** Column name holding `@mailwoman/address-id` keys, when present. */
+	/**
+	 * Column name holding `@mailwoman/address-id` keys, when present.
+	 */
 	addressID?: string
 }
 
-/** Parsed manifest — see {@link LayerManifestTable} for the storage form. */
+/**
+ * Parsed manifest — see {@link LayerManifestTable} for the storage form.
+ */
 export interface LayerManifest {
 	name: string
 	version: string
@@ -61,7 +69,9 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 	}
 }
 
-/** Insert the single manifest row. Call exactly once, from the layer's build script. */
+/**
+ * Insert the single manifest row. Call exactly once, from the layer's build script.
+ */
 export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
 
@@ -85,14 +95,18 @@ export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, mani
 		.execute()
 }
 
-/** Read + validate the manifest. Throws if the table is empty, multi-row, or invalid. */
+/**
+ * Read + validate the manifest. Throws if the table is empty, multi-row, or invalid.
+ */
 export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
 
 	if (rows.length !== 1) {
 		throw new Error(`layer manifest: expected exactly 1 row, found ${rows.length}`)
 	}
+
 	const row = rows[0]!
+
 	const manifest: LayerManifest = {
 		name: row.name,
 		version: row.version,
@@ -119,14 +133,14 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
  * bound-variable ceiling — a continental-scale build's res-6 coverage cell count blows past that limit in a single
  * `.values()` call (found 2026-07-19).
  */
-export const COVERAGE_INSERT_BATCH = 5_000
+export const COVERAGE_INSERT_BATCH = 5000
 
 /**
  * Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine), chunked to stay under SQLite's
  * bound-variable limit.
  */
 export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cells: CoverageCell[]): Promise<void> {
-	if (cells.length === 0) return
+	if (!cells.length) return
 
 	for (let i = 0; i < cells.length; i += COVERAGE_INSERT_BATCH) {
 		const batch = cells.slice(i, i + COVERAGE_INSERT_BATCH)

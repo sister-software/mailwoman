@@ -34,17 +34,29 @@ import type { AddressNode, AddressTree } from "./types.ts"
 import { unknownSpans } from "./unknown-spans.ts"
 
 export interface SerializeXMLOpts {
-	/** Pretty-print with line breaks and indentation. Default true. */
+	/**
+	 * Pretty-print with line breaks and indentation. Default true.
+	 */
 	pretty?: boolean
-	/** Include `conf` attribute on every component. Default true. */
+	/**
+	 * Include `conf` attribute on every component. Default true.
+	 */
 	includeConf?: boolean
-	/** Include `start` + `end` char-offset attributes. Default true. */
+	/**
+	 * Include `start` + `end` char-offset attributes. Default true.
+	 */
 	includeOffsets?: boolean
-	/** Include `src` provenance attribute when the node carries source info. Default true. */
+	/**
+	 * Include `src` provenance attribute when the node carries source info. Default true.
+	 */
 	includeSrc?: boolean
-	/** Include `lat` + `lon` resolver-supplied centroid attrs when set on the node. Default true. */
+	/**
+	 * Include `lat` + `lon` resolver-supplied centroid attrs when set on the node. Default true.
+	 */
 	includeGeo?: boolean
-	/** Include `place` resolver-supplied normalized place URI when set. Default true. */
+	/**
+	 * Include `place` resolver-supplied normalized place URI when set. Default true.
+	 */
 	includePlace?: boolean
 	/**
 	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node. When set +
@@ -63,7 +75,7 @@ export interface SerializeXMLOpts {
 }
 
 function escapeXml(s: string): string {
-	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+	return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
 }
 
 function srcAttrValue(node: AddressNode): string | null {
@@ -113,12 +125,12 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 
 	// Multi-role node (#413): a city-state span tagged `region` that also plays `locality` lists every
 	// role it holds, primary first — `roles="region locality"`. Emitted only when extra roles exist.
-	if (node.interpretations && node.interpretations.length > 0) {
+	if (node.interpretations && node.interpretations.length) {
 		const roles = [node.tag, ...node.interpretations.map((i) => i.tag)]
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)
 	}
 
-	return parts.length === 0 ? "" : " " + parts.join(" ")
+	return !parts.length ? "" : " " + parts.join(" ")
 }
 
 interface AlternativeLike {
@@ -131,10 +143,12 @@ interface AlternativeLike {
 }
 
 function serializeAlternatives(node: AddressNode, indent: string): string {
-	if (!node.alternatives || node.alternatives.length === 0) return ""
+	if (!node.alternatives || !node.alternatives.length) return ""
+
 	const lines = node.alternatives.map((raw) => {
 		const alt = raw as AlternativeLike
 		const place = `wof:${alt.id}`
+
 		const parts = [
 			`place="${escapeXml(place)}"`,
 			`name="${escapeXml(alt.name)}"`,
@@ -170,7 +184,9 @@ function serializeNode(node: AddressNode, indent: string, opts: Required<Seriali
 	return `${indent}<${node.tag}${a}>${text}${nl}${inner}${nl}${indent}</${node.tag}>`
 }
 
-/** Project an `AddressTree` to nested XML with optional confidence/offset attributes. */
+/**
+ * Project an `AddressTree` to nested XML with optional confidence/offset attributes.
+ */
 export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): string {
 	const full: Required<SerializeXMLOpts> = {
 		pretty: opts.pretty ?? true,
@@ -182,6 +198,7 @@ export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): str
 		includeAlternatives: opts.includeAlternatives ?? false,
 		includeUnknown: opts.includeUnknown ?? false,
 	}
+
 	const rawAttr = escapeXml(tree.raw)
 	const nl = full.pretty ? "\n" : ""
 	const indent = full.pretty ? "\t" : ""
@@ -200,6 +217,7 @@ export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): str
 				xml: `${indent}<unknown start="${u.start}" end="${u.end}">${escapeXml(u.value)}</unknown>`,
 			})
 		}
+
 		entries.sort((a, b) => a.start - b.start)
 	}
 

@@ -23,7 +23,9 @@ import { softmax } from "./viterbi.ts"
  */
 export const LOCALE_COUNTRIES = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
-/** ISO-2 country → codex address-system slice. Unmapped locales have no conventions yet. */
+/**
+ * ISO-2 country → codex address-system slice. Unmapped locales have no conventions yet.
+ */
 const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], SystemCode>> = {
 	US: "us",
 	FR: "fr",
@@ -58,6 +60,7 @@ export function detectAddressSystem(
 		if (probs[i]! > probs[best]!) {
 			best = i
 		}
+
 	const confidence = probs[best]!
 
 	if (confidence < threshold) return null

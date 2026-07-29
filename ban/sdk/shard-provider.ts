@@ -19,10 +19,14 @@ import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman
 
 import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.ts"
 
-/** What the cascade needs from a BAN shard — structurally a subset of mailwoman's `StateShards`. */
+/**
+ * What the cascade needs from a BAN shard — structurally a subset of mailwoman's `StateShards`.
+ */
 export interface BANShards {
 	addressPoints?: AddressPointSqliteLookup
-	/** The #1042 derived street-centroid tier — a `GROUP BY street` roll-up, for a street-only query (no house number). */
+	/**
+	 * The #1042 derived street-centroid tier — a `GROUP BY street` roll-up, for a street-only query (no house number).
+	 */
 	streetCentroids?: StreetCentroidSqliteLookup
 }
 
@@ -46,7 +50,9 @@ export class BANShardProvider {
 		return `${this.#dataRoot}/ban/street-centroids-${countryCode}.db`
 	}
 
-	/** Resolve the BAN shards for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered. */
+	/**
+	 * Resolve the BAN shards for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered.
+	 */
 	readonly for = (country: string): BANShards => {
 		const cc = country.toLowerCase()
 		const cached = this.#cache.get(cc)
@@ -63,6 +69,7 @@ export class BANShardProvider {
 			if (existsSync(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })
 			}
+
 			// The #1042 derived street tier — purely additive, opened only when its artifact is on disk.
 			const streetPath = this.#streetCentroidPath(cc)
 
@@ -70,6 +77,7 @@ export class BANShardProvider {
 				entry.streetCentroids = new StreetCentroidSqliteLookup(streetPath, { streetLocale: locale })
 			}
 		}
+
 		this.#cache.set(cc, entry)
 
 		return entry
@@ -80,6 +88,7 @@ export class BANShardProvider {
 			entry.addressPoints?.close()
 			entry.streetCentroids?.close()
 		}
+
 		this.#cache.clear()
 	}
 }

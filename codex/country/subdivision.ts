@@ -29,23 +29,33 @@
 import { CA_PROVINCES } from "../ca/province.ts"
 import { US_STATE_BY_ABBREVIATION } from "../us/state.ts"
 
-/** A resolved subdivision: its ISO 3166-2 code (sans country prefix), canonical English name, and ISO 3166-1 country. */
+/**
+ * A resolved subdivision: its ISO 3166-2 code (sans country prefix), canonical English name, and ISO 3166-1 country.
+ */
 export interface SubdivisionMatch {
-	/** ISO 3166-2 subdivision code without the country prefix (e.g. `QC` for `CA-QC`, `IL` for `US-IL`). */
+	/**
+	 * ISO 3166-2 subdivision code without the country prefix (e.g. `QC` for `CA-QC`, `IL` for `US-IL`).
+	 */
 	code: string
-	/** Canonical English name (e.g. `Quebec`, `Illinois`). */
+	/**
+	 * Canonical English name (e.g. `Quebec`, `Illinois`).
+	 */
 	name: string
-	/** ISO 3166-1 alpha-2 country the subdivision belongs to (`CA`, `US`). */
+	/**
+	 * ISO 3166-1 alpha-2 country the subdivision belongs to (`CA`, `US`).
+	 */
 	country: string
 }
 
-/** Strip diacritics + lowercase so `Québec`, `Quebec`, and `quebec` all key alike (mirrors `ca/province.ts`). */
+/**
+ * Strip diacritics + lowercase so `Québec`, `Quebec`, and `quebec` all key alike (mirrors `ca/province.ts`).
+ */
 function foldName(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 
@@ -56,10 +66,11 @@ function foldName(s: string): string {
  */
 const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const out = new Map<string, SubdivisionMatch>()
+
 	const put = (key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 
-		if (folded.length > 0 && !out.has(folded)) {
+		if (folded.length && !out.has(folded)) {
 			out.set(folded, match)
 		}
 	}

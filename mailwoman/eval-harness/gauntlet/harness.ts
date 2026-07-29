@@ -24,9 +24,13 @@ export interface GauntletDeps {
 	close(): void
 }
 
-/** Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}). */
+/**
+ * Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}).
+ */
 export interface GauntletGeocodeOpts {
-	/** Resolver country prior (ISO-3166 alpha-2) — geocodeAddress's `defaultCountry`. */
+	/**
+	 * Resolver country prior (ISO-3166 alpha-2) — geocodeAddress's `defaultCountry`.
+	 */
 	defaultCountry?: string
 }
 
@@ -83,6 +87,7 @@ export async function buildGauntletDeps(
 	opts: { modelPath?: string; tokenizerPath?: string; modelCardPath?: string; weightsCacheRoot?: string } = {}
 ): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+
 	// A candidate laid out as a package-shaped weights dir (`<cacheRoot>/node_modules/@mailwoman/neural-weights-en-us`).
 	// PREFER THIS over modelPath for a candidate with a DIFFERENT vocab (splice/multisplice): `loadFromWeights({cacheRoot})`
 	// resolves the model + tokenizer + card + anchor/gazetteer siblings package-shaped, exactly as production does — the
@@ -91,12 +96,14 @@ export async function buildGauntletDeps(
 	const cacheModel = opts.weightsCacheRoot
 		? resolve(opts.weightsCacheRoot, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")
 		: undefined
+
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
 	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
 	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolve("neural-weights-en-us/model.onnx"))
 
 	if (existsSync(effModel)) {
 		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
+
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
 		// #1024: the transparency stamp exposed a config↔card drift once (release.config.json still pointed at
@@ -109,6 +116,7 @@ export async function buildGauntletDeps(
 			assertShippedModelMatchesCard(md5)
 		}
 	}
+
 	const classifier = opts.weightsCacheRoot
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: opts.weightsCacheRoot })
 		: opts.tokenizerPath
@@ -121,9 +129,11 @@ export async function buildGauntletDeps(
 			: opts.modelPath
 				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
 				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
+
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// Pastel imports every command module at CLI startup — a static import here would break the
@@ -155,7 +165,9 @@ export async function buildGauntletDeps(
 	}
 }
 
-/** The slice of the assembled result the Gauntlet asserts on. */
+/**
+ * The slice of the assembled result the Gauntlet asserts on.
+ */
 export interface GauntletResult {
 	lat: number | null
 	lon: number | null
@@ -164,7 +176,9 @@ export interface GauntletResult {
 	region: string | null
 	country: string | null
 	postcode: string | null
-	/** The parsed spans, populated regardless of tier (geocode-core #1041) — asserted by venue/name-trap cases. */
+	/**
+	 * The parsed spans, populated regardless of tier (geocode-core #1041) — asserted by venue/name-trap cases.
+	 */
 	house_number: string | null
 	street: string | null
 }

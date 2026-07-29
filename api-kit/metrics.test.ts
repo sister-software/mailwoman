@@ -53,6 +53,7 @@ test("metricsSnapshot: snapshot sorts an unsorted insertion order before taking 
 	for (const v of [10, 1, 7, 3, 9, 2, 8, 4, 6, 5]) {
 		recordTimed(v, "admin")
 	}
+
 	// Same multiset as [1..10] → same percentiles regardless of arrival order.
 	expect(metricsSnapshot().timings.latency_ms).toMatchObject({ p50: 6, p90: 10, p99: 10, max: 10 })
 })

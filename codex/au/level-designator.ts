@@ -45,11 +45,17 @@
  * identifier from standalone ones.
  */
 export interface AuLevelDesignator {
-	/** AS 4590.1 LEVEL_TYPE_CODE (the GNAF / AMAS internal code). */
+	/**
+	 * AS 4590.1 LEVEL_TYPE_CODE (the GNAF / AMAS internal code).
+	 */
 	code: string
-	/** Full descriptive name (AMAS table label). */
+	/**
+	 * Full descriptive name (AMAS table label).
+	 */
 	name: string
-	/** The approved AMAS surface abbreviation written on mail ("L", "B", "M"). */
+	/**
+	 * The approved AMAS surface abbreviation written on mail ("L", "B", "M").
+	 */
 	abbreviation: string
 	/**
 	 * True when the designator takes a numeric or alphanumeric floor identifier after it (`LEVEL 3`, `BASEMENT 2`). False
@@ -74,7 +80,9 @@ export const AU_LEVEL_DESIGNATORS = [
 	{ code: "RT", name: "ROOFTOP", abbreviation: "RT", requiresNumber: false },
 ] as const satisfies readonly AuLevelDesignator[]
 
-/** A canonical AS 4590.1 LEVEL_TYPE_CODE. */
+/**
+ * A canonical AS 4590.1 LEVEL_TYPE_CODE.
+ */
 export type AuLevelCode = (typeof AU_LEVEL_DESIGNATORS)[number]["code"]
 
 /**
@@ -107,7 +115,7 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 	for (const { code } of AU_LEVEL_DESIGNATORS) {
 		const variants = AU_LEVEL_DESIGNATOR_VARIANTS[code]
 
-		if (!variants || variants.length === 0) {
+		if (!variants || !variants.length) {
 			throw new Error(`[codex/au/level-designator] code "${code}" has no variants in AU_LEVEL_DESIGNATOR_VARIANTS`)
 		}
 
@@ -119,6 +127,7 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 			}
 		}
 	}
+
 	const out = new Map<string, AuLevelCode>()
 
 	for (const { code } of AU_LEVEL_DESIGNATORS) {
@@ -134,30 +143,43 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 	return out
 })()
 
-/** Result of an AU level designator parse. */
+/**
+ * Result of an AU level designator parse.
+ */
 export interface AuLevelDesignatorMatch {
-	/** The code as it appeared in the input ("Level", "L", "lvl"). */
+	/**
+	 * The code as it appeared in the input ("Level", "L", "lvl").
+	 */
 	matched: string
-	/** The canonical AS 4590.1 LEVEL_TYPE_CODE ("L", "B", "M"). */
+	/**
+	 * The canonical AS 4590.1 LEVEL_TYPE_CODE ("L", "B", "M").
+	 */
 	code: AuLevelCode
-	/** The floor identifier when present ("3", "G", "B2"). */
+	/**
+	 * The floor identifier when present ("3", "G", "B2").
+	 */
 	identifier?: string
 }
 
-// One regex per level code. Multi-word variants ("LOWER GROUND", "GROUND FLOOR") are matched
-// before their shorter constituents by ordering the variant list longest-first within each code.
+/**
+ * One regex per level code. Multi-word variants ("LOWER GROUND", "GROUND FLOOR") are matched before their shorter
+ * constituents by ordering the variant list longest-first within each code.
+ */
 const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = (() => {
 	const rows: Array<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = []
 
 	for (const { code, requiresNumber } of AU_LEVEL_DESIGNATORS) {
 		const variants = [...AU_LEVEL_DESIGNATOR_VARIANTS[code]]
-			.sort((a, b) => b.length - a.length)
-			.map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, String.raw`\s+`))
+			.toSorted((a, b) => b.length - a.length)
+			.map((v) => v.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&").replaceAll(/\s+/g, String.raw`\s+`))
+
 		const alts = variants.join("|")
+
 		// Identifier: optional alphanumeric (B2, 12, G). requiresNumber=true → identifier required.
 		const tail = requiresNumber
 			? String.raw`\s+([A-Za-z]?\d[\dA-Za-z-]*|\d[\dA-Za-z-]*)`
 			: String.raw`(?:\s+([A-Za-z]?\d[\dA-Za-z-]*|\d[\dA-Za-z-]*))?`
+
 		rows.push({ code, requiresNumber, re: new RegExp(String.raw`^\s*(${alts})${tail}\s*$`, "i") })
 	}
 
@@ -188,7 +210,9 @@ export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch |
 	return null
 }
 
-/** Type-predicate: does the input look like a standalone AU level designator phrase? */
+/**
+ * Type-predicate: does the input look like a standalone AU level designator phrase?
+ */
 export function isAuLevelDesignator(input: unknown): boolean {
 	return matchAuLevelDesignator(input) !== null
 }

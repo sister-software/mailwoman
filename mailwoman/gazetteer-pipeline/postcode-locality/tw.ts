@@ -56,9 +56,21 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
+import { haversineKm } from "@mailwoman/spatial"
 
-const NEARBY_KEEP = 2 // extra non-containing candidates kept for the soft-score set (JP/KR precedent)
-const FALLBACK_RADIUS_KM = 20.0 // no-polygon fallback: name+proximity net around the official center
+/**
+ * Shortest romanised stem still specific enough to match a Taiwanese place name.
+ */
+const MIN_ENGLISH_STEM_LENGTH = 3
+
+/**
+ * Extra non-containing candidates kept for the soft-score set (JP/KR precedent)
+ */
+const NEARBY_KEEP = 2
+/**
+ * No-polygon fallback: name+proximity net around the official center.
+ */
+const FALLBACK_RADIUS_KM = 20
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
  * `localadmin`, `locality` (county-administered townships/cities), AND `neighbourhood` (the Kaohsiung/Taichung inner
@@ -67,19 +79,25 @@ const FALLBACK_RADIUS_KM = 20.0 // no-polygon fallback: name+proximity net aroun
  * otherwise swallow the district tier.
  */
 const PLACETYPES = ["locality", "county", "localadmin", "borough", "neighbourhood"] as const
-/** District-tier placetypes — the rows that ARE the 區/鄉/鎮/市 tier when present inside the polygon. */
+/**
+ * District-tier placetypes — the rows that ARE the 區/鄉/鎮/市 tier when present inside the polygon.
+ */
 const DISTRICT_TIER = new Set(["county", "localadmin"])
 const DISTRICT_SUFFIX = /[區鄉鎮市]$/
 
-/** The county/city prefix (直轄市/縣/市) is always exactly 3 characters (371/371 rows verified). */
+/**
+ * The county/city prefix (直轄市/縣/市) is always exactly 3 characters (371/371 rows verified).
+ */
 const COUNTY_PREFIX_LENGTH = 3
 
-/** Fold the 臺/台 orthographic variants (both are current; sources disagree row-by-row). */
+/**
+ * Fold the 臺/台 orthographic variants (both are current; sources disagree row-by-row).
+ */
 export function normHan(s: string): string {
 	return s
 		.normalize("NFC")
-		.replace(/臺/g, "台")
-		.replace(/[\s　-]/g, "")
+		.replaceAll("臺", "台")
+		.replaceAll(/[\s　-]/g, "")
 }
 
 /**
@@ -90,11 +108,11 @@ export function normEn(s: string): string {
 	return (
 		s
 			.normalize("NFKD")
-			.replace(/\p{M}/gu, "")
+			.replaceAll(/\p{M}/gu, "")
 			.toLowerCase()
 			// `qu`/`xiang`/`zhen` are the romanized 區/鄉/鎮 suffixes WOF sometimes carries ("Zhongzheng Qu").
-			.replace(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
-			.replace(/[\s'’-]/g, "")
+			.replaceAll(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
+			.replaceAll(/[\s'’-]/g, "")
 	)
 }
 
@@ -102,30 +120,29 @@ function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
 }
 
-/** Haversine distance in km (asin form — same as the JP/KR builders). */
-function haversineKm(aLat: number, bLon: number, cLat: number, dLon: number): number {
-	const R = 6371.0
-	const p1 = toRad(aLat)
-	const p2 = toRad(cLat)
-	const dp = toRad(cLat - aLat)
-	const dl = toRad(dLon - bLon)
-
-	return 2 * R * Math.asin(Math.sqrt(Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2))
-}
-
-/** UTC ISO-8601 to the second. */
+/**
+ * UTC ISO-8601 to the second.
+ */
 function isoSeconds(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
 export interface PostalDistrict {
-	/** Full 行政區名, e.g. 臺北市中正區. */
+	/**
+	 * Full 行政區名, e.g. 臺北市中正區.
+	 */
 	name: string
-	/** County/city prefix (exactly 3 chars), e.g. 臺北市. */
+	/**
+	 * County/city prefix (exactly 3 chars), e.g. 臺北市.
+	 */
 	county: string
-	/** District remainder, e.g. 中正區. */
+	/**
+	 * District remainder, e.g. 中正區.
+	 */
 	district: string
-	/** 3-digit postal code (the admin-granularity key). */
+	/**
+	 * 3-digit postal code (the admin-granularity key).
+	 */
 	postcode: string
 	lat: number
 	lon: number
@@ -137,8 +154,10 @@ export interface PostalDistrict {
  */
 export function loadPostalDistricts(path: string): PostalDistrict[] {
 	const xml = readFileSync(path, "utf8")
+
 	const re =
 		/<行政區名>([^<]+)<\/行政區名>\s*<_x0033_碼郵遞區號>(\d+)<\/_x0033_碼郵遞區號>\s*<中心點經度>([\d.]+)<\/中心點經度>\s*<中心點緯度>([\d.]+)<\/中心點緯度>/g
+
 	const out: PostalDistrict[] = []
 
 	for (const m of xml.matchAll(re)) {
@@ -147,6 +166,7 @@ export function loadPostalDistricts(path: string): PostalDistrict[] {
 		const lon = Number(m[3])
 
 		if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
+
 		out.push({
 			name,
 			county: name.slice(0, COUNTY_PREFIX_LENGTH),
@@ -161,7 +181,9 @@ export function loadPostalDistricts(path: string): PostalDistrict[] {
 }
 
 export interface DivisionPolygon {
-	/** Overture names.primary (Chinese full form, e.g. 萬華區). */
+	/**
+	 * Overture names.primary (Chinese full form, e.g. 萬華區).
+	 */
 	name: string
 	nameHan: string
 	/**
@@ -169,18 +191,23 @@ export interface DivisionPolygon {
 	 * names (the whole `county` tier + the Kaohsiung `neighbourhood` districts).
 	 */
 	nameEn: string | null
-	/** Wikidata QID from the joined `division` row — the principled WOF-concordance bridge. */
+	/**
+	 * Wikidata QID from the joined `division` row — the principled WOF-concordance bridge.
+	 */
 	wikidata: string | null
 	geometry: GeojsonGeometry
 	bbox: [number, number, number, number] // minLon, minLat, maxLon, maxLat
 }
 
-/** Load the district polygons fetched from the Overture divisions theme (subtype=locality slice). */
+/**
+ * Load the district polygons fetched from the Overture divisions theme (subtype=locality slice).
+ */
 export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 	const out: DivisionPolygon[] = []
 
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		if (!line.trim()) continue
+
 		const row = JSON.parse(line) as {
 			subtype: string
 			name: string
@@ -196,6 +223,7 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 		let minLat = Infinity
 		let maxLon = -Infinity
 		let maxLat = -Infinity
+
 		const scan = (coords: unknown): void => {
 			if (Array.isArray(coords) && typeof coords[0] === "number") {
 				const [lon, lat] = coords as [number, number]
@@ -225,7 +253,9 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 				}
 			}
 		}
+
 		scan((geometry as { coordinates?: unknown }).coordinates)
+
 		out.push({
 			name: row.name,
 			nameHan: normHan(row.name),
@@ -248,37 +278,31 @@ export interface PostcodeLocalityTWOptions {
 
 interface AdminPlace {
 	pid: number
-	/** Canonical (romanized) spr name. */
+	/**
+	 * Canonical (romanized) spr name.
+	 */
 	nm: string
 	placetype: string
 	la: number
 	lo: number
-	/** NormHan'd Chinese name forms from the names table (empty for the county tier — see header). */
+	/**
+	 * NormHan'd Chinese name forms from the names table (empty for the county tier — see header).
+	 */
 	hanNames: Set<string>
-	/** NormEn'd romanized stems (canonical spr.name + eng names) — matched against Overture's en name. */
+	/**
+	 * NormEn'd romanized stems (canonical spr.name + eng names) — matched against Overture's en name.
+	 */
 	engNames: Set<string>
 }
 
-export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
-	const districts = loadPostalDistricts(args.postalXml)
-
-	if (districts.length === 0) {
-		console.error(`no postal districts parsed from ${args.postalXml}`)
-		process.exit(1)
-	}
-	const polygons = loadDistrictPolygons(args.divisions)
-	const polygonsByName = new Map<string, DivisionPolygon[]>()
-
-	for (const p of polygons) {
-		const bucket = polygonsByName.get(p.nameHan)
-
-		if (bucket) {
-			bucket.push(p)
-		} else {
-			polygonsByName.set(p.nameHan, [p])
-		}
-	}
-
+/**
+ * Everything the district match needs out of the WOF admin database, indexed once: the place rows with their
+ * Chinese/romanized name forms, the region tier (the 22 直轄市/縣/市 that back the containing-city fallback), the Wikidata
+ * concordance bridge, and a 0.5°-cell proximity grid behind `nearby`.
+ *
+ * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
+ */
+function loadAdminIndexes(args: { adminDb: string }) {
 	const admin = new DatabaseSync(args.adminDb)
 	const ph = PLACETYPES.map(() => "?").join(",")
 	const places = new Map<number, AdminPlace>()
@@ -337,6 +361,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		)
 		.all() as Array<{ id: number; name: string; latitude: number; longitude: number; han: string }>) {
 		if (!/[一-鿿]/.test(row.han)) continue
+
 		regionsByHan.set(normHan(row.han), {
 			pid: row.id,
 			nm: row.name,
@@ -369,6 +394,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			placesByQID.set(row.qid, [place])
 		}
 	}
+
 	admin.close()
 
 	// Proximity grid (0.5° cells, same shape as the JP/KR builders) — used by both the polygon
@@ -402,15 +428,44 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				}
 			}
 		}
+
 		out.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
 
 		return out
 	}
 
+	return { places, regionsByHan, placesByQID, nearby }
+}
+
+export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
+	const districts = loadPostalDistricts(args.postalXml)
+
+	if (!districts.length) {
+		console.error(`no postal districts parsed from ${args.postalXml}`)
+
+		process.exit(1)
+	}
+
+	const polygons = loadDistrictPolygons(args.divisions)
+	const polygonsByName = new Map<string, DivisionPolygon[]>()
+
+	for (const p of polygons) {
+		const bucket = polygonsByName.get(p.nameHan)
+
+		if (bucket) {
+			bucket.push(p)
+		} else {
+			polygonsByName.set(p.nameHan, [p])
+		}
+	}
+
+	const { places, regionsByHan, placesByQID, nearby } = loadAdminIndexes(args)
+
 	const buildPath = `${args.output}.building`
 	rmSync(buildPath, { force: true })
 	const db = new DatabaseSync(buildPath)
 	const kdb = new DatabaseClient({ database: db })
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.addColumn("postcode", "text", (c) => c.notNull())
@@ -430,16 +485,21 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		const districtHan = normHan(d.district)
 		const stemHan = districtHan.replace(DISTRICT_SUFFIX, "")
 		const aliases = [d.name, d.district, normHan(d.name) !== d.name ? normHan(d.name) : ""].filter(Boolean).join("|")
+
 		const hanMatches = (p: AdminPlace): boolean =>
 			p.hanNames.has(districtHan) || (stemHan.length >= 2 && p.hanNames.has(stemHan))
+
 		// The Overture en name is per-polygon, so the closure is (re)bound after the polygon resolves.
 		let enStem = ""
-		const nameMatches = (p: AdminPlace): boolean => hanMatches(p) || (enStem.length >= 3 && p.engNames.has(enStem))
+
+		const nameMatches = (p: AdminPlace): boolean =>
+			hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
 
 		// 1. The district polygon: name match (full Chinese form), disambiguated by whether it contains
 		//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official
 		//    center falls in exactly its own polygon).
 		const namesakes = polygonsByName.get(districtHan) ?? []
+
 		const polygon =
 			namesakes.length === 1 ? namesakes[0] : namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
 
@@ -463,6 +523,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				if (geometryContains(polygon.geometry, p.lo, p.la) !== true) continue
 				inside.push({ d: haversineKm(d.lat, d.lon, p.la, p.lo), place: p })
 			}
+
 			inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
 
 			// Name-confirmed district-tier first: sloppy WOF points put a NEIGHBORING district's row
@@ -482,10 +543,11 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			} else if (polygon.wikidata) {
 				const concordant = (placesByQID.get(polygon.wikidata) ?? [])
 					.map((place) => ({ d: haversineKm(d.lat, d.lon, place.la, place.lo), place }))
-					.sort(
+					.toSorted(
 						(a, b) =>
 							Number(!DISTRICT_TIER.has(a.place.placetype)) - Number(!DISTRICT_TIER.has(b.place.placetype)) || a.d - b.d
 					)
+
 				hit = concordant[0]
 
 				if (hit) {
@@ -533,20 +595,16 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					tierCounts.region_fallback++
 					const dist = haversineKm(d.lat, d.lon, region.la, region.lo)
 					rows.push([d.postcode, "TW", region.pid, region.nm, aliases, Math.round(dist * 1000) / 1000, 1])
-					const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
-
-					if (weak) {
-						rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
-					}
-				} else {
-					const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
-
-					if (weak) {
-						// Weak candidate only — recorded non-containing so the resolver's soft score treats it
-						// as proximity evidence, never as an authoritative containment.
-						rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
-					}
 				}
+
+				// The weak candidate rides along either way — recorded non-containing so the resolver's
+				// soft score treats it as proximity evidence, never as an authoritative containment.
+				const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
+
+				if (weak) {
+					rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
+				}
+
 				continue
 			}
 		}
@@ -567,6 +625,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	for (const r of rows) {
 		insert.run(...r)
 	}
+
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -580,8 +639,10 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+
 	const matched = tierCounts.polygon + tierCounts.wikidata + tierCounts.name_in_polygon + tierCounts.name_nearby
 	const matchRate = `${((100 * matched) / districts.length).toFixed(1)}%`
+
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-tw"],
 		["description", "TW 3-digit postcode -> WOF district via official center + Overture division polygon bridge"],
@@ -606,6 +667,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		["unmatched", unmatched.join("|") || "(none)"],
 		["built_at", isoSeconds()],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
@@ -618,14 +680,17 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 	if (ok !== "ok") {
 		console.error(`integrity_check failed: ${ok}`)
+
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.
 	renameSync(buildPath, args.output)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
+
 	console.log(
 		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +
 			`${rows.length} rows -> ${args.output}` +

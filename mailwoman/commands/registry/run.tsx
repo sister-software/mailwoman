@@ -55,12 +55,12 @@ import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../../resolver-backend.ts"
 import { resolverDefaultCountry } from "../parse.tsx"
 
-/** Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands. */
+/**
+ * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
+ */
 export const isDefault = true
 
-// ---------------------------------------------------------------------------
-// CLI contract — args + options
-// ---------------------------------------------------------------------------
+//#region CLI contract — args + options
 
 const ArgumentsSchema = zod
 	.array(zod.string().describe("Path to a CSV file of contact / organization records"))
@@ -160,9 +160,9 @@ const OptionsSchema = zod.object({
 
 export { ArgumentsSchema as args, OptionsSchema as options }
 
-// ---------------------------------------------------------------------------
-// Column mapping
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Column mapping
 
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV that splits the
@@ -194,8 +194,8 @@ export function loadMapping(
 
 		try {
 			provided = JSON.parse(text) as Partial<ColumnMapping>
-		} catch (err) {
-			throw commandError(`--mapping is neither a readable file nor valid JSON: ${(err as Error).message}`)
+		} catch (error) {
+			throw commandError(`--mapping is neither a readable file nor valid JSON: ${(error as Error).message}`)
 		}
 	}
 
@@ -270,15 +270,25 @@ async function buildGeocoder(
 	}
 }
 
-/** Command-level wiring for the record-matcher tool geocoder (`--wof`/`--data-root`/`--locale` + model swaps). */
+/**
+ * Command-level wiring for the record-matcher tool geocoder (`--wof`/`--data-root`/`--locale` + model swaps).
+ */
 export interface EvalGeocoderFlags {
-	/** WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`. */
+	/**
+	 * WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 */
 	wof?: string
-	/** Per-state shard root. Default `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Per-state shard root. Default `$MAILWOMAN_DATA_ROOT`.
+	 */
 	dataRoot?: string
-	/** Weights locale. Default en-US. */
+	/**
+	 * Weights locale. Default en-US.
+	 */
 	locale?: string
-	/** Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`. */
+	/**
+	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`.
+	 */
 	modelPath?: string
 	tokenizerPath?: string
 	modelCardPath?: string
@@ -295,16 +305,19 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 	return async (init): Promise<EvalGeocoder> => {
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
 		const dataRoot = flags.dataRoot || mailwomanDataRoot()
+
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: flags.locale || "en-US",
 			...(flags.modelPath ? { modelPath: flags.modelPath } : {}),
 			...(flags.tokenizerPath ? { tokenizerPath: flags.tokenizerPath } : {}),
 			...(flags.modelCardPath ? { modelCardPath: flags.modelCardPath } : {}),
 		})
+
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
 		const shardProvider = new ShardProvider(mod, dataRoot)
+
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {
 				classifier,
@@ -314,6 +327,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 				placeCountry: false,
 				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
 			})
+
 		const seam = geocodeAddressVia({
 			parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 			geocode,
@@ -339,7 +353,9 @@ interface MultiSourceSpec {
 	delimiter?: "comma" | "tab"
 	mapping: ColumnMapping
 	source?: string
-	/** For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment. */
+	/**
+	 * For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment.
+	 */
 	role?: "eligibility" | "funding"
 	/**
 	 * Read at most this many rows (the head of the file) — sampling a huge source without pre-filtering.
@@ -347,15 +363,17 @@ interface MultiSourceSpec {
 	limit?: number
 }
 
-/** Parse `--sources` (a file path or inline JSON) into specs. */
+/**
+ * Parse `--sources` (a file path or inline JSON) into specs.
+ */
 export function loadSources(option: string): MultiSourceSpec[] {
 	const text = /^[[{]/.test(option.trim()) ? option : readFileSync(option, "utf8")
 	let parsed: unknown
 
 	try {
 		parsed = JSON.parse(text)
-	} catch (err) {
-		throw commandError(`--sources is neither a readable file nor valid JSON: ${(err as Error).message}`)
+	} catch (error) {
+		throw commandError(`--sources is neither a readable file nor valid JSON: ${(error as Error).message}`)
 	}
 
 	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {
@@ -406,18 +424,23 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const label = spec.source ?? spec.path
 			const mapping: ColumnMapping = { ...spec.mapping, source: label }
 			let read = 0
+
 			const rows = (async function* () {
 				for await (const row of streamRows(spec.path, spec.delimiter ? { delimiter: spec.delimiter } : {})) {
 					if (spec.limit !== undefined && read >= spec.limit) break
+
 					read++
 					yield row
 				}
 			})()
+
 			const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
 
 			for (const record of recs) {
 				record.id = `${label}:${record.id}`
-			} // namespace ids so cross-source ids never collide
+			}
+
+			// namespace ids so cross-source ids never collide
 			records.push(...recs)
 			perSource.push(`${label} ${recs.length}`)
 		}
@@ -432,6 +455,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			learnedScorer: false,
 			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
 		})
+
 		const geocoded = records.filter((r) => r.address?.geocode).length
 
 		// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
@@ -447,8 +471,10 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 						"(at least one of each)."
 				)
 			}
+
 			const recon = reconcileCoverage(result.entities, { eligibilitySources, fundingSources })
 			const geojson = reconciliationGeoJSON(recon)
+
 			const report = reconciliationReport(recon, {
 				scopeNote:
 					`Resolved BLIND across ${specs.length} sources via \`mailwoman registry --reconcile\` ` +
@@ -459,15 +485,18 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 					'GBT default (#603) rejects the "same place, different operational name" pattern that IS the ' +
 					"cross-source signal, so it is pinned off here. See #655.",
 			})
+
 			const written = writeOutputs(geojson, options)
 
 			return written === null ? report : `${report}\n\n${written}`
 		}
 
 		const geojson = toGeoJSON(result.entities)
+
 		const crossSource = result.entities.filter(
 			(e) => new Set(e.records.map((r) => r.source).filter(Boolean)).size >= 2
 		).length
+
 		const summary =
 			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
 			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
@@ -480,9 +509,9 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Core
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Core
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	if (options.reconcile) {
@@ -491,6 +520,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 				"`role`), not a single positional CSV."
 		)
 	}
+
 	const rows = parseCSV(readFileSync(csvPath, "utf8"))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
@@ -500,14 +530,17 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 
 	try {
 		const records = await ingestRows(rows, mapping, { geocodeAddress: seam })
+
 		const result = resolveEntities(records, {
 			trainEM: options.trainEm,
 			threshold: options.threshold,
 			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
 		})
+
 		const geojson = toGeoJSON(result.entities)
 
 		const geocoded = records.filter((r) => r.address?.geocode).length
+
 		const summary =
 			`registry: ${rows.length} rows → ${records.length} records (${geocoded} geocoded) → ` +
 			`${result.entities.length} entities ` +
@@ -521,9 +554,9 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 	}
 }
 
-// ---------------------------------------------------------------------------
-// React command component
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region React command component
 
 const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
@@ -534,7 +567,7 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 
 		const csv = args?.[0]
 
-		if (!csv || csv.trim().length === 0) {
+		if (!csv || !csv.trim().length) {
 			throw commandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
 					"e.g. mailwoman registry contacts.csv --out entities.geojson"
@@ -556,3 +589,5 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 }
 
 export default RegistryCommand
+
+//#endregion

@@ -6,7 +6,7 @@
 
 import type { Tagged } from "type-fest"
 
-import { AdminLevel1Code, FIPSStateCode } from "./state.ts"
+import type { AdminLevel1Code, FIPSStateCode } from "./state.ts"
 
 //#region Tagged FIPS types
 
@@ -258,7 +258,7 @@ export type GeoIDPart = (typeof GeoIDPart)[keyof typeof GeoIDPart]
  *
  * @internal
  */
-export type GeoIDPartMapping = {
+export interface GeoIDPartMapping {
 	[GeoIDPart.State]: FIPSStateCode
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
@@ -310,7 +310,7 @@ export interface ParsedGeoIDBlockLevel {
  *
  * @internal
  */
-export type ParsedGeoIDBlockGroupLevel = {
+export interface ParsedGeoIDBlockGroupLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
@@ -324,7 +324,7 @@ export type ParsedGeoIDBlockGroupLevel = {
  *
  * @internal
  */
-export type ParsedGeoIDTractLevel = {
+export interface ParsedGeoIDTractLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
@@ -338,14 +338,14 @@ export type ParsedGeoIDTractLevel = {
  *
  * @internal
  */
-export type ParsedGeoIDPartial = { [P in GeoIDPart]?: string }
+export type ParsedGeoIDPartial = Partial<Record<GeoIDPart, string>>
 
 /**
  * A GeoID parsed to the county-subdivision level. The fourth most granular level.
  *
  * @internal
  */
-export type ParsedGeoIDCountySubDivisionLevel = {
+export interface ParsedGeoIDCountySubDivisionLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
@@ -359,7 +359,7 @@ export type ParsedGeoIDCountySubDivisionLevel = {
  *
  * @internal
  */
-export type ParsedGeoIDCountyLevel = {
+export interface ParsedGeoIDCountyLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: undefined
@@ -373,7 +373,7 @@ export type ParsedGeoIDCountyLevel = {
  *
  * @internal
  */
-export type ParsedGeoIDStateLevel = {
+export interface ParsedGeoIDStateLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: undefined
 	[GeoIDPart.CountySubDivision]: undefined
@@ -534,7 +534,7 @@ export function isGeoIDComponent<T extends GeoIDPart>(component: T, input: unkno
 /**
  * GeoID input matchers sorted by length in descending order, such that the most specific matchers are first.
  */
-const OrderedGeoIDInputMatchers = Object.values(GeoIDInputMatchers).sort((a, b) => b.length - a.length)
+const OrderedGeoIDInputMatchers = Object.values(GeoIDInputMatchers).toSorted((a, b) => b.length - a.length)
 
 /**
  * Given a block GeoID, parse it into its components.
@@ -590,6 +590,7 @@ export function parseGeoID(input: FIPSCountySubDivisionCode): ParsedGeoIDCountyS
 export function parseGeoID(input: FIPSCountyCode): ParsedGeoIDCountyLevel
 export function parseGeoID(input: AdminLevel1Code): ParsedGeoIDStateLevel
 export function parseGeoID(input: unknown): ParsedGeoID | null
+
 export function parseGeoID(input: unknown): ParsedGeoID | null {
 	if (!input) return null
 
@@ -643,6 +644,7 @@ export function formatGeoID(input: ParsedGeoIDBlockLevel): FIPSBlockGeoID
  * @category FIPS
  */
 export function formatGeoID(input: ParsedGeoIDPartial): string
+
 export function formatGeoID(input: unknown): string | null {
 	if (!input || typeof input !== "object") return null
 

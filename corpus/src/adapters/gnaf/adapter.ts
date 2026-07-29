@@ -34,8 +34,14 @@ import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const GNAF_ADAPTER_ID = "gnaf"
-/** Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style). */
+/**
+ * Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style).
+ */
 export const GNAF_DEFAULT_LICENSE = "CC-BY-4.0"
 
 interface GNAFTuple {
@@ -102,8 +108,10 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 				const orders = renderOrders(t)
 				const order = idx % orders.length
+
 				idx++
 				const raw = orders[order]!
+
 				const components: CanonicalRow["components"] = {
 					house_number: t.house_number,
 					street: t.street,
@@ -119,7 +127,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 				const aligned = reconcileComponents(components, raw)
 
-				if (Object.keys(aligned).length === 0) continue
+				if (!Object.keys(aligned).length) continue
+
 				yield {
 					raw,
 					components: aligned,
@@ -130,10 +139,14 @@ export function createGNAFAdapter(): CorpusAdapter {
 					corpus_version: "",
 					license: GNAF_DEFAULT_LICENSE,
 				}
+
 				emitted++
 			}
 		},
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const gnafAdapter = createGNAFAdapter()

@@ -23,28 +23,48 @@ import type { Kysely } from "kysely"
  * `odd`/`even`/`mixed`.
  */
 export interface StreetSegmentTable {
-	/** Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key. */
+	/**
+	 * Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key.
+	 */
 	street_norm: string
-	/** `L` or `R` — the TIGER side the address range sits on. */
+	/**
+	 * `L` or `R` — the TIGER side the address range sits on.
+	 */
 	side: string
 	from_hn: number
 	to_hn: number
-	/** Sorted lower bound of `(from_hn, to_hn)` — the probe filters `min_hn <= n <= max_hn`. */
+	/**
+	 * Sorted lower bound of `(from_hn, to_hn)` — the probe filters `min_hn <= n <= max_hn`.
+	 */
 	min_hn: number
-	/** Sorted upper bound of `(from_hn, to_hn)`. */
+	/**
+	 * Sorted upper bound of `(from_hn, to_hn)`.
+	 */
 	max_hn: number
-	/** `odd` | `even` | `mixed` — the house-number parity along the range. */
+	/**
+	 * `odd` | `even` | `mixed` — the house-number parity along the range.
+	 */
 	parity: string
 	postcode: string | null
-	/** 5-digit state+county FIPS the edge came from. */
+	/**
+	 * 5-digit state+county FIPS the edge came from.
+	 */
 	county_fips: string
-	/** The street as it appeared in TIGER (kept for display / debugging). */
+	/**
+	 * The street as it appeared in TIGER (kept for display / debugging).
+	 */
 	street_raw: string
-	/** GeoJSON LineString text (no SpatiaLite — read back with `JSON.parse`). */
+	/**
+	 * GeoJSON LineString text (no SpatiaLite — read back with `JSON.parse`).
+	 */
 	geometry: string
-	/** Provenance: the dataset this edge came from (e.g. `tiger:edges`). */
+	/**
+	 * Provenance: the dataset this edge came from (e.g. `tiger:edges`).
+	 */
 	source: string
-	/** The pinned TIGER release the edge was ingested from. */
+	/**
+	 * The pinned TIGER release the edge was ingested from.
+	 */
 	release: string
 }
 
@@ -56,15 +76,23 @@ export interface StreetSegmentTable {
  * and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
  */
 export interface InterpCalibrationRow {
-	/** Conformal multiplier for the raw half-segment `uncertainty_m` radius (#374/#584) — ×Q̂ for a ~90% bound. */
+	/**
+	 * Conformal multiplier for the raw half-segment `uncertainty_m` radius (#374/#584) — ×Q̂ for a ~90% bound.
+	 */
 	radius_multiplier: number
-	/** Provenance of the multiplier (e.g. `split-conformal:2026-06-14`). */
+	/**
+	 * Provenance of the multiplier (e.g. `split-conformal:2026-06-14`).
+	 */
 	method: string
-	/** The calibration-table key the multiplier was selected by (a USPS region code, or `default` for unmeasured). */
+	/**
+	 * The calibration-table key the multiplier was selected by (a USPS region code, or `default` for unmeasured).
+	 */
 	region: string
 }
 
-/** The street-segment database schema for `new DatabaseClient<StreetSegmentDatabase>(...)`. */
+/**
+ * The street-segment database schema for `new DatabaseClient<StreetSegmentDatabase>(...)`.
+ */
 export interface StreetSegmentDatabase {
 	street_segment: StreetSegmentTable
 	interp_calibration: InterpCalibrationRow
@@ -90,7 +118,9 @@ export const STREET_SEGMENT_COLUMNS = [
 	"release",
 ] as const
 
-/** Create the `street_segment` table — called before the streaming bulk load. */
+/**
+ * Create the `street_segment` table — called before the streaming bulk load.
+ */
 export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>): Promise<void> {
 	await db.schema
 		.createTable("street_segment")
@@ -126,15 +156,19 @@ export async function writeInterpCalibration(
 		.addColumn("method", "text", (c) => c.notNull())
 		.addColumn("region", "text", (c) => c.notNull())
 		.execute()
+
 	await db.insertInto("interp_calibration").values(row).execute()
 }
 
-/** Create the two probe indexes the reader relies on (postcode-scope, street-scope). */
+/**
+ * Create the two probe indexes the reader relies on (postcode-scope, street-scope).
+ */
 export async function createStreetSegmentIndexes(db: Kysely<StreetSegmentDatabase>): Promise<void> {
 	await db.schema
 		.createIndex("idx_seg_postcode")
 		.on("street_segment")
 		.columns(["postcode", "street_norm", "min_hn"])
 		.execute()
+
 	await db.schema.createIndex("idx_seg_street").on("street_segment").columns(["street_norm", "min_hn"]).execute()
 }

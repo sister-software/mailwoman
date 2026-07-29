@@ -4,20 +4,20 @@
  * @author Teffen Ellis, et al.
  */
 
-import { TIGERClassCode } from "./class-code.ts"
-import { TIGERFunctionalStatus } from "./functional-status.ts"
-import {
-	type FIPSBlockCode,
-	type FIPSBlockGroupCode,
-	type FIPSCongressionalDistrictCode,
-	type FIPSCountyCode,
-	type FIPSCountySubDivisionCode,
-	type FIPSPlaceCode,
-	type FIPSTractCode,
+import type { TIGERClassCode } from "./class-code.ts"
+import type { TIGERFunctionalStatus } from "./functional-status.ts"
+import type {
 	GeoIDPart,
+	FIPSBlockCode,
+	FIPSBlockGroupCode,
+	FIPSCongressionalDistrictCode,
+	FIPSCountyCode,
+	FIPSCountySubDivisionCode,
+	FIPSPlaceCode,
+	FIPSTractCode,
 } from "./geoid.ts"
-import { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
-import { FIPSStateCode } from "./state.ts"
+import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
+import type { FIPSStateCode } from "./state.ts"
 
 /**
  * A code indicating the classification of the block, i.e. urban or rural.

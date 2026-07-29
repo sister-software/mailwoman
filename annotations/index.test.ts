@@ -29,9 +29,11 @@ test("composeAnnotators: merges partial results from multiple annotators", async
 
 test("composeAnnotators: a throwing annotator is skipped, the rest still apply", async () => {
 	const ok: Annotator = () => ({ flag: "🇺🇸" })
+
 	const boom: Annotator = () => {
 		throw new Error("nope")
 	}
+
 	const set = await composeAnnotators([boom, ok])({ lat: 0, lon: 0 })
 
 	expect(set.flag).toBe("🇺🇸")
@@ -39,34 +41,35 @@ test("composeAnnotators: a throwing annotator is skipped, the rest still apply",
 
 test("composeAnnotators: later annotators win on key collision", async () => {
 	const a: Annotator = () => ({ timezone: { name: "UTC" } })
-	const b: Annotator = () => ({ timezone: { name: "America/New_York", offsetSec: -18000 } })
+	const b: Annotator = () => ({ timezone: { name: "America/New_York", offsetSec: -18_000 } })
 	const set = await composeAnnotators([a, b])({ lat: 0, lon: 0 })
 
-	expect(set.timezone).toEqual({ name: "America/New_York", offsetSec: -18000 })
+	expect(set.timezone).toEqual({ name: "America/New_York", offsetSec: -18_000 })
 })
 
 test("toOpenCage: maps native fields to OpenCage key names + casing", () => {
 	const set: AnnotationSet = {
 		dms: { lat: "38° 53′ 51″ N", lon: "77° 02′ 11″ W" },
 		geohash: "dqcjqcp84",
-		mercator: { x: -8575528, y: 4707174 },
+		mercator: { x: -8_575_528, y: 4_707_174 },
 		qiblaBearing: 58.4,
 		callingCode: 1,
 		currency: { isoCode: "USD", symbol: "$" },
 		flag: "🇺🇸",
-		timezone: { name: "America/New_York", offsetSec: -18000 },
+		timezone: { name: "America/New_York", offsetSec: -18_000 },
 		fips: "11001",
 	}
+
 	const oc = toOpenCage(set)
 
 	expect(oc.DMS).toEqual({ lat: "38° 53′ 51″ N", lng: "77° 02′ 11″ W" }) // lon -> lng
 	expect(oc.geohash).toBe("dqcjqcp84")
-	expect(oc.Mercator).toEqual({ x: -8575528, y: 4707174 })
+	expect(oc.Mercator).toEqual({ x: -8_575_528, y: 4_707_174 })
 	expect(oc.qibla).toBe(58.4)
 	expect(oc.callingcode).toBe(1)
 	expect(oc.currency).toEqual({ iso_code: "USD", symbol: "$" }) // isoCode -> iso_code
 	expect(oc.flag).toBe("🇺🇸")
-	expect(oc.timezone).toEqual({ name: "America/New_York", offset_sec: -18000 }) // offsetSec -> offset_sec
+	expect(oc.timezone).toEqual({ name: "America/New_York", offset_sec: -18_000 }) // offsetSec -> offset_sec
 	expect(oc.FIPS).toEqual({ county: "11001" })
 })
 
@@ -105,6 +108,7 @@ test("toSchemaOrg: full Place with geo + PostalAddress, ISO-3166 alpha-2 country
 	expect(place["@context"]).toBe("https://schema.org")
 	expect(place["@type"]).toBe("Place")
 	expect(place.geo).toEqual({ "@type": "GeoCoordinates", latitude: 48.8556, longitude: 2.3448 })
+
 	expect(place.address).toEqual({
 		"@type": "PostalAddress",
 		streetAddress: "8 Boulevard du Palais",
@@ -116,7 +120,7 @@ test("toSchemaOrg: full Place with geo + PostalAddress, ISO-3166 alpha-2 country
 })
 
 test("toSchemaOrg: omits absent fields entirely (never null)", () => {
-	const place = toSchemaOrg({ lat: 40.0, lon: -75.0, locality: "Philadelphia", countryCode: "US" })
+	const place = toSchemaOrg({ lat: 40, lon: -75, locality: "Philadelphia", countryCode: "US" })
 
 	expect(place.name).toBeUndefined()
 	expect(place.address?.streetAddress).toBeUndefined()
@@ -135,7 +139,7 @@ test("toSchemaOrg: geo omitted when the coordinate is missing / non-finite", () 
 })
 
 test("toSchemaOrg: PO box maps to postOfficeBoxNumber; name carries a venue", () => {
-	const place = toSchemaOrg({ lat: 38.9, lon: -77.0, name: "The White House", poBox: "12345", countryCode: "us" })
+	const place = toSchemaOrg({ lat: 38.9, lon: -77, name: "The White House", poBox: "12345", countryCode: "us" })
 
 	expect(place.name).toBe("The White House")
 	expect(place.address?.postOfficeBoxNumber).toBe("12345")

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { AdminLevel1Code, type FIPSCountyCode, type FIPSTractCode } from "@mailwoman/tiger"
+import type { AdminLevel1Code, FIPSCountyCode, FIPSTractCode } from "@mailwoman/tiger"
 
 /**
  * @internal

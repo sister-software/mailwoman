@@ -27,6 +27,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	conventions?: string
@@ -38,22 +39,29 @@ const values = rawValues as {
 	"suppress-gaz-near-postcode"?: boolean
 	"weights-cache"?: string
 }
+
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-// Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
-// candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
+/**
+ * Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its candidate-tag
+ * clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
+ */
 const GAZ = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
 const file = (values["file"] || "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
-// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels
-// (anchor + gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a
-// country-channel model (v6.2.0+), which is exactly what this country probe must feed. Precedence over --model.
+/**
+ * PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft channels (anchor +
+ * gazetteer + country) from the package via loadFromWeights — the only in-distribution grade for a country-channel
+ * model (v6.2.0+), which is exactly what this country probe must feed. Precedence over --model.
+ */
 const WEIGHTS_CACHE = values["weights-cache"] || ""
+
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 	: await (async () => {
 			const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+
 			const [tokenizer, runner] = await Promise.all([
 				MailwomanTokenizer.loadFromFile(TOK),
 				ONNXRunner.create((values["model"] || "")!),
@@ -76,6 +84,7 @@ const rows = readFileSync(file, "utf8")
 	.split("\n")
 	.filter(Boolean)
 	.map((l) => JSON.parse(l))
+
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
@@ -109,11 +118,13 @@ for (const row of rows) {
 			}
 		}
 	}
+
 	// over-fire: model emitted a country that is actually the gold region or locality
 	const gc = norm(got.country)
 
 	if (gc && !norm(exp.country) && (gc === norm(exp.region) || gc === norm(exp.locality))) {
 		overfire++
+
 		overfireCases.push(
 			`  ${row.raw}  → country="${got.country}" (gold ${norm(exp.region) === gc ? "region" : "locality"})`
 		)
@@ -125,8 +136,10 @@ for (const row of rows) {
 	}
 }
 
-console.log(`# country homograph baseline — ${(values["model"] || "")!.split("/").slice(-1)[0]} · n=${rows.length}`)
+console.log(`# country homograph baseline — ${(values["model"] || "")!.split("/").at(-1)} · n=${rows.length}`)
+
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
+
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
 
 for (const t of TAGS) {
@@ -135,20 +148,24 @@ for (const t of TAGS) {
 	const r = tp + fn ? tp / (tp + fn) : 0
 	const f1 = p + r ? (2 * p * r) / (p + r) : 0
 	sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
+
 	console.log(
 		`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`
 	)
 }
+
 // JSON sidecar — the machine-readable contract for the gate verdict (markdown = presentation).
 const jsonOut = values["json"] || ""
 
 if (jsonOut) {
 	const { writeFileSync } = await import("node:fs")
+
 	writeFileSync(
 		jsonOut,
 		JSON.stringify({ n: rows.length, file, tags: sidecar, overfire, missedCountry }, null, "\t") + "\n"
 	)
 }
+
 console.log(`\nover-fire (region/locality tagged as country): ${overfire}`)
 console.log(`missed country (gold country, none emitted): ${missedCountry}`)
 

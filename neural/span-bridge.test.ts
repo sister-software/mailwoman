@@ -21,6 +21,7 @@ describe("bridgePunctuationGaps", () => {
 	it("merges dotted po_box fragments through period O-tokens", () => {
 		// "P.O. BOX 19" — P[0,1) .[1,2) O[2,3) .[3,4) BOX 19[5,11)
 		const text = "P.O. BOX 19"
+
 		const input = [
 			tok("P", 0, "B-po_box", 0.93),
 			tok(".", 1, "O"),
@@ -28,6 +29,7 @@ describe("bridgePunctuationGaps", () => {
 			tok(".", 3, "O"),
 			tok("BOX 19", 5, "B-po_box", 0.96),
 		]
+
 		const out = bridgePunctuationGaps(text, input)
 		expect(out).toHaveLength(1)
 		expect(out[0]).toMatchObject({ piece: "P.O. BOX 19", start: 0, end: 11, label: "B-po_box" })
@@ -69,6 +71,7 @@ describe("bridgePunctuationGaps", () => {
 
 	it("merges comma-gap C.P. style fragments and absorbs the O token", () => {
 		const text = "C.P. 220"
+
 		const input = [
 			tok("C", 0, "B-po_box", 0.6),
 			tok(".", 1, "O"),
@@ -76,6 +79,7 @@ describe("bridgePunctuationGaps", () => {
 			tok(".", 3, "O"),
 			tok("220", 5, "I-po_box", 0.94),
 		]
+
 		const out = bridgePunctuationGaps(text, input)
 		expect(out).toHaveLength(1)
 		expect(out[0]!.piece).toBe("C.P. 220")
@@ -112,6 +116,7 @@ describe("bridgePunctuationGaps", () => {
 
 		it("still merges when the boundary is elsewhere (dotted po_box stays bridged)", () => {
 			const text = "P.O. BOX 19 (rear)"
+
 			const input = [
 				tok("P", 0, "B-po_box", 0.93),
 				tok(".", 1, "O"),
@@ -119,6 +124,7 @@ describe("bridgePunctuationGaps", () => {
 				tok(".", 3, "O"),
 				tok("BOX 19", 5, "B-po_box", 0.96),
 			]
+
 			const out = bridgePunctuationGaps(text, input, { blockedSpans: [{ start: 12, end: 18 }] })
 			expect(out).toHaveLength(1)
 			expect(out[0]!.piece).toBe("P.O. BOX 19")

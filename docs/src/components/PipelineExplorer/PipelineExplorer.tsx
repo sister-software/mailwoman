@@ -46,13 +46,18 @@ import { TreeView } from "../TreeView/TreeView.tsx"
 import styles from "./styles.module.css"
 
 export interface PipelineExplorerProps {
-	/** Address to pre-fill in the input. */
+	/**
+	 * Address to pre-fill in the input.
+	 */
 	defaultAddress?: string
 }
 
-/** The docs demo context, mapped to the package's injected `PipelineRuntime` + `panels`. */
+/**
+ * The docs demo context, mapped to the package's injected `PipelineRuntime` + `panels`.
+ */
 function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels } {
 	const ctx = useDemoEmbed()
+
 	const {
 		manifest,
 		selectedVersion,
@@ -115,6 +120,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(lookup, tree as { roots: unknown[] }, input)
 				const tResolve = performance.now()
+
 				const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({
 					id: c.id,
 					name: c.name,

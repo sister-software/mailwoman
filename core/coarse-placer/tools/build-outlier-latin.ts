@@ -30,6 +30,11 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
+/**
+ * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
+ */
+const MIN_OUTLIER_LENGTH = 6
+
 interface LatinTestRow {
 	raw: string
 	country: string
@@ -37,36 +42,48 @@ interface LatinTestRow {
 	srcCountry: string
 }
 
-/** Options for {@linkcode buildOutlierLatin}. */
+/**
+ * Options for {@linkcode buildOutlierLatin}.
+ */
 export interface BuildOutlierLatinOptions {
-	/** Rows sampled per off-map country. Default 6000. */
+	/**
+	 * Rows sampled per off-map country. Default 6000.
+	 */
 	perCountry?: number
-	/** Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`. */
+	/**
+	 * Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`.
+	 */
 	overture?: string
-	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildOutlierLatin}. */
+/**
+ * Result of {@linkcode buildOutlierLatin}.
+ */
 export interface BuildOutlierLatinResult {
 	train: number
 	val: number
 	test: number
 }
 
-// Off-map (NOT among the trained countries) and Latin-script. TRAIN feeds the OTHER class; HELDOUT
-// is test-only — the generalization probe (unseen off-map countries should still route OTHER).
-// #743: PL/PT/CZ moved from OTHER to FIRST-CLASS in-map countries (they're now in COARSE_CLASSES),
-// so they're removed here — keeping them would feed contradictory gold (the same address labelled
-// both PL and OTHER). That leaves BR/MX as the Latin off-map TRAIN exposure and CA/LI as the
-// heldout probe (the hard near-twins of in-map US/DE — an honest worst case). The in-map expansion
-// itself shrinks the off-map Latin surface, and the bulk OTHER exposure is non-Latin (build-
-// outlier-exposure.ts), so the thinner Latin train set is acceptable; watch OTHER-Latin recall in
-// the openset eval.
+/**
+ * Off-map (NOT among the trained countries) and Latin-script. TRAIN feeds the OTHER class; HELDOUT is test-only — the
+ * generalization probe (unseen off-map countries should still route OTHER). #743: PL/PT/CZ moved from OTHER to
+ * FIRST-CLASS in-map countries (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
+ * contradictory gold (the same address labelled both PL and OTHER). That leaves BR/MX as the Latin off-map TRAIN
+ * exposure and CA/LI as the heldout probe (the hard near-twins of in-map US/DE — an honest worst case). The in-map
+ * expansion itself shrinks the off-map Latin surface, and the bulk OTHER exposure is non-Latin (build-
+ * outlier-exposure.ts), so the thinner Latin train set is acceptable; watch OTHER-Latin recall in the openset eval.
+ */
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
 
-/** Address_levels arrives as a list (node-api) or its string repr; pull the value strings out. */
+/**
+ * Address_levels arrives as a list (node-api) or its string repr; pull the value strings out.
+ */
 function levelValues(al: unknown): string[] {
 	if (Array.isArray(al)) return al.map((x) => (x && x.value ? String(x.value) : "")).filter(Boolean)
 	const s = String(al ?? "")
@@ -85,13 +102,15 @@ function levelValues(al: unknown): string[] {
 	return out
 }
 
-/** Assemble a plausible address string from an Overture address row. Deterministic variant by hash. */
+/**
+ * Assemble a plausible address string from an Overture address row. Deterministic variant by hash.
+ */
 function assemble(r: Record<string, unknown>): string | null {
 	const num = (r.number ?? "").toString().trim()
 	const street = (r.street ?? "").toString().trim()
 	const pc = (r.postcode ?? "").toString().trim()
 	const levels = levelValues(r.address_levels)
-	const locality = (r.postal_city ? String(r.postal_city) : "") || levels[levels.length - 1] || levels[0] || ""
+	const locality = (r.postal_city ? String(r.postal_city) : "") || levels.at(-1) || levels[0] || ""
 
 	if (!street && !locality) return null // nothing distinctive
 	const head = [num, street].filter(Boolean).join(" ")
@@ -108,7 +127,9 @@ function assemble(r: Record<string, unknown>): string | null {
 	}
 }
 
-/** Coarse-placer Overture Latin-off-map outlier builder — see the module doc. */
+/**
+ * Coarse-placer Overture Latin-off-map outlier builder — see the module doc.
+ */
 export async function buildOutlierLatin(
 	options: BuildOutlierLatinOptions = {},
 	report?: (line: string) => void
@@ -129,18 +150,19 @@ export async function buildOutlierLatin(
 			res = await duck.runAndReadAll(
 				`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
 			)
-		} catch (e) {
-			report?.(`  ${cc}: SKIP (${(e as Error).message.split("\n")[0]})`)
+		} catch (error) {
+			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
 
 			return []
 		}
+
 		const seen = new Set<string>()
 		const out: string[] = []
 
 		for (const r of res.getRowObjects()) {
 			const raw = assemble(r)
 
-			if (!raw || seen.has(raw) || raw.length < 6) continue
+			if (!raw || seen.has(raw) || raw.length < MIN_OUTLIER_LENGTH) continue
 			seen.add(raw)
 			out.push(raw)
 		}
@@ -155,7 +177,7 @@ export async function buildOutlierLatin(
 	// dedicated Latin off-map test: {raw, country:"OTHER", group, srcCountry}
 
 	for (const cc of TRAIN_COUNTRIES) {
-		const rows = (await rowsFor(cc)).sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
+		const rows = (await rowsFor(cc)).toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
 		const nVal = Math.floor(rows.length * 0.1)
 		const nTest = Math.floor(rows.length * 0.1)
 		const val = rows.slice(0, nVal)
@@ -173,6 +195,7 @@ export async function buildOutlierLatin(
 		for (const raw of test) {
 			testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
 		}
+
 		report?.(`  TRAIN ${cc}: ${rows.length} (train ${train.length} / val ${val.length} / test ${test.length})`)
 	}
 
@@ -182,8 +205,10 @@ export async function buildOutlierLatin(
 		for (const raw of rows) {
 			testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
 		}
+
 		report?.(`  HELDOUT ${cc}: ${rows.length} (test-only)`)
 	}
+
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
@@ -192,6 +217,7 @@ export async function buildOutlierLatin(
 	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
 	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+
 	report?.(
 		`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
 	)

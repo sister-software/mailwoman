@@ -20,6 +20,11 @@ import { resolve } from "node:path"
 
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
 
+/**
+ * Tokens a BAN street needs before a type/article/name decomposition is attempted.
+ */
+const MIN_TOKENS_FOR_DECOMPOSE = 3
+
 function loadDictionary(filename: string): Set<string> {
 	const candidates = [
 		resourceDictionaryPath("libpostal", "fr", filename),
@@ -51,6 +56,7 @@ function loadDictionary(filename: string): Set<string> {
 			// try next
 		}
 	}
+
 	throw new Error(`Could not load FR libpostal dictionary: ${filename}`)
 }
 
@@ -79,7 +85,7 @@ export function decomposeFrStreet(fullname: string): DecomposedFrStreet {
 	const norm = (s: string) => s.toLowerCase().replace(/[.,;]$/, "")
 
 	// Try 2-word prefix first (e.g. "ancien chemin")
-	if (tokens.length >= 3) {
+	if (tokens.length >= MIN_TOKENS_FOR_DECOMPOSE) {
 		const twoWord = norm(tokens[0]!) + " " + norm(tokens[1]!)
 
 		if (STREET_TYPES_FR.has(twoWord)) {

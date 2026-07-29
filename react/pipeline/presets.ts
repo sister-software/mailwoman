@@ -9,11 +9,18 @@
 
 import type { Preset } from "../common/PresetChips.tsx"
 
+/**
+ * Address the pipeline explorer opens on. Chosen because it exercises every stage — house number, street, directional,
+ * locality and region — in one line.
+ */
 export const PIPELINE_DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 // `country` mirrors the docs `EXAMPLE_ADDRESSES` set (kept in parity) — the placetype-pair country pin (#1278 phase 2's
 // `{country}` override). A host that wires the pair prior pins the country while the input equals the preset text, so a
 // locale structural routing can't detect (NZ) still fires; free-typed input drops to structural detection.
+/**
+ * Preset inputs offered in the explorer, each picked to show a different parse behaviour.
+ */
 export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "White House", value: "1600 Pennsylvania Ave NW, Washington, DC 20500", country: "us" },
 	{ label: "Apple Park", value: "1 Apple Park Way, Cupertino, CA 95014", country: "us" },

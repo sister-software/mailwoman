@@ -57,6 +57,16 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
+/**
+ * How far empirical coverage may sit from the nominal level and still count as calibrated.
+ */
+const COVERAGE_TOLERANCE = 0.03
+
+/**
+ * Interval-width ratio above which the calibrated radius is reported as inflated rather than tight.
+ */
+const INFLATED_INTERVAL_RATIO = 1.1
+
 const { values: rawValues } = parseArgs({
 	options: {
 		"address-points": { type: "string" },
@@ -73,6 +83,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	"address-points"?: string
@@ -86,17 +97,16 @@ const values = rawValues as {
 	tokenizer?: string
 	wof?: string
 }
-// ---------------------------------------------------------------------------
-// CLI helpers
-// ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Percentile (0-indexed: p=0.9 → 90th)
-// ---------------------------------------------------------------------------
+//#region CLI helpers
+
+//#endregion
+
+//#region Percentile (0-indexed: p=0.9 → 90th)
 
 function percentile(xs: number[], p: number): number {
-	if (xs.length === 0) return NaN
-	const s = [...xs].sort((a, b) => a - b)
+	if (!xs.length) return Number.NaN
+	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
 }
@@ -105,9 +115,9 @@ function median(xs: number[]): number {
 	return percentile(xs, 0.5)
 }
 
-// ---------------------------------------------------------------------------
-// Conformal quantile  Q̂ = the ⌈(n+1)×(1−α)⌉-th sorted calibration score
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Conformal quantile
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
@@ -118,19 +128,20 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	if (rank > n) return Infinity
 
 	// can't guarantee at this level
-	return [...calScores].sort((a, b) => a - b)[rank - 1]!
+	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
-// ---------------------------------------------------------------------------
-// Seeded deterministic shuffle (LCG, no external deps)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Seeded deterministic shuffle (LCG, no external deps)
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
-	let state = (seed * 2654435761 + 1) & 0xffffffff
+	let state = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 
 	for (let i = out.length - 1; i > 0; i--) {
-		state = (state * 1103515245 + 12345) & 0x7fffffff
+		state = (state * 1_103_515_245 + 12_345) & 0x7f_ff_ff_ff
+
 		const j = state % (i + 1)
 		;[out[i], out[j]] = [out[j]!, out[i]!]
 	}
@@ -138,25 +149,29 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Tree walkers — read STAMPED metadata, never alter resolution
-// ---------------------------------------------------------------------------
+//#endregion
 
-/** Fixed floor for an exact situs point (building-centroid precision). */
+//#region Tree walkers — read STAMPED metadata, never alter resolution
+
+/**
+ * Fixed floor for an exact situs point (building-centroid precision).
+ */
 const SITUS_FLOOR_M = 10
 
 interface StreetHit {
 	tier: "address_point" | "interpolated"
 	lat: number
 	lon: number
-	/** Claimed uncertainty radius in metres (10 m floor for situs, uncertainty_m for interp). */
+	/**
+	 * Claimed uncertainty radius in metres (10 m floor for situs, uncertainty_m for interp).
+	 */
 	claimedRadiusM: number
 }
 
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
 		if (n.tag === "street") {
@@ -179,15 +194,16 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 				}
 			}
 		}
+
 		stack.push(...n.children)
 	}
 
 	return null
 }
 
-// ---------------------------------------------------------------------------
-// Holdout row type (matches /tmp/ood-truth.jsonl)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Holdout row type (matches /tmp/ood-truth.jsonl)
 
 interface HoldoutRow {
 	input: string
@@ -197,9 +213,49 @@ interface HoldoutRow {
 	state?: string
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Main
+
+/**
+ * Build the parse → resolve cascade this calibration measures. Mirrors `oa-resolver-eval.ts`'s construction exactly —
+ * the whole point of a conformal threshold is that it was fitted against the same stack that will later apply it, so
+ * the two must not drift.
+ */
+async function buildCascade(paths: {
+	modelPath: string
+	tokenizerPath: string
+	modelCardPath: string
+	wofPaths: string[]
+	addressPointsDb: string
+	interpolationDb: string
+}) {
+	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
+	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const modelCard = JSON.parse(readFileSync(paths.modelCardPath, "utf8")) as { labels: string[] }
+
+	const [tokenizer, runner] = await Promise.all([
+		MailwomanTokenizer.loadFromFile(paths.tokenizerPath),
+		ONNXRunner.create(paths.modelPath),
+	])
+
+	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
+
+	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
+		await import("@mailwoman/resolver-wof-sqlite")
+
+	const backend = new WOFSqlitePlaceLookup({
+		databasePath: paths.wofPaths.length === 1 ? paths.wofPaths[0]! : paths.wofPaths,
+	})
+
+	return {
+		neural,
+		resolver: createWOFResolver(backend as never),
+		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDb),
+		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDb }),
+	}
+}
 
 async function main(): Promise<void> {
 	const holdoutPath = values["holdout"] || "/tmp/ood-truth.jsonl"
@@ -208,12 +264,14 @@ async function main(): Promise<void> {
 	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
 	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
 	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
+
 	const wofPaths = (
 		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())
+
 	const calFrac = Number(values["cal-frac"] || "0.5")
 	const alpha = Number(values["alpha"] || "0.9") // target coverage level
 	const seed = Number(values["seed"] || "20260614")
@@ -228,26 +286,14 @@ async function main(): Promise<void> {
 	console.error(`[conformal-calibrate] situs: ${addressPointsDb}  interp: ${interpolationDb}`)
 	console.error(`[conformal-calibrate] model: ${modelPath}`)
 
-	// --- build parser (mirror oa-resolver-eval.ts exactly) ---
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(modelCardPath, "utf8")) as { labels: string[] }
-	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(tokenizerPath),
-		ONNXRunner.create(modelPath),
-	])
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
-
-	// --- build resolver with BOTH street-level shards ---
-	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
-		await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WOFSqlitePlaceLookup({
-		databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
+	const { neural, resolver, addressPoints, interpolation } = await buildCascade({
+		modelPath,
+		tokenizerPath,
+		modelCardPath,
+		wofPaths,
+		addressPointsDb,
+		interpolationDb,
 	})
-	const resolver = createWOFResolver(backend as never)
-	const addressPoints = new AddressPointSqliteLookup(addressPointsDb)
-	const interpolation = new StreetInterpolator({ dbPath: interpolationDb })
 
 	// --- run the cascade ---
 	interface Row {
@@ -255,11 +301,13 @@ async function main(): Promise<void> {
 		claimedRadiusM: number
 		tier: "address_point" | "interpolated"
 	}
+
 	const resolved: Row[] = []
 	let nTotal = 0
 	let nNoStreetHit = 0
 
 	console.error("[conformal-calibrate] running cascade …")
+
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 	const resolveOpts = { defaultCountry: "US", addressPoints, interpolation }
 
@@ -277,8 +325,10 @@ async function main(): Promise<void> {
 
 			if (!hit) {
 				nNoStreetHit++
+
 				continue
 			}
+
 			const errorM = haversine({ lat: hit.lat, lng: hit.lon }, { lat: row.lat, lng: row.lon }, "meters")
 			resolved.push({ errorM, claimedRadiusM: hit.claimedRadiusM, tier: hit.tier })
 		} catch {
@@ -287,6 +337,7 @@ async function main(): Promise<void> {
 	}
 
 	const nResolved = resolved.length
+
 	console.error(
 		`[conformal-calibrate] street-level hits: ${nResolved}/${nTotal}` +
 			`  (${((100 * nResolved) / Math.max(1, nTotal)).toFixed(1)}%)` +
@@ -295,6 +346,7 @@ async function main(): Promise<void> {
 
 	if (nResolved === 0) {
 		console.error("ERROR: zero street-level hits — nothing to calibrate")
+
 		process.exit(1)
 	}
 
@@ -324,15 +376,20 @@ async function main(): Promise<void> {
 
 	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on ALL resolved rows
 	const tierStats = tiers.map((t) => {
-		const rows = byTier[t]
+		const innerRows = byTier[t]
 
-		if (rows.length === 0) return { tier: t, n: 0, medianClaimedM: NaN, medianCalibratedM: NaN, medianErrorM: NaN }
-		const claimedMeds = median(rows.map((r) => r.claimedRadiusM))
-		const errMeds = median(rows.map((r) => r.errorM))
+		if (!innerRows.length)
+			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
+
+		// innerRows, not the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
+		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
+		// computed on the correct splits; only this breakdown was dead).
+		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM))
+		const errMeds = median(innerRows.map((r) => r.errorM))
 
 		return {
 			tier: t,
-			n: rows.length,
+			n: innerRows.length,
 			medianClaimedM: claimedMeds,
 			medianCalibratedM: claimedMeds * Q,
 			medianErrorM: errMeds,
@@ -355,9 +412,14 @@ async function main(): Promise<void> {
 		const testT = shuffledTier.slice(nCalT)
 		const calScoresT = calT.map((r) => r.errorM / r.claimedRadiusM)
 		const QT = conformalThreshold(calScoresT, alpha)
-		const covT = testT.length > 0 ? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length : NaN
-		const uncalCovT =
-			allRows.length > 0 ? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length : NaN
+
+		const covT = testT.length
+			? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length
+			: Number.NaN
+
+		const uncalCovT = allRows.length
+			? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length
+			: Number.NaN
 
 		return {
 			tier: t,
@@ -372,6 +434,7 @@ async function main(): Promise<void> {
 
 	// --- print report ---
 	const hr = "─".repeat(72)
+
 	console.log("")
 	console.log("Conformal-prediction confidence wrapper — street-level coordinate tier  (#374)")
 	console.log(hr)
@@ -384,13 +447,13 @@ async function main(): Promise<void> {
 	console.log(hr)
 	console.log(`target coverage (α=1−${(1 - alpha).toFixed(2)})                  : ${(alpha * 100).toFixed(0)}%`)
 	console.log(
-		`combined conformal threshold Q̂                       : ${isFinite(Q) ? Q.toFixed(6) : "∞"}` +
-			(isFinite(Q) ? `  (× claimed_radius = calibrated interval)` : "  (insufficient data at this α)")
+		`combined conformal threshold Q̂                       : ${Number.isFinite(Q) ? Q.toFixed(6) : "∞"}` +
+			(Number.isFinite(Q) ? `  (× claimed_radius = calibrated interval)` : "  (insufficient data at this α)")
 	)
 	console.log(
 		`empirical coverage on test split (combined)           : ${(coverage * 100).toFixed(1)}%` +
 			`  (${covered}/${testRows.length})` +
-			(Math.abs(coverage - alpha) <= 0.03
+			(Math.abs(coverage - alpha) <= COVERAGE_TOLERANCE
 				? "  ✓ within 3pp of target"
 				: `  ✗ ${((coverage - alpha) * 100).toFixed(1)}pp off target`)
 	)
@@ -402,9 +465,13 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log("Per-tier calibration stats (ALL resolved rows, separate conformal splits):")
 	console.log("")
-	const fmtM = (v: number): string => (isNaN(v) ? "—" : v < 1000 ? `${v.toFixed(1)} m` : `${(v / 1000).toFixed(2)} km`)
-	const fmtPct = (v: number): string => (isNaN(v) ? "—" : `${(v * 100).toFixed(1)}%`)
-	const fmtQ = (v: number): string => (isFinite(v) ? v.toFixed(4) : "∞")
+
+	const fmtM = (v: number): string =>
+		Number.isNaN(v) ? "—" : v < 1000 ? `${v.toFixed(1)} m` : `${(v / 1000).toFixed(2)} km`
+
+	const fmtPct = (v: number): string => (Number.isNaN(v) ? "—" : `${(v * 100).toFixed(1)}%`)
+	const fmtQ = (v: number): string => (Number.isFinite(v) ? v.toFixed(4) : "∞")
+
 	console.log(
 		`  ${"tier".padEnd(14)} ${"n".padStart(5)} ${"Q̂".padStart(8)} ${"coverage".padStart(10)} ${"uncal.cov".padStart(10)} ${"median err".padStart(12)} ${"med.claimed r".padStart(14)} ${"med.cal. r".padStart(12)}`
 	)
@@ -414,12 +481,14 @@ async function main(): Promise<void> {
 
 	for (const ts of tierStats) {
 		const tc = tierConformal.find((x) => x.tier === ts.tier)!
-		const calRadM = isFinite(tc.Q) ? ts.medianClaimedM * tc.Q : Infinity
-		const calRadFmt = !isFinite(calRadM) ? "∞" : fmtM(calRadM)
+		const calRadM = Number.isFinite(tc.Q) ? ts.medianClaimedM * tc.Q : Infinity
+		const calRadFmt = !Number.isFinite(calRadM) ? "∞" : fmtM(calRadM)
+
 		console.log(
 			`  ${ts.tier.padEnd(14)} ${String(ts.n).padStart(5)} ${fmtQ(tc.Q).padStart(8)} ${fmtPct(tc.coverage).padStart(10)} ${fmtPct(tc.uncalCov).padStart(10)} ${fmtM(ts.medianErrorM).padStart(12)} ${fmtM(ts.medianClaimedM).padStart(14)} ${calRadFmt.padStart(12)}`
 		)
 	}
+
 	console.log("")
 	console.log(hr)
 
@@ -427,12 +496,13 @@ async function main(): Promise<void> {
 	// Characterise the dominant tier (address_point here; interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
+
 	console.log("")
 	console.log("CALIBRATION SUMMARY")
 	console.log("")
 
 	// Line 1: overall verdict on the heuristic prior
-	if (!isFinite(Q)) {
+	if (!Number.isFinite(Q)) {
 		console.log(
 			`  The combined conformal threshold is ∞ — not enough calibration data to guarantee ${(alpha * 100).toFixed(0)}% coverage.`
 		)
@@ -440,23 +510,25 @@ async function main(): Promise<void> {
 		console.log(`  Uncalibrated (Q̂=1) coverage is ${(uncalCoverage * 100).toFixed(1)}%.`)
 	} else if (Q < 1) {
 		// The heuristic is conservative — can shrink and still cover
-		const situsVerdict = isFinite(situsTC.Q)
+		const situsVerdict = Number.isFinite(situsTC.Q)
 			? `situs floor (${SITUS_FLOOR_M} m) is ${(1 / situsTC.Q).toFixed(0)}× too large`
 			: "situs tier: insufficient rows for per-tier threshold"
+
 		const interpVerdict =
 			interpTC.nAll === 0
 				? "interpolation tier: 0 hits in this holdout"
-				: !isFinite(interpTC.Q)
+				: !Number.isFinite(interpTC.Q)
 					? `interpolation tier (n=${interpTC.nAll}): too few rows for per-tier ${(alpha * 100).toFixed(0)}% threshold`
 					: interpTC.Q > 1
 						? `interpolation tier: Q̂=${interpTC.Q.toFixed(3)} — uncertainty_m UNDERESTIMATES the true spread`
 						: `interpolation tier: Q̂=${interpTC.Q.toFixed(3)} — uncertainty_m is conservative`
+
 		console.log(`  Combined Q̂ = ${Q.toFixed(6)} ≪ 1: the heuristic prior is HIGHLY CONSERVATIVE — ${situsVerdict}.`)
 		console.log(`  ${interpVerdict}.`)
 		console.log(
 			`  Uncalibrated coverage ${(uncalCoverage * 100).toFixed(1)}% (as-is) already beats ${(alpha * 100).toFixed(0)}% by a large margin; the conformal correction mainly tightens the reported interval.`
 		)
-	} else if (Q > 1.1) {
+	} else if (Q > INFLATED_INTERVAL_RATIO) {
 		// The heuristic underestimates the spread
 		console.log(
 			`  Combined Q̂ = ${Q.toFixed(4)} > 1: the heuristic radius UNDERESTIMATES the true spread — multiply by ${Q.toFixed(2)}× for ${(alpha * 100).toFixed(0)}% coverage.`
@@ -473,7 +545,10 @@ async function main(): Promise<void> {
 		)
 		console.log(`  The raw uncertainty_m / situs floor is a reliable confidence bound to ship.`)
 	}
+
 	console.log("")
 }
 
 runIfScript(import.meta, main)
+
+//#endregion

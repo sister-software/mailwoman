@@ -49,6 +49,9 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { wilson } from "./fragment-board.ts"
 
+/**
+ * Fixture set backing the digit board — house-number and postcode ambiguity probes.
+ */
 export const DIGIT_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/no-digits.jsonl"
 
 export interface DigitFixture {
@@ -56,7 +59,9 @@ export interface DigitFixture {
 	klass: string
 	input: string
 	expect: Record<string, string[]>
-	/** Present on the negative class: the parser must emit NO house_number, and MUST still emit the postcode. */
+	/**
+	 * Present on the negative class: the parser must emit NO house_number, and MUST still emit the postcode.
+	 */
 	expect_no_house_number?: boolean
 	surface: string | null
 	source: string
@@ -73,7 +78,7 @@ export interface DigitBoardOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function flatten(nodes: ReadonlyArray<{ tag: string; value: string; start: number; children?: unknown }>): Array<{
 	tag: string
@@ -96,7 +101,7 @@ function flatten(nodes: ReadonlyArray<{ tag: string; value: string; start: numbe
 const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
 	nodes
 		.filter((n) => n.tag === tag)
-		.sort((a, b) => a.start - b.start)
+		.toSorted((a, b) => a.start - b.start)
 		.map((n) => n.value)
 		.join(" ")
 
@@ -124,6 +129,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const nodes = flatten(tree.roots as never)
 		const hn = tagText(nodes, "house_number")
 		const pc = tagText(nodes, "postcode")
@@ -143,6 +149,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 		} else {
 			bucket.misses.push({ ...fixture, got: fixture.expect_no_house_number ? `hn=${hn} pc=${pc}` : hn })
 		}
+
 		tally.set(fixture.klass, bucket)
 	}
 
@@ -154,7 +161,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 	let totalHit = 0
 	let totalN = 0
 
-	for (const [klass, bucket] of [...tally].sort()) {
+	for (const [klass, bucket] of [...tally].toSorted()) {
 		totalHit += bucket.hit
 		totalN += bucket.total
 		const rate = bucket.hit / bucket.total
@@ -171,8 +178,9 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
 	)
 
-	for (const [klass, bucket] of [...tally].sort()) {
+	for (const [klass, bucket] of [...tally].toSorted()) {
 		if (!bucket.misses.length) continue
+
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 5) ---`)
 
 		for (const miss of bucket.misses.slice(0, 5)) {

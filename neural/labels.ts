@@ -20,7 +20,9 @@
 
 import type { BIOLabel } from "@mailwoman/core/decoder"
 
-/** Coarse component tags trained in Phase 2 Stage 1 (v0.1.0 / v0.2.0). */
+/**
+ * Coarse component tags trained in Phase 2 Stage 1 (v0.1.0 / v0.2.0).
+ */
 export const STAGE1_COARSE_TAGS = [
 	"country",
 	"region",
@@ -31,7 +33,9 @@ export const STAGE1_COARSE_TAGS = [
 	"cedex",
 ] as const
 
-/** BIO label vocabulary for Stage 1 — O + (B-/I- per coarse tag). 1 + 14 = 15 labels. */
+/**
+ * BIO label vocabulary for Stage 1 — O + (B-/I- per coarse tag). 1 + 14 = 15 labels.
+ */
 export const STAGE1_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 	"O" as BIOLabel,
 	...STAGE1_COARSE_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),
@@ -43,7 +47,9 @@ export const STAGE1_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
  */
 export const STAGE2_FINE_TAGS = ["venue", "street", "house_number"] as const
 
-/** Stage 2 ships the full coarse + fine set in the order STAGE2_BIO_LABELS is interleaved. */
+/**
+ * Stage 2 ships the full coarse + fine set in the order STAGE2_BIO_LABELS is interleaved.
+ */
 export const STAGE2_TAGS = [...STAGE1_COARSE_TAGS, ...STAGE2_FINE_TAGS] as const
 
 /**
@@ -58,6 +64,9 @@ export const STAGE2_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 	...STAGE2_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),
 ])
 
+/**
+ * Tags stage 3 adds on top of stage 2 — the fine-grained subdivisions the later curriculum introduces.
+ */
 export const STAGE3_FINE_TAGS = [
 	"street_prefix",
 	"street_suffix",
@@ -67,8 +76,14 @@ export const STAGE3_FINE_TAGS = [
 	"intersection_b",
 ] as const
 
+/**
+ * The full stage-3 tag set: everything stage 2 emitted, plus the fine tags.
+ */
 export const STAGE3_TAGS = [...STAGE2_TAGS, ...STAGE3_FINE_TAGS] as const
 
+/**
+ * Stage-3 tags expanded into BIO labels, which is the form the decoder scores against.
+ */
 export const STAGE3_BIO_LABELS: readonly BIOLabel[] = Object.freeze([
 	"O" as BIOLabel,
 	...STAGE3_TAGS.flatMap((tag) => [`B-${tag}` as BIOLabel, `I-${tag}` as BIOLabel]),

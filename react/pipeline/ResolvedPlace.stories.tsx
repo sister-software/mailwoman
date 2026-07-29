@@ -12,11 +12,12 @@ const meta: Meta<typeof ResolvedPlace> = {
 	title: "Pipeline/ResolvedPlace",
 	component: ResolvedPlace,
 	args: {
-		place: { id: 85977539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 },
+		place: { id: 85_977_539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 },
 	},
 }
 
 export default meta
+
 type Story = StoryObj<typeof ResolvedPlace>
 
 export const Default: Story = {}

@@ -36,9 +36,14 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
+/**
+ * Fixture set backing the fragment board — bare-street and partial-address probes.
+ */
 export const FRAGMENT_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/ban-fragments-fr.jsonl"
 
-/** Tags that together form the street phrase under the board's label policy. */
+/**
+ * Tags that together form the street phrase under the board's label policy.
+ */
 const STREET_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 export interface FragmentFixture {
@@ -46,7 +51,9 @@ export interface FragmentFixture {
 	klass: string
 	input: string
 	expect: Record<string, string[]>
-	/** Present on the negative class: the parser must emit NO street. */
+	/**
+	 * Present on the negative class: the parser must emit NO street.
+	 */
 	expect_no_street?: boolean
 	surface: string | null
 	source: string
@@ -56,7 +63,9 @@ export interface FragmentBoardOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath?: string
-	/** Restrict to one class (e.g. `bare-street`) for a fast iteration loop. */
+	/**
+	 * Restrict to one class (e.g. `bare-street`) for a fast iteration loop.
+	 */
 	klass?: string
 }
 
@@ -64,7 +73,7 @@ export interface FragmentBoardOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /**
  * Wilson score interval — the reason this board exists. The normal approximation collapses at the extremes (it happily
@@ -125,13 +134,15 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const street = flatten(tree.roots as never)
 			.filter((node) => STREET_TAGS.has(node.tag))
-			.sort((a, b) => a.start - b.start)
+			.toSorted((a, b) => a.start - b.start)
 			.map((node) => node.value)
 			.join(" ")
 
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
+
 		bucket.total++
 
 		const ok = fixture.expect_no_street
@@ -143,6 +154,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		} else {
 			bucket.misses.push({ ...fixture, got: street } as never)
 		}
+
 		tally.set(fixture.klass, bucket)
 	}
 
@@ -153,27 +165,31 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 	let totalHit = 0
 	let totalN = 0
 
-	for (const [klass, bucket] of [...tally].sort()) {
+	for (const [klass, bucket] of [...tally].toSorted()) {
 		totalHit += bucket.hit
 		totalN += bucket.total
 		const rate = bucket.hit / bucket.total
 		const ci = wilson(bucket.hit, bucket.total)
+
 		console.log(
 			`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${rate.toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
 		)
 	}
 
 	const overall = wilson(totalHit, totalN)
+
 	console.log(
 		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
 	)
 
-	for (const [klass, bucket] of [...tally].sort()) {
+	for (const [klass, bucket] of [...tally].toSorted()) {
 		if (!bucket.misses.length) continue
+
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 6) ---`)
 
 		for (const miss of bucket.misses.slice(0, 6)) {
 			const want = miss.expect_no_street ? "(no street)" : (miss.expect.street ?? []).join(" ")
+
 			console.log(`    ${JSON.stringify(miss.input)}`)
 			console.log(`        want=${JSON.stringify(want)}  got=${JSON.stringify((miss as never as { got: string }).got)}`)
 		}

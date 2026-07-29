@@ -36,8 +36,9 @@ describe("geocodeStream (wiring, fake worker)", () => {
 		// Every record geocoded; config (locale) + mapping (address col count) reached the worker.
 		expect(out.every((r) => (r.address as unknown as { tag: string }).tag === "en-US")).toBe(true)
 		expect((out[0]!.address as unknown as { cols: number }).cols).toBe(2)
+
 		// Records preserved (set comparison — completion order).
-		expect(out.map((r) => r.id).sort((a, b) => Number(a) - Number(b))).toEqual(
+		expect(out.map((r) => r.id).toSorted((a, b) => Number(a) - Number(b))).toEqual(
 			Array.from({ length: 50 }, (_, i) => String(i))
 		)
 	})

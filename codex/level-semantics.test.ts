@@ -26,8 +26,8 @@ import {
 
 describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
 	it("carries all eleven language families", () => {
-		expect(Object.keys(LEVEL_DESIGNATORS_BY_FAMILY).sort()).toEqual(
-			["en", "fr", "de", "es", "it", "pt", "nl", "ja", "sv", "no", "da"].sort()
+		expect(Object.keys(LEVEL_DESIGNATORS_BY_FAMILY).toSorted()).toEqual(
+			["en", "fr", "de", "es", "it", "pt", "nl", "ja", "sv", "no", "da"].toSorted()
 		)
 	})
 
@@ -58,6 +58,7 @@ describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
 						existing,
 						`family "${family}": variant "${variant}" claimed by both "${existing}" and "${row.code}"`
 					).toBeUndefined()
+
 					seen.set(key, row.code)
 				}
 			}
@@ -215,43 +216,47 @@ describe("lookupLevelDesignator / isLevelDesignatorToken", () => {
 
 describe("per-family designator counts — sanity check against the module docstring's designator list", () => {
 	it("English carries FLOOR, BASEMENT, PENTHOUSE, GROUND, LOWER/UPPER GROUND, MEZZANINE, and ROOF", () => {
-		expect(EN_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(
-			["FLOOR", "BASEMENT", "PENTHOUSE", "GROUND", "LOWER GROUND", "UPPER GROUND", "MEZZANINE", "ROOF"].sort()
+		expect(EN_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
+			["FLOOR", "BASEMENT", "PENTHOUSE", "GROUND", "LOWER GROUND", "UPPER GROUND", "MEZZANINE", "ROOF"].toSorted()
 		)
 	})
 
 	it("French carries ÉTAGE, RDC, SOUS-SOL, and ENTRESOL", () => {
-		expect(FR_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(["ÉTAGE", "RDC", "SOUS-SOL", "ENTRESOL"].sort())
+		expect(FR_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
+			["ÉTAGE", "RDC", "SOUS-SOL", "ENTRESOL"].toSorted()
+		)
 	})
 
 	it("German carries OBERGESCHOSS, ERDGESCHOSS, UNTERGESCHOSS, DACHGESCHOSS, and ZWISCHENGESCHOSS", () => {
-		expect(DE_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(
-			["OBERGESCHOSS", "ERDGESCHOSS", "UNTERGESCHOSS", "DACHGESCHOSS", "ZWISCHENGESCHOSS"].sort()
+		expect(DE_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
+			["OBERGESCHOSS", "ERDGESCHOSS", "UNTERGESCHOSS", "DACHGESCHOSS", "ZWISCHENGESCHOSS"].toSorted()
 		)
 	})
 
 	it("Spanish carries PLANTA, PLANTA BAJA, ENTRESUELO, PRINCIPAL, SÓTANO, and ÁTICO", () => {
-		expect(ES_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(
-			["PLANTA", "PLANTA BAJA", "ENTRESUELO", "PRINCIPAL", "SÓTANO", "ÁTICO"].sort()
+		expect(ES_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
+			["PLANTA", "PLANTA BAJA", "ENTRESUELO", "PRINCIPAL", "SÓTANO", "ÁTICO"].toSorted()
 		)
 	})
 
 	it("Italian carries PIANO, PIANO TERRA, SEMINTERRATO, and ATTICO", () => {
-		expect(IT_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(
-			["PIANO", "PIANO TERRA", "SEMINTERRATO", "ATTICO"].sort()
+		expect(IT_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
+			["PIANO", "PIANO TERRA", "SEMINTERRATO", "ATTICO"].toSorted()
 		)
 	})
 
 	it("Portuguese carries ANDAR, RÉS-DO-CHÃO, and CAVE", () => {
-		expect(PT_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(["ANDAR", "RÉS-DO-CHÃO", "CAVE"].sort())
+		expect(PT_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(["ANDAR", "RÉS-DO-CHÃO", "CAVE"].toSorted())
 	})
 
 	it("Dutch carries VERDIEPING, BEGANE GROND, and KELDER", () => {
-		expect(NL_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(["VERDIEPING", "BEGANE GROND", "KELDER"].sort())
+		expect(NL_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
+			["VERDIEPING", "BEGANE GROND", "KELDER"].toSorted()
+		)
 	})
 
 	it("Japanese carries F, B, and RF", () => {
-		expect(JA_LEVEL_DESIGNATORS.map((r) => r.code).sort()).toEqual(["F", "B", "RF"].sort())
+		expect(JA_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(["F", "B", "RF"].toSorted())
 	})
 
 	it("Swedish, Norwegian, and Danish each carry a numbered/ground/basement triple", () => {

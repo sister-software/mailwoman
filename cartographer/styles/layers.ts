@@ -33,7 +33,7 @@ export class LayerSpecificationList {
 	#headLayer: LayerSpecificationListItem | undefined
 
 	constructor(inputLayers: LayerSpecification[]) {
-		if (inputLayers.length === 0) {
+		if (!inputLayers.length) {
 			throw new Error("No layers provided")
 		}
 

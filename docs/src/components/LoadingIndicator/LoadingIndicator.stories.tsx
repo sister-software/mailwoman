@@ -30,7 +30,9 @@ export const Pulse: Story = {
 	args: { mode: "pulse", barCount: 3, label: "Parsing…" },
 }
 
-/** Staged mode drives the demo's "Analyzing → Classifying → Resolving" pipeline progress list. */
+/**
+ * Staged mode drives the demo's "Analyzing → Classifying → Resolving" pipeline progress list.
+ */
 export const Staged: Story = {
 	args: {
 		mode: "staged",

@@ -11,13 +11,17 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 
-/** A libpostal `parse_address` component: a label + the text it covers, in order. */
+/**
+ * A libpostal `parse_address` component: a label + the text it covers, in order.
+ */
 export interface LibpostalComponent {
 	label: string
 	value: string
 }
 
-/** A raw Mailwoman match the engine yields (our `ComponentTag` classification + the covered text). */
+/**
+ * A raw Mailwoman match the engine yields (our `ComponentTag` classification + the covered text).
+ */
 export interface ParseMatch {
 	classification: string
 	value: string
@@ -50,12 +54,16 @@ export const COMPONENT_TO_LIBPOSTAL: Record<string, string> = {
 	world_region: "world_region",
 }
 
-/** Map raw Mailwoman matches to libpostal's ordered `[{label, value}]` shape. */
+/**
+ * Map raw Mailwoman matches to libpostal's ordered `[{label, value}]` shape.
+ */
 export function toLibpostalComponents(matches: ParseMatch[]): LibpostalComponent[] {
 	return matches.map((m) => ({ label: COMPONENT_TO_LIBPOSTAL[m.classification] ?? m.classification, value: m.value }))
 }
 
-/** The street-name family assembled into a single `street` match (mirrors geocode-core's assembleStreetName). */
+/**
+ * The street-name family assembled into a single `street` match (mirrors geocode-core's assembleStreetName).
+ */
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
@@ -69,9 +77,10 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 
 	const visit = (node: AddressNode): void => {
 		if (node.tag === "street") {
-			const nameParts = [node, ...node.children.filter((child) => STREET_NAME_TAGS.has(child.tag))].sort(
+			const nameParts = [node, ...node.children.filter((child) => STREET_NAME_TAGS.has(child.tag))].toSorted(
 				(a, b) => a.start - b.start || a.end - b.end
 			)
+
 			const first = nameParts[0]
 
 			if (first) {
@@ -98,7 +107,7 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 		visit(root)
 	}
 
-	return spans.sort((a, b) => a.start - b.start).map(({ classification, value }) => ({ classification, value }))
+	return spans.toSorted((a, b) => a.start - b.start).map(({ classification, value }) => ({ classification, value }))
 }
 
 /**

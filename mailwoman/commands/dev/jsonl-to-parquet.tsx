@@ -18,7 +18,7 @@ import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 const OptionsSchema = zod.object({
 	input: zod.string().describe("The labeled-row JSONL to convert"),
 	output: zod.string().describe("The parquet shard to write"),
-	rowGroupSize: zod.number().default(50000).describe("Parquet row-group size"),
+	rowGroupSize: zod.number().default(50_000).describe("Parquet row-group size"),
 })
 
 export { OptionsSchema as options }

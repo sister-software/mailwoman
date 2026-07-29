@@ -26,6 +26,7 @@ let scratch: string
 
 function buildFixtureWOF(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -72,6 +73,7 @@ function buildFixtureWOF(path: string): void {
 		INSERT INTO place_population VALUES (202, 8000);
 		INSERT INTO place_population VALUES (400, 2100000);
 	`)
+
 	db.close()
 }
 
@@ -106,6 +108,7 @@ describe("buildSlimWOFDatabase", () => {
 				.prepare(`SELECT name FROM spr ORDER BY id`)
 				.all()
 				.map((r) => (r as { name: string }).name)
+
 			expect(names).toEqual(["United States", "Illinois", "Chicago", "Springfield", "62701", "60601"])
 
 			// Mascoutah, Paris, and Old Town must be absent.
@@ -131,6 +134,7 @@ describe("buildSlimWOFDatabase", () => {
 				.prepare(`SELECT DISTINCT id FROM names ORDER BY id`)
 				.all()
 				.map((r) => (r as { id: number }).id)
+
 			// Top-1 locality = Chicago (200); ancestors 100/101; postcodes 300/301.
 			expect(nameIds).toEqual([100, 200, 300])
 			// Paris (400) and Mascoutah (202) names must be gone.
@@ -143,6 +147,7 @@ describe("buildSlimWOFDatabase", () => {
 				.prepare(`SELECT id FROM place_population ORDER BY id`)
 				.all()
 				.map((r) => (r as { id: number }).id)
+
 			expect(popIds).toEqual([100, 101, 200])
 			expect(popIds).not.toContain(400)
 			expect(popIds).not.toContain(202)
@@ -169,8 +174,9 @@ describe("buildSlimWOFDatabase", () => {
 			const rows = slim
 				.prepare(`SELECT id, population FROM place_population ORDER BY population DESC LIMIT 3`)
 				.all() as Array<{ id: number; population: number }>
+
 			expect(rows[0]?.id).toBe(100) // US country, biggest population
-			expect(rows[0]?.population).toBe(331000000)
+			expect(rows[0]?.population).toBe(331_000_000)
 		} finally {
 			slim.close()
 		}
@@ -215,6 +221,7 @@ describe("buildSlimWOFDatabase", () => {
 			const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
 				| { wof_id: number }
 				| undefined
+
 			expect(hit?.wof_id).toBe(200)
 		} finally {
 			slim.close()
@@ -238,10 +245,12 @@ describe("buildSlimWOFDatabase", () => {
 		buildFixtureWOF(source)
 		// A dual-role relation: Illinois(101) ⊃ Springfield(201) [survives top-2] and ⊃ Mascoutah(202) [trimmed].
 		const s = new DatabaseSync(source)
+
 		s.exec(`CREATE TABLE coincident_roles (
 			admin_id INTEGER NOT NULL, locality_id INTEGER NOT NULL, relationship_type TEXT NOT NULL,
 			admin_placetype TEXT NOT NULL, distance_km REAL NOT NULL, locality_population INTEGER NOT NULL DEFAULT 0,
 			PRIMARY KEY (admin_id, locality_id))`)
+
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000)`)
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
 		s.close()

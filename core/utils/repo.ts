@@ -19,12 +19,15 @@ import { createPathBuilderResolver, createPathResolver, type Join, type PathBuil
  * Compiled directory name for TS output files.
  */
 export const OutDirectoryName = "out"
+
 export type OutDirectoryName = typeof OutDirectoryName
 
 const RepoRootAlias = "mailwoman" as const
+
 type RepoRootAlias = typeof RepoRootAlias
 
 const PathReflection = ["core", "out", "utils"] as const
+
 type PathReflection = typeof PathReflection
 
 /**
@@ -47,6 +50,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
 const __isCompiledTree = basename(resolve(__dirname, "..")) === OutDirectoryName
 const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
 const RepoRootAbsolutePath = resolve(__dirname, ...Array.from({ length: __upCount }, () => ".."))
+
 type RepoRootAbsolutePath = RepoRootAlias
 
 /**
@@ -70,6 +74,10 @@ export const repoRootPath = createPathResolver<RepoRootAlias>(RepoRootAbsolutePa
  * the JS without any post-install copy step.
  */
 const CorePackageAbsolutePath = resolve(__dirname, "..", __isCompiledTree ? ".." : "")
+/**
+ * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves the same in source and compiled trees.
+ * See the `__isCompiledTree` note in this file before reaching across that boundary.
+ */
 export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
 
 /**

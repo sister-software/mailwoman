@@ -14,7 +14,14 @@
  *   runtime) drive the process exit code — parse works without a data root, gazetteer, or POI layer.
  */
 
-/** A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired. */
+/**
+ * Bytes per MB, for human-readable sizes. Decimal rather than binary, matching how disk sizes are quoted.
+ */
+const BYTES_PER_MB = 1_000_000
+
+/**
+ * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
+ */
 export const CheckStatus = {
 	OK: "ok",
 	Missing: "missing",
@@ -23,14 +30,20 @@ export const CheckStatus = {
 
 export type CheckStatus = (typeof CheckStatus)[keyof typeof CheckStatus]
 
-/** One diagnostic line: a stable `id`, its `status`, a human `detail`, and (when not ok) the one command that fixes it. */
+/**
+ * One diagnostic line: a stable `id`, its `status`, a human `detail`, and (when not ok) the one command that fixes it.
+ */
 export interface DoctorCheck {
 	id: string
-	/** Human-facing label for the check (rendered in the checklist). */
+	/**
+	 * Human-facing label for the check (rendered in the checklist).
+	 */
 	label: string
 	status: CheckStatus
 	detail: string
-	/** The single command/URL that closes the gap. Present whenever `status !== "ok"`. */
+	/**
+	 * The single command/URL that closes the gap. Present whenever `status !== "ok"`.
+	 */
 	fix?: string
 	/**
 	 * Whether this check gates the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit; optional
@@ -39,13 +52,17 @@ export interface DoctorCheck {
 	core: boolean
 }
 
-/** The full diagnostic report — the checklist plus the derived exit code. */
+/**
+ * The full diagnostic report — the checklist plus the derived exit code.
+ */
 export interface DoctorReport {
 	checks: DoctorCheck[]
 	exitCode: number
 }
 
-/** A parsed `<major>.<minor>.<patch>` triple. */
+/**
+ * A parsed `<major>.<minor>.<patch>` triple.
+ */
 export interface SemverTriple {
 	major: number
 	minor: number
@@ -65,7 +82,9 @@ export function parseVersionFloor(engines: string): SemverTriple | undefined {
 	return { major: Number(match[1]), minor: Number(match[2] ?? 0), patch: Number(match[3] ?? 0) }
 }
 
-/** Parse a bare `<major>.<minor>.<patch>` runtime version (e.g. `process.versions.node`). `undefined` if unparseable. */
+/**
+ * Parse a bare `<major>.<minor>.<patch>` runtime version (e.g. `process.versions.node`). `undefined` if unparseable.
+ */
 export function parseVersion(version: string): SemverTriple | undefined {
 	const match = version.match(/^(\d+)\.(\d+)\.(\d+)/u)
 
@@ -74,7 +93,9 @@ export function parseVersion(version: string): SemverTriple | undefined {
 	return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]) }
 }
 
-/** `true` when `version` is at least `floor` under lexicographic major→minor→patch comparison. */
+/**
+ * `true` when `version` is at least `floor` under lexicographic major→minor→patch comparison.
+ */
 export function versionMeetsFloor(version: string, floor: string): boolean {
 	const v = parseVersion(version)
 	const f = parseVersionFloor(floor)
@@ -88,34 +109,46 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 	return v.patch >= f.patch
 }
 
-/** Bytes → a compact `12.3 MB` / `640 KB` / `12 B` string. */
+/**
+ * Bytes → a compact `12.3 MB` / `640 KB` / `12 B` string.
+ */
 export function formatBytes(bytes: number): string {
-	if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`
+	if (bytes >= BYTES_PER_MB) return `${(bytes / 1_000_000).toFixed(1)} MB`
 
-	if (bytes >= 1_000) return `${(bytes / 1_000).toFixed(0)} KB`
+	if (bytes >= 1000) return `${(bytes / 1000).toFixed(0)} KB`
 
 	return `${bytes} B`
 }
 
-// ---------------------------------------------------------------------------
-// Observations (facts the runner gathers) → checks (verdicts)
-// ---------------------------------------------------------------------------
+//#region Observations (facts the runner gathers) → checks (verdicts)
 
-/** Facts about the `@mailwoman/neural-weights-en-us` resolution. */
+/**
+ * Facts about the `@mailwoman/neural-weights-en-us` resolution.
+ */
 export interface WeightsObservation {
-	/** Resolved paths + source tag, or absent when resolution threw. */
+	/**
+	 * Resolved paths + source tag, or absent when resolution threw.
+	 */
 	resolved?: { source: string; modelPath: string; tokenizerPath: string }
-	/** Byte size of the resolved `model.onnx` (undefined if unresolved/unstattable). */
+	/**
+	 * Byte size of the resolved `model.onnx` (undefined if unresolved/unstattable).
+	 */
 	modelSize?: number
-	/** Byte size of the resolved `tokenizer.model`. */
+	/**
+	 * Byte size of the resolved `tokenizer.model`.
+	 */
 	tokenizerSize?: number
-	/** The resolution error message, when resolution failed. */
+	/**
+	 * The resolution error message, when resolution failed.
+	 */
 	error?: string
 }
 
 const WEIGHTS_FIX = "npm install @mailwoman/neural-weights-en-us   (or: mailwoman parse --download-weights)"
 
-/** Check #1 — the trained model bundle. CORE: parse cannot run without it. */
+/**
+ * Check #1 — the trained model bundle. CORE: parse cannot run without it.
+ */
 export function weightsCheck(o: WeightsObservation): DoctorCheck {
 	const base = { id: "weights", label: "Model weights (en-us)", core: true }
 
@@ -144,7 +177,9 @@ export function weightsCheck(o: WeightsObservation): DoctorCheck {
 	}
 }
 
-/** Facts about an optional locale-overlay weights package (e.g. fr-fr). */
+/**
+ * Facts about an optional locale-overlay weights package (e.g. fr-fr).
+ */
 export interface LocaleOverlayObservation {
 	locale: string
 	packageName: string
@@ -152,7 +187,9 @@ export interface LocaleOverlayObservation {
 	source?: string
 }
 
-/** Check #2 — a locale overlay (fr-fr). Informational (never core): its absence is expected on an en-us-only install. */
+/**
+ * Check #2 — a locale overlay (fr-fr). Informational (never core): its absence is expected on an en-us-only install.
+ */
 export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
 	const base = { id: `locale-overlay-${o.locale}`, label: `Locale overlay (${o.locale})`, core: false }
 
@@ -168,17 +205,25 @@ export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
 	}
 }
 
-/** Facts about the resolved data root. */
+/**
+ * Facts about the resolved data root.
+ */
 export interface DataRootObservation {
-	/** The path from the blessed `@mailwoman/core/utils` helper — never re-derived here. */
+	/**
+	 * The path from the blessed `@mailwoman/core/utils` helper — never re-derived here.
+	 */
 	path: string
 	exists: boolean
 	writable: boolean
-	/** Whether `$MAILWOMAN_DATA_ROOT` was set (vs. the built-in default). */
+	/**
+	 * Whether `$MAILWOMAN_DATA_ROOT` was set (vs. the built-in default).
+	 */
 	fromEnv: boolean
 }
 
-/** Check #3 — the data root. Optional: an unwritable/absent root only blocks build tooling, not parse. */
+/**
+ * Check #3 — the data root. Optional: an unwritable/absent root only blocks build tooling, not parse.
+ */
 export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 	const base = { id: "data-root", label: "Data root", core: false }
 	const source = o.fromEnv ? "$MAILWOMAN_DATA_ROOT" : "default"
@@ -212,19 +257,29 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
  * it.
  */
 export interface GazetteerObservation {
-	/** A candidate.db the tools would actually use — explicit/`$MAILWOMAN_CANDIDATE_DB`, on disk. Green. */
+	/**
+	 * A candidate.db the tools would actually use — explicit/`$MAILWOMAN_CANDIDATE_DB`, on disk. Green.
+	 */
 	envCandidate?: { path: string; sizeBytes?: number }
-	/** A WOF admin shard on disk — the FTS backend the tools fall back to when no env candidate is set. Green. */
+	/**
+	 * A WOF admin shard on disk — the FTS backend the tools fall back to when no env candidate is set. Green.
+	 */
 	wofShard?: { path: string; sizeBytes?: number }
-	/** A candidate.db at the convention path while `$MAILWOMAN_CANDIDATE_DB` is UNSET — the trap. Degraded, not green. */
+	/**
+	 * A candidate.db at the convention path while `$MAILWOMAN_CANDIDATE_DB` is UNSET — the trap. Degraded, not green.
+	 */
 	conventionCandidate?: string
-	/** The paths probed, for the not-found detail. */
+	/**
+	 * The paths probed, for the not-found detail.
+	 */
 	probed: string[]
 }
 
 const CANDIDATE_URL = "https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db"
 
-/** Check #4 — the admin gazetteer. Optional: parse runs without it; only geocode/resolve need it. */
+/**
+ * Check #4 — the admin gazetteer. Optional: parse runs without it; only geocode/resolve need it.
+ */
 export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
 
@@ -259,19 +314,27 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	}
 }
 
-/** Facts about the POI layer (mirrors `gazetteer build poi`'s default output path). */
+/**
+ * Facts about the POI layer (mirrors `gazetteer build poi`'s default output path).
+ */
 export interface POIObservation {
 	path: string
 	exists: boolean
-	/** The parsed layer manifest, when the db opened and validated. */
+	/**
+	 * The parsed layer manifest, when the db opened and validated.
+	 */
 	manifest?: { name: string; version: string; sourceVintage: string }
-	/** A read error, when the db exists but the manifest couldn't be read. */
+	/**
+	 * A read error, when the db exists but the manifest couldn't be read.
+	 */
 	error?: string
 }
 
 const POI_URL = "https://public.sister.software/mailwoman/poi/2026-07-20a/poi.db"
 
-/** Check #5 — the POI layer. Optional: only POI-query execution needs it. */
+/**
+ * Check #5 — the POI layer. Optional: only POI-query execution needs it.
+ */
 export function checkPOI(o: POIObservation): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false }
 	const fix = `mailwoman gazetteer build poi   (or: curl -fSL ${POI_URL} -o ${o.path})`
@@ -296,13 +359,17 @@ export function checkPOI(o: POIObservation): DoctorCheck {
 	}
 }
 
-/** Facts about the Node runtime version vs. the package `engines` floor. */
+/**
+ * Facts about the Node runtime version vs. the package `engines` floor.
+ */
 export interface NodeRuntimeObservation {
 	nodeVersion: string
 	enginesFloor: string
 }
 
-/** Check #6a — the Node version floor. CORE. */
+/**
+ * Check #6a — the Node version floor. CORE.
+ */
 export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 	const base = { id: "node-version", label: "Node runtime", core: true }
 
@@ -318,13 +385,17 @@ export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 	}
 }
 
-/** Facts about the ONNX runtime binding. */
+/**
+ * Facts about the ONNX runtime binding.
+ */
 export interface OnnxRuntimeObservation {
 	loadable: boolean
 	error?: string
 }
 
-/** Check #6b — onnxruntime-node loadability. CORE: the neural runtime cannot infer without it. */
+/**
+ * Check #6b — onnxruntime-node loadability. CORE: the neural runtime cannot infer without it.
+ */
 export function onnxRuntimeCheck(o: OnnxRuntimeObservation): DoctorCheck {
 	const base = { id: "onnxruntime", label: "ONNX runtime", core: true }
 
@@ -340,9 +411,9 @@ export function onnxRuntimeCheck(o: OnnxRuntimeObservation): DoctorCheck {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Aggregate
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Aggregate
 
 /**
  * Derive the process exit code: `0` when every CORE check is `ok`, else `1`. Optional data-layer checks report their
@@ -352,12 +423,18 @@ export function computeExitCode(checks: readonly DoctorCheck[]): number {
 	return checks.some((c) => c.core && c.status !== CheckStatus.OK) ? 1 : 0
 }
 
-/** Assemble the report + exit code from the ordered checks. */
+/**
+ * Assemble the report + exit code from the ordered checks.
+ */
 export function assembleReport(checks: DoctorCheck[]): DoctorReport {
 	return { checks, exitCode: computeExitCode(checks) }
 }
 
-/** First line of a possibly-multiline error/stack, trimmed — keeps the checklist to one line per check. */
+/**
+ * First line of a possibly-multiline error/stack, trimmed — keeps the checklist to one line per check.
+ */
 function firstLine(message: string): string {
 	return message.split("\n", 1)[0]!.trim()
 }
+
+//#endregion

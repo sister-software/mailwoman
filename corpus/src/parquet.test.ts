@@ -4,6 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+/* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
+   members (`"UTF8"`), not text-encoding identifiers; see the note in parquet.ts. */
+
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -44,25 +47,31 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 	}
 }
 
-/** Read every row from a `.parquet` file in on-disk order. */
+/**
+ * Read every row from a `.parquet` file in on-disk order.
+ */
 async function readParquet(path: string): Promise<ParquetRow[]> {
 	const reader = await ParquetReader.openFile<ParquetRow>(path)
 	const cursor = reader.getCursor()
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
 
+	// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `row` is reassigned by the assignment inside the condition
 	while ((row = (await cursor.next()) as ParquetRow | null)) {
 		out.push(row)
 	}
+
 	await reader.close()
 
 	return out
 }
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-parquet-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -74,6 +83,7 @@ describe("rowToParquet", () => {
 			synth: { method: "case-upper", base_source_id: "t-1" },
 			source_id: "t-1+case-upper",
 		})
+
 		const pq = rowToParquet(row)
 		expect(pq.locale).toBe("fr-FR")
 		expect(pq.synth_method).toBe("case-upper")
@@ -105,6 +115,7 @@ describe("rowToParquet", () => {
 				span_tags: ["locality", "country"],
 			})
 		)
+
 		expect(pq.span_starts).toEqual([0, 7])
 		expect(pq.span_ends).toEqual([5, 13])
 		expect(pq.span_tags).toEqual(["locality", "country"])
@@ -128,18 +139,18 @@ describe("rowToParquet", () => {
 
 describe("LABELED_ROW_SCHEMA", () => {
 	it("covers every PARQUET_COLUMNS entry", () => {
-		expect(Object.keys(LABELED_ROW_SCHEMA).sort()).toEqual([...PARQUET_COLUMNS].sort())
+		expect(Object.keys(LABELED_ROW_SCHEMA).toSorted()).toEqual([...PARQUET_COLUMNS].toSorted())
 	})
 
 	it("marks locale / synth_method / synth_base_id optional", () => {
-		expect(LABELED_ROW_SCHEMA.locale.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_method.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_base_id.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.locale!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.synth_method!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.synth_base_id!.optional).toBe(true)
 	})
 
 	it("marks tokens / labels REPEATED", () => {
-		expect(LABELED_ROW_SCHEMA.tokens.repeated).toBe(true)
-		expect(LABELED_ROW_SCHEMA.labels.repeated).toBe(true)
+		expect(LABELED_ROW_SCHEMA.tokens!.repeated).toBe(true)
+		expect(LABELED_ROW_SCHEMA.labels!.repeated).toBe(true)
 	})
 
 	it("marks the span triple REPEATED, offsets as INT32 (#519)", () => {
@@ -158,6 +169,7 @@ describe("LABELED_ROW_SCHEMA", () => {
 describe("writeShards", () => {
 	it("PARQUET_COLUMNS lists every emitted column in order", () => {
 		const cols: string[] = [...PARQUET_COLUMNS]
+
 		expect(cols).toEqual([
 			"raw",
 			"tokens",
@@ -182,6 +194,7 @@ describe("writeShards", () => {
 			labeled({ source_id: "t-3", raw: "Marseille" }),
 			labeled({ source_id: "t-4", raw: "Nice" }),
 		]
+
 		const valRows: LabeledRow[] = [labeled({ source_id: "t-1", raw: "Paris", locale: "fr-FR" })]
 		const testRows: LabeledRow[] = [labeled({ source_id: "t-2", raw: "Lyon" })]
 
@@ -258,6 +271,7 @@ describe("writeShards", () => {
 				span_tags: [],
 			}),
 		]
+
 		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.5.0" })
 		const back = await readParquet(m.shards[0]!.path)
 		expect(back).toHaveLength(3)
@@ -282,6 +296,7 @@ describe("writeShards", () => {
 
 	it("refuses to shard rows missing the span triple (the silent-loss hazard, loudly)", async () => {
 		const rows = [labeled({ source_id: "t-1", span_starts: undefined, span_ends: undefined, span_tags: undefined })]
+
 		await expect(
 			writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.5.0" })
 		).rejects.toThrow(/missing the char-offset span triple/)
@@ -289,6 +304,7 @@ describe("writeShards", () => {
 
 	it("rolls to a new shard at rowsPerShard rows", async () => {
 		const rows: LabeledRow[] = Array.from({ length: 25 }, (_, i) => labeled({ source_id: `t-${i}`, raw: `row ${i}` }))
+
 		const m = await writeShards(
 			{ train: asyncFrom(rows) },
 			{ outputDir: scratch, corpusVersion: "0.1.0", rowsPerShard: 10 }
@@ -304,7 +320,7 @@ describe("writeShards", () => {
 		// Confirm each shard is a real readable .parquet
 		for (const shard of trainShards) {
 			const back = await readParquet(shard.path)
-			expect(back.length).toBe(shard.rows)
+			expect(back).toHaveLength(shard.rows)
 		}
 	})
 
@@ -322,6 +338,7 @@ describe("writeShards", () => {
 			labeled({ source_id: "t-with", raw: "with locale", locale: "fr-FR" }),
 			labeled({ source_id: "t-without", raw: "no locale" }),
 		]
+
 		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.1.0" })
 		const back = await readParquet(m.shards[0]!.path)
 		expect(back).toHaveLength(2)
@@ -337,6 +354,7 @@ describe("writeShards", () => {
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
 			{ outputDir: scratch, corpusVersion: "0.1.0" }
 		)
+
 		expect(m.counts).toEqual({ train: 1, val: 0, test: 0 })
 		expect(m.shards).toHaveLength(1)
 		expect(m.shards[0]!.split).toBe("train")

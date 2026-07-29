@@ -33,17 +33,25 @@ import { join } from "node:path"
 import { PSVSpliterator } from "spliterator"
 
 export interface GNAFAssembleOptions {
-	/** G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables). */
+	/**
+	 * G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables).
+	 */
 	standardDir: string
-	/** Target sample size (uniform reservoir → population-proportional across states). */
+	/**
+	 * Target sample size (uniform reservoir → population-proportional across states).
+	 */
 	sampleSize: number
-	/** Output JSONL path. */
+	/**
+	 * Output JSONL path.
+	 */
 	out: string
 	/**
 	 * Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode) are excluded.
 	 */
 	holdoutPath?: string
-	/** Progress sink (the CLI passes a setter). */
+	/**
+	 * Progress sink (the CLI passes a setter).
+	 */
 	onProgress?: (message: string) => void
 }
 
@@ -54,25 +62,32 @@ export interface GNAFAssembleResult {
 	byState: Record<string, number>
 }
 
-/** UPPERCASE → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour). */
+/**
+ * UPPERCASE → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour).
+ */
 export function titlecase(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/(^|[\s'\-/])([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase())
+		.replaceAll(/(^|[\s'\-/])([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase())
 		.trim()
 }
 
-/** Holdout/dedup key: a street within a locality+postcode (house-number-agnostic — conservative). */
+/**
+ * Holdout/dedup key: a street within a locality+postcode (house-number-agnostic — conservative).
+ */
 export function gnafHoldoutKey(street: string, locality: string, postcode: string): string {
 	return `${street}|${locality}|${postcode}`.toLowerCase()
 }
 
 type Row = Record<string, string | number | undefined>
+
 async function* psvObjects(path: string): AsyncIterable<Row> {
 	yield* PSVSpliterator.fromAsync(path, { mode: "object", header: true }) as AsyncIterable<Row>
 }
 
-/** Load a small lookup table fully into a Map keyed by `keyCol`. */
+/**
+ * Load a small lookup table fully into a Map keyed by `keyCol`.
+ */
 async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V): Promise<Map<string, V>> {
 	const m = new Map<string, V>()
 
@@ -89,7 +104,9 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
 	return m
 }
 
-/** Build the held-out key set from an eval JSONL whose rows carry a `components` object. */
+/**
+ * Build the held-out key set from an eval JSONL whose rows carry a `components` object.
+ */
 async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()
 	const text = await readFile(path, "utf8")
@@ -114,6 +131,7 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssembleResult> {
 	const progress = opts.onProgress ?? (() => {})
 	const files = await readdir(opts.standardDir)
+
 	const pick = (re: RegExp, exclude?: RegExp) =>
 		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => join(opts.standardDir, f))
 
@@ -129,16 +147,19 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 	}
 
 	progress(`loading STREET_LOCALITY (${streetPaths.length} files) + LOCALITY (${localityPaths.length})…`)
+
 	const streetMap = await loadMap(streetPaths, "STREET_LOCALITY_PID", (r) => ({
 		name: String(r.STREET_NAME ?? ""),
 		type: String(r.STREET_TYPE_CODE ?? ""),
 		suffix: String(r.STREET_SUFFIX_CODE ?? ""),
 	}))
+
 	const localityMap = await loadMap(localityPaths, "LOCALITY_PID", (r) => String(r.LOCALITY_NAME ?? ""))
 	progress(`streets=${streetMap.size.toLocaleString()} localities=${localityMap.size.toLocaleString()}`)
 
 	const reservoir: Array<{ house_number: string; street: string; locality: string; region: string; postcode: string }> =
 		[]
+
 	let seen = 0
 	let heldOut = 0
 
@@ -159,8 +180,10 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 
 			if (holdout.has(gnafHoldoutKey(street, locality, postcode))) {
 				heldOut++
+
 				continue
 			}
+
 			let house = numberFirst + (r.NUMBER_FIRST_SUFFIX ? String(r.NUMBER_FIRST_SUFFIX) : "")
 
 			if (r.NUMBER_LAST) {
@@ -170,7 +193,9 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 			if (r.FLAT_NUMBER) {
 				house = `${String(r.FLAT_NUMBER)}/${house}`
 			}
+
 			const tuple = { house_number: house, street, locality, region: state, postcode }
+
 			seen++
 
 			if (reservoir.length < opts.sampleSize) {
@@ -183,6 +208,7 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 				}
 			}
 		}
+
 		progress(`${state}: ${seen.toLocaleString()} valid joinable seen`)
 	}
 
@@ -193,7 +219,11 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 		out.write(JSON.stringify(t) + "\n")
 		byState[t.region] = (byState[t.region] ?? 0) + 1
 	}
-	await new Promise<void>((res) => out.end(res))
+
+	await new Promise<void>((res) => {
+		out.end(res)
+	})
+
 	progress(`wrote ${reservoir.length.toLocaleString()} tuples → ${opts.out}`)
 
 	return { written: reservoir.length, seen, heldOut, byState }

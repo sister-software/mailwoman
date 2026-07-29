@@ -19,6 +19,36 @@ import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
 
+/**
+ * Southern edge of the US including Puerto Rico and Hawaii.
+ */
+const MIN_US_LATITUDE = 17
+
+/**
+ * Northern edge of the US including Alaska.
+ */
+const MAX_US_LATITUDE = 72
+
+/**
+ * Western edge of the US including the Aleutians.
+ */
+const MIN_US_LONGITUDE = -180
+
+/**
+ * Eastern edge of the US including Maine and the Virgin Islands.
+ */
+const MAX_US_LONGITUDE = -64
+
+/**
+ * Largest absolute latitude in WGS-84 degrees.
+ */
+const MAX_ABS_LATITUDE = 90
+
+/**
+ * Largest absolute longitude in WGS-84 degrees.
+ */
+const MAX_ABS_LONGITUDE = 180
+
 const API = "https://banks.data.fdic.gov/api/locations"
 const PAGE = 10_000
 const FIELDS = "ADDRESS,CITY,STALP,ZIP,LATITUDE,LONGITUDE"
@@ -32,9 +62,18 @@ interface Loc {
 	LONGITUDE?: number
 }
 
-/** Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth. */
+/**
+ * Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth.
+ */
 function plausibleUs(lat: number, lon: number): boolean {
-	return Number.isFinite(lat) && Number.isFinite(lon) && lat >= 17 && lat <= 72 && lon >= -180 && lon <= -64
+	return (
+		Number.isFinite(lat) &&
+		Number.isFinite(lon) &&
+		lat >= MIN_US_LATITUDE &&
+		lat <= MAX_US_LATITUDE &&
+		lon >= MIN_US_LONGITUDE &&
+		lon <= MAX_US_LONGITUDE
+	)
 }
 
 async function fetchPage(offset: number): Promise<Loc[]> {
@@ -47,7 +86,9 @@ async function fetchPage(offset: number): Promise<Loc[]> {
 	return (body.data ?? []).map((d) => d.data)
 }
 
-/** Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy). */
+/**
+ * Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy).
+ */
 export async function buildFDICHoldout(): Promise<void> {
 	const OUT = `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`
 	const tmp = `${OUT}.tmp-${process.pid}`
@@ -55,6 +96,7 @@ export async function buildFDICHoldout(): Promise<void> {
 	if (existsSync(tmp)) {
 		rmSync(tmp)
 	}
+
 	const sink = createWriteStream(tmp, { encoding: "utf8" })
 	sink.write("address;city;state;zip;lat;lon\n")
 
@@ -65,7 +107,7 @@ export async function buildFDICHoldout(): Promise<void> {
 	for (let offset = 0; ; offset += PAGE) {
 		const rows = await fetchPage(offset)
 
-		if (rows.length === 0) break
+		if (!rows.length) break
 		total += rows.length
 
 		for (const r of rows) {
@@ -78,22 +120,29 @@ export async function buildFDICHoldout(): Promise<void> {
 
 			if (!address || !city || !state || !plausibleUs(lat, lon)) {
 				dropped++
+
 				continue
 			}
+
 			// Semicolons can't appear in a US street address/city; no escaping needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
+
 			written++
 		}
+
 		console.error(
 			`[fdic] offset ${offset.toLocaleString()} → ${written.toLocaleString()} written, ${dropped.toLocaleString()} dropped`
 		)
 	}
 
-	await new Promise<void>((resolvePromise) => sink.end(resolvePromise))
+	await new Promise<void>((resolvePromise) => {
+		sink.end(resolvePromise)
+	})
 
 	if (existsSync(OUT)) {
 		renameSync(OUT, `${OUT}.prev`)
 	}
+
 	renameSync(tmp, OUT)
 
 	if (existsSync(`${OUT}.prev`)) {

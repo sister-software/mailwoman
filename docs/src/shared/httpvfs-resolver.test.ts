@@ -16,14 +16,16 @@ import { afterEach, describe, expect, test } from "vitest"
 
 import { WOFCandidateTableLookup } from "./httpvfs-resolver.ts"
 
-/** Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape). */
+/**
+ * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
+ */
 function stubWorker(db: DatabaseSync) {
 	return {
 		db: {
 			async exec(sql: string) {
 				const rows = db.prepare(sql).all() as Record<string, unknown>[]
 
-				if (rows.length === 0) return []
+				if (!rows.length) return []
 				const columns = Object.keys(rows[0]!)
 
 				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
@@ -34,8 +36,10 @@ function stubWorker(db: DatabaseSync) {
 }
 
 const openDbs: DatabaseSync[] = []
+
 function makeDB(withSideIndex: boolean): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
+
 	d.exec(`
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT);
 		INSERT INTO country_codes VALUES (1, 'US');
@@ -61,10 +65,12 @@ function makeDB(withSideIndex: boolean): DatabaseSync {
 			INSERT INTO postal_city_candidate VALUES ('antioch', '37013', 1, 'Nashville', 36.17, -86.78);
 		`)
 	}
+
 	openDbs.push(d)
 
 	return d
 }
+
 afterEach(() => {
 	while (openDbs.length) {
 		openDbs.pop()!.close()
@@ -85,7 +91,7 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
-		expect(hits[0]!.lat).toBeCloseTo(38.0, 1)
+		expect(hits[0]!.lat).toBeCloseTo(38, 1)
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {

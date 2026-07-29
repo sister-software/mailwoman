@@ -21,6 +21,7 @@ let scratch: string
 
 function buildFixtureDB(path: string): DatabaseSync {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,

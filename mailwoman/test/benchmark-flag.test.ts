@@ -14,6 +14,7 @@ import { promisify } from "node:util"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
+import { ZodError } from "zod"
 
 import { options as parseOptions } from "../commands/parse.tsx"
 
@@ -24,7 +25,7 @@ describe("--benchmark schema", () => {
 	test("accepts integer in [1, 10000]", () => {
 		expect(() => parseOptions.parse({ benchmark: 1 })).not.toThrow()
 		expect(() => parseOptions.parse({ benchmark: 100 })).not.toThrow()
-		expect(() => parseOptions.parse({ benchmark: 10000 })).not.toThrow()
+		expect(() => parseOptions.parse({ benchmark: 10_000 })).not.toThrow()
 	})
 
 	test("coerces numeric strings", () => {
@@ -33,13 +34,13 @@ describe("--benchmark schema", () => {
 	})
 
 	test("rejects out-of-range values", () => {
-		expect(() => parseOptions.parse({ benchmark: 0 })).toThrow()
-		expect(() => parseOptions.parse({ benchmark: -1 })).toThrow()
-		expect(() => parseOptions.parse({ benchmark: 10001 })).toThrow()
+		expect(() => parseOptions.parse({ benchmark: 0 })).toThrow(ZodError)
+		expect(() => parseOptions.parse({ benchmark: -1 })).toThrow(ZodError)
+		expect(() => parseOptions.parse({ benchmark: 10_001 })).toThrow(ZodError)
 	})
 
 	test("rejects non-integers", () => {
-		expect(() => parseOptions.parse({ benchmark: 1.5 })).toThrow()
+		expect(() => parseOptions.parse({ benchmark: 1.5 })).toThrow(ZodError)
 	})
 
 	test("benchmark is optional", () => {
@@ -54,6 +55,7 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 			[cliBin, "parse", "--benchmark", "10", "--no-neural", "350 5th Ave, New York, NY 10118"],
 			{ env: childEnv({ MAILWOMAN_TEST_MODE: "1" }) }
 		)
+
 		expect(stdout).toContain("iterations + 5 warmup")
 		expect(stdout).toContain("stage")
 		expect(stdout).toContain("p50")
@@ -61,20 +63,21 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 		expect(stdout).toContain("normalize")
 		expect(stdout).toContain("query-shape")
 		expect(stdout).toContain("heap delta")
-	}, 30000)
+	}, 30_000)
 
 	test("rejects --benchmark with --neural", async () => {
 		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | undefined
 
 		try {
 			await exec(process.execPath, [cliBin, "parse", "--benchmark", "5", "--neural", "hello world"])
-		} catch (e) {
-			err = e as Error & { stderr?: string; stdout?: string; code?: number }
+		} catch (error) {
+			err = error as Error & { stderr?: string; stdout?: string; code?: number }
 		}
+
 		expect(err).toBeDefined()
 		// Ink renders the error to stdout (Text color=red), not stderr. Process exits 1 because the
 		// useEffect-driven setError(...) → setImmediate(() => process.exit(1)) path fires.
 		const combined = `${err?.stdout ?? ""}${err?.stderr ?? ""}`
 		expect(combined).toMatch(/--benchmark requires the default runtime-pipeline path/)
-	}, 30000)
+	}, 30_000)
 })

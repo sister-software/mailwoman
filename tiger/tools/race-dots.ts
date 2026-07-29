@@ -26,32 +26,54 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** Options for {@linkcode raceDots}. */
+/**
+ * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.
+ */
+const MAX_PLACEMENT_TRIES = 60
+
+/**
+ * Options for {@linkcode raceDots}.
+ */
 export interface RaceDotsOptions {
-	/** TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`. */
+	/**
+	 * TIGER SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`.
+	 */
 	db?: string
-	/** Output NDJSON path. Default `/tmp/race-dots.ndjson`. */
+	/**
+	 * Output NDJSON path. Default `/tmp/race-dots.ndjson`.
+	 */
 	out?: string
-	/** People represented by one dot. Default 10. */
+	/**
+	 * People represented by one dot. Default 10.
+	 */
 	per?: number
-	/** Tippecanoe layer name. Default `dots`. */
+	/**
+	 * Tippecanoe layer name. Default `dots`.
+	 */
 	layer?: string
 }
 
-/** Result of {@linkcode raceDots}. */
+/**
+ * Result of {@linkcode raceDots}.
+ */
 export interface RaceDotsResult {
 	outPath: string
 	dots: number
 	skipped: number
 	blocks: number
-	/** Dots emitted per P2 category. */
+	/**
+	 * Dots emitted per P2 category.
+	 */
 	totals: Record<string, number>
 }
 
-// The eight P2 categories (columns in pl_block) that partition each block's population.
+/**
+ * The eight P2 categories (columns in pl_block) that partition each block's population.
+ */
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const
 
 type Ring = number[][]
+
 type PolygonCoords = Ring[]
 
 function bbox(rings: PolygonCoords): [number, number, number, number] {
@@ -81,7 +103,9 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 	return [minX, minY, maxX, maxY]
 }
 
-/** Race-by-dot-density NDJSON builder — see the module doc. */
+/**
+ * Race-by-dot-density NDJSON builder — see the module doc.
+ */
 export async function raceDots(
 	options: RaceDotsOptions = {},
 	report?: (line: string) => void
@@ -103,15 +127,18 @@ export async function raceDots(
 		while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) {
 			pick++
 		}
+
 		const poly = polys[pick]!
+
 		const polyFeature = {
 			type: "Feature" as const,
 			geometry: { type: "Polygon" as const, coordinates: poly },
 			properties: {},
 		}
+
 		const [minX, minY, maxX, maxY] = bbox(poly)
 
-		for (let tries = 0; tries < 60; tries++) {
+		for (let tries = 0; tries < MAX_PLACEMENT_TRIES; tries++) {
 			const x = minX + Math.random() * (maxX - minX)
 			const y = minY + Math.random() * (maxY - minY)
 			const pt = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [x, y] }, properties: {} }
@@ -123,6 +150,7 @@ export async function raceDots(
 	}
 
 	const db = new DatabaseSync(DB, { readOnly: true })
+
 	const rows = db
 		.prepare(
 			`SELECT b.geometry AS geometry, ${CATEGORIES.map((c) => `p.${c} AS ${c}`).join(", ")}
@@ -130,10 +158,12 @@ export async function raceDots(
 			 WHERE p.pop_total > 0`
 		)
 		.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
+
 	db.close()
 
 	const out = createWriteStream(OUT)
 	const totals = new Map<string, number>()
+
 	let dots = 0,
 		skipped = 0
 
@@ -145,13 +175,16 @@ export async function raceDots(
 		} catch {
 			continue
 		}
+
 		const polys: PolygonCoords[] =
 			geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
+
 		const areas = polys.map((p) => {
 			const [a, b, c, d] = bbox(p)
 
 			return Math.max((c - a) * (d - b), 1e-12)
 		})
+
 		const totalArea = areas.reduce((s, a) => s + a, 0)
 
 		for (const cat of CATEGORIES) {
@@ -166,8 +199,10 @@ export async function raceDots(
 
 				if (!pt) {
 					skipped++
+
 					continue
 				}
+
 				out.write(
 					JSON.stringify({
 						type: "Feature",
@@ -176,6 +211,7 @@ export async function raceDots(
 						geometry: { type: "Point", coordinates: [Math.round(pt[0] * 1e5) / 1e5, Math.round(pt[1] * 1e5) / 1e5] },
 					}) + "\n"
 				)
+
 				dots++
 				totals.set(cat, (totals.get(cat) ?? 0) + 1)
 			}
@@ -183,10 +219,14 @@ export async function raceDots(
 	}
 
 	out.end()
-	await new Promise<void>((resolve) => out.on("finish", () => resolve()))
+
+	await new Promise<void>((resolve) => {
+		out.on("finish", () => resolve())
+	})
+
 	report?.(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
 
-	for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [cat, n] of [...totals.entries()].toSorted((a, b) => b[1] - a[1])) {
 		report?.(`  ${n.toString().padStart(7)}  ${cat}`)
 	}
 

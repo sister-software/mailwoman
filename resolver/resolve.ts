@@ -30,7 +30,9 @@ import {
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { foldName } from "./fold-name.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
+import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -52,26 +54,38 @@ interface ResolutionState {
 	 * can inject postcode-proximal locality candidates.
 	 */
 	postcode?: string
-	/** Proximity-bias points (viewport, user location) — forwarded to every primary lookup. */
+	/**
+	 * Proximity-bias points (viewport, user location) — forwarded to every primary lookup.
+	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
-	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
+	/**
+	 * Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default).
+	 */
 	anchorPosterior?: Record<string, number>
-	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
+	/**
+	 * Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set.
+	 */
 	anchorWeight: number
 	/**
 	 * #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off = undefined.
 	 */
 	hardCountry?: string
-	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
+	/**
+	 * Dual-role hierarchy completion (#405). Off by default → byte-stable.
+	 */
 	hierarchyCompletion: boolean
-	/** Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable. */
+	/**
+	 * Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable.
+	 */
 	includeAncestors: boolean
 	/**
 	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the completion only
 	 * fires when the parser emitted no locality at all, never to override one.
 	 */
 	localityNodePresent: boolean
-	/** The first region that resolved (its place — for the coincident-roles lookup). */
+	/**
+	 * The first region that resolved (its place — for the coincident-roles lookup).
+	 */
 	resolvedRegion: ResolvedPlace | null
 	/**
 	 * The decorated region NODE that produced {@link resolvedRegion} — completion pushes the locality interpretation onto
@@ -87,9 +101,10 @@ interface ResolutionState {
  * population AND distance) ABSTAINS rather than guess.
  */
 function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
-	if (candidates.length === 0) return null
+	if (!candidates.length) return null
 
 	if (candidates.length === 1) return candidates[0]!
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
 	const [first, second] = ranked
 
@@ -105,478 +120,14 @@ function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLo
 function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	const stack = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 
-		if (n.tag === "postcode" && n.value.trim().length > 0) return n.value.trim()
+		if (n.tag === "postcode" && n.value.trim().length) return n.value.trim()
 		stack.push(...n.children)
 	}
 
 	return undefined
-}
-
-/** Street-name component tags that, with the street node itself, reconstruct the full street string. */
-const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
-
-/**
- * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser nests the
- * directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street` (containment.ts), so `street.value` alone
- * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate shards keyed on the FULL
- * normalized name. Collect street + its prefix/particle/suffix descendants (NOT house_number/unit, which also nest
- * under street), order by span offset, and join.
- */
-function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
-	const parts: AddressNode[] = []
-	const stack = [streetNode]
-
-	while (stack.length > 0) {
-		const n = stack.pop()!
-
-		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
-			parts.push(n)
-		}
-		stack.push(...n.children)
-	}
-
-	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
-	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the
-	// shard's "taylor street northeast" (the lookup normalizer expands the abbreviation). Lookup-key
-	// only — the parse output and admin resolution are untouched. Byte-stable when absent (undefined).
-	if (directionalUnit && directionalUnit.value.trim()) {
-		parts.push(directionalUnit)
-	}
-	parts.sort((a, b) => a.start - b.start)
-
-	return parts.map((n) => n.value.trim()).join(" ")
-}
-
-/**
- * Directional quadrant values the model sometimes emits as a `unit` node instead of inside the street subtree (#718
- * admin-tail diagnostic: ~19% of the admin-fallback tail, 83% of DC). Folded into the street lookup key by
- * {@link assembleStreetValue}; the situs/interp lookup normalizer expands the abbreviation ("ne" → "northeast") so the
- * shard's full street name matches.
- */
-// The 8 USPS cardinals/intercardinals (abbrev or name) — @codex/us owns the canonical table (#215).
-const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replace(/\./g, ""))
-
-/**
- * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence, depth-first), scope by the
- * tree's postcode/locality values, and on an exact hit stamp the point onto the STREET node's metadata. Additive only —
- * admin resolution is never altered.
- */
-/**
- * Half-width (degrees) of the bbox derived from a resolved locality centroid for the #247 OSM bbox fall-through. ~0.25°
- * ≈ 28 km N–S — generous enough for a large metro whose centroid sits off the queried point, while the EXACT `(street,
- * number)` match keeps a cross-commune collision rare. The proper fix is per-point scope backfill (the OSM association
- * / point-in-polygon pass, #250); this is the coverage stopgap until then.
- */
-const LOCALITY_BBOX_RADIUS_DEG = 0.25
-
-function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup, bboxFallback?: boolean): void {
-	let street: AddressNode | undefined
-	let houseNumber: AddressNode | undefined
-	let directionalUnit: AddressNode | undefined
-	let localityNode: AddressNode | undefined
-	let locality: string | undefined
-	let postcode: string | undefined
-	const stack = [...roots]
-
-	while (stack.length > 0) {
-		const n = stack.pop()!
-
-		if (n.tag === "street" && !street) {
-			street = n
-		}
-
-		if (n.tag === "house_number" && !houseNumber) {
-			houseNumber = n
-		}
-
-		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) {
-			directionalUnit = n
-		}
-
-		if (n.tag === "locality" && !localityNode && n.value.trim()) {
-			localityNode = n
-			locality = n.value.trim()
-		}
-
-		if (n.tag === "postcode" && !postcode && n.value.trim()) {
-			postcode = n.value.trim()
-		}
-		stack.push(...n.children)
-	}
-
-	if (!street || !houseNumber) return
-
-	// #247 OSM bbox fall-through: when enabled (an OSM shard is wired) and the locality resolved to a
-	// coordinate, scope a final `(street, number)` probe by the locality's box — recovering OSM points that
-	// carry no postcode/locality tag of their own. US situs never enables it, so its probes are byte-identical.
-	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
-
-	if (bboxFallback && localityNode?.lat != null && localityNode.lon != null) {
-		bbox = {
-			minLat: localityNode.lat - LOCALITY_BBOX_RADIUS_DEG,
-			maxLat: localityNode.lat + LOCALITY_BBOX_RADIUS_DEG,
-			minLon: localityNode.lon - LOCALITY_BBOX_RADIUS_DEG,
-			maxLon: localityNode.lon + LOCALITY_BBOX_RADIUS_DEG,
-		}
-	}
-
-	const hit = lookup.find({
-		street: assembleStreetValue(street, directionalUnit),
-		number: houseNumber.value,
-		postcode,
-		locality,
-		bbox,
-	})
-
-	if (!hit) return
-	street.metadata = {
-		...street.metadata,
-		address_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
-		resolution_tier: "address_point",
-	}
-}
-
-/**
- * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact address-point tier
- * ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier === "address_point"`). That gate
- * IS the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
- * locality — the interpolators abstain statewide without a postcode). Stamps a DISTINCT metadata key
- * (`interpolated_point`, never `address_point`). Additive only — admin resolution is untouched.
- */
-function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, radiusCalibration?: number): void {
-	let street: AddressNode | undefined
-	let houseNumber: AddressNode | undefined
-	let directionalUnit: AddressNode | undefined
-	let postcode: string | undefined
-	const stack = [...roots]
-
-	while (stack.length > 0) {
-		const n = stack.pop()!
-
-		if (n.tag === "street" && !street) {
-			street = n
-		}
-
-		if (n.tag === "house_number" && !houseNumber) {
-			houseNumber = n
-		}
-
-		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) {
-			directionalUnit = n
-		}
-
-		if (n.tag === "postcode" && !postcode && n.value.trim()) {
-			postcode = n.value.trim()
-		}
-		stack.push(...n.children)
-	}
-
-	if (!street || !houseNumber) return
-
-	// The fall-through gate: an exact situs point already won — never override it with an estimate.
-	if (street.metadata?.["resolution_tier"] === "address_point") return
-	const hit = lookup.find({ street: assembleStreetValue(street, directionalUnit), number: houseNumber.value, postcode })
-
-	if (!hit) return
-	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
-	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the shard's
-	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default; an
-	// explicit caller factor is the @internal instrument override. Neither present (shards predating the
-	// metadata table, no caller factor) keeps the raw value, byte-stable. Preserve the raw radius for
-	// transparency.
-	const factor = radiusCalibration ?? lookup.radiusCalibration
-	const calibrated = factor ? Math.round(hit.uncertaintyM * factor) : hit.uncertaintyM
-	street.metadata = {
-		...street.metadata,
-		interpolated_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
-		resolution_tier: "interpolated",
-		uncertainty_m: calibrated,
-		...(factor ? { uncertainty_raw_m: hit.uncertaintyM, uncertainty_calibration: factor } : {}),
-		interpolation_method: hit.method,
-		...(hit.parityMatched !== undefined ? { parity_matched: hit.parityMatched } : {}),
-		...(hit.bracket !== undefined ? { interpolation_bracket: hit.bracket } : {}),
-	}
-}
-
-/**
- * French thoroughfare (voie) type tokens — the leading word that marks a street-only span as a THOROUGHFARE rather than
- * a place name ("Place Bellecour", "Cours de l'Intendance", "Quai des Bateliers"). Used by the #1042 street-centroid
- * tier to recognize a thoroughfare that the model mis-parsed as a `locality` (the FR no-street class, #901).
- * Deliberately generous — a false positive simply misses the exact street-centroid lookup and no-ops; the lookup is the
- * real gate.
- */
-const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
-	"rue",
-	"ruelle",
-	"venelle",
-	"avenue",
-	"av",
-	"ave",
-	"boulevard",
-	"bd",
-	"bld",
-	"bvd",
-	"boul",
-	"place",
-	"pl",
-	"cours",
-	"quai",
-	"impasse",
-	"imp",
-	"allee",
-	"all",
-	"chemin",
-	"ch",
-	"che",
-	"passage",
-	"pas",
-	"square",
-	"sq",
-	"faubourg",
-	"fg",
-	"fbg",
-	"route",
-	"rte",
-	"esplanade",
-	"promenade",
-	"sentier",
-	"sente",
-	"villa",
-	"cite",
-	"hameau",
-	"montee",
-	"chaussee",
-	"traverse",
-	"mail",
-	"clos",
-	"voie",
-	"quartier",
-	"lotissement",
-	"residence",
-	"rond",
-])
-
-/** Fold to lower-case, diacritic-stripped, punctuation-free tokens — mirrors `street-normalize.ts`'s `fold`. */
-function foldVoieTokens(s: string): string[] {
-	return s
-		.normalize("NFKD")
-		.replace(/[̀-ͯ]/g, "")
-		.toLowerCase()
-		.replace(/[.,'’]/g, "")
-		.replace(/-/g, " ")
-		.split(/\s+/)
-		.filter(Boolean)
-}
-
-/** Does a string START with a French thoroughfare type token ("Rue …", "Place …")? */
-function isVoieShaped(s: string): boolean {
-	const first = foldVoieTokens(s)[0]
-
-	return first !== undefined && FR_VOIE_TYPES.has(first)
-}
-
-/** Push `v` (trimmed, non-empty, deduped, capped) onto `list`. */
-function pushCandidate(list: string[], v: string | undefined, cap: number): void {
-	const t = v?.trim()
-
-	if (t && list.length < cap && !list.includes(t)) {
-		list.push(t)
-	}
-}
-
-/**
- * Street-centroid tier (#1042): the street-level rung BELOW the exact/interpolation tiers and ABOVE admin-centroid
- * resolution. For a STREET-ONLY query (a thoroughfare with NO house number), stamp the street's centroid onto a
- * `street` node so a consumer gets a street-level coordinate instead of the commune centroid (or a wrong namesake).
- *
- * The FR no-street class mis-parses the thoroughfare — "Place Bellecour, Lyon" parses `region=Lyon`, `locality="Place
- * Bellecour"`; "Avenue des Champs-Élysées" truncates — so this recovers the thoroughfare + commune RAW-TEXT-first (the
- * same substrate as span-rescore), preferring parsed nodes and falling back to the comma-split raw query. A
- * thoroughfare is recognized by its leading voie type ({@link isVoieShaped}); the commune is any non-voie span. Every
- * (thoroughfare, commune) pair is probed against the exact street-centroid lookup, first hit wins — a false candidate
- * simply misses. Additive only: fires ONLY when no house number is present (rooftop tiers untouched) and no
- * street-level coordinate already resolved, and never alters admin resolution.
- */
-function applyStreetCentroid(
-	roots: AddressNode[],
-	raw: string,
-	provider: (country: string) => StreetCentroidLookup | undefined,
-	hints: readonly string[]
-): void {
-	let streetNode: AddressNode | undefined
-	let houseNumber = false
-	let postcode: string | undefined
-	const adminValues: string[] = [] // region / locality values, in tree order (thoroughfare and commune both hide here)
-	const resolvedCountries: string[] = [] // countries the tree actually resolved to — a post-resolution country hint
-	const stack = [...roots]
-
-	while (stack.length > 0) {
-		const n = stack.pop()!
-
-		if (n.tag === "house_number") {
-			houseNumber = true
-		}
-
-		if (n.tag === "street" && !streetNode) {
-			streetNode = n
-		}
-
-		// Never shadow a real street-level coordinate the exact/interp tiers already stamped.
-		if (n.metadata?.["resolution_tier"] === "address_point" || n.metadata?.["resolution_tier"] === "interpolated") {
-			return
-		}
-
-		if (!postcode && n.tag === "postcode" && n.value.trim()) {
-			postcode = n.value.trim()
-		}
-
-		if ((n.tag === "region" || n.tag === "locality" || n.tag === "dependent_locality") && n.value.trim()) {
-			adminValues.push(n.value.trim())
-		}
-		const rc = (n.metadata?.["resolver_country"] as string | undefined)?.trim().toLowerCase()
-
-		if (rc && !resolvedCountries.includes(rc)) {
-			resolvedCountries.push(rc)
-		}
-		stack.push(...n.children)
-	}
-
-	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job
-
-	// Candidate countries: pre-resolution hints (defaultCountry + ungated placer) then the resolved countries. BAN is
-	// FR-only, so a non-FR candidate simply yields no lookup; the exact (street, base-commune) match is the real filter.
-	const countries: string[] = []
-
-	for (const c of [...hints, ...resolvedCountries]) {
-		const cc = c?.trim().toLowerCase()
-
-		if (cc && !countries.includes(cc)) {
-			countries.push(cc)
-		}
-	}
-	const lookups = countries.map((c) => provider(c)).filter((l): l is StreetCentroidLookup => l != null)
-
-	if (lookups.length === 0) return
-
-	const rawSegments = raw
-		.split(",")
-		.map((s) => s.trim())
-		.filter(Boolean)
-	const CAP = 5
-
-	// Thoroughfare candidates (parsed-first, then raw): the assembled street node, any voie-shaped parsed value, any
-	// voie-shaped raw comma-segment. The parse often truncates these (Champs-Élysées → "Avenue des Champs"), so the raw
-	// segment is the recovery — a candidate that misses just advances to the next.
-	const thoroughfares: string[] = []
-
-	if (streetNode) {
-		pushCandidate(thoroughfares, assembleStreetValue(streetNode), CAP)
-	}
-
-	for (const v of adminValues) {
-		if (isVoieShaped(v)) {
-			pushCandidate(thoroughfares, v, CAP)
-		}
-	}
-
-	for (const s of rawSegments) {
-		if (isVoieShaped(s)) {
-			pushCandidate(thoroughfares, s, CAP)
-		}
-	}
-
-	if (thoroughfares.length === 0) return
-
-	// Commune candidates: non-voie parsed admin values, then non-voie raw segments (a truncated/garbled parse loses the
-	// commune — "Rue de la République, Marseille" parses `locality="e"` — so the raw "Marseille" is the recovery).
-	const communes: string[] = []
-
-	for (const v of adminValues) {
-		if (!isVoieShaped(v)) {
-			pushCandidate(communes, v, CAP)
-		}
-	}
-
-	for (const s of rawSegments) {
-		if (!isVoieShaped(s) && !thoroughfares.includes(s)) {
-			pushCandidate(communes, s, CAP)
-		}
-	}
-
-	for (const lookup of lookups) {
-		for (const street of thoroughfares) {
-			let hit = postcode ? lookup.find({ street, postcode }) : null
-			let matchedCommune: string | undefined
-
-			for (let i = 0; !hit && i < communes.length; i++) {
-				hit = lookup.find({ street, locality: communes[i]! })
-
-				if (hit) {
-					matchedCommune = communes[i]
-				}
-			}
-
-			if (!hit) continue
-
-			const target =
-				streetNode ??
-				(() => {
-					const injected: AddressNode = {
-						tag: "street",
-						value: street,
-						start: 0,
-						end: 0,
-						confidence: 0.5,
-						children: [],
-					}
-					roots.push(injected)
-
-					return injected
-				})()
-			target.metadata = {
-				...target.metadata,
-				street_centroid: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
-				resolution_tier: "street",
-				uncertainty_m: hit.uncertaintyM,
-			}
-
-			// #1058: a commune-scoped hit is REGISTER evidence of the street's locality — record it for
-			// the geocode layer's locality/city decoration, and drop any span-rescored locality that
-			// contradicts it. Span-rescore injects SPECULATIVELY (a low-confidence street prefix like
-			// "Rue" exact-matches the commune Rue in Somme); the register's exact (street, commune)
-			// match is strictly stronger, so the injected token-of-the-street must not survive as the
-			// result's city.
-			if (matchedCommune) {
-				target.metadata = { ...target.metadata, street_locality: matchedCommune }
-
-				for (let i = roots.length - 1; i >= 0; i--) {
-					const n = roots[i]!
-
-					if (n.tag !== "locality" || n.metadata?.["span_rescore"] !== true) continue
-					const names = [n.value, (n.metadata?.["resolver_name"] as string | undefined) ?? ""]
-
-					if (!names.some((name) => foldName(name) === foldName(matchedCommune))) {
-						roots.splice(i, 1)
-					}
-				}
-			}
-
-			return
-		}
-	}
-}
-
-/** Case/diacritic-insensitive fold for commune-name comparison (#1058) — mirrors span-rescore's `norm`. */
-function foldName(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFD")
-		.replace(/[^a-z0-9 ]/g, " ")
-		.replace(/\s+/g, " ")
-		.trim()
 }
 
 /**
@@ -624,6 +175,7 @@ async function applySpanRescore(
 	}
 
 	if (!hit) return
+
 	const node: AddressNode = {
 		tag: "locality",
 		value: hit.text,
@@ -633,6 +185,7 @@ async function applySpanRescore(
 		confidence: 0.5,
 		children: [],
 	}
+
 	decorateNode(node, hit.place, [])
 	// `rescore_gated` carries the gate's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
@@ -679,7 +232,9 @@ async function recoverPostcodeNode(
 	}
 }
 
-/** A resolved node carries a real coordinate (placeID set + non-zero lat/lon). */
+/**
+ * A resolved node carries a real coordinate (placeID set + non-zero lat/lon).
+ */
 function isResolvedWithCoord(n: AddressNode): boolean {
 	return !!(n.placeID && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0))
 }
@@ -708,13 +263,15 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 	let anchor: { lat: number; lon: number } | null = null
 	const findAnchor: AddressNode[] = [...roots]
 
-	while (findAnchor.length > 0) {
+	while (findAnchor.length) {
 		const n = findAnchor.pop()!
 
 		if (n.tag === "postcode" && isResolvedWithCoord(n)) {
 			anchor = { lat: n.lat!, lon: n.lon! }
+
 			break
 		}
+
 		findAnchor.push(...n.children)
 	}
 
@@ -722,7 +279,7 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 
 	const stack: AddressNode[] = [...roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop()!
 		stack.push(...node.children)
 
@@ -734,10 +291,12 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
 		// `ResolvedPlace` runner-ups decorateNode attached, so the cast is sound.
 		const alts = (node.alternatives as ResolvedPlace[] | undefined) ?? []
+
 		const reconciling = alts
 			.filter((a) => a.lat !== 0 || a.lon !== 0)
 			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
 			.filter((x) => x.d <= gateKm)
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((x, y) => x.d - y.d)[0]
 
 		if (reconciling) {
@@ -751,11 +310,14 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 				lon: node.lon!,
 				score: 0,
 			}
+
 			const rest = alts.filter((a) => a !== reconciling.a)
 			decorateNode(node, reconciling.a, [displaced, ...rest])
 			node.metadata = { ...node.metadata, postcode_repicked: true }
+
 			continue
 		}
+
 		// No same-named instance near the postcode → the town is unreliable; trust the postcode's area.
 		node.lat = anchor.lat
 		node.lon = anchor.lon
@@ -783,7 +345,7 @@ async function applyAdminCoherence(roots: readonly AddressNode[], backend: Resol
 			regionHere &&
 			(node.tag === "locality" || node.tag === "dependent_locality") &&
 			!isResolvedWithCoord(node) &&
-			node.value.trim().length > 0
+			node.value.trim().length
 		) {
 			await reconcileAdminPair(regionHere, node, backend)
 		}
@@ -828,6 +390,7 @@ async function reconcileAdminPair(
 			parentID: region.id,
 			limit: 3,
 		})
+
 		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 		if (lc) {
@@ -836,12 +399,15 @@ async function reconcileAdminPair(
 				region,
 				regionCands.filter((r) => r !== region)
 			)
+
 			regionNode.metadata = { ...regionNode.metadata, admin_coherence_repicked: true }
+
 			decorateNode(
 				localityNode,
 				lc,
 				scoped.filter((l) => l !== lc)
 			)
+
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
 
 			return
@@ -864,16 +430,19 @@ async function reconcileAdminPair(
 			parentID: country.id,
 			limit: 3,
 		})
+
 		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 		if (lc) {
 			decorateNode(regionNode, country, regionCands)
 			regionNode.metadata = { ...regionNode.metadata, admin_coherence_repicked: true }
+
 			decorateNode(
 				localityNode,
 				lc,
 				scoped.filter((l) => l !== lc)
 			)
+
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
 
 			return
@@ -898,6 +467,7 @@ async function reconcileAdminPair(
 			country: mc.iso2,
 			limit: 3,
 		})
+
 		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 		if (lc) {
@@ -906,6 +476,7 @@ async function reconcileAdminPair(
 				lc,
 				scoped.filter((l) => l !== lc)
 			)
+
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
 			// The token named a foreign country the admin gazetteer has no node for, but the greedy walk had
 			// already decorated the region node with the US-state namesake. Revert that stale decoration so the
@@ -939,8 +510,10 @@ function revertResolverDecoration(node: AddressNode): void {
 		"resolution_quality",
 		"postcode_city_mismatch",
 	]) {
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 		delete meta[key]
 	}
+
 	node.metadata = meta
 	node.lat = undefined
 	node.lon = undefined
@@ -968,7 +541,7 @@ function revertResolverDecoration(node: AddressNode): void {
  */
 async function applyExplicitCountryCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
 	const visit = async (node: AddressNode, countryToken: AddressNode | null, regionAbove: boolean): Promise<void> => {
-		const countryHere = node.tag === "country" && node.value.trim().length > 0 ? node : countryToken
+		const countryHere = node.tag === "country" && node.value.trim().length ? node : countryToken
 		const regionHere = regionAbove || node.tag === "region" || node.tag === "subregion"
 
 		// Fire only when the explicit country is the locality's NEAREST admin context (no region/subregion between).
@@ -1014,6 +587,7 @@ async function reconcileExplicitCountry(
 		country: mc.iso2,
 		limit: 3,
 	})
+
 	const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 	if (!lc) return
@@ -1026,6 +600,7 @@ async function reconcileExplicitCountry(
 		lc,
 		scoped.filter((l) => l !== lc)
 	)
+
 	localityNode.metadata = { ...localityNode.metadata, explicit_country_repicked: true }
 }
 
@@ -1074,7 +649,7 @@ async function applyRegionCountryCoherence(
 			regionHere &&
 			!isResolvedWithCoord(regionHere) &&
 			(node.tag === "locality" || node.tag === "dependent_locality") &&
-			node.value.trim().length > 0
+			node.value.trim().length
 		) {
 			await reconcileRegionCountry(regionHere, node, backend, defaultCountry)
 		}
@@ -1124,6 +699,7 @@ async function reconcileRegionCountry(
 		country: sub.country,
 		limit: 3,
 	})
+
 	const rc = regionScoped.find((r) => r.exactMatch && !(r.lat === 0 && r.lon === 0))
 
 	if (!rc) return
@@ -1136,6 +712,7 @@ async function reconcileRegionCountry(
 		country: sub.country,
 		limit: 3,
 	})
+
 	const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 	if (!lc) return
@@ -1146,12 +723,15 @@ async function reconcileRegionCountry(
 		rc,
 		regionScoped.filter((r) => r !== rc)
 	)
+
 	regionNode.metadata = { ...regionNode.metadata, region_country_repicked: true }
+
 	decorateNode(
 		localityNode,
 		lc,
 		scoped.filter((l) => l !== lc)
 	)
+
 	localityNode.metadata = { ...localityNode.metadata, region_country_repicked: true }
 }
 
@@ -1181,7 +761,7 @@ class WOFResolver implements Resolver {
 			postcode: firstPostcodeValue(tree.roots),
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
-			anchorWeight: opts.anchorWeight ?? 2.0,
+			anchorWeight: opts.anchorWeight ?? 2,
 			hardCountry: opts.hardCountry,
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
@@ -1281,6 +861,7 @@ class WOFResolver implements Resolver {
 		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
 
 		if (!loc) return
+
 		const interpretation: Interpretation = {
 			tag: "locality",
 			placeID: `wof:${loc.id}`,
@@ -1290,6 +871,7 @@ class WOFResolver implements Resolver {
 			confidence: 0,
 			metadata: { relationship_type: loc.relationshipType, resolver_completed: true, resolver_name: loc.name },
 		}
+
 		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
 	}
 
@@ -1305,9 +887,10 @@ class WOFResolver implements Resolver {
 		if (placetype === "locality") {
 			state.localityNodePresent = true
 		}
+
 		let resolved: ResolvedPlace | null = null
 
-		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length > 0) {
+		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length) {
 			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 
 			if (picked) {
@@ -1355,7 +938,7 @@ class WOFResolver implements Resolver {
 		// Proximity bias (viewport center, user location, …) — a SOFT re-rank the backend folds into
 		// its exact-tier prominence; never a filter, so recall is untouched. This is how an ambiguous
 		// bare postcode ("48026") follows the map view instead of a global population coin-flip.
-		if (state.bias && state.bias.length > 0) {
+		if (state.bias && state.bias.length) {
 			query.bias = state.bias
 		}
 
@@ -1367,6 +950,7 @@ class WOFResolver implements Resolver {
 		if (parentResolved && typeof parentResolved.id === "number") {
 			query.parentID = parentResolved.id
 		}
+
 		// #194: a resolved parent's country wins, then the caller's `defaultCountry`, then the confident
 		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is gated
 		// upstream on high confidence (so it only fires when the model is sure), and on a miss the node is
@@ -1380,6 +964,7 @@ class WOFResolver implements Resolver {
 		// lookup, below a resolved parent's country but above the global defaults. It breaks the two-consistent-
 		// pairs tie ("Augusta, ME" → Maine, not Augusta/Messina) that pure geographic consistency cannot.
 		const countryHint = node.metadata?.["country_hint"]
+
 		const country =
 			parentResolved?.country ??
 			(typeof countryHint === "string" ? countryHint : undefined) ??
@@ -1408,7 +993,7 @@ class WOFResolver implements Resolver {
 			// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
 			// prefer a parent-scoped hit but never sacrifice recall. The country constraint is kept, so
 			// this still can't wander to a foreign place. Same logical resolution → no extra budget.
-			if (candidates.length === 0 && state.parentFallback && query.parentID !== undefined) {
+			if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
 				delete query.parentID
 				candidates = await this.#backend.findPlace(query)
 			}
@@ -1418,7 +1003,7 @@ class WOFResolver implements Resolver {
 			return null
 		}
 
-		if (candidates.length === 0) return null
+		if (!candidates.length) return null
 		// Postcode-anchor re-rank (#369): when a country posterior is supplied (from the address's
 		// postcode), boost candidates by `anchorWeight * posterior[candidate.country]` and re-sort, so a
 		// postcode that pins the country pulls the right-country place over a higher-BM25 foreign namesake
@@ -1447,6 +1032,7 @@ class WOFResolver implements Resolver {
 		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
 			const post = state.anchorPosterior
 			const w = state.anchorWeight
+
 			// #928 root cause: this sort's within-tier key was `score + w·posterior` — RAW SCORE order,
 			// the exact metric #910 deprecated inside the exact tier as bm25-length-poisoned (a famous
 			// place's alias-heavy doc reads ~15 pts WORSE than a tiny namesake's clean one; #905
@@ -1456,6 +1042,7 @@ class WOFResolver implements Resolver {
 			// The within-tier key is now the backend's PROMINENCE (population + proximity, #938 units)
 			// with the posterior as the additive country pin; score stays the final tiebreak. Backends
 			// that don't populate `prominence` degrade to the additive score behavior.
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			ranked = [...candidates].sort((a, b) => {
 				const tier = Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false)
 
@@ -1516,8 +1103,10 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 		if (node.sourceID !== undefined) {
 			meta["classifier_source_id"] = node.sourceID
 		}
+
 		node.metadata = meta
 	}
+
 	node.source = "resolver"
 	node.sourceID = `${resolved.placetype}:${resolved.id}`
 	node.lat = resolved.lat
@@ -1550,7 +1139,7 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}
 
-	if (alternatives.length > 0) {
+	if (alternatives.length) {
 		node.alternatives = alternatives
 	}
 }

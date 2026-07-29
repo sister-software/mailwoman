@@ -36,13 +36,18 @@ import { userEvent } from "@vitest/browser/context"
 import { act } from "react"
 import { vi } from "vitest"
 
-/** Marker so a repeat import can't wrap an already-wrapped method (which would nest act() pointlessly). */
+/**
+ * Marker so a repeat import can't wrap an already-wrapped method (which would nest act() pointlessly).
+ */
 const WRAPPED = Symbol.for("mailwoman.react.act-wrapped")
 
 type AnyFn = (...args: unknown[]) => unknown
+
 type TaggableFn = AnyFn & { [WRAPPED]?: true }
 
-/** Run `fn` inside act() and return its resolved value — the shared primitive both wrappers build on. */
+/**
+ * Run `fn` inside act() and return its resolved value — the shared primitive both wrappers build on.
+ */
 async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 	let result: T
 
@@ -53,9 +58,13 @@ async function inAct<T>(fn: () => Promise<T>): Promise<T> {
 	return result!
 }
 
-/** One drained macrotask tick — lets a fire-and-forget handler's trailing microtasks flush inside act(). */
+/**
+ * One drained macrotask tick — lets a fire-and-forget handler's trailing microtasks flush inside act().
+ */
 function nextTick(): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, 0))
+	return new Promise((resolve) => {
+		setTimeout(resolve, 0)
+	})
 }
 
 /**
@@ -86,7 +95,9 @@ function wrapUserEvent(): void {
 	}
 }
 
-/** Vitest's own `vi.waitFor` defaults (see its `WaitForOptions`) — reproduced so the poll matches. */
+/**
+ * Vitest's own `vi.waitFor` defaults (see its `WaitForOptions`) — reproduced so the poll matches.
+ */
 const DEFAULT_WAIT_TIMEOUT = 1000
 const DEFAULT_WAIT_INTERVAL = 50
 
@@ -114,8 +125,10 @@ async function actWaitFor<T>(
 			// still yields a microtask, and a component promise queued behind it would fire setState in
 			// that gap — outside act. None of this suite's callbacks are async, so the sync path is the norm.
 			const result = callback()
+
 			const isThenable =
 				result !== null && typeof result === "object" && typeof (result as { then?: unknown }).then === "function"
+
 			const value = isThenable ? await (result as Promise<T>) : (result as T)
 
 			// The condition is met, but an intermediate assertion (wait for X while Y is still resolving —
@@ -123,7 +136,9 @@ async function actWaitFor<T>(
 			// follow-on) can leave a promise in flight. Drain one more tick INSIDE act so that trailing
 			// setState settles in-scope instead of firing during the caller's `await` resume gap.
 			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 0))
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0)
+				})
 			})
 
 			return value
@@ -136,12 +151,16 @@ async function actWaitFor<T>(
 		// All waiting happens inside act(): the pending updates for this round settle in-scope, and the
 		// fresh act completes so the next effect in a chain gets flushed before the next check.
 		await act(async () => {
-			await new Promise((resolve) => setTimeout(resolve, interval))
+			await new Promise((resolve) => {
+				setTimeout(resolve, interval)
+			})
 		})
 	}
 }
 
-/** Swap `vi.waitFor` for the act-advancing poll above. */
+/**
+ * Swap `vi.waitFor` for the act-advancing poll above.
+ */
 function wrapWaitFor(): void {
 	const original = vi.waitFor as TaggableFn
 
@@ -161,11 +180,15 @@ function wrapWaitFor(): void {
  */
 export async function actDelay(ms = 0): Promise<void> {
 	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, ms))
+		await new Promise((resolve) => {
+			setTimeout(resolve, ms)
+		})
 	})
 }
 
-/** Install the act() wrappers on the shared `userEvent` / `vi` singletons. Idempotent. */
+/**
+ * Install the act() wrappers on the shared `userEvent` / `vi` singletons. Idempotent.
+ */
 export function installActWrappers(): void {
 	wrapUserEvent()
 	wrapWaitFor()

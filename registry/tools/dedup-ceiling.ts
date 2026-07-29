@@ -35,24 +35,43 @@ import { writeFileSync } from "node:fs"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
-/** Options for {@linkcode dedupCeiling}. */
+/**
+ * Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated.
+ */
+const WEAK_SIMILARITY_MIN = 0.3
+
+/**
+ * Options for {@linkcode dedupCeiling}.
+ */
 export interface DedupCeilingOptions {
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Providers sampled from the registry. Default 50000. */
+	/**
+	 * Providers sampled from the registry. Default 50000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** Org-name Jaccard collision threshold. Default 0.7. */
+	/**
+	 * Org-name Jaccard collision threshold. Default 0.7.
+	 */
 	tau?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 
-// Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which
-// carry the distinguishing signal between two co-located providers.
+/**
+ * Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which carry the
+ * distinguishing signal between two co-located providers.
+ */
 const STOP = new Set([
 	"llc",
 	"inc",
@@ -70,17 +89,19 @@ const STOP = new Set([
 	"of",
 	"and",
 ])
+
 function orgTokens(s: string): Set<string> {
 	return new Set(
 		s
 			.toLowerCase()
-			.replace(/[^a-z0-9 ]/g, " ")
+			.replaceAll(/[^a-z0-9 ]/g, " ")
 			.split(/\s+/)
 			.filter((t) => t && !STOP.has(t))
 	)
 }
+
 function jaccard(a: Set<string>, b: Set<string>): number {
-	if (a.size === 0 || b.size === 0) return 0
+	if (!a.size || !b.size) return 0
 	let inter = 0
 
 	for (const t of a)
@@ -90,8 +111,9 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 	return inter / (a.size + b.size - inter)
 }
+
 const normPhone = (p?: string): string => {
-	const d = (p ?? "").replace(/\D/g, "")
+	const d = (p ?? "").replaceAll(/\D/g, "")
 
 	return d.length >= 10 ? d.slice(-10) : ""
 }
@@ -100,7 +122,9 @@ interface Provider {
 	npi: string
 	tokens: Set<string>
 	phone: string
-	/** Authorized official (last + first), lowercased — same official ⇒ almost certainly one org. */
+	/**
+	 * Authorized official (last + first), lowercased — same official ⇒ almost certainly one org.
+	 */
 	auth: string
 	/**
 	 * Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different provider.
@@ -108,13 +132,15 @@ interface Provider {
 	taxonomy: string
 }
 
-/** #625 ceiling measurement — see the module doc. Emits the markdown report to stdout. */
+/**
+ * #625 ceiling measurement — see the module doc. Emits the markdown report to stdout.
+ */
 export async function dedupCeiling(
 	options: DedupCeilingOptions = {},
 	report?: (line: string) => void
 ): Promise<{ markdown: string; pairs: number; collide: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const CAP = options.cap ?? 50000
+	const CAP = options.cap ?? 50_000
 	const STATE = (options.state || "TX").toUpperCase()
 	const TAU = options.tau ?? 0.7
 	const OUT_MD = options.outMd || ""
@@ -144,9 +170,11 @@ export async function dedupCeiling(
 
 		if (!addrKey) continue
 		const npi = norm(r["NPI"])
+
 		const auth = `${norm(r["Authorized Official Last Name"])} ${norm(r["Authorized Official First Name"])}`
 			.toLowerCase()
 			.trim()
+
 		const p: Provider = {
 			npi,
 			tokens: orgTokens(org),
@@ -158,11 +186,14 @@ export async function dedupCeiling(
 		if (!byAddr.has(addrKey)) {
 			byAddr.set(addrKey, [])
 		}
+
 		byAddr.get(addrKey)!.push(p)
+
 		kept++
 
 		if (kept >= CAP) break
 	}
+
 	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
 	// --- Over co-located distinct-NPI pairs: the org-similarity distribution + collision rate. ---
@@ -189,15 +220,18 @@ export async function dedupCeiling(
 			if (!distinct.has(p.npi)) {
 				distinct.set(p.npi, p)
 			}
+
 		const list = [...distinct.values()]
 
 		if (list.length < 2) continue
+
 		sharedAddresses++
 		providersAtSharedAddr += list.length
 
 		for (let i = 0; i < list.length; i++) {
 			for (let j = i + 1; j < list.length; j++) {
 				if (pairs >= PAIR_BUDGET) break
+
 				pairs++
 				const a = list[i]!
 				const b = list[j]!
@@ -209,6 +243,7 @@ export async function dedupCeiling(
 					if (a.phone && a.phone === b.phone) {
 						collideSharePhone++
 					}
+
 					const sameAuth = a.auth !== "" && a.auth === b.auth
 					const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 
@@ -217,7 +252,7 @@ export async function dedupCeiling(
 					} else if (!sameTax) {
 						collideDistinct++
 					}
-				} else if (sim >= 0.3) {
+				} else if (sim >= WEAK_SIMILARITY_MIN) {
 					mid++
 				} else {
 					separable++
@@ -237,113 +272,81 @@ export async function dedupCeiling(
 	const pct = formatPercent
 	const collisionRate = pairs > 0 ? collide / pairs : 0
 
-	const lines: string[] = []
-	lines.push(`# #625 — dedup ceiling: the irreducible over-merge of co-located providers`)
-	lines.push("")
-	lines.push(
+	const lines: string[] = [
+		`# #625 — dedup ceiling: the irreducible over-merge of co-located providers`,
+		"",
 		`_Generated by \`registry/tools/dedup-ceiling.ts\`. ${STATE}, ${kept} type-2 (org) providers ` +
 			`(cap ${CAP}), geocode-free: "same address" = the matcher's \`addressFrequencyKey\`; "same name" = ` +
 			`normalized token Jaccard over the legal business name (corporate suffixes + articles stripped, domain ` +
-			`words kept). NPI is the distinctness truth (different NPI = different provider). τ = ${TAU}._`
-	)
-	lines.push("")
-	lines.push(`## Co-location prevalence`)
-	lines.push("")
-	lines.push(
-		`- **${sharedAddresses}** addresses host ≥2 distinct NPIs (${pct(sharedAddresses, byAddr.size)} of ${byAddr.size} addresses).`
-	)
-	lines.push(
-		`- **${providersAtSharedAddr}** providers sit at a shared address (${pct(providersAtSharedAddr, kept)} of ${kept}).`
-	)
-	lines.push(
-		`- **${pairs}** co-located distinct-NPI pairs (the over-merge population)${pairs >= PAIR_BUDGET ? ` — capped at the ${PAIR_BUDGET} pair budget` : ""}.`
-	)
-	lines.push("")
-	lines.push(`## Name separability of co-located distinct providers`)
-	lines.push("")
-	lines.push(`| org-name Jaccard | pairs | share | meaning |`)
-	lines.push(`|---|---:|---:|---|`)
-	lines.push(
-		`| ≥ ${TAU} (collision) | ${collide} | ${pct(collide, pairs)} | ~identical names → **irreducible over-merge** |`
-	)
-	lines.push(`| ${0.3}–${TAU} | ${mid} | ${pct(mid, pairs)} | partial — separable with a good model |`)
-	lines.push(`| < 0.3 | ${separable} | ${pct(separable, pairs)} | clearly different names → separable |`)
-	lines.push("")
-	lines.push(
+			`words kept). NPI is the distinctness truth (different NPI = different provider). τ = ${TAU}._`,
+		"",
+		`## Co-location prevalence`,
+		"",
+		`- **${sharedAddresses}** addresses host ≥2 distinct NPIs (${pct(sharedAddresses, byAddr.size)} of ${byAddr.size} addresses).`,
+		`- **${providersAtSharedAddr}** providers sit at a shared address (${pct(providersAtSharedAddr, kept)} of ${kept}).`,
+		`- **${pairs}** co-located distinct-NPI pairs (the over-merge population)${pairs >= PAIR_BUDGET ? ` — capped at the ${PAIR_BUDGET} pair budget` : ""}.`,
+		"",
+		`## Name separability of co-located distinct providers`,
+		"",
+		`| org-name Jaccard | pairs | share | meaning |`,
+		`|---|---:|---:|---|`,
+		`| ≥ ${TAU} (collision) | ${collide} | ${pct(collide, pairs)} | ~identical names → **irreducible over-merge** |`,
+		`| ${0.3}–${TAU} | ${mid} | ${pct(mid, pairs)} | partial — separable with a good model |`,
+		`| < 0.3 | ${separable} | ${pct(separable, pairs)} | clearly different names → separable |`,
+		"",
 		`Of the ${collide} collision pairs, **${collideSharePhone}** (${pct(collideSharePhone, collide)}) also share a phone — ` +
 			`so phone (a shared institutional switchboard) does NOT separate them either; if anything it over-links. This is ` +
-			`why the benchmark found phone an unreliable secondary identifier.`
-	)
-	lines.push("")
-	lines.push(`## Splitting the collisions: NPI over-segmentation vs genuinely distinct providers`)
-	lines.push("")
-	lines.push(
+			`why the benchmark found phone an unreliable secondary identifier.`,
+		"",
+		`## Splitting the collisions: NPI over-segmentation vs genuinely distinct providers`,
+		"",
 		`A collision (same address, ~same name, often same phone) with DIFFERENT NPIs is usually one organization holding ` +
 			`multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting**, ` +
-			`not a model error. NPPES's own fields separate the two cases:`
-	)
-	lines.push("")
-	lines.push(`| collision pair is… | pairs | share of collisions | merging it is… |`)
-	lines.push(`|---|---:|---:|---|`)
-	lines.push(
-		`| same authorized official | ${collideSameAuth} | ${pct(collideSameAuth, collide)} | **correct** — one org, many NPIs (NPI over-segments) |`
-	)
-	lines.push(
-		`| different official AND different specialty | ${collideDistinct} | ${pct(collideDistinct, collide)} | a **genuine** distinct co-located provider — true over-merge |`
-	)
-	lines.push(
-		`| (remainder: different official, same specialty) | ${collide - collideSameAuth - collideDistinct} | ${pct(collide - collideSameAuth - collideDistinct, collide)} | ambiguous — needs adjudication |`
-	)
-	lines.push("")
-	lines.push(`## The ceiling`)
-	lines.push("")
-	lines.push(
+			`not a model error. NPPES's own fields separate the two cases:`,
+		"",
+		`| collision pair is… | pairs | share of collisions | merging it is… |`,
+		`|---|---:|---:|---|`,
+		`| same authorized official | ${collideSameAuth} | ${pct(collideSameAuth, collide)} | **correct** — one org, many NPIs (NPI over-segments) |`,
+		`| different official AND different specialty | ${collideDistinct} | ${pct(collideDistinct, collide)} | a **genuine** distinct co-located provider — true over-merge |`,
+		`| (remainder: different official, same specialty) | ${collide - collideSameAuth - collideDistinct} | ${pct(collide - collideSameAuth - collideDistinct, collide)} | ambiguous — needs adjudication |`,
+		"",
+		`## The ceiling`,
+		"",
 		`The raw collision rate is **${pct(collide, pairs)}** of co-located distinct-NPI pairs — but only **${pct(collideDistinct, pairs)}** ` +
 			`of co-located pairs are *genuinely* distinct providers indistinguishable by name (different official + specialty). ` +
 			`Most collisions are **NPI over-segmentation** (${pct(collideSameAuth, collide)} share an authorized official), where ` +
-			`a merge is correct and NPI-truth penalizes it wrongly.`
-	)
-	lines.push("")
-	lines.push(`**This is the answer to "how good is good enough," and it has two parts:**`)
-	lines.push(
+			`a merge is correct and NPI-truth penalizes it wrongly.`,
+		"",
+		`**This is the answer to "how good is good enough," and it has two parts:**`,
 		`1. Measured against **NPI-as-truth**, F1 is capped well below 0.85 — ~${pct(collide, pairs)} of co-located pairs are ` +
 			`unseparable, and NPI-truth scores most of them as errors even though merging is correct. The round **0.85 target ` +
-			`is unreachable under this yardstick and should be dropped.**`
-	)
-	lines.push(
+			`is unreachable under this yardstick and should be dropped.**`,
 		`2. The *real* irreducible over-merge — genuinely distinct co-located providers with identical names — is only ` +
 			`~**${pct(collideDistinct, pairs)}** of the co-located population. Against an **entity-level truth** (subpart-aware), ` +
 			`the achievable ceiling is much higher. But that ceiling can only be MEASURED with an entity-level / adjudicated ` +
 			`gold set — NPI-truth alone can't tell a correct subpart-merge from a true over-merge. **This is why the gold set ` +
-			`(the "second comparison") is necessary, not optional.**`
-	)
-	lines.push("")
-	lines.push(
+			`(the "second comparison") is necessary, not optional.**`,
+		"",
 		`Recommendation: drop 0.85. Set the bar against a subpart-aware / adjudicated entity truth, report NPI-level AND ` +
 			`entity-level side by side, and target "separate the ~${pct(collideDistinct, pairs)} genuinely-distinct co-located ` +
 			`pairs the GBT can still reach" rather than a round F1. The GBT's corroboration-feature work (#625 revised) ` +
-			`attacks exactly that separable slice.`
-	)
-	lines.push("")
-	lines.push(`## Caveats`)
-	lines.push("")
-	lines.push(
+			`attacks exactly that separable slice.`,
+		"",
+		`## Caveats`,
+		"",
 		`- **Geocode-free + exact address key.** "Co-located" here is an exact normalized-address match; geocoding would ` +
 			`add near-but-not-exact neighbors (suite splits, slightly different formatting), which can only RAISE the ` +
-			`collision count. So this is a LOWER bound on the irreducible over-merge.`
-	)
-	lines.push(
+			`collision count. So this is a LOWER bound on the irreducible over-merge.`,
 		`- **Recall side under-measured.** NPPES same-NPI records almost always share an address or the org name, so the ` +
 			`recall floor looks ~1.0 here; real-world feeds with distant + name-drifted same-entity records would lower it. ` +
-			`The F1 ceiling reported tracks the PRECISION constraint, which is the binding one for the over-merge problem.`
-	)
-	lines.push(
+			`The F1 ceiling reported tracks the PRECISION constraint, which is the binding one for the over-merge problem.`,
 		`- **Token-Jaccard ≠ the model's name comparison.** A proxy for separability; the GBT uses the FS agreement ` +
-			`levels. The collision SET (sim ≥ τ + shared phone) is robust to the exact similarity metric.`
-	)
-	lines.push("")
+			`levels. The collision SET (sim ≥ τ + shared phone) is robust to the exact similarity metric.`,
+		"",
+	]
 
 	const md = lines.join("\n")
+
 	console.log(md)
 
 	if (OUT_MD) {

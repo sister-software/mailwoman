@@ -22,7 +22,7 @@ const OptionsSchema = zod.object({
 	baseRoot: zod.string().optional().describe("Base corpus root (default $MAILWOMAN_DATA_ROOT/corpus/versioned)"),
 	threshold: zod.number().default(0.7).describe("Base-majority confidence floor for a contradiction"),
 	minCount: zod.number().default(50).describe("Minimum base support to judge a token"),
-	fraction: zod.number().default(1.0).describe("Fraction of base parts to scan (proportional per-source below 1.0)"),
+	fraction: zod.number().default(1).describe("Fraction of base parts to scan (proportional per-source below 1.0)"),
 })
 
 export { OptionsSchema as options }

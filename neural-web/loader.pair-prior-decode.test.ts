@@ -27,11 +27,15 @@ const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
 	class Tensor {
-		constructor(
-			public readonly type: string,
-			public readonly data: BigInt64Array | Float32Array,
-			public readonly dims: readonly number[]
-		) {}
+		readonly type: string
+		readonly data: BigInt64Array | Float32Array
+		readonly dims: readonly number[]
+
+		constructor(type: string, data: BigInt64Array | Float32Array, dims: readonly number[]) {
+			this.type = type
+			this.data = data
+			this.dims = dims
+		}
 	}
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
@@ -52,7 +56,7 @@ const GB_INDEX = "https://cdn.example/mailwoman/v10/pair-index-gb.bin"
 function col(label: string): number {
 	const idx = STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
 
-	if (idx < 0) throw new Error(`fixture label ${label} missing from STAGE2_BIO_LABELS`)
+	if (idx === -1) throw new Error(`fixture label ${label} missing from STAGE2_BIO_LABELS`)
 
 	return idx
 }
@@ -70,13 +74,16 @@ function fusedLatticeSession(): void {
 	flat[3 * L + col("B-locality")] = 10 // piece 3
 
 	sessionCreateMock.mockReset()
+
 	sessionCreateMock.mockResolvedValue({
 		inputNames: ["input_ids", "attention_mask"],
 		run: vi.fn(() => Promise.resolve({ logits: { data: flat, dims: [1, SEQ, L] } })),
 	})
 }
 
-/** Real PIX1 bytes at the neural fixture's calibration: δ=6, β=5 — the flip needs both (see file header). */
+/**
+ * Real PIX1 bytes at the neural fixture's calibration: δ=6, β=5 — the flip needs both (see file header).
+ */
 function gbIndexBytes(): Uint8Array {
 	const header: PairIndexHeader = {
 		country: "gb",
@@ -97,7 +104,7 @@ function makeFetch(): typeof fetch {
 
 		if (url === TOKENIZER_URL) return new Response(new Uint8Array(readFileSync(TOKENIZER_FIXTURE)))
 
-		if (url === GB_INDEX) return new Response(gbIndexBytes())
+		if (url === GB_INDEX) return new Response(gbIndexBytes().slice().buffer)
 
 		return new Response(new Uint8Array([1, 2, 3])) // model bytes — the ORT session is mocked
 	}) as unknown as typeof fetch

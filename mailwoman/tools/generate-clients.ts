@@ -47,6 +47,7 @@ import type { Check } from "../cli-kit/index.ts"
  * (the new fourth module).
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
+
 export type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
 /**
@@ -54,9 +55,12 @@ export type ClientSurface = (typeof CLIENT_SURFACES)[number]
  * understands 3.0.x).
  */
 const FLAVORS = ["3.1", "3.0"] as const
+
 type Flavor = (typeof FLAVORS)[number]
 
-/** Every surface's compiled CLI entry point, relative to the repo root — the emitters this pipeline shells out to. */
+/**
+ * Every surface's compiled CLI entry point, relative to the repo root — the emitters this pipeline shells out to.
+ */
 function emitterCLIPath(surface: ClientSurface): string {
 	return repoRootPath(surface, "out", "cli.js")
 }
@@ -70,20 +74,26 @@ function emitterCLIPath(surface: ClientSurface): string {
  */
 const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
 
-/** Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps. */
+/**
+ * Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps.
+ */
 function copyLicenseFiles(destDir: string): void {
 	for (const filename of LICENSE_FILENAMES) {
 		copyFileSync(repoRootPath(filename), join(destDir, filename))
 	}
 }
 
-/** Absolute paths to each surface's emitted document, per flavor. */
+/**
+ * Absolute paths to each surface's emitted document, per flavor.
+ */
 export interface SpecPaths {
 	v31: Record<ClientSurface, string>
 	v30: Record<ClientSurface, string>
 }
 
-/** Everything a completed (or partially completed, on early abort) run produced. */
+/**
+ * Everything a completed (or partially completed, on early abort) run produced.
+ */
 export interface GenerateClientsReceipt {
 	version: string
 	outDir: string
@@ -97,7 +107,9 @@ export interface GenerateClientsReceipt {
 }
 
 export interface GenerateClientsOptions {
-	/** Output root. Default `<repo>/clients-build` (gitignored). */
+	/**
+	 * Output root. Default `<repo>/clients-build` (gitignored).
+	 */
 	outDir?: string
 	/**
 	 * Skip `uv build`/import-check + `cargo check --examples` (dev only — an unverified pipeline must never be trusted as
@@ -127,6 +139,7 @@ function fail(message: string): never {
  */
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
 	console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)
+
 	const r = spawnSync(cmd, args, { stdio: "inherit", env: childEnv(), cwd: options.cwd })
 
 	if (r.error) {
@@ -155,14 +168,16 @@ function readMailwomanVersion(): string {
 function checkCompiled(): void {
 	const missing = CLIENT_SURFACES.filter((surface) => !existsSync(emitterCLIPath(surface)))
 
-	if (missing.length > 0) {
+	if (missing.length) {
 		fail(
 			`out/cli.js missing for: ${missing.join(", ")} — run \`yarn compile\` first (client generation reads the compiled openapi emitters, not source)`
 		)
 	}
 }
 
-/** Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`. */
+/**
+ * Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`.
+ */
 function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): SpecPaths {
 	mkdirSync(specsDir, { recursive: true })
 
@@ -176,6 +191,7 @@ function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): Sp
 			const out = join(specsDir, `${surface}-${flavor}.json`)
 
 			phase("emit-spec", `${surface} ${flavor} → ${out}`)
+
 			run("node", [cli, "openapi", "--flavor", flavor, "--out", out])
 			;(flavor === "3.1" ? v31 : v30)[surface] = out
 		}
@@ -195,6 +211,7 @@ function generatePythonModules(specPaths: SpecPaths, pythonDir: string, phase: (
 
 	for (const surface of CLIENT_SURFACES) {
 		phase("python-generate", surface)
+
 		run("uvx", [
 			"openapi-python-client@0.29",
 			"generate",
@@ -523,6 +540,7 @@ function verifyPython(pythonDir: string, phase: (p: string, d?: string) => void)
 	const wheelPath = join(distDir, wheel)
 
 	phase("python-import-check", wheelPath)
+
 	run("uv", [
 		"run",
 		"--no-project",
@@ -800,7 +818,9 @@ function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): vo
 	run("cargo", ["check", "--examples"], { cwd: rustDir })
 }
 
-/** Run the full pipeline. See the module docstring for the phase order and the `--examples` verify note. */
+/**
+ * Run the full pipeline. See the module docstring for the phase order and the `--examples` verify note.
+ */
 export async function generateClients(opts: GenerateClientsOptions = {}): Promise<GenerateClientsResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
@@ -885,6 +905,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			checks.push({ ok: true, check: step.check, detail: detail || undefined })
 		} catch (error) {
 			checks.push({ ok: false, check: step.check, detail: error instanceof Error ? error.message : String(error) })
+
 			break
 		}
 	}

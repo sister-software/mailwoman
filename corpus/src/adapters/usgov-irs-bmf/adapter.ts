@@ -27,11 +27,21 @@ import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
 
 const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
-// PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12".
+/**
+ * PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12".
+ */
 const PO_BOX = /^\s*(?:P\.?\s?O\.?\s*BOX|POB|BOX)\s+\w/i
 
 interface IrsBmfRow {
@@ -43,7 +53,9 @@ interface IrsBmfRow {
 	ZIP: string
 }
 
-/** Classify the street line into a `po_box` or a `{house_number?, street}` split. */
+/**
+ * Classify the street line into a `po_box` or a `{house_number?, street}` split.
+ */
 function splitStreetLine(street: string): { po_box: string } | { house_number?: string; street: string } | null {
 	const trimmed = street.trim()
 
@@ -82,6 +94,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({ columns: true, skip_empty_lines: true, relax_quotes: true, relax_column_count: true, trim: true })
 			)
@@ -143,6 +156,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_IRS_BMF_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -152,4 +166,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovIrsBmfAdapter = createUsgovIrsBmfAdapter()

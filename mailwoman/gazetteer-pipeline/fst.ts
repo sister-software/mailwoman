@@ -37,7 +37,9 @@ import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
-/** The served Latin-script language tiers (see SCOPE.mdx) — uniform curation set for every locale FST. */
+/**
+ * The served Latin-script language tiers (see SCOPE.mdx) — uniform curation set for every locale FST.
+ */
 export const CURATION_LANGUAGES = [
 	"en",
 	"fr",
@@ -58,6 +60,10 @@ export const CURATION_LANGUAGES = [
 	"hu",
 ] as const
 
+/**
+ * Identifies which exclusion policy built an FST. Stamped into the artifact so a stale index built under an older
+ * policy is detectable rather than silently mixed with a new one.
+ */
 export const EXCLUSION_POLICY_ID =
 	"degenerate-surface-exclusion v1.1 (libpostal stopwords+street_types, 17 langs, + supplemental)"
 
@@ -72,7 +78,9 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 	"op",
 ])
 
-/** The shipped per-locale FST set (provenance-recovered country scoping; en-nz deliberately has none). */
+/**
+ * The shipped per-locale FST set (provenance-recovered country scoping; en-nz deliberately has none).
+ */
 export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["en-us", ["US"]],
 	["fr-fr", ["FR"]],
@@ -80,7 +88,9 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["de-de", ["DE"]],
 ])
 
-/** One dictionary line = canonical|variant|variant… — every pipe-separated form is a surface. */
+/**
+ * One dictionary line = canonical|variant|variant… — every pipe-separated form is a surface.
+ */
 function surfacesOfLine(line: string): string[] {
 	return line
 		.split("|")
@@ -116,7 +126,7 @@ export function loadDegenerateSurfaces(
 				for (const surface of surfacesOfLine(line)) {
 					const tokens = fold(surface)
 
-					if (tokens.length === 0) continue
+					if (!tokens.length) continue
 					surfaces.add(tokens.join(" "))
 
 					// Compositional clause sources from stopwords ONLY — single-token entries, so
@@ -132,7 +142,7 @@ export function loadDegenerateSurfaces(
 	for (const s of SUPPLEMENTAL_DEGENERATE_SURFACES) {
 		const tokens = fold(s)
 
-		if (tokens.length === 0) continue
+		if (!tokens.length) continue
 		surfaces.add(tokens.join(" "))
 
 		if (tokens.length === 1) {
@@ -179,6 +189,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 			set = new Set([seen])
 			overflow.set(key, set)
 		}
+
 		set.add(country)
 	}
 
@@ -187,6 +198,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 	for (const row of primary.iterate(...placetypes) as Iterable<{ country: string; name: string }>) {
 		paint(row.name, row.country)
 	}
+
 	const alts = db.prepare(
 		`SELECT s.country AS country, n.name AS name FROM names n JOIN spr s ON s.id = n.id
 		 WHERE s.is_current = 1 AND s.placetype IN (${ph})`
@@ -195,6 +207,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 	for (const row of alts.iterate(...placetypes) as Iterable<{ country: string; name: string }>) {
 		paint(row.name, row.country)
 	}
+
 	db.close()
 
 	const counts = new Map<string, number>()
@@ -207,13 +220,21 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 }
 
 export interface BuildLocaleFSTsOpts {
-	/** Locales to build (default: every FST_LOCALES key). */
+	/**
+	 * Locales to build (default: every FST_LOCALES key).
+	 */
 	locales?: string[]
-	/** WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`). */
+	/**
+	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
+	 */
 	dbPath?: string
-	/** Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`). Never the shipped dir. */
+	/**
+	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`). Never the shipped dir.
+	 */
 	outputDir?: string
-	/** Skip the curation (an A/B control build with the SAME current DB). */
+	/**
+	 * Skip the curation (an A/B control build with the SAME current DB).
+	 */
 	uncurated?: boolean
 	onProgress?: (line: string) => void
 }
@@ -239,6 +260,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			`curation: ${exclusion.surfaces.size} whole surfaces + ${exclusion.stopwordTokens.size} stopword tokens (${EXCLUSION_POLICY_ID})`
 		)
 	}
+
 	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated control stays a pure
 	// pre-curation byte baseline. One global scan shared by every locale.
 	const surfaceCountryCounts = opts.uncurated ? undefined : computeSurfaceCountryCounts(dbPath)
@@ -246,6 +268,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 	if (surfaceCountryCounts) {
 		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)
 	}
+
 	mkdirSync(outputDir, { recursive: true })
 
 	const built: BuiltLocaleFST[] = []
@@ -256,6 +279,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 		if (!countries) throw new Error(`unknown FST locale ${locale} — add it to FST_LOCALES with its country scope`)
 
 		progress(`building fst-${locale} (countries=[${countries}]) from ${dbPath}`)
+
 		const { matcher, provenance } = buildFSTFromWOF({
 			dbPath,
 			countries,
@@ -269,9 +293,11 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			...(surfaceCountryCounts ? { surfaceCountryCounts } : {}),
 			onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 		})
+
 		const outPath = join(outputDir, `fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)
 		const bytes = serializeFST(matcher, provenance)
 		writeFileSync(outPath, bytes)
+
 		built.push({
 			locale,
 			path: outPath,
@@ -279,6 +305,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			nameInsertions: provenance.nameInsertions,
 			excludedInsertions: provenance.excludedInsertions ?? 0,
 		})
+
 		progress(
 			`  wrote ${outPath} (${(bytes.length / 1e6).toFixed(1)} MB, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
 		)

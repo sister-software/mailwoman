@@ -56,17 +56,21 @@ export interface TreeValidity {
 	violations: TreeViolation[]
 }
 
-/** Validate an `AddressTree`'s structural coherence. See module docstring. */
+/**
+ * Validate an `AddressTree`'s structural coherence. See module docstring.
+ */
 export function validateTree(tree: AddressTree): TreeValidity {
 	const violations: TreeViolation[] = []
 	// Validate against the tree's own addressing system's hierarchy (defaults to Western).
 	const parentOf = containmentFor(tree.system)
 
 	const present = new Set<ComponentTag>()
+
 	const collect = (n: AddressNode): void => {
 		present.add(n.tag)
 		n.children.forEach(collect)
 	}
+
 	tree.roots.forEach(collect)
 
 	const walk = (node: AddressNode, parent: AddressNode | null): void => {
@@ -94,6 +98,7 @@ export function validateTree(tree: AddressTree): TreeValidity {
 
 		node.children.forEach((c) => walk(c, node))
 	}
+
 	tree.roots.forEach((r) => walk(r, null))
 
 	return { valid: violations.length === 0, violations }

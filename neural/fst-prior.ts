@@ -21,6 +21,20 @@
 
 import type { TokenLike } from "./query-shape-prior.ts"
 
+/**
+ * Confidence scaling by matched-token count. A one- or two-token FST hit is far likelier to be coincidental than a
+ * three-token one, so short matches are discounted rather than trusted.
+ */
+const FST_MATCH_LENGTH_SCALE: ReadonlyMap<number, number> = new Map([
+	[1, 0.25],
+	[2, 0.7],
+])
+
+/**
+ * Scale applied once a match is long enough to stand on its own.
+ */
+const FULL_FST_MATCH_SCALE = 1
+
 const SPACE_SENTINEL = "▁"
 
 /**
@@ -34,7 +48,9 @@ const SPACE_SENTINEL = "▁"
  */
 const BYTE_FALLBACK_RE = /^<0x[0-9A-Fa-f]{2}>$/
 
-/** Is `piece` real word content, ignoring a leading `▁` sentinel? False for a byte-fallback placeholder — see above. */
+/**
+ * Is `piece` real word content, ignoring a leading `▁` sentinel? False for a byte-fallback placeholder — see above.
+ */
 function hasWordContent(piece: string): boolean {
 	const literal = piece.startsWith(SPACE_SENTINEL) ? piece.slice(SPACE_SENTINEL.length) : piece
 
@@ -43,9 +59,7 @@ function hasWordContent(piece: string): boolean {
 	return /[\p{L}\p{N}]/u.test(piece)
 }
 
-// ---------------------------------------------------------------------------
-// Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
-// ---------------------------------------------------------------------------
+//#region Structural types
 
 export interface FSTMatchLike {
 	stateID: number
@@ -65,9 +79,9 @@ export interface FSTMatcherLike {
 	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
-// ---------------------------------------------------------------------------
-// Placetype → BIO label mapping
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Placetype → BIO label mapping
 
 const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -76,9 +90,9 @@ const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["postalcode", "postcode"],
 ])
 
-// ---------------------------------------------------------------------------
-// Internals
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Internals
 
 export interface WordGroup {
 	fstToken: string
@@ -112,7 +126,9 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * FR regression).
  */
 export interface StreetContextGateOpts {
-	/** The street-morphology FST matcher (same instance the street-morphology prior consumes). */
+	/**
+	 * The street-morphology FST matcher (same instance the street-morphology prior consumes).
+	 */
 	fst: FSTMatcherLike
 	/**
 	 * Multiplier applied to the positive `impBias` when the gate fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
@@ -128,7 +144,9 @@ export interface FSTPriorOpts {
 	 */
 	maxBias?: number
 	suppressionScale?: number
-	/** See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller). */
+	/**
+	 * See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller).
+	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
 	 * See {@link StreetContextGateOpts}. Absent → current behavior (default-safe no-op).
@@ -136,7 +154,9 @@ export interface FSTPriorOpts {
 	streetContext?: StreetContextGateOpts
 }
 
-/** House-number shape for the street-context gate (#1143: "the house number is the license"). */
+/**
+ * House-number shape for the street-context gate (#1143: "the house number is the license").
+ */
 const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
 
 /**
@@ -153,15 +173,16 @@ export function buildFSTEmissionPriors(
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 1.0
+	const biasScale = opts.biasScale ?? 1
 	const seenWOFIDs = new Set<number>()
-	const maxBias = opts.maxBias ?? 3.0
+	const maxBias = opts.maxBias ?? 3
 	const suppressionScale = opts.suppressionScale ?? 1.5
 	// Default `suppression` (#1142, measured 2026-07-18): scaling ONLY the street-suppression term by
 	// match length is a broad win (US golden +35, admin-street-homonym fragments +50, bare-locality −2),
 	// and it leaves the positive locality bias untouched so the bare-fragment regime is safe. Scaling the
 	// positive term too (`both`) measured strictly worse (US +26, FR −9). See docs/…/the-meaning-of-zero.
 	const lengthMode: ImportanceLengthScaleMode = opts.importanceLengthScaleMode ?? "suppression"
+	const tuning: BiasTuning = { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode }
 	const matrix: number[][] = []
 
 	for (let t = 0; t < T; t++) {
@@ -176,15 +197,17 @@ export function buildFSTEmissionPriors(
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 
-	if (wordGroups.length === 0) return matrix
+	if (!wordGroups.length) return matrix
 
 	// Street-context gate precompute (#1142) — O(words), only when the morphology FST was passed in.
 	// `streetTypeFlags[i]` = word-group i is a street-type token per the morphology FST;
 	// `houseNumberFlags[i]` = word-group i is house-number-shaped.
 	const streetContext = opts.streetContext
+
 	const streetTypeFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => g.fstToken !== "" && isStreetAffix(streetContext.fst, g.fstToken))
 		: null
+
 	const houseNumberFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => HOUSE_NUMBER_RE.test(g.fstToken))
 		: null
@@ -204,11 +227,7 @@ export function buildFSTEmissionPriors(
 				labelToCol,
 				fst.accepting(match.stateID),
 				[group],
-				biasScale,
-				maxBias,
-				suppressionScale,
-				seenWOFIDs,
-				lengthMode,
+				tuning,
 				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags)
 			)
 		}
@@ -226,16 +245,13 @@ export function buildFSTEmissionPriors(
 
 			if (next.accepted) {
 				const matchedGroups = wordGroups.slice(start, end + 1).filter((g) => g.fstToken !== "")
+
 				applyBias(
 					matrix,
 					labelToCol,
 					fst.accepting(next.stateID),
 					matchedGroups,
-					biasScale,
-					maxBias,
-					suppressionScale,
-					seenWOFIDs,
-					lengthMode,
+					tuning,
 					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags)
 				)
 			}
@@ -311,8 +327,10 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 				// leave `current === null` as the PENDING signal for whatever piece follows.
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
+
 				continue
 			}
+
 			const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
 			current = { fstToken: literal, pieceIndices: [i] }
 		} else if (!hasAlnum) {
@@ -366,9 +384,9 @@ export function normalizeFSTToken(s: string): string {
 	const cleaned = s
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[\p{P}\p{S}]/gu, "")
+		.replaceAll(/[\p{P}\p{S}]/gu, "")
 
-	return cleaned.length > 0 ? cleaned : ""
+	return cleaned.length ? cleaned : ""
 }
 
 /**
@@ -383,7 +401,9 @@ function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
 	return fst.accepting(match.stateID).some((e) => e.placetype === "street_affix")
 }
 
-/** Nearest non-empty word-group index adjacent to a matched span, or -1 when none exists in that direction. */
+/**
+ * Nearest non-empty word-group index adjacent to a matched span, or -1 when none exists in that direction.
+ */
 function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 | -1): number {
 	for (let i = from + direction; i >= 0 && i < groups.length; i += direction) {
 		if (groups[i]!.fstToken !== "") return i
@@ -414,7 +434,7 @@ function streetContextScale(
 	streetTypeFlags: boolean[] | null,
 	houseNumberFlags: boolean[] | null
 ): number {
-	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1.0
+	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1
 
 	const prev = adjacentNonEmptyIndex(groups, startIdx, -1)
 
@@ -428,7 +448,20 @@ function streetContextScale(
 		return streetContext.positiveScale ?? 0.25
 	}
 
-	return 1.0
+	return 1
+}
+
+/**
+ * The per-run bias knobs — fixed for the whole of one `buildFSTEmissionPriors` call, so they travel as one bundle
+ * rather than five positional arguments. `seenWOFIDs` is deliberately shared, not copied: it is the run-wide dedupe set
+ * that keeps one WOF place from biasing the matrix twice.
+ */
+interface BiasTuning {
+	biasScale: number
+	maxBias: number
+	suppressionScale: number
+	seenWOFIDs: Set<number>
+	lengthMode: ImportanceLengthScaleMode
 }
 
 function applyBias(
@@ -436,13 +469,10 @@ function applyBias(
 	labelToCol: Map<string, number>,
 	entries: ReadonlyArray<FSTPlaceEntryLike>,
 	groups: WordGroup[],
-	biasScale: number,
-	maxBias: number,
-	suppressionScale: number,
-	seenWOFIDs: Set<number>,
-	lengthMode: ImportanceLengthScaleMode,
+	tuning: BiasTuning,
 	contextScale: number
 ): void {
+	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode } = tuning
 	const seenTags = new Map<string, number>()
 
 	// Match-length scaling (#1142). A single-token place match ("Sweeney", "Tower", "Rome") is weak
@@ -453,9 +483,9 @@ function applyBias(
 	// street-suppression term (safe for the bare-fragment regime where the positive bias earns its keep);
 	// `both` also scales the positive locality bias; `off` disables. Locale-general — no word list.
 	const matchLen = groups.length
-	const lengthScale = matchLen >= 3 ? 1.0 : matchLen === 2 ? 0.7 : 0.25
-	const posScale = lengthMode === "both" ? lengthScale : 1.0
-	const supScale = lengthMode === "off" ? 1.0 : lengthScale
+	const lengthScale = FST_MATCH_LENGTH_SCALE.get(matchLen) ?? FULL_FST_MATCH_SCALE
+	const posScale = lengthMode === "both" ? lengthScale : 1
+	const supScale = lengthMode === "off" ? 1 : lengthScale
 
 	for (const entry of entries) {
 		if (seenWOFIDs.has(entry.wofID)) continue
@@ -471,7 +501,7 @@ function applyBias(
 		}
 	}
 
-	if (seenTags.size === 0) return
+	if (!seenTags.size) return
 
 	const allPieceIndices: number[] = []
 
@@ -510,3 +540,5 @@ function applyBias(
 		}
 	}
 }
+
+//#endregion

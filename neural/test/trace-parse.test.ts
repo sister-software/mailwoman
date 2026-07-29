@@ -25,22 +25,29 @@ import { TRACE_PRIOR_KINDS } from "../trace.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Fake runner emitting a canned logits matrix (and optional locale head) regardless of input. */
+/**
+ * Fake runner emitting a canned logits matrix (and optional locale head) regardless of input.
+ */
 class FakeRunner implements NeuralRunner {
-	constructor(
-		private readonly canned: number[][],
-		private readonly localeLogits?: number[]
-	) {}
+	readonly #canned: number[][]
+	readonly #localeLogits?: number[]
+
+	constructor(canned: number[][], localeLogits?: number[]) {
+		this.#canned = canned
+		this.#localeLogits = localeLogits
+	}
 	async infer(_ids: number[]): Promise<InferResult> {
 		return {
-			logits: this.canned,
-			numLabels: this.canned[0]?.length ?? 0,
-			...(this.localeLogits ? { localeLogits: this.localeLogits } : {}),
+			logits: this.#canned,
+			numLabels: this.#canned[0]?.length ?? 0,
+			...(this.#localeLogits ? { localeLogits: this.#localeLogits } : {}),
 		}
 	}
 }
 
-/** Uniform-noise logits with a boost on one label at one token index. */
+/**
+ * Uniform-noise logits with a boost on one label at one token index.
+ */
 function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string, magnitude = 3): number[][] {
 	const labelIdx = STAGE2_BIO_LABELS.indexOf(boostLabel as (typeof STAGE2_BIO_LABELS)[number])
 	const matrix: number[][] = []
@@ -48,9 +55,10 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
 
-		if (t === boostIdx && labelIdx >= 0) {
+		if (t === boostIdx && labelIdx !== -1) {
 			row[labelIdx] = magnitude
 		}
+
 		matrix.push(row)
 	}
 
@@ -86,12 +94,14 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(trace.logits).toEqual(logits)
 		expect(trace.pieces).toHaveLength(pieces.length)
+
 		expect(trace.pieces[0]).toEqual({
 			piece: pieces[0]!.piece,
 			id: pieces[0]!.id,
 			start: pieces[0]!.start,
 			end: pieces[0]!.end,
 		})
+
 		expect(trace.labels).toEqual([...STAGE2_BIO_LABELS])
 		expect(trace.path).toHaveLength(pieces.length)
 		expect(trace.decode).toBe("viterbi")
@@ -119,19 +129,22 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 	it("placetypePair record carries probePath naming the probe-chain leg (segment vs anchored), absent when inert", async () => {
 		const tokenizer = await loadTokenizer()
+
 		// A minimal PairIndexLike double — one real GB pair, hit under any key form.
 		const index = {
-			delta: 6.0,
+			delta: 6,
 			probe: (child: string, parent: string) =>
 				child === "moelfre" && parent === "abergele" ? ("dependent_locality" as const) : undefined,
 		}
 
 		const commaText = "Moelfre, Abergele"
 		const { pieces: commaPieces } = tokenizer.encode(commaText)
+
 		const commaClassifier = new NeuralAddressClassifier({
 			tokenizer,
 			runner: new FakeRunner(logitsWithBoost(commaPieces.length, 0, "B-street")),
 		})
+
 		const commaTrace = await commaClassifier.traceParse(commaText, {
 			placetypePair: { index },
 			spanProposer: false,
@@ -146,10 +159,12 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const bareText = "Moelfre Abergele"
 		const { pieces: barePieces } = tokenizer.encode(bareText)
+
 		const bareClassifier = new NeuralAddressClassifier({
 			tokenizer,
 			runner: new FakeRunner(logitsWithBoost(barePieces.length, 0, "B-street")),
 		})
+
 		const bareTrace = await bareClassifier.traceParse(bareText, {
 			placetypePair: { index },
 			spanProposer: false,
@@ -179,8 +194,9 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
 		const shape: QueryShapeLike = {
-			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 1.0 }],
+			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 1 }],
 		}
+
 		const traced = await classifier.traceParse(text, { queryShape: shape, spanProposer: false })
 
 		expect(traced.priors.find((p) => p.kind === "queryShape")).toEqual({ kind: "queryShape", applied: true })
@@ -215,6 +231,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// postcode-repair.ts precision guards).
 		const text = "London SW1A 1AA"
 		const { pieces } = tokenizer.encode(text)
+
 		// Everything decodes O; the postcode-repair pass should add the "SW1A 1AA" postcode span.
 		const logits = pieces.map(() => {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
@@ -222,6 +239,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 			return row
 		})
+
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
 		const trace = await classifier.traceParse(text, { postcodeRepair: true, spanProposer: false })
@@ -255,6 +273,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// then the postcode labels on the remainder (the clip).
 		const logits = pieces.map((_, i) => {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+
 			const label =
 				i < firstPostcodePiece
 					? i === 0
@@ -265,6 +284,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 						: i === firstPostcodePiece + 1
 							? "B-postcode"
 							: "I-postcode"
+
 			row[STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])] = 6
 
 			return row
@@ -286,6 +306,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			runner: new FakeRunner(logits),
 			addressSystemConventions: "gb",
 		})
+
 		const trace = await pinned.traceParse(text, { spanProposer: false })
 		expect(trace.systemSource).toBe("pinned")
 		expect(trace.detectedSystem).toBe("gb")
@@ -349,6 +370,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
 		const bIdx = STAGE2_BIO_LABELS.indexOf("B-street")
 		const iIdx = STAGE2_BIO_LABELS.indexOf("I-street")
+
 		// Each fragment STARTS with B- (O → I- is an illegal BIO transition the viterbi mask forbids);
 		// only a contiguous continuation piece gets I-. The dots decode O — the gaps the bridge crosses.
 		const logits = pieces.map((p, idx) => {
@@ -361,6 +383,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 			return row
 		})
+
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 
 		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: true, spanProposer: false })
@@ -372,6 +395,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(bridge).toBeDefined()
 		expect(bridge!.before).toHaveLength(pieces.length)
 		expect(bridge!.after).toHaveLength(pieces.length)
+
 		// The merged span's label covers the punctuation pieces it absorbed.
 		expect(bridge!.after.filter((l) => l.endsWith("street")).length).toBeGreaterThan(
 			bridge!.before.filter((l) => l.endsWith("street")).length
@@ -384,6 +408,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const { pieces } = tokenizer.encode(text)
 		const logits = logitsWithBoost(pieces.length, 0, "B-house_number")
 		const anchor: AnchorLookup = new Map([["10118", { posterior: { US: 1 }, lat: 40.75, lon: -73.99 }]])
+
 		const classifier = new NeuralAddressClassifier({
 			tokenizer,
 			runner: new FakeRunner(logits),
@@ -398,7 +423,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// The ZIP's pieces carry the anchor hit; leading pieces don't.
 		expect(Math.max(...trace.anchor!.confidence)).toBeGreaterThan(0)
 		// Serializable by construction: a JSON round-trip preserves the channel byte-for-byte.
-		expect(JSON.parse(JSON.stringify(trace.anchor))).toEqual(trace.anchor)
+		expect(structuredClone(trace.anchor)).toEqual(trace.anchor)
 	})
 
 	it("schema snapshot — drift forces a conscious decision", async () => {

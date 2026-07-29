@@ -15,9 +15,11 @@ import type { CanonicalRow } from "../../types.ts"
 import { OVERTURE_ADAPTER_ID, OVERTURE_DEFAULT_LICENSE, createOvertureAdapter } from "./adapter.ts"
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-ov-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -50,12 +52,14 @@ const ES = [
 describe("overture adapter", () => {
 	it("emits a row per JSONL line, stamping country from --country and source=overture", async () => {
 		const input = await writeFixture(ES)
+
 		const manifest = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(3)
 		const rows = await loadRows()
 		expect(rows).toHaveLength(3)
@@ -66,20 +70,24 @@ describe("overture adapter", () => {
 
 	it("keeps the street keyword WHOLE (affix-relabel splits the prefix downstream)", async () => {
 		const input = await writeFixture(ES)
+
 		await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const julan = rows.find((r) => r.raw.includes("CALLE JULAN"))
+
 		expect(julan?.components).toMatchObject({
 			house_number: "12",
 			street: "CALLE JULAN",
 			postcode: "38914",
 			locality: "El Pinar de El Hierro",
 		})
+
 		expect(julan?.raw).toContain("38914")
 		expect(julan?.raw).toContain("El Pinar de El Hierro")
 		// street_prefix is NOT split here — that's the downstream affix-relabel's job.
@@ -88,12 +96,14 @@ describe("overture adapter", () => {
 
 	it("treats 'S-N' / 'S/N' (sin número) as no house number", async () => {
 		const input = await writeFixture(ES)
+
 		await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const sinNumero = (await loadRows()).find((r) => r.raw.includes("CALLE HIBRONES"))
 		expect(sinNumero?.components.house_number).toBeUndefined()
 		expect(sinNumero?.raw).not.toContain("S-N")
@@ -101,18 +111,21 @@ describe("overture adapter", () => {
 
 	it("includes unit when present", async () => {
 		const input = await writeFixture(ES)
+
 		await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const madrid = (await loadRows()).find((r) => r.raw.includes("Madrid"))
 		expect(madrid?.components.unit).toBe("2A")
 	})
 
 	it("rejects an invocation without --country", async () => {
 		const input = await writeFixture(ES)
+
 		await expect(
 			runAdapter({
 				adapter: createOvertureAdapter(),
@@ -125,17 +138,20 @@ describe("overture adapter", () => {
 
 	it("honors --limit", async () => {
 		const input = await writeFixture(ES)
+
 		const manifest = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES", limit: 2 },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(2)
 	})
 
 	it("skips blanks, comments, garbage, and street-less rows", async () => {
 		const p = join(scratch, "messy.jsonl")
+
 		await writeFile(
 			p,
 			[
@@ -148,31 +164,37 @@ describe("overture adapter", () => {
 			].join("\n") + "\n",
 			"utf8"
 		)
+
 		const manifest = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: p, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(manifest.yielded).toBe(1)
 		expect((await loadRows())[0]?.components.street).toBe("PLAZA MAYOR")
 	})
 
 	it("two runs over the same dump produce identical sha256", async () => {
 		const input = await writeFixture(ES)
+
 		const a = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, OVERTURE_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

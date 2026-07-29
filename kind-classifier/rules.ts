@@ -12,7 +12,53 @@
 
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
-/** Landmark vocabulary — phrases that suggest a vague-location description rather than an address. */
+/**
+ * Longest input still plausible as a bare venue or landmark name. Beyond it the query is carrying an address as well,
+ * and belongs to the structured-address scorer.
+ */
+const MAX_LANDMARK_LENGTH = 50
+
+/**
+ * Longest input still plausible as a bare postcode, allowing for a country prefix and separators.
+ */
+const MAX_POSTCODE_ONLY_LENGTH = 16
+
+/**
+ * Share of the input the postcode must occupy before `postcode_only` fires. Below it the query is carrying something
+ * else too — a locality, a street — and another kind should win.
+ */
+const MIN_POSTCODE_COVERAGE = 0.7
+
+/**
+ * Longest input still plausible as a bare locality name, including a trailing region code.
+ */
+const MAX_LOCALITY_ONLY_LENGTH = 30
+
+/**
+ * Word count of a short capitalized phrase — the shape of a venue name like `Empire State Building`. Wider than this
+ * and the phrase is more likely a full address line.
+ */
+const VENUE_PHRASE_MIN_WORDS = 2
+
+/**
+ * Upper bound of the short-phrase venue window; see {@link VENUE_PHRASE_MIN_WORDS}.
+ */
+const VENUE_PHRASE_MAX_WORDS = 4
+
+/**
+ * Word count above which a single-segment proper-case phrase stops reading as a venue name.
+ */
+const LONG_VENUE_PHRASE_MAX_WORDS = 6
+
+/**
+ * Length at which a single-segment alphanumeric input reads as a full postcode rather than a fragment. Shorter
+ * alphanumeric inputs score lower because they are as likely to be a unit number.
+ */
+const ALPHANUMERIC_POSTCODE_MIN_LENGTH = 15
+
+/**
+ * Landmark vocabulary — phrases that suggest a vague-location description rather than an address.
+ */
 const LANDMARK_LEADERS = [
 	"behind",
 	"near",
@@ -25,7 +71,9 @@ const LANDMARK_LEADERS = [
 	"beside",
 ]
 
-/** Intersection vocabulary — words that signal "where two streets cross" rather than an address. */
+/**
+ * Intersection vocabulary — words that signal "where two streets cross" rather than an address.
+ */
 const INTERSECTION_PATTERNS = [
 	/\bcorner of\b/i,
 	/\bintersection of\b/i,
@@ -75,7 +123,9 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 	return 0
 }
 
-/** Street-suffix tokens that indicate an address, not a venue name. */
+/**
+ * Street-suffix tokens that indicate an address, not a venue name.
+ */
 const STREET_SUFFIXES = new Set([
 	"st",
 	"street",
@@ -113,13 +163,13 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	const text = input.normalized.trim()
 	const len = text.length
 
-	if (len === 0 || len > 50) return 0
+	if (len === 0 || len > MAX_LANDMARK_LENGTH) return 0
 
 	// Must have at least one capitalized word.
 	if (!/[A-Z]/.test(text)) return 0
 
 	// Reject if any known postcode format hit exists.
-	if (shape.knownFormats.length > 0) return 0
+	if (shape.knownFormats.length) return 0
 
 	// Reject if it looks like a multi-segment structured address (City, ST ZIP).
 	const segCount = shape.segments?.length ?? 1
@@ -145,7 +195,7 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	// Boost for short single-segment capitalized phrases (2-4 words).
 	const wordCount = words.length
 
-	if (wordCount >= 2 && wordCount <= 4 && segCount === 1) {
+	if (wordCount >= VENUE_PHRASE_MIN_WORDS && wordCount <= VENUE_PHRASE_MAX_WORDS && segCount === 1) {
 		if (hasInternalNumber) return 0.88
 
 		if (allProperCase) return 0.88
@@ -154,14 +204,16 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	}
 
 	// Longer single-segment capitalized phrases get moderate confidence.
-	if (wordCount <= 6 && segCount === 1 && allProperCase) {
+	if (wordCount <= LONG_VENUE_PHRASE_MAX_WORDS && segCount === 1 && allProperCase) {
 		return 0.75
 	}
 
 	return 0
 }
 
-/** Known QueryShape format strings that indicate "this token is a postcode". */
+/**
+ * Known QueryShape format strings that indicate "this token is a postcode".
+ */
 const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
 	"us_zip",
 	"us_zip4",
@@ -190,14 +242,14 @@ export function isPostcodeFormat(format: string): boolean {
 export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const len = input.normalized.length
 
-	if (len === 0 || len > 16) return 0
+	if (len === 0 || len > MAX_POSTCODE_ONLY_LENGTH) return 0
 	const postcodeHit = shape.knownFormats.find((f) => isPostcodeFormat(f.format))
 
 	if (!postcodeHit) return 0
 	const hitLen = postcodeHit.span.end - postcodeHit.span.start
 
 	// At least 70% of the input must be the postcode for the rule to fire confidently.
-	if (hitLen / len < 0.7) return 0
+	if (hitLen / len < MIN_POSTCODE_COVERAGE) return 0
 
 	// Confidence scales with how much of the input is the postcode and how confident the format hit was.
 	return Math.min(1, postcodeHit.confidence * (hitLen / len) + 0.1)
@@ -212,11 +264,11 @@ export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeL
 export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const len = input.normalized.length
 
-	if (len === 0 || len > 30) return 0
+	if (len === 0 || len > MAX_LOCALITY_ONLY_LENGTH) return 0
 
 	if (shape.characterClass !== "alpha") return 0
 
-	if (shape.knownFormats.length > 0) return 0
+	if (shape.knownFormats.length) return 0
 	// Locality-only inputs typically have 1-3 segments (e.g. "New York" is 1 segment, "Paris, FR" is 2).
 	// We allow up to 2 segments before deciding it's structured.
 	const segCount = shape.segments?.length ?? 1
@@ -240,13 +292,13 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 	if (segCount >= 2 && shape.characterClass === "alphanumeric") return 0.9
 
 	// Single-segment but reasonably long and alphanumeric = moderate confidence.
-	if (len >= 15 && shape.characterClass === "alphanumeric") return 0.75
+	if (len >= ALPHANUMERIC_POSTCODE_MIN_LENGTH && shape.characterClass === "alphanumeric") return 0.75
 
 	// Multi-segment but pure-alpha = moderate (could be a multi-word locality).
 	if (segCount >= 2) return 0.6
 
 	// Single-segment, short, alphanumeric (e.g. "10118-1234" with no other content) — weak.
-	if (len < 15 && shape.characterClass === "alphanumeric") return 0.4
+	if (len < ALPHANUMERIC_POSTCODE_MIN_LENGTH && shape.characterClass === "alphanumeric") return 0.4
 
 	return 0
 }

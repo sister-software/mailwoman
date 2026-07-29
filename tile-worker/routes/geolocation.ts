@@ -24,6 +24,10 @@ const CFGeolocationProperties = [
 	"metroCode",
 ] as const satisfies Array<keyof IncomingRequestCfPropertiesGeographicInformation>
 
+/**
+ * Returns the caller's approximate location from Cloudflare's request geo headers, so the map can open somewhere useful
+ * without asking for permission.
+ */
 export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
 	const { cf } = request
 
@@ -33,8 +37,8 @@ export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
 		CFGeolocationProperties.map((key) => [key, cf[key]])
 	) as IncomingRequestCfPropertiesGeographicInformation
 
-	const latitude = (geolocation.latitude ? parseFloat(geolocation.latitude) : 0) || 0
-	const longitude = (geolocation.longitude ? parseFloat(geolocation.longitude) : 0) || 0
+	const latitude = (geolocation.latitude ? Number.parseFloat(geolocation.latitude) : 0) || 0
+	const longitude = (geolocation.longitude ? Number.parseFloat(geolocation.longitude) : 0) || 0
 
 	const feature: GeoFeature<PointLiteral, IncomingRequestCfPropertiesGeographicInformation> = {
 		type: "Feature",

@@ -17,37 +17,58 @@ import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+//#region Types
+
+/**
+ * Score delta below which two versions are shown as equivalent rather than as a change.
+ */
+const NEGLIGIBLE_DELTA = 0.01
 
 export interface VersionCompareProps {
-	/** The primary (left) parse result. */
+	/**
+	 * The primary (left) parse result.
+	 */
 	primary: DemoResult
-	/** The compare (right) parse result. */
+	/**
+	 * The compare (right) parse result.
+	 */
 	compare: DemoResult
-	/** Version label for the primary side. */
+	/**
+	 * Version label for the primary side.
+	 */
 	primaryVersion: string
-	/** Version label for the compare side. */
+	/**
+	 * Version label for the compare side.
+	 */
 	compareVersion: string
 }
 
 interface CompareRow {
-	/** Tag label (e.g. "house_number", "street"). */
+	/**
+	 * Tag label (e.g. "house_number", "street").
+	 */
 	tag: string
-	/** Primary side node, if present. */
+	/**
+	 * Primary side node, if present.
+	 */
 	primaryNode: ResultNode | null
-	/** Compare side node, if present. */
+	/**
+	 * Compare side node, if present.
+	 */
 	compareNode: ResultNode | null
-	/** Confidence delta (compare − primary). Positive = improved, negative = regressed. */
+	/**
+	 * Confidence delta (compare − primary). Positive = improved, negative = regressed.
+	 */
 	delta: number | null
-	/** How this row relates across versions. */
+	/**
+	 * How this row relates across versions.
+	 */
 	diffKind: "match" | "primary-only" | "compare-only" | "tag-changed"
 }
 
-// ---------------------------------------------------------------------------
-// Diff computation
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Diff computation
 
 /**
  * Build a unified diff table of component rows across two parses. Row identity is by source-order position
@@ -79,7 +100,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 
 	for (const pn of pNodes) {
 		const spanKey = typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
-		let cn: ResultNode | null = null
+		let cn: ResultNode | null
 
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null
@@ -104,6 +125,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 				delta: null,
 				diffKind: "primary-only",
 			})
+
 			continue
 		}
 
@@ -116,6 +138,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 				delta: diffConfidence(cn.confidence, pn.confidence),
 				diffKind: "tag-changed",
 			})
+
 			continue
 		}
 
@@ -131,6 +154,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 	// Remaining spanned compare nodes not matched by span.
 	for (const [spanKey, cn] of cBySpan) {
 		if (handledSpans.has(spanKey)) continue
+
 		rows.push({
 			tag: cn.tag,
 			primaryNode: null,
@@ -157,18 +181,18 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 function diffConfidence(c: number | undefined, p: number | undefined): number | null {
 	if (c == null || p == null) return null
 
-	return parseFloat((c - p).toFixed(3))
+	return Number.parseFloat((c - p).toFixed(3))
 }
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Sub-components
 
 const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({ delta, diffKind }) => {
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
 	const abs = Math.abs(delta)
 
-	if (abs < 0.01) return <span className={styles.deltaNeutral}>≈</span>
+	if (abs < NEGLIGIBLE_DELTA) return <span className={styles.deltaNeutral}>≈</span>
 	const sign = delta >= 0 ? "+" : "−"
 	const cls = delta >= 0 ? styles.deltaUp : styles.deltaDown
 
@@ -180,9 +204,9 @@ const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKin
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Main component
 
 export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare, primaryVersion, compareVersion }) => {
 	const rows = useMemo(() => computeCompareRows(primary, compare), [primary, compare])
@@ -285,3 +309,5 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare
 		</div>
 	)
 }
+
+//#endregion

@@ -50,23 +50,33 @@ import { parseArgs } from "node:util"
 
 import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "../types.ts"
 
-/** The Overture schema release the committed `overture-categories.csv` snapshot was taken from. */
+/**
+ * The Overture schema release the committed `overture-categories.csv` snapshot was taken from.
+ */
 export const OVERTURE_RELEASE = "v1.17.0"
 
-/** This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change. */
+/**
+ * This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change.
+ */
 export const TAXONOMY_VERSION = "0.2.0"
 
-/** Source URL for `--fetch` and provenance. */
+/**
+ * Source URL for `--fetch` and provenance.
+ */
 export const OVERTURE_CATEGORIES_URL =
 	"https://raw.githubusercontent.com/OvertureMaps/schema/main/docs/schema/concepts/by-theme/places/overture_categories.csv"
 
-/** One parsed Overture snapshot row: a category code plus its top-down hierarchy path (ending with the code). */
+/**
+ * One parsed Overture snapshot row: a category code plus its top-down hierarchy path (ending with the code).
+ */
 export interface OvertureSnapshotRow {
 	code: string
 	path: string[]
 }
 
-/** The hand-maintained curated overlay — the shape of `data/curated-overlay.json`. */
+/**
+ * The hand-maintained curated overlay — the shape of `data/curated-overlay.json`.
+ */
 export interface CuratedOverlay {
 	categories: CategoryRecord[]
 	synonyms: SynonymEntry[]
@@ -95,13 +105,15 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 		if (semi === -1) throw new Error(`generate-taxonomy: malformed CSV row ${i + 1}: ${JSON.stringify(line)}`)
 
 		const code = line.slice(0, semi).trim()
+
 		const pathText = line
 			.slice(semi + 1)
 			.trim()
-			.replace(/^\[|\]$/g, "")
+			.replaceAll(/^\[|\]$/g, "")
+
 		const path = pathText.split(",").map((p) => p.trim())
 
-		if (!code || path.length === 0 || path.some((p) => !p)) {
+		if (!code || !path.length || path.some((p) => !p)) {
 			throw new Error(
 				`generate-taxonomy: malformed CSV row ${i + 1}: code ${JSON.stringify(code)} path ${JSON.stringify(pathText)}`
 			)
@@ -121,7 +133,9 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	return rows
 }
 
-/** Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`. */
+/**
+ * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
+ */
 export function humanizeCode(code: string): string {
 	const spaced = code.replaceAll("_", " ")
 
@@ -147,15 +161,18 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 			source: "overture",
 		}))
 
-	const categories = [...overlay.categories, ...snapshotRecords].sort((a, b) => a.id.localeCompare(b.id))
-	const synonyms = [...overlay.synonyms].sort(
+	const categories = [...overlay.categories, ...snapshotRecords].toSorted((a, b) => a.id.localeCompare(b.id))
+
+	const synonyms = [...overlay.synonyms].toSorted(
 		(a, b) => a.phrase.localeCompare(b.phrase) || a.categoryID.localeCompare(b.categoryID)
 	)
 
 	return { version: TAXONOMY_VERSION, overtureRelease: OVERTURE_RELEASE, categories, synonyms }
 }
 
-/** Stable serialization — tab-indented, trailing newline. Matches `build-brands.ts`'s `serializeBrandTable`. */
+/**
+ * Stable serialization — tab-indented, trailing newline. Matches `build-brands.ts`'s `serializeBrandTable`.
+ */
 export function serializeTaxonomyTable(table: POITaxonomyTable): string {
 	return `${JSON.stringify(table, null, "\t")}\n`
 }
@@ -177,7 +194,9 @@ export function taxonomyPaths() {
 	}
 }
 
-/** Read the committed CSV + overlay, merge, and return the table (no write). */
+/**
+ * Read the committed CSV + overlay, merge, and return the table (no write).
+ */
 export function generateTaxonomyTable(): POITaxonomyTable {
 	const paths = taxonomyPaths()
 	const snapshot = parseOvertureCSV(readFileSync(paths.csv, "utf8"))
@@ -196,12 +215,14 @@ async function main(): Promise<void> {
 		if (!res.ok) throw new Error(`generate-taxonomy: fetch ${OVERTURE_CATEGORIES_URL} → HTTP ${res.status}`)
 
 		writeFileSync(paths.csv, await res.text())
+
 		console.log(`fetched snapshot → ${paths.csv}`)
 	}
 
 	const table = generateTaxonomyTable()
 
 	writeFileSync(paths.out, serializeTaxonomyTable(table))
+
 	console.log(
 		`wrote ${paths.out}: ${table.categories.length} categories (${table.synonyms.length} synonyms), Overture ${table.overtureRelease}`
 	)

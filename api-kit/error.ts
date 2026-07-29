@@ -12,7 +12,9 @@ import { z } from "@hono/zod-openapi"
 import type { Context } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 
-/** The native error envelope: a short machine-stable `error` string plus an optional human `detail`. */
+/**
+ * The native error envelope: a short machine-stable `error` string plus an optional human `detail`.
+ */
 export const APIErrorSchema = z
 	.object({
 		error: z.string(),

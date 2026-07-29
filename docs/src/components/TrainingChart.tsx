@@ -31,11 +31,17 @@
 import React, { useState } from "react"
 
 export interface TrainingChartProps {
-	/** Path to the linear-scale SVG. */
+	/**
+	 * Path to the linear-scale SVG.
+	 */
 	src: string
-	/** Optional explicit path to the log-scale SVG. Auto-derived if omitted. */
+	/**
+	 * Optional explicit path to the log-scale SVG. Auto-derived if omitted.
+	 */
 	logSrc?: string
-	/** Alt text for the chart image. */
+	/**
+	 * Alt text for the chart image.
+	 */
 	alt?: string
 }
 

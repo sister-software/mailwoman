@@ -26,13 +26,21 @@ import type { PipelinePanels, PipelineRuntime } from "./types.ts"
 import { useParsePipeline } from "./useParsePipeline.ts"
 
 export interface PipelineExplorerProps {
-	/** The injected model/gazetteer runtime (the host wires this to its bundle). */
+	/**
+	 * The injected model/gazetteer runtime (the host wires this to its bundle).
+	 */
 	runtime: PipelineRuntime
-	/** Address to pre-fill. @default the White House */
+	/**
+	 * Address to pre-fill. @default the White House
+	 */
 	defaultAddress?: string
-	/** Example chips. @default the built-in address presets */
+	/**
+	 * Example chips. @default the built-in address presets
+	 */
 	presets?: ReadonlyArray<Preset>
-	/** Host-injected panels + controls (version selector, span highlight, tree, …). */
+	/**
+	 * Host-injected panels + controls (version selector, span highlight, tree, …).
+	 */
 	panels?: PipelinePanels
 }
 
@@ -76,7 +84,7 @@ function PipelineExplorerInner({ runtime, defaultAddress, presets, panels }: Pip
 			{loading && !runtime.ready ? (
 				<LoadingIndicator
 					mode="staged"
-					steps={loading.stepLabels.length > 0 ? loading.stepLabels : undefined}
+					steps={loading.stepLabels.length ? loading.stepLabels : undefined}
 					activeStep={loading.stepIndex}
 					label={loading.progress}
 				/>
@@ -126,11 +134,16 @@ function PipelineExplorerInner({ runtime, defaultAddress, presets, panels }: Pip
 	)
 }
 
+/**
+ * Stable empty default — a fresh `{}` per render would churn every downstream memo dep.
+ */
+const NO_PANELS: NonNullable<PipelineExplorerProps["panels"]> = {}
+
 export function PipelineExplorer({
 	runtime,
 	defaultAddress = PIPELINE_DEFAULT_ADDRESS,
 	presets = PIPELINE_PRESETS,
-	panels = {},
+	panels = NO_PANELS,
 }: PipelineExplorerProps): ReactNode {
 	return (
 		<ClientOnly

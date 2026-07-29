@@ -49,10 +49,14 @@
 
 import { SentencePieceProcessor } from "@sctg/sentencepiece-js"
 
-/** SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK). */
+/**
+ * SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK).
+ */
 export const SPACE_SENTINEL = "▁"
 
-/** A SentencePiece byte-fallback piece — the vocab's escape hatch for a character with no direct token. */
+/**
+ * A SentencePiece byte-fallback piece — the vocab's escape hatch for a character with no direct token.
+ */
 const BYTE_FALLBACK_RE = /^<0x([0-9A-Fa-f]{2})>$/
 
 const utf8Decoder = new TextDecoder("utf-8", { fatal: false })
@@ -74,15 +78,25 @@ function utf8SequenceLength(leadByte: number): number {
 	return 1
 }
 
-/** A tokenized piece paired with its char-range in the original input. */
+/**
+ * A tokenized piece paired with its char-range in the original input.
+ */
 export interface TokenizedPiece {
-	/** The piece exactly as the tokenizer emitted it (with `▁` preserved where present). */
+	/**
+	 * The piece exactly as the tokenizer emitted it (with `▁` preserved where present).
+	 */
 	piece: string
-	/** The vocab id for this piece. */
+	/**
+	 * The vocab id for this piece.
+	 */
 	id: number
-	/** Inclusive start char offset in the original input. */
+	/**
+	 * Inclusive start char offset in the original input.
+	 */
 	start: number
-	/** Exclusive end char offset in the original input. */
+	/**
+	 * Exclusive end char offset in the original input.
+	 */
 	end: number
 }
 
@@ -98,7 +112,9 @@ export class MailwomanTokenizer {
 		this.processor = processor
 	}
 
-	/** Load from a base64-encoded `tokenizer.model`. Use for in-memory / test setups. */
+	/**
+	 * Load from a base64-encoded `tokenizer.model`. Use for in-memory / test setups.
+	 */
 	static async loadFromBase64(b64: string): Promise<MailwomanTokenizer> {
 		const processor = new SentencePieceProcessor()
 		await processor.loadFromB64StringModel(b64)
@@ -153,6 +169,7 @@ export class MailwomanTokenizer {
 
 				for (let k = 0; k < segmentLength; k++) {
 					const isLast = k === segmentLength - 1
+
 					// The segment's LAST piece owns the character's real [start, end) span (so `raw.slice(start, end)`
 					// recovers the character); earlier pieces get a zero-width range at the character's start — the
 					// same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses for a bare ▁.
@@ -162,6 +179,7 @@ export class MailwomanTokenizer {
 						start,
 						end: isLast ? end : start,
 					})
+
 					pieceIndex++
 				}
 
@@ -185,12 +203,14 @@ export class MailwomanTokenizer {
 							cursor++
 						}
 					}
+
 					byteRun = { pieces: [], ids: [], bytes: [] }
 				}
 
 				byteRun.pieces.push(piece)
 				byteRun.ids.push(id)
 				byteRun.bytes.push(Number.parseInt(byteMatch[1]!, 16))
+
 				continue
 			}
 
@@ -214,7 +234,9 @@ export class MailwomanTokenizer {
 		return { pieces: tokenized, ids }
 	}
 
-	/** Decode a list of ids back to a string. Delegates to the underlying processor. */
+	/**
+	 * Decode a list of ids back to a string. Delegates to the underlying processor.
+	 */
 	decode(ids: number[] | Int32Array): string {
 		const arr = ids instanceof Int32Array ? ids : Int32Array.from(ids)
 

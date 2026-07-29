@@ -12,13 +12,34 @@ import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 
-/** The option base every `mailwoman corpus fetch <source>` module extends. */
+/**
+ * Rate limited — retryable, the server is asking us to back off.
+ */
+const HTTP_TOO_MANY_REQUESTS = 429
+
+/**
+ * Lowest 5xx status. Server-side failures are retryable; 4xx are not.
+ */
+const HTTP_SERVER_ERROR_MIN = 500
+
+/**
+ * Highest 5xx status.
+ */
+const HTTP_SERVER_ERROR_MAX = 599
+
+/**
+ * The option base every `mailwoman corpus fetch <source>` module extends.
+ */
 export interface BaseFetchOptions {
-	/** Destination root for downloaded source data. Each source writes its own subdirectory. */
+	/**
+	 * Destination root for downloaded source data. Each source writes its own subdirectory.
+	 */
 	outRoot: string
 }
 
-/** The per-run result every fetch module returns; the command maps `failed > 0` to exit code 1. */
+/**
+ * The per-run result every fetch module returns; the command maps `failed > 0` to exit code 1.
+ */
 export interface FetchSummary {
 	fetched: number
 	skipped: number
@@ -26,19 +47,27 @@ export interface FetchSummary {
 	failedCodes: string[]
 }
 
-/** A status worth retrying: rate limiting or a server-side failure. */
+/**
+ * A status worth retrying: rate limiting or a server-side failure.
+ */
 export function isTransientStatus(status: number): boolean {
-	return status === 429 || (status >= 500 && status <= 599)
+	return status === HTTP_TOO_MANY_REQUESTS || (status >= HTTP_SERVER_ERROR_MIN && status <= HTTP_SERVER_ERROR_MAX)
 }
 
 export interface DownloadOptions {
 	url: string
 	dest: string
-	/** Per-attempt timeout. Default 10 minutes — these are multi-GB government dumps. */
+	/**
+	 * Per-attempt timeout. Default 10 minutes — these are multi-GB government dumps.
+	 */
 	timeoutMs?: number
-	/** Extra attempts after the first, taken only on transient statuses or network errors. Default 0. */
+	/**
+	 * Extra attempts after the first, taken only on transient statuses or network errors. Default 0.
+	 */
 	retries?: number
-	/** Delay between attempts. Default 5s. */
+	/**
+	 * Delay between attempts. Default 5s.
+	 */
 	retryDelayMs?: number
 	headers?: Record<string, string>
 	report?: (line: string) => void
@@ -49,7 +78,7 @@ export interface DownloadOptions {
  * or once retries are exhausted. Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
-	const { url, dest, timeoutMs = 600_000, retries = 0, retryDelayMs = 5_000, headers, report } = options
+	const { url, dest, timeoutMs = 600_000, retries = 0, retryDelayMs = 5000, headers, report } = options
 	let lastError: unknown
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
@@ -65,6 +94,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 		} catch (error) {
 			// AbortSignal timeouts and network-level failures are retryable.
 			lastError = error
+
 			continue
 		}
 
@@ -73,6 +103,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 
 			if (!isTransientStatus(res.status)) throw error
 			lastError = error
+
 			continue
 		}
 
@@ -90,7 +121,9 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 	throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
-/** Read a MANIFEST.json; `null` when missing or corrupt (callers re-fetch from scratch). */
+/**
+ * Read a MANIFEST.json; `null` when missing or corrupt (callers re-fetch from scratch).
+ */
 export async function readManifest<T>(path: string): Promise<T | null> {
 	if (!existsSync(path)) return null
 
@@ -101,7 +134,9 @@ export async function readManifest<T>(path: string): Promise<T | null> {
 	}
 }
 
-/** Load manifest entries into a map so untouched keys survive a partial re-fetch. */
+/**
+ * Load manifest entries into a map so untouched keys survive a partial re-fetch.
+ */
 export async function loadManifestEntries<T>(path: string, key: (entry: T) => string): Promise<Map<string, T>> {
 	const entries = new Map<string, T>()
 	const parsed = await readManifest<T[]>(path)
@@ -113,7 +148,9 @@ export async function loadManifestEntries<T>(path: string, key: (entry: T) => st
 	return entries
 }
 
-/** Write a MANIFEST.json in the house shape: pretty-printed, trailing newline. */
+/**
+ * Write a MANIFEST.json in the house shape: pretty-printed, trailing newline.
+ */
 export async function writeManifest(path: string, manifest: unknown): Promise<void> {
 	await writeFile(path, JSON.stringify(manifest, null, 2) + "\n")
 }

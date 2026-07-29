@@ -40,11 +40,17 @@
  * @see {@link https://auspost.com.au/business/business-admin/po-boxes-and-locked-bags Australia Post — business PO Boxes, GPO Boxes and Locked Bags}
  */
 
-/** One Postal Delivery Type row from the Australia Post AMAS abbreviation table. */
+/**
+ * One Postal Delivery Type row from the Australia Post AMAS abbreviation table.
+ */
 export interface AuDeliveryServiceDesignator {
-	/** The full Postal Delivery Type name, verbatim from the table (uppercase as published). */
+	/**
+	 * The full Postal Delivery Type name, verbatim from the table (uppercase as published).
+	 */
 	name: string
-	/** The standard abbreviation — the surface form written on mail ("GPO BOX", "LOCKED BAG"). */
+	/**
+	 * The standard abbreviation — the surface form written on mail ("GPO BOX", "LOCKED BAG").
+	 */
 	abbreviation: string
 	/**
 	 * Whether the designator "must have an associated number for a match to occur" (AMAS rule; exceptions are Care of
@@ -81,7 +87,9 @@ export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 	{ name: "ROADSIDE MAIL SERVICE", abbreviation: "RMS", requiresNumber: true, legacy: true },
 ] as const satisfies readonly AuDeliveryServiceDesignator[]
 
-/** A canonical Australia Post Postal Delivery Type abbreviation. */
+/**
+ * A canonical Australia Post Postal Delivery Type abbreviation.
+ */
 export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNATORS)[number]["abbreviation"]
 
 /**
@@ -112,8 +120,10 @@ const DESIGNATOR_INFO = new Map<AuDeliveryServiceAbbreviation, { requiresNumber:
 	AU_DELIVERY_SERVICE_DESIGNATORS.map((d) => [d.abbreviation, { requiresNumber: d.requiresNumber, legacy: d.legacy }])
 )
 
-// One anchored regex per designator: phrase + (required|optional) identifier. The id shape matches
-// the US slice ([\dA-Za-z][\dA-Za-z-]*); MS additionally requires a digit-leading id (see above).
+/**
+ * One anchored regex per designator: phrase + (required|optional) identifier. The id shape matches the US slice
+ * ([\dA-Za-z][\dA-Za-z-]*); MS additionally requires a digit-leading id (see above).
+ */
 const MATCHERS: ReadonlyArray<{ abbreviation: AuDeliveryServiceAbbreviation; re: RegExp }> = DESIGNATOR_PATTERNS.map(
 	([abbreviation, src]) => {
 		const { requiresNumber } = DESIGNATOR_INFO.get(abbreviation)!
@@ -124,15 +134,25 @@ const MATCHERS: ReadonlyArray<{ abbreviation: AuDeliveryServiceAbbreviation; re:
 	}
 )
 
-/** Result of an AU delivery-service parse. */
+/**
+ * Result of an AU delivery-service parse.
+ */
 export interface AuDeliveryServiceMatch {
-	/** The designator phrase as it appeared ("G.P.O. Box", "Locked Bag"). */
+	/**
+	 * The designator phrase as it appeared ("G.P.O. Box", "Locked Bag").
+	 */
 	matched: string
-	/** The canonical Postal Delivery Type abbreviation ("GPO BOX", "LOCKED BAG"). */
+	/**
+	 * The canonical Postal Delivery Type abbreviation ("GPO BOX", "LOCKED BAG").
+	 */
 	designator: AuDeliveryServiceAbbreviation
-	/** The delivery-service number when present ("9999", "4600"). */
+	/**
+	 * The delivery-service number when present ("9999", "4600").
+	 */
 	id?: string
-	/** True when the designator is an AMAS-only legacy form (see the table). */
+	/**
+	 * True when the designator is an AMAS-only legacy form (see the table).
+	 */
 	legacy: boolean
 }
 
@@ -161,7 +181,9 @@ export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch |
 	return null
 }
 
-/** Type-predicate: does the input look like a standalone AU delivery-service address line? */
+/**
+ * Type-predicate: does the input look like a standalone AU delivery-service address line?
+ */
 export function isAuDeliveryService(input: unknown): boolean {
 	return matchAuDeliveryService(input) !== null
 }

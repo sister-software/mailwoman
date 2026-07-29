@@ -16,6 +16,9 @@ import { WorkerRoute } from "../routing.ts"
 
 //#region Tile Retrieval
 
+/**
+ * Serves a single tile from a PMTiles archive in R2, by tile set and z/x/y.
+ */
 export const TileRoute = WorkerRoute.GET(
 	"/:tileSetName([a-zA-Z0-9_\\-]+)/:z(\\d+)/:x(\\d+)/:y(\\d+).:fileExtension([a-z0-9]+)",
 	async ({ request, params, env, ctx }) => {
@@ -65,6 +68,9 @@ export const TileRoute = WorkerRoute.GET(
 
 //#region Metadata Lookup
 
+/**
+ * Serves a tile set's TileJSON metadata, which clients read before requesting tiles.
+ */
 export const TileMetadataRoute = WorkerRoute.GET(
 	"/:tileSetName([a-zA-Z0-9_\\-]+).json",
 	async ({ ctx, request, env, params }) => {

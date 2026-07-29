@@ -30,8 +30,10 @@ export const US_PO_BOX_DESIGNATORS = [
 
 export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 
-// Matches a leading PO-box designator + its identifier. Allows "P.O. Box", "PO BOX", "Post Office
-// Box", "Box 12-A", etc. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+/**
+ * Matches a leading PO-box designator + its identifier. Allows "P.O. Box", "PO BOX", "Post Office Box", "Box 12-A",
+ * etc. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+ */
 const PO_BOX_RE =
 	/^\s*(?:(p\.?\s*o\.?\s*box)|(post\s+office\s+box)|(firm\s+caller)|(caller)|(drawer)|(lockbox)|(box))\s*#?\s*([\dA-Za-z][\dA-Za-z-]*)\s*$/i
 
@@ -44,11 +46,17 @@ export function isPOBox(input: unknown): boolean {
 	return typeof input === "string" && PO_BOX_RE.test(input)
 }
 
-/** Result of a PO-box parse: the matched designator phrase and the box identifier. */
+/**
+ * Result of a PO-box parse: the matched designator phrase and the box identifier.
+ */
 export interface PoBoxMatch {
-	/** The designator phrase as it appeared, e.g. "P.O. Box", "Post Office Box". */
+	/**
+	 * The designator phrase as it appeared, e.g. "P.O. Box", "Post Office Box".
+	 */
 	matched: string
-	/** The box identifier, e.g. "123", "12-A". */
+	/**
+	 * The box identifier, e.g. "123", "12-A".
+	 */
 	id: string
 }
 

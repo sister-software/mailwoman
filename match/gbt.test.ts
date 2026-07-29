@@ -8,14 +8,16 @@ import { describe, expect, it } from "vitest"
 
 import { buildThresholds, type GBT, gbtScore, trainGBT } from "./gbt.ts"
 
-/** Deterministic LCG so the synthetic data + the test are reproducible (no Math.random). */
+/**
+ * Deterministic LCG so the synthetic data + the test are reproducible (no Math.random).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
-		s = (s * 1664525 + 1013904223) >>> 0
+		s = (s * 1_664_525 + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 
@@ -47,6 +49,7 @@ describe("buildThresholds", () => {
 			[0, 0.5],
 			[1, 0.3],
 		]
+
 		const thr = buildThresholds(X)
 		expect(thr).toHaveLength(2)
 		expect(thr[0]).toEqual([0.5]) // binary 0/1 → single midpoint
@@ -78,18 +81,21 @@ describe("trainGBT / gbtScore", () => {
 
 	it("respects class weights — up-weighting the rare positive raises its scores", () => {
 		const { X, y } = makeXor(400, 7)
+
 		const flat = trainGBT(
 			X,
 			y,
 			y.map(() => 1),
 			{ rounds: 40, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
+
 		const up = trainGBT(
 			X,
 			y,
 			y.map((t) => (t === 1 ? 5 : 1)),
 			{ rounds: 40, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
+
 		const posUpFlat = mean(X.filter((_, i) => y[i] === 1).map((x) => gbtScore(flat, x)))
 		const posUpWtd = mean(X.filter((_, i) => y[i] === 1).map((x) => gbtScore(up, x)))
 		expect(posUpWtd).toBeGreaterThan(posUpFlat)
@@ -97,13 +103,15 @@ describe("trainGBT / gbtScore", () => {
 
 	it("round-trips through JSON (the ship-as-a-data-file contract)", () => {
 		const { X, y } = makeXor(200, 3)
+
 		const model = trainGBT(
 			X,
 			y,
 			y.map(() => 1),
 			{ rounds: 20, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
-		const reloaded = JSON.parse(JSON.stringify(model)) as GBT
+
+		const reloaded = structuredClone(model) as GBT
 
 		for (const x of X) {
 			expect(gbtScore(reloaded, x)).toBeCloseTo(gbtScore(model, x), 10)

@@ -30,13 +30,19 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
-/** Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them. */
+/**
+ * Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them.
+ */
 const TOP_PLACETYPES = new Set(["country", "continent", "empire", "ocean", "marinearea", "planet"])
 
 export interface AncestryBackfillResult {
-	/** Places that gained at least one ancestor row. */
+	/**
+	 * Places that gained at least one ancestor row.
+	 */
 	placesFixed: number
-	/** Total ancestor rows inserted. */
+	/**
+	 * Total ancestor rows inserted.
+	 */
 	rowsAdded: number
 	/**
 	 * Only-self candidates whose source geojson could not be found (non-WOF backfilled places, or repos not present
@@ -83,7 +89,9 @@ export function discoverAdminDataRoots(reposRoot: string): string[] {
 	return roots
 }
 
-/** WOF geojson lives sharded: an id resolves to `<3-char chunks>/<id>.geojson` under each data root. */
+/**
+ * WOF geojson lives sharded: an id resolves to `<3-char chunks>/<id>.geojson` under each data root.
+ */
 function geojsonForID(id: number, roots: readonly string[]): Record<string, unknown> | null {
 	const s = String(id)
 	const chunks: string[] = []
@@ -91,6 +99,7 @@ function geojsonForID(id: number, roots: readonly string[]): Record<string, unkn
 	for (let i = 0; i < s.length; i += 3) {
 		chunks.push(s.slice(i, i + 3))
 	}
+
 	const rel = join(chunks.join("/"), `${s}.geojson`)
 
 	for (const root of roots) {
@@ -136,6 +145,7 @@ export function backfillAncestorsFromHierarchy(
 	opts: { maxId?: number } = {}
 ): AncestryBackfillResult {
 	const maxId = opts.maxId ?? Number.MAX_SAFE_INTEGER
+
 	// `s.id < ?` first lets SQLite prune by the PK index before the correlated only-self subquery runs at all.
 	const candidates = db
 		.prepare(
@@ -147,6 +157,7 @@ export function backfillAncestorsFromHierarchy(
 	const insert = db.prepare(
 		"INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)"
 	)
+
 	const hasRow = db.prepare("SELECT 1 FROM ancestors WHERE id = ? AND ancestor_id = ? LIMIT 1")
 
 	let placesFixed = 0
@@ -160,10 +171,11 @@ export function backfillAncestorsFromHierarchy(
 		const props = (gj?.["properties"] ?? null) as Record<string, unknown> | null
 		const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
 
-		if (!hierarchy || hierarchy.length === 0) {
+		if (!hierarchy || !hierarchy.length) {
 			if (!gj) {
 				noGeojson++
 			}
+
 			continue
 		}
 
@@ -190,6 +202,7 @@ export function backfillAncestorsFromHierarchy(
 		for (const [aid, pt] of seen) {
 			if (hasRow.get(id, aid)) continue
 			insert.run(id, aid, pt)
+
 			added++
 		}
 

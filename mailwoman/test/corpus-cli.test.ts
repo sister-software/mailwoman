@@ -14,6 +14,7 @@ import { promisify } from "node:util"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
+import { ZodError } from "zod"
 
 import { options as runOptions } from "../commands/corpus/run.tsx"
 
@@ -22,23 +23,23 @@ const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 describe("corpus run schema validation", () => {
 	test("rejects non-alpha-2 country", () => {
-		expect(() => runOptions.parse({ input: "x", output: "y", country: "USA" })).toThrow()
-		expect(() => runOptions.parse({ input: "x", output: "y", country: "us" })).toThrow()
+		expect(() => runOptions.parse({ input: "x", output: "y", country: "USA" })).toThrow(ZodError)
+		expect(() => runOptions.parse({ input: "x", output: "y", country: "us" })).toThrow(ZodError)
 		expect(() => runOptions.parse({ input: "x", output: "y", country: "FR" })).not.toThrow()
 	})
 
 	test("limit must be a positive integer", () => {
-		expect(() => runOptions.parse({ input: "x", output: "y", limit: "0" })).toThrow()
-		expect(() => runOptions.parse({ input: "x", output: "y", limit: "-1" })).toThrow()
+		expect(() => runOptions.parse({ input: "x", output: "y", limit: "0" })).toThrow(ZodError)
+		expect(() => runOptions.parse({ input: "x", output: "y", limit: "-1" })).toThrow(ZodError)
 		expect(() => runOptions.parse({ input: "x", output: "y", limit: "10" })).not.toThrow()
 	})
 
 	test("input + output are required; corpusVersion defaults to 0.1.0-dev", () => {
-		expect(() => runOptions.parse({ output: "y" })).toThrow()
-		expect(() => runOptions.parse({ input: "x" })).toThrow()
+		expect(() => runOptions.parse({ output: "y" })).toThrow(ZodError)
+		expect(() => runOptions.parse({ input: "x" })).toThrow(ZodError)
 		const parsed = runOptions.parse({ input: "x", output: "y" })
 		expect(parsed.corpusVersion).toBe("0.1.0-dev")
-		expect(parsed.progressEvery).toBe(1_000)
+		expect(parsed.progressEvery).toBe(1000)
 	})
 })
 
@@ -51,6 +52,7 @@ describe("npx mailwoman corpus list", () => {
 			timeout: 10_000,
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 		})
+
 		expect(stderr).toBe("")
 		expect(stdout).toMatch(/wof-admin/i)
 		expect(stdout).toMatch(/CC0/i)

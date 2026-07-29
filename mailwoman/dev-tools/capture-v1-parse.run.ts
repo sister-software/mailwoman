@@ -15,13 +15,14 @@ import { readFileSync } from "node:fs"
 import { readJSONL, writeJSONL } from "@mailwoman/core/utils"
 
 import { createServeEngine } from "../api-engine.ts"
-import { type ParityCase } from "./parity-extract.ts"
+import type { ParityCase } from "./parity-extract.ts"
 
 const PARITY_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const SYNTHETIC_PATH = "mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"
 const OUT_PATH = "mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl"
 
 const parityInputs = readJSONL<ParityCase>(PARITY_PATH).map((c) => c.input)
+
 const syntheticInputs = readFileSync(SYNTHETIC_PATH, "utf8")
 	.split("\n")
 	.map((line) => line.trim())
@@ -45,4 +46,5 @@ for (const input of inputs) {
 }
 
 writeJSONL(OUT_PATH, rows)
+
 console.error(`captured ${rows.length} /v1/parse outcomes`)

@@ -16,11 +16,13 @@ import { alignRow } from "../align.ts"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "../synthesize-boundary-stress.ts"
 import { makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
-// Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality
-// drop on bare "City, STATE" rows WITHOUT becoming a locality-first majority), and
-// house-number-before:after = 7:3 (FR's dominant order is number-BEFORE; 30% after breaks the order-bias
-// shortcut without risking FR hn-before accuracy). The three original non-number shapes keep the bulk.
-// Weights sum to 1.0. Key order is load-bearing — it drives the cumulative thresholds below.
+/**
+ * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality drop on bare
+ * "City, STATE" rows WITHOUT becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
+ * order is number-BEFORE; 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
+ * original non-number shapes keep the bulk. Weights sum to 1.0. Key order is load-bearing — it drives the cumulative
+ * thresholds below.
+ */
 const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 	"street-eats-affix": 0.22,
 	"comma-less-city-state": 0.22,
@@ -29,6 +31,7 @@ const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 	"house-number-before-street": 0.189,
 	"house-number-after-street": 0.081,
 }
+
 const CUM: Array<[BoundaryStressTemplate, number]> = (() => {
 	let acc = 0
 
@@ -36,14 +39,19 @@ const CUM: Array<[BoundaryStressTemplate, number]> = (() => {
 		([t, w]) => [t, (acc += w)] as [BoundaryStressTemplate, number]
 	)
 })()
+
 function pickTemplate(r: () => number): BoundaryStressTemplate {
 	const x = r()
 
 	for (const [t, c] of CUM) if (x <= c) return t
 
-	return CUM[CUM.length - 1]![0]
+	return CUM.at(-1)![0]
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const boundaryStressRecipe: ShardRecipe = {
 	name: "boundary-stress",
 	description: "Boundary-instability rows (#375): weighted template mix → synthesizeBoundaryStressRow → aligned BIO",
@@ -51,7 +59,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Emit PRNG: the legacy build-boundary-stress-shard.mjs seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 20000
+		const count = opts.count ?? 20_000
 		let emitted = 0
 		let skipped = 0
 
@@ -59,6 +67,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
 			const source_id = shardSourceID("synth-boundary-stress", { ...row.components, v: String(i) })
+
 			const canonical = {
 				raw: row.raw,
 				components: row.components,
@@ -69,16 +78,20 @@ export const boundaryStressRecipe: ShardRecipe = {
 				corpus_version: "0.6.0",
 				license: "Synthetic — boundary-stress; derived from public-domain locality/region tuples",
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled") {
 				skipped++
+
 				continue
 			}
+
 			// Match the base corpus parquet schema: flat synth_method / synth_base_id, not a nested `synth`.
 			write(
 				JSON.stringify({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n"
 			)
+
 			emitted++
 		}
 

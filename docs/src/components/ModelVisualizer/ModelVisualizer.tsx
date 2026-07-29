@@ -38,7 +38,9 @@ export interface ModelVisualizerProps {
 	trace: ParseTraceLike
 }
 
-/** Memoized: the live wrapper re-renders on every input keystroke; `trace` is referentially stable between runs. */
+/**
+ * Memoized: the live wrapper re-renders on every input keystroke; `trace` is referentially stable between runs.
+ */
 export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Element {
 	const [matrixMode, setMatrixMode] = useState<"logits" | "emissions">("emissions")
 	const matrix = matrixMode === "logits" ? trace.logits : trace.emissions
@@ -49,7 +51,7 @@ export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: Mo
 	const emissionWidth = matrix[0]?.length ?? 0
 	const rowLabels = trace.labels.slice(0, emissionWidth)
 
-	if (trace.pieces.length === 0) {
+	if (!trace.pieces.length) {
 		return <div className={styles.empty}>Empty input — nothing to trace.</div>
 	}
 

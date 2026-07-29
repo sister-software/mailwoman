@@ -17,7 +17,7 @@ import zod from "zod"
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { evalGeocoderFactory } from "./run.tsx"
 
-export const args = zod.tuple([
+const ArgsSchema = zod.tuple([
 	zod.enum(["gbt", "cross-gbt", "org-cross-gbt"]).describe(
 		argument({
 			name: "variant",
@@ -49,10 +49,11 @@ const OptionsSchema = zod.object({
 	dataRoot: zod.string().optional().describe("Per-state shard root (default $MAILWOMAN_DATA_ROOT)"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
 type Options = zod.infer<typeof OptionsSchema>
-type Variant = zod.infer<typeof args>[0]
+
+type Variant = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)
 
@@ -62,6 +63,7 @@ function runVariant(variant: Variant, options: Options): Promise<{ out: string; 
 		dataRoot: options.dataRoot,
 		locale: options.locale,
 	})
+
 	const base = { createGeocoder, sources: options.sources, out: options.out, locale: options.locale }
 
 	switch (variant) {
@@ -89,7 +91,7 @@ function runVariant(variant: Variant, options: Options): Promise<{ out: string; 
 	}
 }
 
-const RegistryTrainScorer: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const RegistryTrainScorer: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(() => runVariant(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

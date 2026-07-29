@@ -21,6 +21,11 @@ import { repoRootPath } from "../../utils/repo.ts"
 import { formatPercent } from "../../utils/stats.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
+/**
+ * Samples a bucket needs before its off-map rate is reported rather than folded into the tail.
+ */
+const MIN_REPORTABLE_SAMPLES = 8
+
 interface OffMapRow {
 	raw: string
 	country: string
@@ -28,23 +33,35 @@ interface OffMapRow {
 	srcCountry: string
 }
 
-/** Options for {@linkcode evalLatinOffmap}. */
+/**
+ * Options for {@linkcode evalLatinOffmap}.
+ */
 export interface EvalLatinOffmapOptions {
-	/** Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	model?: string
-	/** Abstention threshold. Default 0.5. */
+	/**
+	 * Abstention threshold. Default 0.5.
+	 */
 	abstain?: number
-	/** Dataset dir (`test-latin-offmap.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`test-latin-offmap.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode evalLatinOffmap}. */
+/**
+ * Result of {@linkcode evalLatinOffmap}.
+ */
 export interface EvalLatinOffmapResult {
 	n: number
 	handled: number
 }
 
-/** Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout. */
+/**
+ * Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout.
+ */
 export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Promise<EvalLatinOffmapResult> {
 	const modelDir = options.model || dataRootPath("coarse-placer", "model")
 	const abstain = options.abstain ?? 0.5
@@ -73,6 +90,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	} else {
 		weights = new Float32Array(ab)
 	}
+
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
 	const rows: OffMapRow[] = readFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), "utf8")
@@ -91,42 +109,49 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	for (const r of rows) {
 		const p = placer.predict(r.raw)
 		const h = handled(p)
+
 		n++
 
 		if (h) {
 			ok++
 		}
+
 		bump(`group:${r.group}`).n++
+
 		bump(`cc:${r.srcCountry}`).n++
 
 		if (h) {
 			bump(`group:${r.group}`).ok++
+
 			bump(`cc:${r.srcCountry}`).ok++
 		} else {
 			missTo[p.country!] = (missTo[p.country!] ?? 0) + 1
 
-			if (samples.length < 8) {
+			if (samples.length < MIN_REPORTABLE_SAMPLES) {
 				samples.push(`    ${r.srcCountry} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 38)}»`)
 			}
 		}
 	}
+
 	console.log(`Latin off-map handling — model ${path.basename(modelDir)} (abstain ${abstain}, n=${n})`)
 	console.log(`  OVERALL handled (OTHER-or-abstain): ${ok}/${n} (${formatPercent(ok, n)})  ← want ≥90%`)
 	console.log(`  by group:`)
 
 	for (const k of Object.keys(by)
-		.filter((k) => k.startsWith("group:"))
-		.sort()) {
+		.filter((key) => key.startsWith("group:"))
+		.toSorted()) {
 		console.log(`    ${k.slice(6).padEnd(8)} ${formatPercent(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 	}
+
 	console.log(`  by source country:`)
 
 	for (const k of Object.keys(by)
-		.filter((k) => k.startsWith("cc:"))
-		.sort()) {
+		.filter((key) => key.startsWith("cc:"))
+		.toSorted()) {
 		console.log(`    ${k.slice(3).padEnd(4)} ${formatPercent(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 	}
-	const misses = Object.entries(missTo).sort((a, b) => b[1] - a[1])
+
+	const misses = Object.entries(missTo).toSorted((a, b) => b[1] - a[1])
 
 	if (misses.length) {
 		console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)

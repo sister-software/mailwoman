@@ -41,7 +41,15 @@ import { formatAddress, reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 import { decomposeStreet } from "./street-decompose.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const TIGER_ADAPTER_ID = "tiger"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
 
 /**
@@ -125,7 +133,9 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 	}
 }
 
-/** Three locality-level variants, mirroring `wof-admin`'s fan-out. */
+/**
+ * Three locality-level variants, mirroring `wof-admin`'s fan-out.
+ */
 function* placeVariants(row: TigerPlaceRow): Iterable<{
 	components: CanonicalRow["components"]
 	variantKey: string
@@ -141,17 +151,21 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 		components: { locality: name },
 		variantKey: "locality-only",
 	}
+
 	yield {
 		components: { locality: name, region: state.abbreviation },
 		variantKey: "with-region",
 	}
+
 	yield {
 		components: { locality: name, region: state.abbreviation, country: US_COUNTRY_DISPLAY },
 		variantKey: "with-region-country",
 	}
 }
 
-/** Build a TIGER adapter. Pure factory so multiple instances can be created in tests. */
+/**
+ * Build a TIGER adapter. Pure factory so multiple instances can be created in tests.
+ */
 export function createTigerAdapter(): CorpusAdapter {
 	return {
 		id: TIGER_ADAPTER_ID,
@@ -181,7 +195,7 @@ export function createTigerAdapter(): CorpusAdapter {
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
 
 						yield {
 							raw,
@@ -193,6 +207,7 @@ export function createTigerAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}
@@ -207,7 +222,7 @@ export function createTigerAdapter(): CorpusAdapter {
 						if (!raw) continue
 						const aligned = reconcileComponents(variant.components, raw)
 
-						if (Object.keys(aligned).length === 0) continue
+						if (!Object.keys(aligned).length) continue
 
 						yield {
 							raw,
@@ -219,6 +234,7 @@ export function createTigerAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}
@@ -229,4 +245,7 @@ export function createTigerAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const tigerAdapter = createTigerAdapter()

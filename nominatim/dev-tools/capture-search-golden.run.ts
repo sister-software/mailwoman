@@ -61,7 +61,10 @@ try {
 		}
 
 		if (Date.now() > deadline) throw new Error("nominatim serve did not become ready within 180s")
-		await new Promise((resolve) => setTimeout(resolve, 1000))
+
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000)
+		})
 	}
 
 	const rows: string[] = []
@@ -73,6 +76,7 @@ try {
 	}
 
 	writeFileSync(OUT_PATH, rows.join("\n") + "\n")
+
 	console.error(
 		`captured ${rows.length} /search responses (${withHouseNumber.length} house-number parity cases available)`
 	)

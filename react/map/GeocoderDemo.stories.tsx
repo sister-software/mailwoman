@@ -24,7 +24,9 @@ const PRESETS = [
 	{ label: "ZIP only", value: "90210" },
 ]
 
-/** A stateful wrapper so the version picker + WASM toggle actually drive (a plain fixture can't hold state). */
+/**
+ * A stateful wrapper so the version picker + WASM toggle actually drive (a plain fixture can't hold state).
+ */
 function StatefulDemo({ panels }: { panels?: DemoPanels }) {
 	const [selectedVersion, setSelectedVersion] = useState("v7.2.0")
 	const [forceWASM, setForceWASM] = useState(false)
@@ -65,12 +67,17 @@ const meta: Meta<typeof StatefulDemo> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof StatefulDemo>
 
-/** The whole demo over the fake runtime — type an address, parse, watch the map + panel respond. */
+/**
+ * The whole demo over the fake runtime — type an address, parse, watch the map + panel respond.
+ */
 export const FullDemo: Story = {}
 
-/** The same demo with host-injected panels wired into the DI bag (about / release / compare / debug / permalink). */
+/**
+ * The same demo with host-injected panels wired into the DI bag (about / release / compare / debug / permalink).
+ */
 export const WithPanels: Story = {
 	args: {
 		panels: {

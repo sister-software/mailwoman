@@ -15,6 +15,7 @@ const meta: Meta<typeof SubjectPanel> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof SubjectPanel>
 
 const category = (label: string): CategoryRecord => ({ id: label.toLowerCase(), label }) as unknown as CategoryRecord

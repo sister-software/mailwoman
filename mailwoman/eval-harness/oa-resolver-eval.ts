@@ -61,82 +61,170 @@ import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, mailwomanDataRoot, percentile } from "@mailwoman/core/utils"
+import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
+import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
+
+import type { ShardProvider } from "../geocode-core.ts"
+import { renderOaResolverReport } from "./oa-resolver-report.ts"
 
 /**
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
  * off, tri-states are the paired on/off flags the gate legs pin (`adminCoherence`/`noAdminCoherence`).
  */
+/**
+ * Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals.
+ */
+const MIN_DISTINCTIVE_TOKEN_LENGTH = 4
+
+/**
+ * Shortest qualifier still meaningful when comparing an address's trailing parts.
+ */
+const MIN_QUALIFIER_LENGTH = 3
+
+/**
+ * Misses retained for diagnostics before the harness stops accumulating, to bound memory on a full run.
+ */
+const MAX_DIAGNOSTIC_MISSES = 5000
+
 export interface OAResolverEvalOptions {
-	/** #722 baseline: ablate to anchor-only (gazetteer + conventions OFF). */
+	/**
+	 * #722 baseline: ablate to anchor-only (gazetteer + conventions OFF).
+	 */
 	ablateToAnchor?: boolean
-	/** #476 street-level exact-point shard (single-state). */
+	/**
+	 * #476 street-level exact-point shard (single-state).
+	 */
 	addressPoints?: string
-	/** #895 tri-state pin: force adminCoherence ON. */
+	/**
+	 * #895 tri-state pin: force adminCoherence ON.
+	 */
 	adminCoherence?: boolean
-	/** Minimum anchor confidence to trust the anchor coordinate. Default 0.5. */
+	/**
+	 * Minimum anchor confidence to trust the anchor coordinate. Default 0.5.
+	 */
 	anchorMinConf?: number
-	/** #887 declared ablation of the model's postcode-anchor input channel. */
+	/**
+	 * #887 declared ablation of the model's postcode-anchor input channel.
+	 */
 	anchorOff?: boolean
-	/** #369 S8: feed the anchor's country posterior into the locality re-rank. */
+	/**
+	 * #369 S8: feed the anchor's country posterior into the locality re-rank.
+	 */
 	anchorRerank?: boolean
-	/** #478 leg 2: add the assembled (pipeline) arms. */
+	/**
+	 * #478 leg 2: add the assembled (pipeline) arms.
+	 */
 	assembled?: boolean
-	/** Swap the FTS backend for the byte-range candidate-table lookup (demo parity). */
+	/**
+	 * Swap the FTS backend for the byte-range candidate-table lookup (demo parity).
+	 */
 	candidateDb?: string
-	/** #718 situs-eval: grade the production coordinate cascade (per-state shards). */
+	/**
+	 * #718 situs-eval: grade the production coordinate cascade (per-state shards).
+	 */
 	cascade?: boolean
-	/** Shard root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`. */
+	/**
+	 * Shard root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`.
+	 */
 	dataRoot?: string
-	/** Hard country filter for admin lookups (`none` disables). Default `US`. */
+	/**
+	 * Hard country filter for admin lookups (`none` disables). Default `US`.
+	 */
 	defaultCountry?: string
-	/** Write per-row failure dump here. */
+	/**
+	 * Write per-row failure dump here.
+	 */
 	errorsJson?: string
-	/** Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`. */
+	/**
+	 * Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`.
+	 */
 	eval?: string
-	/** #405: recover the locality dropped for a dual-role place. */
+	/**
+	 * #405: recover the locality dropped for a dual-role place.
+	 */
 	hierarchyCompletion?: boolean
-	/** #483 house-number interpolation shard (single-state). */
+	/**
+	 * #483 house-number interpolation shard (single-state).
+	 */
 	interpolation?: string
-	/** Row cap (0/omitted = all rows). */
+	/**
+	 * Row cap (0/omitted = all rows).
+	 */
 	limit?: number
-	/** Candidate ONNX. */
+	/**
+	 * Candidate ONNX.
+	 */
 	model?: string
-	/** Pin the anchor lookup source. */
+	/**
+	 * Pin the anchor lookup source.
+	 */
 	modelAnchorLookup?: string
-	/** Candidate model-card. */
+	/**
+	 * Candidate model-card.
+	 */
 	modelCard?: string
-	/** #895 tri-state pin: force adminCoherence OFF. */
+	/**
+	 * #895 tri-state pin: force adminCoherence OFF.
+	 */
 	noAdminCoherence?: boolean
-	/** #690/#895 tri-state pin: force normalizeCase ON. */
+	/**
+	 * #690/#895 tri-state pin: force normalizeCase ON.
+	 */
 	normalizeCase?: boolean
-	/** Write the aggregate JSON dump here. */
+	/**
+	 * Write the aggregate JSON dump here.
+	 */
 	outJson?: string
-	/** Also write the markdown report here (self-reporting safeguard). */
+	/**
+	 * Also write the markdown report here (self-reporting safeguard).
+	 */
 	outMd?: string
-	/** Per-row resolved-locality dump for the PIP-containment metric. */
+	/**
+	 * Per-row resolved-locality dump for the PIP-containment metric.
+	 */
 	outResolved?: string
-	/** Per-row neural-vs-v0 outcome dump (every row). */
+	/**
+	 * Per-row neural-vs-v0 outcome dump (every row).
+	 */
 	outRows?: string
-	/** #743: production-representative placer (soft country prior). */
+	/**
+	 * #743: production-representative placer (soft country prior).
+	 */
 	placeCountry?: boolean
-	/** #194/#743: promote a confident placer guess to a hard country filter (safelist-gated). */
+	/**
+	 * #194/#743: promote a confident placer guess to a hard country filter (safelist-gated).
+	 */
 	placeCountryHard?: boolean
-	/** Ungated hard-filter measurement (full in-map safelist). */
+	/**
+	 * Ungated hard-filter measurement (full in-map safelist).
+	 */
 	placeCountryHardAll?: boolean
-	/** #475 opt-in postal-city alias scorer on the FTS path. */
+	/**
+	 * #475 opt-in postal-city alias scorer on the FTS path.
+	 */
 	postalCityAliasDb?: string
-	/** Add the `neural+anchor` row (coordinate from the postcode anchor centroid). */
+	/**
+	 * Add the `neural+anchor` row (coordinate from the postcode anchor centroid).
+	 */
 	postcodeAnchor?: boolean
-	/** Postcode shards for the anchor rows (comma-separated). */
+	/**
+	 * Postcode shards for the anchor rows (comma-separated).
+	 */
 	postcodeShards?: string
-	/** #690/#895 tri-state pin: force normalizeCase OFF. */
+	/**
+	 * #690/#895 tri-state pin: force normalizeCase OFF.
+	 */
 	rawCase?: boolean
-	/** Candidate tokenizer. */
+	/**
+	 * Candidate tokenizer.
+	 */
 	tokenizer?: string
-	/** WOF shard list (comma-separated). Default admin + postcode-locality-intl. */
+	/**
+	 * WOF shard list (comma-separated). Default admin + postcode-locality-intl.
+	 */
 	wof?: string
 }
 
@@ -149,7 +237,9 @@ interface OaRow {
 	source: string
 }
 
-/** Most-specific placetype wins (locality beats region beats country). */
+/**
+ * Most-specific placetype wins (locality beats region beats country).
+ */
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
 	locality: 5,
@@ -168,12 +258,13 @@ interface Resolved {
 	lon: number
 }
 
-/** Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific). */
-/** Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any. */
+/**
+ * Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any.
+ */
 function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		const ap = n.metadata?.address_point as { lat: number; lon: number } | undefined
 
@@ -184,11 +275,13 @@ function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | 
 	return null
 }
 
-/** Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any. */
+/**
+ * Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any.
+ */
 function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const n = stack.pop()!
 		const ip = n.metadata?.interpolated_point as { lat: number; lon: number } | undefined
 
@@ -199,8 +292,12 @@ function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | 
 	return null
 }
 
+/**
+ * Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific).
+ */
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
+
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
@@ -263,14 +360,17 @@ const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
  * altname set (a place's own recorded variants) rather than loosening here.
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
+
 const normName = (s: string | undefined): string => {
 	if (!s) return ""
+
 	const x = s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "") // drop diacritics
-		.replace(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
+		.replaceAll(/[\u0300-\u036F]/g, "") // drop diacritics
+		.replaceAll(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
 		.trim()
+
 	const toks = x
 		.split(" ")
 		.filter(Boolean)
@@ -278,15 +378,17 @@ const normName = (s: string | undefined): string => {
 
 	return toks
 		.join(" ")
-		.replace(/\bmc (\w)/g, "mc$1")
-		.replace(/\s+/g, " ")
+		.replaceAll(/\bmc (\w)/g, "mc$1")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 
-// Resolved region names are the gazetteer's CANONICAL full names ("California", "District of
-// Columbia"); OA's expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so
-// region-match compares like-for-like. Embedded inline (not imported from @mailwoman/corpus, which
-// has no exports map → fragile subpath import for a standalone script).
+/**
+ * Resolved region names are the gazetteer's CANONICAL full names ("California", "District of Columbia"); OA's
+ * expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so region-match compares like-for-like.
+ * Embedded inline (not imported from @mailwoman/corpus, which has no exports map → fragile subpath import for a
+ * standalone script).
+ */
 const STATE_NAME_TO_ABBR: Record<string, string> = {
 	alabama: "AL",
 	alaska: "AK",
@@ -375,10 +477,248 @@ function regionMatches(resolvedName: string | undefined, expected: string | unde
 	return gotFr !== null && gotFr === lookupFrenchRegion(expected)
 }
 
-/** Run the OpenAddresses real-point resolver eval. Markdown report on stdout (+ optional `outMd`). */
+/**
+ * Run the OpenAddresses real-point resolver eval. Markdown report on stdout (+ optional `outMd`).
+ */
+/**
+ * The locality-credit predicate: does the resolved place count as OA's expected locality?
+ *
+ * Two allowances, both provenance-first (no hardcoded name lists), both able only to ADD credit to an already-correct
+ * place: WOF alias names (Butte ↔ Butte-Silver Bow, Saint ↔ St. Johnsbury) and gold's regional qualifiers when they
+ * match the place's OWN ancestry (#386: `Plauen Vogtl` → Plauen, whose county is Vogtlandkreis). Different WOF ids
+ * carry disjoint name sets, so Saint Albans never matches St. Johnsbury.
+ *
+ * The admin shard is opened read-only and both lookups are cached behind a near-miss, so the cost is negligible. The
+ * handle lives as long as the eval — the process exit closes it.
+ */
+function buildLocalityMatcher(adminShardPath: string) {
+	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
+	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
+	// single canonical name. This credits forms WOF records as the SAME place (Butte ↔
+	// Butte-Silver Bow, Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) WITHOUT loosening genuine
+	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
+	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
+	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
+	const adminDb = new DatabaseSync(adminShardPath, { readOnly: true })
+	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
+	const altCache = new Map<number, Set<string>>()
+
+	const altNamesFor = (id: number): Set<string> => {
+		let set = altCache.get(id)
+
+		if (!set) {
+			set = new Set<string>()
+
+			for (const r of namesStmt.all(id) as { name: string }[]) {
+				const n = normName(r.name)
+
+				if (n) {
+					set.add(n)
+				}
+			}
+
+			altCache.set(id, set)
+		}
+
+		return set
+	}
+
+	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
+	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
+	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
+	// reads a miss. Rather than a hardcoded suffix blacklist (a provenance-first violation), credit
+	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
+	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
+	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under
+	// normName (Cyrillic/CJK are stripped), so the token set is latin-only without a language filter.
+	const ancestorNamesStmt = adminDb.prepare(
+		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
+			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
+	)
+
+	const ancestorTokCache = new Map<number, Set<string>>()
+
+	const ancestorTokensFor = (id: number): Set<string> => {
+		let set = ancestorTokCache.get(id)
+
+		if (!set) {
+			set = new Set<string>()
+
+			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
+				for (const t of normName(r.name).split(" "))
+					if (t.length >= MIN_DISTINCTIVE_TOKEN_LENGTH) {
+						set.add(t)
+					}
+			}
+
+			ancestorTokCache.set(id, set)
+		}
+
+		return set
+	}
+
+	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
+		if (!expected || !locNode) return false
+		const e = normName(expected)
+
+		if (!e) return false
+
+		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
+		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when EVERY trailing qualifier is an
+		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
+		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.
+		const base = normName(locNode.name)
+
+		if (base && e.startsWith(base + " ")) {
+			const quals = e
+				.slice(base.length + 1)
+				.split(" ")
+				.filter(Boolean)
+
+			const anc = ancestorTokensFor(locNode.id)
+
+			if (quals.length && quals.every((q) => q.length >= MIN_QUALIFIER_LENGTH && [...anc].some((a) => a.startsWith(q))))
+				return true
+		}
+
+		return false
+	}
+
+	return localityMatches
+}
+
+/**
+ * One arm's counters. `errs` is the raw per-row coordinate error list (km) the percentiles are taken over — kept whole
+ * rather than streamed, because the report needs p50/p90/p99 from the same sample.
+ */
+export interface Agg {
+	n: number
+	localityMatch: number
+	regionMatch: number
+	resolved: number
+	errs: number[]
+}
+
+/**
+ * An arm's headline plus its per-state breakdown. Per-state aggregation keeps a single dense state (Cook County /
+ * Chicago) from dominating the headline.
+ */
+export interface AggPair {
+	overall: Agg
+	byState: Map<string, Agg>
+}
+
+/**
+ * Wire up the coordinate tiers this run grades, from the flags that select them.
+ *
+ * Each tier answers WHERE, never WHICH PLACE: every `neural+<tier>` arm keeps neural's admin match and replaces only
+ * the coordinate, so the delta between arms isolates exactly what the tier sharpens. `--cascade` supersedes the
+ * single-state `--address-points`/`--interpolation` flags with per-row, per-state shard selection through a
+ * ShardProvider.
+ */
+async function buildCoordinateTiers(options: OAResolverEvalOptions) {
+	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
+	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
+	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
+	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
+	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
+	// row isolates exactly what the anchor sharpens: where, not which place.
+	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
+	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
+	// the address-point hit when present (the tier's whole contribution is "where", street-level).
+	const addressPointsDb = options.addressPoints || ""
+	let addressPoints: AddressPointLookup | null = null
+
+	if (addressPointsDb) {
+		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
+	}
+
+	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
+	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
+	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
+	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
+	// long tail of valid-but-unlisted numbers the exact tier misses.
+	const interpolationDb = options.interpolation || ""
+	let interpolation: InterpolationLookup | null = null
+
+	if (interpolationDb) {
+		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
+	}
+
+	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
+	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
+	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
+	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
+	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
+	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
+	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
+	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
+	// <root>/interpolation/).
+	const cascadeOn = options.cascade ?? false
+	const dataRoot = options.dataRoot || mailwomanDataRoot()
+	let cascadeProvider: ShardProvider | null = null
+
+	if (cascadeOn) {
+		const { ShardProvider } = await import("../geocode-core.ts")
+		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+	}
+
+	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
+	const runAddrPt = !!addressPoints || cascadeOn
+	const runInterp = !!interpolation || cascadeOn
+	const useAnchor = options.postcodeAnchor ?? false
+	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
+	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
+	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
+	const anchorRerank = options.anchorRerank ?? false
+
+	let postcodeLookup: {
+		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
+		close(): void
+	} | null = null
+
+	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
+
+	if (useAnchor || anchorRerank) {
+		const shards = (
+			options.postcodeShards ||
+			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
+		)
+			.split(",")
+			.map((s) => s.trim())
+
+		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		postcodeLookup = new WOFPostcodeLookup(shards)
+		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
+	}
+
+	return {
+		addressPoints,
+		interpolation,
+		cascadeProvider,
+		dataRoot,
+		cascadeOn,
+		runAddrPt,
+		runInterp,
+		useAnchor,
+		anchorRerank,
+		postcodeLookup,
+		extractAnchors,
+	}
+}
+
+/* oxlint-disable max-lines, max-statements, complexity -- 782 lines / 175 statements / complexity 146,
+   down from 829 / 272 / 173 after the report, locality-matcher, and coordinate-tier splits. What remains
+   is one linear measurement script: parse the flags, run every arm over every row, aggregate. Getting it
+   under the ceilings means restructuring it into a multi-module harness — worth doing, but not behind an
+   eval gate this machine can't run ($MAILWOMAN_DATA_ROOT is absent). */
 export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promise<void> {
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
+
 	// Default attaches the coordinate-first candidate shard (postcode-locality-intl.db) alongside the
 	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
 	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
@@ -410,10 +750,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
 	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
-	const overrides: import("@mailwoman/neural/scorer").ScorerOverrides = {
+
+	const overrides: ScorerOverrides = {
 		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
 		...(anchorOff ? { anchor: false } : {}),
 	}
+
 	const neural = await createScorer({
 		modelPath: options.model || "",
 		tokenizerPath: options.tokenizer || "",
@@ -423,6 +765,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		tier: "server",
 		...(ablateToAnchor || anchorOff ? { overrides } : {}),
 	})
+
 	console.error(
 		ablateToAnchor
 			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
@@ -441,11 +784,14 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
 	const postalCityAliasDB = options.postalCityAliasDb || ""
+
 	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
+
 	const postalCityAliases = postalCityAliasDB
 		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
 		: undefined
+
 	const backend = candidateDb
 		? new WOFCandidateTableLookup({ databasePath: candidateDb })
 		: new WOFSqlitePlaceLookup({
@@ -460,100 +806,22 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	if (postalCityAliases) {
 		console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	}
+
 	const resolver = createWOFResolver(backend as never)
 
-	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
-	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
-	// single canonical name. This credits forms WOF records as the SAME place (Butte ↔
-	// Butte-Silver Bow, Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) WITHOUT loosening genuine
-	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
-	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
-	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
-	const adminDb = new DatabaseSync(wofPaths[0]!, { readOnly: true })
-	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
-	const altCache = new Map<number, Set<string>>()
-	const altNamesFor = (id: number): Set<string> => {
-		let set = altCache.get(id)
-
-		if (!set) {
-			set = new Set<string>()
-
-			for (const r of namesStmt.all(id) as { name: string }[]) {
-				const n = normName(r.name)
-
-				if (n) {
-					set.add(n)
-				}
-			}
-			altCache.set(id, set)
-		}
-
-		return set
-	}
-	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
-	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
-	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
-	// reads a miss. Rather than a hardcoded suffix blacklist (a provenance-first violation), credit
-	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
-	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
-	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under
-	// normName (Cyrillic/CJK are stripped), so the token set is latin-only without a language filter.
-	const ancestorNamesStmt = adminDb.prepare(
-		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
-			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
-	)
-	const ancestorTokCache = new Map<number, Set<string>>()
-	const ancestorTokensFor = (id: number): Set<string> => {
-		let set = ancestorTokCache.get(id)
-
-		if (!set) {
-			set = new Set<string>()
-
-			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
-				for (const t of normName(r.name).split(" "))
-					if (t.length >= 4) {
-						set.add(t)
-					}
-			}
-			ancestorTokCache.set(id, set)
-		}
-
-		return set
-	}
-	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
-		if (!expected || !locNode) return false
-		const e = normName(expected)
-
-		if (!e) return false
-
-		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
-		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when EVERY trailing qualifier is an
-		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
-		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.
-		const base = normName(locNode.name)
-
-		if (base && e.startsWith(base + " ")) {
-			const quals = e
-				.slice(base.length + 1)
-				.split(" ")
-				.filter(Boolean)
-			const anc = ancestorTokensFor(locNode.id)
-
-			if (quals.length > 0 && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
-		}
-
-		return false
-	}
+	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
 	// #690/#895: normalizeCase is tri-state so a gate leg can PIN either side of the library default
 	// (default-ON at the classifier since #895). `--normalize-case` pins ON, `--raw-case` pins OFF,
 	// neither = the library default. Silent config shifts in a gate battery are the #718 sin — pin
 	// explicitly in pre-registered legs.
 	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
+
 	const parseOpts = {
 		postcodeRepair: true,
 		...(normalizeCase !== undefined ? { normalizeCase } : {}),
 	} as Parameters<typeof neural.parse>[1]
+
 	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
@@ -565,94 +833,42 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// pass it to measure the before/after. Applied to BOTH the neural and rules resolve paths (they
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
+
 	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
 	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
+
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 	}
 
-	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
-	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
-	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
-	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
-	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
-	// row isolates exactly what the anchor sharpens: where, not which place.
-	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
-	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
-	// the address-point hit when present (the tier's whole contribution is "where", street-level).
-	const addressPointsDb = options.addressPoints || ""
-	let addressPoints: import("@mailwoman/resolver").AddressPointLookup | null = null
+	const {
+		addressPoints,
+		interpolation,
+		cascadeProvider,
+		dataRoot,
+		cascadeOn,
+		runAddrPt,
+		runInterp,
+		useAnchor,
+		anchorRerank,
+		postcodeLookup,
+		extractAnchors,
+	} = await buildCoordinateTiers(options)
 
-	if (addressPointsDb) {
-		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
-	}
-	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
-	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
-	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
-	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
-	// long tail of valid-but-unlisted numbers the exact tier misses.
-	const interpolationDb = options.interpolation || ""
-	let interpolation: import("@mailwoman/resolver").InterpolationLookup | null = null
-
-	if (interpolationDb) {
-		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
-		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
-	}
-	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
-	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
-	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
-	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
-	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
-	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
-	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
-	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
-	// <root>/interpolation/).
-	const cascadeOn = options.cascade ?? false
-	const dataRoot = options.dataRoot || mailwomanDataRoot()
-	let cascadeProvider: import("../geocode-core.ts").ShardProvider | null = null
-
-	if (cascadeOn) {
-		const { ShardProvider } = await import("../geocode-core.ts")
-		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
-		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
-	}
-	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
-	const runAddrPt = !!addressPoints || cascadeOn
-	const runInterp = !!interpolation || cascadeOn
-	const useAnchor = options.postcodeAnchor ?? false
-	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
-	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
-	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
-	const anchorRerank = options.anchorRerank ?? false
-	let postcodeLookup: {
-		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
-		close(): void
-	} | null = null
-	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
-
-	if (useAnchor || anchorRerank) {
-		const shards = (
-			options.postcodeShards ||
-			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
-		)
-			.split(",")
-			.map((s) => s.trim())
-		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		postcodeLookup = new WOFPostcodeLookup(shards)
-		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
-	}
 	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized
 	// house-number span scores ~0.2 (single-country × house-number penalty); a genuinely ambiguous
 	// real code scores ≥0.52 (valid in ≤3 countries). The 0.5 floor keeps the latter and rejects the
 	// former, so a span the position prior flags as a house number falls back to the resolver coordinate
 	// (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
 	const anchorMinConf = options.anchorMinConf ?? 0.5
-	/** The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`). */
+
+	/**
+	 * The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`).
+	 */
 	const anchorCoordFor = (input: string): { lat: number; lon: number } | null => {
 		if (!postcodeLookup || !extractAnchors) return null
 		const prefer = (dc && dc.toLowerCase() !== "none" ? dc : "").toUpperCase()
@@ -667,7 +883,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (a.confidence < anchorMinConf) continue
 			const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
 
-			if (placed.length === 0) continue
+			if (!placed.length) continue
 			// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
 			// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
 			// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
@@ -692,7 +908,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		let best: { posterior: Record<string, number>; conf: number } | null = null
 
 		for (const a of extractAnchors(input, postcodeLookup)) {
-			if (a.candidates.length === 0) continue
+			if (!a.candidates.length) continue
 
 			if (!best || a.confidence > best.conf) {
 				best = { posterior: a.posterior, conf: a.confidence }
@@ -702,15 +918,8 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		return best?.posterior
 	}
 
-	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.
-	interface Agg {
-		n: number
-		localityMatch: number
-		regionMatch: number
-		resolved: number
-		errs: number[]
-	}
 	const newAgg = (): Agg => ({ n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] })
+
 	const bump = (a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
 
@@ -731,7 +940,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		}
 	}
 
-	/** Resolve one tree, return the admin-match flags + coord error vs OA's ground-truth point. */
+	/**
+	 * Resolve one tree, return the admin-match flags + coord error vs OA's ground-truth point.
+	 */
 	const scoreTree = (
 		row: OaRow,
 		resolved: Resolved[]
@@ -745,6 +956,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
+
 		// Admin-match is by NAME (OA carries no WOF id): a row matches if OA's expected locality
 		// equals the resolved place's canonical name OR any of its WOF altnames (see
 		// localityMatches); region is name-or-abbrev tolerant.
@@ -756,6 +968,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		const locNode =
 			resolved.find((r) => r.placetype === "locality") ??
 			resolved.find((r) => expandPlacetypeFilter(["locality"]).includes(r.placetype))
+
 		const locRaw = locNode?.name
 		const regResolved = resolved.find((r) => r.placetype === "region")
 
@@ -777,6 +990,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	const agg = {
 		neural: { overall: newAgg(), byState: new Map<string, Agg>() },
 	}
+
 	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
 	// when available. Only the coord error column differs from `neural`.
 	const neuralAnchorAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
@@ -816,13 +1030,16 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	if (usePlaceCountry && !evalPlacer) {
 		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
 	}
+
 	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let neuralPrecond = 0
 	let asmPrecond = 0
+
 	const hasStreetHN = (tree: AddressTree | null): boolean => {
 		if (!tree) return false
 		let street = false
 		let hn = false
+
 		const visit = (n: AddressNode): void => {
 			if (n.tag === "street") {
 				street = true
@@ -843,6 +1060,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 		return street && hn
 	}
+
 	const assembledPipeline = runAssembled
 		? createRuntimePipeline({
 				classifier: {
@@ -871,6 +1089,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		if (!m.has(st)) {
 			m.set(st, newAgg())
 		}
+
 		bump(m.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 		bump(agg[who].overall, s.locMatch, s.regMatch, s.resolved, s.err)
 	}
@@ -915,6 +1134,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		const rowShards = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
 		const rowAddrPoints = rowShards?.addressPoints ?? addressPoints ?? null
 		const rowInterp = rowShards?.interpolation ?? interpolation ?? null
+
 		// Shared resolve opts (hoisted so the assembled arms below resolve identically to neural).
 		const nOpts = {
 			...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
@@ -933,6 +1153,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		} catch {
 			/* unresolved */
 		}
+
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
 
@@ -961,11 +1182,13 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (hit) {
 				addressPointHits++
 			}
+
 			const st = row.state || "??"
 
 			if (!neuralAddrPtAgg.byState.has(st)) {
 				neuralAddrPtAgg.byState.set(st, newAgg())
 			}
+
 			bump(neuralAddrPtAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 			bump(neuralAddrPtAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 		}
@@ -981,11 +1204,13 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (interp) {
 				interpHits++
 			}
+
 			const st = row.state || "??"
 
 			if (!neuralInterpAgg.byState.has(st)) {
 				neuralInterpAgg.byState.set(st, newAgg())
 			}
+
 			bump(neuralInterpAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 			bump(neuralInterpAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 
@@ -999,7 +1224,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				let pc: string | undefined
 				const stk = [...nDecorated.roots]
 
-				while (stk.length > 0) {
+				while (stk.length) {
 					const n = stk.pop()!
 
 					if (n.tag === "street" && !s && n.value.trim()) {
@@ -1013,8 +1238,10 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 					if (n.tag === "postcode" && !pc && n.value.trim()) {
 						pc = n.value.trim()
 					}
+
 					stk.push(...n.children)
 				}
+
 				const precond = !!(s && hn && pc)
 
 				if (precond) {
@@ -1024,7 +1251,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				if (precond && !exact && !interp) {
 					interpFullParseMiss++
 
-					if (diagMisses.length < 5000) {
+					if (diagMisses.length < MAX_DIAGNOSTIC_MISSES) {
 						diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
 					}
 				}
@@ -1040,6 +1267,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (!neuralAnchorAgg.byState.has(st)) {
 				neuralAnchorAgg.byState.set(st, newAgg())
 			}
+
 			bump(neuralAnchorAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 		}
@@ -1064,6 +1292,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				if (!assembledAgg.byState.has(st)) {
 					assembledAgg.byState.set(st, newAgg())
 				}
+
 				bump(assembledAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 				bump(assembledAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
 
@@ -1093,145 +1322,52 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 	if (collectErrors) {
 		writeFileSync(options.errorsJson || "", JSON.stringify(errorRows, null, 2))
+
 		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJson || ""}`)
 	}
 
 	if (collectRows) {
 		writeFileSync(options.outRows || "", JSON.stringify(outRows))
+
 		console.error(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
 	}
 
 	if (collectResolvedDump) {
 		writeFileSync(options.outResolved || "", JSON.stringify(resolvedRows))
+
 		console.error(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
-	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
-	const pct = (x: number, n: number): string => (n ? `${((100 * x) / n).toFixed(1)}%` : "—")
-	const p = (xs: number[], q: number): string => percentile(xs, q)?.toFixed(1) ?? "—"
-	const lines: string[] = []
-	lines.push(`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`)
-	lines.push("")
-	lines.push(`Model: ${options.model || "(shipped weights)"} | WOF shards: ${wofPaths.length}`)
-	lines.push("")
-	lines.push(`## Resolver eval — neural parser through the WOF resolver`)
-	lines.push("")
-	lines.push(`| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |`)
-	lines.push(`|---|--:|--:|--:|--:|--:|--:|`)
-	const overallRow = (label: string, a: Agg): string =>
-		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
-	lines.push(overallRow("**neural**", agg.neural.overall))
+	// self-emitted; eval figures are NEVER hand-typed into docs)
+	const report = renderOaResolverReport({
+		agg,
+		assembledAgg,
+		neuralAnchorAgg,
+		neuralAddrPtAgg,
+		neuralInterpAgg,
+		addressPointHits,
+		interpHits,
+		interpPrecond,
+		interpFullParseMiss,
+		neuralPrecond,
+		asmPrecond,
+		diagMisses,
+		rows,
+		wofPaths,
+		runAssembled,
+		runAddrPt,
+		runInterp,
+		useAnchor,
+		diagInterp,
+		cascadeOn,
+		options,
+	})
 
-	if (runAssembled) {
-		lines.push(overallRow("assembled", assembledAgg.overall))
-	}
-
-	if (useAnchor) {
-		lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
-	}
-
-	if (runAddrPt) {
-		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
-		lines.push("")
-		lines.push(
-			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
-		)
-	}
-
-	if (runInterp) {
-		lines.push(
-			overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall)
-		)
-		lines.push("")
-		lines.push(
-			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
-		)
-
-		if (cascadeOn) {
-			const Nc = neuralInterpAgg.overall.n
-			const adminTier = Math.max(0, Nc - addressPointHits - interpHits)
-			const cerrs = neuralInterpAgg.overall.errs
-			const within = (m: number): string =>
-				`${((100 * cerrs.filter((e) => e <= m / 1000).length) / Math.max(1, cerrs.length)).toFixed(1)}%`
-			lines.push("")
-			lines.push(
-				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${pct(addressPointHits, Nc)}, interpolated ${pct(interpHits, Nc)}, admin ${pct(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
-			)
-		}
-
-		if (diagInterp) {
-			const N = neuralInterpAgg.overall.n
-			lines.push("")
-			lines.push(`### interp coverage diagnostic`)
-			lines.push(
-				`- parsed street+house_number+postcode (precondition): ${interpPrecond}/${N} (${((100 * interpPrecond) / Math.max(1, N)).toFixed(1)}%)`
-			)
-			lines.push(
-				`- precondition met + exact missed + interp MISS (genuine find() miss = shard/normalization gap): ${interpFullParseMiss}`
-			)
-			lines.push(
-				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
-			)
-			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?"). Cumulative % of
-			// ALL rows within each radius — the within-100m DoD metric + the shape of the tail.
-			const ierrs = neuralInterpAgg.overall.errs
-			lines.push("")
-			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
-
-			for (const m of [10, 25, 50, 100, 200, 500, 1000, 5000]) {
-				const within = ierrs.filter((e) => e <= m / 1000).length
-				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
-			}
-
-			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
-			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
-			if (diagMisses.length > 0) {
-				writeFileSync("/tmp/interp-misses.txt", diagMisses.join("\n"))
-				lines.push("")
-				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
-				lines.push("sample (house_number | street | postcode ← input):")
-
-				for (const m of diagMisses.slice(0, 12)) {
-					lines.push(`  - ${m}`)
-				}
-			}
-		}
-	}
-
-	if (runAssembled) {
-		const N = agg.neural.overall.n
-		lines.push("")
-		lines.push(`### Assembled-pipeline coordinate check`)
-		lines.push("")
-		lines.push(
-			"`assembled` is the pipeline through the same neural+resolver (comparability check vs `neural`). The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
-		)
-		lines.push("")
-		lines.push(`- neural: ${pct(neuralPrecond, N)} · assembled: ${pct(asmPrecond, N)} (of ${N} rows)`)
-	}
-	lines.push("")
-	lines.push(`## Neural per-state (locality-match)`)
-	lines.push("")
-	lines.push(`| state | n | neural loc | neural reg |`)
-	lines.push(`|---|--:|--:|--:|`)
-
-	for (const st of [...agg.neural.byState.keys()].sort()) {
-		const nn = agg.neural.byState.get(st)!
-		lines.push(`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(nn.regionMatch, nn.n)} |`)
-	}
-	lines.push("")
-	lines.push(
-		`Coord error for **neural** is the ADMIN-CENTROID tier (locality/region centroid → OA's real` +
-			` address point); a city centroid is legitimately tens of km from edge addresses, so the admin-MATCH` +
-			` rate is the headline there, not the coord. **neural+anchor** swaps in the postcode anchor's own` +
-			` centroid for the coordinate (admin match unchanged) — the finer postcode tier between admin-centroid` +
-			` and street-level (TIGER), which will own the sub-km tier later.`
-	)
-	const report = lines.join("\n")
 	console.log(report)
 
 	if (options.outMd || "") {
 		writeFileSync(options.outMd || "", report + "\n")
+
 		console.error(`wrote markdown → ${options.outMd || ""}`)
 	}
 
@@ -1245,7 +1381,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			},
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
+
 		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
+
 		console.error(`wrote json → ${options.outJson || ""}`)
 	}
 

@@ -18,9 +18,13 @@ export interface QueryFormProps {
 	disabled?: boolean
 	busy?: boolean
 	placeholder?: string
-	/** Keydown on the input — the seam a combobox (the demo's place-autocomplete) needs for arrow/Enter/Esc nav. */
+	/**
+	 * Keydown on the input — the seam a combobox (the demo's place-autocomplete) needs for arrow/Enter/Esc nav.
+	 */
 	onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
-	/** Escape hatch for extra `<input>` attributes (aria-combobox props, `autoComplete`, …). Merged last. */
+	/**
+	 * Escape hatch for extra `<input>` attributes (aria-combobox props, `autoComplete`, …). Merged last.
+	 */
 	inputProps?: InputHTMLAttributes<HTMLInputElement>
 }
 

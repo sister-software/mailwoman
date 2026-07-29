@@ -24,9 +24,11 @@ type Row = Record<string, string | number | null>
 let dir: string
 let altDir: string
 
-/** One GeoNames main-dump row (19 tab-separated columns). */
+/**
+ * One GeoNames main-dump row (19 tab-separated columns).
+ */
 function mainRow(over: Record<number, string>): string {
-	const f = Array(19).fill("")
+	const f = new Array(19).fill("")
 
 	for (const [i, v] of Object.entries(over)) {
 		f[Number(i)] = v
@@ -57,9 +59,11 @@ function freshDb(): DatabaseSync {
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
 		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`
 	)
+
 	db.exec(
 		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
 	)
+
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 
@@ -86,6 +90,7 @@ beforeAll(() => {
 			14: "175945",
 		})
 	)
+
 	// "Santa Isabel" reproduces the Malabo shape: one language-tagged UNFLAGGED row + a separate
 	// language-less row carrying the historic evidence (isHistoric + a `to` date). Historic-ness is a
 	// fact about the NAME — the unflagged row must not classify official.
@@ -135,12 +140,13 @@ test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", 
 
 	const rows = db.prepare(`SELECT name, language, privateuse, official FROM names ORDER BY name`).all() as Row[]
 
-	expect(rows.length).toBe(5)
+	expect(rows).toHaveLength(5)
 
 	for (const r of rows) {
 		expect(r.language).toBe("")
 		expect(r.privateuse).toBe("")
 		expect(r.official).toBe(0)
 	}
+
 	db.close()
 })

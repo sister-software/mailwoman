@@ -21,6 +21,7 @@ describe("JP_PREFECTURES", () => {
 		for (const info of Object.values(JP_PREFECTURES)) {
 			counts[info.type]++
 		}
+
 		expect(counts).toEqual({ to: 1, do: 1, fu: 2, ken: 43 })
 	})
 

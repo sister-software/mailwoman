@@ -35,6 +35,7 @@ describe("normalizePostcodeName (the #920 name law)", () => {
 
 function fixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',
@@ -55,6 +56,7 @@ function fixtureDB(): DatabaseSync {
 describe("ingestGeonamesPostal", () => {
 	it("folds one medoid row per normalized code, with the display form as an alt name", () => {
 		const dir = mkdtempSync(join(tmpdir(), "gn-postal-"))
+
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
 		// The medoid must be one of the REAL points (the cluster member nearest the mean), never
 		// the mean itself.
@@ -68,6 +70,7 @@ describe("ingestGeonamesPostal", () => {
 			].join("\n"),
 			"utf8"
 		)
+
 		const db = fixtureDB()
 		const result = ingestGeonamesPostal(db, ["CZ"], dir)
 

@@ -49,9 +49,7 @@ import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-m
 import { createRuntimePipeline } from "mailwoman"
 import ts from "typescript"
 
-// -------------------------------------------------------------------------------------------------
-// Args
-// -------------------------------------------------------------------------------------------------
+//#region Args
 
 interface Args {
 	testsDir: string
@@ -178,15 +176,16 @@ function parseArgs(): Args {
 
 	if (!out.testsDir) {
 		console.error("Usage: scripts/eval/harness-neural.ts --tests <dir> [--out-json <path>] [...]")
+
 		process.exit(1)
 	}
 
 	return out as Args
 }
 
-// -------------------------------------------------------------------------------------------------
-// Assertion extraction — TS AST → list of (input, expected[])
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Assertion extraction — TS AST → list of (input, expected[])
 
 interface ExtractedAssertion {
 	file: string
@@ -219,6 +218,7 @@ function objectLiteralToRecord(node: ts.ObjectLiteralExpression): Classification
 		} else if (ts.isStringLiteralLike(name)) {
 			key = name.text
 		} else return null
+
 		const value = prop.initializer
 
 		if (!ts.isArrayLiteralExpression(value)) return null
@@ -229,6 +229,7 @@ function objectLiteralToRecord(node: ts.ObjectLiteralExpression): Classification
 				elements.push(el.text)
 			} else return null
 		}
+
 		out[key] = elements
 	}
 
@@ -246,7 +247,7 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 			ts.isCallExpression(node) &&
 			ts.isIdentifier(node.expression) &&
 			node.expression.text === "assert" &&
-			node.arguments.length >= 1
+			node.arguments.length
 		) {
 			const inputArg = node.arguments[0]
 
@@ -255,6 +256,7 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 
 				return
 			}
+
 			const expected: ClassificationRecord[] = []
 			let allOk = true
 
@@ -263,14 +265,18 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 
 				if (!ts.isObjectLiteralExpression(arg)) {
 					allOk = false
+
 					break
 				}
+
 				const rec = objectLiteralToRecord(arg)
 
 				if (!rec) {
 					allOk = false
+
 					break
 				}
+
 				expected.push(rec)
 			}
 
@@ -278,8 +284,10 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 				out.push({ file: basename(file), locale, input: inputArg.text, expected })
 			}
 		}
+
 		ts.forEachChild(node, visit)
 	}
+
 	visit(sf)
 
 	return out
@@ -301,17 +309,17 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 		try {
 			const assertions = extractAssertions(filePath)
 			all.push(...assertions)
-		} catch (err) {
-			console.error(`[harness] WARN: failed to extract from ${entry}: ${(err as Error).message}`)
+		} catch (error) {
+			console.error(`[harness] WARN: failed to extract from ${entry}: ${(error as Error).message}`)
 		}
 	}
 
 	return all
 }
 
-// -------------------------------------------------------------------------------------------------
-// Neural output → the visible ClassificationRecord vocabulary
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Neural output → the visible ClassificationRecord vocabulary
 
 /**
  * Visible classification labels in the assertion vocabulary — the fixture format inherited from the retired rule-based
@@ -363,7 +371,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 		}
 	}
 
-	if (streetParts.length > 0) {
+	if (streetParts.length) {
 		out.street = [streetParts.join(" ")]
 	}
 
@@ -377,6 +385,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 		if (flat.intersection_b) {
 			xs.push(flat.intersection_b)
 		}
+
 		out.street = [...(out.street ?? []), ...xs]
 	}
 
@@ -402,9 +411,9 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 	return { record: out as ClassificationRecord, dropped }
 }
 
-// -------------------------------------------------------------------------------------------------
-// Comparison — case-insensitive superset match
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Comparison — case-insensitive superset match
 
 function normalize(s: string): string {
 	return s.toLowerCase().trim()
@@ -449,9 +458,9 @@ function anyExpectedMatches(expected: ClassificationRecord[], actual: Classifica
 	return false
 }
 
-// -------------------------------------------------------------------------------------------------
-// Per-assertion runner
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Per-assertion runner
 
 interface AssertionResult {
 	file: string
@@ -513,9 +522,9 @@ async function runAssertion(
 	}
 }
 
-// -------------------------------------------------------------------------------------------------
-// Falsehoods JSONL loader
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Falsehoods JSONL loader
 
 interface FalsehoodRow {
 	input: string
@@ -539,10 +548,12 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 
 			try {
 				row = JSON.parse(line)
-			} catch (err) {
-				console.error(`[harness] WARN: bad JSON in ${entry}: ${(err as Error).message}`)
+			} catch (error) {
+				console.error(`[harness] WARN: bad JSON in ${entry}: ${(error as Error).message}`)
+
 				continue
 			}
+
 			out.push({
 				file: `falsehoods/${entry}`,
 				locale: row.locale ?? file,
@@ -555,9 +566,9 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 	return out
 }
 
-// -------------------------------------------------------------------------------------------------
-// Report
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Report
 
 interface FileStats {
 	total: number
@@ -574,11 +585,13 @@ function printReport(results: AssertionResult[]): void {
 
 	for (const r of results) {
 		const s = byFile.get(r.file) ?? { total: 0, neural_pass: 0 }
+
 		s.total++
 
 		if (r.neural_pass) {
 			s.neural_pass++
 		}
+
 		byFile.set(r.file, s)
 	}
 
@@ -586,11 +599,13 @@ function printReport(results: AssertionResult[]): void {
 
 	for (const r of results) {
 		const s = byLocale.get(r.locale) ?? { total: 0, neural_pass: 0 }
+
 		s.total++
 
 		if (r.neural_pass) {
 			s.neural_pass++
 		}
+
 		byLocale.set(r.locale, s)
 	}
 
@@ -617,6 +632,7 @@ function printReport(results: AssertionResult[]): void {
 		const asmPass = results.filter((r) => r.assembled_pass).length
 		const asmGainedVsNeural = results.filter((r) => r.assembled_pass && !r.neural_pass).length
 		const asmLostVsNeural = results.filter((r) => !r.assembled_pass && r.neural_pass).length
+
 		console.log("## Assembled pipeline (#478 — `runPipeline`, the gate)")
 		console.log("")
 		console.log(`| Metric | Count | Rate |`)
@@ -630,28 +646,32 @@ function printReport(results: AssertionResult[]): void {
 	console.log("")
 	console.log("| File | Total | Neural | Neural % |")
 	console.log("|------|-------|--------|----------|")
-	const sortedFiles = [...byFile.entries()].sort((a, b) => b[1].total - a[1].total)
+
+	const sortedFiles = [...byFile.entries()].toSorted((a, b) => b[1].total - a[1].total)
 
 	for (const [file, s] of sortedFiles) {
 		console.log(`| ${file} | ${s.total} | ${s.neural_pass} | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`)
 	}
+
 	console.log("")
 
 	console.log("## Per-locale")
 	console.log("")
 	console.log("| Locale | Total | Neural | Neural % |")
 	console.log("|--------|-------|--------|----------|")
-	const sortedLocales = [...byLocale.entries()].sort((a, b) => b[1].total - a[1].total)
+
+	const sortedLocales = [...byLocale.entries()].toSorted((a, b) => b[1].total - a[1].total)
 
 	for (const [locale, s] of sortedLocales) {
 		console.log(`| ${locale} | ${s.total} | ${s.neural_pass} | ${((100 * s.neural_pass) / s.total).toFixed(0)}% |`)
 	}
+
 	console.log("")
 
 	// First 20 failures — the regression cluster the harness exists to surface.
 	const failures = results.filter((r) => !r.neural_pass).slice(0, 20)
 
-	if (failures.length > 0) {
+	if (failures.length) {
 		console.log(`## Failures (sample of first ${failures.length})`)
 		console.log("")
 
@@ -660,38 +680,45 @@ function printReport(results: AssertionResult[]): void {
 			console.log(`  - expected: \`${JSON.stringify(r.expected[0])}\``)
 			console.log(`  - neural: \`${JSON.stringify(r.neural_actual)}\``)
 		}
+
 		console.log("")
 	}
 }
 
-// -------------------------------------------------------------------------------------------------
-// Main
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()
+
 	console.error("--- harness-neural.ts ---")
-	console.error("Tests dir:        ", args.testsDir)
-	console.error("Falsehoods dir:   ", args.falsehoodsDir ?? "(none)")
-	console.error("Model:            ", args.modelPath ?? "(default — package resolve)")
-	console.error("Morphology:       ", args.morphologyEnabled ? "enabled" : "disabled")
+	console.error("Tests dir:", args.testsDir)
+	console.error("Falsehoods dir:", args.falsehoodsDir ?? "(none)")
+	console.error("Model:", args.modelPath ?? "(default — package resolve)")
+	console.error("Morphology:", args.morphologyEnabled ? "enabled" : "disabled")
 
 	console.error("Extracting assertions...")
+
 	const fromTests = discoverAssertions(args.testsDir)
 	const fromFalsehoods = args.falsehoodsDir ? loadFalsehoods(args.falsehoodsDir) : []
 	const all = [...fromTests, ...fromFalsehoods]
+
 	console.error(`  ${fromTests.length} from tests, ${fromFalsehoods.length} from falsehoods, ${all.length} total`)
 
 	console.error("Loading neural classifier...")
+
 	let neural: NeuralAddressClassifier
 
 	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
 		const modelCard = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
 		const labels: readonly string[] = modelCard.labels
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			ONNXRunner.create(args.modelPath),
 		])
+
 		// Gaz-trained models (v4.2.0+) MUST be fed the lexicon + the postcode-anchor lookup with
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
 		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
@@ -700,11 +727,13 @@ async function main(): Promise<void> {
 		if (args.gazetteerLexiconPath) {
 			gazetteerLexicon = parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
 		}
+
 		let postcodeAnchorLookup: AnchorLookup | undefined
 
 		if (args.anchorLookupPath) {
 			postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(args.anchorLookupPath, "utf8")))
 		}
+
 		neural = new NeuralAddressClassifier({
 			tokenizer,
 			runner,
@@ -723,6 +752,7 @@ async function main(): Promise<void> {
 
 	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
+
 		adminFST = deserializeFST(readFileSync(args.adminFSTPath))
 	}
 
@@ -731,12 +761,14 @@ async function main(): Promise<void> {
 	if (args.morphologyEnabled) {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
+
 			morphologyFST = deserializeFST(readFileSync(args.morphologyBinPath))
 		} else {
 			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
 			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
 			const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
 			morphologyFST = loaded.matcher
+
 			console.error(
 				loaded.source === "artifact"
 					? `Loaded morphology FST from sealed artifact ${loaded.path}`
@@ -763,6 +795,7 @@ async function main(): Promise<void> {
 	}
 
 	console.error("Running harness...")
+
 	const t0 = performance.now()
 	const results: AssertionResult[] = []
 	let i = 0
@@ -772,23 +805,28 @@ async function main(): Promise<void> {
 
 		try {
 			results.push(await runAssertion(a, neural, parseOpts, pipeline))
-		} catch (err) {
-			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(err as Error).message}`)
+		} catch (error) {
+			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(error as Error).message}`)
 		}
 
 		if (i % 50 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
+
 			console.error(`  ${i}/${all.length} (${elapsed.toFixed(1)}s)`)
 		}
 	}
+
 	console.error(`Done in ${((performance.now() - t0) / 1000).toFixed(1)}s`)
 
 	printReport(results)
 
 	if (args.outJson) {
 		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
+
 		console.error(`Wrote ${results.length} results to ${args.outJson}`)
 	}
 }
 
 runIfScript(import.meta, main)
+
+//#endregion

@@ -9,7 +9,9 @@
  *   publish.
  */
 
-/** True for TypeScript SOURCE (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets. */
+/**
+ * True for TypeScript SOURCE (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
+ */
 export function isTypeScriptSource(path: string): boolean {
 	return /\.tsx?$/.test(path) && !path.endsWith(".d.ts")
 }
@@ -30,8 +32,10 @@ export function transformExportsForPublish(exports: unknown): unknown {
 	for (const [subpath, value] of Object.entries(exports as Record<string, unknown>)) {
 		if (typeof value !== "object" || value === null) {
 			out[subpath] = value
+
 			continue
 		}
+
 		const conditions = value as Record<string, unknown>
 		const rewritten: Record<string, unknown> = {}
 
@@ -46,15 +50,19 @@ export function transformExportsForPublish(exports: unknown): unknown {
 			if (condition === "node" && typeof target === "string" && isTypeScriptSource(target)) continue
 			rewritten[condition] = target
 		}
+
 		out[subpath] = rewritten
 	}
 
 	return out
 }
 
-/** Walk a transformed exports map; return every concrete (non-pattern) file target. */
+/**
+ * Walk a transformed exports map; return every concrete (non-pattern) file target.
+ */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []
+
 	const walk = (value: unknown): void => {
 		if (typeof value === "string") {
 			if (!value.includes("*")) {
@@ -70,6 +78,7 @@ export function collectExportTargets(exports: unknown): string[] {
 			}
 		}
 	}
+
 	walk(exports)
 
 	return targets

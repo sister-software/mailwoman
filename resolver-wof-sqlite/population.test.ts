@@ -37,6 +37,7 @@ const FIXTURE: FixturePlace[] = [
 
 function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -48,6 +49,7 @@ function buildFixtureDB(): DatabaseSync {
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
+
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country,
 		                 latitude, longitude,
@@ -55,6 +57,7 @@ function buildFixtureDB(): DatabaseSync {
 		                 is_current, is_deprecated)
 		VALUES (?, NULL, ?, 'locality', ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
+
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 
 	for (const p of FIXTURE) {
@@ -82,6 +85,7 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
 		const db = buildFixtureDB()
 		let doneDetail: string | undefined
+
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") {
@@ -89,6 +93,7 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 				}
 			},
 		})
+
 		expect(doneDetail).toMatch(/FTS rows/)
 		expect(doneDetail).toMatch(/bbox rows/)
 		db.close()
@@ -109,7 +114,7 @@ describe("findPlace — population boost", () => {
 		const candidates = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 		// Filter to just the Springfields (Tokyo also has population but isn't a Springfield match)
 		const springfields = candidates.filter((c) => c.name === "Springfield")
-		expect(springfields.length).toBe(4)
+		expect(springfields).toHaveLength(4)
 		const ids = springfields.map((c) => c.id)
 		// MO has highest pop → first. SC has none → last. MA and IL in between in pop order.
 		expect(ids[0]).toBe(1003) // MO
@@ -124,7 +129,7 @@ describe("findPlace — population boost", () => {
 		try {
 			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 			const springfields = candidates.filter((c) => c.name === "Springfield")
-			expect(springfields.length).toBe(4)
+			expect(springfields).toHaveLength(4)
 			// With boost=0, the four Springfields tie on BM25 + everything else. Ordering is
 			// implementation-defined but ALL should have identical scores.
 			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
@@ -138,7 +143,7 @@ describe("findPlace — population boost", () => {
 		// Tokyo has 13.5M people — log10 ≈ 7.13. With populationScaleLog10 = 6 default, the raw
 		// fraction is 7.13/6 = 1.19, capped at 1. So Tokyo's boost = exactly populationBoost.
 		const candidates = await lookup.findPlace({ text: "Tokyo", placetype: "locality" })
-		expect(candidates.length).toBe(1)
+		expect(candidates).toHaveLength(1)
 		expect(candidates[0]?.population).toBe(13_500_000)
 		// We can't easily isolate the population boost from BM25, but we can check the boost
 		// caps logic by tuning the weight to a sentinel + comparing the score delta to a
@@ -156,11 +161,12 @@ describe("findPlace — population boost", () => {
 			const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 			// All 4 Springfields returned, none with `population` field (the aux table was dropped).
 			const springfields = candidates.filter((c) => c.name === "Springfield")
-			expect(springfields.length).toBe(4)
+			expect(springfields).toHaveLength(4)
 
 			for (const c of springfields) {
 				expect(c.population).toBeUndefined()
 			}
+
 			// Their scores should all be equal (no population boost differentiation).
 			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
 			expect(scores.size).toBe(1)

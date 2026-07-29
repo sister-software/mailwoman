@@ -31,7 +31,9 @@
 import type { ComponentTag } from "../types/component.ts"
 import type { AddressSystem } from "./types.ts"
 
-/** Preferred-parent ordering for each tag. Empty / missing = always root. */
+/**
+ * Preferred-parent ordering for each tag. Empty / missing = always root.
+ */
 export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {
 	// Universal coarse — containment follows geographic granularity.
 	region: ["country"],

@@ -32,6 +32,7 @@ const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDb = existsSync(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDb)
 
 describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
@@ -60,6 +61,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 				expect(c.lon).toBeLessThan(0)
 				expect(c.id).toBeGreaterThan(0)
 			}
+
 			// At least one of the candidates IS plain "Paris" (not "Saint Paris" / "South Paris" / etc).
 			expect(candidates.some((c) => c.name === "Paris")).toBe(true)
 		})
@@ -113,7 +115,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 			// Ashley (US, IL) — admin-us ships a jpn alt: アシュリー (id 1108979833).
 			const candidates = await lookup.findPlace({ text: "アシュリー", placetype: "locality", limit: 10 })
 			expect(candidates.length).toBeGreaterThan(0)
-			const ashley = candidates.find((c) => c.id === 1108979833)
+			const ashley = candidates.find((c) => c.id === 1_108_979_833)
 			expect(ashley).toBeDefined()
 			expect(ashley!.name).toBe("Ashley")
 		})
@@ -123,7 +125,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 		test("parentID narrows children to direct + transitive descendants", async () => {
 			// Pick the first Springfield candidate, then look up children of its parent.
 			const springfields = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 1 })
-			expect(springfields.length).toBe(1)
+			expect(springfields).toHaveLength(1)
 			const parentID = springfields[0]!.parent_id
 			expect(parentID).toBeDefined()
 
@@ -135,6 +137,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 				parentID: parentID!,
 				limit: 50,
 			})
+
 			expect(constrained.length).toBeGreaterThan(0)
 			expect(constrained.find((c) => c.id === springfields[0]!.id)).toBeDefined()
 		})
@@ -149,9 +152,3 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 		})
 	})
 })
-
-if (!hasWOFDb) {
-	describe.skip("WOFSqlitePlaceLookup integration", () => {
-		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB or download via the README)`, () => {})
-	})
-}

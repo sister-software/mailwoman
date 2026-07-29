@@ -79,7 +79,7 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 						status = error.status
 						break
 					case "string":
-						status = parseInt(error.status, 10) || this.DefaultStatus
+						status = Number.parseInt(error.status, 10) || this.DefaultStatus
 						break
 				}
 			}

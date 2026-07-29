@@ -33,13 +33,19 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
-/** A detected postcode-shaped substring with its char range and confidence class. */
+/**
+ * A detected postcode-shaped substring with its char range and confidence class.
+ */
 export interface PostcodeMatch {
 	start: number
 	end: number
-	/** "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span. */
+	/**
+	 * "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span.
+	 */
 	kind: "alnum" | "numeric"
-	/** Pattern priority (lower = more specific, wins overlap resolution). */
+	/**
+	 * Pattern priority (lower = more specific, wins overlap resolution).
+	 */
 	priority: number
 }
 
@@ -91,14 +97,19 @@ function isPostcodeLabel(label: string): boolean {
 	return label === "B-postcode" || label === "I-postcode"
 }
 
-/** Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null). */
+/**
+ * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
+ */
 function tagOf(label: string): string | null {
 	return label === "O" ? null : label.slice(2)
 }
 
-/** Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns. */
+/**
+ * Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns.
+ */
 export function collectMatches(text: string): PostcodeMatch[] {
 	const candidates: PostcodeMatch[] = []
+
 	POSTCODE_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
 
@@ -106,6 +117,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 			candidates.push({ start: m.index, end: m.index + m[0].length, kind: pat.kind, priority })
 		}
 	})
+
 	// Greedy longest-match-wins: accept by (length desc, then priority asc); reject anything
 	// overlapping an accepted match. Longest-first lets a US ZIP+4 ("94610-2737") claim its span
 	// before the shorter NL-shaped false positive in its tail ("2737 CA") can.
@@ -122,7 +134,9 @@ export function collectMatches(text: string): PostcodeMatch[] {
 
 export interface RepairResult {
 	tokens: DecoderToken[]
-	/** Number of token labels changed — for telemetry / logging. */
+	/**
+	 * Number of token labels changed — for telemetry / logging.
+	 */
 	changed: number
 }
 
@@ -134,12 +148,14 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	const matches = collectMatches(text)
 	const tokens = input.map((t) => ({ ...t }))
 
-	if (matches.length === 0) return { tokens, changed: 0 }
+	if (!matches.length) return { tokens, changed: 0 }
 
 	let changed = 0
+
 	const setLabel = (i: number, label: DecoderToken["label"]): void => {
 		if (tokens[i]!.label !== label) {
 			tokens[i]!.label = label
+
 			changed++
 		}
 	}
@@ -156,13 +172,14 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 			}
 		}
 
-		if (overlap.length === 0) continue
+		if (!overlap.length) continue
 
 		const hasPostcode = overlap.some((i) => isPostcodeLabel(tokens[i]!.label))
 
 		if (!hasPostcode) {
 			// ADD path — only for high-confidence alphanumeric shapes, only over safe labels.
 			if (m.kind !== "alnum") continue
+
 			const safe = overlap.every((i) => {
 				const tag = tagOf(tokens[i]!.label)
 
@@ -193,12 +210,12 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// where the postcode sits at the end with nothing to trim).
 		const trailing: number[] = []
 
-		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
+		for (let j = overlap.at(-1)! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
 			trailing.push(j)
 		}
 
-		if (trailing.length > 0) {
-			const after = trailing[trailing.length - 1]! + 1
+		if (trailing.length) {
+			const after = trailing.at(-1)! + 1
 			const connectsToCity = after < tokens.length && tagOf(tokens[after]!.label) === "locality"
 
 			if (connectsToCity) {

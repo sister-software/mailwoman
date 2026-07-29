@@ -34,6 +34,7 @@ function loadTable(): POITaxonomyTable {
 			// try next
 		}
 	}
+
 	throw new Error("poi-taxonomy: could not find data/taxonomy.json")
 }
 
@@ -51,17 +52,23 @@ export function lookupPOICategory(text: string, locale?: string) {
 	return CORE.lookupPOICategory(text, locale)
 }
 
-/** Fetch a category by id. */
+/**
+ * Fetch a category by id.
+ */
 export function getPOICategory(id: string): CategoryRecord | undefined {
 	return CORE.getPOICategory(id)
 }
 
-/** Enumerate the full table (corpus synthesis, builders, docs). */
+/**
+ * Enumerate the full table (corpus synthesis, builders, docs).
+ */
 export function getAllCategories(): ReadonlyArray<CategoryRecord> {
 	return CORE.getAllCategories()
 }
 
-/** True when the category's data exists only in ODbL sources — answering needs a build-local layer. */
+/**
+ * True when the category's data exists only in ODbL sources — answering needs a build-local layer.
+ */
 export function requiresBuildLocalLayer(category: CategoryRecord): boolean {
 	return CORE.requiresBuildLocalLayer(category)
 }
@@ -75,4 +82,7 @@ export function resolveOvertureCategories(seedID: string): string[] {
 	return CORE.resolveOvertureCategories(seedID)
 }
 
+/**
+ * Version of the bundled POI category taxonomy, for cache keys and diagnostics.
+ */
 export const POI_TAXONOMY_VERSION = TABLE.version

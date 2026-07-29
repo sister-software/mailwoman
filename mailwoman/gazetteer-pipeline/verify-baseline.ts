@@ -15,6 +15,10 @@
 
 import type { VerifyBaseline } from "./verify.ts"
 
+/**
+ * Row and index counts a freshly-built gazetteer is expected to clear. A build under these is reported as suspect
+ * rather than published.
+ */
 export const DEFAULT_VERIFY_BASELINE: VerifyBaseline = {
 	requiredNodes: {
 		AE: ["country", "region"],
@@ -217,6 +221,6 @@ export const DEFAULT_VERIFY_BASELINE: VerifyBaseline = {
 		ZM: ["country"],
 		ZW: ["country"],
 	},
-	minRows: 3962560,
+	minRows: 3_962_560,
 	minCountries: 244,
 }

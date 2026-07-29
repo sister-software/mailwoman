@@ -11,7 +11,15 @@
 
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
-/** One lexicon hit for a candidate subject phrase. */
+/**
+ * Comma-segment ceiling for a POI-led query. Past it the input is a venue plus a full address (`X, 350 5th Ave, New
+ * York, NY`), which the structured-address scorer should claim instead.
+ */
+const MAX_POI_SEGMENTS = 3
+
+/**
+ * One lexicon hit for a candidate subject phrase.
+ */
 export interface POIPhraseMatch {
 	/**
 	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. For
@@ -21,24 +29,34 @@ export interface POIPhraseMatch {
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
-	/** Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default). */
 	/**
 	 * Absent = "category" (the pre-brand shape) — optional so pre-7.3 POIPhraseLookup implementors stay
 	 * source-compatible.
 	 */
 	kind?: "category" | "brand"
-	/** Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match). */
+	/**
+	 * Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match).
+	 */
 	wikidata?: string
 }
 
-/** Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss. */
+/**
+ * Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss.
+ */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
+/**
+ * Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default).
+ */
 export interface POISubjectMatch {
 	match: POIPhraseMatch
-	/** The matched subject text as it appeared in the query. */
+	/**
+	 * The matched subject text as it appeared in the query.
+	 */
 	subject: string
-	/** The anchor remainder after the separator; `""` when the whole input matched. */
+	/**
+	 * The anchor remainder after the separator; `""` when the whole input matched.
+	 */
 	remainder: string
 }
 
@@ -62,7 +80,9 @@ export interface POISubjectMatch {
  */
 const ANCHOR_SEPARATOR = /,\s*|\s(?:near|in|at|around)\s+/gi
 
-/** Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table. */
+/**
+ * Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table.
+ */
 const MAX_SUBJECT_TOKENS = 4
 
 /**
@@ -82,7 +102,7 @@ export function matchPOISubject(
 
 	const whole = lookup(trimmed, locale)
 
-	if (whole.length > 0) {
+	if (whole.length) {
 		return { match: whole[0]!, subject: trimmed, remainder: "" }
 	}
 
@@ -96,7 +116,7 @@ export function matchPOISubject(
 
 		const hits = lookup(subject, locale)
 
-		if (hits.length === 0) continue
+		if (!hits.length) continue
 
 		const remainder = trimmed.slice(separator.index + separator[0].length).trim()
 
@@ -128,7 +148,7 @@ export function createScorePOIQuery(
 
 		const segCount = shape.segments?.length ?? 1
 
-		if (segCount > 3) return 0
+		if (segCount > MAX_POI_SEGMENTS) return 0
 
 		return 0.9 * matched.match.confidence
 	}

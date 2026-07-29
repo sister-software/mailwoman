@@ -55,6 +55,11 @@ import { dataRootPath, writeJSONL } from "@mailwoman/core/utils"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
+/**
+ * Longest raw line still plausibly a single address rather than a concatenated record.
+ */
+const MAX_CANDIDATE_LENGTH = 500
+
 interface CorpusRow {
 	raw: string
 	tokens: string[]
@@ -90,21 +95,37 @@ interface GoldenCandidate {
 }
 
 export interface ExpandGoldenOptions {
-	/** Corpus test shard path(s), comma-separated. Default: the v0.2.0 test shard under the data root. */
+	/**
+	 * Corpus test shard path(s), comma-separated. Default: the v0.2.0 test shard under the data root.
+	 */
 	corpus?: string
-	/** Total seeds to process. Default `100` (pilot). */
+	/**
+	 * Total seeds to process. Default `100` (pilot).
+	 */
 	count?: number
-	/** Variants requested per seed. Default `5`. */
+	/**
+	 * Variants requested per seed. Default `5`.
+	 */
 	variants?: number
-	/** JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`. */
+	/**
+	 * JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 */
 	output?: string
-	/** LLM provider. Default `deepseek`. */
+	/**
+	 * LLM provider. Default `deepseek`.
+	 */
 	provider?: "deepseek" | "anthropic"
-	/** Model id. Default depends on provider. */
+	/**
+	 * Model id. Default depends on provider.
+	 */
 	model?: string
-	/** Parallel LLM calls. Default `4`. */
+	/**
+	 * Parallel LLM calls. Default `4`.
+	 */
 	concurrency?: number
-	/** Comma-separated source allow-list. */
+	/**
+	 * Comma-separated source allow-list.
+	 */
 	includeSources?: string
 }
 
@@ -127,10 +148,12 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 	const out: Record<string, string> = {}
 	let currentTag: string | null = null
 	let currentTokens: string[] = []
+
 	const flush = () => {
-		if (currentTag && currentTokens.length > 0 && !(currentTag in out)) {
+		if (currentTag && currentTokens.length && !(currentTag in out)) {
 			out[currentTag] = currentTokens.join(" ").trim()
 		}
+
 		currentTag = null
 		currentTokens = []
 	}
@@ -141,8 +164,10 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 
 		if (label === "O") {
 			flush()
+
 			continue
 		}
+
 		const [prefix, tag] = label.split("-", 2)
 
 		if (prefix === "B" || currentTag !== tag) {
@@ -153,6 +178,7 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 			currentTokens.push(tok)
 		}
 	}
+
 	flush()
 
 	return out
@@ -168,6 +194,7 @@ async function loadSeeds(
 		.split(",")
 		.map((p) => p.trim())
 		.filter(Boolean)
+
 	report?.(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)`)
 
 	if (includeSources) {
@@ -190,6 +217,7 @@ async function loadSeeds(
 			const row = (await cursor.next()) as CorpusRow | null
 
 			if (!row) break
+
 			scanned++
 
 			// Source allow-list (--include-sources) — applied early to skip parsing rows we won't use
@@ -199,8 +227,10 @@ async function loadSeeds(
 			// Skip rows with too few components — single-name wof-admin entries don't make useful seeds
 			if (Object.keys(components).length < 2) {
 				skippedThinComponents++
+
 				continue
 			}
+
 			const seed: Seed = {
 				raw: row.raw,
 				components,
@@ -208,6 +238,7 @@ async function loadSeeds(
 				source: row.source,
 				source_id: row.source_id,
 			}
+
 			let bucket = bySource.get(row.source)
 
 			if (!bucket) {
@@ -219,12 +250,14 @@ async function loadSeeds(
 				bucket.push(seed)
 			}
 		}
+
 		await reader.close()
 	}
 
 	report?.(
 		`  scanned ${scanned} rows across ${paths.length} shard(s); thin-components dropped: ${skippedThinComponents}`
 	)
+
 	report?.(`  per-source pool sizes:`)
 
 	for (const [src, pool] of bySource) {
@@ -233,7 +266,7 @@ async function loadSeeds(
 
 	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
 	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
-	const sources = Array.from(bySource.keys()).sort()
+	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []
@@ -248,6 +281,7 @@ async function loadSeeds(
 			const k = Math.floor(Math.random() * (j + 1))
 			;[pool[j], pool[k]] = [pool[k]!, pool[j]!]
 		}
+
 		const take = Math.min(target, pool.length)
 		picked.push(...pool.slice(0, take))
 
@@ -255,6 +289,7 @@ async function loadSeeds(
 			report?.(`    ⚠ ${src}: requested ${target}, pool had ${pool.length}`)
 		}
 	}
+
 	report?.(`  → loaded ${picked.length} seeds across ${sources.length} sources`)
 
 	return picked
@@ -369,7 +404,7 @@ function makeAnthropicProvider(model: string): LlmProvider {
 
 function parseCandidates(text: string): Candidate[] {
 	// Strip markdown fences the model sometimes wraps around JSON
-	const cleaned = text.replace(/^```(?:json)?\n?|\n?```$/g, "").trim()
+	const cleaned = text.replaceAll(/^```(?:json)?\n?|\n?```$/g, "").trim()
 
 	try {
 		const parsed = JSON.parse(cleaned) as unknown
@@ -394,20 +429,22 @@ function parseCandidates(text: string): Candidate[] {
 // ── Validator ─────────────────────────────────────────────────────────────
 
 function normalize(s: string): string {
-	return s.toLowerCase().replace(/\s+/g, " ").trim()
+	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
-// Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+/**
+ * Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+ */
 const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_number", "venue"])
 
 function validate(seed: Seed, candidate: Candidate): boolean {
 	if (!candidate.raw || typeof candidate.raw !== "string") return false
 
-	if (candidate.raw.length > 500) return false
+	if (candidate.raw.length > MAX_CANDIDATE_LENGTH) return false
 
 	if (/```|<\/?\w+>|^\s*\{/.test(candidate.raw)) return false
 	const normRaw = normalize(candidate.raw)
-	const dropped = new Set(candidate.dropped ?? [])
+	const dropped = new Set(candidate.dropped)
 
 	// LLM cannot drop required components present in the seed.
 	for (const tag of dropped) {
@@ -423,6 +460,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 		if (!value) continue
 
 		if (!normRaw.includes(normalize(value))) return false
+
 		keptCount++
 	}
 
@@ -440,13 +478,14 @@ export async function expandGolden(
 ): Promise<ExpandGoldenSummary> {
 	const corpusPath =
 		options.corpus ?? dataRootPath("corpus", "versioned", "v0.2.0", "corpus-v0.2.0", "test", "part-0000.parquet")
+
 	const count = options.count ?? 100
 	const variants = options.variants ?? 5
 	const providerName = options.provider ?? "deepseek"
 	const model = options.model ?? (providerName === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat")
 	const concurrencyLimit = options.concurrency ?? 4
 	const includeSources = options.includeSources ? new Set(options.includeSources.split(",").map((s) => s.trim())) : null
-	const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+	const ts = new Date().toISOString().replaceAll(/[:.]/g, "-").slice(0, 19)
 	const outputPath = options.output ?? `data/eval/golden/candidates/expand-${ts}.jsonl`
 
 	const provider = providerName === "anthropic" ? makeAnthropicProvider(model) : makeDeepseekProvider(model)
@@ -454,7 +493,7 @@ export async function expandGolden(
 
 	const seeds = await loadSeeds(corpusPath, count, includeSources, report)
 
-	if (seeds.length === 0) {
+	if (!seeds.length) {
 		throw new Error("no seeds loaded — corpus path or filter is wrong")
 	}
 
@@ -466,6 +505,7 @@ export async function expandGolden(
 
 	// Bounded-concurrency worker pool
 	let cursor = 0
+
 	const workers = Array.from({ length: Math.min(concurrencyLimit, seeds.length) }, async () => {
 		while (true) {
 			const i = cursor++
@@ -491,17 +531,20 @@ export async function expandGolden(
 
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) {
+							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 							delete goldenCandidate.components[tag]
 						}
+
 						outRows.push(goldenCandidate)
+
 						kept++
 					} else {
 						dropped++
 					}
 				}
-			} catch (err) {
+			} catch (error) {
 				errored++
-				report?.(`  ✗ seed ${seed.source_id}: ${(err as Error).message}`)
+				report?.(`  ✗ seed ${seed.source_id}: ${(error as Error).message}`)
 			}
 
 			if ((i + 1) % 10 === 0) {
@@ -509,6 +552,7 @@ export async function expandGolden(
 			}
 		}
 	})
+
 	await Promise.all(workers)
 
 	writeJSONL(outputPath, outRows)
@@ -517,7 +561,7 @@ export async function expandGolden(
 	report?.(`candidates kept:  ${kept}`)
 	report?.(`candidates dropped (validator): ${dropped}`)
 	report?.(`seeds with errors: ${errored}`)
-	report?.(`yield: ${seeds.length > 0 ? ((kept / (seeds.length * variants)) * 100).toFixed(1) : "0"}%`)
+	report?.(`yield: ${seeds.length ? ((kept / (seeds.length * variants)) * 100).toFixed(1) : "0"}%`)
 	report?.(`output:           ${outputPath}`)
 
 	return { seedsProcessed: seeds.length, kept, dropped, errored, outputPath }

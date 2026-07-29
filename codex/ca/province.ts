@@ -16,13 +16,21 @@
  *   regions, the Canadian code IS a surface form, not just a resolver key.
  */
 
-/** Per-province record: ISO 3166-2:CA code, English name, and the co-official French name. */
+/**
+ * Per-province record: ISO 3166-2:CA code, English name, and the co-official French name.
+ */
 export interface CanadianProvinceInfo {
-	/** ISO 3166-2:CA subdivision code without the `CA-` prefix (e.g. `ON` for `CA-ON`). */
+	/**
+	 * ISO 3166-2:CA subdivision code without the `CA-` prefix (e.g. `ON` for `CA-ON`).
+	 */
 	code: string
-	/** English name (e.g. `Quebec`). */
+	/**
+	 * English name (e.g. `Quebec`).
+	 */
 	name: string
-	/** Co-official French name (e.g. `Québec`). */
+	/**
+	 * Co-official French name (e.g. `Québec`).
+	 */
 	french: string
 }
 
@@ -46,23 +54,29 @@ export const CA_PROVINCES = {
 	YT: { code: "YT", name: "Yukon", french: "Yukon" },
 } as const satisfies Record<string, CanadianProvinceInfo>
 
-/** An ISO 3166-2:CA province/territory code (`AB`, `ON`, `QC`, …). */
+/**
+ * An ISO 3166-2:CA province/territory code (`AB`, `ON`, `QC`, …).
+ */
 export type CanadianProvinceCode = keyof typeof CA_PROVINCES
 
 const PROVINCE_CODE_SET: ReadonlySet<string> = new Set(Object.keys(CA_PROVINCES))
 
-/** Type-predicate for an ISO 3166-2:CA province/territory code. Case-insensitive. */
+/**
+ * Type-predicate for an ISO 3166-2:CA province/territory code. Case-insensitive.
+ */
 export function isCanadianProvinceCode(input: unknown): input is CanadianProvinceCode {
 	return typeof input === "string" && PROVINCE_CODE_SET.has(input.toUpperCase())
 }
 
-/** Strip diacritics + lowercase so `Québec`, `Quebec`, and `quebec` all key alike. */
+/**
+ * Strip diacritics + lowercase so `Québec`, `Quebec`, and `quebec` all key alike.
+ */
 function foldName(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, " ")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z0-9]+/g, " ")
 		.trim()
 }
 

@@ -20,15 +20,23 @@ import { MailwomanTokenizer } from "../tokenizer.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Fake runner that emits a pre-canned logits matrix regardless of input. */
+/**
+ * Fake runner that emits a pre-canned logits matrix regardless of input.
+ */
 class FakeRunner implements NeuralRunner {
-	constructor(private readonly canned: number[][]) {}
+	readonly #canned: number[][]
+
+	constructor(canned: number[][]) {
+		this.#canned = canned
+	}
 	async infer(_ids: number[]): Promise<InferResult> {
-		return { logits: this.canned, sequenceLength: this.canned.length }
+		return { logits: this.#canned, numLabels: this.#canned[0]?.length ?? 0 }
 	}
 }
 
-/** Build a uniform-noise logits matrix with a small boost on the named label for the given index. */
+/**
+ * Build a uniform-noise logits matrix with a small boost on the named label for the given index.
+ */
 function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string, boostMagnitude = 0.3): number[][] {
 	const numLabels = STAGE2_BIO_LABELS.length
 	const labelIdx = STAGE2_BIO_LABELS.indexOf(boostLabel as (typeof STAGE2_BIO_LABELS)[number])
@@ -37,9 +45,10 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	for (let t = 0; t < numTokens; t++) {
 		const row = new Array<number>(numLabels).fill(0)
 
-		if (t === boostIdx && labelIdx >= 0) {
+		if (t === boostIdx && labelIdx !== -1) {
 			row[labelIdx] = boostMagnitude
 		}
+
 		matrix.push(row)
 	}
 
@@ -89,6 +98,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// QueryShape: a single us_zip hit covering the "10118" substring.
 		const zipStart = text.indexOf("10118")
 		const zipEnd = zipStart + 5
+
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: zipStart, end: zipEnd }, confidence: 0.9 }],
 		}
@@ -114,7 +124,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 
 		for (let t = 0; t < numTokens; t++) {
 			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
-			row[localityIdx] = 5.0
+			row[localityIdx] = 5
 			logits.push(row)
 		}
 
@@ -122,12 +132,13 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// 5.0 locality boost.
 		const zipStart = text.indexOf("10118")
 		const zipEnd = zipStart + 5
+
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: zipStart, end: zipEnd }, confidence: 0.6 }],
 		}
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
-		const tree = await classifier.parse(text, { queryShape: shape, queryShapeBiasScale: 1.0 })
+		const tree = await classifier.parse(text, { queryShape: shape, queryShapeBiasScale: 1 })
 
 		// The encoder's confident locality call wins — postcode bias is too small to overcome it.
 		const allTags = collectTags(tree.roots)

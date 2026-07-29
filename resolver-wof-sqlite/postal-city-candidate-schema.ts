@@ -25,13 +25,21 @@ import { sql, type Kysely } from "kysely"
  * locality directly; the denormalized name/coord avoid a join back to `candidate`.
  */
 export interface PostalCityCandidateTable {
-	/** {@link normalizeLocalityForKey} of the postal-city name — the build/query-consistent probe key. */
+	/**
+	 * {@link normalizeLocalityForKey} of the postal-city name — the build/query-consistent probe key.
+	 */
 	name_key: string
-	/** The postcode the alias is scoped to (the second half of the exact key). */
+	/**
+	 * The postcode the alias is scoped to (the second half of the exact key).
+	 */
 	postcode: string
-	/** WOF id of the geographic locality the postcode sits in (the resolve target). */
+	/**
+	 * WOF id of the geographic locality the postcode sits in (the resolve target).
+	 */
 	spr_id: number
-	/** The geographic locality's display name. */
+	/**
+	 * The geographic locality's display name.
+	 */
 	name: string
 	latitude: number
 	longitude: number
@@ -49,7 +57,9 @@ export interface PostalCityCandidateDatabase {
  */
 export const POSTAL_CITY_CANDIDATE_TABLE = "postal_city_candidate"
 
-/** Column order for the builder's positional INSERT. */
+/**
+ * Column order for the builder's positional INSERT.
+ */
 export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 	"name_key",
 	"postcode",

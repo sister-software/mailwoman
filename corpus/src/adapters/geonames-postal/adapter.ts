@@ -31,10 +31,20 @@ import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
+/**
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
-// GeoNames postal-dump columns (0-based).
+/**
+ * GeoNames postal-dump columns (0-based).
+ */
 const COL = { country: 0, postcode: 1, place: 2, admin1Name: 3 } as const
 
 export function createGeonamesPostalAdapter(): CorpusAdapter {
@@ -46,6 +56,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({ delimiter: "\t", quote: false, relax_column_count: true, skip_empty_lines: true })
 			)
@@ -89,6 +100,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 						const aligned = reconcileComponents(v.comp, v.raw)
 
 						if (Object.keys(aligned).length < 2) continue
+
 						yield {
 							raw: v.raw,
 							components: aligned,
@@ -98,6 +110,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: GEONAMES_POSTAL_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}
@@ -108,4 +121,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const geonamesPostalAdapter = createGeonamesPostalAdapter()

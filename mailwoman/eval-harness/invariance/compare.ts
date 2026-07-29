@@ -22,6 +22,10 @@
  *   downstream knows to distrust it.
  */
 
+/**
+ * Tags whose change under a transform counts as a real failure. A shifted venue or unit is tolerable; a shifted house
+ * number, street, locality or region is not.
+ */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
@@ -35,15 +39,19 @@ export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADE
 
 export interface CompareResult {
 	verdict: Verdict
-	/** Human-readable per-tag diff lines, empty for INVARIANT. */
+	/**
+	 * Human-readable per-tag diff lines, empty for INVARIANT.
+	 */
 	diff: string[]
 }
 
-/** Normalize a component value for comparison: trim, lowercase, collapse internal whitespace. Non-string/empty → "". */
+/**
+ * Normalize a component value for comparison: trim, lowercase, collapse internal whitespace. Non-string/empty → "".
+ */
 function normVal(v: unknown): string {
 	if (typeof v !== "string") return ""
 
-	return v.trim().toLowerCase().replace(/\s+/g, " ")
+	return v.trim().toLowerCase().replaceAll(/\s+/g, " ")
 }
 
 /**
@@ -60,7 +68,7 @@ export function compareComponents(
 	// LOST — the transformed parse is empty (or all-blank) while the original had components at all.
 	// "unresolvable-shaped": a fully collapsed decode, the parse-level analog of a resolver falling back
 	// to an admin-only tier with no coordinate.
-	if (transformedKeys.length === 0 && originalKeys.length > 0) {
+	if (!transformedKeys.length && originalKeys.length) {
 		return { verdict: "LOST", diff: ["transformed parse is empty"] }
 	}
 
@@ -102,5 +110,5 @@ export function compareComponents(
 		}
 	}
 
-	return diff.length > 0 ? { verdict: "DEGRADED", diff } : { verdict: "INVARIANT", diff: [] }
+	return diff.length ? { verdict: "DEGRADED", diff } : { verdict: "INVARIANT", diff: [] }
 }

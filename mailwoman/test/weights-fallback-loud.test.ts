@@ -36,13 +36,19 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest"
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-/** A locale with no `@mailwoman/neural-weights-*` workspace package — resolution can never succeed. */
+/**
+ * A locale with no `@mailwoman/neural-weights-*` workspace package — resolution can never succeed.
+ */
 const ABSENT_LOCALE = "de-DE"
 const ABSENT_PACKAGE = "@mailwoman/neural-weights-de-de"
 
-/** An empty $HOME so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too. */
+/**
+ * An empty $HOME so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.
+ */
 let homeStub: string
-/** A dir holding a stub model.onnx for the corrupt/partial-load case. */
+/**
+ * A dir holding a stub model.onnx for the corrupt/partial-load case.
+ */
 let stubDir: string
 
 beforeAll(() => {
@@ -58,12 +64,16 @@ afterAll(() => {
 	rmSync(stubDir, { recursive: true, force: true })
 })
 
-/** Child env with weights forced absent: empty $HOME + quiet node. */
+/**
+ * Child env with weights forced absent: empty $HOME + quiet node.
+ */
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
 	return childEnv({ HOME: homeStub, NODE_NO_WARNINGS: "1", ...extra })
 }
 
-/** Run the CLI, capturing stdout/stderr/exit whether it exits 0 or non-zero (execFile rejects on non-zero). */
+/**
+ * Run the CLI, capturing stdout/stderr/exit whether it exits 0 or non-zero (execFile rejects on non-zero).
+ */
 async function runCLI(
 	args: readonly string[],
 	env: NodeJS.ProcessEnv
@@ -79,9 +89,11 @@ async function runCLI(
 	}
 }
 
-/** Strip ANSI/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout. */
+/**
+ * Strip ANSI/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout.
+ */
 function parseStdoutJSON(stdout: string): unknown {
-	const cleaned = stdout.replace(/\[[0-9;]*[a-zA-Z]/gu, "").trim()
+	const cleaned = stdout.replaceAll(/\[[0-9;]*[a-zA-Z]/gu, "").trim()
 	const start = cleaned.search(/[{[]/u)
 
 	if (start < 0) throw new Error(`No JSON payload in stdout:\n${stdout}`)
@@ -197,9 +209,3 @@ describe.skipIf(!hasWOFDb)("#1108 loud weights fallback — --resolve degraded e
 		expect(stdout.trim().length).toBeGreaterThan(0)
 	}, 60_000)
 })
-
-if (!hasWOFDb) {
-	describe.skip("#1108 --resolve degraded end-to-end", () => {
-		test(`skipped (WOF DB not present at ${wofPath} — set MAILWOMAN_WOF_DB)`, () => {})
-	})
-}

@@ -26,25 +26,45 @@
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 
-/** Options for {@linkcode ledgerAppend}. */
+/**
+ * Options for {@linkcode ledgerAppend}.
+ */
 export interface LedgerAppendOptions {
-	/** The promotion-gate out-dir carrying `verdict.json`. */
+	/**
+	 * The promotion-gate out-dir carrying `verdict.json`.
+	 */
 	outDir?: string
-	/** The npm semver being ledgered. */
+	/**
+	 * The npm semver being ledgered.
+	 */
 	modelVersion?: string
-	/** Stable run id (`^[a-z0-9-]+$`). */
+	/**
+	 * Stable run id (`^[a-z0-9-]+$`).
+	 */
 	runId?: string
-	/** The published artifact pointer, e.g. `@mailwoman/neural-weights-en-us@5.0.0`. */
+	/**
+	 * The published artifact pointer, e.g. `@mailwoman/neural-weights-en-us@5.0.0`.
+	 */
 	modelPath?: string
-	/** Model card JSON (run-metadata defaults). Default `neural-weights-en-us/model-card.json`. */
+	/**
+	 * Model card JSON (run-metadata defaults). Default `neural-weights-en-us/model-card.json`.
+	 */
 	card?: string
-	/** The ledger file. Default `evals/scores-by-version.json`. */
+	/**
+	 * The ledger file. Default `evals/scores-by-version.json`.
+	 */
 	ledger?: string
-	/** ISO date the model trained. Default: today. */
+	/**
+	 * ISO date the model trained. Default: today.
+	 */
 	trainedAt?: string
-	/** Free-text notes appended to the row. */
+	/**
+	 * Free-text notes appended to the row.
+	 */
 	notes?: string
-	/** Overwrite an existing row for the same run_id / model_version. */
+	/**
+	 * Overwrite an existing row for the same run_id / model_version.
+	 */
 	replace?: boolean
 	/**
 	 * The gate-revision escape (mirrors the no-silent-gate-drift discipline): a FAIL verdict may be ledgered ONLY when
@@ -109,9 +129,10 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		const failing = Object.entries(verdict.results)
 			.filter(([, r]) => !r.pass)
 			.map(([k]) => k)
+
 		const unexcepted = failing.filter((k) => !exceptions.includes(k))
 
-		if (unexcepted.length > 0) {
+		if (unexcepted.length) {
 			console.error(
 				`✗ refusing to ledger a ${verdict.verdict} verdict — the ledger records shipped/shippable runs.\n` +
 					`  failing checks: ${failing.join(", ")}\n` +
@@ -121,7 +142,9 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 
 			return 1
 		}
+
 		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): ${failing.join(", ")}.`
+
 		console.error(`! ledgering a FAIL verdict under operator exception: ${failing.join(", ")}`)
 	}
 
@@ -153,8 +176,10 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 
 		if (!mapped) {
 			console.error(`! unmapped verdict key ${key} — add it to KEY_MAP; skipping`)
+
 			continue
 		}
+
 		const [group, name] = mapped
 		metrics[group] ??= {}
 		metrics[group][name] = entry.actual
@@ -195,6 +220,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 	if (dup !== -1) {
 		ledger.runs.splice(dup, 1)
 	}
+
 	ledger.runs.push(row as never)
 
 	const tmp = `${ledgerPath}.tmp`
@@ -202,6 +228,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 	writeFileSync(tmp, JSON.stringify(ledger, null, "\t") + "\n")
 	JSON.parse(readFileSync(tmp, "utf8")) // self-check before the swap
 	renameSync(tmp, ledgerPath)
+
 	console.log(`✓ appended ${row.model_version} (${row.run_id}) → ${ledgerPath} [${ledger.runs.length} runs]`)
 
 	return 0

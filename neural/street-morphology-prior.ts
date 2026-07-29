@@ -26,7 +26,9 @@ import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "./fst
 import type { TokenLike } from "./query-shape-prior.ts"
 
 export interface StreetMorphologyPriorOpts {
-	/** Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0. */
+	/**
+	 * Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0.
+	 */
 	biasScale?: number
 	/**
 	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin FST. The morphology
@@ -60,10 +62,10 @@ export function buildStreetMorphologyEmissionPriors(
 ): number[][] {
 	const T = pieces.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 1.0
-	const maxAffixBias = opts.maxAffixBias ?? 3.0
-	const maxNeighbourStreetBias = opts.maxNeighbourStreetBias ?? 2.0
-	const dependentLocalityPenalty = opts.dependentLocalityPenalty ?? 2.0
+	const biasScale = opts.biasScale ?? 1
+	const maxAffixBias = opts.maxAffixBias ?? 3
+	const maxNeighbourStreetBias = opts.maxNeighbourStreetBias ?? 2
+	const dependentLocalityPenalty = opts.dependentLocalityPenalty ?? 2
 
 	const matrix: number[][] = []
 
@@ -94,7 +96,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 
-	if (wordGroups.length === 0) return matrix
+	if (!wordGroups.length) return matrix
 
 	// Track which word-group indices are matched as affixes (and which spans they cover) so the
 	// second pass can locate neighbours without re-walking the FST.
@@ -102,6 +104,7 @@ export function buildStreetMorphologyEmissionPriors(
 		startGroupIdx: number
 		endGroupIdx: number // inclusive
 	}
+
 	const affixMatches: AffixMatch[] = []
 
 	// Pass 1 — walk every contiguous subpath, collect accepting morphology matches, and apply
@@ -138,6 +141,7 @@ export function buildStreetMorphologyEmissionPriors(
 				bestEnd = end
 				bestStateID = next.stateID
 			}
+
 			current = next
 		}
 
@@ -179,7 +183,7 @@ export function buildStreetMorphologyEmissionPriors(
 		}
 	}
 
-	if (affixMatches.length === 0) return matrix
+	if (!affixMatches.length) return matrix
 
 	// Pass 2 — for each affix match, identify the immediately-adjacent word groups (skipping
 	// empty/punctuation groups) on either side and bias them toward street, away from

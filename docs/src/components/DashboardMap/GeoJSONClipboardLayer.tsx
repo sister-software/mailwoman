@@ -6,17 +6,22 @@
 
 import { ResourceError } from "@mailwoman/core/errors"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { Feature, FeatureCollection } from "geojson"
+import type { Feature, FeatureCollection } from "geojson"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useRef, useState } from "react"
 import { Layer, Source, useMap } from "react-map-gl/maplibre"
 
+/**
+ * Renders GeoJSON pasted into the map, for inspecting a feature collection without a round trip.
+ */
 export const GeoJSONClipboardLayer: React.FC = memo(() => {
 	const [featureCollections, setSources] = useState<FeatureCollection[]>([])
+
 	const featureCollectionGeometryTypes = useRef<WeakMap<FeatureCollection, Set<Feature["geometry"]["type"]>>>(
 		new WeakMap()
 	)
+
 	const map = useMap()
 
 	const appendGeoJSON = useCallback((geoJSON: Feature | FeatureCollection) => {
@@ -69,7 +74,9 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 
 			if (!item) return
 
-			const data = await new Promise<string>((resolve) => item.getAsString(resolve))
+			const data = await new Promise<string>((resolve) => {
+				item.getAsString(resolve)
+			})
 
 			if (!data) {
 				console.log("No clipboard data")
@@ -139,16 +146,16 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 			console.log("Clipboard doesn't appear to be GeoJSON")
 		}
 
-		window.addEventListener("dragover", handleDragOver)
-		window.addEventListener("drop", handleDrop)
-		window.addEventListener("dragend", handleDragEnd)
-		window.addEventListener("dragstart", handleDragStart)
+		globalThis.addEventListener("dragover", handleDragOver)
+		globalThis.addEventListener("drop", handleDrop)
+		globalThis.addEventListener("dragend", handleDragEnd)
+		globalThis.addEventListener("dragstart", handleDragStart)
 
 		return () => {
-			window.removeEventListener("dragover", handleDragOver)
-			window.removeEventListener("drop", handleDrop)
-			window.removeEventListener("dragend", handleDragEnd)
-			window.removeEventListener("dragstart", handleDragStart)
+			globalThis.removeEventListener("dragover", handleDragOver)
+			globalThis.removeEventListener("drop", handleDrop)
+			globalThis.removeEventListener("dragend", handleDragEnd)
+			globalThis.removeEventListener("dragstart", handleDragStart)
 		}
 	}, [appendGeoJSON, map])
 

@@ -8,9 +8,9 @@
  *   (#483). They run the SAME SQL + the SAME shared normalizer (`street-normalize.ts`) as the node
  *   classes, just ASYNC over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
  *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
- *   parity-preference + polyline interpolation in `HTTPVFSInterpolator` mirrors
- *   `StreetInterpolator` line-for-line — KEEP THE TWO IN LOCKSTEP (the same lockstep contract the
- *   WOF resolvers hold).
+ *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
+ *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
+ *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
  *
  *   These power the demo's street tier against byte-ranged per-state situs/interp shards: a lookup
  *   touches ~KB of a multi-GB shard (measured, see the spec), so the file size is irrelevant to
@@ -26,8 +26,11 @@ import {
 	type StreetLocale,
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
-/** The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns. */
+/**
+ * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
+ */
 export interface HTTPVFSDB {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
@@ -35,11 +38,13 @@ export interface HTTPVFSDB {
 /**
  * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over Comlink).
  */
-const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
+const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
-/** Sql.js exec result → row objects. */
+/**
+ * Sql.js exec result → row objects.
+ */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || res.length === 0) return []
+	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
 
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
@@ -60,7 +65,9 @@ export class HTTPVFSAddressPointLookup {
 	#available: Promise<boolean> | undefined
 	#locale: StreetLocale
 
-	/** `streetLocale` must match the shard's build locale (the node class's contract) — default "us". */
+	/**
+	 * `streetLocale` must match the shard's build locale (the node class's contract) — default "us".
+	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
 		this.#locale = opts.streetLocale ?? "us"
@@ -74,6 +81,7 @@ export class HTTPVFSAddressPointLookup {
 			this.#available = this.#worker.db
 				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='address_point'`)
 				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
+
 			this.#available.catch(() => {
 				this.#available = undefined
 			})
@@ -96,33 +104,34 @@ export class HTTPVFSAddressPointLookup {
 
 		const select = (where: string): string =>
 			`SELECT lat, lon, source, release FROM address_point WHERE ${where} LIMIT 1`
+
 		let rows: Record<string, unknown>[] = []
 
+		/**
+		 * Run one address-point probe and hand back its rows.
+		 */
+		const probe = async (where: string): Promise<Record<string, unknown>[]> =>
+			rowsFromExec(await this.#worker.db.exec(select(where)))
+
 		if (query.postcode) {
-			rows = rowsFromExec(
-				await this.#worker.db.exec(
-					select(
-						`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
-					)
-				)
+			rows = await probe(
+				`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
 			)
 		}
 
-		if (rows.length === 0 && query.locality) {
+		if (!rows.length && query.locality) {
 			// FR shards fold arrondissement communes to the base city on both sides (the node class +
 			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
 			const localityKey =
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
 					: normalizeLocalityForKey(query.locality)
-			rows = rowsFromExec(
-				await this.#worker.db.exec(
-					select(
-						`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
-					)
-				)
+
+			rows = await probe(
+				`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
 			)
 		}
+
 		const r = rows[0]
 
 		if (!r) return null
@@ -158,6 +167,7 @@ export class HTTPVFSInterpolator {
 			this.#available = this.#worker.db
 				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='street_segment'`)
 				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
+
 			this.#available.catch(() => {
 				this.#available = undefined
 			})
@@ -194,23 +204,29 @@ export class HTTPVFSInterpolator {
 			if (new Set(rows.map((r) => String(r.postcode ?? ""))).size > 1) return null
 		}
 
-		if (rows.length === 0) return null
+		if (!rows.length) return null
 
 		// Parity preference: exact side → 'mixed' → opposite side (flagged). Mirrors StreetInterpolator.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
-		const preferred = exact.length > 0 ? exact : mixed
-		const pool = preferred.length > 0 ? preferred : rows
+		const preferred = exact.length ? exact : mixed
+		const pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins.
-		const best = pool.reduce((a, b) =>
-			Number(b.max_hn) - Number(b.min_hn) < Number(a.max_hn) - Number(a.min_hn) ? b : a
-		)
+		const spanOf = (row: Record<string, unknown>): number => Number(row.max_hn) - Number(row.min_hn)
+		let best = pool[0]!
+
+		for (const candidate of pool) {
+			if (spanOf(candidate) < spanOf(best)) {
+				best = candidate
+			}
+		}
+
 		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
 		const span = Number(best.to_hn) - Number(best.from_hn)
-		const t = span === 0 ? 0.5 : clamp01((n - Number(best.from_hn)) / span)
+		const t = span === 0 ? 0.5 : clampFraction((n - Number(best.from_hn)) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)
 
 		return {
@@ -224,47 +240,4 @@ export class HTTPVFSInterpolator {
 			release: String(best.release),
 		}
 	}
-}
-
-function clamp01(t: number): number {
-	return t < 0 ? 0 : t > 1 ? 1 : t
-}
-
-/**
- * Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors StreetInterpolator.
- */
-function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
-	const legs: number[] = []
-	let total = 0
-
-	for (let i = 1; i < polyline.length; i++) {
-		const [aLon, aLat] = polyline[i - 1]!
-		const [bLon, bLat] = polyline[i]!
-		const d = haversineKm(aLat, aLon, bLat, bLon)
-		legs.push(d)
-		total += d
-	}
-
-	if (total === 0) {
-		const [lon, lat] = polyline[0]!
-
-		return [lon, lat, 0]
-	}
-	let remaining = t * total
-
-	for (let i = 0; i < legs.length; i++) {
-		const leg = legs[i]!
-
-		if (remaining <= leg || i === legs.length - 1) {
-			const f = leg === 0 ? 0 : clamp01(remaining / leg)
-			const [aLon, aLat] = polyline[i]!
-			const [bLon, bLat] = polyline[i + 1]!
-
-			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
-		}
-		remaining -= leg
-	}
-	const [lon, lat] = polyline[polyline.length - 1]!
-
-	return [lon, lat, total]
 }

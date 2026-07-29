@@ -19,7 +19,9 @@ import { makeDemoRuntime } from "../test/mocks.tsx"
 import { renderComponent } from "../test/render.tsx"
 import { GeocoderDemo } from "./GeocoderDemo.tsx"
 
-/** Poll `get` inside act() until truthy or timeout; never throws (returns null on timeout). */
+/**
+ * Poll `get` inside act() until truthy or timeout; never throws (returns null on timeout).
+ */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 	let found: T | null = null
@@ -29,7 +31,10 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 			found = get()
 
 			if (found) break
-			await new Promise((resolve) => setTimeout(resolve, 50))
+
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50)
+			})
 		}
 	})
 

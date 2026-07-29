@@ -54,13 +54,16 @@ const { values } = parseArgs({
 
 const version =
 	values.version ?? (JSON.parse(readFileSync(join(repoRoot, "mailwoman", "package.json"), "utf8")).version as string)
+
 const outDir = values.out ? resolve(values.out) : join(repoRoot, "docs", "static", "sbom")
 
 const run = (cmd: string, args: string[], cwd: string): string =>
 	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
 
-/** SPDX restricts the SPDXID charset to letters, numbers, `.` and `-`; npm emits `_` from package names. */
-const sanitizeSPDXID = (id: string): string => (typeof id === "string" ? id.replace(/[^a-zA-Z0-9.-]/g, "-") : id)
+/**
+ * SPDX restricts the SPDXID charset to letters, numbers, `.` and `-`; npm emits `_` from package names.
+ */
+const sanitizeSPDXID = (id: string): string => (typeof id === "string" ? id.replaceAll(/[^a-zA-Z0-9.-]/g, "-") : id)
 
 interface SPDXDocument {
 	creationInfo: { created: string }
@@ -70,7 +73,9 @@ interface SPDXDocument {
 	relationships?: Array<{ spdxElementId: string; relatedSpdxElement: string }>
 }
 
-/** Rewrite npm's SPDX output into a form the SPDX 2.3 reference validator accepts (see file header). */
+/**
+ * Rewrite npm's SPDX output into a form the SPDX 2.3 reference validator accepts (see file header).
+ */
 function normalizeSPDX(doc: SPDXDocument): SPDXDocument {
 	doc.creationInfo.created = doc.creationInfo.created.replace(/\.\d{3}Z$/, "Z")
 
@@ -102,6 +107,7 @@ const tmp = mkdtempSync(join(tmpdir(), "mw-sbom-"))
 
 try {
 	console.log(`[sbom] packing mailwoman@${version} from the registry…`)
+
 	run("npm", ["pack", `mailwoman@${version}`, "--silent"], tmp)
 	run("tar", ["xzf", `mailwoman-${version}.tgz`], tmp)
 
@@ -116,25 +122,32 @@ try {
 	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
 
 	console.log("[sbom] installing the production dependency closure…")
+
 	run("npm", ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], pkgDir)
 
 	execFileSync("mkdir", ["-p", outDir])
 
 	console.log("[sbom] generating SPDX 2.3…")
+
 	const spdx = normalizeSPDX(
 		JSON.parse(run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir))
 	)
+
 	const spdxPath = join(outDir, `mailwoman-${version}.spdx.json`)
 	writeFileSync(spdxPath, `${JSON.stringify(spdx, null, 2)}\n`)
 
 	console.log("[sbom] generating CycloneDX 1.5…")
+
 	const cdx = JSON.parse(
 		run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
 	)
+
 	const cdxPath = join(outDir, `mailwoman-${version}.cdx.json`)
 	writeFileSync(cdxPath, `${JSON.stringify(cdx, null, 2)}\n`)
 
-	const spdxPkgs = (spdx.packages?.length ?? 0) - 1 // minus the root component
+	const spdxPkgs = (spdx.packages?.length ?? 0) - 1
+
+	// minus the root component
 	console.log(
 		`\n[sbom] ✅ wrote SBOMs for mailwoman@${version} (${spdxPkgs} dependencies)\n` +
 			`         ${spdxPath.replace(`${repoRoot}/`, "")}\n` +

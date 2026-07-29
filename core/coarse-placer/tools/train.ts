@@ -19,26 +19,55 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "../featurize.ts"
 
+/**
+ * Lowest calibration temperature swept.
+ */
+const MIN_TEMPERATURE = 0.5
+
+/**
+ * Highest calibration temperature swept — just past 4 so the endpoint is included despite float drift.
+ */
+const MAX_TEMPERATURE = 4.01
+
+/**
+ * Temperature sweep granularity.
+ */
+const TEMPERATURE_STEP = 0.1
+
 interface Sample {
 	x: Int32Array
 	y: number
 }
 
-/** Options for {@linkcode trainCoarsePlacer}. */
+/**
+ * Options for {@linkcode trainCoarsePlacer}.
+ */
 export interface TrainCoarsePlacerOptions {
-	/** SGD epochs. Default 12. */
+	/**
+	 * SGD epochs. Default 12.
+	 */
 	epochs?: number
-	/** Initial learning rate (decays per epoch). Default 0.1. */
+	/**
+	 * Initial learning rate (decays per epoch). Default 0.1.
+	 */
 	lr?: number
-	/** L2 regularization. Default 1e-6. */
+	/**
+	 * L2 regularization. Default 1e-6.
+	 */
 	l2?: number
-	/** Artifact output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Artifact output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	out?: string
-	/** Dataset dir (`{train,val}.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`{train,val}.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode trainCoarsePlacer}. */
+/**
+ * Result of {@linkcode trainCoarsePlacer}.
+ */
 export interface TrainCoarsePlacerResult {
 	outDir: string
 	trainRows: number
@@ -47,7 +76,9 @@ export interface TrainCoarsePlacerResult {
 	valNLL: number
 }
 
-/** Coarse-placer SGD trainer — see the module doc. */
+/**
+ * Coarse-placer SGD trainer — see the module doc.
+ */
 export async function trainCoarsePlacer(
 	options: TrainCoarsePlacerOptions = {},
 	report?: (line: string) => void
@@ -67,6 +98,7 @@ export async function trainCoarsePlacer(
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as { raw: string; country: string })
+
 		// Precompute features once: Int32Array of active indices + label id per row.
 		const out: Sample[] = []
 
@@ -92,8 +124,9 @@ export async function trainCoarsePlacer(
 	// NOTE(phase4b): deliberately NOT `SeededRandom.shuffle` — that's mulberry32; this LCG stream is
 	// what every shipped model was trained on, and swapping the RNG changes the shuffle order (a
 	// silent retrain-reproducibility break).
-	let rng = 1234567
-	const rand = (): number => (rng = (Math.imul(rng, 1103515245) + 12345) & 0x7fffffff) / 0x7fffffff
+	let rng = 1_234_567
+	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7f_ff_ff_ff) / 0x7f_ff_ff_ff
+
 	function shuffle(arr: Sample[]): void {
 		for (let i = arr.length - 1; i > 0; i--) {
 			const j = Math.floor(rand() * (i + 1))
@@ -103,22 +136,26 @@ export async function trainCoarsePlacer(
 
 	const logits = new Float32Array(C)
 	const probs = new Float32Array(C)
+
 	function forward(x: Int32Array): void {
 		for (let c = 0; c < C; c++) {
 			let s = b[c]!
 			const base = c * D
 
-			for (let k = 0; k < x.length; k++) {
-				s += W[base + x[k]!]!
+			for (const featureIndex of x) {
+				s += W[base + featureIndex]!
 			}
+
 			logits[c] = s
 		}
+
 		let mx = -Infinity
 
 		for (let c = 0; c < C; c++)
 			if (logits[c]! > mx) {
 				mx = logits[c]!
 			}
+
 		let sum = 0
 
 		for (let c = 0; c < C; c++) {
@@ -167,12 +204,13 @@ export async function trainCoarsePlacer(
 				b[c] = b[c]! - lr * g
 				const base = c * D
 
-				for (let k = 0; k < x.length; k++) {
-					const idx = base + x[k]!
+				for (const featureIndex of x) {
+					const idx = base + featureIndex
 					W[idx] = W[idx]! - lr * (g + l2 * W[idx]!)
 				}
 			}
 		}
+
 		report?.(
 			`epoch ${ep + 1}/${epochs}  lr=${lr.toFixed(4)}  train_acc=${accuracy(train.slice(0, 5000)).toFixed(4)}  val_acc=${accuracy(val).toFixed(4)}`
 		)
@@ -187,31 +225,36 @@ export async function trainCoarsePlacer(
 				let s = b[c]!
 				const base = c * D
 
-				for (let k = 0; k < x.length; k++) {
-					s += W[base + x[k]!]!
+				for (const featureIndex of x) {
+					s += W[base + featureIndex]!
 				}
+
 				logits[c] = s / T
 			}
+
 			let mx = -Infinity
 
 			for (let c = 0; c < C; c++)
 				if (logits[c]! > mx) {
 					mx = logits[c]!
 				}
+
 			let sum = 0
 
 			for (let c = 0; c < C; c++) {
 				sum += Math.exp(logits[c]! - mx)
 			}
+
 			nll += -(logits[y]! - mx - Math.log(sum))
 		}
 
 		return nll / val.length
 	}
+
 	let bestT = 1
 	let bestNLL = Infinity
 
-	for (let T = 0.5; T <= 4.01; T += 0.1) {
+	for (let T = MIN_TEMPERATURE; T <= MAX_TEMPERATURE; T += TEMPERATURE_STEP) {
 		const nll = valNLL(T)
 
 		if (nll < bestNLL) {
@@ -219,9 +262,11 @@ export async function trainCoarsePlacer(
 			bestT = T
 		}
 	}
+
 	report?.(`temperature=${bestT.toFixed(2)}  val_NLL=${bestNLL.toFixed(4)}`)
 
 	mkdirSync(outDir, { recursive: true })
+
 	writeFileSync(
 		path.join(outDir, "meta.json"),
 		JSON.stringify(
@@ -237,6 +282,7 @@ export async function trainCoarsePlacer(
 			2
 		)
 	)
+
 	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(W.buffer))
 	report?.(`→ ${outDir}/meta.json + weights.bin (${(W.byteLength / 1e6).toFixed(1)} MB fp32)`)
 

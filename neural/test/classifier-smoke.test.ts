@@ -24,6 +24,7 @@ import { ONNXRunner } from "../onnx-runner.ts"
 import { MailwomanTokenizer } from "../tokenizer.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+
 const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
@@ -69,11 +70,3 @@ describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", (
 		expect(tree.roots).toEqual([])
 	})
 })
-
-if (!haveModel) {
-	describe("NeuralAddressClassifier — smoke (skipped)", () => {
-		test(`model not at ${MODEL_PATH} — set MAILWOMAN_TEST_ONNX_MODEL to enable`, () => {
-			expect(true).toBe(true)
-		})
-	})
-}

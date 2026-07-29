@@ -16,6 +16,7 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 	let hasSingle = false
 	let prevSpace = false
 
+	// oxlint-disable-next-line typescript/prefer-for-of -- for…of yields code POINTS; this walks code units
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]
 
@@ -27,9 +28,12 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 			} else {
 				hasSingle = true
 			}
+
 			prevSpace = true
+
 			continue
 		}
+
 		prevSpace = false
 	}
 
@@ -56,6 +60,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 	const locale = opts?.locale ?? (typeof input === "string" ? undefined : input.appliedLocale)
 
 	const tokenSpans = tokenizeForClass(text)
+
 	const tokenClasses: TokenClass[] = tokenSpans.map((span) => ({
 		span,
 		class: classifyToken(span.body),

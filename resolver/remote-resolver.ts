@@ -24,10 +24,14 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
-/** `ResolveOpts` minus the non-serializable live lookup handles. What actually crosses the wire. */
+/**
+ * `ResolveOpts` minus the non-serializable live lookup handles. What actually crosses the wire.
+ */
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">
 
-/** Strip the live lookup handles from `ResolveOpts` so the rest can be JSON-serialized over HTTP. */
+/**
+ * Strip the live lookup handles from `ResolveOpts` so the rest can be JSON-serialized over HTTP.
+ */
 export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | undefined {
 	if (!opts) return undefined
 	const { addressPoints: _ap, interpolation: _ip, ...rest } = opts
@@ -40,21 +44,31 @@ export interface RemoteResolverOpts {
 	 * Full URL of the resolver service's resolve-tree endpoint, e.g. `http://resolver:7081/v1/resolve`.
 	 */
 	endpoint: string
-	/** Injectable fetch (tests / custom agents). Defaults to the global `fetch`. */
+	/**
+	 * Injectable fetch (tests / custom agents). Defaults to the global `fetch`.
+	 */
 	fetch?: typeof fetch
-	/** Per-request timeout in ms. Default 10000. */
+	/**
+	 * Per-request timeout in ms. Default 10000.
+	 */
 	timeoutMs?: number
-	/** Extra headers (auth, tracing). `Content-Type: application/json` is always set. */
+	/**
+	 * Extra headers (auth, tracing). `Content-Type: application/json` is always set.
+	 */
 	headers?: Record<string, string>
 }
 
-/** The wire request body `POST <endpoint>` expects (and the matching server handler parses). */
+/**
+ * The wire request body `POST <endpoint>` expects (and the matching server handler parses).
+ */
 export interface ResolveTreeRequest {
 	tree: AddressTree
 	opts?: SerializableResolveOpts
 }
 
-/** The wire response body the server returns. */
+/**
+ * The wire response body the server returns.
+ */
 export interface ResolveTreeResponse {
 	tree: AddressTree
 }
@@ -79,6 +93,7 @@ export class RemoteResolver implements Resolver {
 
 		try {
 			const body: ResolveTreeRequest = { tree, opts: serializableResolveOpts(opts) }
+
 			const res = await this.#fetch(this.#endpoint, {
 				method: "POST",
 				headers: { "Content-Type": "application/json", ...this.#headers },
@@ -89,6 +104,7 @@ export class RemoteResolver implements Resolver {
 			if (!res.ok) {
 				throw new Error(`RemoteResolver: ${this.#endpoint} → HTTP ${res.status} ${res.statusText}`)
 			}
+
 			const json = (await res.json()) as Partial<ResolveTreeResponse>
 
 			if (!json || !json.tree || !Array.isArray(json.tree.roots)) {

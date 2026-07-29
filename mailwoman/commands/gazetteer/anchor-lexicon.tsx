@@ -36,6 +36,16 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
+/**
+ * Homographs printed before the list is truncated.
+ */
+const MAX_LISTED_HOMOGRAPHS = 12
+
+/**
+ * Letters at or below which a token reads as an abbreviation rather than a word.
+ */
+const MAX_ABBREVIATION_LETTERS = 3
+
 const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const SLOTS = ["country", "region", "po_box", "cedex", "homograph"]
 
@@ -54,16 +64,22 @@ export { OptionsSchema as options }
 const wordNorm = (s: string): string =>
 	s
 		.split(/\s+/)
-		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.join(" ")
-/** Normalize a surface for the case-insensitive map. */
-const norm = (s: string): string => wordNorm(s).toLowerCase()
-/** Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching. */
-const isShortCode = (s: string): boolean => {
-	const letters = s.replace(/[^\p{L}]/gu, "")
 
-	return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
+/**
+ * Normalize a surface for the case-insensitive map.
+ */
+const norm = (s: string): string => wordNorm(s).toLowerCase()
+
+/**
+ * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
+ */
+const isShortCode = (s: string): boolean => {
+	const letters = s.replaceAll(/[^\p{L}]/gu, "")
+
+	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
 const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
@@ -89,6 +105,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 
 				return
 			}
+
 			const key = norm(s)
 
 			if (!key) return
@@ -125,6 +142,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 		for (const map of [entries, codeEntries]) {
 			for (const [key, bits] of map) {
 				if (bits & BIT.country && bits & BIT.region) {
+					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union, not a mistyped logical or
 					map.set(key, bits | BIT.homograph)
 				}
 			}
@@ -149,8 +167,8 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 					"case-SENSITIVE exact: word_norm(token) == key (keys uppercase; the surface must already BE uppercase, so 'in' the word ≠ 'IN' the code). n-gram length 1 only.",
 				scan: "longest-first n-gram over whitespace words, left to right, non-overlapping",
 			},
-			entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
-			code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),
+			entries: Object.fromEntries([...entries].toSorted(([a], [b]) => a.localeCompare(b))),
+			code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 		}
 
 		mkdirSync(dirname(output), { recursive: true })
@@ -159,7 +177,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 		return [
 			`${output}`,
 			`${entries.size} entries + ${codeEntries.size} code_entries, max_ngram=${maxNgram}`,
-			`${homographs.length} homographs: ${homographs.slice(0, 12).join(", ")}${homographs.length > 12 ? ", …" : ""}`,
+			`${homographs.length} homographs: ${homographs.slice(0, MAX_LISTED_HOMOGRAPHS).join(", ")}${homographs.length > MAX_LISTED_HOMOGRAPHS ? ", …" : ""}`,
 		]
 	})
 

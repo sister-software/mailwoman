@@ -55,7 +55,9 @@ export interface TracePrior {
 	probePath?: "segment" | "anchored" | "window"
 }
 
-/** The post-decode repair passes, in application order. */
+/**
+ * The post-decode repair passes, in application order.
+ */
 export type TraceRepairPass = "wordConsistency" | "postcodeRepair" | "unitRepair" | "spanBridge"
 
 /**
@@ -68,7 +70,9 @@ export interface TraceRepair {
 	after: string[]
 }
 
-/** A tokenizer piece as fed to the model — `TokenizedPiece`, kept structural for JSON. */
+/**
+ * A tokenizer piece as fed to the model — `TokenizedPiece`, kept structural for JSON.
+ */
 export interface TracePiece {
 	piece: string
 	id: number
@@ -82,20 +86,34 @@ export interface TracePiece {
  * information, one fewer alignment invariant).
  */
 export interface NeuralParseTrace {
-	/** The text the model actually saw (post case-normalize). */
+	/**
+	 * The text the model actually saw (post case-normalize).
+	 */
 	text: string
-	/** True when case normalization changed the input (`normalizeInputCase`, #690). */
+	/**
+	 * True when case normalization changed the input (`normalizeInputCase`, #690).
+	 */
 	caseNormalized: boolean
 	pieces: TracePiece[]
-	/** Postcode-anchor channel exactly as fed (post-choreography). Absent = channel not fed. */
+	/**
+	 * Postcode-anchor channel exactly as fed (post-choreography). Absent = channel not fed.
+	 */
 	anchor?: SoftFeatureChannel
-	/** Gazetteer channel exactly as fed (post-suppression). Absent = channel not fed. */
+	/**
+	 * Gazetteer channel exactly as fed (post-suppression). Absent = channel not fed.
+	 */
 	gazetteer?: SoftFeatureChannel
-	/** Country-lexicon channel exactly as fed (#1104). Absent = channel not fed. */
+	/**
+	 * Country-lexicon channel exactly as fed (#1104). Absent = channel not fed.
+	 */
 	country?: SoftFeatureChannel
-	/** Raw model emissions, pre-prior — `logits[tokenIdx][labelIdx]`. */
+	/**
+	 * Raw model emissions, pre-prior — `logits[tokenIdx][labelIdx]`.
+	 */
 	logits: number[][]
-	/** Locale-head output, index-aligned with `localeCountries`. Absent on models without the head. */
+	/**
+	 * Locale-head output, index-aligned with `localeCountries`. Absent on models without the head.
+	 */
 	localeLogits?: number[]
 	/**
 	 * #727 stage-2: per-span type scores from the semi-Markov head — `spanScores[token][length-1][type]`. Absent on
@@ -110,12 +128,18 @@ export interface NeuralParseTrace {
 	 * `localeLogits` is.
 	 */
 	localeCountries?: string[]
-	/** Address system whose conventions applied, or null when conventions were off / below the bar. */
+	/**
+	 * Address system whose conventions applied, or null when conventions were off / below the bar.
+	 */
 	detectedSystem: SystemCode | null
-	/** How `detectedSystem` was chosen: conventions off, locale-head auto-detect, or caller-pinned. */
+	/**
+	 * How `detectedSystem` was chosen: conventions off, locale-head auto-detect, or caller-pinned.
+	 */
 	systemSource: "off" | "auto" | "pinned"
 	priors: TracePrior[]
-	/** The post-prior, post-mask matrix viterbi actually decoded over. Equals `logits` when nothing fired. */
+	/**
+	 * The post-prior, post-mask matrix viterbi actually decoded over. Equals `logits` when nothing fired.
+	 */
 	emissions: number[][]
 	/**
 	 * The label vocabulary. Index-aligned with the logits/emissions inner dimension, which may be NARROWER than this list
@@ -131,6 +155,8 @@ export interface NeuralParseTrace {
 	path: number[]
 	decode: "viterbi" | "argmax"
 	repairs: TraceRepair[]
-	/** The final tokens — identical to what `parse()` builds its tree from. */
+	/**
+	 * The final tokens — identical to what `parse()` builds its tree from.
+	 */
 	tokens: DecoderToken[]
 }

@@ -28,7 +28,7 @@ export const KindBadge: FC<KindBadgeProps> = ({ kindResult }) => {
 				<strong>Kind:</strong> <code>{kindResult.kind}</code>{" "}
 				<span className={styles.confidence}>({formatPct(kindResult.confidence)})</span>
 			</summary>
-			{kindResult.alternatives.length > 0 ? (
+			{kindResult.alternatives.length ? (
 				<ul className={styles.alternatives}>
 					{kindResult.alternatives.map((alt) => (
 						<li key={alt.kind}>

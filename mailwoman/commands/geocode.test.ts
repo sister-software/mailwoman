@@ -29,9 +29,7 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-// ---------------------------------------------------------------------------
-// Paths
-// ---------------------------------------------------------------------------
+// MARK: Paths
 
 const CLI_PATH = repoRootPath("mailwoman", "out", "cli.js")
 
@@ -47,9 +45,7 @@ const hasCLICompiled = existsSync(CLI_PATH)
 const hasTxAddressPoints = existsSync(TX_ADDRESS_POINTS_DB)
 const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
 
-// ---------------------------------------------------------------------------
-// Argument-validation tests (unconditional — no DB required)
-// ---------------------------------------------------------------------------
+// MARK: Argument-validation tests (unconditional — no DB required)
 
 describe("geocode argument validation", () => {
 	test("missing address argument exits 1 with a descriptive error", () => {
@@ -58,6 +54,7 @@ describe("geocode argument validation", () => {
 
 			return
 		}
+
 		expect(() =>
 			execFileSync(process.execPath, [CLI_PATH, "geocode"], {
 				encoding: "utf8",
@@ -65,7 +62,7 @@ describe("geocode argument validation", () => {
 				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 				timeout: 10_000,
 			})
-		).toThrow()
+		).toThrow(/Command failed/)
 	})
 
 	test("empty address string exits 1", () => {
@@ -74,13 +71,14 @@ describe("geocode argument validation", () => {
 
 			return
 		}
+
 		expect(() =>
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "   "], {
 				encoding: "utf8",
 				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 				timeout: 10_000,
 			})
-		).toThrow()
+		).toThrow(/Command failed/)
 	})
 
 	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", () => {
@@ -89,8 +87,10 @@ describe("geocode argument validation", () => {
 
 			return
 		}
+
 		let threw = false
 		let output = ""
+		const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-empty-"))
 
 		try {
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
@@ -99,27 +99,23 @@ describe("geocode argument validation", () => {
 				// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
 				// on a standard data root that now SUCCEEDS (the new contract). The error contract
 				// only survives when no default shard exists either.
-				env: childEnv({
-					MAILWOMAN_WOF_DB: undefined,
-					MAILWOMAN_DATA_ROOT: mkdtempSync(join(tmpdir(), "mw-empty-")),
-				}),
+				env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 				timeout: 15_000,
 			})
-		} catch (err: unknown) {
+		} catch (error: unknown) {
 			threw = true
-			const execErr = err as { stderr?: string; stdout?: string }
+			const execErr = error as { stderr?: string; stdout?: string }
 			// Pastel renders errors to stdout (as a React component); stderr may be empty.
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 		}
+
 		expect(threw).toBe(true)
 		// The error message should mention how to provide a DB path.
 		expect(output).toMatch(/MAILWOMAN_WOF_DB|resolve-db|wof/i)
 	})
 })
 
-// ---------------------------------------------------------------------------
-// DB-gated integration tests
-// ---------------------------------------------------------------------------
+// MARK: DB-gated integration tests
 
 const hasTxShards = hasTxAddressPoints && hasTxInterpolation
 

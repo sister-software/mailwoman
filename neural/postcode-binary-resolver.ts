@@ -27,10 +27,16 @@
 import type { AnchorLookup } from "./anchor-inference.ts"
 import type { PostcodePlace } from "./postcode-anchor.ts"
 
-const MAGIC = 0x31_42_43_50 // "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
-const REC_TAIL = 5 // countryIdx(1) + latQ(2) + lonQ(2)
-const LAT_Q = 32767 / 90
-const LON_Q = 32767 / 180
+/**
+ * "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
+ */
+const MAGIC = 0x31_42_43_50
+/**
+ * CountryIdx(1) + latQ(2) + lonQ(2)
+ */
+const REC_TAIL = 5
+const LAT_Q = 32_767 / 90
+const LON_Q = 32_767 / 180
 
 export interface PostcodeBinaryEntry {
 	postcode: string
@@ -54,6 +60,7 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
  * adjacent records. Run in Node; consumed by {@link PostcodeBinaryResolver}.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const sorted = [...entries].sort((a, b) =>
 		a.postcode < b.postcode
 			? -1
@@ -65,9 +72,16 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 						? 1
 						: 0
 	)
+
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const countries = [...new Set(sorted.map((e) => e.country))].sort()
 	const countryIdx = new Map(countries.map((c, i) => [c, i]))
-	const keyWidth = sorted.reduce((m, e) => Math.max(m, e.postcode.length), 1)
+	let keyWidth = 1
+
+	for (const entry of sorted) {
+		keyWidth = Math.max(keyWidth, entry.postcode.length)
+	}
+
 	const recSize = keyWidth + REC_TAIL
 
 	const headerSize = 4 + 4 + 1 + countries.length * 2 + 1
@@ -85,15 +99,16 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 		buf[o++] = c.charCodeAt(0) & 0x7f
 		buf[o++] = c.charCodeAt(1) & 0x7f
 	}
+
 	buf[o++] = keyWidth
 
 	for (const e of sorted) {
 		encodeKey(e.postcode, keyWidth, buf, o)
 		o += keyWidth
 		buf[o++] = countryIdx.get(e.country)!
-		view.setInt16(o, Math.max(-32767, Math.min(32767, Math.round(e.lat * LAT_Q))), true)
+		view.setInt16(o, Math.max(-32_767, Math.min(32_767, Math.round(e.lat * LAT_Q))), true)
 		o += 2
-		view.setInt16(o, Math.max(-32767, Math.min(32767, Math.round(e.lon * LON_Q))), true)
+		view.setInt16(o, Math.max(-32_767, Math.min(32_767, Math.round(e.lon * LON_Q))), true)
 		o += 2
 	}
 
@@ -127,12 +142,15 @@ export class PostcodeBinaryResolver {
 			this.#countries.push(String.fromCharCode(bytes[o]!, bytes[o + 1]!))
 			o += 2
 		}
+
 		this.#keyWidth = bytes[o++]!
 		this.#recSize = this.#keyWidth + REC_TAIL
 		this.#recBase = o
 	}
 
-	/** Compare the keyWidth bytes of record `i` against a padded query key. */
+	/**
+	 * Compare the keyWidth bytes of record `i` against a padded query key.
+	 */
 	#cmpKey(i: number, key: Uint8Array): number {
 		const base = this.#recBase + i * this.#recSize
 
@@ -169,6 +187,7 @@ export class PostcodeBinaryResolver {
 
 		for (let i = lo; i < this.#count && this.#cmpKey(i, key) === 0; i++) {
 			const base = this.#recBase + i * this.#recSize + this.#keyWidth
+
 			out.push({
 				country: this.#countries[this.#buf[base]!]!,
 				lat: this.#view.getInt16(base + 1, true) / LAT_Q,
@@ -202,6 +221,7 @@ export class PostcodeBinaryResolver {
 				if (c === 0) break
 				postcode += String.fromCharCode(c)
 			}
+
 			// Walk the contiguous run of records sharing this key (one per member country).
 			const posterior: Record<string, number> = {}
 			let latSum = 0
@@ -216,6 +236,7 @@ export class PostcodeBinaryResolver {
 				for (let j = 0; j < this.#keyWidth; j++) {
 					if (this.#buf[base + j] !== this.#buf[keyBase + j]) {
 						same = false
+
 						break
 					}
 				}
@@ -229,14 +250,17 @@ export class PostcodeBinaryResolver {
 				if (lat !== 0 || lon !== 0) {
 					latSum += lat
 					lonSum += lon
+
 					centroidCount++
 				}
 			}
+
 			out.set(postcode, {
 				posterior,
 				lat: centroidCount ? latSum / centroidCount : 0,
 				lon: centroidCount ? lonSum / centroidCount : 0,
 			})
+
 			i = k
 		}
 

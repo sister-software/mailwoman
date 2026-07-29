@@ -4595,6 +4595,7 @@ __metadata:
     "@mailwoman/react": "workspace:^"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.62.0"
     "@storybook/addon-docs": "npm:^10.5.4"
@@ -5022,6 +5023,7 @@ __metadata:
   resolution: "@mailwoman/un-locode-lookup@workspace:un-locode-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     csv-parse: "npm:^7.0.1"
   bin:
     un-locode-lookup: ./out/cli.js
@@ -5035,9 +5037,9 @@ __metadata:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
     "@inkjs/ui": "npm:^2.0.0"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
-    "@sister.software/oxfmt-config": "npm:^9.3.0"
-    "@sister.software/oxlint-config": "npm:^9.3.0"
-    "@sister.software/tsconfig": "npm:^9.3.0"
+    "@sister.software/oxfmt-config": "npm:^11.0.0"
+    "@sister.software/oxlint-config": "npm:^11.0.0"
+    "@sister.software/tsconfig": "npm:^11.0.0"
     "@types/geojson": "npm:^7946.0.16"
     "@types/node": "npm:^26.1.1"
     "@types/pluralize": "npm:^0.0.33"
@@ -6934,28 +6936,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@sister.software/oxfmt-config@npm:9.3.0"
+"@sister.software/oxfmt-config@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@sister.software/oxfmt-config@npm:11.0.0"
   peerDependencies:
-    oxfmt: 0.56.0
-  checksum: 10/fed032d078e32797574421d9ee4d74a960720530f14328d6f40612569b2c0bc4bf059531683100bc316cbc0a6e31e045f11bec9c6c2a3b6680f24005a82d8f06
+    oxfmt: ">=0.60.0 <1"
+  checksum: 10/647747fefa8294792046dfd05987a72f2f15000ebd3309eddbf8aae80dc15483f903639a75528e4bfa43d27cd60a804ec9baaece9963f77f64563c944414ed2c
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@sister.software/oxlint-config@npm:9.3.0"
+"@sister.software/oxlint-config@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@sister.software/oxlint-config@npm:11.0.0"
   peerDependencies:
-    oxlint: ^1.71.0
-  checksum: 10/8654671bfa58777bd9a6e04e38022ffd2ca6e49a29825e938367853c53f7ea540d4360de51797ed4076c67e35998781f29162d32b029aa24b8f1667607c7acb5
+    oxlint: ">=1.75.0 <2"
+  checksum: 10/787f467aa545936fda61897b9d55664c69d531ec2d8482f969d12ff56af4a906b80653b258abcac8f3990c20a6f01f5d3ee8dabaa2de6014984b86af84435e7b
   languageName: node
   linkType: hard
 
-"@sister.software/tsconfig@npm:^9.3.0":
-  version: 9.3.0
-  resolution: "@sister.software/tsconfig@npm:9.3.0"
-  checksum: 10/f920f128709efe65bd6116b2b72fd59a0702c5b3f93cdc6e8de84a881ac3b0a8e7524803777f9d64095186c12ed778d247cfb6e2835c19231982812f7b02640e
+"@sister.software/tsconfig@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@sister.software/tsconfig@npm:11.0.0"
+  checksum: 10/97a6ed5681c4e9dff03cb97ba7704348c2232cbef8130442c7a477fea0ea24911f5ae483f05e994e55afcd36b26f8534c9b87dceb95a78e9ab35be0a539081b2
   languageName: node
   linkType: hard
 

@@ -29,68 +29,82 @@ interface FixturePlace {
 	country: string | null
 	lat: number
 	lon: number
-	/** Alternate names (one per locale) — joined into FTS as a single token-bag. */
+	/**
+	 * Alternate names (one per locale) — joined into FTS as a single token-bag.
+	 */
 	alt_names?: string[]
-	/** Ancestor chain (NOT including self). Used to seed the `ancestors` table. */
+	/**
+	 * Ancestor chain (NOT including self). Used to seed the `ancestors` table.
+	 */
 	ancestor_ids?: number[]
 }
 
-/** A small but representative fixture covering the cases the tests assert against. */
+/**
+ * A small but representative fixture covering the cases the tests assert against.
+ */
 const FIXTURE: FixturePlace[] = [
 	// Countries
-	{ id: 85633147, parent_id: null, name: "United States", placetype: "country", country: "US", lat: 39.5, lon: -98.0 },
-	{ id: 85633723, parent_id: null, name: "France", placetype: "country", country: "FR", lat: 46.5, lon: 2.5 },
-	{ id: 85633159, parent_id: null, name: "United Kingdom", placetype: "country", country: "GB", lat: 54.5, lon: -2.5 },
-	{ id: 85632997, parent_id: null, name: "Canada", placetype: "country", country: "CA", lat: 56.0, lon: -96.0 },
+	{ id: 85_633_147, parent_id: null, name: "United States", placetype: "country", country: "US", lat: 39.5, lon: -98 },
+	{ id: 85_633_723, parent_id: null, name: "France", placetype: "country", country: "FR", lat: 46.5, lon: 2.5 },
+	{
+		id: 85_633_159,
+		parent_id: null,
+		name: "United Kingdom",
+		placetype: "country",
+		country: "GB",
+		lat: 54.5,
+		lon: -2.5,
+	},
+	{ id: 85_632_997, parent_id: null, name: "Canada", placetype: "country", country: "CA", lat: 56, lon: -96 },
 
 	// US regions
 	{
-		id: 85688489,
-		parent_id: 85633147,
+		id: 85_688_489,
+		parent_id: 85_633_147,
 		name: "Texas",
 		placetype: "region",
 		country: "US",
-		lat: 31.0,
-		lon: -100.0,
-		ancestor_ids: [85633147],
+		lat: 31,
+		lon: -100,
+		ancestor_ids: [85_633_147],
 	},
 	{
-		id: 85688541,
-		parent_id: 85633147,
+		id: 85_688_541,
+		parent_id: 85_633_147,
 		name: "Illinois",
 		placetype: "region",
 		country: "US",
-		lat: 40.0,
-		lon: -89.0,
-		ancestor_ids: [85633147],
+		lat: 40,
+		lon: -89,
+		ancestor_ids: [85_633_147],
 	},
 	{
-		id: 85688543,
-		parent_id: 85633147,
+		id: 85_688_543,
+		parent_id: 85_633_147,
 		name: "Massachusetts",
 		placetype: "region",
 		country: "US",
-		lat: 42.0,
+		lat: 42,
 		lon: -71.5,
-		ancestor_ids: [85633147],
+		ancestor_ids: [85_633_147],
 	},
 
 	// CA regions
 	{
-		id: 85682077,
-		parent_id: 85632997,
+		id: 85_682_077,
+		parent_id: 85_632_997,
 		name: "Ontario",
 		placetype: "region",
 		country: "CA",
-		lat: 50.0,
-		lon: -85.0,
-		ancestor_ids: [85632997],
+		lat: 50,
+		lon: -85,
+		ancestor_ids: [85_632_997],
 	},
 
 	// Localities
 	{
-		id: 101751119,
-		parent_id: 85683033, // FR region (not in fixture; irrelevant for the assertions)
+		id: 101_751_119,
+		parent_id: 85_683_033, // FR region (not in fixture; irrelevant for the assertions)
 		name: "Paris",
 		placetype: "locality",
 		country: "FR",
@@ -99,67 +113,67 @@ const FIXTURE: FixturePlace[] = [
 		// The canonical name also lives in `names` in a real WOF distribution — required for the
 		// exact-match tier (#exactMatchIds queries `names`, not `spr`). Same shape as Brooklyn below.
 		alt_names: ["Paris", "Pari", "París", "パリ", "巴黎"],
-		ancestor_ids: [85633723],
+		ancestor_ids: [85_633_723],
 	},
 	{
-		id: 101715829,
-		parent_id: 85688489,
+		id: 101_715_829,
+		parent_id: 85_688_489,
 		name: "Paris",
 		placetype: "locality",
 		country: "US",
 		lat: 33.66,
 		lon: -95.55,
-		ancestor_ids: [85688489, 85633147],
+		ancestor_ids: [85_688_489, 85_633_147],
 	},
 	{
-		id: 101727113,
-		parent_id: 85688541,
+		id: 101_727_113,
+		parent_id: 85_688_541,
 		name: "Springfield",
 		placetype: "locality",
 		country: "US",
 		lat: 39.78,
 		lon: -89.65,
-		ancestor_ids: [85688541, 85633147],
+		ancestor_ids: [85_688_541, 85_633_147],
 	},
 	{
-		id: 101729437,
-		parent_id: 85688543,
+		id: 101_729_437,
+		parent_id: 85_688_543,
 		name: "Springfield",
 		placetype: "locality",
 		country: "US",
 		lat: 42.1,
 		lon: -72.59,
-		ancestor_ids: [85688543, 85633147],
+		ancestor_ids: [85_688_543, 85_633_147],
 	},
 	{
-		id: 101750367,
-		parent_id: 85633159,
+		id: 101_750_367,
+		parent_id: 85_633_159,
 		name: "London",
 		placetype: "locality",
 		country: "GB",
 		lat: 51.51,
 		lon: -0.13,
-		ancestor_ids: [85633159],
+		ancestor_ids: [85_633_159],
 	},
 	{
-		id: 101748449,
-		parent_id: 85682077,
+		id: 101_748_449,
+		parent_id: 85_682_077,
 		name: "London",
 		placetype: "borough", // intentionally NOT locality — to test the placetype filter
 		country: "CA",
 		lat: 42.98,
 		lon: -81.25,
-		ancestor_ids: [85682077, 85632997],
+		ancestor_ids: [85_682_077, 85_632_997],
 	},
 	{
-		id: 101751069,
-		parent_id: 85633723,
+		id: 101_751_069,
+		parent_id: 85_633_723,
 		name: "Paris-l'Hôpital",
 		placetype: "locality",
 		country: "FR",
 		lat: 46.92,
 		lon: 4.69,
-		ancestor_ids: [85633723],
+		ancestor_ids: [85_633_723],
 	},
 
 	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, NOT
@@ -167,8 +181,8 @@ const FIXTURE: FixturePlace[] = [
 	// (core/resolver PLACETYPE_FILTER_GROUPS) — otherwise the only locality-typed match is the fuzzy
 	// "Brooklyn Park" and the resolver mislocates to Minnesota.
 	{
-		id: 421205765,
-		parent_id: 85633147,
+		id: 421_205_765,
+		parent_id: 85_633_147,
 		name: "Brooklyn",
 		placetype: "borough",
 		country: "US",
@@ -177,37 +191,38 @@ const FIXTURE: FixturePlace[] = [
 		// The canonical name also lives in `names` in a real WOF distribution — required for the
 		// exact-match tier (#exactMatchIds queries `names`, not `spr`).
 		alt_names: ["Brooklyn"],
-		ancestor_ids: [85633147],
+		ancestor_ids: [85_633_147],
 	},
 	{
-		id: 85969229,
-		parent_id: 85633147,
+		id: 85_969_229,
+		parent_id: 85_633_147,
 		name: "Brooklyn Park",
 		placetype: "locality",
 		country: "US",
 		lat: 45.11,
 		lon: -93.35,
-		ancestor_ids: [85633147],
+		ancestor_ids: [85_633_147],
 	},
 
 	// Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase
 	// "York New". The exact tier must never promote this place for that straddling query, while
 	// each alias on its own ("New City") still earns the exact tier.
 	{
-		id: 999000001,
-		parent_id: 85633147,
+		id: 999_000_001,
+		parent_id: 85_633_147,
 		name: "Twin Hamlet",
 		placetype: "locality",
 		country: "US",
 		lat: 40.2,
 		lon: -76.8,
 		alt_names: ["Old York", "New City"],
-		ancestor_ids: [85633147],
+		ancestor_ids: [85_633_147],
 	},
 ]
 
 function buildFixtureDB(path = ":memory:"): DatabaseSync {
 	const db = new DatabaseSync(path)
+
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
 	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
 	// (modern) and `is_current = 1` (legacy) mean current; `0` means not current. See #91.
@@ -252,6 +267,7 @@ function buildFixtureDB(path = ":memory:"): DatabaseSync {
 		)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1, 0)`
 	)
+
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertAncestor = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)`)
 
@@ -326,7 +342,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 
 	test('an explicit placetype: "borough" filter stays narrow (no reverse expansion)', async () => {
 		const candidates = await lookup.findPlace({ text: "London", placetype: "borough" })
-		expect(candidates.length).toBe(1)
+		expect(candidates).toHaveLength(1)
 		expect(candidates[0]).toMatchObject({ name: "London", country: "CA", placetype: "borough" })
 	})
 
@@ -336,12 +352,12 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		// borough reachable, and exact-match tiering puts it on top.
 		const candidates = await lookup.findPlace({ text: "Brooklyn", placetype: "locality" })
 		expect(candidates.length).toBeGreaterThan(0)
-		expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
+		expect(candidates[0]).toMatchObject({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
 		expect(candidates[0]?.exactMatch).toBe(true)
 	})
 
 	test('"Springfield" with parentID: Illinois returns Springfield,IL first', async () => {
-		const illinoisID = 85688541
+		const illinoisID = 85_688_541
 		const candidates = await lookup.findPlace({ text: "Springfield", parentID: illinoisID })
 		expect(candidates.length).toBeGreaterThan(0)
 		expect(candidates[0]).toMatchObject({ name: "Springfield", country: "US", parent_id: illinoisID })
@@ -405,7 +421,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 
 		try {
 			const candidates = await lookup2.findPlace({ text: "Brooklyn", placetype: "locality" })
-			expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
+			expect(candidates[0]).toMatchObject({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
 			expect(candidates[0]?.exactMatch).toBe(true)
 		} finally {
 			lookup2.close()
@@ -428,7 +444,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 			expect(straddle.some((c) => c.exactMatch === true)).toBe(false)
 			// A single alias still earns the exact tier from the bag alone.
 			const alias = await lookup2.findPlace({ text: "New City", placetype: "locality" })
-			expect(alias[0]).toMatchObject({ id: 999000001, exactMatch: true })
+			expect(alias[0]).toMatchObject({ id: 999_000_001, exactMatch: true })
 		} finally {
 			lookup2.close()
 			db.close()
@@ -454,6 +470,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 describe("WOFSqlitePlaceLookup ctor", () => {
 	test("requires exactly one of database / databasePath", () => {
 		expect(() => new WOFSqlitePlaceLookup({})).toThrow(/one of/)
+
 		expect(
 			() => new WOFSqlitePlaceLookup({ database: new DatabaseSync(":memory:"), databasePath: "/tmp/x.db" })
 		).toThrow(/not both/)

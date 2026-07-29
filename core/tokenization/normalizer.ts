@@ -11,15 +11,15 @@ import regenerate from "regenerate"
  * normalization.
  */
 const CombiningDiacriticalPattern = regenerate()
-	.add(0x200d) // ZERO WIDTH JOINER (U+200D)
-	.addRange(0x0300, 0x036f) // Combining Diacritical Marks
-	.addRange(0x1ab0, 0x1aff) // Combining Diacritical Marks Extended
-	.addRange(0x1dc0, 0x1dff) // Combining Diacritical Marks Supplement
-	.addRange(0x20d0, 0x20ff) // Combining Diacritical Marks for Symbols
-	.addRange(0xfe00, 0xfe0f) // Variation Selectors
-	.addRange(0xfe20, 0xfe2f) // Combining Half Marks
-	.add(0x3099) // Combining Dakuten
-	.add(0x309a) // Combining Handakuten
+	.add(0x20_0d) // ZERO WIDTH JOINER (U+200D)
+	.addRange(0x03_00, 0x03_6f) // Combining Diacritical Marks
+	.addRange(0x1a_b0, 0x1a_ff) // Combining Diacritical Marks Extended
+	.addRange(0x1d_c0, 0x1d_ff) // Combining Diacritical Marks Supplement
+	.addRange(0x20_d0, 0x20_ff) // Combining Diacritical Marks for Symbols
+	.addRange(0xfe_00, 0xfe_0f) // Variation Selectors
+	.addRange(0xfe_20, 0xfe_2f) // Combining Half Marks
+	.add(0x30_99) // Combining Dakuten
+	.add(0x30_9a) // Combining Handakuten
 	.toRegExp("g")
 
 export interface TextNormalizerReplaceClause {
@@ -84,11 +84,11 @@ export class TextNormalizer implements TextNormalizerInit {
 		}
 
 		if (this.removeHyphen) {
-			input = input.replace(/-/g, " ")
+			input = input.replaceAll("-", " ")
 		}
 
 		if (this.removeSpaces) {
-			input = input.replace(/ /g, "")
+			input = input.replaceAll(" ", "")
 		}
 
 		return input

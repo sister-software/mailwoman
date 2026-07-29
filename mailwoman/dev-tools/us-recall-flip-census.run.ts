@@ -15,7 +15,12 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-const fold = (v: string) => v.toLowerCase().replace(/\s+/g, " ").trim()
+/**
+ * Samples a bucket needs before its flip rate is worth reporting rather than noise.
+ */
+const MIN_REPORTABLE_SAMPLES = 4
+
+const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const [candidateRoot, sampleArg] = cliArguments()
 
 if (!candidateRoot) throw new Error("usage: us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]")
@@ -73,17 +78,20 @@ for (const row of rows) {
 			for (const [t, values] of cand.entries()) {
 				if (t !== tag && values.some((v) => fold(v).includes(fold(gold)))) {
 					went = `absorbed into ${t}`
+
 					break
 				}
 			}
 
 			const entry: FlipEntry = flips.get(tag) ?? { count: 0, where: new Map<string, number>(), samples: [] }
+
 			entry.count++
 			entry.where.set(went, (entry.where.get(went) ?? 0) + 1)
 
-			if (entry.samples.length < 4) {
+			if (entry.samples.length < MIN_REPORTABLE_SAMPLES) {
 				entry.samples.push(`${JSON.stringify(row.raw)} gold ${tag}=${JSON.stringify(gold)} -> ${went}`)
 			}
+
 			flips.set(tag, entry)
 		}
 	}
@@ -92,7 +100,7 @@ for (const row of rows) {
 for (const [tag, { count, where, samples }] of flips.entries()) {
 	console.log(`\n=== US ${tag} flips (baseline hit -> candidate miss): ${count}/${rows.length} sampled ===`)
 
-	for (const [went, n] of [...where.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [went, n] of [...where.entries()].toSorted((a, b) => b[1] - a[1])) {
 		console.log(`  ${went}: ${n}`)
 	}
 

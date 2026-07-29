@@ -25,21 +25,31 @@ import { runHoldoutLayer } from "./holdout.ts"
 import { runMetamorphicLayer } from "./metamorphic.ts"
 import { type GauntletLayerOptions, runRegressionLayer } from "./regression.ts"
 
-/** The three Gauntlet layers. */
+/**
+ * The three Gauntlet layers.
+ */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout"
 
-/** Options for {@linkcode runGauntlet}. */
+/**
+ * Options for {@linkcode runGauntlet}.
+ */
 export interface GauntletRunOptions {
-	/** Candidate ONNX. Omit for the shipped-default self-check (regression + metamorphic only). */
+	/**
+	 * Candidate ONNX. Omit for the shipped-default self-check (regression + metamorphic only).
+	 */
 	candidate?: string
-	/** Held-out truth source (`fr` | `us`). Default `fr`. */
+	/**
+	 * Held-out truth source (`fr` | `us`). Default `fr`.
+	 */
 	source?: string
 	/**
 	 * A tokenizer-SPLICE candidate (#444/#884/#912) ships a new vocab — forward it so the held-out layer pairs the
 	 * candidate model with the candidate tokenizer (and runs production through the shipped trio).
 	 */
 	tokenizer?: string
-	/** Candidate model-card (paired with `tokenizer`). */
+	/**
+	 * Candidate model-card (paired with `tokenizer`).
+	 */
 	card?: string
 	/**
 	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`) — the #718-safe path
@@ -47,13 +57,19 @@ export interface GauntletRunOptions {
 	 * `candidate`/`tokenizer`.
 	 */
 	weightsCacheRoot?: string
-	/** Run ONE layer instead of the combined gate. */
+	/**
+	 * Run ONE layer instead of the combined gate.
+	 */
 	layer?: GauntletLayer
-	/** Held-out fresh-draw sample size. Default 300. */
+	/**
+	 * Held-out fresh-draw sample size. Default 300.
+	 */
 	n?: number
 }
 
-/** Run a single layer, mapping its result to an exit code. A throw prints and reads as exit 1. */
+/**
+ * Run a single layer, mapping its result to an exit code. A throw prints and reads as exit 1.
+ */
 async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Promise<number> {
 	const layerOptions: GauntletLayerOptions = {
 		model: options.candidate,
@@ -112,6 +128,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 			// The old runner spawned each layer, so a crash was an isolated non-zero exit. Preserve that:
 			// print the failure and count the layer as FAIL rather than aborting the combined verdict.
 			console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
+
 			results.push({ name: layer === "holdout" ? "held-out" : layer, pass: false })
 		}
 	}
@@ -123,6 +140,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	for (const r of results) {
 		console.log(`  ${r.pass ? "✓ PASS" : "✗ FAIL"}  ${r.name}`)
 	}
+
 	console.log(`\nVERDICT: ${allPass ? "PASS — clear to ship" : "FAIL — do not ship"}`)
 
 	return { exitCode: allPass ? 0 : 1 }

@@ -15,7 +15,9 @@ import { cors } from "hono/cors"
 import type { PhotonEngine } from "./engine.ts"
 import { registerPhotonRoutes } from "./routes.ts"
 
-/** Options for {@link createPhotonApp}. */
+/**
+ * Options for {@link createPhotonApp}.
+ */
 export interface PhotonAppOptions {
 	/**
 	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
@@ -54,14 +56,16 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 	],
 }
 
-/** Build the Photon-compatible app around an injected {@link PhotonEngine}. */
+/**
+ * Build the Photon-compatible app around an injected {@link PhotonEngine}.
+ */
 export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
 	// Browser-embedded widgets need CORS or their cross-origin XHR is blocked before the request completes (#1017).
 	// GET-only — photon has no mutating routes, so unlike libpostal's CORS there is no POST in the methods list.
 	if (options.cors !== false) {
-		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
+		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
 	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash (photon's

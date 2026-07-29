@@ -21,7 +21,9 @@ import { gazetteerCharPaint } from "./gazetteer-inference.ts"
 import type { TokenizedPiece } from "./tokenizer.ts"
 
 const S = COUNTRY_SURFACE_BIT // 1
-const A = COUNTRY_AMBIGUOUS_BIT // 2
+const A = COUNTRY_AMBIGUOUS_BIT
+
+// 2
 
 const LEXICON = parseCountryLexicon({
 	feature_dim: 2,
@@ -44,17 +46,20 @@ const LEXICON = parseCountryLexicon({
 	},
 })
 
-/** Bits painted on the first kept char of each whitespace word (shared paint with the gazetteer). */
+/**
+ * Bits painted on the first kept char of each whitespace word (shared paint with the gazetteer).
+ */
 function paintedWords(raw: string): Record<string, number> {
 	const charBits = gazetteerCharPaint(raw, LEXICON)
 	const out: Record<string, number> = {}
 
 	for (const m of raw.matchAll(/\S+/g)) {
-		const word = m[0].replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
+		const word = m[0].replaceAll(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "")
 
 		for (let c = m.index; c < m.index + m[0].length; c++) {
 			if (/[A-Za-z0-9]/.test(raw[c]!)) {
 				out[word] = charBits[c]!
+
 				break
 			}
 		}
@@ -107,12 +112,14 @@ describe("country matcher parity", () => {
 
 	it("projects onto pieces by first-non-ws char, emits [surface, ambiguous], pads zero", () => {
 		const raw = "Tbilisi, Georgia"
+
 		const pieces: TokenizedPiece[] = [
 			{ piece: "Tbilisi", id: 10, start: 0, end: 7 },
 			{ piece: ", ", id: 11, start: 7, end: 9 },
 			{ piece: "Geo", id: 12, start: 9, end: 12 },
 			{ piece: "rgia", id: 13, start: 12, end: 16 },
 		]
+
 		const { features, confidence } = buildCountryFeatures(raw, pieces, LEXICON)
 		expect(features[0]).toEqual([0, 0]) // Tbilisi: no clue
 		expect(confidence[0]).toBe(0)
@@ -124,12 +131,14 @@ describe("country matcher parity", () => {
 
 	it("unambiguous long form projects [1, 0] with confidence 1", () => {
 		const raw = "United States of America"
+
 		const pieces: TokenizedPiece[] = [
 			{ piece: "United", id: 1, start: 0, end: 6 },
 			{ piece: " States", id: 2, start: 6, end: 13 },
 			{ piece: " of", id: 3, start: 13, end: 16 },
 			{ piece: " America", id: 4, start: 16, end: 24 },
 		]
+
 		const { features, confidence } = buildCountryFeatures(raw, pieces, LEXICON)
 
 		for (let i = 0; i < 4; i++) {

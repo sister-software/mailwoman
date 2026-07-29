@@ -37,17 +37,23 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 
 	// -- pulse mode --
 
-	/** Number of skeleton bars. Ignored when mode !== "pulse". @default 3 */
+	/**
+	 * Number of skeleton bars. Ignored when mode !== "pulse". @default 3
+	 */
 	barCount?: number
 
 	// -- spinner mode --
 
-	/** Spinner ring size. @default "medium" */
+	/**
+	 * Spinner ring size. @default "medium"
+	 */
 	size?: "small" | "medium" | "large"
 
 	// -- staged mode --
 
-	/** Step labels. Each entry is one row. */
+	/**
+	 * Step labels. Each entry is one row.
+	 */
 	steps?: string[]
 
 	/**
@@ -69,6 +75,9 @@ const SIZE_CLASS: Record<NonNullable<LoadingIndicatorProps["size"]>, string> = {
 
 // ── Component ────────────────────────────────────────────────────────────
 
+/**
+ * Spinner, pulse or staged progress, depending on how long the caller expects to wait.
+ */
 export const LoadingIndicator = memo<LoadingIndicatorProps>(
 	({ mode = "spinner", label, barCount = 3, size = "medium", steps, activeStep = -1, className, ...rest }) => {
 		return (
@@ -116,7 +125,7 @@ interface StagedProgressProps {
 }
 
 const StagedProgress = memo<StagedProgressProps>(({ steps, activeStep }) => {
-	if (!steps || steps.length === 0) return null
+	if (!steps || !steps.length) return null
 
 	return (
 		<ul className={styles.stagedList}>

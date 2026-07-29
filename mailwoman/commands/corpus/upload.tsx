@@ -31,7 +31,11 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-type Step = { label: string; status: "pending" | "running" | "done" | "error"; detail?: string }
+interface Step {
+	label: string
+	status: "pending" | "running" | "done" | "error"
+	detail?: string
+}
 
 const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([
@@ -66,9 +70,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		try {
 			await $`rclone sync ${options.corpusDir}/v0.3.0/corpus-v0.3.0/ ${rcloneBase}/corpus/v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
 			updateStep(1, { status: "done", detail: "v0.3.0 synced" })
-		} catch (_e: unknown) {
-			const e = _e as Record<string, unknown>
-			updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+		} catch (error: unknown) {
+			const e = error as Record<string, unknown>
+			updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
 
 			return
 		}
@@ -79,9 +83,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		try {
 			await $`rclone sync ${options.corpusDir}/v0.4.0/corpus-v0.4.0/ ${rcloneBase}/corpus/v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
 			updateStep(2, { status: "done", detail: "v0.4.0 synced" })
-		} catch (_e: unknown) {
-			const e = _e as Record<string, unknown>
-			updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+		} catch (error: unknown) {
+			const e = error as Record<string, unknown>
+			updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
 
 			return
 		}
@@ -92,9 +96,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		try {
 			await $`rclone sync ${options.tokenizerDir}/ ${rcloneBase}/models/tokenizer/ --progress ${dryFlag}`.quiet()
 			updateStep(3, { status: "done", detail: "tokenizer synced" })
-		} catch (_e: unknown) {
-			const e = _e as Record<string, unknown>
-			updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
+		} catch (error: unknown) {
+			const e = error as Record<string, unknown>
+			updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
 
 			return
 		}
@@ -105,11 +109,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		try {
 			await $`rclone sync ./corpus-python/ ${rcloneBase}/corpus-python/ --exclude '.venv/**' --exclude '__pycache__/**' --exclude '*.egg-info/**' --progress ${dryFlag}`.quiet()
 			updateStep(4, { status: "done", detail: "training code synced" })
-		} catch (_e: unknown) {
-			const e = _e as Record<string, unknown>
-			updateStep(4, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
-
-			return
+		} catch (error: unknown) {
+			const e = error as Record<string, unknown>
+			updateStep(4, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
 		}
 	})
 

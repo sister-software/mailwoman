@@ -12,13 +12,17 @@
  *   state: under `node:cluster` each worker reports its own snapshot — aggregate at the scraper.
  */
 
-/** Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory. */
+/**
+ * Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory.
+ */
 const MAX_SAMPLES = 2048
 
 const latencies: number[] = []
 let writeIdx = 0
 
-/** Null-prototype: tier keys are created lazily on first use, not eagerly pre-populated. */
+/**
+ * Null-prototype: tier keys are created lazily on first use, not eagerly pre-populated.
+ */
 const tierCounts: Record<string, number> = Object.create(null)
 let total = 0
 let errors = 0
@@ -46,7 +50,7 @@ export function recordTimed(latencyMs: number, tier: string): void {
 }
 
 function percentile(sorted: number[], p: number): number {
-	if (sorted.length === 0) return 0
+	if (!sorted.length) return 0
 	const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))
 
 	return Math.round(sorted[idx]! * 100) / 100
@@ -67,9 +71,11 @@ export interface MetricsSnapshot {
 	}
 }
 
-/** Current metrics snapshot — sorted-reservoir percentiles + counters. */
+/**
+ * Current metrics snapshot — sorted-reservoir percentiles + counters.
+ */
 export function metricsSnapshot(): MetricsSnapshot {
-	const sorted = [...latencies].sort((a, b) => a - b)
+	const sorted = [...latencies].toSorted((a, b) => a - b)
 
 	return {
 		uptime_s: Math.round((Date.now() - startedAt) / 1000),
@@ -82,7 +88,7 @@ export function metricsSnapshot(): MetricsSnapshot {
 						p50: percentile(sorted, 0.5),
 						p90: percentile(sorted, 0.9),
 						p99: percentile(sorted, 0.99),
-						max: Math.round(sorted[sorted.length - 1]! * 100) / 100,
+						max: Math.round(sorted.at(-1)! * 100) / 100,
 					}
 				: null,
 			latency_samples: sorted.length,
@@ -90,12 +96,15 @@ export function metricsSnapshot(): MetricsSnapshot {
 	}
 }
 
-/** Test-only reset of all counters + the reservoir. */
+/**
+ * Test-only reset of all counters + the reservoir.
+ */
 export function resetMetricsForTest(): void {
 	latencies.length = 0
 	writeIdx = 0
 
 	for (const key of Object.keys(tierCounts)) {
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 		delete tierCounts[key]
 	}
 

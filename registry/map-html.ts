@@ -30,7 +30,9 @@ import { layers, namedFlavor } from "@protomaps/basemaps"
 
 import type { EntityGeoData } from "./types.ts"
 
-/** MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major. */
+/**
+ * MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major.
+ */
 const MAPLIBRE_VERSION = "5.24.0"
 const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
@@ -50,13 +52,19 @@ const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
-/** Protomaps stock flavors (shipped by `@protomaps/basemaps`). */
+/**
+ * Protomaps stock flavors (shipped by `@protomaps/basemaps`).
+ */
 export type MapFlavor = "light" | "dark" | "white" | "grayscale" | "black"
 
 export interface MapHTMLOptions {
-	/** Document `<title>` + on-map heading. Default: "Mailwoman — resolved entities". */
+	/**
+	 * Document `<title>` + on-map heading. Default: "Mailwoman — resolved entities".
+	 */
 	title?: string
-	/** Protomaps basemap flavor. Default: "light" (data points read cleanly over it). */
+	/**
+	 * Protomaps basemap flavor. Default: "light" (data points read cleanly over it).
+	 */
 	flavor?: MapFlavor
 	/**
 	 * How to color the markers:
@@ -69,10 +77,18 @@ export interface MapHTMLOptions {
 	colorBy?: "auto" | "sources" | "bucket"
 }
 
-/** Categorical palette (reused for buckets; cycles if there are more buckets than entries). */
+/**
+ * Categorical palette (reused for buckets; cycles if there are more buckets than entries).
+ */
 const PALETTE = ["#2f9e44", "#f08c00", "#1971c2", "#e8590c", "#9c36b5", "#0c8599", "#e03131", "#5c940d"]
-const SINGLE_COLOR = "#3388ff" // single-source entity
-const CROSS_COLOR = "#e8590c" // cross-dataset link (≥2 sources)
+/**
+ * Single-source entity.
+ */
+const SINGLE_COLOR = "#3388ff"
+/**
+ * Cross-dataset link (≥2 sources)
+ */
+const CROSS_COLOR = "#e8590c"
 
 /**
  * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough — a record value
@@ -80,12 +96,14 @@ const CROSS_COLOR = "#e8590c" // cross-dataset link (≥2 sources)
  * breakout impossible.
  */
 function safeJSONForScript(value: unknown): string {
-	return JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")
+	return JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
 }
 
-/** Escape text for the HTML document body (title/heading), not the inlined script. */
+/**
+ * Escape text for the HTML document body (title/heading), not the inlined script.
+ */
 function escapeHTML(text: string): string {
-	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+	return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
 }
 
 function sourceCount(props: EntityGeoData): number {
@@ -139,6 +157,7 @@ export function toMapHTML(
 	let minLat = Infinity
 	let maxLng = -Infinity
 	let maxLat = -Infinity
+
 	const features = geojson.features.map((f) => {
 		const [lng, lat] = f.geometry.coordinates
 
@@ -160,6 +179,7 @@ export function toMapHTML(
 
 		return { ...f, properties: { ...f.properties, _color: colorFor(f.properties) } }
 	})
+
 	const bbox = features.length ? [[minLng, minLat] as const, [maxLng, maxLat] as const] : null
 
 	// The full MapLibre style: the Protomaps basemap layers (generated here) over the house basemap-v4
@@ -212,6 +232,7 @@ export function toMapHTML(
 				`<div class="muted" style="margin-top:4px">marker size = records merged</div>`
 
 	const crossLinks = geojson.features.filter((f) => sourceCount(f.properties) >= 2).length
+
 	const summary =
 		`${geojson.features.length} entities` + (mode === "sources" ? ` &middot; ${crossLinks} cross-dataset links` : "")
 

@@ -42,17 +42,23 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 		return registry
 	}
 
-	/** Install a policy entry. Replaces any prior entry with the same key. */
+	/**
+	 * Install a policy entry. Replaces any prior entry with the same key.
+	 */
 	set(policy: ClassifierPolicy): void {
 		this.#entries.set(policyKey(policy.component, policy.locale), policy)
 	}
 
-	/** Remove a policy entry, if present. */
+	/**
+	 * Remove a policy entry, if present.
+	 */
 	remove(component: ComponentTag, locale?: string): void {
 		this.#entries.delete(policyKey(component, locale))
 	}
 
-	/** All current entries, in insertion order. */
+	/**
+	 * All current entries, in insertion order.
+	 */
 	entries(): ClassifierPolicy[] {
 		return Array.from(this.#entries.values())
 	}
@@ -63,6 +69,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 
 			if (localized) return localized
 		}
+
 		const global = this.#entries.get(policyKey(component, undefined))
 
 		if (global) return global
@@ -127,18 +134,21 @@ function applyPreferenceFilters(
 
 		if (!policy) {
 			out.push(...list)
+
 			continue
 		}
 
 		if (policy.mode === "neural_preferred") {
 			const hasNeural = list.some((p) => p.source === "neural")
 			out.push(...(hasNeural ? list.filter((p) => p.source !== "rule") : list))
+
 			continue
 		}
 
 		if (policy.mode === "rule_preferred") {
 			const hasRule = list.some((p) => p.source === "rule")
 			out.push(...(hasRule ? list.filter((p) => p.source !== "neural") : list))
+
 			continue
 		}
 

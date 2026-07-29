@@ -8,7 +8,7 @@
  *   components are small and `@vitest/browser/context` provides the querying + interaction API.
  */
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 
@@ -36,6 +36,7 @@ export function renderComponent(ui: ReactElement): RenderResult {
 	act(() => {
 		root.render(ui)
 	})
+
 	mounted.push({ root, container })
 
 	return { container }
@@ -44,12 +45,14 @@ export function renderComponent(ui: ReactElement): RenderResult {
 export async function cleanup(): Promise<void> {
 	const trees = mounted.splice(0)
 
-	if (trees.length === 0) return
+	if (!trees.length) return
 
 	// Drain any trailing async update INSIDE act() so a still-pending debounce/promise settles in-scope
 	// rather than firing unwrapped in the gap before unmount.
 	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, CLEANUP_DRAIN_MS))
+		await new Promise((resolve) => {
+			setTimeout(resolve, CLEANUP_DRAIN_MS)
+		})
 	})
 
 	for (const { root, container } of trees) {

@@ -27,6 +27,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 	let iterationResult = await iterator.next()
 
+	// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `abortSignal.aborted` is flipped by the controller, not by this loop
 	while ((!iterationResult.done || results.size) && !abortSignal?.aborted) {
 		for (const [key, result] of results) {
 			yield result
@@ -36,6 +37,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 		if (runningTasks.size >= batchSize) {
 			await Promise.race(runningTasks.values())
+
 			continue
 		}
 
@@ -47,6 +49,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 		const entry = iterationResult.value
 
+		// oxlint-disable-next-line promise/always-return -- the handle tracks completion, not a value
 		const futureResult = callback(entry).then((result) => {
 			runningTasks.delete(entry)
 
@@ -87,7 +90,7 @@ export async function* takeAsync<T>(collection: AsyncIterable<T>, batchSize: num
 		}
 	}
 
-	if (buffer.length !== 0) {
+	if (buffer.length) {
 		yield buffer
 	}
 }

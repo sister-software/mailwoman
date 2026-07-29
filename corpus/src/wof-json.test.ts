@@ -35,8 +35,9 @@ test("extractNameVariants: lifts the first non-empty string from each name:* arr
 		"name:eng_x_preferred": ["Saint Petersburg"],
 		"name:rus_x_preferred": ["Санкт-Петербург"],
 		"wof:name": "St Petersburg", // not a name:* key → ignored
-		population: 5000000, // unrelated key → ignored
+		population: 5_000_000, // unrelated key → ignored
 	})
+
 	expect(out.get("name:eng_x_preferred")).toBe("Saint Petersburg")
 	expect(out.get("name:rus_x_preferred")).toBe("Санкт-Петербург")
 	expect(out.has("wof:name")).toBe(false)
@@ -48,6 +49,7 @@ test("extractNameVariants: accepts bare-string values and trims whitespace", () 
 		"name:fra_x_preferred": "  Paris  ",
 		"name:deu_x_preferred": ["  München  "],
 	})
+
 	expect(out.get("name:fra_x_preferred")).toBe("Paris")
 	expect(out.get("name:deu_x_preferred")).toBe("München")
 })
@@ -59,6 +61,7 @@ test("extractNameVariants: skips empty / whitespace-only / non-string values", (
 		"name:rus_x_preferred": [], // empty array
 		"name:deu_x_preferred": [null, 42, "Berlin"], // first usable string wins
 	})
+
 	expect(out.has("name:eng_x_preferred")).toBe(false)
 	expect(out.has("name:fra_x_preferred")).toBe(false)
 	expect(out.has("name:rus_x_preferred")).toBe(false)
@@ -89,6 +92,7 @@ test("buildAncestryIndex: walks parent_id upward, nearest-first, self-excluded",
 		[2, rec(2, 1)],
 		[3, rec(3, 2)],
 	])
+
 	const index = buildAncestryIndex(byID)
 	expect(index.get(3)!.map((r) => r.id)).toEqual([2, 1]) // parent then grandparent
 	expect(index.get(2)!.map((r) => r.id)).toEqual([1])
@@ -107,6 +111,7 @@ test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk",
 		[11, rec(11, 0)],
 		[12, rec(12, -4)], // WOF "only-self" sentinel (e.g. NYC parent_id = -4)
 	])
+
 	const index = buildAncestryIndex(byID)
 	expect(index.get(10)).toEqual([])
 	expect(index.get(11)).toEqual([])
@@ -119,6 +124,7 @@ test("buildAncestryIndex: a cycle is broken rather than looping forever", () => 
 		[1, rec(1, 2)],
 		[2, rec(2, 1)],
 	])
+
 	const index = buildAncestryIndex(byID)
 	// From 1: push 2, then 2's parent is 1 (already in guard) → stop.
 	expect(index.get(1)!.map((r) => r.id)).toEqual([2])

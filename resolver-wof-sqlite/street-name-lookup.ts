@@ -39,9 +39,13 @@ function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
 }
 
 export interface SQLiteStreetNameLookupOpts {
-	/** ISO-2 (upper-case) countries this index answers for. Default `["FR"]` (the BAN street-centroids instance). */
+	/**
+	 * ISO-2 (upper-case) countries this index answers for. Default `["FR"]` (the BAN street-centroids instance).
+	 */
 	countries?: Iterable<string>
-	/** Table name. Default `street_centroid`. */
+	/**
+	 * Table name. Default `street_centroid`.
+	 */
 	table?: string
 }
 
@@ -68,9 +72,11 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 			// `name_key` MUST match `foldStreetSurface` here (the fold-parity contract).
 			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
+
 			this.#byNameLocality = this.#db.prepare(
 				`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND locality_base = ? LIMIT 1`
 			)
+
 			this.#byNamePostcode = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND postcode = ? LIMIT 1`)
 		}
 	}
@@ -83,18 +89,24 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 
 		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode; a scoped MISS falls back to the
 		// unscoped probe (index incompleteness in the scope column is not evidence of absence — positive-evidence rule).
-		if (scope?.locality && this.#byNameLocality) {
-			if (this.#byNameLocality.get(norm, foldStreetSurface(scope.locality)) !== undefined) return true
+		if (
+			scope?.locality &&
+			this.#byNameLocality &&
+			this.#byNameLocality.get(norm, foldStreetSurface(scope.locality)) !== undefined
+		) {
+			return true
 		}
 
-		if (scope?.postcode && this.#byNamePostcode) {
-			if (this.#byNamePostcode.get(norm, scope.postcode) !== undefined) return true
+		if (scope?.postcode && this.#byNamePostcode && this.#byNamePostcode.get(norm, scope.postcode) !== undefined) {
+			return true
 		}
 
 		return this.#byName.get(norm) !== undefined
 	}
 
-	/** Close the underlying handle. */
+	/**
+	 * Close the underlying handle.
+	 */
 	close(): void {
 		this.#db.close()
 	}

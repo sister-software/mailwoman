@@ -85,16 +85,20 @@ export const CA_STREET_TYPES_FR: ReadonlySet<string> = new Set([
 	"sentier",
 ])
 
-/** Strip diacritics + lowercase so `Côte`/`cote`, `Allée`/`allee`, `Crescent`/`crescent` key alike. */
+/**
+ * Strip diacritics + lowercase so `Côte`/`cote`, `Allée`/`allee`, `Crescent`/`crescent` key alike.
+ */
 function foldToken(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z]/g, "")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z]/g, "")
 }
 
-/** The English + French street-type vocabularies, both folded, for one position-agnostic lookup. */
+/**
+ * The English + French street-type vocabularies, both folded, for one position-agnostic lookup.
+ */
 const STREET_WORD_SET: ReadonlySet<string> = (() => {
 	const out = new Set<string>()
 
@@ -152,7 +156,7 @@ export function isCanadianDirectional(token: unknown): boolean {
 	if (typeof token !== "string") return false
 	const t = foldToken(token)
 
-	if (t.length === 0) return false
+	if (!t.length) return false
 
 	if (t in CA_DIRECTIONALS) return true
 

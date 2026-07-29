@@ -14,6 +14,7 @@ const meta: Meta<typeof ComponentTable> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof ComponentTable>
 
 export const Default: Story = {

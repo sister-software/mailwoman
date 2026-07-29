@@ -33,7 +33,9 @@ import { readFile } from "node:fs/promises"
 
 import FastGlob from "fast-glob"
 
-/** A WOF GeoJSON feature, as published by the per-record bundles. */
+/**
+ * A WOF GeoJSON feature, as published by the per-record bundles.
+ */
 export interface WOFFeature {
 	type?: string
 	id?: number | string
@@ -47,10 +49,14 @@ export interface WOFFeature {
 export interface WOFRecord {
 	id: number
 	parent_id: number | null
-	/** Canonical `wof:name` of the record. */
+	/**
+	 * Canonical `wof:name` of the record.
+	 */
 	name: string
 	placetype: string
-	/** ISO 3166-1 alpha-2 from `wof:country`. */
+	/**
+	 * ISO 3166-1 alpha-2 from `wof:country`.
+	 */
 	country: string
 	/**
 	 * Localized name variants from `name:*` properties.
@@ -86,9 +92,10 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 
 	for (const [key, value] of Object.entries(props)) {
 		if (!key.startsWith("name:")) continue
+
 		const candidate = Array.isArray(value)
 			? value.find((v): v is string => typeof v === "string" && v.trim().length > 0)
-			: typeof value === "string" && value.trim().length > 0
+			: typeof value === "string" && value.trim().length
 				? value
 				: undefined
 
@@ -107,16 +114,18 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
  * existing source_id separator vocabulary and downstream consumers split on `-`.
  */
 export function normalizeNameKey(rawKey: string): string {
-	return rawKey.replace(/[:_]/g, "-")
+	return rawKey.replaceAll(/[:_]/g, "-")
 }
 
-/** Result of parsing a single GeoJSON file. `null` means "skip this row" (any reason). */
+/**
+ * Result of parsing a single GeoJSON file. `null` means "skip this row" (any reason).
+ */
 function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
 	const props = feature.properties
 
 	const rawID = typeof feature.id === "number" ? feature.id : props["wof:id"]
-	const id = typeof rawID === "number" ? rawID : typeof rawID === "string" ? Number(rawID) : NaN
+	const id = typeof rawID === "number" ? rawID : typeof rawID === "string" ? Number(rawID) : Number.NaN
 
 	if (!Number.isFinite(id)) return null
 
@@ -135,6 +144,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!isCurrentFeature(props)) return null
 
 	const parentRaw = props["wof:parent_id"]
+
 	const parent_id =
 		typeof parentRaw === "number"
 			? parentRaw
@@ -229,6 +239,7 @@ export function buildAncestryIndex(byID: Map<number, WOFRecord>): AncestryIndex 
 			guard.add(parent.id)
 			cur = parent.parent_id
 		}
+
 		index.set(id, chain)
 	}
 

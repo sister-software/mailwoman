@@ -51,9 +51,15 @@ export interface WebONNXRunnerOpts {
 	wasmPathsRoot?: string
 }
 
+/**
+ * Sequence length the web runtime pads to when the model was exported with a fixed input shape. WebGPU requires static
+ * shapes, so a fixed length is the portable default.
+ */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
-/** Apply `wasmPathsRoot` once at module init. Safe to call multiple times. */
+/**
+ * Apply `wasmPathsRoot` once at module init. Safe to call multiple times.
+ */
 function configureWASMPaths(root: string | undefined): void {
 	if (!root) return
 	// onnxruntime-web ships this on `ort.env.wasm`. We assign directly rather than calling
@@ -80,7 +86,9 @@ export class WebONNXRunner implements NeuralRunner {
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
 
-	/** Construct from already-fetched model bytes. */
+	/**
+	 * Construct from already-fetched model bytes.
+	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
 		configureWASMPaths(opts.wasmPathsRoot)
 		const runner = new WebONNXRunner(modelBytes, opts)
@@ -88,7 +96,9 @@ export class WebONNXRunner implements NeuralRunner {
 		return runner
 	}
 
-	/** Fetch the model from a URL and construct. */
+	/**
+	 * Fetch the model from a URL and construct.
+	 */
 	static async fromURL(modelURL: string, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
 		const res = await fetch(modelURL)
 
@@ -111,6 +121,7 @@ export class WebONNXRunner implements NeuralRunner {
 							executionProviders: ["webgpu", "wasm"],
 							graphOptimizationLevel: "all",
 						})
+
 						this.#session = session
 						this.diagnostics = { backend: "webgpu", modelBytes: this.modelBytes.byteLength }
 
@@ -119,10 +130,12 @@ export class WebONNXRunner implements NeuralRunner {
 						// WebGPU probe failed — fall through to WASM
 					}
 				}
+
 				const session = await ort.InferenceSession.create(this.modelBytes, {
 					executionProviders: ["wasm"],
 					graphOptimizationLevel: "all",
 				})
+
 				this.#session = session
 				this.diagnostics = { backend: "wasm", modelBytes: this.modelBytes.byteLength }
 
@@ -183,6 +196,7 @@ export class WebONNXRunner implements NeuralRunner {
 					}
 				}
 			}
+
 			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
 			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("anchor_features")) {
@@ -191,6 +205,7 @@ export class WebONNXRunner implements NeuralRunner {
 				this.fixedSeqLen,
 				ANCHOR_FEATURE_DIM,
 			])
+
 			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -213,6 +228,7 @@ export class WebONNXRunner implements NeuralRunner {
 					}
 				}
 			}
+
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("gazetteer_features")) {
@@ -221,6 +237,7 @@ export class WebONNXRunner implements NeuralRunner {
 				this.fixedSeqLen,
 				GAZETTEER_FEATURE_DIM,
 			])
+
 			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -243,6 +260,7 @@ export class WebONNXRunner implements NeuralRunner {
 					}
 				}
 			}
+
 			feeds.country_features = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, dim])
 			feeds.country_confidence = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("country_features")) {
@@ -251,6 +269,7 @@ export class WebONNXRunner implements NeuralRunner {
 				this.fixedSeqLen,
 				COUNTRY_FEATURE_DIM,
 			])
+
 			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -259,7 +278,8 @@ export class WebONNXRunner implements NeuralRunner {
 
 		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
 		const data = logitsTensor.data as Float32Array
-		const [, , numLabels] = logitsTensor.dims as readonly [number, number, number]
+		// dims are [batch, sequence, labels].
+		const numLabels = (logitsTensor.dims as readonly [number, number, number])[2]
 
 		const logits: number[][] = []
 
@@ -270,6 +290,7 @@ export class WebONNXRunner implements NeuralRunner {
 			for (let l = 0; l < numLabels; l++) {
 				row[l] = data[base + l]!
 			}
+
 			logits.push(row)
 		}
 
@@ -288,7 +309,10 @@ export class WebONNXRunner implements NeuralRunner {
 
 		if (spanTensor) {
 			const spanData = spanTensor.data as Float32Array
-			const [, , spanLen, numTypes] = spanTensor.dims as readonly [number, number, number, number]
+			// dims are [batch, sequence, span, type].
+			const spanDims = spanTensor.dims as readonly [number, number, number, number]
+			const spanLen = spanDims[2]
+			const numTypes = spanDims[3]
 			maxSpan = spanLen
 			spanScores = []
 
@@ -303,8 +327,10 @@ export class WebONNXRunner implements NeuralRunner {
 					for (let ty = 0; ty < numTypes; ty++) {
 						row[ty] = spanData[base + ty]!
 					}
+
 					perLength[l] = row
 				}
+
 				spanScores.push(perLength)
 			}
 		}

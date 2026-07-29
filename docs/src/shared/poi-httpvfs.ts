@@ -46,9 +46,11 @@ export async function loadPOIWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWor
 	return loadHTTPVFSDatabase(poiLayerURL(), sqljsBaseURL)
 }
 
-/** Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported. */
+/**
+ * Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported.
+ */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || res.length === 0) return []
+	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
 
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
@@ -73,6 +75,7 @@ export function loadPOICategoryCodes(worker: POIHTTPVFSWorker): Promise<Map<stri
 
 			return map
 		})
+
 		categoryCodesCache.set(worker, cached)
 	}
 
@@ -125,7 +128,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
 	const categoryIds = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
-	if (categoryIds.length === 0) return []
+	if (!categoryIds.length) return []
 	const categoryIdList = categoryIds.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
@@ -142,6 +145,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			// The SAME packing as poi-lookup.ts's h3CellToInt: shortenH3Cell (the shared @mailwoman/spatial
 			// 48-bit packer) then a straight hex→Number(BigInt) cast — `poi.h3_cell` is the SHORTENED cell.
 			const shortCell = Number(BigInt(`0x${shortenH3Cell(cell as H3Cell)}`))
+
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
 			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.
 			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
@@ -150,6 +154,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
 				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIdList}) ORDER BY neg_rank ASC LIMIT ${limit}`
+
 			const hits = rowsFromExec(await worker.db.exec(sql)) as unknown as Array<{
 				name: string | null
 				latitude: number
@@ -183,13 +188,11 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			confidence: row.confidence,
 			distanceM: haversineKm(opts.center.lat, opts.center.lon, row.latitude, row.longitude) * 1000,
 		}))
-		.sort((a, b) => a.distanceM - b.distanceM)
+		.toSorted((a, b) => a.distanceM - b.distanceM)
 		.slice(0, limit)
 }
 
-// ---------------------------------------------------------------------------
-// Anchor → center resolution (no neural runtime)
-// ---------------------------------------------------------------------------
+// MARK: Anchor → center resolution (no neural runtime)
 
 let candidateWorkerPromise: Promise<POIHTTPVFSWorker> | undefined
 
@@ -200,9 +203,9 @@ let candidateWorkerPromise: Promise<POIHTTPVFSWorker> | undefined
  */
 function loadCandidateWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 	if (!candidateWorkerPromise) {
-		candidateWorkerPromise = loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL).catch((err: unknown) => {
+		candidateWorkerPromise = loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL).catch((error: unknown) => {
 			candidateWorkerPromise = undefined
-			throw err
+			throw error
 		})
 	}
 
@@ -212,7 +215,9 @@ function loadCandidateWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 export interface AnchorCenter {
 	lat: number
 	lon: number
-	/** The resolved place's canonical name — surfaced so the UI can show what "Springfield" resolved to. */
+	/**
+	 * The resolved place's canonical name — surfaced so the UI can show what "Springfield" resolved to.
+	 */
 	name: string
 }
 
@@ -226,7 +231,7 @@ export interface AnchorCenter {
 function splitAnchor(text: string): { localityText: string; regionText?: string } {
 	const commaIndex = text.indexOf(",")
 
-	if (commaIndex >= 0) {
+	if (commaIndex !== -1) {
 		return { localityText: text.slice(0, commaIndex).trim(), regionText: text.slice(commaIndex + 1).trim() }
 	}
 

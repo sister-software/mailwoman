@@ -16,19 +16,31 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
-/** Options for {@linkcode assemblePromotionVerdict}. */
+/**
+ * Options for {@linkcode assemblePromotionVerdict}.
+ */
 export interface PromotionVerdictOptions {
-	/** Path to the gate-spec JSON (already resolved to a real file). */
+	/**
+	 * Path to the gate-spec JSON (already resolved to a real file).
+	 */
 	gate: string
-	/** The promotion-gate out-dir carrying the battery outputs. */
+	/**
+	 * The promotion-gate out-dir carrying the battery outputs.
+	 */
 	outDir: string
-	/** Also collect the int8 battery and enforce the fp32↔int8 delta cap. */
+	/**
+	 * Also collect the int8 battery and enforce the fp32↔int8 delta cap.
+	 */
 	withInt8?: boolean
-	/** Overrides the derived label — pass `weights-cache` when the floors were read from a package-shaped cache. */
+	/**
+	 * Overrides the derived label — pass `weights-cache` when the floors were read from a package-shaped cache.
+	 */
 	gradedArtifact?: "int8" | "fp32" | "weights-cache"
 }
 
-/** Pull `| <tag> | … | <F1> |`-style F1 from an affix/country scorer table (P, R, F1 columns). */
+/**
+ * Pull `| <tag> | … | <F1> |`-style F1 from an affix/country scorer table (P, R, F1 columns).
+ */
 function scorerF1(md: string, tag: string): number | undefined {
 	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*[\\d.]+\\s*\\|\\s*[\\d.]+\\s*\\|\\s*([\\d.]+)`))
 
@@ -47,11 +59,13 @@ function scorerF1(md: string, tag: string): number | undefined {
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
 	const lines = md.split("\n")
+
 	const cells = (line: string): string[] =>
 		line
 			.split("|")
 			.slice(1, -1)
 			.map((c) => c.trim())
+
 	const header = lines.find((l) => /^\|\s*arena\s*\|/.test(l))
 	const row = lines.find((l) => new RegExp(`^\\|\\s*${arena}\\s*\\|`).test(l))
 
@@ -59,14 +73,16 @@ export function arenaColumn(md: string, arena: string, column: string): number |
 
 	const idx = cells(header).indexOf(column)
 
-	if (idx < 0) return undefined
+	if (idx === -1) return undefined
 
 	const m = cells(row)[idx]?.match(/([\d.]+)%/)
 
 	return m ? Number(m[1]) : undefined
 }
 
-/** Pull the per-locale table's per-tag percentage for a locale column (US first, FR second). */
+/**
+ * Pull the per-locale table's per-tag percentage for a locale column (US first, FR second).
+ */
 function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undefined {
 	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*([\\d.]+)%\\s*\\|\\s*([\\d.—-]+)%?`))
 
@@ -80,13 +96,17 @@ function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undef
  * replayable). A sidecar that exists but can't parse is a loud throw — never a silent fallback to presentation
  * parsing.
  */
-/** Parsed scorer sidecar JSON — only the fields this gate reads are modeled. */
+/**
+ * Parsed scorer sidecar JSON — only the fields this gate reads are modeled.
+ */
 interface ScorerSidecar {
 	tags?: Record<string, { f1?: number } | undefined>
 	summary?: { pass_rate_pct?: number }
 }
 
-/** The assembled verdict, as written to `verdict.json`. */
+/**
+ * The assembled verdict, as written to `verdict.json`.
+ */
 export interface PromotionVerdict {
 	label: string
 	/**
@@ -116,6 +136,7 @@ export function assemblePromotionVerdict(
 		floors: Record<string, number>
 		int8_vs_fp32_max_delta_pp?: number
 	}
+
 	const dir = options.outDir
 	const read = (f: string) => readFileSync(path.join(dir, f), "utf8")
 
@@ -132,6 +153,7 @@ export function assemblePromotionVerdict(
 
 		return raw === undefined ? undefined : JSON.parse(raw)
 	}
+
 	function tagF1(side: ScorerSidecar | undefined, md: string, tag: string): number | undefined {
 		const f1 = side?.tags?.[tag]?.f1
 
@@ -220,6 +242,7 @@ export function assemblePromotionVerdict(
 		if (!pass) {
 			failed = true
 		}
+
 		results[key] = { floor, actual, pass }
 	}
 
@@ -249,6 +272,7 @@ export function assemblePromotionVerdict(
 		int8_vs_fp32_deltas: deltas,
 		generated_at_dir: dir,
 	}
+
 	writeFileSync(path.join(dir, "verdict.json"), JSON.stringify(verdict, null, "\t"))
 
 	report(`\n== promotion gate [${gate.label}] — ${verdict.verdict} ==`)

@@ -11,13 +11,15 @@
  *   contract, do not merge).
  */
 
-/** FNV-1a → uint32, for deterministic ordering/variant choice. */
+/**
+ * FNV-1a → uint32, for deterministic ordering/variant choice.
+ */
 export function hashFNV1a(s: string): number {
-	let h = 2166136261
+	let h = 2_166_136_261
 
 	for (let i = 0; i < s.length; i++) {
 		h ^= s.charCodeAt(i)
-		h = Math.imul(h, 16777619)
+		h = Math.imul(h, 16_777_619)
 	}
 
 	return h >>> 0

@@ -12,9 +12,13 @@ import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "./types.ts"
 
 export interface CategoryMatch {
 	category: CategoryRecord
-	/** The lexicon phrase that matched (lowercased). */
+	/**
+	 * The lexicon phrase that matched (lowercased).
+	 */
 	matchedPhrase: string
-	/** 1.0 = ungated or exact-locale; 0.5 = language-only locale match. */
+	/**
+	 * 1.0 = ungated or exact-locale; 0.5 = language-only locale match.
+	 */
 	confidence: number
 }
 
@@ -66,6 +70,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 					`poi-taxonomy: synonym ${JSON.stringify(synonym.phrase)} points at unknown category ${synonym.categoryID}`
 				)
 			}
+
 			add(synonym.phrase, {
 				category,
 				phrase: synonym.phrase,
@@ -88,7 +93,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 		const entries = byPhrase.get(norm)
 
-		if (!entries || entries.length === 0) return []
+		if (!entries || !entries.length) return []
 
 		const language = locale?.split(/[-_]/)[0]
 		const best = new Map<string, CategoryMatch>()
@@ -97,9 +102,9 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			let confidence: number
 
 			if (!entry.locales) {
-				confidence = 1.0
+				confidence = 1
 			} else if (locale && entry.locales.includes(locale)) {
-				confidence = 1.0
+				confidence = 1
 			} else if (language && entry.locales.some((l) => l.split(/[-_]/)[0] === language)) {
 				confidence = 0.5
 			} else {
@@ -113,20 +118,26 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			}
 		}
 
-		return [...best.values()].sort((a, b) => b.confidence - a.confidence)
+		return [...best.values()].toSorted((a, b) => b.confidence - a.confidence)
 	}
 
-	/** Fetch a category by id. */
+	/**
+	 * Fetch a category by id.
+	 */
 	function getPOICategory(id: string): CategoryRecord | undefined {
 		return byID.get(id)
 	}
 
-	/** Enumerate the full table (corpus synthesis, builders, docs). */
+	/**
+	 * Enumerate the full table (corpus synthesis, builders, docs).
+	 */
 	function getAllCategories(): ReadonlyArray<CategoryRecord> {
 		return table.categories
 	}
 
-	/** True when the category's data exists only in ODbL sources — answering needs a build-local layer. */
+	/**
+	 * True when the category's data exists only in ODbL sources — answering needs a build-local layer.
+	 */
 	function requiresBuildLocalLayer(category: CategoryRecord): boolean {
 		return category.source === "mailwoman-infra"
 	}
@@ -142,7 +153,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 		if (!category) return []
 
-		return category.overtureCategories && category.overtureCategories.length > 0
+		return category.overtureCategories && category.overtureCategories.length
 			? [...category.overtureCategories]
 			: [category.id]
 	}

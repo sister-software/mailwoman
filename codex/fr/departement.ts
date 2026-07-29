@@ -13,17 +13,27 @@
 
 import type { FrenchRegionCode } from "./region.ts"
 
-/** Per-département record: code (2-digit, or `2A`/`2B`, or 3-digit DOM) + name + its région. */
+/**
+ * Per-département record: code (2-digit, or `2A`/`2B`, or 3-digit DOM) + name + its région.
+ */
 export interface DepartementInfo {
-	/** Département code: `01`–`95` (metropolitan), `2A`/`2B` (Corsica), or `971`–`976` (overseas). */
+	/**
+	 * Département code: `01`–`95` (metropolitan), `2A`/`2B` (Corsica), or `971`–`976` (overseas).
+	 */
 	code: string
-	/** French name (e.g. `Bouches-du-Rhône`). */
+	/**
+	 * French name (e.g. `Bouches-du-Rhône`).
+	 */
 	name: string
-	/** The ISO 3166-2:FR code of the région this département belongs to. */
+	/**
+	 * The ISO 3166-2:FR code of the région this département belongs to.
+	 */
 	region: FrenchRegionCode
 }
 
-/** Département code → info. 96 metropolitan (incl. 2A/2B) + 5 overseas = 101. */
+/**
+ * Département code → info. 96 metropolitan (incl. 2A/2B) + 5 overseas = 101.
+ */
 export const FR_DEPARTEMENTS = {
 	"01": { code: "01", name: "Ain", region: "ARA" },
 	"02": { code: "02", name: "Aisne", region: "HDF" },
@@ -128,7 +138,9 @@ export const FR_DEPARTEMENTS = {
 	"976": { code: "976", name: "Mayotte", region: "MAY" },
 } as const satisfies Record<string, DepartementInfo>
 
-/** A French département code (`01`–`95`, `2A`/`2B`, or `971`–`976`). */
+/**
+ * A French département code (`01`–`95`, `2A`/`2B`, or `971`–`976`).
+ */
 export type DepartementCode = keyof typeof FR_DEPARTEMENTS
 
 /**

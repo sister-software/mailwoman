@@ -20,6 +20,7 @@
  */
 
 export { groupPhrases, groupPhrasesSync } from "./group.ts"
+
 export {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
@@ -30,7 +31,9 @@ export {
 	scoreVenuePhrase,
 	tokenizeSegment,
 } from "./rules.ts"
+
 export type { SegmentToken } from "./rules.ts"
+
 export type {
 	GroupPhrasesOpts,
 	LocaleHint,

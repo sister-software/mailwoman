@@ -22,6 +22,11 @@ import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
+/**
+ * Row count below which a trained placetype is flagged as thin relative to its peers.
+ */
+const UNDERTRAINED_PLACETYPE_COUNT = 200_000
+
 const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("WOF admin DB. Default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db"),
 	country: zod
@@ -37,9 +42,13 @@ export { OptionsSchema as options }
 interface PlacetypeStat {
 	placetype: string
 	count: number
-	/** How this placetype relates upward: its parent placetype distribution, as fractions summing to ~1. */
+	/**
+	 * How this placetype relates upward: its parent placetype distribution, as fractions summing to ~1.
+	 */
 	parents: Array<{ placetype: string; fraction: number }>
-	/** The modal ancestor-placetype chain (most common ancestor placetypes, ordered by frequency). */
+	/**
+	 * The modal ancestor-placetype chain (most common ancestor placetypes, ordered by frequency).
+	 */
 	ancestors: Array<{ placetype: string; fraction: number }>
 	/**
 	 * True iff this WOF placetype maps to a trained `ComponentTag` (via core/types/mapping) — the ones the model must
@@ -48,7 +57,9 @@ interface PlacetypeStat {
 	trained: boolean
 }
 
-// WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones).
+/**
+ * WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones).
+ */
 const PLACETYPE_TO_TAG: Record<string, string> = {
 	country: "country",
 	region: "region",
@@ -110,6 +121,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			list.push({ placetype: r.parent, n: r.n })
 			byParent.set(r.child, list)
 		}
+
 		const byAnc = new Map<string, Array<{ placetype: string; n: number }>>()
 
 		for (const r of ancRows) {
@@ -117,19 +129,21 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			list.push({ placetype: r.anc, n: r.n })
 			byAnc.set(r.pt, list)
 		}
+
 		const dist = (list: Array<{ placetype: string; n: number }> | undefined) => {
 			if (!list?.length) return []
 			const tot = list.reduce((s, x) => s + x.n, 0) || 1
 
 			return list
-				.sort((a, b) => b.n - a.n)
+				.toSorted((a, b) => b.n - a.n)
 				.slice(0, 5)
 				.map((x) => ({ placetype: x.placetype, fraction: x.n / tot }))
 		}
 
 		const tags = new Set<string>(COMPONENT_TAGS as readonly string[])
+
 		const stats: PlacetypeStat[] = counts
-			.sort((a, b) => b.n - a.n)
+			.toSorted((a, b) => b.n - a.n)
 			.map((c) => ({
 				placetype: c.placetype,
 				count: c.n,
@@ -149,6 +163,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 
 	const { stats, country } = state.result
 	const pct = (f: number) => `${Math.round(f * 100)}%`
+
 	const distStr = (d: Array<{ placetype: string; fraction: number }>) =>
 		d.length ? d.map((x) => `${x.placetype} ${pct(x.fraction)}`).join(", ") : "—"
 
@@ -166,7 +181,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			<Text> </Text>
 			<Text dimColor>Ancestor chains (rare/esoteric types):</Text>
 			{stats
-				.filter((s) => s.count < 200_000 && s.trained)
+				.filter((s) => s.count < UNDERTRAINED_PLACETYPE_COUNT && s.trained)
 				.map((s) => (
 					<Text key={`anc-${s.placetype}`}>
 						{"  "}

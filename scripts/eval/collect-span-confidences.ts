@@ -61,6 +61,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	"anchor-lookup"?: string
@@ -72,6 +73,7 @@ const values = rawValues as {
 	set?: string
 	tokenizer?: string
 }
+
 interface CalibRow {
 	raw: string
 	gold: [string, string][]
@@ -91,18 +93,22 @@ interface ConfRecord {
 const STREET_FAMILY = new Set(["street", "street_prefix", "street_suffix"])
 const OA_GRADABLE = new Set(["locality", "region", "postcode"])
 
-/** Collapse the street decomposition into one matching class; everything else maps to itself. */
+/**
+ * Collapse the street decomposition into one matching class; everything else maps to itself.
+ */
 function tagClass(tag: string): string {
 	return STREET_FAMILY.has(tag) ? "street" : tag
 }
 
-/** Lowercase, strip non-alphanumeric (unicode-aware) to single spaces, collapse + trim. */
+/**
+ * Lowercase, strip non-alphanumeric (unicode-aware) to single spaces, collapse + trim.
+ */
 function norm(s: string): string {
 	return s
 		.toLowerCase()
-		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.replaceAll(/[^\p{L}\p{N}]+/gu, " ")
 		.trim()
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 }
 
 /**
@@ -125,9 +131,12 @@ function valueMatch(pred: string, gold: string): boolean {
 	return subset(at, bset) || subset(bt, aset)
 }
 
-/** Flatten the decoded tree to a list of (tag, value, confidence) spans. */
+/**
+ * Flatten the decoded tree to a list of (tag, value, confidence) spans.
+ */
 function flattenSpans(tree: AddressTree): { tag: string; value: string; conf: number }[] {
 	const out: { tag: string; value: string; conf: number }[] = []
+
 	const walk = (n: AddressNode): void => {
 		out.push({ tag: n.tag, value: n.value, conf: n.confidence })
 
@@ -152,15 +161,16 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 		if (!OA_GRADABLE.has(predTag)) return null
 		const goldVals = row.gold.filter(([t]) => t === predTag).map(([, v]) => v)
 
-		if (goldVals.length === 0) return null
+		if (!goldVals.length) return null
 
 		// OA row lacks this tag entirely → unlabelable
 		return goldVals.some((g) => valueMatch(predValue, g))
 	}
+
 	const cls = tagClass(predTag)
 	const goldVals = row.gold.filter(([t]) => tagClass(t) === cls).map(([, v]) => v)
 
-	if (goldVals.length === 0) return false
+	if (!goldVals.length) return false
 
 	// hallucinated tag the address doesn't have
 	return goldVals.some((g) => valueMatch(predValue, g))
@@ -181,15 +191,18 @@ async function main(): Promise<void> {
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
+
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
 		ONNXRunner.create(values["model"] || "neural-weights-en-us/model.onnx"),
 	])
+
 	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +
 	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
+
 	const neural = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -200,6 +213,7 @@ async function main(): Promise<void> {
 		addressSystemConventions: "auto",
 		bridgePunctuationGaps: true,
 	})
+
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 
 	const records: ConfRecord[] = []
@@ -219,6 +233,7 @@ async function main(): Promise<void> {
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
+
 		let tree: AddressTree
 
 		try {
@@ -232,8 +247,10 @@ async function main(): Promise<void> {
 
 			if (correct === null) {
 				unlabelable++
+
 				continue
 			}
+
 			records.push({ conf: span.conf, correct, tag: span.tag, country: row.country, source: row.source })
 		}
 	}
@@ -244,6 +261,7 @@ async function main(): Promise<void> {
 	const meanConf = records.reduce((a, r) => a + r.conf, 0) / n
 	const byOa = records.filter((r) => r.source === "oa")
 	const byCorpus = records.filter((r) => r.source === "corpus")
+
 	console.error(`\nwrote ${n} gradable spans → ${outPath}  (${unlabelable} unlabelable skipped)`)
 	console.error(
 		`  overall: acc=${acc.toFixed(4)}  meanConf=${meanConf.toFixed(4)}  gap(conf-acc)=${(meanConf - acc).toFixed(4)}`

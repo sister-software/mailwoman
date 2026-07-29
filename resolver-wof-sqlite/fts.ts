@@ -66,7 +66,9 @@ export const PLACE_SEARCH_TABLE = "place_search"
  */
 export const ALIAS_SEPARATOR = "\uE000"
 
-/** `char()` argument for {@link ALIAS_SEPARATOR} in SQL — keeps the SQL text plain ASCII. */
+/**
+ * `char()` argument for {@link ALIAS_SEPARATOR} in SQL — keeps the SQL text plain ASCII.
+ */
 const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
 
 /**
@@ -93,7 +95,7 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
 	if (altNames === null || altNames === "" || !normalizedQuery) return false
-	const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+	const norm = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 
 	if (altNames.includes(ALIAS_SEPARATOR)) {
 		return altNames.split(ALIAS_SEPARATOR).some((alias) => norm(alias) === normalizedQuery)
@@ -126,15 +128,25 @@ export const PLACE_POPULATION_TABLE = "place_population"
  * user.
  */
 export interface BuildPlaceSearchFTSResult {
-	/** Whether the FTS5 index was created (true) or already existed and was left alone (false). */
+	/**
+	 * Whether the FTS5 index was created (true) or already existed and was left alone (false).
+	 */
 	created: boolean
-	/** Number of rows in the `place_search` table after the call. */
+	/**
+	 * Number of rows in the `place_search` table after the call.
+	 */
 	indexedRows: number
-	/** Whether the R*Tree bbox index was created (true) or already existed (false). */
+	/**
+	 * Whether the R*Tree bbox index was created (true) or already existed (false).
+	 */
 	bboxCreated: boolean
-	/** Number of rows in the `place_bbox` R*Tree after the call. */
+	/**
+	 * Number of rows in the `place_bbox` R*Tree after the call.
+	 */
 	bboxIndexedRows: number
-	/** Wall-clock duration of the build step, in milliseconds. */
+	/**
+	 * Wall-clock duration of the build step, in milliseconds.
+	 */
 	durationMs: number
 }
 
@@ -183,6 +195,7 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 
 	if (!ftsExisting || opts.drop) {
 		onProgress("creating")
+
 		db.exec(`
 			CREATE VIRTUAL TABLE ${PLACE_SEARCH_TABLE} USING fts5(
 				wof_id UNINDEXED,
@@ -191,7 +204,9 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				tokenize = 'unicode61 remove_diacritics 2'
 			);
 		`)
+
 		onProgress("populating")
+
 		// Excludes only definitively-not-current places. WOF's `is_current` carries TWO conventions:
 		// `-1` (modern Who's On First) and `1` (legacy Mapzen-era), both meaning "currently valid".
 		// Only `0` means "no longer current". Filtering on `= -1` strict (as Phase 4.2 did) excluded
@@ -220,8 +235,10 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				AND spr.is_deprecated = 0
 				AND spr.name IS NOT NULL;
 		`)
+
 		ftsCreated = true
 	}
+
 	const ftsCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }
 
 	// ─── R*Tree phase ────────────────────────────────────────────────
@@ -234,6 +251,7 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 
 	if (!bboxExisting || opts.drop) {
 		onProgress("creating-bbox")
+
 		// R*Tree requires INTEGER PRIMARY KEY (id) + paired min/max for each indexed dimension.
 		// `rtree` (not `rtree_i32`) keeps coordinates as REAL — what we want for WGS-84.
 		db.exec(`
@@ -243,7 +261,9 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				min_lon, max_lon
 			);
 		`)
+
 		onProgress("populating-bbox")
+
 		// Only index places that have non-zero coordinates AND a real bbox. WOF stores both the
 		// centroid (latitude/longitude) and the bounding box (min_*/max_*). A subset of rows have
 		// all-zero coordinates — likely placeholders for deprecated / unmapped entries; the
@@ -266,8 +286,10 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				AND NOT (spr.min_latitude = 0 AND spr.max_latitude = 0
 				     AND spr.min_longitude = 0 AND spr.max_longitude = 0);
 		`)
+
 		bboxCreated = true
 	}
+
 	const bboxCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_BBOX_TABLE}`).get() as { n: number }
 
 	// NOTE: `place_population` is NOT built here. `scripts/build-unified-wof.ts` extracts
@@ -299,12 +321,16 @@ export function placeSearchFTSExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_SEARCH_TABLE)
 }
 
-/** Returns true iff the `place_bbox` R*Tree table exists. Used for opt-in proximity lookup checks. */
+/**
+ * Returns true iff the `place_bbox` R*Tree table exists. Used for opt-in proximity lookup checks.
+ */
 export function placeBboxExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_BBOX_TABLE)
 }
 
-/** Returns true iff the `place_population` table exists. Used for opt-in population-ranking checks. */
+/**
+ * Returns true iff the `place_population` table exists. Used for opt-in population-ranking checks.
+ */
 export function placePopulationExists(db: DatabaseSync): boolean {
 	return tableExists(db, PLACE_POPULATION_TABLE)
 }

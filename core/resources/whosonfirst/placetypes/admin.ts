@@ -5,7 +5,7 @@
  */
 
 import {
-	Alpha2LanguageCode,
+	type Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha2LanguageCode,
@@ -36,13 +36,17 @@ export interface WOFBaseProperties {
 	"edtf:cessation"?: string
 }
 
+/**
+ * Name kinds Who's On First records per language, in descending preference — a preferred name wins over a variant,
+ * which wins over a colloquial one.
+ */
 export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
+
 export type WOFNameKind = (typeof WOFNameKinds)[number]
+
 export type LanguageSpecificKey = `name:${Alpha3bLanguageCode}_x_${WOFNameKind}`
 
-export type WOFLanguageProperties = {
-	[key in LanguageSpecificKey]?: string | string[]
-}
+export type WOFLanguageProperties = Partial<Record<LanguageSpecificKey, string | string[]>>
 
 export type WOFProperties = WOFBaseProperties & WOFLanguageProperties
 
@@ -132,6 +136,7 @@ export function pluckPlacetypeSpec({
 
 	const population =
 		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : undefined
+
 	const isCurrent = mzIsCurrent === undefined ? undefined : mzIsCurrent !== 0 && mzIsCurrent !== "0"
 
 	return {
@@ -145,12 +150,12 @@ export function pluckPlacetypeSpec({
 		latitude: typeof latitude === "number" ? latitude : undefined,
 		longitude: typeof longitude === "number" ? longitude : undefined,
 		population,
-		concordances: concordances && Object.keys(concordances).length > 0 ? concordances : undefined,
+		concordances: concordances && Object.keys(concordances).length ? concordances : undefined,
 		isCurrent,
 		isDeprecated: !!edtfDeprecated,
 		isCeased: !!edtfCessation,
-		isSuperseded: !!(superseded_by && superseded_by.length > 0),
-		isSuperseding: !!(supersedes && supersedes.length > 0),
+		isSuperseded: !!(superseded_by && superseded_by.length),
+		isSuperseding: !!(supersedes && supersedes.length),
 		lastmodified: typeof lastmodified === "number" ? lastmodified : undefined,
 	}
 }

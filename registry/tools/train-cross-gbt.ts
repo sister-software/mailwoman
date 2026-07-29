@@ -49,23 +49,46 @@ import { TextSpliterator } from "spliterator"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode trainCrossSourceGBT}. */
+/**
+ * Share of entities assigned to fit; the rest are held out.
+ */
+const FIT_SPLIT_FRACTION = 0.8
+
+/**
+ * Options for {@linkcode trainCrossSourceGBT}.
+ */
 export interface TrainCrossSourceGBTOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 2000. */
+	/**
+	 * NPIs sampled. Default 2000.
+	 */
 	npis?: number
-	/** Output TS module path. Default `registry/models/crosssource-gbt-en-us.ts`. */
+	/**
+	 * Output TS module path. Default `registry/models/crosssource-gbt-en-us.ts`.
+	 */
 	out?: string
-	/** Locale recorded in the model meta. Default en-US. */
+	/**
+	 * Locale recorded in the model meta. Default en-US.
+	 */
 	locale?: string
-	/** #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95. */
+	/**
+	 * #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95.
+	 */
 	precisionBar?: number
-	/** Training date stamped into the meta. Default today. */
+	/**
+	 * Training date stamped into the meta. Default today.
+	 */
 	date?: string
 }
 
@@ -81,6 +104,7 @@ const N = {
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
@@ -92,20 +116,24 @@ interface MessyRow {
 	source: string
 }
 
-/** Deterministic LCG (no Math.random — reproducible split + commit). */
+/**
+ * Deterministic LCG (no Math.random — reproducible split + commit).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
 	return () => {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 
-/** Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates. */
+/**
+ * Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates.
+ */
 function uniqueQuantiles(sorted: number[], n: number): number[] {
-	if (sorted.length === 0) return [0]
+	if (!sorted.length) return [0]
 	const ts = new Set<number>()
 
 	for (let k = 0; k <= n; k++) {
@@ -115,7 +143,9 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 	return [...ts]
 }
 
-/** Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows. */
+/**
+ * Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows.
+ */
 async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> {
 	// spliterator owns the line layer (crlf keeps header keys + the last column clean on CRLF sources);
 	// the manual quote/pending re-join + tokenizer below stays deliberately — spliterator ≥ 3.2.0 CAN
@@ -144,6 +174,7 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 				if (ch === '"') {
 					if (line[i + 1] === '"') {
 						cur += '"'
+
 						i++
 					} else {
 						inQ = false
@@ -160,6 +191,7 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 				cur += ch
 			}
 		}
+
 		cells.push(cur)
 
 		if (!header) {
@@ -167,16 +199,20 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 
 			continue
 		}
+
 		const row: Record<string, string> = {}
 
 		for (let i = 0; i < header.length; i++) {
 			row[header[i]!] = cells[i] ?? ""
 		}
+
 		yield row
 	}
 }
 
-/** Train + emit the cross-source link GBT — see the module doc. */
+/**
+ * Train + emit the cross-source link GBT — see the module doc.
+ */
 export async function trainCrossSourceGBT(
 	options: TrainCrossSourceGBTOptions,
 	report?: (line: string) => void
@@ -203,8 +239,10 @@ export async function trainCrossSourceGBT(
 		const st = norm(r["Covered_Recipient_Profile_State"]).toUpperCase()
 
 		if (!npi || st !== STATE || opByNPI.has(npi)) continue
+
 		const name =
 			`${norm(r["Covered_Recipient_Profile_First_Name"])} ${norm(r["Covered_Recipient_Profile_Last_Name"])}`.trim()
+
 		const address = addr(
 			r["Covered_Recipient_Profile_Address_Line_1"]!,
 			r["Covered_Recipient_Profile_City"]!,
@@ -215,6 +253,7 @@ export async function trainCrossSourceGBT(
 		if (!name || !address) continue
 		opByNPI.set(npi, { npi, name, org: "", address, source: "openpayments" })
 	}
+
 	report?.(`    ${opByNPI.size} OP ${STATE} practitioners`)
 
 	// --- Phase B: the SAME NPIs from NPPES (practice address + legal name) + the corpus-wide
@@ -230,13 +269,16 @@ export async function trainCrossSourceGBT(
 		if (++scanned % 1_000_000 === 0) {
 			report?.(`    scanned ${scanned / 1e6}M, joined ${joined.size}`)
 		}
+
 		const practice = addr(r[N.pAddr]!, r[N.pCity]!, r[N.pState]!, r[N.pZip]!)
 
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 			addrTotal++
 		}
+
 		const npi = norm(r[N.npi])
 
 		if (!npi || !opByNPI.has(npi) || joined.has(npi) || !practice) continue
@@ -254,17 +296,20 @@ export async function trainCrossSourceGBT(
 	for (const npi of joined) {
 		rows.push(opByNPI.get(npi)!)
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
 	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). The heavy
 	// geocoder is injected (see ./eval-geocoder.ts). ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
+
 	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
 	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
 	const mappingFor = (source: string): ColumnMapping => ({
@@ -274,8 +319,10 @@ export async function trainCrossSourceGBT(
 		address: "address",
 		source,
 	})
+
 	const nppesRows = rows.filter((r) => r.source === "nppes")
 	const opRows = rows.filter((r) => r.source === "openpayments")
+
 	const records: SourceRecord[] = [
 		...(await ingestRows(nppesRows as unknown as Record<string, string>[], mappingFor("nppes"), {
 			geocodeAddress: geocoder.seam,
@@ -284,6 +331,7 @@ export async function trainCrossSourceGBT(
 			geocodeAddress: geocoder.seam,
 		})),
 	]
+
 	geocoder.close()
 	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
@@ -297,6 +345,7 @@ export async function trainCrossSourceGBT(
 	const Y: number[] = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce((s, y) => s + y, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate))
+
 	report?.(
 		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
 	)
@@ -308,22 +357,26 @@ export async function trainCrossSourceGBT(
 	const split = new Map<string, "fit" | "holdout">()
 
 	for (const npi of joined) {
-		split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+		split.set(npi, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
 	}
+
 	const fitIdx = pairs
 		.map((_, i) => i)
 		.filter((i) => split.get(pairs[i]![0].id) === "fit" && split.get(pairs[i]![1].id) === "fit")
+
 	const holdIdx = pairs
 		.map((_, i) => i)
 		.filter((i) => split.get(pairs[i]![0].id) === "holdout" && split.get(pairs[i]![1].id) === "holdout")
+
 	const calib = trainGBT(
 		fitIdx.map((i) => X[i]!),
 		fitIdx.map((i) => Y[i]!),
 		fitIdx.map((i) => W[i]!),
 		hyperparams
 	)
+
 	const holdScores = holdIdx.map((i) => ({ s: gbtScore(calib, X[i]!), y: Y[i]! }))
-	const sorted = holdScores.map((h) => h.s).sort((a, b) => a - b)
+	const sorted = holdScores.map((h) => h.s).toSorted((a, b) => a - b)
 	const totalPos = holdScores.reduce((s, h) => s + h.y, 0)
 	let recommendedThreshold = Number.POSITIVE_INFINITY
 	let barRecall = 0
@@ -343,6 +396,7 @@ export async function trainCrossSourceGBT(
 				fp++
 			}
 		}
+
 		const precision = tp + fp > 0 ? tp / (tp + fp) : 1
 		const recall = totalPos > 0 ? tp / totalPos : 0
 		const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
@@ -362,6 +416,7 @@ export async function trainCrossSourceGBT(
 	if (!Number.isFinite(recommendedThreshold)) {
 		recommendedThreshold = f1MaxThreshold
 	}
+
 	report?.(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${PRECISION_BAR} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)
@@ -369,6 +424,7 @@ export async function trainCrossSourceGBT(
 	// --- Phase F: train the SHIPPED model on ALL cross-source pairs; emit the committed module. ---
 	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
+
 	const meta = {
 		version: "1.0.0",
 		objective: "cross-source-link" as const,
@@ -387,6 +443,7 @@ export async function trainCrossSourceGBT(
 		features: X[0]?.length ?? 0,
 		sources: ["nppes", "openpayments"],
 	}
+
 	const moduleSource =
 		`/**\n` +
 		` * @copyright Sister Software\n` +
@@ -402,6 +459,7 @@ export async function trainCrossSourceGBT(
 		`export const CROSS_SOURCE_GBT_META = ${JSON.stringify(meta)} as const\n\n` +
 		`// prettier-ignore\n` +
 		`export const CROSS_SOURCE_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
+
 	mkdirSync(dirname(OUT), { recursive: true })
 	writeFileSync(OUT, moduleSource)
 	report?.(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)

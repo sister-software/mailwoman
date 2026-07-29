@@ -27,6 +27,9 @@ export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
 const ArgumentsSchema = zod.array(zod.string().describe("Prefix string to complete"))
 
+/**
+ * Config accepted by `mailwoman autocomplete`, validated before the server starts so a bad flag fails fast.
+ */
 export const AutocompleteConfigSchema = zod.object({
 	limit: zod.coerce
 		.number()
@@ -46,7 +49,9 @@ export const AutocompleteConfigSchema = zod.object({
 	json: zod.boolean().optional().default(false).describe("Emit results as a JSON array instead of formatted text"),
 })
 
-/** Resolve the FST binary path from explicit flag, env var, or the staged default. */
+/**
+ * Resolve the FST binary path from explicit flag, env var, or the staged default.
+ */
 export function resolveFSTPath(explicitPath?: string): string {
 	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? "/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
 }
@@ -82,8 +87,8 @@ export async function runAutocomplete(
 
 	try {
 		buf = readFileSync(fstPath)
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error)
 		throw commandError(`Failed to read FST binary at ${fstPath}: ${msg}`)
 	}
 
@@ -96,8 +101,8 @@ export async function runAutocomplete(
 
 	try {
 		matcher = deserializeFST(buf)
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error)
 		throw commandError(`Malformed FST binary at ${fstPath}: ${msg}`)
 	}
 
@@ -113,11 +118,11 @@ export async function runAutocomplete(
 }
 
 function formatSuggestions(entries: AutocompleteEntry[]): string {
-	if (entries.length === 0) return "(no completions)"
+	if (!entries.length) return "(no completions)"
 
 	return entries
 		.map((e, i) => {
-			const completion = e.completionTokens.length > 0 ? ` [+${e.completionTokens.join(" ")}]` : ""
+			const completion = e.completionTokens.length ? ` [+${e.completionTokens.join(" ")}]` : ""
 			const imp = e.importance.toFixed(4)
 
 			return `${String(i + 1).padStart(2)}. ${e.name}${completion}  (${e.placetype}, wof:${e.wofID}, imp:${imp})`

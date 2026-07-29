@@ -47,22 +47,39 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode crossSourceThresholdSweep}. */
+/**
+ * Independent sources that must agree before a cluster counts as cross-source corroborated.
+ */
+const MIN_CROSS_SOURCE_AGREEMENT = 3
+
+/**
+ * Options for {@linkcode crossSourceThresholdSweep}.
+ */
 export interface CrossSourceThresholdSweepOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** Rows kept per source. Default 2000. */
+	/**
+	 * Rows kept per source. Default 2000.
+	 */
 	cap?: number
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
 	/**
 	 * #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
 	 * at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
 	 */
 	candidate?: string
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
@@ -123,14 +140,18 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	},
 ]
 
-/** Distinct provenance labels an entity's records span. */
+/**
+ * Distinct provenance labels an entity's records span.
+ */
 const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
-/** Last-10-digit phone key (drops formatting / country code). */
+/**
+ * Last-10-digit phone key (drops formatting / country code).
+ */
 const normPhone = (p?: string | null): string => {
 	if (!p) return ""
-	const d = p.replace(/\D/g, "")
+	const d = p.replaceAll(/\D/g, "")
 
 	return d.length >= 10 ? d.slice(-10) : ""
 }
@@ -153,8 +174,10 @@ function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "un
 		if (!bySource.has(s)) {
 			bySource.set(s, new Set())
 		}
+
 		bySource.get(s)!.add(ph)
 	}
+
 	const sources = [...bySource.keys()]
 
 	if (sources.length < 2) return "unknown"
@@ -193,18 +216,22 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 		const n = entitySources(e).size
 
 		if (n < 2) continue
+
 		crossSource++
 
-		if (n >= 3) {
+		if (n >= MIN_CROSS_SOURCE_AGREEMENT) {
 			tripleSource++
 		}
+
 		const ev = phoneEvidence(e)
 
 		if (ev === "corroborated") {
 			phoneCorrob++
+
 			phoneCheckable++
 		} else if (ev === "contradicted") {
 			phoneContradict++
+
 			phoneCheckable++
 		}
 	}
@@ -221,7 +248,9 @@ function measure(label: string, threshold: number | null, entities: ResolvedEnti
 	}
 }
 
-/** #655 cross-source threshold sweep — see the module doc. Emits the markdown report to stdout. */
+/**
+ * #655 cross-source threshold sweep — see the module doc. Emits the markdown report to stdout.
+ */
 export async function crossSourceThresholdSweep(
 	options: CrossSourceThresholdSweepOptions,
 	report?: (line: string) => void
@@ -246,6 +275,7 @@ export async function crossSourceThresholdSweep(
 
 			if (kept.length >= CAP) break
 		}
+
 		rawBySource.set(spec.source, kept)
 		report?.(`    ${spec.source}: ${kept.length} rows`)
 	}
@@ -263,8 +293,10 @@ export async function crossSourceThresholdSweep(
 		for (const r of recs) {
 			r.id = `${spec.source}:${r.id}`
 		}
+
 		records.push(...recs)
 	}
+
 	geocoder.close()
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records; geocoded ${geocoded}`)
@@ -276,18 +308,22 @@ export async function crossSourceThresholdSweep(
 	for (const r of records) {
 		if (!r.address?.raw) continue
 		addrCounts.set(addressFrequencyKey(r.address.raw), (addrCounts.get(addressFrequencyKey(r.address.raw)) ?? 0) + 1)
+
 		addrTotal++
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const gbtScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	// --- Arm 1: the FS baseline (the recall-correct baseline cross-source flows currently pin). ---
 	report?.("[D] resolving — FS baseline baseline…")
+
 	const fs = measure(
 		"FS baseline",
 		0,
@@ -301,12 +337,14 @@ export async function crossSourceThresholdSweep(
 
 	for (const t of SWEEP) {
 		report?.(`[D] resolving — GBT @ threshold ${t}…`)
+
 		const { entities } = resolveEntities(records, {
 			collapseSpatial: true,
 			addressFrequency,
 			scorer: gbtScorer,
 			threshold: t,
 		})
+
 		gbtArms.push(measure(`GBT @ ${t.toFixed(2)}`, t, entities))
 	}
 
@@ -321,16 +359,19 @@ export async function crossSourceThresholdSweep(
 	if (CANDIDATE) {
 		const { pathToFileURL } = await import("node:url")
 		const { resolve: resolvePath } = await import("node:path")
+
 		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
 			CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL
 			CROSS_SOURCE_GBT_META?: { recommendedThreshold?: number }
 			ORG_CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL
 			ORG_CROSS_SOURCE_GBT_META?: { recommendedThreshold?: number }
 		}
+
 		const candModel = mod.CROSS_SOURCE_GBT_MODEL ?? mod.ORG_CROSS_SOURCE_GBT_MODEL
 
 		if (!candModel)
 			throw new Error(`--candidate module exports neither CROSS_SOURCE_GBT_MODEL nor ORG_CROSS_SOURCE_GBT_MODEL`)
+
 		const t0 = (mod.CROSS_SOURCE_GBT_META ?? mod.ORG_CROSS_SOURCE_GBT_META)?.recommendedThreshold ?? 0
 		const candScorer = createGbtScorer({ model: candModel, comparisons, addressFrequency })
 		report?.(`[E] resolving — cross-source GBT candidate @ ${t0.toFixed(3)} (±)…`)
@@ -351,35 +392,43 @@ export async function crossSourceThresholdSweep(
 			)
 		}
 	}
+
 	const rate = (a: ArmMetrics) => (a.phoneCheckable > 0 ? a.phoneCorrob / a.phoneCheckable : 0)
 	const fsCorrobRate = rate(fs)
 	const minEntities = Math.floor(fs.entities * 0.9)
+
 	const dominating = gbtArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
+
 	// The candidate (#655 option-2 models) gets its own verdict scan — the hardcoded option-1 verdict
 	// below is about the DEDUP GBT and must not silently absorb (or ignore) a candidate arm.
 	const candidateDominating = candidateArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
-	const candidateBest = candidateArms.reduce<ArmMetrics | null>(
-		(best, a) => (a.entities >= minEntities && a.crossSource > (best?.crossSource ?? -1) ? a : best),
-		null
-	)
+
+	// Best cross-source rate among arms that still retain enough entities to be meaningful.
+	let candidateBest: ArmMetrics | null = null
+
+	for (const arm of candidateArms) {
+		if (arm.entities >= minEntities && arm.crossSource > (candidateBest?.crossSource ?? -1)) {
+			candidateBest = arm
+		}
+	}
 
 	const rows = [fs, ...gbtArms, ...candidateArms]
-	const lines: string[] = []
-	lines.push(`# #655 — cross-source threshold sweep: can a re-thresholded GBT beat FS?`)
-	lines.push("")
-	lines.push(
+
+	const lines: string[] = [
+		`# #655 — cross-source threshold sweep: can a re-thresholded GBT beat FS?`,
+		"",
 		`_TX-scoped, ≤${CAP} rows/source (NPPES org + TX HHSC nursing = eligibility-ish; FCC-RHC = funding), ` +
 			`geocoded once then resolved per arm. **Phone-corrob** = of the cross-source entities whose records carry ` +
 			`a phone in ≥2 different sources, the fraction where those phones MATCH — a label-free precision proxy ` +
-			`(phone is not the join key). Higher cross-source + higher phone-corrob = better._`
-	)
-	lines.push("")
-	lines.push(`| arm | threshold | total entities | cross-source links | triple-source | phone-corrob (of checkable) |`)
-	lines.push(`|---|---:|---:|---:|---:|---|`)
+			`(phone is not the join key). Higher cross-source + higher phone-corrob = better._`,
+		"",
+		`| arm | threshold | total entities | cross-source links | triple-source | phone-corrob (of checkable) |`,
+		`|---|---:|---:|---:|---:|---|`,
+	]
 
 	for (const r of rows) {
 		lines.push(
@@ -387,6 +436,7 @@ export async function crossSourceThresholdSweep(
 				`${r.tripleSource} | ${r.phoneCorrob}/${r.phoneCheckable} (${pct(r.phoneCorrob, r.phoneCheckable)}) |`
 		)
 	}
+
 	lines.push("")
 	lines.push(`## Verdict`)
 
@@ -406,14 +456,17 @@ export async function crossSourceThresholdSweep(
 			lines.push(`**--candidate**: no non-collapsing arm (every threshold fell below the entity floor).`)
 		}
 	}
+
 	lines.push("")
+
 	lines.push(
 		`FS baseline: **${fs.crossSource}** cross-source links (${fs.tripleSource} triple), ` +
 			`phone-corrob ${pct(fs.phoneCorrob, fs.phoneCheckable)} (${fs.phoneCorrob}/${fs.phoneCheckable}).`
 	)
 
+	lines.push("")
+
 	if (!dominating) {
-		lines.push("")
 		lines.push(
 			`**No GBT threshold dominates FS** — none matches FS's ${fs.crossSource} cross-source links at ≥ its ` +
 				`${pct(fs.phoneCorrob, fs.phoneCheckable)} phone-corrob without over-merging (entity count collapsing below ` +
@@ -424,7 +477,6 @@ export async function crossSourceThresholdSweep(
 				`retrain (option 2), gated on cross-source labels, is the only lever. See #655.`
 		)
 	} else {
-		lines.push("")
 		lines.push(
 			`**GBT @ ${dominating.threshold} dominates FS**: ${dominating.crossSource} links (vs ${fs.crossSource}) at ` +
 				`${pct(dominating.phoneCorrob, dominating.phoneCheckable)} phone-corrob (vs ${pct(fs.phoneCorrob, fs.phoneCheckable)}), ` +
@@ -432,9 +484,11 @@ export async function crossSourceThresholdSweep(
 				`threshold ≈ ${dominating.threshold}.`
 		)
 	}
+
 	lines.push("")
 
 	const md = lines.join("\n")
+
 	console.log(md)
 
 	if (OUT_MD) {

@@ -18,13 +18,14 @@ import { runCascade } from "./demo-helpers.ts"
 import type { MailwomanLookupLike } from "./resources.tsx"
 
 type FindPlaceQuery = Parameters<MailwomanLookupLike["findPlace"]>[0]
+
 type Hit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
 
 interface StubPlace extends Hit {
 	nameKeys?: string[]
 }
 
-const AT_BBOX = { minLat: 46.4, maxLat: 49.0, minLon: 9.5, maxLon: 17.2 }
+const AT_BBOX = { minLat: 46.4, maxLat: 49, minLon: 9.5, maxLon: 17.2 }
 
 /**
  * A candidate-table-shaped stub: exact normalized-name match (candidate rows are always `exactMatch`), score-ordered
@@ -49,13 +50,18 @@ function stubLookup(places: StubPlace[]): MailwomanLookupLike {
 						(p.lat >= q.bbox.minLat && p.lat <= q.bbox.maxLat && p.lon >= q.bbox.minLon && p.lon <= q.bbox.maxLon)
 				)
 				.map((p) => ({ ...p, exactMatch: p.exactMatch ?? true }))
-				.sort((a, b) => b.score - a.score)
+				.toSorted((a, b) => b.score - a.score)
 				.slice(0, q.limit ?? 5)
 		}),
 	}
 }
 
-type TreeNode = { tag: string; value: string; confidence: number; children: TreeNode[] }
+interface TreeNode {
+	tag: string
+	value: string
+	confidence: number
+	children: TreeNode[]
+}
 
 const node = (tag: string, value: string, children: TreeNode[] = []): TreeNode => ({
 	tag,
@@ -81,6 +87,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 				bbox: { minLat: 36.9, maxLat: 42.5, minLon: -91.5, maxLon: -87.5 },
 			},
 		])
+
 		const hits = await runCascade(
 			lookup,
 			tree("Springfield, Illinois", [node("region", "Illinois", [node("locality", "Springfield")])]),
@@ -100,6 +107,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 			{ id: 11, name: "Vienna", placetype: "locality", country: "AT", lat: 48.21, lon: 16.37, score: 3, bbox: AT_BBOX },
 			{ id: 12, name: "Austria", placetype: "country", country: "AT", lat: 47.6, lon: 14.1, score: 2, bbox: AT_BBOX },
 		])
+
 		// The country token is the locality's admin CONTEXT — the parse tree nests it above the
 		// locality (same shape the phrase-grouper emits), which is what arms the pass.
 		const hits = await runCascade(
@@ -117,6 +125,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 			{ id: 20, name: "20500", placetype: "postalcode", country: "US", lat: 38.9, lon: -77.03, score: 1 },
 			{ id: 21, name: "Washington", placetype: "locality", country: "US", lat: 38.9, lon: -77.04, score: 8 },
 		])
+
 		const hits = await runCascade(
 			lookup,
 			tree("Washington 20500", [node("locality", "Washington"), node("postcode", "20500")]),
@@ -131,8 +140,9 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		// locality wins the pin; the postcode stays in the hit list.
 		const lookup = stubLookup([
 			{ id: 30, name: "10115", placetype: "postalcode", country: "DE", lat: 52.53, lon: 13.38, score: 2 },
-			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74.0, score: 9 },
+			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74, score: 9 },
 		])
+
 		const hits = await runCascade(
 			lookup,
 			tree("New York 10115", [node("locality", "New York"), node("postcode", "10115")]),
@@ -156,6 +166,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 				nameKeys: ["pier 39, san francisco"],
 			},
 		])
+
 		const hits = await runCascade(lookup, tree("Pier 39, San Francisco", []), "Pier 39, San Francisco")
 
 		expect(hits[0]?.id).toBe(40)
@@ -165,6 +176,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		const lookup = stubLookup([
 			{ id: 50, name: "Nowhere", placetype: "locality", country: "US", lat: 0, lon: 0, score: 9 },
 		])
+
 		const hits = await runCascade(lookup, tree("Nowhere", [node("locality", "Nowhere")]), "Nowhere")
 
 		expect(hits).toEqual([])

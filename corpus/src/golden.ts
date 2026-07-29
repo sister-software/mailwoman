@@ -28,7 +28,9 @@ import { reconcileComponents } from "./format.ts"
 
 const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 
-/** One entry in a golden `.jsonl` file. */
+/**
+ * One entry in a golden `.jsonl` file.
+ */
 export interface GoldenEntry {
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
@@ -37,25 +39,31 @@ export interface GoldenEntry {
 	notes?: string
 }
 
-/** Per-entry validation failure. */
+/**
+ * Per-entry validation failure.
+ */
 export interface GoldenIssue {
 	file: string
 	line: number
 	reason: string
 }
 
-/** Aggregate report from `validateGoldenDir`. */
+/**
+ * Aggregate report from `validateGoldenDir`.
+ */
 export interface GoldenReport {
 	entries: number
 	files: number
 	issues: GoldenIssue[]
 }
 
-/** Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations. */
+/**
+ * Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations.
+ */
 export function parseGoldenLine(line: string): GoldenEntry {
 	const obj = JSON.parse(line) as Partial<GoldenEntry> & Record<string, unknown>
 
-	if (typeof obj.raw !== "string" || obj.raw.length === 0) {
+	if (typeof obj.raw !== "string" || !obj.raw.length) {
 		throw new Error("missing/empty raw")
 	}
 
@@ -66,12 +74,13 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	if (obj.source !== "golden") {
 		throw new Error(`source must be "golden" (got ${JSON.stringify(obj.source)})`)
 	}
+
 	const components = (obj.components ?? {}) as Record<string, unknown>
 
 	for (const [k, v] of Object.entries(components)) {
 		if (!TAG_SET.has(k)) throw new Error(`unknown ComponentTag: ${k}`)
 
-		if (typeof v !== "string" || v.length === 0) {
+		if (typeof v !== "string" || !v.length) {
 			throw new Error(`components.${k} must be a non-empty string`)
 		}
 	}
@@ -85,7 +94,9 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	}
 }
 
-/** Check that every component in `entry` appears in `entry.raw` (reconciliation-equivalent). */
+/**
+ * Check that every component in `entry` appears in `entry.raw` (reconciliation-equivalent).
+ */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const reconciled = reconcileComponents(entry.components, entry.raw)
 	const missing: ComponentTag[] = []
@@ -99,7 +110,9 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	return missing
 }
 
-/** Validate one `.jsonl` file end-to-end, returning a list of issues. */
+/**
+ * Validate one `.jsonl` file end-to-end, returning a list of issues.
+ */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	const text = await readFile(path, "utf8")
 	const lines = text.split("\n")
@@ -114,24 +127,26 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 			const entry = parseGoldenLine(line)
 			const unreachable = unreachableComponents(entry)
 
-			if (unreachable.length > 0) {
+			if (unreachable.length) {
 				issues.push({
 					file: path,
 					line: i + 1,
 					reason: `components not reachable in raw: ${unreachable.join(", ")}`,
 				})
 			}
-		} catch (err) {
-			issues.push({ file: path, line: i + 1, reason: (err as Error).message })
+		} catch (error) {
+			issues.push({ file: path, line: i + 1, reason: (error as Error).message })
 		}
 	}
 
 	return issues
 }
 
-/** Validate every `.jsonl` in a golden directory. */
+/**
+ * Validate every `.jsonl` in a golden directory.
+ */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = (await readdir(dir)).filter((n) => extname(n) === ".jsonl").sort()
+	const files = (await readdir(dir)).filter((n) => extname(n) === ".jsonl").toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 

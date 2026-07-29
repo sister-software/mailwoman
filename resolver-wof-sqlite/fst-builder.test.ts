@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import { buildFSTFromWOF } from "./fst-builder.ts"
 import type { FSTMatcher } from "./fst-matcher.ts"
-import type { BuildFSTResult } from "./fst-types.ts"
+import type { BuildFSTResult, FSTProvenance } from "./fst-types.ts"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)
@@ -32,12 +32,13 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 				}
 			},
 		})
+
 		matcher = built.matcher
 		result = built.result
 	}, 60_000)
 
 	it("builds a non-trivial FST", () => {
-		expect(result.stateCount).toBeGreaterThan(10000)
+		expect(result.stateCount).toBeGreaterThan(10_000)
 		expect(result.placeCount).toBeGreaterThan(1000)
 	})
 
@@ -51,10 +52,10 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 
 	it("finds NYC with correct parent chain", () => {
 		const q = matcher.query("New York")
-		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofID === 85977539)
+		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofID === 85_977_539)
 		expect(nyc).toBeDefined()
-		expect(nyc!.wofID).toBe(85977539)
-		expect(nyc!.parentChain).toContain(85688543)
+		expect(nyc!.wofID).toBe(85_977_539)
+		expect(nyc!.parentChain).toContain(85_688_543)
 	})
 
 	it("finds 'Portland' with multiple localities", () => {
@@ -62,7 +63,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 		expect(q.accepting.length).toBeGreaterThanOrEqual(2)
 		const localities = q.accepting.filter((p) => p.placetype === "locality")
 		expect(localities.length).toBeGreaterThanOrEqual(2)
-		const sorted = localities.sort((a, b) => b.importance - a.importance)
+		const sorted = localities.toSorted((a, b) => b.importance - a.importance)
 		expect(sorted[0]!.importance).toBeGreaterThan(0)
 	})
 
@@ -102,7 +103,7 @@ const HAS_ADMIN = existsSync(ADMIN_DB)
 
 describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", () => {
 	let matcher: FSTMatcher
-	let provenance: import("./fst-types.ts").FSTProvenance
+	let provenance: FSTProvenance
 
 	beforeAll(() => {
 		const built = buildFSTFromWOF({
@@ -116,6 +117,7 @@ describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", (
 			excludeAllTokensOf: new Set(["de", "la", "du", "des"]),
 			exclusionPolicy: "test-policy",
 		})
+
 		matcher = built.matcher
 		provenance = built.provenance
 	}, 60_000)

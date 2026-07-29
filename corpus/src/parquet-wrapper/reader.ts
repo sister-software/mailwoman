@@ -12,9 +12,11 @@ import { ParquetReader as BaseParquetReader } from "@dsnp/parquetjs"
 import type { BufferReaderOptions } from "@dsnp/parquetjs/dist/lib/bufferReader.js"
 import { ParquetEnvelopeReader } from "@dsnp/parquetjs/dist/lib/reader.js"
 
-import { type ParquetRecordLike, ParquetSchema } from "./schema.ts"
+import type { ParquetSchema, ParquetRecordLike } from "./schema.ts"
 
-/** A typed Parquet reader, wrapping the base Parquet reader. */
+/**
+ * A typed Parquet reader, wrapping the base Parquet reader.
+ */
 export class ParquetReader<T extends ParquetRecordLike> extends BaseParquetReader implements AsyncDisposable {
 	declare schema: ParquetSchema<T>
 
@@ -47,9 +49,9 @@ export class ParquetReader<T extends ParquetRecordLike> extends BaseParquetReade
 			const metadata = await envelopeReader.readFooter()
 
 			return new ParquetReader<T>(metadata, envelopeReader, opts)
-		} catch (err) {
+		} catch (error) {
 			await envelopeReader.close()
-			throw err
+			throw error
 		}
 	}
 

@@ -251,6 +251,7 @@ describe("injectDependentLocalityLine", () => {
 			"San Cristovo de Cea",
 			"Cea"
 		)
+
 		expect(result).toBe("Calle Jose Antonio, 82\nCea\n32130 San Cristovo de Cea")
 	})
 

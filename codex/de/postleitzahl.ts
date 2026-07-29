@@ -28,7 +28,9 @@ import type { Tagged } from "type-fest"
  */
 export type Postleitzahl = Tagged<string, "Postleitzahl">
 
-/** The PLZ shape: exactly five digits. */
+/**
+ * The PLZ shape: exactly five digits.
+ */
 export const PLZ_PATTERN = /^\d{5}$/
 
 /**
@@ -42,20 +44,30 @@ export function normalizePLZ(raw: unknown): Postleitzahl | null {
 	return PLZ_PATTERN.test(s) ? (s as Postleitzahl) : null
 }
 
-/** Type-predicate for a (normalized) German postal code. */
+/**
+ * Type-predicate for a (normalized) German postal code.
+ */
 export function isPostleitzahl(input: unknown): input is Postleitzahl {
 	return typeof input === "string" && PLZ_PATTERN.test(input)
 }
 
-/** A PLZ Leitzone first digit. */
+/**
+ * A PLZ Leitzone first digit.
+ */
 export type LeitzoneDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
-/** Per-Leitzone descriptor: the routing region and a few anchor cities (coarse, postal not admin). */
+/**
+ * Per-Leitzone descriptor: the routing region and a few anchor cities (coarse, postal not admin).
+ */
 export interface LeitzoneInfo {
 	digit: LeitzoneDigit
-	/** Coarse routing-region label. */
+	/**
+	 * Coarse routing-region label.
+	 */
 	region: string
-	/** Well-known anchor cities in the zone (illustrative, not exhaustive). */
+	/**
+	 * Well-known anchor cities in the zone (illustrative, not exhaustive).
+	 */
 	cities: readonly string[]
 }
 
@@ -81,7 +93,9 @@ export const PLZ_LEITZONEN = {
 	9: { digit: 9, region: "nördliches Bayern / Oberpfalz", cities: ["Nürnberg", "Würzburg", "Regensburg"] },
 } as const satisfies Record<LeitzoneDigit, LeitzoneInfo>
 
-/** The Leitzone of a PLZ (its first digit's routing region), or null if the input is not a PLZ. */
+/**
+ * The Leitzone of a PLZ (its first digit's routing region), or null if the input is not a PLZ.
+ */
 export function leitzoneOf(plz: unknown): LeitzoneInfo | null {
 	const normalized = normalizePLZ(plz)
 

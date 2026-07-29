@@ -7,6 +7,9 @@
 import { CloudflareWorkerPMTiles } from "../protomaps/index.ts"
 import { WorkerRoute } from "../routing.ts"
 
+/**
+ * Root route — a plain identifying response, so hitting the worker's origin is not a 404.
+ */
 export const HomeRoute = WorkerRoute.GET("/", () => {
 	return new Response(
 		JSON.stringify(
@@ -26,6 +29,9 @@ export const HomeRoute = WorkerRoute.GET("/", () => {
 	)
 })
 
+/**
+ * Liveness probe at `/heartbeat`, used by uptime checks.
+ */
 export const HealthCheckRoute = WorkerRoute.GET("/heartbeat", () => {
 	return new Response("OK", {
 		headers: {

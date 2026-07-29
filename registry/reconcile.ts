@@ -31,24 +31,36 @@ import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/
 
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.ts"
 
-/** Which source labels denote eligibility vs funding/enrollment. */
+/**
+ * Which source labels denote eligibility vs funding/enrollment.
+ */
 export interface ReconcileConfig {
-	/** Source labels denoting membership in the base/eligibility set. */
+	/**
+	 * Source labels denoting membership in the base/eligibility set.
+	 */
 	eligibilitySources: readonly string[]
-	/** Source labels denoting enrollment / funding / program participation. */
+	/**
+	 * Source labels denoting enrollment / funding / program participation.
+	 */
 	fundingSources: readonly string[]
 }
 
-/** One entity, classified. */
+/**
+ * One entity, classified.
+ */
 export interface ReconciledEntity {
 	entity: ResolvedEntity
-	/** Distinct provenance labels the entity's records span, sorted. */
+	/**
+	 * Distinct provenance labels the entity's records span, sorted.
+	 */
 	sources: string[]
 	bucket: ReconciliationBucket
 }
 
 export interface ReconciliationResult {
-	/** Entities that carry at least one eligibility- or funding-tagged source, each bucketed. */
+	/**
+	 * Entities that carry at least one eligibility- or funding-tagged source, each bucketed.
+	 */
 	reconciled: ReconciledEntity[]
 	counts: Record<ReconciliationBucket, number>
 }
@@ -89,6 +101,7 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
  */
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
+
 	const counts: Record<ReconciliationBucket, number> = {
 		enrolled: 0,
 		"eligible-not-enrolled": 0,
@@ -96,7 +109,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	}
 
 	for (const entity of entities) {
-		const sources = [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort()
+		const sources = [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].toSorted()
 		const bucket = bucketOf(sources, config)
 
 		if (!bucket) continue
@@ -109,7 +122,9 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	return { reconciled, counts }
 }
 
-/** A display name for a reconciled entity's representative record. */
+/**
+ * A display name for a reconciled entity's representative record.
+ */
 function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
 	const person = [rep.name?.given, rep.name?.family].filter(Boolean).join(" ")
@@ -149,15 +164,25 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 }
 
 export interface ReconciliationReportOptions {
-	/** H1 title. Default: "Coverage reconciliation — eligibility ↔ enrollment". */
+	/**
+	 * H1 title. Default: "Coverage reconciliation — eligibility ↔ enrollment".
+	 */
 	title?: string
-	/** An italic scope paragraph under the title (what the sources are, how they were scoped). */
+	/**
+	 * An italic scope paragraph under the title (what the sources are, how they were scoped).
+	 */
 	scopeNote?: string
-	/** A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT). */
+	/**
+	 * A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT).
+	 */
 	scorerNote?: string
-	/** A paragraph about sampling/capping, woven into the caveat. */
+	/**
+	 * A paragraph about sampling/capping, woven into the caveat.
+	 */
 	sampleNote?: string
-	/** How many "eligible, not enrolled" rows to spot-check. Default 15. */
+	/**
+	 * How many "eligible, not enrolled" rows to spot-check. Default 15.
+	 */
 	spotCheckLimit?: number
 }
 
@@ -172,9 +197,7 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 	const eligibleTotal = counts.enrolled + counts["eligible-not-enrolled"]
 	const enrolledRate = eligibleTotal > 0 ? (100 * counts.enrolled) / eligibleTotal : 0
 
-	const lines: string[] = []
-	lines.push(`# ${title}`)
-	lines.push("")
+	const lines: string[] = [`# ${title}`, ""]
 
 	if (options.scopeNote) {
 		lines.push(`_${options.scopeNote}_`)
@@ -185,23 +208,29 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 		lines.push(options.scorerNote)
 		lines.push("")
 	}
+
 	lines.push(`## The reconciliation`)
 	lines.push("")
 	lines.push(`| bucket | entities | meaning |`)
 	lines.push(`|---|---:|---|`)
 	lines.push(`| **enrolled** | ${counts.enrolled} | resolves to an eligibility record AND a funding record |`)
+
 	lines.push(
 		`| **eligible, not enrolled** | ${counts["eligible-not-enrolled"]} | eligibility record, no funding record resolved (the **anti-join**) |`
 	)
+
 	lines.push(
 		`| **funded, not in eligibility set** | ${counts["funded-not-eligible"]} | funding record, no eligibility record resolved |`
 	)
+
 	lines.push("")
+
 	lines.push(
 		`Of the ${eligibleTotal} entities with an eligibility record, ${enrolledRate.toFixed(1)}% also resolve to a ` +
 			`funding record — a **floor**, not a coverage rate (imperfect resolution + any sampling only ever miss ` +
 			`links, never invent them). The deliverable is the anti-join SET, not this percentage.`
 	)
+
 	lines.push("")
 	lines.push(`## Anti-join spot-check — first ${spotCheckLimit} "eligible, not enrolled"`)
 	lines.push("")
@@ -212,18 +241,22 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 		const coord = c.entity.coordinate
 			? `${c.entity.coordinate.latitude.toFixed(4)}, ${c.entity.coordinate.longitude.toFixed(4)}`
 			: "—"
+
 		lines.push(`| ${c.entity.id} | ${c.sources.join(", ")} | ${repName(c.entity)} | ${coord} |`)
 	}
+
 	lines.push("")
 	lines.push(`## The caveat that matters`)
 	lines.push("")
 	const sample = options.sampleNote ? `${options.sampleNote} ` : ""
+
 	lines.push(
 		`${sample}This is a **set-membership reconciliation, not a determination**. A missing funding record can mean ` +
 			`the entity didn't apply, applied under a name we didn't resolve, is ineligible, or any number of things. We ` +
 			`produce the reconciled join and surface the candidate set; **what a gap means, and whether to act on it, is ` +
 			`entirely the data consumer's call.** Nothing here is an allegation.`
 	)
+
 	lines.push("")
 
 	return lines.join("\n")

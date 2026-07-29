@@ -6,7 +6,8 @@
 
 import { describe, expect, test } from "vitest"
 
-import { BIO_LABELS, BIOLabel, COMPONENT_TAGS, ComponentTag } from "./component.ts"
+import type { BIOLabel, ComponentTag } from "./component.ts"
+import { BIO_LABELS, COMPONENT_TAGS } from "./component.ts"
 
 describe("COMPONENT_TAGS", () => {
 	test("every tag is unique", () => {
@@ -55,7 +56,7 @@ describe("BIO_LABELS", () => {
 	})
 
 	test("length is 1 + 2 * COMPONENT_TAGS.length", () => {
-		expect(BIO_LABELS.length).toBe(1 + 2 * COMPONENT_TAGS.length)
+		expect(BIO_LABELS).toHaveLength(1 + 2 * COMPONENT_TAGS.length)
 	})
 
 	test("contains B- and I- for every tag exactly once", () => {

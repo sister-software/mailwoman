@@ -37,19 +37,43 @@ import {
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 
-/** Options for {@linkcode trainDedupGBT}. */
+/**
+ * Share of entities assigned to fit; the rest are held out.
+ */
+const FIT_SPLIT_FRACTION = 0.8
+
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
+const MIN_GROUP_SIZE = 5
+
+/**
+ * Options for {@linkcode trainDedupGBT}.
+ */
 export interface TrainDedupGBTOptions {
-	/** The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). */
+	/**
+	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 */
 	createGeocoder: EvalGeocoderFactory
-	/** Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`. */
+	/**
+	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 */
 	sources?: string
-	/** State filter. Default TX. */
+	/**
+	 * State filter. Default TX.
+	 */
 	state?: string
-	/** NPIs sampled. Default 3000. */
+	/**
+	 * NPIs sampled. Default 3000.
+	 */
 	npis?: number
-	/** Output TS module path. Default `registry/models/dedup-gbt-en-us.ts`. */
+	/**
+	 * Output TS module path. Default `registry/models/dedup-gbt-en-us.ts`.
+	 */
 	out?: string
-	/** Locale recorded in the model meta (the command's factory loads the matching weights). Default en-US. */
+	/**
+	 * Locale recorded in the model meta (the command's factory loads the matching weights). Default en-US.
+	 */
 	locale?: string
 	/**
 	 * Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the model is more
@@ -57,7 +81,9 @@ export interface TrainDedupGBTOptions {
 	 * class-balanced default; >1 penalizes a false merge more than a missed one.
 	 */
 	cost?: number
-	/** Training date stamped into the meta (overridable for reproducible commits). Default today. */
+	/**
+	 * Training date stamped into the meta (overridable for reproducible commits). Default today.
+	 */
 	date?: string
 }
 
@@ -81,6 +107,7 @@ const C = {
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
@@ -89,24 +116,30 @@ interface MessyRow {
 	name: string
 	org: string
 	address: string
-	/** Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree). */
+	/**
+	 * Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree).
+	 */
 	auth: string
 }
 
-/** Deterministic LCG (no Math.random — reproducible split + commit). */
+/**
+ * Deterministic LCG (no Math.random — reproducible split + commit).
+ */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0 || 1
 
 	return () => {
-		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
 
-		return s / 0x100000000
+		return s / 0x1_00_00_00_00
 	}
 }
 
-/** Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates. */
+/**
+ * Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates.
+ */
 function uniqueQuantiles(sorted: number[], n: number): number[] {
-	if (sorted.length === 0) return [0]
+	if (!sorted.length) return [0]
 	const ts = new Set<number>()
 
 	for (let k = 0; k <= n; k++) {
@@ -116,7 +149,9 @@ function uniqueQuantiles(sorted: number[], n: number): number[] {
 	return [...ts]
 }
 
-/** Pairwise clustering F1 of resolved entities vs the NPI grouping (record.id = the NPI). */
+/**
+ * Pairwise clustering F1 of resolved entities vs the NPI grouping (record.id = the NPI).
+ */
 function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 	const choose2 = (k: number) => (k * (k - 1)) / 2
 	const npiTotals = new Map<string, number>()
@@ -129,6 +164,7 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 		for (const rec of e.records) {
 			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
 		}
+
 		sumCluster += choose2(e.records.length)
 
 		for (const [npi, c] of byNPI) {
@@ -136,18 +172,22 @@ function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
 	}
+
 	let sumClass = 0
 
 	for (const total of npiTotals.values()) {
 		sumClass += choose2(total)
 	}
+
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
 
 	return precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 }
 
-/** Train + emit the production dedup GBT — see the module doc. */
+/**
+ * Train + emit the production dedup GBT — see the module doc.
+ */
 export async function trainDedupGBT(
 	options: TrainDedupGBTOptions,
 	report?: (line: string) => void
@@ -174,9 +214,10 @@ export async function trainDedupGBT(
 		if (!npi || !alt) continue
 		const list = altNames.get(npi) ?? []
 
-		if (list.length < 5) {
+		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
+
 		altNames.set(npi, list)
 	}
 
@@ -192,13 +233,16 @@ export async function trainDedupGBT(
 		if (++scanned % 1_000_000 === 0) {
 			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		}
+
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 			addrTotal++
 		}
+
 		const npi = norm(r[C.npi])
 
 		if (
@@ -221,6 +265,7 @@ export async function trainDedupGBT(
 				for (const alt of altNames.get(npi)!) {
 					rows.push({ npi, name: alt, org: alt, address: practice, auth })
 				}
+
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice) {
@@ -229,17 +274,20 @@ export async function trainDedupGBT(
 			}
 		}
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	report?.(`    ${kept.size} NPIs → ${rows.length} records; freq table ${addrCounts.size} distinct over ${addrTotal}`)
 
 	// --- Phase C: geocode + ingest (NPI rides on record.id as the label). The heavy geocoder is
 	// injected (see ./eval-geocoder.ts) — the registry package never imports the runtime. ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
+
 	// mapping.id = "npi" → record.id IS the NPI label (multiple records share an NPI, the ground truth).
 	const mapping: ColumnMapping = {
 		id: "npi",
@@ -248,9 +296,11 @@ export async function trainDedupGBT(
 		address: "address",
 		attributes: { authorizedOfficial: "auth" },
 	}
+
 	const records: SourceRecord[] = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
 		geocodeAddress: geocoder.seam,
 	})
+
 	geocoder.close()
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records, ${geocoded} geocoded`)
@@ -276,23 +326,26 @@ export async function trainDedupGBT(
 	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
 	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
-	const rnd = lcg(20260615)
+	const rnd = lcg(20_260_615)
 	const split = new Map<string, "fit" | "holdout">()
 
 	for (const npi of kept) {
-		split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+		split.set(npi, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
 	}
+
 	const fitPairs = pairs.filter(([a, b]) => split.get(a.id) === "fit" && split.get(b.id) === "fit")
+
 	const calibGbt = trainGBT(
 		fitPairs.map(([a, b]) => featurize(a, b)),
 		fitPairs.map(([a, b]) => (a.id === b.id ? 1 : 0)),
 		fitPairs.map(([a, b]) => (a.id === b.id ? 1 - posRate : posRate * COST)),
 		hyperparams
 	)
+
 	const calibScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(calibGbt, featurize(a, b))
 	const holdoutRecords = records.filter((r) => split.get(r.id) === "holdout")
 	const { pairs: holdoutPairs } = block(holdoutRecords, defaultBlockingKeys())
-	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).sort((p, q) => p - q)
+	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).toSorted((p, q) => p - q)
 	let recommendedThreshold = 0
 	let bestF1 = -1
 
@@ -303,6 +356,7 @@ export async function trainDedupGBT(
 			scorer: calibScorer,
 			threshold: t,
 		})
+
 		const f1 = clusterF1(entities)
 
 		if (f1 > bestF1) {
@@ -310,6 +364,7 @@ export async function trainDedupGBT(
 			recommendedThreshold = t
 		}
 	}
+
 	report?.(
 		`    recommended link threshold ${recommendedThreshold.toFixed(3)} (held-out clustering F1 ${(100 * bestF1).toFixed(1)}%)`
 	)
@@ -337,6 +392,7 @@ export async function trainDedupGBT(
 		addressFrequencyDistinct: addrCounts.size,
 		addressFrequencyTotal: addrTotal,
 	}
+
 	const moduleSource =
 		`/**\n` +
 		` * @copyright Sister Software\n` +
@@ -355,6 +411,7 @@ export async function trainDedupGBT(
 		`export const DEDUP_GBT_META = ${JSON.stringify(meta, null, 2)} as const\n\n` +
 		`// prettier-ignore\n` +
 		`export const DEDUP_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
+
 	mkdirSync(dirname(OUT), { recursive: true })
 	writeFileSync(OUT, moduleSource)
 	report?.(`[written] ${OUT} (${(moduleSource.length / 1024).toFixed(0)} KB)`)

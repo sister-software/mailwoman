@@ -19,7 +19,7 @@ import zod from "zod"
 
 import { type Check, CheckList, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
-export const args = zod.array(
+const ArgsSchema = zod.array(
 	zod.string().describe(
 		argument({
 			name: "wof-db",
@@ -35,19 +35,21 @@ const OptionsSchema = zod.object({
 		.describe("Drop and rebuild place_search + place_bbox if they already exist (after refreshing spr/names)"),
 })
 
-export { OptionsSchema as options }
+export { ArgsSchema as args, OptionsSchema as options }
 
-const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof args> = ({ options, args }) => {
+const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			if (args.length === 0) throw new Error("expected at least one <wof-db> path")
+			if (!args.length) throw new Error("expected at least one <wof-db> path")
 			const checks: Check[] = []
 
 			for (const path of args) {
 				if (!existsSync(path)) {
 					checks.push({ ok: false, check: path, detail: "file not found" })
+
 					continue
 				}
+
 				const db = new DatabaseSync(path)
 
 				try {
@@ -55,6 +57,7 @@ const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof args> = (
 						drop: options.drop,
 						onProgress: (phase, detail) => console.error(`  [${phase}]${detail ? ` — ${detail}` : ""}`),
 					})
+
 					checks.push({
 						ok: true,
 						check: path,

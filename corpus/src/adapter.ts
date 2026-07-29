@@ -34,16 +34,24 @@ import type { CanonicalRow, CorpusAdapter } from "./types.ts"
  * the dependency graph stays traceable.
  */
 export interface AdapterRegistry {
-	/** Add an adapter. Throws if `adapter.id` is already registered. */
+	/**
+	 * Add an adapter. Throws if `adapter.id` is already registered.
+	 */
 	register(adapter: CorpusAdapter): void
 
-	/** Return the adapter for `id`, or `undefined`. */
+	/**
+	 * Return the adapter for `id`, or `undefined`.
+	 */
 	get(id: string): CorpusAdapter | undefined
 
-	/** All registered adapters, in insertion order. */
+	/**
+	 * All registered adapters, in insertion order.
+	 */
 	list(): readonly CorpusAdapter[]
 
-	/** Convenience: ids only, in insertion order. */
+	/**
+	 * Convenience: ids only, in insertion order.
+	 */
 	ids(): readonly string[]
 }
 
@@ -58,6 +66,7 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 		if (this.#byID.has(adapter.id)) {
 			throw new Error(`AdapterRegistry: id ${JSON.stringify(adapter.id)} already registered`)
 		}
+
 		this.#byID.set(adapter.id, adapter)
 	}
 
@@ -92,9 +101,9 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  * length.
  */
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
-	const sortedKeys = Object.keys(components).sort() as ComponentTag[]
-	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\x1f")
-	const digest = createHash("sha256").update(adapterID).update("\x1e").update(payload).digest("hex")
+	const sortedKeys = Object.keys(components).toSorted() as ComponentTag[]
+	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\u001F")
+	const digest = createHash("sha256").update(adapterID).update("\u001E").update(payload).digest("hex")
 
 	return `${adapterID}-${digest.slice(0, 12)}`
 }
@@ -110,12 +119,12 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  * ensuring each augmentation variant survives.
  */
 export function canonicalDedupKey(row: CanonicalRow): string {
-	const sortedKeys = Object.keys(row.components).sort() as ComponentTag[]
-	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\x1f")
-	const rawNorm = row.raw.toLowerCase().replace(/\s+/g, " ").trim()
-	const synthPart = row.synth ? `\x1e${row.synth.method}` : ""
+	const sortedKeys = Object.keys(row.components).toSorted() as ComponentTag[]
+	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\u001F")
+	const rawNorm = row.raw.toLowerCase().replaceAll(/\s+/g, " ").trim()
+	const synthPart = row.synth ? `\u001E${row.synth.method}` : ""
 
-	return `${row.country}\x1e${rawNorm}\x1e${compPart}${synthPart}`
+	return `${row.country}\u001E${rawNorm}\u001E${compPart}${synthPart}`
 }
 
 /**
@@ -130,7 +139,9 @@ export interface StreamingHasher {
 	digest(): string
 }
 
-/** Default `StreamingHasher` (SHA-256, hex). */
+/**
+ * Default `StreamingHasher` (SHA-256, hex).
+ */
 export function streamingSha256(): StreamingHasher {
 	const h: Hash = createHash("sha256")
 	let finalized = false

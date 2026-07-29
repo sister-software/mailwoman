@@ -14,10 +14,16 @@ import { type LatLon, block, geoCellKey } from "./blocking.ts"
 import { cluster } from "./clustering.ts"
 import { type ComparisonLevel, type FellegiSunterModel, scorePair, similarityComparison } from "./fellegi-sunter.ts"
 
-type Clinic = { id: string; given: string; family: string; canonical: string; coord: LatLon }
+interface Clinic {
+	id: string
+	given: string
+	family: string
+	canonical: string
+	coord: LatLon
+}
 
 const NAME_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.9, u: 0.05 },
+	{ label: "exact", minSimilarity: 1, m: 0.9, u: 0.05 },
 	{ label: "different", minSimilarity: 0, m: 0.1, u: 0.95 },
 ]
 
@@ -62,6 +68,7 @@ describe("block → score → cluster", () => {
 			records,
 			geoCellKey((r) => r.coord)
 		)
+
 		// Score each candidate pair.
 		const links = pairs.map(([a, b]) => ({ a, b, weight: scorePair(model, a, b).weight }))
 		// Resolve into entities.
@@ -71,10 +78,11 @@ describe("block → score → cluster", () => {
 			.map((g) =>
 				g
 					.map((r) => r.id)
-					.sort()
+					.toSorted()
 					.join("")
 			)
-			.sort()
+			.toSorted()
+
 		expect(shape).toEqual(["12", "3"])
 	})
 })

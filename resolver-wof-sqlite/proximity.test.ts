@@ -27,7 +27,7 @@ interface FixturePlace {
 const FIXTURE: FixturePlace[] = [
 	// Paris, FR
 	{
-		id: 101751119,
+		id: 101_751_119,
 		name: "Paris",
 		placetype: "locality",
 		country: "FR",
@@ -37,7 +37,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 	// Paris, TX (small US town)
 	{
-		id: 101715829,
+		id: 101_715_829,
 		name: "Paris",
 		placetype: "locality",
 		country: "US",
@@ -47,7 +47,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 	// Tokyo, JP
 	{
-		id: 1108794869,
+		id: 1_108_794_869,
 		name: "Tokyo",
 		placetype: "locality",
 		country: "JP",
@@ -57,7 +57,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 	// London, GB
 	{
-		id: 101750367,
+		id: 101_750_367,
 		name: "London",
 		placetype: "locality",
 		country: "GB",
@@ -69,6 +69,7 @@ const FIXTURE: FixturePlace[] = [
 
 function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
@@ -86,6 +87,7 @@ function buildFixtureDB(): DatabaseSync {
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 	`)
+
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country,
 		                 latitude, longitude,
@@ -128,11 +130,13 @@ describe("haversineKm (sanity)", () => {
 		expect(d).toBeGreaterThan(330)
 		expect(d).toBeLessThan(360)
 	})
+
 	test("Paris,FR → Paris,TX is ~7800 km", () => {
 		const d = haversineKm(48.85, 2.34, 33.66, -95.55)
 		expect(d).toBeGreaterThan(7700)
 		expect(d).toBeLessThan(7900)
 	})
+
 	test("identity is exactly 0", () => {
 		expect(haversineKm(48.85, 2.34, 48.85, 2.34)).toBe(0)
 	})
@@ -147,6 +151,7 @@ describe("bboxAround (sanity)", () => {
 		expect(b.maxLon - b.minLon).toBeGreaterThan(2.6)
 		expect(b.maxLon - b.minLon).toBeLessThan(2.9)
 	})
+
 	test("doesn't divide-by-zero at the pole", () => {
 		expect(() => bboxAround(90, 0, 100)).not.toThrow()
 		expect(() => bboxAround(-90, 0, 100)).not.toThrow()
@@ -160,6 +165,7 @@ describe("findPlace — proximity boost", () => {
 			placetype: "locality",
 			near: { lat: 48.85, lon: 2.34 },
 		})
+
 		expect(candidates.length).toBeGreaterThanOrEqual(2)
 		expect(candidates[0]?.country).toBe("FR")
 		// Both candidates should carry distanceKm.
@@ -174,6 +180,7 @@ describe("findPlace — proximity boost", () => {
 			placetype: "locality",
 			near: { lat: 32.78, lon: -96.8 },
 		})
+
 		expect(candidates[0]?.country).toBe("US")
 	})
 
@@ -183,6 +190,7 @@ describe("findPlace — proximity boost", () => {
 			placetype: "locality",
 			near: { lat: 48.85, lon: 2.34, maxDistanceKm: 100 },
 		})
+
 		// Only Paris,FR is within 100 km of Paris,FR.
 		expect(candidates.map((c) => c.country)).toEqual(["FR"])
 	})
@@ -195,6 +203,7 @@ describe("findPlace — bbox filter", () => {
 			placetype: "locality",
 			bbox: { minLat: 48, maxLat: 49, minLon: 2, maxLon: 3 },
 		})
+
 		expect(candidates.map((c) => c.country)).toEqual(["FR"])
 	})
 
@@ -204,6 +213,7 @@ describe("findPlace — bbox filter", () => {
 			placetype: "locality",
 			bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 }, // South Atlantic — nothing here
 		})
+
 		expect(candidates).toEqual([])
 	})
 
@@ -213,14 +223,15 @@ describe("findPlace — bbox filter", () => {
 			placetype: "locality",
 			bbox: { minLat: 30, maxLat: 50, minLon: -100, maxLon: 5 },
 		})
-		expect(candidates.length).toBe(2)
+
+		expect(candidates).toHaveLength(2)
 	})
 })
 
 describe("findPlace — backwards compat", () => {
 	test("queries without near/bbox still work (no R*Tree JOIN)", async () => {
 		const candidates = await lookup.findPlace({ text: "London", placetype: "locality" })
-		expect(candidates.length).toBe(1)
+		expect(candidates).toHaveLength(1)
 		expect(candidates[0]?.country).toBe("GB")
 		expect(candidates[0]?.distanceKm).toBeUndefined()
 	})
@@ -228,6 +239,7 @@ describe("findPlace — backwards compat", () => {
 	test("near + bbox without R*Tree (legacy DB) is silently ignored; no crash, no proximity filter", async () => {
 		// Simulate an older DB that has FTS5 but NOT the R*Tree bbox index (built before this PR).
 		const db = buildFixtureDB()
+
 		db.exec(`
 			CREATE VIRTUAL TABLE place_search USING fts5(
 				wof_id UNINDEXED, name, alt_names,
@@ -235,6 +247,7 @@ describe("findPlace — backwards compat", () => {
 			);
 			INSERT INTO place_search (wof_id, name, alt_names) SELECT id, name, '' FROM spr;
 		`)
+
 		const oldLookup = new WOFSqlitePlaceLookup({ database: db })
 
 		try {
@@ -245,8 +258,9 @@ describe("findPlace — backwards compat", () => {
 				placetype: "locality",
 				bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 },
 			})
+
 			// Without the bbox filter (silently dropped) all Parises are returned.
-			expect(all.length).toBe(2)
+			expect(all).toHaveLength(2)
 
 			// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree because the
 			// haversine math runs on each row's centroid columns.
@@ -255,6 +269,7 @@ describe("findPlace — backwards compat", () => {
 				placetype: "locality",
 				near: { lat: 48.85, lon: 2.34 },
 			})
+
 			expect(near[0]?.country).toBe("FR")
 			expect(near[0]?.distanceKm).toBeCloseTo(0, 0)
 		} finally {

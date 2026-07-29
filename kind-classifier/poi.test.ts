@@ -10,24 +10,26 @@ import { classifyKind, createKindClassifier } from "./index.ts"
 import { matchPOISubject, type POIPhraseLookup } from "./poi.ts"
 import type { LocaleHint } from "./types.ts"
 
-/** Stub lexicon: knows `hospital` and the two-token `drinking fountain`. */
+/**
+ * Stub lexicon: knows `hospital` and the two-token `drinking fountain`.
+ */
 const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
 
 	if (norm === "hospital") {
-		return [{ kind: "category", categoryID: "hospital", matchedPhrase: "hospital", confidence: 1.0 }]
+		return [{ kind: "category", categoryID: "hospital", matchedPhrase: "hospital", confidence: 1 }]
 	}
 
 	if (norm === "drinking fountain") {
-		return [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1.0 }]
+		return [{ kind: "category", categoryID: "drinking_water", matchedPhrase: "drinking fountain", confidence: 1 }]
 	}
 
 	if (norm === "walk in clinic") {
-		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1.0 }]
+		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1 }]
 	}
 
 	if (norm === "chevron") {
-		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1.0 }]
+		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1 }]
 	}
 
 	return []
@@ -36,6 +38,7 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 const LOCALE: LocaleHint = { locale: "en-US", confidence: 1, alternatives: [], source: "caller" }
 
 const input = (normalized: string) => ({ raw: normalized, normalized })
+
 const shape = (segments?: string[]) => ({
 	knownFormats: [],
 	...(segments ? { segments: segments.map((body, index) => ({ body, index })) } : {}),
@@ -73,13 +76,15 @@ describe("matchPOISubject", () => {
 
 	it("carries a brand hit's kind + wikidata through opaquely (mechanics don't special-case brand)", () => {
 		const m = matchPOISubject("chevron near Houston TX", "en-US", LOOKUP)
+
 		expect(m?.match).toEqual({
 			kind: "brand",
 			categoryID: "Chevron",
 			wikidata: "Q319642",
 			matchedPhrase: "chevron",
-			confidence: 1.0,
+			confidence: 1,
 		})
+
 		expect(m?.remainder).toBe("Houston TX")
 	})
 })
@@ -98,6 +103,7 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	// Fixed subject lexicon: hits only these short leading phrases. The WHOLE inputs below are longer (they carry the
 	// place), so the whole-input path misses and the separator scan runs — surfacing the split point itself.
 	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
+
 	const subjectLookup: POIPhraseLookup = (phrase) => {
 		const t = phrase.trim().toLowerCase()
 
@@ -138,6 +144,7 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 
 	it("resolves the whole input when it hits, without scanning for a separator", () => {
 		const m = matchPOISubject("cafe", "en-US", subjectLookup)
+
 		expect(m).toEqual({
 			match: { kind: "category", categoryID: "cafe", matchedPhrase: "cafe", confidence: 1 },
 			subject: "cafe",
@@ -206,6 +213,7 @@ describe("createKindClassifier with a poi lexicon", () => {
 			shape(["hospital", " 350 5th Ave", " New York", " NY 10118"]),
 			LOCALE
 		)
+
 		expect(result.kind).not.toBe("poi_query")
 	})
 

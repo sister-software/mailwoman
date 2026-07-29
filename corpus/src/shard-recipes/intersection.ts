@@ -51,16 +51,20 @@ interface County {
 	state: string
 	regime: string
 }
+
 const TRAIN_COUNTIES: readonly County[] = [
 	{ fips: "17031", state: "IL", regime: "grid-city" },
 	{ fips: "34027", state: "NJ", regime: "suburb" },
 ]
+
 const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime: "rural" }]
 
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
 const OA_COOK = { zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv" }
 
-/** One real crossing extracted from a county's TIGER EDGES shapefile. */
+/**
+ * One real crossing extracted from a county's TIGER EDGES shapefile.
+ */
 interface Crossing {
 	a: string
 	b: string
@@ -79,6 +83,7 @@ interface Form {
 	w: number
 	render: (a: string, b: string) => string
 }
+
 const FORMS: readonly Form[] = [
 	{ id: "amp", w: 0.2, render: (a, b) => `${a} & ${b}` },
 	{ id: "and", w: 0.2, render: (a, b) => `${a} and ${b}` },
@@ -100,6 +105,7 @@ interface Tail {
 	id: string
 	w: number
 }
+
 const TAILS: readonly Tail[] = [
 	{ id: "bare", w: 0.55 },
 	{ id: "region", w: 0.16 },
@@ -113,6 +119,7 @@ interface Casing {
 	w: number
 	apply: (s: string) => string
 }
+
 const CASES: readonly Casing[] = [
 	{ id: "as-is", w: 0.82, apply: (s) => s },
 	{ id: "upper", w: 0.12, apply: (s) => s.toUpperCase() },
@@ -131,7 +138,9 @@ const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"]
  */
 const BAD_NAME = /[,&@/]|\b(and|at)\b/i
 
-/** Punctuation a connector form may leave between spans (besides whitespace): `, & @ /`. */
+/**
+ * Punctuation a connector form may leave between spans (besides whitespace): `, & @ /`.
+ */
 const CONNECTOR_PUNCT_RE = /^[\s,&@/]*$/
 
 function weightedPick<T extends { w: number }>(items: readonly T[], random: () => number): T {
@@ -144,10 +153,12 @@ function weightedPick<T extends { w: number }>(items: readonly T[], random: () =
 		if (r <= 0) return item
 	}
 
-	return items[items.length - 1]!
+	return items.at(-1)!
 }
 
-/** Minimal RFC-4180-ish splitter (handles quoted fields) — same as the affix builder. */
+/**
+ * Minimal RFC-4180-ish splitter (handles quoted fields) — same as the affix builder.
+ */
 function splitCSV(line: string): string[] {
 	const out: string[] = []
 	let cur = ""
@@ -160,6 +171,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -176,15 +188,20 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
 }
 
-/** Order-insensitive crossing key, for eval-leakage exclusion + pair dedup. */
-const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].sort().join("\x1f")
+/**
+ * Order-insensitive crossing key, for eval-leakage exclusion + pair dedup.
+ */
+const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].toSorted().join("\u001F")
 
-/** Load the eval's crossings so neither train nor golden ever sees them. */
+/**
+ * Load the eval's crossings so neither train nor golden ever sees them.
+ */
 function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
 	const nodes = new Set<number>()
 	const pairs = new Set<string>()
@@ -217,6 +234,7 @@ async function extractCrossings(
 	seed: number
 ): Promise<Crossing[]> {
 	const shp = `${edgesDir}/tl_2023_${county.fips}_edges.shp`
+
 	const result = await db.runAndReadAll(`
 		WITH incidence AS (
 			SELECT TNIDF AS node, FULLNAME AS name, ZIPL AS zip
@@ -238,6 +256,7 @@ async function extractCrossings(
 		WHERE len(names[1]) >= 6 AND len(names[2]) >= 6
 		ORDER BY h
 	`)
+
 	const out: Crossing[] = []
 
 	for (const r of result.getRowObjects()) {
@@ -254,7 +273,9 @@ async function extractCrossings(
 	return out
 }
 
-/** ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings). */
+/**
+ * ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings).
+ */
 function buildZipCityMap(): Map<string, string> {
 	const r = spawnSync("unzip", ["-p", OA_COOK.zip, OA_COOK.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
@@ -263,6 +284,7 @@ function buildZipCityMap(): Map<string, string> {
 
 		return new Map()
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return new Map()
@@ -284,8 +306,10 @@ function buildZipCityMap(): Map<string, string> {
 		if (!byCity) {
 			counts.set(zip, (byCity = new Map()))
 		}
+
 		byCity.set(city, (byCity.get(city) ?? 0) + 1)
 	}
+
 	const map = new Map<string, string>()
 
 	for (const [zip, byCity] of counts) {
@@ -392,7 +416,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		}
 	}
 
-	if (errors.length > 0) return errors
+	if (errors.length) return errors
 
 	const compCount = Object.keys(components).length
 
@@ -407,8 +431,10 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 
 		if (indices.length !== 1) {
 			errors.push(`${tag}: expected 1 span, got ${indices.length}`)
+
 			continue
 		}
+
 		const idx = indices[0]!
 		const got = raw.slice(span_starts[idx]!, span_ends[idx]!)
 
@@ -425,6 +451,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		if (span_starts[i]! > cursor) {
 			uncovered.push(raw.slice(cursor, span_starts[i]!))
 		}
+
 		cursor = span_ends[i]!
 	}
 
@@ -440,7 +467,8 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 				errors.push(`illegal uncovered word "${word}"`)
 			}
 		}
-		const punctOnly = segment.replace(/[\p{L}\p{N}]+/gu, "")
+
+		const punctOnly = segment.replaceAll(/[\p{L}\p{N}]+/gu, "")
 
 		if (!CONNECTOR_PUNCT_RE.test(punctOnly)) {
 			errors.push(`illegal uncovered punctuation in "${segment}"`)
@@ -450,6 +478,10 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 	return errors
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const intersectionRecipe: ShardRecipe = {
 	name: "intersection",
 	description: "Real-pair intersection rows (US): TIGER 2023 EDGES crossings → audited intersection_a/b labels",
@@ -458,11 +490,12 @@ export const intersectionRecipe: ShardRecipe = {
 	async run(opts, write) {
 		// Legacy build-intersection-shard.mjs seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
-		const count = opts.count ?? 40000
+		const count = opts.count ?? 40_000
 		const source = opts.sourceName ?? "synth-intersection"
 		const edgesDir = opts.edgesDir ?? "/tmp/tiger-edges"
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES
 		const exclusions = readEvalExclusions()
+
 		console.error(`  eval exclusions: ${exclusions.nodes.size} nodes, ${exclusions.pairs.size} pairs`)
 
 		const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -484,26 +517,32 @@ export const intersectionRecipe: ShardRecipe = {
 
 				if (exclusions.nodes.has(c.node) || exclusions.pairs.has(key)) {
 					stats.evalExcluded++
+
 					continue
 				}
 
 				if (BAD_NAME.test(c.a) || BAD_NAME.test(c.b) || c.a.includes(c.b) || c.b.includes(c.a)) {
 					stats.badName++
+
 					continue
 				}
 
 				if (seenPairs.has(key)) {
 					stats.dupPair++
+
 					continue
 				}
+
 				seenPairs.add(key)
 				pool.push(c)
+
 				kept++
 			}
+
 			console.error(`  ${county.fips} (${county.state}, ${county.regime}): ${crossings.length} crossings, ${kept} kept`)
 		}
 
-		if (pool.length === 0) {
+		if (!pool.length) {
 			throw new Error(`No crossings found — are the TIGER EDGES shapefiles present in ${edgesDir}?`)
 		}
 
@@ -531,6 +570,7 @@ export const intersectionRecipe: ShardRecipe = {
 
 			if (seenRaw.has(raw)) {
 				skipped++
+
 				continue
 			}
 
@@ -542,7 +582,9 @@ export const intersectionRecipe: ShardRecipe = {
 				caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
 				countyCounts[crossing.fips] = (countyCounts[crossing.fips] ?? 0) + 1
 				usedCrossings.add(crossing.node)
+
 				emitted++
+
 				continue
 			}
 
@@ -556,18 +598,22 @@ export const intersectionRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
 			}
+
 			// Verbatim-only alignment: raw is built from the component values, so a fuzzy fallback could
 			// only ever mislabel (e.g. claim a lookalike window for a near-duplicate street).
 			const aligned = alignRow(canonical, { maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			const violations = auditRow(aligned.row, components)
 
-			if (violations.length > 0) {
+			if (violations.length) {
 				auditErrors.push({ raw, violations })
+
 				continue
 			}
 
@@ -582,6 +628,7 @@ export const intersectionRecipe: ShardRecipe = {
 			if (samples.length < FORMS.length && !samples.some((s) => s.form === formID)) {
 				samples.push({ form: formID, raw, tokens: aligned.row.tokens, labels: aligned.row.labels })
 			}
+
 			emitted++
 		}
 
@@ -599,7 +646,9 @@ export const intersectionRecipe: ShardRecipe = {
 			source: "TIGER2023 EDGES via DuckDB ST_Read; node = 2 distinct S1* FULLNAMEs; eval crossings excluded",
 			samples,
 		}
+
 		writeFileSync(opts.output.replace(/\.jsonl$/, ".report.json"), JSON.stringify(report, null, "\t"))
+
 		console.error(
 			`Done: emitted ${emitted} rows (skipped ${skipped}) from ${usedCrossings.size}/${pool.length} real crossings. → ${opts.output}\n` +
 				`  forms: ${JSON.stringify(formCounts)}\n` +
@@ -608,7 +657,7 @@ export const intersectionRecipe: ShardRecipe = {
 				`  audit: ${auditErrors.length} violation(s)`
 		)
 
-		if (auditErrors.length > 0) {
+		if (auditErrors.length) {
 			throw new Error(`AUDIT FAILED — first violation: ${JSON.stringify(auditErrors[0])}`)
 		}
 

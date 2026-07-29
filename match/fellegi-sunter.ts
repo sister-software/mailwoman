@@ -27,27 +27,47 @@
 
 import { nameSimilarity } from "./comparators.ts"
 
-/** One agreement level of a comparison, with its match / non-match probabilities. */
+/**
+ * One agreement level of a comparison, with its match / non-match probabilities.
+ */
 export interface ComparisonLevel {
-	/** Human-readable label for debugging (`exact`, `high`, `different`). */
+	/**
+	 * Human-readable label for debugging (`exact`, `high`, `different`).
+	 */
 	label: string
-	/** P(a pair lands in this level | it is a true match). A measure of data quality. */
+	/**
+	 * P(a pair lands in this level | it is a true match). A measure of data quality.
+	 */
 	m: number
-	/** P(a pair lands in this level | it is NOT a match). A measure of coincidence / cardinality. */
+	/**
+	 * P(a pair lands in this level | it is NOT a match). A measure of coincidence / cardinality.
+	 */
 	u: number
-	/** For similarity-driven comparisons: the minimum similarity (inclusive) to qualify. */
+	/**
+	 * For similarity-driven comparisons: the minimum similarity (inclusive) to qualify.
+	 */
 	minSimilarity?: number
-	/** For distance-driven comparisons: the maximum distance in km (inclusive) to qualify. */
+	/**
+	 * For distance-driven comparisons: the maximum distance in km (inclusive) to qualify.
+	 */
 	maxKm?: number
 }
 
-/** A per-field comparison: pull a value from each record and assign an agreement level. */
+/**
+ * A per-field comparison: pull a value from each record and assign an agreement level.
+ */
 export interface Comparison<R> {
-	/** Field name, for attribution. */
+	/**
+	 * Field name, for attribution.
+	 */
 	name: string
-	/** Levels ordered highest agreement → lowest (`exact` first, `different` last). */
+	/**
+	 * Levels ordered highest agreement → lowest (`exact` first, `different` last).
+	 */
 	levels: ComparisonLevel[]
-	/** Index into {@link levels}, or `-1` when either value is missing (no evidence → weight 0). */
+	/**
+	 * Index into {@link levels}, or `-1` when either value is missing (no evidence → weight 0).
+	 */
 	assess(a: R, b: R): number
 	/**
 	 * Optional term-frequency adjustment: on the levels it names, replace the level's average `u` with the agreeing
@@ -64,46 +84,74 @@ export interface Comparison<R> {
  * {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare value can't produce an unbounded boost.
  */
 export interface TermFrequencyAdjustment<R> {
-	/** Relative frequency of a value in the data, in (0, 1]. Typically computed on-the-fly. */
+	/**
+	 * Relative frequency of a value in the data, in (0, 1]. Typically computed on-the-fly.
+	 */
 	frequency(value: string): number
-	/** The level indices the adjustment applies to (typically just the exact level). */
+	/**
+	 * The level indices the adjustment applies to (typically just the exact level).
+	 */
 	levels: ReadonlySet<number>
-	/** The agreeing value to look up for a pair (a normalized field value), or null to skip. */
+	/**
+	 * The agreeing value to look up for a pair (a normalized field value), or null to skip.
+	 */
 	value(a: R, b: R): string | null | undefined
-	/** Scale the adjustment in [0, 1]. Default 1. */
+	/**
+	 * Scale the adjustment in [0, 1]. Default 1.
+	 */
 	weight?: number
-	/** Floor for the looked-up frequency, bounding the boost on ultra-rare values. Default 1e-4. */
+	/**
+	 * Floor for the looked-up frequency, bounding the boost on ultra-rare values. Default 1e-4.
+	 */
 	minimumFrequency?: number
 }
 
-/** A Fellegi-Sunter model: the field comparisons plus the prior match rate `λ`. */
+/**
+ * A Fellegi-Sunter model: the field comparisons plus the prior match rate `λ`.
+ */
 export interface FellegiSunterModel<R> {
 	comparisons: Comparison<R>[]
-	/** Prior probability that two records drawn at random are a match. */
+	/**
+	 * Prior probability that two records drawn at random are a match.
+	 */
 	lambda: number
 }
 
-/** The scored outcome for one record pair. */
+/**
+ * The scored outcome for one record pair.
+ */
 export interface PairScore {
-	/** Total match weight in bits (`log2` odds). */
+	/**
+	 * Total match weight in bits (`log2` odds).
+	 */
 	weight: number
-	/** Match probability in [0, 1]. */
+	/**
+	 * Match probability in [0, 1].
+	 */
 	probability: number
-	/** Per-field breakdown — what drove the score. */
+	/**
+	 * Per-field breakdown — what drove the score.
+	 */
 	contributions: Array<{ name: string; level: string | null; weight: number }>
 }
 
-/** The terminal decision for a pair under upper / lower match-weight thresholds. */
+/**
+ * The terminal decision for a pair under upper / lower match-weight thresholds.
+ */
 export type MatchDecision = "match" | "review" | "non-match"
 
-/** The Bayes-factor weight of a single level, in bits: `log2(m / u)`. */
+/**
+ * The Bayes-factor weight of a single level, in bits: `log2(m / u)`.
+ */
 export function levelWeight(level: ComparisonLevel): number {
 	if (level.u <= 0) return level.m > 0 ? Infinity : 0
 
 	return Math.log2(level.m / level.u)
 }
 
-/** The prior match weight in bits: `log2(λ / (1 - λ))`. */
+/**
+ * The prior match weight in bits: `log2(λ / (1 - λ))`.
+ */
 export function priorWeight(lambda: number): number {
 	if (lambda <= 0) return -Infinity
 
@@ -112,7 +160,9 @@ export function priorWeight(lambda: number): number {
 	return Math.log2(lambda / (1 - lambda))
 }
 
-/** Convert a total match weight (bits) to a probability, numerically stable for extreme weights. */
+/**
+ * Convert a total match weight (bits) to a probability, numerically stable for extreme weights.
+ */
 export function probabilityFromWeight(weight: number): number {
 	return 1 / (1 + 2 ** -weight)
 }
@@ -125,7 +175,9 @@ export function probabilityFromWeight(weight: number): number {
 export function similarityComparison<R>(config: {
 	name: string
 	extract: (record: R) => string | null | undefined
-	/** Defaults to {@link nameSimilarity}. */
+	/**
+	 * Defaults to {@link nameSimilarity}.
+	 */
 	similarity?: (a: string, b: string) => number
 	levels: ComparisonLevel[]
 }): Comparison<R> {
@@ -151,7 +203,9 @@ export function similarityComparison<R>(config: {
 	}
 }
 
-/** Score a record pair: total match weight, probability, and the per-field contributions. */
+/**
+ * Score a record pair: total match weight, probability, and the per-field contributions.
+ */
 export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScore {
 	let weight = priorWeight(model.lambda)
 	const contributions: PairScore["contributions"] = []
@@ -161,8 +215,10 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 
 		if (index < 0) {
 			contributions.push({ name: comparison.name, level: null, weight: 0 })
+
 			continue
 		}
+
 		const level = comparison.levels[index]!
 		let w = levelWeight(level)
 

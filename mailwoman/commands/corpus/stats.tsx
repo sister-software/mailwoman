@@ -23,6 +23,7 @@ export { OptionsSchema as options }
 const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
+
 		await buildCorpusStats({
 			shardsArg: options.shards,
 			outputPath: options.output,

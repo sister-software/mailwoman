@@ -15,6 +15,9 @@
 
 import type { LocaleProfile } from "../locale.ts"
 
+/**
+ * Japanese locale profile. Note the reversed hierarchy: Japan addresses run largest-to-smallest.
+ */
 export const jaJP: LocaleProfile = {
 	locale: "ja-JP",
 	ruleClassifiers: [],

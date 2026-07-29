@@ -11,6 +11,21 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
+/**
+ * Bits packed into each base-32 geohash character.
+ */
+const GEOHASH_BITS_PER_CHAR = 5
+
+/**
+ * Southern limit of the MGRS lettered bands. Below it MGRS is undefined and the UPS grid applies instead.
+ */
+const MGRS_LAT_MIN = -80
+
+/**
+ * Northern limit of the MGRS lettered bands. Band X is extended to 84°, so there is no 84–90° band.
+ */
+const MGRS_LAT_MAX = 84
+
 const toRad = (d: number): number => (d * Math.PI) / 180
 const toDeg = (r: number): number => (r * 180) / Math.PI
 
@@ -28,14 +43,18 @@ function dmsComponent(value: number, hemispheres: [string, string], secondsDp = 
 	return `${degrees}° ${minutes}′ ${seconds.toFixed(secondsDp)}″ ${hemisphere}`
 }
 
-/** Degrees-minutes-seconds for a coordinate. */
+/**
+ * Degrees-minutes-seconds for a coordinate.
+ */
 export function toDMS(lat: number, lon: number): { lat: string; lon: string } {
 	return { lat: dmsComponent(lat, ["N", "S"]), lon: dmsComponent(lon, ["E", "W"]) }
 }
 
-const WEB_MERCATOR_R = 6378137
+const WEB_MERCATOR_R = 6_378_137
 
-/** Web Mercator (EPSG:3857) projection of a coordinate. */
+/**
+ * Web Mercator (EPSG:3857) projection of a coordinate.
+ */
 export function toMercator(lat: number, lon: number): { x: number; y: number } {
 	const clampedLat = Math.max(-85.05112878, Math.min(85.05112878, lat))
 
@@ -47,7 +66,9 @@ export function toMercator(lat: number, lon: number): { x: number; y: number } {
 
 const KAABA = { lat: 21.4225, lon: 39.8262 }
 
-/** Initial great-circle bearing (degrees from true north) from a coordinate toward the Kaaba. */
+/**
+ * Initial great-circle bearing (degrees from true north) from a coordinate toward the Kaaba.
+ */
 export function qiblaBearing(lat: number, lon: number): number {
 	const phi1 = toRad(lat)
 	const phi2 = toRad(KAABA.lat)
@@ -60,7 +81,9 @@ export function qiblaBearing(lat: number, lon: number): number {
 
 const GEOHASH_BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
-/** Encode a coordinate as a geohash of the given precision (default 9 ≈ 4.8 m). */
+/**
+ * Encode a coordinate as a geohash of the given precision (default 9 ≈ 4.8 m).
+ */
 export function toGeohash(lat: number, lon: number, precision = 9): string {
 	let latMin = -90
 	let latMax = 90
@@ -93,9 +116,10 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 				latMax = mid
 			}
 		}
+
 		evenBit = !evenBit
 
-		if (++bit === 5) {
+		if (++bit === GEOHASH_BITS_PER_CHAR) {
 			hash += GEOHASH_BASE32[bits]
 			bit = 0
 			bits = 0
@@ -107,10 +131,13 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 
 const A_CODE = "A".charCodeAt(0)
 
-/** Maidenhead grid locator (default 6-char: field uppercase, square digits, subsquare lowercase). */
+/**
+ * Maidenhead grid locator (default 6-char: field uppercase, square digits, subsquare lowercase).
+ */
 export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	const lonAdj = lon + 180
 	const latAdj = lat + 90
+
 	const out = [
 		String.fromCharCode(A_CODE + Math.floor(lonAdj / 20)),
 		String.fromCharCode(A_CODE + Math.floor(latAdj / 10)),
@@ -123,8 +150,8 @@ export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	return out.slice(0, pairs * 2).join("")
 }
 
-const J2000 = 2451545.0
-const unixEpochJulian = 2440587.5
+const J2000 = 2_451_545
+const unixEpochJulian = 2_440_587.5
 
 /**
  * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds, via the standard sunrise equation.
@@ -136,7 +163,7 @@ export function sunTimes(
 	lon: number,
 	date: Date = new Date()
 ): { rise?: number; set?: number; noon: number } {
-	const julian = date.getTime() / 86400000 + unixEpochJulian
+	const julian = date.getTime() / 86_400_000 + unixEpochJulian
 	const n = Math.round(julian - J2000 - 0.0009 + lon / 360)
 	const meanSolarTime = n + 0.0009 - lon / 360
 	const M = (357.5291 + 0.98560028 * meanSolarTime) % 360
@@ -146,9 +173,11 @@ export function sunTimes(
 	const transit = J2000 + meanSolarTime + 0.0053 * Math.sin(Mr) - 0.0069 * Math.sin(2 * lambda)
 	const declination = Math.asin(Math.sin(lambda) * Math.sin(toRad(23.4397)))
 	const latR = toRad(lat)
+
 	const cosH =
 		(Math.sin(toRad(-0.833)) - Math.sin(latR) * Math.sin(declination)) / (Math.cos(latR) * Math.cos(declination))
-	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86400)
+
+	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86_400)
 	const noon = toEpoch(transit)
 
 	if (cosH >= 1 || cosH <= -1) return { noon }
@@ -157,8 +186,10 @@ export function sunTimes(
 	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
 }
 
-// MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
-const UTM_A = 6378137.0
+/**
+ * MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
+ */
+const UTM_A = 6_378_137
 const UTM_F = 1 / 298.257223563
 const UTM_K0 = 0.9996
 const UTM_E2 = UTM_F * (2 - UTM_F)
@@ -172,15 +203,18 @@ function latLonToUtm(lat: number, lon: number): { zone: number; easting: number;
 	const T = Math.tan(phi) ** 2
 	const C = UTM_EP2 * Math.cos(phi) ** 2
 	const A = Math.cos(phi) * (toRad(lon) - lon0)
+
 	const M =
 		UTM_A *
 		((1 - UTM_E2 / 4 - (3 * UTM_E2 ** 2) / 64 - (5 * UTM_E2 ** 3) / 256) * phi -
 			((3 * UTM_E2) / 8 + (3 * UTM_E2 ** 2) / 32 + (45 * UTM_E2 ** 3) / 1024) * Math.sin(2 * phi) +
 			((15 * UTM_E2 ** 2) / 256 + (45 * UTM_E2 ** 3) / 1024) * Math.sin(4 * phi) -
 			((35 * UTM_E2 ** 3) / 3072) * Math.sin(6 * phi))
+
 	const easting =
 		UTM_K0 * N * (A + ((1 - T + C) * A ** 3) / 6 + ((5 - 18 * T + T ** 2 + 72 * C - 58 * UTM_EP2) * A ** 5) / 120) +
-		500000
+		500_000
+
 	let northing =
 		UTM_K0 *
 		(M +
@@ -191,7 +225,7 @@ function latLonToUtm(lat: number, lon: number): { zone: number; easting: number;
 					((61 - 58 * T + T ** 2 + 600 * C - 330 * UTM_EP2) * A ** 6) / 720))
 
 	if (lat < 0) {
-		northing += 10000000
+		northing += 10_000_000
 	}
 
 	return { zone, easting, northing }
@@ -205,23 +239,26 @@ const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
  * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside MGRS bands (±80°/84°).
  */
 export function toMGRS(lat: number, lon: number): string {
-	if (lat < -80 || lat > 84) return ""
+	if (lat < MGRS_LAT_MIN || lat > MGRS_LAT_MAX) return ""
 	const band = MGRS_LAT_BANDS[Math.floor((lat + 80) / 8)]!
 	const { zone, easting, northing } = latLonToUtm(lat, lon)
-	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100000) - 1]!
-	let row = Math.floor(northing / 100000) % 20
+	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100_000) - 1]!
+	let row = Math.floor(northing / 100_000) % 20
 
 	if (zone % 2 === 0) {
 		row = (row + 5) % 20
 	}
+
 	const rowLetter = MGRS_ROW_LETTERS[row]!
-	const e = String(Math.floor(easting % 100000)).padStart(5, "0")
-	const n = String(Math.floor(northing % 100000)).padStart(5, "0")
+	const e = String(Math.floor(easting % 100_000)).padStart(5, "0")
+	const n = String(Math.floor(northing % 100_000)).padStart(5, "0")
 
 	return `${zone}${band}${colLetter}${rowLetter}${e}${n}`
 }
 
-/** Fill the coordinate-format slice of an {@link AnnotationSet} from a `{lat, lon}`. */
+/**
+ * Fill the coordinate-format slice of an {@link AnnotationSet} from a `{lat, lon}`.
+ */
 export const coordinateFormatAnnotator: Annotator = ({ lat, lon, date }): Partial<AnnotationSet> => ({
 	dms: toDMS(lat, lon),
 	geohash: toGeohash(lat, lon),

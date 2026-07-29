@@ -13,11 +13,11 @@ describe("lookupPOIBrand", () => {
 		const matches = lookupPOIBrand("chevron")
 		expect(matches[0]?.brand.wikidata).toBe("Q319642")
 		expect(matches[0]?.brand.name).toBe("Chevron")
-		expect(matches[0]?.confidence).toBe(1.0)
+		expect(matches[0]?.confidence).toBe(1)
 	})
 
 	it("matches a known alias variant", () => {
-		const [target] = getAllBrands().filter((b) => b.aliases.length > 0)
+		const target = getAllBrands().find((b) => b.aliases.length)
 		expect(target, "expected at least one committed brand with aliases").toBeDefined()
 
 		const alias = target!.aliases[0]!

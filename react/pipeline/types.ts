@@ -13,7 +13,9 @@ import type { ReactNode } from "react"
 
 import type { KindBadgeResult } from "../common/KindBadge.tsx"
 
-/** One decoded component, as the table + span views render it. Offsets index into `ParseResult.input`. */
+/**
+ * One decoded component, as the table + span views render it. Offsets index into `ParseResult.input`.
+ */
 export interface ParsedComponent {
 	tag: string
 	value?: unknown
@@ -22,7 +24,9 @@ export interface ParsedComponent {
 	end?: number
 }
 
-/** A resolved gazetteer place, projected to what the "Resolved place" panel + copy payload need. */
+/**
+ * A resolved gazetteer place, projected to what the "Resolved place" panel + copy payload need.
+ */
 export interface ResolvedPlaceView {
 	id: number
 	name: string
@@ -32,7 +36,9 @@ export interface ResolvedPlaceView {
 	score: number
 }
 
-/** An additional admin role a resolved place also fulfils (the dual-role / city-state relation, #402). */
+/**
+ * An additional admin role a resolved place also fulfils (the dual-role / city-state relation, #402).
+ */
 export interface DualRoleView {
 	id: number
 	name: string
@@ -41,14 +47,18 @@ export interface DualRoleView {
 	role: string
 }
 
-/** Per-stage wall-clock (ms) for one parse. `resolve` is absent when the lookup is skipped. */
+/**
+ * Per-stage wall-clock (ms) for one parse. `resolve` is absent when the lookup is skipped.
+ */
 export interface StageTiming {
 	shape: number
 	classify: number
 	resolve?: number
 }
 
-/** FST gazetteer-prior provenance, as the "FST prior" disclosure renders it. */
+/**
+ * FST gazetteer-prior provenance, as the "FST prior" disclosure renders it.
+ */
 export interface FSTProvenance {
 	builtAt: string
 	stateCount: number
@@ -56,10 +66,14 @@ export interface FSTProvenance {
 	importanceMatches: number
 }
 
-/** The presentational projection of one parse+resolve. The host's `runParse` produces it. */
+/**
+ * The presentational projection of one parse+resolve. The host's `runParse` produces it.
+ */
 export interface ParseResult {
 	input: string
-	/** Opaque hierarchy — handed straight to a host-injected tree/visualizer panel. */
+	/**
+	 * Opaque hierarchy — handed straight to a host-injected tree/visualizer panel.
+	 */
 	tree: unknown
 	nodes: ParsedComponent[]
 	kindResult?: KindBadgeResult
@@ -71,7 +85,9 @@ export interface ParseResult {
 	dualRoles?: DualRoleView[]
 }
 
-/** Bundle-load progress surfaced before the runtime is `ready`. */
+/**
+ * Bundle-load progress surfaced before the runtime is `ready`.
+ */
 export interface PipelineLoadingState {
 	progress?: string
 	stepLabels: string[]
@@ -83,15 +99,25 @@ export interface PipelineLoadingState {
  * progress + errors. This package never imports the model or gazetteer — it only calls this contract.
  */
 export interface PipelineRuntime {
-	/** Whether the model/gazetteer bundle is ready to parse. */
+	/**
+	 * Whether the model/gazetteer bundle is ready to parse.
+	 */
 	ready: boolean
-	/** Execute a full parse+resolve, reporting stage progress via `onStage` (0-based index into `parseStageLabels`). */
+	/**
+	 * Execute a full parse+resolve, reporting stage progress via `onStage` (0-based index into `parseStageLabels`).
+	 */
 	runParse: (input: string, hooks: { onStage: (stage: number) => void }) => Promise<ParseResult>
-	/** Per-parse progress labels (differ by whether a gazetteer lookup is wired). */
+	/**
+	 * Per-parse progress labels (differ by whether a gazetteer lookup is wired).
+	 */
 	parseStageLabels: string[]
-	/** Bundle-load progress (before `ready`). */
+	/**
+	 * Bundle-load progress (before `ready`).
+	 */
 	loading?: PipelineLoadingState | null
-	/** Error surfaced by the bundle load, distinct from a per-parse error. */
+	/**
+	 * Error surfaced by the bundle load, distinct from a per-parse error.
+	 */
 	errorMessage?: string | null
 }
 
@@ -101,18 +127,32 @@ export interface PipelineRuntime {
  * components nor their heavy data types.
  */
 export interface PipelinePanels {
-	/** Rendered above the form (e.g. the docs "About this demo"). */
+	/**
+	 * Rendered above the form (e.g. the docs "About this demo").
+	 */
 	header?: ReactNode
-	/** Rendered below everything (e.g. a guided tour). */
+	/**
+	 * Rendered below everything (e.g. a guided tour).
+	 */
 	footer?: ReactNode
-	/** Model-version selector, wired to the host's bundle state. */
+	/**
+	 * Model-version selector, wired to the host's bundle state.
+	 */
 	versionControl?: ReactNode
-	/** Backend indicator + WASM toggle. */
+	/**
+	 * Backend indicator + WASM toggle.
+	 */
 	backendControl?: ReactNode
-	/** One-line release blurb. */
+	/**
+	 * One-line release blurb.
+	 */
 	releaseInfo?: ReactNode
-	/** Heavy visualizers (span highlight, tree, timing, BIO, …), rendered from the result. */
+	/**
+	 * Heavy visualizers (span highlight, tree, timing, BIO, …), rendered from the result.
+	 */
 	extras?: (result: ParseResult) => ReactNode
-	/** Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic). */
+	/**
+	 * Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic).
+	 */
 	failure?: (result: ParseResult) => ReactNode
 }

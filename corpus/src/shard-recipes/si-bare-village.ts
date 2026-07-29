@@ -26,6 +26,10 @@
 
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const siBareVillageRecipe: ShardRecipe = {
 	name: "si-bare-village",
 	description: "SI no-street village form (#901 run-2): '«V» «n», «pc» «V»' — the fr-bare-street counter-distribution",
@@ -44,10 +48,13 @@ export const siBareVillageRecipe: ShardRecipe = {
 
 			if (!village || !number || !postcode) {
 				skipped++
+
 				continue
 			}
+
 			const order = read % 3
 			let raw: string
+
 			const components: Record<string, string> = {
 				street: village,
 				house_number: number,
@@ -63,7 +70,9 @@ export const siBareVillageRecipe: ShardRecipe = {
 				components.postcode = postcode
 				raw = `${postcode} ${village}, ${village} ${number}`
 			}
+
 			const source_id = shardSourceID("synth-si-bare-village", { ...components, o: String(order), v: String(read) })
+
 			const canonical = {
 				raw,
 				components,

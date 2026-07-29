@@ -21,7 +21,7 @@ describe("normalizeUkPostcode", () => {
 		expect(normalizeUkPostcode("75008")).toBeNull() // a French code postal
 		expect(normalizeUkPostcode("ABC")).toBeNull()
 		expect(normalizeUkPostcode("")).toBeNull()
-		expect(normalizeUkPostcode(12345)).toBeNull()
+		expect(normalizeUkPostcode(12_345)).toBeNull()
 	})
 })
 

@@ -29,6 +29,12 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, loadManifestEntries, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+const BYTES_PER_KIB = 1024
+
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
@@ -150,15 +156,18 @@ export interface BanManifestEntry {
 
 export type FetchBanOptions = BaseFetchOptions
 
-/** Mimic `numfmt --to=iec` for a friendly byte-size log line. */
+/**
+ * Mimic `numfmt --to=iec` for a friendly byte-size log line.
+ */
 function iec(bytes: number): string {
-	if (bytes < 1024) return String(bytes)
+	if (bytes < BYTES_PER_KIB) return String(bytes)
 	const units = ["K", "M", "G", "T", "P"]
 	let value = bytes / 1024
 	let i = 0
 
-	while (value >= 1024 && i < units.length - 1) {
+	while (value >= BYTES_PER_KIB && i < units.length - 1) {
 		value /= 1024
+
 		i++
 	}
 
@@ -195,7 +204,9 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 
 			if (recordedSha && existingSha === recordedSha) {
 				report?.(`  → already present + sha matches — skipping`)
+
 				skipped++
+
 				continue
 			}
 
@@ -212,40 +223,49 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 				headers: { "Accept-Encoding": "gzip, br" },
 				report,
 			})
-		} catch (err) {
-			report?.(`  ✗ download failed: ${url} (${(err as Error).message})`)
+		} catch (error) {
+			report?.(`  ✗ download failed: ${url} (${(error as Error).message})`)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
 
 		// Guard against truncated 404/error pages.
 		const gzSize = statSync(gzFile).size
 
-		if (gzSize < 1024) {
+		if (gzSize < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${gzSize} bytes) — probable 404 / error page`)
 			await unlink(gzFile)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
 
 		// Decompress in-place; delete the .gz.
 		try {
 			await writeFile(csvFile, gunzipSync(await readFile(gzFile)))
-		} catch (err) {
-			report?.(`  ✗ decompress failed: ${(err as Error).message}`)
+		} catch (error) {
+			report?.(`  ✗ decompress failed: ${(error as Error).message}`)
 			await unlink(gzFile)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
+
 		await unlink(gzFile)
 
 		if (!existsSync(csvFile)) {
 			report?.(`  ✗ decompressed file not found at ${csvFile}`)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
 
@@ -262,6 +282,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		})
 
 		report?.(`  ✓ ${iec(bytes)}  sha256=${sha}`)
+
 		fetched++
 
 		// Be a polite citizen — short pause between requests.
@@ -269,9 +290,10 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 	}
 
 	// Write the consolidated MANIFEST.json (entries sorted by dept_code, codepoint order).
-	const sorted = [...entries.values()].sort((a, b) =>
+	const sorted = [...entries.values()].toSorted((a, b) =>
 		a.dept_code < b.dept_code ? -1 : a.dept_code > b.dept_code ? 1 : 0
 	)
+
 	await writeManifest(manifestPath, sorted)
 	report?.(`Wrote ${manifestPath} with ${sorted.length} entries.`)
 
@@ -280,7 +302,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 	report?.(`skipped:  ${skipped} (already present + sha matched)`)
 	report?.(`failed:   ${failed}`)
 
-	if (failedCodes.length > 0) {
+	if (failedCodes.length) {
 		report?.(`failed codes: ${failedCodes.join(" ")}`)
 	}
 

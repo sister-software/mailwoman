@@ -39,10 +39,22 @@ import { execSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+/**
+ * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
+ */
+const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
+
+/**
+ * Examples printed per finding before the list is truncated.
+ */
+const MAX_LISTED_EXAMPLES = 20
+
 const SEP = ""
 
-// Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure
-// modes surface that the current numbers miss.
+/**
+ * Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure modes surface that the current
+ * numbers miss.
+ */
 const CORPUS_CONFIDENCE_FLOOR = 0.66
 const SHARD_MIN_COUNT = 50
 const CORPUS_MIN_COUNT = 200
@@ -65,17 +77,29 @@ function defaultRulesPath(): string {
 	return fileURLToPath(new URL("../../../src/tools/lint-rules.json", import.meta.url))
 }
 
-/** Options for {@linkcode lintCorpusShard}. */
+/**
+ * Options for {@linkcode lintCorpusShard}.
+ */
 export interface LintCorpusShardOptions {
-	/** The new shard parquet to lint. */
+	/**
+	 * The new shard parquet to lint.
+	 */
 	shardPath: string
-	/** Pre-computed corpus stats JSON (see `corpus-stats.ts`). */
+	/**
+	 * Pre-computed corpus stats JSON (see `corpus-stats.ts`).
+	 */
 	statsPath: string
-	/** Anti-pattern rules JSON. Default: the `lint-rules.json` beside this module. */
+	/**
+	 * Anti-pattern rules JSON. Default: the `lint-rules.json` beside this module.
+	 */
 	rulesPath?: string
-	/** Write the markdown report here as well as stdout. */
+	/**
+	 * Write the markdown report here as well as stdout.
+	 */
 	outMd?: string
-	/** Write a JSON sidecar of the flags + summary here. */
+	/**
+	 * Write a JSON sidecar of the flags + summary here.
+	 */
 	outJson?: string
 }
 
@@ -114,6 +138,7 @@ labels_col = t['labels'].to_pylist()
 for i in range(len(tokens_col)):
     sys.stdout.write(json.dumps({"tokens": tokens_col[i], "labels": labels_col[i]}) + "\\n")
 `
+
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: ShardRow[] = []
 
@@ -145,6 +170,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 	for (const row of rows) {
 		if (row.tokens.length !== row.labels.length) {
 			out.truncatedRows++
+
 			continue
 		}
 
@@ -161,6 +187,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 				labelMap = new Map()
 				out.tokens.set(tk, labelMap)
 			}
+
 			labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
 
 			if (i + 1 < row.tokens.length) {
@@ -172,6 +199,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 					bMap = new Map()
 					out.bigrams.set(bigramKey, bMap)
 				}
+
 				bMap.set(bigramLabel, (bMap.get(bigramLabel) ?? 0) + 1)
 			}
 		}
@@ -203,7 +231,9 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 	return { label: bestLabel, count: bestCount, total, confidence: total === 0 ? 0 : bestCount / total }
 }
 
-/** One lint flag emitted by a check. */
+/**
+ * One lint flag emitted by a check.
+ */
 export interface LintShardFlag {
 	check: string
 	severity: "error" | "warn"
@@ -217,12 +247,16 @@ export interface LintShardFlag {
 	ruleID?: string
 }
 
-/** Findings summary returned by {@linkcode lintCorpusShard}. */
+/**
+ * Findings summary returned by {@linkcode lintCorpusShard}.
+ */
 export interface LintCorpusShardSummary {
 	errors: number
 	warnings: number
 	findings: LintShardFlag[]
-	/** The rendered markdown report (also printed to stdout). */
+	/**
+	 * The rendered markdown report (also printed to stdout).
+	 */
 	report: string
 }
 
@@ -307,6 +341,7 @@ function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): LintShar
 			const renderBigram = bigram.split(SEP).join(" ")
 			const renderShardLabel = shardMaj.label.split(SEP).join(" → ")
 			const renderCorpusLabel = corpusMaj.label.split(SEP).join(" → ")
+
 			flags.push({
 				check: "bigram-collision",
 				severity: "error",
@@ -325,6 +360,7 @@ function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): LintShar
 
 function checkRules(shard: ShardStats, rulesFile: LintRulesFile): LintShardFlag[] {
 	const flags: LintShardFlag[] = []
+
 	const compiled = rulesFile.rules.map((r) => ({
 		rule: r,
 		regex: new RegExp(r.pattern, r.pattern_case_sensitive ? "" : "i"),
@@ -335,7 +371,7 @@ function checkRules(shard: ShardStats, rulesFile: LintRulesFile): LintShardFlag[
 			if (!regex.test(token)) continue
 
 			for (const [label, count] of labelMap) {
-				if (rule.forbidden_labels.includes(label) && count >= 5) {
+				if (rule.forbidden_labels.includes(label) && count >= FORBIDDEN_LABEL_REPORT_THRESHOLD) {
 					flags.push({
 						check: "anti-pattern-rule",
 						severity: rule.severity,
@@ -363,6 +399,7 @@ function checkSanity(shard: ShardStats): LintShardFlag[] {
 			detail: `${shard.truncatedRows} row(s) have tokens.length !== labels.length. Pipeline alignment bug.`,
 		})
 	}
+
 	const allORatio = shard.allORows / Math.max(1, shard.rowCount)
 
 	if (allORatio >= ALL_O_RATIO_CEILING) {
@@ -383,28 +420,29 @@ function renderReport(
 ): string {
 	const errors = flags.filter((f) => f.severity === "error")
 	const warns = flags.filter((f) => f.severity === "warn")
-	const verdict = errors.length === 0 ? "**PASS** ✓" : "**FLAGGED** ⚠"
-	const lines: string[] = []
-	lines.push(`# Corpus Lint: ${verdict}`)
-	lines.push("")
-	lines.push(`- **Shard:** \`${opts.shardPath}\``)
-	lines.push(`- **Corpus stats:** \`${opts.statsPath}\``)
-	lines.push(`- **Rules:** \`${opts.rulesPath}\``)
-	lines.push(`- **Shard rows:** ${shard.rowCount}`)
-	lines.push(`- **Unique tokens:** ${shard.tokens.size}`)
-	lines.push(`- **Unique bigrams:** ${shard.bigrams.size}`)
-	lines.push("")
-	lines.push(
-		`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`
-	)
-	lines.push(`**Warnings:** ${warns.length} (advisory)`)
-	lines.push("")
+	const verdict = !errors.length ? "**PASS** ✓" : "**FLAGGED** ⚠"
 
-	if (flags.length === 0) {
+	const lines: string[] = [
+		`# Corpus Lint: ${verdict}`,
+		"",
+		`- **Shard:** \`${opts.shardPath}\``,
+		`- **Corpus stats:** \`${opts.statsPath}\``,
+		`- **Rules:** \`${opts.rulesPath}\``,
+		`- **Shard rows:** ${shard.rowCount}`,
+		`- **Unique tokens:** ${shard.tokens.size}`,
+		`- **Unique bigrams:** ${shard.bigrams.size}`,
+		"",
+		`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`,
+		`**Warnings:** ${warns.length} (advisory)`,
+		"",
+	]
+
+	if (!flags.length) {
 		lines.push("No anomalies detected.")
 
 		return lines.join("\n")
 	}
+
 	const byCheck = new Map<string, LintShardFlag[]>()
 
 	for (const f of flags) {
@@ -423,16 +461,19 @@ function renderReport(
 			lines.push(`- **[${f.severity.toUpperCase()}]** ${f.detail}`)
 		}
 
-		if (list.length > 20) {
+		if (list.length > MAX_LISTED_EXAMPLES) {
 			lines.push(`- ... and ${list.length - 20} more`)
 		}
+
 		lines.push("")
 	}
 
 	return lines.join("\n")
 }
 
-/** Lint a shard against corpus stats + the anti-pattern rules; print the markdown report to stdout. */
+/**
+ * Lint a shard against corpus stats + the anti-pattern rules; print the markdown report to stdout.
+ */
 export function lintCorpusShard(
 	options: LintCorpusShardOptions,
 	report?: (line: string) => void
@@ -440,6 +481,7 @@ export function lintCorpusShard(
 	const rulesPath = options.rulesPath ?? defaultRulesPath()
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
 	const corpus: CorpusStats = JSON.parse(readFileSync(options.statsPath, "utf8"))
+
 	report?.(
 		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
 	)
@@ -455,6 +497,7 @@ export function lintCorpusShard(
 	const rulesFile: LintRulesFile = JSON.parse(readFileSync(rulesPath, "utf8"))
 
 	report?.(`Running checks...`)
+
 	const flags: LintShardFlag[] = [
 		...checkDistributionOutliers(shard, corpus),
 		...checkLabelVacuum(shard, corpus),
@@ -464,6 +507,7 @@ export function lintCorpusShard(
 	]
 
 	const rendered = renderReport({ shardPath: options.shardPath, statsPath: options.statsPath, rulesPath }, shard, flags)
+
 	console.log(rendered)
 
 	if (options.outMd) {

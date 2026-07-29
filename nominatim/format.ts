@@ -13,7 +13,14 @@ import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwom
 
 import type { NominatimAddressDetails, NominatimResult } from "./engine.ts"
 
-/** A GeoJSON `FeatureCollection` — the `format=geojson` envelope. */
+/**
+ * Arity of a 2D bounding box, as Nominatim reports it.
+ */
+const BBOX_2D_LENGTH = 4
+
+/**
+ * A GeoJSON `FeatureCollection` — the `format=geojson` envelope.
+ */
 export interface NominatimFeatureCollection {
 	type: "FeatureCollection"
 	features: Array<{
@@ -36,16 +43,18 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	for (const r of results) {
 		if (r.lat == null || r.lon == null) continue
 		const { lat, lon, boundingbox, geojson, ...properties } = r
+
 		const feature: NominatimFeatureCollection["features"][number] = {
 			type: "Feature",
 			properties,
 			geometry: geojson ?? { type: "Point", coordinates: [Number(lon), Number(lat)] },
 		}
 
-		if (boundingbox?.length === 4) {
+		if (boundingbox?.length === BBOX_2D_LENGTH) {
 			// boundingbox is [south, north, west, east]; GeoJSON bbox is [west, south, east, north].
 			feature.bbox = [Number(boundingbox[2]), Number(boundingbox[0]), Number(boundingbox[3]), Number(boundingbox[1])]
 		}
+
 		features.push(feature)
 	}
 
@@ -61,18 +70,24 @@ export interface ResolvedAddress {
 	lat: number | null
 	lon: number | null
 	address: NominatimAddressDetails
-	/** Pre-rendered display name; falls back to the address values joined by ", ". */
+	/**
+	 * Pre-rendered display name; falls back to the address values joined by ", ".
+	 */
 	displayName?: string
 	category?: string
 	type?: string
 	importance?: number
 	placeRank?: number
 	boundingbox?: [string, string, string, string]
-	/** A stable id from the resolver (WOF/GERS); a deterministic hash is used when absent. */
+	/**
+	 * A stable id from the resolver (WOF/GERS); a deterministic hash is used when absent.
+	 */
 	placeID?: string | number
 }
 
-/** The attribution string emitted as `licence` (the data sources Mailwoman resolves over). */
+/**
+ * The attribution string emitted as `licence` (the data sources Mailwoman resolves over).
+ */
 export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER"
 
 function stableID(seed: string): number {
@@ -93,6 +108,7 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 	const displayName = r.displayName ?? Object.values(r.address).filter(Boolean).join(", ")
 	const lat = r.lat != null ? String(r.lat) : ""
 	const lon = r.lon != null ? String(r.lon) : ""
+
 	const result: NominatimResult = {
 		place_id: r.placeID ?? stableID(`${lat},${lon},${displayName}`),
 		licence: MAILWOMAN_LICENCE,

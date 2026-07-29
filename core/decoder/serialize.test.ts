@@ -18,6 +18,7 @@ function tok(piece: string, start: number, end: number, label: BIOLabel, confide
 }
 
 const WHITE_HOUSE_RAW = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
+
 const WHITE_HOUSE_TOKENS: DecoderToken[] = [
 	tok("1600", 0, 4, "B-house_number"),
 	tok("Pennsylvania", 5, 17, "B-street"),
@@ -33,6 +34,7 @@ const WHITE_HOUSE_TOKENS: DecoderToken[] = [
 describe("decodeAsJSON (libpostal-compat)", () => {
 	test("flattens to a tag→value map", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+
 		expect(decodeAsJSON(tree)).toEqual({
 			house_number: "1600",
 			street: "Pennsylvania Avenue NW",
@@ -45,12 +47,14 @@ describe("decodeAsJSON (libpostal-compat)", () => {
 	test("first-occurrence wins for repeated tags", () => {
 		// "Springfield IL Springfield MA" → two B-locality
 		const raw = "Springfield IL Springfield MA"
+
 		const tokens: DecoderToken[] = [
 			tok("Springfield", 0, 11, "B-locality"),
 			tok("IL", 12, 14, "B-region"),
 			tok("Springfield", 15, 26, "B-locality"),
 			tok("MA", 27, 29, "B-region"),
 		]
+
 		const tree = buildAddressTree(raw, tokens)
 		const json = decodeAsJSON(tree)
 		// First locality / region encountered in tree walk wins.
@@ -62,6 +66,7 @@ describe("decodeAsJSON (libpostal-compat)", () => {
 describe("decodeAsTuples (order-preserving)", () => {
 	test("returns spans in source order", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+
 		expect(decodeAsTuples(tree)).toEqual([
 			["house_number", "1600"],
 			["street", "Pennsylvania Avenue NW"],
@@ -73,16 +78,18 @@ describe("decodeAsTuples (order-preserving)", () => {
 
 	test("preserves repetition", () => {
 		const raw = "Springfield IL Springfield MA"
+
 		const tokens: DecoderToken[] = [
 			tok("Springfield", 0, 11, "B-locality"),
 			tok("IL", 12, 14, "B-region"),
 			tok("Springfield", 15, 26, "B-locality"),
 			tok("MA", 27, 29, "B-region"),
 		]
+
 		const tree = buildAddressTree(raw, tokens)
 		const tuples = decodeAsTuples(tree)
-		expect(tuples.filter(([t]) => t === "locality").length).toBe(2)
-		expect(tuples.filter(([t]) => t === "region").length).toBe(2)
+		expect(tuples.filter(([t]) => t === "locality")).toHaveLength(2)
+		expect(tuples.filter(([t]) => t === "region")).toHaveLength(2)
 	})
 })
 
@@ -137,8 +144,8 @@ describe("decodeAsXML (nested mixed-content)", () => {
 	test("opts: pretty=false emits a single line", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
 		const xml = decodeAsXML(tree, { pretty: false })
-		expect(xml.includes("\n")).toBe(false)
-		expect(xml.includes("\t")).toBe(false)
+		expect(xml).not.toContain("\n")
+		expect(xml).not.toContain("	")
 	})
 
 	test("well-formed: every opened tag closes", () => {
@@ -147,7 +154,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
 		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
 		// Self-closing tags would shorten the closer list; we don't emit any, so they should match.
-		expect(openers.sort()).toEqual(closers.sort())
+		expect(openers.toSorted()).toEqual(closers.toSorted())
 	})
 
 	test("includeAlternatives=false by default (libpostal-compat preserved)", () => {
@@ -155,10 +162,12 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const tokens: DecoderToken[] = [tok("Springfield", 0, 11, "B-locality")]
 		const tree = buildAddressTree(raw, tokens)
 		const root = tree.roots[0]!
+
 		root.alternatives = [
-			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
-			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
+			{ id: 101_727_113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
+			{ id: 101_728_010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
 		]
+
 		const xml = decodeAsXML(tree)
 		expect(xml).not.toContain("<alternative")
 		expect(xml).not.toContain("Springfield, IL")
@@ -169,10 +178,12 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const tokens: DecoderToken[] = [tok("Springfield", 0, 11, "B-locality")]
 		const tree = buildAddressTree(raw, tokens)
 		const root = tree.roots[0]!
+
 		root.alternatives = [
-			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
-			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
+			{ id: 101_727_113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
+			{ id: 101_728_010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
 		]
+
 		const xml = decodeAsXML(tree, { includeAlternatives: true })
 		expect(xml).toContain("<alternative")
 		expect(xml).toContain('place="wof:101727113"')
@@ -199,6 +210,7 @@ describe("interpretations (multi-role nodes, #413)", () => {
 	// A city-state: the `region` span "Berlin" also plays `locality` via an interpretation.
 	const cityStateTree = () => {
 		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
+
 		const region = tree.roots.find((r) => r.tag === "region")!
 		;(region as { interpretations?: unknown }).interpretations = [
 			{ tag: "locality", placeID: "wof:101909779", lat: 52.52, lon: 13.4 },

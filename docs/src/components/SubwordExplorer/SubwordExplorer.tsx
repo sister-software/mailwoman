@@ -15,43 +15,62 @@
 
 import type React from "react"
 
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import type { KindResult, ResultNode, StageTiming } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+//#region Types
 
 export interface SubwordExplorerProps {
-	/** The raw text handed to the parser — `nodes[].start/end` index into this. */
+	/**
+	 * The raw text handed to the parser — `nodes[].start/end` index into this.
+	 */
 	input: string
-	/** Flattened parse nodes; only those with numeric `start`/`end` are rendered. */
+	/**
+	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
+	 */
 	nodes: ResultNode[]
-	/** The parse tree (for phrase-group extraction via intermediate grouping nodes). */
+	/**
+	 * The parse tree (for phrase-group extraction via intermediate grouping nodes).
+	 */
 	tree?: unknown
-	/** Stage 2.5 kind classifier result. */
+	/**
+	 * Stage 2.5 kind classifier result.
+	 */
 	kindResult?: KindResult
-	/** Per-stage timing breakdown. */
+	/**
+	 * Per-stage timing breakdown.
+	 */
 	timing?: StageTiming
 }
 
-// ---------------------------------------------------------------------------
-// Word tokenization (matches BIOHighlight's approach)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Word tokenization (matches BIOHighlight's approach)
 
 interface WordToken {
-	/** The word text as it appears in the input. */
+	/**
+	 * The word text as it appears in the input.
+	 */
 	text: string
-	/** Leading whitespace before this word. */
+	/**
+	 * Leading whitespace before this word.
+	 */
 	whitespace: string
-	/** Start offset in the input string. */
+	/**
+	 * Start offset in the input string.
+	 */
 	start: number
-	/** End offset in the input string. */
+	/**
+	 * End offset in the input string.
+	 */
 	end: number
 }
 
-/** Tokenize the raw input into words, preserving leading whitespace for each token. */
+/**
+ * Tokenize the raw input into words, preserving leading whitespace for each token.
+ */
 function tokenizeWords(input: string): WordToken[] {
 	const words: WordToken[] = []
 	let i = 0
@@ -61,6 +80,7 @@ function tokenizeWords(input: string): WordToken[] {
 
 		while (i < input.length && /\s/.test(input[i])) {
 			ws += input[i]
+
 			i++
 		}
 
@@ -70,15 +90,16 @@ function tokenizeWords(input: string): WordToken[] {
 		while (i < input.length && !/\s/.test(input[i])) {
 			i++
 		}
+
 		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
 	}
 
 	return words
 }
 
-// ---------------------------------------------------------------------------
-// Span + phrase-group assignment
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Span + phrase-group assignment
 
 interface SpanInfo {
 	tag: string
@@ -90,15 +111,25 @@ interface SpanInfo {
 
 interface AnnotatedWord {
 	word: WordToken
-	/** The most specific span covering this word (same shortest-span owner as BIOHighlight). */
+	/**
+	 * The most specific span covering this word (same shortest-span owner as BIOHighlight).
+	 */
 	span: SpanInfo | null
-	/** BIO label (B-X, I-X, or O). */
+	/**
+	 * BIO label (B-X, I-X, or O).
+	 */
 	label: string
-	/** Tag this label refers to (e.g. "street", "locality"). */
+	/**
+	 * Tag this label refers to (e.g. "street", "locality").
+	 */
 	tag: string | null
-	/** Phrase group index — adjacent words of the same tag form a phrase group. */
+	/**
+	 * Phrase group index — adjacent words of the same tag form a phrase group.
+	 */
 	phraseGroup: number
-	/** Whether this word starts a new phrase group. */
+	/**
+	 * Whether this word starts a new phrase group.
+	 */
 	phraseGroupStart: boolean
 }
 
@@ -131,6 +162,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 				best = s
 			}
 		}
+
 		owner[w] = best
 	}
 
@@ -179,19 +211,19 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 	return result
 }
 
-// ---------------------------------------------------------------------------
-// Confidence tier (mirrors SpanHighlight / ResultPanel)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Confidence tier (mirrors SpanHighlight / ResultPanel)
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
-// ---------------------------------------------------------------------------
-// Pipeline stage definitions (for the flow diagram + legend)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Pipeline stage definitions (for the flow diagram + legend)
 
 interface PipelineStage {
 	key: string
@@ -251,9 +283,9 @@ const PIPELINE_STAGES: PipelineStage[] = [
 	},
 ]
 
-// ---------------------------------------------------------------------------
-// Pipeline flow diagram (compact, horizontal)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Pipeline flow diagram (compact, horizontal)
 
 const PipelineFlow: React.FC = () => (
 	<div className={styles.pipelineFlow}>
@@ -269,9 +301,9 @@ const PipelineFlow: React.FC = () => (
 	</div>
 )
 
-// ---------------------------------------------------------------------------
-// Stage detail panel (expandable per-stage descriptions)
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Stage detail panel (expandable per-stage descriptions)
 
 const StageDetails: React.FC = () => (
 	<details className={styles.stageDetails}>
@@ -289,9 +321,9 @@ const StageDetails: React.FC = () => (
 	</details>
 )
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Main component
 
 export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, kindResult, timing }) => {
 	if (!input) return null
@@ -425,3 +457,5 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 		</div>
 	)
 }
+
+//#endregion

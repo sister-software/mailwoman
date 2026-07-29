@@ -25,6 +25,12 @@ import type { CanonicalRow } from "./types.ts"
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
 // synthesis distribution doesn't overfit to a tiny vocabulary.
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 const STREET_NAMES = [
 	"Main",
 	"Oak",
@@ -165,7 +171,9 @@ export interface SynthesizedStreetRow {
 
 export interface StreetSynthesisOpts {
 	random?: () => number
-	/** Probability of emitting house_number alongside the street. Default 0.85. */
+	/**
+	 * Probability of emitting house_number alongside the street. Default 0.85.
+	 */
 	includeHouseNumberProb?: number
 	/**
 	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/ postcode components
@@ -192,7 +200,7 @@ function randomHouseNumber(random: () => number): string {
 
 	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
 
-	return String(10000 + Math.floor(random() * 89999))
+	return String(10_000 + Math.floor(random() * 89_999))
 }
 
 /**

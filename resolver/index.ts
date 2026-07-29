@@ -12,21 +12,26 @@
  */
 
 export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.ts"
+
 export type {
 	RemoteResolverOpts,
 	ResolveTreeRequest,
 	ResolveTreeResponse,
 	SerializableResolveOpts,
 } from "./remote-resolver.ts"
+
 export { createWOFResolver } from "./resolve.ts"
+
 export {
 	COUNTRY_BBOX,
 	finestResolvedCoordinate,
 	isImplausibleResolution,
 	outsideExpectedCountry,
 } from "./plausibility.ts"
+
 export type { PlausibilityOpts, PlausibilityVerdict, ResolvedCoordinate } from "./plausibility.ts"
 export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "./street-evidence.ts"
+
 export type {
 	PickByStreetEvidenceOpts,
 	StreetCandidate,
@@ -34,6 +39,7 @@ export type {
 	StreetEvidenceScope,
 	StreetLocalityEvidence,
 } from "./street-evidence.ts"
+
 export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 

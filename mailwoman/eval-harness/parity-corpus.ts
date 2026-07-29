@@ -19,6 +19,7 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 
@@ -30,12 +31,24 @@ import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
  * corpus stays reproducible via `--fixtures mailwoman/eval-harness/fixtures/parity-corpus.jsonl`; the run always prints
  * which corpus + how many tombstones it skipped, so the denominator is never silent.
  */
+/**
+ * Examples a parity bucket needs before its rate is stable enough to compare across versions.
+ */
+const MIN_BUCKET_EXAMPLES = 8
+
+/**
+ * Parity corpus — the cases rescued from the legacy golden set, used to compare versions.
+ */
 export const PARITY_FIXTURES_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
-/** The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`. */
+/**
+ * The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`.
+ */
 export const PARITY_FIXTURES_V1_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 
-/** Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates. */
+/**
+ * Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates.
+ */
 export const PARITY_FLOORS = [
 	{ label: "house_number", floor: 0.97, tags: ["house_number"] },
 	{ label: "postcode", floor: 0.97, tags: ["postcode"] },
@@ -65,7 +78,9 @@ export interface ParityEvalOptions {
 	 * gate grades the healed parse). Pass `false` to reproduce pre-heal baselines.
 	 */
 	wordConsistency?: boolean
-	/** List the first N disagreeing inputs per floor label. */
+	/**
+	 * List the first N disagreeing inputs per floor label.
+	 */
 	failing?: number
 }
 
@@ -73,7 +88,7 @@ export interface ParityEvalOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replace(/\s+/g, " ").trim()
+const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function loadFixtures(path: string): ParityFixture[] {
 	return readFileSync(path, "utf8")
@@ -82,7 +97,9 @@ function loadFixtures(path: string): ParityFixture[] {
 		.map((line) => JSON.parse(line) as ParityFixture)
 }
 
-/** Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout. */
+/**
+ * Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout.
+ */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)
@@ -95,7 +112,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		cacheRoot: options.weightsCacheRoot,
 	})
 
-	let fstStreetMorphology: import("@mailwoman/resolver-wof-sqlite/fst-matcher").FSTMatcher | undefined
+	let fstStreetMorphology: FSTMatcher | undefined
 
 	if (options.streetMorphology) {
 		// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
@@ -104,6 +121,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader")
 		const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
+
 		console.log(
 			`street-morphology bias ON (${loaded.source === "artifact" ? `sealed artifact ${loaded.path}` : "per-process dictionary build"}${loaded.provenance ? `: ${loaded.provenance.placeCount} canonical affixes, ${loaded.provenance.nameInsertions} variant insertions` : ""})`
 		)
@@ -122,6 +140,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 	for (const fixture of live) {
 		const expect = fixture.expect!
+
 		// Ship-config parse (gate-revision 2026-07-15): production's safeClassify/parseForGeocode heal
 		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the gate must grade the same parse the swapped
 		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
@@ -138,6 +157,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
+
 		const byTag = new Map<string, string[]>()
 
 		for (const [tag, value] of tuples) {
@@ -150,13 +170,14 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		for (const { label, tags } of PARITY_FLOORS) {
 			if (expect[label]?.length) continue
 			const bucket = precision.get(label)!
+
 			bucket.absent++
 			const emitted = tags.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 
 			if (emitted) {
 				bucket.spurious++
 
-				if (bucket.examples.length < 8) {
+				if (bucket.examples.length < MIN_BUCKET_EXAMPLES) {
 					bucket.examples.push(`${JSON.stringify(fixture.input)} -> ${label}=${JSON.stringify(emitted)}`)
 				}
 			}
@@ -168,6 +189,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			if (!goldValues?.length) continue
 
 			const tally = tallies.get(label)!
+
 			tally.total++
 			const actual = tags.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 
@@ -175,6 +197,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				tally.hit++
 			} else {
 				caseAgrees = false
+
 				tally.failing.push(
 					`${fixture.id} ${JSON.stringify(fixture.input)} gold=${JSON.stringify(goldValues)} got=${JSON.stringify(actual)}`
 				)
@@ -192,15 +215,18 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		}
 
 		const country = byCountry.get(fixture.country) ?? { cases: 0, fullAgree: 0 }
+
 		country.cases++
 
 		if (caseAgrees) {
 			country.fullAgree++
 		}
+
 		byCountry.set(fixture.country, country)
 	}
 
 	const corpusName = (options.fixturesPath ?? PARITY_FIXTURES_PATH).split("/").pop()
+
 	console.log(
 		`parity corpus: ${corpusName} — ${live.length} live fixtures (${fixtures.length - live.length} tombstones skipped)`
 	)
@@ -217,6 +243,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		if (!ok) {
 			pass = false
 		}
+
 		console.log(
 			`${label.padEnd(13)} ${`${hit}/${total}`.padStart(8)}  ${rate.toFixed(4).padStart(7)}  ${floor.toFixed(2).padStart(5)}  ${ok ? "PASS" : "FAIL"}`
 		)
@@ -233,6 +260,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const { spurious, absent } = precision.get(label)!
 
 		if (!absent) continue
+
 		console.log(
 			`${label.padEnd(13)} ${`${spurious}/${absent}`.padStart(8)}  ${(spurious / absent).toFixed(4).padStart(7)}   emitted where gold has none`
 		)
@@ -242,6 +270,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const { examples } = precision.get(label)!
 
 		if (!examples.length) continue
+
 		console.log(`\n  --- ${label}: emitted where the gold has none (first ${examples.length}) ---`)
 
 		for (const example of examples) {
@@ -252,7 +281,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	console.log("")
 	console.log("country  cases  full-agree")
 
-	for (const [country, { cases, fullAgree }] of [...byCountry.entries()].sort()) {
+	for (const [country, { cases, fullAgree }] of [...byCountry.entries()].toSorted()) {
 		console.log(
 			`${country.padEnd(7)} ${String(cases).padStart(6)}  ${String(fullAgree).padStart(4)} (${((fullAgree / cases) * 100).toFixed(0)}%)`
 		)
@@ -264,7 +293,8 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		for (const { label } of PARITY_FLOORS) {
 			const list = tallies.get(label)!.failing.slice(0, failing)
 
-			if (list.length === 0) continue
+			if (!list.length) continue
+
 			console.log("")
 			console.log(`first ${list.length} disagreements — ${label}:`)
 

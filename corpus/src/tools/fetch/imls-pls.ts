@@ -20,6 +20,9 @@
  *   and sha matches MANIFEST, skips download.
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"
@@ -31,10 +34,17 @@ import { sha256File } from "@mailwoman/core/utils"
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
+/**
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
+ * than data.
+ */
+const BYTES_PER_KIB = 1024
+
 const execFileAsync = promisify(execFile)
 
-// The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05).
-// If IMLS publishes a newer year, update this URL.
+/**
+ * The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05). If IMLS publishes a newer year, update this URL.
+ */
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
 const SLUG = "usgov-imls-pls"
 
@@ -48,7 +58,9 @@ interface SourceManifest {
 	bytes: number
 }
 
-/** Return the filenames listed inside a ZIP (the trailing column of each `unzip -l` row). */
+/**
+ * Return the filenames listed inside a ZIP (the trailing column of each `unzip -l` row).
+ */
 async function listZipEntries(zipPath: string): Promise<string[]> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
@@ -70,9 +82,8 @@ export async function fetchIMLSPLS(
 
 	report?.(`=== ${SLUG}`)
 
-	// ------------------------------------------------------------------
-	// Idempotency check: if outlet CSV already exists and sha matches, skip.
-	// ------------------------------------------------------------------
+	// MARK: Idempotency check
+
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
@@ -85,10 +96,10 @@ export async function fetchIMLSPLS(
 		}
 	}
 
-	// ------------------------------------------------------------------
-	// Download ZIP
-	// ------------------------------------------------------------------
+	// MARK: Download ZIP
+
 	report?.(`  Downloading ${ZIP_URL} ...`)
+
 	const { bytes: zipSize } = await downloadToFile({
 		url: ZIP_URL,
 		dest: zipDest,
@@ -96,19 +107,18 @@ export async function fetchIMLSPLS(
 		headers: { "Accept-Encoding": "gzip, br" },
 		report,
 	})
+
 	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
 
-	if (zipSize < 1024) {
+	if (zipSize < BYTES_PER_KIB) {
 		report?.(`  ✗ Response too small (${zipSize} bytes) — probable error page`)
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	// ------------------------------------------------------------------
 	// Discover the outlet-level CSV inside the ZIP.
 	// Outlet files match: pls_fy*outlet*.csv (case-insensitive)
 	// Administrative-entity files match: pls_fy*ae*.csv — we skip those.
-	// ------------------------------------------------------------------
 	report?.("  Inspecting ZIP contents ...")
 	const entries = await listZipEntries(zipDest)
 
@@ -125,6 +135,7 @@ export async function fetchIMLSPLS(
 		for (const name of entries) {
 			report?.(`    ${name}`)
 		}
+
 		report?.("  ✗ Could not identify outlet CSV — inspect above listing and update this module")
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
@@ -137,15 +148,13 @@ export async function fetchIMLSPLS(
 	const csvSize = statSync(csvDest).size
 	const csvSha = await sha256File(csvDest)
 
-	// ------------------------------------------------------------------
-	// Remove ZIP (small, but keep destDir clean)
-	// ------------------------------------------------------------------
+	// MARK: Remove ZIP (small, but keep destDir clean)
+
 	await rm(zipDest, { force: true })
 	report?.("  Removed ZIP (CSV kept)")
 
-	// ------------------------------------------------------------------
-	// Write MANIFEST
-	// ------------------------------------------------------------------
+	// MARK: Write MANIFEST
+
 	const manifest: SourceManifest = {
 		source_url: ZIP_URL,
 		downloaded_at: new Date().toISOString(),
@@ -153,6 +162,7 @@ export async function fetchIMLSPLS(
 		sha256: csvSha,
 		bytes: csvSize,
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${(csvSize / 1024 / 1024).toFixed(1)} MB  sha256=${csvSha}`)

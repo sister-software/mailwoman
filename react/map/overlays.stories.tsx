@@ -26,21 +26,31 @@ const STUB_STYLE: DemoMapStyle = {
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-/** Base place; each story overrides only the fields its branch needs. */
+/**
+ * Base place; each story overrides only the fields its branch needs.
+ */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Demo Place", placetype: "locality", lat: 40.7128, lon: -74.006, score: 1, ...overrides }
 }
 
 interface SceneProps {
-	/** The resolved place to render. */
+	/**
+	 * The resolved place to render.
+	 */
 	place: ResolvedMapPlace
-	/** Optional host overlays to layer beneath the resolved place. */
+	/**
+	 * Optional host overlays to layer beneath the resolved place.
+	 */
 	overlays?: OverlaySpec[]
-	/** Apply the computed camera (fly/fit). @default false in stories so the fixed initial view stays put. */
+	/**
+	 * Apply the computed camera (fly/fit). @default false in stories so the fixed initial view stays put.
+	 */
 	applyCamera?: boolean
 }
 
-/** A self-contained scene: compute the spec, render the map + overlays. */
+/**
+ * A self-contained scene: compute the spec, render the map + overlays.
+ */
 function OverlayScene({ place: resolved, overlays, applyCamera = false }: SceneProps): ReactNode {
 	const spec = computeMapPlaceRenderSpec(resolved)
 
@@ -63,14 +73,19 @@ const meta: Meta<typeof OverlayScene> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof OverlayScene>
 
-/** An admin place with a bbox → marker + a bbox-sized approximate circle. */
+/**
+ * An admin place with a bbox → marker + a bbox-sized approximate circle.
+ */
 export const BboxCircle: Story = {
 	args: { place: place({ bbox: { minLat: 40.6, maxLat: 40.85, minLon: -74.1, maxLon: -73.85 } }) },
 }
 
-/** A pre-fetched crisp admin polygon → marker + the real boundary drawn. */
+/**
+ * A pre-fetched crisp admin polygon → marker + the real boundary drawn.
+ */
 export const CrispPolygon: Story = {
 	args: {
 		place: place({
@@ -91,22 +106,30 @@ export const CrispPolygon: Story = {
 	},
 }
 
-/** A street-level (exact building) hit → marker + a tight uncertainty circle. */
+/**
+ * A street-level (exact building) hit → marker + a tight uncertainty circle.
+ */
 export const StreetRadius: Story = {
 	args: { place: place({ tier: "address_point", uncertaintyM: 10 }) },
 }
 
-/** An anchor-centroid postcode (no bbox) → marker + a ~3 km "around here" circle. */
+/**
+ * An anchor-centroid postcode (no bbox) → marker + a ~3 km "around here" circle.
+ */
 export const PostcodeCircle: Story = {
 	args: { place: place({ placetype: "postcode" }) },
 }
 
-/** A bare point (no bbox, no tier, no polygon) → marker only, no outline. */
+/**
+ * A bare point (no bbox, no tier, no polygon) → marker only, no outline.
+ */
 export const BarePoint: Story = {
 	args: { place: place({}) },
 }
 
-/** The bbox circle layered over a host overlay (a translucent coverage rectangle). */
+/**
+ * The bbox circle layered over a host overlay (a translucent coverage rectangle).
+ */
 export const WithHostOverlay: Story = {
 	args: {
 		place: place({ bbox: { minLat: 40.6, maxLat: 40.85, minLon: -74.1, maxLon: -73.85 } }),

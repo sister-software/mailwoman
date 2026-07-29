@@ -34,12 +34,12 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 				<dt>score</dt>
 				<dd>{place.score.toFixed(3)}</dd>
 			</dl>
-			{dualRoles && dualRoles.length > 0 ? (
+			{dualRoles && dualRoles.length ? (
 				<p className="mw-resolved__dual">
 					🏛️ <strong>Dual-role place.</strong> {place.name} also resolves as{" "}
 					{dualRoles.map((role, i) => (
 						<Fragment key={`${role.role}-${role.id}`}>
-							{i > 0 ? ", " : ""}a <strong>{role.role}</strong> ({role.relationshipType.replace(/-/g, " ")})
+							{i > 0 ? ", " : ""}a <strong>{role.role}</strong> ({role.relationshipType.replaceAll("-", " ")})
 						</Fragment>
 					))}
 					.

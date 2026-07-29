@@ -19,15 +19,23 @@ const PRESETS = [
 	"90210",
 ]
 
-/** Options for {@linkcode presetCompare}. */
+/**
+ * Options for {@linkcode presetCompare}.
+ */
 export interface PresetCompareOptions {
-	/** Candidate ONNX model path. Omit to print the baseline only. */
+	/**
+	 * Candidate ONNX model path. Omit to print the baseline only.
+	 */
 	modelPath?: string
-	/** Candidate tokenizer path (paired with `modelPath`). */
+	/**
+	 * Candidate tokenizer path (paired with `modelPath`).
+	 */
 	tokenizerPath?: string
 }
 
-/** Run the 6 demo presets through the baseline (and optionally a candidate) and report each parse. */
+/**
+ * Run the 6 demo presets through the baseline (and optionally a candidate) and report each parse.
+ */
 export async function presetCompare(
 	options: PresetCompareOptions,
 	report: (line: string) => void = console.log
@@ -37,9 +45,11 @@ export async function presetCompare(
 
 	for (const addr of PRESETS) {
 		const r = await baseline.parseJSON(addr)
+
 		const comps = Object.entries(r)
 			.map(([k, v]) => `${k}=${v}`)
 			.join(", ")
+
 		report(`  ${addr}`)
 		report(`    → ${comps || "(empty)"}\n`)
 	}
@@ -52,9 +62,11 @@ export async function presetCompare(
 
 		for (const addr of PRESETS) {
 			const r = await candidate.parseJSON(addr)
+
 			const comps = Object.entries(r)
 				.map(([k, v]) => `${k}=${v}`)
 				.join(", ")
+
 			report(`  ${addr}`)
 			report(`    → ${comps || "(empty)"}\n`)
 		}

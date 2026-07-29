@@ -19,25 +19,43 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Options for {@linkcode raceDotsMap}. */
+/**
+ * Options for {@linkcode raceDotsMap}.
+ */
 export interface RaceDotsMapOptions {
-	/** Dots tileset URL the page reads client-side. Default `http://localhost:8899/race-dots-oc.pmtiles`. */
+	/**
+	 * Dots tileset URL the page reads client-side. Default `http://localhost:8899/race-dots-oc.pmtiles`.
+	 */
 	pmtilesURL?: string
-	/** Output HTML path. Default `/tmp/race-dots-oc.html`. */
+	/**
+	 * Output HTML path. Default `/tmp/race-dots-oc.html`.
+	 */
 	out?: string
-	/** People represented by one dot (title/legend copy only). Default 5. */
+	/**
+	 * People represented by one dot (title/legend copy only). Default 5.
+	 */
 	per?: number
-	/** Page title. Default derives from `per`. */
+	/**
+	 * Page title. Default derives from `per`.
+	 */
 	title?: string
-	/** Initial map center longitude. Default -117.83 (Orange County, CA). */
+	/**
+	 * Initial map center longitude. Default -117.83 (Orange County, CA).
+	 */
 	lng?: number
-	/** Initial map center latitude. Default 33.68. */
+	/**
+	 * Initial map center latitude. Default 33.68.
+	 */
 	lat?: number
-	/** Initial map zoom. Default 9.4. */
+	/**
+	 * Initial map zoom. Default 9.4.
+	 */
 	zoom?: number
 }
 
-/** Result of {@linkcode raceDotsMap}. */
+/**
+ * Result of {@linkcode raceDotsMap}.
+ */
 export interface RaceDotsMapResult {
 	outPath: string
 	pmtilesURL: string
@@ -53,7 +71,9 @@ const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
-// Cooper Center "Racial Dot Map" palette, by `pl_block`/P2 category.
+/**
+ * Cooper Center "Racial Dot Map" palette, by `pl_block`/P2 category.
+ */
 const CATEGORY_COLOR: Record<string, string> = {
 	white: "#1f78b4", // blue
 	black: "#33a02c", // green
@@ -64,6 +84,7 @@ const CATEGORY_COLOR: Record<string, string> = {
 	other: "#b15928", // brown
 	multi: "#9e9e9e", // grey
 }
+
 const CATEGORY_LABEL: Record<string, string> = {
 	white: "White (non-Hispanic)",
 	black: "Black (non-Hispanic)",
@@ -75,7 +96,9 @@ const CATEGORY_LABEL: Record<string, string> = {
 	multi: "Two or more races",
 }
 
-/** Race-dots MapLibre page writer — see the module doc. */
+/**
+ * Race-dots MapLibre page writer — see the module doc.
+ */
 export async function raceDotsMap(
 	options: RaceDotsMapOptions = {},
 	report?: (line: string) => void
@@ -97,6 +120,7 @@ export async function raceDotsMap(
 	for (const [cat, color] of Object.entries(CATEGORY_COLOR)) {
 		colorMatch.push(cat, color)
 	}
+
 	colorMatch.push("#9e9e9e")
 
 	const style = {

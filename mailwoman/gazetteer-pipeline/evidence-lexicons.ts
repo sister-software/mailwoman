@@ -60,9 +60,18 @@ import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
 
-/** Law 2: 1-token locality surfaces need population-backed importance ≥ this (≈11k population). */
+/**
+ * Letters at or below which a token reads as an abbreviation rather than a word.
+ */
+const MAX_ABBREVIATION_LETTERS = 3
+
+/**
+ * Law 2: 1-token locality surfaces need population-backed importance ≥ this (≈11k population).
+ */
 export const ONE_TOKEN_IMPORTANCE_FLOOR = 0.25
-/** Law 3: 1-token person-name surfaces need importance ≥ this (the metropolis tier). */
+/**
+ * Law 3: 1-token person-name surfaces need importance ≥ this (the metropolis tier).
+ */
 export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 
 const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
@@ -78,7 +87,7 @@ const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 export function painterFold(surface: string): string[] {
 	return surface
 		.split(/\s+/)
-		.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.map((w) => w.toLowerCase())
 }
@@ -114,7 +123,9 @@ export function loadDirectionalSurfaces(fold: (surface: string) => string[] = pa
 			for (const surface of line.split("|")) {
 				const tokens = fold(surface)
 
-				if (tokens.length > 0) surfaces.add(tokens.join(" "))
+				if (tokens.length) {
+					surfaces.add(tokens.join(" "))
+				}
 			}
 		}
 	}
@@ -132,7 +143,9 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
 	for (const s of [...US_STATE_ABBREVIATIONS, ...US_STATE_NAMES]) {
 		const tokens = fold(s)
 
-		if (tokens.length > 0) surfaces.add(tokens.join(" "))
+		if (tokens.length) {
+			surfaces.add(tokens.join(" "))
+		}
 	}
 
 	return surfaces
@@ -143,7 +156,7 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
  * Equality doesn't count — re-adding the primary through the names table is harmless.
  */
 export function isSubPhraseAlias(alt: readonly string[], primary: readonly string[]): boolean {
-	if (alt.length === 0 || alt.length >= primary.length) return false
+	if (!alt.length || alt.length >= primary.length) return false
 
 	outer: for (let start = 0; start + alt.length <= primary.length; start++) {
 		for (let i = 0; i < alt.length; i++) {
@@ -156,7 +169,9 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
 	return false
 }
 
-/** Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles). */
+/**
+ * Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles).
+ */
 export function loadPersonNameSurfaces(): Set<string> {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
 	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
@@ -164,6 +179,7 @@ export function loadPersonNameSurfaces(): Set<string> {
 	for (const lang of CURATION_LANGUAGES) {
 		files.push(join(dictionariesDir, lang, "personal_titles.txt"))
 	}
+
 	const names = new Set<string>()
 
 	for (const f of files) {
@@ -173,7 +189,9 @@ export function loadPersonNameSurfaces(): Set<string> {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)
 
-				if (tokens.length === 1) names.add(tokens[0]!)
+				if (tokens.length === 1) {
+					names.add(tokens[0]!)
+				}
 			}
 		}
 	}
@@ -202,16 +220,22 @@ export function clearsProminenceFloor(
 }
 
 export interface BuildLocalitySurfaceLexiconOpts {
-	/** Countries whose locality names become evidence. Default US+FR (the probe-validated pair). */
+	/**
+	 * Countries whose locality names become evidence. Default US+FR (the probe-validated pair).
+	 */
 	countries?: string[]
 	/**
 	 * Child placetypes. Default includes `neighbourhood` (the v4 register change); pass `["locality", "localadmin"]` for
 	 * a v3-parity build.
 	 */
 	placetypes?: string[]
-	/** WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`). */
+	/**
+	 * WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
+	 */
 	dbPath?: string
-	/** Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v6.json`). */
+	/**
+	 * Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v6.json`).
+	 */
 	output?: string
 	onProgress?: (line: string) => void
 }
@@ -221,9 +245,13 @@ export interface BuiltLexicon {
 	entries: number
 	homographs: number
 	skippedDegenerate: number
-	/** Law 4 (v5): surfaces refused as region vocabulary. */
+	/**
+	 * Law 4 (v5): surfaces refused as region vocabulary.
+	 */
 	skippedRegionVocabulary: number
-	/** Alt-name sub-phrase hygiene (v5): names-table aliases refused as sub-phrases of their primary. */
+	/**
+	 * Alt-name sub-phrase hygiene (v5): names-table aliases refused as sub-phrases of their primary.
+	 */
 	skippedSubPhrase: number
 	skippedProminence: number
 	maxNgram: number
@@ -241,9 +269,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const { surfaces: degenerate, stopwordTokens } = loadDegenerateSurfaces(undefined, painterFold)
 
 	// Law-1 directional closure (v5): union the directionals in WITHOUT touching the shared FST policy set.
-	for (const s of loadDirectionalSurfaces()) degenerate.add(s)
+	for (const s of loadDirectionalSurfaces()) {
+		degenerate.add(s)
+	}
 
-	for (const s of EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES) degenerate.add(painterFold(s).join(" "))
+	for (const s of EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES) {
+		degenerate.add(painterFold(s).join(" "))
+	}
 
 	// Law 4 (v5): region vocabulary, scoped to the countries this build covers.
 	const regionVocabulary = countries.includes("US") ? loadUSRegionVocabulary() : new Set<string>()
@@ -257,7 +289,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	for (const row of popStmt.iterate() as Iterable<{ id: number; population: number }>) {
 		if (row.population > 0) {
 			// The FST builder's population→importance formula — one scale across every artifact.
-			importanceByID.set(row.id, Math.min(1.0, Math.log2(1 + row.population / 1000) / 14))
+			importanceByID.set(row.id, Math.min(1, Math.log2(1 + row.population / 1000) / 14))
 		}
 	}
 
@@ -295,7 +327,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const add = (surface: string, placeID: number): void => {
 		const tokens = painterFold(surface)
 
-		if (tokens.length === 0) return
+		if (!tokens.length) return
 		const key = tokens.join(" ")
 		// The homograph scan is FST-fold-keyed (it feeds the FST builder too) — fold separately for the join.
 		const fstKey = normalizeTokens(surface).join(" ")
@@ -320,12 +352,14 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 			const prev = oneTokenMaxImportance.get(key) ?? { own: 0, parent: 0 }
 			oneTokenMaxImportance.set(key, { own: Math.max(prev.own, own), parent: Math.max(prev.parent, parent) })
 		}
+
 		maxNgram = Math.max(maxNgram, tokens.length)
 		const homograph = (countryCounts.get(fstKey) ?? 1) >= 2
 		entries.set(key, LOCALITY_BIT.locality | (homograph ? LOCALITY_BIT.locality_homograph : 0))
 	}
 
 	const ph = (arr: readonly string[]) => arr.map(() => "?").join(",")
+
 	const primary = db.prepare(
 		`SELECT id, name FROM spr WHERE is_current = 1 AND country IN (${ph(countries)}) AND placetype IN (${ph(placetypes)})`
 	)
@@ -333,10 +367,12 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	for (const row of primary.iterate(...countries, ...placetypes) as Iterable<{ id: number; name: string }>) {
 		add(row.name, row.id)
 	}
+
 	const alts = db.prepare(
 		`SELECT n.id AS id, n.name AS name, s.name AS primary_name FROM names n JOIN spr s ON s.id = n.id
 		 WHERE s.is_current = 1 AND s.country IN (${ph(countries)}) AND s.placetype IN (${ph(placetypes)})`
 	)
+
 	let skippedSubPhrase = 0
 
 	for (const row of alts.iterate(...countries, ...placetypes) as Iterable<{
@@ -347,10 +383,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		// Sub-phrase hygiene: "East" as an alias of "East Nashville" is ambiguity without discrimination.
 		if (isSubPhraseAlias(painterFold(row.name), painterFold(row.primary_name))) {
 			skippedSubPhrase++
+
 			continue
 		}
+
 		add(row.name, row.id)
 	}
+
 	db.close()
 
 	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers;
@@ -358,11 +397,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	for (const [key, imp] of oneTokenMaxImportance) {
 		if (!clearsProminenceFloor(key, imp.own, personNames, imp.parent)) {
 			entries.delete(key)
+
 			skippedProminence++
 		}
 	}
 
 	const homographs = [...entries.values()].filter((b) => b & LOCALITY_BIT.locality_homograph).length
+
 	const lexicon = {
 		version: 6,
 		generated_by:
@@ -405,12 +446,12 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Street-type lexicon (the bundle's first channel)
-// ---------------------------------------------------------------------------
+// MARK: Street-type lexicon (the bundle's first channel)
 
 export interface BuildStreetTypeLexiconOpts {
-	/** Output path (default `<repo>/data/gazetteer/street-type-lexicon-v3.json` — small, committed). */
+	/**
+	 * Output path (default `<repo>/data/gazetteer/street-type-lexicon-v3.json` — small, committed).
+	 */
 	output?: string
 }
 
@@ -434,18 +475,20 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		import("@mailwoman/codex/gb"),
 		import("@mailwoman/codex/us"),
 	])
+
 	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v3.json"))
 
 	const wordNorm = (s: string): string =>
 		s
 			.split(/\s+/)
-			.map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+			.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 			.filter(Boolean)
 			.join(" ")
-	const isShortCode = (s: string): boolean => {
-		const letters = s.replace(/[^\p{L}]/gu, "")
 
-		return letters.length > 0 && letters.length <= 3 && /^[\p{L}.\s]+$/u.test(s)
+	const isShortCode = (s: string): boolean => {
+		const letters = s.replaceAll(/[^\p{L}]/gu, "")
+
+		return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 	}
 
 	const entries = new Map<string, number>()
@@ -455,10 +498,11 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	const addCanonical = (surface: string): void => {
 		const key = wordNorm(surface).toLowerCase()
 
-		if (!key || key.replace(/[^\p{L}\p{N}]/gu, "").length < 2) return
+		if (!key || key.replaceAll(/[^\p{L}\p{N}]/gu, "").length < 2) return
 		maxNgram = Math.max(maxNgram, key.split(" ").length)
 		entries.set(key, 1)
 	}
+
 	const addAbbrev = (surface: string): void => {
 		const s = surface.trim()
 
@@ -467,44 +511,68 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		if (isShortCode(s)) {
 			const key = wordNorm(s).toUpperCase()
 
-			if (key) codeEntries.set(key, 1)
+			if (key) {
+				codeEntries.set(key, 1)
+			}
 
 			return
 		}
+
 		addCanonical(s)
 	}
 
 	for (const [canonical, abbrevs] of Object.entries(fr.FR_VOIE_TYPES)) {
 		addCanonical(canonical)
-		for (const a of abbrevs) addAbbrev(a)
+
+		for (const a of abbrevs) {
+			addAbbrev(a)
+		}
 	}
 
 	for (const [canonical, variants] of Object.entries(us.US_STREET_SUFFIX_VARIANTS)) {
 		addCanonical(canonical)
-		for (const v of variants) addAbbrev(v)
+
+		for (const v of variants) {
+			addAbbrev(v)
+		}
 	}
 
-	for (const t of gb.GB_STREET_TYPES) addCanonical(t)
+	for (const t of gb.GB_STREET_TYPES) {
+		addCanonical(t)
+	}
 
 	for (const [canonical, variants] of Object.entries(de.DE_STREET_TYPE_VARIANTS)) {
 		addCanonical(canonical)
-		for (const v of variants) addAbbrev(v)
+
+		for (const v of variants) {
+			addAbbrev(v)
+		}
 	}
 
-	for (const suffix of de.DE_STREET_SUFFIXES) addCanonical(suffix)
+	for (const suffix of de.DE_STREET_SUFFIXES) {
+		addCanonical(suffix)
+	}
 
-	for (const t of CA_STREET_TYPES_EN) addCanonical(t)
+	for (const t of CA_STREET_TYPES_EN) {
+		addCanonical(t)
+	}
 
-	for (const t of CA_STREET_TYPES_FR) addCanonical(t)
+	for (const t of CA_STREET_TYPES_FR) {
+		addCanonical(t)
+	}
 
-	for (const d of Object.keys(CA_DIRECTIONALS)) addAbbrev(d)
+	for (const d of Object.keys(CA_DIRECTIONALS)) {
+		addAbbrev(d)
+	}
 
 	// V2 / family F1: state-abbreviation homograph codes never paint (see the docstring). Directionals exempt.
 	const DIRECTIONAL_CODES = new Set(["N", "S", "E", "W", "NE", "NW", "SE", "SW"])
 	let droppedStateCodes = 0
 
 	for (const code of US_STATE_ABBREVIATIONS) {
-		if (!DIRECTIONAL_CODES.has(code) && codeEntries.delete(code)) droppedStateCodes++
+		if (!DIRECTIONAL_CODES.has(code) && codeEntries.delete(code)) {
+			droppedStateCodes++
+		}
 	}
 
 	const lexicon = {
@@ -531,8 +599,8 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 				"Unicode-Nd digit; the guarded match still consumes its span (no sub-ngram re-matching). v3.23: evidence " +
 				"beside a house number swallowed the digit into the span (P0 alnum-hn \u22120.325 lower+heal).",
 		},
-		entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
-		code_entries: Object.fromEntries([...codeEntries].sort(([a], [b]) => a.localeCompare(b))),
+		entries: Object.fromEntries([...entries].toSorted(([a], [b]) => a.localeCompare(b))),
+		code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 	}
 
 	mkdirSync(dirname(output), { recursive: true })

@@ -33,19 +33,33 @@ import { DatabaseSync } from "node:sqlite"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
-/** Options for {@linkcode sourceProvenanceMap}. */
+/**
+ * Options for {@linkcode sourceProvenanceMap}.
+ */
 export interface SourceProvenanceMapOptions {
-	/** State (lowercase postal). Default ny. */
+	/**
+	 * State (lowercase postal). Default ny.
+	 */
 	state?: string
-	/** Address-point DB path. Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`. */
+	/**
+	 * Address-point DB path. Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`.
+	 */
 	db?: string
-	/** Output HTML path. Default `/tmp/source-provenance.html`. */
+	/**
+	 * Output HTML path. Default `/tmp/source-provenance.html`.
+	 */
 	outHtml?: string
-	/** Keep ~1/N of NAD points. Default 700. */
+	/**
+	 * Keep ~1/N of NAD points. Default 700.
+	 */
 	nadMod?: number
-	/** Keep ~1/N of OpenAddresses points. Default 120. */
+	/**
+	 * Keep ~1/N of OpenAddresses points. Default 120.
+	 */
 	oaMod?: number
-	/** Per-source marker cap. Default 7000. */
+	/**
+	 * Per-source marker cap. Default 7000.
+	 */
 	cap?: number
 }
 
@@ -56,7 +70,7 @@ function categorize(source: string): { bucket: string; publisher: string } {
 	if (source === "overture:NAD") return { bucket: "National Address Database", publisher: "NAD (federal)" }
 
 	if (source.startsWith("overture:OpenAddresses")) {
-		const publisher = source.split("/").slice(-1)[0] || "OpenAddresses"
+		const publisher = source.split("/").at(-1) || "OpenAddresses"
 
 		return { bucket: "OpenAddresses", publisher: `OpenAddresses · ${publisher}` }
 	}
@@ -64,9 +78,15 @@ function categorize(source: string): { bucket: string; publisher: string } {
 	return { bucket: source, publisher: source }
 }
 
+// Must stay a type alias. Rows come back from the driver as `Record<string, SQLOutputValue>[]` and
+// are asserted to `Row[]`; an object type alias carries an implicit index signature that makes that
+// assertion legal, an interface does not.
+// oxlint-disable-next-line typescript/consistent-type-definitions -- needs the implicit index signature
 type Row = { lat: number; lon: number; source: string; number: string | null; street_raw: string | null }
 
-/** Render the per-state address-point provenance map — see the module doc. */
+/**
+ * Render the per-state address-point provenance map — see the module doc.
+ */
 export function sourceProvenanceMap(
 	options: SourceProvenanceMapOptions = {},
 	report?: (line: string) => void
@@ -95,9 +115,11 @@ export function sourceProvenanceMap(
 		...sample("source = 'overture:NAD'", NAD_MOD),
 		...sample("source LIKE 'overture:OpenAddresses%'", OA_MOD),
 	]
+
 	db.close()
 
 	const counts = new Map<string, number>()
+
 	const features = rows.map((r) => {
 		const { bucket, publisher } = categorize(r.source)
 		counts.set(bucket, (counts.get(bucket) ?? 0) + 1)
@@ -118,6 +140,7 @@ export function sourceProvenanceMap(
 	})
 
 	const geojson = { type: "FeatureCollection" as const, features }
+
 	const html = toMapHTML(geojson as never, {
 		title: `Address-point provenance — ${STATE.toUpperCase()}, every point colored by its open-data source`,
 		flavor: "light",
@@ -127,7 +150,7 @@ export function sourceProvenanceMap(
 	writeFileSync(OUT, html)
 	report?.(`[written] ${OUT}  (${features.length} points)`)
 
-	for (const [bucket, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [bucket, n] of [...counts.entries()].toSorted((a, b) => b[1] - a[1])) {
 		report?.(`  ${n.toString().padStart(5)}  ${bucket}`)
 	}
 

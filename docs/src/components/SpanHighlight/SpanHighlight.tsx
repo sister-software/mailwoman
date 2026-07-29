@@ -1,21 +1,31 @@
+import { confidenceTier } from "../../shared/confidence-tiers.ts"
 import type { ResultNode } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 
 export interface SpanHighlightProps {
-	/** The raw text handed to the parser — `nodes[].start/end` index into this. */
+	/**
+	 * The raw text handed to the parser — `nodes[].start/end` index into this.
+	 */
 	input: string
-	/** Flattened parse nodes; only those with numeric `start`/`end` are rendered. */
+	/**
+	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
+	 */
 	nodes: ResultNode[]
 }
 
-type Segment = { text: string; node: ResultNode | null }
+interface Segment {
+	text: string
+	node: ResultNode | null
+}
 
-/** ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync. */
+/**
+ * ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync.
+ */
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
 
-	return confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return confidenceTier(confidence)
 }
 
 /**
@@ -37,7 +47,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 			n.end <= input.length
 	)
 
-	if (spans.length === 0) return null
+	if (!spans.length) return null
 
 	// Per-character owner = the most specific (shortest) span covering it. Robust to any parent/child
 	// span nesting the tree hands us — the leaf always wins, so every character renders once.
@@ -55,6 +65,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 				best = s
 			}
 		}
+
 		owner[i] = best
 	}
 
@@ -68,6 +79,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 				text: input.slice(from, i),
 				node: owner[from] === -1 ? null : spans[owner[from]],
 			})
+
 			from = i
 		}
 	}

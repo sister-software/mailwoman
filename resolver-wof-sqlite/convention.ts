@@ -38,7 +38,9 @@ export interface ScoringWeights {
  * `tokenNormalization`, etc.
  */
 export interface Convention {
-	/** Ordered strategy names the dispatcher runs; the first to return a non-null result wins. */
+	/**
+	 * Ordered strategy names the dispatcher runs; the first to return a non-null result wins.
+	 */
 	candidateStrategies?: string[]
 	/**
 	 * Weights for `postcode_area_resolution`'s soft-score. Partial — a layer may nudge one weight and inherit the rest

@@ -35,10 +35,14 @@ import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resol
 // imports are DYNAMIC inside the functions; type-only imports are erased and safe at module level.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite"
 
-/** Shared source string for the #743 promote measurements. */
+/**
+ * Shared source string for the #743 promote measurements.
+ */
 const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised gate, 2026-06-22)"
 
-/** Shared source string for the #928 promote OSM panels. */
+/**
+ * Shared source string for the #928 promote OSM panels.
+ */
 const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
 
 /**
@@ -51,9 +55,9 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
  * — the constant in core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
-	{ country: "US", hardFilterSafe: true, hardResolveRate: 1.0, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "FR", hardFilterSafe: true, hardResolveRate: 1.0, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	{ country: "DE", hardFilterSafe: true, hardResolveRate: 1.0, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{ country: "US", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{ country: "FR", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
+	{ country: "DE", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "ES", hardFilterSafe: true, hardResolveRate: 0.998, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "NL", hardFilterSafe: true, hardResolveRate: 0.973, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "IT", hardFilterSafe: true, hardResolveRate: 0.968, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
@@ -94,7 +98,9 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	},
 ]
 
-/** Shared source string for the guard-B boxes. */
+/**
+ * Shared source string for the guard-B boxes.
+ */
 const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/coord-parity.mjs) — deliberately coarse"
 
 const bbox = (country: string, latMin: number, latMax: number, lonMin: number, lonMax: number): CountryBBoxFact => ({
@@ -133,11 +139,17 @@ export const MEASURED_COUNTRY_BBOXES: readonly CountryBBoxFact[] = [
 ]
 
 export interface EmitCoverageManifestOptions {
-	/** The candidate DB under construction — MUST be pre-seal (a shipped DB is never patched, rebuild instead). */
+	/**
+	 * The candidate DB under construction — MUST be pre-seal (a shipped DB is never patched, rebuild instead).
+	 */
 	dbPath: string
-	/** Coverage rows to bake (default {@link MEASURED_COUNTRY_COVERAGE}). */
+	/**
+	 * Coverage rows to bake (default {@link MEASURED_COUNTRY_COVERAGE}).
+	 */
 	coverage?: readonly CountryCoverageFact[]
-	/** Guard-B bbox rows to bake (default {@link MEASURED_COUNTRY_BBOXES}). */
+	/**
+	 * Guard-B bbox rows to bake (default {@link MEASURED_COUNTRY_BBOXES}).
+	 */
 	bboxes?: readonly CountryBBoxFact[]
 }
 

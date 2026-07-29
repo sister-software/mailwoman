@@ -46,16 +46,24 @@ export interface SplitOptions {
 	holdouts?: Record<string, readonly string[]>
 }
 
-/** Output manifest: source_id lists per split. */
+/**
+ * Output manifest: source_id lists per split.
+ */
 export interface SplitManifest {
 	train: string[]
 	val: string[]
 	test: string[]
-	/** Echoes the holdouts used, so the manifest is self-describing. */
+	/**
+	 * Echoes the holdouts used, so the manifest is self-describing.
+	 */
 	holdouts: Record<string, readonly string[]>
-	/** Corpus version stamped onto the manifest. Read from the first row. */
+	/**
+	 * Corpus version stamped onto the manifest. Read from the first row.
+	 */
 	corpus_version: string
-	/** Counts for quick sanity checks. */
+	/**
+	 * Counts for quick sanity checks.
+	 */
 	counts: { train: number; val: number; test: number; total: number }
 }
 
@@ -117,6 +125,7 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 		if (!corpus_version && row.corpus_version) {
 			corpus_version = row.corpus_version
 		}
+
 		const split = splitForRow(row, holdouts)
 
 		if (split === "train") {
@@ -140,7 +149,9 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	}
 }
 
-/** Lightweight deterministic 0..(n-1) bucket from a string id. */
+/**
+ * Lightweight deterministic 0..(n-1) bucket from a string id.
+ */
 export function hashBucket(id: string, n: number): number {
 	const digest = createHash("sha256").update(id).digest()
 	// Read 4 bytes as uint32 to avoid bigint overhead.
@@ -160,18 +171,22 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 	await mkdir(outputDir, { recursive: true })
 
 	for (const name of ["train", "val", "test"] as const) {
-		const sorted = [...manifest[name]].sort()
+		const sorted = [...manifest[name]].toSorted()
 		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length ? "\n" : ""), "utf8")
 	}
+
 	const summary = {
 		corpus_version: manifest.corpus_version,
 		holdouts: manifest.holdouts,
 		counts: manifest.counts,
 	}
+
 	await writeFile(join(outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
 }
 
-/** Type re-export for callers that want to ingest LabeledRow specifically. */
+/**
+ * Type re-export for callers that want to ingest LabeledRow specifically.
+ */
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
@@ -199,11 +214,13 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	}
 
 	const total = opts.counts.train + opts.counts.val + opts.counts.test
+
 	const summary = {
 		corpus_version: opts.corpusVersion,
 		holdouts,
 		counts: { ...opts.counts, total },
 	}
+
 	await writeFile(join(opts.outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
 
 	return summary.counts
@@ -216,6 +233,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
 	const out = createWriteStream(unsortedPath, { encoding: "utf8" })
+
 	const outClosed = new Promise<void>((resolve, reject) => {
 		out.on("close", () => resolve())
 		out.on("error", reject)
@@ -233,12 +251,14 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 	} finally {
 		out.end()
 	}
+
 	await outClosed
 
 	await new Promise<void>((resolve, reject) => {
 		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.
 		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
+
 		proc.on("exit", (code) => {
 			if (code === 0) {
 				resolve()
@@ -247,5 +267,6 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 			}
 		})
 	})
+
 	await unlink(unsortedPath).catch(() => {})
 }

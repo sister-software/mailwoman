@@ -21,14 +21,15 @@ test("countryFlag: non-two-letter input → empty string", () => {
 	expect(countryFlag("")).toBe("")
 })
 
-test("countryReferenceAnnotator: fills iso3166 + flag + calling code + currency", () => {
+test("countryReferenceAnnotator: fills iso3166 + flag + calling code + currency", async () => {
 	expect(countryReferenceAnnotator({ lat: 0, lon: 0, countryCode: "us" })).toEqual({
 		iso3166: { alpha2: "US" },
 		flag: "🇺🇸",
 		callingCode: 1,
 		currency: { isoCode: "USD", name: "United States dollar", symbol: "$" },
 	})
-	const gb = countryReferenceAnnotator({ lat: 0, lon: 0, countryCode: "GB" })
+
+	const gb = await countryReferenceAnnotator({ lat: 0, lon: 0, countryCode: "GB" })
 	expect(gb.callingCode).toBe(44)
 	expect(gb.currency?.isoCode).toBe("GBP")
 })

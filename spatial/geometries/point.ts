@@ -11,7 +11,7 @@ import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
 
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "../bbox.ts"
-import { type H3Cell, shortenH3Cell } from "../h3/index.ts"
+import { type H3Cell, shortenH3Cell } from "../h3/cell.ts"
 import { type GeoObjectLiteral, GeometryType } from "../objects.ts"
 import {
 	type InternalPointCoordinates,
@@ -153,9 +153,9 @@ export class GeoPoint implements PointLiteral {
 		this.#altitude = typeof altitude === "number" ? altitude : 0
 	}
 
-	#latitude: number = 0
-	#longitude: number = 0
-	#altitude: number = 0
+	#latitude = 0
+	#longitude = 0
+	#altitude = 0
 
 	/**
 	 * The longitude of the point in degrees, i.e. the x-coordinate.
@@ -249,6 +249,8 @@ export class GeoPoint implements PointLiteral {
 	constructor(input: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	constructor(input?: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox) {
 		if (isCoordPairLiteral(input)) {
+			// A ternary does not carry the narrowing through, and inferGeoJSONCoordOrder needs the 2-tuple.
+			// oxlint-disable-next-line unicorn/prefer-ternary -- the if/else is what narrows `input`
 			if (input.length === 2) {
 				this.coordinates = inferGeoJSONCoordOrder(input)
 			} else {
@@ -301,7 +303,7 @@ export class GeoPoint implements PointLiteral {
 			if (point.isNullIsland()) return null
 
 			return point
-		} catch (_error) {
+		} catch {
 			return null
 		}
 	}

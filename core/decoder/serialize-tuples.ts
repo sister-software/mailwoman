@@ -14,7 +14,9 @@ import type { ComponentTag } from "../types/component.ts"
 import type { AddressNode, AddressTree } from "./types.ts"
 import { unknownSpans } from "./unknown-spans.ts"
 
-/** Options for {@link decodeAsTuples}. */
+/**
+ * Options for {@link decodeAsTuples}.
+ */
 export interface SerializeTuplesOpts {
 	/**
 	 * Interleave `["unknown", value]` tuples for the all-O spans the model left unclassified (#493), in source order.
@@ -31,9 +33,12 @@ function flatten(node: AddressNode, out: AddressNode[]): void {
 	}
 }
 
-/** Project an `AddressTree` to a source-ordered list of (tag, value) pairs. */
+/**
+ * Project an `AddressTree` to a source-ordered list of (tag, value) pairs.
+ */
 export function decodeAsTuples(tree: AddressTree): Array<[ComponentTag, string]>
 export function decodeAsTuples(tree: AddressTree, opts: SerializeTuplesOpts): Array<[ComponentTag | "unknown", string]>
+
 export function decodeAsTuples(
 	tree: AddressTree,
 	opts: SerializeTuplesOpts = {}

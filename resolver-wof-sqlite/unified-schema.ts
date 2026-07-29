@@ -12,7 +12,7 @@
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
 
-import { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
@@ -109,11 +109,13 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
  */
 export function populateAncestors(db: DatabaseSync): number {
 	db.exec("DELETE FROM ancestors")
+
 	const rows = db.prepare("SELECT id, parent_id, placetype FROM spr").all() as Array<{
 		id: number
 		parent_id: number
 		placetype: string
 	}>
+
 	const byID = new Map<number, { parent: number; placetype: string }>()
 
 	for (const r of rows) {
@@ -125,7 +127,9 @@ export function populateAncestors(db: DatabaseSync): number {
 	let count = 0
 
 	for (const r of rows) {
-		insert.run(r.id, r.id, r.placetype) // self
+		insert.run(r.id, r.id, r.placetype)
+
+		// self
 		count++
 		const seen = new Set<number>([r.id])
 		let cur = r.parent_id
@@ -135,11 +139,13 @@ export function populateAncestors(db: DatabaseSync): number {
 
 			if (!node) break
 			insert.run(r.id, cur, node.placetype)
+
 			count++
 			seen.add(cur)
 			cur = node.parent
 		}
 	}
+
 	db.exec("COMMIT")
 
 	return count
@@ -152,18 +158,21 @@ export async function createUnifiedIndexes(db: DatabaseSync): Promise<void> {
 	await kdb.schema.createIndex("spr_by_parent").ifNotExists().on("spr").column("parent_id").execute()
 	await kdb.schema.createIndex("names_by_id").ifNotExists().on("names").column("id").execute()
 	await kdb.schema.createIndex("names_by_name").ifNotExists().on("names").column("name").execute()
+
 	await kdb.schema
 		.createIndex("concordances_by_id")
 		.ifNotExists()
 		.on("concordances")
 		.columns(["id", "lastmodified"])
 		.execute()
+
 	await kdb.schema
 		.createIndex("concordances_by_other_id")
 		.ifNotExists()
 		.on("concordances")
 		.columns(["other_source", "other_id"])
 		.execute()
+
 	// ancestor_id is the hot column (parent-constraint queries `WHERE ancestor_id = ?`); id supports
 	// the reverse lookup.
 	await kdb.schema.createIndex("ancestors_by_ancestor").ifNotExists().on("ancestors").column("ancestor_id").execute()

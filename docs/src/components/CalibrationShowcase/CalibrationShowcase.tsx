@@ -51,15 +51,25 @@ interface CalibrationData {
 }
 
 export interface CalibrationShowcaseProps {
-	/** Model version to load the table for. Defaults to the demo's default release. */
+	/**
+	 * Model version to load the table for. Defaults to the demo's default release.
+	 */
 	version?: string
-	/** Locale dir on R2. */
+	/**
+	 * Locale dir on R2.
+	 */
 	locale?: string
 }
 
 // Palette via theme vars where possible; fixed hexes for the two data series so the legend reads.
-const RAW_COLOR = "#e8833a" // amber — the un-calibrated softmax score
-const CAL_COLOR = "#2e8b8b" // teal — after isotonic calibration
+/**
+ * Amber — the un-calibrated softmax score.
+ */
+const RAW_COLOR = "#e8833a"
+/**
+ * Teal — after isotonic calibration.
+ */
+const CAL_COLOR = "#2e8b8b"
 
 export default function CalibrationShowcase({
 	version = "v4.13.0",
@@ -70,6 +80,7 @@ export default function CalibrationShowcase({
 
 	useEffect(() => {
 		let cancelled = false
+
 		void (async () => {
 			try {
 				const res = await fetch(assetURL(locale, version, "calibration.json"))
@@ -80,9 +91,9 @@ export default function CalibrationShowcase({
 				if (!cancelled) {
 					setData(json)
 				}
-			} catch (e) {
+			} catch (caught) {
 				if (!cancelled) {
-					setError(e instanceof Error ? e.message : String(e))
+					setError(caught instanceof Error ? caught.message : String(caught))
 				}
 			}
 		})()
@@ -134,9 +145,7 @@ export default function CalibrationShowcase({
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Reliability diagram
-// ---------------------------------------------------------------------------
+//#region Reliability diagram
 
 function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: ReliabilityBin[] }): React.ReactElement {
 	const W = 340
@@ -156,10 +165,11 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 			(b): b is ReliabilityBin & { conf: number; acc: number } =>
 				b.n > 0 && b.conf != null && b.acc != null && b.conf >= lo && b.acc >= lo
 		)
+
 	const maxN = Math.max(1, ...raw.concat(cal).map((b) => b.n))
 	const r = (n: number) => 2 + 9 * Math.sqrt(n / maxN)
 
-	const ticks = [0.4, 0.6, 0.8, 1.0]
+	const ticks = [0.4, 0.6, 0.8, 1]
 
 	return (
 		<figure style={{ margin: 0 }}>
@@ -232,9 +242,9 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Abstention curve
-// ---------------------------------------------------------------------------
+//#endregion
+
+//#region Abstention curve
 
 function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.ReactElement {
 	const W = 340
@@ -249,7 +259,7 @@ function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.React
 
 	const line = (sel: (p: AbstentionPoint) => number) => points.map((p) => `${x(p.threshold)},${y(sel(p))}`).join(" ")
 
-	const yTicks = [0, 0.25, 0.5, 0.75, 1.0]
+	const yTicks = [0, 0.25, 0.5, 0.75, 1]
 
 	return (
 		<figure style={{ margin: 0 }}>
@@ -321,3 +331,5 @@ function Dot({ color }: { color: string }): React.ReactElement {
 		/>
 	)
 }
+
+//#endregion

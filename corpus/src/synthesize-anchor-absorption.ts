@@ -32,6 +32,12 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
+/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
+   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
+   extracted as named constants above. */
+
 export interface AnchorAbsorptionBaseTuple {
 	locality: string
 	region: string
@@ -78,8 +84,10 @@ function houseNum(random: () => number, realZips: ReadonlyArray<string>): string
 	return String(1 + Math.floor(random() * 9999))
 }
 
-// Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear
-// in `raw` for alignRow; these are plain ASCII tokens that align cleanly.
+/**
+ * Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear in `raw` for
+ * alignRow; these are plain ASCII tokens that align cleanly.
+ */
 const STREET_NAMES = [
 	"Main",
 	"Oak",
@@ -100,7 +108,9 @@ const STREET_NAMES = [
 	"Westpark",
 	"Crescent Meadow",
 ]
+
 const STREET_TYPES = ["St", "Ave", "Rd", "Dr", "Ln", "Blvd", "Ct", "Way", "Road", "Drive"]
+
 const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
 	{ locality: "Springfield", region: "IL", postcode: "62701" },
 	{ locality: "Portland", region: "OR", postcode: "97215" },
@@ -111,10 +121,16 @@ const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
 	{ locality: "Rochester", region: "NY", postcode: "14606" },
 	{ locality: "Sacramento", region: "CA", postcode: "95823" },
 ]
-// US rural states where the leading-postcode "{ZIP} {Street}, {STATE}" form (no trailing ZIP) is real —
-// the VT/rural format the #723 override broke and Probe A0 eroded.
+
+/**
+ * US rural states where the leading-postcode "{ZIP} {Street}, {STATE}" form (no trailing ZIP) is real — the VT/rural
+ * format the #723 override broke and Probe A0 eroded.
+ */
 const RURAL_REGIONS = ["VT", "ND", "SD", "NH", "ME", "MT", "WY"]
-// DE leading-postcode tuples: "{postcode} {locality}, {street} {house}".
+
+/**
+ * DE leading-postcode tuples: "{postcode} {locality}, {street} {house}".
+ */
 const DE_TUPLES = [
 	{ postcode: "10115", locality: "Berlin", street: "Hauptstraße" },
 	{ postcode: "80331", locality: "München", street: "Sendlinger Straße" },
@@ -122,11 +138,16 @@ const DE_TUPLES = [
 	{ postcode: "50667", locality: "Köln", street: "Hohe Straße" },
 	{ postcode: "01067", locality: "Dresden", street: "Prager Straße" },
 ]
+
 const HOUSE_NUMS = ["5", "12", "27", "100", "212", "1450", "8"]
-// Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp.
+/**
+ * Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp.
+ */
 const FAKE_ZIPS = ["00000", "99998", "99997", "00001", "99996"]
 
-/** Build one anchor-absorption counter-augmentation row. */
+/**
+ * Build one anchor-absorption counter-augmentation row.
+ */
 export function synthesizeAnchorAbsorptionRow(
 	opts: AnchorAbsorptionSynthesisOpts = {}
 ): SynthesizedAnchorAbsorptionRow {
@@ -199,6 +220,7 @@ export function synthesizeAnchorAbsorptionRow(
 		if (random() < 0.5) {
 			return { raw: `${zip} ${street}`, components: { house_number: zip, street }, locale: "en-US", template }
 		}
+
 		const t = pick(US_TUPLES, random)
 
 		return {
@@ -228,6 +250,7 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	// standard: normal house number + trailing postcode → house_number (baseline, keeps the common case).
 	const hn = houseNum(random, realZips)
 	const t = pick(US_TUPLES, random)
@@ -252,12 +275,16 @@ export function synthesizeAnchorAbsorptionRow(
 // had NO counter-slice for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
 // to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
 // trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/SLICE-H. CASE-P = 26%.
+/**
+ * Every anchor-absorption template, in one list for the shard runner to sample from. Each covers a way a venue or
+ * landmark name can swallow the street token that follows it.
+ */
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [
-	...Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),
-	...Array<AnchorAbsorptionTemplate>(15).fill("h-no-trailing-locality"),
-	...Array<AnchorAbsorptionTemplate>(13).fill("p-us-rural"),
-	...Array<AnchorAbsorptionTemplate>(13).fill("p-de"),
-	...Array<AnchorAbsorptionTemplate>(8).fill("anchor-fp"),
-	...Array<AnchorAbsorptionTemplate>(14).fill("locale-ambig"),
-	...Array<AnchorAbsorptionTemplate>(12).fill("standard"),
+	...new Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),
+	...new Array<AnchorAbsorptionTemplate>(15).fill("h-no-trailing-locality"),
+	...new Array<AnchorAbsorptionTemplate>(13).fill("p-us-rural"),
+	...new Array<AnchorAbsorptionTemplate>(13).fill("p-de"),
+	...new Array<AnchorAbsorptionTemplate>(8).fill("anchor-fp"),
+	...new Array<AnchorAbsorptionTemplate>(14).fill("locale-ambig"),
+	...new Array<AnchorAbsorptionTemplate>(12).fill("standard"),
 ]

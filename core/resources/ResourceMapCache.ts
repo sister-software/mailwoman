@@ -10,6 +10,7 @@
 export type DisposableLike = Disposable | AsyncDisposable
 
 export type ResourceConstructor<K extends PropertyKey, R extends DisposableLike> = new (key: K) => R
+
 export type ResourceFactory<K extends PropertyKey, R extends DisposableLike> = (key: K) => R | Promise<R>
 
 export type ResourceFactoryLike<K extends PropertyKey = PropertyKey, R extends DisposableLike = DisposableLike> =
@@ -58,7 +59,7 @@ export class ResourceMapCache<
 	/**
 	 * The human-readable name of the resource.
 	 */
-	public displayName: string = "ResourceMapCache"
+	public displayName = "ResourceMapCache"
 
 	protected readonly factoryLike: F
 
@@ -115,7 +116,7 @@ export class ResourceMapCache<
 	}
 
 	public async [Symbol.asyncDispose]() {
-		const resourceKeys = Array.from(super.keys()).reverse()
+		const resourceKeys = Array.from(super.keys()).toReversed()
 
 		for (const resourceKey of resourceKeys) {
 			this.close(resourceKey)

@@ -18,6 +18,16 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
+/**
+ * Confusions below this count are individually uninteresting and are summarised instead.
+ */
+const MIN_CONFUSION_COUNT = 20
+
+/**
+ * Off-map misses printed before the list is truncated.
+ */
+const MAX_LISTED_MISSES = 8
+
 interface TestRow {
 	raw: string
 	country: string
@@ -29,26 +39,42 @@ interface MultiScriptRow {
 	script: string
 }
 
-/** Options for {@linkcode evalCoarsePlacer}. */
+/**
+ * Options for {@linkcode evalCoarsePlacer}.
+ */
 export interface EvalCoarsePlacerOptions {
-	/** Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	model?: string
-	/** Abstention threshold. Default 0.5. */
+	/**
+	 * Abstention threshold. Default 0.5.
+	 */
 	abstain?: number
-	/** Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode evalCoarsePlacer}. */
+/**
+ * Result of {@linkcode evalCoarsePlacer}.
+ */
 export interface EvalCoarsePlacerResult {
 	n: number
-	/** Overall accuracy in percent. */
+	/**
+	 * Overall accuracy in percent.
+	 */
 	accuracy: number
-	/** 10-bucket expected calibration error. */
+	/**
+	 * 10-bucket expected calibration error.
+	 */
 	ece: number
 }
 
-/** Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout. */
+/**
+ * Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout.
+ */
 export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): Promise<EvalCoarsePlacerResult> {
 	const modelDir = options.model || dataRootPath("coarse-placer", "model")
 	const abstain = options.abstain ?? 0.5
@@ -63,6 +89,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		.trim()
 		.split("\n")
 		.map((l) => JSON.parse(l) as TestRow)
+
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
 	const confusion: Record<string, Record<string, number>> = {} // true → {pred → n}
@@ -71,6 +98,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	// ECE deciles
 	for (const r of test) {
 		const p = placer.predict(r.raw)
+
 		const pred = p.country ?? "(abstain)"
 		;(perClass[r.country] ??= { n: 0, ok: 0 }).n++
 		;(confusion[r.country] ??= {})[pred] = ((confusion[r.country] ??= {})[pred] ?? 0) + 1
@@ -78,15 +106,19 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 		if (hit) {
 			correct++
+
 			perClass[r.country]!.ok++
 		}
+
 		const b = Math.min(9, Math.floor(p.confidence * 10))
+
 		buckets[b]!.n++
 
 		if (hit) {
 			buckets[b]!.ok++
 		}
 	}
+
 	console.log(`coarse-placer eval — test n=${test.length}`)
 	console.log(`  overall accuracy: ${((100 * correct) / test.length).toFixed(2)}%  (abstain threshold ${abstain})`)
 	console.log(`  per-class recall:`)
@@ -98,6 +130,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			console.log(`    ${c}: ${((100 * s.ok) / s.n).toFixed(1)}%  (n=${s.n})`)
 		}
 	}
+
 	let ece = 0
 	const N = test.length
 
@@ -109,6 +142,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		const conf = (i + 0.5) / 10
 		ece += (bk.n / N) * Math.abs(acc - conf)
 	}
+
 	console.log(`  ECE (10-bucket): ${ece.toFixed(4)}`)
 
 	// Top confusions
@@ -116,7 +150,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 	for (const t of meta.classes) {
 		for (const [pred, n] of Object.entries(confusion[t] ?? {})) {
-			if (pred !== t && n >= 20) {
+			if (pred !== t && n >= MIN_CONFUSION_COUNT) {
 				confLines.push(`    ${t}→${pred}: ${n}`)
 			}
 		}
@@ -124,7 +158,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 	if (confLines.length) {
 		console.log(`  notable confusions (≥20):`)
-		console.log(confLines.sort().join("\n"))
+		console.log(confLines.toSorted().join("\n"))
 	}
 
 	// --- Abstention on the multi-script set (off-map scripts should abstain) ---
@@ -135,14 +169,17 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as MultiScriptRow)
+
 		const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
 		// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way
 		// it's not a confident mis-placement onto a wrong country.
 		const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
+
 		let offN = 0,
 			offOk = 0,
 			missN = 0,
 			missOk = 0
+
 		const offMiss: string[] = []
 
 		for (const r of ms) {
@@ -154,7 +191,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 				if (handled(p)) {
 					offOk++
-				} else if (offMiss.length < 8) {
+				} else if (offMiss.length < MAX_LISTED_MISSES) {
 					offMiss.push(
 						`    ${r.script}/${r.country} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 30)}»`
 					)
@@ -167,6 +204,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 				} // a latin/cjk in-map input mis-routed to OTHER = a false abstention
 			}
 		}
+
 		console.log(`\nmulti-script off-map handling (n=${ms.length}):`)
 		console.log(
 			`  OFF-map scripts (Cyrillic/Arabic/Thai/…) routed to OTHER-or-abstain: ${offOk}/${offN} (${((100 * offOk) / Math.max(1, offN)).toFixed(0)}%) ← want HIGH`
@@ -179,8 +217,8 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			console.log(`  off-map still mis-placed (the Latin-off-map residual — needs full off-map addresses, M3):`)
 			console.log(offMiss.join("\n"))
 		}
-	} catch (e) {
-		console.log(`\n(multi-script set not found at ${msPath}: ${(e as Error).message})`)
+	} catch (error) {
+		console.log(`\n(multi-script set not found at ${msPath}: ${(error as Error).message})`)
 	}
 
 	return { n: test.length, accuracy: (100 * correct) / test.length, ece }

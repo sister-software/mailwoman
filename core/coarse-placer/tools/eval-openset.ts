@@ -30,6 +30,9 @@
  *   Run: `mailwoman placer eval openset [--model <dir>] [--out-md <path>]`
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
@@ -37,6 +40,16 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 import { COARSE_CLASSES, featurize } from "../featurize.ts"
+
+/**
+ * Steps in the threshold sweep; finer than the reporting precision so the knee is not missed.
+ */
+const QUANTILE_SWEEP_STEPS = 200
+
+/**
+ * Percentage both held-out catch and in-map accuracy must clear for an operating point to qualify.
+ */
+const TARGET_PERCENT = 90
 
 type ScoreKey = "maxprob" | "p_inmap" | "energy" | "maxlogit" | "maha"
 
@@ -59,21 +72,35 @@ interface ParetoPoint {
 	heldCaught: number
 }
 
-/** Options for {@linkcode evalOpenSet}. */
+/**
+ * Options for {@linkcode evalOpenSet}.
+ */
 export interface EvalOpenSetOptions {
-	/** Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`. */
+	/**
+	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 */
 	model?: string
-	/** Dataset dir. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
-	/** Mahalanobis fit rows per class. Default 2000. */
+	/**
+	 * Mahalanobis fit rows per class. Default 2000.
+	 */
 	fitPerClass?: number
-	/** Also write the markdown report here. */
+	/**
+	 * Also write the markdown report here.
+	 */
 	outMd?: string
 }
 
-/** Result of {@linkcode evalOpenSet}. */
+/**
+ * Result of {@linkcode evalOpenSet}.
+ */
 export interface EvalOpenSetResult {
-	/** Best score by the honest dev→test balanced min. */
+	/**
+	 * Best score by the honest dev→test balanced min.
+	 */
 	winner: ScoreKey
 	honestMin: number
 	clears90: boolean
@@ -87,6 +114,7 @@ function logsumexp(xs: number[]): number {
 		if (x > m) {
 			m = x
 		}
+
 	let s = 0
 
 	for (const x of xs) {
@@ -96,7 +124,9 @@ function logsumexp(xs: number[]): number {
 	return m + Math.log(s)
 }
 
-/** Per-class softmax prob over ALL 12 classes. */
+/**
+ * Per-class softmax prob over ALL 12 classes.
+ */
 function softmax(z: Float64Array): Float64Array {
 	const m = Math.max(...z)
 	const e = z.map((x) => Math.exp(x - m))
@@ -105,15 +135,19 @@ function softmax(z: Float64Array): Float64Array {
 	return e.map((x) => x / s)
 }
 
-/** Invert a symmetric positive-definite matrix via Gauss-Jordan. */
+/**
+ * Invert a symmetric positive-definite matrix via Gauss-Jordan.
+ */
 function inverse(M: Float64Array[]): number[][] {
 	const n = M.length
+
 	const A = M.map((row, i) => {
 		const r = new Float64Array(2 * n)
 
 		for (let j = 0; j < n; j++) {
 			r[j] = row[j]!
 		}
+
 		r[n + i] = 1
 
 		return r
@@ -126,6 +160,7 @@ function inverse(M: Float64Array[]): number[][] {
 			if (Math.abs(A[r]![col]!) > Math.abs(A[piv]![col]!)) {
 				piv = r
 			}
+
 		;[A[col], A[piv]] = [A[piv]!, A[col]!]
 		const d = A[col]![col]!
 
@@ -146,7 +181,9 @@ function inverse(M: Float64Array[]): number[][] {
 	return A.map((r) => Array.from(r.slice(n)))
 }
 
-/** Coarse-placer post-hoc open-set score comparison — see the module doc. Emits the markdown report to stdout. */
+/**
+ * Coarse-placer post-hoc open-set score comparison — see the module doc. Emits the markdown report to stdout.
+ */
 export async function evalOpenSet(
 	options: EvalOpenSetOptions = {},
 	report?: (line: string) => void
@@ -166,7 +203,9 @@ export async function evalOpenSet(
 
 	if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 
-	/** Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry, not calibration. */
+	/**
+	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry, not calibration.
+	 */
 	function logits(raw: string): Float64Array {
 		const feats = featurize(raw)
 		const z = new Float64Array(C)
@@ -178,13 +217,16 @@ export async function evalOpenSet(
 			for (const i of feats) {
 				s += W[base + i]!
 			}
+
 			z[c] = s
 		}
 
 		return z
 	}
 
-	/** In-map logit sub-vector (length nIn), in IN order. */
+	/**
+	 * In-map logit sub-vector (length nIn), in IN order.
+	 */
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
 	function load(file: string): DataRow[] {
@@ -194,10 +236,8 @@ export async function evalOpenSet(
 			.map((l) => JSON.parse(l) as DataRow)
 	}
 
-	// ---------------------------------------------------------------------------
 	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
 	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
-	// ---------------------------------------------------------------------------
 	report?.("fitting Mahalanobis on in-map train logits…")
 	const trainRows = load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
@@ -210,12 +250,13 @@ export async function evalOpenSet(
 			arr.push(r.raw)
 		}
 	}
+
 	const means = new Map<string, Float64Array>() // country -> Float64Array(nIn)
 	const counts = new Map<string, number>()
 
 	// Accumulate per-class means.
 	for (const [country, raws] of byClass) {
-		if (raws.length === 0) continue
+		if (!raws.length) continue
 		const mu = new Float64Array(nIn)
 
 		for (const raw of raws) {
@@ -229,9 +270,11 @@ export async function evalOpenSet(
 		for (let k = 0; k < nIn; k++) {
 			mu[k] = mu[k]! / raws.length
 		}
+
 		means.set(country, mu)
 		counts.set(country, raws.length)
 	}
+
 	// Tied covariance over centered in-map train logits.
 	const Sigma = Array.from({ length: nIn }, () => new Float64Array(nIn))
 	let nTot = 0
@@ -254,6 +297,7 @@ export async function evalOpenSet(
 					Sigma[a]![b] = Sigma[a]![b]! + d[a]! * d[b]!
 				}
 			}
+
 			nTot++
 		}
 	}
@@ -271,7 +315,9 @@ export async function evalOpenSet(
 
 	const SigmaInv = inverse(Sigma)
 
-	/** -min_c Mahalanobis² to any in-map class mean (higher = closer to the in-map manifold). */
+	/**
+	 * -min_c Mahalanobis² to any in-map class mean (higher = closer to the in-map manifold).
+	 */
 	function mahaScore(z: Float64Array): number {
 		const v = inVec(z)
 		let best = Infinity
@@ -282,6 +328,7 @@ export async function evalOpenSet(
 			for (let k = 0; k < nIn; k++) {
 				d[k] = v[k]! - mu[k]!
 			}
+
 			let q = 0
 
 			for (let a = 0; a < nIn; a++) {
@@ -290,6 +337,7 @@ export async function evalOpenSet(
 				for (let b = 0; b < nIn; b++) {
 					row += SigmaInv[a]![b]! * d[b]!
 				}
+
 				q += d[a]! * row
 			}
 
@@ -301,17 +349,19 @@ export async function evalOpenSet(
 		return -best
 	}
 
-	// ---------------------------------------------------------------------------
-	// Score the in-map test (11 countries) + the off-map heldout families.
-	// ---------------------------------------------------------------------------
+	// MARK: Score both splits
+
 	report?.("scoring in-map test + off-map heldout…")
 	const SCORES: ScoreKey[] = ["maxprob", "p_inmap", "energy", "maxlogit", "maha"]
 
-	/** All open-set scores for one raw string + whether argmax-in-map routes to `trueCountry`. */
+	/**
+	 * All open-set scores for one raw string + whether argmax-in-map routes to `trueCountry`.
+	 */
 	function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
 		const z = logits(raw)
 		const probs = softmax(z)
 		const zin = inVec(z)
+
 		// argmax over in-map classes (the FIXED routing).
 		let amIdx = 0,
 			am = -Infinity
@@ -321,6 +371,7 @@ export async function evalOpenSet(
 				am = zin[k]!
 				amIdx = k
 			}
+
 		const routedCountry = COARSE_CLASSES[IN[amIdx]!]!
 		const inmapProbMax = Math.max(...IN.map((c) => probs[c]!))
 
@@ -350,7 +401,9 @@ export async function evalOpenSet(
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)
 	const heldTest = heldoutScored.filter((_, i) => i % 2 === 1)
 
-	/** (inMapAcc, heldCaught) at threshold t over a given in-map/heldout split. */
+	/**
+	 * (inMapAcc, heldCaught) at threshold t over a given in-map/heldout split.
+	 */
 	function pointAt(scoreKey: ScoreKey, t: number, inSplit: ScoredRow[], heldSplit: ScoredRow[]): ParetoPoint {
 		let keepCorrect = 0
 
@@ -358,6 +411,7 @@ export async function evalOpenSet(
 			if (o.s[scoreKey] >= t && o.correctRoute) {
 				keepCorrect++
 			}
+
 		let caught = 0
 
 		for (const o of heldSplit)
@@ -374,15 +428,17 @@ export async function evalOpenSet(
 		const inVals = inmapScored.map((o) => ({ v: o.s[scoreKey], ok: o.correctRoute }))
 		const heldVals = heldoutScored.map((o) => o.s[scoreKey])
 		// Candidate thresholds: quantiles of the union of scores.
-		const all = [...inVals.map((x) => x.v), ...heldVals].sort((a, b) => a - b)
+		const all = [...inVals.map((x) => x.v), ...heldVals].toSorted((a, b) => a - b)
 		const ts: number[] = []
 
-		for (let q = 0; q <= 200; q++) {
+		for (let q = 0; q <= QUANTILE_SWEEP_STEPS; q++) {
 			ts.push(all[Math.min(all.length - 1, Math.floor((q / 200) * (all.length - 1)))]!)
 		}
+
 		const uniq = [...new Set(ts)]
 		const nInVals = inVals.length
 		const nHeld = heldVals.length
+
 		const pts: ParetoPoint[] = uniq.map((t) => {
 			let keepCorrect = 0
 
@@ -390,6 +446,7 @@ export async function evalOpenSet(
 				if (x.v >= t && x.ok) {
 					keepCorrect++
 				}
+
 			let caught = 0
 
 			for (const v of heldVals)
@@ -399,6 +456,7 @@ export async function evalOpenSet(
 
 			return { t, inMapAcc: (100 * keepCorrect) / nInVals, heldCaught: (100 * caught) / nHeld }
 		})
+
 		// Summaries.
 		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the FULL probe
 		let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
@@ -412,11 +470,11 @@ export async function evalOpenSet(
 				balanced = { val: m, pt: p }
 			}
 
-			if (p.heldCaught >= 90 && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) {
+			if (p.heldCaught >= TARGET_PERCENT && (!atHeld90 || p.inMapAcc > atHeld90.inMapAcc)) {
 				atHeld90 = p
 			}
 
-			if (p.inMapAcc >= 90 && (!atIn90 || p.heldCaught > atIn90.heldCaught)) {
+			if (p.inMapAcc >= TARGET_PERCENT && (!atIn90 || p.heldCaught > atIn90.heldCaught)) {
 				atIn90 = p
 			}
 		}
@@ -432,6 +490,7 @@ export async function evalOpenSet(
 				devBest = { val: m, t: p.t }
 			}
 		}
+
 		const heldoutTestPt = pointAt(scoreKey, devBest.t!, inTest, heldTest)
 
 		return { balanced, atHeld90, atIn90, devThreshold: devBest.t, honest: heldoutTestPt, pts }
@@ -440,20 +499,20 @@ export async function evalOpenSet(
 	type Pareto = ReturnType<typeof paretoFor>
 	const results = Object.fromEntries(SCORES.map((k) => [k, paretoFor(k)])) as Record<ScoreKey, Pareto>
 
-	// ---------------------------------------------------------------------------
-	// Report.
-	// ---------------------------------------------------------------------------
+	// MARK: Report.
+
 	const f = (x: number | null | undefined): string => (x == null ? "—" : x.toFixed(1))
-	const lines: string[] = []
-	lines.push(`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`)
-	lines.push("")
-	lines.push(
+
+	const lines: string[] = [
+		`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`,
+		"",
 		`_Frozen shipped model (\`${path.basename(modelDir)}\`), NO retrain. In-map test ${inmapTest.length} rows ` +
 			`(11 countries); off-map HELDOUT ${heldout.length} rows (never-trained families: baltic/oceania/middle-east). ` +
 			`Mahalanobis fit on ≤${fitPerClass}/class in-map train logits. The 11-way routing is fixed; each score only ` +
-			`changes the reject decision._`
-	)
-	lines.push("")
+			`changes the reject decision._`,
+		"",
+	]
+
 	function atStr(p: ParetoPoint | null): string {
 		if (!p) return "— (unreachable)"
 
@@ -468,10 +527,12 @@ export async function evalOpenSet(
 	for (const k of SCORES) {
 		const r = results[k]
 		const h = r.honest
+
 		lines.push(
 			`| \`${k}\` | ${f(h.inMapAcc)} | ${f(h.heldCaught)} | **${f(Math.min(h.inMapAcc, h.heldCaught))}** | ${f(r.balanced.val)} |`
 		)
 	}
+
 	lines.push("")
 	lines.push(`## Full-probe corners (the achievable Pareto), per score`)
 	lines.push("")
@@ -481,33 +542,39 @@ export async function evalOpenSet(
 	for (const k of SCORES) {
 		const r = results[k]
 		const bal = r.balanced.pt
+
 		lines.push(
 			`| \`${k}\` | **${f(r.balanced.val)}** (in ${f(bal?.inMapAcc)}, held ${f(bal?.heldCaught)}) | ` +
 				`${atStr(r.atHeld90)} | ${atStr(r.atIn90)} |`
 		)
 	}
+
 	lines.push("")
 
 	// Winner by the HONEST dev→test balanced min (not the full-probe number).
 	const ranked = SCORES.map((k) => ({
 		k,
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),
-	})).sort((a, b) => b.honestMin - a.honestMin)
+	})).toSorted((a, b) => b.honestMin - a.honestMin)
+
 	const winner = ranked[0]!
-	const clears90 = winner.honestMin >= 90
+	const clears90 = winner.honestMin >= TARGET_PERCENT
 	lines.push(`## Verdict`)
 	lines.push("")
+
 	lines.push(
 		`Best score (honest dev→test): **\`${winner.k}\`** at min(in-map, heldout) = **${f(winner.honestMin)}** on the frozen test half. ` +
 			(clears90
 				? `**Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule; no retrain needed (Phase 2 reject-head unnecessary).`
 				: `Below the 90/90 bar — the best post-hoc score reaches ${f(winner.honestMin)}. Escalate to Phase 2 (explicit binary reject head).`)
 	)
+
 	lines.push("")
 	lines.push(`Ranking (honest dev→test min): ${ranked.map((r) => `\`${r.k}\` ${f(r.honestMin)}`).join(" · ")}`)
 	lines.push("")
 
 	const md = lines.join("\n")
+
 	console.log(md)
 
 	if (options.outMd) {

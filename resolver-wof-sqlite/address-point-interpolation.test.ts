@@ -33,6 +33,7 @@ async function seedPoints(db: DatabaseSync, points: SeedPoint[]): Promise<void> 
 	// (closed in afterAll), so we don't destroy `kdb`.
 	const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
 	await createAddressPointTable(kdb)
+
 	const ins = db.prepare(
 		`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 		 VALUES (?, ?, ?, NULL, ?, NULL, ?, ?, ?, 'overture:test', '2026-05-20.0')`
@@ -50,6 +51,7 @@ let interpolator: AddressPointInterpolator
 
 beforeAll(async () => {
 	db = new DatabaseSync(":memory:")
+
 	await seedPoints(db, [
 		// Both-sided bracket fixture: known points at 100 and 200.
 		{ street_key: "main street", number: "100", postcode: "05601", lat: 0, lon: 0 },
@@ -72,6 +74,7 @@ beforeAll(async () => {
 		{ street_key: "state route 100", number: "1000", postcode: "05601", lat: 3, lon: 0 },
 		{ street_key: "state route 100", number: "1100", postcode: "05601", lat: 3, lon: 0.001 },
 	])
+
 	interpolator = new AddressPointInterpolator({ database: db })
 })
 
@@ -149,6 +152,7 @@ describe("AddressPointInterpolator", () => {
 
 	it("falls through to the TIGER segment fallback when bracketing cannot answer", () => {
 		const segDB = new DatabaseSync(":memory:")
+
 		segDB.exec(`
 			CREATE TABLE street_segment (
 				street_norm  TEXT NOT NULL,
@@ -166,12 +170,14 @@ describe("AddressPointInterpolator", () => {
 				release      TEXT NOT NULL
 			)
 		`)
+
 		segDB
 			.prepare(
 				`INSERT INTO street_segment VALUES
 				 ('lone lane', 'L', 1, 99, 1, 99, 'odd', '05601', '50023', 'Lone Ln', '[[0,2],[0.001,2]]', 'tiger:edges', 'TIGER2023')`
 			)
 			.run()
+
 		const tiger = new StreetInterpolator({ database: segDB })
 		const ladder = new AddressPointInterpolator({ database: db, fallback: tiger })
 

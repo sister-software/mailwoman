@@ -16,7 +16,14 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import FastGlob from "fast-glob"
 import { asyncParallelIterator } from "spliterator"
 
-/** The admin placetype allowlist (postalcode builds pass their own set). */
+/**
+ * Arity of a 2D bounding box: `[west, south, east, north]`.
+ */
+const BBOX_2D_LENGTH = 4
+
+/**
+ * The admin placetype allowlist (postalcode builds pass their own set).
+ */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
 	"region",
@@ -60,7 +67,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 
 	const supersededBy = props["wof:superseded_by"]
 
-	if (supersededBy && supersededBy.length > 0) return null
+	if (supersededBy && supersededBy.length) return null
 
 	const placetype = props["wof:placetype"]
 
@@ -78,7 +85,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 	if (typeof bboxStr === "string") {
 		const parts = bboxStr.split(",").map(Number)
 
-		if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
+		if (parts.length === BBOX_2D_LENGTH && parts.every((n) => Number.isFinite(n))) {
 			;[minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]
 		}
 	}
@@ -99,7 +106,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 		const vals = Array.isArray(value) ? value : [value]
 
 		for (const v of vals) {
-			if (typeof v === "string" && v.length > 0) {
+			if (typeof v === "string" && v.length) {
 				names.push({ name: v, language: lang, privateuse, official })
 			}
 		}
@@ -130,15 +137,25 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 }
 
 export interface IngestWOFOptions {
-	/** WOF repos root (a parent of `whosonfirst-data*` subrepos, or a single repo directory). */
+	/**
+	 * WOF repos root (a parent of `whosonfirst-data*` subrepos, or a single repo directory).
+	 */
 	dataDir: string
-	/** Placetype allowlist. Default {@link ADMIN_PLACETYPES}. */
+	/**
+	 * Placetype allowlist. Default {@link ADMIN_PLACETYPES}.
+	 */
 	placetypes?: ReadonlySet<string>
-	/** Parallel file reads. Default 64. */
+	/**
+	 * Parallel file reads. Default 64.
+	 */
 	concurrency?: number
-	/** Files per write transaction. Default 500. */
+	/**
+	 * Files per write transaction. Default 500.
+	 */
 	batchCommitSize?: number
-	/** Progress callback — invoked every 25,000 processed files. */
+	/**
+	 * Progress callback — invoked every 25,000 processed files.
+	 */
 	onProgress?: (processed: number, skipped: number, total: number) => void
 }
 
@@ -164,6 +181,7 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 	if (!placetypes.has("postalcode")) {
 		ignore.push("**/whosonfirst-data-postalcode-*/**")
 	}
+
 	const filePaths = await FastGlob("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
 		absolute: true,
@@ -173,12 +191,15 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const concordancesInsert = db.prepare(
 		`INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)`
 	)
+
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
 	let processed = 0
@@ -206,6 +227,7 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 
 		if (!feature) {
 			skipped++
+
 			continue
 		}
 

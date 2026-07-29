@@ -32,6 +32,7 @@ export { OptionsSchema as options }
 
 const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
+
 	const state = useCommandTask(async () => {
 		if (!/^\d{2}$/.test(options.state)) {
 			throw commandError(`--state must be a two-digit FIPS code (got "${options.state}")`)
@@ -48,6 +49,7 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 				"`tiger redistricting` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
 			)
 		}
+
 		const gen = fetchRedistricting({
 			stateFIPS: options.state,
 			vintage: options.vintage,
@@ -69,6 +71,7 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 			} else if (ev.phase === "load") {
 				setStatus(`Loading counts… ${ev.inserted.toLocaleString()}${ev.total ? ` / ${ev.total.toLocaleString()}` : ""}`)
 			}
+
 			next = await gen.next()
 		}
 

@@ -32,33 +32,36 @@ const QUEBEC: RegionPlace = {
 	abbrev: "QC",
 	placetype: "region",
 	country: "CA",
-	lat: 52.0,
-	lon: -72.0,
+	lat: 52,
+	lon: -72,
 	score: 9,
 	exactMatch: true,
 }
+
 const ONTARIO: RegionPlace = {
 	id: 101,
 	name: "Ontario",
 	abbrev: "ON",
 	placetype: "region",
 	country: "CA",
-	lat: 50.0,
-	lon: -85.0,
+	lat: 50,
+	lon: -85,
 	score: 9,
 	exactMatch: true,
 }
+
 const ILLINOIS: RegionPlace = {
 	id: 102,
 	name: "Illinois",
 	abbrev: "IL",
 	placetype: "region",
 	country: "US",
-	lat: 40.0,
-	lon: -89.0,
+	lat: 40,
+	lon: -89,
 	score: 9,
 	exactMatch: true,
 }
+
 const MAINE: RegionPlace = {
 	id: 103,
 	name: "Maine",
@@ -66,7 +69,7 @@ const MAINE: RegionPlace = {
 	placetype: "region",
 	country: "US",
 	lat: 45.3,
-	lon: -69.0,
+	lon: -69,
 	score: 9,
 	exactMatch: true,
 }
@@ -83,6 +86,7 @@ const MONTREAL_CA: ResolvedPlace = {
 	score: 9,
 	exactMatch: true,
 }
+
 const MONTREAL_WI: ResolvedPlace = {
 	id: 201,
 	name: "Montreal",
@@ -94,6 +98,7 @@ const MONTREAL_WI: ResolvedPlace = {
 	score: 6,
 	exactMatch: true,
 }
+
 // London, Ontario vs London, KY (a real US namesake — so the greedy US filter DOES resolve a locality to rescue from).
 const LONDON_CA: ResolvedPlace = {
 	id: 202,
@@ -106,6 +111,7 @@ const LONDON_CA: ResolvedPlace = {
 	score: 9,
 	exactMatch: true,
 }
+
 const LONDON_KY: ResolvedPlace = {
 	id: 203,
 	name: "London",
@@ -117,6 +123,7 @@ const LONDON_KY: ResolvedPlace = {
 	score: 5,
 	exactMatch: true,
 }
+
 // The domestic controls — a same-named US locality under its US region.
 const SPRINGFIELD_IL: ResolvedPlace = {
 	id: 204,
@@ -129,6 +136,7 @@ const SPRINGFIELD_IL: ResolvedPlace = {
 	score: 9,
 	exactMatch: true,
 }
+
 const PORTLAND_ME: ResolvedPlace = {
 	id: 205,
 	name: "Portland",
@@ -284,10 +292,12 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("does not fire when adminCoherence is explicitly false (the opt-out)", async () => {
 		const resolver = createWOFResolver(makeBackend(CA_POOL))
+
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), {
 			defaultCountry: "US",
 			adminCoherence: false,
 		})
+
 		const loc = localityOf(out)
 
 		// Greedy US filter → Montreal WI, and no coherence re-pick.

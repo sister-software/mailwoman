@@ -24,7 +24,9 @@
 
 import type { UkCountryCode } from "./country.ts"
 
-/** Northern Ireland is a single postcode area: BT (Belfast). */
+/**
+ * Northern Ireland is a single postcode area: BT (Belfast).
+ */
 const NORTHERN_IRELAND_AREAS = ["BT"] as const
 
 /**
@@ -74,7 +76,9 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 	...Object.fromEntries(WALES_AREAS.map((a) => [a, "WLS" as const])),
 }
 
-/** True when `area` looks like a valid postcode-area string: one or two ASCII letters. */
+/**
+ * True when `area` looks like a valid postcode-area string: one or two ASCII letters.
+ */
 function isAreaShape(area: unknown): area is string {
 	return typeof area === "string" && /^[A-Z]{1,2}$/i.test(area)
 }

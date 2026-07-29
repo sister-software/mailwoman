@@ -19,7 +19,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { REGRESSION_CASES } from "./cases/regression.ts"
 import { createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
 
-/** Build the curated regression DB from the committed seed and swap it into place. */
+/**
+ * Build the curated regression DB from the committed seed and swap it into place.
+ */
 export async function buildRegressionDB(): Promise<void> {
 	const output = dataRootPath("gauntlet", "regression.db")
 	const tmp = `${output}.tmp-${process.pid}`
@@ -58,11 +60,13 @@ export async function buildRegressionDB(): Promise<void> {
 			c.note ?? null
 		)
 	}
+
 	await kdb.destroy()
 
 	if (existsSync(output)) {
 		renameSync(output, `${output}.prev`)
 	}
+
 	renameSync(tmp, output)
 
 	if (existsSync(`${output}.prev`)) {
@@ -70,10 +74,12 @@ export async function buildRegressionDB(): Promise<void> {
 	}
 
 	console.log(`[gauntlet] built ${output} — ${REGRESSION_CASES.length} cases`)
+
 	const kinds = new Map<string, number>()
 
 	for (const c of REGRESSION_CASES) {
 		kinds.set(`${c.country}/${c.addressKind}`, (kinds.get(`${c.country}/${c.addressKind}`) ?? 0) + 1)
 	}
+
 	console.log(`[gauntlet] coverage by kind: ${[...kinds].map(([k, n]) => `${k}=${n}`).join("  ")}`)
 }

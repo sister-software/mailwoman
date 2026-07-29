@@ -71,6 +71,7 @@ test("wellKnownGeometryToGeoJSON: parses a WKT MULTIPOLYGON into two distinct po
 	const geo = wellKnownGeometryToGeoJSON<GeometryLiteral>(
 		"MULTIPOLYGON(((30 20,45 40,10 40,30 20)),((15 5,40 10,10 20,5 10,15 5)))"
 	)
+
 	expect(geo).toEqual(MULTIPOLYGON)
 })
 
@@ -82,7 +83,7 @@ test("wellKnownGeometryToGeoJSON: parses an EWKB buffer back into the source geo
 })
 
 test("wellKnownGeometryToGeoJSON: throws on malformed WKT", () => {
-	expect(() => wellKnownGeometryToGeoJSON("NOT A GEOMETRY")).toThrow()
+	expect(() => wellKnownGeometryToGeoJSON("NOT A GEOMETRY")).toThrow(Error)
 })
 
 test("geometryToWKT: serializes GeoJSON back to its canonical WKT string", () => {

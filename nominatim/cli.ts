@@ -44,7 +44,9 @@ import {
 	toNominatimResult,
 } from "./index.ts"
 
-/** WOF placetype → Nominatim address key. */
+/**
+ * WOF placetype → Nominatim address key.
+ */
 const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 	venue: "road",
 	street: "road",
@@ -68,7 +70,9 @@ function joinNonEmpty(...parts: Array<string | undefined>): string {
 	return parts.filter(Boolean).join(", ")
 }
 
-/** Map a forward geocode result (admin + coordinate) into the formatter's neutral shape. */
+/**
+ * Map a forward geocode result (admin + coordinate) into the formatter's neutral shape.
+ */
 function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 	const address: NominatimAddressDetails = {}
 
@@ -129,15 +133,17 @@ async function serve(): Promise<void> {
 	// back to ambient data.
 	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
 		console.error(`✗ --candidate-db not found: ${values["candidate-db"]}`)
+
 		process.exit(1)
 	}
+
 	const candidateDb =
 		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
 
 	// #1009: fail FRIENDLY before the resolver's internal shard error — same message shape as
 	// @mailwoman/photon's pre-flight (kept in lockstep; docs/switching pages are the maintained pointer).
-	if (!candidateDb && wofPaths.length === 0) {
+	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			[
 				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
@@ -154,6 +160,7 @@ async function serve(): Promise<void> {
 				"  Docs: https://mailwoman.sister.software/docs/switching/nominatim",
 			].join("\n")
 		)
+
 		process.exit(1)
 	}
 
@@ -180,16 +187,19 @@ async function serve(): Promise<void> {
 	if (existsSync(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
 	}
+
 	const ulDBPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
 
 	if (existsSync(ulDBPath)) {
 		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
 	}
+
 	const nutsDBPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
 
 	if (existsSync(nutsDBPath)) {
 		annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDBPath })))
 	}
+
 	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {
@@ -205,6 +215,7 @@ async function serve(): Promise<void> {
 			// for the #822 placer frontier — `countrycodes=au` lands Sydney in Australia. One country is the
 			// common (geopy) case; for a list we apply the first.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
+
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
@@ -233,6 +244,7 @@ async function serve(): Promise<void> {
 			if (result.street) {
 				resolved.address.road = result.street
 			}
+
 			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
 			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
@@ -242,6 +254,7 @@ async function serve(): Promise<void> {
 				if (!resolved.address.country) {
 					resolved.address.country = country.canonical
 				}
+
 				resolved.address.country_code = country.iso2.toLowerCase()
 			}
 
@@ -256,7 +269,9 @@ async function serve(): Promise<void> {
 						resolved.address.country
 					) || resolved.displayName
 			}
+
 			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+
 			out.annotations = toOpenCage(
 				await annotate({
 					lat: result.lat,
@@ -273,7 +288,7 @@ async function serve(): Promise<void> {
 			if (!reverseGeo) return null
 			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
 
-			if (hierarchy.length === 0) return null
+			if (!hierarchy.length) return null
 			const address: NominatimAddressDetails = {}
 
 			for (const place of hierarchy) {
@@ -283,11 +298,13 @@ async function serve(): Promise<void> {
 					address[key] = place.name
 				}
 			}
+
 			const deepest = hierarchy[0]!
 
 			if (deepest.country) {
 				address.country_code = deepest.country.toLowerCase()
 			}
+
 			const resolved: ResolvedAddress = {
 				lat: params.lat,
 				lon: params.lon,
@@ -303,7 +320,9 @@ async function serve(): Promise<void> {
 						]
 					: undefined,
 			}
+
 			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+
 			out.annotations = toOpenCage(
 				await annotate({ lat: params.lat, lon: params.lon, countryCode: address.country_code })
 			)
@@ -355,6 +374,7 @@ function openapi(): void {
 	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
 		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
 		console.error("Usage: mailwoman-nominatim openapi [--flavor 3.1|3.0] [--out <path>]")
+
 		process.exit(1)
 	}
 

@@ -24,8 +24,8 @@ describe("detectRegionAbbreviations", () => {
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
 		const hits = detectRegionAbbreviations(tokens, segs)
-		expect(hits.length).toBe(1)
-		expect(hits[0].span).toBe("DC")
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.span).toBe("DC")
 	})
 
 	it("detects 'NY' after comma in '350 5th Ave, New York, NY 10118'", () => {
@@ -33,8 +33,8 @@ describe("detectRegionAbbreviations", () => {
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
 		const hits = detectRegionAbbreviations(tokens, segs)
-		expect(hits.length).toBe(1)
-		expect(hits[0].span).toBe("NY")
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.span).toBe("NY")
 	})
 
 	it("returns empty for inputs without commas", () => {
@@ -57,9 +57,11 @@ describe("detectRegionAbbreviations", () => {
 		const text = "Seattle, WA and Portland, OR"
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
-		// "WA" appears after first comma in segment with separator "comma"
-		// Whether both are detected depends on segmentation treating "and" as whitespace-separated
-		expect((hits) => hits.length >= 1).toBeTruthy()
+		// "WA" appears after the first comma; whether BOTH are detected depends on segmentation treating
+		// "and" as whitespace-separated, so this pins the weaker property: at least one is found.
+		const hits = detectRegionAbbreviations(tokens, segs)
+
+		expect(hits.length).toBeGreaterThan(0)
 	})
 
 	it("does not detect lowercase abbreviations", () => {
@@ -81,13 +83,13 @@ describe("detectRegionAbbreviations", () => {
 
 	it("integrates with computeQueryShape", () => {
 		const shape = computeQueryShape("1600 Pennsylvania Ave NW, Washington, DC 20500")
-		expect(shape.regionAbbreviations.length).toBe(1)
-		expect(shape.regionAbbreviations[0].span).toBe("DC")
+		expect(shape.regionAbbreviations).toHaveLength(1)
+		expect(shape.regionAbbreviations[0]!.span).toBe("DC")
 	})
 
 	it("detects 'CA' in 'Pier 39, San Francisco, CA 94133'", () => {
 		const shape = computeQueryShape("Pier 39, San Francisco, CA 94133")
-		expect(shape.regionAbbreviations.length).toBe(1)
-		expect(shape.regionAbbreviations[0].span).toBe("CA")
+		expect(shape.regionAbbreviations).toHaveLength(1)
+		expect(shape.regionAbbreviations[0]!.span).toBe("CA")
 	})
 })

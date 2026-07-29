@@ -21,30 +21,35 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical. */
+/**
+ * Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical.
+ */
 function mulberry32(seed: number): () => number {
 	let state = seed >>> 0
 
 	return () => {
-		state = (state + 0x6d2b79f5) >>> 0
+		state = (state + 0x6d_2b_79_f5) >>> 0
 		let t = state
 		t = Math.imul(t ^ (t >>> 15), t | 1)
 		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
 
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 }
 
-const random = mulberry32(20260712)
+const random = mulberry32(20_260_712)
 const uniform = (low: number, high: number) => low + (high - low) * random()
 
 const WIDTH = 80
 const HEIGHT = 12
 
-const MAGENTA = "\x1b[38;5;199m" // brand #ff00b0
-const DIM = "\x1b[38;5;245m"
-const GREEN = "\x1b[38;5;114m"
-const RESET = "\x1b[0m"
+/**
+ * Brand #ff00b0.
+ */
+const MAGENTA = "\u001B[38;5;199m"
+const DIM = "\u001B[38;5;245m"
+const GREEN = "\u001B[38;5;114m"
+const RESET = "\u001B[0m"
 
 type CastEvent = [timestamp: number, kind: "o", data: string]
 
@@ -91,10 +96,11 @@ emit(0.045, `${DIM}}${RESET}\r\n`)
 
 // Trailing prompt, then hold the final frame
 emit(0.3, `${DIM}$${RESET} `)
-emit(3.0, "")
+emit(3, "")
 
 const header = { version: 2, width: WIDTH, height: HEIGHT, title: "mailwoman parse" }
 const lines = [JSON.stringify(header), ...events.map((event) => JSON.stringify(event))]
 
 writeFileSync("cast.json", `${lines.join("\n")}\n`)
+
 console.log(`wrote cast.json: ${events.length} events, ${events.at(-1)?.[0]}s`)

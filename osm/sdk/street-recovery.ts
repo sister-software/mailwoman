@@ -18,8 +18,14 @@ import { spawn } from "node:child_process"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-const CELL_DEG = 0.003 // ~330m grid cell
-const DENSIFY_KM = 0.02 // interpolate a vertex every ~20m along each segment
+/**
+ * ~330m grid cell.
+ */
+const CELL_DEG = 0.003
+/**
+ * Interpolate a vertex every ~20m along each segment.
+ */
+const DENSIFY_KM = 0.02
 
 interface Vertex {
 	name: string
@@ -27,7 +33,9 @@ interface Vertex {
 	lat: number
 }
 
-/** Grid-indexed nearest-named-highway lookup. */
+/**
+ * Grid-indexed nearest-named-highway lookup.
+ */
 export class StreetRecoveryIndex {
 	readonly #grid = new Map<string, Vertex[]>()
 	#count = 0
@@ -48,11 +56,15 @@ export class StreetRecoveryIndex {
 			cell = []
 			this.#grid.set(k, cell)
 		}
+
 		cell.push({ name, lon, lat })
+
 		this.#count++
 	}
 
-	/** Nearest highway name within `maxKm`, or null. Scans the point's cell + the 8 neighbours. */
+	/**
+	 * Nearest highway name within `maxKm`, or null. Scans the point's cell + the 8 neighbours.
+	 */
 	nearest(lon: number, lat: number, maxKm: number): { name: string; km: number } | null {
 		const cx = Math.floor(lon / CELL_DEG)
 		const cy = Math.floor(lat / CELL_DEG)
@@ -100,7 +112,9 @@ function* densify(coords: number[][]): Generator<[number, number]> {
 	}
 }
 
-/** Build the recovery index from the PBF's named highways (the `lines` layer). */
+/**
+ * Build the recovery index from the PBF's named highways (the `lines` layer).
+ */
 export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetRecoveryIndex> {
 	const args = [
 		"-f",
@@ -112,21 +126,29 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		"SELECT name FROM lines WHERE highway IS NOT NULL AND name IS NOT NULL",
 		pbfPath,
 	]
+
 	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
 	proc.stderr.on("data", (d: Buffer) => {
 		stderr += d.toString()
 	})
+
 	const exit = new Promise<number>((resolve, reject) => {
 		proc.on("error", reject)
 		proc.on("close", resolve)
 	})
+
 	const index = new StreetRecoveryIndex()
 
 	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
 	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		const line = raw.replace(/^/, "").trim()
+		// Strip the RFC-8142 record separator (U+001E) GDAL's GeoJSONSeq MAY prefix records with —
+		// `.trim()` does NOT remove it (not whitespace), so an RS-framed record would fail JSON.parse
+		// and be silently skipped (all of them — an empty index). The strip had degraded to the no-op
+		// `replace(/^/, "")` (CodeQL js/identity-replacement, alert #13): harmless only because GDAL
+		// defaults to newline framing.
+		const line = (raw.charCodeAt(0) === 0x1e ? raw.slice(1) : raw).trim()
 
 		if (!line) continue
 		let f: { properties?: { name?: string }; geometry?: { type?: string; coordinates?: number[][] } }
@@ -136,6 +158,7 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		} catch {
 			continue
 		}
+
 		const name = f.properties?.name
 
 		if (!name || f.geometry?.type !== "LineString" || !Array.isArray(f.geometry.coordinates)) continue
@@ -144,6 +167,7 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 			index.add(name, lon, lat)
 		}
 	}
+
 	const code = await exit
 
 	if (code !== 0) throw new Error(`ogr2ogr (highways) exited ${code}: ${stderr.slice(-400)}`)

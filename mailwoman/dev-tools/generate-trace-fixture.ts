@@ -27,22 +27,32 @@ const DEFAULT_OUT = String(
 
 const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
-/** Options for {@linkcode generateTraceFixture}. */
+/**
+ * Options for {@linkcode generateTraceFixture}.
+ */
 export interface GenerateTraceFixtureOptions {
-	/** Address to trace. Default: the White House. */
+	/**
+	 * Address to trace. Default: the White House.
+	 */
 	text?: string
-	/** Output path override. Default: the committed ModelVisualizer fixture. */
+	/**
+	 * Output path override. Default: the committed ModelVisualizer fixture.
+	 */
 	out?: string
 }
 
-/** Summary returned by {@linkcode generateTraceFixture}. */
+/**
+ * Summary returned by {@linkcode generateTraceFixture}.
+ */
 export interface GenerateTraceFixtureSummary {
 	outPath: string
 	pieces: number
 	labels: number
 }
 
-/** Trace one address through the en-us weights and write the committed fixture JSON. */
+/**
+ * Trace one address through the en-us weights and write the committed fixture JSON.
+ */
 export async function generateTraceFixture(
 	options: GenerateTraceFixtureOptions = {},
 	report?: (line: string) => void

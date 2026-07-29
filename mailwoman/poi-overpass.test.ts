@@ -36,6 +36,7 @@ describe("emitOverpassQL", () => {
 			}),
 			{ osmTag: "amenity=hospital" }
 		)
+
 		expect(ql).toContain('area["name"="Springfield"]->.anchor')
 		expect(ql).toContain('nwr["amenity"="hospital"](area.anchor)')
 	})

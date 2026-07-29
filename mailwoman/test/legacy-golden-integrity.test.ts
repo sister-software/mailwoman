@@ -42,7 +42,7 @@ test("parity-raw.jsonl: aligned 1:1 with parity-inputs", () => {
 	const inputs = readRows("mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl")
 	const raw = readRows("mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl") as Array<{ solutions?: unknown[] }>
 
-	expect(raw.length).toBe(inputs.length)
+	expect(raw).toHaveLength(inputs.length)
 
 	for (const row of raw) {
 		expect(Array.isArray(row.solutions)).toBe(true)

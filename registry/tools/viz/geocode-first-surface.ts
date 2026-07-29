@@ -39,14 +39,18 @@
 
 import { writeFileSync } from "node:fs"
 
-/** Options for {@linkcode geocodeFirstSurface}. */
+/**
+ * Options for {@linkcode geocodeFirstSurface}.
+ */
 export interface GeocodeFirstSurfaceOptions {
 	/**
 	 * Illustrative prior λ. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field model with phone
 	 * + spatial exact-key); here we want the boundary visible in a two-axis slice. Default 0.02.
 	 */
 	lambda?: number
-	/** Output HTML path. Default `/tmp/geocode-first-surface.html`. */
+	/**
+	 * Output HTML path. Default `/tmp/geocode-first-surface.html`.
+	 */
 	outHtml?: string
 }
 
@@ -61,14 +65,18 @@ interface Level {
 	maxKm?: number
 }
 
-// registry/resolve.ts → NAME_LEVELS
+/**
+ * Registry/resolve.ts → NAME_LEVELS.
+ */
 const NAME_LEVELS: Level[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.8, u: 0.01 },
+	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.01 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.03 },
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
 
-// match/distance.ts → DEFAULT_DISTANCE_LEVELS
+/**
+ * Match/distance.ts → DEFAULT_DISTANCE_LEVELS.
+ */
 const DISTANCE_LEVELS: Level[] = [
 	{ label: "same-building", maxKm: 0.05, m: 0.7, u: 0.001 },
 	{ label: "same-block", maxKm: 0.5, m: 0.2, u: 0.02 },
@@ -81,21 +89,27 @@ const levelWeight = (lvl: Level) => (lvl.u <= 0 ? (lvl.m > 0 ? Infinity : 0) : M
 const priorWeight = (lambda: number) => Math.log2(lambda / (1 - lambda))
 const probabilityFromWeight = (w: number) => 1 / (1 + 2 ** -w)
 
-/** Assign a name-similarity score to its agreement-level weight (levels ordered high→low sim). */
+/**
+ * Assign a name-similarity score to its agreement-level weight (levels ordered high→low sim).
+ */
 function nameWeight(sim: number): number {
 	for (const lvl of NAME_LEVELS) if (sim >= (lvl.minSimilarity ?? 0)) return levelWeight(lvl)
 
-	return levelWeight(NAME_LEVELS[NAME_LEVELS.length - 1]!)
+	return levelWeight(NAME_LEVELS.at(-1)!)
 }
 
-/** Assign a distance (km) to its agreement-level weight (levels ordered near→far). */
+/**
+ * Assign a distance (km) to its agreement-level weight (levels ordered near→far).
+ */
 function distanceWeight(km: number): number {
 	for (const lvl of DISTANCE_LEVELS) if (km <= (lvl.maxKm ?? Infinity)) return levelWeight(lvl)
 
-	return levelWeight(DISTANCE_LEVELS[DISTANCE_LEVELS.length - 1]!)
+	return levelWeight(DISTANCE_LEVELS.at(-1)!)
 }
 
-/** Emit the geocode-first decision-surface Plotly HTML — see the module doc. */
+/**
+ * Emit the geocode-first decision-surface Plotly HTML — see the module doc.
+ */
 export function geocodeFirstSurface(
 	options: GeocodeFirstSurfaceOptions = {},
 	report?: (line: string) => void
@@ -105,9 +119,13 @@ export function geocodeFirstSurface(
 
 	const PRIOR = priorWeight(LAMBDA)
 
-	/** String-first model: name evidence only — distance is invisible to it. */
+	/**
+	 * String-first model: name evidence only — distance is invisible to it.
+	 */
 	const pStringFirst = (sim: number, _km: number) => probabilityFromWeight(PRIOR + nameWeight(sim))
-	/** Geocode-first model: name + distance evidence. */
+	/**
+	 * Geocode-first model: name + distance evidence.
+	 */
 	const pGeocodeFirst = (sim: number, km: number) => probabilityFromWeight(PRIOR + nameWeight(sim) + distanceWeight(km))
 
 	// ── Grid. X = string similarity 0→1. Y = geographic distance, sampled denser near 0 (log-ish) so
@@ -118,6 +136,7 @@ export function geocodeFirstSurface(
 	const KM_MAX = 50 // 0 → 50 km, log-spaced
 
 	const simAxis = Array.from({ length: NX }, (_, i) => i / (NX - 1))
+
 	// log-spaced distance: 0.005 km (5 m) → 50 km, plus a literal 0 at the front
 	const kmAxis = Array.from({ length: NY }, (_, j) => {
 		const t = j / (NY - 1)
@@ -141,11 +160,12 @@ export function geocodeFirstSurface(
 		sim: number
 		km: number
 	}
+
 	const TRAPS: Trap[] = [
 		{
 			label: "Springfield General — IL vs MA",
 			detail: "identical name, ~1500 km apart",
-			sim: 1.0,
+			sim: 1,
 			km: 15, // plotted on the far plateau (real distance ~1500 km; clamped into view)
 		},
 		{
@@ -160,6 +180,7 @@ export function geocodeFirstSurface(
 
 	// Decision verdicts at each trap (for the annotation text).
 	const verdict = (p: number) => (p >= 0.5 ? "MATCH" : "no")
+
 	const trapRows = TRAPS.map((t) => ({
 		...t,
 		stringP: pStringFirst(t.sim, t.km),
@@ -178,7 +199,7 @@ export function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>")
+	const safe = JSON.stringify(data).replaceAll(/<\/script>/gi, "<\\/script>")
 
 	const html = `<!doctype html><html><head><meta charset="utf-8"/>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>

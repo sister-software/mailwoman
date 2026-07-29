@@ -24,23 +24,42 @@ import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { hashFNV1a } from "./fnv-hash.ts"
 
-/** Options for {@linkcode buildOutlierExposure}. */
+/**
+ * Share of a bucket that must be off-map before it is treated as an exposure case rather than noise.
+ */
+const OFFMAP_DOMINANCE = 0.6
+
+/**
+ * Options for {@linkcode buildOutlierExposure}.
+ */
 export interface BuildOutlierExposureOptions {
-	/** Names sampled per off-map language. Default 2500. */
+	/**
+	 * Names sampled per off-map language. Default 2500.
+	 */
 	perLang?: number
-	/** WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`. */
+	/**
+	 * WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 */
 	wof?: string
-	/** Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`. */
+	/**
+	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 */
 	data?: string
 }
 
-/** Result of {@linkcode buildOutlierExposure}. */
+/**
+ * Result of {@linkcode buildOutlierExposure}.
+ */
 export interface BuildOutlierExposureResult {
-	/** Total OTHER pool size (names + address-shaped variants). */
+	/**
+	 * Total OTHER pool size (names + address-shaped variants).
+	 */
 	total: number
 }
 
-// Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
+/**
+ * Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
+ */
 const OFF_MAP_LANGS = [
 	"rus",
 	"ukr",
@@ -75,7 +94,9 @@ const OFF_MAP_LANGS = [
 	"amh", // Georgian / Armenian / Ethiopic
 ]
 
-/** Dominant script must be off-map: has chars in a non-Latin, non-CJK, non-digit block. */
+/**
+ * Dominant script must be off-map: has chars in a non-Latin, non-CJK, non-digit block.
+ */
 function isOffMapScript(s: string): boolean {
 	let off = 0
 	let total = 0
@@ -83,21 +104,24 @@ function isOffMapScript(s: string): boolean {
 	for (const ch of s) {
 		const cp = ch.codePointAt(0)!
 
-		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue // punct/space/digits
-		total++
-		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x24f)
-		const cjk =
-			(cp >= 0x3040 && cp <= 0x30ff) ||
-			(cp >= 0x4e00 && cp <= 0x9fff) ||
-			(cp >= 0xac00 && cp <= 0xd7af) ||
-			(cp >= 0x3400 && cp <= 0x4dbf)
+		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue
 
-		if (!latin && !cjk && cp > 0x2ff) {
+		// punct/space/digits
+		total++
+		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x2_4f)
+
+		const cjk =
+			(cp >= 0x30_40 && cp <= 0x30_ff) ||
+			(cp >= 0x4e_00 && cp <= 0x9f_ff) ||
+			(cp >= 0xac_00 && cp <= 0xd7_af) ||
+			(cp >= 0x34_00 && cp <= 0x4d_bf)
+
+		if (!latin && !cjk && cp > 0x2_ff) {
 			off++
 		}
 	}
 
-	return total > 0 && off / total > 0.6
+	return total > 0 && off / total > OFFMAP_DOMINANCE
 }
 
 // Mimic a real off-map ADDRESS: a pure-script place name isn't what we see at inference (those carry
@@ -118,7 +142,9 @@ function addressVariant(name: string, h: number): string {
 	}
 }
 
-/** Coarse-placer non-Latin outlier-exposure builder — see the module doc. */
+/**
+ * Coarse-placer non-Latin outlier-exposure builder — see the module doc.
+ */
 export async function buildOutlierExposure(
 	options: BuildOutlierExposureOptions = {},
 	report?: (line: string) => void
@@ -135,6 +161,7 @@ export async function buildOutlierExposure(
 		const rows = db
 			.prepare(`SELECT name FROM names WHERE language = ? AND length(name) >= 4 LIMIT ?`)
 			.all(lang, PER * 2)
+
 		let kept = 0
 
 		for (const r of rows) {
@@ -144,17 +171,22 @@ export async function buildOutlierExposure(
 			if (!name || seen.has(name) || !isOffMapScript(name)) continue
 			seen.add(name)
 			pool.push(name)
-			pool.push(addressVariant(name, hashFNV1a(name))) // address-shaped sibling
+			pool.push(addressVariant(name, hashFNV1a(name)))
+
+			// address-shaped sibling
 			kept++
 		}
+
 		report?.(`  ${lang}: ${kept}`)
 	}
+
 	db.close()
 
 	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
 	const nTest = Math.floor(pool.length * 0.1)
+
 	const splits: Record<string, string[]> = {
 		val: pool.slice(0, nVal),
 		test: pool.slice(nVal, nVal + nTest),
@@ -166,6 +198,7 @@ export async function buildOutlierExposure(
 		appendFileSync(path.join(dataDir, `${split}.jsonl`), lines)
 		report?.(`appended ${names.length} OTHER → ${split}.jsonl`)
 	}
+
 	report?.(`total OTHER pool: ${pool.length}`)
 
 	return { total: pool.length }

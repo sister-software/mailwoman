@@ -57,6 +57,7 @@ const dryRun = $public.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
 
 if (!workspacePath) {
 	console.error("publish-workspace.ts: RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE unset")
+
 	process.exit(2)
 }
 
@@ -65,6 +66,7 @@ const isWeightsWorkspace = workspacePath.startsWith("./neural-weights-")
 
 if (SKIP_WEIGHTS && isWeightsWorkspace) {
 	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
+
 	process.exit(0)
 }
 
@@ -83,6 +85,7 @@ try {
 	// Step 1: pack with the derived publish map injected (shared helper — same path the CI
 	// smoke test uses, so what we test is what we ship).
 	console.error(`publish-workspace: packing ${workspacePath} with injected publish exports`)
+
 	packWorkspaceForPublish(cwd, tarballPath)
 
 	// Step 2: verify the tarball is consumer-resolvable (every concrete exports target is shipped).
@@ -122,12 +125,14 @@ try {
 		console.error(
 			`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`
 		)
+
 		process.exit(0)
 	}
 
 	if (stderr) {
 		process.stderr.write(stderr)
 	}
+
 	process.exit(publishResult.status ?? 1)
 } finally {
 	rmSync(tmpDir, { recursive: true, force: true })
@@ -140,31 +145,37 @@ try {
  * ship-break (exports pointing at files the `files` globs excluded) and mailwoman's historically never-shipped
  * `.d.ts`.
  */
-function verifyPublishExports(tarballPath: string) {
-	const listing = spawnSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
+function verifyPublishExports(innerTarballPath: string) {
+	const listing = spawnSync("tar", ["-tzf", innerTarballPath], { encoding: "utf8" })
 
 	if (listing.status !== 0) {
 		console.error(`publish-workspace: tar -tzf failed (exit ${listing.status})`)
+
 		process.exit(listing.status ?? 1)
 	}
+
 	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
-	const manifestRead = spawnSync("tar", ["-xzf", tarballPath, "-O", "package/package.json"], { encoding: "utf8" })
+	const manifestRead = spawnSync("tar", ["-xzf", innerTarballPath, "-O", "package/package.json"], { encoding: "utf8" })
 
 	if (manifestRead.status !== 0) {
 		console.error(`publish-workspace: could not read package.json from tarball (exit ${manifestRead.status})`)
+
 		process.exit(manifestRead.status ?? 1)
 	}
+
 	const manifest = JSON.parse(manifestRead.stdout)
 	const offenders = collectExportTargets(manifest.exports ?? {}).filter((target) => !shipped.has(target))
 
-	if (offenders.length > 0) {
+	if (offenders.length) {
 		console.error(`publish-workspace: UNRESOLVABLE PUBLISH MAP for ${manifest.name} — refusing to publish:`)
 
 		for (const line of offenders) {
 			console.error(`  - ${line} (not present in the tarball)`)
 		}
+
 		process.exit(1)
 	}
+
 	console.error(
 		`publish-workspace: exports verified for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets shipped)`
 	)

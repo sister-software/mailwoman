@@ -21,6 +21,9 @@
  *   sha256 matches MANIFEST, skips download.
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"
@@ -70,7 +73,9 @@ async function discoverLatestZip(): Promise<string | undefined> {
 	return undefined
 }
 
-/** Extract the main registry CSV name (npidata_pfile_*.csv) from a ZIP's `unzip -l` listing. */
+/**
+ * Extract the main registry CSV name (npidata_pfile_*.csv) from a ZIP's `unzip -l` listing.
+ */
 async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
@@ -103,10 +108,8 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const zipDest = join(destDir, zipFilename)
 	report?.(`  Latest full file: ${zipFilename}`)
 
-	// ------------------------------------------------------------------
 	// Idempotency check: if the main CSV already exists and sha matches,
 	// skip re-download.
-	// ------------------------------------------------------------------
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
@@ -119,10 +122,10 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		}
 	}
 
-	// ------------------------------------------------------------------
-	// Download ZIP (large; 60-minute timeout)
-	// ------------------------------------------------------------------
+	// MARK: Download ZIP (large; 60-minute timeout)
+
 	report?.(`  Downloading ${zipURL} ...`)
+
 	const { bytes: zipSize } = await downloadToFile({
 		url: zipURL,
 		dest: zipDest,
@@ -130,11 +133,11 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		headers: { "Accept-Encoding": "gzip, br" },
 		report,
 	})
+
 	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
 
-	// ------------------------------------------------------------------
-	// Extract only the main registry CSV (npidata_pfile_*.csv)
-	// ------------------------------------------------------------------
+	// MARK: Extract only the main registry CSV (npidata_pfile_*.csv)
+
 	report?.("  Extracting npidata_pfile CSV from ZIP ...")
 	const csvName = await findNpidataCSV(zipDest)
 
@@ -152,15 +155,13 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const csvSha = await sha256File(csvDest)
 	report?.(`  CSV size: ${(csvSize / 1024 / 1024).toFixed(1)} MB`)
 
-	// ------------------------------------------------------------------
-	// Remove the ZIP to reclaim ~1 GB (the CSV is what adapters consume)
-	// ------------------------------------------------------------------
+	// MARK: Remove the ZIP to reclaim ~1 GB
+
 	await rm(zipDest, { force: true })
 	report?.("  Removed ZIP (CSV kept)")
 
-	// ------------------------------------------------------------------
-	// Write MANIFEST (records the extracted CSV, not the ZIP)
-	// ------------------------------------------------------------------
+	// MARK: Write MANIFEST (records the extracted CSV, not the ZIP)
+
 	const manifest: SourceManifest = {
 		source_url: zipURL,
 		downloaded_at: new Date().toISOString(),
@@ -168,6 +169,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		sha256: csvSha,
 		bytes: csvSize,
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${(csvSize / 1024 / 1024).toFixed(1)} MB  sha256=${csvSha}`)

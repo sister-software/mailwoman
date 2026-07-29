@@ -26,16 +26,24 @@ import type { ResolvedMapPlace } from "./place-render.ts"
 import type { DemoRuntime, MapBias } from "./types.ts"
 
 export interface UseDemoGeocodeOptions {
-	/** The injected demo runtime (extends `PipelineRuntime` with the map + bias surface). */
+	/**
+	 * The injected demo runtime (extends `PipelineRuntime` with the map + bias surface).
+	 */
 	runtime: DemoRuntime
-	/** Address to pre-fill. */
+	/**
+	 * Address to pre-fill.
+	 */
 	defaultText: string
-	/** Read the current viewport bias (the map center) at submit time. Absent → no bias. */
+	/**
+	 * Read the current viewport bias (the map center) at submit time. Absent → no bias.
+	 */
 	getBias?: () => MapBias | null
 }
 
 export interface UseDemoGeocode extends UseParsePipeline {
-	/** The selected candidate enriched into the map-render shape (bbox / tier / polygon), or `null`. */
+	/**
+	 * The selected candidate enriched into the map-render shape (bbox / tier / polygon), or `null`.
+	 */
 	mapPlace: ResolvedMapPlace | null
 }
 

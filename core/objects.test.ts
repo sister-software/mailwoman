@@ -106,5 +106,5 @@ test("flattenObject: a flat object is returned with single-segment keys", () => 
 
 test("flattenObject: a null leaf is preserved at its dotted path", () => {
 	// "null is also an object" — but a null *value* recurses to the else branch and is kept as a leaf.
-	expect(flattenObject({ a: { b: null } } as never)).toEqual({ "a.b": null })
+	expect(flattenObject({ a: { b: null } })).toEqual({ "a.b": null })
 })

@@ -20,11 +20,13 @@ import {
 import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
 
 const input = (normalized: string): NormalizedInputLite => ({ raw: normalized, normalized })
+
 const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
 	format,
 	span: { start, end },
 	confidence,
 })
+
 const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
 
 test("isPostcodeFormat: set membership avoids the `us_zip4.endsWith('_zip')` false-negative trap", () => {
@@ -77,22 +79,26 @@ test("scorePostcodeOnly: a bare postcode fires; a postcode buried in an address 
 
 test("scoreLocalityOnly: short, alpha, ≤2 segments, no format hits", () => {
 	expect(scoreLocalityOnly(input("Paris"), shape({ characterClass: "alpha" }))).toBe(0.85)
+
 	// rejected: a format hit present
 	expect(
 		scoreLocalityOnly(input("Paris"), shape({ characterClass: "alpha", knownFormats: [fmt("fr_postcode", 0, 5)] }))
 	).toBe(0)
+
 	// rejected: not pure-alpha
 	expect(scoreLocalityOnly(input("350 5th"), shape({ characterClass: "alphanumeric" }))).toBe(0)
 })
 
 test("scoreStructuredAddress: multi-segment alphanumeric scores highest", () => {
 	const seg = (n: number) => Array.from({ length: n }, (_, i) => ({ body: `s${i}`, index: i }))
+
 	expect(
 		scoreStructuredAddress(
 			input("350 5th Ave, NYC, NY 10118"),
 			shape({ segments: seg(3), characterClass: "alphanumeric" })
 		)
 	).toBe(0.9)
+
 	expect(scoreStructuredAddress(input("Paris"), shape({ segments: seg(1), characterClass: "alpha" }))).toBe(0)
 })
 

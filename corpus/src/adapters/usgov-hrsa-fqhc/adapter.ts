@@ -38,7 +38,15 @@ import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 
 /**
@@ -52,7 +60,9 @@ interface HrsaSiteRow {
 	"Site City": string
 	"Site State Abbreviation": string
 	"Site Postal Code": string
-	/** Optional. Falls back to `stableSourceID` derived from components when missing. */
+	/**
+	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 */
 	"Site ID"?: string
 }
 
@@ -113,6 +123,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -160,9 +171,10 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 
 					const aligned = reconcileComponents(components, raw)
 
-					if (Object.keys(aligned).length === 0) continue
+					if (!Object.keys(aligned).length) continue
 
 					const siteID = (record["Site ID"] ?? "").trim()
+
 					const sourceID = siteID
 						? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
 						: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
@@ -177,6 +189,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {
@@ -186,4 +199,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovHrsaFqhcAdapter = createUsgovHrsaFqhcAdapter()

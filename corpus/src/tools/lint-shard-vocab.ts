@@ -39,14 +39,18 @@ import { join } from "node:path"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 
-/** A column-projected base/shard row: parallel token + label lists plus the row's country. */
+/**
+ * A column-projected base/shard row: parallel token + label lists plus the row's country.
+ */
 interface CorpusRow {
 	tokens: string[]
 	labels: string[]
 	country: string | null
 }
 
-/** Strip a BIO prefix ("B-"/"I-") off a label, matching the Python `strip_bio`. */
+/**
+ * Strip a BIO prefix ("B-"/"I-") off a label, matching the Python `strip_bio`.
+ */
 function stripBIO(label: string): string {
 	const head = label.slice(0, 2)
 
@@ -77,7 +81,9 @@ function pyRound(x: number): number {
 	return floor % 2 === 0 ? floor : floor + 1
 }
 
-/** Format a fraction as a whole-percent string the way Python's `:.0%` does, e.g. 0.73 -> "73%". */
+/**
+ * Format a fraction as a whole-percent string the way Python's `:.0%` does, e.g. 0.73 -> "73%".
+ */
 function pct(frac: number): string {
 	return `${pyRound(frac * 100)}%`
 }
@@ -91,7 +97,9 @@ function pyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
 }
 
-/** Left-justify to a minimum width with spaces, matching Python's `{value:N}` string field. */
+/**
+ * Left-justify to a minimum width with spaces, matching Python's `{value:N}` string field.
+ */
 function pad(value: string, width: number): string {
 	return value.padEnd(width)
 }
@@ -114,12 +122,14 @@ function dominant(counter: Map<string, number>): [string, number, number] {
 		}
 	}
 
-	if (total === 0) return ["", 0, 0.0]
+	if (total === 0) return ["", 0, 0]
 
 	return [bestTag, total, bestCount / total]
 }
 
-/** Bump a (key -> count) tally, creating the inner counter on first sight. */
+/**
+ * Bump a (key -> count) tally, creating the inner counter on first sight.
+ */
 function bump(table: Map<string, Map<string, number>>, key: string, sub: string): void {
 	let counter = table.get(key)
 
@@ -127,10 +137,13 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 		counter = new Map()
 		table.set(key, counter)
 	}
+
 	counter.set(sub, (counter.get(sub) ?? 0) + 1)
 }
 
-/** The DuckDB connection type, without a static dependency on the optional-peer package. */
+/**
+ * The DuckDB connection type, without a static dependency on the optional-peer package.
+ */
 type DuckDBConnection = Awaited<
 	ReturnType<Awaited<ReturnType<(typeof import("@duckdb/node-api"))["DuckDBInstance"]["create"]>>["connect"]>
 >
@@ -144,6 +157,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 	const result = await con.runAndReadAll(
 		`SELECT to_json(tokens) AS tokens, to_json(labels) AS labels, country FROM read_parquet('${path}')`
 	)
+
 	const raw = result.getRowObjects() as Array<{ tokens: unknown; labels: unknown; country: unknown }>
 	const rows: CorpusRow[] = []
 
@@ -152,6 +166,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 		const labels = JSON.parse(String(r.labels)) as unknown
 
 		if (!Array.isArray(tokens) || !Array.isArray(labels)) continue
+
 		rows.push({
 			tokens: tokens as string[],
 			labels: labels as string[],
@@ -162,7 +177,9 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 	return rows
 }
 
-/** Read just the first row's `source` value — used to group base parts for a proportional slice. */
+/**
+ * Read just the first row's `source` value — used to group base parts for a proportional slice.
+ */
 async function readSource(con: DuckDBConnection, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
 	const rows = result.getRowObjects() as Array<{ source: unknown }>
@@ -170,7 +187,9 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 	return rows.length ? String(rows[0]!.source) : ""
 }
 
-/** Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`. */
+/**
+ * Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`.
+ */
 function globParquet(dir: string): string[] {
 	let names: string[]
 
@@ -183,44 +202,68 @@ function globParquet(dir: string): string[] {
 	return names
 		.filter((f) => f.endsWith(".parquet"))
 		.map((f) => join(dir, f))
-		.sort()
+		.toSorted()
 }
 
-/** Options for {@linkcode lintShardVocab}. */
+/**
+ * Options for {@linkcode lintShardVocab}.
+ */
 export interface LintShardVocabOptions {
-	/** The shard parquet to lint. */
+	/**
+	 * The shard parquet to lint.
+	 */
 	shard: string
-	/** Base corpus version. Default `v0.5.0`. */
+	/**
+	 * Base corpus version. Default `v0.5.0`.
+	 */
 	baseVersion?: string
-	/** Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`. */
+	/**
+	 * Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
+	 */
 	baseRoot?: string
-	/** Base-majority confidence floor for a contradiction. Default 0.7. */
+	/**
+	 * Base-majority confidence floor for a contradiction. Default 0.7.
+	 */
 	threshold?: number
-	/** Minimum base support to judge a token. Default 50. */
+	/**
+	 * Minimum base support to judge a token. Default 50.
+	 */
 	minCount?: number
-	/** Fraction of base parts to scan (proportional per-source slice below 1.0). Default 1.0. */
+	/**
+	 * Fraction of base parts to scan (proportional per-source slice below 1.0). Default 1.0.
+	 */
 	fraction?: number
 }
 
-/** One contradiction row: token, shard tag, base tag, base fraction, base total. */
+/**
+ * One contradiction row: token, shard tag, base tag, base fraction, base total.
+ */
 export type ShardVocabRow = [token: string, shardTag: string, baseTag: string, baseFrac: number, baseTotal: number]
 
-/** Findings summary returned by {@linkcode lintShardVocab}. */
+/**
+ * Findings summary returned by {@linkcode lintShardVocab}.
+ */
 export interface LintShardVocabSummary {
-	/** Real contradictions — the command exits 1 when nonzero. */
+	/**
+	 * Real contradictions — the command exits 1 when nonzero.
+	 */
 	errors: number
-	/** Affix-split rows (EXPECTED — the loader's affix-relabel handles them). */
+	/**
+	 * Affix-split rows (EXPECTED — the loader's affix-relabel handles them).
+	 */
 	warnings: number
 	findings: { contradictions: ShardVocabRow[]; affixSplits: ShardVocabRow[] }
 }
 
-/** Lint a synthetic shard's (token → tag) vocabulary against the base corpus, country-scoped. */
+/**
+ * Lint a synthetic shard's (token → tag) vocabulary against the base corpus, country-scoped.
+ */
 export async function lintShardVocab(options: LintShardVocabOptions): Promise<LintShardVocabSummary> {
 	const baseVersion = options.baseVersion ?? "v0.5.0"
 	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
 	const threshold = options.threshold ?? 0.7
 	const minCount = options.minCount ?? 50
-	const fraction = options.fraction ?? 1.0
+	const fraction = options.fraction ?? 1
 
 	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -247,10 +290,13 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 				set = new Set()
 				shardCountries.set(w, set)
 			}
+
 			set.add(country)
 		}
 	}
+
 	const shardVocab = new Set(shardTags.keys())
+
 	console.log(`shard: ${shardRows.length} rows, ${shardVocab.size} unique tokens`)
 
 	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source slice (still big)
@@ -261,7 +307,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 		throw new Error("no base parts found")
 	}
 
-	if (fraction < 1.0) {
+	if (fraction < 1) {
 		const bysrc = new Map<string, string[]>()
 
 		for (const p of parts) {
@@ -272,8 +318,10 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 				list = []
 				bysrc.set(src, list)
 			}
+
 			list.push(p)
 		}
+
 		const sliced: string[] = []
 
 		for (const ps of bysrc.values()) {
@@ -283,8 +331,10 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 				sliced.push(p)
 			}
 		}
+
 		parts = sliced
 	}
+
 	console.log(`base ${baseVersion}: scanning ${parts.length} parts (fraction=${pyFloat(fraction)}), COUNTRY-scoped`)
 
 	// 3. tally each shard token's base tag, SCOPED to the country the shard uses it in
@@ -336,6 +386,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	for (const [label, rows] of sections) {
 		if (!rows.length) continue
 		rows.sort((a, b) => b[4] - a[4] || b[3] - a[3])
+
 		console.log(`\n${label.startsWith("CONTRA") ? "⚠️ " : "· "}${rows.length} ${label}:`)
 
 		for (const [w, sTag, bTag, bFrac, bTotal] of rows) {

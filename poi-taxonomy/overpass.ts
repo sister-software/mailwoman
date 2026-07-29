@@ -28,31 +28,43 @@ export interface OverpassIntentLike {
 		| { kind: "category"; categoryID: string; matched: string }
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }
-	/** Spatial anchor: the split-off remainder text and its parse, when the query carried one. */
+	/**
+	 * Spatial anchor: the split-off remainder text and its parse, when the query carried one.
+	 */
 	anchor?: {
 		text?: string
 		tree?: { roots: ReadonlyArray<{ tag: string; value: string }> }
-		/** Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved. */
+		/**
+		 * Caller-supplied bias point ("near me"); executors treat it as the anchor when no tree resolved.
+		 */
 		biasPoint?: { latitude: number; longitude: number }
 		radiusM?: number
 	}
 	limit?: number
 }
 
-/** Escape a value for an OverpassQL double-quoted string. */
+/**
+ * Escape a value for an OverpassQL double-quoted string.
+ */
 function escapeQL(value: string): string {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')
 }
 
-/** Escape regex metacharacters — the `~` operator's value is a regex, not a literal. */
+/**
+ * Escape regex metacharacters — the `~` operator's value is a regex, not a literal.
+ */
 function escapeQLRegex(value: string): string {
-	return escapeQL(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+	return escapeQL(value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 }
 
 export interface EmitOverpassOpts {
-	/** `key=value` OSM tag for category subjects (from `CategoryRecord.osmTag`). */
+	/**
+	 * `key=value` OSM tag for category subjects (from `CategoryRecord.osmTag`).
+	 */
 	osmTag?: string
-	/** Radius for around-filters when the anchor is a bias point (future); default 10000. */
+	/**
+	 * Radius for around-filters when the anchor is a bias point (future); default 10000.
+	 */
 	radiusM?: number
 }
 
@@ -69,12 +81,15 @@ export function emitOverpassQL(intent: OverpassIntentLike, opts: EmitOverpassOpt
 			if (!opts.osmTag) {
 				throw new Error(`emitOverpassQL: category subject ${intent.subject.categoryID} requires opts.osmTag`)
 			}
+
 			const parts = opts.osmTag.split("=")
 
 			if (parts.length !== 2 || !parts[0] || !parts[1]) {
 				throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(opts.osmTag)} — expected key=value`)
 			}
+
 			filter = `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`
+
 			break
 		}
 		case "brand":

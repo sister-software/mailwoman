@@ -38,7 +38,15 @@ import { TextSpliterator } from "spliterator"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
 interface NADRecord {
@@ -192,6 +200,7 @@ function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 
 		return { prefix, street: name, suffix, full }
 	}
+
 	const full = (r.StNam_Full ?? "").toString().trim()
 
 	if (full) return { full, street: full }
@@ -243,7 +252,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
 			// featureserver shard pattern is the primary distribution.
 			const entries = await readdir(opts.inputPath)
-			const shards = entries.filter((n) => n.endsWith(".ndjson")).sort()
+			const shards = entries.filter((n) => n.endsWith(".ndjson")).toSorted()
 
 			let emitted = 0
 			outer: for (const shard of shards) {
@@ -328,6 +337,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_NAD_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			}
@@ -335,4 +345,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const usgovNADAdapter = createUsgovNADAdapter()

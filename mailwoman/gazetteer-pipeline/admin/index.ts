@@ -37,19 +37,29 @@ import { freezeAdmin } from "./freeze.ts"
 import { ingestWOF } from "./ingest-wof.ts"
 
 export interface BuildAdminOptions {
-	/** WOF repos root. Default `<data-root>/wof/repos`. */
+	/**
+	 * WOF repos root. Default `<data-root>/wof/repos`.
+	 */
 	dataDir?: string
-	/** Output artifact path. Default `<data-root>/wof/admin-global-priority.REBUILD.db` (staging — swap deliberately). */
+	/**
+	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.REBUILD.db` (staging — swap deliberately).
+	 */
 	out?: string
 	overtureCountries?: readonly string[]
 	geonamesCountries?: readonly string[]
 	overtureRelease?: string
-	/** Skip the verify gate (fixture/dev runs ONLY — an unverified artifact must never be promoted). */
+	/**
+	 * Skip the verify gate (fixture/dev runs ONLY — an unverified artifact must never be promoted).
+	 */
 	skipVerify?: boolean
-	/** Skip the WOF geojson ingest concurrency/batch tuning. */
+	/**
+	 * Skip the WOF geojson ingest concurrency/batch tuning.
+	 */
 	concurrency?: number
 	batchCommitSize?: number
-	/** Build-log path. Default `<repo>/scripts/wof-build-manifest.json`; absent file → the append is skipped. */
+	/**
+	 * Build-log path. Default `<repo>/scripts/wof-build-manifest.json`; absent file → the append is skipped.
+	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void
 }
@@ -64,7 +74,9 @@ export interface BuildAdminResult {
 	elapsedSeconds: number
 }
 
-/** Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed. */
+/**
+ * Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed.
+ */
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
@@ -86,6 +98,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	phase("staging", ingestPath)
 	const db = new DatabaseSync(ingestPath)
+
 	db.exec(`
 		PRAGMA page_size = 8192;
 		PRAGMA journal_mode = WAL;
@@ -94,9 +107,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		PRAGMA temp_store = MEMORY;
 		PRAGMA cache_size = -200000;
 	`)
+
 	await createUnifiedSchema(db)
 
 	phase("ingest-wof", dataDir)
+
 	const ingest = await ingestWOF(db, {
 		dataDir,
 		concurrency: opts.concurrency,
@@ -107,6 +122,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 				`${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`
 			),
 	})
+
 	phase("ingest-wof", `${ingest.placesIngested.toLocaleString()} places`)
 
 	phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
@@ -133,6 +149,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		// A prior sealed staging artifact can't be unlinked-through-write — remove it explicitly.
 		unlinkSync(out)
 	}
+
 	db.prepare("VACUUM INTO ?").run(out)
 	db.close()
 	unlinkSync(ingestPath)
@@ -186,9 +203,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		const md5 = (await md5File(out)).slice(0, 8)
 		const stamp = new Date().toISOString().slice(0, 10)
 		log.notes ??= []
+
 		log.notes.push(
 			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${folded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}`
 		)
+
 		writeFileSync(buildLogPath, JSON.stringify(log, null, "\t") + "\n")
 	} else {
 		phase("build-log", `skipped (${buildLogPath} not present)`)
@@ -212,7 +231,9 @@ export * from "./fold-overture.ts"
 export * from "./freeze.ts"
 export * from "./ingest-wof.ts"
 
-/** Byte-size of the built artifact — a convenience for command summaries. */
+/**
+ * Byte-size of the built artifact — a convenience for command summaries.
+ */
 export function artifactSizeMB(path: string): number {
 	return Math.round((statSync(path).size / 1024 / 1024) * 10) / 10
 }

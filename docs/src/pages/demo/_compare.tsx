@@ -22,21 +22,35 @@ import type { DemoResult, MailwomanClassifierLike, ResultNode } from "../../shar
 import { neuralClassifierLoadURLs } from "../../shared/resources.tsx"
 
 export interface DemoCompareProps {
-	/** The primary (left) parse result from the package's compare context. */
+	/**
+	 * The primary (left) parse result from the package's compare context.
+	 */
 	primary: ParseResult | null
-	/** Whether compare mode is on. */
+	/**
+	 * Whether compare mode is on.
+	 */
 	compareMode: boolean
-	/** The version selected to compare against, or `null`. */
+	/**
+	 * The version selected to compare against, or `null`.
+	 */
 	compareVersion: string | null
-	/** The primary version label. */
+	/**
+	 * The primary version label.
+	 */
 	primaryVersion: string
-	/** The selectable releases (for the compare release's `hasAnchor`). */
+	/**
+	 * The selectable releases (for the compare release's `hasAnchor`).
+	 */
 	releases: ReleaseInfo[]
-	/** Whether the CPU/WASM backend is forced. */
+	/**
+	 * Whether the CPU/WASM backend is forced.
+	 */
 	forceWASM: boolean
 }
 
-/** Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`. */
+/**
+ * Load a compare classifier + re-parse the current input, rendering the side-by-side `<VersionCompare>`.
+ */
 export const DemoCompare: React.FC<DemoCompareProps> = ({
 	primary,
 	compareMode,
@@ -64,6 +78,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 
 			return
 		}
+
 		let cancelled = false
 		const release = releases.find((r) => r.version === compareVersion)
 
@@ -76,20 +91,23 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 				setBackend("")
 
 				const neuralWeb = await import("@mailwoman/neural-web")
+
 				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromURLs(
 					neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 
 				if (cancelled) return
+
 				setBackend(
 					diagnostics
 						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
 						: "unknown"
 				)
+
 				setClassifier(cls as unknown as MailwomanClassifierLike)
-			} catch (err) {
+			} catch (caught) {
 				if (cancelled) return
-				setError(err instanceof Error ? err.message : String(err))
+				setError(caught instanceof Error ? caught.message : String(caught))
 			} finally {
 				if (!cancelled) {
 					setLoading(false)
@@ -113,6 +131,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 
 			return
 		}
+
 		let cancelled = false
 
 		void (async () => {
@@ -123,6 +142,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 					import("@mailwoman/core/pipeline"),
 					import("@mailwoman/phrase-grouper"),
 				])
+
 				const cStart = performance.now()
 				const cQueryShape = computeQueryShape(primaryInput)
 				const cKindResult = classifyKindSync({ raw: primaryInput, normalized: primaryInput }, cQueryShape)
@@ -133,10 +153,12 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 					groupPhrases,
 					classifier: cls as unknown as Parameters<typeof runPipeline>[1]["classifier"],
 				})
+
 				const cClassifyTime = performance.now() - cStart - cShapeTime
 				const cNodes = flattenTree(cPipelineResult.tree) as ResultNode[]
 
 				if (cancelled) return
+
 				setCompareResult({
 					input: primaryInput,
 					tree: cPipelineResult.tree,
@@ -147,9 +169,9 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 					fstActive: false,
 					timing: { shape: cShapeTime, classify: cClassifyTime },
 				})
-			} catch (err) {
+			} catch (caught) {
 				if (cancelled) return
-				setError(err instanceof Error ? err.message : String(err))
+				setError(caught instanceof Error ? caught.message : String(caught))
 			}
 		})()
 

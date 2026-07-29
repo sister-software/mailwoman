@@ -16,14 +16,19 @@ import { describe, expect, test, vi } from "vitest"
 
 import { geocodeAddress, type GeocodeClassifier } from "../geocode-core.ts"
 
-/** A classifier that returns a fixed tree (no region → admin-only path, no shards needed). */
+/**
+ * A classifier that returns a fixed tree (no region → admin-only path, no shards needed).
+ */
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }
 }
 
-/** A resolver that records the ResolveOpts it was handed and echoes the tree back. */
+/**
+ * A resolver that records the ResolveOpts it was handed and echoes the tree back.
+ */
 function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 	const seen: ResolveOpts[] = []
+
 	const resolver: Resolver = {
 		resolveTree: vi.fn(async (tree, opts) => {
 			seen.push(opts ?? {})
@@ -40,11 +45,13 @@ const emptyTree: AddressTree = { raw: "x", roots: [] }
 describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 	test("placeCountry: false ⇒ no anchorPosterior (the disable / byte-stable path)", async () => {
 		const { resolver, seen } = captureResolver()
+
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry: false,
 		})
+
 		expect(seen[0]?.anchorPosterior).toBeUndefined()
 		expect(seen[0]?.anchorWeight).toBeUndefined()
 	})
@@ -63,33 +70,38 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never OTHER)
 			expect(p).toBeGreaterThanOrEqual(0)
 		}
+
 		// US is the unambiguous winner for this address.
-		const top = entries.sort((a, b) => b[1] - a[1])[0]!
+		const top = entries.toSorted((a, b) => b[1] - a[1])[0]!
 		expect(top[0]).toBe("US")
-		expect(seen[0]?.anchorWeight).toBe(1.0)
+		expect(seen[0]?.anchorWeight).toBe(1)
 	})
 
 	test("a confident in-map guess injects an anchorPosterior + weight", async () => {
 		const { resolver, seen } = captureResolver()
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.94 }))
+
 		await geocodeAddress("12 rue de la Paix, Paris", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			placeCountry,
 		})
+
 		expect(placeCountry).toHaveBeenCalledWith("12 rue de la Paix, Paris")
-		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.94 }, anchorWeight: 1.0 })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.94 }, anchorWeight: 1 })
 	})
 
 	test("an explicit defaultCountry flows alongside the injected posterior", async () => {
 		const { resolver, seen } = captureResolver()
 		const placeCountry = vi.fn(() => ({ country: "DE", confidence: 0.97 }))
+
 		await geocodeAddress("Hauptstraße 5, Berlin", {
 			classifier: fakeClassifier(emptyTree),
 			resolver,
 			defaultCountry: "DE",
 			placeCountry,
 		})
+
 		expect(seen[0]).toMatchObject({ defaultCountry: "DE", anchorPosterior: { DE: 0.97 } })
 	})
 

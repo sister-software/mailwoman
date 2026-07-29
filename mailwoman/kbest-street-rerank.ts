@@ -38,8 +38,7 @@
  *   today, US TIGER / NO Kartverket next, each behind the same interface with no code change here.
  */
 
-import { type BIOLabel, buildAddressTree, type DecoderToken } from "@mailwoman/core/decoder"
-import type { AddressTree } from "@mailwoman/core/decoder"
+import { type BIOLabel, buildAddressTree, type DecoderToken, type AddressTree } from "@mailwoman/core/decoder"
 import { BIO_LABELS } from "@mailwoman/core/types"
 import {
 	decodeSegmentationsKBest,
@@ -50,14 +49,14 @@ import {
 	type SemiCRFTransitions,
 } from "@mailwoman/neural"
 import {
-	foldStreetSurface,
 	pickByStreetEvidence,
 	type StreetCandidate,
 	type StreetEvidenceScope,
 	type StreetLocalityEvidence,
 } from "@mailwoman/resolver"
 
-/** The segment-type strings that make up a street surface (the STREET family). */
+export { foldStreetSurface } from "@mailwoman/resolver"
+
 const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 	"street",
 	"street_prefix",
@@ -67,32 +66,52 @@ const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 
 const BIO_LABEL_SET: ReadonlySet<string> = new Set(BIO_LABELS)
 
-/** Admin anchors whose presence in the argmax parse means the input is STRUCTURED — the rerank stands down (see below). */
+/**
+ * Admin anchors whose presence in the argmax parse means the input is STRUCTURED — the rerank stands down (see below).
+ */
 const ANCHOR_TAGS: ReadonlySet<string> = new Set(["country", "region"])
 
 export interface StreetRerankOpts {
-	/** K-best decode depth. Default 5 (the measured board depth). */
+	/**
+	 * K-best decode depth. Default 5 (the measured board depth).
+	 */
 	k?: number
-	/** G2 margin cap forwarded to {@link pickByStreetEvidence}. Default 2.5 (the measured value). */
+	/**
+	 * G2 margin cap forwarded to {@link pickByStreetEvidence}. Default 2.5 (the measured value).
+	 */
 	marginCap?: number
-	/** Locality/postcode scope for the evidence probe (fragments usually carry none). */
+	/**
+	 * Locality/postcode scope for the evidence probe (fragments usually carry none).
+	 */
 	scope?: StreetEvidenceScope
-	/** Parse options forwarded to `classifier.traceParse` (production config: postcodeRepair, queryShape, …). */
+	/**
+	 * Parse options forwarded to `classifier.traceParse` (production config: postcodeRepair, queryShape, …).
+	 */
 	parseOpts?: ParseOpts
 }
 
 export interface StreetRerankResult {
-	/** The parse tree: the argmax tree, with the winning street spliced in when the atlas confirms it. */
+	/**
+	 * The parse tree: the argmax tree, with the winning street spliced in when the atlas confirms it.
+	 */
 	tree: AddressTree
-	/** True when name evidence moved the pick off the model's rank-1 (a loggable rank-2-beats-rank-1 correction). */
+	/**
+	 * True when name evidence moved the pick off the model's rank-1 (a loggable rank-2-beats-rank-1 correction).
+	 */
 	moved: boolean
-	/** Index of the winning hypothesis in the k-best list (0 = model rank-1). */
+	/**
+	 * Index of the winning hypothesis in the k-best list (0 = model rank-1).
+	 */
 	rank: number
-	/** The winning street surface (raw), for logging + the training-signal capture. */
+	/**
+	 * The winning street surface (raw), for logging + the training-signal capture.
+	 */
 	streetSurface: string
 }
 
-/** Slice the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets. */
+/**
+ * Slice the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets.
+ */
 function hypothesisStreetSurface(
 	hyp: SegmentationHypothesis,
 	trace: NeuralParseTrace,
@@ -100,7 +119,7 @@ function hypothesisStreetSurface(
 ): string {
 	const parts = hyp.segments
 		.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
-		.sort((a, b) => a.start - b.start)
+		.toSorted((a, b) => a.start - b.start)
 		.map((s) => {
 			const first = trace.tokens[s.start]
 			const last = trace.tokens[s.start + s.length - 1]
@@ -144,7 +163,7 @@ function spliceStreetTree(
 	const streetSegs = hyp.segments.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
 
 	// No street in the winning hypothesis → nothing to splice; the argmax tree stands.
-	if (streetSegs.length === 0) {
+	if (!streetSegs.length) {
 		return buildAddressTree(trace.text, tokens)
 	}
 
@@ -214,7 +233,7 @@ export async function rerankByStreetEvidence(
 
 	const hyps = decodeSegmentationsKBest(trace.spanScores, trace.tokens.length, grammar, opts.k ?? 5)
 
-	if (hyps.length === 0) {
+	if (!hyps.length) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
 	}
 
@@ -238,11 +257,10 @@ export async function rerankByStreetEvidence(
 	// win (argmax street wrong/absent, segmentation street confirmed → spliced). An unconfirmed street never overrides.
 	const confirmed =
 		pick.candidate.streetSurface !== "" && evidence.hasStreetName(pick.candidate.streetSurface, opts.scope)
+
 	const tree = confirmed
 		? spliceStreetTree(pick.candidate.payload!, trace, grammar)
 		: buildAddressTree(trace.text, trace.tokens)
 
 	return { tree, moved: pick.moved, rank: pick.index, streetSurface: pick.candidate.streetSurface }
 }
-
-export { foldStreetSurface }

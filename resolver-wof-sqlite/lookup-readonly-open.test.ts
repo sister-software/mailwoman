@@ -42,13 +42,18 @@ vi.mock("node:sqlite", async (importOriginal) => {
 	return { ...actual, DatabaseSync: RecordingDatabaseSync }
 })
 
+// oxlint-disable-next-line import/first -- kept below the vi.mock factory it pairs with; vitest hoists the mock anyway
 import { DatabaseSync } from "node:sqlite"
 
+// oxlint-disable-next-line import/first -- see above
 import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
-/** Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable. */
+/**
+ * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.
+ */
 function seedFixture(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -58,18 +63,22 @@ function seedFixture(path: string): void {
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER NOT NULL, language TEXT, name TEXT NOT NULL);
 	`)
+
 	db.prepare(
 		`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, -1, 0)`
-	).run(101715829, 85688489, "Paris", "locality", "US", 33.66, -95.55)
-	db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`).run(101715829, "und", "Paris")
+	).run(101_715_829, 85_688_489, "Paris", "locality", "US", 33.66, -95.55)
+
+	db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`).run(101_715_829, "und", "Paris")
 	db.close()
 }
 
-/** The readOnly option recorded for the main-shard open of `path` (asserts exactly one such open). */
+/**
+ * The readOnly option recorded for the main-shard open of `path` (asserts exactly one such open).
+ */
 function readOnlyForOpenOf(path: string): boolean | undefined {
 	const opens = spy.opens.filter((o) => o.path === path)
-	expect(opens.length).toBe(1)
+	expect(opens).toHaveLength(1)
 
 	return opens[0]!.readOnly
 }
@@ -91,6 +100,7 @@ describe("WOFSqlitePlaceLookup open mode (databasePath branch)", () => {
 		} catch {
 			/* already gone */
 		}
+
 		rmSync(dir, { recursive: true, force: true })
 		spy.opens.length = 0
 	})

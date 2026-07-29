@@ -25,6 +25,12 @@
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 
 /**
+ * Token count a street must exceed before its trailing pair is merged. At or below it the pair IS the whole street
+ * name, and merging would leave nothing to match on.
+ */
+const MIN_TOKENS_FOR_TAIL_MERGE = 3
+
+/**
  * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied ONLY when a street-type suffix
  * follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities ("Tenth Street", "Fifth Avenue") match
  * the shards' digit keys, WITHOUT rewriting ordinal-WORD names where the next token is not a suffix ("First National
@@ -63,14 +69,16 @@ const SPELLED_ORDINAL_TO_DIGIT = new Map<string, string>([
 	["hundredth", "100th"],
 ])
 
-/** Lowercase + diacritic-fold + punctuation strip + whitespace collapse. */
+/**
+ * Lowercase + diacritic-fold + punctuation strip + whitespace collapse.
+ */
 function fold(input: string): string {
 	return input
 		.normalize("NFKD")
-		.replace(/[̀-ͯ]/g, "")
+		.replaceAll(/[̀-ͯ]/g, "")
 		.toLowerCase()
-		.replace(/[.,'’]/g, "")
-		.replace(/\s+/g, " ")
+		.replaceAll(/[.,'’]/g, "")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 }
 
@@ -81,7 +89,7 @@ function fold(input: string): string {
 export function normalizeStreetForKey(street: string): string {
 	const tokens = fold(street).split(" ")
 
-	if (tokens.length === 0) return ""
+	if (!tokens.length) return ""
 
 	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
 	// "10th street", #723). Gated on the next token being a suffix so ordinal-WORD names are untouched.
@@ -99,6 +107,7 @@ export function normalizeStreetForKey(street: string): string {
 	// ("southeast"), and also merge an already-written two-token pair ("South East …").
 	const edgeDirectional = (raw: string) =>
 		AbbreviationToDirectional.get(raw.toUpperCase())?.toLowerCase().replace(" ", "")
+
 	const mergePair = (a?: string, b?: string) =>
 		a && b && /^(north|south)$/.test(a) && /^(east|west)$/.test(b) ? a + b : undefined
 
@@ -107,20 +116,21 @@ export function normalizeStreetForKey(street: string): string {
 	if (leadPair && tokens.length > 2) {
 		tokens.splice(0, 2, leadPair)
 	}
+
 	const first = edgeDirectional(tokens[0]!)
 
 	if (first && tokens.length > 1) {
 		tokens[0] = first
 	}
 
-	const tailPair = mergePair(tokens[tokens.length - 2], tokens[tokens.length - 1])
+	const tailPair = mergePair(tokens.at(-2), tokens.at(-1))
 
-	if (tailPair && tokens.length > 3) {
-		tokens.splice(tokens.length - 2, 2, tailPair)
+	if (tailPair && tokens.length > MIN_TOKENS_FOR_TAIL_MERGE) {
+		tokens.splice(-2, 2, tailPair)
 	}
 
 	if (tokens.length > 2) {
-		const last = edgeDirectional(tokens[tokens.length - 1]!)
+		const last = edgeDirectional(tokens.at(-1)!)
 
 		if (last) {
 			tokens[tokens.length - 1] = last
@@ -136,6 +146,7 @@ export function normalizeStreetForKey(street: string): string {
 
 		if (canonical) {
 			tokens[at] = canonical.toLowerCase()
+
 			break
 		}
 	}
@@ -196,9 +207,9 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
 	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
 	// per-locale type/Saint map can see.
-	const tokens = fold(street).replace(/ß/g, "ss").replace(/-/g, " ").split(/\s+/).filter(Boolean)
+	const tokens = fold(street).replaceAll("ß", "ss").replaceAll("-", " ").split(/\s+/).filter(Boolean)
 
-	if (tokens.length === 0) return ""
+	if (!tokens.length) return ""
 
 	switch (locale) {
 		case "fr":
@@ -229,7 +240,9 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	return tokens.join(" ")
 }
 
-/** Normalize a locality name for address-point keying (fold only — no street semantics). */
+/**
+ * Normalize a locality name for address-point keying (fold only — no street semantics).
+ */
 export function normalizeLocalityForKey(locality: string): string {
 	return fold(locality)
 }
@@ -268,7 +281,9 @@ export function stripLocalityQualifier(locality: string): string {
 
 	if (s.includes("/")) {
 		s = s.split("/")[0]!.trim()
-	} // "Kraubath/Mur", "St.Kanzian/Klopeiner See"
+	}
+
+	// "Kraubath/Mur", "St.Kanzian/Klopeiner See"
 	s = s.replace(/\s+[a-zà-ÿ]\.\s*\S.*$/iu, "") // abbreviated " b.Graz" / " o.Bleiburg" / " a.d. …"
 	s = s.replace(/\s+(im|an der|ob|bei|in der|unter|vor)\s+\S.*$/iu, "") // " im Simmental", " bei Graz"
 	s = s.replace(/\s+(S|N|E|W|V|Ø|Sø|Fyn|Thy|Sjælland|Jylland|[A-ZÅÄÖ]{2})$/u, "") // " S", " VD", " Thy"

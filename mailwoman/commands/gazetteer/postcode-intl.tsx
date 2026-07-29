@@ -61,7 +61,9 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-/** The street-normalize key function, threaded in after a dynamic import of the optional peer. */
+/**
+ * The street-normalize key function, threaded in after a dynamic import of the optional peer.
+ */
 type NormalizeKey = (value: string) => string
 
 /**
@@ -69,7 +71,9 @@ type NormalizeKey = (value: string) => string
  */
 const SYNTH_ID_BASE = 8_000_000_000
 
-/** One postcode's accumulated GeoNames points (one row per place sharing the code). */
+/**
+ * One postcode's accumulated GeoNames points (one row per place sharing the code).
+ */
 interface PostcodeAcc {
 	cc: string
 	pc: string
@@ -82,7 +86,9 @@ interface PostcodeAcc {
 	maxLon: number
 }
 
-/** Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode). */
+/**
+ * Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode).
+ */
 async function readGeonames(file: string, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
 	const acc = new Map<string, PostcodeAcc>()
 
@@ -104,6 +110,7 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 		if (cur) {
 			cur.sumLat += lat
 			cur.sumLon += lon
+
 			cur.n++
 
 			if (lat < cur.minLat) {
@@ -133,12 +140,13 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
  * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped form.
  */
 function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
-	const stripped = pc.replace(/[\s-]/g, "")
+	const stripped = pc.replaceAll(/[\s-]/g, "")
 	const variants = [pc]
 
 	if (stripped && stripped !== pc) {
 		variants.push(stripped)
 	}
+
 	// Dedup by fold() — two forms that normalize identically need only one row.
 	const seen = new Set<string>()
 
@@ -176,11 +184,13 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	if (existsSync(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
+
 	const db = new DatabaseSync(outPath)
 	const kdb = new DatabaseClient({ database: db })
 	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
 	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
+
 	// Schema mirrors postalcode-intl.db's `spr` exactly — a drop-in `--postcodes` input for build-candidate.
 	await kdb.schema
 		.createTable("spr")
@@ -208,6 +218,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	const ins = db.prepare(
 		`INSERT INTO spr (${SPR_COLUMNS.join(", ")}) VALUES (${SPR_COLUMNS.map(() => "?").join(", ")})`
 	)
+
 	let id = SYNTH_ID_BASE
 	let rows = 0
 	db.exec("BEGIN")
@@ -218,9 +229,11 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 
 		for (const name of nameVariants(a.pc, normalizeKey)) {
 			ins.run(++id, -1, name, "postalcode", a.cc, lat, lon, a.minLat, a.minLon, a.maxLat, a.maxLon, 1, 0, 0, 0, 0, 0)
+
 			rows++
 		}
 	}
+
 	db.exec("COMMIT")
 	db.close()
 
@@ -255,6 +268,7 @@ async function foldIntoCandidate(
 	const maxCc = out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes").get() as { m: number }
 	let nextCc = maxCc.m + 1
 	const insCc = out.prepare("INSERT INTO country_codes (id, code) VALUES (?, ?)")
+
 	const ccID = (code: string): number => {
 		let id = ccCache.get(code)
 
@@ -266,6 +280,7 @@ async function foldIntoCandidate(
 
 			return r.id
 		}
+
 		id = nextCc++
 		insCc.run(id, code)
 		ccCache.set(code, id)
@@ -277,6 +292,7 @@ async function foldIntoCandidate(
 		"INSERT OR IGNORE INTO candidate (name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, longitude, min_lat, min_lon, max_lat, max_lon, population, is_primary) " +
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	)
+
 	let n = 0
 	out.exec("BEGIN")
 
@@ -292,6 +308,7 @@ async function foldIntoCandidate(
 		if (!key) continue
 		const lat = r.latitude as number
 		const lon = r.longitude as number
+
 		ins.run(
 			key,
 			ccID(r.country as string),
@@ -309,8 +326,10 @@ async function foldIntoCandidate(
 			0,
 			1
 		)
+
 		n++
 	}
+
 	out.exec("COMMIT")
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
@@ -324,12 +343,14 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 	const state = useCommandTask(async () => {
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
+
 		const countries = options.countries
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
 					.filter(Boolean)
 			: ["PL", "CZ"]
+
 		const foldInto = options.foldInto
 		const foldOut = options.foldOut
 
@@ -343,15 +364,18 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
 		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
+
 		const acc = await readGeonames(geonames, new Set(countries))
 		const byCc = new Map<string, number>()
 
 		for (const a of acc.values()) {
 			byCc.set(a.cc, (byCc.get(a.cc) ?? 0) + 1)
 		}
+
 		console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
 
 		const rows = await buildShard(acc, out, normalizeLocalityForKey)
+
 		console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
 
 		const lines = [
@@ -363,14 +387,19 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 			if (!existsSync(foldInto)) {
 				throw commandError(`Missing --fold-into candidate DB: ${foldInto}`)
 			}
+
 			console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+
 			const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
+
 			console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
+
 			lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
 		} else {
 			console.error(
 				`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
 			)
+
 			lines.push(`shard only — feed it to build-candidate via --postcodes for the canonical rebuild`)
 		}
 

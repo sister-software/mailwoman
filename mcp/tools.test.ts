@@ -34,14 +34,14 @@ describe("buildToolTable", () => {
 	it("registers exactly the five expected tools", () => {
 		const table = buildToolTable(stubDeps())
 
-		expect(table.map((t) => t.name).sort()).toEqual(
+		expect(table.map((t) => t.name).toSorted()).toEqual(
 			[
 				"mailwoman_geocode",
 				"mailwoman_layer_manifest",
 				"mailwoman_overpass_export",
 				"mailwoman_parse",
 				"mailwoman_poi_search",
-			].sort()
+			].toSorted()
 		)
 	})
 
@@ -103,10 +103,12 @@ describe("buildToolTable", () => {
 			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_poi_search")
 
 			expect(tool.inputSchema.safeParse({ query: "coffee near 350 5th Ave, New York" }).success).toBe(true)
+
 			expect(
 				tool.inputSchema.safeParse({ query: "coffee near 350 5th Ave, New York", poiDatabasePath: "/tmp/poi.db" })
 					.success
 			).toBe(true)
+
 			expect(tool.inputSchema.safeParse({}).success).toBe(false)
 			expect(tool.inputSchema.safeParse({ query: "" }).success).toBe(false)
 		})
@@ -116,6 +118,7 @@ describe("buildToolTable", () => {
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_poi_search")
 
 			await tool.handler({ query: "coffee near 350 5th Ave", poiDatabasePath: "/tmp/poi.db" })
+
 			expect(deps.poiSearch).toHaveBeenCalledWith({
 				query: "coffee near 350 5th Ave",
 				poiDatabasePath: "/tmp/poi.db",

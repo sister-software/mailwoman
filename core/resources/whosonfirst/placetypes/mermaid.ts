@@ -8,7 +8,7 @@ import { rgb } from "d3-color"
 import { interpolateViridis } from "d3-scale-chromatic"
 
 import { type PlacetypeRole, PlacetypeRoles } from "./definition.ts"
-import { Placetype } from "./Placetype.ts"
+import type { Placetype } from "./Placetype.ts"
 
 /**
  * Mermaid's `classDef` parser uses commas to separate style properties, so an `rgb(r, g, b)` value (which
@@ -52,7 +52,9 @@ const PlacetypeRoleText = {
 export type InterpolateColorCallback = (t: number) => string
 
 export interface GenerateMermaidMarkupOptions {
-	/** Restrict descendants to the given roles. Default: all roles. */
+	/**
+	 * Restrict descendants to the given roles. Default: all roles.
+	 */
 	roles?: Iterable<PlacetypeRole>
 	/**
 	 * Edge color interpolator. Each edge is colored by its child node's depth from the root: `t = (childDepth - 1) /
@@ -154,6 +156,7 @@ export function generateMermaidMarkup(placetype: Placetype, options: GenerateMer
 
 			lines.push(`  ${node.name} --> ${child.name}:::${child.role}`)
 			lines.push(`  linkStyle ${edgeIdx} stroke:${edgeColor}`)
+
 			edgeIdx++
 
 			if (visited.has(child.name)) continue

@@ -39,6 +39,10 @@ import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 import { decomposeFrStreet } from "./street-decompose.ts"
 
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
 export const BAN_ADAPTER_ID = "ban"
 
 /**
@@ -83,13 +87,14 @@ function composeRaw(house: string, street: string, postcode: string, locality: s
 	if (streetPart) {
 		parts.push(streetPart)
 	}
+
 	const cityPart = [postcode, locality].filter(Boolean).join(" ").trim()
 
 	if (cityPart) {
 		parts.push(cityPart)
 	}
 
-	return parts.join(", ").replace(/\s+/g, " ").trim()
+	return parts.join(", ").replaceAll(/\s+/g, " ").trim()
 }
 
 export function createBanAdapter(): CorpusAdapter {
@@ -104,6 +109,7 @@ export function createBanAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					delimiter: ";",
@@ -161,7 +167,7 @@ export function createBanAdapter(): CorpusAdapter {
 
 					const aligned = reconcileComponents(components, raw)
 
-					if (Object.keys(aligned).length === 0) continue
+					if (!Object.keys(aligned).length) continue
 
 					const sourceID = record.id?.trim()
 						? `${BAN_ADAPTER_ID}-${record.id.trim()}`
@@ -177,6 +183,7 @@ export function createBanAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: "Licence Ouverte 2.0",
 					}
+
 					emitted++
 				}
 			} finally {
@@ -186,4 +193,7 @@ export function createBanAdapter(): CorpusAdapter {
 	}
 }
 
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
 export const banAdapter = createBanAdapter()

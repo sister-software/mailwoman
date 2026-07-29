@@ -26,15 +26,18 @@
  *   on their own.
  */
 
+/** Partial Content — the response to a range request, which is what this worker caches. */
+const HTTP_PARTIAL_CONTENT = 206
+
 const CACHE_NAME = "mailwoman-db-ranges-v1"
 const DB_HOST = "public.sister.software"
 
 self.addEventListener("install", () => {
-	void self.skipWaiting()
+	void globalThis.skipWaiting()
 })
 
 self.addEventListener("activate", (event) => {
-	event.waitUntil(self.clients.claim())
+	event.waitUntil(globalThis.clients.claim())
 })
 
 self.addEventListener("message", (event) => {
@@ -83,13 +86,14 @@ async function respondWithCachedRange(request, href, start, end) {
 			if (contentRange && body.byteLength === rangeLength(contentRange)) {
 				return rangeResponse(body, contentRange)
 			}
+
 			await cache.delete(cacheKey) // unreadable entry — fall through to network
 		}
 
 		let response = await fetch(request)
-		let chunk = response.status === 206 ? await validatedChunk(response) : null
+		let chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
 
-		if (!chunk && response.status === 206) {
+		if (!chunk && response.status === HTTP_PARTIAL_CONTENT) {
 			// Torn chunk out of the HTTP cache (the Safari failure mode) — force fresh bytes once.
 			response = await fetch(href, {
 				method: "GET",
@@ -98,10 +102,13 @@ async function respondWithCachedRange(request, href, start, end) {
 				cache: "no-store",
 				headers: { range: `bytes=${start}-${end}` },
 			})
-			chunk = response.status === 206 ? await validatedChunk(response) : null
+
+			chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
 		}
 
-		if (!chunk) return response // 200/4xx/5xx or still torn — hand it to the app untouched
+		if (!chunk) return response
+
+		// 200/4xx/5xx or still torn — hand it to the app untouched
 
 		await cache.put(
 			cacheKey,

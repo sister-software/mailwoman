@@ -32,6 +32,7 @@ export { OptionsSchema as options }
 const GazetteerBuildStreetMorphology: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildStreetMorphologyArtifact } = await import("../../../gazetteer-pipeline/street-morphology.ts")
+
 		const built = buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
 			locales: options.locales?.split(",").map((s) => s.trim()),

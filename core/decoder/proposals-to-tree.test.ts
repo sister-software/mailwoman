@@ -28,6 +28,7 @@ describe("treeToProposals", () => {
 				},
 			],
 		}
+
 		const props = treeToProposals(tree, "neural", { sourceID: "n1" })
 		expect(props.map((p) => p.component)).toEqual(["street", "house_number"])
 		expect(props.every((p) => p.source === "neural" && p.source_id === "n1")).toBe(true)
@@ -44,6 +45,7 @@ describe("treeToProposals", () => {
 				{ tag: "locality", value: "NYC", start: 5, end: 8, confidence: 0.9, children: [] },
 			],
 		}
+
 		const props = treeToProposals(tree, "neural", { emits: new Set<ComponentTag>(["street"]) })
 		expect(props.map((p) => p.component)).toEqual(["street"])
 	})
@@ -56,6 +58,7 @@ describe("treeToProposals", () => {
 				{ tag: "street", value: "Main", start: 4, end: 8, confidence: 0.9, children: [] },
 			],
 		}
+
 		const project = (t: AddressTree) => t.roots.map((r) => ({ tag: r.tag, value: r.value, start: r.start, end: r.end }))
 		const rebuilt = proposalsToTree(tree.raw, treeToProposals(tree, "neural"))
 		expect(project(rebuilt)).toEqual(project(tree))

@@ -20,7 +20,7 @@ import {
 // The StatCan/ONS first-name levels (the recipe the research pass surfaced). m/u are project-specific
 // — re-estimated by EM in practice — but they anchor the weight math here.
 const NAME_LEVELS: ComparisonLevel[] = [
-	{ label: "exact", minSimilarity: 1.0, m: 0.7798, u: 0.00149 },
+	{ label: "exact", minSimilarity: 1, m: 0.7798, u: 0.00149 },
 	{ label: "high", minSimilarity: 0.88, m: 0.15, u: 0.01 },
 	{ label: "different", minSimilarity: 0, m: 0.003, u: 0.9727 },
 ]
@@ -84,7 +84,11 @@ describe("similarityComparison.assess", () => {
 })
 
 describe("scorePair", () => {
-	type Person = { given?: string; family?: string }
+	interface Person {
+		given?: string
+		family?: string
+	}
+
 	const model: FellegiSunterModel<Person> = {
 		lambda: 0.0001,
 		comparisons: [

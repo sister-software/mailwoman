@@ -117,7 +117,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	})
 
 	it("is stable regardless of input order (sorted by child, parent bytes)", () => {
-		const reversed = [...ENTRIES].reverse()
+		const reversed = [...ENTRIES].toReversed()
 		const a = new PairIndexResolver(serializePairIndex(HEADER, ENTRIES))
 		const b = new PairIndexResolver(serializePairIndex(HEADER, reversed))
 
@@ -183,6 +183,7 @@ describe("peekPairIndexHeader", () => {
 			parent: `parent-${i % 50}`,
 			tag: "dependent_locality" as const,
 		}))
+
 		const bytes = serializePairIndex(HEADER, bigEntries)
 
 		expect(peekPairIndexHeader(bytes)).toEqual(HEADER)
@@ -208,6 +209,6 @@ describe("peekPairIndexHeader", () => {
 		const truncated = bytes.subarray(0, pairCountOffset + 4)
 
 		expect(peekPairIndexHeader(truncated)).toEqual(HEADER)
-		expect(() => new PairIndexResolver(truncated)).toThrow()
+		expect(() => new PairIndexResolver(truncated)).toThrow(/Offset is outside the bounds/)
 	})
 })

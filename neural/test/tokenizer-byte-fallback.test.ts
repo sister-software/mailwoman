@@ -22,7 +22,9 @@ import { MailwomanTokenizer, SPACE_SENTINEL } from "../tokenizer.ts"
 
 const TOKENIZER_MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-/** Assert every piece AFTER the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`. */
+/**
+ * Assert every piece AFTER the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`.
+ */
 async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 	const { pieces } = tokenizer.encode(raw)
@@ -70,10 +72,12 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		// "Leeds" is split fine-grained on this small-vocab fixture tokenizer ("▁Le", "e", "d", "s") — reassembling
 		// every piece after the brace run must still spell "Leeds" cleanly, not a garbled offset-shifted string.
 		const afterComma = pieces.filter((p) => p.start >= pieces.find((q) => q.piece === ",")!.end)
+
 		const reassembled = afterComma
 			.map((p) => raw.slice(p.start, p.end))
 			.join("")
 			.trim()
+
 		expect(reassembled).toBe("Leeds")
 	})
 
@@ -89,7 +93,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		// "“" and "”" (U+201C/U+201D) are each 3 UTF-8 bytes on this vocab (no direct token) — two runs of three
 		// consecutive <0xHH> pieces, split by the real "A" piece between them.
 		const runPieces = pieces.filter((p) => /^<0x[0-9A-Fa-f]{2}>$/.test(p.piece))
-		expect(runPieces.length).toBe(6)
+		expect(runPieces).toHaveLength(6)
 
 		const openRun = runPieces.slice(0, 3)
 		const closeRun = runPieces.slice(3, 6)
@@ -110,10 +114,12 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(raw.slice(aPiece.start, aPiece.end)).toBe("A")
 
 		const afterClose = pieces.filter((p) => p.start >= closeRun[2]!.end)
+
 		const reassembled = afterClose
 			.map((p) => raw.slice(p.start, p.end))
 			.join("")
 			.trim()
+
 		expect(reassembled).toBe(",Leeds") // raw.slice per-piece omits the sentinel-consumed leading space, as expected
 	})
 
@@ -134,7 +140,9 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 	})
 })
 
-/** Project each piece to `[piece, start, end]` for exact-tuple assertions. */
+/**
+ * Project each piece to `[piece, start, end]` for exact-tuple assertions.
+ */
 async function encodeToTuples(raw: string): Promise<Array<[string, number, number]>> {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 	const { pieces } = tokenizer.encode(raw)

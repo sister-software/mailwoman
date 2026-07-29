@@ -49,6 +49,7 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 
 function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 	if (!raw) return undefined
+
 	const allow = new Set(
 		raw
 			.split(",")
@@ -56,7 +57,7 @@ function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 			.filter(Boolean)
 	)
 
-	return allow.size > 0 ? allow : undefined
+	return allow.size ? allow : undefined
 }
 
 const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {

@@ -4,7 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-/** Re-exports of the canonical types from `@mailwoman/core/pipeline`. */
+/**
+ * Re-exports of the canonical types from `@mailwoman/core/pipeline`.
+ */
 export type { LocaleHint, LocaleTag } from "@mailwoman/core/pipeline"
 
 /**
@@ -30,7 +32,9 @@ export interface QueryShapeLike {
 }
 
 export interface DetectLocaleOpts {
-	/** Caller's locale hint. When set, returned at confidence 1.0 with source="caller". */
+	/**
+	 * Caller's locale hint. When set, returned at confidence 1.0 with source="caller".
+	 */
 	hint?: string
 	/**
 	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives. Default 0.7.

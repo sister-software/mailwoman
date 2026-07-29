@@ -35,6 +35,7 @@ describe("convention engine — merge + resolve", () => {
 		const out = mergeConventions(WORLD_DEFAULT, {
 			candidateStrategies: ["digital_code_lookup", "postcode_area_resolution"],
 		})
+
 		expect(out.candidateStrategies).toEqual(["digital_code_lookup", "postcode_area_resolution"])
 	})
 
@@ -62,6 +63,7 @@ describe("convention engine — merge + resolve", () => {
 			200: { candidateStrategies: ["grid_interpolation", "postcode_area_resolution"] }, // region (Hokkaido)
 			300: { scoringWeights: { name: 0.4 } }, // locality (Sapporo)
 		} satisfies Record<number, Convention>)
+
 		// chain ordered MOST-GENERAL → MOST-SPECIFIC
 		const out = resolveConvention(source, [100, 200, 300])
 		expect(out.candidateStrategies).toEqual(["grid_interpolation", "postcode_area_resolution"]) // region won
@@ -79,6 +81,7 @@ describe("convention engine — merge + resolve", () => {
 
 function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
@@ -88,23 +91,27 @@ function buildDB(): DatabaseSync {
 		CREATE TABLE postcode_locality (postcode TEXT, country TEXT, locality_id INTEGER, locality_name TEXT,
 			aliases TEXT, distance_km REAL, is_containing INTEGER);
 	`)
+
 	const spr = db.prepare(
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
+
 	// id 90 is the DE country polygon (the convention key); 3 is the small Saxon town "Plauen".
-	spr.run(90, 0, "Germany", "country", "DE", 51.0, 10.0, 47.0, 55.0, 6.0, 15.0)
-	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
-	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0.0, 1)
+	spr.run(90, 0, "Germany", "country", "DE", 51, 10, 47, 55, 6, 15)
+	spr.run(3, 90, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12, 12.3)
+	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("08523", "DE", 3, "Plauen", "", 0, 1)
 
 	return db
 }
 
 describe("convention engine — live dispatch", () => {
 	let db: DatabaseSync
+
 	beforeEach(() => {
 		db = buildDB()
 	})
+
 	afterEach(() => {
 		// lookup.close() in each test closes db; nothing else to do.
 	})
@@ -126,6 +133,7 @@ describe("convention engine — live dispatch", () => {
 			buildFTS: true,
 			conventions: { 90: { candidateStrategies: ["fallback_fuzzy_name_match"] } },
 		})
+
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).not.toBe("Plauen")
 		lookup.close()

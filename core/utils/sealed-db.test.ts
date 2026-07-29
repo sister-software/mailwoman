@@ -55,15 +55,16 @@ describe("openBuiltDatabase", () => {
 	it("throws SealedArtifactError (naming the rebuild command) on a write open of a sealed artifact", () => {
 		const path = makeDB()
 		sealDatabase(path)
-		expect(() => openBuiltDatabase(path, { write: true })).toThrowError(SealedArtifactError)
-		expect(() => openBuiltDatabase(path, { write: true })).toThrowError(/sealed read-only artifact/)
-		expect(() => openBuiltDatabase(path, { write: true })).toThrowError(/gazetteer build/)
+		expect(() => openBuiltDatabase(path, { write: true })).toThrow(SealedArtifactError)
+		expect(() => openBuiltDatabase(path, { write: true })).toThrow(/sealed read-only artifact/)
+		expect(() => openBuiltDatabase(path, { write: true })).toThrow(/gazetteer build/)
 	})
 
 	it("allows a write open of an UNsealed database (builder staging)", () => {
 		const path = makeDB()
 		const db = openBuiltDatabase(path, { write: true })
-		db.exec("INSERT INTO t (v) VALUES ('y')")
+
+		expect(() => db.exec("INSERT INTO t (v) VALUES ('y')")).not.toThrow()
 		db.close()
 	})
 })

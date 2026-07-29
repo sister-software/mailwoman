@@ -5,13 +5,14 @@
  */
 
 import { mkdirSync } from "node:fs"
-import { setTimeout } from "node:timers/promises"
 
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { dirname } from "path-ts"
 
 import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.ts"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"
+
+export { tryWithBackoff } from "./backoff.ts"
 
 export class DataSourceCache extends DisposableStack {
 	#placetypeToLanguage = new Map<WhosOnFirstPlacetype, Map<Alpha3bLanguageCode, PlacetypeDataSource>>()
@@ -46,27 +47,4 @@ export class DataSourceCache extends DisposableStack {
 
 		return dataSource
 	}
-}
-
-/**
- * Given a callback, attempt to run it up to `attempts` times.
- */
-export async function tryWithBackoff<T>(attempts: number, callback: () => T): Promise<T> {
-	let lastError: unknown
-
-	for (let i = 0; i < attempts; i++) {
-		try {
-			const result = await callback()
-
-			return result
-		} catch (error) {
-			lastError = error
-		}
-
-		// We try to avoid contention by giving a pause between attempts.
-		const delay = Math.floor(Math.random() * 1000) + 1000 * attempts
-		await setTimeout(delay)
-	}
-
-	throw lastError
 }

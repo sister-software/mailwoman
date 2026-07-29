@@ -11,12 +11,12 @@ import { Span } from "./Span.ts"
 test("constructor: defaults", () => {
 	const span = Span.from()
 
-	expect(span.body).toStrictEqual("")
-	expect(span.normalized).toStrictEqual("")
-	expect(span.start).toStrictEqual(0)
-	expect(span.end).toStrictEqual(0)
+	expect(span.body).toBe("")
+	expect(span.normalized).toBe("")
+	expect(span.start).toBe(0)
+	expect(span.end).toBe(0)
 
-	expect(span.classifications.size).toEqual(0)
+	expect(span.classifications.size).toBe(0)
 	expect(span.flags.has("numeric")).toBe(false)
 	expect(span.flags.has("ends_with_period")).toBe(false)
 })
@@ -24,10 +24,10 @@ test("constructor: defaults", () => {
 test("constructor: string", () => {
 	const span = Span.from("Example")
 
-	expect(span.body).toStrictEqual("Example")
-	expect(span.normalized).toStrictEqual("example")
-	expect(span.start).toStrictEqual(0)
-	expect(span.end).toStrictEqual(7)
+	expect(span.body).toBe("Example")
+	expect(span.normalized).toBe("example")
+	expect(span.start).toBe(0)
+	expect(span.end).toBe(7)
 	expect(span.flags.has("numeric")).toBe(false)
 	expect(span.flags.has("ends_with_period")).toBe(false)
 })
@@ -35,10 +35,10 @@ test("constructor: string", () => {
 test("constructor: string + start", () => {
 	const span = Span.from("Example", { start: 10 })
 
-	expect(span.body).toStrictEqual("Example")
-	expect(span.normalized).toStrictEqual("example")
-	expect(span.start).toStrictEqual(10)
-	expect(span.end).toStrictEqual(17)
+	expect(span.body).toBe("Example")
+	expect(span.normalized).toBe("example")
+	expect(span.start).toBe(10)
+	expect(span.end).toBe(17)
 	expect(span.flags.has("numeric")).toBe(false)
 	expect(span.flags.has("ends_with_period")).toBe(false)
 })
@@ -47,10 +47,10 @@ test("setBody: empty string", () => {
 	const span = Span.from("Example")
 
 	span.body = ""
-	expect(span.body).toStrictEqual("")
-	expect(span.normalized).toStrictEqual("")
-	expect(span.start).toStrictEqual(0)
-	expect(span.end).toStrictEqual(0)
+	expect(span.body).toBe("")
+	expect(span.normalized).toBe("")
+	expect(span.start).toBe(0)
+	expect(span.end).toBe(0)
 	expect(span.flags.has("numeric")).toBe(false)
 	expect(span.flags.has("ends_with_period")).toBe(false)
 })
@@ -58,27 +58,27 @@ test("setBody: empty string", () => {
 test("setBody: update body", () => {
 	const span = Span.from("Example")
 
-	expect(span.body).toStrictEqual("Example")
+	expect(span.body).toBe("Example")
 	span.body = "Foo"
-	expect(span.body).toStrictEqual("Foo")
+	expect(span.body).toBe("Foo")
 })
 
 test("setBody: update norm", () => {
 	const span = Span.from("Example")
 
-	expect(span.normalized).toStrictEqual("example")
+	expect(span.normalized).toBe("example")
 	span.body = "Foo"
-	expect(span.normalized).toStrictEqual("foo")
+	expect(span.normalized).toBe("foo")
 })
 
 test("setBody: update end", () => {
 	const span = Span.from("Example", { start: 10 })
 
-	expect(span.start).toStrictEqual(10)
-	expect(span.end).toStrictEqual(17)
+	expect(span.start).toBe(10)
+	expect(span.end).toBe(17)
 	span.body = "Foo"
-	expect(span.start).toStrictEqual(10)
-	expect(span.end).toStrictEqual(13)
+	expect(span.start).toBe(10)
+	expect(span.end).toBe(13)
 })
 
 test("setBody: update contains.numerals", () => {
@@ -105,16 +105,18 @@ test("setBody: trim text when greater than 140 characters with spaces", () => {
 	const span =
 		Span.from(`Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`)
-	expect(span.start).toStrictEqual(0)
-	expect(span.end).toStrictEqual(140)
+
+	expect(span.start).toBe(0)
+	expect(span.end).toBe(140)
 })
 
 test("setBody: do not trim text when it's 140 characters", () => {
 	const span = Span.from(
 		"LoremipsumdolorsitametconsecteturadipiscingelitseddoeiusmodtemporincididuntutlaboreetdoloremagnaaliquaUtenimadminimveniamquisnostrudexercita"
 	)
-	expect(span.start).toStrictEqual(0)
-	expect(span.end).toStrictEqual(140)
+
+	expect(span.start).toBe(0)
+	expect(span.end).toBe(140)
 })
 
 test("intersects: basic", () => {
@@ -177,8 +179,8 @@ test("distance: same", () => {
 	const spanA = Span.from("A")
 	const spanB = Span.from("B")
 
-	expect(spanA.distance(spanB)).toEqual(0)
-	expect(spanB.distance(spanA)).toEqual(0)
+	expect(spanA.distance(spanB)).toBe(0)
+	expect(spanB.distance(spanA)).toBe(0)
 })
 
 test("distance: right", () => {
@@ -187,8 +189,8 @@ test("distance: right", () => {
 	spanB.start = 5
 	spanB.end = 6
 
-	expect(spanA.distance(spanB)).toEqual(4)
-	expect(spanB.distance(spanA)).toEqual(4)
+	expect(spanA.distance(spanB)).toBe(4)
+	expect(spanB.distance(spanA)).toBe(4)
 })
 
 test("distance: left", () => {
@@ -198,8 +200,8 @@ test("distance: left", () => {
 
 	const spanB = Span.from("B")
 
-	expect(spanA.distance(spanB)).toEqual(1)
-	expect(spanB.distance(spanA)).toEqual(1)
+	expect(spanA.distance(spanB)).toBe(1)
+	expect(spanB.distance(spanA)).toBe(1)
 })
 
 test("connectSiblings - array list", () => {

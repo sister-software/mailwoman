@@ -25,25 +25,43 @@
  *       professional suffixes) without a model.
  */
 
-/** A parsed person name. All fields optional — the parser fills what it can identify. */
+/**
+ * A parsed person name. All fields optional — the parser fills what it can identify.
+ */
 export interface PersonName {
-	/** Title / salutation that preceded the name (`Dr`, `Mr`, `Capt`). */
+	/**
+	 * Title / salutation that preceded the name (`Dr`, `Mr`, `Capt`).
+	 */
 	prefix?: string
-	/** First / given name. */
+	/**
+	 * First / given name.
+	 */
 	given?: string
-	/** Middle name(s) or initial. */
+	/**
+	 * Middle name(s) or initial.
+	 */
 	middle?: string
-	/** Surname, _without_ any particle (`Vega`, not `de la Vega`). */
+	/**
+	 * Surname, _without_ any particle (`Vega`, not `de la Vega`).
+	 */
 	family?: string
-	/** Surname particle, stored separately (`de la`, `van der`, `von`). */
+	/**
+	 * Surname particle, stored separately (`de la`, `van der`, `von`).
+	 */
 	familyParticle?: string
-	/** Generational or professional suffix (`Jr`, `III`, `PhD`, `MD`). */
+	/**
+	 * Generational or professional suffix (`Jr`, `III`, `PhD`, `MD`).
+	 */
 	suffix?: string
-	/** A parenthetical or quoted nickname (`"Gob"` in `George "Gob" Bluth`). */
+	/**
+	 * A parenthetical or quoted nickname (`"Gob"` in `George "Gob" Bluth`).
+	 */
 	nickname?: string
 }
 
-/** Titles / salutations that lead a name. Matched case-insensitively, trailing `.` ignored. */
+/**
+ * Titles / salutations that lead a name. Matched case-insensitively, trailing `.` ignored.
+ */
 const TITLES = new Set([
 	"airman",
 	"br",
@@ -100,7 +118,9 @@ const TITLES = new Set([
 	"sister",
 ])
 
-/** Generational + professional suffixes that trail a name. */
+/**
+ * Generational + professional suffixes that trail a name.
+ */
 const SUFFIXES = new Set([
 	// generational
 	"jr",
@@ -194,21 +214,21 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	// 1. Extract a parenthetical "(Jim)" or quoted "Jim" nickname, then strip it out.
 	let working = input
-		.replace(/\s*\(([^)]+)\)\s*/g, (_m, n: string) => {
+		.replaceAll(/\s*\(([^)]+)\)\s*/g, (_m, n: string) => {
 			if (!result.nickname) {
 				result.nickname = n.trim()
 			}
 
 			return " "
 		})
-		.replace(/\s*"([^"]+)"\s*/g, (_m, n: string) => {
+		.replaceAll(/\s*"([^"]+)"\s*/g, (_m, n: string) => {
 			if (!result.nickname) {
 				result.nickname = n.trim()
 			}
 
 			return " "
 		})
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 	// 2. Resolve a single comma: "Last, First" inversion, unless the tail is a known suffix
@@ -226,7 +246,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	const tokens = working.split(/\s+/).filter(Boolean)
 
-	if (tokens.length === 0) return Object.keys(result).length ? result : null
+	if (!tokens.length) return Object.keys(result).length ? result : null
 
 	// 3. Leading titles → prefix.
 	const prefixParts: string[] = []
@@ -242,7 +262,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	// 4. Trailing suffixes → suffix (a single name token must remain).
 	const suffixParts: string[] = []
 
-	while (tokens.length > 1 && SUFFIXES.has(norm(tokens[tokens.length - 1]!))) {
+	while (tokens.length > 1 && SUFFIXES.has(norm(tokens.at(-1)!))) {
 		suffixParts.unshift(tokens.pop()!)
 	}
 
@@ -250,7 +270,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		result.suffix = isPresent(result.suffix) ? `${suffixParts.join(" ")} ${result.suffix}` : suffixParts.join(" ")
 	}
 
-	if (tokens.length === 0) return result
+	if (!tokens.length) return result
 
 	// 5. Locate the surname particle run; everything from it onward is the (particled) surname.
 	let particleStart = -1
@@ -259,6 +279,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		// A particle only starts a surname if a bare-surname token follows it.
 		if (PARTICLES.has(norm(tokens[i]!)) && i < tokens.length - 1) {
 			particleStart = i
+
 			break
 		}
 	}
@@ -269,8 +290,10 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 		while (i < tokens.length - 1 && PARTICLES.has(norm(tokens[i]!))) {
 			particleParts.push(tokens[i]!)
+
 			i++
 		}
+
 		result.familyParticle = particleParts.join(" ")
 		result.family = tokens.slice(i).join(" ")
 		const before = tokens.slice(0, particleStart)
@@ -292,8 +315,9 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 		return result
 	}
+
 	result.given = tokens[0]
-	result.family = tokens[tokens.length - 1]
+	result.family = tokens.at(-1)
 
 	if (tokens.length > 2) {
 		result.middle = tokens.slice(1, -1).join(" ")

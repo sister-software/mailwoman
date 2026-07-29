@@ -31,19 +31,39 @@ import { haversineKm } from "@mailwoman/spatial"
 import { buildGauntletDeps, runOne } from "./harness.ts"
 import type { GauntletLayerOptions } from "./regression.ts"
 
-const INV_EPSILON_KM = 0.001 // 1m — same address, identical resolution expected.
-const DIR_NEAR_KM = 5 // dropping the postcode may lose the rooftop, but must still land in the right area.
-const BAND_NEAR_KM = 5 // a corrupted surface may shift the parse, but must stay within the tolerance band.
+/**
+ * Shortest span body worth mutating — below it a perturbation changes the token entirely.
+ */
+const MIN_MUTABLE_BODY_LENGTH = 5
+
+/**
+ * 1m — same address, identical resolution expected.
+ */
+const INV_EPSILON_KM = 0.001
+/**
+ * Dropping the postcode may lose the rooftop, but must still land in the right area.
+ */
+const DIR_NEAR_KM = 5
+/**
+ * A corrupted surface may shift the parse, but must stay within the tolerance band.
+ */
+const BAND_NEAR_KM = 5
 
 interface Base {
 	input: string
-	/** Drives the DIR (drop-postcode) test; all bases drive INV + BAND. */
+	/**
+	 * Drives the DIR (drop-postcode) test; all bases drive INV + BAND.
+	 */
 	postcode: boolean
-	/** Selects the abbreviation dictionary for the `abbrev` INV perturbation. */
+	/**
+	 * Selects the abbreviation dictionary for the `abbrev` INV perturbation.
+	 */
 	locale: string
 }
 
-/** Base inputs. The postcode'd ones drive the DIR (drop-postcode) test; all drive INV + BAND. */
+/**
+ * Base inputs. The postcode'd ones drive the DIR (drop-postcode) test; all drive INV + BAND.
+ */
 const BASES: Base[] = [
 	{ input: "181 Rue du Chevaleret, Paris", postcode: false, locale: "fr-FR" },
 	{ input: "181 Rue du Chevaleret, 75013 Paris", postcode: true, locale: "fr-FR" },
@@ -82,7 +102,9 @@ function inverseAbbrev(locale: string): Map<string, string> {
 	return inv
 }
 
-/** Replace the first expandable long-form token with its abbreviation (`Avenue`→`Ave`). Null if none present. */
+/**
+ * Replace the first expandable long-form token with its abbreviation (`Avenue`→`Ave`). Null if none present.
+ */
 function abbreviate(input: string, locale: string): string | null {
 	const inv = inverseAbbrev(locale)
 	const tokens = input.split(/(\s+)/)
@@ -102,7 +124,9 @@ function abbreviate(input: string, locale: string): string | null {
 	return null
 }
 
-/** The longest maximal run of letters, length ≥5, leftmost on ties. Null if none — nothing safe to corrupt. */
+/**
+ * The longest maximal run of letters, length ≥5, leftmost on ties. Null if none — nothing safe to corrupt.
+ */
 function longestAlphaToken(s: string): { start: number; body: string } | null {
 	let best: { start: number; body: string } | null = null
 	const re = /\p{L}+/gu
@@ -111,7 +135,7 @@ function longestAlphaToken(s: string): { start: number; body: string } | null {
 	while ((m = re.exec(s))) {
 		const body = m[0]!
 
-		if (body.length < 5) continue
+		if (body.length < MIN_MUTABLE_BODY_LENGTH) continue
 
 		if (!best || body.length > best.body.length) {
 			best = { start: m.index, body }
@@ -121,7 +145,9 @@ function longestAlphaToken(s: string): { start: number; body: string } | null {
 	return best
 }
 
-/** Adjacent-char swap at the middle of the longest alphabetic token. Deterministic, no RNG. Null if not applicable. */
+/**
+ * Adjacent-char swap at the middle of the longest alphabetic token. Deterministic, no RNG. Null if not applicable.
+ */
 function transposeMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
 
@@ -137,6 +163,7 @@ function transposeMiddle(s: string): string | null {
 			i = mid
 		} else return null
 	}
+
 	const swapped = [...chars]
 	const tmp = swapped[i]!
 	swapped[i] = swapped[i + 1]!
@@ -145,7 +172,9 @@ function transposeMiddle(s: string): string | null {
 	return s.slice(0, tok.start) + swapped.join("") + s.slice(tok.start + tok.body.length)
 }
 
-/** Single-char substitution at the middle of the longest alphabetic token (→`x`, or `z` when already `x`). */
+/**
+ * Single-char substitution at the middle of the longest alphabetic token (→`x`, or `z` when already `x`).
+ */
 function substituteMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
 
@@ -164,7 +193,9 @@ function substituteMiddle(s: string): string | null {
 	return s.slice(0, tok.start) + body + s.slice(tok.start + tok.body.length)
 }
 
-/** Numeral↔spelled ordinal street names (`5th`↔`Fifth`). */
+/**
+ * Numeral↔spelled ordinal street names (`5th`↔`Fifth`).
+ */
 const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 	["1st", "First"],
 	["2nd", "Second"],
@@ -180,7 +211,9 @@ const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 	["12th", "Twelfth"],
 ]
 
-/** Swap the first ordinal-street token between numeral and spelled form (`5th Ave`↔`Fifth Ave`). Null if none. */
+/**
+ * Swap the first ordinal-street token between numeral and spelled form (`5th Ave`↔`Fifth Ave`). Null if none.
+ */
 function swapOrdinal(s: string): string | null {
 	const numToWord = new Map(ORDINALS.map(([n, w]) => [n.toLowerCase(), w]))
 	const wordToNum = new Map(ORDINALS.map(([n, w]) => [w.toLowerCase(), n]))
@@ -201,7 +234,9 @@ function swapOrdinal(s: string): string | null {
 	return null
 }
 
-/** Spell out the LEADING house-number token (`100`→`One Hundred`). Bounded map — never a general algorithm. */
+/**
+ * Spell out the LEADING house-number token (`100`→`One Hundred`). Bounded map — never a general algorithm.
+ */
 const HOUSE_SPELL = new Map<string, string>([["100", "One Hundred"]])
 
 function spellHouseNumber(s: string): string | null {
@@ -221,22 +256,26 @@ interface Perturbation {
 	f: (s: string, base: Base) => string | null
 }
 
-/** Label-preserving perturbations — the output must be INVARIANT (≤1m, same tier). */
+/**
+ * Label-preserving perturbations — the output must be INVARIANT (≤1m, same tier).
+ */
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
 	{ name: "upper", f: (s) => s.toUpperCase() },
-	{ name: "ws", f: (s) => s.replace(/ /g, "  ") },
+	{ name: "ws", f: (s) => s.replaceAll(" ", "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
-	{ name: "comma-tight", f: (s) => s.replace(/, /g, ",") }, // surface-form: drop the space after a comma
+	{ name: "comma-tight", f: (s) => s.replaceAll(", ", ",") }, // surface-form: drop the space after a comma
 	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still
 	// space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix
 	// half (punctuation-drop training augmentation) closes any deterministic failure this surfaces; a
 	// failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
-	{ name: "comma-drop", f: (s) => s.replace(/,/g, "") },
+	{ name: "comma-drop", f: (s) => s.replaceAll(",", "") },
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
 
-/** Corrupting perturbations — output may shift, but must stay within the BAND (≤5km). */
+/**
+ * Corrupting perturbations — output may shift, but must stay within the BAND (≤5km).
+ */
 const BAND: Perturbation[] = [
 	{ name: "transpose", f: (s) => transposeMiddle(s) },
 	{ name: "typo-sub", f: (s) => substituteMiddle(s) },
@@ -250,19 +289,20 @@ const BAND: Perturbation[] = [
  * xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into false comfort — the
  * Pelias-pass-list trap, inverted.
  */
-// Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
-// retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
-// the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
-// A NEW deterministic INV break belongs here with a tracked note, never silently gated.
-// The #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was NOT the
-// FR gazetteer (street_norm expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into
-// house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1 `expandAbbreviations` in the geocode
-// path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately untouched). Keep the
-// anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never silently gated.
-// comma-drop (#1101 delimiter-free invariant): the FR "Rue du Chevaleret" base loses rooftop resolution
-// when its comma is stripped (address_point → admin tier, coord → null) — the comma-free parsing gap the
-// punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until
-// that augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
+/**
+ * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
+ * retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
+ * the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
+ * A NEW deterministic INV break belongs here with a tracked note, never silently gated. The #1002 FR `Boulevard→Bd`
+ * xfail was removed 2026-07-06 with its fix: the root cause was NOT the FR gazetteer (street_norm expands `bd` fine)
+ * but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1
+ * `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately
+ * untouched). Keep the anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never
+ * silently gated. comma-drop (#1101 delimiter-free invariant): the FR "Rue du Chevaleret" base loses rooftop resolution
+ * when its comma is stripped (address_point → admin tier, coord → null) — the comma-free parsing gap the
+ * punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until that
+ * augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
+ */
 const KNOWN_INV_XFAIL = new Map<string, string>([
 	// The FR comma-free rooftop loss. Its US twin ("1600 Pennsylvania Ave NW Washington DC") had the SAME
 	// #1101 failure on the shipped model (v6.4.0), but the punct-drop augmentation (v3.8.x,
@@ -277,9 +317,11 @@ const KNOWN_INV_XFAIL = new Map<string, string>([
  * outside the band. Tracked (visible, non-blocking) rather than hidden or gated. See the input-robustness coverage
  * matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
  */
-// All measured anchor-OFF/gazetteer-OFF (the harness default; the weights package ships no anchor artifacts). The
-// gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
-// may hold with the retrieval channels ON — tracked here as the anchor-off floor, not a claim about production.
+/**
+ * All measured anchor-OFF/gazetteer-OFF (the harness default; the weights package ships no anchor artifacts). The
+ * gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
+ * may hold with the retrieval channels ON — tracked here as the anchor-off floor, not a claim about production.
+ */
 const KNOWN_BAND_XFAIL = new Map<string, string>([
 	// House-number spelling is neither normalized nor trained — the expected miss (input-robustness matrix).
 	["num-house|100 Centre Street, New York, NY", "untrained: house-number spelling (input-robustness matrix)"],
@@ -291,12 +333,14 @@ const KNOWN_BAND_XFAIL = new Map<string, string>([
 	["typo-sub|Damrak 1, 1012 LG Amsterdam", "anchor-off: typo'd locality, no postcode anchor → no-resolve"],
 ])
 
-/** Strip a 5-digit (US/FR) postcode token for the DIR test. */
+/**
+ * Strip a 5-digit (US/FR) postcode token for the DIR test.
+ */
 const dropPostcode = (s: string) =>
 	s
 		.replace(/\b\d{5}\b/, "")
-		.replace(/\s*,\s*,/g, ",")
-		.replace(/\s+/g, " ")
+		.replaceAll(/\s*,\s*,/g, ",")
+		.replaceAll(/\s+/g, " ")
 		.trim()
 
 interface Tally {
@@ -312,7 +356,9 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 	m.set(name, t)
 }
 
-/** Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails). */
+/**
+ * Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails).
+ */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const deps = await buildGauntletDeps(
 		options.weightsCacheRoot
@@ -347,11 +393,14 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		for (const p of INV) {
 			const perturbed = p.f(base.input, base)
 
-			if (perturbed == null) continue // perturbation not applicable to this base (e.g. no expandable suffix)
+			if (perturbed == null) continue
+
+			// perturbation not applicable to this base (e.g. no expandable suffix)
 
 			invChecks++
 			bump(invTally, p.name, "checks")
 			const r = await runOne(perturbed, deps)
+
 			const moved =
 				r.tier !== canon.tier ||
 				(canon.lat != null && r.lat != null && haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) > INV_EPSILON_KM) ||
@@ -359,8 +408,10 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (!moved) {
 				bump(invTally, p.name, "held")
+
 				continue
 			}
+
 			const key = `${p.name}|${base.input}`
 			const tracked = KNOWN_INV_XFAIL.get(key)
 			const line = `INV[${p.name}] "${base.input}" → "${perturbed}" · tier ${canon.tier}→${r.tier}, coord ${canon.lat},${canon.lon} → ${r.lat},${r.lon}`
@@ -380,6 +431,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		if (base.postcode) {
 			dirChecks++
 			const dropped = await runOne(dropPostcode(base.input), deps)
+
 			const ok =
 				dropped.lat != null &&
 				canon.lat != null &&
@@ -387,6 +439,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (!ok) {
 				dirFails++
+
 				fails.push(
 					`  ✗ DIR[drop-postcode] "${base.input}" → "${dropPostcode(base.input)}" landed ${dropped.lat},${dropped.lon} (anchor ${canon.lat},${canon.lon})`
 				)
@@ -399,7 +452,9 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (perturbed == null || perturbed === base.input) continue
 
-			if (canon.lat == null) continue // no clean anchor to measure a band against
+			if (canon.lat == null) continue
+
+			// no clean anchor to measure a band against
 
 			bandChecks++
 			bump(bandTally, p.name, "checks")
@@ -409,8 +464,10 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (ok) {
 				bump(bandTally, p.name, "held")
+
 				continue
 			}
+
 			const key = `${p.name}|${base.input}`
 			const tracked = KNOWN_BAND_XFAIL.get(key)
 			const movedBy = dist != null ? `${dist.toFixed(1)}km` : "no-resolve"
@@ -427,6 +484,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			}
 		}
 	}
+
 	deps.close()
 
 	// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
@@ -458,6 +516,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			if (!t) continue
 			const heldStr = `${t.held}/${t.checks} held`
 			const notes = [t.fails ? `${t.fails} FAIL` : "", t.xfail ? `${t.xfail} xfail` : ""].filter(Boolean).join(", ")
+
 			console.log(`  ${set}[${p.name}]`.padEnd(22) + `${heldStr}${notes ? ` (${notes})` : ""}`)
 		}
 	}
@@ -485,9 +544,11 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			console.log(`  + ${key}  [was: ${issue}]`)
 		}
 	}
+
 	// The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size
+
 	console.log(
 		`\nverdict: ${pass ? "PASS" : "FAIL"}${pass && trackedTotal ? ` (with ${trackedTotal} tracked xfails)` : ""}`
 	)

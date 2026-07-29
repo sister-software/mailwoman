@@ -41,7 +41,9 @@ export interface HouseVenueBaseTuple {
 
 export type HouseVenueTemplate =
 	| "venue-after-street" // "123 Main St, Sunrise Bakery, Springfield, IL 02101"
-	| "venue-before-street" // "Sunrise Bakery, 123 Main St, Springfield, IL 02101"
+	| "venue-before-street"
+
+// "Sunrise Bakery, 123 Main St, Springfield, IL 02101"
 
 export interface HouseVenueSynthesisOpts {
 	random?: () => number
@@ -55,12 +57,12 @@ export interface SynthesizedHouseVenueRow {
 	template: HouseVenueTemplate
 }
 
-// ---------------------------------------------------------------------------------------------
-// Venue pool — PLAIN, no street-typing tokens. The point of this shard is to teach
-// house_number + venue coexistence, NOT to re-introduce decompose-mode pressure.
-// Adversarial venue names live in `synthesize-no-street.ts`.
-// ---------------------------------------------------------------------------------------------
+//#region Venue pool
 
+/**
+ * PLAIN venue names, carrying no street-typing tokens. This shard teaches house_number + venue coexistence, NOT
+ * decompose-mode pressure — adversarial venue names live in `synthesize-no-street.ts`.
+ */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
 	"Acme Corporation",
@@ -84,11 +86,13 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Westwood Realty",
 ]
 
-// ---------------------------------------------------------------------------------------------
-// Fallback street pool for tuples that didn't carry a `street` field. Plain street names
-// without typing-token ambiguity.
-// ---------------------------------------------------------------------------------------------
+//#endregion
 
+//#region Fallback street pool
+
+/**
+ * Stand-in streets for tuples that carried no `street` field. Plain names, no typing-token ambiguity.
+ */
 const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Main St",
 	"Oak Ave",
@@ -107,9 +111,9 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Forest Blvd",
 ]
 
-// ---------------------------------------------------------------------------------------------
-// House-number generator
-// ---------------------------------------------------------------------------------------------
+//#endregion
+
+//#region House-number generator
 
 function randomHouseNumber(random: () => number): string {
 	// Generate a plain numeric house number 1-9999. No fractions/ranges — those land in
@@ -144,9 +148,9 @@ function countryToLocale(country: string): string {
 	}
 }
 
-// ---------------------------------------------------------------------------------------------
-// Synthesis
-// ---------------------------------------------------------------------------------------------
+//#endregion
+
+//#region Synthesis
 
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
@@ -190,3 +194,5 @@ export function synthesizeHouseVenueRow(
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
 	return components.house_number !== undefined && components.venue !== undefined
 }
+
+//#endregion

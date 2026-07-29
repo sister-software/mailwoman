@@ -25,7 +25,9 @@ export interface POIExecutorLookup {
 	search(query: POISearchQuery): POISearchHit[]
 }
 
-/** The compact read-time ancestry triple a result's `ancestry` carries — deepest-first, mirrors `POIResult.ancestry`. */
+/**
+ * The compact read-time ancestry triple a result's `ancestry` carries — deepest-first, mirrors `POIResult.ancestry`.
+ */
 export interface POIAncestryEntry {
 	placetype: string
 	name: string
@@ -33,9 +35,13 @@ export interface POIAncestryEntry {
 }
 
 export interface POIExecutorOpts {
-	/** Absent = no poi.db configured (intent-only mode, today's Plan-2 behavior for non-build-local categories). */
+	/**
+	 * Absent = no poi.db configured (intent-only mode, today's Plan-2 behavior for non-build-local categories).
+	 */
 	lookup: POIExecutorLookup | undefined
-	/** `@mailwoman/poi-taxonomy`'s `requiresBuildLocalLayer(getPOICategory(id)!)`, injected so this stays lexicon-free. */
+	/**
+	 * `@mailwoman/poi-taxonomy`'s `requiresBuildLocalLayer(getPOICategory(id)!)`, injected so this stays lexicon-free.
+	 */
 	requiresBuildLocal: (categoryID: string) => boolean
 	/**
 	 * `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories(id)`, injected so this stays lexicon-free — maps a canonical
@@ -118,7 +124,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			limit: intent.limit,
 		})
 
-		if (buildLocalCategory && results.length === 0) {
+		if (buildLocalCategory && !results.length) {
 			return { type: "abstain", reason: "requires_build_local_layer" }
 		}
 
@@ -143,7 +149,7 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
 	if (!reverseGeocode) return result
 	const ancestry = reverseGeocode(result.latitude, result.longitude)
 
-	return ancestry && ancestry.length > 0 ? { ...result, ancestry } : result
+	return ancestry && ancestry.length ? { ...result, ancestry } : result
 }
 
 /**
@@ -163,7 +169,9 @@ function resolveCenter(intent: POIIntent): { latitude: number; longitude: number
 	return intent.anchor?.biasPoint
 }
 
-/** One level deep beats a root: a child's centroid is more specific than its parent's. */
+/**
+ * One level deep beats a root: a child's centroid is more specific than its parent's.
+ */
 function deepestGeoNode(roots: AddressNode[]): AddressNode | undefined {
 	for (const root of roots) {
 		for (const child of root.children) {

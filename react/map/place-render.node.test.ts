@@ -13,7 +13,9 @@ import { expect, test } from "vitest"
 
 import { cameraToViewState, computeMapPlaceRenderSpec, type ResolvedMapPlace } from "./place-render.ts"
 
-/** A minimal resolved place; spread over with the fields a given branch needs. */
+/**
+ * A minimal resolved place; spread over with the fields a given branch needs.
+ */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Somewhere", placetype: "locality", lat: 40, lon: -74, score: 1, ...overrides }
 }
@@ -43,8 +45,10 @@ test("a pre-fetched crisp polygon → draw it and fit its bounds (padding 40)", 
 			],
 		],
 	}
+
 	const spec = computeMapPlaceRenderSpec(place({ geometry }))
 	expect(spec.outline).toBe(geometry)
+
 	expect(spec.camera).toEqual({
 		kind: "bounds",
 		bounds: [
@@ -73,6 +77,7 @@ test("a bbox with real extent → bbox-sized circle + fit the bbox", () => {
 	const bbox = { minLat: 39.9, maxLat: 40.1, minLon: -74.1, maxLon: -73.9 }
 	const spec = computeMapPlaceRenderSpec(place({ bbox }))
 	expect(spec.outline?.type).toBe("Polygon")
+
 	expect(spec.camera).toEqual({
 		kind: "bounds",
 		bounds: [
@@ -108,6 +113,7 @@ test("cameraToViewState reshapes a center target and returns null for a bounds t
 		latitude: 40,
 		zoom: 12,
 	})
+
 	expect(
 		cameraToViewState({
 			kind: "bounds",

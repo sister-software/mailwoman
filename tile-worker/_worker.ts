@@ -50,6 +50,7 @@ const handler: ExportedHandler<TileWorkerEnv> = {
 			}
 
 			console.error(error)
+
 			const response = new Response("Nexus Internal Server Error", { status: 500 })
 			applyAccessControlAllowOrigin(request, response)
 

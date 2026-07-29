@@ -15,6 +15,7 @@ const meta: Meta<typeof LiveResultsBlock> = {
 }
 
 export default meta
+
 type Story = StoryObj<typeof LiveResultsBlock>
 
 export const Success: Story = {

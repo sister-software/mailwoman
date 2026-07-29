@@ -50,6 +50,7 @@ const GEONAMES_FIXTURE = [
 
 function seedDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`CREATE TABLE spr (
 		id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',
 		placetype TEXT NOT NULL DEFAULT '', country TEXT NOT NULL DEFAULT '',
@@ -58,9 +59,11 @@ function seedDB(): DatabaseSync {
 		max_latitude REAL NOT NULL DEFAULT 0, max_longitude REAL NOT NULL DEFAULT 0,
 		is_current INTEGER NOT NULL DEFAULT 1
 	)`)
+
 	const insert = db.prepare(
 		`INSERT INTO spr (id, name, placetype, country, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)`
 	)
+
 	insert.run(1, "90210", "postalcode", "US", 0, 0) // placeholder, ZCTA exists → filled by ZCTA
 	insert.run(2, "10001", "postalcode", "US", 40.750634, -73.997177) // real WOF coord → untouched
 	insert.run(3, "21638", "postalcode", "US", 0, 0) // placeholder, no ZCTA but GeoNames → filled by GeoNames
@@ -165,6 +168,7 @@ describe("fillGeonamesPlaceholders", () => {
 
 		// Provenance: ZCTA source for 90210 (id=1), GeoNames for 21638 (id=3).
 		const sources = db.prepare(`SELECT id, source FROM centroid_source ORDER BY id`).all()
+
 		expect(sources).toEqual([
 			{ id: 1, source: ZCTA_SOURCE },
 			{ id: 3, source: GEONAMES_US_SOURCE },
@@ -196,6 +200,7 @@ describe("fillGeonamesPlaceholders", () => {
 			latitude: number
 			source: string
 		}
+
 		expect(r.latitude).toBeCloseTo(34.100517, 4)
 		expect(r.source).toBe(ZCTA_SOURCE)
 	})

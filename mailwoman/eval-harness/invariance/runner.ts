@@ -34,21 +34,26 @@ import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
 // (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
 // resolves against the CWD the CLI is invoked from (the repo root), not `import.meta.dirname`.
+/**
+ * Suite the invariance runner loads when no path is given.
+ */
 export const DEFAULT_SUITE_PATH = "mailwoman/eval-harness/invariance/suite.jsonl"
 
-// -------------------------------------------------------------------------------------------------
-// fixture loading
-// -------------------------------------------------------------------------------------------------
+//#region fixture loading
 
 export interface InvarianceRow {
 	id: string
 	raw: string
 	country: string
-	/** Transform ids (see transforms.ts) that apply to this row. */
+	/**
+	 * Transform ids (see transforms.ts) that apply to this row.
+	 */
 	transforms: string[]
 }
 
-/** Load `suite.jsonl`-shaped rows. Blank lines and `//`-prefixed comment lines (the fixture header) are skipped. */
+/**
+ * Load `suite.jsonl`-shaped rows. Blank lines and `//`-prefixed comment lines (the fixture header) are skipped.
+ */
 export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 	if (!existsSync(path)) throw new Error(`invariance suite not found: ${path}`)
 
@@ -64,15 +69,19 @@ export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 	return rows
 }
 
-// -------------------------------------------------------------------------------------------------
-// parse function construction
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region parse function construction
 
 export type ParseFn = (raw: string) => Promise<Record<string, string>>
 
-/** Options that select a model — mirrors the shape of `eval gate` / `eval error-analysis`. */
+/**
+ * Options that select a model — mirrors the shape of `eval gate` / `eval error-analysis`.
+ */
 export interface ModelSelectOptions {
-	/** Candidate ONNX (requires `tokenizer` + `modelCard`, or falls back to co-located siblings via `weightsCache`). */
+	/**
+	 * Candidate ONNX (requires `tokenizer` + `modelCard`, or falls back to co-located siblings via `weightsCache`).
+	 */
 	model?: string
 	tokenizer?: string
 	modelCard?: string
@@ -82,7 +91,9 @@ export interface ModelSelectOptions {
 	 * whose vocab differs (splice), and the only correct grade for a country-channel model. Alternative to `model`.
 	 */
 	weightsCache?: string
-	/** BCP-47-ish locale tag for weights-package resolution. Default `en-US`. */
+	/**
+	 * BCP-47-ish locale tag for weights-package resolution. Default `en-US`.
+	 */
 	locale?: string
 }
 
@@ -109,16 +120,18 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 	return NeuralAddressClassifier.loadFromWeights({ locale })
 }
 
-/** Build a `ParseFn` from model-select options. Exported so `--baseline` can build a second, independent classifier. */
+/**
+ * Build a `ParseFn` from model-select options. Exported so `--baseline` can build a second, independent classifier.
+ */
 export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const classifier = await buildClassifier(opts)
 
 	return async (raw: string) => decodeAsJSON(await classifier.parse(raw)) as Record<string, string>
 }
 
-// -------------------------------------------------------------------------------------------------
-// the run
-// -------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region the run
 
 export interface PairOutcome {
 	rowId: string
@@ -128,9 +141,13 @@ export interface PairOutcome {
 	transformed: string
 	verdict: Verdict
 	diff: string[]
-	/** Only set in `--baseline` mode: the baseline model's verdict on the SAME pair. */
+	/**
+	 * Only set in `--baseline` mode: the baseline model's verdict on the SAME pair.
+	 */
 	baselineVerdict?: Verdict
-	/** True when the candidate violates but the baseline ALSO violates — reported, non-blocking. */
+	/**
+	 * True when the candidate violates but the baseline ALSO violates — reported, non-blocking.
+	 */
 	preExisting?: boolean
 }
 
@@ -138,7 +155,9 @@ export interface InvarianceReport {
 	outcomes: PairOutcome[]
 	skipped: Array<{ rowId: string; transformId: string; reason: string }>
 	counts: { invariant: number; degraded: number; lost: number }
-	/** Counts restricted to NEW violations (baseline mode) — identical to `counts` when there's no baseline. */
+	/**
+	 * Counts restricted to NEW violations (baseline mode) — identical to `counts` when there's no baseline.
+	 */
 	newCounts: { degraded: number; lost: number }
 	pass: boolean
 	exitCode: number
@@ -147,14 +166,20 @@ export interface InvarianceReport {
 export interface RunInvarianceOptions {
 	rows: InvarianceRow[]
 	parse: ParseFn
-	/** `--baseline` regression mode: pre-existing baseline violations are reported but non-blocking. */
+	/**
+	 * `--baseline` regression mode: pre-existing baseline violations are reported but non-blocking.
+	 */
 	baselineParse?: ParseFn
-	/** Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0. */
+	/**
+	 * Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0.
+	 */
 	maxDegraded?: number
 	report?: (line: string) => void
 }
 
-/** Canonicalize every value in a component map to long-form Ave/St/Rd (see `canonicalizeAbbreviations`). */
+/**
+ * Canonicalize every value in a component map to long-form Ave/St/Rd (see `canonicalizeAbbreviations`).
+ */
 function canonicalizeMap(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
 
@@ -182,7 +207,9 @@ function compareForTransform(
 	return compareComponents(original, transformed)
 }
 
-/** Run the full suite. Returns a report with per-pair outcomes, summary counts, and the gate exit code. */
+/**
+ * Run the full suite. Returns a report with per-pair outcomes, summary counts, and the gate exit code.
+ */
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0
 	const report = options.report ?? console.error
@@ -223,16 +250,11 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 		for (const transformId of row.transforms) {
 			const transform = getTransform(transformId) // throws loudly on an unknown id — fixture typo guard.
-			let transformedText: string | null
-
-			if (transformId === "idempotence") {
-				transformedText = row.raw
-			} else {
-				transformedText = transform.apply(row.raw)
-			}
+			const transformedText: string | null = transformId === "idempotence" ? row.raw : transform.apply(row.raw)
 
 			if (transformedText == null) {
 				skipped.push({ rowId: row.id, transformId, reason: "transform not applicable to this raw" })
+
 				continue
 			}
 
@@ -245,6 +267,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			} else {
 				const original = await originalFor(row)
 				const perturbed = await options.parse(transformedText)
+
 				candidateOutcome = {
 					transformed: transformedText,
 					...compareForTransform(transformId, original, perturbed),
@@ -278,6 +301,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 							})()
 
 				outcome.baselineVerdict = baselineResult.verdict
+
 				// Severity-aware, NOT severity-blind: a violation is pre-existing only if the candidate's verdict
 				// is not WORSE than the baseline's on this SAME (row, transform) pair — INVARIANT < DEGRADED <
 				// LOST. Two non-INVARIANT verdicts on both sides used to be enough to call it pre-existing, which
@@ -323,17 +347,19 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 	report(`\n=== invariance mini-suite ===`)
 	report(`  rows: ${options.rows.length}   pairs: ${outcomes.length}   skipped (n/a): ${skipped.length}`)
+
 	report(
 		`  INVARIANT ${counts.invariant}   DEGRADED ${counts.degraded}${options.baselineParse ? ` (${newCounts.degraded} new)` : ""}   LOST ${counts.lost}${options.baselineParse ? ` (${newCounts.lost} new)` : ""}`
 	)
 
 	const violations = outcomes.filter((o) => o.verdict !== "INVARIANT")
 
-	if (violations.length > 0) {
+	if (violations.length) {
 		report(`\nviolations:`)
 
 		for (const v of violations) {
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
+
 			// Final-review fix: this used to hardcode "baseline held INVARIANT" for every NEW violation, but
 			// "not pre-existing" (worse severity than the baseline) does not imply the baseline was INVARIANT —
 			// the baseline could itself have been DEGRADED while the candidate is the strictly-worse LOST.
@@ -343,6 +369,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 					? " [pre-existing: baseline also violates — non-blocking]"
 					: ` [NEW — baseline verdict was ${v.baselineVerdict}]`
 				: ""
+
 			report(`  ${tag} [${v.transformId}] ${v.rowId} "${v.raw}" → "${v.transformed}"${provenance}`)
 
 			for (const d of v.diff) {
@@ -351,7 +378,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		}
 	}
 
-	if (skipped.length > 0) {
+	if (skipped.length) {
 		report(`\nskipped (transform declared but not applicable — check the fixture):`)
 
 		for (const s of skipped) {
@@ -360,6 +387,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	}
 
 	const pass = newCounts.lost === 0 && newCounts.degraded <= maxDegraded
+
 	report(
 		`\nverdict: ${pass ? "PASS" : "FAIL"} (max-degraded ${maxDegraded}${options.baselineParse ? ", regression mode vs baseline" : ""})`
 	)
@@ -373,3 +401,5 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		exitCode: pass ? 0 : 1,
 	}
 }
+
+//#endregion

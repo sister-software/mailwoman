@@ -25,10 +25,11 @@
 
 import addressFormatter from "@fragaria/address-formatter"
 import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
-import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ClassificationMap, VisibleClassification, ComponentTag } from "@mailwoman/core/types"
 
-/** Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace. */
+/**
+ * Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace.
+ */
 function slotPattern(slot: string): RegExp {
 	return new RegExp(`\\{\\{\\{\\s*${slot}\\s*\\}\\}\\}`)
 }
@@ -114,10 +115,14 @@ const DEPENDENT_LOCALITY_SLOTS: {
 	return { quarterOnly, placeOnly, postRender }
 })()
 
-/** A partial map of `ComponentTag` → string value — the canonical formatter input. */
+/**
+ * A partial map of `ComponentTag` → string value — the canonical formatter input.
+ */
 export type ComponentDict = Partial<Record<ComponentTag, string>>
 
-/** Options accepted by `formatAddress`. */
+/**
+ * Options accepted by `formatAddress`.
+ */
 export interface FormatAddressOptions {
 	/**
 	 * Append the country name as a final line (`"USA"`, `"France"`). Default `false`: most rows are intra-country and the
@@ -147,7 +152,7 @@ export interface FormatAddressOptions {
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
 	const ocComponents = toOpenCageComponents(components, country)
 
-	if (Object.keys(ocComponents).length === 0) return ""
+	if (!Object.keys(ocComponents).length) return ""
 
 	let raw = addressFormatter.format(ocComponents, {
 		abbreviate: opts.abbreviate ?? false,
@@ -162,9 +167,9 @@ export function formatAddress(components: ComponentDict, country: string, opts: 
 		raw = injectDependentLocalityLine(raw, components.locality, components.dependent_locality)
 	}
 
-	const trimmed = raw.replace(/\s+$/g, "")
+	const trimmed = raw.replaceAll(/\s+$/g, "")
 
-	return opts.separator !== undefined ? trimmed.replace(/\n+/g, opts.separator) : trimmed
+	return opts.separator !== undefined ? trimmed.replaceAll(/\n+/g, opts.separator) : trimmed
 }
 
 /**
@@ -240,12 +245,13 @@ export function formatFromClassificationMap(
 	const unitParts: string[] = []
 
 	for (const [classification, values] of map) {
-		const value = values.filter(Boolean).join(" ").replace(/\s+/g, " ").trim()
+		const value = values.filter(Boolean).join(" ").replaceAll(/\s+/g, " ").trim()
 
 		if (!value) continue
 
 		if (classification === "unit" || classification === "level") {
 			unitParts.push(value)
+
 			continue
 		}
 
@@ -270,12 +276,12 @@ export function formatFromClassificationMap(
  * value is the original input.
  */
 export function reconcileComponents(components: ComponentDict, raw: string): ComponentDict {
-	const haystack = raw.toLowerCase().replace(/\s+/g, " ")
+	const haystack = raw.toLowerCase().replaceAll(/\s+/g, " ")
 	const out: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(components)) {
 		if (!v) continue
-		const needle = v.toLowerCase().replace(/\s+/g, " ")
+		const needle = v.toLowerCase().replaceAll(/\s+/g, " ")
 
 		if (haystack.includes(needle)) {
 			out[k as ComponentTag] = v
@@ -356,7 +362,7 @@ export function toOpenCageComponents(components: ComponentDict, country: string)
 	// otherwise the template renders the bare code ("US") as a fallback line, which no caller wants.
 	const cc = country.trim().toLowerCase()
 
-	if (cc && Object.keys(out).length > 0) {
+	if (cc && Object.keys(out).length) {
 		out.country_code = cc
 	}
 
@@ -396,7 +402,7 @@ function composeRoad(components: ComponentDict): string {
 		parts.push(components.unit)
 	}
 
-	return parts.join(" ").replace(/\s+/g, " ").trim()
+	return parts.join(" ").replaceAll(/\s+/g, " ").trim()
 }
 
 /**
@@ -407,7 +413,7 @@ function composePostcode(components: ComponentDict): string {
 	const base = components.postcode?.trim() ?? ""
 	const cedex = components.cedex?.trim() ?? ""
 
-	if (base && cedex) return `${base} ${cedex}`.replace(/\s+/g, " ")
+	if (base && cedex) return `${base} ${cedex}`.replaceAll(/\s+/g, " ")
 
 	return base || cedex
 }

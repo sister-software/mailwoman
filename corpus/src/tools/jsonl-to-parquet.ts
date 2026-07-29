@@ -82,17 +82,27 @@ const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
 	synth_base_id: "VARCHAR",
 }
 
-/** Options for {@linkcode jsonlToParquet}. */
+/**
+ * Options for {@linkcode jsonlToParquet}.
+ */
 export interface JSONLToParquetOptions {
-	/** The labeled-row JSONL to convert. */
+	/**
+	 * The labeled-row JSONL to convert.
+	 */
 	input: string
-	/** The parquet shard to write. */
+	/**
+	 * The parquet shard to write.
+	 */
 	output: string
-	/** Parquet row-group size. Default 50000. */
+	/**
+	 * Parquet row-group size. Default 50000.
+	 */
 	rowGroupSize?: number
 }
 
-/** Summary returned by {@linkcode jsonlToParquet}. */
+/**
+ * Summary returned by {@linkcode jsonlToParquet}.
+ */
 export interface JSONLToParquetSummary {
 	read: number
 	written: number
@@ -115,6 +125,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 				"must carry span_starts/span_ends/span_tags; re-emit this shard through alignRow."
 		)
 	}
+
 	const n = (row.span_starts as unknown[]).length
 
 	if ((row.span_ends as unknown[]).length !== n || (row.span_tags as unknown[]).length !== n) {
@@ -126,17 +137,21 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	}
 }
 
-/** Escape a path for single-quoted SQL string literals. */
+/**
+ * Escape a path for single-quoted SQL string literals.
+ */
 function sqlString(value: string): string {
-	return value.replace(/'/g, "''")
+	return value.replaceAll("'", "''")
 }
 
-/** Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard. */
+/**
+ * Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard.
+ */
 export async function jsonlToParquet(
 	options: JSONLToParquetOptions,
 	report?: (line: string) => void
 ): Promise<JSONLToParquetSummary> {
-	const rowGroupSize = options.rowGroupSize ?? 50000
+	const rowGroupSize = options.rowGroupSize ?? 50_000
 
 	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {
 		throw new Error(`rowGroupSize must be a positive integer (got ${JSON.stringify(rowGroupSize)})`)
@@ -166,9 +181,13 @@ export async function jsonlToParquet(
 			// Write the validated line verbatim; DuckDB's `read_json` projects to the explicit `columns`
 			// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 			stage.write(line + "\n")
+
 			rows++
 		}
-		await new Promise<void>((resolve, reject) => stage.end((err?: Error | null) => (err ? reject(err) : resolve())))
+
+		await new Promise<void>((resolve, reject) => {
+			stage.end((err?: Error | null) => (err ? reject(err) : resolve()))
+		})
 
 		report?.(`Read ${rows} rows from ${options.input}`)
 
@@ -182,6 +201,7 @@ export async function jsonlToParquet(
 		// Row order is load-bearing: the overlay-manifest assembler records first/last source_id from
 		// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 		await db.run("SET preserve_insertion_order=true")
+
 		await db.run(
 			`COPY (SELECT ${selectList} FROM read_json('${sqlString(stagePath)}', ` +
 				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +

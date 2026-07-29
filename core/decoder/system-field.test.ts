@@ -27,6 +27,7 @@ function tok(piece: string, start: number, end: number, label: BIOLabel): Decode
 }
 
 const RAW = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
+
 function tokens(): DecoderToken[] {
 	return [
 		tok("1600", 0, 4, "B-house_number"),
@@ -39,7 +40,9 @@ function tokens(): DecoderToken[] {
 	]
 }
 
-/** Stable structural fingerprint: each node as `tag(value)` with nested children. */
+/**
+ * Stable structural fingerprint: each node as `tag(value)` with nested children.
+ */
 function shape(nodes: { tag: string; value: string; children: unknown[] }[]): string {
 	return nodes.map((n) => `${n.tag}[${shape(n.children as never)}]`).join(",")
 }

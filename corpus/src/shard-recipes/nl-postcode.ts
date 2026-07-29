@@ -20,11 +20,17 @@
 
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
-/** "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case. */
+/**
+ * "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case.
+ */
 function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
 }
 
+/**
+ * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
+ */
 export const nlPostcodeRecipe: ShardRecipe = {
 	name: "nl-postcode",
 	description:
@@ -41,13 +47,15 @@ export const nlPostcodeRecipe: ShardRecipe = {
 			const street = String(t.street ?? "").trim()
 			const city = String(t.locality ?? "").trim()
 			const number = String(t.number ?? "").trim()
+
 			const rawPostcode = String(t.postcode ?? "")
 				.trim()
 				.toUpperCase()
-				.replace(/\s+/g, "")
+				.replaceAll(/\s+/g, "")
 
 			if (!street || !city || !number || !/^\d{4}[A-Z]{2}$/.test(rawPostcode)) {
 				skipped++
+
 				continue
 			}
 
@@ -75,12 +83,14 @@ export const nlPostcodeRecipe: ShardRecipe = {
 				postcode,
 				locality: city,
 			}
+
 			const source_id = shardSourceID("synth-nl-postcode", {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",
 				v: String(read),
 			})
+
 			const canonical = {
 				raw,
 				components,

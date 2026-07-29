@@ -497,6 +497,6 @@ describe("evaluateFloors — breach detection", () => {
 	})
 
 	it("exposes the pre-registered floor thresholds", () => {
-		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1.0, address: 1.0 })
+		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1, address: 1 })
 	})
 })

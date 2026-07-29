@@ -55,7 +55,9 @@ export const FR_VOIE_TYPES = {
 	lotissement: ["lot"],
 } as const satisfies Record<string, readonly string[]>
 
-/** A canonical French voie type (e.g. `rue`, `avenue`, `boulevard`). */
+/**
+ * A canonical French voie type (e.g. `rue`, `avenue`, `boulevard`).
+ */
 export type FrenchVoieType = keyof typeof FR_VOIE_TYPES
 
 /**
@@ -67,7 +69,8 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 		s
 			.toLowerCase()
 			.normalize("NFD")
-			.replace(/[\u0300-\u036f]/g, "")
+			.replaceAll(/[\u0300-\u036F]/g, "")
+
 	const out = new Set<string>()
 
 	for (const canonical of Object.keys(FR_VOIE_TYPES) as FrenchVoieType[]) {
@@ -88,11 +91,12 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
  */
 export function isFrenchStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
+
 	const t = token
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z-]/g, "")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.replaceAll(/[^a-z-]/g, "")
 
 	return t.length > 0 && VOIE_TOKEN_SET.has(t)
 }

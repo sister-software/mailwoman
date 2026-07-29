@@ -14,7 +14,9 @@ function labelCol(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
 }
 
-/** Same structural mock as fst-prior.test.ts — paths joined by spaces, prefix-aware walk. */
+/**
+ * Same structural mock as fst-prior.test.ts — paths joined by spaces, prefix-aware walk.
+ */
 function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 	const states = new Map<string, { id: number; entries: FSTPlaceEntryLike[] }>()
 	let nextID = 1
@@ -128,7 +130,7 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 	it("fires on a prefix-locale trailing city ('8 Rue Princesse Paris'): B-locality + street suppression on the span", () => {
 		const pieces = makePieces("8 Rue Princesse Paris")
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
-		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6.0, 2)
+		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6, 2)
 		expect(m[3]![labelCol("B-street")]).toBeCloseTo(-1.5, 2)
 		// the street itself is untouched
 		expect(m[0]!.every((v) => v === 0)).toBe(true)
@@ -138,14 +140,14 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 	it("fires on a suffix-locale trailing city ('10 Downing Street London') — affix in suffix position", () => {
 		const pieces = makePieces("10 Downing Street London")
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
-		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6.0, 2)
+		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6, 2)
 	})
 
 	it("longest-first multi-token span ('350 5th Ave New York') — B on 'New', I on 'York'", () => {
 		const pieces = makePieces("350 5th Ave New York")
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
-		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6.0, 2)
-		expect(m[4]![labelCol("I-locality")]).toBeCloseTo(6.0, 2)
+		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6, 2)
+		expect(m[4]![labelCol("I-locality")]).toBeCloseTo(6, 2)
 	})
 
 	it("does NOT fire on the street NAME of a prefix-locale bare street ('45 Cours Lafayette')", () => {
@@ -197,7 +199,7 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 	it("R1: a multi-token locality ('New York') still fires — its own longest match carries locality", () => {
 		const pieces = makePieces("350 5th Ave New York")
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
-		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6.0, 2)
+		expect(m[3]![labelCol("B-locality")]).toBeCloseTo(6, 2)
 	})
 
 	it("R2: particle transparency — '8 Rue de Montfaucon' does NOT fire (the place name IS the street name)", () => {
@@ -209,7 +211,7 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 	it("R2: particles don't shield a real trailing city ('8 Rue de Montfaucon Paris' fires on Paris)", () => {
 		const pieces = makePieces("8 Rue de Montfaucon Paris")
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
-		expect(m[4]![labelCol("B-locality")]).toBeCloseTo(6.0, 2)
+		expect(m[4]![labelCol("B-locality")]).toBeCloseTo(6, 2)
 	})
 
 	it("R3: locality already in the model's argmax → zero matrix (don't re-label locality-present parses)", () => {
@@ -230,7 +232,7 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 	it("R1b: a zero-importance-only locality (no region shadow) stays fireable — presence over importance", () => {
 		const pieces = makePieces("16 Rue du Château Surlot")
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
-		expect(m[4]![labelCol("B-locality")]).toBeCloseTo(6.0, 2)
+		expect(m[4]![labelCol("B-locality")]).toBeCloseTo(6, 2)
 	})
 
 	it("R4: comma fused into the previous word piece ('10 Downing Street, London') → silent", () => {
@@ -248,6 +250,7 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 			{ piece: ",", start: 17, end: 18 },
 			{ piece: "▁London", start: 19, end: 25 },
 		]
+
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
 		expect(isZero(m)).toBe(true)
 	})

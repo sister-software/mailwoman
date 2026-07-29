@@ -18,7 +18,7 @@ import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
 import { reconcileSpans } from "./reconcile.ts"
 import { aggregateSpanLogits } from "./span-logit-aggregation.ts"
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
+import { WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -35,7 +35,19 @@ import type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "./types.ts"
-import { deriveInputMode } from "./types.ts"
+
+/**
+ * Kind confidence required to skip the full pipeline. Set high deliberately: a short-circuit that fires on a wrong kind
+ * cannot be recovered downstream, so the cost of being wrong is a whole mis-parse, while the cost of being cautious is
+ * one extra pass.
+ */
+const SHORT_CIRCUIT_MIN_CONFIDENCE = 0.95
+
+/**
+ * Longest `locality_only` input allowed to short-circuit. Past it the query is likely carrying more than a locality
+ * name, and the full pipeline should look for what else is in there.
+ */
+const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
 
 /**
  * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
@@ -60,34 +72,35 @@ function isPostcodeFormat(format: string): boolean {
  * whole-string country guess is a broader, softer signal than a postcode that pins the country, so it blends more
  * gently with the candidate score.
  */
-const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
+const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
-// #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved).
-// The placer already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob
-// can still be split across neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the
-// hard filter to the cases the model is sure of (FI/PL routinely score ~1.0) and leaves the ambiguous
-// ones on the soft path. Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
+/**
+ * #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved). The placer
+ * already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob can still be split across
+ * neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the hard filter to the cases the model is sure
+ * of (FI/PL routinely score ~1.0) and leaves the ambiguous ones on the soft path. Deliberately strict — a wrong hard
+ * country is the #244 M2 misroute failure.
+ */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-// #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering
-// is a PURE WIN — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter
-// "miss → unresolved" is rare and almost always a genuine non-match, not a coverage gap. A confident
-// placement OUTSIDE this set stays on the SOFT prior, so the low-coverage tail (FI/PL/…) keeps its
-// recall until its gazetteer is filled (#193) — the win for covered countries, no recall regression
-// for the rest (DeepSeek-advised, 2026-06-22).
-//
-// FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer
-// artifacts that predate the coverage manifest. Facts about the artifact live IN the artifact — the
-// candidate gazetteer's `country_coverage` table carries the per-country promote-gate verdicts + the
-// measured rates (the numbers that used to be trivia in this comment), and a loaded artifact's
-// derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence over this
-// constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
-// (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence:
-// per-call `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures ungated to grow the
-// list) → the loaded artifact's manifest → this constant.
-// Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE: US/FR/DE 100, ES 99.8,
-// NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote (2026-07-06,
-// OSM panels, night 34); AU with the #244 placer class (2026-07-06).
+/**
+ * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering is a PURE WIN —
+ * measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
+ * almost always a genuine non-match, not a coverage gap. A confident placement OUTSIDE this set stays on the SOFT
+ * prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193) — the win for covered
+ * countries, no recall regression for the rest (DeepSeek-advised, 2026-06-22).
+ *
+ * FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer artifacts that predate
+ * the coverage manifest. Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
+ * table carries the per-country promote-gate verdicts + the measured rates (the numbers that used to be trivia in this
+ * comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence
+ * over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
+ * (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence: per-call
+ * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures ungated to grow the list) → the loaded artifact's
+ * manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE: US/FR/DE 100,
+ * ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote (2026-07-06, OSM
+ * panels, night 34); AU with the #244 placer class (2026-07-06).
+ */
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"US",
 	"ES",
@@ -115,12 +128,13 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 	let sawLocality = false
 	const stack = [...tree.roots]
 
-	while (stack.length > 0) {
+	while (stack.length) {
 		const node = stack.pop()!
 
 		if (node.tag === "locality") {
 			sawLocality = true
 		} else if (node.value.trim() !== "") return false
+
 		stack.push(...node.children)
 	}
 
@@ -160,17 +174,23 @@ function isPostcodeFormatHit(hit: { format: string }): boolean {
 	return isPostcodeFormat(hit.format)
 }
 
-/** Pass-through normalize used when no `normalize` stage is wired. */
+/**
+ * Pass-through normalize used when no `normalize` stage is wired.
+ */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
 	return { raw, normalized: raw, appliedLocale: opts?.locale }
 }
 
-/** No-op query-shape used when no `computeQueryShape` stage is wired. */
+/**
+ * No-op query-shape used when no `computeQueryShape` stage is wired.
+ */
 function emptyQueryShape(): QueryShapeLite {
 	return { knownFormats: [] }
 }
 
-/** Default locale detector: trusts the caller's hint, or falls back to `und`. */
+/**
+ * Default locale detector: trusts the caller's hint, or falls back to `und`.
+ */
 async function defaultDetectLocale(
 	_input: NormalizedInputLite,
 	_shape: QueryShapeLite,
@@ -180,13 +200,15 @@ async function defaultDetectLocale(
 
 	return {
 		locale,
-		confidence: opts?.hint ? 1.0 : 0.0,
+		confidence: opts?.hint ? 1 : 0,
 		alternatives: [],
 		source: opts?.hint ? "caller" : "detected",
 	}
 }
 
-/** Default kind classifier: always returns `structured_address` with low confidence (no fast-path). */
+/**
+ * Default kind classifier: always returns `structured_address` with low confidence (no fast-path).
+ */
 async function defaultClassifyKind(
 	_input: NormalizedInputLite,
 	_shape: QueryShapeLite,
@@ -194,7 +216,7 @@ async function defaultClassifyKind(
 ): Promise<QueryKindResult> {
 	return {
 		kind: "structured_address",
-		confidence: 0.0,
+		confidence: 0,
 		alternatives: [],
 	}
 }
@@ -206,14 +228,14 @@ async function defaultClassifyKind(
 function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: PipelineOpts): boolean {
 	if (opts?.forceFullPipeline) return false
 
-	if (kind.confidence < 0.95) return false
+	if (kind.confidence < SHORT_CIRCUIT_MIN_CONFIDENCE) return false
 
 	if (kind.kind === "postcode_only") {
 		return shape.knownFormats.some(isPostcodeFormatHit)
 	}
 
 	if (kind.kind === "locality_only") {
-		return (shape.totalLength ?? Infinity) <= 30 && shape.characterClass === "alpha"
+		return (shape.totalLength ?? Infinity) <= SHORT_CIRCUIT_MAX_LOCALITY_LENGTH && shape.characterClass === "alpha"
 	}
 
 	return false
@@ -328,7 +350,9 @@ export async function runPipeline(
 				opts?.hardPlaceCountry,
 				opts?.hardCountrySafelist ?? stages.resolver?.artifactCoverage?.hardCountrySafelist
 			)
+
 			placerAnchorApplied = true
+
 			effectiveOpts = {
 				...opts,
 				resolveOpts: {
@@ -447,6 +471,7 @@ export async function runPipeline(
 	// to opt back into reconcile (the A/B harnesses do). Report:
 	// docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	const jointEnabled = opts?.jointReconcile ?? false
+
 	const useJointReconcile =
 		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
 
@@ -460,6 +485,7 @@ export async function runPipeline(
 
 		throwIfAborted(opts)
 		const tClassify = performance.now()
+
 		const {
 			tree: argmaxTree,
 			logits,
@@ -469,6 +495,7 @@ export async function runPipeline(
 			fst: stages.fst,
 			...streetContextGateFor(stages),
 		})
+
 		timing["token-classify"] = performance.now() - tClassify
 
 		throwIfAborted(opts)
@@ -486,13 +513,14 @@ export async function runPipeline(
 			{ labels, text: normalized.normalized }
 		)
 
-		if (classifierTopK.length > 0) {
+		if (classifierTopK.length) {
 			// Concordance axes (#478): when the caller wires a backend, one bounded pre-fetch
 			// activates the resolver-candidate + parent-chain scoring the reconciler already
 			// implements. Absent backend = classifier-only reconcile (byte-stable).
 			// Country constraint from the locale gate's BCP-47 tag ("en-US" -> "US"); absent or
 			// und-like tags pass no constraint (ranking alone decides — matches resolveTree's default).
 			const localeCountry = locale.locale.split("-")[1]?.toUpperCase()
+
 			const lookups = stages.resolverBackend
 				? await prefetchReconcileLookups(
 						stages.resolverBackend,
@@ -501,12 +529,14 @@ export async function runPipeline(
 						localeCountry && localeCountry.length === 2 ? { defaultCountry: localeCountry } : {}
 					)
 				: undefined
+
 			const result = reconcileSpans({
 				raw: normalized.normalized,
 				phraseProposals,
 				classifierTopK,
 				...(lookups ? { resolverCandidates: lookups.resolverCandidates, parentChain: lookups.parentChain } : {}),
 			})
+
 			tree = result.tree
 			// The reconciler can leave a span uncovered (e.g. it picked the single-token street
 			// `Trento` over `Via Trento`, orphaning `Via`). The grouper-audit below would then promote
@@ -517,10 +547,12 @@ export async function runPipeline(
 		} else {
 			tree = argmaxTree
 		}
+
 		timing["reconcile"] = performance.now() - tReconcile
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
+
 		tree = await safeClassify(
 			stages.classifier,
 			normalized.normalized,
@@ -532,10 +564,11 @@ export async function runPipeline(
 			// Decision A: explicit caller register wins; otherwise the kind verdict decides. NEVER case-keyed.
 			opts?.inputMode ?? deriveInputMode(kind.kind)
 		)
+
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
-	if (phraseProposals.length > 0 && tree.roots.length >= 0) {
+	if (phraseProposals.length && tree.roots.length >= 0) {
 		const tAudit = performance.now()
 		tree = grouperAudit(tree, phraseProposals, normalized.normalized, auditClassifierTopK)
 		timing["grouper-audit"] = performance.now() - tAudit
@@ -550,6 +583,7 @@ export async function runPipeline(
 		if (placerAnchorApplied && isBareLocalityTree(tree)) {
 			effectiveOpts = opts
 		}
+
 		tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 		timing["resolve"] = performance.now() - tResolve
 	}
@@ -580,7 +614,9 @@ function throwIfAborted(opts?: PipelineOpts): void {
 	}
 }
 
-/** Defensive wrapper: if the classifier throws, return an empty tree rather than abort the pipeline. */
+/**
+ * Defensive wrapper: if the classifier throws, return an empty tree rather than abort the pipeline.
+ */
 async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
@@ -645,7 +681,9 @@ function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?:
 		: {}
 }
 
-/** Defensive wrapper: a grouper failure returns an empty proposal list rather than abort. */
+/**
+ * Defensive wrapper: a grouper failure returns an empty proposal list rather than abort.
+ */
 async function safeGroupPhrases(
 	groupPhrases: NonNullable<RuntimePipelineStages["groupPhrases"]>,
 	normalized: NormalizedInputLite,
@@ -659,9 +697,7 @@ async function safeGroupPhrases(
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Grouper-audit pass
-// ---------------------------------------------------------------------------
+// MARK: Grouper-audit pass
 
 const GROUPER_TYPING_PENALTY = 0.55
 
@@ -692,11 +728,12 @@ export function grouperAudit(
 	text: string,
 	classifierTopK?: ClassifierCandidate[]
 ): AddressTree {
-	if (proposals.length === 0) return tree
+	if (!proposals.length) return tree
 
 	const roots = [...tree.roots]
 
 	const allNodes: Array<{ start: number; end: number }> = []
+
 	const collectNodes = (nodes: typeof roots): void => {
 		for (const n of nodes) {
 			allNodes.push({ start: n.start, end: n.end })
@@ -706,6 +743,7 @@ export function grouperAudit(
 			}
 		}
 	}
+
 	collectNodes(roots)
 
 	// Index the classifier's single best tag per exact span (start:end) so the audit can defer to it.
@@ -728,6 +766,7 @@ export function grouperAudit(
 	// from being shadowed by an earlier-positioned spurious node in `decodeAsJSON` (#425 residual tail).
 	const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["locality", "region", "postcode", "country"])
 	const presentSingletons = new Set<ComponentTag>()
+
 	const collectSingletons = (nodes: typeof roots): void => {
 		for (const n of nodes) {
 			if (SINGLETON_TAGS.has(n.tag)) {
@@ -739,6 +778,7 @@ export function grouperAudit(
 			}
 		}
 	}
+
 	collectSingletons(roots)
 	const dedupeSingletons = classifierTopK !== undefined
 
@@ -758,6 +798,7 @@ export function grouperAudit(
 
 		// Defer to the classifier when it confidently typed this exact span as something else.
 		const classifierVerdict = bestTagBySpan.get(`${proposal.span.start}:${proposal.span.end}`)
+
 		const tag =
 			classifierVerdict && classifierVerdict.score >= CLASSIFIER_OVERRIDE_MIN ? classifierVerdict.tag : phraseTag
 
@@ -787,7 +828,9 @@ export function grouperAudit(
 	return { raw: tree.raw, roots }
 }
 
-/** Defensive wrapper: a resolver failure leaves the classifier tree intact. */
+/**
+ * Defensive wrapper: a resolver failure leaves the classifier tree intact.
+ */
 async function safeResolve(
 	resolver: NonNullable<RuntimePipelineStages["resolver"]>,
 	tree: AddressTree,

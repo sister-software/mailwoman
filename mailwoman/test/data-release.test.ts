@@ -18,18 +18,26 @@ import { readReleaseManifest, resolveShardPath } from "../data-release.ts"
 import { ShardProvider } from "../geocode-core.ts"
 
 const dirs: string[] = []
+
 function tmp(): string {
 	const d = mkdtempSync(join(tmpdir(), "mw-data-release-"))
 	dirs.push(d)
 
 	return d
 }
+
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
 
-/** Fake lookups: record the path they were opened from + whether they've been closed. */
+/**
+ * Fake lookups: record the path they were opened from + whether they've been closed.
+ */
 class FakeAddressPoints {
 	closed = false
-	constructor(public dbPath: string) {}
+	dbPath: string
+
+	constructor(dbPath: string) {
+		this.dbPath = dbPath
+	}
 	find() {
 		return null
 	}
@@ -37,9 +45,14 @@ class FakeAddressPoints {
 		this.closed = true
 	}
 }
+
 class FakeInterp {
 	closed = false
-	constructor(public opts: { dbPath: string }) {}
+	opts: { dbPath: string }
+
+	constructor(opts: { dbPath: string }) {
+		this.opts = opts
+	}
 	find() {
 		return null
 	}
@@ -47,9 +60,12 @@ class FakeInterp {
 		this.closed = true
 	}
 }
+
 const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolator: FakeInterp } as never
 
-/** Ensure a directory exists and return it. */
+/**
+ * Ensure a directory exists and return it.
+ */
 function dirEnsure(d: string): string {
 	mkdirSync(d, { recursive: true })
 
@@ -60,10 +76,12 @@ describe("readReleaseManifest", () => {
 	test("reads a valid manifest; null for absent or malformed", () => {
 		const root = tmp()
 		expect(readReleaseManifest(root)).toBeNull()
+
 		writeFileSync(
 			join(root, "releases.json"),
 			JSON.stringify({ "address-points": "2026-05-20.0", interpolation: "TIGER2023" })
 		)
+
 		expect(readReleaseManifest(root)).toEqual({ "address-points": "2026-05-20.0", interpolation: "TIGER2023" })
 		writeFileSync(join(root, "releases.json"), "{ not json")
 		expect(readReleaseManifest(root)).toBeNull()
@@ -79,13 +97,16 @@ describe("resolveShardPath", () => {
 		expect(resolveShardPath(root, "address-points", "tx", null)).toBe(join(apDir, "address-points-us-tx.db"))
 		// versioned present + pinned → wins
 		writeFileSync(join(apDir, "address-points-us-tx-v2.db"), "")
+
 		expect(resolveShardPath(root, "address-points", "tx", { "address-points": "v2" })).toBe(
 			join(apDir, "address-points-us-tx-v2.db")
 		)
+
 		// pinned version with no file → legacy fallback
 		expect(resolveShardPath(root, "address-points", "tx", { "address-points": "v9" })).toBe(
 			join(apDir, "address-points-us-tx.db")
 		)
+
 		// nothing for an unknown slug
 		expect(resolveShardPath(root, "address-points", "zz", null)).toBeNull()
 	})

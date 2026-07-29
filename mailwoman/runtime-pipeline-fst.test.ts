@@ -31,11 +31,14 @@ function writeTinyFST(dir: string): string {
 		db.exec(
 			"CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, parent_id INTEGER, latitude REAL, longitude REAL, is_current INTEGER)"
 		)
+
 		db.exec("CREATE TABLE names (id INTEGER, name TEXT, language TEXT, privateuse TEXT)")
 		db.exec("CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL)")
+
 		db.prepare(
 			"INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current) VALUES (1, 'Testville', 'locality', 'US', 40.0, -75.0, 1)"
 		).run()
+
 		db.prepare("INSERT INTO names (id, name, language) VALUES (1, 'testville', 'eng')").run()
 		db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
 	} finally {
@@ -49,7 +52,9 @@ function writeTinyFST(dir: string): string {
 	return fstPath
 }
 
-/** Minimal classifier stand-in: records the opts it was called with, returns an empty tree. */
+/**
+ * Minimal classifier stand-in: records the opts it was called with, returns an empty tree.
+ */
 function fakeClassifier(fstPath?: string) {
 	const calls: Array<Record<string, unknown>> = []
 

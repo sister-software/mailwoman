@@ -29,6 +29,7 @@ describe("proposalsToTree", () => {
 			makeProposal("postcode", "75004", 6),
 			makeProposal("country", "France", 12),
 		])
+
 		expect(tree.roots).toHaveLength(3)
 		expect(tree.roots.every((r) => r.children.length === 0)).toBe(true)
 	})
@@ -39,6 +40,7 @@ describe("proposalsToTree", () => {
 			makeProposal("locality", "Paris", 0),
 			makeProposal("postcode", "75004", 6),
 		])
+
 		expect(tree.roots.map((r) => r.tag)).toEqual(["locality", "postcode", "country"])
 	})
 
@@ -58,6 +60,7 @@ describe("proposalsToTree", () => {
 			makeProposal("locality", "Paris", 0),
 			makeProposal("postcode", "75004", 6),
 		])
+
 		expect(decodeAsJSON(tree)).toEqual({ locality: "Paris", postcode: "75004" })
 	})
 
@@ -66,6 +69,7 @@ describe("proposalsToTree", () => {
 			makeProposal("postcode", "75004", 6),
 			makeProposal("locality", "Paris", 0),
 		])
+
 		expect(decodeAsTuples(tree)).toEqual([
 			["locality", "Paris"],
 			["postcode", "75004"],

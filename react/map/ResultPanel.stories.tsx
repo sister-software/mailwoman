@@ -19,10 +19,14 @@ const meta: Meta<typeof ResultPanel> = {
 	component: ResultPanel,
 	decorators: [(Story) => <div className="mw-pipeline-explorer">{Story()}</div>],
 }
+
 export default meta
+
 type Story = StoryObj<typeof ResultPanel>
 
-/** A resolved result — click an alternate candidate to update the resolved-place detail. */
+/**
+ * A resolved result — click an alternate candidate to update the resolved-place detail.
+ */
 export const WithResolved: Story = {
 	render: () => {
 		const [index, setIndex] = useState(0)
@@ -39,7 +43,9 @@ export const WithResolved: Story = {
 	},
 }
 
-/** No candidates → the injected `failure` slot renders instead of a resolved place. */
+/**
+ * No candidates → the injected `failure` slot renders instead of a resolved place.
+ */
 export const Failure: Story = {
 	render: () => {
 		const result = { ...makeFakeParseResult(), resolved: null, candidates: [] }

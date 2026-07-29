@@ -25,7 +25,9 @@
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 
-/** Canonical 2-letter slug for a US state/territory NAME or 2-letter abbreviation, else null. */
+/**
+ * Canonical 2-letter slug for a US state/territory NAME or 2-letter abbreviation, else null.
+ */
 const STATE_NAME_TO_SLUG: Record<string, string> = {
 	alabama: "al",
 	alaska: "ak",
@@ -80,6 +82,7 @@ const STATE_NAME_TO_SLUG: Record<string, string> = {
 	wyoming: "wy",
 	"puerto rico": "pr",
 }
+
 const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
 
 /**
@@ -99,7 +102,9 @@ export function usStateSlug(value: string): string | null {
 	return null
 }
 
-/** Build a region node covering the state token, carrying a (lightly-confident) provenance marker. */
+/**
+ * Build a region node covering the state token, carrying a (lightly-confident) provenance marker.
+ */
 function makeRegionNode(value: string, start: number, end: number, confidence: number): AddressNode {
 	return {
 		tag: "region" as ComponentTag,
@@ -153,7 +158,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 	// Only convert when there's a sibling city to nest — the unambiguous "City, State" shape. A LONE
 	// state-name locality ("Washington", "Florida") is genuinely a city in this context as often as a
 	// state, so leave it untouched rather than risk a mis-fire.
-	if (region.children.length === 0) return afterSplit
+	if (!region.children.length) return afterSplit
 	out.push(region)
 
 	return out
@@ -166,7 +171,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const comma = node.value.lastIndexOf(",")
 
-	if (comma < 0) return null
+	if (comma === -1) return null
 	const head = node.value.slice(0, comma).trim()
 	const tail = node.value.slice(comma + 1).trim()
 	const slug = usStateSlug(tail)
@@ -175,6 +180,7 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	// Offsets: the region covers the tail's char span; the locality the head's (relative to node.start).
 	const tailStart = node.start + node.value.indexOf(tail, comma)
 	const region = makeRegionNode(tail, tailStart, node.end, node.confidence)
+
 	region.children.push({
 		tag: "locality" as ComponentTag,
 		value: head,
@@ -188,9 +194,11 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	return region
 }
 
-/** Recursively correct a node's children. */
+/**
+ * Recursively correct a node's children.
+ */
 function correctNode(node: AddressNode): AddressNode {
-	if (node.children.length > 0) {
+	if (node.children.length) {
 		node.children = correctSiblings(node.children).map(correctNode)
 	}
 
