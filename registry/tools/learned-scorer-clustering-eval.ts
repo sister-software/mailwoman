@@ -124,6 +124,7 @@ const C = {
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
@@ -167,6 +168,7 @@ function scoreClusters(
 		for (const rec of e.records) {
 			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
 		}
+
 		sumCluster += choose2(e.records.length)
 
 		if (byNPI.size > 1) {
@@ -178,11 +180,13 @@ function scoreClusters(
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
 	}
+
 	let sumClass = 0
 
 	for (const total of npiTotals.values()) {
 		sumClass += choose2(total)
 	}
+
 	void n
 	const tp = sumCK
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
@@ -223,6 +227,7 @@ export async function scorerClusteringEval(
 		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
+
 		altNames.set(npi, list)
 	}
 
@@ -237,13 +242,16 @@ export async function scorerClusteringEval(
 		if (++scanned % 1_000_000 === 0) {
 			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		}
+
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 			addrTotal++
 		}
+
 		const npi = norm(r[C.npi])
 
 		if (
@@ -265,6 +273,7 @@ export async function scorerClusteringEval(
 				for (const alt of altNames.get(npi)!) {
 					rows.push({ npi, name: alt, org: alt, address: practice })
 				}
+
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice) {
@@ -273,19 +282,23 @@ export async function scorerClusteringEval(
 			}
 		}
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	report?.(`    ${kept.size} NPIs → ${rows.length} records`)
 
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
+
 	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
 		geocodeAddress: geocoder.seam,
 	})
+
 	geocoder.close()
 
 	// --- The feature basis: address-frequency + collapsed-spatial model (the baseline). The agreement
@@ -323,6 +336,7 @@ export async function scorerClusteringEval(
 		for (const npi of kept) {
 			npiSplit.set(npi, rnd() < SPLIT ? "train" : "eval")
 		}
+
 		const trainRecords = records.filter((r) => npiSplit.get(r.id) === "train")
 		const evalRecords = records.filter((r) => npiSplit.get(r.id) === "eval")
 		const N = evalRecords.length
@@ -350,19 +364,23 @@ export async function scorerClusteringEval(
 				for (let j = 0; j < dim; j++) {
 					z += w[j]! * trainX[i]![j]!
 				}
+
 				const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
 
 				for (let j = 0; j < dim; j++) {
 					gw[j]! += err * trainX[i]![j]!
 				}
+
 				gb += err
 			}
 
 			for (let j = 0; j < dim; j++) {
 				w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
 			}
+
 			bias -= 0.1 * (gb / trainX.length)
 		}
+
 		const lrSc = (x: number[]) => {
 			let z = bias
 
@@ -393,6 +411,7 @@ export async function scorerClusteringEval(
 		// FS baseline: EM-fit weights in bits, fine grid [0..25]. Learned scorers: a FINE sweep (33 points)
 		// from each scorer's own eval-pair score distribution, so a coarse grid can't understate them.
 		const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
+
 		const quantileThresholds = (scores: number[]): number[] => {
 			const sorted = [...scores].toSorted((p, q) => p - q)
 			const ts = new Set<number>()
@@ -403,18 +422,21 @@ export async function scorerClusteringEval(
 
 			return [...ts]
 		}
+
 		const fs = bestOver(
 			Array.from({ length: 26 }, (_, i) => i),
 			// learnedScorer:false — the FS baseline is the baseline this A/B measures against (the learned scorer
 			// is now default-on, so without this the "FS arm" would silently BE the GBT).
 			(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 		)
+
 		const gbtArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
 			addressFrequency,
 			collapseSpatial: true,
 			scorer: gbtScorer,
 			threshold: t,
 		}))
+
 		const lrArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => lrScorer(a, b))), (t) => ({
 			addressFrequency,
 			collapseSpatial: true,
@@ -430,6 +452,7 @@ export async function scorerClusteringEval(
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const sgn = (x: number) => (x >= 0 ? "+" : "")
 	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
+
 	const std = (xs: number[]) => {
 		const m = mean(xs)
 
@@ -443,11 +466,13 @@ export async function scorerClusteringEval(
 	for (let k = 0; k < SEEDS; k++) {
 		const r = runSeed(SEED + k)
 		results.push(r)
+
 		report?.(
 			`    seed ${r.seed}: ${r.trainN}tr/${r.evalN}ev  FS ${pct(r.fs.f1)}  LR ${pct(r.lr.f1)} (${sgn(r.lr.f1 - r.fs.f1)}${pct(r.lr.f1 - r.fs.f1)})  ` +
 				`GBT ${pct(r.gbt.f1)} (${sgn(r.gbt.f1 - r.fs.f1)}${pct(r.gbt.f1 - r.fs.f1)})`
 		)
 	}
+
 	const fsF1 = results.map((r) => r.fs.f1)
 	const lrF1 = results.map((r) => r.lr.f1)
 	const gbtF1 = results.map((r) => r.gbt.f1)
@@ -455,6 +480,7 @@ export async function scorerClusteringEval(
 	const dLr = results.map((r) => r.lr.f1 - r.fs.f1)
 	const gbtWins = dGbt.filter((d) => d > 0).length
 	const meanDGbt = mean(dGbt)
+
 	const armRow = (label: string, pick: (r: SeedResult) => ArmScore, dArr: number[] | null, bold: boolean) => {
 		const f1s = results.map((r) => pick(r).f1)
 		const P = mean(results.map((r) => pick(r).precision))
@@ -466,6 +492,7 @@ export async function scorerClusteringEval(
 
 		return `| ${bold ? `**${label}**` : label} | ${cells} |`
 	}
+
 	const avgEval = Math.round(mean(results.map((r) => r.evalN)))
 	const avgTrain = Math.round(mean(results.map((r) => r.trainN)))
 
@@ -491,6 +518,7 @@ export async function scorerClusteringEval(
 		`**ΔF1 (GBT − FS): ${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp mean, GBT > FS in ${gbtWins}/${SEEDS} seeds.**`,
 		"",
 	]
+
 	const verdict =
 		meanDGbt > MIN_MEANINGFUL_F1_DELTA && gbtWins >= SEEDS - 1
 			? `**The learned scorer beats the FS baseline on the assembled clustering output** — GBT clustering F1 ` +
@@ -507,6 +535,7 @@ export async function scorerClusteringEval(
 					`${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp, ${gbtWins}/${SEEDS} seeds). The pairwise ranking gain (#640) is ` +
 					`real but largely washes out through the threshold + connected-components assembly. A learned scorer is not a free ` +
 					`dedup win; pairing it with a clustering change or a more distinctive identifier (#625) is the path.`
+
 	lines.push(verdict)
 	lines.push("")
 	lines.push(`### Per-seed F1`)
@@ -517,9 +546,11 @@ export async function scorerClusteringEval(
 	for (const r of results) {
 		lines.push(`| ${r.seed} | ${r.evalN} | ${pct(r.fs.f1)}% | ${pct(r.lr.f1)}% | ${pct(r.gbt.f1)}% |`)
 	}
+
 	lines.push("")
 	lines.push(`## Honest caveats`)
 	lines.push("")
+
 	lines.push(
 		`In-domain (${STATE}), a held-out-NPI split (NOT a held-out STATE — cross-state generalization is the next axis, ` +
 			`the #603 train-TX/eval-other-state design). The FS arm IS the benchmark baseline (same model), so the comparison is ` +
@@ -529,6 +560,7 @@ export async function scorerClusteringEval(
 			`co-located collisions to exhibit the over-merge, which only bites at scale, so trust the larger eval. NPI-as-truth ` +
 			`is conservative (a cross-NPI merge is a candidate, not necessarily an error)._`
 	)
+
 	lines.push("")
 
 	const md = lines.join("\n")

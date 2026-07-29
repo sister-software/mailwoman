@@ -40,6 +40,7 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 function fixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
+
 	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
 		"Test/Zone",
 		0,

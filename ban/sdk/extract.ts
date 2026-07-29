@@ -148,6 +148,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 			assertRequiredColumns(row)
 			checkedHeader = true
 		}
+
 		const numero = row.numero?.trim()
 		const street = row.nom_voie?.trim()
 

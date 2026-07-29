@@ -83,6 +83,7 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 
 	const placements: Array<{ tag: string; start: number; end: number }> = []
 	let dropped = 0
+
 	// Greedy left-to-right: for each pair (sorted by earliest possible position), claim the next
 	// free occurrence past the cursor. Sorting by first-occurrence keeps multi-value order sane.
 	pairs.sort((a, b) => {
@@ -91,6 +92,7 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 
 		return (ia === -1 ? 1e9 : ia) - (ib === -1 ? 1e9 : ib)
 	})
+
 	let cursor = 0
 
 	for (const { tag, value } of pairs) {
@@ -98,13 +100,16 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 
 		if (!span) {
 			dropped++
+
 			continue
 		}
+
 		placements.push({ tag, start: span[0], end: span[1] })
 		cursor = Math.max(cursor, span[1])
 	}
 
 	placements.sort((a, b) => a.start - b.start)
+
 	const tokens: DecoderToken[] = placements.map((p) => ({
 		piece: raw.slice(p.start, p.end),
 		start: p.start,

@@ -198,6 +198,7 @@ export async function promoteGolden(
 			for (const e of entries) {
 				seenNormalized.add(normalize(e.raw))
 			}
+
 			report?.(`  prior ${country}: ${entries.length} entries (forward-copy base)`)
 		}
 	} else {
@@ -211,6 +212,7 @@ export async function promoteGolden(
 		kept: 0,
 		perCountry: {},
 	}
+
 	const accepted: GoldenEntry[] = []
 	const seenInBatch = new Set<string>()
 
@@ -220,34 +222,40 @@ export async function promoteGolden(
 		// Dedup pass 1: against prior versioned golden
 		if (seenNormalized.has(norm)) {
 			stats.filteredOut.forwardDup++
+
 			continue
 		}
 
 		// Dedup pass 2: against this batch
 		if (seenInBatch.has(norm)) {
 			stats.filteredOut.duplicate++
+
 			continue
 		}
 
 		if (applyFilters) {
 			if (isComponentsGlued(cand)) {
 				stats.filteredOut.glued++
+
 				continue
 			}
 
 			if (isPostcodeBadlyLeading(cand)) {
 				stats.filteredOut.postcodeLeading++
+
 				continue
 			}
 
 			if (isSuspicious(cand)) {
 				stats.filteredOut.suspicious++
+
 				continue
 			}
 		}
 
 		accepted.push(cand)
 		seenInBatch.add(norm)
+
 		stats.kept++
 		const country = cand.country || "OTHER"
 		stats.perCountry[country] = (stats.perCountry[country] ?? 0) + 1
@@ -267,6 +275,7 @@ export async function promoteGolden(
 		if (!buckets.has(key)) {
 			buckets.set(key, [])
 		}
+
 		buckets.get(key)!.push(cand)
 	}
 
@@ -278,6 +287,7 @@ export async function promoteGolden(
 	for (const [key, entries] of buckets) {
 		report?.(`  ${key.toLowerCase()}.jsonl: ${entries.length} entries`)
 	}
+
 	report?.(`=== filter stats ===`)
 	report?.(`candidates in:        ${stats.candidatesIn}`)
 	report?.(`  filtered (glued):           ${stats.filteredOut.glued}`)
@@ -299,6 +309,7 @@ export async function promoteGolden(
 	}
 
 	mkdirSync(outDir, { recursive: true })
+
 	const manifest: {
 		promoted_at: string
 		from: string

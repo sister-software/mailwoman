@@ -127,11 +127,13 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 		.addColumn("id", "integer", (c) => c.primaryKey())
 		.addColumn("code", "text", (c) => c.unique())
 		.execute()
+
 	await db.schema
 		.createTable("placetype_codes")
 		.addColumn("id", "integer", (c) => c.primaryKey())
 		.addColumn("placetype", "text", (c) => c.unique())
 		.execute()
+
 	await db.schema
 		.createTable("cand_stage")
 		.addColumn("name_key", "text")

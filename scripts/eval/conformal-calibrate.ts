@@ -83,6 +83,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	"address-points"?: string
@@ -134,6 +135,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 
 	for (let i = out.length - 1; i > 0; i--) {
 		state = (state * 1_103_515_245 + 12_345) & 0x7f_ff_ff_ff
+
 		const j = state % (i + 1)
 		;[out[i], out[j]] = [out[j]!, out[i]!]
 	}
@@ -184,6 +186,7 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 				}
 			}
 		}
+
 		stack.push(...n.children)
 	}
 
@@ -219,14 +222,17 @@ async function buildCascade(paths: {
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(paths.modelCardPath, "utf8")) as { labels: string[] }
+
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(paths.tokenizerPath),
 		ONNXRunner.create(paths.modelPath),
 	])
+
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 
 	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
 		await import("@mailwoman/resolver-wof-sqlite")
+
 	const backend = new WOFSqlitePlaceLookup({
 		databasePath: paths.wofPaths.length === 1 ? paths.wofPaths[0]! : paths.wofPaths,
 	})
@@ -246,12 +252,14 @@ async function main(): Promise<void> {
 	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
 	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
 	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
+
 	const wofPaths = (
 		values["wof"] ||
 		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())
+
 	const calFrac = Number(values["cal-frac"] || "0.5")
 	const alpha = Number(values["alpha"] || "0.9") // target coverage level
 	const seed = Number(values["seed"] || "20260614")
@@ -304,8 +312,10 @@ async function main(): Promise<void> {
 
 			if (!hit) {
 				nNoStreetHit++
+
 				continue
 			}
+
 			const errorM = haversine({ lat: hit.lat, lng: hit.lon }, { lat: row.lat, lng: row.lon }, "meters")
 			resolved.push({ errorM, claimedRadiusM: hit.claimedRadiusM, tier: hit.tier })
 		} catch {
@@ -357,6 +367,7 @@ async function main(): Promise<void> {
 
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
+
 		// innerRows, not the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
 		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
 		// computed on the correct splits; only this breakdown was dead).
@@ -388,9 +399,11 @@ async function main(): Promise<void> {
 		const testT = shuffledTier.slice(nCalT)
 		const calScoresT = calT.map((r) => r.errorM / r.claimedRadiusM)
 		const QT = conformalThreshold(calScoresT, alpha)
+
 		const covT = testT.length
 			? testT.filter((r) => r.errorM / r.claimedRadiusM <= QT).length / testT.length
 			: Number.NaN
+
 		const uncalCovT = allRows.length
 			? allRows.filter((r) => r.errorM <= r.claimedRadiusM).length / allRows.length
 			: Number.NaN
@@ -442,6 +455,7 @@ async function main(): Promise<void> {
 
 	const fmtM = (v: number): string =>
 		Number.isNaN(v) ? "—" : v < 1000 ? `${v.toFixed(1)} m` : `${(v / 1000).toFixed(2)} km`
+
 	const fmtPct = (v: number): string => (Number.isNaN(v) ? "—" : `${(v * 100).toFixed(1)}%`)
 	const fmtQ = (v: number): string => (Number.isFinite(v) ? v.toFixed(4) : "∞")
 
@@ -486,6 +500,7 @@ async function main(): Promise<void> {
 		const situsVerdict = Number.isFinite(situsTC.Q)
 			? `situs floor (${SITUS_FLOOR_M} m) is ${(1 / situsTC.Q).toFixed(0)}× too large`
 			: "situs tier: insufficient rows for per-tier threshold"
+
 		const interpVerdict =
 			interpTC.nAll === 0
 				? "interpolation tier: 0 hits in this holdout"

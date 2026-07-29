@@ -73,6 +73,7 @@ export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
 				return { locale: "ja-JP", confidence: 0.95, reason: `format=${hit.format}` }
 		}
 	}
+
 	// Ambiguous 5-digit fallback.
 	const fivedigit = shape.knownFormats.find((f) => f.format === "us_zip" || f.format === "fr_postcode")
 

@@ -177,11 +177,13 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 					if (yielded % progressEvery === 0) {
 						emitProgress()
 					}
+
 					continue
 				}
 
 				if (seen.size >= DEDUP_MAX_SIZE) {
 					dedupExhausted = true
+
 					process.stderr.write(
 						`  runner: dedup set full at ${DEDUP_MAX_SIZE.toLocaleString()} — skipping dedup for remaining rows\n`
 					)
@@ -193,6 +195,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 			const line = `${JSON.stringify(stamped)}\n`
 			hasher.update(line)
 			bytes += Buffer.byteLength(line, "utf8")
+
 			written++
 
 			if (!stream.write(line)) {
@@ -247,6 +250,7 @@ export async function runAllAdapters(
 
 	for (const adapter of registry.list()) {
 		const adapterOptions = common.adapterOptionsFor?.(adapter) ?? common.adapterOptions
+
 		out.push(
 			await runAdapter({
 				...common,
@@ -294,10 +298,12 @@ function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 			emitter.off("error", onError)
 			resolve()
 		}
+
 		const onError = (err: Error): void => {
 			emitter.off(event, onEvent)
 			reject(err)
 		}
+
 		emitter.once(event, onEvent)
 		emitter.once("error", onError)
 	})

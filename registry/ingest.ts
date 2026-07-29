@@ -114,6 +114,7 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 			.toLowerCase()
 			.replaceAll(/[^a-z0-9]+/g, " ")
 			.trim()} `
+
 	const mapping: ColumnMapping = {}
 	const name: string[] = []
 	const address: string[] = []
@@ -196,6 +197,7 @@ export function parseCSV(text: string): Record<string, string>[] {
 export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
 	if (!columns) return undefined
 	const list = Array.isArray(columns) ? columns : [columns]
+
 	const value = list
 		.map((c) => row[c]?.trim())
 		.filter(Boolean)
@@ -261,6 +263,7 @@ export async function ingestRows(
 
 	for await (const row of rows) {
 		records.push(await ingestRow(row, mapping, index, opts))
+
 		index++
 	}
 
@@ -281,6 +284,7 @@ export async function* normalizeCSV(
 
 	for await (const row of streamRows(source, { delimiter: opts.delimiter })) {
 		yield await ingestRow(row, opts.mapping, index)
+
 		index++
 	}
 }

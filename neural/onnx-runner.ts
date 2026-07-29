@@ -221,6 +221,7 @@ export class ONNXRunner {
 					}
 				}
 			}
+
 			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
 			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("anchor_features")) {
@@ -232,6 +233,7 @@ export class ONNXRunner {
 				this.fixedSeqLen,
 				ANCHOR_FEATURE_DIM,
 			])
+
 			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -253,6 +255,7 @@ export class ONNXRunner {
 					}
 				}
 			}
+
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("gazetteer_features")) {
@@ -261,6 +264,7 @@ export class ONNXRunner {
 				this.fixedSeqLen,
 				GAZETTEER_FEATURE_DIM,
 			])
+
 			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -281,6 +285,7 @@ export class ONNXRunner {
 					}
 				}
 			}
+
 			feeds.country_features = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, dim])
 			feeds.country_confidence = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("country_features")) {
@@ -289,6 +294,7 @@ export class ONNXRunner {
 				this.fixedSeqLen,
 				COUNTRY_FEATURE_DIM,
 			])
+
 			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
@@ -318,6 +324,7 @@ export class ONNXRunner {
 						}
 					}
 				}
+
 				feeds[`${prefix}_features`] = new ort.Tensor("float32", ef, [1, this.fixedSeqLen, dim])
 				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", ec, [1, this.fixedSeqLen])
 			} else {
@@ -326,6 +333,7 @@ export class ONNXRunner {
 					this.fixedSeqLen,
 					fallbackDim,
 				])
+
 				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
 					1,
 					this.fixedSeqLen,
@@ -350,6 +358,7 @@ export class ONNXRunner {
 			for (let l = 0; l < numLabels; l++) {
 				row[l] = data[base + l]!
 			}
+
 			logits.push(row)
 		}
 
@@ -383,8 +392,10 @@ export class ONNXRunner {
 					for (let ty = 0; ty < numTypes; ty++) {
 						row[ty] = spanData[base + ty]!
 					}
+
 					perLength[l] = row
 				}
+
 				spanScores.push(perLength)
 			}
 		}

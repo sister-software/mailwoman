@@ -69,6 +69,7 @@ const SEQ = 128
  */
 function installMockSession(): void {
 	sessionCreateMock.mockReset()
+
 	sessionCreateMock.mockResolvedValue({
 		inputNames: ["input_ids", "attention_mask"],
 		run: vi.fn(() => Promise.resolve({ logits: { data: new Float32Array(SEQ * 3), dims: [1, SEQ, 3] } })),
@@ -237,6 +238,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 	test("CONFIG DEFAULT requested but no matching index → warn, no default; the other indexes still load LIVE", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		// Pin 'fr' but only ship gb + nz — the pin can't be honored.
 		const fetchImpl = makeFetch((url) =>
 			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
@@ -259,6 +261,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 	test("multi-locale LOAD-ALL: gb + nz both load LIVE; a 'en-gb' pin makes gb the config default, nz stays available", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		const fetchImpl = makeFetch((url) =>
 			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
 		)

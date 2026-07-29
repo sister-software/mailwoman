@@ -38,6 +38,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 	// convention) so eagerly loading this module (pastel imports every command) never faults without it.
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry-backfill")
+
 	const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
 	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})

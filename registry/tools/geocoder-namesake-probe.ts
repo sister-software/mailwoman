@@ -45,6 +45,7 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
  * Texas bounding box (generous).
  */
 const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
+
 const inTexas = (lat: number, lon: number) =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
@@ -73,6 +74,7 @@ export async function geocoderNamesakeProbe(
 
 				continue
 			}
+
 			const ok = inTexas(g.lat, g.lon)
 			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
 
@@ -86,6 +88,7 @@ export async function geocoderNamesakeProbe(
 			)
 		}
 	}
+
 	geocoder.close()
 
 	console.log(`\n  ${wrongRegion}/${total} variants resolved OUTSIDE Texas (wrong-region).`)

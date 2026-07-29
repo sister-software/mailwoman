@@ -26,6 +26,7 @@ const piece = (p: string, start: number, end: number): TokenizedPiece =>
 
 // Small homograph-style lexicon (2 entries + 2 codes), mirroring the Python fixture's bit layout.
 const BITS = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
+
 const LEXICON = parseGazetteerLexicon({
 	feature_dim: 5,
 	slots: ["country", "region", "po_box", "cedex", "homograph"],
@@ -34,11 +35,13 @@ const LEXICON = parseGazetteerLexicon({
 	entries: { georgia: BITS.country | BITS.region | BITS.homograph },
 	code_entries: { CA: BITS.country | BITS.region | BITS.homograph, GA: BITS.region },
 })
+
 const ZERO_GAZ = [0, 0, 0, 0, 0]
 
 describe("buildSoftFeatures — US postcode anchor hit", () => {
 	// "100 Main St 30301" — the postcode "30301" is chars [12, 17).
 	const TEXT = "100 Main St 30301"
+
 	const PIECES = [
 		piece("▁100", 0, 3),
 		piece("▁Main", 4, 8),
@@ -46,6 +49,7 @@ describe("buildSoftFeatures — US postcode anchor hit", () => {
 		piece("▁303", 12, 15),
 		piece("01", 15, 17),
 	]
+
 	const LOOKUP: AnchorLookup = new Map([["30301", { posterior: { US: 1 }, lat: 33.749, lon: -84.388 }]])
 
 	it("confidence 1.0 + the feature vector on exactly the postcode pieces; no gazetteer when unconfigured", () => {
@@ -102,6 +106,7 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 			gazetteerLexicon: LEXICON,
 			suppressGazetteerNearPostcode: true,
 		})
+
 		// GA (piece 0) is within window=1 of the anchor hit at piece 1 → cleared.
 		expect(soft.gazetteer!.features[0]).toEqual(ZERO_GAZ)
 		expect(soft.gazetteer!.confidence[0]).toBe(0)
@@ -114,6 +119,7 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 			gazetteerLexicon: LEXICON,
 			suppressGazetteerNearPostcode: true,
 		})
+
 		expect(soft.anchor).toBeUndefined()
 		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0]) // GA clue intact
 	})

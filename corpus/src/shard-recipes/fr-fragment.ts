@@ -85,6 +85,7 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
 const HOUSE_NUMBERS = [
 	1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 21, 24, 27, 30, 33, 42, 57, 68, 84, 102, 115, 140,
 ]
+
 /**
  * FR alphanumeric house-number forms. `bis`/`ter` are separated; a bare letter is suffixed.
  */
@@ -144,6 +145,7 @@ export function frTitleCase(value: string): string {
  * Does the street name carry a particle? Decides the particle vs bare classification.
  */
 const PARTICLE = /\b(de la|de l'|du|des|de|d'|le|la|les)\b/i
+
 /**
  * Does the street name carry date material (a year, or a day + French month)?
  */
@@ -217,12 +219,14 @@ export const frFragmentRecipe: ShardRecipe = {
 
 			if (!fullStreet) {
 				skipped++
+
 				continue
 			}
 
 			// THE SPLIT. A surface on the fragment board never enters training.
 			if (excluded.has(norm(fullStreet))) {
 				contaminated++
+
 				continue
 			}
 
@@ -232,6 +236,7 @@ export const frFragmentRecipe: ShardRecipe = {
 			// is a different problem and would muddy the signal.
 			if (!prefix || !street) {
 				skipped++
+
 				continue
 			}
 
@@ -244,11 +249,13 @@ export const frFragmentRecipe: ShardRecipe = {
 				const number = HOUSE_NUMBERS[Math.floor(random() * HOUSE_NUMBERS.length)]!
 				const alnum = random() < 0.25
 				const suffix = ALNUM_SUFFIXES[Math.floor(random() * ALNUM_SUFFIXES.length)]!
+
 				const houseNumber = alnum
 					? suffix === "bis" || suffix === "ter"
 						? `${number} ${suffix}`
 						: `${number}${suffix}`
 					: String(number)
+
 				components.house_number = houseNumber
 				raw = `${houseNumber} ${prefix} ${street}`
 				klass = alnum ? "alnum-housenumber" : "street-housenumber"

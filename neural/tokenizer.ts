@@ -169,6 +169,7 @@ export class MailwomanTokenizer {
 
 				for (let k = 0; k < segmentLength; k++) {
 					const isLast = k === segmentLength - 1
+
 					// The segment's LAST piece owns the character's real [start, end) span (so `raw.slice(start, end)`
 					// recovers the character); earlier pieces get a zero-width range at the character's start — the
 					// same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses for a bare ▁.
@@ -178,6 +179,7 @@ export class MailwomanTokenizer {
 						start,
 						end: isLast ? end : start,
 					})
+
 					pieceIndex++
 				}
 
@@ -201,12 +203,14 @@ export class MailwomanTokenizer {
 							cursor++
 						}
 					}
+
 					byteRun = { pieces: [], ids: [], bytes: [] }
 				}
 
 				byteRun.pieces.push(piece)
 				byteRun.ids.push(id)
 				byteRun.bytes.push(Number.parseInt(byteMatch[1]!, 16))
+
 				continue
 			}
 

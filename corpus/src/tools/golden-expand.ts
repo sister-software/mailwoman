@@ -148,10 +148,12 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 	const out: Record<string, string> = {}
 	let currentTag: string | null = null
 	let currentTokens: string[] = []
+
 	const flush = () => {
 		if (currentTag && currentTokens.length && !(currentTag in out)) {
 			out[currentTag] = currentTokens.join(" ").trim()
 		}
+
 		currentTag = null
 		currentTokens = []
 	}
@@ -162,8 +164,10 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 
 		if (label === "O") {
 			flush()
+
 			continue
 		}
+
 		const [prefix, tag] = label.split("-", 2)
 
 		if (prefix === "B" || currentTag !== tag) {
@@ -174,6 +178,7 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 			currentTokens.push(tok)
 		}
 	}
+
 	flush()
 
 	return out
@@ -189,6 +194,7 @@ async function loadSeeds(
 		.split(",")
 		.map((p) => p.trim())
 		.filter(Boolean)
+
 	report?.(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)`)
 
 	if (includeSources) {
@@ -211,6 +217,7 @@ async function loadSeeds(
 			const row = (await cursor.next()) as CorpusRow | null
 
 			if (!row) break
+
 			scanned++
 
 			// Source allow-list (--include-sources) — applied early to skip parsing rows we won't use
@@ -220,8 +227,10 @@ async function loadSeeds(
 			// Skip rows with too few components — single-name wof-admin entries don't make useful seeds
 			if (Object.keys(components).length < 2) {
 				skippedThinComponents++
+
 				continue
 			}
+
 			const seed: Seed = {
 				raw: row.raw,
 				components,
@@ -229,6 +238,7 @@ async function loadSeeds(
 				source: row.source,
 				source_id: row.source_id,
 			}
+
 			let bucket = bySource.get(row.source)
 
 			if (!bucket) {
@@ -240,12 +250,14 @@ async function loadSeeds(
 				bucket.push(seed)
 			}
 		}
+
 		await reader.close()
 	}
 
 	report?.(
 		`  scanned ${scanned} rows across ${paths.length} shard(s); thin-components dropped: ${skippedThinComponents}`
 	)
+
 	report?.(`  per-source pool sizes:`)
 
 	for (const [src, pool] of bySource) {
@@ -269,6 +281,7 @@ async function loadSeeds(
 			const k = Math.floor(Math.random() * (j + 1))
 			;[pool[j], pool[k]] = [pool[k]!, pool[j]!]
 		}
+
 		const take = Math.min(target, pool.length)
 		picked.push(...pool.slice(0, take))
 
@@ -276,6 +289,7 @@ async function loadSeeds(
 			report?.(`    ⚠ ${src}: requested ${target}, pool had ${pool.length}`)
 		}
 	}
+
 	report?.(`  → loaded ${picked.length} seeds across ${sources.length} sources`)
 
 	return picked
@@ -446,6 +460,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 		if (!value) continue
 
 		if (!normRaw.includes(normalize(value))) return false
+
 		keptCount++
 	}
 
@@ -463,6 +478,7 @@ export async function expandGolden(
 ): Promise<ExpandGoldenSummary> {
 	const corpusPath =
 		options.corpus ?? dataRootPath("corpus", "versioned", "v0.2.0", "corpus-v0.2.0", "test", "part-0000.parquet")
+
 	const count = options.count ?? 100
 	const variants = options.variants ?? 5
 	const providerName = options.provider ?? "deepseek"
@@ -489,6 +505,7 @@ export async function expandGolden(
 
 	// Bounded-concurrency worker pool
 	let cursor = 0
+
 	const workers = Array.from({ length: Math.min(concurrencyLimit, seeds.length) }, async () => {
 		while (true) {
 			const i = cursor++
@@ -517,7 +534,9 @@ export async function expandGolden(
 							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 							delete goldenCandidate.components[tag]
 						}
+
 						outRows.push(goldenCandidate)
+
 						kept++
 					} else {
 						dropped++
@@ -533,6 +552,7 @@ export async function expandGolden(
 			}
 		}
 	})
+
 	await Promise.all(workers)
 
 	writeJSONL(outputPath, outRows)

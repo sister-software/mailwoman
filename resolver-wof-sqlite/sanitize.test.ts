@@ -17,6 +17,7 @@ import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,

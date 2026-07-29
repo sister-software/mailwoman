@@ -62,6 +62,7 @@ export interface ClusterOptions {
  */
 function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, number]>, threshold: number): R[][] {
 	const clusters = members.map((_, i) => [i])
+
 	const crossAverage = (a: number[], b: number[]): number | null => {
 		const inA = new Set(a)
 		const inB = new Set(b)
@@ -71,6 +72,7 @@ function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, num
 		for (const [i, j, w] of edges) {
 			if ((inA.has(i) && inB.has(j)) || (inA.has(j) && inB.has(i))) {
 				sum += w
+
 				count++
 			}
 		}
@@ -143,6 +145,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 			parent[ry] = rx
 		} else {
 			parent[ry] = rx
+
 			rank[rx]!++
 		}
 	}
@@ -165,6 +168,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	}
 
 	const groups = new Map<number, R[]>()
+
 	records.forEach((record, i) => {
 		const root = find(i)
 		const group = groups.get(root)
@@ -187,6 +191,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	for (const members of groups.values()) {
 		members.forEach((m, i) => localOf.set(m, i))
 	}
+
 	const groupEdges = new Map<number, Array<[number, number, number]>>()
 
 	for (const link of allLinks) {
@@ -203,6 +208,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	for (const [root, members] of groups) {
 		if (members.length <= 1 || members.length > maxComponent) {
 			result.push(members)
+
 			continue
 		}
 

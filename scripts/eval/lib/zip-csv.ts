@@ -41,10 +41,12 @@ const CSV_OPTS: Options = {
  */
 export function firstCSVEntry(zipPath: string): string {
 	const r = spawnSync("unzip", ["-Z1", zipPath], { encoding: "utf8", maxBuffer: 1 << 28 })
+
 	const names = (r.stdout || "")
 		.split("\n")
 		.map((s) => s.trim())
 		.filter(Boolean)
+
 	const csv = names.find((n) => n.endsWith(".csv"))
 
 	if (!csv) throw new Error(`no .csv entry found in ${zipPath}`)

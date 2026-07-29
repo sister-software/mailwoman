@@ -297,6 +297,7 @@ function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | 
  */
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
+
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
@@ -359,14 +360,17 @@ const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
  * altname set (a place's own recorded variants) rather than loosening here.
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
+
 const normName = (s: string | undefined): string => {
 	if (!s) return ""
+
 	const x = s
 		.toLowerCase()
 		.normalize("NFD")
 		.replaceAll(/[\u0300-\u036F]/g, "") // drop diacritics
 		.replaceAll(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
 		.trim()
+
 	const toks = x
 		.split(" ")
 		.filter(Boolean)
@@ -498,6 +502,7 @@ function buildLocalityMatcher(adminShardPath: string) {
 	const adminDb = new DatabaseSync(adminShardPath, { readOnly: true })
 	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
 	const altCache = new Map<number, Set<string>>()
+
 	const altNamesFor = (id: number): Set<string> => {
 		let set = altCache.get(id)
 
@@ -511,11 +516,13 @@ function buildLocalityMatcher(adminShardPath: string) {
 					set.add(n)
 				}
 			}
+
 			altCache.set(id, set)
 		}
 
 		return set
 	}
+
 	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
 	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
 	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
@@ -528,7 +535,9 @@ function buildLocalityMatcher(adminShardPath: string) {
 		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
 			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
 	)
+
 	const ancestorTokCache = new Map<number, Set<string>>()
+
 	const ancestorTokensFor = (id: number): Set<string> => {
 		let set = ancestorTokCache.get(id)
 
@@ -541,11 +550,13 @@ function buildLocalityMatcher(adminShardPath: string) {
 						set.add(t)
 					}
 			}
+
 			ancestorTokCache.set(id, set)
 		}
 
 		return set
 	}
+
 	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
 		if (!expected || !locNode) return false
 		const e = normName(expected)
@@ -563,6 +574,7 @@ function buildLocalityMatcher(adminShardPath: string) {
 				.slice(base.length + 1)
 				.split(" ")
 				.filter(Boolean)
+
 			const anc = ancestorTokensFor(locNode.id)
 
 			if (quals.length && quals.every((q) => q.length >= MIN_QUALIFIER_LENGTH && [...anc].some((a) => a.startsWith(q))))
@@ -621,6 +633,7 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
 	}
+
 	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
 	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
 	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
@@ -633,6 +646,7 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
 	}
+
 	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
 	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
 	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
@@ -651,6 +665,7 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
+
 	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
 	const runAddrPt = !!addressPoints || cascadeOn
 	const runInterp = !!interpolation || cascadeOn
@@ -659,10 +674,12 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
 	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
 	const anchorRerank = options.anchorRerank ?? false
+
 	let postcodeLookup: {
 		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
 		close(): void
 	} | null = null
+
 	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
 
 	if (useAnchor || anchorRerank) {
@@ -672,6 +689,7 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		)
 			.split(",")
 			.map((s) => s.trim())
+
 		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		postcodeLookup = new WOFPostcodeLookup(shards)
 		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
@@ -700,6 +718,7 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promise<void> {
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
+
 	// Default attaches the coordinate-first candidate shard (postcode-locality-intl.db) alongside the
 	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
 	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
@@ -731,10 +750,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
 	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
+
 	const overrides: ScorerOverrides = {
 		...(ablateToAnchor ? { gazetteer: false, conventions: false } : {}),
 		...(anchorOff ? { anchor: false } : {}),
 	}
+
 	const neural = await createScorer({
 		modelPath: options.model || "",
 		tokenizerPath: options.tokenizer || "",
@@ -763,11 +784,14 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
 	const postalCityAliasDB = options.postalCityAliasDb || ""
+
 	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
+
 	const postalCityAliases = postalCityAliasDB
 		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
 		: undefined
+
 	const backend = candidateDb
 		? new WOFCandidateTableLookup({ databasePath: candidateDb })
 		: new WOFSqlitePlaceLookup({
@@ -782,6 +806,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	if (postalCityAliases) {
 		console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	}
+
 	const resolver = createWOFResolver(backend as never)
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
@@ -791,10 +816,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// neither = the library default. Silent config shifts in a gate battery are the #718 sin — pin
 	// explicitly in pre-registered legs.
 	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
+
 	const parseOpts = {
 		postcodeRepair: true,
 		...(normalizeCase !== undefined ? { normalizeCase } : {}),
 	} as Parameters<typeof neural.parse>[1]
+
 	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
@@ -806,10 +833,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// pass it to measure the before/after. Applied to BOTH the neural and rules resolve paths (they
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
+
 	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
 	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
+
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
@@ -829,12 +858,14 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		postcodeLookup,
 		extractAnchors,
 	} = await buildCoordinateTiers(options)
+
 	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized
 	// house-number span scores ~0.2 (single-country × house-number penalty); a genuinely ambiguous
 	// real code scores ≥0.52 (valid in ≤3 countries). The 0.5 floor keeps the latter and rejects the
 	// former, so a span the position prior flags as a house number falls back to the resolver coordinate
 	// (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
 	const anchorMinConf = options.anchorMinConf ?? 0.5
+
 	/**
 	 * The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`).
 	 */
@@ -888,6 +919,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	}
 
 	const newAgg = (): Agg => ({ n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] })
+
 	const bump = (a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
 
@@ -924,6 +956,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
+
 		// Admin-match is by NAME (OA carries no WOF id): a row matches if OA's expected locality
 		// equals the resolved place's canonical name OR any of its WOF altnames (see
 		// localityMatches); region is name-or-abbrev tolerant.
@@ -935,6 +968,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		const locNode =
 			resolved.find((r) => r.placetype === "locality") ??
 			resolved.find((r) => expandPlacetypeFilter(["locality"]).includes(r.placetype))
+
 		const locRaw = locNode?.name
 		const regResolved = resolved.find((r) => r.placetype === "region")
 
@@ -956,6 +990,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	const agg = {
 		neural: { overall: newAgg(), byState: new Map<string, Agg>() },
 	}
+
 	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
 	// when available. Only the coord error column differs from `neural`.
 	const neuralAnchorAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
@@ -995,13 +1030,16 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	if (usePlaceCountry && !evalPlacer) {
 		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
 	}
+
 	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let neuralPrecond = 0
 	let asmPrecond = 0
+
 	const hasStreetHN = (tree: AddressTree | null): boolean => {
 		if (!tree) return false
 		let street = false
 		let hn = false
+
 		const visit = (n: AddressNode): void => {
 			if (n.tag === "street") {
 				street = true
@@ -1022,6 +1060,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 		return street && hn
 	}
+
 	const assembledPipeline = runAssembled
 		? createRuntimePipeline({
 				classifier: {
@@ -1050,6 +1089,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		if (!m.has(st)) {
 			m.set(st, newAgg())
 		}
+
 		bump(m.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 		bump(agg[who].overall, s.locMatch, s.regMatch, s.resolved, s.err)
 	}
@@ -1094,6 +1134,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		const rowShards = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
 		const rowAddrPoints = rowShards?.addressPoints ?? addressPoints ?? null
 		const rowInterp = rowShards?.interpolation ?? interpolation ?? null
+
 		// Shared resolve opts (hoisted so the assembled arms below resolve identically to neural).
 		const nOpts = {
 			...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
@@ -1112,6 +1153,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		} catch {
 			/* unresolved */
 		}
+
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
 
@@ -1140,11 +1182,13 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (hit) {
 				addressPointHits++
 			}
+
 			const st = row.state || "??"
 
 			if (!neuralAddrPtAgg.byState.has(st)) {
 				neuralAddrPtAgg.byState.set(st, newAgg())
 			}
+
 			bump(neuralAddrPtAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 			bump(neuralAddrPtAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 		}
@@ -1160,11 +1204,13 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (interp) {
 				interpHits++
 			}
+
 			const st = row.state || "??"
 
 			if (!neuralInterpAgg.byState.has(st)) {
 				neuralInterpAgg.byState.set(st, newAgg())
 			}
+
 			bump(neuralInterpAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 			bump(neuralInterpAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 
@@ -1192,8 +1238,10 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 					if (n.tag === "postcode" && !pc && n.value.trim()) {
 						pc = n.value.trim()
 					}
+
 					stk.push(...n.children)
 				}
+
 				const precond = !!(s && hn && pc)
 
 				if (precond) {
@@ -1219,6 +1267,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			if (!neuralAnchorAgg.byState.has(st)) {
 				neuralAnchorAgg.byState.set(st, newAgg())
 			}
+
 			bump(neuralAnchorAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
 		}
@@ -1243,6 +1292,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 				if (!assembledAgg.byState.has(st)) {
 					assembledAgg.byState.set(st, newAgg())
 				}
+
 				bump(assembledAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
 				bump(assembledAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
 
@@ -1331,6 +1381,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			},
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
+
 		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
 
 		console.error(`wrote json → ${options.outJson || ""}`)

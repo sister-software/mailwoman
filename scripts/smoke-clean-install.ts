@@ -31,6 +31,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 
 const repoRoot = repoRootPath()
+
 /**
  * The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load at runtime MUST
  * be packed here — otherwise `npm install` pulls it from the REGISTRY (the published, possibly-stale version), and the
@@ -152,9 +153,11 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	const child = spawn(binPath, [], { cwd: projDir, stdio: ["pipe", "pipe", "pipe"] })
 
 	let stderr = ""
+
 	child.stderr.on("data", (d: Buffer) => {
 		stderr += d.toString()
 	})
+
 	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write; swallow it so
 	// the real failure surfaces via the `error`/`exit` events below, not an uncaught stream error.
 	child.stdin.on("error", () => {})
@@ -192,10 +195,13 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	const exited = new Promise<number | null>((res) => {
 		child.on("exit", (code) => res(code))
 	})
+
 	const failed = new Promise<never>((_, rej) => {
 		child.on("error", (err) => rej(new Error(`mailwoman-mcp failed to spawn (${binPath}): ${(err as Error).message}`)))
 	})
+
 	let overallTimer: NodeJS.Timeout | undefined
+
 	const timedOut = new Promise<never>((_, rej) => {
 		overallTimer = setTimeout(() => {
 			child.kill("SIGKILL")
@@ -215,6 +221,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 				}
 
 				waiters.set(id, res)
+
 				exited.then((code) =>
 					rej(new Error(`mailwoman-mcp exited (code ${code}) before responding to id ${id}; stderr:\n${stderr}`))
 				)
@@ -240,6 +247,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 				clientInfo: { name: "mw-smoke", version: "0.0.0" },
 			},
 		})
+
 		const initResp = await waitFor(1)
 
 		if (initResp.error) throw new Error(`initialize failed: ${JSON.stringify(initResp.error)}`)
@@ -260,6 +268,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		// Clean shutdown: closing stdin ends the stdio transport; the process (lazy deps, nothing loaded) must exit 0.
 		child.stdin.end()
 		let shutdownTimer: NodeJS.Timeout | undefined
+
 		const exitCode = await Promise.race([
 			exited,
 			timedOut,
@@ -289,6 +298,7 @@ const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
 const tarDir = join(tmp, "tarballs")
 const proj = join(tmp, "proj")
 execFileSync("mkdir", ["-p", tarDir, proj])
+
 const run = (cmd: string, args: string[], cwd: string) =>
 	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 
@@ -340,6 +350,7 @@ try {
 		packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 		deps[name] = `file:${tgz}`
 	}
+
 	writeFileSync(
 		join(proj, "package.json"),
 		JSON.stringify({ name: "mw-smoke", private: true, dependencies: deps }, null, 2)
@@ -394,6 +405,7 @@ try {
 
 		const solo = join(tmp, `solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
+
 		writeFileSync(
 			join(solo, "package.json"),
 			JSON.stringify(
@@ -407,6 +419,7 @@ try {
 				2
 			)
 		)
+
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)
 		run("node", ["--input-type=module", "-e", `await import("${leaf}")`], solo)
 	}

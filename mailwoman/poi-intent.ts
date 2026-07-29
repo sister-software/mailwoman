@@ -63,6 +63,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 
 	const isBrandAlias = (hit: AliasLookupResult): hit is AliasLookupResult & { alias: BrandAlias } =>
 		hit.alias.kind === "brand"
+
 	const aliasHits = lookupVariantAliases(phrase, locale).filter(isBrandAlias)
 
 	return aliasHits.map(({ alias, confidence }): POIPhraseMatch => {

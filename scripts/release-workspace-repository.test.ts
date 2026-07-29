@@ -45,6 +45,7 @@ describe("#757 release provenance: every published workspace declares its reposi
 		const pkg = JSON.parse(readFileSync(resolve(repoRoot, ws, "package.json"), "utf8")) as {
 			repository?: { type?: string; url?: string; directory?: string }
 		}
+
 		const repo = pkg.repository
 		// A missing/empty repository.url is exactly what npm provenance rejects with E422.
 		expect(repo, `${ws}/package.json is missing "repository"`).toBeTypeOf("object")

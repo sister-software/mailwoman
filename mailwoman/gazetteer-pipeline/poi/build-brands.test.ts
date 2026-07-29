@@ -108,6 +108,7 @@ describe("aggregateBrands", () => {
 			{ wikidata: "Q1", name: "A Chain Alt", n: 10 },
 			{ wikidata: "Q2", name: "B Chain", n: 50 },
 		]
+
 		const shuffled = [rows[3]!, rows[1]!, rows[0]!, rows[2]!]
 
 		expect(aggregateBrands(shuffled, 1)).toEqual(aggregateBrands(rows, 1))

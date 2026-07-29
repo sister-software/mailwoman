@@ -39,9 +39,11 @@ export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } |
 }
 
 const EARTH_R_KM = 6371
+
 function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
 	const dLat = ((bLat - aLat) * Math.PI) / 180
 	const dLon = ((bLon - aLon) * Math.PI) / 180
+
 	const s =
 		Math.sin(dLat / 2) ** 2 +
 		Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
@@ -59,9 +61,11 @@ export class UnLocodeLookup {
 
 	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
 		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+
 		this.#byName = this.#db.prepare(
 			"SELECT country, location FROM un_locode WHERE country = ? AND nameNorm = ? LIMIT 1"
 		)
+
 		this.#byBox = this.#db.prepare(
 			"SELECT location, country, lat, lon FROM un_locode WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?"
 		)
@@ -84,12 +88,14 @@ export class UnLocodeLookup {
 	nearest(lat: number, lon: number, maxKm = 25): string | null {
 		const dLat = maxKm / 111
 		const dLon = maxKm / (111 * Math.max(0.01, Math.cos((lat * Math.PI) / 180)))
+
 		const rows = this.#byBox.all(lat - dLat, lat + dLat, lon - dLon, lon + dLon) as Array<{
 			location: string
 			country: string
 			lat: number
 			lon: number
 		}>
+
 		let best: { code: string; km: number } | null = null
 
 		for (const r of rows) {

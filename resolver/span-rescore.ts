@@ -106,6 +106,7 @@ interface RawTok {
 	start: number
 	end: number
 }
+
 /**
  * Whitespace/punctuation tokenization of the raw input, char offsets preserved, diacritics intact.
  */
@@ -274,6 +275,7 @@ export async function findRescoreCandidate(
 			spans.push({ text: raw.slice(start, end), start, end, len })
 		}
 	}
+
 	spans.sort((a, b) => b.len - a.len)
 
 	for (const sp of spans) {
@@ -312,13 +314,16 @@ export async function findRescoreCandidate(
 			const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
 
 			for (const h of exact) {
-				if (!h.country || h.country === country) continue // the scoped pass already covered `country`
+				if (!h.country || h.country === country) continue
+
+				// the scoped pass already covered `country`
 				const pcHits = await backend.findPlace({
 					text: code,
 					country: h.country,
 					placetype: "postalcode",
 					limit: 2,
 				})
+
 				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
 
 				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= gateKm) {

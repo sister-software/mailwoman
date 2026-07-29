@@ -136,6 +136,7 @@ export function geocodeFirstSurface(
 	const KM_MAX = 50 // 0 → 50 km, log-spaced
 
 	const simAxis = Array.from({ length: NX }, (_, i) => i / (NX - 1))
+
 	// log-spaced distance: 0.005 km (5 m) → 50 km, plus a literal 0 at the front
 	const kmAxis = Array.from({ length: NY }, (_, j) => {
 		const t = j / (NY - 1)
@@ -159,6 +160,7 @@ export function geocodeFirstSurface(
 		sim: number
 		km: number
 	}
+
 	const TRAPS: Trap[] = [
 		{
 			label: "Springfield General — IL vs MA",
@@ -178,6 +180,7 @@ export function geocodeFirstSurface(
 
 	// Decision verdicts at each trap (for the annotation text).
 	const verdict = (p: number) => (p >= 0.5 ? "MATCH" : "no")
+
 	const trapRows = TRAPS.map((t) => ({
 		...t,
 		stringP: pStringFirst(t.sim, t.km),

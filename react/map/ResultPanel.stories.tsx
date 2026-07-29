@@ -19,6 +19,7 @@ const meta: Meta<typeof ResultPanel> = {
 	component: ResultPanel,
 	decorators: [(Story) => <div className="mw-pipeline-explorer">{Story()}</div>],
 }
+
 export default meta
 type Story = StoryObj<typeof ResultPanel>
 

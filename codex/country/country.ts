@@ -57,6 +57,7 @@ export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
  */
 export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	const out = new Map<string, string>()
+
 	const put = (k: string, iso2: string) => {
 		const key = k.trim().toLowerCase()
 

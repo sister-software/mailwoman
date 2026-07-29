@@ -61,6 +61,7 @@ function POIExplorerInner({
 	brandLiveSearch,
 }: POIExplorerInnerProps): ReactNode {
 	const [text, setText] = useState(defaultText)
+
 	const { result, liveSearch, searchLive } = usePOISearch({
 		text,
 		loadRuntime,
@@ -69,6 +70,7 @@ function POIExplorerInner({
 	})
 
 	const subject = result?.subject
+
 	// The live block appears whenever the subject COULD be live-searched with an anchor — i.e. capable minus the
 	// anchor-present requirement (`canSearchLive` also requires an anchor; the block itself renders the "add an anchor"
 	// hint, so it must show one step earlier). Category: not build-local. Brand: brand-capable probe + a QID.

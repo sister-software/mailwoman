@@ -28,16 +28,20 @@ test("pointInMultiPolygon: inside vs outside", () => {
 			],
 		],
 	]
+
 	expect(pointInMultiPolygon(5, 5, square)).toBe(true)
 	expect(pointInMultiPolygon(20, 20, square)).toBe(false)
 })
 
 function fixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsID TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"
 	)
+
 	const ins = db.prepare("INSERT INTO nuts_regions VALUES (?,?,?,?,?,?,?)")
+
 	const square = JSON.stringify([
 		[
 			[
@@ -49,6 +53,7 @@ function fixtureDB(): DatabaseSync {
 			],
 		],
 	])
+
 	ins.run("XX300", 3, 0, 10, 0, 10, square)
 
 	return db

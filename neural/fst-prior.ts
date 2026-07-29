@@ -199,9 +199,11 @@ export function buildFSTEmissionPriors(
 	// `streetTypeFlags[i]` = word-group i is a street-type token per the morphology FST;
 	// `houseNumberFlags[i]` = word-group i is house-number-shaped.
 	const streetContext = opts.streetContext
+
 	const streetTypeFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => g.fstToken !== "" && isStreetAffix(streetContext.fst, g.fstToken))
 		: null
+
 	const houseNumberFlags: boolean[] | null = streetContext
 		? wordGroups.map((g) => HOUSE_NUMBER_RE.test(g.fstToken))
 		: null
@@ -239,6 +241,7 @@ export function buildFSTEmissionPriors(
 
 			if (next.accepted) {
 				const matchedGroups = wordGroups.slice(start, end + 1).filter((g) => g.fstToken !== "")
+
 				applyBias(
 					matrix,
 					labelToCol,
@@ -320,8 +323,10 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 				// leave `current === null` as the PENDING signal for whatever piece follows.
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
+
 				continue
 			}
+
 			const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
 			current = { fstToken: literal, pieceIndices: [i] }
 		} else if (!hasAlnum) {

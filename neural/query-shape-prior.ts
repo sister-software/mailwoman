@@ -227,6 +227,7 @@ export function addEmissionMatrix(emissions: number[][], priors: number[][]): nu
 		for (let k = 0; k < e.length; k++) {
 			row[k] = e[k]! + (p[k] ?? 0)
 		}
+
 		out.push(row)
 	}
 

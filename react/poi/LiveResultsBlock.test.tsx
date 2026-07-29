@@ -26,6 +26,7 @@ test("LiveResultsBlock disables search + prompts when there is no anchor", () =>
 
 test("LiveResultsBlock fires onSearch and renders ranked hits on success", async () => {
 	let searched = false
+
 	const { container } = renderComponent(
 		<LiveResultsBlock
 			subjectLabel="Drinking Fountain"

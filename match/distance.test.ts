@@ -56,12 +56,14 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 		key?: string
 		coord?: LatLon
 	}
+
 	const cmp = spatialComparison<R>({
 		name: "spatial",
 		key: (r) => r.key,
 		coordinate: (r) => r.coord,
 		levels: DEFAULT_SPATIAL_LEVELS,
 	})
+
 	const rec = (key: string | undefined, latitude: number, longitude = 0): R => ({ key, coord: { latitude, longitude } })
 
 	it("scores an exact canonical-key match as the top tier regardless of coordinate", () => {

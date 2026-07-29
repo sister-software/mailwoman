@@ -25,6 +25,7 @@ describe("geomBounds", () => {
 				],
 			],
 		}
+
 		expect(geomBounds(geom)).toEqual({ minLon: -10, minLat: -5, maxLon: 10, maxLat: 5 })
 	})
 
@@ -50,6 +51,7 @@ describe("geomBounds", () => {
 				],
 			],
 		}
+
 		expect(geomBounds(geom)).toEqual({ minLon: 0, minLat: 0, maxLon: 8, maxLat: 9 })
 	})
 })

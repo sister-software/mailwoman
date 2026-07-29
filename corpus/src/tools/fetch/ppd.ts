@@ -59,21 +59,25 @@ export async function extractPPDTuples(
 
 		if (saon) {
 			stats.skippedSAON++
+
 			continue
 		}
 
 		if (!paon || !HOUSE_NUMBER_PATTERN.test(paon)) {
 			stats.skippedPAON++
+
 			continue
 		}
 
 		if (!street) {
 			stats.skippedNoStreet++
+
 			continue
 		}
 
 		if (!postcode) {
 			stats.skippedNoPostcode++
+
 			continue
 		}
 
@@ -90,6 +94,7 @@ export async function extractPPDTuples(
 				postcode,
 			].join(",")
 		)
+
 		stats.kept++
 	}
 
@@ -107,6 +112,7 @@ export async function runPPDExtract(inputPath: string, outputPath: string): Prom
 		header: false,
 		enableQuoteHandling: true,
 	})
+
 	const out = createWriteStream(outputPath, { encoding: "utf8" })
 	const stats = await extractPPDTuples(rows, (line) => out.write(line + "\n"))
 
@@ -124,6 +130,7 @@ runIfScript(import.meta, async () => {
 			output: { type: "string", default: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") },
 		},
 	})
+
 	const stats = await runPPDExtract(values.input!, values.output!)
 
 	console.log(`[ppd] ${JSON.stringify(stats)}`)

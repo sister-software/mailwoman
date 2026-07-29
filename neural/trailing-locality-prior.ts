@@ -246,6 +246,7 @@ export function buildTrailingLocalityPriors(
 		if (localityPositive || (localityAny && !regionPositive)) {
 			span = { startWord, endWord: words.length - 1 }
 		}
+
 		// else: a non-locality admin match at this length BLOCKS shorter spans (R1) — stop.
 		break
 	}
@@ -293,6 +294,7 @@ export function buildTrailingLocalityPriors(
 				!STREET_NAME_PARTICLES.has(token)
 			) {
 				suffixPosition = true
+
 				break
 			}
 		}

@@ -97,6 +97,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 			if (!term.tags?.some((tag) => enabled.has(tag))) return false
 
 			if (!lowerSearch) return true
+
 			const haystack = [term.term, term.definition, term.abbreviation, ...(term.aliases ?? [])]
 				.filter(Boolean)
 				.join(" ")

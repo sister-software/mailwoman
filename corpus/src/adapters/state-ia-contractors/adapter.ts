@@ -74,6 +74,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -121,6 +122,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
 						.filter(Boolean)
 						.join(", ")
@@ -130,6 +132,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const regNum = (record["Registration #"] ?? "").trim()
+
 					const sourceID = regNum
 						? `${STATE_IA_CONTRACTORS_ADAPTER_ID}-${regNum}`
 						: stableSourceID(STATE_IA_CONTRACTORS_ADAPTER_ID, aligned)
@@ -144,6 +147,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

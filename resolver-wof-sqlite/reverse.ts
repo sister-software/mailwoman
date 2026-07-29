@@ -185,8 +185,10 @@ export class WOFReverseGeocoder implements Disposable {
 
 		this.#admin = opts.adminDatabase ?? new DatabaseSync(opts.adminDBPath!, { readOnly: true })
 		this.#ownsAdmin = !opts.adminDatabase
+
 		this.#polygons =
 			opts.polygonDatabase ?? (opts.polygonDBPath ? new DatabaseSync(opts.polygonDBPath, { readOnly: true }) : null)
+
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
 		// Fail loudly up front — the R*Tree is a build artifact, not part of the upstream WOF
@@ -239,6 +241,7 @@ export class WOFReverseGeocoder implements Disposable {
 		) {
 			throw new RangeError(`WOFReverseGeocoder.reverseGeocode: (${lat}, ${lon}) is not a WGS-84 coordinate`)
 		}
+
 		const maxApproximateKm = opts.maxApproximateKm ?? DEFAULT_MAX_APPROXIMATE_KM
 		const candidates = this.#bboxCandidates(lat, lon, opts)
 
@@ -254,6 +257,7 @@ export class WOFReverseGeocoder implements Disposable {
 			if (contains === true) {
 				winner = c
 				winnerConfirmed = true
+
 				break
 			}
 
@@ -300,6 +304,7 @@ export class WOFReverseGeocoder implements Disposable {
 					next = k
 					nextConfirmed = true
 					nextKm = undefined
+
 					break
 				}
 
@@ -342,6 +347,7 @@ export class WOFReverseGeocoder implements Disposable {
 				}
 			}
 		}
+
 		const hierarchy = [...byID.values()]
 
 		if (opts.placetypes) {
@@ -353,6 +359,7 @@ export class WOFReverseGeocoder implements Disposable {
 				}
 			}
 		}
+
 		hierarchy.sort((a, b) => placetypeDepth(b.placetype) - placetypeDepth(a.placetype))
 
 		return { hierarchy, containment: currentConfirmed ? "polygon" : "approximate" }
@@ -370,12 +377,14 @@ export class WOFReverseGeocoder implements Disposable {
 			"spr.is_current != 0",
 			"spr.is_deprecated = 0",
 		]
+
 		const params: Array<number | string> = [lat, lat, lon, lon]
 
 		if (opts.placetypes && opts.placetypes.length) {
 			where.push(`spr.placetype IN (${opts.placetypes.map(() => "?").join(", ")})`)
 			params.push(...opts.placetypes)
 		}
+
 		params.push(opts.maxCandidates ?? DEFAULT_MAX_CANDIDATES)
 
 		return this.#admin
@@ -434,6 +443,7 @@ export class WOFReverseGeocoder implements Disposable {
 		if (this.#geometryCache.size >= WOFReverseGeocoder.#GEOMETRY_CACHE_CAP) {
 			this.#geometryCache.clear()
 		}
+
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
 		let geometry: GeojsonGeometry | null = null
 
@@ -444,6 +454,7 @@ export class WOFReverseGeocoder implements Disposable {
 				geometry = null // malformed row — treat as no-polygon rather than failing the query
 			}
 		}
+
 		this.#geometryCache.set(id, geometry)
 
 		return geometry

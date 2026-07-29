@@ -199,8 +199,10 @@ export class CoarsePlacer {
 			for (const i of feats) {
 				s += this.#weights[base + i]!
 			}
+
 			logits[c] = s / this.#temp
 		}
+
 		// Numerically-stable softmax.
 		let maxLogit = -Infinity
 
@@ -208,6 +210,7 @@ export class CoarsePlacer {
 			if (logits[c]! > maxLogit) {
 				maxLogit = logits[c]!
 			}
+
 		let sum = 0
 		const probs = new Float32Array(C)
 
@@ -216,6 +219,7 @@ export class CoarsePlacer {
 			probs[c] = e
 			sum += e
 		}
+
 		let topIdx = 0
 		let topProb = -1
 		let otherProb = 0

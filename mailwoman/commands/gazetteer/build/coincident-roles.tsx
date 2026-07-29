@@ -50,8 +50,10 @@ const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, type
 			for (const path of args) {
 				if (!existsSync(path)) {
 					checks.push({ ok: false, check: path, detail: "file not found" })
+
 					continue
 				}
+
 				const db = new DatabaseSync(path)
 
 				try {
@@ -59,11 +61,13 @@ const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, type
 						drop: options.drop,
 						onProgress: (phase, detail) => console.error(`  [${phase}]${detail ? ` — ${detail}` : ""}`),
 					})
+
 					const top = Object.entries(result.byCountry)
 						.toSorted((a, b) => b[1] - a[1])
 						.slice(0, 8)
 						.map(([cc, n]) => `${cc} ${n}`)
 						.join(", ")
+
 					checks.push({
 						ok: true,
 						check: path,

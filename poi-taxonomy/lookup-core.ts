@@ -70,6 +70,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 					`poi-taxonomy: synonym ${JSON.stringify(synonym.phrase)} points at unknown category ${synonym.categoryID}`
 				)
 			}
+
 			add(synonym.phrase, {
 				category,
 				phrase: synonym.phrase,

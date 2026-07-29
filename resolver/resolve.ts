@@ -175,6 +175,7 @@ async function applySpanRescore(
 	}
 
 	if (!hit) return
+
 	const node: AddressNode = {
 		tag: "locality",
 		value: hit.text,
@@ -184,6 +185,7 @@ async function applySpanRescore(
 		confidence: 0.5,
 		children: [],
 	}
+
 	decorateNode(node, hit.place, [])
 	// `rescore_gated` carries the gate's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
@@ -266,8 +268,10 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 
 		if (n.tag === "postcode" && isResolvedWithCoord(n)) {
 			anchor = { lat: n.lat!, lon: n.lon! }
+
 			break
 		}
+
 		findAnchor.push(...n.children)
 	}
 
@@ -287,6 +291,7 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
 		// `ResolvedPlace` runner-ups decorateNode attached, so the cast is sound.
 		const alts = (node.alternatives as ResolvedPlace[] | undefined) ?? []
+
 		const reconciling = alts
 			.filter((a) => a.lat !== 0 || a.lon !== 0)
 			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
@@ -305,11 +310,14 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 				lon: node.lon!,
 				score: 0,
 			}
+
 			const rest = alts.filter((a) => a !== reconciling.a)
 			decorateNode(node, reconciling.a, [displaced, ...rest])
 			node.metadata = { ...node.metadata, postcode_repicked: true }
+
 			continue
 		}
+
 		// No same-named instance near the postcode → the town is unreliable; trust the postcode's area.
 		node.lat = anchor.lat
 		node.lon = anchor.lon
@@ -382,6 +390,7 @@ async function reconcileAdminPair(
 			parentID: region.id,
 			limit: 3,
 		})
+
 		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 		if (lc) {
@@ -390,12 +399,15 @@ async function reconcileAdminPair(
 				region,
 				regionCands.filter((r) => r !== region)
 			)
+
 			regionNode.metadata = { ...regionNode.metadata, admin_coherence_repicked: true }
+
 			decorateNode(
 				localityNode,
 				lc,
 				scoped.filter((l) => l !== lc)
 			)
+
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
 
 			return
@@ -418,16 +430,19 @@ async function reconcileAdminPair(
 			parentID: country.id,
 			limit: 3,
 		})
+
 		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 		if (lc) {
 			decorateNode(regionNode, country, regionCands)
 			regionNode.metadata = { ...regionNode.metadata, admin_coherence_repicked: true }
+
 			decorateNode(
 				localityNode,
 				lc,
 				scoped.filter((l) => l !== lc)
 			)
+
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
 
 			return
@@ -452,6 +467,7 @@ async function reconcileAdminPair(
 			country: mc.iso2,
 			limit: 3,
 		})
+
 		const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 		if (lc) {
@@ -460,6 +476,7 @@ async function reconcileAdminPair(
 				lc,
 				scoped.filter((l) => l !== lc)
 			)
+
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
 			// The token named a foreign country the admin gazetteer has no node for, but the greedy walk had
 			// already decorated the region node with the US-state namesake. Revert that stale decoration so the
@@ -496,6 +513,7 @@ function revertResolverDecoration(node: AddressNode): void {
 		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
 		delete meta[key]
 	}
+
 	node.metadata = meta
 	node.lat = undefined
 	node.lon = undefined
@@ -569,6 +587,7 @@ async function reconcileExplicitCountry(
 		country: mc.iso2,
 		limit: 3,
 	})
+
 	const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 	if (!lc) return
@@ -581,6 +600,7 @@ async function reconcileExplicitCountry(
 		lc,
 		scoped.filter((l) => l !== lc)
 	)
+
 	localityNode.metadata = { ...localityNode.metadata, explicit_country_repicked: true }
 }
 
@@ -679,6 +699,7 @@ async function reconcileRegionCountry(
 		country: sub.country,
 		limit: 3,
 	})
+
 	const rc = regionScoped.find((r) => r.exactMatch && !(r.lat === 0 && r.lon === 0))
 
 	if (!rc) return
@@ -691,6 +712,7 @@ async function reconcileRegionCountry(
 		country: sub.country,
 		limit: 3,
 	})
+
 	const lc = scoped.find((l) => l.exactMatch && !(l.lat === 0 && l.lon === 0))
 
 	if (!lc) return
@@ -701,12 +723,15 @@ async function reconcileRegionCountry(
 		rc,
 		regionScoped.filter((r) => r !== rc)
 	)
+
 	regionNode.metadata = { ...regionNode.metadata, region_country_repicked: true }
+
 	decorateNode(
 		localityNode,
 		lc,
 		scoped.filter((l) => l !== lc)
 	)
+
 	localityNode.metadata = { ...localityNode.metadata, region_country_repicked: true }
 }
 
@@ -836,6 +861,7 @@ class WOFResolver implements Resolver {
 		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
 
 		if (!loc) return
+
 		const interpretation: Interpretation = {
 			tag: "locality",
 			placeID: `wof:${loc.id}`,
@@ -845,6 +871,7 @@ class WOFResolver implements Resolver {
 			confidence: 0,
 			metadata: { relationship_type: loc.relationshipType, resolver_completed: true, resolver_name: loc.name },
 		}
+
 		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
 	}
 
@@ -860,6 +887,7 @@ class WOFResolver implements Resolver {
 		if (placetype === "locality") {
 			state.localityNodePresent = true
 		}
+
 		let resolved: ResolvedPlace | null = null
 
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length) {
@@ -922,6 +950,7 @@ class WOFResolver implements Resolver {
 		if (parentResolved && typeof parentResolved.id === "number") {
 			query.parentID = parentResolved.id
 		}
+
 		// #194: a resolved parent's country wins, then the caller's `defaultCountry`, then the confident
 		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is gated
 		// upstream on high confidence (so it only fires when the model is sure), and on a miss the node is
@@ -935,6 +964,7 @@ class WOFResolver implements Resolver {
 		// lookup, below a resolved parent's country but above the global defaults. It breaks the two-consistent-
 		// pairs tie ("Augusta, ME" → Maine, not Augusta/Messina) that pure geographic consistency cannot.
 		const countryHint = node.metadata?.["country_hint"]
+
 		const country =
 			parentResolved?.country ??
 			(typeof countryHint === "string" ? countryHint : undefined) ??
@@ -1002,6 +1032,7 @@ class WOFResolver implements Resolver {
 		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
 			const post = state.anchorPosterior
 			const w = state.anchorWeight
+
 			// #928 root cause: this sort's within-tier key was `score + w·posterior` — RAW SCORE order,
 			// the exact metric #910 deprecated inside the exact tier as bm25-length-poisoned (a famous
 			// place's alias-heavy doc reads ~15 pts WORSE than a tiny namesake's clean one; #905
@@ -1072,8 +1103,10 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 		if (node.sourceID !== undefined) {
 			meta["classifier_source_id"] = node.sourceID
 		}
+
 		node.metadata = meta
 	}
+
 	node.source = "resolver"
 	node.sourceID = `${resolved.placetype}:${resolved.id}`
 	node.lat = resolved.lat

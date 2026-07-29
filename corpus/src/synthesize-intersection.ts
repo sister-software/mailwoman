@@ -29,6 +29,7 @@ import type { CanonicalRow } from "./types.ts"
  * Attempts to draw a second street distinct from the first before giving up on the pair.
  */
 const MAX_DISTINCT_STREET_TRIES = 8
+
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
@@ -127,6 +128,7 @@ function buildStreetName(random: () => number): string {
 	if (random() < 0.35) {
 		parts.push(pick(DIRECTIONALS, random))
 	}
+
 	parts.push(random() < 0.45 ? pick(ORDINALS, random) : pick(STREET_CORES, random))
 	parts.push(pick(SUFFIXES, random))
 
@@ -172,9 +174,11 @@ export function synthesizeIntersectionRow(
 		raw = `${cornerPrefix}${a}${connector}${b}`
 	} else {
 		const includePostcode = base.postcode != null && random() < 0.7
+
 		const tail = includePostcode
 			? `, ${base.locality}, ${base.region} ${base.postcode}`
 			: `, ${base.locality}, ${base.region}`
+
 		raw = `${cornerPrefix}${a}${connector}${b}${tail}`
 		components.locality = base.locality
 		components.region = base.region

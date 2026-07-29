@@ -38,6 +38,7 @@ import zod from "zod"
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const DEFAULT_RELEASE = "2026-05-20.0"
+
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
 
@@ -84,6 +85,7 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 				`${p.address_levels_pct}% | ${p.oa_lineage_pct}% |`
 		)
 	}
+
 	lines.push("", "## Observed source datasets (per country)", "")
 
 	for (const p of probes) {
@@ -92,6 +94,7 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 		for (const [ds, n] of Object.entries(p.datasets)) {
 			lines.push(`- \`${ds}\` — ${n.toLocaleString("en-US")} rows`)
 		}
+
 		lines.push("")
 	}
 
@@ -138,6 +141,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 			const limitClause = limit ? `LIMIT ${limit}` : ""
 			const dest = countryParquet(cc)
 			const started = Date.now()
+
 			await db.run(`
 				COPY (
 					SELECT
@@ -158,6 +162,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 					${limitClause}
 				) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
 			`)
+
 			const secs = ((Date.now() - started) / 1000).toFixed(0)
 
 			console.error(`[ingest] ${cc} -> ${dest} (${secs}s)`)
@@ -172,6 +177,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)
 			const dest = path.join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
+
 			await db.run(`
 				COPY (
 					SELECT
@@ -198,6 +204,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 		 */
 		const probeCountry = async (cc: string): Promise<CountryProbe | null> => {
 			const src = countryParquet(cc)
+
 			const fillExprs = FILL_FIELDS.map(
 				(f) => `round(100.0 * count(nullif(trim(${f}), '')) / count(*), 1) AS ${f}_pct`
 			).join(",\n\t\t\t")
@@ -212,6 +219,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 					) / count(*), 1) AS oa_lineage_pct
 				FROM read_parquet('${src}')
 			`)
+
 			const row = totals.getRowObjects()[0] as Record<string, unknown>
 
 			if (!row || Number(row.rows) === 0) return null
@@ -221,6 +229,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 				FROM (SELECT unnest(sources) AS u FROM read_parquet('${src}'))
 				GROUP BY 1 ORDER BY n DESC
 			`)
+
 			const datasets: Record<string, number> = {}
 
 			for (const d of datasetRows.getRowObjects() as { dataset: string; n: bigint }[]) {
@@ -253,6 +262,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ optio
 			if (options.corpusJsonl) {
 				await emitCorpusJSONL(cc)
 			}
+
 			const probe = await probeCountry(cc)
 
 			if (probe) {

@@ -27,6 +27,7 @@ describe("toMapHTML", () => {
 		const html = toMapHTML(
 			fc([point(-97.7431, 30.2672, { entityID: "e1", recordCount: 2, sources: ["a", "b"], name: "Acme" })])
 		)
+
 		expect(html.startsWith("<!doctype html>")).toBe(true)
 		expect(html.trimEnd().endsWith("</html>")).toBe(true)
 		// MapLibre GL, not Leaflet, pinned with SRI.
@@ -69,6 +70,7 @@ describe("toMapHTML", () => {
 				point(1, 1, { entityID: "b", recordCount: 1, bucket: "eligible-not-enrolled", sources: ["y"] }),
 			])
 		)
+
 		// Bucket labels render verbatim in the legend (neutral — straight from the data).
 		expect(withBuckets).toContain("enrolled")
 		expect(withBuckets).toContain("eligible-not-enrolled")
@@ -84,6 +86,7 @@ describe("toMapHTML", () => {
 			title: "Coverage reconciliation",
 			flavor: "dark",
 		})
+
 		expect(html).toContain("<title>Coverage reconciliation</title>")
 		// A dark Protomaps flavor produces a dark background fill in the inlined style.
 		expect(html).toMatch(/"background"/)

@@ -96,6 +96,7 @@ export async function buildFDICHoldout(): Promise<void> {
 	if (existsSync(tmp)) {
 		rmSync(tmp)
 	}
+
 	const sink = createWriteStream(tmp, { encoding: "utf8" })
 	sink.write("address;city;state;zip;lat;lon\n")
 
@@ -119,10 +120,13 @@ export async function buildFDICHoldout(): Promise<void> {
 
 			if (!address || !city || !state || !plausibleUs(lat, lon)) {
 				dropped++
+
 				continue
 			}
+
 			// Semicolons can't appear in a US street address/city; no escaping needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
+
 			written++
 		}
 
@@ -138,6 +142,7 @@ export async function buildFDICHoldout(): Promise<void> {
 	if (existsSync(OUT)) {
 		renameSync(OUT, `${OUT}.prev`)
 	}
+
 	renameSync(tmp, OUT)
 
 	if (existsSync(`${OUT}.prev`)) {

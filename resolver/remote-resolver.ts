@@ -93,6 +93,7 @@ export class RemoteResolver implements Resolver {
 
 		try {
 			const body: ResolveTreeRequest = { tree, opts: serializableResolveOpts(opts) }
+
 			const res = await this.#fetch(this.#endpoint, {
 				method: "POST",
 				headers: { "Content-Type": "application/json", ...this.#headers },
@@ -103,6 +104,7 @@ export class RemoteResolver implements Resolver {
 			if (!res.ok) {
 				throw new Error(`RemoteResolver: ${this.#endpoint} → HTTP ${res.status} ${res.statusText}`)
 			}
+
 			const json = (await res.json()) as Partial<ResolveTreeResponse>
 
 			if (!json || !json.tree || !Array.isArray(json.tree.roots)) {

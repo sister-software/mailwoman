@@ -21,6 +21,7 @@ function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 
 function captureResolver(): { resolver: Resolver; seen: AddressTree[] } {
 	const seen: AddressTree[] = []
+
 	const resolver: Resolver = {
 		resolveTree: vi.fn(async (tree: AddressTree, _opts?: ResolveOpts) => {
 			seen.push(tree)
@@ -71,10 +72,12 @@ describe("parseForGeocode", () => {
 		})
 
 		expect(classifier.parse).toHaveBeenCalledTimes(1)
+
 		expect(classifier.parse).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({ postcodeRepair: true, normalizeCase: true })
 		)
+
 		expect(tree).toBeDefined()
 	})
 

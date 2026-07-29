@@ -94,6 +94,7 @@ describe("chooseCountryExpression", () => {
 			filterExpr: "country",
 			selectExpr: "country",
 		})
+
 		expect(chooseCountryExpression(NEWER_RELEASE_COLUMNS)).toEqual({
 			filterExpr: "country",
 			selectExpr: "country",

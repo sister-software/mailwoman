@@ -26,6 +26,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	conventions?: string
@@ -37,9 +38,11 @@ const values = rawValues as {
 	"suppress-gaz-near-postcode"?: boolean
 	"weights-cache"?: string
 }
+
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const file = (values["file"] || "data/eval/external/street-affix-real.jsonl")!
+
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -68,10 +71,12 @@ const suppressGaz = values["suppress-gaz-near-postcode"] ?? false
  * model (v6.2.0+). Takes precedence over the explicit --model path.
  */
 const WEIGHTS_CACHE = values["weights-cache"] || ""
+
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 	: await (async () => {
 			const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+
 			const [tokenizer, runner] = await Promise.all([
 				MailwomanTokenizer.loadFromFile(TOK),
 				ONNXRunner.create((values["model"] || "")!),
@@ -95,6 +100,7 @@ const rows = readFileSync(file, "utf8")
 	.split("\n")
 	.filter(Boolean)
 	.map((l) => JSON.parse(l))
+
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 
@@ -142,6 +148,7 @@ for (const t of TAGS) {
 		`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`
 	)
 }
+
 // JSON sidecar (--json <path>): the machine-readable contract the gate verdict reads — the
 // markdown above is presentation. Codex-review follow-up: regex-parsing scorer tables was the
 // gate's one brittle joint.

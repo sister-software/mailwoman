@@ -45,6 +45,7 @@ interface SeedRegion {
  */
 function buildDB(regions: SeedRegion[]): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -56,11 +57,13 @@ function buildDB(regions: SeedRegion[]): DatabaseSync {
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
+
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
 			min_latitude, max_latitude, min_longitude, max_longitude, is_current, is_deprecated)
 		VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
+
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 
@@ -77,6 +80,7 @@ function buildDB(regions: SeedRegion[]): DatabaseSync {
 			r.lon - 0.5,
 			r.lon + 0.5
 		)
+
 		insertName.run(r.id, "eng", r.name)
 
 		for (const a of r.aliases ?? []) {
@@ -123,6 +127,7 @@ describe("findPlace — exact-match tiering", () => {
 			{ database: buildDB(REGIONS), buildFTS: true },
 			{ ...POP_DOMINATES, exactMatchTiering: false }
 		)
+
 		const results = await lookup.findPlace({ text: "ME", placetype: "region", country: "US" })
 		expect(results[0]!.id).toBe(2) // the populous non-exact match — pre-fix behavior
 	})
@@ -144,6 +149,7 @@ describe("findPlace — exact-match tiering", () => {
 				population: 9_000_000,
 			},
 		])
+
 		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true }, POP_DOMINATES)
 		const results = await lookup.findPlace({ text: "Capitalia", placetype: "region", limit: 2 })
 
@@ -164,6 +170,7 @@ describe("findPlace — exact-match tiering", () => {
 			]),
 			buildFTS: true,
 		})
+
 		const results = await lookup.findPlace({ text: "Springfield", placetype: "region", country: "US" })
 		expect(results).toHaveLength(2)
 		expect(results[0]!.id).toBe(11) // higher population wins within the exact tier
@@ -184,6 +191,7 @@ describe("findPlace — exact-match tiering", () => {
 			lat: 50 + i * 0.01,
 			lon: -1 + i * 0.01,
 		}))
+
 		const newYork: SeedRegion = {
 			id: 1,
 			name: "New York",
@@ -194,6 +202,7 @@ describe("findPlace — exact-match tiering", () => {
 			// (rank ~61: outside the default `limit * 4` window, inside the 200 short-query floor).
 			aliases: ["NY", ...Array.from({ length: 40 }, (_, i) => `New York alternate label ${i}`)],
 		}
+
 		lookup = new WOFSqlitePlaceLookup({ database: buildDB([newYork, ...decoys]), buildFTS: true })
 		const results = await lookup.findPlace({ text: "NY", placetype: "region", limit: 2 })
 		expect(results[0]!.id).toBe(1)
@@ -208,6 +217,7 @@ describe("findPlace — exact-match tiering", () => {
 			{ id: 21, name: "1012LG", country: "NL", lat: 52.377, lon: 4.898, placetype: "postalcode" },
 			{ id: 22, name: "1012", country: "NL", lat: 52.374, lon: 4.895, placetype: "postalcode" },
 		])
+
 		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 
 		// Placetype gate: a region-typed query never enters the ladder (and the spaced phrase can't
@@ -233,10 +243,13 @@ describe("findPlace — exact-match tiering", () => {
 			{ id: 31, name: "48026", country: "IT", lat: 44.37, lon: 12.03, placetype: "postalcode", population: 12_000 },
 			{ id: 32, name: "48026", country: "US", lat: 42.54, lon: -82.95, placetype: "postalcode", population: 900 },
 		])
+
 		lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
 
 		const noBias = await lookup.findPlace({ text: "48026", placetype: "postalcode", limit: 2 })
-		expect(noBias[0]?.country).toBe("IT") // population-first, unchanged default
+		expect(noBias[0]?.country).toBe("IT")
+
+		// population-first, unchanged default
 
 		const usBias = await lookup.findPlace({
 			text: "48026",
@@ -244,8 +257,11 @@ describe("findPlace — exact-match tiering", () => {
 			limit: 2,
 			bias: [{ lat: 42.33, lon: -83.05 }], // Detroit viewport
 		})
+
 		expect(usBias[0]?.country).toBe("US")
-		expect(usBias).toHaveLength(2) // soft — nothing filtered
+		expect(usBias).toHaveLength(2)
+
+		// soft — nothing filtered
 
 		const itBias = await lookup.findPlace({
 			text: "48026",
@@ -253,6 +269,7 @@ describe("findPlace — exact-match tiering", () => {
 			limit: 2,
 			bias: [{ lat: 44.42, lon: 12.2 }], // Ravenna viewport
 		})
+
 		expect(itBias[0]?.country).toBe("IT")
 	})
 
@@ -263,6 +280,7 @@ describe("findPlace — exact-match tiering", () => {
 			]),
 			buildFTS: true,
 		})
+
 		const results = await lookup.findPlace({ text: "OR", placetype: "region", country: "US" })
 		expect(results).toHaveLength(1)
 		expect(results[0]!.name).toBe("Oregon")

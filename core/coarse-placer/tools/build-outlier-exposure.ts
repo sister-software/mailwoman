@@ -104,9 +104,12 @@ function isOffMapScript(s: string): boolean {
 	for (const ch of s) {
 		const cp = ch.codePointAt(0)!
 
-		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue // punct/space/digits
+		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue
+
+		// punct/space/digits
 		total++
 		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x2_4f)
+
 		const cjk =
 			(cp >= 0x30_40 && cp <= 0x30_ff) ||
 			(cp >= 0x4e_00 && cp <= 0x9f_ff) ||
@@ -158,6 +161,7 @@ export async function buildOutlierExposure(
 		const rows = db
 			.prepare(`SELECT name FROM names WHERE language = ? AND length(name) >= 4 LIMIT ?`)
 			.all(lang, PER * 2)
+
 		let kept = 0
 
 		for (const r of rows) {
@@ -167,17 +171,22 @@ export async function buildOutlierExposure(
 			if (!name || seen.has(name) || !isOffMapScript(name)) continue
 			seen.add(name)
 			pool.push(name)
-			pool.push(addressVariant(name, hashFNV1a(name))) // address-shaped sibling
+			pool.push(addressVariant(name, hashFNV1a(name)))
+
+			// address-shaped sibling
 			kept++
 		}
+
 		report?.(`  ${lang}: ${kept}`)
 	}
+
 	db.close()
 
 	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
 	const nTest = Math.floor(pool.length * 0.1)
+
 	const splits: Record<string, string[]> = {
 		val: pool.slice(0, nVal),
 		test: pool.slice(nVal, nVal + nTest),
@@ -189,6 +198,7 @@ export async function buildOutlierExposure(
 		appendFileSync(path.join(dataDir, `${split}.jsonl`), lines)
 		report?.(`appended ${names.length} OTHER → ${split}.jsonl`)
 	}
+
 	report?.(`total OTHER pool: ${pool.length}`)
 
 	return { total: pool.length }

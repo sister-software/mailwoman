@@ -83,6 +83,7 @@ export interface TrainOrgCrossSourceGBTOptions {
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
@@ -156,6 +157,7 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 				if (ch === '"') {
 					if (line[i + 1] === '"') {
 						cur += '"'
+
 						i++
 					} else {
 						inQ = false
@@ -172,6 +174,7 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 				cur += ch
 			}
 		}
+
 		cells.push(cur)
 
 		if (!header) {
@@ -179,11 +182,13 @@ async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> 
 
 			continue
 		}
+
 		const row: Record<string, string> = {}
 
 		for (let i = 0; i < header.length; i++) {
 			row[header[i]!] = cells[i] ?? ""
 		}
+
 		yield row
 	}
 }
@@ -219,6 +224,7 @@ export async function trainOrgCrossSourceGBT(
 		if (!ccn || !name || !address) continue
 		ccByID.set(ccn, { npi: ccn, name, org: name, address, source: "care-compare" })
 	}
+
 	report?.(`    ${ccByID.size} Care Compare facilities`)
 
 	// --- Phase B: the SAME CCNs from the POS file + the corpus-wide address-frequency table. ---
@@ -234,8 +240,10 @@ export async function trainOrgCrossSourceGBT(
 		if (address) {
 			const k = addressFrequencyKey(address)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 			addrTotal++
 		}
+
 		const ccn = norm(r["PRVDR_NUM"])
 
 		if (!ccn || !ccByID.has(ccn) || joined.has(ccn) || !address) continue
@@ -249,17 +257,20 @@ export async function trainOrgCrossSourceGBT(
 	for (const ccn of joined) {
 		rows.push(ccByID.get(ccn)!)
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	report?.(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
 
 	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). The heavy
 	// geocoder is injected (see ./eval-geocoder.ts). ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
+
 	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
 	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
 	const mappingFor = (source: string): ColumnMapping => ({
@@ -269,8 +280,10 @@ export async function trainOrgCrossSourceGBT(
 		address: "address",
 		source,
 	})
+
 	const posRows = rows.filter((r) => r.source === "cms-pos")
 	const ccRows = rows.filter((r) => r.source === "care-compare")
+
 	const records: SourceRecord[] = [
 		...(await ingestRows(posRows as unknown as Record<string, string>[], mappingFor("cms-pos"), {
 			geocodeAddress: geocoder.seam,
@@ -279,6 +292,7 @@ export async function trainOrgCrossSourceGBT(
 			geocodeAddress: geocoder.seam,
 		})),
 	]
+
 	geocoder.close()
 	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
@@ -292,6 +306,7 @@ export async function trainOrgCrossSourceGBT(
 	const Y: number[] = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce((s, y) => s + y, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate))
+
 	report?.(
 		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
 	)
@@ -305,18 +320,22 @@ export async function trainOrgCrossSourceGBT(
 	for (const ccn of joined) {
 		split.set(ccn, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
 	}
+
 	const fitIdx = pairs
 		.map((_, i) => i)
 		.filter((i) => split.get(pairs[i]![0].id) === "fit" && split.get(pairs[i]![1].id) === "fit")
+
 	const holdIdx = pairs
 		.map((_, i) => i)
 		.filter((i) => split.get(pairs[i]![0].id) === "holdout" && split.get(pairs[i]![1].id) === "holdout")
+
 	const calib = trainGBT(
 		fitIdx.map((i) => X[i]!),
 		fitIdx.map((i) => Y[i]!),
 		fitIdx.map((i) => W[i]!),
 		hyperparams
 	)
+
 	const holdScores = holdIdx.map((i) => ({ s: gbtScore(calib, X[i]!), y: Y[i]! }))
 	const sorted = holdScores.map((h) => h.s).toSorted((a, b) => a - b)
 	const totalPos = holdScores.reduce((s, h) => s + h.y, 0)
@@ -338,6 +357,7 @@ export async function trainOrgCrossSourceGBT(
 				fp++
 			}
 		}
+
 		const precision = tp + fp > 0 ? tp / (tp + fp) : 1
 		const recall = totalPos > 0 ? tp / totalPos : 0
 		const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
@@ -357,6 +377,7 @@ export async function trainOrgCrossSourceGBT(
 	if (!Number.isFinite(recommendedThreshold)) {
 		recommendedThreshold = f1MaxThreshold
 	}
+
 	report?.(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${PRECISION_BAR} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)
@@ -364,6 +385,7 @@ export async function trainOrgCrossSourceGBT(
 	// --- Phase F: train the SHIPPED model on ALL cross-source pairs; emit the committed module. ---
 	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
+
 	const meta = {
 		version: "1.0.0",
 		objective: "org-cross-source-link" as const,
@@ -381,6 +403,7 @@ export async function trainOrgCrossSourceGBT(
 		features: X[0]?.length ?? 0,
 		sources: ["cms-pos", "care-compare"],
 	}
+
 	const moduleSource =
 		`/**\n` +
 		` * @copyright Sister Software\n` +
@@ -396,6 +419,7 @@ export async function trainOrgCrossSourceGBT(
 		`export const ORG_CROSS_SOURCE_GBT_META = ${JSON.stringify(meta)} as const\n\n` +
 		`// prettier-ignore\n` +
 		`export const ORG_CROSS_SOURCE_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
+
 	mkdirSync(dirname(OUT), { recursive: true })
 	writeFileSync(OUT, moduleSource)
 	report?.(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)

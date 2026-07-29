@@ -166,8 +166,10 @@ export interface PostalDistrict {
  */
 export function loadPostalDistricts(path: string): PostalDistrict[] {
 	const xml = readFileSync(path, "utf8")
+
 	const re =
 		/<行政區名>([^<]+)<\/行政區名>\s*<_x0033_碼郵遞區號>(\d+)<\/_x0033_碼郵遞區號>\s*<中心點經度>([\d.]+)<\/中心點經度>\s*<中心點緯度>([\d.]+)<\/中心點緯度>/g
+
 	const out: PostalDistrict[] = []
 
 	for (const m of xml.matchAll(re)) {
@@ -176,6 +178,7 @@ export function loadPostalDistricts(path: string): PostalDistrict[] {
 		const lon = Number(m[3])
 
 		if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
+
 		out.push({
 			name,
 			county: name.slice(0, COUNTY_PREFIX_LENGTH),
@@ -216,6 +219,7 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		if (!line.trim()) continue
+
 		const row = JSON.parse(line) as {
 			subtype: string
 			name: string
@@ -231,6 +235,7 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 		let minLat = Infinity
 		let maxLon = -Infinity
 		let maxLat = -Infinity
+
 		const scan = (coords: unknown): void => {
 			if (Array.isArray(coords) && typeof coords[0] === "number") {
 				const [lon, lat] = coords as [number, number]
@@ -260,7 +265,9 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 				}
 			}
 		}
+
 		scan((geometry as { coordinates?: unknown }).coordinates)
+
 		out.push({
 			name: row.name,
 			nameHan: normHan(row.name),
@@ -366,6 +373,7 @@ function loadAdminIndexes(args: { adminDb: string }) {
 		)
 		.all() as Array<{ id: number; name: string; latitude: number; longitude: number; han: string }>) {
 		if (!/[一-鿿]/.test(row.han)) continue
+
 		regionsByHan.set(normHan(row.han), {
 			pid: row.id,
 			nm: row.name,
@@ -398,6 +406,7 @@ function loadAdminIndexes(args: { adminDb: string }) {
 			placesByQID.set(row.qid, [place])
 		}
 	}
+
 	admin.close()
 
 	// Proximity grid (0.5° cells, same shape as the JP/KR builders) — used by both the polygon
@@ -431,6 +440,7 @@ function loadAdminIndexes(args: { adminDb: string }) {
 				}
 			}
 		}
+
 		out.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
 
 		return out
@@ -447,6 +457,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 		process.exit(1)
 	}
+
 	const polygons = loadDistrictPolygons(args.divisions)
 	const polygonsByName = new Map<string, DivisionPolygon[]>()
 
@@ -466,6 +477,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	rmSync(buildPath, { force: true })
 	const db = new DatabaseSync(buildPath)
 	const kdb = new DatabaseClient({ database: db })
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.addColumn("postcode", "text", (c) => c.notNull())
@@ -485,10 +497,13 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		const districtHan = normHan(d.district)
 		const stemHan = districtHan.replace(DISTRICT_SUFFIX, "")
 		const aliases = [d.name, d.district, normHan(d.name) !== d.name ? normHan(d.name) : ""].filter(Boolean).join("|")
+
 		const hanMatches = (p: AdminPlace): boolean =>
 			p.hanNames.has(districtHan) || (stemHan.length >= 2 && p.hanNames.has(stemHan))
+
 		// The Overture en name is per-polygon, so the closure is (re)bound after the polygon resolves.
 		let enStem = ""
+
 		const nameMatches = (p: AdminPlace): boolean =>
 			hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
 
@@ -496,6 +511,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official
 		//    center falls in exactly its own polygon).
 		const namesakes = polygonsByName.get(districtHan) ?? []
+
 		const polygon =
 			namesakes.length === 1 ? namesakes[0] : namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
 
@@ -519,6 +535,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				if (geometryContains(polygon.geometry, p.lo, p.la) !== true) continue
 				inside.push({ d: haversineKm(d.lat, d.lon, p.la, p.lo), place: p })
 			}
+
 			inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
 
 			// Name-confirmed district-tier first: sloppy WOF points put a NEIGHBORING district's row
@@ -542,6 +559,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 						(a, b) =>
 							Number(!DISTRICT_TIER.has(a.place.placetype)) - Number(!DISTRICT_TIER.has(b.place.placetype)) || a.d - b.d
 					)
+
 				hit = concordant[0]
 
 				if (hit) {
@@ -598,6 +616,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				if (weak) {
 					rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
 				}
+
 				continue
 			}
 		}
@@ -618,6 +637,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	for (const r of rows) {
 		insert.run(...r)
 	}
+
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -631,8 +651,10 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+
 	const matched = tierCounts.polygon + tierCounts.wikidata + tierCounts.name_in_polygon + tierCounts.name_nearby
 	const matchRate = `${((100 * matched) / districts.length).toFixed(1)}%`
+
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-tw"],
 		["description", "TW 3-digit postcode -> WOF district via official center + Overture division polygon bridge"],
@@ -657,6 +679,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		["unmatched", unmatched.join("|") || "(none)"],
 		["built_at", isoSeconds()],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
@@ -672,6 +695,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.

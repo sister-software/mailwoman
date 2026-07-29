@@ -92,6 +92,7 @@ async function serve(): Promise<void> {
 
 		process.exit(1)
 	}
+
 	const candidateDb =
 		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
@@ -140,6 +141,7 @@ async function serve(): Promise<void> {
 			// #1016: forward the client's viewport/user location as a proximity bias — a SOFT re-rank the resolver
 			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
+
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
@@ -166,6 +168,7 @@ async function serve(): Promise<void> {
 			// #1050: the street-centroid tier is STREET-GRADE — full assembled street name in `name`,
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
+
 			const primary: PhotonForwardInput = {
 				lat: result.lat,
 				lon: result.lon,
@@ -175,6 +178,7 @@ async function serve(): Promise<void> {
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
+
 			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
 			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
 			const alternatives = result.candidates.slice(1).map((c) => {
@@ -197,6 +201,7 @@ async function serve(): Promise<void> {
 
 			if (!hierarchy.length) return photonCollection([])
 			const deepest = hierarchy[0]!
+
 			// #1014: carry osm_key/osm_value/type (from the deepest placetype) so /reverse matches /api's schema —
 			// no Photon client should dereference an undefined osm_key on a reverse result either.
 			const properties: PhotonProperties = {

@@ -86,6 +86,7 @@ export class TimezoneLookup {
 
 	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
 		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+
 		// Candidate features whose bbox contains the point; PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
 			`SELECT tzid, geom FROM timezone_polygons

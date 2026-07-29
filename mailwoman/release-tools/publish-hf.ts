@@ -80,6 +80,7 @@ const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
 	return false
 }
+
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
 /**
@@ -192,6 +193,7 @@ function verifyRequiredFiles(args: PublishHFOptions): void {
 		if (!existsSync(localPath)) {
 			fail(`${localPath} does not exist`)
 		}
+
 		const size = statSync(localPath).size
 
 		if (size === 0) {
@@ -226,6 +228,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		.split("-")
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
 		.join("-")
+
 	const fstRemoteName = `fst-${bcp47}.bin`
 	const fstPath = stageOptionalBinary(args.fst, "FST gazetteer")
 
@@ -413,6 +416,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	if (!res.ok) {
 		fail(`failed to fetch ${releasesURL}`)
 	}
+
 	const releases = (await res.json()) as ReleaseManifest
 
 	const newEntry: Record<string, unknown> = {

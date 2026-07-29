@@ -60,11 +60,13 @@ export async function buildRegressionDB(): Promise<void> {
 			c.note ?? null
 		)
 	}
+
 	await kdb.destroy()
 
 	if (existsSync(output)) {
 		renameSync(output, `${output}.prev`)
 	}
+
 	renameSync(tmp, output)
 
 	if (existsSync(`${output}.prev`)) {

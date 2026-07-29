@@ -32,6 +32,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 				}
 			},
 		})
+
 		matcher = built.matcher
 		result = built.result
 	}, 60_000)
@@ -116,6 +117,7 @@ describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", (
 			excludeAllTokensOf: new Set(["de", "la", "du", "des"]),
 			exclusionPolicy: "test-policy",
 		})
+
 		matcher = built.matcher
 		provenance = built.provenance
 	}, 60_000)

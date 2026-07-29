@@ -67,6 +67,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 				`${divergences} of ${fixture.length} entries diverged from Python.\nFirst ${failures.length}:\n${failures.join("\n---\n")}`
 			)
 		}
+
 		expect(divergences).toBe(0)
 	})
 
@@ -88,6 +89,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 			if (ZERO_WIDTH_RE.test(raw)) continue
 
 			if (expectedPieces.some((p) => BYTE_FALLBACK_RE.test(p))) continue
+
 			supported++
 
 			const { pieces } = tokenizer.encode(raw)
@@ -103,6 +105,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 							`raw=${JSON.stringify(raw)}\n  piece=${JSON.stringify(p.piece)} literal=${JSON.stringify(literal)} start=${p.start} end=${p.end}\n  raw.slice=${JSON.stringify(raw.slice(p.start, p.end))}`
 						)
 					}
+
 					break
 				}
 			}

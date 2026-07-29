@@ -129,6 +129,7 @@ function detectPoBox(text: string, tokens: ReadonlyArray<TokenClass>): KnownForm
 
 			if (PO_BOX_LEADERS.has(tjBody)) {
 				last = j
+
 				continue
 			}
 
@@ -136,8 +137,10 @@ function detectPoBox(text: string, tokens: ReadonlyArray<TokenClass>): KnownForm
 			if (tj.class === "digit" || tj.class === "mixed") {
 				last = j
 				foundNumber = true
+
 				break
 			}
+
 			break
 		}
 

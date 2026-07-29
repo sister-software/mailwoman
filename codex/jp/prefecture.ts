@@ -134,6 +134,7 @@ function foldRomaji(s: string): string {
 		.toLowerCase()
 		.normalize("NFD")
 		.replaceAll(/[\u0300-\u036F]/g, "")
+
 	// Strip an appended type-suffix only when a separator (hyphen / space / middle dot) precedes it.
 	const desuffixed = lowered.replace(/[-\s·][\s]*(to|do|fu|ken)$/, "")
 

@@ -178,6 +178,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 
 	const url =
 		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
+
 	const csv = await fetchText(url)
 	const lines = csv.split("\n")
 	const header = lines[0]!.split(",")
@@ -219,6 +220,7 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (existsSync(RANKED_FILE)) {
 		return JSON.parse(readFileSync(RANKED_FILE, "utf8"))
 	}
+
 	const records = await fetchAndBuildRanking()
 	mkdirSync(path.dirname(RANKED_FILE), { recursive: true })
 	writeFileSync(RANKED_FILE, JSON.stringify(records, null, 2))
@@ -248,10 +250,12 @@ function fetchText(url: string, redirectsLeft = 3): Promise<string> {
 			if (status !== HTTP_OK) {
 				return reject(new Error(`HTTP ${status} for ${url}`))
 			}
+
 			const chunks: Buffer[] = []
 			res.on("data", (c) => chunks.push(c))
 			res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")))
 		})
+
 		req.on("error", reject)
 	})
 }
@@ -287,6 +291,7 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const follow = (u: string, hopsLeft: number) => {
 			if (hopsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
+
 			const req = https.get(u, (res) => {
 				const status = res.statusCode ?? 0
 
@@ -302,11 +307,14 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 
 					return reject(new Error(`HTTP ${status} for ${u}`))
 				}
+
 				const out = createWriteStream(dest)
 				pipeline(res, out).then(resolve).catch(reject)
 			})
+
 			req.on("error", reject)
 		}
+
 		follow(url, 5)
 	})
 }
@@ -359,6 +367,7 @@ async function downloadParallel(
 			// Idempotency: skip if the SHP is already present (the ZIP may be gone after extraction)
 			if (existsSync(shpPath)) {
 				skipped++
+
 				continue
 			}
 
@@ -366,7 +375,9 @@ async function downloadParallel(
 			if (existsSync(task.zipPath)) {
 				try {
 					extractEdgesZip(task.zipPath, edgesDir)
+
 					skipped++
+
 					continue
 				} catch (error) {
 					console.error(
@@ -378,6 +389,7 @@ async function downloadParallel(
 			try {
 				await downloadFile(task.zipURL, task.zipPath)
 				extractEdgesZip(task.zipPath, edgesDir)
+
 				downloaded++
 			} catch (error) {
 				console.error(`  [fail] ${task.geoid}: ${error instanceof Error ? error.message : error}`)
@@ -421,6 +433,7 @@ function buildStateShard(
 
 	mkdirSync(outDir, { recursive: true })
 	const t0 = Date.now()
+
 	const result = spawnSync(
 		process.execPath,
 		[
@@ -441,6 +454,7 @@ function buildStateShard(
 			encoding: "utf8",
 		}
 	)
+
 	const wallMs = Date.now() - t0
 
 	if (result.status !== 0) {
@@ -554,6 +568,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			console.error(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
 
 			const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
+
 			const tasks: DownloadTask[] = counties.map((c) => {
 				const geoid = c.geoid // 5-digit: stateFips + countyFips
 				const zipFile = `tl_2023_${geoid}_edges.zip`
@@ -564,6 +579,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 					zipPath: path.join(EDGES_DIR, zipFile),
 				}
 			})
+
 			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
 
 			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
@@ -618,16 +634,20 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			if (result === null) {
 				// skipped (already exists, no --force)
 				stateResults.push({ state: abbr, counties: 0, segments: 0, wallMs: 0, skipped: true })
+
 				continue
 			}
+
 			builtStates++
 			totalSegments += result.segments
+
 			stateResults.push({
 				state: abbr,
 				counties: result.counties,
 				segments: result.segments,
 				wallMs: result.wallMs,
 			})
+
 			const elapsed = (result.wallMs / 1000).toFixed(1)
 
 			console.error(
@@ -638,6 +658,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// ── Summary ────────────────────────────────────────────────────────────
 		const totalWallMs = Date.now() - wallStart
+
 		const lines = [
 			`interpolation: ${OUT_DIR}`,
 			`States built:    ${builtStates} / ${availableStates.length}`,

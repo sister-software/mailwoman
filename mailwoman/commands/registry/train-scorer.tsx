@@ -62,6 +62,7 @@ function runVariant(variant: Variant, options: Options): Promise<{ out: string; 
 		dataRoot: options.dataRoot,
 		locale: options.locale,
 	})
+
 	const base = { createGeocoder, sources: options.sources, out: options.out, locale: options.locale }
 
 	switch (variant) {

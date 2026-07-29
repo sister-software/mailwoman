@@ -88,6 +88,7 @@ export async function createPostalCityAliasTable(db: Kysely<PostalCityAliasDatab
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("release", "text", (c) => c.notNull())
 		.execute()
+
 	await db.schema.createIndex("idx_pca_postcode").on("postal_city_alias").column("postcode").execute()
 	await db.schema.createIndex("idx_pca_pair").on("postal_city_alias").columns(["postal_city", "geo_locality"]).execute()
 }

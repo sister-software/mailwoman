@@ -51,6 +51,7 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
 
 	const valid = new Set<string>(PlacetypeRoles)
+
 	const parsed = raw
 		.split(",")
 		.map((s) => s.trim())

@@ -215,8 +215,10 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 
 		if (index < 0) {
 			contributions.push({ name: comparison.name, level: null, weight: 0 })
+
 			continue
 		}
+
 		const level = comparison.levels[index]!
 		let w = levelWeight(level)
 

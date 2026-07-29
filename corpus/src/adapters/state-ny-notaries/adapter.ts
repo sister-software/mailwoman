@@ -83,6 +83,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -142,6 +143,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
 						.filter(Boolean)
 						.join(", ")
@@ -151,6 +153,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const commNum = (record["Commission Number (UID)"] ?? "").trim()
+
 					const sourceID = commNum
 						? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`
 						: stableSourceID(STATE_NY_NOTARIES_ADAPTER_ID, aligned)
@@ -165,6 +168,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

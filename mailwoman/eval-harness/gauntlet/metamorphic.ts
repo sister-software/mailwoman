@@ -163,6 +163,7 @@ function transposeMiddle(s: string): string | null {
 			i = mid
 		} else return null
 	}
+
 	const swapped = [...chars]
 	const tmp = swapped[i]!
 	swapped[i] = swapped[i + 1]!
@@ -392,11 +393,14 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		for (const p of INV) {
 			const perturbed = p.f(base.input, base)
 
-			if (perturbed == null) continue // perturbation not applicable to this base (e.g. no expandable suffix)
+			if (perturbed == null) continue
+
+			// perturbation not applicable to this base (e.g. no expandable suffix)
 
 			invChecks++
 			bump(invTally, p.name, "checks")
 			const r = await runOne(perturbed, deps)
+
 			const moved =
 				r.tier !== canon.tier ||
 				(canon.lat != null && r.lat != null && haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) > INV_EPSILON_KM) ||
@@ -404,8 +408,10 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (!moved) {
 				bump(invTally, p.name, "held")
+
 				continue
 			}
+
 			const key = `${p.name}|${base.input}`
 			const tracked = KNOWN_INV_XFAIL.get(key)
 			const line = `INV[${p.name}] "${base.input}" → "${perturbed}" · tier ${canon.tier}→${r.tier}, coord ${canon.lat},${canon.lon} → ${r.lat},${r.lon}`
@@ -425,6 +431,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		if (base.postcode) {
 			dirChecks++
 			const dropped = await runOne(dropPostcode(base.input), deps)
+
 			const ok =
 				dropped.lat != null &&
 				canon.lat != null &&
@@ -432,6 +439,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (!ok) {
 				dirFails++
+
 				fails.push(
 					`  ✗ DIR[drop-postcode] "${base.input}" → "${dropPostcode(base.input)}" landed ${dropped.lat},${dropped.lon} (anchor ${canon.lat},${canon.lon})`
 				)
@@ -444,7 +452,9 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (perturbed == null || perturbed === base.input) continue
 
-			if (canon.lat == null) continue // no clean anchor to measure a band against
+			if (canon.lat == null) continue
+
+			// no clean anchor to measure a band against
 
 			bandChecks++
 			bump(bandTally, p.name, "checks")
@@ -454,8 +464,10 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			if (ok) {
 				bump(bandTally, p.name, "held")
+
 				continue
 			}
+
 			const key = `${p.name}|${base.input}`
 			const tracked = KNOWN_BAND_XFAIL.get(key)
 			const movedBy = dist != null ? `${dist.toFixed(1)}km` : "no-resolve"
@@ -472,6 +484,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			}
 		}
 	}
+
 	deps.close()
 
 	// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
@@ -531,6 +544,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			console.log(`  + ${key}  [was: ${issue}]`)
 		}
 	}
+
 	// The gate fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size

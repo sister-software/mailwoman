@@ -28,11 +28,13 @@ export function detectLocaleSync(
 	if (script) {
 		scored.push(script)
 	}
+
 	const postcode = scoreByPostcode(shape)
 
 	if (postcode) {
 		scored.push(postcode)
 	}
+
 	scored.push(scoreFallback(shape))
 
 	// Sort descending by confidence; preserve scorer order on ties (stable sort).
@@ -41,6 +43,7 @@ export function detectLocaleSync(
 	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins; the other
 	// contributes nothing useful as an alternative.
 	const seen = new Set<string>()
+
 	const deduped = scored.filter((c) => {
 		if (seen.has(c.locale)) return false
 		seen.add(c.locale)

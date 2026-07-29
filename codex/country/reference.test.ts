@@ -28,6 +28,7 @@ test("countryReferenceAnnotator: fills iso3166 + flag + calling code + currency"
 		callingCode: 1,
 		currency: { isoCode: "USD", name: "United States dollar", symbol: "$" },
 	})
+
 	const gb = countryReferenceAnnotator({ lat: 0, lon: 0, countryCode: "GB" })
 	expect(gb.callingCode).toBe(44)
 	expect(gb.currency?.isoCode).toBe("GBP")

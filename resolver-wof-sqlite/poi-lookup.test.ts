@@ -71,6 +71,7 @@ const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3,
 const TRAIL_GRID_DISTANCE = 13
 const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
 const [TRAIL_LAT, TRAIL_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, TRAIL_GRID_DISTANCE)[0]!)
+
 const TRAIL_SPARSE: FixtureRow = {
 	name: "Ridge Trail",
 	category: "trail",
@@ -88,6 +89,7 @@ const CAFE_ALPHA: FixtureRow = {
 	longitude: -89.6501,
 	gersID: "08f2836a5411a2ff0300b0a0a0a0a0a0",
 }
+
 const CAFE_BETA: FixtureRow = {
 	name: "Cafe Beta",
 	category: "cafe",
@@ -95,6 +97,7 @@ const CAFE_BETA: FixtureRow = {
 	latitude: 39.785,
 	longitude: -89.6501,
 }
+
 const CAFE_GAMMA: FixtureRow = {
 	name: "Cafe Gamma",
 	category: "cafe",
@@ -102,6 +105,7 @@ const CAFE_GAMMA: FixtureRow = {
 	latitude: 39.79,
 	longitude: -89.6501,
 }
+
 // 1 branded fast-food row, near Springfield (McDonald's, Q38076).
 const MCDONALDS: FixtureRow = {
 	name: "McDonald's",
@@ -110,6 +114,7 @@ const MCDONALDS: FixtureRow = {
 	latitude: 39.781,
 	longitude: -89.651,
 }
+
 // A SECOND McDonald's (same Q38076) ~280 km away in Chicago — far outside the default ~4 km ring budget. The brand
 // path is a brand-wide fetch (no k-ring), so both must surface, distance-sorted (Springfield one first).
 const MCDONALDS_CHICAGO: FixtureRow = {
@@ -119,6 +124,7 @@ const MCDONALDS_CHICAGO: FixtureRow = {
 	latitude: 41.8805,
 	longitude: -87.6299,
 }
+
 // Costco (Q715583): one near Springfield, one ~2,800 km away in San Francisco. The SF one is past the 500 km sanity
 // radius, so a Costco brand search from Springfield returns ONLY the near one.
 const COSTCO_NEAR: FixtureRow = {
@@ -128,6 +134,7 @@ const COSTCO_NEAR: FixtureRow = {
 	latitude: 39.783,
 	longitude: -89.652,
 }
+
 const COSTCO_FAR: FixtureRow = {
 	name: "Costco SF",
 	category: "supermarket",
@@ -135,6 +142,7 @@ const COSTCO_FAR: FixtureRow = {
 	latitude: 37.7749,
 	longitude: -122.4194,
 }
+
 // 7 rows ~280 km away in Chicago — a distinct res-9 cell, well outside the default ~4 km ring budget.
 // Includes the fixture's ONLY `museum` rows, so a museum search from Springfield must come back empty.
 const CHICAGO_ROWS: FixtureRow[] = [
@@ -146,6 +154,7 @@ const CHICAGO_ROWS: FixtureRow[] = [
 	{ name: "Field Museum", category: "museum", brandWikidata: null, latitude: 41.8663, longitude: -87.6169 },
 	{ name: "Shedd Wing", category: "museum", brandWikidata: null, latitude: 41.8676, longitude: -87.6153 },
 ]
+
 // 1 uncategorized named row, unrelated location — the FTS name-path fixture.
 const PIER_39: FixtureRow = {
 	name: "Pier 39",
@@ -243,6 +252,7 @@ describe("POILookup", () => {
 			// gers_id round-trips: Cafe Alpha was seeded with one, the others with null.
 			expect(hits[0]!.gersID).toBe(CAFE_ALPHA.gersID)
 			expect(hits[1]!.gersID).toBeNull()
+
 			// Sanity: the app-level distance matches a plain haversine of the same pair.
 			expect(hits[0]!.distanceM).toBeCloseTo(
 				haversineKm(SPRINGFIELD.latitude, SPRINGFIELD.longitude, CAFE_ALPHA.latitude, CAFE_ALPHA.longitude) * 1000,
@@ -379,6 +389,7 @@ describe("POILookup", () => {
 			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
 			// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
 			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])
+
 			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 14 }).map((h) => h.name)).toEqual([
 				"Ridge Trail",
 			])
@@ -452,6 +463,7 @@ describe("POILookup", () => {
 			const found = raw
 				.prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?")
 				.get("poi_brand_wikidata") as { sql: string } | undefined
+
 			expect(found).toBeDefined()
 			// PARTIAL: the DDL carries the `WHERE brand_wikidata IS NOT NULL` predicate.
 			expect(found!.sql.toLowerCase()).toContain("where")

@@ -170,6 +170,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		]) {
 			aliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDirEntry(coreDir, sub)
 		}
+
 		// Barrel-bypass for @mailwoman/resolver — resolve it straight to its `types` module (where
 		// `expandPlacetypeFilter`, `DEFAULT_PLACETYPE_MAP`, and `PLACETYPE_FILTER_GROUPS` are DIRECTLY
 		// defined) instead of the package barrel `resolver/index.ts`, which RE-EXPORTS them from
@@ -269,6 +270,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
 
 		return false
 	}
+
 	const sourceSize = statSync(sourcePath).size
 
 	if (existsSync(destPath)) {
@@ -303,6 +305,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 
 		return false
 	}
+
 	const files = ["index.js", "sqlite.worker.js", "sql-wasm.wasm"]
 	let copied = 0
 
@@ -314,6 +317,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 
 			return false
 		}
+
 		const dest = resolve(destDir, f)
 
 		// Idempotent stage: skip when the destination already matches (by size). This runs in
@@ -325,6 +329,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 		// so it was never affected.)
 		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
 		copyFileSync(src, dest)
+
 		copied++
 	}
 
@@ -354,6 +359,7 @@ export function stagePairIndexes(destDir: string): boolean {
 		{ pkg: "@mailwoman/neural-weights-en-gb", file: "pair-index-gb.bin" },
 		{ pkg: "@mailwoman/neural-weights-en-nz", file: "pair-index-nz.bin" },
 	]
+
 	let copied = 0
 
 	for (const { pkg, file } of sources) {
@@ -364,6 +370,7 @@ export function stagePairIndexes(destDir: string): boolean {
 
 			continue
 		}
+
 		const src = resolve(pkgDir, file)
 
 		if (!existsSync(src)) {
@@ -374,11 +381,13 @@ export function stagePairIndexes(destDir: string): boolean {
 
 			continue
 		}
+
 		const dest = resolve(destDir, file)
 
 		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
 		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
 		copyFileSync(src, dest)
+
 		copied++
 	}
 

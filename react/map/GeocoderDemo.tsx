@@ -97,6 +97,7 @@ function GeocoderDemoInner({
 
 	const geocode = useDemoGeocode({ runtime, defaultText: defaultAddress, getBias })
 	const compare = useCompareState()
+
 	const autocomplete = usePlaceAutocomplete({
 		text: geocode.text,
 		setText: geocode.setText,

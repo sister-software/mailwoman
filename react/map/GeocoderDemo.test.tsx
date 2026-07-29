@@ -31,6 +31,7 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 			found = get()
 
 			if (found) break
+
 			await new Promise((resolve) => {
 				setTimeout(resolve, 50)
 			})

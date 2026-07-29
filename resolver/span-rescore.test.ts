@@ -84,11 +84,13 @@ describe("findRescoreCandidate", () => {
 	it("recovers a fragmented locality from the raw text", async () => {
 		// The model split "Grudziądz" into "Grudzi" + "dz"; neither resolves. The raw word is intact.
 		const raw = "86-300 Grudziądz, Daliowa 4"
+
 		const roots: AddressNode[] = [
 			node({ tag: "postcode", value: "86-300", start: 0, end: 6 }),
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16, confidence: 0.9 }),
 		]
+
 		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "PL", postcode: "86-300" })
 		expect(hit?.text).toBe("Grudziądz")
 		expect(hit?.place.id).toBe(1)
@@ -111,6 +113,7 @@ describe("findRescoreCandidate", () => {
 			postcode: "97-200",
 			gateKm: 50,
 		})
+
 		expect(hit?.place.id).toBe(3)
 		expect(hit?.gated).toBe(true)
 	})
@@ -123,6 +126,7 @@ describe("findRescoreCandidate", () => {
 			postcode: "97-200",
 			gateKm: 50,
 		})
+
 		expect(hit).toBeNull()
 	})
 
@@ -149,10 +153,12 @@ describe("resolveTree + spanRescore", () => {
 
 	it("injects a resolved locality when the tree resolved nothing (opt-in)", async () => {
 		const resolver = createWOFResolver(makeBackend())
+
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
+
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL", spanRescore: true })
 		const injected = out.roots.find((n) => n.placeID === "wof:1")
 		expect(injected).toBeDefined()
@@ -166,10 +172,12 @@ describe("resolveTree + spanRescore", () => {
 
 	it("injects by default when spanRescore is unset (#370 promoted to default-on 2026-06-25)", async () => {
 		const resolver = createWOFResolver(makeBackend())
+
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
+
 		// No `spanRescore` in opts — the default (ON) must still recover the locality.
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
 		expect(out.roots.find((n) => n.placeID === "wof:1")?.value).toBe("Grudziądz")
@@ -178,16 +186,19 @@ describe("resolveTree + spanRescore", () => {
 	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
 		const resolver = createWOFResolver(makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
+
 		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), {
 			defaultCountry: "PL",
 			spanRescore: false,
 		})
+
 		expect(out.roots.some((n) => n.placeID)).toBe(false)
 		expect(out.roots).toHaveLength(1)
 	})
 
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {
 		const resolver = createWOFResolver(makeBackend())
+
 		// "Grudziądz" as a single locality node resolves in the walk → already has a coordinate.
 		const out = await resolver.resolveTree(
 			tree("Grudziądz", [node({ tag: "locality", value: "Grudziądz", start: 0, end: 9 })]),
@@ -196,6 +207,7 @@ describe("resolveTree + spanRescore", () => {
 				spanRescore: true,
 			}
 		)
+
 		// Exactly one locality node (the resolved original), no injected duplicate.
 		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(1)
 	})

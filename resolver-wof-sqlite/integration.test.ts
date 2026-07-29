@@ -61,6 +61,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 				expect(c.lon).toBeLessThan(0)
 				expect(c.id).toBeGreaterThan(0)
 			}
+
 			// At least one of the candidates IS plain "Paris" (not "Saint Paris" / "South Paris" / etc).
 			expect(candidates.some((c) => c.name === "Paris")).toBe(true)
 		})
@@ -136,6 +137,7 @@ describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 				parentID: parentID!,
 				limit: 50,
 			})
+
 			expect(constrained.length).toBeGreaterThan(0)
 			expect(constrained.find((c) => c.id === springfields[0]!.id)).toBeDefined()
 		})

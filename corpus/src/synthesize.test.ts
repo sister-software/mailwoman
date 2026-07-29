@@ -48,6 +48,7 @@ describe("universal augmentations", () => {
 		const out = caseUpper(
 			baseRow({ raw: "Portland, OR 97214", components: { locality: "Portland", region: "OR", postcode: "97214" } })
 		)!
+
 		expect(out.raw).toBe("PORTLAND, OR 97214")
 		expect(out.components.locality).toBe("PORTLAND")
 		expect(out.synth?.method).toBe("case-upper")
@@ -70,6 +71,7 @@ describe("universal augmentations", () => {
 		const out = dropCommas(
 			baseRow({ raw: "Portland, OR 97214", components: { locality: "Portland", region: "OR", postcode: "97214" } })
 		)!
+
 		expect(out.raw).toBe("Portland OR 97214")
 		expect(out.synth?.method).toBe("drop-commas")
 	})
@@ -81,6 +83,7 @@ describe("universal augmentations", () => {
 				components: { street: "Champs Élysées", locality: "Paris", country: "France" },
 			})
 		)!
+
 		expect(out.raw).toBe("Champs  Élysées,  Paris,  France")
 		// Components must double-space too: alignment substring-searches each component in raw,
 		// so single-spaced "Champs Élysées" would not appear in the double-spaced raw.
@@ -104,6 +107,7 @@ describe("universal augmentations", () => {
 				components: { locality: "Paris", region: "Île-de-France", country: "France" },
 			})
 		)!
+
 		expect(out.raw).toBe("Paris, Ile-de-France, France")
 		expect(out.components.region).toBe("Ile-de-France")
 	})
@@ -122,6 +126,7 @@ describe("US augmentations", () => {
 				components: { locality: "Portland", region: "OR", postcode: "97214" },
 			})
 		)!
+
 		expect(out.raw).toBe("Portland, Oregon 97214")
 		expect(out.components.region).toBe("Oregon")
 		expect(out.synth?.method).toBe("state-expand")
@@ -134,6 +139,7 @@ describe("US augmentations", () => {
 				components: { locality: "Portland", region: "Oregon" },
 			})
 		)!
+
 		expect(out.raw).toBe("Portland, OR")
 		expect(out.components.region).toBe("OR")
 	})
@@ -150,6 +156,7 @@ describe("US augmentations", () => {
 				components: { house_number: "1600", street: "Pennsylvania", street_suffix: "Ave NW" },
 			})
 		)!
+
 		expect(out.raw).toBe("1600 Pennsylvania Ave Northwest")
 		expect(out.components.street_suffix).toBe("Ave Northwest")
 	})
@@ -161,6 +168,7 @@ describe("US augmentations", () => {
 				components: { house_number: "6220", street: "Salmon St Southeast" },
 			})
 		)!
+
 		expect(out.raw).toBe("6220 Salmon St SE")
 	})
 
@@ -171,6 +179,7 @@ describe("US augmentations", () => {
 				components: { locality: "Portland", region: "OR", postcode: "12345-6789" },
 			})
 		)!
+
 		expect(out.components.postcode).toBe("123456789")
 		expect(out.raw).toBe("Portland, OR 123456789")
 	})
@@ -195,6 +204,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				},
 			})
 		)!
+
 		expect(out.components.street).toBe("5th Ave")
 		expect(out.raw).toBe("350 5th Ave, New York, NY 10118")
 		expect(out.synth?.method).toBe("us-street-suffix-abbreviate")
@@ -213,6 +223,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				},
 			})
 		)!
+
 		expect(out.components.street).toBe("5TH AVE")
 		expect(out.raw).toContain("5TH AVE,")
 	})
@@ -224,6 +235,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "100", street: "Main Street", locality: "Anytown" },
 			})
 		)!
+
 		expect(out.components.street).toBe("Main St")
 		expect(out.raw).toContain("Main St,")
 	})
@@ -235,6 +247,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "1", street: "Sunset Boulevard" },
 			})
 		)!
+
 		expect(out.components.street).toBe("Sunset Blvd")
 	})
 
@@ -245,6 +258,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "100", street: "Main St" },
 			})
 		)
+
 		expect(out).toBeNull()
 	})
 
@@ -255,6 +269,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "100", street: "MAIN AV" },
 			})
 		)!
+
 		expect(out.components.street).toBe("MAIN AVE")
 	})
 
@@ -265,6 +280,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "100", street: "Broadway" },
 			})
 		)
+
 		expect(out).toBeNull()
 	})
 
@@ -280,6 +296,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "350", street: "5th Ave", locality: "New York", region: "NY", postcode: "10118" },
 			})
 		)!
+
 		expect(out.components.street).toBe("5th Avenue")
 		expect(out.raw).toBe("350 5th Avenue, New York, NY 10118")
 		expect(out.synth?.method).toBe("us-street-suffix-expand")
@@ -292,6 +309,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "350", street: "5TH AVE" },
 			})
 		)!
+
 		expect(out.components.street).toBe("5TH AVENUE")
 	})
 
@@ -302,6 +320,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 		const strt = streetSuffixExpand(
 			baseRow({ raw: "1 MAIN STRT", components: { house_number: "1", street: "MAIN STRT" } })
 		)!
+
 		expect(strt.components.street).toBe("MAIN STREET")
 	})
 
@@ -312,6 +331,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 				components: { house_number: "1", street: "Sunset Boulevard" },
 			})
 		)
+
 		expect(out).toBeNull()
 	})
 
@@ -363,6 +383,7 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 				},
 			})
 		)!
+
 		expect(out.components.unit).toBe("Apt 4B")
 		expect(out.raw).toContain("Main St Apt 4B,")
 	})
@@ -371,6 +392,7 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		const out = unitDesignatorAbbreviate(
 			unitRow({ raw: "1 OCEAN DR SUITE 200", components: { house_number: "1", street: "OCEAN DR", unit: "SUITE 200" } })
 		)!
+
 		expect(out.components.unit).toBe("STE 200")
 		expect(out.raw).toContain("STE 200")
 	})
@@ -379,6 +401,7 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		const out = unitDesignatorExpand(
 			unitRow({ raw: "12 Elm St Bsmt", components: { house_number: "12", street: "Elm St", unit: "Bsmt" } })
 		)!
+
 		expect(out.components.unit).toBe("Basement")
 		expect(out.raw).toContain("Elm St Basement")
 	})
@@ -399,12 +422,14 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 				postcode: "94601",
 			},
 		})
+
 		expect(unitDesignatorExpand(row)).toBeNull()
 		expect(unitDesignatorAbbreviate(row)).toBeNull()
 	})
 
 	it("returns null on a non-US row + when there's no unit component", () => {
 		expect(unitDesignatorExpand(unitRow({ country: "FR" }))).toBeNull()
+
 		expect(
 			unitDesignatorExpand(baseRow({ raw: "123 Main St", components: { house_number: "123", street: "Main St" } }))
 		).toBeNull()
@@ -435,6 +460,7 @@ describe("FR augmentations", () => {
 				},
 			})
 		)!
+
 		expect(out.raw).toBe("10 Rue République, 75008 Paris")
 		expect(out.components.street_prefix_particle).toBeUndefined()
 		expect(out.components.street_prefix).toBe("Rue")
@@ -475,6 +501,7 @@ describe("registry + defaults", () => {
 			raw: "Portland, OR 97214",
 			components: { locality: "Portland", region: "OR", postcode: "97214" },
 		})
+
 		const out = Array.from(synthesizeRow(row))
 		// Case-upper + case-lower + drop-commas + double-space + state-expand all apply
 		const methods = out.map((r) => r.synth?.method)
@@ -490,6 +517,7 @@ describe("registry + defaults", () => {
 			raw: "Portland, Oregon",
 			components: { locality: "Portland", region: "Oregon" },
 		})
+
 		const out = Array.from(synthesizeRow(row))
 		const upper = out.find((r) => r.synth?.method === "case-upper")!
 		expect(upper.source_id).toBe("t-1+case-upper")
@@ -651,11 +679,13 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 
 		if (aligned.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
+
 		const slice = (tag: ComponentTag) => {
 			const i = span_tags!.indexOf(tag)
 
 			return raw.slice(span_starts![i]!, span_ends![i]!)
 		}
+
 		expect(slice("po_box")).toBe("P.O. BOX 5")
 		expect(slice("street")).toBe("MAIN ST")
 	})
@@ -672,9 +702,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -692,9 +724,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -717,9 +751,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Las Vegas", region: "NV", postcode: "89109" },
 			source_id: "wof-admin-las-vegas",
 		})
+
 		const result = composeAdversarialRow("New York, New York Steakhouse", address, {
 			pattern: "place-shaped-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -744,9 +780,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Montreal", region: "QC", postcode: "H2X 1Y4" },
 			source_id: "test-montreal",
 		})
+
 		const result = composeAdversarialRow("P'tit St. Denis Street Café", address, {
 			pattern: "particle-honorific",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -770,9 +808,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -791,9 +831,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -813,9 +855,11 @@ describe("composeAdversarialRow", () => {
 			source: "wof-admin",
 			license: "CC0-1.0",
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -832,10 +876,12 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const spaced = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 			separator: " ",
 		})
+
 		expect(spaced.kind).toBe("labeled")
 
 		if (spaced.kind === "labeled") {
@@ -846,6 +892,7 @@ describe("composeAdversarialRow", () => {
 			pattern: "place-name-venue",
 			separator: "\n",
 		})
+
 		expect(newline.kind).toBe("labeled")
 
 		if (newline.kind === "labeled") {
@@ -858,6 +905,7 @@ describe("composeAdversarialRow", () => {
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 		})
+
 		const result = composeAdversarialRow("   ", address, { pattern: "place-name-venue" })
 		expect(result.kind).toBe("quarantined")
 
@@ -873,9 +921,11 @@ describe("composeAdversarialRow", () => {
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "QQQQQQ", postcode: "14201" },
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("quarantined")
 
 		if (result.kind === "quarantined") {
@@ -890,9 +940,11 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
 			pattern: "place-name-venue",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
@@ -922,6 +974,7 @@ describe("composeAdversarialRow", () => {
 				pattern: "place-shaped-venue",
 				separator,
 			})
+
 			expect(result.kind).toBe("labeled")
 
 			if (result.kind !== "labeled") continue
@@ -947,14 +1000,17 @@ describe("composeAdversarialRow", () => {
 			country: "CA",
 			components: { locality: "Montreal", region: "QC", postcode: "H2X 1Y4" },
 		})
+
 		const result = composeAdversarialRow("P'tit St. Denis Street Café", address, {
 			pattern: "particle-honorific",
 		})
+
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
 		// The whole venue — apostrophe, period, accent included — is ONE span.
 		expect(result.row.span_tags![0]).toBe("venue")
+
 		expect(result.row.raw.slice(result.row.span_starts![0]!, result.row.span_ends![0]!)).toBe(
 			"P'tit St. Denis Street Café"
 		)
@@ -965,6 +1021,7 @@ describe("composeAdversarialRow", () => {
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 		})
+
 		const nfdVenue = "Café Olé".normalize("NFD")
 		const result = composeAdversarialRow(nfdVenue, address, { pattern: "place-name-venue" })
 		expect(result.kind).toBe("quarantined")
@@ -980,6 +1037,7 @@ describe("composeAdversarialRow", () => {
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
 			source_id: "wof-admin-buffalo",
 		})
+
 		const a = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
 		const b = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
 		expect(a).toEqual(b)
@@ -1003,9 +1061,11 @@ describe("typoInject (#530)", () => {
 		const out = typoInject(row)
 		expect(out).not.toBeNull()
 		expect(out!.synth?.method).toBe("typo-inject")
+
 		const changed = (Object.keys(row.components) as ComponentTag[]).filter(
 			(k) => row.components[k] !== out!.components[k]
 		)
+
 		expect(changed).toHaveLength(1)
 		const tag = changed[0]!
 		expect(tag).not.toBe("house_number")
@@ -1031,6 +1091,7 @@ describe("typoInject (#530)", () => {
 		const out = typoInject(
 			baseRow({ raw: "123 95014", components: { house_number: "123", postcode: "95014" }, source_id: "n" })
 		)
+
 		expect(out).toBeNull()
 	})
 

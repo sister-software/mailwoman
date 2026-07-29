@@ -114,6 +114,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		// 11 valid rows (1 dropped: ZZ state) — exact number depends on which fixture rows
 		// the address-formatter renders into a non-empty `raw`. The strict equality below catches
 		// any future drift in the format pipeline.
@@ -134,6 +135,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		expect(rows.find((r) => r.source_id === "fcc-bdc-1000000099")).toBeUndefined()
 	})
@@ -145,9 +147,11 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "fcc-bdc-1000000001")
 		expect(row).toBeDefined()
+
 		expect(row!.components).toMatchObject({
 			house_number: "123",
 			street: "Main St",
@@ -155,6 +159,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			region: "OR",
 			postcode: "97215",
 		})
+
 		expect(row!.raw).toContain("123 Main St")
 		expect(row!.raw).toContain("Portland")
 		expect(row!.raw).toContain("OR")
@@ -168,6 +173,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "fcc-bdc-1000000002")
 		expect(row).toBeDefined()
@@ -182,6 +188,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "fcc-bdc-1000000003")
 		expect(row).toBeDefined()
@@ -195,6 +202,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const poBox = rows.find((r) => r.source_id === "fcc-bdc-1000000050")
 		expect(poBox).toBeDefined()
@@ -210,6 +218,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "fcc-bdc-1000000020")
 		expect(row).toBeDefined()
@@ -223,6 +232,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "fcc-bdc-1000000060")
 		expect(row).toBeDefined()
@@ -247,6 +257,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(m.yielded).toBe(3)
 		expect(m.written).toBe(3)
 	})
@@ -258,13 +269,16 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		await rm(join(scratch, FCC_BDC_ADAPTER_ID), { recursive: true, force: true })
+
 		const b = await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
+
 		expect(a.sha256).toBe(b.sha256)
 	})
 })

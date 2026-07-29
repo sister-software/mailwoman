@@ -170,12 +170,14 @@ export function aggregateBrands(
 		const sortedVariants = [...variants.entries()].toSorted(
 			([nameA, nA], [nameB, nB]) => nB - nA || nameA.localeCompare(nameB)
 		)
+
 		const modalName = sortedVariants[0]![0]
 		const modalCount = sortedVariants[0]![1]
 
 		if (modalCount / total < dominance) continue
 
 		const noiseFloor = Math.max(3, total * 0.01)
+
 		const aliases = sortedVariants
 			.slice(1)
 			.filter(([, n]) => n >= noiseFloor)
@@ -231,6 +233,7 @@ export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promis
 
 	const rows = opts.rows ?? readBrandNameCounts(opts.dbPath!)
 	const sourceLayer = opts.sourceLayer ?? (await readSourceLayer(opts.dbPath!))
+
 	const brands: BrandRecord[] = aggregateBrands(
 		rows,
 		opts.minRows ?? DEFAULT_MIN_ROWS,

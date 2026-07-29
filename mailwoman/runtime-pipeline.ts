@@ -289,6 +289,7 @@ export function createRuntimePipeline(
 	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
 	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
 	const poiQueryKindEffective = opts.poiQueryKind ?? true
+
 	const stages: RuntimePipelineStages = {
 		normalize,
 		computeQueryShape,
@@ -450,6 +451,7 @@ export function createRuntimePipeline(
 				}
 			}
 		}
+
 		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
 		// runOpts value overrides each. hardPlaceCountry is DEFAULT-ON (#743, 2026-06-22): the coverage
 		// safelist confines the hard filter to well-covered countries, so this is a pure win there and a

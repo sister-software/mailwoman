@@ -126,10 +126,12 @@ export class StreetInterpolator implements InterpolationLookup {
 		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
 		if (hasTable(this.#db, "street_segment")) {
 			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
+
 			this.#byPostcode = this.#db.prepare(
 				`SELECT ${columns} FROM street_segment
 				 WHERE postcode = ? AND street_norm = ? AND min_hn <= ? AND max_hn >= ?`
 			)
+
 			this.#byStreet = this.#db.prepare(
 				`SELECT ${columns} FROM street_segment
 				 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
@@ -145,6 +147,7 @@ export class StreetInterpolator implements InterpolationLookup {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
 				| { radius_multiplier: unknown }
 				| undefined
+
 			const value = row?.radius_multiplier
 
 			if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -256,6 +259,7 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 
 		return [lon, lat, 0]
 	}
+
 	let remaining = t * total
 
 	for (let i = 0; i < legs.length; i++) {
@@ -268,8 +272,10 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 
 			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
 		}
+
 		remaining -= leg
 	}
+
 	const [lon, lat] = polyline.at(-1)!
 
 	return [lon, lat, total]

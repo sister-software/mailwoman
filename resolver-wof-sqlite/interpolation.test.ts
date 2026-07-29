@@ -45,6 +45,7 @@ function seed(db: DatabaseSync, segments: SeedSegment[]): void {
 			release      TEXT NOT NULL
 		)
 	`)
+
 	const ins = db.prepare(
 		`INSERT INTO street_segment
 		 (street_norm, side, from_hn, to_hn, min_hn, max_hn, parity, postcode, county_fips, street_raw, geometry, source, release)
@@ -81,6 +82,7 @@ const MAIN_EVEN: SeedSegment = {
 		[0.001, 0],
 	],
 }
+
 const MAIN_ODD: SeedSegment = { ...MAIN_EVEN, side: "L", from_hn: 101, to_hn: 199, parity: "odd" }
 
 let db: DatabaseSync
@@ -88,6 +90,7 @@ let interpolator: StreetInterpolator
 
 beforeAll(() => {
 	db = new DatabaseSync(":memory:")
+
 	seed(db, [
 		MAIN_EVEN,
 		MAIN_ODD,
@@ -167,6 +170,7 @@ beforeAll(() => {
 			],
 		},
 	])
+
 	interpolator = new StreetInterpolator({ database: db })
 })
 
@@ -302,9 +306,11 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 	it("reports undefined for an empty or invalid calibration table", () => {
 		const emptyDB = new DatabaseSync(":memory:")
 		seed(emptyDB, [MAIN_EVEN])
+
 		emptyDB.exec(
 			"CREATE TABLE interp_calibration (radius_multiplier REAL NOT NULL, method TEXT NOT NULL, region TEXT NOT NULL)"
 		)
+
 		const emptyCalib = new StreetInterpolator({ database: emptyDB })
 		expect(emptyCalib.radiusCalibration).toBeUndefined()
 		emptyCalib.close()

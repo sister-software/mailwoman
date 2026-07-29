@@ -155,11 +155,13 @@ function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(finalPath + sfx, { force: true })
 	}
+
 	renameSync(tmpPath, finalPath)
 
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(tmpPath + sfx, { force: true })
 	}
+
 	rmSync(aside, { force: true })
 }
 
@@ -170,6 +172,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				`--state required (one of: ${Object.keys(STATE_FIPS).join(", ")} — extend STATE_FIPS for others)`
 			)
 		}
+
 		const STATE = options.state.toUpperCase()
 		const finalOut = options.out ?? dataRootPath("interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
 
@@ -187,6 +190,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				"situs interpolation-shard requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."
 			)
 		}
+
 		let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
 
 		try {
@@ -196,8 +200,10 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				"@duckdb/node-api is not installed — `situs interpolation-shard` is a maintainer-only data command"
 			)
 		}
+
 		const { STREET_SEGMENT_COLUMNS, createStreetSegmentTable, createStreetSegmentIndexes, writeInterpCalibration } =
 			segmentSchema
+
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
 		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toSorted()
@@ -229,12 +235,15 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 		// shard's `interp_calibration` metadata table. `StreetInterpolator` reads it at open time; callers
 		// stop carrying the number.
 		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
+
 		const calibration = {
 			radius_multiplier: measuredMultiplier ?? INTERP_RADIUS_CALIBRATION.default,
 			method: CALIBRATION_METHOD,
 			region: measuredMultiplier === undefined ? "default" : STATE,
 		}
+
 		await writeInterpCalibration(kdb, calibration)
+
 		const insert = db.prepare(
 			`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
 					 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
@@ -252,6 +261,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 
 		for (const shp of shapefiles) {
 			const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
+
 			// Address-carrying road edges only; geometry as GeoJSON text so the JS side stays
 			// shapefile-free (same ST_Read approach as build-intersection-real.ts).
 			const result = await duck.runAndReadAll(`
@@ -270,6 +280,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
 
 				if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
+
 				// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
 				const polyline = JSON.stringify(
 					geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
@@ -285,10 +296,14 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 
 					if (from === null || to === null) {
 						skippedNonNumeric++
+
 						continue
 					}
+
 					const parity = parityOf(from, to)
+
 					parityCounts[parity]++
+
 					insert.run(
 						streetNorm,
 						side,
@@ -304,20 +319,24 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 						"tiger:edges",
 						String(options.release)
 					)
+
 					sides++
 				}
 			}
 
 			console.error(`  ${countyFips}: done (${sides} sides so far)`)
 		}
+
 		db.exec("COMMIT")
 		await createStreetSegmentIndexes(kdb)
 		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+
 		const stats = db
 			.prepare(
 				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
 			)
 			.get() as Record<string, number>
+
 		await kdb.destroy()
 
 		swapDatabaseIntoPlace(tmpOut, finalOut)

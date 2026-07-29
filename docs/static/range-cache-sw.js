@@ -86,6 +86,7 @@ async function respondWithCachedRange(request, href, start, end) {
 			if (contentRange && body.byteLength === rangeLength(contentRange)) {
 				return rangeResponse(body, contentRange)
 			}
+
 			await cache.delete(cacheKey) // unreadable entry — fall through to network
 		}
 
@@ -101,10 +102,13 @@ async function respondWithCachedRange(request, href, start, end) {
 				cache: "no-store",
 				headers: { range: `bytes=${start}-${end}` },
 			})
+
 			chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
 		}
 
-		if (!chunk) return response // 200/4xx/5xx or still torn — hand it to the app untouched
+		if (!chunk) return response
+
+		// 200/4xx/5xx or still torn — hand it to the app untouched
 
 		await cache.put(
 			cacheKey,

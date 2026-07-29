@@ -155,6 +155,7 @@ export const GuidedTour: React.FC = () => {
 					groupPhrases,
 					classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
 				})
+
 				const tClassify = performance.now()
 
 				const tree = pipelineResult.tree
@@ -181,6 +182,7 @@ export const GuidedTour: React.FC = () => {
 				console.error("Tour parse error", error)
 
 				const message = error instanceof Error ? error.message : String(error)
+
 				setStopStates((prev) => {
 					const next = new Map(prev)
 					next.set(stopID, { ...next.get(stopID)!, result: null, busy: false, error: message })
@@ -218,6 +220,7 @@ export const GuidedTour: React.FC = () => {
 	const onInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.target.value
+
 			setStopStates((innerPrev) => {
 				const innerNext = new Map(innerPrev)
 				const existing = innerNext.get(currentStop.id)!

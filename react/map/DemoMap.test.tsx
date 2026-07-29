@@ -35,11 +35,13 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 	// Flush react-map-gl's async map creation (dynamic import + effects) inside act() so React state
 	// updates don't warn and the DOM is current when we query.
 	let found: T | null = null
+
 	await act(async () => {
 		while (Date.now() - start < timeout) {
 			found = get()
 
 			if (found) break
+
 			await new Promise((resolve) => {
 				setTimeout(resolve, 50)
 			})

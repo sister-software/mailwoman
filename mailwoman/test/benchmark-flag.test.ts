@@ -55,6 +55,7 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 			[cliBin, "parse", "--benchmark", "10", "--no-neural", "350 5th Ave, New York, NY 10118"],
 			{ env: childEnv({ MAILWOMAN_TEST_MODE: "1" }) }
 		)
+
 		expect(stdout).toContain("iterations + 5 warmup")
 		expect(stdout).toContain("stage")
 		expect(stdout).toContain("p50")
@@ -72,6 +73,7 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 		} catch (error) {
 			err = error as Error & { stderr?: string; stdout?: string; code?: number }
 		}
+
 		expect(err).toBeDefined()
 		// Ink renders the error to stdout (Text color=red), not stderr. Process exits 1 because the
 		// useEffect-driven setError(...) → setImmediate(() => process.exit(1)) path fires.

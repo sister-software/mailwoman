@@ -122,6 +122,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	// MARK: Download ZIP (large; 60-minute timeout)
 
 	report?.(`  Downloading ${zipURL} ...`)
+
 	const { bytes: zipSize } = await downloadToFile({
 		url: zipURL,
 		dest: zipDest,
@@ -129,6 +130,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		headers: { "Accept-Encoding": "gzip, br" },
 		report,
 	})
+
 	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
 
 	// MARK: Extract only the main registry CSV (npidata_pfile_*.csv)
@@ -164,6 +166,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		sha256: csvSha,
 		bytes: csvSize,
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${(csvSize / 1024 / 1024).toFixed(1)} MB  sha256=${csvSha}`)

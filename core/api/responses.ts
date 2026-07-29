@@ -31,6 +31,7 @@ export type ExtractResponseData<T> = T extends ResponseContainer<infer Body> ? B
 
 function isResponseContainer<Body>(responseContainer: ResponseLike<Body>): responseContainer is ResponseContainer<Body>
 function isResponseContainer<Body>(body: Body): body is Body
+
 function isResponseContainer<Body>(input: ResponseLike<Body>): input is ResponseContainer<Body> {
 	return typeof input === "object" && input !== null && "data" in input
 }
@@ -40,6 +41,7 @@ function isResponseContainer<Body>(input: ResponseLike<Body>): input is Response
  */
 function pluckResponseBody<Body>(responseContainer: ResponseContainer<Body>): Body
 function pluckResponseBody<Body>(rawBody: Body): Body
+
 function pluckResponseBody<Body>(input: ResponseContainer<Body> | Body): Body {
 	if (isResponseContainer(input)) return input.data
 

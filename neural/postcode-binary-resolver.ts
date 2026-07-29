@@ -72,6 +72,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 						? 1
 						: 0
 	)
+
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const countries = [...new Set(sorted.map((e) => e.country))].sort()
 	const countryIdx = new Map(countries.map((c, i) => [c, i]))
@@ -80,6 +81,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 	for (const entry of sorted) {
 		keyWidth = Math.max(keyWidth, entry.postcode.length)
 	}
+
 	const recSize = keyWidth + REC_TAIL
 
 	const headerSize = 4 + 4 + 1 + countries.length * 2 + 1
@@ -97,6 +99,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 		buf[o++] = c.charCodeAt(0) & 0x7f
 		buf[o++] = c.charCodeAt(1) & 0x7f
 	}
+
 	buf[o++] = keyWidth
 
 	for (const e of sorted) {
@@ -139,6 +142,7 @@ export class PostcodeBinaryResolver {
 			this.#countries.push(String.fromCharCode(bytes[o]!, bytes[o + 1]!))
 			o += 2
 		}
+
 		this.#keyWidth = bytes[o++]!
 		this.#recSize = this.#keyWidth + REC_TAIL
 		this.#recBase = o
@@ -183,6 +187,7 @@ export class PostcodeBinaryResolver {
 
 		for (let i = lo; i < this.#count && this.#cmpKey(i, key) === 0; i++) {
 			const base = this.#recBase + i * this.#recSize + this.#keyWidth
+
 			out.push({
 				country: this.#countries[this.#buf[base]!]!,
 				lat: this.#view.getInt16(base + 1, true) / LAT_Q,
@@ -216,6 +221,7 @@ export class PostcodeBinaryResolver {
 				if (c === 0) break
 				postcode += String.fromCharCode(c)
 			}
+
 			// Walk the contiguous run of records sharing this key (one per member country).
 			const posterior: Record<string, number> = {}
 			let latSum = 0
@@ -230,6 +236,7 @@ export class PostcodeBinaryResolver {
 				for (let j = 0; j < this.#keyWidth; j++) {
 					if (this.#buf[base + j] !== this.#buf[keyBase + j]) {
 						same = false
+
 						break
 					}
 				}
@@ -243,14 +250,17 @@ export class PostcodeBinaryResolver {
 				if (lat !== 0 || lon !== 0) {
 					latSum += lat
 					lonSum += lon
+
 					centroidCount++
 				}
 			}
+
 			out.set(postcode, {
 				posterior,
 				lat: centroidCount ? latSum / centroidCount : 0,
 				lon: centroidCount ? lonSum / centroidCount : 0,
 			})
+
 			i = k
 		}
 

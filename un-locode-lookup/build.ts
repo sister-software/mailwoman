@@ -32,11 +32,14 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 		skip_empty_lines: true,
 		relax_quotes: true,
 	}) as CSVRow[]
+
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS un_locode")
+
 	db.exec(
 		"CREATE TABLE un_locode (country TEXT NOT NULL, location TEXT NOT NULL, name TEXT, nameNorm TEXT, lat REAL, lon REAL)"
 	)
+
 	const insert = db.prepare("INSERT INTO un_locode (country, location, name, nameNorm, lat, lon) VALUES (?,?,?,?,?,?)")
 
 	let withCoords = 0
@@ -49,9 +52,11 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 		if (coords) {
 			withCoords++
 		}
+
 		const name = r.NameWoDiacritics || r.Name || ""
 		insert.run(r.Country, r.Location, r.Name || name, foldName(name), coords?.lat ?? null, coords?.lon ?? null)
 	}
+
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_locode_name ON un_locode (country, nameNorm)")
 	db.exec("CREATE INDEX idx_locode_bbox ON un_locode (lat, lon)")

@@ -65,6 +65,7 @@ describe("buildStreetMorphologyFST", () => {
 			dictionariesDir: DICTIONARIES_DIR,
 			locales: ["en"],
 		})
+
 		const buf = serializeFST(matcher, provenance)
 		const restored = deserializeFST(buf)
 		const restoredProvenance = readFSTProvenance(buf)

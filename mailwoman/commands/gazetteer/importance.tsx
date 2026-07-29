@@ -63,22 +63,27 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 					httpsGet(location, (res2) => {
 						const chunks: Buffer[] = []
 						res2.on("data", (chunk) => chunks.push(chunk))
+
 						res2.on("end", () => {
 							writeFileSync(dest, Buffer.concat(chunks))
 							resolve()
 						})
+
 						res2.on("error", reject)
 					}).on("error", reject)
 
 					return
 				}
 			}
+
 			const chunks: Buffer[] = []
 			res.on("data", (chunk) => chunks.push(chunk))
+
 			res.on("end", () => {
 				writeFileSync(dest, Buffer.concat(chunks))
 				resolve()
 			})
+
 			res.on("error", reject)
 		}).on("error", reject)
 	})
@@ -172,6 +177,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 		console.error("Building place_importance table...")
 
 		await kdb.schema.dropTable("place_importance").ifExists().execute()
+
 		await kdb.schema
 			.createTable("place_importance")
 			.addColumn("id", "integer", (c) => c.primaryKey())
@@ -204,8 +210,10 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		for (const [wofID, importance] of wofImportance) {
 			insertStmt.run(wofID, importance)
+
 			importanceCount++
 		}
+
 		db.exec("COMMIT")
 
 		// Step 5: Population fallback for places without Wikipedia data
@@ -223,9 +231,11 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 				if (row.population > 0) {
 					const pseudoImportance = Math.min(1, Math.log2(1 + row.population / 1000) / 14)
 					fallbackInsert.run(row.id, pseudoImportance)
+
 					fallbackCount++
 				}
 			}
+
 			db.exec("COMMIT")
 		} catch {
 			console.error("  No place_population table — skipping fallback")

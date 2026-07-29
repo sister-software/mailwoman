@@ -34,9 +34,11 @@ const row = (id: string, country: string, region?: string): MinRow => ({
 })
 
 let scratch: string
+
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-split-"))
 })
+
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
@@ -79,6 +81,7 @@ describe("splitRows — locality holdout", () => {
 			row("us-5", "US", "North Dakota"),
 			row("us-6", "US", "Texas"),
 		]
+
 		const m = splitRows(rows)
 		expect(m.train).toEqual(expect.arrayContaining(["us-1", "us-4", "us-6"]))
 		expect(m.train).not.toContain("us-2")
@@ -97,6 +100,7 @@ describe("splitRows — locality holdout", () => {
 			row("fr-4", "FR", "Creuse"),
 			row("fr-5", "FR", "Auvergne-Rhône-Alpes"),
 		]
+
 		const m = splitRows(rows)
 		const heldOut = [...m.val, ...m.test].toSorted()
 		expect(heldOut).toEqual(["fr-2", "fr-3", "fr-4"])
@@ -175,6 +179,7 @@ describe("splitForRow (pure per-row decision)", () => {
 			row("fr-1", "FR", "Corse"),
 			row("fr-2", "FR", "Île-de-France"),
 		]
+
 		const manifest = splitRows(rows)
 
 		for (const r of rows) {
@@ -207,15 +212,18 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 			val: join(scratch, "labeled-val.jsonl"),
 			test: join(scratch, "labeled-test.jsonl"),
 		}
+
 		// Write per-split labeled files in non-sorted order to exercise the external sort.
 		await writeFile(
 			labeledPaths.train,
 			['{"source_id":"us-c"}', '{"source_id":"us-a"}', '{"source_id":"us-b"}', ""].join("\n")
 		)
+
 		await writeFile(labeledPaths.val, ['{"source_id":"vt-2"}', '{"source_id":"vt-1"}', ""].join("\n"))
 		await writeFile(labeledPaths.test, ['{"source_id":"wy-1"}', ""].join("\n"))
 
 		const counts = { train: 3, val: 2, test: 1 }
+
 		const result = await writeSplitManifestsFromLabeledFiles({
 			labeledPaths,
 			outputDir: scratch,
@@ -235,10 +243,12 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 		expect(test.trim()).toBe("wy-1")
 
 		const summary = JSON.parse(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
+
 		expect(summary).toMatchObject({
 			corpus_version: "0.1.1",
 			counts: { train: 3, val: 2, test: 1, total: 6 },
 		})
+
 		expect(summary.holdouts.US).toContain("Vermont")
 	})
 
@@ -248,6 +258,7 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 			val: join(scratch, "labeled-val.jsonl"),
 			test: join(scratch, "labeled-test.jsonl"),
 		}
+
 		await writeFile(labeledPaths.train, '{"source_id":"only-train"}\n')
 		await writeFile(labeledPaths.val, "")
 		await writeFile(labeledPaths.test, "")
@@ -258,6 +269,7 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 			corpusVersion: "0.1.1",
 			counts: { train: 1, val: 0, test: 0 },
 		})
+
 		expect((await readFile(join(scratch, "val.txt"), "utf8")).trim()).toBe("")
 		expect((await readFile(join(scratch, "test.txt"), "utf8")).trim()).toBe("")
 		expect((await readFile(join(scratch, "train.txt"), "utf8")).trim()).toBe("only-train")

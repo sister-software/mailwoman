@@ -45,6 +45,7 @@ export async function collectProposals(
 			)
 		}
 	}
+
 	const results = await Promise.all(tasks)
 
 	return results.flat()

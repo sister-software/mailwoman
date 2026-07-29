@@ -37,6 +37,7 @@ export const houseVenueRecipe: ShardRecipe = {
 
 			if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {
 				skipped++
+
 				continue
 			}
 
@@ -45,8 +46,10 @@ export const houseVenueRecipe: ShardRecipe = {
 
 				if (!synth) {
 					skipped++
+
 					continue
 				}
+
 				const ok = alignAndWrite(
 					write,
 					{

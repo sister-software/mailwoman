@@ -146,6 +146,7 @@ export function outsideExpectedCountry(
 
 		return lat < fact.latMin || lat > fact.latMax || lon < fact.lonMin || lon > fact.lonMax
 	}
+
 	const b = COUNTRY_BBOX[cc]
 
 	if (!b) return false

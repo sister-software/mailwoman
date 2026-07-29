@@ -68,6 +68,7 @@ describe("block → score → cluster", () => {
 			records,
 			geoCellKey((r) => r.coord)
 		)
+
 		// Score each candidate pair.
 		const links = pairs.map(([a, b]) => ({ a, b, weight: scorePair(model, a, b).weight }))
 		// Resolve into entities.
@@ -81,6 +82,7 @@ describe("block → score → cluster", () => {
 					.join("")
 			)
 			.toSorted()
+
 		expect(shape).toEqual(["12", "3"])
 	})
 })

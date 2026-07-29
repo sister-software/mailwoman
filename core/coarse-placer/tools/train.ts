@@ -98,6 +98,7 @@ export async function trainCoarsePlacer(
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as { raw: string; country: string })
+
 		// Precompute features once: Int32Array of active indices + label id per row.
 		const out: Sample[] = []
 
@@ -125,6 +126,7 @@ export async function trainCoarsePlacer(
 	// silent retrain-reproducibility break).
 	let rng = 1_234_567
 	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7f_ff_ff_ff) / 0x7f_ff_ff_ff
+
 	function shuffle(arr: Sample[]): void {
 		for (let i = arr.length - 1; i > 0; i--) {
 			const j = Math.floor(rand() * (i + 1))
@@ -134,6 +136,7 @@ export async function trainCoarsePlacer(
 
 	const logits = new Float32Array(C)
 	const probs = new Float32Array(C)
+
 	function forward(x: Int32Array): void {
 		for (let c = 0; c < C; c++) {
 			let s = b[c]!
@@ -142,14 +145,17 @@ export async function trainCoarsePlacer(
 			for (const featureIndex of x) {
 				s += W[base + featureIndex]!
 			}
+
 			logits[c] = s
 		}
+
 		let mx = -Infinity
 
 		for (let c = 0; c < C; c++)
 			if (logits[c]! > mx) {
 				mx = logits[c]!
 			}
+
 		let sum = 0
 
 		for (let c = 0; c < C; c++) {
@@ -204,6 +210,7 @@ export async function trainCoarsePlacer(
 				}
 			}
 		}
+
 		report?.(
 			`epoch ${ep + 1}/${epochs}  lr=${lr.toFixed(4)}  train_acc=${accuracy(train.slice(0, 5000)).toFixed(4)}  val_acc=${accuracy(val).toFixed(4)}`
 		)
@@ -221,24 +228,29 @@ export async function trainCoarsePlacer(
 				for (const featureIndex of x) {
 					s += W[base + featureIndex]!
 				}
+
 				logits[c] = s / T
 			}
+
 			let mx = -Infinity
 
 			for (let c = 0; c < C; c++)
 				if (logits[c]! > mx) {
 					mx = logits[c]!
 				}
+
 			let sum = 0
 
 			for (let c = 0; c < C; c++) {
 				sum += Math.exp(logits[c]! - mx)
 			}
+
 			nll += -(logits[y]! - mx - Math.log(sum))
 		}
 
 		return nll / val.length
 	}
+
 	let bestT = 1
 	let bestNLL = Infinity
 
@@ -250,9 +262,11 @@ export async function trainCoarsePlacer(
 			bestT = T
 		}
 	}
+
 	report?.(`temperature=${bestT.toFixed(2)}  val_NLL=${bestNLL.toFixed(4)}`)
 
 	mkdirSync(outDir, { recursive: true })
+
 	writeFileSync(
 		path.join(outDir, "meta.json"),
 		JSON.stringify(
@@ -268,6 +282,7 @@ export async function trainCoarsePlacer(
 			2
 		)
 	)
+
 	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(W.buffer))
 	report?.(`→ ${outDir}/meta.json + weights.bin (${(W.byteLength / 1e6).toFixed(1)} MB fp32)`)
 

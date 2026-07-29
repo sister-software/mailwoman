@@ -34,6 +34,7 @@ interface Args {
 	geocodeEarthKey?: string
 	backoffMs: number
 }
+
 function parseArgs(): Args {
 	const out: Partial<Args> = { backoffMs: 3000 }
 
@@ -80,10 +81,12 @@ function parseArgs(): Args {
 }
 
 type Rec = Record<string, string>
+
 const sleep = (ms: number) =>
 	new Promise((r) => {
 		setTimeout(r, ms)
 	})
+
 const norm = (s: string | undefined) => (s ?? "").toLowerCase().trim()
 
 /**
@@ -91,6 +94,7 @@ const norm = (s: string | undefined) => (s ?? "").toLowerCase().trim()
  */
 function tagHit(expected: string, actual: string | undefined): boolean {
 	if (!actual) return false
+
 	const e = norm(expected),
 		x = norm(actual)
 
@@ -181,6 +185,7 @@ function mapPhoton(p: Props | undefined): Rec {
 	// POI fallback
 	return out
 }
+
 function mapNominatim(a: Props | undefined): Rec {
 	if (!a) return {}
 	const out: Rec = {}
@@ -192,6 +197,7 @@ function mapNominatim(a: Props | undefined): Rec {
 	if (a.road) {
 		out.street = a.road
 	}
+
 	const loc = a.city || a.town || a.village || a.municipality || a.suburb
 
 	if (loc) {
@@ -212,6 +218,7 @@ function mapNominatim(a: Props | undefined): Rec {
 
 	return out
 }
+
 function mapGeocodeEarth(props: Props | undefined): Rec {
 	if (!props) return {}
 	const out: Rec = {}
@@ -279,12 +286,14 @@ async function main(): Promise<void> {
 		}
 
 		const photonRaw = (await fetchJSON(`https://photon.komoot.io/api/?q=${q}&limit=1`)) as FeatureResp | null
+
 		const nomRaw = (await fetchJSON(
 			`https://nominatim.openstreetmap.org/search?q=${q}&format=jsonv2&addressdetails=1&limit=1`,
 			{
 				"User-Agent": UA,
 			}
 		)) as NominatimResp | null
+
 		let geRaw: FeatureResp | null = null
 
 		if (args.geocodeEarthKey) {
@@ -307,6 +316,7 @@ async function main(): Promise<void> {
 
 			return { hits: hits.length, total: tags.length, hitTags: hits }
 		}
+
 		const row = {
 			locale: c.locale,
 			input: c.input,
@@ -319,6 +329,7 @@ async function main(): Promise<void> {
 			nominatimRaw: nomRaw?.[0]?.address ?? nomRaw,
 			...(geocodeEarth ? { geocodeEarth, geocodeEarthScore: score(geocodeEarth) } : {}),
 		}
+
 		results.push(row)
 
 		console.error(`  [${i + 1}/${bothFail.length}] ${c.input}`)
@@ -338,21 +349,27 @@ async function main(): Promise<void> {
 		"full-stack geocoders (Photon = open-source Pelias peer; Nominatim = OSM). Lenient match.",
 		"Not a fair head-to-head — a capability ceiling: what a gazetteer stack can recover.\n",
 	]
+
 	const tot = results.length
 	const pSolved = results.filter((r) => r.photonScore.hits === r.photonScore.total && r.photonScore.total > 0).length
+
 	const nSolved = results.filter(
 		(r) => r.nominatimScore.hits === r.nominatimScore.total && r.nominatimScore.total > 0
 	).length
+
 	const eitherStreet = results.filter((r) => {
 		if (!r.expected.street) return false
 
 		return tagHit(r.expected.street, r.photon.street) || tagHit(r.expected.street, r.nominatim.street)
 	}).length
+
 	const withStreet = results.filter((r) => r.expected.street).length
 	md.push(`**Fully recovered (all expected tags, lenient):** Photon ${pSolved}/${tot} · Nominatim ${nSolved}/${tot}`)
+
 	md.push(
 		`**Street kept whole (the fragmentation we fail on):** ${eitherStreet}/${withStreet} cases with an expected street\n`
 	)
+
 	md.push("| Locale | Input | Expected | Photon (mapped) | Nominatim (mapped) | P | N |")
 	md.push("|---|---|---|---|---|--:|--:|")
 
@@ -361,10 +378,12 @@ async function main(): Promise<void> {
 			Object.entries(o)
 				.map(([k, v]) => `${k}=${v}`)
 				.join(", ") || "—"
+
 		md.push(
 			`| ${r.locale} | \`${r.input}\` | ${fmt(r.expected)} | ${fmt(r.photon)} | ${fmt(r.nominatim)} | ${r.photonScore.hits}/${r.photonScore.total} | ${r.nominatimScore.hits}/${r.nominatimScore.total} |`
 		)
 	}
+
 	const mdText = md.join("\n") + "\n"
 
 	if (args.outMd) {

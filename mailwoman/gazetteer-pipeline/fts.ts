@@ -30,6 +30,7 @@ export interface BuildFTSResult {
 export async function buildFTS(db: DatabaseSync, opts: BuildFTSOptions = {}): Promise<BuildFTSResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")
+
 	const result = buildPlaceSearchFTS(db, {
 		drop: opts.drop ?? false,
 		onProgress: (phase, detail) => opts.onProgress?.(phase, detail),

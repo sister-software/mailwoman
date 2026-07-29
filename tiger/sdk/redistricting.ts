@@ -33,6 +33,7 @@ import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERData
 
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"
+
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
@@ -48,6 +49,7 @@ const GEO_GEOCODE = 9
  */
 const SEG_LOGRECNO = 4
 const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
+
 /**
  * The eight P2 categories that partition the total (P0020001), in `pl_block` column order.
  */
@@ -110,6 +112,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 		child.stdout.on("data", (d) => (out += d))
 		child.stderr.on("data", (d) => (err += d))
 		child.on("error", reject)
+
 		child.on("close", (code) =>
 			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
 		)
@@ -126,6 +129,7 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 			// corrupt cache — re-download
 		}
 	}
+
 	const tmp = dest + ".tmp"
 	const res = await fetch(url, { redirect: "follow" })
 
@@ -187,6 +191,7 @@ export async function* fetchRedistricting(
 	// Pass 1: header → LOGRECNO → GEOID for the blocks we want.
 	const prefix = options.county ? state + options.county : state
 	const logToGeoid = new Map<string, string>()
+
 	await eachLine(geoPath, (line) => {
 		const f = line.split("|")
 
@@ -196,6 +201,7 @@ export async function* fetchRedistricting(
 		if (!geoid.startsWith(prefix)) return
 		logToGeoid.set(f[GEO_LOGRECNO] ?? "", geoid)
 	})
+
 	const total = logToGeoid.size
 	yield { phase: "header", blocks: total }
 
@@ -213,6 +219,7 @@ export async function* fetchRedistricting(
 
 		let inserted = 0
 		let batch: PLBlockTable[] = []
+
 		const flush = async () => {
 			if (!batch.length) return
 			const rows = batch
@@ -228,6 +235,7 @@ export async function* fetchRedistricting(
 			const geoid = logToGeoid.get(f[SEG_LOGRECNO] ?? "")
 
 			if (!geoid) continue
+
 			batch.push({
 				GEOID: geoid,
 				pop_total: Number(f[CATEGORY_INDEX.pop_total] ?? 0),
@@ -246,6 +254,7 @@ export async function* fetchRedistricting(
 				yield { phase: "load", inserted, total }
 			}
 		}
+
 		await flush()
 
 		yield { phase: "load", inserted, total }

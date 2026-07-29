@@ -110,6 +110,7 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 		if (cur) {
 			cur.sumLat += lat
 			cur.sumLon += lon
+
 			cur.n++
 
 			if (lat < cur.minLat) {
@@ -145,6 +146,7 @@ function nameVariants(pc: string, normalizeKey: NormalizeKey): string[] {
 	if (stripped && stripped !== pc) {
 		variants.push(stripped)
 	}
+
 	// Dedup by fold() — two forms that normalize identically need only one row.
 	const seen = new Set<string>()
 
@@ -182,11 +184,13 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	if (existsSync(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
+
 	const db = new DatabaseSync(outPath)
 	const kdb = new DatabaseClient({ database: db })
 	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
 	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
+
 	// Schema mirrors postalcode-intl.db's `spr` exactly — a drop-in `--postcodes` input for build-candidate.
 	await kdb.schema
 		.createTable("spr")
@@ -214,6 +218,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	const ins = db.prepare(
 		`INSERT INTO spr (${SPR_COLUMNS.join(", ")}) VALUES (${SPR_COLUMNS.map(() => "?").join(", ")})`
 	)
+
 	let id = SYNTH_ID_BASE
 	let rows = 0
 	db.exec("BEGIN")
@@ -224,9 +229,11 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 
 		for (const name of nameVariants(a.pc, normalizeKey)) {
 			ins.run(++id, -1, name, "postalcode", a.cc, lat, lon, a.minLat, a.minLon, a.maxLat, a.maxLon, 1, 0, 0, 0, 0, 0)
+
 			rows++
 		}
 	}
+
 	db.exec("COMMIT")
 	db.close()
 
@@ -261,6 +268,7 @@ async function foldIntoCandidate(
 	const maxCc = out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes").get() as { m: number }
 	let nextCc = maxCc.m + 1
 	const insCc = out.prepare("INSERT INTO country_codes (id, code) VALUES (?, ?)")
+
 	const ccID = (code: string): number => {
 		let id = ccCache.get(code)
 
@@ -272,6 +280,7 @@ async function foldIntoCandidate(
 
 			return r.id
 		}
+
 		id = nextCc++
 		insCc.run(id, code)
 		ccCache.set(code, id)
@@ -283,6 +292,7 @@ async function foldIntoCandidate(
 		"INSERT OR IGNORE INTO candidate (name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, longitude, min_lat, min_lon, max_lat, max_lon, population, is_primary) " +
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	)
+
 	let n = 0
 	out.exec("BEGIN")
 
@@ -298,6 +308,7 @@ async function foldIntoCandidate(
 		if (!key) continue
 		const lat = r.latitude as number
 		const lon = r.longitude as number
+
 		ins.run(
 			key,
 			ccID(r.country as string),
@@ -315,8 +326,10 @@ async function foldIntoCandidate(
 			0,
 			1
 		)
+
 		n++
 	}
+
 	out.exec("COMMIT")
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
@@ -330,12 +343,14 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 	const state = useCommandTask(async () => {
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
+
 		const countries = options.countries
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
 					.filter(Boolean)
 			: ["PL", "CZ"]
+
 		const foldInto = options.foldInto
 		const foldOut = options.foldOut
 

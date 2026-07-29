@@ -74,6 +74,7 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	if (obj.source !== "golden") {
 		throw new Error(`source must be "golden" (got ${JSON.stringify(obj.source)})`)
 	}
+
 	const components = (obj.components ?? {}) as Record<string, unknown>
 
 	for (const [k, v] of Object.entries(components)) {

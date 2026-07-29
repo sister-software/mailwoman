@@ -193,6 +193,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	const nearestKm = Math.min(
 		...results.map((r) => haversineKm(r.latitude, r.longitude, expect.anchorGold.latitude, expect.anchorGold.longitude))
 	)
+
 	const withinRange = nearestKm <= expect.maxNearestKm
 
 	// Brand and category checks use the SAME "top field, mismatch phrase" shape (`top <field> <got> !== expected <want>`)
@@ -200,14 +201,18 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	// against v1 assertions (`top category X !== expected Y`).
 	const topCategoryID = results[0]!.categoryID
 	const topBrandWikidata = results[0]!.brandWikidata
+
 	const topMatches =
 		expect.brandWikidata !== undefined ? topBrandWikidata === expect.brandWikidata : topCategoryID === expect.categoryID
+
 	const topSummary =
 		expect.brandWikidata !== undefined ? `top brandWikidata ${topBrandWikidata}` : `top category ${topCategoryID}`
+
 	const mismatchDetail =
 		expect.brandWikidata !== undefined
 			? `top brandWikidata ${topBrandWikidata} !== expected ${expect.brandWikidata}`
 			: `top category ${topCategoryID} !== expected ${expect.categoryID}`
+
 	const pass = withinRange && topMatches
 
 	const detail = pass
@@ -380,6 +385,7 @@ export function evaluateFloors(report: FloorInput): FloorEvaluation {
 
 	const overallTotal = Object.values(report.byExpectKind).reduce((sum, b) => sum + b.total, 0)
 	const overallPass = Object.values(report.byExpectKind).reduce((sum, b) => sum + b.pass, 0)
+
 	const overallLine: FloorLine = {
 		key: "overall",
 		label: "overall",
@@ -452,6 +458,7 @@ function computeStats(values: number[]): QuantileStats | null {
  */
 export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoardRunResult> {
 	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
+
 	const fixtures = readFileSync(fixturesPath, "utf8")
 		.split("\n")
 		.filter(Boolean)
@@ -460,6 +467,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 
 	const db = options.db ?? dataRootPath("poi", "poi.db")
+
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
 		cacheRoot: options.weightsCacheRoot,
@@ -513,11 +521,13 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 
 	for (const grade of cases) {
 		const bucket = byExpectKind[grade.expectKind] ?? { total: 0, pass: 0, rate: 0 }
+
 		bucket.total++
 
 		if (grade.pass) {
 			bucket.pass++
 		}
+
 		byExpectKind[grade.expectKind] = bucket
 	}
 

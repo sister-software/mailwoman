@@ -313,6 +313,7 @@ function assertConventionsRespectCapabilities(modelCardPath: string, tier: strin
 
 			if (delta > CAPABILITY_DELTA_THRESHOLD) {
 				const maskOn = cap.maskOnF1 === undefined ? "unmeasured (assumed 0 — hard −1e9 ban)" : String(cap.maskOnF1)
+
 				fail(
 					strict,
 					`conventions forbids \`${tag}\` for system \`${system}\` but the model is certified to emit it ` +
@@ -351,6 +352,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	const labels = readLabelsFromModelCard(opts.modelCardPath)
+
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(opts.tokenizerPath),
 		ONNXRunner.create(opts.modelPath),
@@ -376,6 +378,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const anchorSource: { path: string; binary: boolean } | undefined = opts.anchorLookupPath
 		? { path: opts.anchorLookupPath, binary: false }
 		: defaultAnchorSource(opts.locale)
+
 	const anchorRequired = declared.anchor?.required ?? false
 	let postcodeAnchorLookup: AnchorLookup | undefined
 
@@ -395,6 +398,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			const reason = postcodeAnchorLookup
 				? `parsed lookup is EMPTY (size 0)`
 				: `lookup not found (tried ${anchorSource?.path ?? DEFAULT_ANCHOR_LOOKUP} + weights-package sibling)`
+
 			fail(
 				strict,
 				`anchor channel is declared REQUIRED by the model-card but cannot be fed: ${reason}. ` +
@@ -488,6 +492,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			)
 		}
 	}
+
 	const localitySurfaceLexiconPath = opts.localitySurfaceLexiconPath ?? defaultLocalitySurfaceLexicon(opts.locale)
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
 	let localitySurfaceLexicon: GazetteerLexicon | undefined
@@ -551,6 +556,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 	// --- Bridge + near-postcode choreography ------------------------------------------------------
 	const bridgePunctuationGaps = overrides.bridge ?? declared.bridge?.required ?? false
+
 	const suppressGazetteerNearPostcode =
 		overrides.suppressGazetteerNearPostcode ?? declared.suppress_gazetteer_near_postcode ?? false
 

@@ -199,6 +199,7 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 			}
 		}
 	}
+
 	const out: Record<string, number> = {}
 
 	for (const t of TAGS) {
@@ -283,6 +284,7 @@ export async function maskRegressionGate(
 
 		for (const tag of TAGS) {
 			const inScope = rowsHaveTag(rows, tag) || off[tag]! > 0 || on[tag]! > 0
+
 			deltas.push({
 				locale: spec.system,
 				tag,
@@ -301,6 +303,7 @@ export async function maskRegressionGate(
 	for (const d of deltas) {
 		if (!d.inScope) continue
 		const flag = d.delta > THRESHOLD * 100 ? "  ✗ REGRESSION" : ""
+
 		report(
 			`  ${d.locale.padEnd(6)}  ${d.tag.padEnd(20)}  ${String(d.maskOff).padStart(7)}  ${String(d.maskOn).padStart(7)}  ${(d.delta >= 0 ? "+" : "") + d.delta.toFixed(1).padStart(5)}${flag}`
 		)
@@ -329,6 +332,7 @@ export async function maskRegressionGate(
 				"\t"
 			)
 		)
+
 		report(`\nWrote per-tag delta table → ${JSON_OUT}`)
 	}
 
@@ -342,6 +346,7 @@ export async function maskRegressionGate(
 				`  (${v.locale}, ${v.tag}): maskOff ${v.maskOff} → maskOn ${v.maskOn}  Δ=${v.delta.toFixed(1)}pp > ${thresholdPp.toFixed(1)}pp`
 			)
 		}
+
 		report(
 			`\nThe conventions mask provably harms a tag the model emits. Either narrow the codex ` +
 				`forbiddenTags for the offending locale, or re-certify and prove the mask is benign.`

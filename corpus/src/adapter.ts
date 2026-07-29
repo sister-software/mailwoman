@@ -66,6 +66,7 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 		if (this.#byID.has(adapter.id)) {
 			throw new Error(`AdapterRegistry: id ${JSON.stringify(adapter.id)} already registered`)
 		}
+
 		this.#byID.set(adapter.id, adapter)
 	}
 

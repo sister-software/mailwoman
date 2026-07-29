@@ -83,6 +83,7 @@ if (values.version === "major" || values.version === "minor" || values.version =
 const releaseItConfig = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8")) as {
 	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
 }
+
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
 if (!Array.isArray(workspaces) || !workspaces.length) {

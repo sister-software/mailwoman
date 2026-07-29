@@ -105,10 +105,12 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 		if (semi === -1) throw new Error(`generate-taxonomy: malformed CSV row ${i + 1}: ${JSON.stringify(line)}`)
 
 		const code = line.slice(0, semi).trim()
+
 		const pathText = line
 			.slice(semi + 1)
 			.trim()
 			.replaceAll(/^\[|\]$/g, "")
+
 		const path = pathText.split(",").map((p) => p.trim())
 
 		if (!code || !path.length || path.some((p) => !p)) {
@@ -160,6 +162,7 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 		}))
 
 	const categories = [...overlay.categories, ...snapshotRecords].toSorted((a, b) => a.id.localeCompare(b.id))
+
 	const synonyms = [...overlay.synonyms].toSorted(
 		(a, b) => a.phrase.localeCompare(b.phrase) || a.categoryID.localeCompare(b.categoryID)
 	)

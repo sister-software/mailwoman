@@ -47,6 +47,7 @@ export const streetBareRecipe: ShardRecipe = {
 
 		while (emitted < count && guard++ < count * 5) {
 			const base = DEFAULT_US_BASES[emitted % DEFAULT_US_BASES.length]!
+
 			const synth = synthesizeStreetRow(base as StreetBaseTuple, {
 				random,
 				bareProb,
@@ -55,8 +56,10 @@ export const streetBareRecipe: ShardRecipe = {
 
 			if (!synth) {
 				skipped++
+
 				continue
 			}
+
 			const isBare = synth.components.region === undefined
 
 			const canonical: CanonicalShardRow = {
@@ -83,9 +86,12 @@ export const streetBareRecipe: ShardRecipe = {
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

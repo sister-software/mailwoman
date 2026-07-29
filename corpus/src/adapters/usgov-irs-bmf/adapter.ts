@@ -94,6 +94,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({ columns: true, skip_empty_lines: true, relax_quotes: true, relax_column_count: true, trim: true })
 			)
@@ -155,6 +156,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_IRS_BMF_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

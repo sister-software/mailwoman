@@ -17,12 +17,14 @@ import { afterAll, describe, expect, test } from "vitest"
 import { DEFAULT_MAPPING, loadMapping, loadSources } from "../commands/registry/run.tsx"
 
 const dirs: string[] = []
+
 function tmp(): string {
 	const d = mkdtempSync(join(tmpdir(), "mw-registry-"))
 	dirs.push(d)
 
 	return d
 }
+
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
 
 describe("registry command — loadMapping", () => {
@@ -64,6 +66,7 @@ describe("registry command — loadSources (--sources)", () => {
 		const specs = loadSources(
 			'[{ "path": "a.tsv", "source": "a", "mapping": { "id": "id" } }, { "path": "b.csv", "mapping": {} }]'
 		)
+
 		expect(specs).toHaveLength(2)
 		expect(specs[0]).toMatchObject({ path: "a.tsv", source: "a" })
 		expect(specs[1]!.path).toBe("b.csv")

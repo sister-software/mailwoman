@@ -77,6 +77,7 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
 			wanted.add(Number(f[0]))
 		}
 	}
+
 	const v2 = new Map<number, Map<string, V2Alias>>()
 
 	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
@@ -124,6 +125,7 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
 		if (!byName) {
 			v2.set(gid, (byName = new Map()))
 		}
+
 		const prev = byName.get(alt)
 
 		if (!prev) {
@@ -179,18 +181,23 @@ export function ingestGeonamesAliases(
 	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",
 	// airport codes), 2–60 chars, at least one letter (drops bare postcodes/numbers).
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
+
 	const clean = (s: string): string | null => {
 		const t = s.trim()
 
 		return t && LATIN_NAME.test(t) && /\p{L}/u.test(t) ? t : null
 	}
+
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
+
 	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach
 	// the gap countries. Only used for a country in opts.adminForCountries.
 	const ancestorInsert = db.prepare(
@@ -220,8 +227,10 @@ export function ingestGeonamesAliases(
 
 		if (!existsSync(file)) {
 			report({ country: cc, places: 0, skipped: true }, file)
+
 			continue
 		}
+
 		let nc = 0
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
@@ -310,6 +319,7 @@ export function ingestGeonamesAliases(
 					ancestorInsert.run(nid, countryID, "country")
 				}
 			}
+
 			const seen = new Set([name])
 
 			const tags = v2?.get(Number(f[0]))
@@ -324,16 +334,20 @@ export function ingestGeonamesAliases(
 					namesInsert.run(nid, alt, "locality", cc, tag?.language ?? "", tag?.privateuse ?? "", tag?.official ?? 0, 0)
 				}
 			}
+
 			const pop = Number(f[14]) || 0
 
 			if (pop > 0) {
 				populationInsert.run(nid, pop)
 			}
+
 			nc++
 		}
+
 		report({ country: cc, places: nc, skipped: false })
 		total += nc
 	}
+
 	db.exec("COMMIT")
 
 	return total

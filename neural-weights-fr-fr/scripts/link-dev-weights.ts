@@ -65,6 +65,7 @@ function removeIfPresent(dest: string): void {
 	} catch {
 		return
 	}
+
 	unlinkSync(dest)
 
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)

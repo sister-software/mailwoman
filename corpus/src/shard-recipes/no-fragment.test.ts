@@ -44,6 +44,7 @@ function scratch(tuples: object[], surfaces: string[]): { input: string; exclude
 async function run(tuples: object[], surfaces: string[], opts: Record<string, unknown> = {}) {
 	const { input, exclude } = scratch(tuples, surfaces)
 	const lines: string[] = []
+
 	const stats = await noFragmentRecipe.run(
 		{ output: "", seed: 901, variants: 1, input, excludeSurfaces: exclude, ...opts },
 		(line) => lines.push(line)
@@ -95,6 +96,7 @@ describe("no-fragment", () => {
 	it("emits BOTH counter-classes — bare locality and bare postcode", async () => {
 		// counterProb 1 so every row is a counter draw.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 1 })
+
 		const kinds = new Set(
 			rows.map((r) => {
 				const c = (r as { components: Record<string, string> }).components
@@ -116,6 +118,7 @@ describe("no-fragment", () => {
 		const { rows } = await run([{ street: "X", locality: "HELLVIK", number: "1", postcode: "4375" }], ["z"], {
 			counterProb: 1,
 		})
+
 		const locRows = rows.filter((r) => (r as { components: { locality?: string } }).components.locality)
 
 		for (const r of locRows) {

@@ -88,6 +88,7 @@ describe("scorePair", () => {
 		given?: string
 		family?: string
 	}
+
 	const model: FellegiSunterModel<Person> = {
 		lambda: 0.0001,
 		comparisons: [

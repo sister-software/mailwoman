@@ -37,6 +37,7 @@ const FIXTURE: FixturePlace[] = [
 
 function buildFixtureDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -48,6 +49,7 @@ function buildFixtureDB(): DatabaseSync {
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
+
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country,
 		                 latitude, longitude,
@@ -55,6 +57,7 @@ function buildFixtureDB(): DatabaseSync {
 		                 is_current, is_deprecated)
 		VALUES (?, NULL, ?, 'locality', ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
+
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 
 	for (const p of FIXTURE) {
@@ -82,6 +85,7 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
 		const db = buildFixtureDB()
 		let doneDetail: string | undefined
+
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") {
@@ -89,6 +93,7 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 				}
 			},
 		})
+
 		expect(doneDetail).toMatch(/FTS rows/)
 		expect(doneDetail).toMatch(/bbox rows/)
 		db.close()
@@ -161,6 +166,7 @@ describe("findPlace — population boost", () => {
 			for (const c of springfields) {
 				expect(c.population).toBeUndefined()
 			}
+
 			// Their scores should all be equal (no population boost differentiation).
 			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
 			expect(scores.size).toBe(1)

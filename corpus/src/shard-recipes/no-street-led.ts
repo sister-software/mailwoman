@@ -85,16 +85,20 @@ export const noStreetLedRecipe: ShardRecipe = {
 
 			if (!street || !city || !number || !postcode) {
 				skipped++
+
 				continue
 			}
 
 			// A surface on the digit board never enters training.
 			if (excluded.has(norm(street))) {
 				contaminated++
+
 				continue
 			}
+
 			const order = read % 3
 			let raw: string
+
 			const components: Record<string, string> = {
 				street,
 				house_number: number,
@@ -109,7 +113,9 @@ export const noStreetLedRecipe: ShardRecipe = {
 			} else {
 				raw = `${postcode} ${city}, ${street} ${number}`
 			}
+
 			const source_id = shardSourceID("synth-no-street-led", { ...components, o: String(order), v: String(read) })
+
 			const canonical = {
 				raw,
 				components,

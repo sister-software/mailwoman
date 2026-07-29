@@ -100,6 +100,7 @@ export function fillPlaceholderCentroids(
 		`UPDATE spr SET latitude=?, longitude=?, min_latitude=?, max_latitude=?, min_longitude=?, max_longitude=?
 		 WHERE id=? AND latitude=0 AND longitude=0`
 	)
+
 	const stamp = db.prepare(`INSERT OR REPLACE INTO centroid_source (id, source) VALUES (?, ?)`)
 
 	let filled = 0
@@ -113,9 +114,11 @@ export function fillPlaceholderCentroids(
 
 		if (Number(res.changes) > 0) {
 			stamp.run(row.id, source)
+
 			filled++
 		}
 	}
+
 	db.exec("COMMIT")
 
 	return filled
@@ -146,6 +149,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
 		if (cur) {
 			cur.lat += lat
 			cur.lon += lon
+
 			cur.n++
 		} else {
 			acc.set(pc, { lat, lon, n: 1 })
@@ -188,6 +192,7 @@ export function fillGeonamesPlaceholders(
 		`UPDATE spr SET latitude=?, longitude=?, min_latitude=?, max_latitude=?, min_longitude=?, max_longitude=?
 		 WHERE id=? AND latitude=0 AND longitude=0`
 	)
+
 	const stamp = db.prepare(`INSERT OR REPLACE INTO centroid_source (id, source) VALUES (?, ?)`)
 
 	let filled = 0
@@ -201,9 +206,11 @@ export function fillGeonamesPlaceholders(
 
 		if (Number(res.changes) > 0) {
 			stamp.run(row.id, source)
+
 			filled++
 		}
 	}
+
 	db.exec("COMMIT")
 
 	return filled

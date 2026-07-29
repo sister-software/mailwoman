@@ -116,16 +116,20 @@ export async function geocoderVsProvidedCoords(
 
 		if (!provided || !line) {
 			noCoord++
+
 			continue
 		}
+
 		scanned++
 		const address = [line, city, state, zip].filter(Boolean).join(", ")
 		const g = await geocoder.geocode(address)
 
 		if (g.lat === null || g.lon === null) {
 			noPlace++
+
 			continue
 		}
+
 		const deltaM = haversineKm(provided, { latitude: g.lat, longitude: g.lon }) * 1000
 		results.push({ deltaM, tier: g.resolution_tier ?? "unknown" })
 	}
@@ -143,6 +147,7 @@ export async function geocoderVsProvidedCoords(
 	}
 
 	const m = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(2)} km` : `${Math.round(x)} m`)
+
 	report?.(
 		`    geocoded ${results.length}/${scanned} placed (${noPlace} unplaced, ${noCoord} skipped no-coord/addr); ` +
 			`p50 ${m(quantile(all, 0.5))}, p90 ${m(quantile(all, 0.9))}`
@@ -174,9 +179,11 @@ export async function geocoderVsProvidedCoords(
 		const s = [...list].toSorted((a, b) => a - b)
 		lines.push(`| ${tier} | ${list.length} | ${m(quantile(s, 0.5))} | ${m(quantile(s, 0.9))} |`)
 	}
+
 	lines.push("")
 	lines.push(`## Reading`)
 	lines.push("")
+
 	lines.push(
 		`Two regimes. **Street-tier placement is excellent** (the address_point + interpolated rows above) — ` +
 			`rooftop-to-segment medians, the precision that makes geo-first blocking and the distance evidence ` +
@@ -187,6 +194,7 @@ export async function geocoderVsProvidedCoords(
 			`self-reported-vs-independent coordinate discrepancy is itself a data-quality column the reconciliation ` +
 			`surfaces (#621).`
 	)
+
 	lines.push("")
 
 	const md = lines.join("\n")

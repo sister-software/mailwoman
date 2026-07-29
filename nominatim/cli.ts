@@ -136,6 +136,7 @@ async function serve(): Promise<void> {
 
 		process.exit(1)
 	}
+
 	const candidateDb =
 		resolveCandidateDBPath(values["candidate-db"]) ??
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
@@ -186,16 +187,19 @@ async function serve(): Promise<void> {
 	if (existsSync(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
 	}
+
 	const ulDBPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
 
 	if (existsSync(ulDBPath)) {
 		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
 	}
+
 	const nutsDBPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
 
 	if (existsSync(nutsDBPath)) {
 		annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDBPath })))
 	}
+
 	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {
@@ -211,6 +215,7 @@ async function serve(): Promise<void> {
 			// for the #822 placer frontier — `countrycodes=au` lands Sydney in Australia. One country is the
 			// common (geopy) case; for a list we apply the first.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
+
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
@@ -239,6 +244,7 @@ async function serve(): Promise<void> {
 			if (result.street) {
 				resolved.address.road = result.street
 			}
+
 			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
 			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
@@ -248,6 +254,7 @@ async function serve(): Promise<void> {
 				if (!resolved.address.country) {
 					resolved.address.country = country.canonical
 				}
+
 				resolved.address.country_code = country.iso2.toLowerCase()
 			}
 
@@ -262,7 +269,9 @@ async function serve(): Promise<void> {
 						resolved.address.country
 					) || resolved.displayName
 			}
+
 			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+
 			out.annotations = toOpenCage(
 				await annotate({
 					lat: result.lat,
@@ -289,11 +298,13 @@ async function serve(): Promise<void> {
 					address[key] = place.name
 				}
 			}
+
 			const deepest = hierarchy[0]!
 
 			if (deepest.country) {
 				address.country_code = deepest.country.toLowerCase()
 			}
+
 			const resolved: ResolvedAddress = {
 				lat: params.lat,
 				lon: params.lon,
@@ -309,7 +320,9 @@ async function serve(): Promise<void> {
 						]
 					: undefined,
 			}
+
 			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+
 			out.annotations = toOpenCage(
 				await annotate({ lat: params.lat, lon: params.lon, countryCode: address.country_code })
 			)

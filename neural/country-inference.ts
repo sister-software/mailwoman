@@ -102,9 +102,11 @@ export function buildCountryFeatures(
 		for (let c = p.start; c < p.end; c++) {
 			if (c < text.length && !/\s/.test(text[c]!)) {
 				bits = charBits[c]!
+
 				break
 			}
 		}
+
 		const surface = bits & COUNTRY_SURFACE_BIT ? 1 : 0
 		const ambiguous = bits & COUNTRY_AMBIGUOUS_BIT ? 1 : 0
 		features.push([surface, ambiguous])

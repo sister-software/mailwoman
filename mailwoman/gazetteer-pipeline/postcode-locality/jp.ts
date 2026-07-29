@@ -78,6 +78,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -108,6 +109,7 @@ function pyRound(x: number, nd = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -129,11 +131,13 @@ function pyRound(x: number, nd = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -249,16 +253,19 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 		process.exit(1)
 	}
+
 	const points = loadGeonamesPoints(args.geonames)
 
 	const admin = new DatabaseSync(args.adminDb)
 	const ph = PLACETYPES.map(() => "?").join(",")
+
 	const places = admin
 		.prepare(
 			`SELECT id,name,latitude,longitude FROM spr WHERE country=? AND placetype IN (${ph}) ` +
 				`AND latitude IS NOT NULL AND NOT (latitude=0 AND longitude=0)`
 		)
 		.all(args.country, ...PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
+
 	admin.close()
 
 	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
@@ -291,6 +298,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 				}
 			}
 		}
+
 		out.sort((a, b) => a.d - b.d || a.pid - b.pid || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))
 
 		return out
@@ -299,6 +307,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	const db = new DatabaseSync(args.output)
 	const kdb = new DatabaseClient({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.addColumn("postcode", "text", (c) => c.notNull())
@@ -344,6 +353,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	for (const r of rows) {
 		insert.run(...r)
 	}
+
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -358,7 +368,9 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+
 	const matchRate = `${((100 * matched) / keys.length).toFixed(1)}%`
+
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-cjk"],
 		["description", "CJK postcode -> WOF locality via authoritative-name + proximity match (no polygons)"],
@@ -370,6 +382,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		["match_rate", matchRate],
 		["built_at", isoSeconds()],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
@@ -385,6 +398,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.

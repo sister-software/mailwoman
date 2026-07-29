@@ -132,11 +132,13 @@ describe("usgov-nad adapter", () => {
 
 	it("rejects non-US country filter", async () => {
 		const adapter = createUsgovNADAdapter()
+
 		const iterate = async () => {
 			for await (const _ of adapter.rows({ inputPath: FIXTURE_DIR, country: "FR" })) {
 				/* should throw before first yield */
 			}
 		}
+
 		await expect(iterate()).rejects.toThrow(/only US supported/)
 	})
 })

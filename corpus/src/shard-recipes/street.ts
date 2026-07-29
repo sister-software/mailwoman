@@ -33,11 +33,13 @@ export const streetRecipe: ShardRecipe = {
 
 			if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {
 				skipped++
+
 				continue
 			}
 
 			if (tuple.country !== "US") {
 				skipped++
+
 				continue
 			}
 
@@ -45,6 +47,7 @@ export const streetRecipe: ShardRecipe = {
 				const synth = synthesizeStreetRow(tuple as StreetBaseTuple, { random, includeHouseNumberProb })
 
 				if (!synth) continue
+
 				const ok = alignAndWrite(
 					write,
 					{

@@ -87,6 +87,7 @@ export async function buildGauntletDeps(
 	opts: { modelPath?: string; tokenizerPath?: string; modelCardPath?: string; weightsCacheRoot?: string } = {}
 ): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+
 	// A candidate laid out as a package-shaped weights dir (`<cacheRoot>/node_modules/@mailwoman/neural-weights-en-us`).
 	// PREFER THIS over modelPath for a candidate with a DIFFERENT vocab (splice/multisplice): `loadFromWeights({cacheRoot})`
 	// resolves the model + tokenizer + card + anchor/gazetteer siblings package-shaped, exactly as production does — the
@@ -95,6 +96,7 @@ export async function buildGauntletDeps(
 	const cacheModel = opts.weightsCacheRoot
 		? resolve(opts.weightsCacheRoot, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")
 		: undefined
+
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
 	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
 	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolve("neural-weights-en-us/model.onnx"))
@@ -114,6 +116,7 @@ export async function buildGauntletDeps(
 			assertShippedModelMatchesCard(md5)
 		}
 	}
+
 	const classifier = opts.weightsCacheRoot
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: opts.weightsCacheRoot })
 		: opts.tokenizerPath
@@ -126,9 +129,11 @@ export async function buildGauntletDeps(
 			: opts.modelPath
 				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
 				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
+
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// Pastel imports every command module at CLI startup — a static import here would break the

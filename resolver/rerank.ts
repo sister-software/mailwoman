@@ -124,8 +124,10 @@ export async function rerankByResolution<T>(
 		if (i >= maxResolve) {
 			// Beyond the resolve budget: carried through unresolved, never vetoed.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
+
 			continue
 		}
+
 		let resolved: AddressTree | null
 
 		try {
@@ -134,9 +136,12 @@ export async function rerankByResolution<T>(
 			// A resolver failure is NOT evidence against the parse — treat it as "no evidence" and let
 			// the model's rank stand, rather than vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
+
 			continue
 		}
+
 		const verdict = isImplausibleResolution(resolved)
+
 		ranked.push({
 			...candidate,
 			resolved,

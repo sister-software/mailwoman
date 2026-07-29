@@ -108,6 +108,7 @@ export async function buildDataset(
 	const OUT_DIR = options.data || repoRootPath("data", "coarse-placer")
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
+
 	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows; the v0.9.2 G-NAF shard carries
 	// 150k real Australian addresses. AU rides the SAME corpus sampling path as COUNTRIES, just from its
 	// own glob — the (country, glob) pairs below unify the two.
@@ -119,6 +120,7 @@ export async function buildDataset(
 		"train",
 		"*.parquet"
 	)
+
 	const OVERTURE_DIR = dataRootPath("overture", "2026-06-17.0")
 	mkdirSync(OUT_DIR, { recursive: true })
 
@@ -141,6 +143,7 @@ export async function buildDataset(
 		const q = `SELECT raw FROM (
 				SELECT raw FROM read_parquet('${glob}') WHERE country = '${country}' AND nullif(trim(raw), '') IS NOT NULL
 			) USING SAMPLE ${Math.ceil(PER * 1.3)} ROWS`
+
 		const res = await duck.runAndReadAll(q)
 		const seen = new Set<string>()
 		const rows: string[] = []
@@ -153,6 +156,7 @@ export async function buildDataset(
 			seen.add(raw)
 			rows.push(raw)
 		}
+
 		const nVal = Math.floor(rows.length * VAL_FRAC)
 		const nTest = Math.floor(rows.length * TEST_FRAC)
 		const valRows = rows.slice(0, nVal)
@@ -170,24 +174,29 @@ export async function buildDataset(
 		for (const raw of testRows) {
 			test.push({ raw, country })
 		}
+
 		report?.(`  ${country}: train ${trainRows.length}  val ${valRows.length}  test ${testRows.length}`)
 	}
 
 	for (const country of [...NEW_EU, ...IN_MAP_EU]) {
 		const parquet = `${OVERTURE_DIR}/addresses-${country.toLowerCase()}.parquet`
+
 		const q = `SELECT street, number, postcode,
 				COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS loc
 			FROM read_parquet('${parquet}')
 			WHERE street IS NOT NULL AND trim(street) <> ''
 			USING SAMPLE ${Math.ceil(PER * 1.4)} ROWS`
+
 		let res
 
 		try {
 			res = await duck.runAndReadAll(q)
 		} catch (error) {
 			report?.(`  ${country}: SKIPPED — ${(error as Error).message}`)
+
 			continue
 		}
+
 		const seen = new Set<string>()
 		const rows: string[] = []
 
@@ -202,6 +211,7 @@ export async function buildDataset(
 			seen.add(raw)
 			rows.push(raw)
 		}
+
 		const nVal = Math.floor(rows.length * VAL_FRAC)
 		const nTest = Math.floor(rows.length * TEST_FRAC)
 
@@ -216,6 +226,7 @@ export async function buildDataset(
 		for (const raw of rows.slice(nVal + nTest)) {
 			train.push({ raw, country })
 		}
+
 		report?.(`  ${country} (overture): train ${rows.length - nVal - nTest}  val ${nVal}  test ${nTest}`)
 	}
 

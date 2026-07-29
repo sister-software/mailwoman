@@ -216,6 +216,7 @@ function objectLiteralToRecord(node: ts.ObjectLiteralExpression): Classification
 		} else if (ts.isStringLiteralLike(name)) {
 			key = name.text
 		} else return null
+
 		const value = prop.initializer
 
 		if (!ts.isArrayLiteralExpression(value)) return null
@@ -226,6 +227,7 @@ function objectLiteralToRecord(node: ts.ObjectLiteralExpression): Classification
 				elements.push(el.text)
 			} else return null
 		}
+
 		out[key] = elements
 	}
 
@@ -252,6 +254,7 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 
 				return
 			}
+
 			const expected: ClassificationRecord[] = []
 			let allOk = true
 
@@ -260,14 +263,18 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 
 				if (!ts.isObjectLiteralExpression(arg)) {
 					allOk = false
+
 					break
 				}
+
 				const rec = objectLiteralToRecord(arg)
 
 				if (!rec) {
 					allOk = false
+
 					break
 				}
+
 				expected.push(rec)
 			}
 
@@ -275,8 +282,10 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 				out.push({ file: basename(file), locale, input: inputArg.text, expected })
 			}
 		}
+
 		ts.forEachChild(node, visit)
 	}
+
 	visit(sf)
 
 	return out
@@ -372,6 +381,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 		if (flat.intersection_b) {
 			xs.push(flat.intersection_b)
 		}
+
 		out.street = [...(out.street ?? []), ...xs]
 	}
 
@@ -533,6 +543,7 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 
 				continue
 			}
+
 			out.push({
 				file: `falsehoods/${entry}`,
 				locale: row.locale ?? file,
@@ -562,11 +573,13 @@ function printReport(results: AssertionResult[]): void {
 
 	for (const r of results) {
 		const s = byFile.get(r.file) ?? { total: 0, neural_pass: 0 }
+
 		s.total++
 
 		if (r.neural_pass) {
 			s.neural_pass++
 		}
+
 		byFile.set(r.file, s)
 	}
 
@@ -574,11 +587,13 @@ function printReport(results: AssertionResult[]): void {
 
 	for (const r of results) {
 		const s = byLocale.get(r.locale) ?? { total: 0, neural_pass: 0 }
+
 		s.total++
 
 		if (r.neural_pass) {
 			s.neural_pass++
 		}
+
 		byLocale.set(r.locale, s)
 	}
 
@@ -684,10 +699,12 @@ async function main(): Promise<void> {
 	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
 		const modelCard = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
 		const labels: readonly string[] = modelCard.labels
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			ONNXRunner.create(args.modelPath),
 		])
+
 		// Gaz-trained models (v4.2.0+) MUST be fed the lexicon + the postcode-anchor lookup with
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
 		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
@@ -696,11 +713,13 @@ async function main(): Promise<void> {
 		if (args.gazetteerLexiconPath) {
 			gazetteerLexicon = parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
 		}
+
 		let postcodeAnchorLookup: AnchorLookup | undefined
 
 		if (args.anchorLookupPath) {
 			postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(args.anchorLookupPath, "utf8")))
 		}
+
 		neural = new NeuralAddressClassifier({
 			tokenizer,
 			runner,

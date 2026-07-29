@@ -89,6 +89,7 @@ export function ingestGeonamesPostal(
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', ?, '', 0)`
 	)
@@ -111,6 +112,7 @@ export function ingestGeonamesPostal(
 
 			continue
 		}
+
 		// Group member settlement points per NORMALIZED code; remember one display form.
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
@@ -146,6 +148,7 @@ export function ingestGeonamesPostal(
 					best = p
 				}
 			}
+
 			const id = nextID++
 			sprInsert.run(id, name, cc, best[0], best[1], best[0], best[1], best[0], best[1])
 			namesInsert.run(id, name, cc)
@@ -153,8 +156,10 @@ export function ingestGeonamesPostal(
 			if (m.display !== name) {
 				namesInsert.run(id, m.display, cc)
 			}
+
 			inserted++
 		}
+
 		db.exec("COMMIT")
 		byCountry[cc] = members.size
 

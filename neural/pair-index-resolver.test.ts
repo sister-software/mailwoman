@@ -183,6 +183,7 @@ describe("peekPairIndexHeader", () => {
 			parent: `parent-${i % 50}`,
 			tag: "dependent_locality" as const,
 		}))
+
 		const bytes = serializePairIndex(HEADER, bigEntries)
 
 		expect(peekPairIndexHeader(bytes)).toEqual(HEADER)

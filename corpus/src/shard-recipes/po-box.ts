@@ -42,6 +42,7 @@ export const poBoxRecipe: ShardRecipe = {
 
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && !regionOptional)) {
 				skipped++
+
 				continue
 			}
 
@@ -49,6 +50,7 @@ export const poBoxRecipe: ShardRecipe = {
 				const synth = synthesizePoBoxRow(tuple as PoBoxBaseTuple, { random, pmbRatio })
 
 				if (!synth) continue
+
 				const ok = alignAndWrite(
 					write,
 					{
@@ -81,6 +83,7 @@ export const poBoxRecipe: ShardRecipe = {
 			// Default 0 → byte-stable (random() not called when off). US-only.
 			if (militaryRatio > 0 && random() < militaryRatio) {
 				const mil = synthesizeMilitaryPoBoxRow({ random })
+
 				const ok = alignAndWrite(
 					write,
 					{

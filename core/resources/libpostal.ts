@@ -94,6 +94,7 @@ export async function prepareLocaleIndex(
 	options?: LibPostalNormalizerInit
 ): Promise<LocaleIndex<LibPostalLanguageCode>> {
 	const normalizer = new TextNormalizer(options)
+
 	const index = new LocaleIndex<LibPostalLanguageCode>([], {
 		displayName: "libpostal",
 		normalizer,

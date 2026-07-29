@@ -63,6 +63,7 @@ const SOURCE_LABELS: Record<string, string> = {
 	"fcc-rhc-commitments": "FCC commitments",
 	"txhhsc-nursing": "TX HHSC",
 }
+
 const label = (s: string) => SOURCE_LABELS[s] ?? s
 
 /**
@@ -77,6 +78,7 @@ const SOURCE_AGENCY: Record<string, string> = {
 	"fcc-rhc-commitments": "FCC",
 	"txhhsc-nursing": "TX HHSC",
 }
+
 const agencyOf = (s: string) => SOURCE_AGENCY[s] ?? s
 
 const sourcesOf = (f: { properties: Record<string, unknown> | null }) =>
@@ -97,7 +99,9 @@ export function crossDatasetMap(
 		type: "FeatureCollection"
 		features: Array<{ properties: Record<string, unknown> | null }>
 	}
+
 	const total = parsed.features.length
+
 	const geojson = CROSS_AGENCY_ONLY
 		? { ...parsed, features: parsed.features.filter((f) => new Set(sourcesOf(f).map(agencyOf)).size > 1) }
 		: parsed
@@ -118,11 +122,13 @@ export function crossDatasetMap(
 		if (new Set(combo.map(agencyOf)).size >= MIN_DISTINCT_AGENCIES) {
 			triple++
 		}
+
 		comboCounts.set(bucket, (comboCounts.get(bucket) ?? 0) + 1)
 	}
 
 	const kept = geojson.features.length
 	const scope = CROSS_AGENCY_ONLY ? "across agencies" : "across sources"
+
 	const html = toMapHTML(geojson as never, {
 		title: `Cross-dataset entity links — ${kept} resolved ${scope} (no shared key)`,
 		flavor: "light",
@@ -136,6 +142,7 @@ export function crossDatasetMap(
 	for (const [combo, n] of [...comboCounts.entries()].toSorted((a, b) => b[1] - a[1])) {
 		report?.(`    ${n.toString().padStart(4)}  ${combo}`)
 	}
+
 	report?.(`  spanning all three agencies: ${triple}`)
 
 	return { outHtml: OUT, kept, total, triple }

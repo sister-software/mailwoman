@@ -16,11 +16,13 @@ test("PointGeometrySchema: accepts a lon/lat point, rejects wrong arity", () => 
 
 test("featureSchema: wraps a properties schema into a GeoJSON Feature envelope", () => {
 	const schema = featureSchema(z.object({ name: z.string() }))
+
 	const parsed = schema.safeParse({
 		type: "Feature",
 		geometry: { type: "Point", coordinates: [13.405, 52.52] },
 		properties: { name: "Berlin" },
 	})
+
 	expect(parsed.success).toBe(true)
 	expect(schema.safeParse({ type: "Feature", geometry: null, properties: { name: "x" } }).success).toBe(false)
 })

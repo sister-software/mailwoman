@@ -67,10 +67,12 @@ const wordNorm = (s: string): string =>
 		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 		.filter(Boolean)
 		.join(" ")
+
 /**
  * Normalize a surface for the case-insensitive map.
  */
 const norm = (s: string): string => wordNorm(s).toLowerCase()
+
 /**
  * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
  */
@@ -103,6 +105,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 
 				return
 			}
+
 			const key = norm(s)
 
 			if (!key) return

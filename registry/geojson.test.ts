@@ -10,6 +10,7 @@ import { toGeoJSON } from "./geojson.ts"
 import type { ResolvedEntity, SourceRecord } from "./types.ts"
 
 const record = (id: string, o: Partial<SourceRecord> = {}): SourceRecord => ({ id, ...o }) as SourceRecord
+
 const entity = (o: Partial<ResolvedEntity>): ResolvedEntity =>
 	({ id: "e1", records: [record("r1")], representative: record("r1"), cohesion: null, ...o }) as ResolvedEntity
 
@@ -33,6 +34,7 @@ test("toGeoJSON: entities with no resolved coordinate are omitted", () => {
 		entity({ id: "has-coord", coordinate: { latitude: 1, longitude: 2 } }),
 		entity({ id: "no-coord" }), // coordinate undefined
 	])
+
 	expect(fc.features).toHaveLength(1)
 	expect(fc.features[0]!.properties.entityID).toBe("has-coord")
 })
@@ -51,6 +53,7 @@ test("toGeoJSON: properties carry record count, cohesion, and DISTINCT, SORTED s
 			],
 		}),
 	])
+
 	const p = fc.features[0]!.properties
 	expect(p.recordCount).toBe(4)
 	expect(p.cohesion).toBe(3.5)
@@ -65,6 +68,7 @@ test("toGeoJSON: displayName joins the representative's name parts; null when ab
 			representative: record("rep", { name: { given: "Jane", family: "Doe" } as SourceRecord["name"] }),
 		}),
 	])
+
 	expect(named.features[0]!.properties.name).toBe("Jane Doe")
 
 	const unnamed = toGeoJSON([entity({ coordinate: { latitude: 1, longitude: 2 } })])

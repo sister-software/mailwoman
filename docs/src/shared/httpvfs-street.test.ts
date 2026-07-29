@@ -37,6 +37,7 @@ function stubWorker(innerDb: DatabaseSync) {
 }
 
 const openDbs: DatabaseSync[] = []
+
 function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
 	setup(d)
@@ -44,6 +45,7 @@ function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 
 	return d
 }
+
 afterEach(() => {
 	while (openDbs.length) {
 		openDbs.pop()!.close()
@@ -55,6 +57,7 @@ function situsDB(): DatabaseSync {
 		d.exec(
 			"CREATE TABLE address_point(street_norm TEXT, street_key TEXT, number TEXT, unit TEXT, postcode TEXT, locality_norm TEXT, street_raw TEXT, lat REAL, lon REAL, source TEXT, release TEXT)"
 		)
+
 		// street_norm is the SHARED normalizer output; "Main St" → "main street".
 		d.prepare(
 			"INSERT INTO address_point(street_norm, number, postcode, locality_norm, lat, lon, source, release) VALUES(?,?,?,?,?,?,?,?)"
@@ -67,6 +70,7 @@ function interpDB(): DatabaseSync {
 		d.exec(
 			"CREATE TABLE street_segment(street_norm TEXT, from_hn INTEGER, to_hn INTEGER, min_hn INTEGER, max_hn INTEGER, parity TEXT, postcode TEXT, geometry TEXT, source TEXT, release TEXT)"
 		)
+
 		// A 100→200 even-side segment, a straight ~1km polyline.
 		d.prepare("INSERT INTO street_segment VALUES(?,?,?,?,?,?,?,?,?,?)").run(
 			"main street",

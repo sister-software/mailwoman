@@ -84,11 +84,13 @@ describe("matchNzDeliveryService", () => {
 			id: "102",
 			colloquial: true,
 		})
+
 		expect(matchNzDeliveryService("private box 24999")).toMatchObject({
 			type: "Private Box",
 			id: "24999",
 			colloquial: true,
 		})
+
 		expect(isNzDeliveryService("Private Box 102")).toBe(true)
 	})
 

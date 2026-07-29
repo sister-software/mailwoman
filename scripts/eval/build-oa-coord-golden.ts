@@ -138,6 +138,7 @@ async function main(): Promise<void> {
 			process.exit(2)
 		}
 	}
+
 	const country = values.country!
 	const out = values.out!
 	const n = Number(values.n)
@@ -216,6 +217,7 @@ async function main(): Promise<void> {
 		for (const r of buckets.get(key)!) {
 			const order = ORDERS[i % 3]!
 			i += 1
+
 			rows.push({
 				raw: render(r.street, r.num, r.cp, r.city, order),
 				components: { house_number: r.num, street: r.street, postcode: r.cp, locality: r.city },
@@ -226,11 +228,13 @@ async function main(): Promise<void> {
 			})
 		}
 	}
+
 	rng.shuffle(rows)
 	const trimmed = rows.slice(0, n)
 
 	mkdirSync(dirname(out), { recursive: true })
 	writeFileSync(out, trimmed.map((r) => pyJSONDumps(r, { ensureAscii: false }) + "\n").join(""))
+
 	process.stderr.write(
 		`wrote ${trimmed.length} ${country.toUpperCase()} rows across ${buckets.size} buckets -> ${out}\n`
 	)

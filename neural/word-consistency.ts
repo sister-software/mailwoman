@@ -153,6 +153,7 @@ export function enforceWordConsistency(
 	// Type → {B index, I index}; the standalone O index; per-label-index → type.
 	const typeB = new Map<string, number>()
 	const typeI = new Map<string, number>()
+
 	const idxType = labels.map((l, idx) => {
 		const t = labelType(l)
 
@@ -164,6 +165,7 @@ export function enforceWordConsistency(
 
 		return t
 	})
+
 	const oIdx = labels.indexOf("O")
 
 	const out = [...labelIndices]
@@ -175,10 +177,12 @@ export function enforceWordConsistency(
 	// is left as-is, matching the decoder's "zero-width O is not a boundary" handling).
 	const words: number[][] = []
 	let cur: number[] = []
+
 	const flush = (): void => {
 		if (cur.length) {
 			words.push(cur)
 		}
+
 		cur = []
 	}
 
@@ -190,6 +194,7 @@ export function enforceWordConsistency(
 		if (content.trim() === "") {
 			// Separator (bare `▁` or whitespace) — ends the current word, belongs to none.
 			flush()
+
 			continue
 		}
 
@@ -197,6 +202,7 @@ export function enforceWordConsistency(
 			// Punctuation separator — `12/345`'s halves vote independently; a trailing `,` never joins
 			// `Ave`'s group. The piece itself joins no word (its label is left as-is, like whitespace).
 			flush()
+
 			continue
 		}
 
@@ -209,6 +215,7 @@ export function enforceWordConsistency(
 			cur.push(i)
 		}
 	}
+
 	flush()
 
 	for (const w of words) {
@@ -235,6 +242,7 @@ export function enforceWordConsistency(
 				score.set(t, (score.get(t) ?? 0) + probs[li]!)
 			}
 		}
+
 		let bestType = "O"
 		let bestScore = -1
 
@@ -244,12 +252,14 @@ export function enforceWordConsistency(
 				bestType = t
 			}
 		}
+
 		// Target label index per piece: B-<type> for the first piece, I-<type> for the rest (or O).
 		const targets = w.map((_pi, k) => {
 			if (bestType === "O") return oIdx
 
 			return k === 0 ? (typeB.get(bestType) ?? oIdx) : (typeI.get(bestType) ?? oIdx)
 		})
+
 		const changed = w.some((pi, k) => out[pi] !== targets[k])
 
 		if (!changed) continue // word already consistent → byte-identical, leave it
@@ -260,7 +270,9 @@ export function enforceWordConsistency(
 		// Confidence gate: a low-confidence vote is the noise-amplification signature the 2026-06-19
 		// gate caught — skip the heal rather than force an unreliable consensus.
 		if (opts?.minMeanConfidence && meanConf < opts.minMeanConfidence) continue
+
 		healedWords++
+
 		w.forEach((pi, k) => {
 			out[pi] = targets[k]!
 			healedConfidence.set(pi, meanConf)

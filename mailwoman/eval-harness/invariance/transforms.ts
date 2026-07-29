@@ -54,6 +54,7 @@ const LONG_TO_SHORT = new Map([
 	["street", "St"],
 	["road", "Rd"],
 ])
+
 const SHORT_TO_LONG = new Map([
 	["ave", "Avenue"],
 	["st", "Street"],

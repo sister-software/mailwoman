@@ -51,6 +51,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 
 			return
 		}
+
 		const { decodeAsXML } = await import("@mailwoman/core/decoder")
 		setXml(decodeAsXML(result.tree as Parameters<typeof decodeAsXML>[0]))
 		setShowXml(true)
@@ -79,6 +80,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 					}
 				: null,
 		}
+
 		const json = JSON.stringify(payload, null, 2)
 
 		try {
@@ -96,8 +98,10 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 			} catch {
 				/* nothing more we can do */
 			}
+
 			document.body.removeChild(ta)
 		}
+
 		setCopied(true)
 		globalThis.setTimeout(() => setCopied(false), 1500)
 	}, [result, selected])

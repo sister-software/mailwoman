@@ -129,6 +129,7 @@ describe("buildFSTEmissionPriors", () => {
 				],
 			])
 		)
+
 		const pieces = makePieces("New York")
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 
@@ -157,10 +158,12 @@ describe("buildFSTEmissionPriors", () => {
 
 	it("handles subword pieces correctly", () => {
 		const fst = mockFST(new Map([["springfield", [{ wofID: 6, placetype: "locality", importance: 0.45 }]]]))
+
 		const pieces = [
 			{ piece: "▁Spring", start: 0, end: 6 },
 			{ piece: "field", start: 6, end: 11 },
 		]
+
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.45 * 3, 2)
 		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.45 * 3, 2)
@@ -179,11 +182,13 @@ describe("buildFSTEmissionPriors", () => {
 		// encoded an implementation accident of the pre-fix code, not a protected invariant — updated
 		// consciously, not silently. See the fix-wave report.
 		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", importance: 0.85 }]]]))
+
 		const pieces = [
 			{ piece: "▁Washington", start: 0, end: 10 },
 			{ piece: ",", start: 10, end: 11 },
 			{ piece: "▁DC", start: 12, end: 14 },
 		]
+
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3, 2)
 		// The comma (piece 1) is now part of the "Washington" word group — it gets the SAME bias as an
@@ -223,6 +228,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 				["new york", [{ wofID: 11, placetype: "locality", importance: 0.95 }]],
 			])
 		)
+
 	const morphology = () =>
 		mockFST(
 			new Map([
@@ -234,9 +240,11 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 
 	it("suffix adjacency ('Washington Blvd') scales the positive bias ×0.25 (default); suppression keeps #1173 length-scaling", () => {
 		const pieces = makePieces("Washington Blvd")
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 		// Suppression path untouched by the gate: 1-token match → -1.5 × 0.25 (#1173).
 		expect(gated[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
@@ -246,25 +254,31 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 
 	it("prefix adjacency ('Rue Washington', FR shape) scales the positive bias", () => {
 		const pieces = makePieces("Rue Washington")
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
 	it("house-number left ('500 Washington') scales the positive bias — 'the house number is the license' (#1143)", () => {
 		const pieces = makePieces("500 Washington")
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
 	it("multi-token match with street adjacency ('New York Ave') scales the positive bias on the whole span", () => {
 		const pieces = makePieces("New York Ave")
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
 		expect(gated[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
 	})
@@ -272,9 +286,11 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 	it("'Washington' alone → full boost, BYTE-IDENTICAL to the ungated run (default-safe asymmetry)", () => {
 		const pieces = makePieces("Washington")
 		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated).toEqual(ungated)
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
@@ -282,9 +298,11 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 	it("'Washington DC' → adjacent region, gate silent → full boost, byte-identical to ungated", () => {
 		const pieces = makePieces("Washington DC")
 		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated).toEqual(ungated)
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
@@ -292,17 +310,21 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 	it("no street context anywhere in the parse → whole matrix byte-identical to ungated", () => {
 		const pieces = makePieces("Hello Washington Goodbye")
 		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
+
 		expect(gated).toEqual(ungated)
 	})
 
 	it("custom positiveScale is honored (tuning range 0.15–0.4)", () => {
 		const pieces = makePieces("Washington Blvd")
+
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology(), positiveScale: 0.15 },
 		})
+
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.15, 2)
 	})
 })

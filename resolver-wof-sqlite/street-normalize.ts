@@ -107,6 +107,7 @@ export function normalizeStreetForKey(street: string): string {
 	// ("southeast"), and also merge an already-written two-token pair ("South East …").
 	const edgeDirectional = (raw: string) =>
 		AbbreviationToDirectional.get(raw.toUpperCase())?.toLowerCase().replace(" ", "")
+
 	const mergePair = (a?: string, b?: string) =>
 		a && b && /^(north|south)$/.test(a) && /^(east|west)$/.test(b) ? a + b : undefined
 
@@ -115,6 +116,7 @@ export function normalizeStreetForKey(street: string): string {
 	if (leadPair && tokens.length > 2) {
 		tokens.splice(0, 2, leadPair)
 	}
+
 	const first = edgeDirectional(tokens[0]!)
 
 	if (first && tokens.length > 1) {
@@ -144,6 +146,7 @@ export function normalizeStreetForKey(street: string): string {
 
 		if (canonical) {
 			tokens[at] = canonical.toLowerCase()
+
 			break
 		}
 	}
@@ -278,7 +281,9 @@ export function stripLocalityQualifier(locality: string): string {
 
 	if (s.includes("/")) {
 		s = s.split("/")[0]!.trim()
-	} // "Kraubath/Mur", "St.Kanzian/Klopeiner See"
+	}
+
+	// "Kraubath/Mur", "St.Kanzian/Klopeiner See"
 	s = s.replace(/\s+[a-zà-ÿ]\.\s*\S.*$/iu, "") // abbreviated " b.Graz" / " o.Bleiburg" / " a.d. …"
 	s = s.replace(/\s+(im|an der|ob|bei|in der|unter|vor)\s+\S.*$/iu, "") // " im Simmental", " bei Graz"
 	s = s.replace(/\s+(S|N|E|W|V|Ø|Sø|Fyn|Thy|Sjælland|Jylland|[A-ZÅÄÖ]{2})$/u, "") // " S", " VD", " Thy"

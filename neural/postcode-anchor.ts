@@ -121,6 +121,7 @@ const FUZZY_PENALTY = 0.6
 export function editDistance1Variants(s: string): string[] {
 	const classOf = (ch: string): string =>
 		/[0-9]/.test(ch) ? "0123456789" : /[A-Z]/.test(ch) ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : ""
+
 	const variants = new Set<string>()
 
 	for (let i = 0; i < s.length; i++) {
@@ -143,7 +144,9 @@ export function editDistance1Variants(s: string): string[] {
 
 	for (let i = 0; i + 1 < s.length; i++) {
 		variants.add(s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2))
-	} // transpositions
+	}
+
+	// transpositions
 	variants.delete(s)
 
 	return [...variants]
@@ -371,6 +374,7 @@ export function extractPostcodeAnchors(
 		const systems = countries.length
 			? new Set(countries.map((c) => c.toLowerCase()))
 			: new Set<string>(candidateSystemsForPostcode(normalized))
+
 		const position = positionFactor(text, match.start, normalized, systems)
 		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1) * position
 

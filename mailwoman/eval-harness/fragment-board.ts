@@ -134,6 +134,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const street = flatten(tree.roots as never)
 			.filter((node) => STREET_TAGS.has(node.tag))
 			.toSorted((a, b) => a.start - b.start)
@@ -141,6 +142,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			.join(" ")
 
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
+
 		bucket.total++
 
 		const ok = fixture.expect_no_street
@@ -152,6 +154,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		} else {
 			bucket.misses.push({ ...fixture, got: street } as never)
 		}
+
 		tally.set(fixture.klass, bucket)
 	}
 

@@ -45,6 +45,7 @@ async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterab
 	for await (const raw of iterateJSONL<Record<string, unknown>>(jsonl)) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
+
 		yield {
 			raw: raw["raw"] as string,
 			components,
@@ -85,6 +86,7 @@ export async function buildKryptoniteShard(
 	await mkdir(options.outDir, { recursive: true })
 
 	const quarantine: string[] = []
+
 	const newManifest = await writeShards(
 		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
 		{ outputDir: options.outDir, corpusVersion }
@@ -110,6 +112,7 @@ export async function buildKryptoniteShard(
 
 	// Compose the final corpus-v0.4.0 manifest: every shard from base + the new shard(s).
 	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
+
 	const combined: ShardManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
@@ -123,6 +126,7 @@ export async function buildKryptoniteShard(
 		},
 		total_rows: base.total_rows + newManifest.total_rows,
 	}
+
 	// Stamp source on the legacy v0.3.0 shards too, so audit's shard.source path is the
 	// authoritative one. v0.3.0 shards mix sources; we use the first_source_id-prefix
 	// inference for them (audit.ts will re-derive on its own when shard.source is absent).

@@ -52,6 +52,7 @@ export const DebugControl: React.FC = memo(() => {
 		const handleMouseMove = (event: MapLayerMouseEvent) => {
 			const nextPointerPosition = event.point
 			const nextPointerCoords = event.lngLat.wrap()
+
 			const nextFeatureTargets = event.target
 				.queryRenderedFeatures(nextPointerPosition, {
 					filter: ["!=", ["get", "pmap:kind"], "earth"],
@@ -75,6 +76,7 @@ export const DebugControl: React.FC = memo(() => {
 		<>
 			{featureTargets?.map((feature, index) => {
 				const layerID = feature.layer.id
+
 				const properties: string =
 					"pmap:kind" in feature.properties ? feature.properties.name : JSON.stringify(feature.properties, null, 2)
 

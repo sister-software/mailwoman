@@ -61,6 +61,7 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 	if (!bins || !bins.length) {
 		throw new Error("createCalibrator: empty calibration table")
 	}
+
 	// Sort by center and extract parallel arrays for interpolation.
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
@@ -87,6 +88,7 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 				hi = mid
 			}
 		}
+
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!
 		const y0 = cals[lo]!

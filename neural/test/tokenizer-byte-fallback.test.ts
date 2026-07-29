@@ -72,10 +72,12 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		// "Leeds" is split fine-grained on this small-vocab fixture tokenizer ("▁Le", "e", "d", "s") — reassembling
 		// every piece after the brace run must still spell "Leeds" cleanly, not a garbled offset-shifted string.
 		const afterComma = pieces.filter((p) => p.start >= pieces.find((q) => q.piece === ",")!.end)
+
 		const reassembled = afterComma
 			.map((p) => raw.slice(p.start, p.end))
 			.join("")
 			.trim()
+
 		expect(reassembled).toBe("Leeds")
 	})
 
@@ -112,10 +114,12 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(raw.slice(aPiece.start, aPiece.end)).toBe("A")
 
 		const afterClose = pieces.filter((p) => p.start >= closeRun[2]!.end)
+
 		const reassembled = afterClose
 			.map((p) => raw.slice(p.start, p.end))
 			.join("")
 			.trim()
+
 		expect(reassembled).toBe(",Leeds") // raw.slice per-piece omits the sentinel-consumed leading space, as expected
 	})
 

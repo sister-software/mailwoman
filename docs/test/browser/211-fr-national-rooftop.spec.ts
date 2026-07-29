@@ -7,7 +7,9 @@
 // to the admin centroid and fails the tolerance.
 import { expect, test } from "#e2e"
 
-const TOL = 0.006 // ~600 m — separates the rooftop (48.8335) from the Paris centroid (48.8566)
+const TOL = 0.006
+
+// ~600 m — separates the rooftop (48.8335) from the Paris centroid (48.8566)
 
 const CASES: Array<{ address: string; lat: number; lon: number }> = [
 	// BAN row: 181 | rue du chevaleret | 75013 | paris → 48.833518, 2.36858 (release 2026-05-18)

@@ -104,7 +104,9 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
 	if (rows.length !== 1) {
 		throw new Error(`layer manifest: expected exactly 1 row, found ${rows.length}`)
 	}
+
 	const row = rows[0]!
+
 	const manifest: LayerManifest = {
 		name: row.name,
 		version: row.version,

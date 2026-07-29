@@ -89,6 +89,7 @@ function parse(): BuildArgs {
 	if (!existsSync(csvDir)) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"
 	const output = values.out ?? dataRootPath("ban", `address-points-${country}.db`)
+
 	const depts = values.depts
 		? values.depts
 				.split(",")
@@ -186,10 +187,13 @@ async function main(): Promise<void> {
 
 			if (!streetNorm || !numTrim) {
 				noStreet++
+
 				continue
 			}
+
 			// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
 			const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
+
 			// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
 			// locality_norm, street_raw, lat, lon, source, release.
 			insert.run(
@@ -208,6 +212,7 @@ async function main(): Promise<void> {
 				source,
 				args.release
 			)
+
 			written++
 
 			if (written % BATCH === 0) {
@@ -222,6 +227,7 @@ async function main(): Promise<void> {
 
 		console.error(`[ban]   dept ${dept}: ${written.toLocaleString()} cumulative`)
 	}
+
 	out.exec("COMMIT")
 
 	console.error(`[ban] indexing…`)
@@ -238,11 +244,13 @@ async function main(): Promise<void> {
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(args.output + sfx, { force: true })
 	}
+
 	renameSync(tmp, args.output)
 
 	if (existsSync(`${args.output}.prev`)) {
 		rmSync(`${args.output}.prev`, { force: true })
 	}
+
 	sealDatabase(args.output)
 
 	const md5 = await fileMD5(args.output)
@@ -252,6 +260,7 @@ async function main(): Promise<void> {
 	// (the fast --depts validation builds are transient and don't rewrite the record).
 	if (!args.depts) {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
+
 		writeFileSync(
 			attributionPath,
 			JSON.stringify(

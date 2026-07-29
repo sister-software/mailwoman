@@ -34,6 +34,7 @@ test("placetypeDepth: depth strictly increases from country down to microhood", 
 		"neighbourhood",
 		"microhood",
 	]
+
 	const depths = order.map(placetypeDepth)
 
 	for (let i = 1; i < depths.length; i++) {
@@ -62,6 +63,7 @@ test("PLACETYPE_DEPTH: the exported table matches placetypeDepth for every known
 	for (const [placetype, depth] of Object.entries(PLACETYPE_DEPTH)) {
 		expect(placetypeDepth(placetype)).toBe(depth)
 	}
+
 	// Each depth is unique (no two placetypes collide at the same rank).
 	const depths = Object.values(PLACETYPE_DEPTH)
 	expect(new Set(depths).size).toBe(depths.length)

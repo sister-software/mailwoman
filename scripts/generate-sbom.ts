@@ -54,6 +54,7 @@ const { values } = parseArgs({
 
 const version =
 	values.version ?? (JSON.parse(readFileSync(join(repoRoot, "mailwoman", "package.json"), "utf8")).version as string)
+
 const outDir = values.out ? resolve(values.out) : join(repoRoot, "docs", "static", "sbom")
 
 const run = (cmd: string, args: string[], cwd: string): string =>
@@ -131,6 +132,7 @@ try {
 	const spdx = normalizeSPDX(
 		JSON.parse(run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir))
 	)
+
 	const spdxPath = join(outDir, `mailwoman-${version}.spdx.json`)
 	writeFileSync(spdxPath, `${JSON.stringify(spdx, null, 2)}\n`)
 
@@ -139,6 +141,7 @@ try {
 	const cdx = JSON.parse(
 		run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
 	)
+
 	const cdxPath = join(outDir, `mailwoman-${version}.cdx.json`)
 	writeFileSync(cdxPath, `${JSON.stringify(cdx, null, 2)}\n`)
 

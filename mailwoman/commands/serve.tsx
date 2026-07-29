@@ -69,6 +69,7 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 			if (!alive.length) {
 				process.exit(0)
 			}
+
 			let remaining = alive.length
 
 			for (const worker of alive) {
@@ -80,8 +81,10 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 						process.exit(0)
 					}
 				})
+
 				worker.process.kill(signal)
 			}
+
 			setTimeout(() => {
 				// A wedged worker must not survive the primary holding the port.
 				for (const worker of alive) {
@@ -89,6 +92,7 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 						worker.process.kill("SIGKILL")
 					}
 				}
+
 				process.exit(0)
 			}, 10_000).unref()
 		}
@@ -193,6 +197,7 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 				if (cluster.worker?.id === 1) {
 					console.error(preflight.message)
 				}
+
 				process.exit(1)
 			}
 

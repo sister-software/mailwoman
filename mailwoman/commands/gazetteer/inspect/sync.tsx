@@ -49,6 +49,7 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 
 function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 	if (!raw) return undefined
+
 	const allow = new Set(
 		raw
 			.split(",")

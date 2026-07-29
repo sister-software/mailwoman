@@ -177,6 +177,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: "CC-BY-4.0",
 					}
+
 					emitted++
 				}
 			} finally {

@@ -87,9 +87,11 @@ export async function generateOfficialLanguages(
 			Record<string, Record<string, unknown>>
 		>
 	).supplemental!.territoryInfo as Record<string, { languagePopulation?: Record<string, LanguagePopulation> }>
+
 	const aliasesDoc = (await loadCLDR("aliases", options.cldrDir, cldrVersion)) as {
 		supplemental: { metadata: { alias: { languageAlias: Record<string, { _replacement?: string }> } } }
 	}
+
 	const languageAlias = aliasesDoc.supplemental.metadata.alias.languageAlias
 
 	// canonical code → every plain 2-3 letter alias spelling that maps to it (fi gains "fin")
@@ -104,6 +106,7 @@ export async function generateOfficialLanguages(
 		if (!set) {
 			spellingsOf.set(canon, (set = new Set()))
 		}
+
 		set.add(alias)
 	}
 

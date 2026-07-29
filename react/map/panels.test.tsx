@@ -89,6 +89,7 @@ test("CompareToggle reveals the compare select (primary excluded) when turned on
 
 test("BackendControl shows the backend and toggles forceWASM", async () => {
 	const onForceWASMChange = vi.fn()
+
 	const { container } = renderComponent(
 		<BackendControl activeBackend="webgpu (28 MB int8)" forceWASM={false} onForceWASMChange={onForceWASMChange} />
 	)
@@ -130,6 +131,7 @@ test("ResultPanel renders components + resolved place, and switches candidate", 
 
 test("ResultPanel renders the injected failure slot when nothing resolved", () => {
 	const result = { ...makeFakeParseResult(), resolved: null, candidates: [] }
+
 	const { container } = renderComponent(
 		<ResultPanel
 			result={result}

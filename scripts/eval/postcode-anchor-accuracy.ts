@@ -87,20 +87,25 @@ function main(): void {
 		const lon: number | undefined = row.lon
 
 		if (!postcode || typeof lat !== "number" || typeof lon !== "number") continue
+
 		withPostcode++
 
 		const hits = lookup.lookup(String(postcode)).filter((h) => h.country === country)
 
 		if (!hits.length) {
 			notInGazetteer++
+
 			continue
 		}
+
 		const placedHit = hits.find((h) => h.lat !== 0 && h.lon !== 0)
 
 		if (!placedHit) {
 			inGazetteerNoCentroid++
+
 			continue
 		}
+
 		placed++
 		distances.push(haversineKm(lat, lon, placedHit.lat, placedHit.lon))
 	}

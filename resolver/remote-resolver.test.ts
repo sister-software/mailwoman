@@ -37,6 +37,7 @@ describe("serializableResolveOpts", () => {
 			addressPoints: {} as AddressPointLookup,
 			interpolation: {} as InterpolationLookup,
 		}
+
 		const out = serializableResolveOpts(opts)!
 		expect(out).toEqual({ defaultCountry: "US", maxLookups: 3, interpolationRadiusCalibration: 1.7 })
 		expect("addressPoints" in out).toBe(false)

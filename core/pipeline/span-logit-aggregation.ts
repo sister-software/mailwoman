@@ -107,6 +107,7 @@ export function aggregateSpanLogits(
 
 		// Normalize by number of overlapping tokens so longer spans don't auto-win.
 		const norm = overlapping.length
+
 		const sorted = [...tagScores.entries()]
 			.map(([tag, score]) => ({ tag, score: score / norm }))
 			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
@@ -147,6 +148,7 @@ function softmax(row: readonly number[]): number[] {
 		if (row[i]! > max) {
 			max = row[i]!
 		}
+
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)
 

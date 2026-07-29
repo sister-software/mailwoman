@@ -45,6 +45,7 @@ async function withPage<T>(fn: PageCallback<T>): Promise<T> {
 	const consoleErrors: string[] = []
 
 	page.on("pageerror", (e) => consoleErrors.push(`pageerror: ${e.message}`))
+
 	page.on("console", (m) => {
 		if (m.type() === "error") {
 			consoleErrors.push(`console.error: ${m.text()}`)
@@ -65,6 +66,7 @@ function url(path: string | URL) {
 async function cmdScreenshot(path: string, outArg?: string) {
 	const out = resolve(outArg ?? `${SCREENSHOT_DIR}/${path.replaceAll(/[/]+/g, "_") || "root"}.png`)
 	await mkdir(dirname(out), { recursive: true })
+
 	const result = await withPage(async (page) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
 		await page.screenshot({ path: out, fullPage: true })
@@ -78,12 +80,14 @@ async function cmdScreenshot(path: string, outArg?: string) {
 async function checkRoute(path: string) {
 	return await withPage(async (page: Page, consoleErrors: string[]) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })
+
 		// Docusaurus serves its 404 with HTTP 200, so detect the soft-404 by reading the rendered <h1>.
 		const heading = await page
 			.locator("h1")
 			.first()
 			.textContent()
 			.catch(() => null)
+
 		const soft404 = (heading ?? "").trim() === "Page Not Found"
 
 		return {
@@ -191,6 +195,7 @@ if (values.smoke) {
 
 		process.exit(2)
 	}
+
 	const js = jsParts.join(" ")
 	await cmdEval(path, js)
 } else {

@@ -46,6 +46,7 @@ interface StateLedger {
 const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const outDir = options.outDir ?? dataRootPath("address-points")
+
 		// Canonical per-state shards only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
 		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state shard and the CLI never
 		// selects.
@@ -75,6 +76,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 				db = new DatabaseSync(path.join(outDir, file), { readOnly: true })
 			} catch {
 				manifest.states[slug] = { ok: false, error: "unreadable" }
+
 				continue
 			}
 
@@ -83,6 +85,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 					source: string
 					n: number
 				}>
+
 				const datasets: Record<string, number> = {}
 				let points = 0
 
@@ -92,6 +95,7 @@ const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ opti
 					manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + Number(n)
 					points += Number(n)
 				}
+
 				manifest.states[slug] = { ok: true, points, datasets }
 				manifest.totalPoints += points
 

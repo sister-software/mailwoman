@@ -76,6 +76,7 @@ test("geomBounds walks a single-ring Polygon", () => {
 			],
 		],
 	}
+
 	expect(geomBounds(geom)).toEqual({ minLon: -74, minLat: 40, maxLon: -73, maxLat: 41 })
 })
 
@@ -101,6 +102,7 @@ test("geomBounds walks every part of a MultiPolygon", () => {
 			],
 		],
 	}
+
 	expect(geomBounds(geom)).toEqual({ minLon: 0, minLat: 0, maxLon: 12, maxLat: 13 })
 })
 
@@ -123,6 +125,7 @@ test("geomBounds does NOT normalize an antimeridian-crossing polygon (documents 
 			],
 		],
 	}
+
 	expect(geomBounds(geom)).toEqual({ minLon: -179, minLat: 0, maxLon: 179, maxLat: 1 })
 })
 

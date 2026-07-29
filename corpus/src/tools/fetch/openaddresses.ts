@@ -136,6 +136,7 @@ function humanBytes(bytes: number): string {
 
 	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
 		value /= 1024
+
 		unit++
 	}
 
@@ -174,6 +175,7 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 
 			if (attempt < opts.retries && isTransientStatus(res.status)) {
 				await sleep(opts.retryDelayMs)
+
 				continue
 			}
 
@@ -181,6 +183,7 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 		} catch {
 			if (attempt < opts.retries) {
 				await sleep(opts.retryDelayMs)
+
 				continue
 			}
 
@@ -198,7 +201,9 @@ async function gunzipToFile(src: string, dest: string): Promise<void> {
 	const child = spawn("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
 		stdio: ["ignore", "pipe", "inherit"],
 	})
+
 	await pipeline(child.stdout!, createWriteStream(dest))
+
 	await new Promise<void>((resolve, reject) => {
 		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`gunzip exited with code ${code}`))))
 		child.on("error", reject)
@@ -254,6 +259,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
+
 		const res = await fetch(`${OA_BASE}/api/collections`, {
 			headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" },
 			signal: AbortSignal.timeout(30_000),
@@ -311,6 +317,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 
 	if (httpStatus !== HTTP_OK) {
 		rmSync(tmpGz, { force: true })
+
 		report?.(`
 ERROR: Download returned HTTP ${httpStatus}.
 
@@ -382,6 +389,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		notes:
 			"batch.openaddresses.io requires a free registered account for downloads. License is mixed per-row; use the openaddresses adapter with allowShareAlike=false (default) to filter Tier-C rows.",
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${humanBytes(size)}  rows=${rowCount}  sha256=${sha}`)

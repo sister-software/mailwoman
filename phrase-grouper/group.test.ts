@@ -82,6 +82,7 @@ describe("phrase-grouper — contract", () => {
 describe("tokenizeSegment", () => {
 	it("preserves absolute offsets when segment starts mid-input", () => {
 		const tokens = tokenizeSegment("New York", 10)
+
 		expect(tokens.map((t) => [t.body, t.start, t.end])).toEqual([
 			["New", 10, 13],
 			["York", 14, 18],
@@ -124,6 +125,7 @@ describe("scorePostcode", () => {
 			}),
 			"350 5th Ave, New York, 10118"
 		)
+
 		expect(out).toHaveLength(1)
 		expect(out[0]!.span.body).toBe("10118")
 		expect(out[0]!.confidence).toBeCloseTo(0.92)
@@ -134,6 +136,7 @@ describe("scorePostcode", () => {
 			shape({ knownFormats: [{ format: "po_box", span: { start: 0, end: 8 }, confidence: 0.9 }] }),
 			"PO Box 1"
 		)
+
 		expect(out).toEqual([])
 	})
 })
@@ -309,6 +312,7 @@ describe("scoreLocalityPhrase", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("CITTA DI CASTELLO", 0), "CITTA DI CASTELLO", true).map(
 			(p) => p.span.body
 		)
+
 		expect(bodies).toContain("CITTA DI CASTELLO")
 		expect(bodies).not.toContain("CITTA DI")
 	})
@@ -344,6 +348,7 @@ describe("scoreVenuePhrase", () => {
 describe("groupPhrases — segment-aware composition", () => {
 	it("processes each QueryShape segment independently", () => {
 		const text = "350 5th Ave, New York, NY 10118"
+
 		const out = groupPhrasesSync(
 			input(text),
 			shape({
@@ -355,6 +360,7 @@ describe("groupPhrases — segment-aware composition", () => {
 				knownFormats: [{ format: "us_zip", span: { start: 26, end: 31 }, confidence: 0.92 }],
 			})
 		)
+
 		expect(kinds(out)).toContain("NUMERIC")
 		expect(kinds(out)).toContain("STREET_PHRASE")
 		expect(kinds(out)).toContain("LOCALITY_PHRASE")

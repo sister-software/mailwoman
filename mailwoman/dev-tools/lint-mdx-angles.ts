@@ -77,6 +77,7 @@ function violations(file: string): string[] {
 	for (const [i, line] of lines.entries()) {
 		if (line.startsWith("```")) {
 			fenced = !fenced
+
 			continue
 		}
 
@@ -104,6 +105,7 @@ export function lintMDXAngles(
 
 	for (const f of targets) {
 		if (!existsSync(f)) continue
+
 		filesChecked++
 		const hits = violations(f)
 
@@ -113,6 +115,7 @@ export function lintMDXAngles(
 			for (const h of hits.slice(0, 5)) {
 				report?.(`    ${h}`)
 			}
+
 			findings.push({ file: f, hits })
 		}
 	}

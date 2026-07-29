@@ -58,6 +58,7 @@ test("rustLibRs declares a generate_api! module + a *_local() constructor for ev
 		expect(source).toContain(`pub mod ${surface} {`)
 		expect(source).toContain(`progenitor::generate_api!("openapi/${surface}.json");`)
 	}
+
 	// mailwoman has no hosted trial (self-host only, unlike photon) — local() only, no hosted().
 	expect(source).toContain("pub fn mailwoman_local() -> mailwoman::Client {")
 	expect(source).not.toContain("mailwoman_hosted")

@@ -141,6 +141,7 @@ async function draw(src: SourceDef, n: number): Promise<Sample[]> {
 		const s = src.parse(raw.split(";"))
 
 		if (!s) continue
+
 		seen++
 
 		if (res.length < n) {
@@ -165,8 +166,10 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 		const g = await deps.geocode(s.query)
 
 		if (g.lat == null || g.lon == null) continue
+
 		resolved++
 		const km = haversineKm(g.lat, g.lon, s.lat, s.lon)
+
 		TOLS.forEach((t, i) => {
 			if (km <= t) {
 				hits[i] = (hits[i] ?? 0) + 1
@@ -209,6 +212,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 		return { pass: false, exitCode: 2 }
 	}
+
 	const src: SourceDef = selected
 
 	if (!CANDIDATE && !CAND_CACHE) {
@@ -227,11 +231,13 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	// through the SHIPPED (model, tokenizer, card) trio via createScorer — otherwise the two sides have different
 	// anchor/gazetteer wiring and the z-test is confounded. resolveWeights gives the shipped trio for production.
 	const shipped = CAND_TOKENIZER || CAND_CACHE ? resolveWeights({ locale: "en-us" }) : null
+
 	const prodDeps = await buildGauntletDeps(
 		shipped
 			? { modelPath: shipped.modelPath, tokenizerPath: shipped.tokenizerPath, modelCardPath: shipped.modelCardPath }
 			: {}
 	)
+
 	const prod = await score(prodDeps, sample)
 	prodDeps.close()
 
@@ -242,6 +248,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 				? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined }
 				: { modelPath: CANDIDATE }
 	)
+
 	const cand = await score(candDeps, sample)
 	candDeps.close()
 

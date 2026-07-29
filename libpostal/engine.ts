@@ -80,6 +80,7 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 			const nameParts = [node, ...node.children.filter((child) => STREET_NAME_TAGS.has(child.tag))].toSorted(
 				(a, b) => a.start - b.start || a.end - b.end
 			)
+
 			const first = nameParts[0]
 
 			if (first) {

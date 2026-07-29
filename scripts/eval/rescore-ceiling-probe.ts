@@ -30,6 +30,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { model?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
@@ -38,6 +39,7 @@ const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const WOF = dataRootPath("wof", "admin-global-priority.db")
 const MODEL = values["model"] || "out/v191/model.onnx"
 const N = Number(values["n"] || "150")
+
 const LOCALES: [string, string][] = [
 	["IT", "data/eval/external/oa-it-coord-150.jsonl"],
 	["PT", "data/eval/external/oa-pt-coord-150.jsonl"],
@@ -66,6 +68,7 @@ async function main() {
 	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF })
 	const resolver = createWOFResolver(lookup as never)
+
 	const model = await createScorer({
 		modelPath: MODEL,
 		tokenizerPath: TOK,
@@ -90,11 +93,13 @@ async function main() {
 
 			continue
 		}
+
 		const rows = readFileSync(file, "utf8")
 			.trim()
 			.split("\n")
 			.slice(0, N)
 			.map((l) => JSON.parse(l))
+
 		const s = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 		const sT1: number[] = []
 		const sB5: number[] = []
@@ -106,8 +111,10 @@ async function main() {
 
 			if ((r.roots as N9[]).some(hasWOF)) {
 				s.res++
+
 				continue
 			}
+
 			s.unres++
 			const emitted = ((decodeAsJSON(tree) as Record<string, string>).locality ?? "").toString().trim()
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()
@@ -117,6 +124,7 @@ async function main() {
 				s.cov++
 			} else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
+
 				// FALSIFIER: resolve the gold locality with the row's postcode (what the rescore keeps as
 				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a REAL
 				// coordinate; scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
@@ -127,6 +135,7 @@ async function main() {
 				if (Number.isFinite(tLat) && Number.isFinite(tLon)) {
 					const pc = ((row.components?.postcode ?? row.components?.postal_code ?? "") as string).toString().trim()
 					const dis = pc ? await lookup.findPlace({ text: gold, country: cc, postcode: pc, limit: 5 }) : goldCands
+
 					// findPlace candidates carry lat/lon (NOT the ResolvedPlace latitude/longitude).
 					const dists = (dis as unknown as { lat: number; lon: number }[])
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
@@ -143,6 +152,7 @@ async function main() {
 				s.emitUn++
 			}
 		}
+
 		const swapKm = sT1.length
 			? `${pctile(sT1, 50).toFixed(1)}/${pctile(sT1, 90).toFixed(0)} · ${pctile(sB5, 50).toFixed(1)}/${pctile(sB5, 90).toFixed(0)} (n${sT1.length})`
 			: "—"
@@ -154,9 +164,11 @@ async function main() {
 		for (const k of Object.keys(s) as (keyof typeof s)[]) {
 			T[k] += s[k]
 		}
+
 		swapTop1.push(...sT1)
 		swapBest5.push(...sB5)
 	}
+
 	const recoverable = T.swap + T.needsK
 
 	console.log(`ALL | n=${T.n} res=${T.res} unres=${T.unres}`)
@@ -172,6 +184,7 @@ async function main() {
 		t1p90 = pctile(swapTop1, 90),
 		b5p50 = pctile(swapBest5, 50),
 		b5p90 = pctile(swapBest5, 90)
+
 	const verdict = !swapTop1.length
 		? "INCONCLUSIVE — no swap cases with a truth coord + resolvable gold"
 		: t1p50 < 10
@@ -187,4 +200,5 @@ async function main() {
 			`   → ${verdict}`
 	)
 }
+
 await main()

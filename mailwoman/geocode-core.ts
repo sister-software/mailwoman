@@ -333,6 +333,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 			regionValue = node.value.trim() || null
 			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
 		}
+
 		stack.push(...node.children)
 	}
 
@@ -437,6 +438,7 @@ export class ShardProvider {
 		for (const h of this.#retired) {
 			h.close()
 		}
+
 		this.#retired = []
 		this.#manifest = readReleaseManifest(this.#dataRoot)
 
@@ -468,6 +470,7 @@ export class ShardProvider {
 		for (const h of this.#retired) {
 			h.close()
 		}
+
 		this.#cache.clear()
 		this.#retired = []
 	}
@@ -502,6 +505,7 @@ export async function parseForGeocode(
 	// matrix — so both bare-form and well-formed inputs are byte-stable; it earns its keep only on the ambiguous
 	// digit-span / region-abbrev cases the model isn't already confident about.
 	const queryShape = computeQueryShape(parseInput)
+
 	// Decision A: explicit register wins; otherwise the kind verdict decides (same derivation as the
 	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline).
 	const inputMode =
@@ -531,6 +535,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
 	const parseInput =
 		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const stateSlug = regionSlugFromTree(tree)
 	const usShards = deps.shards?.(stateSlug) ?? {}
@@ -553,6 +558,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	if (deps.bias && deps.bias.length) {
 		opts.bias = deps.bias
 	}
+
 	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
 	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
 	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
@@ -567,6 +573,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// country hint (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree — the only reliable
 	// FR signal there is this ungated placer). Byte-stable: the anchor/hardCountry logic stays gated exactly as before.
 	const placerResult = placeCountry ? placeCountry(parseInput) : null
+
 	const streetPlacerCountry =
 		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
 
@@ -588,6 +595,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			placedCountry = pcCountry
 			opts.anchorPosterior = { [pcCountry]: 1 }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+
 			// Safelist precedence (survey candidate #2): per-call override (the eval instrument) → the loaded
 			// gazetteer artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
 			const hardCountry = hardCountryFor(
@@ -615,6 +623,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
 			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+
 			// #743/#194: default-on coverage-guarded HARD country filter (same gate as the runtime pipeline,
 			// via the shared helper so the two production paths can't drift). Same safelist precedence as
 			// above: per-call override → the artifact's coverage manifest → the code-constant fallback.
@@ -706,10 +715,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		//   2. a shard predating the metadata table (the shipped fleet) falls back to the in-code
 		//      per-region table selected by the parsed region (`stateSlug`) — byte-identical to before.
 		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
+
 		const fallback =
 			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
 				: undefined
+
 		const calibration = explicit ?? fallback
 
 		// A factor of 1 is a no-op — skipped, EXCEPT as an explicit override of an artifact value ("force raw").
@@ -743,8 +754,10 @@ function assembleStreetName(streetNode: AddressNode): string {
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
 			parts.push(n)
 		}
+
 		stack.push(...n.children)
 	}
+
 	parts.sort((a, b) => a.start - b.start)
 
 	return parts.map((n) => n.value.trim()).join(" ")
@@ -756,12 +769,14 @@ function assembleStreetName(streetNode: AddressNode): string {
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
 	const allNodes: AddressNode[] = []
+
 	const flatten = (nodes: readonly AddressNode[]) => {
 		for (const n of nodes) {
 			allNodes.push(n)
 			flatten(n.children)
 		}
 	}
+
 	flatten(tree.roots)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
@@ -820,10 +835,12 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// lookup ladder can coarsen to it, and a stem hit must NOT outrank the locality).
 		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
 		const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+
 		const pc6Exact =
 			pcNode !== undefined &&
 			/^\d{4}\s?[A-Z]{2}$/i.test(pcNode.value.trim()) &&
 			alnum(String(pcNode.metadata?.["resolver_name"] ?? "")) === alnum(pcNode.value)
+
 		const adminPriority: ReadonlyArray<string> = pc6Exact
 			? ["postcode", "locality", "dependent_locality", "region", "country"]
 			: ["locality", "dependent_locality", "postcode", "region", "country"]
@@ -834,6 +851,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			if (node) {
 				lat = node.lat!
 				lon = node.lon!
+
 				break
 			}
 		}
@@ -846,10 +864,12 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	// "Bordeaux", not "Rue"). Unset for postcode-scoped hits (no commune evidence) and other tiers.
 	const streetLocality =
 		tier === "street" ? (streetNode?.metadata?.["street_locality"] as string | undefined)?.trim() || null : null
+
 	const locality =
 		streetLocality ??
 		allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() ??
 		null
+
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
 
@@ -859,6 +879,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
 	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
+
 	const hierarchy = allNodes
 		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
 		.toSorted((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
@@ -888,6 +909,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 		if (c) {
 			countryCode = c.toUpperCase()
+
 			break
 		}
 	}
@@ -899,6 +921,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const primaryNode =
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
+
 	const candidates: GeocodeResult["candidates"] = []
 
 	if (primaryNode?.lat != null) {
@@ -908,6 +931,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		const seen = new Set<string>()
 		const coordKey = (lt: number, ln: number): string => `${lt.toFixed(4)},${ln.toFixed(4)}`
 		seen.add(coordKey(primaryNode.lat, primaryNode.lon!))
+
 		candidates.push({
 			name: (primaryNode.metadata?.["resolver_name"] as string | undefined)?.trim() || primaryNode.value.trim(),
 			tag: primaryNode.tag,
@@ -935,6 +959,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 			if (seen.has(key)) continue
 			seen.add(key)
+
 			candidates.push({
 				name: String(a.name).trim(),
 				tag: a.placetype ?? primaryNode.tag,

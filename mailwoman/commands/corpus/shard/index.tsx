@@ -95,6 +95,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		if (recipe.mode === "generate" && !options.count) throw commandError(`recipe "${name}" needs --count <N>`)
 
 		const seed = options.seed != null ? Number(options.seed) : Date.now()
+
 		const opts: ShardRecipeOpts = {
 			output: options.output,
 			seed,
@@ -123,11 +124,14 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
 
 		const stream = createWriteStream(options.output, { encoding: "utf8" })
+
 		const write = (line: string): void => {
 			stream.write(line)
 		}
+
 		const stats = await recipe.run(opts, write)
 		stream.end()
+
 		await new Promise<void>((res) => {
 			stream.on("finish", () => res())
 		})

@@ -52,6 +52,7 @@ const { values: rawStringArgs } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const stringArgs = rawStringArgs as {
 	"anchor-lookup"?: string
@@ -94,13 +95,16 @@ interface Resolved {
 	lat: number
 	lon: number
 }
+
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
+
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
 		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
+
 			out.push({
 				id: Number(n.placeID.slice(4)),
 				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
@@ -121,6 +125,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 
 	return out
 }
+
 function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null
 
@@ -131,13 +136,16 @@ function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_R
 
 	return best
 }
+
 const pct = (xs: number[], p: number): number => {
 	if (!xs.length) return Number.NaN
 	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
+
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
+
 const norm = (s: string | undefined): string =>
 	(s ?? "")
 		.normalize("NFKD")
@@ -154,6 +162,7 @@ async function main() {
 	// node, which needs a postalcode shard attached alongside the admin DB.
 	const wofDBArg = stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db")
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
+
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
 		.split("\n")
@@ -168,6 +177,7 @@ async function main() {
 		])
 
 	const anchorPath = stringArgs["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+
 	const neural = await createScorer({
 		modelPath: stringArgs["model"] || "",
 		tokenizerPath: stringArgs["tokenizer"] || "",
@@ -176,6 +186,7 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
+
 	// #936 option 3 gate legs: `--official-name-exact` flips the official-name sub-tier promotion on
 	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above).
 	// #895/#718 discipline: the tri-state pins keep gate legs reproducible against pre-flip baselines —
@@ -211,13 +222,16 @@ async function main() {
 		},
 		strict: false,
 	})
+
 	const tri = (on: keyof typeof pins, off: keyof typeof pins): boolean | undefined =>
 		pins[on] === true ? true : pins[off] === true ? false : undefined
 
 	const officialNameExact = pins["official-name-exact"] === true
+
 	const resolver = createWOFResolver(
 		new WOFSqlitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined) as never
 	)
+
 	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")
 	const normalizeCasePin = tri("normalize-case", "raw-case")
 	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
@@ -225,6 +239,7 @@ async function main() {
 	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
 	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = stringArgs["default-country"] || "FR"
+
 	const resolveOpts: {
 		defaultCountry?: string
 		adminCoherence?: boolean
@@ -247,11 +262,14 @@ async function main() {
 	// unscoped `--default-country none` legs — exactly matching geocode-core's precedence.
 	const hardCountryPin = pins["hard-country"] === true
 	const placeCountry = hardCountryPin ? await loadDefaultPlaceCountry() : null
-	const COARSE_PLACER_ANCHOR_WEIGHT = 1 // keep in sync with geocode-core.ts
+	const COARSE_PLACER_ANCHOR_WEIGHT = 1
+
+	// keep in sync with geocode-core.ts
 	// #985: default safelist + any `--hard-country-safelist` additions (experiment without editing the const).
 	const extraSafelist = (pins["hard-country-safelist"] as string | undefined)
 		?.split(",")
 		.map((c) => c.trim().toUpperCase())
+
 	const hardCountrySafelist = extraSafelist?.length
 		? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist])
 		: undefined
@@ -262,6 +280,7 @@ async function main() {
 	// golden, so coord-ab-bootstrap.ts can resample rows and compute a paired p50-diff / resolve-rate CI.
 	const rowRecords: Array<{ i: number; resolved: boolean; err_km: number | null }> = []
 	let rowIdx = -1
+
 	let resolved = 0,
 		regionEmitted = 0,
 		regionCorrect = 0,
@@ -270,11 +289,13 @@ async function main() {
 
 	for (const row of rows) {
 		rowIdx++
+
 		const tree = await neural.parse(row.raw, {
 			postcodeRepair: true,
 			enforceWordConsistency: parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY),
 			...(normalizeCasePin !== undefined ? { normalizeCase: normalizeCasePin } : {}),
 		})
+
 		const flat = decodeAsJSON(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined
 		const predRegion = flat.region
@@ -298,6 +319,7 @@ async function main() {
 				}
 			}
 		}
+
 		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior
 		// re-rank (+ hard-country filter on the unscoped legs). The placer abstains on a bare-locality tree
 		// (same isBareLocalityTree guard geocode-core uses), and hardCountryFor no-ops when defaultCountry set.
@@ -308,6 +330,7 @@ async function main() {
 
 			if (placed.country && placed.country !== "OTHER") {
 				const hardCountry = hardCountryFor(placed.country, placed.confidence, resolveOpts, true, hardCountrySafelist)
+
 				rowResolveOpts = {
 					...resolveOpts,
 					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
@@ -316,6 +339,7 @@ async function main() {
 				}
 			}
 		}
+
 		const best = mostSpecific(
 			collectResolved(await resolver.resolveTree(tree, rowResolveOpts)),
 			pins["prefer-postcode-coord"] === true ? POSTCODE_CONVENTION_RANK : PLACETYPE_RANK
@@ -334,6 +358,7 @@ async function main() {
 	}
 
 	const n = rows.length
+
 	const summary = {
 		label,
 		n,

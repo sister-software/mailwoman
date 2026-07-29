@@ -59,6 +59,7 @@ describe("synthesizeBoundaryStressRow", () => {
 			random: mulberry32(2),
 			forceTemplate: "comma-less-city-state",
 		})
+
 		expect(row.raw).not.toContain(",") // the whole point — no delimiter cue
 		const result = alignRow(asCanonical(row))
 		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
@@ -88,6 +89,7 @@ describe("synthesizeBoundaryStressRow", () => {
 			{ locality: "Sacramento", region: "CA", postcode: "95823", country: "US" },
 			{ random: mulberry32(7), forceTemplate: "bare-locality" }
 		)
+
 		const result = alignRow(asCanonical(row))
 		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
 
@@ -119,8 +121,10 @@ describe("synthesizeBoundaryStressRow", () => {
 			const result = alignRow(asCanonical(row))
 
 			if (result.kind !== "labeled") continue
+
 			labeled++
 		}
+
 		expect(labeled).toBeGreaterThanOrEqual(388) // 97%
 	})
 })

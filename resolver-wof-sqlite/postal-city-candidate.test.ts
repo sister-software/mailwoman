@@ -31,6 +31,7 @@ let candidatePath: string
 
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -49,6 +50,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (1, 700000);
 		INSERT INTO place_population VALUES (2, 117000);
 	`)
+
 	db.close()
 }
 
@@ -59,6 +61,7 @@ async function attachPostalCityIndex(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
 	const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: raw })
 	await createPostalCityCandidateTable(kdb)
+
 	await kdb
 		.insertInto(POSTAL_CITY_CANDIDATE_TABLE)
 		.values({
@@ -70,6 +73,7 @@ async function attachPostalCityIndex(path: string): Promise<void> {
 			longitude: -86.78,
 		})
 		.execute()
+
 	await kdb.destroy() // closes the underlying `raw` handle
 }
 

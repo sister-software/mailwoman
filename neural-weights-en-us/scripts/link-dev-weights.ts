@@ -71,6 +71,7 @@ const PKG_DIR = repoRootPath("neural-weights-en-us")
 const CARD = JSON.parse(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
 	files_md5?: Record<string, string>
 }
+
 /**
  * Expected model digest from the model card, checked so a stale or truncated link is caught here rather than at
  * inference.

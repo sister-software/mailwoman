@@ -79,6 +79,7 @@ describe("PairIndexBuilder", () => {
 
 		expect(distribution.totalRows).toBe(3)
 		expect(distribution.max).toBe(4)
+
 		expect(distribution.counts).toEqual([
 			{ words: 1, rows: 1 },
 			{ words: 2, rows: 1 },

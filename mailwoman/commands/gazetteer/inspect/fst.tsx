@@ -38,6 +38,7 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 		console.error(`Building FST from ${dbPath}...`)
 
 		const start = performance.now()
+
 		const { matcher, result } = buildFSTFromWOF({
 			dbPath,
 			countries: ["US"],

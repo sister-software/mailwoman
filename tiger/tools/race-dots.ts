@@ -126,12 +126,15 @@ export async function raceDots(
 		while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) {
 			pick++
 		}
+
 		const poly = polys[pick]!
+
 		const polyFeature = {
 			type: "Feature" as const,
 			geometry: { type: "Polygon" as const, coordinates: poly },
 			properties: {},
 		}
+
 		const [minX, minY, maxX, maxY] = bbox(poly)
 
 		for (let tries = 0; tries < MAX_PLACEMENT_TRIES; tries++) {
@@ -146,6 +149,7 @@ export async function raceDots(
 	}
 
 	const db = new DatabaseSync(DB, { readOnly: true })
+
 	const rows = db
 		.prepare(
 			`SELECT b.geometry AS geometry, ${CATEGORIES.map((c) => `p.${c} AS ${c}`).join(", ")}
@@ -153,10 +157,12 @@ export async function raceDots(
 			 WHERE p.pop_total > 0`
 		)
 		.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
+
 	db.close()
 
 	const out = createWriteStream(OUT)
 	const totals = new Map<string, number>()
+
 	let dots = 0,
 		skipped = 0
 
@@ -168,13 +174,16 @@ export async function raceDots(
 		} catch {
 			continue
 		}
+
 		const polys: PolygonCoords[] =
 			geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
+
 		const areas = polys.map((p) => {
 			const [a, b, c, d] = bbox(p)
 
 			return Math.max((c - a) * (d - b), 1e-12)
 		})
+
 		const totalArea = areas.reduce((s, a) => s + a, 0)
 
 		for (const cat of CATEGORIES) {
@@ -189,8 +198,10 @@ export async function raceDots(
 
 				if (!pt) {
 					skipped++
+
 					continue
 				}
+
 				out.write(
 					JSON.stringify({
 						type: "Feature",
@@ -199,6 +210,7 @@ export async function raceDots(
 						geometry: { type: "Point", coordinates: [Math.round(pt[0] * 1e5) / 1e5, Math.round(pt[1] * 1e5) / 1e5] },
 					}) + "\n"
 				)
+
 				dots++
 				totals.set(cat, (totals.get(cat) ?? 0) + 1)
 			}
@@ -206,9 +218,11 @@ export async function raceDots(
 	}
 
 	out.end()
+
 	await new Promise<void>((resolve) => {
 		out.on("finish", () => resolve())
 	})
+
 	report?.(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
 
 	for (const [cat, n] of [...totals.entries()].toSorted((a, b) => b[1] - a[1])) {

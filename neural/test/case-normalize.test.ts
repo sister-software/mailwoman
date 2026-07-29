@@ -97,6 +97,7 @@ describe("normalizeInputCase — the parser hook", () => {
 		expect(normalizeInputCase("1600 pennsylvania ave nw, washington dc")).toBe(
 			"1600 Pennsylvania Ave NW, Washington DC"
 		)
+
 		expect(normalizeInputCase("damrak 1, 1012 lg amsterdam")).toBe("Damrak 1, 1012 LG Amsterdam")
 	})
 

@@ -99,6 +99,7 @@ function geojsonForID(id: number, roots: readonly string[]): Record<string, unkn
 	for (let i = 0; i < s.length; i += 3) {
 		chunks.push(s.slice(i, i + 3))
 	}
+
 	const rel = join(chunks.join("/"), `${s}.geojson`)
 
 	for (const root of roots) {
@@ -144,6 +145,7 @@ export function backfillAncestorsFromHierarchy(
 	opts: { maxId?: number } = {}
 ): AncestryBackfillResult {
 	const maxId = opts.maxId ?? Number.MAX_SAFE_INTEGER
+
 	// `s.id < ?` first lets SQLite prune by the PK index before the correlated only-self subquery runs at all.
 	const candidates = db
 		.prepare(
@@ -155,6 +157,7 @@ export function backfillAncestorsFromHierarchy(
 	const insert = db.prepare(
 		"INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)"
 	)
+
 	const hasRow = db.prepare("SELECT 1 FROM ancestors WHERE id = ? AND ancestor_id = ? LIMIT 1")
 
 	let placesFixed = 0
@@ -172,6 +175,7 @@ export function backfillAncestorsFromHierarchy(
 			if (!gj) {
 				noGeojson++
 			}
+
 			continue
 		}
 
@@ -198,6 +202,7 @@ export function backfillAncestorsFromHierarchy(
 		for (const [aid, pt] of seen) {
 			if (hasRow.get(id, aid)) continue
 			insert.run(id, aid, pt)
+
 			added++
 		}
 

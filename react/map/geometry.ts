@@ -80,6 +80,7 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
 	const halfDiagKm = bbox
 		? Math.hypot((bbox.maxLat - bbox.minLat) * KM_PER_DEG_LAT, (bbox.maxLon - bbox.minLon) * kmPerDegLon(lat)) / 2
 		: 3
+
 	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
 
 	return { type: "Polygon", coordinates: [circleRing(lat, lon, radiusKm)] }

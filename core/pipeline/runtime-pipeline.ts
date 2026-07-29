@@ -134,6 +134,7 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 		if (node.tag === "locality") {
 			sawLocality = true
 		} else if (node.value.trim() !== "") return false
+
 		stack.push(...node.children)
 	}
 
@@ -349,7 +350,9 @@ export async function runPipeline(
 				opts?.hardPlaceCountry,
 				opts?.hardCountrySafelist ?? stages.resolver?.artifactCoverage?.hardCountrySafelist
 			)
+
 			placerAnchorApplied = true
+
 			effectiveOpts = {
 				...opts,
 				resolveOpts: {
@@ -468,6 +471,7 @@ export async function runPipeline(
 	// to opt back into reconcile (the A/B harnesses do). Report:
 	// docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
 	const jointEnabled = opts?.jointReconcile ?? false
+
 	const useJointReconcile =
 		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
 
@@ -481,6 +485,7 @@ export async function runPipeline(
 
 		throwIfAborted(opts)
 		const tClassify = performance.now()
+
 		const {
 			tree: argmaxTree,
 			logits,
@@ -490,6 +495,7 @@ export async function runPipeline(
 			fst: stages.fst,
 			...streetContextGateFor(stages),
 		})
+
 		timing["token-classify"] = performance.now() - tClassify
 
 		throwIfAborted(opts)
@@ -514,6 +520,7 @@ export async function runPipeline(
 			// Country constraint from the locale gate's BCP-47 tag ("en-US" -> "US"); absent or
 			// und-like tags pass no constraint (ranking alone decides — matches resolveTree's default).
 			const localeCountry = locale.locale.split("-")[1]?.toUpperCase()
+
 			const lookups = stages.resolverBackend
 				? await prefetchReconcileLookups(
 						stages.resolverBackend,
@@ -522,12 +529,14 @@ export async function runPipeline(
 						localeCountry && localeCountry.length === 2 ? { defaultCountry: localeCountry } : {}
 					)
 				: undefined
+
 			const result = reconcileSpans({
 				raw: normalized.normalized,
 				phraseProposals,
 				classifierTopK,
 				...(lookups ? { resolverCandidates: lookups.resolverCandidates, parentChain: lookups.parentChain } : {}),
 			})
+
 			tree = result.tree
 			// The reconciler can leave a span uncovered (e.g. it picked the single-token street
 			// `Trento` over `Via Trento`, orphaning `Via`). The grouper-audit below would then promote
@@ -538,10 +547,12 @@ export async function runPipeline(
 		} else {
 			tree = argmaxTree
 		}
+
 		timing["reconcile"] = performance.now() - tReconcile
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
+
 		tree = await safeClassify(
 			stages.classifier,
 			normalized.normalized,
@@ -553,6 +564,7 @@ export async function runPipeline(
 			// Decision A: explicit caller register wins; otherwise the kind verdict decides. NEVER case-keyed.
 			opts?.inputMode ?? deriveInputMode(kind.kind)
 		)
+
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
@@ -571,6 +583,7 @@ export async function runPipeline(
 		if (placerAnchorApplied && isBareLocalityTree(tree)) {
 			effectiveOpts = opts
 		}
+
 		tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 		timing["resolve"] = performance.now() - tResolve
 	}
@@ -720,6 +733,7 @@ export function grouperAudit(
 	const roots = [...tree.roots]
 
 	const allNodes: Array<{ start: number; end: number }> = []
+
 	const collectNodes = (nodes: typeof roots): void => {
 		for (const n of nodes) {
 			allNodes.push({ start: n.start, end: n.end })
@@ -729,6 +743,7 @@ export function grouperAudit(
 			}
 		}
 	}
+
 	collectNodes(roots)
 
 	// Index the classifier's single best tag per exact span (start:end) so the audit can defer to it.
@@ -751,6 +766,7 @@ export function grouperAudit(
 	// from being shadowed by an earlier-positioned spurious node in `decodeAsJSON` (#425 residual tail).
 	const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["locality", "region", "postcode", "country"])
 	const presentSingletons = new Set<ComponentTag>()
+
 	const collectSingletons = (nodes: typeof roots): void => {
 		for (const n of nodes) {
 			if (SINGLETON_TAGS.has(n.tag)) {
@@ -762,6 +778,7 @@ export function grouperAudit(
 			}
 		}
 	}
+
 	collectSingletons(roots)
 	const dedupeSingletons = classifierTopK !== undefined
 
@@ -781,6 +798,7 @@ export function grouperAudit(
 
 		// Defer to the classifier when it confidently typed this exact span as something else.
 		const classifierVerdict = bestTagBySpan.get(`${proposal.span.start}:${proposal.span.end}`)
+
 		const tag =
 			classifierVerdict && classifierVerdict.score >= CLASSIFIER_OVERRIDE_MIN ? classifierVerdict.tag : phraseTag
 

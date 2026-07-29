@@ -48,11 +48,13 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 		if (!candidateDb) {
 			throw commandError("--candidate-db is required (modified in place — run on a copy first)")
 		}
+
 		const aliasDB = options.aliasDB ?? dataRootPath("wof", "postal-city-alias-us.db")
 		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("wof", "postcode-locality-us.db")
 
 		const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
 			await import("@mailwoman/resolver-wof-sqlite")
+
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
 		const db = new DatabaseSync(candidateDb)
@@ -71,6 +73,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 				pcToLocality.set(String(r.postcode), Number(r.locality_id))
 			}
 		}
+
 		pcl.close()
 
 		// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
@@ -90,9 +93,11 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 		console.error(`▸ loading divergent postal-city edges from ${aliasDB}`)
 
 		const alias = new DatabaseSync(aliasDB, { readOnly: true })
+
 		const edges = alias
 			.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 			.all() as unknown as Array<{ postcode: string; postal_city: string }>
+
 		alias.close()
 
 		// DDL via the Kysely schema-builder (the house idiom); the hot INSERT loop below stays on the
@@ -100,6 +105,7 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 		const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: db })
 		await kdb.schema.dropTable(POSTAL_CITY_CANDIDATE_TABLE).ifExists().execute()
 		await createPostalCityCandidateTable(kdb)
+
 		const insert = db.prepare(
 			`INSERT OR IGNORE INTO ${POSTAL_CITY_CANDIDATE_TABLE} (${POSTAL_CITY_CANDIDATE_COLUMNS.join(", ")})
 			 VALUES (${POSTAL_CITY_CANDIDATE_COLUMNS.map(() => "?").join(", ")})`
@@ -115,23 +121,31 @@ const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }
 
 			if (localityID === undefined) {
 				noLocality++
+
 				continue
 			}
+
 			const place = sprToPlace.get(localityID)
 
 			if (!place) {
 				noCoord++
+
 				continue
 			}
+
 			const key = normalizeLocalityForKey(e.postal_city)
 
 			if (!key) continue
 			insert.run(key, String(e.postcode), localityID, place.name, place.lat, place.lon)
+
 			inserted++
 		}
+
 		db.exec("COMMIT")
 		await kdb.schema.createIndex("idx_pcc_spr").ifNotExists().on(POSTAL_CITY_CANDIDATE_TABLE).column("spr_id").execute()
-		await kdb.destroy() // closes the underlying `db` handle
+		await kdb.destroy()
+
+		// closes the underlying `db` handle
 
 		const summary = [
 			`postal_city_candidate built → ${candidateDb}`,

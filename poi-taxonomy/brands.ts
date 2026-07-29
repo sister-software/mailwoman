@@ -38,6 +38,7 @@ function loadBrandTable(): POIBrandTable {
 			// try next
 		}
 	}
+
 	throw new Error("poi-taxonomy: could not find data/brands.json")
 }
 

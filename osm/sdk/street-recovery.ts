@@ -56,7 +56,9 @@ export class StreetRecoveryIndex {
 			cell = []
 			this.#grid.set(k, cell)
 		}
+
 		cell.push({ name, lon, lat })
+
 		this.#count++
 	}
 
@@ -124,16 +126,19 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		"SELECT name FROM lines WHERE highway IS NOT NULL AND name IS NOT NULL",
 		pbfPath,
 	]
+
 	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
 	proc.stderr.on("data", (d: Buffer) => {
 		stderr += d.toString()
 	})
+
 	const exit = new Promise<number>((resolve, reject) => {
 		proc.on("error", reject)
 		proc.on("close", resolve)
 	})
+
 	const index = new StreetRecoveryIndex()
 
 	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
@@ -148,6 +153,7 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		} catch {
 			continue
 		}
+
 		const name = f.properties?.name
 
 		if (!name || f.geometry?.type !== "LineString" || !Array.isArray(f.geometry.coordinates)) continue
@@ -156,6 +162,7 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 			index.add(name, lon, lat)
 		}
 	}
+
 	const code = await exit
 
 	if (code !== 0) throw new Error(`ogr2ogr (highways) exited ${code}: ${stderr.slice(-400)}`)

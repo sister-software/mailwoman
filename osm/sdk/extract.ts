@@ -89,6 +89,7 @@ function representativePoint(
 	if (n > 1 && ring[0]![0] === ring[n - 1]![0] && ring[0]![1] === ring[n - 1]![1]) {
 		n--
 	}
+
 	let sx = 0
 	let sy = 0
 
@@ -96,6 +97,7 @@ function representativePoint(
 		sx += ring[i]![0]!
 		sy += ring[i]![1]!
 	}
+
 	const lon = sx / n
 	const lat = sy / n
 
@@ -135,6 +137,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 	proc.stderr.on("data", (d: Buffer) => {
 		stderr += d.toString()
 	})
+
 	const exit = new Promise<number>((resolve, reject) => {
 		proc.on("error", reject)
 		proc.on("close", resolve)
@@ -153,12 +156,14 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 		} catch {
 			continue
 		}
+
 		const rec = toRecord(feature)
 
 		if (rec) {
 			yield rec
 		}
 	}
+
 	const code = await exit
 
 	if (code !== 0) throw new Error(`ogr2ogr (${layer}) exited ${code}: ${stderr.slice(-800)}`)

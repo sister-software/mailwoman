@@ -112,6 +112,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// assigned here; the rows are bulk-inserted via kdb once the passes have discovered every code. ---
 	const ccodes = new Map<string, number>()
 	const ptcodes = new Map<string, number>()
+
 	const ccID = (code: string | null): number => {
 		const c = (code || "??").toUpperCase()
 		let id = ccodes.get(c)
@@ -123,6 +124,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 		return id
 	}
+
 	const ptID = (pt: string | null): number => {
 		const p = pt || ""
 		let id = ptcodes.get(p)
@@ -142,6 +144,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	for (const r of src.prepare("SELECT id, ancestor_id FROM ancestors WHERE ancestor_placetype='region'").iterate()) {
 		regionOf.set(Number(r.id), Number(r.ancestor_id))
 	}
+
 	progress("region", `${regionOf.size.toLocaleString()} places carry a region`)
 
 	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
@@ -173,6 +176,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const neg = -Math.log10(pop + 1)
 		const name = String(r.name ?? "")
 		const pkey = normalizeLocalityForKey(name)
+
 		const a: PlaceAttrs = {
 			cid,
 			rid,
@@ -188,13 +192,16 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			neg,
 			pkey,
 		}
+
 		attrs.set(sid, a)
 
 		if (pkey) {
 			insStage.run(pkey, cid, rid, ptid, neg, sid, name, a.lat, a.lon, a.mnLat, a.mnLon, a.mxLat, a.mxLon, pop, 1)
+
 			nPrim++
 		}
 	}
+
 	out.exec("COMMIT")
 	progress("primaries", `${nPrim.toLocaleString()} primaries; ${attrs.size.toLocaleString()} places`)
 
@@ -236,9 +243,11 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			if (!k || seen.has(k)) continue
 			seen.add(k)
 			stageRow(k, a, Number(r.wof_id), 0)
+
 			nAlias++
 		}
 	}
+
 	out.exec("COMMIT")
 	progress("aliases", `${nAlias.toLocaleString()} aliases`)
 
@@ -254,8 +263,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 		if (!k) continue
 		stageRow(k, a, Number(r.id), 1)
+
 		nAbbr++
 	}
+
 	out.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
@@ -281,6 +292,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			if (!key) continue
 			const lat = r.latitude as number
 			const lon = r.longitude as number
+
 			// region_id 0 (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
 			// (no population). bbox = the postcode's own min/max (falls back to the centroid point).
 			insStage.run(
@@ -300,8 +312,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 				0,
 				1
 			)
+
 			nPostcode++
 		}
+
 		out.exec("COMMIT")
 		pc.close()
 	}
@@ -351,6 +365,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		.selectFrom("candidate")
 		.select((eb) => eb.fn.countAll<number>().as("n"))
 		.executeTakeFirstOrThrow()
+
 	src.close()
 	await kdb.destroy()
 

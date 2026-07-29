@@ -124,6 +124,7 @@ function readModelCard(): Record<string, unknown> | null {
 	} catch {
 		/* package not resolvable from here — fall through */
 	}
+
 	candidates.push("neural-weights-en-us/model-card.json")
 
 	for (const p of candidates) {
@@ -252,12 +253,15 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 		const parseClassifier = classifier
+
 		parse = async (address, opts) => {
 			// Decision A: explicit wire register wins; unset → the kind classifier decides (same derivation
 			// as the runtime pipeline / geocode-core — /v1/parse is the "plain parse" endpoint class).
 			const shape = computeQueryShape(address)
+
 			const inputMode =
 				opts.inputMode ?? deriveInputMode(classifyKindSync({ raw: address, normalized: address }, shape).kind)
+
 			const tree = await parseClassifier.parse(address, { postcodeRepair: true, inputMode })
 
 			return {
@@ -355,6 +359,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		try {
 			const slug = regionSlugFromTree(tree)
 			const { addressPoints, interpolation } = deps.shards.for(slug)
+
 			const opts: ResolveOpts = {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
@@ -372,6 +377,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 						}
 					: {}),
 			}
+
 			const resolved = await deps.resolver.resolveTree(tree, opts)
 			// Best-effort tier metric: read the street node's stamped tier (matches the geocode path).
 			const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)

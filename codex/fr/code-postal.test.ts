@@ -19,6 +19,7 @@ describe("normalizeCodePostal", () => {
 		expect(normalizeCodePostal("F-75008")).toBe("75008")
 		expect(normalizeCodePostal(" 13001 ")).toBe("13001")
 	})
+
 	it("returns null for non-codes", () => {
 		expect(normalizeCodePostal("7500")).toBeNull()
 		expect(normalizeCodePostal("SW1A 1AA")).toBeNull()

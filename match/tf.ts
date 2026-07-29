@@ -59,6 +59,7 @@ export function buildTermFrequencyTable(
 
 		if (!key) continue
 		counts.set(key, (counts.get(key) ?? 0) + 1)
+
 		total++
 	}
 

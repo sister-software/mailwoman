@@ -35,6 +35,7 @@ let candidatePath: string
  */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -95,6 +96,7 @@ function buildFixtureAdmin(path: string): void {
 		-- The dominant alt-name: Wyemetro US is aliased to "Wyeburg" (the LA→Los Angeles class).
 		INSERT INTO place_search VALUES (603, 'Wyeburg');
 	`)
+
 	db.close()
 }
 
@@ -103,6 +105,7 @@ function buildFixtureAdmin(path: string): void {
  */
 function buildFixturePostcodes(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -113,6 +116,7 @@ function buildFixturePostcodes(path: string): void {
 		INSERT INTO spr VALUES (60601, '60601', 'postalcode', 'US', 41.885, -87.62, 41.88, -87.63, 41.89, -87.61, -1, 0);
 		INSERT INTO spr VALUES (20500, '20500', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, -1, 0);
 	`)
+
 	db.close()
 }
 
@@ -163,6 +167,7 @@ describe("WOFCandidateTableLookup", () => {
 				limit: 5,
 				bias: [{ lat: 46.73, lon: -117, weight: 1 }],
 			})
+
 			expect(idahoView[0]!.country).toBe("US")
 			expect(idahoView[0]!.lat).toBeCloseTo(46.73, 1)
 
@@ -174,6 +179,7 @@ describe("WOFCandidateTableLookup", () => {
 				limit: 5,
 				bias: [{ lat: 41.88, lon: -87.63, weight: 1 }],
 			})
+
 			expect(chicagoView[0]!.country).toBe("RU")
 		} finally {
 			lk.close()
@@ -240,6 +246,7 @@ describe("WOFCandidateTableLookup", () => {
 				placetype: "locality",
 				bbox: { minLat: 50, maxLat: 60, minLon: 30, maxLon: 45 },
 			})
+
 			expect(hits).toHaveLength(1)
 			expect(hits[0]!.country).toBe("RU")
 		} finally {
@@ -330,6 +337,7 @@ describe("WOFCandidateTableLookup", () => {
 				parentID: 400,
 				limit: 5,
 			})
+
 			expect(scoped).toHaveLength(1)
 			expect(scoped[0]!.id).toBe(310)
 			expect(scoped[0]!.lat).toBeCloseTo(39.78, 2)
@@ -353,6 +361,7 @@ describe("WOFCandidateTableLookup", () => {
 				parentID: 999,
 				limit: 5,
 			})
+
 			expect(scoped.length).toBeGreaterThan(0)
 			expect(scoped[0]!.id).toBe(311) // unscoped population-first — same as the no-parentID baseline
 			expect(scoped[0]!.lat).toBeCloseTo(37.19, 2)
@@ -454,6 +463,7 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	const US = 2
 	const IT = 3
 	const AT = 4
+
 	// A row from a raw population — build-candidate stores neg_rank = -log10(population + 1), so the pure
 	// lever sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
 	const pop = (population: number, is_primary: number, country_id: number) => ({

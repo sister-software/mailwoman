@@ -146,18 +146,21 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 	// No index on GEOID alone — it's the PRIMARY KEY, which already carries a unique index. The prior
 	// schema's idx_tabblock20_geoid duplicated that for nothing (double insert cost, double footprint).
 	await db.schema.createIndex("idx_tabblock20_state_code").ifNotExists().on("tabblock20").column("state_code").execute()
+
 	await db.schema
 		.createIndex("idx_tabblock20_state_county")
 		.ifNotExists()
 		.on("tabblock20")
 		.columns(["state_code", "county_code"])
 		.execute()
+
 	await db.schema
 		.createIndex("idx_tabblock20_state_county_tract")
 		.ifNotExists()
 		.on("tabblock20")
 		.columns(["state_code", "county_code", "tract_code"])
 		.execute()
+
 	await db.schema.createIndex("idx_tabblock20_population").ifNotExists().on("tabblock20").column("population").execute()
 
 	await db.schema
@@ -187,7 +190,9 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("zipr", "text")
 		.addColumn("statefp", "text", (c) => c.notNull())
 		.execute()
+
 	await db.schema.createIndex("idx_tiger_streets_statefp").ifNotExists().on("tiger_streets").column("statefp").execute()
+
 	await db.schema
 		.createIndex("idx_tiger_streets_linearid")
 		.ifNotExists()
@@ -205,6 +210,7 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("namelsad", "text")
 		.addColumn("classfp", "text")
 		.execute()
+
 	await db.schema.createIndex("idx_tiger_places_statefp").ifNotExists().on("tiger_places").column("statefp").execute()
 	await db.schema.createIndex("idx_tiger_places_geoid").ifNotExists().on("tiger_places").column("geoid").execute()
 }

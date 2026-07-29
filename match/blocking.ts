@@ -170,6 +170,7 @@ export function block<R>(
 
 		if (bucket.length > maxBlockSize) {
 			droppedBlocks.push({ key, size: bucket.length })
+
 			continue
 		}
 

@@ -59,6 +59,7 @@ export function useMapPointerInfo(map: MapLibreMap | null) {
 					})
 					.filter((feature) => (feature.layer.metadata as { queryable?: boolean })?.queryable !== false)
 					.slice(0, 5)
+
 				setFeatureTargets(nextFeatureTargets)
 			} else {
 				setFeatureTargets([])
@@ -124,6 +125,7 @@ export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 				const layerID = feature.layer.id
 
 				const isNamed = "pmap:kind" in feature.properties
+
 				const entries: [string, unknown][] = isNamed
 					? []
 					: Object.entries(feature.properties).filter(

@@ -143,6 +143,7 @@ export function tokenizeSegment(segmentBody: string, segmentStart: number): Segm
 		while (i < segmentBody.length && !WHITESPACE.test(segmentBody[i]!)) {
 			i++
 		}
+
 		tokens.push({
 			body: segmentBody.slice(start, i),
 			start: segmentStart + start,
@@ -489,10 +490,12 @@ export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string):
 	for (const t of tokens) {
 		if (!isAllDigit(t.body)) continue
 		const len = t.body.length
+
 		// 1-4 digit pure-numerics are clearly NUMERIC (house number). 5+ are ambiguous with POSTCODE
 		// — emit anyway at lower confidence so the reconciler sees both options.
 		const confidence =
 			len <= MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS ? UNAMBIGUOUS_NUMERIC_CONFIDENCE : NEUTRAL_PROPOSAL_CONFIDENCE
+
 		out.push({
 			span: makeSection(text, t.start, t.end),
 			kindHypothesis: "NUMERIC",
@@ -515,6 +518,7 @@ export function scorePostcode(shape: QueryShapeLike, text: string): PhrasePropos
 		// `po_box` is not a postcode; the kind classifier owns that signal. Skip non-postcode
 		// formats here so we don't pollute POSTCODE proposals.
 		if (hit.format === "po_box") continue
+
 		out.push({
 			span: makeSection(text, hit.span.start, hit.span.end),
 			kindHypothesis: "POSTCODE",
@@ -552,11 +556,13 @@ export function scoreRegionAbbreviation(
 		if (after && isPlaceNameContent(after.body) && !isRegionAbbreviation(after.body) && !isStreetSuffix(after.body)) {
 			continue
 		}
+
 		// Position cue: last token in a segment (canonical region slot) → high confidence. Anywhere
 		// else, moderate. Anywhere in the LAST segment → slightly elevated (region is canonically the
 		// final non-postcode component).
 		const atTail = i === tokens.length - 1
 		const confidence = atTail ? 0.85 : segmentIsLast ? 0.7 : NEUTRAL_PROPOSAL_CONFIDENCE
+
 		out.push({
 			span: makeSection(text, t.start, t.end),
 			kindHypothesis: "REGION_ABBREVIATION",
@@ -583,6 +589,7 @@ export function scoreHyphenatedCompound(tokens: ReadonlyArray<SegmentToken>, tex
 		// Skip leading/trailing hyphens (likely punctuation drift) — require an interior hyphen
 		// surrounded by non-hyphen characters.
 		if (!/[^-]-[^-]/.test(t.body)) continue
+
 		out.push({
 			span: makeSection(text, t.start, t.end),
 			kindHypothesis: "HYPHENATED_COMPOUND",
@@ -635,11 +642,13 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 
 			if (start === suffixIdx) continue // only "<number> <suffix>" remained — no street name to phrase
 		}
+
 		const startTok = tokens[start]!
 		const endTok = tokens[suffixIdx]!
 		// A preceding (now-excluded) house number is still strong evidence this run is a street → high
 		// confidence. A capitalized-run + suffix with no number scores slightly lower (could be a venue).
 		const confidence = hadHouseNumber ? 0.9 : 0.75
+
 		out.push({
 			span: makeSection(text, startTok.start, endTok.end),
 			kindHypothesis: "STREET_PHRASE",
@@ -670,8 +679,10 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		while (end > prefixIdx && isPlaceNameParticle(tokens[end]!.body)) {
 			end--
 		}
+
 		const startTok = tokens[prefixIdx]!
 		const endTok = tokens[end]!
+
 		// Prefix + name scores moderately; a bare prefix still emits a low-confidence marker so the
 		// audit types the leftover span `street`, never `locality`.
 		out.push({
@@ -721,6 +732,7 @@ export function scoreLocalityPhrase(
 
 			if (!after || !(isPlaceNameContent(after.body) || isPlaceNameParticle(after.body))) continue
 		}
+
 		// Walk forward grabbing place-name content. Bridge connective particles (lowercase "de"/"in" or
 		// all-caps "DI"/"DEL") ONLY when a content token follows within a short run (≤2 consecutive
 		// particles: "aan den Rijn"), so a dangling "Palmas de" at end-of-segment doesn't extend the
@@ -740,6 +752,7 @@ export function scoreLocalityPhrase(
 
 			if (isPlaceNameContent(b) && !isPlaceNameParticle(b)) {
 				j++
+
 				continue
 			}
 
@@ -752,12 +765,16 @@ export function scoreLocalityPhrase(
 				}
 
 				if (tokens[k] && k - (j + 1) <= 2 && isPlaceNameContent(tokens[k]!.body)) {
-					j = k // jump onto the content token; the bridged particles stay inside the span
+					j = k
+
+					// jump onto the content token; the bridged particles stay inside the span
 					continue
 				}
 			}
+
 			break
 		}
+
 		// Emit proposals for every prefix-length of the run starting at i, capped at 6 tokens (covers
 		// "Las Palmas de Gran Canaria" = 5). Each starting i contributes ≤6 proposals → O(n) per segment.
 		const maxLen = Math.min(j - i + 1, 6)
@@ -785,6 +802,7 @@ export function scoreLocalityPhrase(
 			if (atTail) {
 				confidence += 0.05
 			}
+
 			out.push({
 				span: makeSection(text, startTok.start, endTok.end),
 				kindHypothesis: "LOCALITY_PHRASE",
@@ -822,13 +840,16 @@ export function scoreVenuePhrase(
 	while (i < tokens.length) {
 		if (!startsCapitalized(tokens[i]!.body)) {
 			i++
+
 			continue
 		}
+
 		let j = i
 
 		while (j + 1 < tokens.length && (startsCapitalized(tokens[j + 1]!.body) || tokens[j + 1]!.body.includes("-"))) {
 			j++
 		}
+
 		const run = tokens.slice(i, j + 1)
 		const markerWeight = venueMarkerWeight(run)
 		const hasHyphenCompound = run.some((t) => /[^-]-[^-]/.test(t.body))
@@ -837,6 +858,7 @@ export function scoreVenuePhrase(
 			const startTok = run[0]!
 			const endTok = run.at(-1)!
 			const confidence = markerWeight > 0 ? markerWeight : 0.65
+
 			out.push({
 				span: makeSection(text, startTok.start, endTok.end),
 				kindHypothesis: "VENUE_PHRASE",
@@ -850,6 +872,7 @@ export function scoreVenuePhrase(
 			if (!hasStreet && !hasLeadingNum && !hasUnit) {
 				const startTok = run[0]!
 				const endTok = run.at(-1)!
+
 				out.push({
 					span: makeSection(text, startTok.start, endTok.end),
 					kindHypothesis: "VENUE_PHRASE",

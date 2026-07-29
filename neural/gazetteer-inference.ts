@@ -102,6 +102,7 @@ function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number):
 	for (let k = i; k < i + matchedN; k++) {
 		if (hasDecimal(words[k]!.text)) return true
 	}
+
 	let k = i - 1
 
 	while (k >= 0 && !words[k]!.text) {
@@ -162,14 +163,17 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 
 		if (!stripped) {
 			words.push({ begin: m.index, end: m.index, text: "" })
+
 			continue
 		}
+
 		let head = 0
 		const alnum = (c: string) => /[\p{L}\p{N}]/u.test(c)
 
 		while (head < surface.length && !alnum(surface[head]!)) {
 			head++
 		}
+
 		words.push({ begin: m.index + head, end: m.index + head + stripped.length, text: stripped })
 	}
 
@@ -178,8 +182,10 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 	while (i < words.length) {
 		if (!words[i]!.text) {
 			i++
+
 			continue
 		}
+
 		let matchedN = 0
 		let matchedBits = 0
 		const maxN = Math.min(lexicon.maxNgram, words.length - i)
@@ -191,8 +197,10 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			for (let k = i; k < i + n; k++) {
 				if (!words[k]!.text) {
 					ok = false
+
 					break
 				}
+
 				parts.push(words[k]!.text)
 			}
 
@@ -209,6 +217,7 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			if (bits) {
 				matchedN = n
 				matchedBits = bits
+
 				break
 			}
 		}
@@ -218,14 +227,17 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			// Python painter exactly) but paints nothing.
 			if (lexicon.digitGuard && digitAdjacent(words, i, matchedN)) {
 				i += matchedN
+
 				continue
 			}
+
 			const begin = words[i]!.begin
 			const end = words[i + matchedN - 1]!.end
 
 			for (let c = begin; c < Math.min(end, text.length); c++) {
 				charBits[c] = matchedBits
 			}
+
 			i += matchedN
 		} else {
 			i++
@@ -263,6 +275,7 @@ export function suppressGazetteerNearPostcode(
 			}
 		}
 	}
+
 	const dim = gazetteer.features[0]?.length ?? 0
 
 	return {
@@ -292,9 +305,11 @@ export function buildGazetteerFeatures(
 		for (let c = p.start; c < p.end; c++) {
 			if (c < text.length && !/\s/.test(text[c]!)) {
 				bits = charBits[c]!
+
 				break
 			}
 		}
+
 		features.push(bits ? bitsToRow(bits, lexicon) : zero())
 		confidence.push(bits ? 1 : 0)
 	}

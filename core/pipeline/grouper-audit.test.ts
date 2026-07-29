@@ -166,6 +166,7 @@ describe("grouper-audit pass", () => {
 			raw: "Via Trento, SORBOLO",
 			roots: [{ tag: "locality", value: "SORBOLO", start: 12, end: 19, confidence: 0.9, children: [] }],
 		}
+
 		const proposals = [
 			{ span: Span.from("Via", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
 		] as PhraseProposal[]
@@ -186,6 +187,7 @@ describe("grouper-audit pass", () => {
 				raw: "Via Trento, SORBOLO",
 				roots: [{ tag: "postcode", value: "00000", start: 12, end: 19, confidence: 0.9, children: [] }],
 			}
+
 			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 3 }, tag: "street", score: 0.2 }]
 			const out = grouperAudit(bareTree, proposals, bareTree.raw, classifierTopK)
 			expect(out.roots.find((n) => n.value === "Via")!.tag).toBe("locality")
@@ -204,10 +206,12 @@ describe("grouper-audit pass", () => {
 			const props = [
 				{ span: Span.from("Francesca", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
 			] as PhraseProposal[]
+
 			const treeWithCity: AddressTree = {
 				raw: "Francesca, MONSUMMANO TERME",
 				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
 			}
+
 			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 9 }, tag: "locality", score: 0.3 }]
 			const out = grouperAudit(treeWithCity, props, treeWithCity.raw, classifierTopK)
 			expect(out.roots.filter((n) => n.tag === "locality").map((n) => n.value)).toEqual(["MONSUMMANO TERME"])
@@ -218,10 +222,12 @@ describe("grouper-audit pass", () => {
 			const props = [
 				{ span: Span.from("Francesca", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
 			] as PhraseProposal[]
+
 			const treeWithCity: AddressTree = {
 				raw: "Francesca, MONSUMMANO TERME",
 				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
 			}
+
 			const out = grouperAudit(treeWithCity, props, treeWithCity.raw)
 			expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(2)
 		})

@@ -41,6 +41,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
 			parts.push(n)
 		}
+
 		stack.push(...n.children)
 	}
 
@@ -51,6 +52,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 	if (directionalUnit && directionalUnit.value.trim()) {
 		parts.push(directionalUnit)
 	}
+
 	parts.sort((a, b) => a.start - b.start)
 
 	return parts.map((n) => n.value.trim()).join(" ")
@@ -110,6 +112,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 		if (n.tag === "postcode" && !postcode && n.value.trim()) {
 			postcode = n.value.trim()
 		}
+
 		stack.push(...n.children)
 	}
 
@@ -138,6 +141,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 	})
 
 	if (!hit) return
+
 	street.metadata = {
 		...street.metadata,
 		address_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
@@ -181,6 +185,7 @@ export function applyInterpolation(
 		if (n.tag === "postcode" && !postcode && n.value.trim()) {
 			postcode = n.value.trim()
 		}
+
 		stack.push(...n.children)
 	}
 
@@ -199,6 +204,7 @@ export function applyInterpolation(
 	// transparency.
 	const factor = radiusCalibration ?? lookup.radiusCalibration
 	const calibrated = factor ? Math.round(hit.uncertaintyM * factor) : hit.uncertaintyM
+
 	street.metadata = {
 		...street.metadata,
 		interpolated_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
@@ -352,11 +358,13 @@ export function applyStreetCentroid(
 		if ((n.tag === "region" || n.tag === "locality" || n.tag === "dependent_locality") && n.value.trim()) {
 			adminValues.push(n.value.trim())
 		}
+
 		const rc = (n.metadata?.["resolver_country"] as string | undefined)?.trim().toLowerCase()
 
 		if (rc && !resolvedCountries.includes(rc)) {
 			resolvedCountries.push(rc)
 		}
+
 		stack.push(...n.children)
 	}
 
@@ -373,6 +381,7 @@ export function applyStreetCentroid(
 			countries.push(cc)
 		}
 	}
+
 	const lookups = countries.map((c) => provider(c)).filter((l): l is StreetCentroidLookup => l != null)
 
 	if (!lookups.length) return
@@ -381,6 +390,7 @@ export function applyStreetCentroid(
 		.split(",")
 		.map((s) => s.trim())
 		.filter(Boolean)
+
 	const CAP = 5
 
 	// Thoroughfare candidates (parsed-first, then raw): the assembled street node, any voie-shaped parsed value, any
@@ -448,10 +458,12 @@ export function applyStreetCentroid(
 						confidence: 0.5,
 						children: [],
 					}
+
 					roots.push(injected)
 
 					return injected
 				})()
+
 			target.metadata = {
 				...target.metadata,
 				street_centroid: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },

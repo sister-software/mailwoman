@@ -269,6 +269,7 @@ const F1ScoreTableInner: React.FC = () => {
 
 	const sortedRows = useMemo(() => {
 		const rows = [...F1_DATA]
+
 		rows.sort((a, b) => {
 			const av = a[sortKey]
 			const bv = b[sortKey]

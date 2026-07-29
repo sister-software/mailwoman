@@ -50,6 +50,7 @@ test("extract: yields the full tuple, folds rep to lower-case, skips coordinate-
 	}
 
 	expect(recs).toHaveLength(2)
+
 	expect(recs[0]).toMatchObject({
 		numero: "6",
 		rep: null,
@@ -58,6 +59,7 @@ test("extract: yields the full tuple, folds rep to lower-case, skips coordinate-
 		city: "Altier",
 		lieuDit: null, // empty nom_ld cell
 	})
+
 	expect(recs[0]!.lat).toBeCloseTo(44.474983)
 	expect(recs[1]).toMatchObject({ numero: "8", rep: "bis" }) // uppercase BIS folded
 })

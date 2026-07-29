@@ -132,6 +132,7 @@ export function createPostalAddressID(input: CreatePostalAddressIDInput): Postal
 		input.coordinate.longitude,
 		input.resolution ?? ADDRESS_H3_RESOLUTION
 	)
+
 	const hash = createHash("sha256").update(canonicalizeForHash(input.address)).digest("hex").slice(0, HASH_LENGTH)
 	const state = (input.state ?? deriveState(input.address) ?? "xx").toLowerCase()
 

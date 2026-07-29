@@ -202,6 +202,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: "CC0-1.0",
 						}
+
 						emitted++
 					}
 				}

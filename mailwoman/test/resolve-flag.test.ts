@@ -66,6 +66,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			[cliBin, "parse", "--neural", "--resolve", "--format", "xml", "Springfield, Illinois"],
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
+
 		// The XML root is always present.
 		expect(result.stdout).toContain("<address raw=")
 		// At least one node gained resolver attribution. The exact wof id varies by FTS ranking, but
@@ -84,6 +85,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", wofPath, "--format", "xml", "Springfield, Illinois"],
 			{ env: childEnv({ NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
+
 		expect(result.stdout).toContain("<address raw=")
 		expect(result.stdout).toMatch(/src="resolver:/)
 	}, 60_000)
@@ -93,6 +95,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		expect(result.stdout).toContain("<address raw=")
 		// Without --resolve, no resolver attribution.
 		expect(result.stdout).not.toMatch(/src="resolver:/)
@@ -108,6 +111,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			[cliBin, "parse", "--resolve", "--candidates", "5", "--format", "xml", "Springfield, Illinois"],
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
+
 		expect(result.stdout).toContain("<address raw=")
 		// At least one alternative element with a place attr.
 		expect(result.stdout).toMatch(/<alternative[^>]*place="wof:\d+"/)
@@ -121,6 +125,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			[cliBin, "parse", "--resolve", "--candidates", "3", "--format", "json", "Springfield, Illinois"],
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
+
 		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
 		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
 		// in containment-nesting trees like region → locality).
@@ -131,12 +136,14 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			alternatives?: unknown[]
 			children?: TreeNode[]
 		}
+
 		const findAlternatives = (nodes: TreeNode[]): boolean =>
 			nodes.some(
 				(n) =>
 					(Array.isArray(n.alternatives) && n.alternatives.length > 0) ||
 					(Array.isArray(n.children) && findAlternatives(n.children))
 			)
+
 		expect(findAlternatives(tree.roots as TreeNode[])).toBe(true)
 	}, 60_000)
 
@@ -145,6 +152,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const out = JSON.parse(stripAnsiSpinner(result.stdout))
 		// Libpostal-compat is flat: no `raw` / `roots` top-level keys.
 		expect(out).not.toHaveProperty("raw")

@@ -132,6 +132,7 @@ function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 	const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
 		runs?: Array<{ model_version?: string }>
 	}
+
 	const runs = ledger.runs ?? []
 	const found = runs.some((run) => run.model_version === version)
 
@@ -168,6 +169,7 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 		const trimmed = line.trim()
 
 		if (!trimmed.startsWith("|")) continue
+
 		// Split into cells, dropping the leading/trailing empties from the outer pipes.
 		const cells = trimmed
 			.split("|")
@@ -278,6 +280,7 @@ function checkStatus(version: string, statusPath: string): SurfaceResult {
 				`      Add / restore the info box and cite release ${version}.`,
 		}
 	}
+
 	const end = markdown.indexOf(":::", start + 1)
 	const infoBox = markdown.slice(start, end === -1 ? undefined : end)
 

@@ -43,6 +43,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	for (const r of results) {
 		if (r.lat == null || r.lon == null) continue
 		const { lat, lon, boundingbox, geojson, ...properties } = r
+
 		const feature: NominatimFeatureCollection["features"][number] = {
 			type: "Feature",
 			properties,
@@ -53,6 +54,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 			// boundingbox is [south, north, west, east]; GeoJSON bbox is [west, south, east, north].
 			feature.bbox = [Number(boundingbox[2]), Number(boundingbox[0]), Number(boundingbox[3]), Number(boundingbox[1])]
 		}
+
 		features.push(feature)
 	}
 
@@ -106,6 +108,7 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 	const displayName = r.displayName ?? Object.values(r.address).filter(Boolean).join(", ")
 	const lat = r.lat != null ? String(r.lat) : ""
 	const lon = r.lon != null ? String(r.lon) : ""
+
 	const result: NominatimResult = {
 		place_id: r.placeID ?? stableID(`${lat},${lon},${displayName}`),
 		licence: MAILWOMAN_LICENCE,

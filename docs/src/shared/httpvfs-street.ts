@@ -80,6 +80,7 @@ export class HTTPVFSAddressPointLookup {
 			this.#available = this.#worker.db
 				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='address_point'`)
 				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
+
 			this.#available.catch(() => {
 				this.#available = undefined
 			})
@@ -102,6 +103,7 @@ export class HTTPVFSAddressPointLookup {
 
 		const select = (where: string): string =>
 			`SELECT lat, lon, source, release FROM address_point WHERE ${where} LIMIT 1`
+
 		let rows: Record<string, unknown>[] = []
 
 		/**
@@ -123,10 +125,12 @@ export class HTTPVFSAddressPointLookup {
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
 					: normalizeLocalityForKey(query.locality)
+
 			rows = await probe(
 				`locality_norm = ${sqlStr(localityKey)} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
 			)
 		}
+
 		const r = rows[0]
 
 		if (!r) return null
@@ -162,6 +166,7 @@ export class HTTPVFSInterpolator {
 			this.#available = this.#worker.db
 				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='street_segment'`)
 				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
+
 			this.#available.catch(() => {
 				this.#available = undefined
 			})
@@ -217,6 +222,7 @@ export class HTTPVFSInterpolator {
 				best = candidate
 			}
 		}
+
 		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
 		const span = Number(best.to_hn) - Number(best.from_hn)
 		const t = span === 0 ? 0.5 : clamp01((n - Number(best.from_hn)) / span)
@@ -259,6 +265,7 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 
 		return [lon, lat, 0]
 	}
+
 	let remaining = t * total
 
 	for (let i = 0; i < legs.length; i++) {
@@ -271,8 +278,10 @@ function pointAlong(polyline: readonly [number, number][], t: number): [lon: num
 
 			return [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f, total]
 		}
+
 		remaining -= leg
 	}
+
 	const [lon, lat] = polyline.at(-1)!
 
 	return [lon, lat, total]

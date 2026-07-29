@@ -144,6 +144,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 			stack.push([lo, idx], [idx, hi])
 		}
 	}
+
 	const out: LinearRing = []
 
 	for (let i = 0; i < ring.length; i++)
@@ -192,25 +193,30 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		if ((!points && !admin) || (points && admin)) {
 			throw commandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 		}
+
 		const countries = options.countries
 			? options.countries
 					.split(",")
 					.map((c) => c.trim().toUpperCase())
 					.filter(Boolean)
 			: null
+
 		const repos = options.repos
 		const tol = options.tol
 
 		const srcPath = points || admin
 		const src = new DatabaseSync(srcPath, { readOnly: true })
+
 		const where = countries
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
 			: `placetype NOT IN ('postalcode')`
+
 		const rows = (
 			src
 				.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
 				.all(...(countries ?? [])) as unknown as SprRow[]
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
+
 		src.close()
 
 		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
@@ -227,11 +233,13 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		const dbOut = new DatabaseSync(tmpOut)
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
 		const kdb = new DatabaseClient({ database: dbOut })
+
 		await kdb.schema
 			.createTable("polygons")
 			.addColumn("id", "integer", (c) => c.primaryKey())
 			.addColumn("geom", "text", (c) => c.notNull())
 			.execute()
+
 		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 
 		let done = 0
@@ -244,6 +252,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 			if (!existsSync(path)) {
 				missing++
+
 				continue
 			}
 
@@ -253,9 +262,12 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 				if (!simp) {
 					dropped++
+
 					continue
 				}
+
 				insert.run(r.id, JSON.stringify(simp))
+
 				done++
 			} catch {
 				dropped++
@@ -265,12 +277,15 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 				console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
 			}
 		}
+
 		dbOut.exec("COMMIT")
 		dbOut.exec("VACUUM")
+
 		const bytes = dbOut.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
 			n: number
 			b: number | null
 		}
+
 		await kdb.destroy() // closes the underlying `dbOut` handle
 
 		// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
@@ -279,6 +294,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		if (existsSync(out)) {
 			renameSync(out, backup)
 		}
+
 		renameSync(tmpOut, out)
 
 		if (existsSync(backup)) {

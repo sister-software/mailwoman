@@ -15,6 +15,7 @@ import { ONNXRunner } from "../onnx-runner.ts"
 
 const fakeSession = () =>
 	({ inputNames: [], outputNames: [], run: async () => ({}) }) as unknown as ort.InferenceSession
+
 const epsOf = (call: unknown[]) => (call[1] as { executionProviders: string[] }).executionProviders
 
 describe("ONNXRunner execution providers (guarded)", () => {
@@ -39,6 +40,7 @@ describe("ONNXRunner execution providers (guarded)", () => {
 
 	test("a GPU provider that throws at create is caught and retried on cpu alone", async () => {
 		vi.spyOn(console, "warn").mockImplementation(() => {})
+
 		const spy = vi.spyOn(ort.InferenceSession, "create").mockImplementation(async (_bytes, opts) => {
 			const eps = (opts?.executionProviders ?? []) as string[]
 

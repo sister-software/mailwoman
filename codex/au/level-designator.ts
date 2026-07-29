@@ -127,6 +127,7 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 			}
 		}
 	}
+
 	const out = new Map<string, AuLevelCode>()
 
 	for (const { code } of AU_LEVEL_DESIGNATORS) {
@@ -171,11 +172,14 @@ const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean
 		const variants = [...AU_LEVEL_DESIGNATOR_VARIANTS[code]]
 			.toSorted((a, b) => b.length - a.length)
 			.map((v) => v.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&").replaceAll(/\s+/g, String.raw`\s+`))
+
 		const alts = variants.join("|")
+
 		// Identifier: optional alphanumeric (B2, 12, G). requiresNumber=true → identifier required.
 		const tail = requiresNumber
 			? String.raw`\s+([A-Za-z]?\d[\dA-Za-z-]*|\d[\dA-Za-z-]*)`
 			: String.raw`(?:\s+([A-Za-z]?\d[\dA-Za-z-]*|\d[\dA-Za-z-]*))?`
+
 		rows.push({ code, requiresNumber, re: new RegExp(String.raw`^\s*(${alts})${tail}\s*$`, "i") })
 	}
 

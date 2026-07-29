@@ -116,6 +116,7 @@ async function main() {
 			appendFileSync(US_SLICE, r.stdout)
 		}
 	}
+
 	const US_N = (readFileSync(US_SLICE, "utf8").match(/\n/g) || []).length
 
 	console.error(`US held-out slice (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
@@ -130,9 +131,12 @@ async function main() {
 		if (n < TRUST_FLOOR) {
 			return `${name}\t${n}\tUNTRUSTED\t-\t-\t-\t-\t-\t-`
 		}
+
 		const resolved = `${TMP}/${tag}.json`
+
 		const evalOut =
 			await $`node scripts/eval/oa-resolver-eval.ts --eval ${slice} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --wof ${WOF} --default-country ${cc} --out-resolved ${resolved}`
+
 		writeFileSync(`${TMP}/${tag}.eval.md`, evalOut.stdout)
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
 		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |
@@ -143,16 +147,20 @@ async function main() {
 		const p50 = cols[5] ?? ""
 		const p90 = cols[6] ?? ""
 		const pipJson = `${TMP}/${tag}.pip.json`
+
 		const pip = await $({
 			nothrow: true,
 		})`python3 scripts/eval/pip-containment.py ${resolved} --label ${name} --json ${pipJson}`
+
 		writeFileSync(`${TMP}/${tag}.pip.txt`, pip.stdout)
+
 		// jq: percent rounded to 1 decimal, "-" when the field is null/missing, "" when the file can't be read.
 		const jqPct = async (field: string): Promise<string> => {
 			const r = await $({ nothrow: true })`jq -r ${`(.${field}*100|.*10|round/10) // "-"`} ${pipJson}`
 
 			return r.stdout.trim()
 		}
+
 		const pipAll = await jqPct("pip_all")
 		const pipPoly = await jqPct("pip_poly")
 		const polyCov = await jqPct("poly_coverage")
@@ -166,6 +174,7 @@ async function main() {
 
 	// --- emit the per-locale table ---
 	const u = US_ROW.split("\t")
+
 	const emit = [
 		`### Honest-eval scorecard — label: \`${LABEL}\``,
 		"",

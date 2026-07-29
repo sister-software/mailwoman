@@ -121,6 +121,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 	it("respects custom bias magnitudes", () => {
 		const fst = mockAffixFST(["avenue"])
 		const pieces = makePieces("elm avenue")
+
 		const matrix = buildStreetMorphologyEmissionPriors(fst, pieces, STAGE3_BIO_LABELS, {
 			maxAffixBias: 5,
 			maxNeighbourStreetBias: 4,

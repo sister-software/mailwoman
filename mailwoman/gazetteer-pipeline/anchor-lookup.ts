@@ -79,6 +79,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -109,6 +110,7 @@ function pyRound(x: number, nd = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -130,11 +132,13 @@ function pyRound(x: number, nd = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -169,6 +173,7 @@ function placed(lat: number, lon: number): boolean {
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
 	const con = new DatabaseSync(dataRootPath("wof", "postalcode-intl.db"))
+
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
 		.all(country) as Array<{ name: string; latitude: number; longitude: number }>
@@ -182,6 +187,7 @@ function loadIntl(country: string): Map<string, Centroid> {
 			out.set(pc, [lat, lon, placed(lat, lon) ? "wof" : null])
 		}
 	}
+
 	con.close()
 
 	return out
@@ -197,6 +203,7 @@ function loadUs(): Map<string, Centroid> {
 	const hasSources = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='centroid_source'").get()
 	const srcJoin = hasSources ? "LEFT JOIN centroid_source cs ON cs.id=spr.id" : ""
 	const srcCol = hasSources ? "cs.source" : "NULL"
+
 	const rows = con
 		.prepare(
 			`SELECT spr.name, spr.latitude, spr.longitude, ${srcCol} AS src FROM spr ${srcJoin} ` +
@@ -213,6 +220,7 @@ function loadUs(): Map<string, Centroid> {
 			out.set(pc, [lat, lon, placed(lat, lon) ? row.src || "wof" : null])
 		}
 	}
+
 	con.close()
 
 	return out
@@ -313,7 +321,9 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		["DE", loadIntl("DE")],
 		["FR", loadIntl("FR")],
 		["US", loadUs()],
-	] // centroid priority order
+	]
+
+	// centroid priority order
 	const zcta = args.zcta ? loadZCTA(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
 
@@ -340,6 +350,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		if (k > 1) {
 			collisions++
 		}
+
 		// centroid: first source (DE→FR→US) with a non-zero centroid; never overwritten by ZCTA.
 		let lat = 0
 		let lon = 0
@@ -350,6 +361,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 
 			if (c && placed(c[0], c[1])) {
 				;[lat, lon, source] = c
+
 				break
 			}
 		}
@@ -358,8 +370,10 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 		if (source === null && members.includes("US") && zcta.has(pc)) {
 			;[lat, lon] = zcta.get(pc)!
 			source = ZCTA_SOURCE
+
 			zctaFilled++
 		}
+
 		lookup[pc] = [posterior, pyRound(lat, 5), pyRound(lon, 5), source]
 	}
 
@@ -373,11 +387,13 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 	for (const [c] of sources) {
 		byCountry[c] = Object.values(lookup).filter((v) => c in v[0]).length
 	}
+
 	const bySource = new Map<string | null, number>()
 
 	for (const v of Object.values(lookup)) {
 		bySource.set(v[3], (bySource.get(v[3]) ?? 0) + 1)
 	}
+
 	const placeholders = bySource.get(null) ?? 0
 
 	// Python repr of `{k or 'placeholder': n for k, n in sorted(by_source.items(), key=lambda kv: -kv[1])}`.
@@ -388,6 +404,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): void {
 			.map(([k, n]) => `'${k ?? "placeholder"}': ${n}`)
 			.join(", ") +
 		"}"
+
 	const total = Object.keys(lookup).length
 
 	console.log(

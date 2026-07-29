@@ -62,9 +62,11 @@ export async function ingestOvertureDivisions(
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const con = await instance.connect()
+
 	await con.run(
 		"INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; INSTALL json; LOAD json; SET s3_region='us-west-2';"
 	)
+
 	await con.run("SET memory_limit='4GB'; SET threads=4;")
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
@@ -93,6 +95,7 @@ export async function ingestOvertureDivisions(
 		WHERE d.country IN (${inlist}) AND d.subtype IN (${subtypes})
 			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL
 	`)
+
 	const rows = result.getRowObjects() as Array<Record<string, unknown>>
 
 	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
@@ -104,9 +107,11 @@ export async function ingestOvertureDivisions(
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
 	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
@@ -126,6 +131,7 @@ export async function ingestOvertureDivisions(
 		const name = String(r.name)
 		const subtype = String(r.subtype)
 		const country = String(r.country ?? "").toUpperCase()
+
 		// SELECT aliases: min_lat=ymin, min_lon=xmin, max_lat=ymax, max_lon=xmax → spr (lat, lon,
 		// min_latitude, min_longitude, max_latitude, max_longitude).
 		sprInsert.run(
@@ -147,6 +153,7 @@ export async function ingestOvertureDivisions(
 			0,
 			0
 		)
+
 		namesInsert.run(nid, name, subtype, country, "", 0, 0)
 
 		// Multilingual aliases (names.common — language→name, incl. English / Latin transliterations) so a
@@ -168,13 +175,16 @@ export async function ingestOvertureDivisions(
 				/* malformed common map — keep the primary, skip aliases */
 			}
 		}
+
 		const pop = num(r.population)
 
 		if (pop > 0) {
 			populationInsert.run(nid, pop)
 		}
+
 		n++
 	}
+
 	db.exec("COMMIT")
 
 	return n

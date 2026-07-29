@@ -208,6 +208,7 @@ async function runLoreGuards(env: {
 
 		return r.stdout.trim()
 	}
+
 	const md5 = async (p: string): Promise<string> => {
 		const r = await $`md5sum ${p}`
 
@@ -218,25 +219,30 @@ async function runLoreGuards(env: {
 	// fp32/int8 dual-artifact assertions (they exist for the --model fp32 + --int8 sibling flow).
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
+
 		const provenance =
 			[
 				`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
 				`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
 			].join("\n") + "\n"
+
 		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance)
 		process.stdout.write(provenance)
 	} else {
 		const modelDql = await dql(MODEL)
+
 		const provLines = [
 			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
 			`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
 		]
+
 		let int8Dql = ""
 
 		if (INT8) {
 			int8Dql = await dql(INT8)
 			provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
 		}
+
 		const provenance = provLines.join("\n") + "\n"
 		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
 		process.stdout.write(provenance)
@@ -307,6 +313,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	if (!OUT_DIR) {
 		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
 	}
+
 	mkdirSync(OUT_DIR, { recursive: true })
 
 	const card = JSON.parse(readFileSync(EFF_CARD, "utf8")) as ModelCard
@@ -319,6 +326,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	if (gate.requires_gazetteer_lexicon === true) {
 		GAZ_ARGS.push("--gazetteer-lexicon", GAZ, "--suppress-gaz-near-postcode")
 	}
+
 	// Conventions channel (#511 Tier A): when the gate spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
 	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
@@ -327,6 +335,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	if (CONV_MODE) {
 		GAZ_ARGS.push("--conventions", CONV_MODE)
 	}
+
 	// Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
 	let BRIDGE_MODE = ""
 
@@ -346,38 +355,57 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		const plFlags = WC
 			? ["--weights-cache", WC]
 			: ["--model", m, "--tokenizer", TOK, "--model-card", CARD, "--model-anchor-lookup", String(LK)]
+
 		const probeFlags = WC ? ["--weights-cache", WC] : ["--model", m]
+
 		const perLocale =
 			await $`node scripts/eval/per-locale-f1.ts ${plFlags} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, perLocale.stdout)
+
 		const affix =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-affix.md`, affix.stdout)
+
 		const unit =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-unit.md`, unit.stdout)
+
 		const country =
 			await $`node scripts/eval/score-country-homograph.ts ${probeFlags} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-country.md`, country.stdout)
+
 		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
 		const pobox =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-pobox.md`, pobox.stdout)
+
 		const intersection =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-intersection.md`, intersection.stdout)
+
 		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
 		const watchVt =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-watch-intersection-vt.md`, watchVt.stdout)
+
 		const watchGlue =
 			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-watch-glue.md`, watchGlue.stdout)
+
 		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — nothrow,
 		// combine stdout+stderr like the bash `> … 2>&1 || true`.
 		const deorder = await $({
 			nothrow: true,
 		})`node scripts/eval/de-order-eval.ts --model ${m} --card ${EFF_CARD} --tokenizer ${EFF_TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
+
 		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${deorder.stdout}${deorder.stderr}`)
 	}
 
@@ -393,6 +421,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			await runBattery(INT8, "int8")
 		}
 	}
+
 	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
 	// same capture: the report lines land in presets.md, a failure is tolerated like the old child's
 	// self-caught `.catch(console.error)` (partial output kept, gate continues).
@@ -403,6 +432,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	} catch (error) {
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}
+
 	writeFileSync(`${OUT_DIR}/presets.md`, presetLines.map((line) => `${line}\n`).join(""))
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
@@ -417,6 +447,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		const cascade = await $({
 			nothrow: true,
 		})`node scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${EFF_TOK} --card ${EFF_CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
+
 		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, cascade.stdout)
 
 		if (cascade.exitCode !== 0) {
@@ -455,9 +486,11 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			...(CONV_MODE ? ["--conventions", CONV_MODE] : []),
 			...(BRIDGE_MODE ? ["--bridge-gaps"] : []),
 		]
+
 		const arena = await $({
 			nothrow: true,
 		})`node scripts/eval/external-arenas.ts ${arenaArgs}`
+
 		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
@@ -477,6 +510,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			nothrow: true,
 			env: childEnv(),
 		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${EFF_TOK} --model-card ${EFF_CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
+
 		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${bare.stdout}${bare.stderr}`)
 
 		if (bare.exitCode !== 0) {
@@ -515,11 +549,13 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 				},
 				(line) => maskLines.push(line)
 			)
+
 			MASK_GATE_STATUS = mask.pass ? 0 : 1
 		} catch (error) {
 			maskLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			MASK_GATE_STATUS = 1
 		}
+
 		writeFileSync(`${OUT_DIR}/mask-regression.md`, maskLines.map((line) => `${line}\n`).join(""))
 
 		if (MASK_GATE_STATUS === 0) {
@@ -544,6 +580,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			withInt8: Boolean(INT8),
 			...(options.weightsCache ? { gradedArtifact: "weights-cache" as const } : {}),
 		})
+
 		VERDICT_STATUS = failed ? 1 : 0
 	} catch (error) {
 		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))

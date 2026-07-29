@@ -123,6 +123,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 				delta: null,
 				diffKind: "primary-only",
 			})
+
 			continue
 		}
 
@@ -135,6 +136,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 				delta: diffConfidence(cn.confidence, pn.confidence),
 				diffKind: "tag-changed",
 			})
+
 			continue
 		}
 
@@ -150,6 +152,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 	// Remaining spanned compare nodes not matched by span.
 	for (const [spanKey, cn] of cBySpan) {
 		if (handledSpans.has(spanKey)) continue
+
 		rows.push({
 			tag: cn.tag,
 			primaryNode: null,

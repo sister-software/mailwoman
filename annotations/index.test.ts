@@ -29,9 +29,11 @@ test("composeAnnotators: merges partial results from multiple annotators", async
 
 test("composeAnnotators: a throwing annotator is skipped, the rest still apply", async () => {
 	const ok: Annotator = () => ({ flag: "🇺🇸" })
+
 	const boom: Annotator = () => {
 		throw new Error("nope")
 	}
+
 	const set = await composeAnnotators([boom, ok])({ lat: 0, lon: 0 })
 
 	expect(set.flag).toBe("🇺🇸")
@@ -57,6 +59,7 @@ test("toOpenCage: maps native fields to OpenCage key names + casing", () => {
 		timezone: { name: "America/New_York", offsetSec: -18_000 },
 		fips: "11001",
 	}
+
 	const oc = toOpenCage(set)
 
 	expect(oc.DMS).toEqual({ lat: "38° 53′ 51″ N", lng: "77° 02′ 11″ W" }) // lon -> lng
@@ -105,6 +108,7 @@ test("toSchemaOrg: full Place with geo + PostalAddress, ISO-3166 alpha-2 country
 	expect(place["@context"]).toBe("https://schema.org")
 	expect(place["@type"]).toBe("Place")
 	expect(place.geo).toEqual({ "@type": "GeoCoordinates", latitude: 48.8556, longitude: 2.3448 })
+
 	expect(place.address).toEqual({
 		"@type": "PostalAddress",
 		streetAddress: "8 Boulevard du Palais",

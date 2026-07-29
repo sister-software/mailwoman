@@ -59,8 +59,10 @@ function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
+
 			stateID = next
 		}
+
 		const node = nodes[stateID]!
 
 		if (!node.places.some((p) => p.wofID === entry.wofID)) {

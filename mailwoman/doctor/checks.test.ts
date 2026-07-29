@@ -66,6 +66,7 @@ describe("weightsCheck (core)", () => {
 			modelSize: 35_800_000,
 			tokenizerSize: 800_000,
 		})
+
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.core).toBe(true)
 		expect(c.fix).toBeUndefined()
@@ -86,6 +87,7 @@ describe("weightsCheck (core)", () => {
 			modelSize: 0,
 			tokenizerSize: 800_000,
 		})
+
 		expect(c.status).toBe(CheckStatus.Degraded)
 		expect(c.fix).toBeDefined()
 	})
@@ -99,6 +101,7 @@ describe("localeOverlayCheck (informational, never core)", () => {
 			resolved: true,
 			source: "package:@mailwoman/neural-weights-fr-fr+base",
 		})
+
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.core).toBe(false)
 		expect(c.fix).toBeUndefined()
@@ -139,6 +142,7 @@ describe("gazetteerCheck (optional)", () => {
 			envCandidate: { path: "/wof/candidate.db", sizeBytes: 1_400_000_000 },
 			probed: ["/wof/candidate.db"],
 		})
+
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
 		expect(c.detail).toContain("MB")
@@ -157,6 +161,7 @@ describe("gazetteerCheck (optional)", () => {
 			conventionCandidate: "/data/wof/candidate.db",
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
 		})
+
 		expect(c.status).toBe(CheckStatus.Degraded)
 		expect(c.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
 		expect(c.detail).toContain("geocode/serve won't use it")
@@ -179,6 +184,7 @@ describe("checkPOI (optional)", () => {
 			exists: true,
 			manifest: { name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" },
 		})
+
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("poi v2026-07-20a")
 		expect(c.detail).toContain("vintage 2026-07")
@@ -228,6 +234,7 @@ describe("runtime checks (core)", () => {
 
 describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 	const ok = (id: string, core: boolean): DoctorCheck => ({ id, label: id, status: CheckStatus.OK, detail: "", core })
+
 	const bad = (id: string, core: boolean, status: CheckStatus): DoctorCheck => ({
 		id,
 		label: id,
@@ -245,6 +252,7 @@ describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 			bad("gazetteer", false, CheckStatus.Missing),
 			bad("poi-layer", false, CheckStatus.Degraded),
 		]
+
 		expect(computeExitCode(checks)).toBe(0)
 		expect(assembleReport(checks).exitCode).toBe(0)
 	})

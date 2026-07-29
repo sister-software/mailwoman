@@ -179,6 +179,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	copyFileSync(opts.adminIn, opts.adminOut)
 
 	const db = new DatabaseSync(opts.adminOut)
+
 	const ingested = ingestGeonamesAliases(
 		db,
 		[...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)],
@@ -189,6 +190,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 			alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
 		}
 	)
+
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
 	db.exec("ANALYZE")
@@ -227,6 +229,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		onProgress: opts.onProgress,
 	})
+
 	// Coverage manifest (survey candidate #2): facts about the artifact live IN the artifact — bake the
 	// measured hard-filter coverage record + guard-B bboxes so consumers read them at open instead of
 	// falling back to the code constants. MUST run pre-seal (a shipped DB is never patched — rebuild).
@@ -254,6 +257,7 @@ export function promoteCandidate(candidateDb: string, dataRoot: string = mailwom
 	} catch {
 		// nothing there yet
 	}
+
 	symlinkSync(candidateDb, linkPath)
 
 	return linkPath
@@ -317,6 +321,7 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 	} catch {
 		// fresh
 	}
+
 	symlinkSync(opts.candidateDb, staged)
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
@@ -330,6 +335,7 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 	if (opts.dryRun) {
 		args.push("--dry-run")
 	}
+
 	execFileSync("python3", args, { stdio: "inherit" })
 
 	let bumped = false

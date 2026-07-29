@@ -189,6 +189,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 			set = new Set([seen])
 			overflow.set(key, set)
 		}
+
 		set.add(country)
 	}
 
@@ -197,6 +198,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 	for (const row of primary.iterate(...placetypes) as Iterable<{ country: string; name: string }>) {
 		paint(row.name, row.country)
 	}
+
 	const alts = db.prepare(
 		`SELECT s.country AS country, n.name AS name FROM names n JOIN spr s ON s.id = n.id
 		 WHERE s.is_current = 1 AND s.placetype IN (${ph})`
@@ -205,6 +207,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 	for (const row of alts.iterate(...placetypes) as Iterable<{ country: string; name: string }>) {
 		paint(row.name, row.country)
 	}
+
 	db.close()
 
 	const counts = new Map<string, number>()
@@ -257,6 +260,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			`curation: ${exclusion.surfaces.size} whole surfaces + ${exclusion.stopwordTokens.size} stopword tokens (${EXCLUSION_POLICY_ID})`
 		)
 	}
+
 	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated control stays a pure
 	// pre-curation byte baseline. One global scan shared by every locale.
 	const surfaceCountryCounts = opts.uncurated ? undefined : computeSurfaceCountryCounts(dbPath)
@@ -264,6 +268,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 	if (surfaceCountryCounts) {
 		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)
 	}
+
 	mkdirSync(outputDir, { recursive: true })
 
 	const built: BuiltLocaleFST[] = []
@@ -274,6 +279,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 		if (!countries) throw new Error(`unknown FST locale ${locale} — add it to FST_LOCALES with its country scope`)
 
 		progress(`building fst-${locale} (countries=[${countries}]) from ${dbPath}`)
+
 		const { matcher, provenance } = buildFSTFromWOF({
 			dbPath,
 			countries,
@@ -287,9 +293,11 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			...(surfaceCountryCounts ? { surfaceCountryCounts } : {}),
 			onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 		})
+
 		const outPath = join(outputDir, `fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)
 		const bytes = serializeFST(matcher, provenance)
 		writeFileSync(outPath, bytes)
+
 		built.push({
 			locale,
 			path: outPath,
@@ -297,6 +305,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 			nameInsertions: provenance.nameInsertions,
 			excludedInsertions: provenance.excludedInsertions ?? 0,
 		})
+
 		progress(
 			`  wrote ${outPath} (${(bytes.length / 1e6).toFixed(1)} MB, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
 		)

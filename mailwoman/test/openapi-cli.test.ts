@@ -34,6 +34,7 @@ describe("mailwoman openapi", () => {
 
 		const doc = JSON.parse(stdout) as { openapi: string; paths: Record<string, unknown> }
 		expect(doc.openapi).toBe("3.1.0")
+
 		expect(Object.keys(doc.paths)).toEqual(
 			expect.arrayContaining(["/v1/parse", "/v1/geocode", "/v1/batch", "/v1/resolve", "/v1/format"])
 		)
@@ -44,6 +45,7 @@ describe("mailwoman openapi", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const doc = JSON.parse(stdout) as { openapi: string }
 		expect(doc.openapi).toBe("3.0.3")
 	}, 30_000)

@@ -102,6 +102,7 @@ const FAMILIES: Record<string, string[]> = {
 	oceania: ["AU", "NZ", "NC"],
 	middle_east: ["AE", "IL", "KW", "QA", "SA"],
 }
+
 /**
  * Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row from — Baltic
  * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
@@ -171,6 +172,7 @@ export async function buildOutlierOA(
 
 			return []
 		}
+
 		const seen = new Set<string>()
 		const out: string[] = []
 
@@ -181,6 +183,7 @@ export async function buildOutlierOA(
 			for (const [k, v] of Object.entries(r)) {
 				row[k.toLowerCase()] = v
 			}
+
 			const raw = assemble(row)
 
 			if (!raw || raw.length < MIN_OUTLIER_LENGTH || seen.has(raw)) continue
@@ -212,6 +215,7 @@ export async function buildOutlierOA(
 				for (const raw of rows) {
 					testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc, family })
 				}
+
 				heldCC++
 				report?.(`  HELDOUT ${cc} (${family}): ${rows.length} (test-only)`)
 			} else {
@@ -229,11 +233,13 @@ export async function buildOutlierOA(
 				for (const raw of rows.slice(nVal + nTest)) {
 					trainAppend.push(raw)
 				}
+
 				trainCC++
 				report?.(`  TRAIN ${cc} (${family}): ${rows.length}`)
 			}
 		}
 	}
+
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
@@ -242,6 +248,7 @@ export async function buildOutlierOA(
 	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
 	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+
 	report?.(
 		`wrote test-latin-offmap.jsonl: ${testRows.length} (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
 	)

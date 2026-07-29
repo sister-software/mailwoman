@@ -141,9 +141,11 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		...(postcodeRepair ? { postcodeRepair: true } : {}),
 		...(options.wordConsistency ? { enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT } : {}),
 	}
+
 	const parseOpts = Object.keys(repairOpts).length
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
+
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
 	// conventions channels the model was trained against (per the model-card `requires` block) so a
 	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer
@@ -154,6 +156,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 		throw new Error("createScorer needs model + tokenizer + model-card; resolveWeights returned incomplete paths")
+
 	const classifier = await createScorer({
 		modelPath: resolved.modelPath,
 		tokenizerPath: resolved.tokenizerPath,
@@ -178,6 +181,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		hallucinated: number
 	}
 	const perTag = new Map<string, TagStats>()
+
 	function tagStat(tag: string): TagStats {
 		let s = perTag.get(tag)
 
@@ -203,15 +207,18 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 		for (const [tag, value] of Object.entries(expected)) {
 			const predValue = predicted[tag as keyof typeof predicted]
+
 			tagStat(tag).expected++
 
 			if (!predValue) {
 				missed.total++
+
 				tagStat(tag).missed++
 
 				if (missed.examples.length < 10) {
 					missed.examples.push({ raw: entry.raw, detail: `missing ${tag}="${value}"` })
 				}
+
 				allCorrect = false
 			} else if (predValue !== value) {
 				const predNorm = String(predValue).toLowerCase().trim()
@@ -219,6 +226,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 				if (predNorm.includes(expNorm) || expNorm.includes(predNorm)) {
 					boundaryErrors.total++
+
 					tagStat(tag).boundary++
 
 					if (boundaryErrors.examples.length < 10) {
@@ -229,6 +237,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 					}
 				} else {
 					confused.total++
+
 					tagStat(tag).confused++
 
 					if (confused.examples.length < 10) {
@@ -238,6 +247,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 						})
 					}
 				}
+
 				allCorrect = false
 			} else {
 				tagStat(tag).correct++
@@ -247,6 +257,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		for (const [tag] of Object.entries(predicted)) {
 			if (!(tag in expected)) {
 				hallucinated.total++
+
 				tagStat(tag).hallucinated++
 
 				if (hallucinated.examples.length < 10) {
@@ -255,6 +266,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 						detail: `hallucinated ${tag}="${predicted[tag as keyof typeof predicted]}"`,
 					})
 				}
+
 				allCorrect = false
 			}
 		}

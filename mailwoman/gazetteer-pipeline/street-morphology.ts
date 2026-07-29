@@ -74,6 +74,7 @@ export function buildStreetMorphologyArtifact(
 	const outPath = resolve(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
+
 	const result = buildStreetMorphologyFST({
 		dictionariesDir,
 		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),

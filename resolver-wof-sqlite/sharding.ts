@@ -118,6 +118,7 @@ export function resolveShards(input: string | ReadonlyArray<string | ShardConfig
 					`{ path, schemaName } to override.`
 			)
 		}
+
 		// The first shard is always main per SQLite semantics — its derived name is informational
 		// only. Subsequent shards must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
@@ -128,7 +129,9 @@ export function resolveShards(input: string | ReadonlyArray<string | ShardConfig
 					`(either with "main" or another shard). Pass an explicit { path, schemaName }.`
 			)
 		}
+
 		seen.add(schemaName)
+
 		out.push({
 			path: cfg.path,
 			schemaName,

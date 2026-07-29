@@ -218,6 +218,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	app.openapi(searchRoute, async (c) => {
 		if (!engine.search) return c.json({ error: "search not implemented (see #802)" }, 501)
 		const q = legacyQuery(c)
+
 		const params: NominatimSearchParams = {
 			q: asString(q["q"]),
 			street: asString(q["street"]),
@@ -234,6 +235,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
 		}
+
 		const results = await engine.search(params)
 
 		if (params.format === "geojson") {
@@ -259,6 +261,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		if (lat < MIN_LATITUDE || lat > MAX_LATITUDE || lon < MIN_LONGITUDE || lon > MAX_LONGITUDE) {
 			return c.json({ error: "lat must be in [-90, 90] and lon in [-180, 180]" }, 400)
 		}
+
 		const params: NominatimReverseParams = {
 			lat,
 			lon,
@@ -268,6 +271,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
 		}
+
 		const result = await engine.reverse(params)
 
 		if (params.format === "geojson") {
@@ -283,11 +287,13 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	app.openapi(lookupRoute, async (c) => {
 		if (!engine.lookup) return c.json({ error: "lookup not implemented (see #805)" }, 501)
 		const q = legacyQuery(c)
+
 		const params: NominatimLookupParams = {
 			osmIds: asString(q["osm_ids"])?.split(",") ?? [],
 			addressdetails: parseBool(q["addressdetails"]),
 			format: parseFormat(q["format"]),
 		}
+
 		const results = await engine.lookup(params)
 
 		// NOTE: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`

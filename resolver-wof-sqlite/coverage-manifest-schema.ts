@@ -202,6 +202,7 @@ export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifa
 
 		for (const row of rows) {
 			const country = String(row.country).toUpperCase()
+
 			countryCoverage.set(country, {
 				country,
 				hardFilterSafe: Number(row.hard_filter_safe) !== 0,
@@ -222,6 +223,7 @@ export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifa
 
 		for (const row of rows) {
 			const country = String(row.country).toUpperCase()
+
 			countryBBoxes.set(country, {
 				country,
 				latMin: Number(row.lat_min),

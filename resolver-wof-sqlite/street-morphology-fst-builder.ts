@@ -83,6 +83,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 	const trimmed = line.trim()
 
 	if (!trimmed.length || trimmed.startsWith("#")) return null
+
 	const parts = trimmed
 		.split("|")
 		.map((s) => s.trim())
@@ -118,6 +119,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			}
 		})
 	}
+
 	progress("discover", `Found ${locales.length} locales with ${STREET_TYPES_FILENAME}`)
 
 	// Collect canonical → set-of-variants across all locales. Same canonical form may appear in
@@ -137,9 +139,11 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			for (const variant of parsed.variants) {
 				existing.add(variant)
 			}
+
 			canonicalToVariants.set(parsed.canonical, existing)
 		}
 	}
+
 	progress("collect", `Collected ${canonicalToVariants.size} canonical affixes`)
 
 	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
@@ -167,8 +171,10 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)
 			}
+
 			stateID = next
 		}
+
 		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
@@ -182,6 +188,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	for (const canonical of sortedCanonicals) {
 		const variants = canonicalToVariants.get(canonical)!
 		const wofID = canonicalToWOFID.get(canonical)!
+
 		const entry: PlaceEntry = {
 			wofID,
 			placetype: "street_affix",
@@ -205,14 +212,18 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 
 			if (joined.length < minVariantLength) continue
 			insertName(tokens, entry)
+
 			insertCount++
+
 			variantCount++
 		}
 	}
+
 	progress("trie", `Built trie: ${nodes.length} states, ${insertCount} variant insertions`)
 
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
+
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries: locales, // Reuse `countries` slot for locale provenance — semantics differ from admin FST.

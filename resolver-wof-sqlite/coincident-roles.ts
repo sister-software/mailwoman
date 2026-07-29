@@ -125,7 +125,9 @@ export function buildCoincidentRoles(
 		onProgress("dropping", COINCIDENT_ROLES_TABLE)
 		db.exec(`DROP TABLE ${COINCIDENT_ROLES_TABLE}`)
 	}
+
 	onProgress("creating", COINCIDENT_ROLES_TABLE)
+
 	// Raw DDL by design: this is a sync builder consumed by a sync CLI (build-coincident-roles-cli) and
 	// 6 sync unit tests, so routing one table through async Kysely would cascade async through all of
 	// them for no real gain. See AGENTS.md "Database / inline SQL". (The SELECT + INSERT loop below are
@@ -143,6 +145,7 @@ export function buildCoincidentRoles(
 	`)
 
 	onProgress("scanning")
+
 	// Admin (region/county tier) ⋈ same-name DESCENDANT locality. `place_population` is optional (LEFT
 	// JOIN → 0 when absent). The relative-tolerance filter + relationship classification happen in JS so
 	// the SQL stays a plain join. `spr` exposes the bbox columns we need for the diagonal.
@@ -163,11 +166,13 @@ export function buildCoincidentRoles(
 		.all() as unknown as CandidateRow[]
 
 	onProgress("filtering", `${candidates.length} candidates`)
+
 	const insert = db.prepare(
 		`INSERT OR REPLACE INTO ${COINCIDENT_ROLES_TABLE}
 			(admin_id, locality_id, relationship_type, admin_placetype, distance_km, locality_population)
 			VALUES (?, ?, ?, ?, ?, ?)`
 	)
+
 	const byCountry: Record<string, number> = {}
 	let rowCount = 0
 	db.exec("BEGIN")
@@ -186,14 +191,17 @@ export function buildCoincidentRoles(
 			// dominated by French cantons / JP counties that don't hit the parser-drops-locality failure.
 			const relationshipType = dist <= cityStateMaxKm ? "city-state" : "capital-seat"
 			insert.run(c.admin_id, c.locality_id, relationshipType, c.admin_placetype, dist, c.pop)
+
 			rowCount++
 			byCountry[c.country] = (byCountry[c.country] ?? 0) + 1
 		}
+
 		db.exec("COMMIT")
 	} catch (error) {
 		db.exec("ROLLBACK")
 		throw error
 	}
+
 	db.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON ${COINCIDENT_ROLES_TABLE} (admin_id)`)
 
 	onProgress("done", `${rowCount} coincident-role rows`)
@@ -217,6 +225,7 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 	const map = new Map<number, CoincidentRole[]>()
 
 	if (!coincidentRolesExists(db)) return map
+
 	const rows = db
 		.prepare(
 			`SELECT admin_id, locality_id, relationship_type, admin_placetype, distance_km, locality_population
@@ -239,6 +248,7 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 			distanceKm: r.distance_km,
 			population: r.locality_population,
 		}
+
 		const list = map.get(r.admin_id)
 
 		if (list) {

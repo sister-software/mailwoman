@@ -52,6 +52,7 @@ describe("npx mailwoman corpus list", () => {
 			timeout: 10_000,
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 		})
+
 		expect(stderr).toBe("")
 		expect(stdout).toMatch(/wof-admin/i)
 		expect(stdout).toMatch(/CC0/i)

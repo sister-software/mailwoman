@@ -116,11 +116,13 @@ function main(): void {
 
 		if (flags === undefined) {
 			untracked++
+
 			continue
 		}
 
 		if (flags === 0) {
 			clean.push(s)
+
 			continue
 		}
 

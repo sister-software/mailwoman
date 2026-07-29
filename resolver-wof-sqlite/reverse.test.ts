@@ -50,10 +50,12 @@ describe("point-in-polygon primitives", () => {
 
 	test("geometryContains — Polygon, MultiPolygon, and non-areal geometry", () => {
 		const polygon = { type: "Polygon", coordinates: [square(0, 0, 10, 10)] }
+
 		const multi = {
 			type: "MultiPolygon",
 			coordinates: [[square(0, 0, 1, 1)], [square(8, 8, 9, 9)]],
 		}
+
 		expect(geometryContains(polygon, 5, 5)).toBe(true)
 		expect(geometryContains(polygon, 11, 5)).toBe(false)
 		expect(geometryContains(multi, 8.5, 8.5)).toBe(true)
@@ -72,6 +74,7 @@ describe("point-in-polygon primitives", () => {
  */
 function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 	const admin = new DatabaseSync(":memory:")
+
 	admin.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -129,6 +132,7 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 
 		// Deepest = the locality village (descent: county A → town → village), approximate.
 		expect(result.containment).toBe("approximate")
+
 		expect(result.hierarchy.map((p) => p.name)).toEqual([
 			"Middlewich Village",
 			"Middlewich",
@@ -136,6 +140,7 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 			"Vermont",
 			"United States",
 		])
+
 		// The bbox false positive (county B) must never appear.
 		expect(result.hierarchy.some((p) => p.id === 6)).toBe(false)
 		// The approximate winner carries its centroid distance.
@@ -203,9 +208,11 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 		// Construct in beforeAll, not the describe body — the body runs at collection time even when
 		// the suite is skipped, and would try to open the (absent) DBs.
 		let rg: WOFReverseGeocoder
+
 		beforeAll(() => {
 			rg = new WOFReverseGeocoder({ adminDBPath: ADMIN_DB!, polygonDBPath: POLYGONS_DB! })
 		})
+
 		afterAll(() => rg?.close())
 
 		test("South Side Chicago → full chain down to the neighbourhood grain", async () => {
@@ -224,6 +231,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			const result = await rg.reverseGeocode(41.8004427, -87.6031768, {
 				placetypes: ["country", "region", "county", "localadmin", "locality"],
 			})
+
 			expect(result.hierarchy[0]).toMatchObject({ name: "Chicago", placetype: "locality" })
 			expect(result.containment).toBe("polygon")
 		})

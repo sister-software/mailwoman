@@ -24,6 +24,7 @@ let scratch: string
 
 function buildAdminShard(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -37,12 +38,14 @@ function buildAdminShard(path: string): void {
 		INSERT INTO spr VALUES (102, NULL, 'Beverly Hills', 'locality', 'US', 34.07, -118.40, 34.05, 34.09, -118.42, -118.38, 1, 0);
 		INSERT INTO spr VALUES (103, NULL, 'Paris', 'locality', 'FR', 48.85, 2.34, 48.81, 48.90, 2.22, 2.46, -1, 0);
 	`)
+
 	buildPlaceSearchFTS(db)
 	db.close()
 }
 
 function buildPostcodeShard(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -56,6 +59,7 @@ function buildPostcodeShard(path: string): void {
 		INSERT INTO spr VALUES (202, 102, '90210', 'postalcode', 'US', 34.10, -118.41, 34.08, 34.12, -118.43, -118.39, -1, 0);
 		INSERT INTO spr VALUES (203, 101, '62702', 'postalcode', 'US', 39.82, -89.63, 39.80, 39.84, -89.65, -89.61, 1, 0);
 	`)
+
 	buildPlaceSearchFTS(db)
 	db.close()
 }
@@ -145,6 +149,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 				placetype: "postalcode",
 				near: { lat: 39.8, lon: -89.65, maxDistanceKm: 10 },
 			})
+
 			expect(r.length).toBeGreaterThan(0)
 			expect(r[0]?.distanceKm).toBeDefined()
 			expect(r[0]?.distanceKm).toBeLessThan(5)

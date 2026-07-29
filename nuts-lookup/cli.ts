@@ -34,6 +34,7 @@ if (positionals[0] === "build") {
 
 		process.exit(1)
 	}
+
 	const { regions } = buildNutsDB(values.geojson, values.out)
 
 	console.error(`built ${values.out} (${regions} regions)`)
@@ -46,6 +47,7 @@ if (positionals[0] === "build") {
 
 		process.exit(1)
 	}
+
 	const lookup = new NutsLookup({ databasePath: values.db })
 
 	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find

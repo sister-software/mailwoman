@@ -43,6 +43,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 			out.push(ch)
 			map.push(i)
 			i += 1
+
 			continue
 		}
 
@@ -60,6 +61,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				changed = true
 				runs += 1
 			}
+
 			continue
 		}
 
@@ -67,6 +69,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 		if (ch === "\n" && out.at(-1) === "\r") {
 			// Already handled in CR branch above by emitting both; skip combiner check
 		}
+
 		out.push(ch)
 		map.push(i)
 		i += 1
@@ -78,6 +81,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 	while (lead < out.length && ANY_SPACE.test(out[lead]!)) {
 		lead += 1
 	}
+
 	let trail = out.length
 
 	while (trail > lead && TRAILING_NOISE.test(out[trail - 1]!)) {
@@ -87,6 +91,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 	if (lead > 0 || trail < out.length) {
 		changed = true
 	}
+
 	const trimmedOut = out.slice(lead, trail)
 	const trimmedMap = map.slice(lead, trail)
 

@@ -11,7 +11,9 @@ import { applyNFC } from "./nfc.ts"
 // Combining acute accent (U+0301) and the composed forms, by codepoint — so the test's intent
 // doesn't depend on how this file's literal characters happen to be normalized on disk.
 const COMBINING_ACUTE = "́"
-const E_ACUTE = "é" // é (composed, NFC)
+const E_ACUTE = "é"
+
+// é (composed, NFC)
 
 test("applyNFC: already-NFC input is a no-op with an identity map", () => {
 	const r = applyNFC("Main St")

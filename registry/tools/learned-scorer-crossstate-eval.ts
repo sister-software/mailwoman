@@ -109,9 +109,12 @@ const C = {
 	mZip: "Provider Business Mailing Address Postal Code",
 	otherOrg: "Provider Other Organization Name",
 }
+
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
+
 const choose2 = (n: number) => (n * (n - 1)) / 2
 
 interface MessyRow {
@@ -141,6 +144,7 @@ function scoreClusters(entities: ResolvedEntity[]): {
 		for (const rec of e.records) {
 			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
 		}
+
 		sumCluster += choose2(e.records.length)
 
 		if (byNPI.size > 1) {
@@ -152,11 +156,13 @@ function scoreClusters(entities: ResolvedEntity[]): {
 			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
 		}
 	}
+
 	let sumClass = 0
 
 	for (const total of npiTotals.values()) {
 		sumClass += choose2(total)
 	}
+
 	const tp = sumCK
 	const precision = sumCluster > 0 ? tp / sumCluster : 0
 	const recall = sumClass > 0 ? tp / sumClass : 0
@@ -194,15 +200,18 @@ export async function scorerCrossStateEval(
 		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
+
 		altNames.set(npi, list)
 	}
 
 	// ONE registry pass: global address-frequency + a TRAIN-state sample + an EVAL-state sample.
 	report?.(`[B] registry pass: address-frequency + ${NPIS} ${TRAIN_STATE} (train) + ${NPIS} ${EVAL_STATE} (eval)…`)
+
 	const samples: Record<string, { rows: MessyRow[]; kept: Set<string> }> = {
 		[TRAIN_STATE]: { rows: [], kept: new Set() },
 		[EVAL_STATE]: { rows: [], kept: new Set() },
 	}
+
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
@@ -211,13 +220,16 @@ export async function scorerCrossStateEval(
 		if (++scanned % 1_000_000 === 0) {
 			report?.(`    scanned ${scanned / 1e6}M`)
 		}
+
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 			addrTotal++
 		}
+
 		const npi = norm(r[C.npi])
 		const st = norm(r[C.pState]).toUpperCase()
 		const bucket = samples[st]
@@ -234,6 +246,7 @@ export async function scorerCrossStateEval(
 				for (const alt of altNames.get(npi)!) {
 					bucket.rows.push({ npi, name: alt, org: alt, address: practice })
 				}
+
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice) {
@@ -242,11 +255,13 @@ export async function scorerCrossStateEval(
 			}
 		}
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	report?.(
 		`    ${TRAIN_STATE}: ${samples[TRAIN_STATE]!.kept.size} NPIs → ${samples[TRAIN_STATE]!.rows.length} records · ` +
 			`${EVAL_STATE}: ${samples[EVAL_STATE]!.kept.size} NPIs → ${samples[EVAL_STATE]!.rows.length} records`
@@ -255,8 +270,10 @@ export async function scorerCrossStateEval(
 	report?.("[C] geocoding both states…")
 	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
+
 	const geocodeRows = (rows: MessyRow[]) =>
 		ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: geocoder.seam })
+
 	const trainRecords = await geocodeRows(samples[TRAIN_STATE]!.rows)
 	const evalRecords = await geocodeRows(samples[EVAL_STATE]!.rows)
 	geocoder.close()
@@ -288,19 +305,23 @@ export async function scorerCrossStateEval(
 			for (let j = 0; j < dim; j++) {
 				z += w[j]! * trainX[i]![j]!
 			}
+
 			const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
 
 			for (let j = 0; j < dim; j++) {
 				gw[j]! += err * trainX[i]![j]!
 			}
+
 			gb += err
 		}
 
 		for (let j = 0; j < dim; j++) {
 			w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
 		}
+
 		bias -= 0.1 * (gb / trainX.length)
 	}
+
 	const lrSc = (x: number[]) => {
 		let z = bias
 
@@ -310,6 +331,7 @@ export async function scorerCrossStateEval(
 
 		return z
 	}
+
 	const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
 	const lrScorer = (a: SourceRecord, b: SourceRecord) => lrSc(featurize(a, b))
 
@@ -320,6 +342,7 @@ export async function scorerCrossStateEval(
 		f1: number
 		overMerged: number
 	}
+
 	const bestOver = (thresholds: number[], cfg: (t: number) => Parameters<typeof resolveEntities>[1]): ArmScore => {
 		let best: ArmScore = { precision: 0, recall: 0, f1: -1, overMerged: 0 }
 
@@ -333,7 +356,9 @@ export async function scorerCrossStateEval(
 
 		return best
 	}
+
 	const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
+
 	const quantileThresholds = (scores: number[]): number[] => {
 		const sorted = [...scores].toSorted((p, q) => p - q)
 		const ts = new Set<number>()
@@ -344,34 +369,40 @@ export async function scorerCrossStateEval(
 
 		return [...ts]
 	}
+
 	const fs = bestOver(
 		Array.from({ length: 26 }, (_, i) => i),
 		// learnedScorer:false — the FS baseline is the baseline (the learned scorer is now default-on, so
 		// without this the "FS arm" would silently BE the GBT).
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
+
 	const gbtArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
 		addressFrequency,
 		collapseSpatial: true,
 		scorer: gbtScorer,
 		threshold: t,
 	}))
+
 	const lrArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => lrScorer(a, b))), (t) => ({
 		addressFrequency,
 		collapseSpatial: true,
 		scorer: lrScorer,
 		threshold: t,
 	}))
+
 	// The SHIPPED model (the default-on candidate): the bundled DEDUP_GBT_MODEL, NOT a fresh per-run TX
 	// fit. This is the arm that justifies flipping `learnedScorer` default-on — the actual artifact every
 	// caller would get, evaluated on a state it never trained on.
 	const bundledScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
+
 	const bundledArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({
 		addressFrequency,
 		collapseSpatial: true,
 		scorer: bundledScorer,
 		threshold: t,
 	}))
+
 	const dBundled = bundledArm.f1 - fs.f1
 
 	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
@@ -380,6 +411,7 @@ export async function scorerCrossStateEval(
 	const sgn = (x: number) => (x >= 0 ? "+" : "")
 	const dGbt = gbtArm.f1 - fs.f1
 	const dLr = lrArm.f1 - fs.f1
+
 	report?.(
 		`    FS  ${pct(fs.f1)}%  ·  LR ${pct(lrArm.f1)}% (${sgn(dLr)}${pct(dLr)})  ·  GBT ${pct(gbtArm.f1)}% (${sgn(dGbt)}${pct(dGbt)})` +
 			`  ·  BUNDLED ${pct(bundledArm.f1)}% (${sgn(dBundled)}${pct(dBundled)})`
@@ -391,6 +423,7 @@ export async function scorerCrossStateEval(
 
 		return `| ${bold ? `**${label}**` : label} | ${pct(a.precision)}% | ${pct(a.recall)}% | ${f1} | ${bold ? `**${dCell}**` : dCell} | ${a.overMerged} |`
 	}
+
 	const lines: string[] = [
 		`# Learned-scorer CROSS-STATE generalization (#603 Tier 2) — train ${TRAIN_STATE}, evaluate ${EVAL_STATE}`,
 		"",
@@ -413,6 +446,7 @@ export async function scorerCrossStateEval(
 			`${EVAL_STATE} — a state it never trained on. The "fresh ${TRAIN_STATE} fit" row retrains per run for comparison.`,
 		"",
 	]
+
 	const verdict =
 		dGbt > MIN_MEANINGFUL_F1_DELTA
 			? `**The GBT win GENERALIZES across states** — trained on ${TRAIN_STATE}, it still beats the FS baseline on ${EVAL_STATE} ` +
@@ -426,10 +460,12 @@ export async function scorerCrossStateEval(
 				: `**The GBT roughly TIES the FS baseline cross-state** (${pct(gbtArm.f1)}% vs ${pct(fs.f1)}%, ` +
 					`${sgn(dGbt * 100)}${(dGbt * 100).toFixed(1)}pp). The within-state win attenuates across states — partial ` +
 					`generalization. A production GBM likely needs broader/multi-state training to recover the full within-state margin.`
+
 	lines.push(verdict)
 	lines.push("")
 	lines.push(`## Honest caveats`)
 	lines.push("")
+
 	lines.push(
 		`A single train/eval state pair (${TRAIN_STATE}→${EVAL_STATE}), one geocoded sample each, a compact pure-Node GBT ` +
 			`(120 rounds, depth 3). The FS arm is the benchmark baseline (same model), so the comparison is fair. Absolute F1 ` +
@@ -437,6 +473,7 @@ export async function scorerCrossStateEval(
 			`conservative. The within-state held-out-NPI A/B (\`scorer-eval clustering\`) is the companion; together ` +
 			`they bound the generalization question a production GBM must answer._`
 	)
+
 	lines.push("")
 	const md = lines.join("\n")
 

@@ -66,6 +66,7 @@ function foldName(s: string): string {
  */
 const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const out = new Map<string, SubdivisionMatch>()
+
 	const put = (key: string, match: SubdivisionMatch): void => {
 		const folded = foldName(key)
 

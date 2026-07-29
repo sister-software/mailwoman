@@ -65,6 +65,7 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 }) => {
 	const { baseURL } = useSiteConfig()
 	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
+
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = useDemoMapRuntime({
 		sqljsBaseURL,
 		baseURL,

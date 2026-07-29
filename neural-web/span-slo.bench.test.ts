@@ -31,6 +31,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 			for (let i = 0; i < 8; i++) {
 				await runner.infer(ids)
 			}
+
 			const t0 = performance.now()
 			const N = 40
 			let spans = false
@@ -41,6 +42,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 
 			return { ms: (performance.now() - t0) / N, spans }
 		}
+
 		const a = await bench(V264)
 		const b = await bench(V301)
 

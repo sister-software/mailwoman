@@ -184,6 +184,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const packageName = weightsPackageName(locale)
 
 	const cacheDir = resolve(opts.cacheRoot ?? weightsCacheDir(), "node_modules", packageName)
+
 	const cacheHasBinaries = () =>
 		existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))
 
@@ -253,9 +254,11 @@ function resolveFromPackageDir(
 			if (!opts.tokenizerPath) {
 				tokenizerPath = resolve(baseDir, "tokenizer.model")
 			}
+
 			source = `${source}+base`
 		}
 	}
+
 	tried.push(modelPath, tokenizerPath)
 
 	if (!existsSync(modelPath) || !existsSync(tokenizerPath)) {
@@ -275,6 +278,7 @@ function resolveFromPackageDir(
 	// `+base` source suffix convention.
 	const modelCardCandidate = resolve(packageDir, "model-card.json")
 	const baseModelCardCandidate = baseDir ? resolve(baseDir, "model-card.json") : undefined
+
 	const modelCardPath = existsSync(modelCardCandidate)
 		? modelCardCandidate
 		: baseModelCardCandidate && existsSync(baseModelCardCandidate)
@@ -299,18 +303,25 @@ function resolveFromPackageDir(
 	const anchorLookupPath = resolveAnchorLookupSibling(packageDir, country)
 	// Tier `"pocket"` is anchor-only — never surface the gazetteer lexicon (the loader then skips it).
 	const gazetteerCandidate = resolve(packageDir, "anchor-lexicon-v1.json")
+
 	const gazetteerLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(gazetteerCandidate) ? gazetteerCandidate : undefined
+
 	// Country-lexicon sibling (#1104): ships with the server tier alongside the gazetteer; pocket is anchor-only.
 	const countryCandidate = resolve(packageDir, "country-surface-lexicon-v1.json")
+
 	const countryLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
+
 	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
 	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them).
 	const streetTypeCandidate = resolve(packageDir, "street-type-lexicon-v3.json")
+
 	const streetTypeLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(streetTypeCandidate) ? streetTypeCandidate : undefined
+
 	const localitySurfaceCandidate = resolve(packageDir, "locality-surface-lexicon-v6.json")
+
 	const localitySurfaceLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
 
@@ -329,6 +340,7 @@ function resolveFromPackageDir(
 	// package when a data-only overlay doesn't ship its own copy (same fallback family as the model card above).
 	const morphologyCandidate = resolve(packageDir, "fst-street-morphology.bin")
 	const baseMorphologyCandidate = baseDir ? resolve(baseDir, "fst-street-morphology.bin") : undefined
+
 	const streetMorphologyPath = existsSync(morphologyCandidate)
 		? morphologyCandidate
 		: baseMorphologyCandidate && existsSync(baseMorphologyCandidate)
@@ -368,6 +380,7 @@ function resolveAnchorLookupSibling(
 
 		if (existsSync(binary)) return { path: binary, binary: true }
 	}
+
 	const json = resolve(packageDir, "anchor-lookup.json")
 
 	if (existsSync(json)) return { path: json, binary: false }
@@ -402,6 +415,7 @@ function resolveBaseWeightsDir(packageDir: string): string | undefined {
 		const pkg = JSON.parse(readFileSync(resolve(packageDir, "package.json"), "utf8")) as {
 			mailwoman?: { baseWeights?: string }
 		}
+
 		const base = pkg.mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return undefined
@@ -431,6 +445,7 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -510,6 +525,7 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -529,6 +545,7 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 				`expected an object, got ${JSON.stringify(requires)}.`
 		)
 	}
+
 	const obj = requires as Record<string, unknown>
 
 	// Channel entries must be `{ required: boolean, ... }`; a present-but-shapeless entry is corrupt.
@@ -631,6 +648,7 @@ export function readCapabilityManifest(modelCardPath: string | undefined): Capab
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {
@@ -697,6 +715,7 @@ export function readCrfTransitions(crfPath: string | undefined): CrfTransitions 
 	} catch {
 		return undefined
 	}
+
 	let parsed: unknown
 
 	try {

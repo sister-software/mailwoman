@@ -44,6 +44,7 @@ afterEach(async () => {
  */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -58,6 +59,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (200, 'Chicago', 'locality', 'US', 41.88, -87.63, 41.6, -87.9, 42.0, -87.5, -1, 0);
 		INSERT INTO place_population VALUES (200, 2700000);
 	`)
+
 	db.close()
 }
 
@@ -167,6 +169,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		try {
 			expect(lookup.artifactCoverage).toBeDefined()
+
 			expect([...lookup.artifactCoverage!.hardCountrySafelist].toSorted()).toEqual(
 				[...HARD_PLACE_COUNTRY_SAFELIST].toSorted()
 			)

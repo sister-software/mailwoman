@@ -90,10 +90,12 @@ export class DemoFixture {
 
 	async submit(): Promise<void> {
 		await this.page.locator("button[type='submit']").click()
+
 		// Block until the result panel renders so callers can immediately readResult().
 		await this.page.waitForFunction(() => document.body.textContent?.includes("Parsed components"), {
 			timeout: 60_000,
 		})
+
 		// Map needs a beat to finish fitBounds + (re-)wire terrain.
 		await this.page.waitForTimeout(2000)
 	}
@@ -105,6 +107,7 @@ export class DemoFixture {
 
 				return { tag: cells[0] ?? "", value: cells[1] ?? "", confidence: cells[2] ?? "" }
 			})
+
 			const resolved: Record<string, string> = {}
 
 			for (const dt of document.querySelectorAll("dl dt")) {
@@ -114,6 +117,7 @@ export class DemoFixture {
 					resolved[dt.textContent] = dd.textContent
 				}
 			}
+
 			const markerCount = document.querySelectorAll(".maplibregl-marker").length
 
 			return { parsedRows, resolved, markerCount }
@@ -127,6 +131,7 @@ export class DemoFixture {
 		await this.page.evaluate((t) => {
 			document.documentElement.setAttribute("data-theme", t)
 		}, theme)
+
 		// Allow the MutationObserver-driven setStyle + terrain re-wire to settle.
 		await this.page.waitForTimeout(2000)
 	}

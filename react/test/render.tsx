@@ -36,6 +36,7 @@ export function renderComponent(ui: ReactElement): RenderResult {
 	act(() => {
 		root.render(ui)
 	})
+
 	mounted.push({ root, container })
 
 	return { container }

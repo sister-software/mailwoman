@@ -128,6 +128,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		tokenizerPath: options.tokenizer,
 		modelCardPath: options.modelCard,
 	})
+
 	const base = { createGeocoder, sources: options.sources, outMd: options.outMd }
 
 	switch (kind) {

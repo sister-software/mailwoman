@@ -258,6 +258,7 @@ async function loadPostcodeAnchorLookup(
 			}
 		})
 	)
+
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
 	return lookups.length ? mergeAnchorLookups(lookups) : undefined
@@ -276,6 +277,7 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 
 			if (!existing) {
 				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
+
 				continue
 			}
 
@@ -443,12 +445,15 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const gazetteerLexiconURL =
 		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
+
 	const countryLexiconURL =
 		opts.countryLexiconURL === null ? null : (opts.countryLexiconURL ?? defaultCountryLexiconURL(opts.modelURL))
+
 	const streetTypeLexiconURL =
 		opts.streetTypeLexiconURL === null
 			? null
 			: (opts.streetTypeLexiconURL ?? defaultStreetTypeLexiconURL(opts.modelURL))
+
 	const localitySurfaceLexiconURL =
 		opts.localitySurfaceLexiconURL === null
 			? null
@@ -507,6 +512,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	}
 
 	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
+
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -521,7 +527,9 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		...(conventions ? { addressSystemConventions: conventions } : {}),
 		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
 	})
+
 	await runner.infer([0])
+
 	warnOnUnfedTrainedChannels(runner, {
 		gazetteerLexicon,
 		gazetteerLexiconURL,
@@ -676,6 +684,7 @@ async function fetchLabelsFromModelCard(url: string, fetchImpl: typeof fetch): P
 		if (res.status === HTTP_NOT_FOUND) return null
 		throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`)
 	}
+
 	const parsed = (await res.json()) as { labels?: unknown }
 	const labels = parsed.labels
 

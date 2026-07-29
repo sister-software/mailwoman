@@ -75,6 +75,7 @@ function callingCode(country: MledozeCountry): number | undefined {
 
 		return Number.isFinite(n) ? n : undefined
 	}
+
 	const n = Number(root)
 
 	return Number.isFinite(n) ? n : undefined
@@ -113,6 +114,7 @@ export async function generateCountryReference(
 		if (cc != null) {
 			entry.callingCode = cc
 		}
+
 		const currencyCodes = Object.keys(country.currencies ?? {}).toSorted()
 
 		if (currencyCodes.length) {

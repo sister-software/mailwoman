@@ -93,6 +93,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		// weak magnitude-1 baseline) already makes "shoreditch"'s three pieces unanimous BEFORE
 		// enforceWordConsistency runs — there is nothing left for the heal to do.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
+
 		const biased = await classifier.traceParse(text, {
 			spanProposer: false,
 			placetypePair: { index, probeMode: "window" },
@@ -103,6 +104,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 			applied: true,
 			probePath: "window",
 		})
+
 		expect(biased.repairs.find((r) => r.pass === "wordConsistency")).toBeUndefined()
 
 		// The raw decoder path itself (captured BEFORE any heal) is already united across the word.
@@ -129,7 +131,9 @@ describe("placetype-pair prior — decode-order integration", () => {
 		logits[3]![col("B-locality")] = 5
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
-		const index = fixedPairIndex("shoreditch", "london", "dependent_locality") // delta 6.0
+		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
+
+		// delta 6.0
 
 		const trace = await classifier.traceParse(text, {
 			spanProposer: false,
@@ -173,7 +177,9 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 	it("beta-less index: the fused street path survives — byte-identity with the pre-beta decode (characterization)", async () => {
 		const tokenizer = await loadTokenizer()
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(fusedLogits()) })
-		const index = fixedPairIndex("shoreditch", "london", "dependent_locality") // no transitionBeta
+		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
+
+		// no transitionBeta
 
 		const trace = await classifier.traceParse("Shoreditch London", {
 			spanProposer: false,
@@ -187,6 +193,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			applied: true,
 			probePath: "anchored",
 		})
+
 		expect(trace.path).toEqual([col("B-street"), col("I-street"), col("I-street"), col("B-locality")])
 	})
 
@@ -198,6 +205,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			spanProposer: false,
 			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality") },
 		})
+
 		const withBeta = await classifier.traceParse("Shoreditch London", {
 			spanProposer: false,
 			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6, 5) },
@@ -210,6 +218,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			col("I-dependent_locality"),
 			col("B-locality"),
 		])
+
 		// The beta is a DECODER term: the post-prior emission matrices are byte-identical across the two runs —
 		// only the transition side moved.
 		expect(withBeta.emissions).toEqual(betaLess.emissions)
@@ -219,6 +228,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			spanProposer: false,
 			placetypePair: { index: fixedPairIndex("shoreditch", "london", "dependent_locality", 6, 5) },
 		})
+
 		expect(json.dependent_locality).toBe("Shoreditch")
 	})
 })

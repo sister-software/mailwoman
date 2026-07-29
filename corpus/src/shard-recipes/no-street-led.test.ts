@@ -44,6 +44,7 @@ function scratch(tuples: object[], surfaces: string[]): { input: string; exclude
 async function run(tuples: object[], surfaces: string[]) {
 	const { input, exclude } = scratch(tuples, surfaces)
 	const lines: string[] = []
+
 	const stats = await noStreetLedRecipe.run(
 		{ output: "", seed: 901, variants: 1, input, excludeSurfaces: exclude },
 		(line) => lines.push(line)

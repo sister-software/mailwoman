@@ -49,6 +49,7 @@ describe("buildThresholds", () => {
 			[0, 0.5],
 			[1, 0.3],
 		]
+
 		const thr = buildThresholds(X)
 		expect(thr).toHaveLength(2)
 		expect(thr[0]).toEqual([0.5]) // binary 0/1 → single midpoint
@@ -80,18 +81,21 @@ describe("trainGBT / gbtScore", () => {
 
 	it("respects class weights — up-weighting the rare positive raises its scores", () => {
 		const { X, y } = makeXor(400, 7)
+
 		const flat = trainGBT(
 			X,
 			y,
 			y.map(() => 1),
 			{ rounds: 40, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
+
 		const up = trainGBT(
 			X,
 			y,
 			y.map((t) => (t === 1 ? 5 : 1)),
 			{ rounds: 40, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
+
 		const posUpFlat = mean(X.filter((_, i) => y[i] === 1).map((x) => gbtScore(flat, x)))
 		const posUpWtd = mean(X.filter((_, i) => y[i] === 1).map((x) => gbtScore(up, x)))
 		expect(posUpWtd).toBeGreaterThan(posUpFlat)
@@ -99,12 +103,14 @@ describe("trainGBT / gbtScore", () => {
 
 	it("round-trips through JSON (the ship-as-a-data-file contract)", () => {
 		const { X, y } = makeXor(200, 3)
+
 		const model = trainGBT(
 			X,
 			y,
 			y.map(() => 1),
 			{ rounds: 20, depth: 2, lr: 0.3, minLeaf: 10 }
 		)
+
 		const reloaded = structuredClone(model) as GBT
 
 		for (const x of X) {

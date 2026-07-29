@@ -46,9 +46,12 @@ export function approxCircleGeometry(
 ): PlaceGeometry {
 	const kmPerDegLat = 111.32
 	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
+
 	const halfDiagKm = bbox
 		? Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
-		: 3 // anchor-centroid postcodes carry no extent; ~ZIP-sized default
+		: 3
+
+	// anchor-centroid postcodes carry no extent; ~ZIP-sized default
 	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
 	const ring: number[][] = []
 
@@ -73,6 +76,7 @@ export function geomBounds(geometry: PlaceGeometry): {
 	let minLat = Infinity
 	let maxLon = -Infinity
 	let maxLat = -Infinity
+
 	const visit = (node: unknown): void => {
 		if (Array.isArray(node) && typeof node[0] === "number") {
 			const [lon, lat] = node as number[]
@@ -102,6 +106,7 @@ export function geomBounds(geometry: PlaceGeometry): {
 			}
 		}
 	}
+
 	visit(geometry.coordinates)
 
 	return { minLon, minLat, maxLon, maxLat }
@@ -138,6 +143,7 @@ export async function fetchBasemapSource(): Promise<VectorSourceSpecification> {
 	if (!response.ok) {
 		throw new Error(`Failed to load basemap tilejson (${response.status})`)
 	}
+
 	const meta = (await response.json()) as {
 		scheme?: string
 		tiles: string[]

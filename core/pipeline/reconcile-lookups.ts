@@ -61,6 +61,7 @@ export async function prefetchReconcileLookups(
 		const text = raw.slice(candidate.span.start, candidate.span.end).trim()
 
 		if (!text) continue
+
 		budget--
 		let places: ResolvedPlace[] = []
 
@@ -75,6 +76,7 @@ export async function prefetchReconcileLookups(
 			// A backend failure degrades to "no concordance evidence for this pair" — the
 			// reconciler scores without it, identical to today's behavior.
 		}
+
 		candidateTable.set(key, places.slice(0, perPair))
 
 		// Ancestors are synchronous + memoized backend-side; chain them now so parentsOf is a
@@ -83,6 +85,7 @@ export async function prefetchReconcileLookups(
 			for (const place of places) {
 				if (chainTable.has(place.id)) continue
 				const chain = backend.ancestors(place.id) ?? []
+
 				// The reconciler's concordance check is MEMBERSHIP-ONLY (by id) — Ancestor carries no
 				// coordinates, and none are needed; zeroes satisfy the ResolvedPlace shape.
 				chainTable.set(

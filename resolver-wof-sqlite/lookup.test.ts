@@ -222,6 +222,7 @@ const FIXTURE: FixturePlace[] = [
 
 function buildFixtureDB(path = ":memory:"): DatabaseSync {
 	const db = new DatabaseSync(path)
+
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
 	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
 	// (modern) and `is_current = 1` (legacy) mean current; `0` means not current. See #91.
@@ -266,6 +267,7 @@ function buildFixtureDB(path = ":memory:"): DatabaseSync {
 		)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1, 0)`
 	)
+
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertAncestor = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)`)
 
@@ -468,6 +470,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 describe("WOFSqlitePlaceLookup ctor", () => {
 	test("requires exactly one of database / databasePath", () => {
 		expect(() => new WOFSqlitePlaceLookup({})).toThrow(/one of/)
+
 		expect(
 			() => new WOFSqlitePlaceLookup({ database: new DatabaseSync(":memory:"), databasePath: "/tmp/x.db" })
 		).toThrow(/not both/)

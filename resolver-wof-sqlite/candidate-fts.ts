@@ -37,6 +37,7 @@ export const CANDIDATE_FTS_TABLE = "candidate_fts"
 export function createCandidateFTS(db: DatabaseSync): void {
 	db.exec(`DROP TABLE IF EXISTS ${CANDIDATE_FTS_TABLE}`)
 	db.exec(`CREATE VIRTUAL TABLE ${CANDIDATE_FTS_TABLE} USING fts5(name_key, tokenize='trigram')`)
+
 	db.exec(
 		`INSERT INTO ${CANDIDATE_FTS_TABLE}(name_key) SELECT DISTINCT name_key FROM candidate WHERE name_key IS NOT NULL`
 	)

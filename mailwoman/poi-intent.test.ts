@@ -64,6 +64,7 @@ describe("poiTaxonomyLookup adapter", () => {
 describe("createPOIIntentStage", () => {
 	it("returns a category intent with a parsed anchor", async () => {
 		const parsed: string[] = []
+
 		const stage = createPOIIntentStage({
 			lookup: poiTaxonomyLookup,
 			parseAnchor: async (text) => {
@@ -72,6 +73,7 @@ describe("createPOIIntentStage", () => {
 				return anchorResult(text)
 			},
 		})
+
 		const outcome = await stage(
 			{ raw: "hospital near Springfield IL", normalized: "hospital near Springfield IL" },
 			LOCALE
@@ -91,6 +93,7 @@ describe("createPOIIntentStage", () => {
 			lookup: poiTaxonomyLookup,
 			parseAnchor: async (text) => anchorResult(text),
 		})
+
 		const outcome = await stage({ raw: "chevron near Houston TX", normalized: "chevron near Houston TX" }, LOCALE)
 
 		expect(outcome?.type).toBe("intent")
@@ -105,6 +108,7 @@ describe("createPOIIntentStage", () => {
 			wikidata: "Q319642",
 			matched: "Chevron",
 		})
+
 		expect(outcome.intent.anchor?.text).toBe("Houston TX")
 	})
 
@@ -115,6 +119,7 @@ describe("createPOIIntentStage", () => {
 				throw new Error("must not parse an anchor for a bare subject")
 			},
 		})
+
 		const outcome = await stage({ raw: "fire hydrant", normalized: "fire hydrant" }, LOCALE)
 
 		expect(outcome?.type).toBe("intent")
@@ -173,6 +178,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			categoryID: "hospital",
 			matched: "hospital",
 		})
+
 		expect(result.poiIntent.intent.anchor?.text).toBe("Springfield")
 	})
 
@@ -218,6 +224,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 				...HERMETIC,
 				poiQueryKind: { poiDatabasePath: "/nonexistent/never/ancestry-degrade-poi.db" },
 			})
+
 			const result = await pipeline("hospital near Springfield")
 
 			expect(result.path).toBe("poi")
@@ -238,6 +245,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			...HERMETIC,
 			poiQueryKind: { poiDatabasePath: "/nonexistent/never/poi.db" },
 		})
+
 		const first = await pipeline("hospital near Springfield")
 		expect(first.path).toBe("poi")
 		expect(first.poiIntent?.type).toBe("intent")

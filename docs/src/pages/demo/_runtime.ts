@@ -248,6 +248,7 @@ export function useDemoMapRuntime({
 		}
 
 		if (typeof navigator === "undefined" || !navigator.geolocation) return
+
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
 				geoBiasRef.current = { lat: pos.coords.latitude, lon: pos.coords.longitude }
@@ -291,6 +292,7 @@ export function useDemoMapRuntime({
 
 						return { situs: new HTTPVFSAddressPointLookup(situsW, { streetLocale: slug as "fr" }), interp: undefined }
 					}
+
 					const [situsW, interpW] = await Promise.all([
 						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
 						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
@@ -298,6 +300,7 @@ export function useDemoMapRuntime({
 
 					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }
 				})()
+
 				p.catch(() => streetLookupsRef.current.delete(slug))
 				streetLookupsRef.current.set(slug, p)
 			}
@@ -331,19 +334,24 @@ export function useDemoMapRuntime({
 			)
 
 			const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
+
 			const stateNode = nodes
 				.filter((n) => n.tag === "region" || n.tag === "state")
 				.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+
 			const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
+
 			const streetParts = nodes
 				.filter((n) => STREET_COMPONENT_TAGS.has(n.tag) && String(n.value ?? "").trim())
 				.toSorted((a, b) => (a.start ?? 0) - (b.start ?? 0))
+
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
 			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+
 			const streetSlug =
 				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
 					? stateSlug
@@ -400,6 +408,7 @@ export function useDemoMapRuntime({
 			if (release?.hasPolygons && version && !polygonDBRef.current) {
 				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
 				polygonDBRef.current = loading
+
 				loading.catch(() => {
 					if (polygonDBRef.current === loading) {
 						polygonDBRef.current = null
@@ -447,6 +456,7 @@ export function useDemoMapRuntime({
 				lon: c.lon,
 				score: c.score,
 			}))
+
 			// Stash the map-render extras (bbox) keyed by the candidate object.
 			cascadeHits.forEach((c, i) => {
 				extrasRef.current.set(candidates[i]!, { bbox: c.bbox })
@@ -467,10 +477,12 @@ export function useDemoMapRuntime({
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				}
+
 				extrasRef.current.set(streetCandidate, {
 					tier: streetResolution.tier,
 					uncertaintyM: streetResolution.uncertaintyM,
 				})
+
 				candidates.unshift(streetCandidate)
 			}
 
@@ -507,6 +519,7 @@ export function useDemoMapRuntime({
 
 		try {
 			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
+
 			const res = fstAutocomplete(fst as unknown as Parameters<typeof fstAutocomplete>[0], query, {
 				maxSuggestions: 6,
 				dedupeByName: true,
@@ -522,6 +535,7 @@ export function useDemoMapRuntime({
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
 			const extras = extrasRef.current.get(candidate) ?? {}
+
 			const place: ResolvedMapPlace = {
 				...candidate,
 				bbox: extras.bbox,
@@ -549,6 +563,7 @@ export function useDemoMapRuntime({
 							if (!polygonDBRef.current) {
 								polygonDBRef.current = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
 							}
+
 							const geom = await (await polygonDBRef.current).get(placeID)
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
 						} catch (error) {

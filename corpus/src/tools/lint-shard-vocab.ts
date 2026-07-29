@@ -137,6 +137,7 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 		counter = new Map()
 		table.set(key, counter)
 	}
+
 	counter.set(sub, (counter.get(sub) ?? 0) + 1)
 }
 
@@ -156,6 +157,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 	const result = await con.runAndReadAll(
 		`SELECT to_json(tokens) AS tokens, to_json(labels) AS labels, country FROM read_parquet('${path}')`
 	)
+
 	const raw = result.getRowObjects() as Array<{ tokens: unknown; labels: unknown; country: unknown }>
 	const rows: CorpusRow[] = []
 
@@ -164,6 +166,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 		const labels = JSON.parse(String(r.labels)) as unknown
 
 		if (!Array.isArray(tokens) || !Array.isArray(labels)) continue
+
 		rows.push({
 			tokens: tokens as string[],
 			labels: labels as string[],
@@ -287,9 +290,11 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 				set = new Set()
 				shardCountries.set(w, set)
 			}
+
 			set.add(country)
 		}
 	}
+
 	const shardVocab = new Set(shardTags.keys())
 
 	console.log(`shard: ${shardRows.length} rows, ${shardVocab.size} unique tokens`)
@@ -313,8 +318,10 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 				list = []
 				bysrc.set(src, list)
 			}
+
 			list.push(p)
 		}
+
 		const sliced: string[] = []
 
 		for (const ps of bysrc.values()) {
@@ -324,6 +331,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 				sliced.push(p)
 			}
 		}
+
 		parts = sliced
 	}
 

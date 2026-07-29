@@ -46,8 +46,10 @@ const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof ArgsSchem
 			for (const path of args) {
 				if (!existsSync(path)) {
 					checks.push({ ok: false, check: path, detail: "file not found" })
+
 					continue
 				}
+
 				const db = new DatabaseSync(path)
 
 				try {
@@ -55,6 +57,7 @@ const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof ArgsSchem
 						drop: options.drop,
 						onProgress: (phase, detail) => console.error(`  [${phase}]${detail ? ` — ${detail}` : ""}`),
 					})
+
 					checks.push({
 						ok: true,
 						check: path,

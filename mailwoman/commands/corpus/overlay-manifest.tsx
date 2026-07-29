@@ -27,6 +27,7 @@ export { OptionsSchema as options }
 const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
+
 		await assembleOverlayManifest({
 			base: options.base,
 			newDir: options.newDir,

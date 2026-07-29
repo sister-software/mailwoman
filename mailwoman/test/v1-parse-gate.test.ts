@@ -261,6 +261,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				}
 
 				const both = !!neuralCoord && !!rulesCoord
+
 				rows.push({
 					hasStreet: !!expect_.street,
 					streetFail: expect_.street ? agree.street === false : false,

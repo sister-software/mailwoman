@@ -47,8 +47,10 @@ describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () =>
 describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 	// "Strasse 12 10115 Berlin" — the postcode "10115" is chars [11, 16).
 	const TEXT = "Strasse 12 10115 Berlin"
+
 	const piece = (p: string, start: number, end: number): TokenizedPiece =>
 		({ piece: p, id: 0, start, end }) as unknown as TokenizedPiece
+
 	// pieces, with the postcode split across two (101 | 15)
 	const PIECES = [
 		piece("▁Strasse", 0, 7),
@@ -57,6 +59,7 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 		piece("15", 14, 16),
 		piece("▁Berlin", 17, 23),
 	]
+
 	const LOOKUP: AnchorLookup = new Map([["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }]])
 
 	it("lands confidence + features on exactly the postcode pieces", () => {

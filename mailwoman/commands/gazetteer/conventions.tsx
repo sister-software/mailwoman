@@ -75,10 +75,12 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 		if (typeof r?.source !== "string" || !r.source.trim()) {
 			errors.push(`${at}: every row needs non-empty 'source' provenance`)
 		}
+
 		const c = r?.convention
 
 		if (!c || typeof c !== "object") {
 			errors.push(`${at}: missing convention object`)
+
 			continue
 		}
 
@@ -114,6 +116,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 		const kdb = new DatabaseClient({ database: db })
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
+
 		await kdb.schema
 			.createTable("address_convention")
 			// wof_id: the WOF admin polygon this profile attaches to. convention: the Convention JSON.
@@ -122,6 +125,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 			.addColumn("convention", "text", (c) => c.notNull())
 			.addColumn("source", "text", (c) => c.notNull())
 			.execute()
+
 		const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
 		for (const r of rows) {
@@ -134,6 +138,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 			.addColumn("key", "text", (c) => c.primaryKey())
 			.addColumn("value", "text")
 			.execute()
+
 		const meta: Record<string, string> = {
 			name: "mailwoman-conventions",
 			description: "Geographic Rule Engine convention profiles, keyed by WOF polygon id (Direction E)",
@@ -143,6 +148,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 			rows: String(rows.length),
 			strategies_known: [...KNOWN].join(","),
 		}
+
 		const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
 		for (const [k, v] of Object.entries(meta)) {

@@ -102,10 +102,12 @@ describe("generateIntersectionRows", () => {
 			const result = alignRow(asCanonical(r))
 
 			if (result.kind !== "labeled") continue
+
 			labeled++
 			expect(result.row.labels).toContain("B-intersection_a")
 			expect(result.row.labels).toContain("B-intersection_b")
 		}
+
 		// alignment should succeed on the overwhelming majority (clean synthetic surface forms).
 		expect(labeled).toBeGreaterThanOrEqual(95)
 	})

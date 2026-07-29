@@ -151,10 +151,12 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 		components: { locality: name },
 		variantKey: "locality-only",
 	}
+
 	yield {
 		components: { locality: name, region: state.abbreviation },
 		variantKey: "with-region",
 	}
+
 	yield {
 		components: { locality: name, region: state.abbreviation, country: US_COUNTRY_DISPLAY },
 		variantKey: "with-region-country",
@@ -205,6 +207,7 @@ export function createTigerAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}
@@ -231,6 +234,7 @@ export function createTigerAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}

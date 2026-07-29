@@ -81,12 +81,15 @@ export function emitOverpassQL(intent: OverpassIntentLike, opts: EmitOverpassOpt
 			if (!opts.osmTag) {
 				throw new Error(`emitOverpassQL: category subject ${intent.subject.categoryID} requires opts.osmTag`)
 			}
+
 			const parts = opts.osmTag.split("=")
 
 			if (parts.length !== 2 || !parts[0] || !parts[1]) {
 				throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(opts.osmTag)} — expected key=value`)
 			}
+
 			filter = `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`
+
 			break
 		}
 		case "brand":

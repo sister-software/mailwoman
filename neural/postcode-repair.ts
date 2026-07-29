@@ -109,6 +109,7 @@ function tagOf(label: string): string | null {
  */
 export function collectMatches(text: string): PostcodeMatch[] {
 	const candidates: PostcodeMatch[] = []
+
 	POSTCODE_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
 
@@ -116,6 +117,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 			candidates.push({ start: m.index, end: m.index + m[0].length, kind: pat.kind, priority })
 		}
 	})
+
 	// Greedy longest-match-wins: accept by (length desc, then priority asc); reject anything
 	// overlapping an accepted match. Longest-first lets a US ZIP+4 ("94610-2737") claim its span
 	// before the shorter NL-shaped false positive in its tail ("2737 CA") can.
@@ -149,9 +151,11 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	if (!matches.length) return { tokens, changed: 0 }
 
 	let changed = 0
+
 	const setLabel = (i: number, label: DecoderToken["label"]): void => {
 		if (tokens[i]!.label !== label) {
 			tokens[i]!.label = label
+
 			changed++
 		}
 	}
@@ -175,6 +179,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		if (!hasPostcode) {
 			// ADD path — only for high-confidence alphanumeric shapes, only over safe labels.
 			if (m.kind !== "alnum") continue
+
 			const safe = overlap.every((i) => {
 				const tag = tagOf(tokens[i]!.label)
 

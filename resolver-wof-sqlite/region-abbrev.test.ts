@@ -31,6 +31,7 @@ import { WOFSqlitePlaceLookup } from "./lookup.ts"
 // the wof:hierarchy backfill restores so the region constraint can reach the descendant town.
 function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
@@ -39,10 +40,12 @@ function buildDB(): DatabaseSync {
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER);
 		CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER);
 	`)
+
 	const spr = db.prepare(
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
+
 	// Regions (US states + DC + a territory) — parent is the US country node (id 1).
 	spr.run(1, 0, "United States", "country", "US", 39.8, -98.6, 18, 72, -180, -66)
 	spr.run(10, 1, "Vermont", "region", "US", 44, -72.7, 42.7, 45, -73.4, -71.5)
@@ -68,6 +71,7 @@ function buildDB(): DatabaseSync {
 	nm.run(12, "CA")
 	nm.run(13, "DC")
 	nm.run(14, "PR")
+
 	// Ancestry — self + county + region + country (what backfill-ancestors-from-hierarchy restores).
 	const anc = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
@@ -87,9 +91,11 @@ function buildDB(): DatabaseSync {
 }
 
 let lookup: WOFSqlitePlaceLookup
+
 beforeEach(() => {
 	lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
 })
+
 afterEach(() => {
 	lookup.close()
 })

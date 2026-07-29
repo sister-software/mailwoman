@@ -153,6 +153,7 @@ export async function probeFrontier(
 		if (!country) continue
 		all.push({ q: `${name}, ${country}`, cc })
 	}
+
 	all.sort((a, b) => a.q.length - b.q.length)
 	const queries = all.slice(0, maxN)
 
@@ -168,6 +169,7 @@ export async function probeFrontier(
 	for (const { q, cc } of queries) {
 		const p = placer.predict(q)
 		const s = per.get(cc) ?? { cc, n: 0, inClass: 0, top1Correct: 0, probs: [] }
+
 		s.n++
 
 		if (classSet.has(cc)) {
@@ -178,6 +180,7 @@ export async function probeFrontier(
 			s.top1Correct++
 			s.probs.push(p.confidence)
 		}
+
 		per.set(cc, s)
 	}
 

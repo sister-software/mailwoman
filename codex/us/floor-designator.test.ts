@@ -25,6 +25,7 @@ describe("US_FLOOR_DESIGNATORS", () => {
 		const numbered = US_FLOOR_DESIGNATORS.filter((r) => r.requiresNumber)
 			.map((r) => r.name)
 			.toSorted()
+
 		expect(numbered).toEqual(["BASEMENT", "FLOOR"].toSorted())
 	})
 
@@ -32,6 +33,7 @@ describe("US_FLOOR_DESIGNATORS", () => {
 		const standalone = US_FLOOR_DESIGNATORS.filter((r) => !r.requiresNumber)
 			.map((r) => r.name)
 			.toSorted()
+
 		expect(standalone).toEqual(["LOBBY", "PENTHOUSE"].toSorted())
 	})
 

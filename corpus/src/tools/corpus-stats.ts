@@ -82,6 +82,7 @@ n = min(len(tokens_col), ${limit ?? "len(tokens_col)"})
 for i in range(n):
     sys.stdout.write(json.dumps({"tokens": tokens_col[i], "labels": labels_col[i]}) + "\\n")
 `
+
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: Array<{ tokens: string[]; labels: string[] }> = []
 
@@ -123,6 +124,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 					labelMap = new Map()
 					tokenStats.set(tk, labelMap)
 				}
+
 				labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
 
 				if (i + 1 < tokens.length) {
@@ -134,6 +136,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 						bMap = new Map()
 						bigramStats.set(bigramKey, bMap)
 					}
+
 					bMap.set(bigramLabel, (bMap.get(bigramLabel) ?? 0) + 1)
 				}
 			}
@@ -158,6 +161,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 
 		if (total < MIN_BIGRAM_COUNT) {
 			bigramStats.delete(k)
+
 			prunedBigrams++
 		}
 	}

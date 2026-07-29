@@ -70,6 +70,7 @@ function fusedLatticeSession(): void {
 	flat[3 * L + col("B-locality")] = 10 // piece 3
 
 	sessionCreateMock.mockReset()
+
 	sessionCreateMock.mockResolvedValue({
 		inputNames: ["input_ids", "attention_mask"],
 		run: vi.fn(() => Promise.resolve({ logits: { data: flat, dims: [1, SEQ, L] } })),

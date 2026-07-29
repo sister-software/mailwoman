@@ -61,6 +61,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as {
 	"anchor-lookup"?: string
@@ -72,6 +73,7 @@ const values = rawValues as {
 	set?: string
 	tokenizer?: string
 }
+
 interface CalibRow {
 	raw: string
 	gold: [string, string][]
@@ -134,6 +136,7 @@ function valueMatch(pred: string, gold: string): boolean {
  */
 function flattenSpans(tree: AddressTree): { tag: string; value: string; conf: number }[] {
 	const out: { tag: string; value: string; conf: number }[] = []
+
 	const walk = (n: AddressNode): void => {
 		out.push({ tag: n.tag, value: n.value, conf: n.confidence })
 
@@ -163,6 +166,7 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 		// OA row lacks this tag entirely → unlabelable
 		return goldVals.some((g) => valueMatch(predValue, g))
 	}
+
 	const cls = tagClass(predTag)
 	const goldVals = row.gold.filter(([t]) => tagClass(t) === cls).map(([, v]) => v)
 
@@ -187,15 +191,18 @@ async function main(): Promise<void> {
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
+
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
 		ONNXRunner.create(values["model"] || "neural-weights-en-us/model.onnx"),
 	])
+
 	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +
 	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
+
 	const neural = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
@@ -206,6 +213,7 @@ async function main(): Promise<void> {
 		addressSystemConventions: "auto",
 		bridgePunctuationGaps: true,
 	})
+
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 
 	const records: ConfRecord[] = []
@@ -225,6 +233,7 @@ async function main(): Promise<void> {
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
+
 		let tree: AddressTree
 
 		try {
@@ -238,8 +247,10 @@ async function main(): Promise<void> {
 
 			if (correct === null) {
 				unlabelable++
+
 				continue
 			}
+
 			records.push({ conf: span.conf, correct, tag: span.tag, country: row.country, source: row.source })
 		}
 	}

@@ -179,6 +179,7 @@ export function loadPersonNameSurfaces(): Set<string> {
 	for (const lang of CURATION_LANGUAGES) {
 		files.push(join(dictionariesDir, lang, "personal_titles.txt"))
 	}
+
 	const names = new Set<string>()
 
 	for (const f of files) {
@@ -351,12 +352,14 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 			const prev = oneTokenMaxImportance.get(key) ?? { own: 0, parent: 0 }
 			oneTokenMaxImportance.set(key, { own: Math.max(prev.own, own), parent: Math.max(prev.parent, parent) })
 		}
+
 		maxNgram = Math.max(maxNgram, tokens.length)
 		const homograph = (countryCounts.get(fstKey) ?? 1) >= 2
 		entries.set(key, LOCALITY_BIT.locality | (homograph ? LOCALITY_BIT.locality_homograph : 0))
 	}
 
 	const ph = (arr: readonly string[]) => arr.map(() => "?").join(",")
+
 	const primary = db.prepare(
 		`SELECT id, name FROM spr WHERE is_current = 1 AND country IN (${ph(countries)}) AND placetype IN (${ph(placetypes)})`
 	)
@@ -364,10 +367,12 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	for (const row of primary.iterate(...countries, ...placetypes) as Iterable<{ id: number; name: string }>) {
 		add(row.name, row.id)
 	}
+
 	const alts = db.prepare(
 		`SELECT n.id AS id, n.name AS name, s.name AS primary_name FROM names n JOIN spr s ON s.id = n.id
 		 WHERE s.is_current = 1 AND s.country IN (${ph(countries)}) AND s.placetype IN (${ph(placetypes)})`
 	)
+
 	let skippedSubPhrase = 0
 
 	for (const row of alts.iterate(...countries, ...placetypes) as Iterable<{
@@ -378,10 +383,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		// Sub-phrase hygiene: "East" as an alias of "East Nashville" is ambiguity without discrimination.
 		if (isSubPhraseAlias(painterFold(row.name), painterFold(row.primary_name))) {
 			skippedSubPhrase++
+
 			continue
 		}
+
 		add(row.name, row.id)
 	}
+
 	db.close()
 
 	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers;
@@ -389,11 +397,13 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	for (const [key, imp] of oneTokenMaxImportance) {
 		if (!clearsProminenceFloor(key, imp.own, personNames, imp.parent)) {
 			entries.delete(key)
+
 			skippedProminence++
 		}
 	}
 
 	const homographs = [...entries.values()].filter((b) => b & LOCALITY_BIT.locality_homograph).length
+
 	const lexicon = {
 		version: 6,
 		generated_by:
@@ -465,6 +475,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		import("@mailwoman/codex/gb"),
 		import("@mailwoman/codex/us"),
 	])
+
 	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v3.json"))
 
 	const wordNorm = (s: string): string =>
@@ -473,6 +484,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 			.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
 			.filter(Boolean)
 			.join(" ")
+
 	const isShortCode = (s: string): boolean => {
 		const letters = s.replaceAll(/[^\p{L}]/gu, "")
 
@@ -490,6 +502,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		maxNgram = Math.max(maxNgram, key.split(" ").length)
 		entries.set(key, 1)
 	}
+
 	const addAbbrev = (surface: string): void => {
 		const s = surface.trim()
 
@@ -504,6 +517,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 
 			return
 		}
+
 		addCanonical(s)
 	}
 

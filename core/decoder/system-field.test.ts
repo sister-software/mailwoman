@@ -27,6 +27,7 @@ function tok(piece: string, start: number, end: number, label: BIOLabel): Decode
 }
 
 const RAW = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
+
 function tokens(): DecoderToken[] {
 	return [
 		tok("1600", 0, 4, "B-house_number"),

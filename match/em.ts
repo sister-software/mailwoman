@@ -116,6 +116,7 @@ export function estimateParameters<R>(
 				matchLikelihood *= m[i]![level]!
 				nonMatchLikelihood *= u[i]![level]!
 			}
+
 			const total = matchLikelihood + nonMatchLikelihood
 			const g = total > 0 ? matchLikelihood / total : 0
 			responsibilitySum += g
@@ -142,8 +143,10 @@ export function estimateParameters<R>(
 			for (let l = 0; l < levels; l++) {
 				const newM =
 					mDenominator[i]! > 0 ? (mNumerator[i]![l]! + EPSILON) / (mDenominator[i]! + EPSILON * levels) : m[i]![l]!
+
 				const newU =
 					uDenominator[i]! > 0 ? (uNumerator[i]![l]! + EPSILON) / (uDenominator[i]! + EPSILON * levels) : u[i]![l]!
+
 				maxDelta = Math.max(maxDelta, Math.abs(newM - m[i]![l]!), Math.abs(newU - u[i]![l]!))
 				m[i]![l] = newM
 				u[i]![l] = newU
@@ -152,7 +155,9 @@ export function estimateParameters<R>(
 
 		if (maxDelta < tolerance) {
 			converged = true
+
 			iterations++
+
 			break
 		}
 	}

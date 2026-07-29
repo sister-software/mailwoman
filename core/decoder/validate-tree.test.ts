@@ -30,6 +30,7 @@ describe("validateTree", () => {
 			tok("Main", 4, 8, "B-street"),
 			tok("St", 9, 11, "I-street"),
 		])
+
 		const v = validateTree(tree)
 		expect(v.valid).toBe(true)
 		expect(v.violations).toHaveLength(0)
@@ -40,6 +41,7 @@ describe("validateTree", () => {
 			tok("100", 0, 3, "B-house_number"),
 			tok("Springfield", 4, 15, "B-locality"),
 		])
+
 		const v = validateTree(tree)
 		expect(v.valid).toBe(false)
 		expect(v.violations.some((x) => x.type === "stranded-dependent" && x.tag === "house_number")).toBe(true)
@@ -69,6 +71,7 @@ describe("validateTree", () => {
 			raw: "x",
 			roots: [node("house_number", "100", [node("postcode", "90210")])],
 		}
+
 		const v = validateTree(tree)
 		expect(v.violations.some((x) => x.type === "illegal-edge" && x.tag === "postcode")).toBe(true)
 	})

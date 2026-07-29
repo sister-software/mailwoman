@@ -28,9 +28,12 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 			} else {
 				hasSingle = true
 			}
+
 			prevSpace = true
+
 			continue
 		}
+
 		prevSpace = false
 	}
 
@@ -57,6 +60,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 	const locale = opts?.locale ?? (typeof input === "string" ? undefined : input.appliedLocale)
 
 	const tokenSpans = tokenizeForClass(text)
+
 	const tokenClasses: TokenClass[] = tokenSpans.map((span) => ({
 		span,
 		class: classifyToken(span.body),

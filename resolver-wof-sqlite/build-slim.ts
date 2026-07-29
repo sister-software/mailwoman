@@ -195,6 +195,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 					throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
 				}
 			}
+
 			// PRIMARY KEY on spr.id + place_population.id come from the schemas we copied; an explicit
 			// index on names.id helps the per-id INSERT SELECT later.
 			out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
@@ -214,6 +215,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		// population aux table is NOT rebuilt here: it was copied verbatim above, and fts.ts only
 		// (re)builds it when a `geojson` table is present, which the slim DB intentionally has not.
 		progress("fts", "building place_search / place_bbox on slim DB")
+
 		buildPlaceSearchFTS(out, {
 			drop: true, // schema we copied had no FTS tables, but be explicit
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
@@ -257,6 +259,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			placeBbox: countRows(out, PLACE_BBOX_TABLE),
 			placePopulation: countRows(out, PLACE_POPULATION_TABLE),
 		}
+
 		progress("done", JSON.stringify(rowCounts))
 
 		result = {
@@ -267,6 +270,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	} finally {
 		out.close()
 	}
+
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(opts.output)
 
@@ -308,6 +312,7 @@ async function copyFromSource(
 
 			// 1. Ancestor placetypes (country / region / county / etc.) — always-kept.
 			progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
+
 			await kysely
 				.insertInto("spr")
 				.expression((eb) =>
@@ -326,6 +331,7 @@ async function copyFromSource(
 			// aux table — left-join it so localities without a population row still qualify (sorted
 			// last). If the shard has no population table, fall back to a deterministic id ordering.
 			progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
+
 			await kysely
 				.insertInto("spr")
 				.expression((eb) =>
@@ -345,6 +351,7 @@ async function copyFromSource(
 
 			// 3. All postcodes in scope.
 			progress("postcode", `${inputPath}: all postcodes`)
+
 			await kysely
 				.insertInto("spr")
 				.expression((eb) =>
@@ -361,6 +368,7 @@ async function copyFromSource(
 
 			// 4. Pull names for the IDs we just selected.
 			progress("names", `${inputPath}: names rows for selected IDs`)
+
 			await kysely
 				.insertInto("names")
 				.expression((eb) => eb.selectFrom("src.names").selectAll().where("id", "in", eb.selectFrom("spr").select("id")))
@@ -370,6 +378,7 @@ async function copyFromSource(
 			// 5. Pull population rows for the selected IDs (sparse — only the places WOF has a count for).
 			if (srcHasPopulation) {
 				progress("place_population", `${inputPath}: population rows for selected IDs`)
+
 				await kysely
 					.insertInto("place_population")
 					.expression((eb) =>
@@ -391,10 +400,12 @@ async function copyFromSource(
 			if (relationSchema?.sql) {
 				progress("coincident_roles", `${inputPath}: copying dual-role relation`)
 				out.exec(relationSchema.sql.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS"))
+
 				out.exec(
 					`INSERT OR IGNORE INTO coincident_roles SELECT * FROM src.coincident_roles
 						WHERE admin_id IN (SELECT id FROM spr) AND locality_id IN (SELECT id FROM spr)`
 				)
+
 				out.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON coincident_roles (admin_id)`)
 			}
 		} finally {

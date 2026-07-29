@@ -68,6 +68,7 @@ export function ancestorLineage(db: DatabaseSync, id: number, schemaName = "main
 			WHERE a.id = ? AND a.ancestor_id != a.id`
 		)
 		.all(id) as unknown as AncestorPlaceRow[]
+
 	rows.sort((a, b) => placetypeDepth(b.placetype) - placetypeDepth(a.placetype))
 
 	return rows

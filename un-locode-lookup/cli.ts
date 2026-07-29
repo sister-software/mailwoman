@@ -38,6 +38,7 @@ if (positionals[0] === "build") {
 
 		process.exit(1)
 	}
+
 	const { rows, withCoords } = buildUnLocodeDB(values.csv, values.out)
 
 	console.error(`built ${values.out} (${rows} rows, ${withCoords} with coordinates)`)
@@ -52,6 +53,7 @@ if (positionals[0] === "build") {
 
 		process.exit(1)
 	}
+
 	const lookup = new UnLocodeLookup({ databasePath: values.db })
 	const code = byName ? lookup.byName(values.country!, values.name!) : lookup.nearest(lat, lon)
 

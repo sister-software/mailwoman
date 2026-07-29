@@ -58,6 +58,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 
 			if (!body) continue
 			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
+
 			continue
 		}
 

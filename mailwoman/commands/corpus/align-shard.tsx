@@ -23,6 +23,7 @@ export { OptionsSchema as options }
 const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { alignCanonicalShard } = await import("@mailwoman/corpus/tools")
+
 		await alignCanonicalShard({
 			input: options.input,
 			output: options.output,

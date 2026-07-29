@@ -144,9 +144,11 @@ interface AlternativeLike {
 
 function serializeAlternatives(node: AddressNode, indent: string): string {
 	if (!node.alternatives || !node.alternatives.length) return ""
+
 	const lines = node.alternatives.map((raw) => {
 		const alt = raw as AlternativeLike
 		const place = `wof:${alt.id}`
+
 		const parts = [
 			`place="${escapeXml(place)}"`,
 			`name="${escapeXml(alt.name)}"`,
@@ -196,6 +198,7 @@ export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): str
 		includeAlternatives: opts.includeAlternatives ?? false,
 		includeUnknown: opts.includeUnknown ?? false,
 	}
+
 	const rawAttr = escapeXml(tree.raw)
 	const nl = full.pretty ? "\n" : ""
 	const indent = full.pretty ? "\t" : ""
@@ -214,6 +217,7 @@ export function decodeAsXML(tree: AddressTree, opts: SerializeXMLOpts = {}): str
 				xml: `${indent}<unknown start="${u.start}" end="${u.end}">${escapeXml(u.value)}</unknown>`,
 			})
 		}
+
 		entries.sort((a, b) => a.start - b.start)
 	}
 

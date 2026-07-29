@@ -292,9 +292,11 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			const splitDir = join(corpusDir, split)
 			await mkdir(splitDir, { recursive: true })
 			path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
+
 			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
 				rowGroupSize: ROW_GROUP_SIZE,
 			})
+
 			writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
 			writer.setMetadata("mailwoman.split", split)
 			writer.setMetadata("mailwoman.shard_index", String(shardIndex))
@@ -310,6 +312,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			if (shardRows > 0) {
 				const fileStat = await stat(path)
 				const sha256 = await hashFile(path)
+
 				shards.push({
 					split,
 					path,
@@ -322,6 +325,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 					last_source_id: lastSourceID,
 				})
 			}
+
 			writer = null
 		}
 
@@ -329,19 +333,25 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			if (!writer) {
 				await openShard()
 			}
+
 			const pq = rowToParquet(row)
 			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
 
 			if (shardRows === 0) {
 				firstSourceID = row.source_id
 			}
+
 			lastSourceID = row.source_id
+
 			shardRows++
+
 			counts[split]++
+
 			totalRows++
 
 			if (shardRows >= rowsPerShard) {
 				await closeShard()
+
 				shardIndex++
 			}
 		}
@@ -360,6 +370,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		counts,
 		total_rows: totalRows,
 	}
+
 	await writeFile(join(corpusDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
 
 	return manifest

@@ -96,6 +96,7 @@ export async function fetchIMLSPLS(
 	// MARK: Download ZIP
 
 	report?.(`  Downloading ${ZIP_URL} ...`)
+
 	const { bytes: zipSize } = await downloadToFile({
 		url: ZIP_URL,
 		dest: zipDest,
@@ -103,6 +104,7 @@ export async function fetchIMLSPLS(
 		headers: { "Accept-Encoding": "gzip, br" },
 		report,
 	})
+
 	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
 
 	if (zipSize < BYTES_PER_KIB) {
@@ -130,6 +132,7 @@ export async function fetchIMLSPLS(
 		for (const name of entries) {
 			report?.(`    ${name}`)
 		}
+
 		report?.("  ✗ Could not identify outlet CSV — inspect above listing and update this module")
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
@@ -156,6 +159,7 @@ export async function fetchIMLSPLS(
 		sha256: csvSha,
 		bytes: csvSize,
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${(csvSize / 1024 / 1024).toFixed(1)} MB  sha256=${csvSha}`)

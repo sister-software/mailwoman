@@ -90,6 +90,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 			this.#byPostcode = this.#db.prepare(
 				`SELECT ${AGG_SELECT} FROM street_centroid WHERE postcode = ? AND street_norm = ?`
 			)
+
 			this.#byLocality = this.#db.prepare(
 				`SELECT ${AGG_SELECT} FROM street_centroid WHERE locality_base = ? AND street_norm = ?`
 			)

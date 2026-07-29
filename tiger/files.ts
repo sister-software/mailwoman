@@ -142,6 +142,7 @@ export function TIGERStateLevelZIPPath<
 >(stateFIPSCode: SFC, level: Level, vintage: Vintage = TIGERCurrentVintage as Vintage) {
 	const levelPath = level.toUpperCase() as Uppercase<Level>
 	const fileName = TIGERStateLevelFileName(stateFIPSCode, level, TIGERFileExtension.Zip, vintage)
+
 	const path = `/geo/tiger/TIGER${vintage}/${levelPath}/${fileName}` satisfies TIGERStateLevelZIPPath<
 		SFC,
 		Level,
@@ -207,6 +208,7 @@ export function TIGERLevelManifest<
 	const Projection = TIGERStateLevelFileName(stateFIPSCode, level, TIGERFileExtension.Projection, vintage)
 	const FGDCMetadata = TIGERStateLevelFileName(stateFIPSCode, level, TIGERFileExtension.FGDCMetadata, vintage)
 	const ISOMetadata = TIGERStateLevelFileName(stateFIPSCode, level, TIGERFileExtension.ISOMetadata, vintage)
+
 	const EntityAttributeMetadata = TIGERStateLevelFileName(
 		stateFIPSCode,
 		level,

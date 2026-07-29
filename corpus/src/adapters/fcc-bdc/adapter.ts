@@ -188,6 +188,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: FCC_BDC_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

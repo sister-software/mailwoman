@@ -47,6 +47,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 
 		// Shape: every PipelineResult key is present.
@@ -79,6 +80,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const kind = result["kind"] as Record<string, unknown>
 		expect(kind["kind"]).toBe("locality_only")
@@ -89,6 +91,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const shape = result["queryShape"] as Record<string, unknown>
 		const formats = shape["knownFormats"] as Array<Record<string, unknown>>
@@ -100,6 +103,7 @@ describe("parse --debug (runtime pipeline)", () => {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
+
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const normalized = result["normalized"] as Record<string, unknown>
 		expect(normalized["normalized"]).toBe("Paris")

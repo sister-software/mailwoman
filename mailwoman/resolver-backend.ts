@@ -80,6 +80,7 @@ export function createResolverBackend(
 
 		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
 	}
+
 	const wp = opts.wofPaths
 	const aliasDB = resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
 	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : undefined

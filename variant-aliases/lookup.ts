@@ -31,6 +31,7 @@ function loadTable(): VariantAliasTable {
 			// try next
 		}
 	}
+
 	throw new Error("variant-aliases: could not find data/aliases.json")
 }
 
@@ -82,8 +83,10 @@ export function lookupVariantAliases(text: string, locale: string): AliasLookupR
 	for (const alias of candidates) {
 		if (alias.locales.includes(locale)) {
 			results.push({ alias, confidence: 1 })
+
 			continue
 		}
+
 		// Relaxed match: any locale in `locales` that shares the same language part.
 		const langMatch = alias.locales.some((l) => l.split(/[-_]/)[0] === language)
 

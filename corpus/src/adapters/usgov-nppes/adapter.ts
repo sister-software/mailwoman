@@ -94,6 +94,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -165,6 +166,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_NPPES_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

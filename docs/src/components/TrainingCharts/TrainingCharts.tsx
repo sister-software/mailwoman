@@ -242,6 +242,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 	// In log mode, we map y through log10 and work in log-space.
 	const { xMin, xMax, yMin, yMax, yMinData } = useMemo(() => {
 		if (!allPoints.length) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0 }
+
 		let xmn = Infinity,
 			xmx = -Infinity,
 			ymn = Infinity,
@@ -264,6 +265,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 				ymx = p.value
 			}
 		}
+
 		const yPad = (ymx - ymn) * 0.05 || 0.01
 		const innerYMinData = ymn - yPad
 		const yMaxData = ymx + yPad
@@ -283,7 +285,9 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 
 		if (!Number.isFinite(posMin)) {
 			posMin = 1e-6
-		} // all values non-positive; nominal floor
+		}
+
+		// all values non-positive; nominal floor
 		const posMax = Math.max(ymx, posMin * 10)
 		const logMin = Math.log10(posMin)
 		const logMax = Math.log10(posMax)
@@ -305,6 +309,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 		(x: number) => SVG_PAD.left + ((x - xMin) / (xMax - xMin || 1)) * plotW,
 		[xMin, xMax, plotW]
 	)
+
 	const yScale = useCallback(
 		(y: number) => {
 			// Clamp ≤0 values to the positive floor so they rest on the axis bottom (log10(0) = -∞).
@@ -336,6 +341,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 
 		return ticks.toSorted((a, b) => a - b)
 	}, [yMin, yMax, isLog])
+
 	const xTicks = useMemo(() => niceTicks(xMin, xMax, 8), [xMin, xMax])
 
 	// Generate polyline points strings once per series
@@ -506,6 +512,7 @@ const TrainingChartsInner: React.FC = () => {
 	// Fetch runs on mount
 	useEffect(() => {
 		let cancelled = false
+
 		async function load() {
 			try {
 				const runList = await fetchRuns()
@@ -525,6 +532,7 @@ const TrainingChartsInner: React.FC = () => {
 				}
 			}
 		}
+
 		load()
 
 		return () => {
@@ -628,8 +636,10 @@ const TrainingChartsInner: React.FC = () => {
 						// ignore
 					}
 				}
+
 				newData.set(runName, runMap)
 			}
+
 			setMetricData(newData)
 		}, POLL_INTERVAL_MS)
 
@@ -659,6 +669,7 @@ const TrainingChartsInner: React.FC = () => {
 				const points = runData.get(mk)
 
 				if (!points || !points.length) continue
+
 				series.push({
 					run: runName,
 					metric: mk,
@@ -666,6 +677,7 @@ const TrainingChartsInner: React.FC = () => {
 					color: LINE_COLORS[colorIdx % LINE_COLORS.length],
 					points: [...points].toSorted((a, b) => a.step - b.step),
 				})
+
 				colorIdx++
 			}
 		}

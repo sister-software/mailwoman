@@ -65,10 +65,12 @@ export function validateTree(tree: AddressTree): TreeValidity {
 	const parentOf = containmentFor(tree.system)
 
 	const present = new Set<ComponentTag>()
+
 	const collect = (n: AddressNode): void => {
 		present.add(n.tag)
 		n.children.forEach(collect)
 	}
+
 	tree.roots.forEach(collect)
 
 	const walk = (node: AddressNode, parent: AddressNode | null): void => {
@@ -96,6 +98,7 @@ export function validateTree(tree: AddressTree): TreeValidity {
 
 		node.children.forEach((c) => walk(c, node))
 	}
+
 	tree.roots.forEach((r) => walk(r, null))
 
 	return { valid: violations.length === 0, violations }

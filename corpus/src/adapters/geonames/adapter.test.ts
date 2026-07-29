@@ -14,6 +14,7 @@ import type { CanonicalRow } from "../../types.ts"
 import { createGeonamesAdapter, GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE } from "./adapter.ts"
 
 let scratch: string
+
 beforeEach(() => {
 	scratch = mkdtempSync(join(tmpdir(), "mailwoman-geonames-"))
 })
@@ -88,10 +89,12 @@ describe("geonames adapter", () => {
 		const p = writeFixture([
 			gnRow({ id: "5234567", name: "Montpelier", featureClass: "P", featureCode: "PPLA", country: "US", admin1: "VT" }),
 		])
+
 		const rows = await collect(p)
 		expect(rows).toHaveLength(2)
 		const byRaw = Object.fromEntries(rows.map((r) => [r.raw, r]))
 		expect(byRaw["Montpelier, Vermont"]?.components).toEqual({ locality: "Montpelier", region: "Vermont" })
+
 		expect(byRaw["Montpelier, Vermont, United States"]?.components).toEqual({
 			locality: "Montpelier",
 			region: "Vermont",
@@ -112,6 +115,7 @@ describe("geonames adapter", () => {
 			gnRow({ id: "2", name: "Ghost Town", featureClass: "P", featureCode: "PPLQ", country: "US", admin1: "VT" }), // abandoned
 			gnRow({ id: "3", name: "Burlington", featureClass: "P", featureCode: "PPL", country: "US", admin1: "VT" }), // real
 		])
+
 		const rows = await collect(p)
 		expect(rows.every((r) => r.components.locality === "Burlington")).toBe(true)
 		expect(rows).toHaveLength(2) // only Burlington, two variants
@@ -122,6 +126,7 @@ describe("geonames adapter", () => {
 			gnRow({ id: "10", name: "Burlington", featureClass: "P", featureCode: "PPL", country: "US", admin1: "VT" }),
 			gnRow({ id: "11", name: "Toronto", featureClass: "P", featureCode: "PPL", country: "CA", admin1: "08" }),
 		])
+
 		expect((await collect(p, { country: "US" })).every((r) => r.country === "US")).toBe(true)
 		expect(await collect(p, { limit: 1 })).toHaveLength(1)
 	})
@@ -131,6 +136,7 @@ describe("geonames adapter", () => {
 			[gnRow({ id: "20", name: "Burlington", featureClass: "P", featureCode: "PPL", country: "US", admin1: "VT" })],
 			{ admin1: false, countries: false }
 		)
+
 		const rows = await collect(p)
 		expect(rows).toHaveLength(1)
 		expect(rows[0]?.components).toEqual({ locality: "Burlington" })

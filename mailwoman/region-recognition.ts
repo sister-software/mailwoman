@@ -82,6 +82,7 @@ const STATE_NAME_TO_SLUG: Record<string, string> = {
 	wyoming: "wy",
 	"puerto rico": "pr",
 }
+
 const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
 
 /**
@@ -179,6 +180,7 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	// Offsets: the region covers the tail's char span; the locality the head's (relative to node.start).
 	const tailStart = node.start + node.value.indexOf(tail, comma)
 	const region = makeRegionNode(tail, tailStart, node.end, node.confidence)
+
 	region.children.push({
 		tag: "locality" as ComponentTag,
 		value: head,

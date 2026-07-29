@@ -33,10 +33,12 @@ test("pluckPlacetypeSpec: passes through identity + resolves the wof→gn popula
 		placetype: "locality",
 		parent_id: 404,
 	})
+
 	// wof:population wins when present…
 	expect(pluckPlacetypeSpec(baseProps({ "wof:population": 9_000_000, "gn:population": 8_000_000 })).population).toBe(
 		9_000_000
 	)
+
 	// …else falls back to gn:population
 	expect(pluckPlacetypeSpec(baseProps({ "gn:population": 8_000_000 })).population).toBe(8_000_000)
 	expect(pluckPlacetypeSpec(baseProps()).population).toBeUndefined()
@@ -55,6 +57,7 @@ test("pluckPlacetypeSpec: lifecycle flags from edtf + superseded arrays", () => 
 	expect(pluckPlacetypeSpec(baseProps({ "wof:superseded_by": [202] })).isSuperseded).toBe(true)
 	expect(pluckPlacetypeSpec(baseProps({ "wof:supersedes": [303] })).isSuperseding).toBe(true)
 	const clean = pluckPlacetypeSpec(baseProps())
+
 	expect([clean.isDeprecated, clean.isCeased, clean.isSuperseded, clean.isSuperseding]).toEqual([
 		false,
 		false,
@@ -67,6 +70,7 @@ test("pluckPlacetypeSpec: builds the localized name map from name:<lang>_x_<kind
 	const spec = pluckPlacetypeSpec(
 		baseProps({ "name:eng_x_preferred": "London", "name:fra_x_preferred": "Londres" } as Partial<WOFProperties>)
 	)
+
 	expect(spec.localizedPropMap.get("eng" as never)?.get("preferred")).toBe("London")
 	expect(spec.localizedPropMap.get("fra" as never)?.get("preferred")).toBe("Londres")
 })

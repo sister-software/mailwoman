@@ -62,6 +62,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	// Source geojson with a populated wof:hierarchy (region + country), even though parent_id is -4.
 	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
 	mkdirSync(join(dataRoot, "859", "775", "39"), { recursive: true })
+
 	writeFileSync(
 		join(dataRoot, "859", "775", "39", `${orphanID}.geojson`),
 		JSON.stringify({
@@ -84,6 +85,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ? AND ancestor_id != ? ORDER BY ancestor_id")
 		.all(orphanID, orphanID)
 		.map((r) => (r as { ancestor_id: number }).ancestor_id)
+
 	expect(ancestorIds).toEqual([85_633_793, 85_688_543, 102_081_863].toSorted((a, b) => a - b))
 
 	// Re-run: idempotent — already-present rows are not duplicated.

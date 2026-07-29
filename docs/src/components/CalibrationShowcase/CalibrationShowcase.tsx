@@ -80,6 +80,7 @@ export default function CalibrationShowcase({
 
 	useEffect(() => {
 		let cancelled = false
+
 		void (async () => {
 			try {
 				const res = await fetch(assetURL(locale, version, "calibration.json"))
@@ -164,6 +165,7 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 			(b): b is ReliabilityBin & { conf: number; acc: number } =>
 				b.n > 0 && b.conf != null && b.acc != null && b.conf >= lo && b.acc >= lo
 		)
+
 	const maxN = Math.max(1, ...raw.concat(cal).map((b) => b.n))
 	const r = (n: number) => 2 + 9 * Math.sqrt(n / maxN)
 

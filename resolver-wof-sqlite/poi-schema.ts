@@ -116,6 +116,7 @@ export async function createPOIStagingTables(db: Kysely<POIDatabase>): Promise<v
 		.addColumn("id", "integer", (c) => c.primaryKey())
 		.addColumn("category", "text", (c) => c.unique())
 		.execute()
+
 	await db.schema
 		.createTable("poi_stage")
 		.addColumn("h3_cell", "integer")

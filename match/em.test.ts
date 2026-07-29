@@ -32,10 +32,12 @@ function buildModel(lambda: number): FellegiSunterModel<Person> {
 describe("agreementPattern", () => {
 	it("reduces a record pair to per-comparison level indices", () => {
 		const model = buildModel(0.1)
+
 		// given exact, family different → [0, 1]
 		expect(
 			agreementPattern(model.comparisons, { given: "Jo", family: "Smith" }, { given: "jo", family: "Jones" })
 		).toEqual([0, 1])
+
 		// family missing on one side → -1
 		expect(agreementPattern(model.comparisons, { given: "Jo" }, { given: "Jo", family: "Smith" })).toEqual([0, -1])
 	})
@@ -45,17 +47,21 @@ describe("estimateParameters (EM)", () => {
 	// A separable synthetic: 100 matches (mostly both-exact), 900 non-matches (mostly both-different),
 	// with coincidental partial agreement in both classes. True match rate = 0.1.
 	const patterns: number[][] = []
+
 	const push = (pattern: number[], n: number) => {
 		for (let i = 0; i < n; i++) {
 			patterns.push([...pattern])
 		}
 	}
+
 	push([0, 0], 90) // matches: both exact
 	push([0, 1], 5)
 	push([1, 0], 5) // match noise
 	push([1, 1], 850) // non-matches: both different
 	push([0, 1], 25)
-	push([1, 0], 25) // coincidental agreement
+	push([1, 0], 25)
+
+	// coincidental agreement
 
 	it("recovers the prior match rate from unlabeled patterns", () => {
 		const result = estimateParameters(buildModel(0.2), patterns, { maxIterations: 100 })

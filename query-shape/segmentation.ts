@@ -34,8 +34,10 @@ export function segment(text: string, _locale?: string): Segment[] {
 				index,
 				separator: lastSeparator,
 			})
+
 			index += 1
 		}
+
 		lastSeparator = separator
 	}
 
@@ -56,6 +58,7 @@ export function segment(text: string, _locale?: string): Segment[] {
 			start = i + 1
 		}
 	}
+
 	flush(text.length, null)
 
 	return segments

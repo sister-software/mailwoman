@@ -200,6 +200,7 @@ function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 
 		return { prefix, street: name, suffix, full }
 	}
+
 	const full = (r.StNam_Full ?? "").toString().trim()
 
 	if (full) return { full, street: full }
@@ -336,6 +337,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_NAD_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			}

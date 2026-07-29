@@ -69,6 +69,7 @@ export class BANShardProvider {
 			if (existsSync(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })
 			}
+
 			// The #1042 derived street tier — purely additive, opened only when its artifact is on disk.
 			const streetPath = this.#streetCentroidPath(cc)
 
@@ -76,6 +77,7 @@ export class BANShardProvider {
 				entry.streetCentroids = new StreetCentroidSqliteLookup(streetPath, { streetLocale: locale })
 			}
 		}
+
 		this.#cache.set(cc, entry)
 
 		return entry
@@ -86,6 +88,7 @@ export class BANShardProvider {
 			entry.addressPoints?.close()
 			entry.streetCentroids?.close()
 		}
+
 		this.#cache.clear()
 	}
 }

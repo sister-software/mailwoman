@@ -99,6 +99,7 @@ describe("@mailwoman/fastify", () => {
 			intent: { subject: { kind: "category" as const, categoryID: "eat_and_drink.coffee", matched: "coffee" } },
 			results: [],
 		}
+
 		const app = await buildApp({ pipeline: fakePipeline({ poiIntent, path: "poi" }), poiDatabasePath: "/tmp/poi.db" })
 		const res = await app.inject({ method: "POST", url: "/poi", payload: { text: "coffee near Union Square" } })
 

@@ -108,7 +108,9 @@ const STREET_NAMES = [
 	"Westpark",
 	"Crescent Meadow",
 ]
+
 const STREET_TYPES = ["St", "Ave", "Rd", "Dr", "Ln", "Blvd", "Ct", "Way", "Road", "Drive"]
+
 const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
 	{ locality: "Springfield", region: "IL", postcode: "62701" },
 	{ locality: "Portland", region: "OR", postcode: "97215" },
@@ -119,11 +121,13 @@ const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
 	{ locality: "Rochester", region: "NY", postcode: "14606" },
 	{ locality: "Sacramento", region: "CA", postcode: "95823" },
 ]
+
 /**
  * US rural states where the leading-postcode "{ZIP} {Street}, {STATE}" form (no trailing ZIP) is real — the VT/rural
  * format the #723 override broke and Probe A0 eroded.
  */
 const RURAL_REGIONS = ["VT", "ND", "SD", "NH", "ME", "MT", "WY"]
+
 /**
  * DE leading-postcode tuples: "{postcode} {locality}, {street} {house}".
  */
@@ -134,6 +138,7 @@ const DE_TUPLES = [
 	{ postcode: "50667", locality: "Köln", street: "Hohe Straße" },
 	{ postcode: "01067", locality: "Dresden", street: "Prager Straße" },
 ]
+
 const HOUSE_NUMS = ["5", "12", "27", "100", "212", "1450", "8"]
 /**
  * Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp.
@@ -215,6 +220,7 @@ export function synthesizeAnchorAbsorptionRow(
 		if (random() < 0.5) {
 			return { raw: `${zip} ${street}`, components: { house_number: zip, street }, locale: "en-US", template }
 		}
+
 		const t = pick(US_TUPLES, random)
 
 		return {
@@ -244,6 +250,7 @@ export function synthesizeAnchorAbsorptionRow(
 			template,
 		}
 	}
+
 	// standard: normal house number + trailing postcode → house_number (baseline, keeps the common case).
 	const hn = houseNum(random, realZips)
 	const t = pick(US_TUPLES, random)

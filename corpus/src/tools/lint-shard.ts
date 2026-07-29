@@ -138,6 +138,7 @@ labels_col = t['labels'].to_pylist()
 for i in range(len(tokens_col)):
     sys.stdout.write(json.dumps({"tokens": tokens_col[i], "labels": labels_col[i]}) + "\\n")
 `
+
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: ShardRow[] = []
 
@@ -169,6 +170,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 	for (const row of rows) {
 		if (row.tokens.length !== row.labels.length) {
 			out.truncatedRows++
+
 			continue
 		}
 
@@ -185,6 +187,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 				labelMap = new Map()
 				out.tokens.set(tk, labelMap)
 			}
+
 			labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
 
 			if (i + 1 < row.tokens.length) {
@@ -196,6 +199,7 @@ function statsFromShard(rows: ShardRow[]): ShardStats {
 					bMap = new Map()
 					out.bigrams.set(bigramKey, bMap)
 				}
+
 				bMap.set(bigramLabel, (bMap.get(bigramLabel) ?? 0) + 1)
 			}
 		}
@@ -337,6 +341,7 @@ function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): LintShar
 			const renderBigram = bigram.split(SEP).join(" ")
 			const renderShardLabel = shardMaj.label.split(SEP).join(" → ")
 			const renderCorpusLabel = corpusMaj.label.split(SEP).join(" → ")
+
 			flags.push({
 				check: "bigram-collision",
 				severity: "error",
@@ -355,6 +360,7 @@ function checkBigramCollisions(shard: ShardStats, corpus: CorpusStats): LintShar
 
 function checkRules(shard: ShardStats, rulesFile: LintRulesFile): LintShardFlag[] {
 	const flags: LintShardFlag[] = []
+
 	const compiled = rulesFile.rules.map((r) => ({
 		rule: r,
 		regex: new RegExp(r.pattern, r.pattern_case_sensitive ? "" : "i"),
@@ -393,6 +399,7 @@ function checkSanity(shard: ShardStats): LintShardFlag[] {
 			detail: `${shard.truncatedRows} row(s) have tokens.length !== labels.length. Pipeline alignment bug.`,
 		})
 	}
+
 	const allORatio = shard.allORows / Math.max(1, shard.rowCount)
 
 	if (allORatio >= ALL_O_RATIO_CEILING) {
@@ -414,6 +421,7 @@ function renderReport(
 	const errors = flags.filter((f) => f.severity === "error")
 	const warns = flags.filter((f) => f.severity === "warn")
 	const verdict = !errors.length ? "**PASS** ✓" : "**FLAGGED** ⚠"
+
 	const lines: string[] = [
 		`# Corpus Lint: ${verdict}`,
 		"",
@@ -434,6 +442,7 @@ function renderReport(
 
 		return lines.join("\n")
 	}
+
 	const byCheck = new Map<string, LintShardFlag[]>()
 
 	for (const f of flags) {
@@ -455,6 +464,7 @@ function renderReport(
 		if (list.length > MAX_LISTED_EXAMPLES) {
 			lines.push(`- ... and ${list.length - 20} more`)
 		}
+
 		lines.push("")
 	}
 
@@ -471,6 +481,7 @@ export function lintCorpusShard(
 	const rulesPath = options.rulesPath ?? defaultRulesPath()
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
 	const corpus: CorpusStats = JSON.parse(readFileSync(options.statsPath, "utf8"))
+
 	report?.(
 		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
 	)
@@ -486,6 +497,7 @@ export function lintCorpusShard(
 	const rulesFile: LintRulesFile = JSON.parse(readFileSync(rulesPath, "utf8"))
 
 	report?.(`Running checks...`)
+
 	const flags: LintShardFlag[] = [
 		...checkDistributionOutliers(shard, corpus),
 		...checkLabelVacuum(shard, corpus),

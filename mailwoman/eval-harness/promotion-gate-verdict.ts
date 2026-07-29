@@ -59,11 +59,13 @@ function scorerF1(md: string, tag: string): number | undefined {
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
 	const lines = md.split("\n")
+
 	const cells = (line: string): string[] =>
 		line
 			.split("|")
 			.slice(1, -1)
 			.map((c) => c.trim())
+
 	const header = lines.find((l) => /^\|\s*arena\s*\|/.test(l))
 	const row = lines.find((l) => new RegExp(`^\\|\\s*${arena}\\s*\\|`).test(l))
 
@@ -134,6 +136,7 @@ export function assemblePromotionVerdict(
 		floors: Record<string, number>
 		int8_vs_fp32_max_delta_pp?: number
 	}
+
 	const dir = options.outDir
 	const read = (f: string) => readFileSync(path.join(dir, f), "utf8")
 
@@ -150,6 +153,7 @@ export function assemblePromotionVerdict(
 
 		return raw === undefined ? undefined : JSON.parse(raw)
 	}
+
 	function tagF1(side: ScorerSidecar | undefined, md: string, tag: string): number | undefined {
 		const f1 = side?.tags?.[tag]?.f1
 
@@ -238,6 +242,7 @@ export function assemblePromotionVerdict(
 		if (!pass) {
 			failed = true
 		}
+
 		results[key] = { floor, actual, pass }
 	}
 
@@ -267,6 +272,7 @@ export function assemblePromotionVerdict(
 		int8_vs_fp32_deltas: deltas,
 		generated_at_dir: dir,
 	}
+
 	writeFileSync(path.join(dir, "verdict.json"), JSON.stringify(verdict, null, "\t"))
 
 	report(`\n== promotion gate [${gate.label}] — ${verdict.verdict} ==`)

@@ -32,6 +32,7 @@ export class SealedArtifactError extends Error {
 			`${basename(path)} is a sealed read-only artifact — rebuild it via \`mailwoman gazetteer build …\`, ` +
 				`don't mutate it. (Deliberate unseal: chmod u+w — but prefer a rebuild.)`
 		)
+
 		this.name = "SealedArtifactError"
 	}
 }
@@ -52,6 +53,7 @@ export function sealDatabase(path: string): void {
 	if (isSealed(path)) {
 		chmodSync(path, 0o644)
 	}
+
 	const db = new (sqlite().DatabaseSync)(path)
 	const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
 
@@ -59,6 +61,7 @@ export function sealDatabase(path: string): void {
 		db.close()
 		throw new Error(`sealDatabase: WAL checkpoint busy on ${path} — close all writers first`)
 	}
+
 	const mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
 	db.close()
 
@@ -71,6 +74,7 @@ export function sealDatabase(path: string): void {
 			unlinkSync(sidecar)
 		}
 	}
+
 	chmodSync(path, 0o444)
 }
 

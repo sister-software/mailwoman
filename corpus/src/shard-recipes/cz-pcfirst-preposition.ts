@@ -40,10 +40,13 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 
 			if (!street || !city || !number || !postcode) {
 				skipped++
+
 				continue
 			}
+
 			const order = read % 3
 			let raw: string
+
 			const components: Record<string, string> = {
 				street,
 				house_number: number,
@@ -58,11 +61,13 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 			} else {
 				raw = `${city}, ${postcode}, ${street} ${number}`
 			}
+
 			const source_id = shardSourceID("synth-cz-pcfirst-preposition", {
 				...components,
 				o: String(order),
 				v: String(read),
 			})
+
 			const canonical = {
 				raw,
 				components,

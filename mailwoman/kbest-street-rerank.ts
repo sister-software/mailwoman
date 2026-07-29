@@ -56,6 +56,7 @@ import {
 } from "@mailwoman/resolver"
 
 export { foldStreetSurface } from "@mailwoman/resolver"
+
 const STREET_SEGMENT_TYPES: ReadonlySet<string> = new Set([
 	"street",
 	"street_prefix",
@@ -256,6 +257,7 @@ export async function rerankByStreetEvidence(
 	// win (argmax street wrong/absent, segmentation street confirmed → spliced). An unconfirmed street never overrides.
 	const confirmed =
 		pick.candidate.streetSurface !== "" && evidence.hasStreetName(pick.candidate.streetSurface, opts.scope)
+
 	const tree = confirmed
 		? spliceStreetTree(pick.candidate.payload!, trace, grammar)
 		: buildAddressTree(trace.text, trace.tokens)

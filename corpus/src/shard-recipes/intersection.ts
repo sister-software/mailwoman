@@ -51,10 +51,12 @@ interface County {
 	state: string
 	regime: string
 }
+
 const TRAIN_COUNTIES: readonly County[] = [
 	{ fips: "17031", state: "IL", regime: "grid-city" },
 	{ fips: "34027", state: "NJ", regime: "suburb" },
 ]
+
 const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime: "rural" }]
 
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
@@ -81,6 +83,7 @@ interface Form {
 	w: number
 	render: (a: string, b: string) => string
 }
+
 const FORMS: readonly Form[] = [
 	{ id: "amp", w: 0.2, render: (a, b) => `${a} & ${b}` },
 	{ id: "and", w: 0.2, render: (a, b) => `${a} and ${b}` },
@@ -102,6 +105,7 @@ interface Tail {
 	id: string
 	w: number
 }
+
 const TAILS: readonly Tail[] = [
 	{ id: "bare", w: 0.55 },
 	{ id: "region", w: 0.16 },
@@ -115,6 +119,7 @@ interface Casing {
 	w: number
 	apply: (s: string) => string
 }
+
 const CASES: readonly Casing[] = [
 	{ id: "as-is", w: 0.82, apply: (s) => s },
 	{ id: "upper", w: 0.12, apply: (s) => s.toUpperCase() },
@@ -166,6 +171,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -182,6 +188,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -227,6 +234,7 @@ async function extractCrossings(
 	seed: number
 ): Promise<Crossing[]> {
 	const shp = `${edgesDir}/tl_2023_${county.fips}_edges.shp`
+
 	const result = await db.runAndReadAll(`
 		WITH incidence AS (
 			SELECT TNIDF AS node, FULLNAME AS name, ZIPL AS zip
@@ -248,6 +256,7 @@ async function extractCrossings(
 		WHERE len(names[1]) >= 6 AND len(names[2]) >= 6
 		ORDER BY h
 	`)
+
 	const out: Crossing[] = []
 
 	for (const r of result.getRowObjects()) {
@@ -275,6 +284,7 @@ function buildZipCityMap(): Map<string, string> {
 
 		return new Map()
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return new Map()
@@ -296,8 +306,10 @@ function buildZipCityMap(): Map<string, string> {
 		if (!byCity) {
 			counts.set(zip, (byCity = new Map()))
 		}
+
 		byCity.set(city, (byCity.get(city) ?? 0) + 1)
 	}
+
 	const map = new Map<string, string>()
 
 	for (const [zip, byCity] of counts) {
@@ -419,8 +431,10 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 
 		if (indices.length !== 1) {
 			errors.push(`${tag}: expected 1 span, got ${indices.length}`)
+
 			continue
 		}
+
 		const idx = indices[0]!
 		const got = raw.slice(span_starts[idx]!, span_ends[idx]!)
 
@@ -437,6 +451,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		if (span_starts[i]! > cursor) {
 			uncovered.push(raw.slice(cursor, span_starts[i]!))
 		}
+
 		cursor = span_ends[i]!
 	}
 
@@ -452,6 +467,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 				errors.push(`illegal uncovered word "${word}"`)
 			}
 		}
+
 		const punctOnly = segment.replaceAll(/[\p{L}\p{N}]+/gu, "")
 
 		if (!CONNECTOR_PUNCT_RE.test(punctOnly)) {
@@ -501,20 +517,25 @@ export const intersectionRecipe: ShardRecipe = {
 
 				if (exclusions.nodes.has(c.node) || exclusions.pairs.has(key)) {
 					stats.evalExcluded++
+
 					continue
 				}
 
 				if (BAD_NAME.test(c.a) || BAD_NAME.test(c.b) || c.a.includes(c.b) || c.b.includes(c.a)) {
 					stats.badName++
+
 					continue
 				}
 
 				if (seenPairs.has(key)) {
 					stats.dupPair++
+
 					continue
 				}
+
 				seenPairs.add(key)
 				pool.push(c)
+
 				kept++
 			}
 
@@ -549,6 +570,7 @@ export const intersectionRecipe: ShardRecipe = {
 
 			if (seenRaw.has(raw)) {
 				skipped++
+
 				continue
 			}
 
@@ -560,7 +582,9 @@ export const intersectionRecipe: ShardRecipe = {
 				caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
 				countyCounts[crossing.fips] = (countyCounts[crossing.fips] ?? 0) + 1
 				usedCrossings.add(crossing.node)
+
 				emitted++
+
 				continue
 			}
 
@@ -574,18 +598,22 @@ export const intersectionRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
 			}
+
 			// Verbatim-only alignment: raw is built from the component values, so a fuzzy fallback could
 			// only ever mislabel (e.g. claim a lookalike window for a near-duplicate street).
 			const aligned = alignRow(canonical, { maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			const violations = auditRow(aligned.row, components)
 
 			if (violations.length) {
 				auditErrors.push({ raw, violations })
+
 				continue
 			}
 
@@ -600,6 +628,7 @@ export const intersectionRecipe: ShardRecipe = {
 			if (samples.length < FORMS.length && !samples.some((s) => s.form === formID)) {
 				samples.push({ form: formID, raw, tokens: aligned.row.tokens, labels: aligned.row.labels })
 			}
+
 			emitted++
 		}
 
@@ -617,6 +646,7 @@ export const intersectionRecipe: ShardRecipe = {
 			source: "TIGER2023 EDGES via DuckDB ST_Read; node = 2 distinct S1* FULLNAMEs; eval crossings excluded",
 			samples,
 		}
+
 		writeFileSync(opts.output.replace(/\.jsonl$/, ".report.json"), JSON.stringify(report, null, "\t"))
 
 		console.error(

@@ -72,9 +72,11 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 			// `name_key` MUST match `foldStreetSurface` here (the fold-parity contract).
 			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
+
 			this.#byNameLocality = this.#db.prepare(
 				`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND locality_base = ? LIMIT 1`
 			)
+
 			this.#byNamePostcode = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND postcode = ? LIMIT 1`)
 		}
 	}

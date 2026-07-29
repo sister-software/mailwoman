@@ -213,6 +213,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 	if (streetParts.length) {
 		out.street = streetParts.join(" ")
 	}
+
 	const xs: string[] = []
 
 	if (flat.intersection_a) {
@@ -293,6 +294,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 	const perTag: Record<string, TagMetric> = {}
 	let f1Sum = 0
+
 	let microTp = 0,
 		microFp = 0,
 		microFn = 0
@@ -316,6 +318,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 				fn++
 			}
 		}
+
 		const p = tp / Math.max(tp + fp, 1)
 		const r = tp / Math.max(tp + fn, 1)
 		const f1 = p + r > 0 ? (2 * p * r) / (p + r) : 0
@@ -325,6 +328,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 		microFp += fp
 		microFn += fn
 	}
+
 	const microP = microTp / Math.max(microTp + microFp, 1)
 	const microR = microTp / Math.max(microTp + microFn, 1)
 	const microF1 = microP + microR > 0 ? (2 * microP * microR) / (microP + microR) : 0
@@ -378,21 +382,26 @@ async function main(): Promise<void> {
 					`default weights). got: model=${!!args.modelPath} tokenizer=${!!args.tokenizerPath} model-card=${!!args.modelCardPath}`
 			)
 		}
+
 		const card = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			ONNXRunner.create(args.modelPath),
 		])
+
 		// Anchor + gazetteer feed. DEFAULT-ON (the standard paths) so an anchor-trained model is scored
 		// in-distribution — see the DEFAULT_* note above for why omitting these silently collapses the
 		// admin tags. `--no-anchor` opts out; an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
 		// overrides the default path. The runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
+
 		const postcodeAnchorLookup =
 			anchorLookupPath && existsSync(anchorLookupPath)
 				? parseAnchorLookup(JSON.parse(readFileSync(anchorLookupPath, "utf8")))
 				: undefined
+
 		// Gazetteer-anchor lexicon (#464): fed so a gazetteer-trained model gets its clues. Harmless for
 		// older models (the runner skips inputs the ONNX lacks).
 		const gazetteerLexicon =
@@ -438,6 +447,7 @@ async function main(): Promise<void> {
 
 			continue
 		}
+
 		const preds: Array<Record<string, string>> = []
 		const t0 = performance.now()
 		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction
@@ -447,6 +457,7 @@ async function main(): Promise<void> {
 
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
+
 			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
 			// this battery historically fed NEITHER — so the gate scored a config production doesn't run.
@@ -460,6 +471,7 @@ async function main(): Promise<void> {
 				// MODEL's own case handling (the shim would mask any augment_upper_case_prob effect).
 				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
+
 			const pred = foldToComponents(decodeAsJSON(tree))
 			preds.push(pred)
 
@@ -473,6 +485,7 @@ async function main(): Promise<void> {
 				}
 			}
 		}
+
 		const rep = scoreFile(basename(file, ".jsonl"), rows, preds)
 		reports.push(rep)
 

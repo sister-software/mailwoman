@@ -17,6 +17,7 @@ describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {
 	it("carries the verbatim AMAS table size and the documented no-number exceptions", () => {
 		expect(AU_DELIVERY_SERVICE_DESIGNATORS).toHaveLength(14)
 		const noNumber = AU_DELIVERY_SERVICE_DESIGNATORS.filter((d) => !d.requiresNumber).map((d) => d.name)
+
 		// "With the exception of Care of Post Office, Community Mail Agent, Community Postal Agent,
 		// and Community Mail Bag, all Postal Delivery Types must have an associated number."
 		expect(noNumber.toSorted()).toEqual(
@@ -40,11 +41,13 @@ describe("matchAuDeliveryService", () => {
 	it("matches the current designators with ids", () => {
 		expect(matchAuDeliveryService("GPO Box 2890")).toMatchObject({ designator: "GPO BOX", id: "2890", legacy: false })
 		expect(matchAuDeliveryService("PO Box 112")).toMatchObject({ designator: "PO BOX", id: "112", legacy: false })
+
 		expect(matchAuDeliveryService("Locked Bag 1797")).toMatchObject({
 			designator: "LOCKED BAG",
 			id: "1797",
 			legacy: false,
 		})
+
 		expect(matchAuDeliveryService("Private Bag 7")).toMatchObject({ designator: "PRIVATE BAG", id: "7", legacy: false })
 	})
 

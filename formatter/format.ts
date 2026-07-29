@@ -251,6 +251,7 @@ export function formatFromClassificationMap(
 
 		if (classification === "unit" || classification === "level") {
 			unitParts.push(value)
+
 			continue
 		}
 

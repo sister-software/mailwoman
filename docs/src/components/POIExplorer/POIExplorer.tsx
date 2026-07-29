@@ -59,6 +59,7 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 
 			try {
 				const worker = await loadPOIWorker(sqljsBaseURL)
+
 				const hits = await searchPOICategory(worker, {
 					categoryID,
 					categoryIDs: overtureCategoryIDs,

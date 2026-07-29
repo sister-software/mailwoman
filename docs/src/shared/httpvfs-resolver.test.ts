@@ -36,8 +36,10 @@ function stubWorker(db: DatabaseSync) {
 }
 
 const openDbs: DatabaseSync[] = []
+
 function makeDB(withSideIndex: boolean): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
+
 	d.exec(`
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT);
 		INSERT INTO country_codes VALUES (1, 'US');
@@ -63,10 +65,12 @@ function makeDB(withSideIndex: boolean): DatabaseSync {
 			INSERT INTO postal_city_candidate VALUES ('antioch', '37013', 1, 'Nashville', 36.17, -86.78);
 		`)
 	}
+
 	openDbs.push(d)
 
 	return d
 }
+
 afterEach(() => {
 	while (openDbs.length) {
 		openDbs.pop()!.close()

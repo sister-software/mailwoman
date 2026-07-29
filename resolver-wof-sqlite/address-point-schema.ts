@@ -113,11 +113,13 @@ export async function createAddressPointIndexes(db: Kysely<AddressPointDatabase>
 		.on("address_point")
 		.columns(["postcode", "street_norm", "number"])
 		.execute()
+
 	await db.schema
 		.createIndex("idx_ap_locality")
 		.on("address_point")
 		.columns(["locality_norm", "street_norm", "number"])
 		.execute()
+
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
 	// Street-first index for the BBOX scope (#247): OSM points often carry no postcode/locality, so the
 	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon BETWEEN). The

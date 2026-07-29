@@ -37,6 +37,7 @@ export async function* takeInParallel<T, C extends (entry: T) => Promise<unknown
 
 		if (runningTasks.size >= batchSize) {
 			await Promise.race(runningTasks.values())
+
 			continue
 		}
 

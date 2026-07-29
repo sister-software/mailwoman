@@ -72,6 +72,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 			confidence: 0.95,
 			children,
 		})
+
 		const tree = (raw: string, roots: object[]) => ({ raw, roots }) as { roots: unknown[] }
 
 		test('locality "Brooklyn" alone → the borough', async () => {

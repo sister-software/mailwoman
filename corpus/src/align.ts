@@ -249,6 +249,7 @@ function locateSpan(args: {
 			if (isBoundaryAligned(haystack, idx, end)) return { start: idx, end }
 			intraWord ??= { start: idx, end }
 		}
+
 		from = idx + 1
 	}
 
@@ -317,9 +318,11 @@ function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan
 				} else {
 					assigned = `I-${s.tag}` as BIOLabel
 				}
+
 				break
 			}
 		}
+
 		out.push(assigned)
 	}
 

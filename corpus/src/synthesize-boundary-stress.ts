@@ -146,6 +146,7 @@ const MULTIWORD_STREETS = [
 	"Queens Gate",
 	"Princeton Junction",
 ] as const
+
 const SINGLE_STREETS = [
 	"Main",
 	"Oak",
@@ -187,6 +188,7 @@ const SINGLE_STREETS = [
 	"12th",
 	"42nd",
 ] as const
+
 const SUFFIXES = [
 	"St",
 	"Street",
@@ -219,6 +221,7 @@ const SUFFIXES = [
 	"Row",
 	"Walk",
 ] as const
+
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
 /**
@@ -241,6 +244,7 @@ const FR_PREFIXES = [
 	"Sentier",
 	"Promenade",
 ] as const
+
 const FR_NAMES = [
 	"Jean-Baptiste Lebas",
 	"Neuve-des-Capucines",
@@ -333,6 +337,7 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Chicago", region: "IL", postcode: "60625", country: "US" },
 	{ locality: "Springfield", region: "MA", postcode: "01108", country: "US" },
 ]
+
 /**
  * FR localities DERIVED from the FR (ban) shards specifically — where these famous cities are 95–99% locality-DOMINANT
  * (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-shard scan falsely flagged them
@@ -360,6 +365,7 @@ const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Brunoy", region: "", postcode: "91800", country: "FR" },
 	{ locality: "Rambouillet", region: "", postcode: "78120", country: "FR" },
 ]
+
 // NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"), and the base yielded
 // zero locality-dominant DE towns in the scan, so house-number-after-street is FR-only here. DE's
 // native-order number-after-street is covered by the dedicated synth-german shard.
@@ -415,6 +421,7 @@ export function synthesizeBoundaryStressRow(
 				template,
 			}
 		}
+
 		const withZip = random() < 0.5
 		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
 		// "United States" (United 98% / States 98% country in the base), NOT "USA" — the #511 lint found
@@ -480,6 +487,7 @@ export function synthesizeBoundaryStressRow(
 				template,
 			}
 		}
+
 		// house-number-after-street: "{name} {hn}, {postcode} {locality}" — number FOLLOWS the street.
 		const raw = `${name} ${hn}, ${b.postcode} ${b.locality}`
 
@@ -499,6 +507,7 @@ export function synthesizeBoundaryStressRow(
 	const name = random() < 0.7 ? pick(MULTIWORD_STREETS, random) : pick(SINGLE_STREETS, random)
 	const suffix = pick(SUFFIXES, random)
 	const streetCore = `${dir ? `${dir} ` : ""}${name} ${suffix}`
+
 	const components: CanonicalRow["components"] = {
 		house_number: hn,
 		...(dir ? { street_prefix: dir } : {}),
@@ -508,6 +517,7 @@ export function synthesizeBoundaryStressRow(
 		region: b.region,
 		postcode: b.postcode,
 	}
+
 	const raw =
 		template === "comma-less-city-state"
 			? // no commas anywhere — the segmentation cue is gone

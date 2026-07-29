@@ -116,6 +116,7 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 			`${c.ok ? "✓" : "✗"} ${c.check}${c.detail ? `: ${c.detail}` : ""}`
 		)
 	)
+
 	const summary =
 		verdict === undefined
 			? null

@@ -58,6 +58,7 @@ describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
 						existing,
 						`family "${family}": variant "${variant}" claimed by both "${existing}" and "${row.code}"`
 					).toBeUndefined()
+
 					seen.set(key, row.code)
 				}
 			}

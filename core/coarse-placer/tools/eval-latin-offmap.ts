@@ -90,6 +90,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	} else {
 		weights = new Float32Array(ab)
 	}
+
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
 	const rows: OffMapRow[] = readFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), "utf8")
@@ -108,16 +109,20 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	for (const r of rows) {
 		const p = placer.predict(r.raw)
 		const h = handled(p)
+
 		n++
 
 		if (h) {
 			ok++
 		}
+
 		bump(`group:${r.group}`).n++
+
 		bump(`cc:${r.srcCountry}`).n++
 
 		if (h) {
 			bump(`group:${r.group}`).ok++
+
 			bump(`cc:${r.srcCountry}`).ok++
 		} else {
 			missTo[p.country!] = (missTo[p.country!] ?? 0) + 1
@@ -145,6 +150,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 		.toSorted()) {
 		console.log(`    ${k.slice(3).padEnd(4)} ${formatPercent(by[k]!.ok, by[k]!.n)} (n=${by[k]!.n})`)
 	}
+
 	const misses = Object.entries(missTo).toSorted((a, b) => b[1] - a[1])
 
 	if (misses.length) {

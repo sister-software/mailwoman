@@ -56,6 +56,7 @@ function tokenizeWords(input: string): Array<{ text: string; start: number; end:
 
 		while (i < input.length && /\s/.test(input[i])) {
 			ws += input[i]
+
 			i++
 		}
 
@@ -67,6 +68,7 @@ function tokenizeWords(input: string): Array<{ text: string; start: number; end:
 		while (i < input.length && !/\s/.test(input[i])) {
 			i++
 		}
+
 		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
 	}
 
@@ -102,6 +104,7 @@ function assignBIOLabels(
 				best = s
 			}
 		}
+
 		owner[w] = best
 	}
 
@@ -113,8 +116,10 @@ function assignBIOLabels(
 
 		if (spanIdx === -1) {
 			result.push({ text: words[w].text, whitespace: words[w].whitespace, label: "O", tag: null })
+
 			continue
 		}
+
 		const span = spans[spanIdx]
 		// Check if this is the first word of this span (B) or continuation (I).
 		const isFirst = w === 0 || owner[w - 1] !== spanIdx

@@ -25,10 +25,13 @@ describe("AU_LEVEL_DESIGNATORS", () => {
 		const numbered = AU_LEVEL_DESIGNATORS.filter((r) => r.requiresNumber)
 			.map((r) => r.code)
 			.toSorted()
+
 		expect(numbered).toEqual(["B", "L", "P"].toSorted())
+
 		const standalone = AU_LEVEL_DESIGNATORS.filter((r) => !r.requiresNumber)
 			.map((r) => r.code)
 			.toSorted()
+
 		expect(standalone).toEqual(["G", "LG", "M", "OD", "RT", "UG"].toSorted())
 	})
 

@@ -21,6 +21,7 @@ function linkForce(src: string, dest: string): void {
 	if (existsSync(tmp)) {
 		unlinkSync(tmp)
 	}
+
 	symlinkSync(src, tmp)
 	renameSync(tmp, dest)
 }
@@ -30,11 +31,13 @@ function linkForce(src: string, dest: string): void {
  */
 const SRC_MODEL =
 	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
+
 /**
  * Tokenizer actually linked — the environment override if set, otherwise the card's default.
  */
 const SRC_TOKENIZER =
 	$public.MAILWOMAN_DEV_TOKENIZER || dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
+
 /**
  * Where `model.onnx` is linked. `@mailwoman/neural` auto-resolves this path.
  */
@@ -85,6 +88,7 @@ for (const [src, name] of [
 
 		continue
 	}
+
 	const dest = resolve(PKG_DIR, name)
 	linkForce(src, dest)
 

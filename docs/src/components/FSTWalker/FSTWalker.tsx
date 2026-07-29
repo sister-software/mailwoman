@@ -184,8 +184,10 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 			if (!prev) {
 				// Previous token already broke the path — all subsequent steps are null
 				steps.push({ token: tokens[i]!, result: null, isFirst: false })
+
 				continue
 			}
+
 			const nextResult = fstMatcher.walkFrom(prev, tokens[i]!)
 			steps.push({ token: tokens[i]!, result: nextResult, isFirst: false })
 		}
@@ -214,6 +216,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 		for (let i = walkSteps.length - 1; i >= 0; i--) {
 			if (walkSteps[i]!.result) {
 				lastValidStep = walkSteps[i]!
+
 				break
 			}
 		}

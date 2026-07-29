@@ -201,6 +201,7 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 			}
 		}
 	}
+
 	const out: Record<string, number> = {}
 
 	for (const t of TAGS) {
@@ -259,6 +260,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				// trips the gate (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
 				overrides: { ...tierOverrides, conventions: false },
 			})
+
 			const off = await perTagF1(offScorer, rows)
 
 			// mask-ON: conventions in `auto` mode (reads the model's locale head → applies the detected
@@ -272,6 +274,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				strict: true,
 				overrides: { ...tierOverrides, conventions: "auto" },
 			})
+
 			const on = await perTagF1(onScorer, rows)
 
 			const perTag: Record<string, TagCapability> = {}
@@ -287,8 +290,10 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				if (FORBIDDEN_TAGS.has(t)) {
 					cap.maskOnF1 = on[t]!
 				}
+
 				perTag[t] = cap
 			}
+
 			capabilities[tier]![spec.system] = perTag
 
 			// Diagnostic: surface the forbidden-tag deltas (the decisive rows).
@@ -324,6 +329,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		anchorLookup: options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json")),
 		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 	}
+
 	const WRITE = options.write ?? false
 
 	const capabilities = await buildManifest(paths)
@@ -358,10 +364,12 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 					`(the surgical insert appends; it does not replace).`
 			)
 		}
+
 		const block = JSON.stringify(capabilities, null, "\t")
 			.split("\n")
 			.map((line) => "\t" + line)
 			.join("\n")
+
 		const before = original.slice(0, lastBrace).replace(/\s*$/, "")
 		const after = original.slice(lastBrace) // the final "}\n"
 		writeFileSync(paths.modelCard, `${before},\n\t"capabilities": ${block.trimStart()}\n${after}`)

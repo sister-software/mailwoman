@@ -242,6 +242,7 @@ export function assertBaselines(observations: BaselineObservation[]): BaselineVe
 
 		if (!baseline) {
 			violations.push({ id: observation.id, kind: "unregistered", observed: observation.observed })
+
 			continue
 		}
 
@@ -320,6 +321,7 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 				`      mailwoman/eval-harness/baselines.json (commit + command + note required).`,
 				""
 			)
+
 			continue
 		}
 

@@ -22,9 +22,11 @@ import { WOFPostcodeLookup } from "./postcode-point-lookup.ts"
  */
 function seedShard(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, latitude REAL, longitude REAL, is_current INTEGER)`
 	)
+
 	const ins = db.prepare(
 		`INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
@@ -32,6 +34,7 @@ function seedShard(path: string, rows: Array<[number, string, string, string, nu
 	for (const r of rows) {
 		ins.run(...r)
 	}
+
 	db.close()
 }
 
@@ -42,6 +45,7 @@ beforeAll(() => {
 	dir = mkdtempSync(join(tmpdir(), "mailwoman-pc-lookup-"))
 	const intl = join(dir, "postalcode-intl.db")
 	const us = join(dir, "postalcode-us.db")
+
 	seedShard(intl, [
 		[1, "75008", "postalcode", "FR", 48.873, 2.313, 1],
 		[2, "18540", "postalcode", "DE", 53.093, 14.259, 1], // backfilled centroid
@@ -49,10 +53,12 @@ beforeAll(() => {
 		[4, "13579", "postalcode", "FR", 1, 1, 0], // not current → filtered
 		[5, "Zippendorf", "postalcode", "DE", 0, 0, 0], // deprecated place-name junk → filtered
 	])
+
 	seedShard(us, [
 		[10, "75008", "postalcode", "US", 35.9, -90.7, 1], // collides with FR 75008
 		[11, "94105", "postalcode", "US", 37.789, -122.396, 1],
 	])
+
 	lookup = new WOFPostcodeLookup([intl, us])
 })
 
@@ -83,6 +89,7 @@ describe("WOFPostcodeLookup", () => {
 			.lookup("75008")
 			.map((p) => p.country)
 			.toSorted()
+
 		expect(countries).toEqual(["FR", "US"])
 	})
 })

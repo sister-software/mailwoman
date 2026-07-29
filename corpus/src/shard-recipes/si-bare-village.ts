@@ -48,10 +48,13 @@ export const siBareVillageRecipe: ShardRecipe = {
 
 			if (!village || !number || !postcode) {
 				skipped++
+
 				continue
 			}
+
 			const order = read % 3
 			let raw: string
+
 			const components: Record<string, string> = {
 				street: village,
 				house_number: number,
@@ -67,7 +70,9 @@ export const siBareVillageRecipe: ShardRecipe = {
 				components.postcode = postcode
 				raw = `${postcode} ${village}, ${village} ${number}`
 			}
+
 			const source_id = shardSourceID("synth-si-bare-village", { ...components, o: String(order), v: String(read) })
+
 			const canonical = {
 				raw,
 				components,

@@ -120,6 +120,7 @@ async function main() {
 
 		const r =
 			await $`node scripts/eval/harness-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
+
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
 
 		console.log(r.stdout.split("\n").slice(-40).join("\n"))

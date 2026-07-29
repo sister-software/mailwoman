@@ -167,6 +167,7 @@ function iec(bytes: number): string {
 
 	while (value >= BYTES_PER_KIB && i < units.length - 1) {
 		value /= 1024
+
 		i++
 	}
 
@@ -203,7 +204,9 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 
 			if (recordedSha && existingSha === recordedSha) {
 				report?.(`  → already present + sha matches — skipping`)
+
 				skipped++
+
 				continue
 			}
 
@@ -222,8 +225,10 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			})
 		} catch (error) {
 			report?.(`  ✗ download failed: ${url} (${(error as Error).message})`)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
 
@@ -233,8 +238,10 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		if (gzSize < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${gzSize} bytes) — probable 404 / error page`)
 			await unlink(gzFile)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
 
@@ -244,16 +251,21 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		} catch (error) {
 			report?.(`  ✗ decompress failed: ${(error as Error).message}`)
 			await unlink(gzFile)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
+
 		await unlink(gzFile)
 
 		if (!existsSync(csvFile)) {
 			report?.(`  ✗ decompressed file not found at ${csvFile}`)
+
 			failed++
 			failedCodes.push(code)
+
 			continue
 		}
 
@@ -270,6 +282,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		})
 
 		report?.(`  ✓ ${iec(bytes)}  sha256=${sha}`)
+
 		fetched++
 
 		// Be a polite citizen — short pause between requests.
@@ -280,6 +293,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 	const sorted = [...entries.values()].toSorted((a, b) =>
 		a.dept_code < b.dept_code ? -1 : a.dept_code > b.dept_code ? 1 : 0
 	)
+
 	await writeManifest(manifestPath, sorted)
 	report?.(`Wrote ${manifestPath} with ${sorted.length} entries.`)
 

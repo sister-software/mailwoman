@@ -19,9 +19,11 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	const shardPath = join(dir, "postalcode-tl.db")
 	const shard = new DatabaseSync(shardPath)
 	await createUnifiedSchema(shard)
+
 	const ins = shard.prepare(
 		"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)"
 	)
+
 	ins.run(100, 9, "1000", "postalcode", "TL", 0, 0) // placeholder → should fill from parent 9
 	ins.run(101, 9, "2000", "postalcode", "TL", 5.5, 6.5) // real coordinate → must be untouched
 	shard.close()
@@ -30,11 +32,13 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	const adminPath = join(dir, "admin.db")
 	const admin = new DatabaseSync(adminPath)
 	await createUnifiedSchema(admin)
+
 	admin
 		.prepare(
 			"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (9, -1, 'Testtown', 'locality', 'TL', 1.25, 2.5, 1, 2, 1.5, 3, 1, 0, 0, 0, 0, 0)"
 		)
 		.run()
+
 	admin.close()
 
 	const db = new DatabaseSync(shardPath)
@@ -47,11 +51,14 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 		latitude: number
 		longitude: number
 	}
+
 	expect(filled).toEqual({ latitude: 1.25, longitude: 2.5 })
+
 	const untouched = db.prepare("SELECT latitude, longitude FROM spr WHERE id = 101").get() as {
 		latitude: number
 		longitude: number
 	}
+
 	expect(untouched).toEqual({ latitude: 5.5, longitude: 6.5 })
 	db.close()
 })

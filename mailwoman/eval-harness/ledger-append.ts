@@ -129,6 +129,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		const failing = Object.entries(verdict.results)
 			.filter(([, r]) => !r.pass)
 			.map(([k]) => k)
+
 		const unexcepted = failing.filter((k) => !exceptions.includes(k))
 
 		if (unexcepted.length) {
@@ -141,6 +142,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 
 			return 1
 		}
+
 		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): ${failing.join(", ")}.`
 
 		console.error(`! ledgering a FAIL verdict under operator exception: ${failing.join(", ")}`)
@@ -177,6 +179,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 
 			continue
 		}
+
 		const [group, name] = mapped
 		metrics[group] ??= {}
 		metrics[group][name] = entry.actual
@@ -217,6 +220,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 	if (dup !== -1) {
 		ledger.runs.splice(dup, 1)
 	}
+
 	ledger.runs.push(row as never)
 
 	const tmp = `${ledgerPath}.tmp`

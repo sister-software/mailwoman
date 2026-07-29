@@ -56,6 +56,7 @@ export interface GoldSetSampleOptions {
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const STOP = new Set([
 	"llc",
 	"inc",
@@ -73,6 +74,7 @@ const STOP = new Set([
 	"of",
 	"and",
 ])
+
 function orgTokens(s: string): Set<string> {
 	return new Set(
 		s
@@ -82,6 +84,7 @@ function orgTokens(s: string): Set<string> {
 			.filter((t) => t && !STOP.has(t))
 	)
 }
+
 function jaccard(a: Set<string>, b: Set<string>): number {
 	if (!a.size || !b.size) return 0
 	let inter = 0
@@ -93,6 +96,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 	return inter / (a.size + b.size - inter)
 }
+
 const C = {
 	npi: "NPI",
 	entityType: "Entity Type Code",
@@ -151,6 +155,7 @@ export async function goldSetSample(
 		const addrKey = addressFrequencyKey(address)
 
 		if (!addrKey) continue
+
 		const p: Prov = {
 			npi: norm(r[C.npi]),
 			org,
@@ -165,11 +170,14 @@ export async function goldSetSample(
 		if (!byAddr.has(addrKey)) {
 			byAddr.set(addrKey, [])
 		}
+
 		byAddr.get(addrKey)!.push(p)
+
 		kept++
 
 		if (kept >= CAP) break
 	}
+
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
 	// Hard pairs: co-located, name-similar (≥τ), DISTINCT NPIs that programmatic truth can't confidently
@@ -196,6 +204,7 @@ export async function goldSetSample(
 			if (!distinct.has(p.npi)) {
 				distinct.set(p.npi, p)
 			}
+
 		const list = [...distinct.values()]
 
 		if (list.length < 2) continue
@@ -212,6 +221,7 @@ export async function goldSetSample(
 				if (sameParent) continue // programmatic truth already collapses these — not the hard slice
 				const sameAuth = a.auth !== "" && a.auth === b.auth
 				const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
+
 				hard.push({
 					npiA: a.npi,
 					npiB: b.npi,
@@ -231,6 +241,7 @@ export async function goldSetSample(
 			}
 		}
 	}
+
 	report?.(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)
 
 	// Deterministic spread sample of N (stride, not head — avoid file-order bias, the dedup-ceiling lesson).

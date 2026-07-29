@@ -31,6 +31,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 				}
 			},
 		})
+
 		matcher = built.matcher
 	}, 60_000)
 
@@ -93,6 +94,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		lat: 0,
 		lon: 0,
 	})
+
 	const matcher = new FSTMatcher([
 		{
 			edges: new Map([
@@ -168,6 +170,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 			},
 			{ edges: new Map(), places: [place(200, "Gotham", "locality", 0.9)] },
 		])
+
 		const r = autocomplete(dense, "go", { maxSuggestions: 3 })
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})

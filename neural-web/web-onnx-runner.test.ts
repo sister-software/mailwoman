@@ -41,6 +41,7 @@ function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPa
 		return null
 	}
 }
+
 const weights = probeWeights()
 const haveWeights = weights !== null
 
@@ -65,10 +66,12 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 
 	test("classifier.parse() works with a WebONNXRunner injected", async () => {
 		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),
 			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
+
 		// Thread the trained label vocabulary from the model card, same as loadFromWeights — the
 		// dev-linked weights are a Stage 3 bundle whose emission width exceeds the compile-time
 		// STAGE2_BIO_LABELS default.

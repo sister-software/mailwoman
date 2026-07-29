@@ -193,6 +193,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		pos += 4
 		strOffset += encoded.length
 	}
+
 	buf.writeUInt32LE(strOffset, pos)
 	pos += 4
 
@@ -224,6 +225,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			const ep = edgeTableStart + edgeIdx * EDGE_ENTRY_SIZE
 			buf.writeUInt32LE(intern(token), ep)
 			buf.writeUInt32LE(target, ep + 4)
+
 			edgeIdx++
 		}
 
@@ -246,6 +248,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			for (let ci = 0; ci < MAX_CHAIN_LEN; ci++) {
 				buf.writeUInt32LE(ci < chainLen ? validChain[ci]! : 0, pp + 24 + ci * 4)
 			}
+
 			placeIdx++
 		}
 	}
@@ -286,6 +289,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		strOffsets[i] = buf.readUInt32LE(pos)
 		pos += 4
 	}
+
 	const strDataStart = pos
 	const strings: string[] = new Array(stringCount)
 
@@ -294,6 +298,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const end = strDataStart + strOffsets[i + 1]!
 		strings[i] = buf.toString("utf8", start, end)
 	}
+
 	pos += stringBytes
 
 	// --- State table ---
@@ -308,8 +313,10 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = buf.readUInt32LE(sp)
 		const placeStart = buf.readUInt32LE(sp + 4)
+
 		const edgeCountForState =
 			version >= VERSION_WIDE_STATE_COUNTERS ? buf.readUInt32LE(sp + 8) : buf.readUInt16LE(sp + 8)
+
 		const placeCountForState =
 			version >= VERSION_WIDE_STATE_COUNTERS ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
 
@@ -332,9 +339,11 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
+
 			const rawImportance = isV2
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
+
 			places[pi] = {
 				wofID: buf.readUInt32LE(pp),
 				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",

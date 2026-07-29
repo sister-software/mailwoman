@@ -52,15 +52,19 @@ function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): 
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
+
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
 			min_latitude, max_latitude, min_longitude, max_longitude, is_current, is_deprecated)
 		VALUES (?, NULL, ?, 'locality', ?, 60, 22, 59.5, 60.5, 21.5, 22.5, -1, 0)
 	`)
+
 	const insertName = opts?.omitOfficialColumn
 		? db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 		: db.prepare(`INSERT INTO names (id, language, name, official) VALUES (?, ?, ?, ?)`)
+
 	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
+
 	const run = (id: number, language: string, name: string, official: number): void => {
 		if (opts?.omitOfficialColumn) {
 			insertName.run(id, language, name)
@@ -124,6 +128,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 			{ database: buildDB(TURKU_ABO), buildFTS: true },
 			{ officialNameExact: true, officialNameExactFloor: 500_000 }
 		)
+
 		const results = await lookup.findPlace({ text: "Åbo", placetype: "locality" })
 
 		expect(results[0]!.id).toBe(1)
@@ -140,6 +145,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 			},
 			FLAG_ON
 		)
+
 		const results = await lookup.findPlace({ text: "Paris", placetype: "locality" })
 
 		expect(results[0]!.id).toBe(10)
@@ -156,6 +162,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 			},
 			FLAG_ON
 		)
+
 		const results = await lookup.findPlace({ text: "Córdoba", placetype: "locality" })
 
 		expect(results[0]!.id).toBe(20)
@@ -166,6 +173,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 			{ database: buildDB(TURKU_ABO, { omitOfficialColumn: true }), buildFTS: true },
 			FLAG_ON
 		)
+
 		const results = await lookup.findPlace({ text: "Åbo", placetype: "locality" })
 
 		expect(results[0]!.id).toBe(1)

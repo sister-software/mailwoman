@@ -129,6 +129,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const nodes = flatten(tree.roots as never)
 		const hn = tagText(nodes, "house_number")
 		const pc = tagText(nodes, "postcode")
@@ -148,6 +149,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 		} else {
 			bucket.misses.push({ ...fixture, got: fixture.expect_no_house_number ? `hn=${hn} pc=${pc}` : hn })
 		}
+
 		tally.set(fixture.klass, bucket)
 	}
 

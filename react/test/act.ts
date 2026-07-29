@@ -124,8 +124,10 @@ async function actWaitFor<T>(
 			// still yields a microtask, and a component promise queued behind it would fire setState in
 			// that gap — outside act. None of this suite's callbacks are async, so the sync path is the norm.
 			const result = callback()
+
 			const isThenable =
 				result !== null && typeof result === "object" && typeof (result as { then?: unknown }).then === "function"
+
 			const value = isThenable ? await (result as Promise<T>) : (result as T)
 
 			// The condition is met, but an intermediate assertion (wait for X while Y is still resolving —

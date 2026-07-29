@@ -84,6 +84,7 @@ const CATEGORY_COLOR: Record<string, string> = {
 	other: "#b15928", // brown
 	multi: "#9e9e9e", // grey
 }
+
 const CATEGORY_LABEL: Record<string, string> = {
 	white: "White (non-Hispanic)",
 	black: "Black (non-Hispanic)",
@@ -119,6 +120,7 @@ export async function raceDotsMap(
 	for (const [cat, color] of Object.entries(CATEGORY_COLOR)) {
 		colorMatch.push(cat, color)
 	}
+
 	colorMatch.push("#9e9e9e")
 
 	const style = {

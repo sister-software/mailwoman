@@ -143,6 +143,7 @@ describe("buildPlacetypePairPriors — absence cases", () => {
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls.length).toBeGreaterThan(0) // it DID probe — just never hit
 	})
 })
@@ -157,6 +158,7 @@ describe("buildPlacetypePairPriors — window-key fold (space-join, not concaten
 		const tokenizer = await MailwomanTokenizer.loadFromFile(
 			repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 		)
+
 		const { pieces } = tokenizer.encode("St Helens Lancashire")
 		const index = mockPairIndex({ "st helens|lancashire": "dependent_locality" }, 6)
 
@@ -204,6 +206,7 @@ describe("buildPlacetypePairPriors — matrix-cell exactness", () => {
 			pieces,
 			LABELS
 		)
+
 		const { matrix: b } = buildPlacetypePairPriors(
 			{ index: withoutDelta, biasScale: 2.5, probeMode: "window" },
 			pieces,
@@ -284,6 +287,7 @@ describe("buildPlacetypePairPriors — dual-key probe (hyphen/space cross-form)"
 		const tokenizer = await MailwomanTokenizer.loadFromFile(
 			repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 		)
+
 		const { pieces } = tokenizer.encode("Fishburn Stockton-on-Tees")
 		const index = mockPairIndex({ "fishburn|stocktonontees": "dependent_locality" }, 6)
 		const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
@@ -377,6 +381,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 	const REAL_BUILDER_ENTRIES: PairIndexEntry[] = [
 		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality" },
 	]
+
 	const REAL_HEADER: PairIndexHeader = {
 		country: "gb",
 		delta: 6,
@@ -435,6 +440,7 @@ describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		// Prove it structurally: "queens park" (the census's actual child key) was never even attempted as a
 		// probe key — only the whole-segment folds ("queens park academy" / "queensparkacademy") were.
 		expect(index.calls.some(([child]) => child === "queens park")).toBe(false)
@@ -542,6 +548,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		const armed = mockPairIndex(entries, 6, undefined, "gb")
 		const disabled = mockPairIndex(entries, 6)
 		const armedResult = buildPlacetypePairPriors({ index: armed, inputText: text }, makePiecesWithCommas(text), LABELS)
+
 		const baseResult = buildPlacetypePairPriors(
 			{ index: disabled, inputText: text },
 			makePiecesWithCommas(text),
@@ -567,6 +574,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls.some(([child]) => child === "5026")).toBe(true)
 		expect(index.calls.some(([child, parent]) => child === "" || parent === "")).toBe(false)
 	})
@@ -597,6 +605,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls).toContainEqual(["plimmerton", "porirua 5026"])
 		expect(index.calls).not.toContainEqual(["plimmerton", "porirua"])
 	})
@@ -630,6 +639,7 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls.some(([child]) => child === "fishburn")).toBe(false)
 	})
 
@@ -645,6 +655,7 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls.some(([child]) => child === "fishburn")).toBe(false)
 	})
 })
@@ -722,6 +733,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		for (const i of [0, 1, 2, 4, 5, 6, 7, 8]) {
 			expect(matrix[i]!.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls).toContainEqual(["fishburn", "stockton on tees"])
 	})
 
@@ -755,6 +767,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		const hitAuto = mockPairIndex(hitEntries, 6)
 		const hitSegment = mockPairIndex(hitEntries, 6)
 		const { matrix: autoMatrix } = buildPlacetypePairPriors({ index: hitAuto, inputText: hitText }, hitPieces, LABELS)
+
 		const { matrix: segmentMatrix } = buildPlacetypePairPriors(
 			{ index: hitSegment, probeMode: "segment", inputText: hitText },
 			hitPieces,
@@ -772,11 +785,13 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		const venuePieces = makePiecesWithCommas(venueText)
 		const venueAuto = mockPairIndex(venueEntries, 6)
 		const venueSegment = mockPairIndex(venueEntries, 6)
+
 		const { matrix: venueAutoMatrix } = buildPlacetypePairPriors(
 			{ index: venueAuto, inputText: venueText },
 			venuePieces,
 			LABELS
 		)
+
 		const { matrix: venueSegmentMatrix } = buildPlacetypePairPriors(
 			{ index: venueSegment, probeMode: "segment", inputText: venueText },
 			venuePieces,
@@ -788,6 +803,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		for (const row of venueAutoMatrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(venueAuto.calls).toEqual(venueSegment.calls)
 	})
 
@@ -814,6 +830,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 			{ "cadbury|yeovil": "dependent_locality", "north cadbury|yeovil": "dependent_locality" },
 			6
 		)
+
 		const text = "North Cadbury Yeovil"
 		const pieces = makePieces(text) // 0=north 1=cadbury 2=yeovil
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
@@ -838,6 +855,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		for (const i of [1, 2, 3]) {
 			expect(matrix[i]![labelCol("I-dependent_locality")]).toBe(6)
 		}
+
 		expect(matrix[4]!.every((v) => v === 0)).toBe(true)
 	})
 
@@ -852,6 +870,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
+
 		expect(index.calls.some(([child]) => child === "church")).toBe(false)
 	})
 
@@ -985,34 +1004,41 @@ describe("buildPlacetypePairPriors — probeTrace (which chain leg fired)", () =
 
 		const segmentTrace: PlacetypePairProbeTrace = {}
 		const commaText = "Moelfre, Abergele"
+
 		buildPlacetypePairPriors(
 			{ index: mockPairIndex(entries, 6), inputText: commaText, probeTrace: segmentTrace },
 			makePiecesWithCommas(commaText),
 			LABELS
 		)
+
 		expect(segmentTrace.firedPath).toBe("segment")
 
 		const anchoredTrace: PlacetypePairProbeTrace = {}
 		const bareText = "Moelfre Abergele"
+
 		buildPlacetypePairPriors(
 			{ index: mockPairIndex(entries, 6), inputText: bareText, probeTrace: anchoredTrace },
 			makePieces(bareText),
 			LABELS
 		)
+
 		expect(anchoredTrace.firedPath).toBe("anchored")
 
 		const missTrace: PlacetypePairProbeTrace = {}
 		const missText = "Totally Unrelated Words"
+
 		buildPlacetypePairPriors(
 			{ index: mockPairIndex(entries, 6), inputText: missText, probeTrace: missTrace },
 			makePieces(missText),
 			LABELS
 		)
+
 		expect(missTrace.firedPath).toBeUndefined()
 	})
 
 	it('records "window" when the opt-in window mode produced the bias', () => {
 		const windowTrace: PlacetypePairProbeTrace = {}
+
 		buildPlacetypePairPriors(
 			{
 				index: mockPairIndex({ "shoreditch|london": "dependent_locality" }, 6),
@@ -1022,6 +1048,7 @@ describe("buildPlacetypePairPriors — probeTrace (which chain leg fired)", () =
 			makePieces("Shoreditch London"),
 			LABELS
 		)
+
 		expect(windowTrace.firedPath).toBe("window")
 	})
 })
@@ -1045,6 +1072,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		const text = "Bryn Caergwrle Wrexham"
 		const pieces = makePieces(text)
 		const trace: PlacetypePairProbeTrace = {}
+
 		const { transitionAdjustments } = buildPlacetypePairPriors(
 			{ index, inputText: text, probeTrace: trace },
 			pieces,
@@ -1064,6 +1092,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 			pieces,
 			LABELS
 		)
+
 		const withoutBeta = buildPlacetypePairPriors(
 			{ index: mockPairIndex({ "moelfre|abergele": "dependent_locality" }, 10), inputText: text },
 			pieces,
@@ -1097,6 +1126,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		const text = "New Inn at Hoff Appleby"
 		const pieces = makePieces(text)
 		const trace: PlacetypePairProbeTrace = {}
+
 		const { matrix, transitionAdjustments } = buildPlacetypePairPriors(
 			{ index, inputText: text, probeTrace: trace },
 			pieces,
@@ -1157,6 +1187,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 			10,
 			5
 		)
+
 		const { transitionAdjustments } = buildPlacetypePairPriors(
 			{ index, probeMode: "window" },
 			makePieces("Shoreditch East London"),

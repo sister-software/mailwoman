@@ -63,11 +63,13 @@ function mockSession(
 ) {
 	const numLabels = opts.numLabels ?? 3
 	const runCalls: Array<Record<string, FedTensor>> = []
+
 	const session = {
 		inputNames,
 		runCalls,
 		run: vi.fn((feeds: Record<string, FedTensor>) => {
 			runCalls.push(feeds)
+
 			const output: Record<string, { data: Float32Array; dims: number[] }> = {
 				logits: { data: new Float32Array(SEQ * numLabels), dims: [1, SEQ, numLabels] },
 			}
@@ -86,6 +88,7 @@ function mockSession(
 			return Promise.resolve(output)
 		}),
 	}
+
 	sessionCreateMock.mockResolvedValue(session)
 
 	return session
@@ -105,6 +108,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"gazetteer_features",
 			"gazetteer_confidence",
 		])
+
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		// Pre-fix this rejected with ORT's `input 'gazetteer_features' is missing in 'feeds'`.
@@ -112,6 +116,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(result.logits).toHaveLength(3)
 
 		const feeds = session.runCalls[0]!
+
 		expect(Object.keys(feeds).toSorted()).toEqual([
 			"anchor_confidence",
 			"anchor_features",
@@ -120,6 +125,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"gazetteer_features",
 			"input_ids",
 		])
+
 		expect(feeds.gazetteer_features!.dims).toEqual([1, SEQ, GAZETTEER_FEATURE_DIM])
 		expect(feeds.gazetteer_confidence!.dims).toEqual([1, SEQ])
 		expect(feeds.anchor_features!.dims).toEqual([1, SEQ, ANCHOR_FEATURE_DIM])
@@ -138,10 +144,12 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"gazetteer_features",
 			"gazetteer_confidence",
 		])
+
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		const gazRow = [1, 0, 1, 0, 0] // country + po_box bits, lexicon featureDim = 5
 		const anchorRow = Array.from({ length: ANCHOR_FEATURE_DIM }, (_, i) => (i === 0 ? 0.9 : 0))
+
 		await runner.infer(
 			[5, 6],
 			{ features: [anchorRow, anchorRow.map(() => 0)], confidence: [0.9, 0] },
@@ -187,6 +195,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 			"country_features",
 			"country_confidence",
 		])
+
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
 		// Pre-wiring this rejected with ORT's `input 'country_features' is missing in 'feeds'` (the v263 browser break).
@@ -204,7 +213,9 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		const session = mockSession(["input_ids", "attention_mask", "country_features", "country_confidence"])
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
-		const countryRow = [1, 0] // [country_surface, country_ambiguous], featureDim = 2
+		const countryRow = [1, 0]
+
+		// [country_surface, country_ambiguous], featureDim = 2
 		await runner.infer([5, 6], undefined, undefined, {
 			features: [countryRow, countryRow.map(() => 0)],
 			confidence: [1, 0],
@@ -250,6 +261,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 				}
 			}
 		}
+
 		mockSession(["input_ids", "attention_mask"], { spanScores: flat, spanDims: [1, SEQ, L, T] })
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
@@ -292,9 +304,11 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 describe("defaultGazetteerLexiconURL", () => {
 	test("derives the sibling anchor-lexicon-v1.json beside the model URL", async () => {
 		const { defaultGazetteerLexiconURL } = await import("./loader.ts")
+
 		expect(defaultGazetteerLexiconURL("https://public.sister.software/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
 			"https://public.sister.software/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
 		)
+
 		// Relative URLs stay relative.
 		expect(defaultGazetteerLexiconURL("/static/mailwoman/model.onnx")).toBe("/static/mailwoman/anchor-lexicon-v1.json")
 	})
@@ -303,9 +317,11 @@ describe("defaultGazetteerLexiconURL", () => {
 describe("defaultCountryLexiconURL", () => {
 	test("derives the sibling country-surface-lexicon-v1.json beside the model URL", async () => {
 		const { defaultCountryLexiconURL } = await import("./loader.ts")
+
 		expect(defaultCountryLexiconURL("https://public.sister.software/mailwoman/en-us/v6.2.0/model.onnx")).toBe(
 			"https://public.sister.software/mailwoman/en-us/v6.2.0/country-surface-lexicon-v1.json"
 		)
+
 		expect(defaultCountryLexiconURL("/static/mailwoman/model.onnx")).toBe(
 			"/static/mailwoman/country-surface-lexicon-v1.json"
 		)
@@ -344,10 +360,13 @@ describe("cross-runner parity (#727 span read)", () => {
 				for (let ty = 0; ty < T; ty++) {
 					row.push(flat[(t * L + l) * T + ty]!)
 				}
+
 				perLength.push(row)
 			}
+
 			expected.push(perLength)
 		}
+
 		expect(webResult.spanScores).toEqual(expected)
 	})
 })

@@ -62,6 +62,7 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 			vec[i]! /= total
 		}
 	}
+
 	vec[LOCALE_ORDER.length] = Math.max(-1, Math.min(1, lat / 90))
 	vec[LOCALE_ORDER.length + 1] = Math.max(-1, Math.min(1, lon / 180))
 
@@ -123,6 +124,7 @@ export function buildAnchorFeatures(
 						features[i] = vec
 						confidence[i] = 1
 					}
+
 					break // first non-whitespace char of the piece decides (mirrors realign_anchor_to_pieces)
 				}
 			}

@@ -139,6 +139,7 @@ describe("postal-compound recovery (#942)", () => {
 		const resolver = createWOFResolver(makeBackend())
 		// "Neznano" is not in the gazetteer — the locality rescue misses, so the floor fires.
 		const raw = "Neznano 7, 1382 Neznano"
+
 		const tree: AddressTree = {
 			raw,
 			roots: [
@@ -147,6 +148,7 @@ describe("postal-compound recovery (#942)", () => {
 				node({ tag: "postcode", value: "1382 Neznano", start: 11, end: 23 }),
 			],
 		}
+
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
@@ -157,10 +159,12 @@ describe("postal-compound recovery (#942)", () => {
 
 	it("flag ON: never disturbs a resolved tree (the #685 brake)", async () => {
 		const resolver = createWOFResolver(makeBackend())
+
 		const tree: AddressTree = {
 			raw: "Kožljek, Slovenia",
 			roots: [node({ tag: "locality", value: "Kožljek", start: 0, end: 7 })],
 		}
+
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
@@ -172,6 +176,7 @@ describe("postal-compound recovery (#942)", () => {
 		// A street-only failing parse: the street token equals a real place name, but street blocking
 		// must keep it out of recovery even with the flag on.
 		const resolver = createWOFResolver(makeBackend())
+
 		const tree: AddressTree = {
 			raw: "Kožljek 7",
 			roots: [
@@ -179,6 +184,7 @@ describe("postal-compound recovery (#942)", () => {
 				node({ tag: "house_number", value: "7", start: 8, end: 9 }),
 			],
 		}
+
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
@@ -218,6 +224,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 		const resolver = createWOFResolver(
 			makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
 		)
+
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
 
 		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID)).toHaveLength(0)
@@ -225,6 +232,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 
 	it("never cross-promotes without a postcode present (no ungated wandering)", async () => {
 		const resolver = createWOFResolver(makeBackend())
+
 		const tree: AddressTree = {
 			raw: "Kožljek 7",
 			roots: [
@@ -232,6 +240,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 				node({ tag: "house_number", value: "7", start: 8, end: 9 }),
 			],
 		}
+
 		const out = await resolver.resolveTree(tree, { defaultCountry: "US" })
 
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)

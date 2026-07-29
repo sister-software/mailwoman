@@ -91,10 +91,12 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 	test("neural_preferred falls back to rule when no neural proposal", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "neural_preferred" })
+
 		const only = [
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "merged", confidence: 0.85 }),
 		]
+
 		const out = registry.apply(only)
 		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "rule"])
 	})
@@ -102,11 +104,13 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 	test("merged-source proposals survive both preference modes (they are neither rule nor neural)", () => {
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred" })
+
 		const cases = [
 			makeProposal({ component: "country", source: "neural", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 			makeProposal({ component: "country", source: "merged", confidence: 0.9 }),
 		]
+
 		const out = registry.apply(proposals)
 		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural"])
 	})
@@ -116,10 +120,12 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		// count as "neural present" — else rule proposals vanish with nothing to replace them.
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred", confidence_threshold: 0.8 })
+
 		const cases = [
 			makeProposal({ component: "country", source: "neural", confidence: 0.5 }),
 			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
 		]
+
 		const out = registry.apply(cases)
 		expect(out.map((p) => p.source)).toEqual(["rule"])
 	})
@@ -155,6 +161,7 @@ describe("InMemoryPolicyRegistry — confidence threshold", () => {
 			makeProposal({ component: "region", source: "rule", confidence: 0.4 }),
 			makeProposal({ component: "region", source: "rule", confidence: 0.39 }),
 		])
+
 		expect(out.map((p) => p.confidence)).toEqual([0.4])
 	})
 })
@@ -162,10 +169,12 @@ describe("InMemoryPolicyRegistry — confidence threshold", () => {
 describe("InMemoryPolicyRegistry — pass-through behavior", () => {
 	test("proposals for components with no override flow through default rule_only", () => {
 		const registry = new InMemoryPolicyRegistry()
+
 		const out = registry.apply([
 			makeProposal({ component: "locality", source: "rule" }),
 			makeProposal({ component: "locality", source: "neural" }),
 		])
+
 		expect(out.map((p) => p.source)).toEqual(["rule"])
 	})
 

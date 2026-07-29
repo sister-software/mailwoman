@@ -95,6 +95,7 @@ export function departementOfCodePostal(codePostal: unknown): DepartementCode | 
 
 		return departementInfo(dom) ? (dom as DepartementCode) : null
 	}
+
 	const dd = cp.slice(0, 2)
 
 	return departementInfo(dd) ? (dd as DepartementCode) : null

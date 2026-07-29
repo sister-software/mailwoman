@@ -82,6 +82,7 @@ test("toNominatimResult: carries class/type/importance/boundingbox when present"
 		importance: 0.8,
 		boundingbox: ["38.89", "38.90", "-77.04", "-77.03"],
 	})
+
 	expect(r.class).toBe("building")
 	expect(r.type).toBe("government")
 	expect(r.importance).toBe(0.8)
@@ -145,10 +146,12 @@ test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients
 
 test("CORS: preflight OPTIONS answers 204 with CORS headers", async () => {
 	const app = createNominatimApp(corsEngine)
+
 	const res = await app.request("/search", {
 		method: "OPTIONS",
 		headers: { origin: "https://example.com", "access-control-request-method": "GET" },
 	})
+
 	expect(res.status).toBe(204)
 	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 	expect(res.headers.get("access-control-allow-methods")).toContain("GET")
@@ -203,6 +206,7 @@ test("unknown format falls back to jsonv2 (raw results array)", async () => {
 
 test("format=jsonld forces addressdetails on search and reverse, but plain parseBool governs lookup", async () => {
 	const seen: Array<boolean | undefined> = []
+
 	const app = createNominatimApp({
 		search: async (p) => {
 			seen.push(p.addressdetails)
@@ -259,6 +263,7 @@ test("lookup has no jsonld branch — format=jsonld returns the raw results (leg
 
 test("repeated single-valued params are treated as absent (asString(array) → undefined; never a 400)", async () => {
 	let seen: NominatimSearchParams | undefined
+
 	const app = createNominatimApp({
 		search: async (p) => {
 			seen = p
@@ -266,6 +271,7 @@ test("repeated single-valued params are treated as absent (asString(array) → u
 			return []
 		},
 	})
+
 	const res = await app.request("/search?q=berlin&q=paris&limit=5")
 	expect(res.status).toBe(200)
 	expect(seen?.q).toBeUndefined()
@@ -275,6 +281,7 @@ test("repeated single-valued params are treated as absent (asString(array) → u
 test("countrycodes and osm_ids comma-split; limit defaults to 10 on absent/invalid", async () => {
 	const seenSearch: NominatimSearchParams[] = []
 	const seenLookup: NominatimLookupParams[] = []
+
 	const app = createNominatimApp({
 		search: async (p) => {
 			seenSearch.push(p)
@@ -303,6 +310,7 @@ test("an engine fault answers the clean legacy 500 envelope", async () => {
 			throw new Error("resolver exploded")
 		},
 	})
+
 	const res = await app.request("/search?q=x")
 	expect(res.status).toBe(500)
 	expect(await res.json()).toEqual({ error: "internal error" })

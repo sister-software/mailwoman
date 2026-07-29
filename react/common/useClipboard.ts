@@ -68,6 +68,7 @@ export function useClipboard(resetMs = 1500): UseClipboard {
 			if (timer.current) {
 				clearTimeout(timer.current)
 			}
+
 			timer.current = setTimeout(() => setCopied(false), resetMs)
 		},
 		[resetMs]

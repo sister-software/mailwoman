@@ -125,6 +125,7 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 		if (!corpus_version && row.corpus_version) {
 			corpus_version = row.corpus_version
 		}
+
 		const split = splitForRow(row, holdouts)
 
 		if (split === "train") {
@@ -173,11 +174,13 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 		const sorted = [...manifest[name]].toSorted()
 		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length ? "\n" : ""), "utf8")
 	}
+
 	const summary = {
 		corpus_version: manifest.corpus_version,
 		holdouts: manifest.holdouts,
 		counts: manifest.counts,
 	}
+
 	await writeFile(join(outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
 }
 
@@ -211,11 +214,13 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	}
 
 	const total = opts.counts.train + opts.counts.val + opts.counts.test
+
 	const summary = {
 		corpus_version: opts.corpusVersion,
 		holdouts,
 		counts: { ...opts.counts, total },
 	}
+
 	await writeFile(join(opts.outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
 
 	return summary.counts
@@ -228,6 +233,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
 	const out = createWriteStream(unsortedPath, { encoding: "utf8" })
+
 	const outClosed = new Promise<void>((resolve, reject) => {
 		out.on("close", () => resolve())
 		out.on("error", reject)
@@ -245,12 +251,14 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 	} finally {
 		out.end()
 	}
+
 	await outClosed
 
 	await new Promise<void>((resolve, reject) => {
 		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.
 		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
+
 		proc.on("exit", (code) => {
 			if (code === 0) {
 				resolve()
@@ -259,5 +267,6 @@ async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string):
 			}
 		})
 	})
+
 	await unlink(unsortedPath).catch(() => {})
 }

@@ -91,6 +91,7 @@ export function buildSpanProposalPriors(
 	for (let k = 0; k < labels.length; k++) {
 		labelToCol.set(labels[k]!, k)
 	}
+
 	const oCol = labelToCol.get("O")
 
 	for (const proposal of proposals) {
@@ -105,6 +106,7 @@ export function buildSpanProposalPriors(
 					matrix[t]![oCol] = Math.max(matrix[t]![oCol]!, bias)
 				}
 			}
+
 			continue
 		}
 

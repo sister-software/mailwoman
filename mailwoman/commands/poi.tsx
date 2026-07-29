@@ -112,6 +112,7 @@ async function tryLoadResolver(
 	options: zod.infer<typeof OptionsSchema>
 ): Promise<{ resolver: Resolver; close: () => void } | undefined> {
 	const candidateDb = resolveCandidateDBPath(options.candidateDb)
+
 	const wofPaths = candidateDb
 		? []
 		: (options.resolveDb ? options.resolveDb.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>

@@ -31,6 +31,7 @@ const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 	"house-number-before-street": 0.189,
 	"house-number-after-street": 0.081,
 }
+
 const CUM: Array<[BoundaryStressTemplate, number]> = (() => {
 	let acc = 0
 
@@ -38,6 +39,7 @@ const CUM: Array<[BoundaryStressTemplate, number]> = (() => {
 		([t, w]) => [t, (acc += w)] as [BoundaryStressTemplate, number]
 	)
 })()
+
 function pickTemplate(r: () => number): BoundaryStressTemplate {
 	const x = r()
 
@@ -65,6 +67,7 @@ export const boundaryStressRecipe: ShardRecipe = {
 			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
 			const source_id = shardSourceID("synth-boundary-stress", { ...row.components, v: String(i) })
+
 			const canonical = {
 				raw: row.raw,
 				components: row.components,
@@ -75,16 +78,20 @@ export const boundaryStressRecipe: ShardRecipe = {
 				corpus_version: "0.6.0",
 				license: "Synthetic — boundary-stress; derived from public-domain locality/region tuples",
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled") {
 				skipped++
+
 				continue
 			}
+
 			// Match the base corpus parquet schema: flat synth_method / synth_base_id, not a nested `synth`.
 			write(
 				JSON.stringify({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n"
 			)
+
 			emitted++
 		}
 

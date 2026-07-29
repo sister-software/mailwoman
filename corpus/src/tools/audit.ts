@@ -78,6 +78,7 @@ function parseConfig(configPath: string): ParsedConfig | null {
 		if (sourceWeightsMatch) {
 			inBlock = true
 			blockIndent = sourceWeightsMatch[1]!.length
+
 			continue
 		}
 
@@ -90,8 +91,10 @@ function parseConfig(configPath: string): ParsedConfig | null {
 
 		if (indent <= blockIndent) {
 			inBlock = false
+
 			continue
 		}
+
 		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
 
 		if (m) {
@@ -113,9 +116,11 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 		const splitDir = join(corpusDir, split)
 
 		if (!existsSync(splitDir)) continue
+
 		const files = readdirSync(splitDir)
 			.filter((f) => f.endsWith(".parquet"))
 			.toSorted()
+
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
 		const sampled = files.filter((_, i) => i % sampleEvery === 0).slice(0, sampleCount)
@@ -129,12 +134,14 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 			const inferred = inferSourceFromFilename(f)
 			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
 		}
+
 		// Scale to estimated full-shard counts.
 		const scale = files.length / Math.max(sampled.length, 1)
 
 		for (const k of Object.keys(splitMap)) {
 			splitMap[k] = Math.round(splitMap[k]! * scale)
 		}
+
 		stats.bySplit[split] = splitMap
 		stats.totalShards += files.length
 	}
@@ -209,6 +216,7 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 	const manifestPath = join(corpusDir, "MANIFEST.json")
 
 	if (!existsSync(manifestPath)) return null
+
 	const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
 		shards?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
 	}
@@ -222,6 +230,7 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 		bySplit[split] ??= {}
 		bySplit[split][src] = (bySplit[split][src] ?? 0) + 1
 	}
+
 	const total = Object.values(bySplit).reduce((sum, m) => sum + Object.values(m).reduce((a, b) => a + b, 0), 0)
 
 	return { bySplit, totalShards: total, totalFiles: total }
@@ -250,12 +259,14 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 		const effective = weight !== undefined ? shards * weight : 0
 		sampleWeights.push([src, effective])
 	}
+
 	const totalSampleWeight = sampleWeights.reduce((a, [, w]) => a + w, 0)
 
 	for (const src of allSources) {
 		const shards = stats[src] ?? 0
 		const weight = weights[src] ?? "—"
 		const effective = typeof weight === "number" ? (shards * weight) / Math.max(totalSampleWeight, 1) : "—"
+
 		rows.push({
 			source: src,
 			shards,
@@ -264,6 +275,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 			effectiveSamplePct: typeof effective === "number" ? effective : "—",
 		})
 	}
+
 	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
 	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
 	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
@@ -271,6 +283,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
 		AuditRow & { effectiveSamplePct: number }
 	>
+
 	numeric.sort((a, b) => b.effectiveSamplePct - a.effectiveSamplePct)
 
 	if (numeric.length) {
@@ -284,6 +297,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 			top.overweightFactor = next > 0 ? top.effectiveSamplePct / next : Infinity
 		}
 	}
+
 	rows.sort((a, b) => b.shards - a.shards)
 
 	return rows
@@ -351,6 +365,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 		} else {
 			console.log("✓ No single-source concentration (top source < 40% effective sample AND < 1.5× next).")
 		}
+
 		const missingWeights = rows.filter((r) => r.weight === "—" && r.shards > 0)
 
 		if (missingWeights.length && configPath) {
@@ -359,6 +374,7 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 					`(loader will skip them): ${missingWeights.map((r) => r.source).join(", ")}`
 			)
 		}
+
 		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.shards === 0)
 
 		if (orphanWeights.length) {

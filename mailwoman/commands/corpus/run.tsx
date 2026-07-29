@@ -56,6 +56,7 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 		written: 0,
 		bytes: 0,
 	})
+
 	const state = useCommandTask(async () => {
 		const adapterID = args[0]
 

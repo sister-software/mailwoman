@@ -175,6 +175,7 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 		if (!POLICY_MODES.includes(mode as PolicyMode)) {
 			throw commandError(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
 		}
+
 		out.push({ component: component as ComponentTag, mode: mode as PolicyMode })
 	}
 
@@ -344,6 +345,7 @@ async function resolveWithCandidates(
 	if (options.candidates !== undefined) {
 		opts.candidatesPerLookup = options.candidates + 1
 	}
+
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) {
@@ -488,6 +490,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 			resolveOpts.defaultCountry = dc
 		}
 	}
+
 	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
 		locale: options.locale,
 	}
@@ -588,6 +591,7 @@ async function runBenchmark(
 		if (typeof globalThis.gc === "function") {
 			globalThis.gc()
 		}
+
 		const heapBefore = process.memoryUsage().heapUsed
 
 		const stageRuns = new Map<string, number[]>()
@@ -606,6 +610,7 @@ async function runBenchmark(
 					arr = []
 					stageRuns.set(stage, arr)
 				}
+
 				arr.push(ms)
 			}
 		}
@@ -626,9 +631,11 @@ async function runBenchmark(
 		`input: ${JSON.stringify(input)}`,
 		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`,
 	]
+
 	const pathSummary = Array.from(collected.paths.entries())
 		.map(([p, n]) => `${p}=${n}`)
 		.join(" ")
+
 	lines.push(`path breakdown: ${pathSummary}`)
 	lines.push("")
 	lines.push("stage              p50       p95       p99       max")
@@ -636,6 +643,7 @@ async function runBenchmark(
 
 	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).toSorted()) {
 		const sorted = [...ms].toSorted((a, b) => a - b)
+
 		lines.push(
 			[
 				stage.padEnd(17),
@@ -646,8 +654,10 @@ async function runBenchmark(
 			].join("  ")
 		)
 	}
+
 	const totalsSorted = [...collected.totals].toSorted((a, b) => a - b)
 	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+
 	lines.push(
 		[
 			"TOTAL".padEnd(17),
@@ -657,6 +667,7 @@ async function runBenchmark(
 			formatMs(totalsSorted.at(-1) ?? 0).padStart(8),
 		].join("  ")
 	)
+
 	lines.push("")
 	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
 

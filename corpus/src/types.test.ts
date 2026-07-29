@@ -16,6 +16,7 @@ describe("corpus types", () => {
 		for (const tag of COMPONENT_TAGS) {
 			components[tag] = `value for ${tag}`
 		}
+
 		const row: CanonicalRow = {
 			raw: "1600 Pennsylvania Ave NW, Washington, DC 20500, USA",
 			components,
@@ -26,6 +27,7 @@ describe("corpus types", () => {
 			corpus_version: "0.1.0",
 			license: "CC0-1.0",
 		}
+
 		expect(row.components.country).toBe("value for country")
 		expect(row.components.postcode).toBe("value for postcode")
 	})
@@ -41,12 +43,14 @@ describe("corpus types", () => {
 			corpus_version: "0.1.0",
 			license: "CC0-1.0",
 		}
+
 		const synth: CanonicalRow = {
 			...natural,
 			raw: "PARIS",
 			source_id: "wof-101751119+case-upper",
 			synth: { method: "case-perturb:upper", base_source_id: "wof-101751119" },
 		}
+
 		expect(natural.synth).toBeUndefined()
 		expect(synth.synth?.method).toBe("case-perturb:upper")
 		expect(synth.synth?.base_source_id).toBe("wof-101751119")
@@ -54,6 +58,7 @@ describe("corpus types", () => {
 
 	it("LabeledRow extends CanonicalRow with parallel token/label arrays of equal length", () => {
 		const labels = BIO_LABELS.slice(0, 3)
+
 		const row: LabeledRow = {
 			raw: "Paris",
 			components: { locality: "Paris" },
@@ -65,6 +70,7 @@ describe("corpus types", () => {
 			tokens: ["▁Pa", "ri", "s"],
 			labels,
 		}
+
 		expect(row.tokens).toHaveLength(row.labels.length)
 		expect(row.labels[0]).toBe(BIO_LABELS[0])
 	})
@@ -82,6 +88,7 @@ describe("corpus types", () => {
 			},
 			reason: "component-not-found:locality",
 		}
+
 		expect(q.reason).toMatch(/^component-not-found:/)
 	})
 
@@ -108,11 +115,13 @@ describe("corpus types", () => {
 				}
 			},
 		}
+
 		const collected: CanonicalRow[] = []
 
 		for await (const row of adapter.rows({ inputPath: "" })) {
 			collected.push(row)
 		}
+
 		expect(collected).toHaveLength(1)
 		expect(collected[0]!.source).toBe("noop")
 	})

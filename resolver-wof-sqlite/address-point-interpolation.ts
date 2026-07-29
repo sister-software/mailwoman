@@ -83,6 +83,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 		} else {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
+
 		this.#fallback = opts.fallback
 
 		// Degrade gracefully on an empty/tableless shard (#568): with no `address_point` table this tier
@@ -162,6 +163,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 			below = anchor
 		} else {
 			above = anchor
+
 			break
 		}
 	}

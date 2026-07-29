@@ -72,6 +72,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -102,6 +103,7 @@ function pyRound(x: number, nd = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -123,11 +125,13 @@ function pyRound(x: number, nd = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -201,6 +205,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	const loc = admin
 		.prepare("SELECT id,name,latitude,longitude FROM spr WHERE placetype='locality' AND (latitude!=0 OR longitude!=0)")
 		.all() as Array<{ id: number; name: string; latitude: number; longitude: number }>
+
 	const xy = new Map<number, [number, number]>()
 	const sprName = new Map<number, string>()
 	const grid = new Map<string, Array<{ pid: number; la: number; lo: number }>>()
@@ -243,6 +248,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	// Province (admin1) anchor: Hangul region name -> region id (records coarse-anchor coverage in meta).
 	const regionIdx = new Set<string>()
+
 	const regionRows = admin
 		.prepare(
 			"SELECT s.id,n.name FROM spr s JOIN names n ON n.id=s.id AND n.language IN ('kor','und') WHERE s.placetype='region'"
@@ -255,6 +261,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 			regionIdx.add(bare(nm))
 		}
 	}
+
 	admin.close()
 
 	/**
@@ -278,6 +285,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				}
 			}
 		}
+
 		out.sort((a, b) => a.d - b.d || a.pid - b.pid)
 
 		return out
@@ -305,6 +313,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	const db = new DatabaseSync(args.output)
 	const kdb = new DatabaseClient({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.addColumn("postcode", "text", (c) => c.notNull())
@@ -326,6 +335,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		const nb = nearby(lat, lon)
 
 		if (!nb.length) continue
+
 		resolved++
 		const { d: d0, pid: pid0 } = nb[0]! // point-nearest
 		dists.push(d0)
@@ -333,6 +343,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) {
 			provinceOk++
 		}
+
 		// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
 		// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
 		const nameIds = nameIdx.get(bare(place)) ?? new Set<number>()
@@ -357,6 +368,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	for (const r of rows) {
 		insert.run(...r)
 	}
+
 	db.exec("COMMIT")
 
 	await kdb.schema
@@ -375,6 +387,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-kr"],
 		[
@@ -402,6 +415,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		],
 		["built_at", isoSeconds()],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
@@ -417,6 +431,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.

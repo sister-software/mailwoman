@@ -107,6 +107,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		if (prefixState === undefined) {
 			return { query, normalizedTokens, depth: 0, suggestions: [] }
 		}
+
 		depth = complete.length
 
 		for (const cont of fst.continuations(prefixState)) {
@@ -116,6 +117,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH)) {
 				addSuggestion(seen, entry, complete.length + 1, [cont.token])
 			}
+
 			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
 			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
@@ -159,6 +161,7 @@ function addSuggestion(
 	const existing = seen.get(entry.wofID)
 
 	if (existing && existing.matchDepth <= matchDepth) return
+
 	seen.set(entry.wofID, {
 		name: entry.name,
 		placetype: entry.placetype,

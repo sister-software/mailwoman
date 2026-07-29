@@ -327,6 +327,7 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "./pair-index-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
+
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
 		const crf = readCrfTransitions(resolved.crfTransitionsPath)
@@ -345,6 +346,7 @@ export class NeuralAddressClassifier {
 				)
 			}
 		}
+
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
@@ -437,6 +439,7 @@ export class NeuralAddressClassifier {
 				)
 			}
 		}
+
 		let localitySurfaceLexicon: GazetteerLexicon | undefined
 
 		if (resolved.localitySurfaceLexiconPath) {
@@ -550,6 +553,7 @@ export class NeuralAddressClassifier {
 		if (!text.length) {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
+
 		const { tokens, logits, pieces } = await this.#decode(text, opts)
 
 		return {
@@ -593,6 +597,7 @@ export class NeuralAddressClassifier {
 				tokens: [],
 			}
 		}
+
 		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
 		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
 
@@ -665,6 +670,7 @@ export class NeuralAddressClassifier {
 		// formatted mode withholds both lexicons so the model runs its curriculum-trained absence
 		// identity — the fed channels lift fragments but damage full-address parses.
 		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
+
 		const soft = buildSoftFeatures(text, pieces, {
 			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
@@ -673,6 +679,7 @@ export class NeuralAddressClassifier {
 			streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
 			localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
 		})
+
 		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
 			ids,
 			soft.anchor,
@@ -691,12 +698,14 @@ export class NeuralAddressClassifier {
 		// arguments are never built for a plain parse).
 		const tracePriors: TracePrior[] | null = trace ? [] : null
 		const traceRepairs: TraceRepair[] | null = trace ? [] : null
+
 		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
 			if (!traceRepairs) return
 
 			if (before.length === after.length && before.every((label, i) => label === after[i])) return
 			traceRepairs.push({ pass, before, after })
 		}
+
 		// TraceRepair before/after are PER-PIECE (index-aligned with `pieces`). Token-count-preserving
 		// passes can read labels 1:1, but the span bridge MERGES fragments (dropping later tokens), so
 		// labels are projected back onto pieces via char offsets: each piece carries the label of the
@@ -714,6 +723,7 @@ export class NeuralAddressClassifier {
 				return (tok && tok.start <= p.start && p.start < tok.end ? tok.label : "O") as string
 			})
 		}
+
 		// `applied` reports EFFECT (see TracePrior): a composed prior counts only if any cell is nonzero.
 		const matrixHasBias = (m: readonly (readonly number[])[]): boolean => m.some((row) => row.some((v) => v !== 0))
 
@@ -721,6 +731,7 @@ export class NeuralAddressClassifier {
 		// system, or the model's own locale-head detection under a high confidence bar. Null = no
 		// constraints; the parse below is byte-identical to the pre-conventions path.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
+
 		// The resolved system code drives the conventions row below (the `forbiddenTags` emission mask +
 		// the `postcodePattern` snap-repair). null when conventions are off → no system, no constraints
 		// (byte-stable). "auto" reads the model's locale head; a pinned SystemCode wins.
@@ -730,7 +741,9 @@ export class NeuralAddressClassifier {
 				: conventionsOpt === "auto"
 					? (detectAddressSystem(localeLogits)?.system ?? null)
 					: conventionsOpt
+
 		const conventions = conventionsForSystem(detectedSystem)
+
 		const systemSource: "off" | "auto" | "pinned" =
 			conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned"
 
@@ -740,6 +753,7 @@ export class NeuralAddressClassifier {
 					inputText: text,
 				})
 			: undefined
+
 		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
 		tracePriors?.push({ kind: "queryShape", applied: queryShapePrior !== undefined && matrixHasBias(queryShapePrior) })
@@ -768,6 +782,7 @@ export class NeuralAddressClassifier {
 		if (fstPrior) {
 			emissions = addEmissionMatrix(emissions, fstPrior)
 		}
+
 		tracePriors?.push({ kind: "fst", applied: fstPrior !== undefined && matrixHasBias(fstPrior) })
 
 		const morphologyPrior = opts?.fstStreetMorphology
@@ -782,6 +797,7 @@ export class NeuralAddressClassifier {
 		if (morphologyPrior) {
 			emissions = addEmissionMatrix(emissions, morphologyPrior)
 		}
+
 		tracePriors?.push({
 			kind: "streetMorphology",
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
@@ -800,6 +816,7 @@ export class NeuralAddressClassifier {
 		if (trailingLocalityPrior) {
 			emissions = addEmissionMatrix(emissions, trailingLocalityPrior)
 		}
+
 		tracePriors?.push({
 			kind: "trailingLocality",
 			applied: trailingLocalityPrior !== undefined && matrixHasBias(trailingLocalityPrior),
@@ -816,6 +833,7 @@ export class NeuralAddressClassifier {
 		if (spanProposals.length) {
 			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
+
 		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
@@ -830,6 +848,7 @@ export class NeuralAddressClassifier {
 		// Trace-only out-record: which probe-chain path fired (segment vs anchored vs window) — see
 		// PlacetypePairProbeTrace. Only allocated when tracing, like the tracePriors list itself.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
+
 		const placetypePairResult = placetypePairOpt
 			? buildPlacetypePairPriors(
 					{ ...placetypePairOpt, inputText: text, probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace },
@@ -837,6 +856,7 @@ export class NeuralAddressClassifier {
 					this.labels
 				)
 			: undefined
+
 		const placetypePairPrior = placetypePairResult?.matrix
 
 		if (placetypePairPrior) {
@@ -891,6 +911,7 @@ export class NeuralAddressClassifier {
 				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
 			}
 		}
+
 		tracePriors?.push({ kind: "conventionsMask", applied: conventionsMaskApplied })
 
 		let labelIndices =
@@ -1291,6 +1312,7 @@ export interface ParseOpts {
  * exists to surface).
  */
 const warnedUnfedChannels = new Set<string>()
+
 function warnUnfedChannel(
 	channel: "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface",
 	detail: string
@@ -1315,11 +1337,13 @@ function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
 			maxIdx = i
 		}
 	}
+
 	let sumExp = 0
 
 	for (const v of row) {
 		sumExp += Math.exp(v - maxVal)
 	}
+
 	const conf = 1 / sumExp
 
 	return { idx: maxIdx, conf }
@@ -1338,6 +1362,7 @@ function addMatrices(a: number[][], b: number[][]): number[][] {
 		for (let j = 0; j < n; j++) {
 			row[j] = a[i]![j]! + b[i]![j]!
 		}
+
 		out.push(row)
 	}
 

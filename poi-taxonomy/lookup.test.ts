@@ -195,8 +195,10 @@ describe("taxonomy integrity — malformed table", () => {
 
 	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
 		vi.resetModules()
+
 		vi.doMock("node:fs", async () => {
 			const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
+
 			const malformed = JSON.stringify({
 				version: "0.0.0",
 				overtureRelease: null,

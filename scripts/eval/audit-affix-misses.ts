@@ -51,6 +51,7 @@ const rows = readFileSync(args.file!, "utf8")
 // audit's first run produced — caught by the misses-vs-scorer discrepancy).
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(args.model!)])
+
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,

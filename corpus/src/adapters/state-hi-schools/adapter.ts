@@ -96,6 +96,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -140,6 +141,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [
 						name,
 						streetPart,
@@ -153,6 +155,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const code = (record.code ?? "").toString().trim()
+
 					const sourceID = code
 						? `${STATE_HI_SCHOOLS_ADAPTER_ID}-${code}`
 						: stableSourceID(STATE_HI_SCHOOLS_ADAPTER_ID, aligned)
@@ -167,6 +170,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

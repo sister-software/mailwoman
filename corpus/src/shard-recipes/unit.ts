@@ -65,6 +65,7 @@ const TRAIN_SOURCES: readonly UnitSource[] = [
 	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
 	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
 ]
+
 const EVAL_SOURCE: UnitSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 
 /**
@@ -83,6 +84,7 @@ const ID_DESIGNATORS: readonly USUnitDesignator[] = [
 	"SPACE",
 	"LOT",
 ]
+
 const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 	"BASEMENT",
 	"LOBBY",
@@ -92,6 +94,7 @@ const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 	"UPPER",
 	"LOWER",
 ]
+
 /**
  * 85% id-bearing designators, 15% standalone.
  */
@@ -125,6 +128,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -141,6 +145,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -157,16 +162,19 @@ function readTuples(source: UnitSource): UnitTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iUnit = idx("unit"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: UnitTuple[] = []
 	const seen = new Set<string>()
@@ -183,6 +191,7 @@ function readTuples(source: UnitSource): UnitTuple[] {
 
 		if (seen.has(key)) continue
 		seen.add(key)
+
 		tuples.push({
 			house_number,
 			street,
@@ -212,6 +221,7 @@ function makeUnit(random: () => number, oaUnit: string): string {
 	const designator = random() < 0.5 ? title(canonical) : title(US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical])
 
 	if (standalone) return designator
+
 	const id =
 		oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : SYNTH_IDS[Math.floor(random() * SYNTH_IDS.length)]!
 
@@ -254,7 +264,9 @@ function renderUnit(
 		loc = base.locality,
 		reg = base.region,
 		pc = base.postcode
+
 	const road = `${hn} ${street}`
+
 	const full: Partial<Record<ComponentTag, string>> = {
 		house_number: hn,
 		street,
@@ -263,6 +275,7 @@ function renderUnit(
 		region: reg,
 		...(pc ? { postcode: pc } : {}),
 	}
+
 	const r = random()
 
 	if (r < 0.34) return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
@@ -323,14 +336,18 @@ export const unitRecipe: ShardRecipe = {
 			// The unit must survive verbatim in raw, else alignment can't label it.
 			if (!raw.includes(unit)) {
 				skipped++
+
 				continue
 			}
 
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: "US" }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -341,13 +358,17 @@ export const unitRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "unit", synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

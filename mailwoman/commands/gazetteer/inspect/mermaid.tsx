@@ -46,6 +46,7 @@ const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 
 	return out
 })()
+
 const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).toSorted()
 
 const ArgumentsSchema = zod
@@ -88,6 +89,7 @@ function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
 
 	const valid = new Set<string>(PlacetypeRoles)
+
 	const parsed = raw
 		.split(",")
 		.map((s) => s.trim())

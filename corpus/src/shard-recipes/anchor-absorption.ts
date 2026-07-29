@@ -66,7 +66,9 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 
 		for (let i = 0; i < count; i++) {
 			const synth = synthesizeAnchorAbsorptionRow({ random, realZips })
-			const country = synth.locale.split("-")[1] // "en-US" -> "US", "de-DE" -> "DE"
+			const country = synth.locale.split("-")[1]
+
+			// "en-US" -> "US", "de-DE" -> "DE"
 			const canonical = {
 				raw: synth.raw,
 				components: synth.components,
@@ -75,15 +77,19 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 				source,
 				source_id: stableSourceID(source, `${i}` as unknown as Parameters<typeof stableSourceID>[1]),
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled") {
 				quarantined++
+
 				continue
 			}
+
 			write(
 				JSON.stringify({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }) + "\n"
 			)
+
 			written++
 			byTemplate[synth.template] = (byTemplate[synth.template] ?? 0) + 1
 		}

@@ -147,6 +147,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					"openaddresses adapter: --country is required (OpenAddresses files are country-partitioned but rows lack a country field)"
 				)
 			}
+
 			const country = adapterOpts.country
 
 			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating blank/`#`/
@@ -184,6 +185,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					if (!allowShareAlike && SHARE_ALIKE_PATTERN.test(license)) {
 						shareAlikeBlocked++
+
 						continue
 					}
 
@@ -222,6 +224,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					if (!Object.keys(aligned).length) continue
 
 					const sourceIDSeed = props.hash?.trim() || props.id?.trim()
+
 					const sourceID = sourceIDSeed
 						? `${OPENADDRESSES_ADAPTER_ID}-${sourceIDSeed}`
 						: stableSourceID(OPENADDRESSES_ADAPTER_ID, aligned)
@@ -235,6 +238,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 						corpus_version: "",
 						license,
 					}
+
 					emitted++
 				}
 			} finally {

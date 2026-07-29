@@ -21,6 +21,7 @@ function displayName(record: SourceRecord): string | null {
 	const name = record.name
 
 	if (!name) return null
+
 	const joined = [name.prefix, name.given, name.middle, name.familyParticle, name.family, name.suffix]
 		.filter(Boolean)
 		.join(" ")

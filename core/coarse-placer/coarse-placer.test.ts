@@ -49,6 +49,7 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 		for (let i = 0; i < dim; i++) {
 			maxAbs = Math.max(maxAbs, Math.abs(w[base + i]!))
 		}
+
 		const scale = maxAbs / 127 || 1
 		scales.push(scale)
 
@@ -116,6 +117,7 @@ describe("dequantizeInt8Weights", () => {
 		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) {
 			expect(out[i]).toBeCloseTo(want, 6)
 		}
+
 		expect(out[4]).toBeCloseTo(5, 6)
 		expect(out[7]).toBeCloseTo(-25, 6)
 	})
@@ -160,10 +162,12 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	test("int8 artifact missing scales is rejected", async () => {
 		const badDir = join(tmpRoot, "int8-noscales")
 		mkdirSync(badDir, { recursive: true })
+
 		writeFileSync(
 			join(badDir, "meta.json"),
 			JSON.stringify({ classes, featureDim: FEATURE_DIM, temperature: 1, bias, quantization: "int8-per-row" })
 		)
+
 		writeFileSync(join(badDir, "weights.bin"), Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer))
 		await expect(CoarsePlacer.fromArtifactDir(badDir)).rejects.toThrow(/scales/)
 	})
@@ -176,6 +180,7 @@ describe("open-set reject rule (#244 M2)", () => {
 	// dim MUST be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
 	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
 	const dim = FEATURE_DIM
+
 	const make = (bias: number[], opts: { abstainBelow?: number; openSet?: boolean }) =>
 		new CoarsePlacer(
 			{ classes, featureDim: dim, temperature: 1, bias, weights: new Float32Array(classes.length * dim) },
@@ -223,6 +228,7 @@ describe("abstention", () => {
 	test("abstains when no class clears the threshold", () => {
 		// All-zero weights → logits are the (equal) bias → near-uniform softmax → top prob ≈ 1/C < 0.5.
 		const classes = ["AA", "BB", "CC", "DD"]
+
 		const placer = new CoarsePlacer(
 			{
 				classes,
@@ -233,6 +239,7 @@ describe("abstention", () => {
 			},
 			{ abstainBelow: 0.5 }
 		)
+
 		const p = placer.predict("anything at all")
 		expect(p.abstained).toBe(true)
 		expect(p.country).toBeNull()

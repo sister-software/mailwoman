@@ -44,6 +44,7 @@ function* fixtureRows(): Iterable<POISourceRow> {
 		for (const category of CATEGORIES) {
 			for (let n = 0; n < 5; n++) {
 				gersCounter++
+
 				yield {
 					name: `${loc.country} ${category} #${n}`,
 					category,
@@ -69,6 +70,7 @@ function* fixtureRows(): Iterable<POISourceRow> {
 		confidence: 0.9,
 		gersID: "bad-nan",
 	}
+
 	yield {
 		name: "Bad Infinity",
 		category: "cafe",
@@ -132,9 +134,12 @@ describe("buildPOIDatabase", () => {
 			.where("category_id", "=", cafeID)
 			.where("country", "=", "US")
 			.execute()
+
 		expect(group).toHaveLength(5)
 		const clusterCell = group[0]!.h3_cell
-		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true) // all 5 jittered into one res-9 cell
+		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true)
+
+		// all 5 jittered into one res-9 cell
 
 		const firstPhysicalRow = await kdb
 			.selectFrom("poi")
@@ -142,11 +147,13 @@ describe("buildPOIDatabase", () => {
 			.where("h3_cell", "=", clusterCell)
 			.where("category_id", "=", cafeID)
 			.executeTakeFirstOrThrow()
+
 		const maxConfidence = Math.max(...group.map((r) => r.confidence))
 		expect(firstPhysicalRow.confidence).toBeCloseTo(maxConfidence, 10)
 
 		// --- manifest reads back valid ---
 		const manifest = await readLayerManifest(kdb)
+
 		expect(manifest).toMatchObject({
 			name: "poi",
 			tier: "shipped",

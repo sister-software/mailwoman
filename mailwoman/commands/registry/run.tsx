@@ -303,16 +303,19 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 	return async (init): Promise<EvalGeocoder> => {
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
 		const dataRoot = flags.dataRoot || mailwomanDataRoot()
+
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: flags.locale || "en-US",
 			...(flags.modelPath ? { modelPath: flags.modelPath } : {}),
 			...(flags.tokenizerPath ? { tokenizerPath: flags.tokenizerPath } : {}),
 			...(flags.modelCardPath ? { modelCardPath: flags.modelCardPath } : {}),
 		})
+
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
 		const shardProvider = new ShardProvider(mod, dataRoot)
+
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {
 				classifier,
@@ -322,6 +325,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 				placeCountry: false,
 				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
 			})
+
 		const seam = geocodeAddressVia({
 			parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 			geocode,
@@ -418,18 +422,23 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const label = spec.source ?? spec.path
 			const mapping: ColumnMapping = { ...spec.mapping, source: label }
 			let read = 0
+
 			const rows = (async function* () {
 				for await (const row of streamRows(spec.path, spec.delimiter ? { delimiter: spec.delimiter } : {})) {
 					if (spec.limit !== undefined && read >= spec.limit) break
+
 					read++
 					yield row
 				}
 			})()
+
 			const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
 
 			for (const record of recs) {
 				record.id = `${label}:${record.id}`
-			} // namespace ids so cross-source ids never collide
+			}
+
+			// namespace ids so cross-source ids never collide
 			records.push(...recs)
 			perSource.push(`${label} ${recs.length}`)
 		}
@@ -444,6 +453,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			learnedScorer: false,
 			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
 		})
+
 		const geocoded = records.filter((r) => r.address?.geocode).length
 
 		// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
@@ -459,8 +469,10 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 						"(at least one of each)."
 				)
 			}
+
 			const recon = reconcileCoverage(result.entities, { eligibilitySources, fundingSources })
 			const geojson = reconciliationGeoJSON(recon)
+
 			const report = reconciliationReport(recon, {
 				scopeNote:
 					`Resolved BLIND across ${specs.length} sources via \`mailwoman registry --reconcile\` ` +
@@ -471,15 +483,18 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 					'GBT default (#603) rejects the "same place, different operational name" pattern that IS the ' +
 					"cross-source signal, so it is pinned off here. See #655.",
 			})
+
 			const written = writeOutputs(geojson, options)
 
 			return written === null ? report : `${report}\n\n${written}`
 		}
 
 		const geojson = toGeoJSON(result.entities)
+
 		const crossSource = result.entities.filter(
 			(e) => new Set(e.records.map((r) => r.source).filter(Boolean)).size >= 2
 		).length
+
 		const summary =
 			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
 			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
@@ -501,6 +516,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 				"`role`), not a single positional CSV."
 		)
 	}
+
 	const rows = parseCSV(readFileSync(csvPath, "utf8"))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
@@ -510,14 +526,17 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 
 	try {
 		const records = await ingestRows(rows, mapping, { geocodeAddress: seam })
+
 		const result = resolveEntities(records, {
 			trainEM: options.trainEm,
 			threshold: options.threshold,
 			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
 		})
+
 		const geojson = toGeoJSON(result.entities)
 
 		const geocoded = records.filter((r) => r.address?.geocode).length
+
 		const summary =
 			`registry: ${rows.length} rows → ${records.length} records (${geocoded} geocoded) → ` +
 			`${result.entities.length} entities ` +

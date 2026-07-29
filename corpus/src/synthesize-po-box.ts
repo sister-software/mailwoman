@@ -114,6 +114,7 @@ const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATE
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
+
 	const variants: Array<(s: string) => string> = [
 		// Thousand-separator comma (real input: "Box 1,234")
 		(s) => (s.length >= MIN_DIGITS_FOR_COMMA_GROUPING ? `${s.slice(0, -3)},${s.slice(-3)}` : s),
@@ -122,6 +123,7 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 		// Embedded spaces (real input from OCR: "1 2 3 4")
 		(s) => s.split("").join(" "),
 	]
+
 	const f = variants[Math.floor(random() * variants.length)]!
 
 	return f(num)
@@ -252,7 +254,9 @@ const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
 	{ code: "CMR", boxRequired: true },
 	{ code: "Unit", boxRequired: false },
 ]
+
 const MIL_PO_CODES = ["APO", "FPO", "DPO"] as const
+
 /**
  * Region → plausible ZIP prefix (AE Europe 09xxx, AP Pacific 962-966xx, AA Americas 340xx).
  */

@@ -156,6 +156,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("bug_ref", "text")
 		.addColumn("note", "text")
 		.execute()
+
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"
 	await db.schema.createIndex("idx_gauntlet_kind").on("gauntlet_case").columns(["country", "address_kind"]).execute()
 }

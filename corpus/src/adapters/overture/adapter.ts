@@ -84,6 +84,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 					"overture adapter: --country is required (the Overture JSONL is per-country and rows omit a country field)"
 				)
 			}
+
 			const country = opts.country
 
 			// TextSpliterator streams string lines (parseLine keeps tolerating blank/`#`/malformed
@@ -119,6 +120,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 				if (/^\d/.test(number)) {
 					components.house_number = number
 				}
+
 				components.street = street
 
 				if (unit) {
@@ -150,6 +152,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 					corpus_version: "",
 					license: OVERTURE_DEFAULT_LICENSE,
 				}
+
 				emitted++
 			}
 		},

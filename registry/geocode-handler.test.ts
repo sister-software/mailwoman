@@ -25,11 +25,13 @@ describe("makeGeocodeHandler", () => {
 
 	it("leaves a record with no mapped address untouched (no geocode call)", async () => {
 		let calls = 0
+
 		const seam: GeocodeAddress = async () => {
 			calls++
 
 			return null
 		}
+
 		const handle = makeGeocodeHandler(seam, { address: ["addr"] })
 
 		const out = await handle(rec({ addr: "" }))

@@ -52,6 +52,7 @@ const LEVEL_DIR: Record<TIGERFetchLevel, string> = {
 	place: "PLACE",
 	addrfeat: "ADDRFEAT",
 }
+
 const LEVEL_TABLE: Record<TIGERFetchLevel, keyof TIGERDatabase> = {
 	tabblock20: "tabblock20",
 	place: "tiger_places",
@@ -176,6 +177,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 		child.stdout.on("data", (d) => (out += d))
 		child.stderr.on("data", (d) => (err += d))
 		child.on("error", reject)
+
 		child.on("close", (code) =>
 			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
 		)
@@ -192,6 +194,7 @@ async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 			// corrupt cache — re-download
 		}
 	}
+
 	const tmp = dest + ".tmp"
 	const res = await fetch(url, { redirect: "follow" })
 
@@ -283,6 +286,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 		let inserted = 0
 		let batch: Row[] = []
+
 		const flush = async () => {
 			if (!batch.length) return
 			const rows = batch
@@ -319,8 +323,10 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 				],
 				{ stdio: ["ignore", "pipe", "pipe"] }
 			)
+
 			let stderr = ""
 			child.stderr.on("data", (d) => (stderr += d))
+
 			const exited = new Promise<number>((resolve) => {
 				child.on("close", (code) => resolve(code ?? 0))
 			})
@@ -347,6 +353,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 					yield { phase: "load", inserted, total: 0 }
 				}
 			}
+
 			await flush()
 
 			const code = await exited

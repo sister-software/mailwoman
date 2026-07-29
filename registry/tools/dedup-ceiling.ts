@@ -89,6 +89,7 @@ const STOP = new Set([
 	"of",
 	"and",
 ])
+
 function orgTokens(s: string): Set<string> {
 	return new Set(
 		s
@@ -98,6 +99,7 @@ function orgTokens(s: string): Set<string> {
 			.filter((t) => t && !STOP.has(t))
 	)
 }
+
 function jaccard(a: Set<string>, b: Set<string>): number {
 	if (!a.size || !b.size) return 0
 	let inter = 0
@@ -109,6 +111,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 	return inter / (a.size + b.size - inter)
 }
+
 const normPhone = (p?: string): string => {
 	const d = (p ?? "").replaceAll(/\D/g, "")
 
@@ -167,9 +170,11 @@ export async function dedupCeiling(
 
 		if (!addrKey) continue
 		const npi = norm(r["NPI"])
+
 		const auth = `${norm(r["Authorized Official Last Name"])} ${norm(r["Authorized Official First Name"])}`
 			.toLowerCase()
 			.trim()
+
 		const p: Provider = {
 			npi,
 			tokens: orgTokens(org),
@@ -181,11 +186,14 @@ export async function dedupCeiling(
 		if (!byAddr.has(addrKey)) {
 			byAddr.set(addrKey, [])
 		}
+
 		byAddr.get(addrKey)!.push(p)
+
 		kept++
 
 		if (kept >= CAP) break
 	}
+
 	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
 	// --- Over co-located distinct-NPI pairs: the org-similarity distribution + collision rate. ---
@@ -212,15 +220,18 @@ export async function dedupCeiling(
 			if (!distinct.has(p.npi)) {
 				distinct.set(p.npi, p)
 			}
+
 		const list = [...distinct.values()]
 
 		if (list.length < 2) continue
+
 		sharedAddresses++
 		providersAtSharedAddr += list.length
 
 		for (let i = 0; i < list.length; i++) {
 			for (let j = i + 1; j < list.length; j++) {
 				if (pairs >= PAIR_BUDGET) break
+
 				pairs++
 				const a = list[i]!
 				const b = list[j]!
@@ -232,6 +243,7 @@ export async function dedupCeiling(
 					if (a.phone && a.phone === b.phone) {
 						collideSharePhone++
 					}
+
 					const sameAuth = a.auth !== "" && a.auth === b.auth
 					const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 

@@ -57,6 +57,7 @@ test("emitOpenAPIDocuments: returns both 3.1 and 3.0 flavors from the same route
 
 test("emitOpenAPIDocuments: full-info options land servers/security/license/tags on the v31 document", () => {
 	const app = createPingApp()
+
 	const { v31 } = emitOpenAPIDocuments(app, {
 		title: "@mailwoman/api-kit test",
 		version: "0.0.0",

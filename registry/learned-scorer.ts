@@ -85,8 +85,10 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 				f.push(lvl === l ? 1 : 0)
 			}
 		}
+
 		// Interaction: co-located (spatial exact = level 0) AND names/org disagree (catch-all level).
 		const spatialExact = spatialI !== undefined && pat[spatialI] === 0 ? 1 : 0
+
 		const nameDisagree =
 			givenI !== undefined &&
 			familyI !== undefined &&
@@ -94,6 +96,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 			pat[familyI] === lastLevel(familyI)
 				? 1
 				: 0
+
 		const orgDisagree = orgI !== undefined && pat[orgI] === lastLevel(orgI) ? 1 : 0
 		f.push(spatialExact * nameDisagree) // the over-merge signature: same place, names disagree
 		f.push(spatialExact * orgDisagree)

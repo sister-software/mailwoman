@@ -60,6 +60,7 @@ const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
  */
 export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
+
 	const tableExists = (name: string): boolean =>
 		db.prepare("SELECT 1 FROM sqlite_master WHERE name = ?").get(name) !== undefined
 
@@ -68,6 +69,7 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 		const probe = db.prepare(
 			"SELECT COUNT(*) n FROM spr WHERE country = ? AND placetype = ? AND is_current != 0 AND is_deprecated = 0"
 		)
+
 		const missing: string[] = []
 
 		for (const [cc, placetypes] of Object.entries(baseline.requiredNodes)) {
@@ -77,6 +79,7 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 				}
 			}
 		}
+
 		checks.push({
 			check: "node-census",
 			ok: missing.length === 0,
@@ -91,7 +94,9 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 		const c = db
 			.prepare("SELECT COUNT(*) rows, COUNT(DISTINCT country) countries FROM spr WHERE is_current != 0")
 			.get() as { rows: number; countries: number }
+
 		const ok = c.rows >= baseline.minRows && c.countries >= baseline.minCountries
+
 		checks.push({
 			check: "coverage-floor",
 			ok,
@@ -102,12 +107,15 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 	// 3. region-abbrevs: the #440 class — abbr names present AND the VT→Vermont join resolves.
 	{
 		const abbrCount = (db.prepare("SELECT COUNT(*) n FROM names WHERE language = 'abbr'").get() as { n: number }).n
+
 		const vt = tableExists("place_abbr")
 			? (db
 					.prepare("SELECT s.name FROM place_abbr a JOIN spr s ON s.id = a.id WHERE a.abbr = 'VT' AND s.country = 'US'")
 					.get() as { name: string } | undefined)
 			: undefined
+
 		const ok = abbrCount > 0 && vt?.name === "Vermont"
+
 		checks.push({
 			check: "region-abbrevs",
 			ok,
@@ -120,16 +128,20 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 		const rows = tableExists("place_abbr")
 			? (db.prepare("SELECT COUNT(*) n FROM place_abbr").get() as { n: number }).n
 			: 0
+
 		checks.push({ check: "place-abbr", ok: rows > 0, detail: `${rows} rows` })
 	}
 
 	// 5. fts-bbox: place_search + place_bbox exist and the R*Tree covers spr (≥90% of current rows).
 	{
 		const sprCount = (db.prepare("SELECT COUNT(*) n FROM spr WHERE is_current != 0").get() as { n: number }).n
+
 		const bboxCount = tableExists("place_bbox")
 			? (db.prepare("SELECT COUNT(*) n FROM place_bbox").get() as { n: number }).n
 			: 0
+
 		const ok = tableExists("place_search") && bboxCount >= sprCount * 0.9
+
 		checks.push({
 			check: "fts-bbox",
 			ok,
@@ -153,6 +165,7 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 				bad.push(cc)
 			}
 		}
+
 		checks.push({
 			check: "bbox-extents",
 			ok: bad.length === 0,
@@ -199,6 +212,7 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
 			const r = await rg.reverseGeocode(lat, lon)
 			const deepest = r.hierarchy[0]
 			const got = (r.hierarchy.find((h) => h.placetype === "country")?.country ?? deepest?.country ?? "").toUpperCase()
+
 			checks.push({
 				check: `reverse:${label}`,
 				ok: got === expected,
@@ -226,6 +240,7 @@ export function generateBaseline(db: DatabaseSync): VerifyBaseline {
 		.all() as Array<{ country: string; placetype: "country" | "region" }>) {
 		;(requiredNodes[r.country] ??= []).push(r.placetype)
 	}
+
 	const c = db
 		.prepare("SELECT COUNT(*) rows, COUNT(DISTINCT country) countries FROM spr WHERE is_current != 0")
 		.get() as { rows: number; countries: number }

@@ -17,11 +17,13 @@ const loc = (value: string, start = 0, end = value.length, children: AddressNode
 	confidence: 0.9,
 	children,
 })
+
 const tree = (roots: AddressNode[]): AddressTree => ({
 	roots,
 	raw: roots.map((r) => r.value).join(", "),
 	system: "western",
 })
+
 const tagsOf = (n: AddressNode): string =>
 	`${n.tag}:${n.value}${n.children.length ? `[${n.children.map(tagsOf).join(",")}]` : ""}`
 
@@ -33,6 +35,7 @@ describe("usStateSlug", () => {
 		expect(usStateSlug("New York")).toBe("ny")
 		expect(usStateSlug("District of Columbia")).toBe("dc")
 	})
+
 	it("rejects non-states and multi-token values", () => {
 		expect(usStateSlug("Dublin")).toBeNull()
 		expect(usStateSlug("Dublin, TX")).toBeNull() // whole value, not a bare state

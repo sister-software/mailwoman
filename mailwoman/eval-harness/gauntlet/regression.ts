@@ -139,6 +139,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 					}
 				: {}
 	)
+
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
@@ -161,6 +162,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)
 		}
 	}
+
 	deps.close()
 
 	console.log(
@@ -186,6 +188,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			console.log(p)
 		}
 	}
+
 	const pass = fails.length === 0
 
 	console.log(`\nverdict: ${pass ? "PASS" : "FAIL"}`)

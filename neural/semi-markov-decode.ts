@@ -99,6 +99,7 @@ export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
 	if (typeof maxSpan !== "number" || maxSpan < 1) {
 		throw new Error(`semi-crf-transitions: max_span must be a positive number, got ${String(maxSpan)}`)
 	}
+
 	const n = segmentTypes.length
 
 	if (transitions.length !== n || transitions.some((row) => row.length !== n)) {
@@ -148,6 +149,7 @@ export function decodeSegmentationsKBest(
 
 			return
 		}
+
 		// Insertion sort into a k-bounded, descending list — cheaper than sort() per push at k ≤ 10.
 		let i = list.length
 
@@ -177,6 +179,7 @@ export function decodeSegmentationsKBest(
 					if (t === O_TYPE_ID && spanLen !== 1) continue
 					const segScore = perLength[t] ?? NEG_INF
 					const trans = lastType === -1 ? grammar.startTransitions[t]! : grammar.transitions[lastType]![t]!
+
 					push(dp[j]!, t, {
 						score: entry.score + segScore + trans,
 						segments: [...entry.segments, { start: i, length: spanLen, typeID: t }],
@@ -203,6 +206,7 @@ export function decodeSegmentationsKBest(
 			finals.push({ score: entry.score + grammar.endTransitions[lastType]!, segments: entry.segments })
 		}
 	}
+
 	finals.sort((a, b) => b.score - a.score)
 
 	return finals.slice(0, k)

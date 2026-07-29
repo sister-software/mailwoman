@@ -17,9 +17,11 @@ import { Layer, Source, useMap } from "react-map-gl/maplibre"
  */
 export const GeoJSONClipboardLayer: React.FC = memo(() => {
 	const [featureCollections, setSources] = useState<FeatureCollection[]>([])
+
 	const featureCollectionGeometryTypes = useRef<WeakMap<FeatureCollection, Set<Feature["geometry"]["type"]>>>(
 		new WeakMap()
 	)
+
 	const map = useMap()
 
 	const appendGeoJSON = useCallback((geoJSON: Feature | FeatureCollection) => {

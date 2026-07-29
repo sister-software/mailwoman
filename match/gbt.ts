@@ -54,6 +54,7 @@ export function buildThresholds(X: number[][]): number[][] {
 			for (let k = 0; k < uniq.length - 1; k++) {
 				t.push((uniq[k]! + uniq[k + 1]!) / 2)
 			}
+
 			out.push(t)
 		} else {
 			const sorted = [...vals].toSorted((p, q) => p - q)
@@ -62,6 +63,7 @@ export function buildThresholds(X: number[][]): number[][] {
 			for (let q = 1; q <= QUANTILE_SPLIT_COUNT; q++) {
 				t.push(sorted[Math.floor((q / 7) * (sorted.length - 1))]!)
 			}
+
 			out.push([...new Set(t)])
 		}
 	}
@@ -80,6 +82,7 @@ function nodeSSE(rows: number[], g: number[], w: number[]): number {
 		wsum += w[i]!
 		wg += w[i]! * g[i]!
 	}
+
 	const mean = wsum > 0 ? wg / wsum : 0
 	let sse = 0
 
@@ -110,6 +113,7 @@ function fitRegTree(
 		wsum += w[i]!
 		wg += w[i]! * g[i]!
 	}
+
 	const leaf = wsum > 0 ? wg / wsum : 0
 
 	if (depth === 0 || rows.length < 2 * minLeaf) return { leaf }
@@ -198,6 +202,7 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 			wpos += w[i]!
 		}
 	}
+
 	const base = Math.log((wpos + 1) / (wtot - wpos + 1)) // weighted base log-odds
 	const F = new Array<number>(N).fill(base)
 	const trees: TreeNode[] = []
@@ -207,12 +212,15 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 
 		for (let i = 0; i < N; i++) {
 			g[i] = y[i]! - sigmoid(F[i]!)
-		} // negative gradient of logistic loss
+		}
+
+		// negative gradient of logistic loss
 		const tree = fitRegTree(rowsAll, X, g, w, thresholds, opts.depth, opts.minLeaf)
 
 		for (let i = 0; i < N; i++) {
 			F[i]! += opts.lr * predictTree(tree, X[i]!)
 		}
+
 		trees.push(tree)
 	}
 

@@ -52,6 +52,7 @@ function weightsPresent(): boolean {
 		return false
 	}
 }
+
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfWeights = describe.skipIf(!weightsPresent())
 
@@ -103,10 +104,12 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	test("GET /health: returns status + data shape", async () => {
 		const res = await app.request("/health")
 		expect(res.status).toBe(200)
+
 		const body = (await res.json()) as {
 			status: string
 			data: { situs_states: number; interpolation_states: number }
 		}
+
 		expect(body.status).toBe("ok")
 		expect(typeof body.data.situs_states).toBe("number")
 		expect(typeof body.data.interpolation_states).toBe("number")
@@ -122,11 +125,13 @@ describeIfWeights(
 		test("POST /v1/parse: returns ordered components + the decoded tree, in engine reading order", async () => {
 			const r = await postJSON("/v1/parse", { address: "3075 Hill Street, Round Rock, TX 78664" })
 			expect(r.status).toBe(200)
+
 			const body = r.body as {
 				input: string
 				components: Array<{ tag: string; value: string }>
 				tree: { roots: unknown[] }
 			}
+
 			expect(body.input).toBe("3075 Hill Street, Round Rock, TX 78664")
 			expect(body.components.length).toBeGreaterThan(0)
 			expect(body.components.some((c) => c.tag === "house_number" && c.value === "3075")).toBe(true)
@@ -166,7 +171,9 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 		const after = (await (await app.request("/metrics")).json()) as {
 			timings: { total: number; tiers: Record<string, number> }
 		}
+
 		expect(after.timings.total).toBe(1)
+
 		expect(Object.keys(after.timings.tiers)).toEqual(
 			expect.arrayContaining([expect.stringMatching(/^(address_point|interpolated)$/)])
 		)
@@ -183,9 +190,11 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 
 		// #485 4a handoff: per-ROW metrics land in the engine, not just the route's whole-call "batch" tier.
 		const snapshot = metricsSnapshot()
+
 		const perRowTotal = Object.entries(snapshot.timings.tiers)
 			.filter(([tier]) => tier !== "batch")
 			.reduce((sum, [, count]) => sum + count, 0)
+
 		expect(perRowTotal).toBe(2)
 	}, 60_000)
 
@@ -201,6 +210,7 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 		const { RemoteResolver } = await import("@mailwoman/resolver")
 
 		let handle!: ServerHandle
+
 		const port = await new Promise<number>((resolve) => {
 			handle = serveNode({
 				fetch: app.fetch,
@@ -217,10 +227,12 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 			const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
 
 			const flat: Array<(typeof resolved.roots)[number]> = []
+
 			const walk = (n: (typeof resolved.roots)[number]) => {
 				flat.push(n)
 				n.children.forEach(walk)
 			}
+
 			resolved.roots.forEach(walk)
 			const street = flat.find((n) => n.tag === "street")
 			// The resolver service wired its own shards → the street node carries a coordinate tier.

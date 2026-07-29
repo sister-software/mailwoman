@@ -48,6 +48,7 @@ export class FSTMatcher {
 			if (next === undefined) return null
 			stateID = next
 		}
+
 		const node = this.nodes[stateID]!
 
 		return { stateID, accepted: node.places.length > 0, depth: tokens.length }
@@ -77,6 +78,7 @@ export class FSTMatcher {
 
 		for (const [token, targetID] of node.edges) {
 			const target = this.nodes[targetID]!
+
 			result.push({
 				token,
 				targetState: targetID,
@@ -104,6 +106,7 @@ export class FSTMatcher {
 
 				if (next === undefined) break
 				stateID = next
+
 				depth++
 			}
 

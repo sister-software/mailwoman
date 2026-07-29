@@ -97,6 +97,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 			if (cur) {
 				cur.lat += lat
 				cur.lon += lon
+
 				cur.n++
 			} else {
 				acc.set(pc, { lat, lon, n: 1 })
@@ -111,6 +112,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 			const res = update.run(lat, lon, lat, lat, lon, lon, cc, pc)
 			fixed += Number(res.changes)
 		}
+
 		db.exec("COMMIT")
 	}
 
@@ -144,6 +146,7 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	const adminCentroid = db.prepare(
 		`SELECT latitude AS lat, longitude AS lon FROM adm.spr WHERE id=? AND latitude!=0 AND longitude!=0 LIMIT 1`
 	)
+
 	const update = db.prepare(
 		`UPDATE spr SET latitude=?, longitude=?, min_latitude=?, max_latitude=?, min_longitude=?, max_longitude=? WHERE id=?`
 	)
@@ -172,11 +175,14 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 
 			if (c) {
 				update.run(c.lat, c.lon, c.lat, c.lat, c.lon, c.lon, row.id)
+
 				fixed++
+
 				break
 			}
 		}
 	}
+
 	db.exec("COMMIT")
 
 	return fixed
@@ -190,12 +196,14 @@ export async function fillPostcodeCentroids(
 	opts: CentroidFillOptions = {}
 ): Promise<CentroidFillResult> {
 	const phase = opts.onPhase ?? (() => {})
+
 	const placed = () =>
 		(
 			db.prepare(`SELECT COUNT(*) n FROM spr WHERE placetype='postalcode' AND is_current!=0 AND latitude!=0`).get() as {
 				n: number
 			}
 		).n
+
 	const placedBefore = placed()
 	let geonamesFixed = 0
 	let ancestorFixed = 0
@@ -214,6 +222,7 @@ export async function fillPostcodeCentroids(
 			// and every other column intact.
 			phase("fill-parent-borrow")
 			db.exec("BEGIN")
+
 			const res = db.exec(`
 				UPDATE spr
 				SET latitude = (SELECT a.latitude FROM adm.spr a WHERE a.id = spr.parent_id),
@@ -231,6 +240,7 @@ export async function fillPostcodeCentroids(
 				      WHERE a.id = spr.parent_id AND a.latitude != 0 AND a.longitude != 0
 				  )
 			`)
+
 			db.exec("COMMIT")
 			void res
 
@@ -243,8 +253,10 @@ export async function fillPostcodeCentroids(
 			db.exec("DETACH adm")
 		}
 	}
+
 	const placedAfter = placed()
 	const parentBorrowFixed = placedAfter - placedBefore - geonamesFixed - ancestorFixed
+
 	const total = (
 		db.prepare(`SELECT COUNT(*) n FROM spr WHERE placetype='postalcode' AND is_current!=0`).get() as { n: number }
 	).n

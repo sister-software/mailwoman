@@ -23,6 +23,7 @@ function seeded(seed: number): () => number {
 
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 	const synth = synthesizeAnchorAbsorptionRow({ random: seeded(seed), forceTemplate: template })
+
 	const aligned = alignRow({
 		raw: synth.raw,
 		components: synth.components,

@@ -34,11 +34,13 @@ const { values: args } = parseArgs({
 		n: { type: "string", default: "800" },
 	},
 })
+
 const N = Number(args.n)
 
 for (const k of ["baseline", "candidate", "tokenizer"] as const) if (!args[k]) throw new Error(`--${k} required`)
 
 const norm = (s?: string) => (s ?? "").toLowerCase().replaceAll(/[.,]/g, "").replaceAll(/\s+/g, " ").trim()
+
 const wordIncludes = (hay: string, needle: string) =>
 	needle.length > 0 && new RegExp(`\\b${needle.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(hay)
 
@@ -53,6 +55,7 @@ const load = (modelPath: string) =>
 		tokenizerPath: args.tokenizer,
 		modelCardPath: args["model-card"],
 	})
+
 const [base, cand] = await Promise.all([load(args.baseline!), load(args.candidate!)])
 
 const rows = readFileSync(args.golden!, "utf8")
@@ -108,6 +111,7 @@ for (const row of rows) {
 		} else {
 			mode = "other (org/venue name or unrelated span)"
 		}
+
 		failMode[mode] = (failMode[mode] ?? 0) + 1
 
 		if (examples.length < 10) {

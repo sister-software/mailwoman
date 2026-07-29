@@ -181,6 +181,7 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 	if (!placetypes.has("postalcode")) {
 		ignore.push("**/whosonfirst-data-postalcode-*/**")
 	}
+
 	const filePaths = await FastGlob("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
 		absolute: true,
@@ -190,12 +191,15 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	)
+
 	const concordancesInsert = db.prepare(
 		`INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)`
 	)
+
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
 	let processed = 0
@@ -223,6 +227,7 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 
 		if (!feature) {
 			skipped++
+
 			continue
 		}
 

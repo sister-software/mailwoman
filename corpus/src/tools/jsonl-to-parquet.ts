@@ -125,6 +125,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 				"must carry span_starts/span_ends/span_tags; re-emit this shard through alignRow."
 		)
 	}
+
 	const n = (row.span_starts as unknown[]).length
 
 	if ((row.span_ends as unknown[]).length !== n || (row.span_tags as unknown[]).length !== n) {
@@ -180,8 +181,10 @@ export async function jsonlToParquet(
 			// Write the validated line verbatim; DuckDB's `read_json` projects to the explicit `columns`
 			// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 			stage.write(line + "\n")
+
 			rows++
 		}
+
 		await new Promise<void>((resolve, reject) => {
 			stage.end((err?: Error | null) => (err ? reject(err) : resolve()))
 		})
@@ -198,6 +201,7 @@ export async function jsonlToParquet(
 		// Row order is load-bearing: the overlay-manifest assembler records first/last source_id from
 		// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 		await db.run("SET preserve_insertion_order=true")
+
 		await db.run(
 			`COPY (SELECT ${selectList} FROM read_json('${sqlString(stagePath)}', ` +
 				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +

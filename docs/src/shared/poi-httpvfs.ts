@@ -75,6 +75,7 @@ export function loadPOICategoryCodes(worker: POIHTTPVFSWorker): Promise<Map<stri
 
 			return map
 		})
+
 		categoryCodesCache.set(worker, cached)
 	}
 
@@ -144,6 +145,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			// The SAME packing as poi-lookup.ts's h3CellToInt: shortenH3Cell (the shared @mailwoman/spatial
 			// 48-bit packer) then a straight hex→Number(BigInt) cast — `poi.h3_cell` is the SHORTENED cell.
 			const shortCell = Number(BigInt(`0x${shortenH3Cell(cell as H3Cell)}`))
+
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
 			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.
 			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
@@ -152,6 +154,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
 				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIdList}) ORDER BY neg_rank ASC LIMIT ${limit}`
+
 			const hits = rowsFromExec(await worker.db.exec(sql)) as unknown as Array<{
 				name: string | null
 				latitude: number

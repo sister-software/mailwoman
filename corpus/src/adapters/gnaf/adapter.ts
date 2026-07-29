@@ -108,8 +108,10 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 				const orders = renderOrders(t)
 				const order = idx % orders.length
+
 				idx++
 				const raw = orders[order]!
+
 				const components: CanonicalRow["components"] = {
 					house_number: t.house_number,
 					street: t.street,
@@ -126,6 +128,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 				const aligned = reconcileComponents(components, raw)
 
 				if (!Object.keys(aligned).length) continue
+
 				yield {
 					raw,
 					components: aligned,
@@ -136,6 +139,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 					corpus_version: "",
 					license: GNAF_DEFAULT_LICENSE,
 				}
+
 				emitted++
 			}
 		},

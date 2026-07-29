@@ -70,7 +70,9 @@ function generate(n: number, dup: number, seed = 1): SourceRecord[] {
 		const place = i % places
 		const latitude = 25 + rnd() * 24 // ~25–49 N
 		const longitude = -124 + rnd() * 57 // ~-124 to -67 W
-		const variant = i < places ? "" : rnd() < 0.5 ? " llc" : " inc" // duplicates drift the name slightly
+		const variant = i < places ? "" : rnd() < 0.5 ? " llc" : " inc"
+
+		// duplicates drift the name slightly
 		records[i] = {
 			id: String(i),
 			organization: { canonical: `org ${place}${variant}`, raw: `Org ${place}` },
@@ -118,6 +120,7 @@ export async function matcherScale(
 	for (const n of SIZES) {
 		const records = generate(n, DUP)
 		const t0 = performance.now()
+
 		// learnedScorer:false — this measures the FS-baseline pipeline throughput baseline (the learned scorer
 		// is now default-on; its per-pair tree eval is a separate cost, not what this scale number tracks).
 		const { entities, candidatePairs } = resolveEntities(records, {
@@ -125,6 +128,7 @@ export async function matcherScale(
 			trainEM: EM,
 			learnedScorer: false,
 		})
+
 		const wallMs = performance.now() - t0
 		const rssBytes = process.memoryUsage().rss
 		rows.push({ n, records: records.length, entities: entities.length, candidatePairs, wallMs, rssBytes })
@@ -150,15 +154,18 @@ export async function matcherScale(
 
 	for (const r of rows) {
 		const rate = Math.round(r.records / (r.wallMs / 1000))
+
 		lines.push(
 			`| ${r.records.toLocaleString()} | ${r.candidatePairs.toLocaleString()} | ${r.entities.toLocaleString()} | ` +
 				`${sec(r.wallMs)} | ${rate.toLocaleString()}/s | ${mb(r.rssBytes)} |`
 		)
 	}
+
 	lines.push("")
 	lines.push(`## Reading`)
 	lines.push("")
 	const last = rows.at(-1)!
+
 	lines.push(
 		`The matcher resolves **${last.records.toLocaleString()} records in ${sec(last.wallMs)}** in a single Node ` +
 			`process — block → Fellegi-Sunter → union-find clustering, no external service. Geo-cell + canonical-key ` +
@@ -168,19 +175,24 @@ export async function matcherScale(
 			`hundreds of thousands of records, where a string-similarity matcher would need a search cluster to make the ` +
 			`candidate generation tractable.`
 	)
+
 	lines.push("")
+
 	lines.push(
 		`RSS is the shared-process high-water mark across the sweep (each size reuses the heap), so it is an upper ` +
 			`bound, not a per-N working set. The largest size that fits is bounded by the record objects + the link array; ` +
 			`beyond that, shard by geography (each cell is independent) — the same partition the blocking already implies.`
 	)
+
 	lines.push("")
+
 	lines.push(
 		`One honest caveat on the shape: these are uniform-random US coordinates, so as N rises the geo-cell collision ` +
 			`rate climbs and the candidate-pair count grows faster than N (visible in the table). Real address data clusters ` +
 			`into a roughly fixed set of places, so its pair/record ratio is flatter — the wall-clock here, which tracks the ` +
 			`number of PAIRS, is a conservative upper bound on a realistic workload of the same N.`
 	)
+
 	lines.push("")
 
 	const md = lines.join("\n")

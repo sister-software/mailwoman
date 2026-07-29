@@ -57,6 +57,7 @@ export interface PipelineExplorerProps {
  */
 function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels } {
 	const ctx = useDemoEmbed()
+
 	const {
 		manifest,
 		selectedVersion,
@@ -119,6 +120,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(lookup, tree as { roots: unknown[] }, input)
 				const tResolve = performance.now()
+
 				const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({
 					id: c.id,
 					name: c.name,

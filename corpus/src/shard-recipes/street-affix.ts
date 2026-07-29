@@ -57,6 +57,7 @@ interface USSource {
 	csv: string
 	region: string
 }
+
 const TRAIN_SOURCES: readonly USSource[] = [
 	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
 	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
@@ -66,6 +67,7 @@ const TRAIN_SOURCES: readonly USSource[] = [
 	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
 	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
 ]
+
 const EVAL_SOURCE: USSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 
 // Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
@@ -79,12 +81,14 @@ interface BalanceSource {
 	region: string
 	order: string
 }
+
 const MULTILOCALE_SOURCES: readonly BalanceSource[] = [
 	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
 	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
 	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
 	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
 ]
+
 const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
@@ -142,6 +146,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -158,6 +163,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -174,15 +180,18 @@ function readTuples(source: USSource): USTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
@@ -231,6 +240,7 @@ function parseStreet(street: string): { prefix: Prefix | null; name: string; suf
 		prefix = { canonical: lead.canonical, abbreviation: lead.abbreviation }
 		words = words.slice(1)
 	}
+
 	// Trailing USPS suffix — only if it leaves ≥1 word for the name.
 	const trail = matchTrailingSuffix(words.join(" "))
 
@@ -271,11 +281,15 @@ function renderStreet(
 	parts.push(name)
 
 	// Suffix: abbreviated ("St") vs expanded ("Street"), Title-cased to match the name.
-	const full = title(parsed.suffix) // canonical is uppercase word → "Street"
+	const full = title(parsed.suffix)
+
+	// canonical is uppercase word → "Street"
 	const abbr = matchCase(
 		US_STREET_SUFFIX_PREFERRED_ABBR[parsed.suffix as keyof typeof US_STREET_SUFFIX_PREFERRED_ABBR],
 		"Aa"
-	) // "AVE" → "Ave"
+	)
+
+	// "AVE" → "Ave"
 	const renderedSuffix = random() < 0.5 ? abbr : full
 	components.street_suffix = renderedSuffix
 	parts.push(renderedSuffix)
@@ -304,6 +318,7 @@ function renderRow(
 		loc = base.locality,
 		reg = base.region,
 		pc = base.postcode
+
 	const road = `${hn} ${street}`
 	const withRoad: Partial<Record<ComponentTag, string>> = { house_number: hn, ...streetComponents }
 	const r = random()
@@ -334,6 +349,7 @@ function renderRow(
  */
 function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
 	const maxLines = Math.max(limit * 8, 20_000) + 1
+
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
@@ -344,16 +360,19 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string): number => header.indexOf(n)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iRegion = idx("region"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
@@ -361,6 +380,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
 		const cells = splitCSV(lines[li]!)
+
 		const street = get(cells, iStreet),
 			locality = get(cells, iCity),
 			house_number = get(cells, iNum),
@@ -371,6 +391,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 
 		if (seen.has(key)) continue
 		seen.add(key)
+
 		tuples.push({
 			house_number,
 			street,
@@ -393,6 +414,7 @@ function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<R
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
 	// region is intentionally omitted — it isn't rendered in `raw`, so labeling it would fail alignment.
 	const components: Partial<Record<ComponentTag, string>> = { house_number: hn, street, locality: loc, postcode: pc }
+
 	const raw =
 		order === "fr"
 			? `${hn} ${street}, ${pc} ${loc}` // French: number-street, postcode-city
@@ -454,10 +476,13 @@ export const streetAffixRecipe: ShardRecipe = {
 
 			if (!parsed) {
 				noAffix++
+
 				continue
 			}
+
 			const { street, components: streetComponents } = renderStreet(random, parsed)
 			const { fmt, raw, components } = renderRow(random, base, street, streetComponents)
+
 			// Every affix surface form must survive verbatim in raw, else alignment can't label it.
 			const surfaces = [streetComponents.street_prefix, streetComponents.street, streetComponents.street_suffix].filter(
 				(s): s is string => Boolean(s)
@@ -465,8 +490,10 @@ export const streetAffixRecipe: ShardRecipe = {
 
 			if (!surfaces.every((s) => raw.includes(s))) {
 				skipped++
+
 				continue
 			}
+
 			formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1
 			const hasP = !!streetComponents.street_prefix
 
@@ -480,9 +507,12 @@ export const streetAffixRecipe: ShardRecipe = {
 
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: "US" }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -493,13 +523,17 @@ export const streetAffixRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "affix", synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 
@@ -524,6 +558,7 @@ export const streetAffixRecipe: ShardRecipe = {
 					mlPool.push(x)
 				}
 			}
+
 			const M = mlPool.length
 			let mlGuard = 0
 
@@ -535,16 +570,21 @@ export const streetAffixRecipe: ShardRecipe = {
 				// Every component surface must survive in raw, else alignment can't label it.
 				if (![components.street, components.locality, components.postcode].every((s) => !!s && raw.includes(s))) {
 					balanceSkipped++
+
 					continue
 				}
+
 				balanceISO[t.iso2] = (balanceISO[t.iso2] ?? 0) + 1
 				const locale = `${t.iso2.toLowerCase()}-${t.iso2}`
 
 				if (opts.golden) {
 					write(JSON.stringify({ raw, components, country: t.iso2 }) + "\n")
+
 					balanceEmitted++
+
 					continue
 				}
+
 				const canonical: CanonicalRow = {
 					raw,
 					components,
@@ -555,13 +595,17 @@ export const streetAffixRecipe: ShardRecipe = {
 					corpus_version: "0.4.0",
 					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix shard)",
 				}
+
 				const aligned = alignRow(canonical)
 
 				if (aligned.kind !== "labeled" || !aligned.row) {
 					balanceSkipped++
+
 					continue
 				}
+
 				write(JSON.stringify({ ...aligned.row, synth_method: "affix-balance", synth_base_id: null }) + "\n")
+
 				balanceEmitted++
 			}
 		}

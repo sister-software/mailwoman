@@ -70,6 +70,7 @@ export function serveWithRangeSupport(
 
 			return res.end("not found")
 		}
+
 		const type = TYPES[extname(path)] || "application/octet-stream"
 		const base = { "Content-Type": type, "Accept-Ranges": "bytes", "Access-Control-Allow-Origin": "*" }
 		const range = req.headers.range
@@ -78,11 +79,13 @@ export function serveWithRangeSupport(
 		if (m) {
 			const start = Number(m[1])
 			const end = m[2] ? Number(m[2]) : st.size - 1
+
 			res.writeHead(206, {
 				...base,
 				"Content-Range": `bytes ${start}-${end}/${st.size}`,
 				"Content-Length": end - start + 1,
 			})
+
 			createReadStream(path, { start, end }).pipe(res)
 		} else {
 			res.writeHead(200, { ...base, "Content-Length": st.size })
@@ -92,6 +95,7 @@ export function serveWithRangeSupport(
 
 	return new Promise<RangeServer>((resolve, reject) => {
 		server.once("error", reject)
+
 		server.listen(port, () => {
 			report?.(`range server: ${dir} on http://localhost:${port}`)
 			resolve({ dir, port, server, close: () => server.close() })

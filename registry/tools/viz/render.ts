@@ -55,6 +55,7 @@ export async function renderPlotlyHTMLToPNG(
 	const browser = await chromium.launch({
 		args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 	})
+
 	const page = await browser.newPage({
 		viewport: { width: options.width ?? 1160, height: options.height ?? 1000 },
 		deviceScaleFactor: 2,
@@ -75,9 +76,11 @@ export async function renderPlotlyHTMLToPNG(
 			on?: (event: string, cb: () => void) => void
 		}
 		const doc = (globalThis as unknown as { document: { querySelectorAll(s: string): Iterable<unknown> } }).document
+
 		const divs = [...doc.querySelectorAll("div")]
 			.map((d) => d as PlotlyDiv)
 			.filter((d) => d._fullLayout && typeof d.on === "function")
+
 		await Promise.all(
 			divs.map(
 				(d) =>
@@ -88,6 +91,7 @@ export async function renderPlotlyHTMLToPNG(
 			)
 		)
 	})
+
 	// Final settle for the software WebGL rasterizer.
 	await page.waitForTimeout(800)
 
@@ -101,6 +105,7 @@ export async function renderPlotlyHTMLToPNG(
 			report?.("  " + e)
 		}
 	}
+
 	report?.(`[render] ${options.outPNG}`)
 
 	return { outPNG: options.outPNG, consoleErrors: errors }

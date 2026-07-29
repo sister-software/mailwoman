@@ -88,6 +88,7 @@ function serialize(value: unknown, ensureAscii: boolean): string {
 
 		return "{" + parts.join(", ") + "}"
 	}
+
 	throw new TypeError(`pyJSONDumps: unsupported value of type ${t}`)
 }
 

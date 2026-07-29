@@ -47,6 +47,7 @@ export const nlPostcodeRecipe: ShardRecipe = {
 			const street = String(t.street ?? "").trim()
 			const city = String(t.locality ?? "").trim()
 			const number = String(t.number ?? "").trim()
+
 			const rawPostcode = String(t.postcode ?? "")
 				.trim()
 				.toUpperCase()
@@ -54,6 +55,7 @@ export const nlPostcodeRecipe: ShardRecipe = {
 
 			if (!street || !city || !number || !/^\d{4}[A-Z]{2}$/.test(rawPostcode)) {
 				skipped++
+
 				continue
 			}
 
@@ -81,12 +83,14 @@ export const nlPostcodeRecipe: ShardRecipe = {
 				postcode,
 				locality: city,
 			}
+
 			const source_id = shardSourceID("synth-nl-postcode", {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",
 				v: String(read),
 			})
+
 			const canonical = {
 				raw,
 				components,

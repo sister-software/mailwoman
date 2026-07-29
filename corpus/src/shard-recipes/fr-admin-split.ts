@@ -182,14 +182,17 @@ export const frAdminSplitRecipe: ShardRecipe = {
 
 			if (!values.every((v) => raw.includes(v))) {
 				skipped++
+
 				continue
 			}
 
 			if (opts.golden) {
 				// Held-out eval slice for the centroid gate — carries the truth coordinate.
 				write(JSON.stringify({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }) + "\n")
+
 				emitted++
 				orderCounts[order] = (orderCounts[order] ?? 0) + 1
+
 				continue
 			}
 
@@ -198,6 +201,7 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				region: components.region,
 				postcode: components.postcode,
 			})
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -208,16 +212,20 @@ export const frAdminSplitRecipe: ShardRecipe = {
 				corpus_version: "0.5.0",
 				license: LICENSE,
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(
 				JSON.stringify({ ...aligned.row, synth_method: "fr-admin-split", synth_order: order, synth_base_id: null }) +
 					"\n"
 			)
+
 			emitted++
 			orderCounts[order] = (orderCounts[order] ?? 0) + 1
 		}

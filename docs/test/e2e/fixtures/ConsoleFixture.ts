@@ -22,6 +22,7 @@ export class ConsoleFixture {
 
 	constructor(page: Page) {
 		this.#baseHost = ""
+
 		const wireBaseURL = (): void => {
 			try {
 				const url = new URL(page.url())
@@ -35,6 +36,7 @@ export class ConsoleFixture {
 			const text = msg.text()
 
 			if (isIgnored(text)) return
+
 			this.events.push({
 				kind: "console",
 				severity: msg.type() as CapturedEvent["severity"],
@@ -54,6 +56,7 @@ export class ConsoleFixture {
 			// Third-party CDN flakiness shouldn't fail the suite.
 			if (!url.includes(this.#baseHost) && !url.includes("/mailwoman/")) return
 			const err = req.failure()?.errorText ?? "unknown"
+
 			this.events.push({
 				kind: "requestfailed",
 				severity: "error",

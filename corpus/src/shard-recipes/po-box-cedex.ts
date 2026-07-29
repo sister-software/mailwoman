@@ -66,6 +66,7 @@ const US_TRAIN_SOURCES = [
 	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
 	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
 ]
+
 const US_EVAL_SOURCE = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 const FR_SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
 const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
@@ -130,10 +131,14 @@ const NZ_LEADERS_RARE = ["CMB"]
  */
 const QC_FSA_LETTERS = Object.entries(FSA_LETTER_TO_PROVINCE)
 	.filter(([, p]) => p === "QC")
-	.map(([l]) => l) // G H J
+	.map(([l]) => l)
+
+// G H J
 const ON_FSA_LETTERS = Object.entries(FSA_LETTER_TO_PROVINCE)
 	.filter(([, p]) => p === "ON")
-	.map(([l]) => l) // K L M N P
+	.map(([l]) => l)
+
+// K L M N P
 const CA_INTERIOR_LETTERS = "ABCEGHJKLMNPRSTVWXYZ"
 
 /**
@@ -202,6 +207,7 @@ function localityHash(name: string): number {
 
 	return h
 }
+
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
 
 /**
@@ -219,6 +225,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -235,6 +242,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -256,15 +264,18 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string) => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
@@ -276,8 +287,10 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 
 		if (!cleanLocality(locality)) continue
 		const key = locality.toLowerCase()
+
 		const street = get(cells, iStreet),
 			house_number = get(cells, iNum)
+
 		// One tuple per (locality, street) pair keeps the pool varied without ballooning memory.
 		const pairKey = `${key}|${street}`.toLowerCase()
 
@@ -306,15 +319,18 @@ function readFrTuples(limit: number): FrTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string) => header.indexOf(n)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
@@ -322,6 +338,7 @@ function readFrTuples(limit: number): FrTuple[] {
 	for (let li = 1; li < lines.length; li++) {
 		if (!lines[li]) continue
 		const cells = splitCSV(lines[li]!)
+
 		const locality = get(cells, iCity),
 			postcode = get(cells, iPost),
 			street = get(cells, iStreet),
@@ -379,6 +396,7 @@ function readPostalTuples(
 
 		return []
 	}
+
 	const tuples: Array<AuTuple | NzTuple> = []
 	const seen = new Set<string>()
 	const validPostcode = opts.withState ? isAuPostcode : isNzPostcode
@@ -454,6 +472,7 @@ function makePoBoxPhrase(
 	if (rareLeaders && random() < 0.1) {
 		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	}
+
 	const num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 	const phrase = leader === "#" ? `#${num}` : `${caseDial(random, leader)} ${num}`
 
@@ -474,6 +493,7 @@ function makePoBoxPhrase(
 function makeCedex(random: () => number): string {
 	const r = random()
 	const word = r < 0.6 ? "CEDEX" : r < 0.9 ? "Cedex" : "cedex"
+
 	const phrase = (() => {
 		if (random() < 0.2) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
 		const n = 1 + Math.floor(random() * 20)
@@ -504,12 +524,14 @@ function makeAuNzPoBoxPhrase(
 	if (rareLeaders && random() < 0.1) {
 		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	}
+
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 
 	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
 	if (leader === "CMB" && validate === isNzDeliveryService) {
 		num = `B${num}`
 	}
+
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
@@ -563,6 +585,7 @@ function renderPoBoxUs(random: () => number, t: USTuple): Rendered {
 			components: { venue: v, ...base, ...(pc ? { postcode: pc } : {}) },
 		}
 	}
+
 	// USPS label form: comma-less, all-caps ("PO BOX 123 BURLINGTON VT 05401").
 	const up = (s: string) => s.toUpperCase()
 
@@ -614,6 +637,7 @@ function renderBpFr(random: () => number, t: FrTuple): Rendered {
 			components: { po_box: phrase, postcode: pc, locality: locUp, cedex },
 		}
 	}
+
 	const v = pick(random, VENUES_FR)
 
 	return {
@@ -734,6 +758,7 @@ function renderNzPoBox(random: () => number, t: NzTuple): Rendered {
  * `locality` before `region: "ON"` goes looking.
  */
 const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
+
 function orderComponents(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
 
@@ -774,6 +799,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				usPool.push(x)
 			}
 		}
+
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
 		const frAll = readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
@@ -867,19 +893,24 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country = "CA"
 				locale = "en-CA"
 			}
+
 			const { raw, components } = rendered
 
 			// Every component surface must survive verbatim in raw, else alignment can't label it.
 			if (!Object.values(components).every((s) => raw.includes(s))) {
 				skipped++
+
 				continue
 			}
 
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components: orderComponents(components), country }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const canonical: CanonicalShardRow = {
 				raw,
 				components: orderComponents(components),
@@ -899,13 +930,17 @@ export const poBoxCedexRecipe: ShardRecipe = {
 									? "GeoNames NZ postal dump (CC-BY 4.0) locality/postcode tails + NZ Post ADV358 Delivery Service Types (@mailwoman/codex/nz)"
 									: "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: cls, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

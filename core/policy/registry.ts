@@ -69,6 +69,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 
 			if (localized) return localized
 		}
+
 		const global = this.#entries.get(policyKey(component, undefined))
 
 		if (global) return global
@@ -133,18 +134,21 @@ function applyPreferenceFilters(
 
 		if (!policy) {
 			out.push(...list)
+
 			continue
 		}
 
 		if (policy.mode === "neural_preferred") {
 			const hasNeural = list.some((p) => p.source === "neural")
 			out.push(...(hasNeural ? list.filter((p) => p.source !== "rule") : list))
+
 			continue
 		}
 
 		if (policy.mode === "rule_preferred") {
 			const hasRule = list.some((p) => p.source === "rule")
 			out.push(...(hasRule ? list.filter((p) => p.source !== "neural") : list))
+
 			continue
 		}
 

@@ -81,6 +81,7 @@ export function losslessSegments(tree: AddressTree): LosslessSegment[] {
 		while (j < len && !!covered[j] === !!covered[i]) {
 			j++
 		}
+
 		out.push({ kind, value: tree.raw.slice(i, j), start: i, end: j })
 		i = j
 	}

@@ -83,6 +83,7 @@ let changed = 0
 for (const file of listFiles()) {
 	const src = readFileSync(file, "utf8")
 	let touched = false
+
 	const out = src.replace(importRe, (match, head, q, spec) => {
 		const rewritten = rewriteSpecifier(spec, file)
 
@@ -94,6 +95,7 @@ for (const file of listFiles()) {
 
 	if (touched) {
 		writeFileSync(file, out)
+
 		changed++
 	}
 }

@@ -49,6 +49,7 @@ export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLi
 	const scored = SCORERS.map((s) => ({ kind: s.kind, confidence: s.score(input, shape) })).filter(
 		(s) => s.confidence > 0
 	)
+
 	scored.sort((a, b) => b.confidence - a.confidence)
 
 	const top = scored[0] ?? { kind: "vague" as QueryKind, confidence: 0.3 }

@@ -78,6 +78,7 @@ const MD5_HEX_LENGTH = 32
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = repoRootPath("neural-weights-en-gb")
+
 /**
  * In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this pair identical to
  * neural-weights-en-us/scripts/link-dev-weights.ts's DEFAULT_MODEL / DEFAULT_TOKENIZER on every ship. The guard below
@@ -85,6 +86,7 @@ const PKG_DIR = repoRootPath("neural-weights-en-gb")
  */
 const SRC_MODEL =
 	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v385-latam-step-008000-int8.onnx")
+
 /**
  * Tokenizer actually linked — the environment override if set, otherwise the card's default.
  */
@@ -182,6 +184,7 @@ function peekPairIndexHeaderFields(path: string): {
 	}
 
 	const headerLen = view.getUint32(4, true)
+
 	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
 		delta: number
 		transitionBeta?: number
@@ -203,6 +206,7 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 	const enUSCard = JSON.parse(
 		readFileSync(resolve(PKG_DIR, "..", "neural-weights-en-us", "model-card.json"), "utf8")
 	) as { files_md5?: Record<string, string> }
+
 	const checks: Array<[string, string, string | undefined]> = [
 		["model", resolve(PKG_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
 		["tokenizer", resolve(PKG_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
@@ -222,6 +226,7 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 
 			process.exit(1)
 		}
+
 		const actual = createHash("md5").update(readFileSync(path)).digest("hex")
 
 		if (actual !== expected) {

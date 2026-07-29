@@ -137,10 +137,12 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
  */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()
+
 	await db.schema
 		.createIndex("idx_sc_locality")
 		.on("street_centroid")
 		.columns(["locality_base", "street_norm"])
 		.execute()
+
 	await db.schema.createIndex("idx_sc_name").on("street_centroid").columns(["name_key"]).execute()
 }

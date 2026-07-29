@@ -93,12 +93,14 @@ async function main() {
 		// declared ablation; #887). The old idiom (an empty-anchor.json fed as --model-anchor-lookup)
 		// is refused by the #718 fail-closed gate: a lookup parsing to size 0 → UnfedChannelError.
 		const anchorArgs = anchorOn ? ["--model-anchor-lookup", lookup] : ["--anchor-off"]
+
 		// nothrow: oa-resolver-eval exits non-zero on its own internal regression signal even when it wrote
 		// a valid report; this is a MEASUREMENT harness (loc() reads the .md), so under the bash `set -e` we
 		// must not let that exit code abort before the 2x2 summary prints (it false-failed de.native_locality).
 		const r = await $({
 			nothrow: true,
 		})`node scripts/eval/oa-resolver-eval.ts --eval ${evalJsonl} --model ${model} --model-card ${card} --tokenizer ${tok} ${anchorArgs} --default-country ${country}`
+
 		writeFileSync(join(out, `${outName}.md`), r.stdout)
 		writeFileSync(join(out, `${outName}.log`), r.stderr)
 	}

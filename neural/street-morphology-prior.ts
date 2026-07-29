@@ -140,6 +140,7 @@ export function buildStreetMorphologyEmissionPriors(
 				bestEnd = end
 				bestStateID = next.stateID
 			}
+
 			current = next
 		}
 

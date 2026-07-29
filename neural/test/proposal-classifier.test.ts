@@ -29,9 +29,11 @@ function makeSection(body: string, start = 0): Section {
 }
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+
 const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
+
 const haveModel = existsSync(MODEL_PATH)
 
 /**
@@ -48,6 +50,7 @@ describe("createNeuralProposalClassifier — adapter shape", () => {
 			classifier: stubClassifier({ raw: "", roots: [] }),
 			locales: ["en-us"],
 		})
+
 		expect(cls.id).toBe("neural-v0.2.0-en-us")
 		expect(cls.locales).toEqual(["en-us"])
 		expect(cls.emits).toContain("locality")
@@ -58,6 +61,7 @@ describe("createNeuralProposalClassifier — adapter shape", () => {
 			id: "x",
 			classifier: stubClassifier({ raw: "", roots: [] }),
 		})
+
 		expect(cls.locales).toEqual(["*"])
 	})
 })
@@ -82,6 +86,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 			id: "neural-test",
 			classifier: stubClassifier(tree),
 		})
+
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
 		expect(proposals).toHaveLength(2)
 		expect(proposals.map((p) => p.component).toSorted()).toEqual(["locality", "postcode"])
@@ -92,6 +97,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 			id: "neural-v0.2.0-en-us",
 			classifier: stubClassifier(tree),
 		})
+
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
 
 		for (const p of proposals) {
@@ -126,6 +132,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 			classifier: stubClassifier(tree),
 			emits: ["locality"], // postcode excluded
 		})
+
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
 		expect(proposals).toHaveLength(1)
 		expect(proposals[0]!.component).toBe("locality")
@@ -137,6 +144,7 @@ describe("createNeuralProposalClassifier — proposal emission", () => {
 			classifier: stubClassifier(tree),
 			penalty: 0.25,
 		})
+
 		const proposals = await cls.classify(makeSection("Paris 75004"), {})
 
 		for (const p of proposals) {
@@ -151,6 +159,7 @@ describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with v0.2.0 
 			modelPath: MODEL_PATH,
 			tokenizerPath: TOKENIZER_PATH,
 		})
+
 		const cls = createNeuralProposalClassifier({ id: "neural-v0.2.0-en-us", classifier: neural })
 		const proposals = await cls.classify(makeSection("Washington DC 20500"), {})
 		const tags = new Set(proposals.map((p) => p.component))

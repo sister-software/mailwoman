@@ -29,6 +29,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { golden?: string; out?: string; "per-file"?: string }
 const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
@@ -64,6 +65,7 @@ function main(): void {
 		const lines = readFileSync(join(GOLDEN, file), "utf8")
 			.split("\n")
 			.filter((l) => l.trim())
+
 		// Deterministic spread: every Nth row up to PER_FILE.
 		const step = Math.max(1, Math.floor(lines.length / PER_FILE))
 
@@ -90,7 +92,9 @@ function main(): void {
 			for (const p of PERTURBATIONS) {
 				const input = p.apply(row.raw)
 
-				if (input === row.raw && p.name !== "lowercase") continue // perturbation was a no-op (skip; keep lowercase always)
+				if (input === row.raw && p.name !== "lowercase") continue
+
+				// perturbation was a no-op (skip; keep lowercase always)
 				out.push(
 					JSON.stringify({
 						input,
@@ -102,6 +106,7 @@ function main(): void {
 				)
 			}
 		}
+
 		base += PER_FILE
 	}
 

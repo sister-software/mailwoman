@@ -149,6 +149,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -197,6 +198,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 					if (!Object.keys(aligned).length) continue
 
 					const frID = (record.frid ?? "").trim()
+
 					const sourceID = frID
 						? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}`
 						: stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
@@ -211,6 +213,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_SAMHSA_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

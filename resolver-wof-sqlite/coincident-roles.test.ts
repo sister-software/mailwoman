@@ -117,6 +117,7 @@ let db: DatabaseSync
 
 beforeEach(() => {
 	db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -127,11 +128,13 @@ beforeEach(() => {
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
 		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL);
 	`)
+
 	const insSpr = db.prepare(
 		`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
 			min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated)
 			VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`
 	)
+
 	const insPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 
 	for (const r of FIXTURE) {
@@ -141,6 +144,7 @@ beforeEach(() => {
 			insPop.run(r.id, r.population)
 		}
 	}
+
 	const insAnc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, 'region')`)
 
 	for (const [id, anc] of ANCESTRY) {

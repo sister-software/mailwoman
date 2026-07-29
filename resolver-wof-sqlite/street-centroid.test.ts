@@ -43,6 +43,7 @@ async function seedShard(rows: Seed[]): Promise<string> {
 	const db = new DatabaseSync(path)
 	const kdb = new DatabaseClient<StreetCentroidDatabase>({ database: db })
 	await createStreetCentroidTable(kdb)
+
 	const ins = db.prepare(
 		`INSERT INTO street_centroid
 		 (street_norm, postcode, locality_base, lat, lon, min_lat, max_lat, min_lon, max_lon, point_count, street_raw, source, release, name_key)
@@ -65,6 +66,7 @@ async function seedShard(rows: Seed[]): Promise<string> {
 			r.street_norm // name_key — the geocoding lookup doesn't probe it; any non-null fixture value serves
 		)
 	}
+
 	db.close()
 
 	return path
@@ -129,6 +131,7 @@ describe("StreetCentroidSqliteLookup", () => {
 				point_count: 65,
 			},
 		])
+
 		lookup = new StreetCentroidSqliteLookup(path, { streetLocale: "fr" })
 	})
 

@@ -34,6 +34,7 @@ const db = new DatabaseSync(a.shard, { readOnly: true })
 // Even, deterministic spread across the shard (not the first N clustered rows): sample by rowid modulo.
 const total = (db.prepare("SELECT count(*) c FROM address_point").get() as { c: number }).c
 const stride = Math.max(1, Math.floor(total / (N * 1.4)))
+
 const rows = db
 	.prepare(
 		`SELECT number, street_raw, postcode, locality_norm, lat, lon
@@ -65,6 +66,7 @@ for (const r of rows) {
 	const input = `${number} ${street}, ${[locality, region, postcode].filter(Boolean).join(" ")}`
 	lines.push(JSON.stringify({ input, lat: r.lat, lon: r.lon }))
 }
+
 db.close()
 writeFileSync(out, lines.join("\n") + "\n")
 

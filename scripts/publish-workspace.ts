@@ -132,6 +132,7 @@ try {
 	if (stderr) {
 		process.stderr.write(stderr)
 	}
+
 	process.exit(publishResult.status ?? 1)
 } finally {
 	rmSync(tmpDir, { recursive: true, force: true })
@@ -152,6 +153,7 @@ function verifyPublishExports(innerTarballPath: string) {
 
 		process.exit(listing.status ?? 1)
 	}
+
 	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
 	const manifestRead = spawnSync("tar", ["-xzf", innerTarballPath, "-O", "package/package.json"], { encoding: "utf8" })
 
@@ -160,6 +162,7 @@ function verifyPublishExports(innerTarballPath: string) {
 
 		process.exit(manifestRead.status ?? 1)
 	}
+
 	const manifest = JSON.parse(manifestRead.stdout)
 	const offenders = collectExportTargets(manifest.exports ?? {}).filter((target) => !shipped.has(target))
 
@@ -169,6 +172,7 @@ function verifyPublishExports(innerTarballPath: string) {
 		for (const line of offenders) {
 			console.error(`  - ${line} (not present in the tarball)`)
 		}
+
 		process.exit(1)
 	}
 

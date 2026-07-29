@@ -22,6 +22,7 @@ const SYNTHETIC_PATH = "mailwoman/test-fixtures/legacy-golden/synthetic-inputs.t
 const OUT_PATH = "mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl"
 
 const parityInputs = readJSONL<ParityCase>(PARITY_PATH).map((c) => c.input)
+
 const syntheticInputs = readFileSync(SYNTHETIC_PATH, "utf8")
 	.split("\n")
 	.map((line) => line.trim())

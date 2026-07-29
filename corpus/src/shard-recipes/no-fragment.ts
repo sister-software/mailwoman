@@ -129,6 +129,7 @@ export const noFragmentRecipe: ShardRecipe = {
 			// emitSeq keeps every emit distinct — knob 3 emits N copies of one long-number row, and
 			// (components, read) alone would collide their source_id and let downstream dedup drop the boost.
 			const source_id = shardSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
+
 			const canonical = {
 				raw,
 				components,
@@ -164,12 +165,14 @@ export const noFragmentRecipe: ShardRecipe = {
 
 			if (!street) {
 				skipped++
+
 				continue
 			}
 
 			// THE SPLIT. A surface on the digit board never enters training.
 			if (excluded.has(norm(street))) {
 				contaminated++
+
 				continue
 			}
 
@@ -186,6 +189,7 @@ export const noFragmentRecipe: ShardRecipe = {
 
 					emit(pc, { postcode: pc }, "counter-bare-postcode")
 				}
+
 				continue
 			}
 

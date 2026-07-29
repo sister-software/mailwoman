@@ -189,6 +189,7 @@ function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): Sp
 			const out = join(specsDir, `${surface}-${flavor}.json`)
 
 			phase("emit-spec", `${surface} ${flavor} → ${out}`)
+
 			run("node", [cli, "openapi", "--flavor", flavor, "--out", out])
 			;(flavor === "3.1" ? v31 : v30)[surface] = out
 		}
@@ -208,6 +209,7 @@ function generatePythonModules(specPaths: SpecPaths, pythonDir: string, phase: (
 
 	for (const surface of CLIENT_SURFACES) {
 		phase("python-generate", surface)
+
 		run("uvx", [
 			"openapi-python-client@0.29",
 			"generate",
@@ -536,6 +538,7 @@ function verifyPython(pythonDir: string, phase: (p: string, d?: string) => void)
 	const wheelPath = join(distDir, wheel)
 
 	phase("python-import-check", wheelPath)
+
 	run("uv", [
 		"run",
 		"--no-project",
@@ -900,6 +903,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			checks.push({ ok: true, check: step.check, detail: detail || undefined })
 		} catch (error) {
 			checks.push({ ok: false, check: step.check, detail: error instanceof Error ? error.message : String(error) })
+
 			break
 		}
 	}

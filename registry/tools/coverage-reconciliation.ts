@@ -167,6 +167,7 @@ export async function coverageReconciliation(
 
 			if (kept.length >= CAP) break
 		}
+
 		rawBySource.set(spec.source, kept)
 		report?.(`    ${spec.source}: ${kept.length} rows`)
 	}
@@ -176,9 +177,11 @@ export async function coverageReconciliation(
 
 	let geo = 0
 	let total = 0
+
 	// Count placements at the seam (parity with the retired in-script counter).
 	const seam: GeocodeAddress = async (raw) => {
 		const g = await geocoder.seam(raw)
+
 		total++
 
 		if (g?.geocode) {
@@ -197,8 +200,10 @@ export async function coverageReconciliation(
 		for (const r of recs) {
 			r.id = `${spec.source}:${r.id}`
 		}
+
 		records.push(...recs)
 	}
+
 	geocoder.close()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 

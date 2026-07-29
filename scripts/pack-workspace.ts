@@ -62,8 +62,10 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 				...manifest.publishConfig,
 				exports: transformExportsForPublish(manifest.exports),
 			}
+
 			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
 		}
+
 		const result = spawnSync("yarn", ["pack", "-o", outFile], { cwd: workspaceDir, stdio: ["ignore", "pipe", "pipe"] })
 
 		if (result.status !== 0) {

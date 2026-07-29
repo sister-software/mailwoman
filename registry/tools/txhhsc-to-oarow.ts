@@ -67,6 +67,7 @@ export function convertTXHHSC(
 	const lines = readFileSync(src, "utf8")
 		.split("\n")
 		.filter((l) => l.trim())
+
 	const header = lines[0]!.split("\t")
 	const col = (name: string) => header.indexOf(name)
 	const cAddr = col("Physical Address")
@@ -86,16 +87,20 @@ export function convertTXHHSC(
 
 		if (!addr || !city || !m) {
 			skipped++
+
 			continue
 		}
+
 		const lat = Number(m[1])
 		const lon = Number(m[2])
 
 		// Sanity: TX bounding box (rejects swapped/garbage coords).
 		if (lat < TX_MIN_LATITUDE || lat > TX_MAX_LATITUDE || lon > TX_MAX_LONGITUDE || lon < TX_MIN_LONGITUDE) {
 			skipped++
+
 			continue
 		}
+
 		records.push(
 			JSON.stringify({
 				input: `${addr}, ${city}, TX ${zip}`,

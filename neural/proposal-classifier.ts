@@ -84,6 +84,7 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 					end: sectionOffset + node.end,
 					body: node.value,
 				} as unknown as Span
+
 				proposals.push({
 					span,
 					component: node.tag,

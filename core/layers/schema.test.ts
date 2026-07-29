@@ -56,6 +56,7 @@ describe("layer contract DDL", () => {
 			.insertInto("layer_coverage")
 			.values({ h3_cell: 123_456_789, completeness: 0.42, observed_rows: 17 })
 			.execute()
+
 		const cell = await db.selectFrom("layer_coverage").selectAll().executeTakeFirstOrThrow()
 		expect(cell.completeness).toBeCloseTo(0.42)
 	})

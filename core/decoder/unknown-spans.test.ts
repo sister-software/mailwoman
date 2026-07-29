@@ -37,6 +37,7 @@ describe("unknownSpans", () => {
 		expect(unknownSpans(t)).toEqual([{ kind: "unknown", value: "ô", start: 1, end: 2 }])
 		// The round-trip HOLDS precisely because the unknown span captures the dropped char.
 		expect(isLossless(t)).toBe(true)
+
 		expect(
 			losslessSegments(t)
 				.map((s) => s.value)
@@ -55,10 +56,12 @@ describe("unknownSpans", () => {
 	it("captures leading and trailing gaps", () => {
 		// "  X " — only X [2,3) is covered; leading "  " and trailing " " are unknown.
 		const t = tree("  X ", [node("house_number", 2, 3, "X")])
+
 		expect(unknownSpans(t)).toEqual([
 			{ kind: "unknown", value: "  ", start: 0, end: 2 },
 			{ kind: "unknown", value: " ", start: 3, end: 4 },
 		])
+
 		expect(isLossless(t)).toBe(true)
 	})
 
@@ -75,6 +78,7 @@ describe("unknownSpans", () => {
 
 	it("losslessSegments tiles the input in source order", () => {
 		const t = tree("A, B", [node("locality", 0, 1, "A"), node("locality", 3, 4, "B")])
+
 		expect(losslessSegments(t)).toEqual([
 			{ kind: "covered", value: "A", start: 0, end: 1 },
 			{ kind: "unknown", value: ", ", start: 1, end: 3 },

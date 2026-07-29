@@ -239,11 +239,14 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 		input = createReadStream(part.path)
 	} else {
 		const child = spawn("unzip", ["-p", part.zip!, part.csv!])
+
 		child.on("error", (err) => {
 			console.error(`  WARN: unzip failed for ${part.zip}: ${err.message}`)
 		})
+
 		input = child.stdout!
 	}
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const reservoir: LocaleBaseTuple[] = []
 	let cols: ColumnIndex | null = null
@@ -265,6 +268,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				header = cells.map((h) => h.trim().toLowerCase())
 				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				const ix = (name: string): number => header!.indexOf(name)
+
 				// `cnigRaw` (ES pedanía only): the RAW CNIG header has no NUMBER/STREET/CITY/DISTRICT/REGION/POSTCODE
 				// at all — `numero`/`nombre_via`/`poblacion`/`municipio`/`comunidad_autonoma`/`cod_postal` instead.
 				// See {@link LocalePart.cnigRaw}.
@@ -292,6 +296,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			}
 
 			if (cols === null) continue
+
 			// cnigRaw: STREET is split into a road-type column (`tipo_vial`, e.g. "CARRETERA") and the name
 			// (`nombre_via`) — rejoin them exactly as OA's own conform step does (verified byte-identical to the
 			// conformed STREET column for the same source row). Every other part's header already carries the
@@ -300,6 +305,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				cols.tipoVial >= 0
 					? [get(cells, cols.tipoVial), get(cells, cols.street)].filter(Boolean).join(" ")
 					: get(cells, cols.street)
+
 			const rawCity = get(cells, cols.city)
 
 			if (!street) continue
@@ -325,6 +331,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				if (cleanedDistrict) {
 					locality = cleanedDistrict
 					const cleanedCity = cleanCityNoise(rawCity)
+
 					// ES pedanía lesson (2026-07-22): the CNIG `poblacion` column is filled on ~93% of rows but
 					// EQUALS `municipio` on the majority of those (the address point sits in the municipio's own
 					// main town, not a below-municipio pedanía) — only ~32.6% of ES rows carry a genuinely
@@ -349,6 +356,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 
 				continue
 			}
+
 			const tuple: LocaleBaseTuple = {
 				house_number: get(cells, cols.num),
 				street,
@@ -357,6 +365,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				postcode: get(cells, cols.post),
 				...(dependent_locality ? { dependent_locality } : {}),
 			}
+
 			seen++
 
 			if (reservoir.length < RESERVOIR_CAP) {
@@ -464,11 +473,13 @@ export const localeRecipe: ShardRecipe = {
 				`No OA sources registered for --country ${country}. Known: ${Object.keys(COUNTRY_SOURCES).join(", ")}.`
 			)
 		}
+
 		const intlFraction = opts.intlFraction ?? 0.4
 
 		if (!(intlFraction >= 0 && intlFraction <= 1)) {
 			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
 		}
+
 		// Default 0 → the `random() < countryFraction` draw below is short-circuited away entirely (never
 		// consumed), so every existing locale's emit stream is byte-identical to before this option existed.
 		const countryFraction = opts.countryFraction ?? 0
@@ -476,6 +487,7 @@ export const localeRecipe: ShardRecipe = {
 		if (!(countryFraction >= 0 && countryFraction <= 1)) {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
 		}
+
 		const source = opts.sourceName ?? countrySource.source
 		const count = opts.count ?? 4000
 		// Tri-state: `undefined` (flag absent) touches nothing below — `parts` stays the default list and each
@@ -511,22 +523,27 @@ export const localeRecipe: ShardRecipe = {
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
 			const order = random() < intlFraction ? "international" : "native"
+
 			// Per-country surface-shape draws (#241) — consumed ONLY for that country, so the DE/FR emit
 			// streams for a given seed are unchanged by their existence.
 			const nativeHouseJoin =
 				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : undefined
+
 			const postcodeShape =
 				country === "NL"
 					? random() < NL_GLUED_POSTCODE_FRACTION
 						? ("as-source" as const)
 						: ("conventional" as const)
 					: undefined
+
 			const synth = synthesizeLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
 
 			if (!synth) {
 				skipped++
+
 				continue
 			}
+
 			applyCountryAppend(synth, country, countryFraction, random)
 
 			if (opts.golden) {
@@ -540,22 +557,29 @@ export const localeRecipe: ShardRecipe = {
 					source,
 					source_id: "golden:align-check",
 				}
+
 				const goldenAligned = alignRow(goldenCanonical as Parameters<typeof alignRow>[0])
 
 				if (goldenAligned.kind !== "labeled" || !goldenAligned.row) {
 					skipped++
+
 					continue
 				}
+
 				write(JSON.stringify({ raw: synth.raw, components: synth.components, country, order }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const sourceID = stableSourceID(source, {
 				street: synth.components.street,
 				house_number: synth.components.house_number,
 				locality: synth.components.locality,
 				postcode: synth.components.postcode,
 			})
+
 			const canonical = {
 				raw: synth.raw,
 				components: synth.components,
@@ -566,13 +590,17 @@ export const localeRecipe: ShardRecipe = {
 				corpus_version: countrySource.corpusVersion,
 				license: `OpenAddresses ${country} tuples, rendered ${order}-order — see ingest SOURCES`,
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: source, synth_order: order, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

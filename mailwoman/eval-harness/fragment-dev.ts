@@ -51,6 +51,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		.split("\n")
 		.filter(Boolean)
 		.map((line) => JSON.parse(line) as DevRow)
+
 	const sample = options.limit && options.limit > 0 ? rows.slice(0, options.limit) : rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({

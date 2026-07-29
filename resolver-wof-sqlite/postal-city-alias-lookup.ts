@@ -71,6 +71,7 @@ export class WOFPostalCityAliasLookup {
 		} else {
 			throw new Error("WOFPostalCityAliasLookup needs `databasePath` or `database`")
 		}
+
 		// `#kdb` wraps `#db` for the typed query; close() owns the raw handle directly (sync).
 		this.#kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: this.#db })
 	}
@@ -83,6 +84,7 @@ export class WOFPostalCityAliasLookup {
 		const pc = postcode.trim()
 
 		if (!pc) return []
+
 		const rows = await this.#kdb
 			.selectFrom("postal_city_alias")
 			.select(["postal_city", "geo_locality", "n"])

@@ -87,6 +87,7 @@ function composeRaw(house: string, street: string, postcode: string, locality: s
 	if (streetPart) {
 		parts.push(streetPart)
 	}
+
 	const cityPart = [postcode, locality].filter(Boolean).join(" ").trim()
 
 	if (cityPart) {
@@ -108,6 +109,7 @@ export function createBanAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					delimiter: ";",
@@ -181,6 +183,7 @@ export function createBanAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: "Licence Ouverte 2.0",
 					}
+
 					emitted++
 				}
 			} finally {

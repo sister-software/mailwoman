@@ -30,6 +30,7 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { "warn-only"?: boolean }
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
@@ -120,6 +121,7 @@ const localCard = JSON.parse(readFileSync(MODEL_CARD_PATH, "utf8")) as {
 	version: string
 	files_md5?: Record<string, string>
 }
+
 const cardModelVersion = normalizeVersion(localCard.version)
 
 const demoDefault = await readDemoDefaultVersion()
@@ -138,6 +140,7 @@ let demoNote = `${cardModelVersion} (model-card version)`
 if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 	try {
 		const trailingCardURL = `https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${demoDefault}/model-card.json`
+
 		const trailingCard = (await (await fetch(trailingCardURL)).json()) as {
 			files_md5?: Record<string, string>
 		}
@@ -154,6 +157,7 @@ if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 		// Fetch failure → keep the strict verdict; the check stays honest rather than silently passing.
 	}
 }
+
 checks.push({
 	name: `demo manifest defaultVersion (${DEMO_MANIFEST_URL})`,
 	value: demoDefault,
@@ -162,6 +166,7 @@ checks.push({
 })
 
 const docsCurrent = readDocsCurrentVersion()
+
 checks.push({
 	name: "docs/articles/releases.mdx (current) row",
 	value: docsCurrent,

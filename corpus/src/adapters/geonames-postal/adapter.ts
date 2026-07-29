@@ -56,6 +56,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({ delimiter: "\t", quote: false, relax_column_count: true, skip_empty_lines: true })
 			)
@@ -99,6 +100,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 						const aligned = reconcileComponents(v.comp, v.raw)
 
 						if (Object.keys(aligned).length < 2) continue
+
 						yield {
 							raw: v.raw,
 							components: aligned,
@@ -108,6 +110,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: GEONAMES_POSTAL_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}

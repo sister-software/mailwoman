@@ -105,6 +105,7 @@ test("setBody: trim text when greater than 140 characters with spaces", () => {
 	const span =
 		Span.from(`Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`)
+
 	expect(span.start).toBe(0)
 	expect(span.end).toBe(140)
 })
@@ -113,6 +114,7 @@ test("setBody: do not trim text when it's 140 characters", () => {
 	const span = Span.from(
 		"LoremipsumdolorsitametconsecteturadipiscingelitseddoeiusmodtemporincididuntutlaboreetdoloremagnaaliquaUtenimadminimveniamquisnostrudexercita"
 	)
+
 	expect(span.start).toBe(0)
 	expect(span.end).toBe(140)
 })

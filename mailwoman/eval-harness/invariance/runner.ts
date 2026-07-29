@@ -250,6 +250,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 			if (transformedText == null) {
 				skipped.push({ rowId: row.id, transformId, reason: "transform not applicable to this raw" })
+
 				continue
 			}
 
@@ -262,6 +263,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			} else {
 				const original = await originalFor(row)
 				const perturbed = await options.parse(transformedText)
+
 				candidateOutcome = {
 					transformed: transformedText,
 					...compareForTransform(transformId, original, perturbed),
@@ -295,6 +297,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 							})()
 
 				outcome.baselineVerdict = baselineResult.verdict
+
 				// Severity-aware, NOT severity-blind: a violation is pre-existing only if the candidate's verdict
 				// is not WORSE than the baseline's on this SAME (row, transform) pair — INVARIANT < DEGRADED <
 				// LOST. Two non-INVARIANT verdicts on both sides used to be enough to call it pre-existing, which
@@ -340,6 +343,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 	report(`\n=== invariance mini-suite ===`)
 	report(`  rows: ${options.rows.length}   pairs: ${outcomes.length}   skipped (n/a): ${skipped.length}`)
+
 	report(
 		`  INVARIANT ${counts.invariant}   DEGRADED ${counts.degraded}${options.baselineParse ? ` (${newCounts.degraded} new)` : ""}   LOST ${counts.lost}${options.baselineParse ? ` (${newCounts.lost} new)` : ""}`
 	)
@@ -351,6 +355,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 		for (const v of violations) {
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
+
 			// Final-review fix: this used to hardcode "baseline held INVARIANT" for every NEW violation, but
 			// "not pre-existing" (worse severity than the baseline) does not imply the baseline was INVARIANT —
 			// the baseline could itself have been DEGRADED while the candidate is the strictly-worse LOST.
@@ -360,6 +365,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 					? " [pre-existing: baseline also violates — non-blocking]"
 					: ` [NEW — baseline verdict was ${v.baselineVerdict}]`
 				: ""
+
 			report(`  ${tag} [${v.transformId}] ${v.rowId} "${v.raw}" → "${v.transformed}"${provenance}`)
 
 			for (const d of v.diff) {
@@ -377,6 +383,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	}
 
 	const pass = newCounts.lost === 0 && newCounts.degraded <= maxDegraded
+
 	report(
 		`\nverdict: ${pass ? "PASS" : "FAIL"} (max-degraded ${maxDegraded}${options.baselineParse ? ", regression mode vs baseline" : ""})`
 	)

@@ -50,6 +50,7 @@ const COUNTRY_FORM_POOL = (() => {
 	// all ~249 ISO canonical English names (breadth)
 	return { surface, names }
 })()
+
 /**
  * Negatives: rows with NO country token → teach golden precision.
  */
@@ -82,6 +83,7 @@ const SOURCES: readonly CountrySource[] = [
 	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
 	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
 ]
+
 /**
  * Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained.
  */
@@ -105,6 +107,7 @@ interface CountryTuple {
 
 function splitCSV(line: string): string[] {
 	const out: string[] = []
+
 	let cur = "",
 		inQ = false
 
@@ -115,6 +118,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -131,6 +135,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -140,6 +145,7 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	// countrywide extracts (FR/IT/NL) are GB-scale — cap the bytes with `head` (read ~8 lines per wanted
 	// tuple to survive dedup/skips) so the toString stays under V8's string limit.
 	const maxLines = Math.max(limit * 8, 20_000) + 1
+
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
@@ -150,16 +156,19 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (n: string): number => header.indexOf(n)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iRegion = idx("region"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
@@ -167,6 +176,7 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
 		if (!lines[li]) continue
 		const cells = splitCSV(lines[li]!)
+
 		const street = get(cells, iStreet),
 			locality = get(cells, iCity),
 			house_number = get(cells, iNum)
@@ -176,6 +186,7 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 
 		if (seen.has(key)) continue
 		seen.add(key)
+
 		tuples.push({
 			house_number,
 			street,
@@ -219,6 +230,7 @@ function renderCountry(
 	if (pc) {
 		components.postcode = pc
 	}
+
 	let body: string
 
 	if (order === "us") {
@@ -238,6 +250,7 @@ function renderCountry(
 		// postcode is NOT a country (counters the v1 golden over-firing).
 		return { fmt: "negative", raw: body, components }
 	}
+
 	const withC: Partial<Record<ComponentTag, string>> = { ...components, country }
 	const r = random()
 
@@ -263,6 +276,7 @@ interface Homograph {
 	cities: readonly string[]
 	us: { role: "region" | "locality"; locality: string; region: string; postcodes: readonly string[] }
 }
+
 const HOMOGRAPHS: readonly Homograph[] = [
 	{
 		surface: "Georgia",
@@ -301,12 +315,14 @@ const HOMOGRAPHS: readonly Homograph[] = [
 		us: { role: "locality", locality: "Turkey", region: "TX", postcodes: ["79261", "28393"] },
 	},
 ]
+
 // 2-letter codes that are BOTH a US state abbrev AND an ISO country code → must read as region in US ctx.
 interface AbbrevRegion {
 	code: string
 	localities: readonly string[]
 	postcodes: readonly string[]
 }
+
 const ABBREV_REGIONS: readonly AbbrevRegion[] = [
 	{ code: "CA", localities: ["Los Angeles", "Sacramento", "San Diego"], postcodes: ["90012", "95814", "92101"] }, // California / Canada
 	{ code: "GA", localities: ["Atlanta", "Savannah", "Macon"], postcodes: ["30309", "31401", "31201"] }, // Georgia(US) / Georgia
@@ -315,6 +331,7 @@ const ABBREV_REGIONS: readonly AbbrevRegion[] = [
 	{ code: "PA", localities: ["Philadelphia", "Pittsburgh"], postcodes: ["19103", "15222"] }, // Pennsylvania / Panama
 	{ code: "AL", localities: ["Birmingham", "Montgomery"], postcodes: ["35203", "36104"] }, // Alabama / Albania
 ]
+
 const STREET_POOL: readonly string[] = [
 	"Main Street",
 	"Oak Avenue",
@@ -327,6 +344,7 @@ const STREET_POOL: readonly string[] = [
 	"2nd Avenue",
 	"Maple Drive",
 ]
+
 const pick = <T>(random: () => number, arr: readonly T[]): T => arr[Math.floor(random() * arr.length)]!
 const houseNo = (random: () => number): string => String(1 + Math.floor(random() * 998))
 
@@ -341,6 +359,7 @@ function renderHomograph(random: () => number): {
 	iso2: string
 } {
 	const h = pick(random, HOMOGRAPHS)
+
 	const hn = houseNo(random),
 		street = pick(random, STREET_POOL)
 
@@ -348,12 +367,14 @@ function renderHomograph(random: () => number): {
 		const city = pick(random, h.cities)
 		const withStreet = random() < 0.6
 		const raw = withStreet ? `${hn} ${street}, ${city}, ${h.surface}` : `${city}, ${h.surface}`
+
 		const components: Partial<Record<ComponentTag, string>> = withStreet
 			? { house_number: hn, street, locality: city, country: h.surface }
 			: { locality: city, country: h.surface }
 
 		return { fmt: "homograph-country", raw, components, iso2: h.iso2 }
 	}
+
 	const pc = pick(random, h.us.postcodes)
 
 	if (h.us.role === "region") {
@@ -385,6 +406,7 @@ function renderAbbrevRegion(random: () => number): {
 	iso2: string
 } {
 	const a = pick(random, ABBREV_REGIONS)
+
 	const hn = houseNo(random),
 		street = pick(random, STREET_POOL),
 		locality = pick(random, a.localities),
@@ -469,17 +491,22 @@ export const countryBalancedRecipe: ShardRecipe = {
 
 				if (country && !rendered.raw.includes(country)) {
 					skipped++
+
 					continue
 				}
 			}
+
 			const { raw, components } = rendered
 			const localeTag = rowISO2 === "US" ? "en-US" : `${rowISO2.toLowerCase()}-${rowISO2}`
 
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: rowISO2 }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -490,13 +517,17 @@ export const countryBalancedRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "country", synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

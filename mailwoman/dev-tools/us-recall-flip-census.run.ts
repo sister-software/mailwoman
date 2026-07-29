@@ -78,17 +78,20 @@ for (const row of rows) {
 			for (const [t, values] of cand.entries()) {
 				if (t !== tag && values.some((v) => fold(v).includes(fold(gold)))) {
 					went = `absorbed into ${t}`
+
 					break
 				}
 			}
 
 			const entry: FlipEntry = flips.get(tag) ?? { count: 0, where: new Map<string, number>(), samples: [] }
+
 			entry.count++
 			entry.where.set(went, (entry.where.get(went) ?? 0) + 1)
 
 			if (entry.samples.length < MIN_REPORTABLE_SAMPLES) {
 				entry.samples.push(`${JSON.stringify(row.raw)} gold ${tag}=${JSON.stringify(gold)} -> ${went}`)
 			}
+
 			flips.set(tag, entry)
 		}
 	}

@@ -107,6 +107,7 @@ function iec(bytes: number): string {
 
 	while (value >= BYTES_PER_KIB && i < units.length - 1) {
 		value /= 1024
+
 		i++
 	}
 
@@ -123,6 +124,7 @@ async function convertXLSXToCSV(xlsxPath: string, csvPath: string): Promise<void
 	const child = spawn("python3", ["-c", PY_CONVERT, xlsxPath, csvPath], {
 		stdio: ["ignore", "inherit", "inherit"],
 	})
+
 	await new Promise<void>((resolve, reject) => {
 		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`python3 converter exited with ${code}`))))
 		child.on("error", reject)
@@ -216,6 +218,7 @@ export async function fetchStateHISchools(
 		bytes: csvSize,
 		notes: "Converted from XLSX (sheets HIDOE + PCS concatenated under shared header).",
 	}
+
 	await writeManifest(manifestPath, manifest)
 
 	report?.(`  ✓ ${iec(csvSize)}  sha256=${csvSha}`)

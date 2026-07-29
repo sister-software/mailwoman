@@ -23,6 +23,7 @@ test("toLibpostalComponents: maps our classifications to libpostal labels, in or
 		{ classification: "region", value: "DC" },
 		{ classification: "postcode", value: "20500" },
 	]
+
 	expect(toLibpostalComponents(matches)).toEqual([
 		{ label: "house_number", value: "1600" },
 		{ label: "road", value: "Pennsylvania Ave NW" },
@@ -64,6 +65,7 @@ test("GET /parse?query= returns ordered libpostal components", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/parse?query=1600+pennsylvania+ave")
 	expect(res.status).toBe(200)
+
 	expect(await res.json()).toEqual([
 		{ label: "house_number", value: "1600" },
 		{ label: "road", value: "pennsylvania ave" },
@@ -78,11 +80,13 @@ test("GET /parse honors the address alias", async () => {
 
 test("POST /parse accepts a JSON body (native now — the express CLI never mounted a body parser)", async () => {
 	const app = createLibpostalApp(fixtureEngine)
+
 	const res = await app.request("/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ query: "1600 pennsylvania ave" }),
 	})
+
 	expect(res.status).toBe(200)
 	expect((await res.json()) as unknown[]).toHaveLength(2)
 })
@@ -115,6 +119,7 @@ test("an empty higher-precedence query param wins precedence and 400s (legacy pa
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ query: "" }),
 	})
+
 	expect(viaBody.status).toBe(400)
 	expect(await viaBody.json()).toEqual({ error: "query is required" })
 })
@@ -127,6 +132,7 @@ test("POST /parse with malformed JSON is tolerated like the served legacy endpoi
 		headers: { "content-type": "application/json" },
 		body: "{truncated",
 	})
+
 	expect(withParam.status).toBe(200)
 
 	const without = await app.request("/parse", {
@@ -134,6 +140,7 @@ test("POST /parse with malformed JSON is tolerated like the served legacy endpoi
 		headers: { "content-type": "application/json" },
 		body: "{truncated",
 	})
+
 	expect(without.status).toBe(400)
 	expect(await without.json()).toEqual({ error: "query is required" })
 })
@@ -159,22 +166,26 @@ test("expand with an engine: 200 with expansions; missing address is the legacy 
 
 test("POST /expand accepts a JSON body", async () => {
 	const app = createLibpostalApp(expandingEngine)
+
 	const res = await app.request("/expand", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ address: "1600 penn" }),
 	})
+
 	expect(res.status).toBe(200)
 	expect(await res.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
 })
 
 test("POST /expand: a `query` field is inert (expand has no query alias) — `address` still wins", async () => {
 	const app = createLibpostalApp(expandingEngine)
+
 	const res = await app.request("/expand", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ query: "ignored", address: "1600 penn" }),
 	})
+
 	expect(res.status).toBe(200)
 	expect(await res.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
 })
@@ -182,11 +193,13 @@ test("POST /expand: a `query` field is inert (expand has no query alias) — `ad
 test("POST with a body over the 100 KiB cap answers 413, not a buffered crash", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const oversized = JSON.stringify({ query: "x".repeat(103_000) })
+
 	const res = await app.request("/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: oversized,
 	})
+
 	expect(res.status).toBe(413)
 	expect(await res.json()).toEqual({ error: "request body too large" })
 })
@@ -197,6 +210,7 @@ test("an engine fault answers the clean legacy 500, never a crash", async () => 
 			throw new Error("model exploded")
 		},
 	})
+
 	const res = await app.request("/parse?query=x")
 	expect(res.status).toBe(500)
 	expect(await res.json()).toEqual({ error: "internal error" })
@@ -210,10 +224,12 @@ test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients
 
 test("CORS: preflight OPTIONS answers 204 with CORS headers (POST /parse is preflighted)", async () => {
 	const app = createLibpostalApp(fixtureEngine)
+
 	const res = await app.request("/parse", {
 		method: "OPTIONS",
 		headers: { origin: "https://example.com", "access-control-request-method": "POST" },
 	})
+
 	expect(res.status).toBe(204)
 	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 	expect(res.headers.get("access-control-allow-methods")).toContain("POST")
@@ -221,10 +237,12 @@ test("CORS: preflight OPTIONS answers 204 with CORS headers (POST /parse is pref
 
 test("CORS preflight carries the legacy header values (Allow-Headers *, Max-Age 86400)", async () => {
 	const app = createLibpostalApp(fixtureEngine)
+
 	const res = await app.request("/parse", {
 		method: "OPTIONS",
 		headers: { origin: "https://example.com", "access-control-request-method": "POST" },
 	})
+
 	expect(res.status).toBe(204)
 	expect(res.headers.get("access-control-allow-headers")).toBe("*")
 	expect(res.headers.get("access-control-max-age")).toBe("86400")
@@ -264,6 +282,7 @@ test("POST with a non-string body field is treated as absent (never-contract: ol
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ query: 42 }),
 	})
+
 	expect(alone.status).toBe(400)
 	expect(await alone.json()).toEqual({ error: "query is required" })
 
@@ -272,6 +291,7 @@ test("POST with a non-string body field is treated as absent (never-contract: ol
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ query: 42 }),
 	})
+
 	expect(withFallback.status).toBe(200)
 })
 
@@ -283,6 +303,7 @@ test("POST with a form-encoded body leaves the body inert like the served legacy
 		headers: { "content-type": "application/x-www-form-urlencoded" },
 		body: "query=ignored",
 	})
+
 	expect(withParam.status).toBe(200)
 
 	const without = await app.request("/parse", {
@@ -290,6 +311,7 @@ test("POST with a form-encoded body leaves the body inert like the served legacy
 		headers: { "content-type": "application/x-www-form-urlencoded" },
 		body: "query=ignored",
 	})
+
 	expect(without.status).toBe(400)
 	expect(await without.json()).toEqual({ error: "query is required" })
 })

@@ -50,6 +50,7 @@ const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 		console.error(`▸ build candidate ← ${admin.out}`)
 
 		const shards = resolvePostcodeShards()
+
 		const candidate = await buildCandidate({
 			adminDb: admin.out,
 			out: candidateOut,

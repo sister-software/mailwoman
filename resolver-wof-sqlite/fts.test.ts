@@ -21,6 +21,7 @@ import {
 
 function buildBaseSchema(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	// Mirror the real WOF SQLite schema subset that fts.ts queries. Includes the bbox columns
 	// (min_latitude/max_latitude/min_longitude/max_longitude) the R*Tree builder reads.
 	db.exec(`
@@ -89,6 +90,7 @@ describe("buildPlaceSearchFTS", () => {
 		db.exec(`
 			INSERT INTO spr VALUES (4, NULL, 'Tokyo', 'locality', 'JP', 35.68, 139.69, 35.50, 35.83, 139.34, 139.91, -1, 0);
 		`)
+
 		expect((db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }).n).toBe(3)
 
 		const result = buildPlaceSearchFTS(db, { drop: true })
@@ -106,6 +108,7 @@ describe("buildPlaceSearchFTS", () => {
 			name: string
 			alt_names: string
 		}
+
 		expect(row.name).toBe("Paris")
 		expect(row.alt_names).toContain("パリ")
 		expect(row.alt_names).toContain("París")
@@ -120,6 +123,7 @@ describe("buildPlaceSearchFTS", () => {
 		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 1`).get() as {
 			alt_names: string
 		}
+
 		// One boundary between the two aliases (space-padded so each alias tokenizes normally) plus
 		// the trailing format marker that distinguishes new bags from legacy single-alias ones.
 		expect(row.alt_names).toBe(`パリ ${ALIAS_SEPARATOR} París ${ALIAS_SEPARATOR}`)
@@ -129,6 +133,7 @@ describe("buildPlaceSearchFTS", () => {
 
 	test("a phrase query cannot match ACROSS two aliases' concatenation boundary (#523)", () => {
 		const db = buildBaseSchema()
+
 		// Two aliases whose concatenation forms a third phrase: the bag "York <sep> New City" must
 		// not phrase-match "york new". Without the separator token, FTS5 assigns the aliases' tokens
 		// consecutive positions and the cross-boundary phrase falsely matches (see the ALIAS_SEPARATOR
@@ -138,6 +143,7 @@ describe("buildPlaceSearchFTS", () => {
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'New City');
 		`)
+
 		buildPlaceSearchFTS(db)
 
 		const match = (q: string): number[] =>
@@ -156,15 +162,18 @@ describe("buildPlaceSearchFTS", () => {
 
 	test("strips an embedded U+E000 from source names so a poisoned row can't forge an alias boundary (#523)", () => {
 		const db = buildBaseSchema()
+
 		db.exec(`
 			INSERT INTO spr VALUES (6, NULL, 'Honest Place', 'locality', 'US', 41.0, -81.0, 40.9, 41.1, -81.1, -80.9, -1, 0);
 		`)
+
 		db.prepare(`INSERT INTO names (id, language, name) VALUES (6, 'eng', ?)`).run(`Evil${ALIAS_SEPARATOR}Name`)
 		buildPlaceSearchFTS(db)
 
 		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 6`).get() as {
 			alt_names: string
 		}
+
 		// Flattened to a space — ONE alias (plus the trailing format marker), no forged boundary.
 		expect(row.alt_names).toBe(`Evil Name ${ALIAS_SEPARATOR}`)
 		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false) // fragment ≠ exact
@@ -180,12 +189,14 @@ describe("buildPlaceSearchFTS", () => {
 		const rows = db
 			.prepare(`SELECT wof_id FROM ${PLACE_SEARCH_TABLE} WHERE ${PLACE_SEARCH_TABLE} MATCH ?`)
 			.all('"Paris"') as { wof_id: number }[]
+
 		expect(rows).toHaveLength(1)
 		expect(rows[0]?.wof_id).toBe(1)
 
 		const altRows = db
 			.prepare(`SELECT wof_id FROM ${PLACE_SEARCH_TABLE} WHERE ${PLACE_SEARCH_TABLE} MATCH ?`)
 			.all('"パリ"') as { wof_id: number }[]
+
 		expect(altRows).toHaveLength(1)
 		expect(altRows[0]?.wof_id).toBe(1)
 
@@ -205,6 +216,7 @@ describe("buildPlaceSearchFTS", () => {
 		buildPlaceSearchFTS(db)
 		const phases: string[] = []
 		buildPlaceSearchFTS(db, { drop: true, onProgress: (phase) => phases.push(phase) })
+
 		expect(phases).toEqual([
 			"checking",
 			"dropping", // place_search
@@ -215,12 +227,14 @@ describe("buildPlaceSearchFTS", () => {
 			"populating-bbox",
 			"done",
 		])
+
 		db.close()
 	})
 
 	test("onProgress receives a detail string for the done phase", () => {
 		const db = buildBaseSchema()
 		let doneDetail: string | undefined
+
 		buildPlaceSearchFTS(db, {
 			onProgress: (phase, detail) => {
 				if (phase === "done") {
@@ -228,6 +242,7 @@ describe("buildPlaceSearchFTS", () => {
 				}
 			},
 		})
+
 		expect(doneDetail).toMatch(/3 FTS rows/)
 		expect(doneDetail).toMatch(/3 bbox rows/)
 		db.close()
@@ -236,16 +251,19 @@ describe("buildPlaceSearchFTS", () => {
 	test("populates the R*Tree bbox table from spr.min_*/max_* columns", () => {
 		const db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
+
 		// Paris (id 1) bbox should be present and queryable.
 		const hits = db
 			.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ? AND min_lon <= ? AND max_lon >= ?`)
 			.all(48.85, 48.85, 2.34, 2.34) as { id: number }[]
+
 		expect(hits.map((h) => h.id)).toContain(1)
 		db.close()
 	})
 
 	test("indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see #91", () => {
 		const db = buildBaseSchema()
+
 		// Add one place tagged with the legacy convention (`is_current = 1`). WOF mixes both
 		// conventions; ~42% of admin-US rows carry `1` rather than `-1`. The filter must accept
 		// both — the Phase 4.2 regression was excluding all of these.
@@ -257,23 +275,30 @@ describe("buildPlaceSearchFTS", () => {
 				1, 0  /* is_current = 1 (legacy), is_deprecated = 0 */
 			);
 		`)
+
 		const result = buildPlaceSearchFTS(db)
-		expect(result.indexedRows).toBe(4) // 3 modern + 1 legacy
+		expect(result.indexedRows).toBe(4)
+
+		// 3 modern + 1 legacy
 		// MATCH against the new row to confirm it's actually queryable.
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Legacy Place") as
 			| { wof_id: number }
 			| undefined
+
 		expect(hit?.wof_id).toBe(1000)
+
 		// Also confirm the bbox row landed in the R*Tree.
 		const bboxHit = db.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ?`).all(40, 40) as {
 			id: number
 		}[]
+
 		expect(bboxHit.map((h) => h.id)).toContain(1000)
 		db.close()
 	})
 
 	test("excludes is_current = 0 places (no-longer-current); see #91", () => {
 		const db = buildBaseSchema()
+
 		db.exec(`
 			INSERT INTO spr VALUES (
 				2000, NULL, 'Phantom Place', 'locality', 'US',
@@ -282,11 +307,15 @@ describe("buildPlaceSearchFTS", () => {
 				0, 0
 			);
 		`)
+
 		const result = buildPlaceSearchFTS(db)
-		expect(result.indexedRows).toBe(3) // the phantom is excluded
+		expect(result.indexedRows).toBe(3)
+
+		// the phantom is excluded
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Phantom") as
 			| { wof_id: number }
 			| undefined
+
 		expect(hit).toBeUndefined()
 		db.close()
 	})

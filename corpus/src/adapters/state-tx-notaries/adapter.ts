@@ -73,6 +73,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -136,6 +137,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
 						.filter(Boolean)
 						.join(", ")
@@ -158,6 +160,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

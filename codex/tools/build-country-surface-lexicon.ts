@@ -124,6 +124,7 @@ function add(surface: string): void {
 
 		return
 	}
+
 	const key = norm(s)
 
 	if (!key) return
@@ -176,6 +177,7 @@ const lexicon = {
 
 mkdirSync(dirname(OUTPUT), { recursive: true })
 writeFileSync(OUTPUT, JSON.stringify(lexicon, null, 1) + "\n")
+
 process.stderr.write(
 	`wrote ${OUTPUT}: ${entries.size} entries + ${codeEntries.size} code_entries, ` +
 		`max_ngram=${maxNgram}, ${ambiguousEntries.length} ambiguous: ${ambiguousEntries.slice(0, MAX_LISTED_AMBIGUOUS).join(", ")}${ambiguousEntries.length > MAX_LISTED_AMBIGUOUS ? ", …" : ""}\n`

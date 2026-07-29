@@ -27,6 +27,7 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 		// a successful run is the contract.
 		const tmp = mkdtempSync(join(tmpdir(), "audit-test-"))
 		const configPath = join(tmp, "v0_4_0.yaml")
+
 		writeFileSync(
 			configPath,
 			[
@@ -42,6 +43,7 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 				"  use_crf: true",
 			].join("\n")
 		)
+
 		expect(() => audit({ corpusDir: CORPUS_PATH, configPath })).not.toThrow()
 	})
 })
@@ -57,6 +59,7 @@ describe("audit — config parser", () => {
 		// "weighted in config but no shards" warning where we can inspect what the parser saw.
 		mkdirSync(join(tmp, "train"))
 		const configPath = join(tmp, "test.yaml")
+
 		writeFileSync(
 			configPath,
 			[
@@ -72,6 +75,7 @@ describe("audit — config parser", () => {
 				"  crf_loss_weight: 0.05",
 			].join("\n")
 		)
+
 		const origError = console.error
 		const origLog = console.log
 		const errLines: string[] = []
@@ -85,6 +89,7 @@ describe("audit — config parser", () => {
 			console.error = origError
 			console.log = origLog
 		}
+
 		const errOutput = errLines.join("\n")
 		const logOutput = logLines.join("\n")
 		// Configured sources should appear as warnings (no shards present).

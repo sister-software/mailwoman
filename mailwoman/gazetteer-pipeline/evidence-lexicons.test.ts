@@ -35,6 +35,7 @@ describe("three-law selectivity — pure units", () => {
 		for (const name of ["joseph", "pierre", "louis", "thomas"]) {
 			expect(personNames.has(name), name).toBe(true)
 		}
+
 		// Titles ride personal_titles ("Rue Baron Desgenettes").
 		expect(personNames.has("baron")).toBe(true)
 	})
@@ -75,6 +76,7 @@ describe("three-law selectivity — pure units", () => {
 		for (const s of ["la", "op", "boulevard", "lane", "street"]) {
 			expect(surfaces.has(s), s).toBe(true)
 		}
+
 		// The compositional clause's token source ("de la" class).
 		expect(stopwordTokens.has("de")).toBe(true)
 		expect(stopwordTokens.has("la")).toBe(true)
@@ -88,6 +90,7 @@ describe("three-law selectivity — pure units", () => {
 		for (const s of ["east", "west", "north", "south", "northeast", "northwest", "southeast", "southwest"]) {
 			expect(directionals.has(s), s).toBe(true)
 		}
+
 		// The set stays out of the shipped FST policy — loadDegenerateSurfaces alone must NOT carry
 		// "northeast" (policy separation: degenerate-surface-exclusion v1.1 is baked into FST trailers).
 		expect(loadDegenerateSurfaces(undefined, painterFold).surfaces.has("northeast")).toBe(false)
@@ -100,6 +103,7 @@ describe("three-law selectivity — pure units", () => {
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "wy", "ct", "dc", "north dakota"]) {
 			expect(region.has(s), s).toBe(true)
 		}
+
 		// Not a blanket word ban — ordinary locality surfaces stay out.
 		expect(region.has("fargo")).toBe(false)
 		expect(region.has("springfield")).toBe(false)
@@ -148,6 +152,7 @@ describe("street-type lexicon build", () => {
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}
+
 		// Directional codes stay (single-letter CA forms; none collide with a state).
 		expect(j.code_entries.N).toBe(1)
 		expect(j.code_entries.W).toBe(1)
@@ -163,6 +168,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 	it("applies all three laws end to end", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("./evidence-lexicons.ts")
 		const tmp = `${tmpdir()}/locality-surface-lexicon-test.json`
+
 		// v3-parity placetypes for run-to-run comparability with the probe chain's numbers.
 		const built = buildLocalitySurfaceLexicon({
 			countries: ["FR"],
@@ -185,6 +191,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 	it("v5: the census flip families are out, the legitimate entries stay", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("./evidence-lexicons.ts")
 		const tmp = `${tmpdir()}/locality-surface-lexicon-v5-us-test.json`
+
 		const built = buildLocalitySurfaceLexicon({
 			countries: ["US"],
 			placetypes: ["locality", "localadmin", "neighbourhood"],
@@ -205,6 +212,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "north dakota"]) {
 			expect(j.entries[s], s).toBeUndefined()
 		}
+
 		// WOF data-noise carriers with census receipts (the evidence supplemental-degenerate set):
 		expect(j.entries.school).toBeUndefined()
 		expect(j.entries.state).toBeUndefined()
@@ -216,6 +224,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
 			expect(j.entries[s], s).toBeDefined()
 		}
+
 		// Multi-token entries with a directional/state INSIDE survive (only whole-surface exclusion):
 		expect(j.entries["east nashville"]).toBeDefined()
 	}, 600_000)

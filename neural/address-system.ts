@@ -60,6 +60,7 @@ export function detectAddressSystem(
 		if (probs[i]! > probs[best]!) {
 			best = i
 		}
+
 	const confidence = probs[best]!
 
 	if (confidence < threshold) return null

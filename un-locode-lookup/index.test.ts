@@ -50,8 +50,10 @@ test("UnLocodeLookup.nearest: closest coordinate within range", () => {
 
 test("makeUnLocodeAnnotator: byName when available, else nearest", () => {
 	const annotate = makeUnLocodeAnnotator(new UnLocodeLookup({ database: fixtureDB() }))
+
 	expect(annotate({ lat: 40.71, lon: -74.01, countryCode: "US", placeName: "New York" })).toEqual({
 		unLocode: "US NYC",
 	})
+
 	expect(annotate({ lat: 51.92, lon: 4.48 })).toEqual({ unLocode: "NL RTM" })
 })

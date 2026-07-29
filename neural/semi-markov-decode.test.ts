@@ -66,6 +66,7 @@ function bruteForce(seqLen: number, maxSpan: number): Array<Array<[number, numbe
 			}
 		}
 	}
+
 	rec(0, [])
 
 	return out
@@ -95,6 +96,7 @@ describe("decodeSegmentationsKBest", () => {
 			startTransitions: [0.3, -0.1, 0.6],
 			endTransitions: [-0.5, 0.4, 0.2],
 		})
+
 		const sc = scores(4, 2, 7)
 		const got = decodeSegmentationsKBest(sc, 4, g, 1)[0]!
 		const all = bruteForce(4, 2)
@@ -105,6 +107,7 @@ describe("decodeSegmentationsKBest", () => {
 				best = candidate
 			}
 		}
+
 		expect(got.score).toBeCloseTo(scoreOne(best, sc, g), 6)
 		expect(got.segments.map((s) => [s.start, s.length, s.typeID])).toEqual(best)
 	})
@@ -119,13 +122,16 @@ describe("decodeSegmentationsKBest", () => {
 			startTransitions: [0.1, 0.5, -0.2],
 			endTransitions: [0.25, -0.3, 0.45],
 		})
+
 		const sc = scores(4, 2, 11)
 		const k = 5
 		const got = decodeSegmentationsKBest(sc, 4, g, k)
+
 		const expected = bruteForce(4, 2)
 			.map((s) => scoreOne(s, sc, g))
 			.toSorted((a, b) => b - a)
 			.slice(0, k)
+
 		expect(got).toHaveLength(k)
 		got.forEach((h, i) => expect(h.score).toBeCloseTo(expected[i]!, 6))
 	})

@@ -43,6 +43,7 @@ describe("createMatchFeaturizer", () => {
 			rec("1", "ann", "lee", "10 oak st", "10 OAK ST"),
 			rec("2", "ann", "lee", "10 oak st", "10 OAK ST")
 		)
+
 		const expectedOneHot = comparisons.reduce((n, c) => n + c.levels.length, 0)
 		expect(v).toHaveLength(expectedOneHot + 6) // 3 interaction/crowd + 3 roll-up (#625 adjudication)
 		expect(v.every((x) => x >= 0)).toBe(true)
@@ -66,11 +67,13 @@ describe("createMatchFeaturizer", () => {
 			organization: { canonical: "sunrise home care", raw: "Sunrise Home Care" },
 			attributes: { authorizedOfficial: "shane lewis" },
 		}
+
 		const b = {
 			...rec("2", "", "", "10 oak st", "10 OAK ST"),
 			organization: { canonical: "bluebonnet health services", raw: "Bluebonnet Health Services" },
 			attributes: { authorizedOfficial: "shane lewis" },
 		}
+
 		const t = tail(a, b)
 		expect(t[3]).toBe(1) // officialAgree
 		expect(t[4]).toBe(1) // officialAgree × orgDisagree — the roll-up core
@@ -87,10 +90,12 @@ describe("createMatchFeaturizer", () => {
 			rec("1", "ann", "lee", "1 plaza", "1 PLAZA CROWDED BLDG"),
 			rec("2", "bob", "ng", "1 plaza", "1 PLAZA CROWDED BLDG")
 		)[2]
+
 		const rare = tail(
 			rec("3", "ann", "lee", "9 lane", "9 QUIET LANE"),
 			rec("4", "bob", "ng", "9 lane", "9 QUIET LANE")
 		)[2]
+
 		expect(crowded).toBeGreaterThan(rare) // a crowded address scores higher on the crowdedness feature
 	})
 })
@@ -103,12 +108,14 @@ describe("createGbtScorer", () => {
 		// A trivial model trained so its score is well-defined; we only assert the wiring is consistent.
 		const x = featurize(a, b)
 		const dim = x.length
+
 		const model: GBT = trainGBT([x, new Array<number>(dim).fill(0)], [1, 0], [1, 1], {
 			rounds: 5,
 			depth: 2,
 			lr: 0.3,
 			minLeaf: 1,
 		})
+
 		const scorer = createGbtScorer({ comparisons, addressFrequency, model })
 		// The scorer must equal gbtScore over the identical featurization.
 		expect(scorer(a, b)).toBeCloseTo(gbtScore(model, featurize(a, b)), 10)

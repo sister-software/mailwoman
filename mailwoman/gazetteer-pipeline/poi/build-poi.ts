@@ -217,6 +217,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	const categoryColumn = chooseCategoryColumn(describeRows)
 	const hasBrand = hasBrandColumn(describeRows)
 	const countryExpression = chooseCountryExpression(describeRows)
+
 	phase(
 		"probe",
 		`category column: ${categoryColumn}; brand: ${hasBrand ? "present" : "absent"}; country: ${countryExpression.filterExpr}`
@@ -232,6 +233,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 		const dest = join(outDir, `places-${cc.toLowerCase()}.parquet`)
 		const limitClause = opts.limit ? `LIMIT ${opts.limit}` : ""
 		const started = Date.now()
+
 		await db.run(`
 			COPY (
 				SELECT
@@ -248,6 +250,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 				${limitClause}
 			) TO '${dest}' (FORMAT PARQUET, COMPRESSION SNAPPY)
 		`)
+
 		const secs = ((Date.now() - started) / 1000).toFixed(0)
 		phase("ingest", `${cc} -> ${dest} (${secs}s)`)
 		countryParquet[cc] = dest
@@ -294,6 +297,7 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 				`SELECT name, category, brand_wikidata, lat, lon, country, confidence, gers_id
 				 FROM read_parquet('${parquetPath}')`
 			)
+
 			// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 			const colNames = stream.columnNames()
 
@@ -440,6 +444,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	await createLayerCoverageTable(asContractDB(kdb))
 
 	const categoryCodes = new Map<string, number>()
+
 	const categoryID = (category: string | null): number => {
 		if (!category) return 0
 		let id = categoryCodes.get(category)
@@ -475,6 +480,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	for await (const row of rowSource) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) {
 			skipped++
+
 			continue
 		}
 
@@ -483,6 +489,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		const catID = categoryID(row.category)
 		const negRank = -Math.log10(row.confidence + 1e-6)
 		const nameKey = row.name ? normalizeLocalityForKey(row.name) : null
+
 		rowidKey++
 
 		insStage.run(
@@ -499,6 +506,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			row.confidence,
 			row.gersID
 		)
+
 		inserted++
 		countries.set(row.country, (countries.get(row.country) ?? 0) + 1)
 
@@ -514,6 +522,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			batch = 0
 		}
 	}
+
 	db.exec("COMMIT")
 	progress("load", `${inserted.toLocaleString()} staged, ${skipped.toLocaleString()} skipped (non-finite coords)`)
 
@@ -536,11 +545,13 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	progress("fts", "building FTS5 name index")
 	createPOISearchFTS(db)
+
 	db.exec(
 		`INSERT INTO ${POI_FTS_TABLE} (name, name_key, h3_cell) SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL;`
 	)
 
 	progress("manifest", "writing layer manifest + coverage")
+
 	await writeLayerManifest(asContractDB(kdb), {
 		name: "poi",
 		version: opts.version ?? opts.release,
@@ -567,6 +578,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		completeness: 1,
 		observedRows,
 	}))
+
 	await writeLayerCoverage(asContractDB(kdb), coverageCells)
 
 	progress("finalize", "ANALYZE + VACUUM")

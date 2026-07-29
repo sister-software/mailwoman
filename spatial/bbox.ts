@@ -425,6 +425,7 @@ export class GeoBoundingBox {
 	 */
 	public to2DPolygon(): PolygonLiteral {
 		const { minLatitude, maxLatitude, minLongitude, maxLongitude } = this
+
 		const path: SolidPolygonPath = [
 			[
 				[minLongitude, minLatitude],

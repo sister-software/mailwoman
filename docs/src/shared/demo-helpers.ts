@@ -385,6 +385,7 @@ export async function runClassifyStage(
 		// fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
 		{ inputMode: "fragmented", ...(placetypePair !== undefined ? { placetypePair } : {}) }
 	)
+
 	const tClassify = performance.now()
 
 	return {
@@ -462,6 +463,7 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 				hi = mid
 			}
 		}
+
 		const x0 = centers[lo]!
 		const x1 = centers[hi]!
 		const t = x1 === x0 ? 0 : (x - x0) / (x1 - x0)
@@ -567,6 +569,7 @@ export async function runCascade(
 			const placetype = sep === -1 ? node.sourceID : node.sourceID.slice(0, sep)
 			const id = Number(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))
 			const meta = backend.metaFor(id)
+
 			const hit: CascadeHits[number] = {
 				id,
 				name: String(node.metadata?.["resolver_name"] ?? node.value ?? ""),

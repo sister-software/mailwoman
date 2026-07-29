@@ -36,6 +36,7 @@ let scratch: string
  */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -79,6 +80,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (201, 101, 'region');
 		INSERT INTO ancestors VALUES (202, 101, 'region');
 	`)
+
 	db.close()
 }
 
@@ -87,6 +89,7 @@ function buildFixtureAdmin(path: string): void {
  */
 function buildFixturePostcodes(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -99,6 +102,7 @@ function buildFixturePostcodes(path: string): void {
 		-- placeholder 0,0 coords → dropped by the latitude!=0 AND longitude!=0 filter (the White House 20500 case)
 		INSERT INTO spr VALUES (20500, '20500', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, -1, 0);
 	`)
+
 	db.close()
 }
 

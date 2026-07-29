@@ -102,6 +102,7 @@ export function bridgePunctuationGaps(
 			while (back >= 0 && out[back]!.label === "O" && out[back]!.start >= (out[back - 1]?.end ?? 0)) {
 				back--
 			}
+
 			const prev = back >= 0 ? out[back]! : undefined
 			const tag = token.label.replace(/^[BI]-/, "")
 			const prevTag = prev?.label.replace(/^[BI]-/, "")
@@ -120,15 +121,18 @@ export function bridgePunctuationGaps(
 				// Widen the previous fragment through the gap (absorbing the punctuation O tokens);
 				// keep the lower confidence so the merged span never overstates its weakest piece.
 				out.length = back + 1
+
 				out[back] = {
 					...prev,
 					end: token.end,
 					piece: text.slice(prev.start, token.end),
 					confidence: Math.min(prev.confidence, token.confidence),
 				}
+
 				continue
 			}
 		}
+
 		out.push(token)
 	}
 

@@ -57,6 +57,7 @@ describe("isImplausibleResolution", () => {
 			[node({ tag: "country", value: "Australia", lat: -25.7, lon: 134.5, placeID: "wof:au" })],
 			"6000, NSW, Australia"
 		)
+
 		const verdict = isImplausibleResolution(t)
 
 		expect(verdict.implausible).toBe(true)
@@ -86,6 +87,7 @@ describe("isImplausibleResolution", () => {
 			[node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6, placeID: "wof:ia-png" })],
 			"1210a IA 10 W IA"
 		)
+
 		const verdict = isImplausibleResolution(t, { expectedCountry: "US" })
 
 		expect(verdict.implausible).toBe(true)
@@ -159,6 +161,7 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: artifact }).reason).toBe(
 			"outside-expected-country"
 		)
+
 		// An artifact WITHOUT a US box → fail-open, overriding the constant.
 		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: new Map() }).implausible).toBe(false)
 	})

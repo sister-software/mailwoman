@@ -84,6 +84,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	if (version < 1 || version > MAX_VERSION) {
 		throw new Error(`FST version ${version} unsupported (expected 1..${MAX_VERSION})`)
 	}
+
 	const isV2 = version >= 2
 	// flags bit0 (survey #4, mirrors fst-serialize.ts): place rows carry surface-ambiguity data.
 	const hasAmbiguity = (view.getUint16(6, true) & 1) === 1
@@ -103,6 +104,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		strOffsets[i] = view.getUint32(pos, true)
 		pos += 4
 	}
+
 	const strDataStart = pos
 	const strings: string[] = new Array(stringCount)
 
@@ -111,6 +113,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		const end = strDataStart + strOffsets[i + 1]!
 		strings[i] = decoder.decode(bytes.subarray(start, end))
 	}
+
 	pos += stringBytes
 
 	// --- State table ---
@@ -125,8 +128,10 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = view.getUint32(sp, true)
 		const placeStart = view.getUint32(sp + 4, true)
+
 		const edgeCountForState =
 			version >= VERSION_WIDE_STATE_COUNTERS ? view.getUint32(sp + 8, true) : view.getUint16(sp + 8, true)
+
 		const placeCountForState =
 			version >= VERSION_WIDE_STATE_COUNTERS ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
 
@@ -149,6 +154,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(view.getUint32(pp + 24 + ci * 4, true))
 			}
+
 			const rawImportance = isV2
 				? view.getFloat32(pp + 12, true)
 				: Math.min(1, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)

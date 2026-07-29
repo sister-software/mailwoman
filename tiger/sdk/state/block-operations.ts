@@ -57,6 +57,7 @@ export function parseTIGERBlockFromRow({ serializedGeometry, ...properties }: TI
  */
 export function parseTIGERBlockFeatureCollectionFromRows(rows: TIGERBlockRow[]): TIGERBlockFeatureCollection {
 	const features = rows.map(parseTIGERBlockFromRow)
+
 	const featureCollection: TIGERBlockFeatureCollection = {
 		type: "FeatureCollection",
 		features,

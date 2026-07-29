@@ -26,6 +26,7 @@ describe("US_MILITARY_POST_OFFICE_CODES", () => {
 		const armedForces = US_MILITARY_POST_OFFICE_CODES.filter((r) => r.armedForces)
 			.map((r) => r.code)
 			.toSorted()
+
 		expect(armedForces).toEqual(["APO", "FPO"].toSorted())
 		const diplomatic = US_MILITARY_POST_OFFICE_CODES.filter((r) => !r.armedForces).map((r) => r.code)
 		expect(diplomatic).toEqual(["DPO"])
@@ -49,6 +50,7 @@ describe("US_MILITARY_UNIT_DESIGNATORS", () => {
 		const requiresBox = US_MILITARY_UNIT_DESIGNATORS.filter((r) => r.requiresBox)
 			.map((r) => r.code)
 			.toSorted()
+
 		expect(requiresBox).toEqual(["CMR", "PSC"].toSorted())
 		const noBox = US_MILITARY_UNIT_DESIGNATORS.filter((r) => !r.requiresBox).map((r) => r.code)
 		expect(noBox).toEqual(["UNIT"])

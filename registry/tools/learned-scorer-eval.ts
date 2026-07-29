@@ -143,6 +143,7 @@ const C = {
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
@@ -201,6 +202,7 @@ async function generateMessyRows(paths: {
 		if (list.length < MIN_GROUP_SIZE) {
 			list.push(alt)
 		}
+
 		altNames.set(npi, list)
 	}
 
@@ -215,13 +217,16 @@ async function generateMessyRows(paths: {
 		if (++scanned % 1_000_000 === 0) {
 			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
 		}
+
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
 
 		if (practice) {
 			const k = addressFrequencyKey(practice)
 			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 			addrTotal++
 		}
+
 		const npi = norm(r[C.npi])
 
 		if (
@@ -243,6 +248,7 @@ async function generateMessyRows(paths: {
 				for (const alt of altNames.get(npi)!) {
 					rows.push({ npi, name: alt, org: alt, address: practice })
 				}
+
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice) {
@@ -251,11 +257,13 @@ async function generateMessyRows(paths: {
 			}
 		}
 	}
+
 	const addressFrequency = {
 		total: addrTotal,
 		distinct: addrCounts.size,
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
+
 	report?.(`    ${kept.size} NPIs → ${rows.length} records`)
 
 	return { rows, keptNPIs: kept, addressFrequency }
@@ -289,9 +297,11 @@ export async function scorerPairwiseEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
+
 	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
 		geocodeAddress: geocoder.seam,
 	})
+
 	geocoder.close()
 
 	// --- Block + feature extraction. The model (collapsed spatial + address-frequency) defines the
@@ -309,7 +319,9 @@ export async function scorerPairwiseEval(
 	const givenI = compIndex["given"]!
 	const familyI = compIndex["family"]!
 	const orgI = compIndex["organization"]!
-	const lastLevel = (i: number) => levelCounts[i]! - 1 // the "different"/"far" catch-all level
+	const lastLevel = (i: number) => levelCounts[i]! - 1
+
+	// the "different"/"far" catch-all level
 
 	/**
 	 * Feature vector for a pair: one-hot agreement levels + the over-merge interactions + address crowdedness.
@@ -324,6 +336,7 @@ export async function scorerPairwiseEval(
 				f.push(lvl === l ? 1 : 0)
 			}
 		}
+
 		// Interaction: co-located (spatial exact = level 0) AND the names/org disagree (catch-all level).
 		const spatialExact = pat[spatialI] === 0 ? 1 : 0
 		const nameDisagree = pat[givenI] === lastLevel(givenI) && pat[familyI] === lastLevel(familyI) ? 1 : 0
@@ -373,11 +386,14 @@ export async function scorerPairwiseEval(
 
 		const train: Sample[] = []
 		const test: Sample[] = []
+
 		pairs.forEach(([a, b], i) => {
 			const sa = npiSplit.get(a.id)
 			const sb = npiSplit.get(b.id)
 
-			if (!sa || sa !== sb) return // cross-split or unknown → drop (no leakage)
+			if (!sa || sa !== sb) return
+
+			// cross-split or unknown → drop (no leakage)
 			const sample: Sample = {
 				x: features(patterns[i]!, a),
 				y: a.id === b.id ? 1 : 0,
@@ -385,6 +401,7 @@ export async function scorerPairwiseEval(
 			}
 			;(sa === "train" ? train : test).push(sample)
 		})
+
 		const dim = train[0]?.x.length ?? 0
 
 		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted.
@@ -404,6 +421,7 @@ export async function scorerPairwiseEval(
 				for (let j = 0; j < dim; j++) {
 					z += w[j]! * s.x[j]!
 				}
+
 				const p = sigmoid(z)
 				const sampleW = s.y === 1 ? 1 - posWeight : posWeight
 				const err = (p - s.y) * sampleW
@@ -411,14 +429,17 @@ export async function scorerPairwiseEval(
 				for (let j = 0; j < dim; j++) {
 					gw[j]! += err * s.x[j]!
 				}
+
 				gb += err
 			}
 
 			for (let j = 0; j < dim; j++) {
 				w[j]! -= lrate * (gw[j]! / train.length + l2 * w[j]!)
 			}
+
 			bias -= lrate * (gb / train.length)
 		}
+
 		const lrScore = (x: number[]) => {
 			let z = bias
 
@@ -464,18 +485,21 @@ export async function scorerPairwiseEval(
 			while (j < sorted.length && sorted[j]!.s === sorted[i]!.s) {
 				j++
 			}
+
 			const avg = (rank + (rank + (j - i) - 1)) / 2
 
 			for (let k = i; k < j; k++)
 				if (sorted[k]!.y === 1) {
 					rankSum += avg
 				}
+
 			rank += j - i
 			i = j
 		}
 
 		return (rankSum - (pos.length * (pos.length + 1)) / 2) / (pos.length * neg.length)
 	}
+
 	function bestF1(scored: Array<{ s: number; y: number }>): { f1: number; precision: number; recall: number } {
 		const thresholds = [...new Set(scored.map((d) => d.s))].toSorted((p, q) => p - q)
 		let best = { f1: 0, precision: 0, recall: 0 }
@@ -494,6 +518,7 @@ export async function scorerPairwiseEval(
 					}
 				}
 			}
+
 			const precision = tp + fp > 0 ? tp / (tp + fp) : 0
 			const recall = P > 0 ? tp / P : 0
 			const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
@@ -510,11 +535,13 @@ export async function scorerPairwiseEval(
 	const SEEDS = options.seeds ?? 8
 	const splits = Array.from({ length: SEEDS }, (_, k) => runSplit(SEED + k))
 	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
+
 	const std = (xs: number[]) => {
 		const m = mean(xs)
 
 		return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)))
 	}
+
 	const fsAucs = splits.map((r) => auc(r.fsScored))
 	const lrAucs = splits.map((r) => auc(r.lrScored))
 	const deltas = splits.map((_, i) => lrAucs[i]! - fsAucs[i]!)
@@ -543,12 +570,14 @@ export async function scorerPairwiseEval(
 	for (const r of splits) {
 		const dl = auc(r.lrScored) - auc(r.fsScored)
 		const dg = auc(r.gbtScored) - auc(r.fsScored)
+
 		report?.(
 			`    seed ${r.seed}: ${r.trainN}tr/${r.testN}te  FS ${auc(r.fsScored).toFixed(4)}  ` +
 				`LR ${auc(r.lrScored).toFixed(4)} (Δ${dl >= 0 ? "+" : ""}${dl.toFixed(4)})  ` +
 				`GBT ${auc(r.gbtScored).toFixed(4)} (Δ${dg >= 0 ? "+" : ""}${dg.toFixed(4)})`
 		)
 	}
+
 	report?.(
 		`    mean/${SEEDS} — FS ${mean(fsAucs).toFixed(4)}  LR ${mean(lrAucs).toFixed(4)} (Δ${meanDelta >= 0 ? "+" : ""}${meanDelta.toFixed(4)})  ` +
 			`GBT ${mean(gbtAucs).toFixed(4)} (Δ${meanGbtVsFs >= 0 ? "+" : ""}${meanGbtVsFs.toFixed(4)} vs FS, ` +
@@ -560,6 +589,7 @@ export async function scorerPairwiseEval(
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const f4 = (x: number) => x.toFixed(4)
 	const sgn = (x: number) => (x >= 0 ? "+" : "")
+
 	const lines: string[] = [
 		`# Learned-scorer probe (#603) — does a model beat Fellegi-Sunter on the FS feature vector?`,
 		"",
@@ -589,6 +619,7 @@ export async function scorerPairwiseEval(
 			`ranking barely moves.`,
 		"",
 	]
+
 	// Linear vs tree: does a non-linear model extract MORE than the LR? (The probe's open question.)
 	const treeVerdict =
 		meanGbtVsLr > MIN_MEANINGFUL_DELTA && gbtBeatsLr >= SEEDS - 1
@@ -608,6 +639,7 @@ export async function scorerPairwiseEval(
 					`gain. The signal in this feature set is close to linearly saturated, so a production GBM should budget for the ` +
 					`SAME modest margin the LR shows, not a step change — its real value is generalizing the #625 levers, not ` +
 					`finding hidden non-linear structure here.`
+
 	lines.push(treeVerdict)
 	lines.push("")
 	lines.push(`### Per-seed`)
@@ -618,7 +650,9 @@ export async function scorerPairwiseEval(
 	for (const r of splits) {
 		lines.push(`| ${r.seed} | ${r.testN} | ${f4(auc(r.fsScored))} | ${f4(auc(r.lrScored))} | ${f4(auc(r.gbtScored))} |`)
 	}
+
 	lines.push("")
+
 	const verdict =
 		unanimous && (meanDelta > CLEAR_WIN_DELTA || f1Delta > CLEAR_WIN_F1_DELTA)
 			? `The LR beats FS **consistently** — it wins ${lrWins}/${SEEDS} seeds and lifts the operating-point F1 by ` +
@@ -642,10 +676,12 @@ export async function scorerPairwiseEval(
 						`seeds, within noise). On these features the over-merge resists a learned scorer — the discriminating signal a ` +
 						`reliable secondary identifier provides (#625) isn't recoverable from the FS feature vector alone. A richer ` +
 						`feature set or a tree is the next test before committing to #603.`
+
 	lines.push(verdict)
 	lines.push("")
 	lines.push(`## Honest caveats`)
 	lines.push("")
+
 	lines.push(
 		`In-domain (${STATE} only), ${keptNPIs.size} NPIs, PAIRWISE ranking (not the assembled clustering metric the dedup ` +
 			`benchmark reports against the 64.7% baseline — a better pairwise scorer need not translate 1:1 to cluster F1). The GBT ` +
@@ -657,6 +693,7 @@ export async function scorerPairwiseEval(
 			`definitive test remains a GBM A/B on the **clustering** metric with a train-TX / eval-held-out-state split (#603 ` +
 			`Tier 2)._`
 	)
+
 	lines.push("")
 
 	const md = lines.join("\n")

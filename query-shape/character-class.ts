@@ -251,12 +251,14 @@ export function tokenizeForClass(text: string): SpanRange[] {
 
 		if (cls === "whitespace" || cls === "punct") {
 			i += cp > 0xff_ff ? 2 : 1
+
 			continue
 		}
 
 		// A leading connector (rare — most inputs don't start with `-`/`'`) is consumed as whitespace.
 		if (cls === "connector") {
 			i += cp > 0xff_ff ? 2 : 1
+
 			continue
 		}
 
@@ -275,8 +277,10 @@ export function tokenizeForClass(text: string): SpanRange[] {
 
 			if (ncls === "connector") {
 				cur += nstep
+
 				continue
 			}
+
 			// Break tokens across script transitions (digit↔alpha is fine; alpha↔cjk is a boundary).
 			const isLatinPair = (a: CodepointClass, b: CodepointClass) =>
 				(a === "digit" || a === "alpha") && (b === "digit" || b === "alpha")
@@ -288,6 +292,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 			) {
 				break
 			}
+
 			cur += nstep
 		}
 

@@ -50,6 +50,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ optio
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+
 		const countries = options.countries
 			? options.countries
 					.split(",")

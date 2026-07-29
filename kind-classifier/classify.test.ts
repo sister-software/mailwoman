@@ -28,6 +28,7 @@ describe("classifyKind — postcode_only", () => {
 				segments: [{ body: "10118", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("postcode_only")
 	})
 
@@ -41,6 +42,7 @@ describe("classifyKind — postcode_only", () => {
 				segments: [{ body: "350 5th Ave 10118", index: 0 }],
 			})
 		)
+
 		expect(result.kind).not.toBe("postcode_only")
 	})
 
@@ -54,6 +56,7 @@ describe("classifyKind — postcode_only", () => {
 				segments: [{ body: "10118-1234", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("postcode_only")
 	})
 })
@@ -69,6 +72,7 @@ describe("classifyKind — locality_only", () => {
 				segments: [{ body: "Paris", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("locality_only")
 	})
 
@@ -85,6 +89,7 @@ describe("classifyKind — locality_only", () => {
 				],
 			})
 		)
+
 		expect(result.kind).toBe("locality_only")
 	})
 
@@ -98,6 +103,7 @@ describe("classifyKind — locality_only", () => {
 				segments: [{ body: "The Magnificent Republic of Eastern Suburbia Hills", index: 0 }],
 			})
 		)
+
 		expect(result.kind).not.toBe("locality_only")
 	})
 
@@ -111,6 +117,7 @@ describe("classifyKind — locality_only", () => {
 				segments: [{ body: "Apt 4", index: 0 }],
 			})
 		)
+
 		expect(result.kind).not.toBe("locality_only")
 	})
 })
@@ -130,6 +137,7 @@ describe("classifyKind — structured_address", () => {
 				],
 			})
 		)
+
 		expect(result.kind).toBe("structured_address")
 	})
 
@@ -143,6 +151,7 @@ describe("classifyKind — structured_address", () => {
 				segments: [{ body: "350 5th Ave NYC NY 10118", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("structured_address")
 	})
 })
@@ -158,6 +167,7 @@ describe("classifyKind — po_box", () => {
 				segments: [{ body: "PO Box 1234", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("po_box")
 	})
 
@@ -171,6 +181,7 @@ describe("classifyKind — po_box", () => {
 				segments: [{ body: "BP 42", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("po_box")
 	})
 
@@ -188,6 +199,7 @@ describe("classifyKind — po_box", () => {
 				],
 			})
 		)
+
 		expect(result.kind).toBe("po_box")
 	})
 })
@@ -203,6 +215,7 @@ describe("classifyKind — intersection", () => {
 				segments: [{ body: "Corner of 5th and Main", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("intersection")
 	})
 
@@ -216,6 +229,7 @@ describe("classifyKind — intersection", () => {
 				segments: [{ body: "5th & 42nd", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("intersection")
 	})
 
@@ -229,6 +243,7 @@ describe("classifyKind — intersection", () => {
 				segments: [{ body: "Broadway and 42nd Street", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("intersection")
 	})
 })
@@ -244,6 +259,7 @@ describe("classifyKind — landmark", () => {
 				segments: [{ body: "Behind the gas station", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 
@@ -257,6 +273,7 @@ describe("classifyKind — landmark", () => {
 				segments: [{ body: "Across from the church", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 
@@ -270,6 +287,7 @@ describe("classifyKind — landmark", () => {
 				segments: [{ body: "Near the old post office", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 })
@@ -285,6 +303,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				segments: [{ body: "Pier 39", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 
@@ -298,6 +317,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				segments: [{ body: "Empire State Building", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 
@@ -311,6 +331,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				segments: [{ body: "Wrigley Field", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 
@@ -324,6 +345,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				segments: [{ body: "Grand Central Terminal", index: 0 }],
 			})
 		)
+
 		expect(result.kind).toBe("landmark")
 	})
 
@@ -337,6 +359,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				segments: [{ body: "350 5th Ave", index: 0 }],
 			})
 		)
+
 		expect(result.kind).not.toBe("landmark")
 	})
 
@@ -350,6 +373,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				segments: [{ body: "123 Main St", index: 0 }],
 			})
 		)
+
 		expect(result.kind).not.toBe("landmark")
 	})
 
@@ -367,6 +391,7 @@ describe("classifyKind — landmark (venue/named-place)", () => {
 				],
 			})
 		)
+
 		expect(result.kind).not.toBe("landmark")
 	})
 })
@@ -399,6 +424,7 @@ describe("classifyKind — alternatives + confidence ordering", () => {
 				segments: [{ body: "Paris", index: 0 }],
 			})
 		)
+
 		const altKinds = [result.kind, ...result.alternatives.map((a) => a.kind)]
 		expect(altKinds).toContain("vague")
 	})
@@ -435,6 +461,7 @@ describe("classifyKind — vague fallback", () => {
 				segments: [],
 			})
 		)
+
 		expect(result.kind).toBe("vague")
 	})
 
@@ -448,6 +475,7 @@ describe("classifyKind — vague fallback", () => {
 				segments: [],
 			})
 		)
+
 		expect(result.kind).toBe("vague")
 	})
 })

@@ -91,6 +91,7 @@ describe("runInvarianceSuite", () => {
 
 	it("respects --max-degraded: a DEGRADED count under the cap still passes", async () => {
 		const degradedRow: InvarianceRow = { ...row, transforms: ["lowercase"] }
+
 		const parse: ParseFn = async (raw) => {
 			const base = { house_number: "1", street: "Fake St", locality: "Faketown" }
 
@@ -112,6 +113,7 @@ describe("runInvarianceSuite", () => {
 	it("idempotence catches nondeterminism — two independent calls that disagree", async () => {
 		let call = 0
 		const idempoRow: InvarianceRow = { ...row, transforms: ["idempotence"] }
+
 		const parse: ParseFn = async () => {
 			call++
 
@@ -127,6 +129,7 @@ describe("runInvarianceSuite", () => {
 
 	it("--baseline regression mode: a violation the baseline ALSO has is reported but non-blocking", async () => {
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+
 		// Both candidate and baseline lose the house number on comma-drop — a PRE-EXISTING gap.
 		const parse: ParseFn = async (raw) =>
 			raw.includes(",") ? { house_number: "1", street: "Fake St" } : { street: "Fake St" }
@@ -141,8 +144,10 @@ describe("runInvarianceSuite", () => {
 
 	it("--baseline regression mode: a NEW violation the baseline does NOT have fails the gate", async () => {
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+
 		const candidateParse: ParseFn = async (raw) =>
 			raw.includes(",") ? { house_number: "1", street: "Fake St" } : { street: "Fake St" }
+
 		const baselineParse: ParseFn = async () => ({ house_number: "1", street: "Fake St" }) // baseline holds
 
 		const result = await runInvarianceSuite({ rows: [brokenRow], parse: candidateParse, baselineParse })
@@ -158,10 +163,12 @@ describe("runInvarianceSuite", () => {
 		// sides merely "non-INVARIANT") would wrongly call this pre-existing and let it through. A candidate
 		// verdict that is WORSE than the baseline's on the same (row, transform) must always be NEW.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+
 		const candidateParse: ParseFn = async (raw) =>
 			raw.includes(",")
 				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" } // house_number dropped — LOST
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+
 		const baselineParse: ParseFn = async (raw) =>
 			raw.includes(",")
 				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
@@ -183,16 +190,19 @@ describe("runInvarianceSuite", () => {
 		// regardless of what the baseline actually did; here the baseline was DEGRADED, not INVARIANT, so a
 		// hardcoded claim would be false on its face.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+
 		const candidateParse: ParseFn = async (raw) =>
 			raw.includes(",")
 				? { street: "Fake St", locality: "Faketown", unit: "Apt 1" } // house_number dropped — LOST
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+
 		const baselineParse: ParseFn = async (raw) =>
 			raw.includes(",")
 				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
 
 		const lines: string[] = []
+
 		await runInvarianceSuite({
 			rows: [brokenRow],
 			parse: candidateParse,
@@ -207,10 +217,12 @@ describe("runInvarianceSuite", () => {
 
 	it("--baseline severity gate: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
 		const degradedRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
+
 		const candidateParse: ParseFn = async (raw) =>
 			raw.includes(",")
 				? { house_number: "1", street: "Fake St", locality: "Faketown" } // unit dropped — DEGRADED
 				: { house_number: "1", street: "Fake St", locality: "Faketown", unit: "Apt 1" }
+
 		const baselineParse = candidateParse // identical shape — both DEGRADED on the same pair
 
 		const result = await runInvarianceSuite({ rows: [degradedRow], parse: candidateParse, baselineParse })
@@ -234,10 +246,13 @@ describe("runInvarianceSuite", () => {
 			country: "US",
 			transforms: ["abbreviation-swap"],
 		}
+
 		const parse: ParseFn = async (raw) =>
 			raw.includes("Avenue")
 				? { house_number: "350", street: "Fifth Avenue", locality: "New York", region: "NY" }
-				: { house_number: "350", street: "Fifth Ave", locality: "New York", region: "NY" } // echoes the swap
+				: { house_number: "350", street: "Fifth Ave", locality: "New York", region: "NY" }
+
+		// echoes the swap
 
 		const result = await runInvarianceSuite({ rows: [abbrevRow], parse })
 

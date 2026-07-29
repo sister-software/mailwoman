@@ -116,17 +116,22 @@ export function buildSoftFeatures(
 	const anchor = sources.postcodeAnchorLookup
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup)
 		: undefined
+
 	const gazetteer = sources.gazetteerLexicon
 		? buildGazetteerFeatures(text, pieces, sources.gazetteerLexicon)
 		: undefined
+
 	const gazFed =
 		gazetteer && anchor && sources.suppressGazetteerNearPostcode
 			? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 			: gazetteer
+
 	const country = sources.countryLexicon ? buildCountryFeatures(text, pieces, sources.countryLexicon) : undefined
+
 	const streetType = sources.streetTypeLexicon
 		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
 		: undefined
+
 	const localitySurface = sources.localitySurfaceLexicon
 		? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
 		: undefined

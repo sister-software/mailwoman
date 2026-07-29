@@ -81,6 +81,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 
 		return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
 	}
+
 	function loadInt8(dir: string): CoarsePlacer {
 		const meta = JSON.parse(readFileSync(path.join(dir, "meta.json"), "utf8")) as CoarsePlacerMeta
 		const buf = readFileSync(path.join(dir, "weights.bin"))
@@ -123,25 +124,30 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 		const pf = fp32.predict(r.raw)
 		const pi = int8.predict(r.raw)
 		const cf = pf.country ?? "(abstain)"
+
 		const ci = pi.country ?? "(abstain)"
 		;(perF[r.country] ??= { n: 0, ok: 0 }).n++
 		;(perI[r.country] ??= { n: 0, ok: 0 }).n++
 
 		if (cf === r.country) {
 			okF++
+
 			perF[r.country]!.ok++
 		}
 
 		if (ci === r.country) {
 			okI++
+
 			perI[r.country]!.ok++
 		}
 
 		if (cf === ci) {
 			agree++
 		}
+
 		confMae += Math.abs(pf.confidence - pi.confidence)
 	}
+
 	const N = test.length
 	const accF = (100 * okF) / N
 	const accI = (100 * okI) / N
@@ -166,6 +172,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 			`    ${c.padEnd(6)} ${rf.toFixed(1)}% → ${ri.toFixed(1)}%  (Δ ${(ri - rf >= 0 ? "+" : "") + (ri - rf).toFixed(1)}pp, n=${f.n})`
 		)
 	}
+
 	const pass = Math.abs(accI - accF) <= 1
 
 	console.log(`  gate: ${pass ? "PASS (within 1pp)" : "FAIL (>1pp drop)"}`)

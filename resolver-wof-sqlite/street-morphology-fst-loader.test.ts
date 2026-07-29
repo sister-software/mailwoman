@@ -100,6 +100,7 @@ describe("loadStreetMorphologyFST", () => {
 
 		writeFileSync(corruptPath, Buffer.from("not an FST artifact"))
 		const warnings: string[] = []
+
 		const loaded = loadStreetMorphologyFST({
 			artifactPath: corruptPath,
 			dictionariesDir: DICTIONARIES_DIR,

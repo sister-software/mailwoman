@@ -58,6 +58,7 @@ test.describe("docs build", () => {
 				maxBuffer: 64 * 1024 * 1024,
 				env: childEnv({ CI: "true" }),
 			})
+
 			stdout = result.stdout
 			stderr = result.stderr
 		} catch (error) {

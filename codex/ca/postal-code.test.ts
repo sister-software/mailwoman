@@ -14,6 +14,7 @@ describe("normalizeCaPostalCode", () => {
 		expect(normalizeCaPostalCode("k1a 0b1")).toBe("K1A 0B1")
 		expect(normalizeCaPostalCode(" m5v2t6 ")).toBe("M5V 2T6")
 	})
+
 	it("returns null for non-codes", () => {
 		expect(normalizeCaPostalCode("K1A 0B")).toBeNull() // too short
 		expect(normalizeCaPostalCode("D1A 0B1")).toBeNull() // D never opens a postcode
@@ -55,6 +56,7 @@ describe("isRuralPostalCode — second character is 0", () => {
 		expect(isRuralPostalCode("M5V 2T6")).toBe(false) // urban Toronto
 		expect(isRuralPostalCode("H2X 1Y4")).toBe(false) // urban Montreal
 	})
+
 	it("returns false for a non-code", () => {
 		expect(isRuralPostalCode("nope")).toBe(false)
 	})

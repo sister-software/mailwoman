@@ -383,7 +383,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 					records.map((r) => r.address?.raw),
 					{ normalize: addressFrequencyKey }
 				))
+
 	const collapseSpatial = config.collapseSpatial ?? true
+
 	const model =
 		config.model ??
 		buildDefaultModel({
@@ -393,6 +395,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			discriminators: config.discriminators,
 			exactDiscriminators: config.exactDiscriminators,
 		})
+
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 
 	// #603: the learned scorer is DEFAULT-ON. An explicit `scorer` overrides everything; otherwise
@@ -406,13 +409,16 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	if (!scorer && config.learnedScorer !== false) {
 		const gbt =
 			config.learnedScorer === undefined || config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
+
 		usingBundledModel = gbt === DEDUP_GBT_MODEL
+
 		scorer = createGbtScorer({
 			model: gbt,
 			comparisons: buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons,
 			addressFrequency: addressFrequency ?? buildTermFrequencyTable([], { normalize: addressFrequencyKey }),
 		})
 	}
+
 	// Threshold: an explicit value wins; else the bundled model's CALIBRATED threshold when it's active
 	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS baseline or a custom model).
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
@@ -453,11 +459,13 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	// in ONE pass over links via a record→cluster index, not by filtering every link for every cluster —
 	// the latter is O(clusters × links) and dominates the resolve at scale.
 	const clusterOf = new Map<SourceRecord, number>()
+
 	clusters.forEach((group, i) => {
 		for (const record of group) {
 			clusterOf.set(record, i)
 		}
 	})
+
 	const minIntraWeight = new Array<number>(clusters.length).fill(Infinity)
 
 	for (const link of links) {

@@ -89,6 +89,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		.trim()
 		.split("\n")
 		.map((l) => JSON.parse(l) as TestRow)
+
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
 	const confusion: Record<string, Record<string, number>> = {} // true → {pred → n}
@@ -97,6 +98,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	// ECE deciles
 	for (const r of test) {
 		const p = placer.predict(r.raw)
+
 		const pred = p.country ?? "(abstain)"
 		;(perClass[r.country] ??= { n: 0, ok: 0 }).n++
 		;(confusion[r.country] ??= {})[pred] = ((confusion[r.country] ??= {})[pred] ?? 0) + 1
@@ -104,9 +106,12 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 		if (hit) {
 			correct++
+
 			perClass[r.country]!.ok++
 		}
+
 		const b = Math.min(9, Math.floor(p.confidence * 10))
+
 		buckets[b]!.n++
 
 		if (hit) {
@@ -125,6 +130,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			console.log(`    ${c}: ${((100 * s.ok) / s.n).toFixed(1)}%  (n=${s.n})`)
 		}
 	}
+
 	let ece = 0
 	const N = test.length
 
@@ -163,14 +169,17 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			.trim()
 			.split("\n")
 			.map((l) => JSON.parse(l) as MultiScriptRow)
+
 		const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
 		// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way
 		// it's not a confident mis-placement onto a wrong country.
 		const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
+
 		let offN = 0,
 			offOk = 0,
 			missN = 0,
 			missOk = 0
+
 		const offMiss: string[] = []
 
 		for (const r of ms) {

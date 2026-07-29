@@ -237,12 +237,14 @@ function gatherGazetteer(deps: DoctorDeps): GazetteerObservation {
 	if (envCandidate) {
 		return { envCandidate: { path: envCandidate, sizeBytes: deps.fileSize(envCandidate) }, probed: [envCandidate] }
 	}
+
 	const shards = deps.wofShardPaths()
 	const existing = shards.find((p) => deps.existsSync(p))
 
 	if (existing) {
 		return { wofShard: { path: existing, sizeBytes: deps.fileSize(existing) }, probed: shards }
 	}
+
 	const convention = deps.conventionCandidatePath()
 
 	if (convention) {
@@ -297,16 +299,19 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	} catch (error) {
 		onnxError = error instanceof Error ? error.message : String(error)
 	}
+
 	const onnx = onnxRuntimeCheck({ loadable: onnxLoadable, error: onnxError })
 
 	// Optional data layers.
 	const root = deps.dataRoot()
+
 	const dataRoot = dataRootCheck({
 		path: root.path,
 		exists: deps.existsSync(root.path),
 		writable: deps.isWritable(root.path),
 		fromEnv: root.fromEnv,
 	})
+
 	const gazetteer = gazetteerCheck(gatherGazetteer(deps))
 	const poi = checkPOI(await gatherPOI(deps))
 

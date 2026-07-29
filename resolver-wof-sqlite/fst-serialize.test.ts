@@ -147,6 +147,7 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 				}
 			},
 		})
+
 		original = matcher
 		buf = serializeFST(original)
 		restored = deserializeFST(buf)
@@ -228,6 +229,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 				],
 			},
 		]
+
 		nodes[0]!.edges.set("pierre", 1)
 
 		return FSTMatcher.fromNodes(nodes)
@@ -256,6 +258,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 
 	it("mixed presence still flags the header and defaults absent entries to 0 in-band", () => {
 		const m = ambiguousMatcher()
+
 		// an entry WITHOUT the field alongside one with it — the writer records 0 for it, and since the
 		// header flag is set the reader reports 0 (a build that opted in but had no count for a surface)
 		m.nodes[1]!.places.push({
@@ -267,6 +270,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 			lat: 29.96,
 			lon: -91.2,
 		})
+
 		const restored = deserializeFST(serializeFST(m))
 		const q = restored.query("Pierre")
 

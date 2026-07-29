@@ -156,6 +156,7 @@ export function generateMermaidMarkup(placetype: Placetype, options: GenerateMer
 
 			lines.push(`  ${node.name} --> ${child.name}:::${child.role}`)
 			lines.push(`  linkStyle ${edgeIdx} stroke:${edgeColor}`)
+
 			edgeIdx++
 
 			if (visited.has(child.name)) continue

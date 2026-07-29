@@ -56,6 +56,7 @@ export class SqliteConventionSource implements ConventionSource {
 			// WORLD_DEFAULT). The build script validates structure, so this is purely defensive.
 			value = null
 		}
+
 		this.#cache.set(wofID, value)
 
 		return value ?? undefined

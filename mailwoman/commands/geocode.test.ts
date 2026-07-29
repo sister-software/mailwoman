@@ -54,6 +54,7 @@ describe("geocode argument validation", () => {
 
 			return
 		}
+
 		expect(() =>
 			execFileSync(process.execPath, [CLI_PATH, "geocode"], {
 				encoding: "utf8",
@@ -70,6 +71,7 @@ describe("geocode argument validation", () => {
 
 			return
 		}
+
 		expect(() =>
 			execFileSync(process.execPath, [CLI_PATH, "geocode", "   "], {
 				encoding: "utf8",
@@ -85,6 +87,7 @@ describe("geocode argument validation", () => {
 
 			return
 		}
+
 		let threw = false
 		let output = ""
 		const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-empty-"))
@@ -105,6 +108,7 @@ describe("geocode argument validation", () => {
 			// Pastel renders errors to stdout (as a React component); stderr may be empty.
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 		}
+
 		expect(threw).toBe(true)
 		// The error message should mention how to provide a DB path.
 		expect(output).toMatch(/MAILWOMAN_WOF_DB|resolve-db|wof/i)

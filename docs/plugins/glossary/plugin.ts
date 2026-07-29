@@ -185,14 +185,17 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 			for (const term of glossary.terms as TaggedGlossaryTerm[]) {
 				if (!term.tags || !term.tags.length) {
 					problems.push(`"${term.term}" has no tags`)
+
 					continue
 				}
 
 				for (const tag of term.tags) {
 					if (!registered.has(tag)) {
 						problems.push(`"${term.term}" uses unregistered tag "${tag}"`)
+
 						continue
 					}
+
 					counts.set(tag, (counts.get(tag) ?? 0) + 1)
 				}
 			}
@@ -227,6 +230,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 			// remark auto-linker is wired to the docs preset, so these are the pages that render
 			// tooltips back to the glossary.
 			const docsContent = allContent["docusaurus-plugin-content-docs"]?.default as DocsPluginContent | undefined
+
 			const docs = (docsContent?.loadedVersions ?? [])
 				.flatMap((version) => version.docs)
 				.filter((doc) => !doc.draft && !doc.unlisted)

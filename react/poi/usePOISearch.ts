@@ -204,12 +204,14 @@ export function usePOISearch({
 	}, [debouncedText, runtime])
 
 	const subject = result?.subject
+
 	// A subject is live-searchable when a probe is wired, it has an anchor, and: a CATEGORY that isn't build-local, or a
 	// BRAND with a QID AND a brand-capable probe (`brandLiveSearch`). Brands without a QID / without a brand probe show
 	// the intent + QID chip but no live affordance.
 	const subjectLiveCapable =
 		subject !== undefined &&
 		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
+
 	const canSearchLive = Boolean(
 		runLiveSearch && runtime && subject && subjectLiveCapable && subject.remainder.trim().length > 0
 	)

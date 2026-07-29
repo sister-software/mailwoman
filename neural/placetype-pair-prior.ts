@@ -618,6 +618,7 @@ function buildSegmentWindows(
 	for (let i = 1; i <= nonEmptyGroups.length; i++) {
 		if (i === nonEmptyGroups.length || groupSegments[i] !== groupSegments[segStart]) {
 			const slice = nonEmptyGroups.slice(segStart, i)
+
 			const keyTokens = stripTrailingSegmentPostcode(
 				slice.map((g) => g.fstToken),
 				parentPostcodeShape
@@ -630,6 +631,7 @@ function buildSegmentWindows(
 				endPos: i - 1,
 				pieceIndices: slice.flatMap((g) => g.pieceIndices),
 			})
+
 			segStart = i
 		}
 	}
@@ -900,6 +902,7 @@ export function buildPlacetypePairPriors(
 	// codex shape. Resolved on the segment path only — anchored and window modes never see it (they build their own
 	// candidates), so their behavior is byte-identical to pre-#1308.
 	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country) : undefined
+
 	const segmentWindows = groupSegments
 		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape)
 		: undefined
@@ -970,6 +973,7 @@ export function buildPlacetypePairPriors(
 
 			if (tag) {
 				matchedTag = tag
+
 				break
 			}
 		}

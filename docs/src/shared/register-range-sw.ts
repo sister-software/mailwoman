@@ -22,6 +22,7 @@ const PRUNE_MESSAGE_TYPE = "mailwoman-prune-db-ranges"
  */
 export function registerRangeCacheServiceWorker(baseURL: string): void {
 	if (globalThis.window === undefined || !("serviceWorker" in navigator)) return
+
 	void navigator.serviceWorker.register(`${baseURL}range-cache-sw.js`).catch((error: unknown) => {
 		console.warn("[mailwoman demo] range-cache service worker registration failed", error)
 	})
@@ -33,6 +34,7 @@ export function registerRangeCacheServiceWorker(baseURL: string): void {
  */
 export function pruneDBRangeCache(keepVersion: string): void {
 	if (globalThis.window === undefined || !("serviceWorker" in navigator)) return
+
 	void navigator.serviceWorker.ready
 		.then((registration) => registration.active?.postMessage({ type: PRUNE_MESSAGE_TYPE, keepVersion }))
 		.catch(() => {

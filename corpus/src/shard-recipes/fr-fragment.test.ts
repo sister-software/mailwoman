@@ -44,6 +44,7 @@ function scratch(tuples: object[], surfaces: string[]): { input: string; exclude
 async function run(tuples: object[], surfaces: string[], opts: Record<string, unknown> = {}) {
 	const { input, exclude } = scratch(tuples, surfaces)
 	const lines: string[] = []
+
 	const stats = await frFragmentRecipe.run(
 		{ output: "", seed: 727, variants: 1, input, excludeSurfaces: exclude, ...opts },
 		(line) => lines.push(line)
@@ -156,6 +157,7 @@ describe("fr-fragment: the counter-distribution", () => {
 	it("scales the counter with bareProb", async () => {
 		const none = await run(TUPLES, ["nothing"], { bareProb: 0 })
 		const lots = await run(TUPLES, ["nothing"], { bareProb: 0.5 })
+
 		const count = (r: { rows: Array<Record<string, never>> }) =>
 			r.rows.filter((x) => String(x.synth_method) === "fr-fragment:bare-locality").length
 

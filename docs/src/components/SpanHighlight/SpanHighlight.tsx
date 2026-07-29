@@ -65,6 +65,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 				best = s
 			}
 		}
+
 		owner[i] = best
 	}
 
@@ -78,6 +79,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 				text: input.slice(from, i),
 				node: owner[from] === -1 ? null : spans[owner[from]],
 			})
+
 			from = i
 		}
 	}

@@ -155,6 +155,7 @@ export async function buildOutlierLatin(
 
 			return []
 		}
+
 		const seen = new Set<string>()
 		const out: string[] = []
 
@@ -194,6 +195,7 @@ export async function buildOutlierLatin(
 		for (const raw of test) {
 			testRows.push({ raw, country: "OTHER", group: "indist", srcCountry: cc })
 		}
+
 		report?.(`  TRAIN ${cc}: ${rows.length} (train ${train.length} / val ${val.length} / test ${test.length})`)
 	}
 
@@ -203,8 +205,10 @@ export async function buildOutlierLatin(
 		for (const raw of rows) {
 			testRows.push({ raw, country: "OTHER", group: "heldout", srcCountry: cc })
 		}
+
 		report?.(`  HELDOUT ${cc}: ${rows.length} (test-only)`)
 	}
+
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
@@ -213,6 +217,7 @@ export async function buildOutlierLatin(
 	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
 	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
+
 	report?.(
 		`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
 	)

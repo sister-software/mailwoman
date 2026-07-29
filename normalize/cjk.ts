@@ -73,6 +73,7 @@ export function applyCjkNormalization(input: string): CjkResult {
 
 		if (code === POSTAL_MARK) {
 			stripped += 1
+
 			continue // drop — no addressing content; whitespace collapse later tidies any gap
 		}
 
@@ -80,6 +81,7 @@ export function applyCjkNormalization(input: string): CjkResult {
 			out.push(String.fromCharCode(code - FULLWIDTH_TO_ASCII))
 			map.push(i)
 			folded += 1
+
 			continue
 		}
 
@@ -87,8 +89,10 @@ export function applyCjkNormalization(input: string): CjkResult {
 			out.push(" ")
 			map.push(i)
 			folded += 1
+
 			continue
 		}
+
 		out.push(input[i]!)
 		map.push(i)
 	}

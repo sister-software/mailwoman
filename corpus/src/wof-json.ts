@@ -92,6 +92,7 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 
 	for (const [key, value] of Object.entries(props)) {
 		if (!key.startsWith("name:")) continue
+
 		const candidate = Array.isArray(value)
 			? value.find((v): v is string => typeof v === "string" && v.trim().length > 0)
 			: typeof value === "string" && value.trim().length
@@ -143,6 +144,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!isCurrentFeature(props)) return null
 
 	const parentRaw = props["wof:parent_id"]
+
 	const parent_id =
 		typeof parentRaw === "number"
 			? parentRaw
@@ -237,6 +239,7 @@ export function buildAncestryIndex(byID: Map<number, WOFRecord>): AncestryIndex 
 			guard.add(parent.id)
 			cur = parent.parent_id
 		}
+
 		index.set(id, chain)
 	}
 

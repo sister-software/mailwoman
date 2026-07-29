@@ -81,6 +81,7 @@ function humanBytes(bytes: number): string {
 
 	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
 		value /= 1024
+
 		unit++
 	}
 
@@ -111,6 +112,7 @@ async function streamDownload(
 
 			if (attempt < opts.retries && isTransientStatus(res.status)) {
 				await sleep(opts.retryDelayMs)
+
 				continue
 			}
 
@@ -118,6 +120,7 @@ async function streamDownload(
 		} catch {
 			if (attempt < opts.retries) {
 				await sleep(opts.retryDelayMs)
+
 				continue
 			}
 
@@ -198,6 +201,7 @@ export async function fetchTigerFull(
 	// MARK: Step 1 — discover the county file list
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
+
 	const listingRes = await fetch(`${TIGER_BASE_URL}/`, {
 		headers: { "Accept-Encoding": "gzip, br" },
 		signal: AbortSignal.timeout(60_000),
@@ -241,6 +245,7 @@ export async function fetchTigerFull(
 		if (skipStateFips.includes(stateFips)) {
 			report?.(`--- State ${stateFips} — SKIPPED (in --skip-state-fips, ${countyFiles.length} counties)`)
 			totalSkippedState += countyFiles.length
+
 			continue
 		}
 
@@ -264,13 +269,17 @@ export async function fetchTigerFull(
 			// Skip if already verified via MANIFEST.
 			if (known && (await fileMatchesSha(dest, known.sha256, known.bytes))) {
 				report?.(`  skip (verified) ${fname}`)
+
 				totalSkipped++
+
 				continue
 			}
 
 			if (dryRun) {
 				report?.(`  would fetch: ${url}`)
+
 				totalFetched++
+
 				continue
 			}
 
@@ -284,6 +293,7 @@ export async function fetchTigerFull(
 		// --- Download pending files with bounded parallelism + rate-limit spacing ---
 		const results: CountyResult[] = new Array(pending.length)
 		let cursor = 0
+
 		const workers = Array.from({ length: Math.min(maxParallel, pending.length) }, async () => {
 			while (true) {
 				const i = cursor++
@@ -295,6 +305,7 @@ export async function fetchTigerFull(
 				results[i] = await downloadCounty(item.url, item.dest)
 			}
 		})
+
 		await Promise.all(workers)
 
 		// Collect results from this state.
@@ -302,10 +313,12 @@ export async function fetchTigerFull(
 			if (result.ok) {
 				report?.(`  ok ${result.filename}  ${humanBytes(result.bytes)}  sha256=${result.sha256.slice(0, 12)}...`)
 				manifest.set(result.filename, { filename: result.filename, sha256: result.sha256, bytes: result.bytes })
+
 				totalFetched++
 				totalBytesFetched += result.bytes
 			} else {
 				report?.(`  FAIL ${result.filename} -- ${result.reason}`)
+
 				totalFailed++
 				failedCodes.push(result.filename)
 			}
@@ -313,12 +326,14 @@ export async function fetchTigerFull(
 
 		// Rewrite per-state MANIFEST.json with all known-good counties (sorted for determinism).
 		const counties = [...manifest.values()].toSorted((a, b) => a.filename.localeCompare(b.filename))
+
 		const manifestDoc = {
 			state_fips: stateFips,
 			updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
 			tiger_base_url: TIGER_BASE_URL,
 			counties,
 		}
+
 		await writeManifest(manifestPath, manifestDoc)
 	}
 

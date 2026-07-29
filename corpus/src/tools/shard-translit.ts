@@ -112,6 +112,7 @@ async function writeOneShard(
 	const writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, outPath, {
 		rowGroupSize: ROW_GROUP_SIZE,
 	})
+
 	writer.setMetadata("mailwoman.corpus_version", corpusVersion)
 	writer.setMetadata("mailwoman.split", "train")
 	writer.setMetadata("mailwoman.shard_source", source)
@@ -126,8 +127,10 @@ async function writeOneShard(
 		if (firstSourceID === "") {
 			firstSourceID = row.source_id
 		}
+
 		lastSourceID = row.source_id
 	}
+
 	await writer.close()
 
 	const fileStat = await stat(outPath)
@@ -183,8 +186,10 @@ export async function buildTranslitShard(
 
 		if (result.kind !== "labeled") {
 			quarantine.push(`${canon.source_id}\t${result.row.reason}`)
+
 			continue
 		}
+
 		const bucket = buckets.get(canon.source)
 
 		if (bucket) {
@@ -193,6 +198,7 @@ export async function buildTranslitShard(
 			buckets.set(canon.source, [result.row])
 		}
 	}
+
 	report?.(`read ${totalIn} rows; ${quarantine.length} quarantined; ${buckets.size} script buckets`)
 
 	const newShards: ShardDescriptor[] = []
@@ -217,11 +223,14 @@ export async function buildTranslitShard(
 	// the new translit shards. Kryptonite shard already lives in the base manifest (it was written
 	// there by Thread B).
 	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
+
 	const rewrittenBase = base.shards.map((sh) => ({
 		...sh,
 		path: canonicalizeShardPath(sh.path, legacyPathPrefix, canonicalPathPrefix),
 	}))
+
 	const newTrainRows = newShards.reduce((sum, sh) => sum + sh.rows, 0)
+
 	const combined: ShardManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,

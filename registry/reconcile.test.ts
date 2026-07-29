@@ -62,6 +62,7 @@ describe("reconcileCoverage", () => {
 			],
 			CONFIG
 		)
+
 		expect(result.counts).toEqual({ enrolled: 1, "eligible-not-enrolled": 2, "funded-not-eligible": 1 })
 		expect(result.reconciled).toHaveLength(4) // 'e' excluded
 		expect(result.reconciled.find((r) => r.entity.id === "a")!.bucket).toBe("enrolled")
@@ -74,6 +75,7 @@ describe("reconcileCoverage", () => {
 			representative: rec("1", "fcc"),
 			cohesion: 5,
 		}
+
 		const { reconciled } = reconcileCoverage([e], CONFIG)
 		expect(reconciled[0]!.sources).toEqual(["fcc", "nppes"])
 		expect(reconciled[0]!.bucket).toBe("enrolled")
@@ -86,6 +88,7 @@ describe("reconciliationGeoJSON", () => {
 			[entity("a", ["nppes", "fcc"], { latitude: 30.27, longitude: -97.74 }), entity("b", ["nppes"])],
 			CONFIG
 		)
+
 		const gj = reconciliationGeoJSON(result)
 		expect(gj.features).toHaveLength(1) // 'b' has no coordinate
 		const f = gj.features[0]!
@@ -127,6 +130,7 @@ describe("reconciliationReport", () => {
 			scorerNote: "Scored with the Fellegi-Sunter baseline.",
 			spotCheckLimit: 5,
 		})
+
 		expect(md).toContain("# TX coverage")
 		expect(md).toContain("_TX-scoped, ≤2000 rows/source._")
 		expect(md).toContain("Scored with the Fellegi-Sunter baseline.")

@@ -95,6 +95,7 @@ function removeIfPresent(dest: string): void {
 	} catch {
 		return
 	}
+
 	unlinkSync(dest)
 
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
@@ -158,6 +159,7 @@ function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD
 	}
 
 	const headerLen = view.getUint32(4, true)
+
 	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
 		delta: number
 		sourceMD5s?: string[]

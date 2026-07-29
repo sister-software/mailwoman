@@ -45,9 +45,11 @@ export async function presetCompare(
 
 	for (const addr of PRESETS) {
 		const r = await baseline.parseJSON(addr)
+
 		const comps = Object.entries(r)
 			.map(([k, v]) => `${k}=${v}`)
 			.join(", ")
+
 		report(`  ${addr}`)
 		report(`    → ${comps || "(empty)"}\n`)
 	}
@@ -60,9 +62,11 @@ export async function presetCompare(
 
 		for (const addr of PRESETS) {
 			const r = await candidate.parseJSON(addr)
+
 			const comps = Object.entries(r)
 				.map(([k, v]) => `${k}=${v}`)
 				.join(", ")
+
 			report(`  ${addr}`)
 			report(`    → ${comps || "(empty)"}\n`)
 		}

@@ -171,8 +171,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		if (!adapterOptions) {
 			skipped.push(adapter.id)
 			opts.onProgress?.("adapter-run", `skipped ${adapter.id} (no input configured)`)
+
 			continue
 		}
+
 		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + MANIFEST.json
 		// already exist, reuse them instead of re-emitting. The MANIFEST is written only after the
 		// canonical is fully flushed, so its presence guarantees completeness; row order is identical,
@@ -189,15 +191,19 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			const cached = JSON.parse(readFileSync(cachedManifest, "utf8")) as AdapterRunManifest
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
 			adapterRuns.push(cached)
+
 			continue
 		}
+
 		opts.onProgress?.("adapter-run", `running ${adapter.id}`)
+
 		const m = await runAdapter({
 			adapter,
 			adapterOptions,
 			outputDir: intermediateDir,
 			corpusVersion: opts.corpusVersion,
 		})
+
 		adapterRuns.push(m)
 	}
 
@@ -211,11 +217,13 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		val: join(intermediateDir, "labeled-val.jsonl"),
 		test: join(intermediateDir, "labeled-test.jsonl"),
 	}
+
 	const labeledStreams: Record<SplitName, WriteStream> = {
 		train: createWriteStream(labeledPaths.train, { encoding: "utf8" }),
 		val: createWriteStream(labeledPaths.val, { encoding: "utf8" }),
 		test: createWriteStream(labeledPaths.test, { encoding: "utf8" }),
 	}
+
 	const quarantinePath = join(intermediateDir, "quarantine.jsonl")
 	const quarantineStream = createWriteStream(quarantinePath, { encoding: "utf8" })
 
@@ -246,8 +254,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was cut.
 			if (licenseExcluded(row.license, excludeLicenses)) {
 				excludedByLicense++
+
 				continue
 			}
+
 			const fanned: CanonicalRow[] = [row]
 
 			if (synthesize) {
@@ -267,17 +277,22 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 					// this catches any UNKNOWN throw (e.g. assertSpanInvariants on an unforeseen span
 					// shape) → quarantine + continue. A spike in `align-threw` reasons is a finding.
 					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
+
 					quarantined++
+
 					continue
 				}
 
 				if (result.kind === "labeled") {
 					const split = splitForRow(result.row, holdouts)
 					labeledStreams[split].write(`${JSON.stringify(result.row)}\n`)
+
 					counts[split]++
+
 					aligned++
 				} else {
 					writeQuarantine(r, result.row.reason)
+
 					quarantined++
 				}
 			}
@@ -287,6 +302,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	for (const s of Object.values(labeledStreams)) {
 		s.end()
 	}
+
 	quarantineStream.end()
 	await Promise.all([...Object.values(labeledStreams).map(streamEnd), streamEnd(quarantineStream)])
 
@@ -295,6 +311,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// manifests with disk spill for splits that exceed in-memory thresholds.
 	opts.onProgress?.("split", `splitting ${aligned} aligned rows`)
 	const splitsDir = join(opts.outputDir, "splits")
+
 	const splitCounts = await writeSplitManifestsFromLabeledFiles({
 		labeledPaths,
 		outputDir: splitsDir,
@@ -306,6 +323,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// 5. Parquet shards — per-split labeled JSONL streams in, sharded `.parquet` out. The prior
 	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
 	opts.onProgress?.("shard", "writing parquet shards")
+
 	const shardManifest = await writeShards(
 		{
 			train: streamJSONL<LabeledRow>(labeledPaths.train),
@@ -322,6 +340,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// License-set visibility (#26): loudly report the resolved license set so a build is an obvious
 	// deliberate act — especially a proprietary-weights build (did you pass --exclude-share-alike?).
 	const licenseSummary = [...licenseCounts.entries()].toSorted((a, b) => b[1] - a[1])
+
 	opts.onProgress?.(
 		"manifest",
 		`license set: ${licenseSummary.map(([l, c]) => `${l}=${c}`).join(", ")}` +
@@ -332,6 +351,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	// 6. Top-level manifest.
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
+
 	const manifest: BuildCorpusManifest = {
 		corpus_version: opts.corpusVersion,
 		built_at,
@@ -344,6 +364,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		licenses: Object.fromEntries(licenseSummary),
 		excluded_by_license: excludedByLicense,
 	}
+
 	await writeFile(join(opts.outputDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
 
 	return manifest

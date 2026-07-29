@@ -87,6 +87,7 @@ const SCRIPTS = [
 	"digit",
 	"other",
 ] as const
+
 type Script = (typeof SCRIPTS)[number]
 
 function scriptOf(cp: number): Script {
@@ -150,6 +151,7 @@ export function featurize(text: string): number[] {
 		const sc = scriptOf(ch.codePointAt(0)!)
 		counts.set(sc, (counts.get(sc) ?? 0) + 1)
 	}
+
 	let dominant: Script = "other"
 	let max = -1
 
@@ -161,6 +163,7 @@ export function featurize(text: string): number[] {
 			dominant = sc
 		}
 	}
+
 	active.add(bucket(`__dom_${dominant}`, 2))
 
 	// Char n-grams (3,4,5) over the boundary-marked string.

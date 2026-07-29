@@ -25,6 +25,7 @@ let slimBytes: Uint8Array
 
 function buildFixtureWOF(path: string): void {
 	const db = new DatabaseSync(path)
+
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -110,6 +111,7 @@ function buildFixtureWOF(path: string): void {
 			PRIMARY KEY (admin_id, locality_id));
 		INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000);
 	`)
+
 	db.close()
 }
 
@@ -135,12 +137,14 @@ describe("WOFWasmPlaceLookup", () => {
 		try {
 			const roles = lookup.coincidentLocalitiesFor(101) // Illinois
 			expect(roles).toHaveLength(1)
+
 			expect(roles[0]).toMatchObject({
 				id: 201,
 				name: "Springfield",
 				placetype: "locality",
 				relationshipType: "capital-seat",
 			})
+
 			expect(lookup.coincidentLocalitiesFor(99_999)).toHaveLength(0)
 		} finally {
 			lookup.close()
@@ -251,6 +255,7 @@ describe("WOFWasmPlaceLookup", () => {
 				bbox: { minLat: 40.4, maxLat: 45.1, minLon: -79.8, maxLon: -71.7 },
 				limit: 5,
 			})
+
 			expect(matches.map((m) => m.id)).toEqual([230])
 		} finally {
 			lookup.close()
@@ -305,6 +310,7 @@ describe("WOFWasmPlaceLookup", () => {
 				bbox: { minLat: 34, maxLat: 35, minLon: -83, maxLon: -82 },
 				limit: 5,
 			})
+
 			expect(matches.map((m) => m.id)).toEqual([210])
 		} finally {
 			lookup.close()

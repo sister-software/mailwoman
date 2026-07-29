@@ -163,6 +163,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 		const query = asString(q["q"])
 
 		if (!query) return c.json({ ...EMPTY, message: "q is required" }, 400)
+
 		const params: PhotonSearchParams = {
 			q: query,
 			limit: Number(q["limit"] ?? DEFAULT_LIMIT) || DEFAULT_LIMIT,
@@ -172,6 +173,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			osmTag: asStringArray(q["osm_tag"]),
 			layer: asStringArray(q["layer"]),
 		}
+
 		const collection = await engine.search(params)
 
 		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD. The
@@ -198,6 +200,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 		if (lat < MIN_LATITUDE || lat > MAX_LATITUDE || lon < MIN_LONGITUDE || lon > MAX_LONGITUDE) {
 			return c.json({ ...EMPTY, message: "lat must be in [-90, 90] and lon in [-180, 180]" }, 400)
 		}
+
 		const params: PhotonReverseParams = {
 			lat,
 			lon,
@@ -205,6 +208,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			lang: asString(q["lang"]),
 			radius: q["radius"] != null ? Number(q["radius"]) : undefined,
 		}
+
 		const collection = await engine.reverse(params)
 
 		// #1052: `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD. See

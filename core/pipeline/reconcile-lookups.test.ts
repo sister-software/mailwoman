@@ -46,10 +46,12 @@ describe("prefetchReconcileLookups", () => {
 
 	it("fetches per (span, tag) pair and serves sync lookups", async () => {
 		const calls: Array<{ text: string }> = []
+
 		const lookups = await prefetchReconcileLookups(fakeBackend(calls), raw, [
 			cand(0, 11, "locality", 0.9),
 			cand(12, 20, "region", 0.8),
 		])
+
 		expect(calls.map((c) => c.text)).toEqual(["Springfield", "Illinois"])
 		expect(lookups.resolverCandidates.candidatesFor({ start: 0, end: 11 }, "locality")).toHaveLength(2)
 		expect(lookups.resolverCandidates.candidatesFor({ start: 12, end: 20 }, "region")).toHaveLength(1)
@@ -66,11 +68,13 @@ describe("prefetchReconcileLookups", () => {
 
 	it("skips non-resolvable tags (street/house_number never hit the gazetteer)", async () => {
 		const calls: Array<{ text: string }> = []
+
 		await prefetchReconcileLookups(fakeBackend(calls), raw, [
 			cand(0, 11, "street", 0.99),
 			cand(0, 11, "house_number", 0.98),
 			cand(12, 20, "region", 0.5),
 		])
+
 		expect(calls.map((c) => c.text)).toEqual(["Illinois"])
 	})
 
@@ -87,6 +91,7 @@ describe("prefetchReconcileLookups", () => {
 				throw new Error("backend down")
 			},
 		}
+
 		const lookups = await prefetchReconcileLookups(backend, raw, [cand(0, 11, "locality", 0.9)])
 		expect(lookups.resolverCandidates.candidatesFor({ start: 0, end: 11 }, "locality")).toEqual([])
 	})

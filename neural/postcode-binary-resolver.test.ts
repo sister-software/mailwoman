@@ -58,6 +58,7 @@ describe("PostcodeBinaryResolver", () => {
 				.lookup("1012LM")
 				.map((h) => h.country)
 		).toEqual(["NL"])
+
 		expect(
 			resolver()
 				.lookup("94105")

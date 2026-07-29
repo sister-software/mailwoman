@@ -78,6 +78,7 @@ function tokenizeWords(input: string): WordToken[] {
 
 		while (i < input.length && /\s/.test(input[i])) {
 			ws += input[i]
+
 			i++
 		}
 
@@ -87,6 +88,7 @@ function tokenizeWords(input: string): WordToken[] {
 		while (i < input.length && !/\s/.test(input[i])) {
 			i++
 		}
+
 		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
 	}
 
@@ -156,6 +158,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 				best = s
 			}
 		}
+
 		owner[w] = best
 	}
 

@@ -170,6 +170,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 			import("@mailwoman/resolver"),
 			import("mailwoman/resolver-backend"),
 		])
+
 		const backend = createResolverBackend(resolverMod, { wofPaths: opts.resolveDatabasePath })
 		resolver = createWOFResolver(backend)
 	}
@@ -218,6 +219,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	// The pipeline + helpers resolve once, lazily. An injected pipeline is used as-is; otherwise it's built on the first
 	// request (never at registration) so `fastify.register` stays cheap and side-effect-free.
 	let pipelinePromise: Promise<RuntimePipeline> | undefined
+
 	const getPipeline = (): Promise<RuntimePipeline> => {
 		if (opts.pipeline) return Promise.resolve(opts.pipeline)
 
@@ -281,6 +283,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 				detail: "register @mailwoman/fastify with { poiDatabasePath } to enable POST /poi",
 			})
 		}
+
 		const text = readText(request, reply)
 
 		if (text === null) return reply

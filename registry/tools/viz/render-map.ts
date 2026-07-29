@@ -50,6 +50,7 @@ export async function renderServedMapToPNG(
 	const browser = await chromium.launch({
 		args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 	})
+
 	const page = await browser.newPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 2 })
 
 	const errors: string[] = []

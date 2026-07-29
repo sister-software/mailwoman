@@ -61,6 +61,7 @@ export function resolveShardPath(
 
 		if (existsSync(versioned)) return versioned
 	}
+
 	const legacy = `${dataRoot}/${family}/${family}-us-${slug}.db`
 
 	return existsSync(legacy) ? legacy : null

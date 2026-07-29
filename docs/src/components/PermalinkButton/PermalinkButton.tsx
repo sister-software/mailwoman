@@ -19,6 +19,7 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 		} else {
 			url.searchParams.delete("q")
 		}
+
 		const href = url.toString()
 
 		try {
@@ -36,8 +37,10 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 			} catch {
 				/* nothing more we can do; user can copy from address bar */
 			}
+
 			document.body.removeChild(ta)
 		}
+
 		setCopied(true)
 		globalThis.setTimeout(() => setCopied(false), 1500)
 	}, [text])

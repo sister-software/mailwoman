@@ -98,6 +98,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	phase("staging", ingestPath)
 	const db = new DatabaseSync(ingestPath)
+
 	db.exec(`
 		PRAGMA page_size = 8192;
 		PRAGMA journal_mode = WAL;
@@ -106,9 +107,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		PRAGMA temp_store = MEMORY;
 		PRAGMA cache_size = -200000;
 	`)
+
 	await createUnifiedSchema(db)
 
 	phase("ingest-wof", dataDir)
+
 	const ingest = await ingestWOF(db, {
 		dataDir,
 		concurrency: opts.concurrency,
@@ -119,6 +122,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 				`${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`
 			),
 	})
+
 	phase("ingest-wof", `${ingest.placesIngested.toLocaleString()} places`)
 
 	phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
@@ -145,6 +149,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		// A prior sealed staging artifact can't be unlinked-through-write — remove it explicitly.
 		unlinkSync(out)
 	}
+
 	db.prepare("VACUUM INTO ?").run(out)
 	db.close()
 	unlinkSync(ingestPath)
@@ -198,9 +203,11 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		const md5 = (await md5File(out)).slice(0, 8)
 		const stamp = new Date().toISOString().slice(0, 10)
 		log.notes ??= []
+
 		log.notes.push(
 			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${folded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}`
 		)
+
 		writeFileSync(buildLogPath, JSON.stringify(log, null, "\t") + "\n")
 	} else {
 		phase("build-log", `skipped (${buildLogPath} not present)`)

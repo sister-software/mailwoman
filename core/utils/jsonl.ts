@@ -31,8 +31,10 @@ export function writeJSONL(path: string, rows: Iterable<unknown>): number {
 
 	for (const row of rows) {
 		out += JSON.stringify(row) + "\n"
+
 		count++
 	}
+
 	writeFileSync(path, out, "utf8")
 
 	return count

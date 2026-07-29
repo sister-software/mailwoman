@@ -21,6 +21,7 @@ import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer
 const ArgumentsSchema = zod.array(
 	zod.string().describe(`Candidate DB to promote. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)
 )
+
 const OptionsSchema = zod.object({})
 
 export { ArgumentsSchema as args, OptionsSchema as options }

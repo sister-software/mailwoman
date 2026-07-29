@@ -73,6 +73,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -121,6 +122,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					}
 
 					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
 					const raw = [
 						libName,
 						streetPart,
@@ -134,6 +136,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					if (Object.keys(aligned).length <= 2) continue
 
 					const fscsKey = (record.FSCSKEY ?? "").trim()
+
 					const sourceID = fscsKey
 						? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`
 						: stableSourceID(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
@@ -148,6 +151,7 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

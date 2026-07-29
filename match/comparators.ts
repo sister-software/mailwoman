@@ -44,7 +44,9 @@ export function jaro(a: string, b: string): number {
 			if (bMatched[j] || a[i] !== b[j]) continue
 			aMatched[i] = true
 			bMatched[j] = true
+
 			matches++
+
 			break
 		}
 	}
@@ -65,8 +67,10 @@ export function jaro(a: string, b: string): number {
 		if (a[i] !== b[k]) {
 			transpositions++
 		}
+
 		k++
 	}
+
 	transpositions /= 2
 
 	return (matches / la + matches / lb + (matches - transpositions) / matches) / 3

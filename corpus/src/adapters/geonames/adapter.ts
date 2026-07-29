@@ -122,6 +122,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			const countries = loadCountries(dir)
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({ delimiter: "\t", quote: false, relax_column_count: true, skip_empty_lines: true })
 			)
@@ -176,9 +177,11 @@ export function createGeonamesAdapter(): CorpusAdapter {
 						const aligned = reconcileComponents(v.comp, v.raw)
 
 						if (!Object.keys(aligned).length) continue
+
 						const sourceID = geonameid
 							? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`
 							: stableSourceID(GEONAMES_ADAPTER_ID, aligned)
+
 						yield {
 							raw: v.raw,
 							components: aligned,
@@ -188,6 +191,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 							corpus_version: "",
 							license: GEONAMES_DEFAULT_LICENSE,
 						}
+
 						emitted++
 					}
 				}

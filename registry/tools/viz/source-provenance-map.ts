@@ -115,9 +115,11 @@ export function sourceProvenanceMap(
 		...sample("source = 'overture:NAD'", NAD_MOD),
 		...sample("source LIKE 'overture:OpenAddresses%'", OA_MOD),
 	]
+
 	db.close()
 
 	const counts = new Map<string, number>()
+
 	const features = rows.map((r) => {
 		const { bucket, publisher } = categorize(r.source)
 		counts.set(bucket, (counts.get(bucket) ?? 0) + 1)
@@ -138,6 +140,7 @@ export function sourceProvenanceMap(
 	})
 
 	const geojson = { type: "FeatureCollection" as const, features }
+
 	const html = toMapHTML(geojson as never, {
 		title: `Address-point provenance — ${STATE.toUpperCase()}, every point colored by its open-data source`,
 		flavor: "light",

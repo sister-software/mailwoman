@@ -140,6 +140,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 	for (const fixture of live) {
 		const expect = fixture.expect!
+
 		// Ship-config parse (gate-revision 2026-07-15): production's safeClassify/parseForGeocode heal
 		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the gate must grade the same parse the swapped
 		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
@@ -156,6 +157,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
+
 		const byTag = new Map<string, string[]>()
 
 		for (const [tag, value] of tuples) {
@@ -168,6 +170,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		for (const { label, tags } of PARITY_FLOORS) {
 			if (expect[label]?.length) continue
 			const bucket = precision.get(label)!
+
 			bucket.absent++
 			const emitted = tags.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 
@@ -186,6 +189,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			if (!goldValues?.length) continue
 
 			const tally = tallies.get(label)!
+
 			tally.total++
 			const actual = tags.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 
@@ -193,6 +197,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				tally.hit++
 			} else {
 				caseAgrees = false
+
 				tally.failing.push(
 					`${fixture.id} ${JSON.stringify(fixture.input)} gold=${JSON.stringify(goldValues)} got=${JSON.stringify(actual)}`
 				)
@@ -210,11 +215,13 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		}
 
 		const country = byCountry.get(fixture.country) ?? { cases: 0, fullAgree: 0 }
+
 		country.cases++
 
 		if (caseAgrees) {
 			country.fullAgree++
 		}
+
 		byCountry.set(fixture.country, country)
 	}
 

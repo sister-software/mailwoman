@@ -99,6 +99,7 @@ function tagOf(label: string): string | null {
  */
 function collectMatches(text: string): UnitMatch[] {
 	const candidates: UnitMatch[] = []
+
 	UNIT_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
 
@@ -106,6 +107,7 @@ function collectMatches(text: string): UnitMatch[] {
 			candidates.push({ start: m.index, end: m.index + m[0].length, priority })
 		}
 	})
+
 	// Longest-match-wins, then most-specific; reject anything overlapping an accepted match.
 	candidates.sort((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
 	const accepted: UnitMatch[] = []
@@ -137,9 +139,11 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 	if (!matches.length) return { tokens, changed: 0 }
 
 	let changed = 0
+
 	const setLabel = (i: number, label: DecoderToken["label"]): void => {
 		if (tokens[i]!.label !== label) {
 			tokens[i]!.label = label
+
 			changed++
 		}
 	}

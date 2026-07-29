@@ -162,6 +162,7 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
 	const files = readdirSync(opts.dataRoot).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
 	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
+
 	const slugs =
 		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
 
@@ -243,6 +244,7 @@ export async function buildCoverageTiles(
 	const bands = buildBands(ALL_RES, opts.tileMaxZoom)
 	const states = resolveStates(opts)
 	const interpCount = states.filter((s) => s.interp).length
+
 	onProgress(
 		"init",
 		`${states.length} shard(s)${opts.interpRoot ? ` (+${interpCount} interp)` : ""} · fine res ${opts.fineRes} · rollup ${opts.rollup.join(",")} · domain res ${opts.domainRes}`
@@ -254,6 +256,7 @@ export async function buildCoverageTiles(
 	if (opts.threads) {
 		await duck.run(`SET threads TO ${opts.threads}`)
 	}
+
 	await duck.run("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite;")
 
 	// ATTACH every shard read-only (address-points as st<i>, interpolation as ip<i> when present).
@@ -276,6 +279,7 @@ export async function buildCoverageTiles(
 	// cells. Raw-then-aggregate is correct.
 	onProgress("aggregate", "address points → fine cells…")
 	const ptAgg = states.map((_, i) => `SELECT lat, lon FROM st${i}.address_point`).join("\nUNION ALL\n")
+
 	await duck.run(
 		`CREATE TEMP TABLE data_pt AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${ptAgg}) GROUP BY 1`
 	)
@@ -291,7 +295,9 @@ export async function buildCoverageTiles(
 					`SELECT json_extract(geometry, '$[0][1]')::DOUBLE AS lat, json_extract(geometry, '$[0][0]')::DOUBLE AS lon FROM ip${i}.street_segment WHERE geometry IS NOT NULL`
 			)
 			.join("\nUNION ALL\n")
+
 		onProgress("aggregate", `street segments → fine cells (${segIdx.length} interp shard(s))…`)
+
 		await duck.run(
 			`CREATE TEMP TABLE data_seg AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${segAgg}) GROUP BY 1`
 		)
@@ -302,6 +308,7 @@ export async function buildCoverageTiles(
 	// domain9: every fine child of a domain-res parent holding EITHER signal, with the address-point count
 	// (pt), segment count (seg), and a blended coverage score cov ∈ [0,1] (points strong, segments weak).
 	onProgress("domain", "expanding fog neighborhood + blending signals…")
+
 	await duck.run(`
 		CREATE TEMP TABLE domain9 AS
 		WITH sig AS (SELECT cell FROM data_pt UNION SELECT cell FROM data_seg),
@@ -318,15 +325,18 @@ export async function buildCoverageTiles(
 		LEFT JOIN data_pt p USING (cell)
 		LEFT JOIN data_seg s USING (cell)
 	`)
+
 	const summary = (
 		await duck.runAndReadAll(
 			"SELECT count(*) AS domain, count(*) FILTER (WHERE pt>0) AS pt_cov, count(*) FILTER (WHERE pt=0 AND seg>0) AS seg_only FROM domain9"
 		)
 	).getRowObjects()[0] as Record<string, bigint>
+
 	const domainCells = Number(summary.domain)
 	const withPoints = Number(summary.pt_cov)
 	const streetOnly = Number(summary.seg_only)
 	let postcodeCells = 0
+
 	onProgress(
 		"domain",
 		`${domainCells.toLocaleString()} cells · ${withPoints.toLocaleString()} with points · ${streetOnly.toLocaleString()} street-only`
@@ -337,6 +347,7 @@ export async function buildCoverageTiles(
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = createWriteStream(ndjsonPath)
 	let featureCount = 0
+
 	const emitResolution = async (res: number, sql: string, bandOverride?: [number, number]): Promise<void> => {
 		const [minzoom, maxzoom] = bandOverride ?? bands.get(res) ?? [0, opts.tileMaxZoom]
 		const prefix = `{"type":"Feature","tippecanoe":{"layer":"coverage","minzoom":${minzoom},"maxzoom":${maxzoom}},"properties":`
@@ -349,6 +360,7 @@ export async function buildCoverageTiles(
 
 				if (antimeridianWrapped(String(r.geom))) continue
 				const fog = Number(r.fog)
+
 				const props = {
 					fog: Math.round(fog * 1000) / 1000,
 					fog_opt: Math.round(fog ** opts.optimisticGamma * 1000) / 1000,
@@ -357,10 +369,13 @@ export async function buildCoverageTiles(
 					pc: Number(r.pc ?? 0),
 					res,
 				}
+
 				sink.write(`${prefix}${JSON.stringify(props)},"geometry":${String(r.geom)}}\n`)
+
 				featureCount++
 			}
 		}
+
 		onProgress("emit", `res ${res} → zoom ${minzoom}–${maxzoom} · ${featureCount.toLocaleString()} features`)
 	}
 
@@ -392,6 +407,7 @@ export async function buildCoverageTiles(
 	if (opts.geonamesPostalFile && opts.wofDB) {
 		const exclude = opts.postcodeExcludeCountries.map((c) => `'${c.toUpperCase()}'`).join(", ") || "''"
 		onProgress("holes", "postcode coverage + civilization salience → holes…")
+
 		// pc_cov: postcode COVERAGE per domain cell — flat presence (postcode ∪ 1-ring), clears the hole.
 		await duck.run(`
 			CREATE TEMP TABLE pc_cov AS
@@ -406,6 +422,7 @@ export async function buildCoverageTiles(
 			)
 			SELECT DISTINCT UNNEST(h3_grid_disk(cell, 1)) AS cell, ${opts.postcodeCeiling}::DOUBLE AS cov FROM data_pc
 		`)
+
 		// sal: CIVILIZATION salience per domain cell — WOF settlement places weighted by IMPORTANCE
 		// (Wikipedia notability via place_importance, with a population fallback baked in by
 		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it IS the
@@ -427,6 +444,7 @@ export async function buildCoverageTiles(
 			spread AS (SELECT UNNEST(h3_grid_disk(h3_latlng_to_cell(lat, lon, ${opts.domainRes}), 1)) AS cell, sal FROM places)
 			SELECT cell, max(sal) AS salience FROM spread GROUP BY cell
 		`)
+
 		// holes: fog = salience·(1−cov). Keep only residual fog > 0.05 (the actual holes); covered +
 		// empty cells are dropped → clear basemap.
 		await duck.run(`
@@ -436,17 +454,21 @@ export async function buildCoverageTiles(
 			FROM sal s LEFT JOIN pc_cov c USING (cell)
 			WHERE s.salience * (1.0 - COALESCE(c.cov, 0)) > 0.05
 		`)
+
 		postcodeCells = Number(
 			(await duck.runAndReadAll("SELECT count(*) AS n FROM pc_cells")).getRowObjects()[0]!.n as bigint
 		)
+
 		const pcOnset = RES_ONSET_ZOOM[opts.domainRes] ?? 5
 		onProgress("holes", `${postcodeCells.toLocaleString()} uncovered-civilization holes → res ${opts.domainRes}`)
+
 		// res-domainRes holes, visible from their onset zoom up through the tile max (overzoomed above).
 		await emitResolution(
 			opts.domainRes,
 			`SELECT pc, fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cell))) AS geom FROM pc_cells`,
 			[pcOnset, opts.tileMaxZoom]
 		)
+
 		// res-4 low-zoom rollup (mean child fog) for the world/continent view.
 		await emitResolution(
 			4,
@@ -462,6 +484,7 @@ export async function buildCoverageTiles(
 
 	// --- tippecanoe → PMTiles ---
 	onProgress("tile", `tiling ${featureCount.toLocaleString()} features → pmtiles…`)
+
 	const tipArgs = [
 		"-o",
 		opts.out,
@@ -482,6 +505,7 @@ export async function buildCoverageTiles(
 		"--force",
 		ndjsonPath,
 	]
+
 	// quiet: tippecanoe's stderr must not leak into the Ink render; we surface it only on failure.
 	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${tipArgs}`
 

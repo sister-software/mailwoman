@@ -23,10 +23,12 @@ describe("aggregateSpanLogits", () => {
 			{ start: 0, end: 5 },
 			{ start: 5, end: 10 },
 		]
+
 		const logits = [
 			dominantLogits(5, 1), // B-locality dominant
 			dominantLogits(5, 2), // I-locality dominant
 		]
+
 		const spans: SpanBounds[] = [{ start: 0, end: 10 }]
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 3, labels: LABELS })
@@ -43,10 +45,12 @@ describe("aggregateSpanLogits", () => {
 			{ start: 0, end: 3 },
 			{ start: 3, end: 6 },
 		]
+
 		const logits = [
 			dominantLogits(5, 3), // B-region
 			dominantLogits(5, 4), // I-region
 		]
+
 		const spans: SpanBounds[] = [{ start: 0, end: 6 }]
 
 		const candidates = aggregateSpanLogits(logits, pieces, spans, { topK: 2, labels: LABELS })
@@ -62,10 +66,12 @@ describe("aggregateSpanLogits", () => {
 			{ start: 0, end: 5 },
 			{ start: 6, end: 11 },
 		]
+
 		const logits = [
 			dominantLogits(5, 1), // B-locality
 			dominantLogits(5, 3), // B-region
 		]
+
 		const spans: SpanBounds[] = [
 			{ start: 0, end: 5 },
 			{ start: 6, end: 11 },
@@ -98,12 +104,14 @@ describe("aggregateSpanLogits", () => {
 			{ start: 6, end: 9 },
 			{ start: 10, end: 13 },
 		]
+
 		const logits = [
 			dominantLogits(5, 1), // B-locality
 			dominantLogits(5, 2), // I-locality
 			dominantLogits(5, 2), // I-locality
 			dominantLogits(5, 1), // B-locality
 		]
+
 		const spans: SpanBounds[] = [
 			{ start: 0, end: 9 }, // 3 tokens
 			{ start: 10, end: 13 }, // 1 token

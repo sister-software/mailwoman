@@ -172,6 +172,7 @@ function tokenize(text: string): RawToken[] {
 		while (i < text.length && !/\s/.test(text[i]!)) {
 			i++
 		}
+
 		const body = text.slice(start, i)
 		let s = 0
 		let e = body.length
@@ -183,6 +184,7 @@ function tokenize(text: string): RawToken[] {
 		while (e > s && EDGE_PUNCT.test(body[e - 1]!)) {
 			e--
 		}
+
 		out.push({
 			body,
 			start,
@@ -261,6 +263,7 @@ function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: S
 
 	if (tokens.length === 2) {
 		const lead = tokens[0]!.toLowerCase().replace(/\.$/, "")
+
 		const strong =
 			(lexicon.unitDesignators.has(lead) || lexicon.levelDesignators.has(lead)) && !lexicon.weakDesignators.has(lead)
 
@@ -294,6 +297,7 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 
 			if (!content) continue
 			const atEnd = p.close >= lastNonSpace - 1
+
 			out.push({
 				start: p.open,
 				end: p.close + 1,
@@ -311,6 +315,7 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 		// „…“ (low-9 opener, German/Czech): closes with “ — only scanned when a „ is present, so the
 		// “ ” class above (which would see a stray “) is skipped for such inputs.
 	]
+
 	const hasLow9 = text.includes("„")
 
 	for (const [idx, find] of quotePairFinders.entries()) {
@@ -372,6 +377,7 @@ function proposeDesignatorPhrases(
 		// cue family 3 owns punctuated ids
 		if (!isShortIdentifier(next.stripped)) continue
 		const weak = lexicon.weakDesignators.has(lead)
+
 		out.push({
 			start: tokens[i]!.strippedStart,
 			end: next.strippedEnd,
@@ -443,6 +449,7 @@ function proposeNumericReadings(
 				confidence: 0.85,
 				source: "fraction:usps-half-address",
 			})
+
 			continue
 		}
 
@@ -451,6 +458,7 @@ function proposeNumericReadings(
 		if (slash) {
 			const leftEnd = t.strippedStart + slash[1]!.length
 			const rightStart = leftEnd + 1
+
 			// Reading A context: a unit/level designator leads ("Unit 4/22", "Flat 2/14" via the
 			// leading-shape fallback below). Reading B context: the compound itself leads the address
 			// ("3/45 Wattle St" — the AU/NZ bare sub-premise shape, only proposed when those codex
@@ -466,6 +474,7 @@ function proposeNumericReadings(
 			if (prevIsDesignator || leadingShape) {
 				const group = nextGroup()
 				const conf = prevIsDesignator ? (hasAuNz ? 0.85 : 0.6) : 0.7
+
 				out.push({
 					start: prev!.strippedStart,
 					end: leftEnd,
@@ -474,6 +483,7 @@ function proposeNumericReadings(
 					alternativeGroup: group,
 					source: prevIsDesignator ? "slash:designator-split" : "slash:leading-designator-shape",
 				})
+
 				out.push({
 					start: rightStart,
 					end: t.strippedEnd,
@@ -482,6 +492,7 @@ function proposeNumericReadings(
 					alternativeGroup: group,
 					source: "slash:designator-split",
 				})
+
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -492,6 +503,7 @@ function proposeNumericReadings(
 				})
 			} else if (i === 0 && hasAuNz && tokens.length > 1) {
 				const group = nextGroup()
+
 				out.push({
 					start: t.strippedStart,
 					end: leftEnd,
@@ -500,6 +512,7 @@ function proposeNumericReadings(
 					alternativeGroup: group,
 					source: "slash:bare-leading-split",
 				})
+
 				out.push({
 					start: rightStart,
 					end: t.strippedEnd,
@@ -508,6 +521,7 @@ function proposeNumericReadings(
 					alternativeGroup: group,
 					source: "slash:bare-leading-split",
 				})
+
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -527,6 +541,7 @@ function proposeNumericReadings(
 					source: "slash:trailing-fused",
 				})
 			}
+
 			continue
 		}
 
@@ -540,6 +555,7 @@ function proposeNumericReadings(
 
 			if (prevIsDesignator) {
 				const group = nextGroup()
+
 				out.push({
 					start: prev!.strippedStart,
 					end: leftEnd,
@@ -548,6 +564,7 @@ function proposeNumericReadings(
 					alternativeGroup: group,
 					source: "hyphen:designator-split",
 				})
+
 				out.push({
 					start: leftEnd + 1,
 					end: t.strippedEnd,
@@ -556,6 +573,7 @@ function proposeNumericReadings(
 					alternativeGroup: group,
 					source: "hyphen:designator-split",
 				})
+
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -601,6 +619,7 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 
 	const paired = proposePairedDelimiters(text, lexicon)
 	const tokens = tokenize(text)
+
 	const inner = [
 		...proposeDesignatorPhrases(text, tokens, lexicon),
 		...proposeNumericReadings(tokens, lexicon, nextGroup),
@@ -609,6 +628,7 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 	const confidentAnnotations = paired.filter(
 		(p) => p.kind === "ANNOTATION_SPAN" && p.confidence >= CONFIDENT_ANNOTATION_MIN
 	)
+
 	const survivors = inner.filter((p) => !confidentAnnotations.some((a) => p.start >= a.start && p.end <= a.end))
 
 	const out = [...paired, ...survivors]

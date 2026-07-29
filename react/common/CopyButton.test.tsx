@@ -24,6 +24,7 @@ test("CopyButton flips to the copied label after a click", async () => {
 
 test("CopyButton evaluates a thunk value at click time", async () => {
 	let calls = 0
+
 	const { container } = renderComponent(
 		<CopyButton
 			value={() => {

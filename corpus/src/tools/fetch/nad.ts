@@ -46,6 +46,7 @@ import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
 const SLUG = "usgov-nad"
+
 const FEATURE_SERVICE_URL =
 	"https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/Address_Points_from_National_Address_Database_view/FeatureServer/0"
 
@@ -152,7 +153,9 @@ async function fetchChunk(
 		rows: [],
 		error: null,
 	}))
+
 	let nextSlot = 0
+
 	const workers = Array.from({ length: Math.min(concurrency, pageRanges.length) }, async () => {
 		while (true) {
 			const slot = nextSlot++
@@ -168,6 +171,7 @@ async function fetchChunk(
 			}
 		}
 	})
+
 	await Promise.all(workers)
 
 	// Single-writer phase — write all pages in OID order to keep NDJSON deterministic.
@@ -177,6 +181,7 @@ async function fetchChunk(
 	for (const { rows, error } of pageResults) {
 		if (error) {
 			errors++
+
 			continue
 		}
 
@@ -184,6 +189,7 @@ async function fetchChunk(
 			lines.push(JSON.stringify(row))
 		}
 	}
+
 	await writeFile(chunkPath, !lines.length ? "" : lines.join("\n") + "\n")
 
 	return { recordCount: lines.length, errors }
@@ -225,6 +231,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 
 			if (recorded?.complete) {
 				skipped++
+
 				continue
 			}
 		}
@@ -247,12 +254,15 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 			page_errors: errors,
 			complete: errors === 0,
 		}
+
 		await writeManifest(manifestPath, manifest)
 
 		const status = errors === 0 ? "✓" : `⚠ ${errors} page errors`
+
 		report?.(
 			`    ${status}  ${recordCount.toLocaleString()} records in ${elapsed}s  (${(bytes / 1024 / 1024).toFixed(1)} MB)`
 		)
+
 		fetched++
 		totalRecords += recordCount
 		totalErrors += errors
@@ -280,6 +290,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 				`accept the disclaimer, and re-run with the pre-signed S3 URL.`
 		)
 	}
+
 	const destDir = join(options.outRoot, SLUG)
 	mkdirSync(destDir, { recursive: true })
 	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
@@ -291,6 +302,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 	const { bytes } = await downloadToFile({ url: options.nadURL, dest: destPath, timeoutMs: 3 * 3600 * 1000, report })
 
 	const sha = await sha256File(destPath)
+
 	await writeManifest(join(destDir, "MANIFEST.json"), {
 		source_url: options.nadURL,
 		downloaded_at: new Date().toISOString(),
@@ -298,6 +310,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 		sha256: sha,
 		bytes,
 	})
+
 	report?.(`  ✓ ${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB  sha256=${sha}`)
 
 	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }

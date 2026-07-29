@@ -85,6 +85,7 @@ describe("canonicalizeRouteKey", () => {
 	it("keeps the post-designator tail (letter suffixes, trailing directionals)", () => {
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 22A"))).toBe("state route 22a")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 22A"))).toBe("state route 22a")
+
 		expect(canonicalizeRouteKey(normalizeStreetForKey("US Hwy 5 S"))).toEqual(
 			canonicalizeRouteKey(normalizeStreetForKey("US ROUTE 5 S"))
 		)

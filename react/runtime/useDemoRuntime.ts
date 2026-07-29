@@ -232,6 +232,7 @@ export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoR
 
 		const controller = new AbortController()
 		const { signal } = controller
+
 		const guard = (fn: () => void) => {
 			if (!signal.aborted) {
 				fn()

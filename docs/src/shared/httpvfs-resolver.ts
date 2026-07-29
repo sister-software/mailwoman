@@ -77,6 +77,7 @@ const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 function sanitizeFTS(text: string): string {
 	const trimmed = text.trim()
 	const prefix = trimmed.endsWith("*")
+
 	const cleaned = trimmed
 		.replaceAll(/[*]/g, " ")
 		.replaceAll(/["'()^:{}[\]~]/g, " ")
@@ -168,6 +169,7 @@ export async function loadHTTPVFSDatabase(
 			`${sqljsBaseURL}/sqlite.worker.js`,
 			`${sqljsBaseURL}/sql-wasm.wasm`
 		)
+
 		await raw.db.exec("SELECT count(*) FROM sqlite_master")
 
 		// throws here if the schema chunk is torn
@@ -238,6 +240,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 						hasRoles: Number(row.has_roles) > 0,
 					}
 				})
+
 			this.#schemaProbe.catch(() => {
 				this.#schemaProbe = undefined
 			})
@@ -256,6 +259,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				const { hasRoles } = await this.#schema()
 
 				if (!hasRoles) return map
+
 				const rows = rowsFromExec(
 					await this.#worker.db.exec(
 						`SELECT cr.admin_id AS adminID, cr.locality_id AS localityID, cr.relationship_type AS rel,
@@ -263,6 +267,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 						FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
 					)
 				)
+
 				const push = (key: number, role: DualRole): void => {
 					const arr = map.get(key) ?? []
 					arr.push(role)
@@ -273,6 +278,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 					const adminID = Number(r.adminID)
 					const localityID = Number(r.localityID)
 					const rel = String(r.rel)
+
 					// Resolved place is the locality → it ALSO acts as the region (the admin partner).
 					push(localityID, {
 						id: adminID,
@@ -281,6 +287,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 						relationshipType: rel,
 						role: "region",
 					})
+
 					// Resolved place is the admin → it ALSO acts as the locality.
 					push(adminID, {
 						id: localityID,
@@ -293,6 +300,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 				return map
 			})()
+
 			this.#dualRoles.catch(() => {
 				this.#dualRoles = undefined
 			})
@@ -323,6 +331,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 */
 	async warmUp(): Promise<void> {
 		const { hasPop, hasAbbr } = await this.#schema()
+
 		const stmts = [
 			`SELECT spr.id${hasPop ? ", pp.population" : ""} ` +
 				`FROM place_search JOIN spr ON spr.id = place_search.wof_id ` +
@@ -333,6 +342,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		if (hasAbbr) {
 			stmts.push(`SELECT id FROM place_abbr WHERE abbr = 'ny' COLLATE NOCASE LIMIT 1`)
 		}
+
 		await Promise.all([this.#worker.db.exec(stmts.join(";\n")), this.#dualRolesMap()])
 	}
 
@@ -353,6 +363,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		const t = text.trim()
 
 		if (!t || !(await this.#schema()).hasAbbr) return new Set()
+
 		const rows = rowsFromExec(
 			await this.#worker.db.exec(`SELECT id FROM place_abbr WHERE abbr = ${sqlStr(t)} COLLATE NOCASE`)
 		)
@@ -390,6 +401,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 		if (query.bbox) {
 			const b = query.bbox
+
 			conds.push(
 				`spr.latitude BETWEEN ${Number(b.minLat)} AND ${Number(b.maxLat)} AND spr.longitude BETWEEN ${Number(b.minLon)} AND ${Number(b.maxLon)}`
 			)
@@ -397,6 +409,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 		const { hasPop } = await this.#schema()
 		const pool = Math.max(limit, 50)
+
 		const sql =
 			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
 			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, ` +
@@ -413,10 +426,12 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		// them, saving a main-thread→worker round-trip gap per lookup.
 		const [rows, abbrIds] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIds(text)])
 		const normQuery = normName(text)
+
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: Record<string, unknown>): boolean =>
 			normName(String(row.name)) === normQuery || abbrIds.has(Number(row.id))
+
 		const anyStrictExact = rows.some(strictExact)
 
 		return rows
@@ -424,6 +439,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				const pop = typeof row.population === "number" ? row.population : 0
 				const popBoost = pop > 0 ? POPULATION_BOOST * Math.min(1, Math.log10(1 + pop) / POPULATION_SCALE_LOG10) : 0
 				const adj = (row.bm25 as number) - popBoost
+
 				// Alias tier: `alt_names` is the FTS row's alias bag, aliases joined on the
 				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
 				// check, ungated; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
@@ -431,6 +447,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				// ("York" inside "New York City") can't be false-promoted. Mirrors WOFWasmPlaceLookup.
 				const aliasExact =
 					typeof row.alt_names === "string" && aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
+
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 
 				return { row, exactTier, adj }
@@ -504,6 +521,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			this.#hasPostalCity = this.#worker.db
 				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='postal_city_candidate'`)
 				.then((res) => Number(rowsFromExec(res)[0]?.n ?? 0) > 0)
+
 			this.#hasPostalCity.catch(() => {
 				this.#hasPostalCity = undefined
 			})
@@ -524,6 +542,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 					countryToID.set(String(r.code).toUpperCase(), Number(r.id))
 					idToCountry.set(Number(r.id), String(r.code).toUpperCase())
 				}
+
 				const placetypeToID = new Map<string, number>()
 				const idToPlacetype = new Map<number, string>()
 
@@ -534,6 +553,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 				return { countryToID, idToCountry, placetypeToID, idToPlacetype }
 			})()
+
 			this.#codes.catch(() => {
 				this.#codes = undefined
 			})
@@ -547,6 +567,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	 */
 	async warmUp(): Promise<void> {
 		await this.#codeMaps()
+
 		await this.#worker.db.exec(
 			`SELECT spr_id, name, latitude, longitude FROM candidate WHERE name_key = 'springfield' ORDER BY neg_rank ASC LIMIT 3`
 		)
@@ -576,6 +597,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		const requestedPlacetypes = query.placetype
 			? ((Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[])
 			: []
+
 		const wantsLocality =
 			requestedPlacetypes.length === 0 || expandPlacetypeFilter(requestedPlacetypes).includes("locality")
 
@@ -631,6 +653,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 		if (query.bbox) {
 			const b = query.bbox
+
 			filters.push(
 				`latitude BETWEEN ${Number(b.minLat)} AND ${Number(b.maxLat)} AND longitude BETWEEN ${Number(b.minLon)} AND ${Number(b.maxLon)}`
 			)
@@ -638,6 +661,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 		const probe = async (nk: string): Promise<CandidateProbeRow[]> => {
 			const conds = [`name_key = ${sqlStr(nk)}`, ...filters]
+
 			const sql =
 				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
@@ -695,6 +719,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			const POP_BOOST = 4
 			const POP_SCALE_LOG10 = 6
 			const PROX_SCALE_KM = 30
+
 			const prominence = (c: (typeof candidates)[number]): number => {
 				const popTerm = POP_BOOST * Math.min(1, Math.max(0, c.score) / POP_SCALE_LOG10)
 				let proxTerm = 0

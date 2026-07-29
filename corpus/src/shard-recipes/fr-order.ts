@@ -85,6 +85,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -101,6 +102,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -113,6 +115,7 @@ function splitCSV(line: string): string[] {
  */
 function readTuples(limit: number): FrTuple[] {
 	const maxLines = Math.max(limit * 8, 40_000) + 1
+
 	const r = spawnSync("bash", ["-c", `unzip -p "${SOURCE.zip}" "${SOURCE.csv}" | head -n ${maxLines}`], {
 		maxBuffer: 1024 * 1024 * 1024,
 		encoding: "buffer",
@@ -123,15 +126,18 @@ function readTuples(limit: number): FrTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
@@ -246,6 +252,7 @@ export const frOrderRecipe: ShardRecipe = {
 					// Variant D: postcode, HN+street, city (reversed top-to-bottom)
 					raw = `${postcode}, ${house_number} ${street}, ${locality}`
 				}
+
 				rendered = { raw, components: { house_number, street, postcode, locality } }
 			} else {
 				rendered = renderCanonical(house_number, street, postcode, locality)
@@ -258,13 +265,16 @@ export const frOrderRecipe: ShardRecipe = {
 
 			if (!componentValues.every((v) => raw.includes(v))) {
 				skipped++
+
 				continue
 			}
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components, country:"FR"}).
 			if (opts.golden) {
 				write(JSON.stringify({ raw, components, country: "FR" }) + "\n")
+
 				emitted++
+
 				continue
 			}
 
@@ -274,6 +284,7 @@ export const frOrderRecipe: ShardRecipe = {
 				locality: components.locality,
 				postcode: components.postcode,
 			})
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -284,12 +295,15 @@ export const frOrderRecipe: ShardRecipe = {
 				corpus_version: "0.5.0",
 				license: "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(
 				JSON.stringify({
 					...aligned.row,
@@ -298,6 +312,7 @@ export const frOrderRecipe: ShardRecipe = {
 					synth_base_id: null,
 				}) + "\n"
 			)
+
 			emitted++
 		}
 

@@ -121,6 +121,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					input = JSON.parse(trimmed) as PoBoxInputRow
 				} catch {
 					skipped++
+
 					continue
 				}
 
@@ -131,6 +132,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {
 					skipped++
+
 					continue
 				}
 
@@ -160,6 +162,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
 					}
+
 					emitted++
 
 					if (options.limit !== undefined && emitted >= options.limit) break
@@ -179,12 +182,14 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					random() < militaryRatio
 				) {
 					const mil = synthesizeMilitaryPoBoxRow({ random })
+
 					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
 						po_box: `${mil.components.po_box}#mil${militarySeq++}`,
 						locality: mil.components.locality!,
 						region: mil.components.region!,
 						postcode: mil.components.postcode!,
 					})
+
 					yield {
 						raw: mil.raw,
 						components: mil.components,
@@ -195,6 +200,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
 					}
+
 					emitted++
 				}
 			}

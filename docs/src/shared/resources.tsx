@@ -504,6 +504,7 @@ export async function loadFSTGazetteer(
 			return r.arrayBuffer()
 		}),
 	])
+
 	const matcher = fstModule.deserializeFSTWeb(fstBinary) as FSTMatcherLike
 	let provenance: FSTProvenanceLike | undefined
 

@@ -156,6 +156,7 @@ export async function writeInterpCalibration(
 		.addColumn("method", "text", (c) => c.notNull())
 		.addColumn("region", "text", (c) => c.notNull())
 		.execute()
+
 	await db.insertInto("interp_calibration").values(row).execute()
 }
 
@@ -168,5 +169,6 @@ export async function createStreetSegmentIndexes(db: Kysely<StreetSegmentDatabas
 		.on("street_segment")
 		.columns(["postcode", "street_norm", "min_hn"])
 		.execute()
+
 	await db.schema.createIndex("idx_seg_street").on("street_segment").columns(["street_norm", "min_hn"]).execute()
 }

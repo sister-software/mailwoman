@@ -70,6 +70,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			const r = this.#db.selectObjects(
 				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_population' LIMIT 1`
 			)
+
 			this.#hasPopulationCache = r.length > 0
 		}
 
@@ -96,6 +97,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		const t = text.trim()
 
 		if (!t || !this.#hasPlaceAbbr()) return new Set()
+
 		const rows = this.#db.selectObjects(`SELECT id FROM place_abbr WHERE abbr = ? COLLATE NOCASE`, [t]) as Array<{
 			id: number
 		}>
@@ -156,6 +158,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// bm25, which is why the demo targeted West New York for "New York, NY".)
 		const hasPop = this.#hasPopulation()
 		const pool = Math.max(limit, 50)
+
 		const sql =
 			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
 			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, ` +
@@ -166,6 +169,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			`WHERE ${conditions.join(" AND ")} ` +
 			`ORDER BY bm25(place_search) ASC ` +
 			`LIMIT ?`
+
 		params.push(pool)
 
 		const rows = this.#db.selectObjects(sql, params) as Array<{
@@ -193,10 +197,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
 		// replacement for the demo's hardcoded `expandUSRegion` map; it also generalizes beyond US.
 		const abbrIds = this.#abbrExactIds(text)
+
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
 			normalizeName(row.name) === normQuery || abbrIds.has(row.id)
+
 		const anyStrictExact = rows.some(strictExact)
 
 		return rows
@@ -210,10 +216,12 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				// (`WOFSqlitePlaceLookup.#exactMatchIds`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
+
 				const popBoost =
 					row.population && row.population > 0
 						? POPULATION_BOOST * Math.min(1, Math.log10(1 + row.population) / POPULATION_SCALE_LOG10)
 						: 0
+
 				// Lower adjScore = better, matching SQLite's bm25 convention (more negative = better).
 				const adjScore = row.bm25 - popBoost
 
@@ -260,6 +268,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		if (!this.#coincidentRolesCache) {
 			const map = new Map<number, CoincidentLocality[]>()
+
 			const exists = this.#db.selectObjects(
 				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1`
 			)
@@ -295,6 +304,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 						population: r.population,
 						distanceKm: r.distanceKm,
 					}
+
 					const list = map.get(r.adminID)
 
 					if (list) {
@@ -304,6 +314,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 					}
 				}
 			}
+
 			this.#coincidentRolesCache = map
 		}
 
@@ -335,6 +346,7 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 			if (!body) continue
 			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
+
 			continue
 		}
 

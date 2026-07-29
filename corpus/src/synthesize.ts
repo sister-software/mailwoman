@@ -237,6 +237,7 @@ function mulberry32(seed: number): () => number {
  */
 export const typoInject: Augmentation = (row) => {
 	const rng = mulberry32(hashString(`${row.source_id}:typo`))
+
 	// Count occurrences so we only edit an UNAMBIGUOUS target — a value that appears exactly once in
 	// raw and isn't a substring of another component. (e.g. "Cupertino" the locality is a substring of
 	// "Cupertino Avenue" the street; editing it would `replace` the street's occurrence and break the
@@ -250,7 +251,9 @@ export const typoInject: Augmentation = (row) => {
 
 		return n
 	}
+
 	const values = Object.values(row.components).filter(Boolean) as string[]
+
 	const eligible = (Object.entries(row.components) as Array<[ComponentTag, string]>).filter(
 		([, v]) => v && ALPHA_NAME.test(v) && occurs(v) === 1 && !values.some((o) => o !== v && o.includes(v))
 	)
@@ -408,6 +411,7 @@ const DIRECTIONAL_FULL_TO_ABBR: Record<string, string> = {
 	Southeast: "SE",
 	Southwest: "SW",
 }
+
 const DIRECTIONAL_ABBR_TO_FULL: Record<string, string> = Object.fromEntries(
 	Object.entries(DIRECTIONAL_FULL_TO_ABBR).map(([k, v]) => [v, k])
 )
@@ -454,6 +458,7 @@ export const directionalAbbreviate: Augmentation = (row) => {
 		const v = newComponents[tag]
 
 		if (!v) continue
+
 		const replaced = v.replaceAll(
 			/\b(North|South|East|West|Northeast|Northwest|Southeast|Southwest)\b/g,
 			(m) => DIRECTIONAL_FULL_TO_ABBR[m] ?? m
@@ -858,6 +863,7 @@ export function composeAdversarialRow(
 	const labels: BIOLabel[] = [...venueLabels, ...addressAligned.row.labels]
 
 	const composedRaw = `${venueTrimmed}${separator}${address.raw}`
+
 	const composedComponents = {
 		venue: venueTrimmed,
 		...address.components,
@@ -875,7 +881,9 @@ export function composeAdversarialRow(
 				`(source=${address.source}, source_id=${address.source_id}) — alignment contract violation`
 		)
 	}
+
 	const offset = venueTrimmed.length + separator.length
+
 	const spans: ComponentSpan[] = [
 		{ tag: "venue", start: 0, end: venueTrimmed.length },
 		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
@@ -900,6 +908,7 @@ export function composeAdversarialRow(
 		span_ends: spans.map((s) => s.end),
 		span_tags: spans.map((s) => s.tag),
 	}
+
 	assertSpanInvariants(spans, composed)
 
 	return { kind: "labeled", row: composed }

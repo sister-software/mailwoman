@@ -61,6 +61,7 @@ function incDecimalString(s: string): string {
 			a[i] = "0"
 		} else {
 			a[i] = String(Number(a[i]) + 1)
+
 			break
 		}
 	}
@@ -91,6 +92,7 @@ function pyRound(x: number, nd = 0): number {
 
 		return floor % 2 === 0 ? floor : floor + 1
 	}
+
 	const neg = x < 0
 	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
 	const dot = digits.indexOf(".")
@@ -112,11 +114,13 @@ function pyRound(x: number, nd = 0): number {
 			roundUp = lastKept % 2 === 1
 		}
 	}
+
 	let combined = intPart + keep
 
 	if (roundUp) {
 		combined = incDecimalString(combined)
 	}
+
 	const num = Number(combined) / 10 ** nd
 
 	return neg ? -num : num
@@ -166,6 +170,7 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 				}
 		}
 	}
+
 	out.delete(canonical)
 
 	return [...out].toSorted()
@@ -218,6 +223,7 @@ export interface PostcodeLocalityBaseOptions {
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const db = new DatabaseSync(output)
+
 	const counts = db
 		.prepare(
 			"SELECT country AS country, COUNT(*) AS n, SUM(is_containing) AS con FROM postcode_locality GROUP BY country ORDER BY country"
@@ -246,6 +252,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		"}"
 
 	const kdb = new DatabaseClient({ database: db })
+
 	await kdb.schema
 		.createTable("meta")
 		.ifNotExists()
@@ -270,6 +277,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		],
 		["countries", countriesJson],
 	]
+
 	const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
 	for (const [k, v] of meta) {
@@ -285,6 +293,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 
 		process.exit(1)
 	}
+
 	db.exec("VACUUM")
 	db.close()
 
@@ -326,6 +335,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 			if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue
 			const xs: number[] = []
 			const ys: number[] = []
+
 			const walk = (c: unknown): void => {
 				if (typeof (c as unknown[])[0] === "number") {
 					const pos = c as number[]
@@ -337,12 +347,14 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 					}
 				}
 			}
+
 			walk((geom as { coordinates: unknown }).coordinates)
 			const name = (p["wof:name"] as string) ?? ""
 			const lblLat = p["lbl:latitude"]
 			const lblLon = p["lbl:longitude"]
 			const clat = typeof lblLat === "number" ? lblLat : (Math.min(...ys) + Math.max(...ys)) / 2
 			const clon = typeof lblLon === "number" ? lblLon : (Math.min(...xs) + Math.max(...xs)) / 2
+
 			locs.push({
 				id: Number(p["wof:id"]),
 				name,
@@ -380,9 +392,11 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	}
 
 	const con = new DatabaseSync(postcodeDB!)
+
 	const postcodes = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
+
 	con.close()
 
 	console.log(`  ${postcodes.length} ${country} postcode centroids`)
@@ -392,6 +406,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
 	// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 	const kdb = new DatabaseClient({ database: out })
+
 	await kdb.schema
 		.createTable("postcode_locality")
 		.ifNotExists()
@@ -403,6 +418,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		.addColumn("distance_km", "real", (c) => c.notNull())
 		.addColumn("is_containing", "integer", (c) => c.notNull())
 		.execute()
+
 	out.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
 
 	const insert = out.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
@@ -432,6 +448,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				geometryContains(l.geom, plon, plat) === true
 			) {
 				containingIdx = idx
+
 				break
 			}
 		}
@@ -452,12 +469,14 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				}
 			}
 		}
+
 		cand.sort((a, b) => a.d - b.d || a.idx - b.idx)
 
 		const chosen: Array<{ d: number; idx: number; isc: number }> = []
 
 		if (containingIdx !== null) {
 			chosen.push({ d: 0, idx: containingIdx, isc: 1 })
+
 			nContained++
 		}
 
@@ -471,9 +490,11 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		for (const { d, idx, isc } of chosen) {
 			const l = locs[idx]!
 			insert.run(pc, country!, l.id, l.name, l.aliases.join("|"), pyRound(d, 3), isc)
+
 			rows++
 		}
 	}
+
 	out.exec("COMMIT")
 
 	await kdb.schema

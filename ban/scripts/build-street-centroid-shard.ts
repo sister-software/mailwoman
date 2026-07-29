@@ -196,6 +196,7 @@ async function main(): Promise<void> {
 			// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
 			foldStreetSurface(row.street_raw.replaceAll('"', ""))
 		)
+
 		written++
 
 		if (written % BATCH === 0) {
@@ -207,6 +208,7 @@ async function main(): Promise<void> {
 			}
 		}
 	}
+
 	out.exec("COMMIT")
 	src.close()
 
@@ -224,11 +226,13 @@ async function main(): Promise<void> {
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(args.output + sfx, { force: true })
 	}
+
 	renameSync(tmp, args.output)
 
 	if (existsSync(`${args.output}.prev`)) {
 		rmSync(`${args.output}.prev`, { force: true })
 	}
+
 	sealDatabase(args.output)
 
 	const md5 = await fileMD5(args.output)

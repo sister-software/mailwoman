@@ -72,6 +72,7 @@ const SOURCE_COUNTRY = SOFT_FEED.countryLexicon ? resolve(repoRoot, SOFT_FEED.co
 // Option-A evidence bundle (v3.23): street-type is a small repo-committed file; locality-surface is a
 // ~7 MB data-root artifact (never in git) — note the DIFFERENT base dirs.
 const SOURCE_STREET_TYPE = SOFT_FEED.streetTypeLexicon ? resolve(repoRoot, SOFT_FEED.streetTypeLexicon) : null
+
 const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
 	? resolve(dataRoot, SOFT_FEED.localitySurfaceLexicon)
 	: null
@@ -154,6 +155,7 @@ async function materializeFST(workspace: string, dir: string) {
 
 		return
 	}
+
 	const dest = resolve(dir, `fst-${locale}.bin`)
 	await removeIfPresent(dest)
 	await copyFile(src, dest)
@@ -178,6 +180,7 @@ async function materializeStreetMorphology(workspace: string, dir: string) {
 
 		return
 	}
+
 	const dest = resolve(dir, "fst-street-morphology.bin")
 	await removeIfPresent(dest)
 	await copyFile(src, dest)
@@ -197,6 +200,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 				`Missing gazetteer lexicon: ${SOURCE_GAZETTEER}\nSet softFeed.gazetteerLexicon in release.config.json.`
 			)
 		}
+
 		const dest = resolve(dir, "anchor-lexicon-v1.json")
 		await removeIfPresent(dest)
 		await copyFile(SOURCE_GAZETTEER, dest)
@@ -209,6 +213,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		if (!(await exists(SOURCE_COUNTRY))) {
 			throw new Error(`Missing country lexicon: ${SOURCE_COUNTRY}\nSet softFeed.countryLexicon in release.config.json.`)
 		}
+
 		const dest = resolve(dir, "country-surface-lexicon-v1.json")
 		await removeIfPresent(dest)
 		await copyFile(SOURCE_COUNTRY, dest)
@@ -227,6 +232,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		if (!(await exists(source))) {
 			throw new Error(`Missing evidence lexicon: ${source}\nSet ${label} in release.config.json.`)
 		}
+
 		const dest = resolve(dir, basename)
 		await removeIfPresent(dest)
 		await copyFile(source, dest)
@@ -245,6 +251,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 		return
 	}
+
 	const db = dbRel.startsWith("/") ? dbRel : resolve(dataRoot, "wof", dbRel)
 
 	if (!existsSync(db)) {
@@ -252,6 +259,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 			`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDBByCountry.`
 		)
 	}
+
 	const binDest = resolve(dir, `postcode-${country}.bin`)
 	await removeIfPresent(binDest)
 	// `gazetteer postcode-binary` is the compiled Pastel command (ported from the old
@@ -259,6 +267,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	// script, so mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
 	// postcode-<cc>.bin directly where the `files` array expects it.
 	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+
 	const r = spawnSync(
 		process.execPath,
 		[cli, "gazetteer", "postcode-binary", "--out", dir, "--locale", `${country.toUpperCase()}:${db}`],
@@ -285,6 +294,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 	if (!entry) {
 		return
 	}
+
 	const source = entry.source.startsWith("/") ? entry.source : resolve(dataRoot, entry.source)
 
 	if (!existsSync(source)) {
@@ -292,11 +302,13 @@ async function materializePairIndex(workspace: string, dir: string) {
 			`Missing pair-index source CSV for ${country}: ${source}\nSet MAILWOMAN_DATA_ROOT or softFeed.pairIndexByCountry.${country}.source.`
 		)
 	}
+
 	const binDest = resolve(dir, `pair-index-${country}.bin`)
 	await removeIfPresent(binDest)
 	// `gazetteer pair-index` is the compiled Pastel command; `.release-it.json` runs `yarn compile` right
 	// before this script, so mailwoman/out/cli.js exists (same precondition as postcode-binary above).
 	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+
 	const r = spawnSync(
 		process.execPath,
 		[

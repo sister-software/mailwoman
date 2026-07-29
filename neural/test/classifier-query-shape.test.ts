@@ -44,6 +44,7 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 		if (t === boostIdx && labelIdx !== -1) {
 			row[labelIdx] = boostMagnitude
 		}
+
 		matrix.push(row)
 	}
 
@@ -93,6 +94,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// QueryShape: a single us_zip hit covering the "10118" substring.
 		const zipStart = text.indexOf("10118")
 		const zipEnd = zipStart + 5
+
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: zipStart, end: zipEnd }, confidence: 0.9 }],
 		}
@@ -126,6 +128,7 @@ describe("NeuralAddressClassifier — queryShape integration", () => {
 		// 5.0 locality boost.
 		const zipStart = text.indexOf("10118")
 		const zipEnd = zipStart + 5
+
 		const shape: QueryShapeLike = {
 			knownFormats: [{ format: "us_zip", span: { start: zipStart, end: zipEnd }, confidence: 0.6 }],
 		}

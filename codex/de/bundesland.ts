@@ -81,6 +81,7 @@ export const DE_STATE_NAME_TO_CODE: ReadonlyMap<string, GermanStateCode> = (() =
 		out.set(info.english.toLowerCase(), code)
 		out.set(code.toLowerCase(), code)
 	}
+
 	// Everyday aliases that are neither the ISO code nor the canonical name.
 	const aliases: Record<string, GermanStateCode> = {
 		nrw: "NW",

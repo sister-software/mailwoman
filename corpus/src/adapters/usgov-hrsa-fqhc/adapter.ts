@@ -123,6 +123,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 			}
 
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
+
 			const parser = stream.pipe(
 				csvParse({
 					columns: true,
@@ -173,6 +174,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 					if (!Object.keys(aligned).length) continue
 
 					const siteID = (record["Site ID"] ?? "").trim()
+
 					const sourceID = siteID
 						? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
 						: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
@@ -187,6 +189,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 						corpus_version: "",
 						license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 					}
+
 					emitted++
 				}
 			} finally {

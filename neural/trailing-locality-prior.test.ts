@@ -250,6 +250,7 @@ describe("buildTrailingLocalityPriors — geometry gates (comma-free street + tr
 			{ piece: ",", start: 17, end: 18 },
 			{ piece: "▁London", start: 19, end: 25 },
 		]
+
 		const m = buildTrailingLocalityPriors(pieces, STAGE2_BIO_LABELS, OPTS())
 		expect(isZero(m)).toBe(true)
 	})

@@ -279,6 +279,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		// A particle only starts a surname if a bare-surname token follows it.
 		if (PARTICLES.has(norm(tokens[i]!)) && i < tokens.length - 1) {
 			particleStart = i
+
 			break
 		}
 	}
@@ -289,8 +290,10 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 		while (i < tokens.length - 1 && PARTICLES.has(norm(tokens[i]!))) {
 			particleParts.push(tokens[i]!)
+
 			i++
 		}
+
 		result.familyParticle = particleParts.join(" ")
 		result.family = tokens.slice(i).join(" ")
 		const before = tokens.slice(0, particleStart)
@@ -312,6 +315,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 		return result
 	}
+
 	result.given = tokens[0]
 	result.family = tokens.at(-1)
 

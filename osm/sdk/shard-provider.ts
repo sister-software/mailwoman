@@ -60,6 +60,7 @@ export class OSMShardProvider {
 				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }
 			}
 		}
+
 		this.#cache.set(cc, entry)
 
 		return entry
@@ -69,6 +70,7 @@ export class OSMShardProvider {
 		for (const entry of this.#cache.values()) {
 			entry.addressPoints?.close()
 		}
+
 		this.#cache.clear()
 	}
 }

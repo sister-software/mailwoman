@@ -154,9 +154,11 @@ interface StateManifestEntry {
 const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const outDir = options.outDir ?? dataRootPath("address-points")
+
 		const states = (
 			options.states ? options.states.split(",").map((s) => s.trim().toUpperCase()) : STATES_BY_COVERAGE
 		).filter(Boolean)
+
 		mkdirSync(outDir, { recursive: true })
 
 		const concurrency = Math.max(1, options.concurrency || 4)
@@ -185,11 +187,13 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			try {
 				const db = new DatabaseSync(dbPath, { readOnly: true })
 				const n = (db.prepare("SELECT count(*) AS n FROM address_point").get() as { n: number }).n
+
 				const idx = (
 					db
 						.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_ap_streetkey'")
 						.get() as { n: number }
 				).n
+
 				db.close()
 
 				return n > 0 && idx > 0
@@ -221,12 +225,16 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				if (options.licenseFilter) {
 					argv.push("--license-filter", options.licenseFilter)
 				}
+
 				const t = Date.now()
 				const child = spawn(process.execPath, argv)
+
 				let out = "",
 					err = ""
+
 				child.stdout.on("data", (d) => (out += d))
 				child.stderr.on("data", (d) => (err += d))
+
 				child.on("close", (code) =>
 					resolve({ state: stateCode, code, seconds: Number(((Date.now() - t) / 1000).toFixed(1)), out, err })
 				)
@@ -234,6 +242,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		}
 
 		const t0 = Date.now()
+
 		const manifest: {
 			release: string
 			builtAt: string | null
@@ -247,10 +256,12 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			states: {},
 			datasetTotals: {},
 		}
+
 		let built = 0,
 			skipped = 0,
 			failed = 0,
 			totalRows = 0
+
 		const attributionPath = path.join(outDir, "ATTRIBUTION.json")
 
 		// asyncParallelIterator yields results AS THEY COMPLETE (out of order), capped at `concurrency`
@@ -261,6 +272,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				console.error(`[skip] ${r.state} — complete (use --force to rebuild)`)
 
 				skipped++
+
 				continue
 			}
 
@@ -268,9 +280,12 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripAnsi(r.err || "").slice(-600)}`)
 
 				manifest.states[r.state] = { ok: false }
+
 				failed++
+
 				continue
 			}
+
 			// The child's parse-relevant facts span its Ink summary (stdout) + plain progress (stderr) —
 			// combine + strip ANSI, then match WITHOUT line anchors so the summary's "✓ "/"  " render
 			// prefixes don't defeat the regex.
@@ -281,11 +296,14 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			for (const m of text.matchAll(/overture:(\S+)\s+([\d,]+) rows/g)) {
 				const ds = m[1]!,
 					n = Number(m[2]!.replaceAll(",", ""))
+
 				datasets[ds] = n
 				manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + n
 			}
+
 			manifest.states[r.state] = { ok: true, points: pts, seconds: r.seconds, datasets }
 			totalRows += pts
+
 			built++
 
 			console.error(`[ok]   ${r.state} — ${pts.toLocaleString()} points (${r.seconds}s)`)
@@ -295,6 +313,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		}
 
 		const mins = ((Date.now() - t0) / 60_000).toFixed(1)
+
 		const lines = [
 			`situs: ${outDir}`,
 			`built ${built} · skipped ${skipped} · failed ${failed} · ${totalRows.toLocaleString()} total points · ${mins} min`,
@@ -306,6 +325,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			.slice(0, 8)) {
 			lines.push(`  ${ds.padEnd(28)} ${n.toLocaleString()}`)
 		}
+
 		lines.push(`attribution manifest → ${attributionPath}`)
 
 		return lines

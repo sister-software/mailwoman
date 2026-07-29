@@ -187,6 +187,7 @@ export function pickByStreetEvidence<T>(
 	if (!candidates.length) {
 		throw new Error("pickByStreetEvidence: no candidates")
 	}
+
 	const rank1 = candidates[0]!
 	const topScore = rank1.score
 

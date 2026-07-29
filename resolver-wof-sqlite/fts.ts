@@ -195,6 +195,7 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 
 	if (!ftsExisting || opts.drop) {
 		onProgress("creating")
+
 		db.exec(`
 			CREATE VIRTUAL TABLE ${PLACE_SEARCH_TABLE} USING fts5(
 				wof_id UNINDEXED,
@@ -203,7 +204,9 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				tokenize = 'unicode61 remove_diacritics 2'
 			);
 		`)
+
 		onProgress("populating")
+
 		// Excludes only definitively-not-current places. WOF's `is_current` carries TWO conventions:
 		// `-1` (modern Who's On First) and `1` (legacy Mapzen-era), both meaning "currently valid".
 		// Only `0` means "no longer current". Filtering on `= -1` strict (as Phase 4.2 did) excluded
@@ -232,8 +235,10 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				AND spr.is_deprecated = 0
 				AND spr.name IS NOT NULL;
 		`)
+
 		ftsCreated = true
 	}
+
 	const ftsCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }
 
 	// ─── R*Tree phase ────────────────────────────────────────────────
@@ -246,6 +251,7 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 
 	if (!bboxExisting || opts.drop) {
 		onProgress("creating-bbox")
+
 		// R*Tree requires INTEGER PRIMARY KEY (id) + paired min/max for each indexed dimension.
 		// `rtree` (not `rtree_i32`) keeps coordinates as REAL — what we want for WGS-84.
 		db.exec(`
@@ -255,7 +261,9 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				min_lon, max_lon
 			);
 		`)
+
 		onProgress("populating-bbox")
+
 		// Only index places that have non-zero coordinates AND a real bbox. WOF stores both the
 		// centroid (latitude/longitude) and the bounding box (min_*/max_*). A subset of rows have
 		// all-zero coordinates — likely placeholders for deprecated / unmapped entries; the
@@ -278,8 +286,10 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 				AND NOT (spr.min_latitude = 0 AND spr.max_latitude = 0
 				     AND spr.min_longitude = 0 AND spr.max_longitude = 0);
 		`)
+
 		bboxCreated = true
 	}
+
 	const bboxCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_BBOX_TABLE}`).get() as { n: number }
 
 	// NOTE: `place_population` is NOT built here. `scripts/build-unified-wof.ts` extracts

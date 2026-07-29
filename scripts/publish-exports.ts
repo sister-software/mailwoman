@@ -32,8 +32,10 @@ export function transformExportsForPublish(exports: unknown): unknown {
 	for (const [subpath, value] of Object.entries(exports as Record<string, unknown>)) {
 		if (typeof value !== "object" || value === null) {
 			out[subpath] = value
+
 			continue
 		}
+
 		const conditions = value as Record<string, unknown>
 		const rewritten: Record<string, unknown> = {}
 
@@ -48,6 +50,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
 			if (condition === "node" && typeof target === "string" && isTypeScriptSource(target)) continue
 			rewritten[condition] = target
 		}
+
 		out[subpath] = rewritten
 	}
 
@@ -59,6 +62,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
  */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []
+
 	const walk = (value: unknown): void => {
 		if (typeof value === "string") {
 			if (!value.includes("*")) {
@@ -74,6 +78,7 @@ export function collectExportTargets(exports: unknown): string[] {
 			}
 		}
 	}
+
 	walk(exports)
 
 	return targets

@@ -47,6 +47,7 @@ async function sortFileInPlace(path: string): Promise<void> {
 	if (hadTrailingNewline) {
 		lines.pop()
 	}
+
 	lines.sort()
 	await writeFile(path, lines.join("\n") + (hadTrailingNewline ? "\n" : ""))
 }

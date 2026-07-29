@@ -70,6 +70,7 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 			.toLowerCase()
 			.normalize("NFD")
 			.replaceAll(/[\u0300-\u036F]/g, "")
+
 	const out = new Set<string>()
 
 	for (const canonical of Object.keys(FR_VOIE_TYPES) as FrenchVoieType[]) {
@@ -90,6 +91,7 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
  */
 export function isFrenchStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
+
 	const t = token
 		.toLowerCase()
 		.normalize("NFD")

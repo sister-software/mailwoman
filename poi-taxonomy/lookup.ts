@@ -34,6 +34,7 @@ function loadTable(): POITaxonomyTable {
 			// try next
 		}
 	}
+
 	throw new Error("poi-taxonomy: could not find data/taxonomy.json")
 }
 

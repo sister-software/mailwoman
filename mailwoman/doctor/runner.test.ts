@@ -52,6 +52,7 @@ describe("runDoctor (injected seams)", () => {
 	it("all-healthy → every check ok, exit 0, 7 checks in render order", async () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
+
 		expect(report.checks.map((c) => c.id)).toEqual([
 			"weights",
 			"node-version",
@@ -61,6 +62,7 @@ describe("runDoctor (injected seams)", () => {
 			"poi-layer",
 			"locale-overlay-fr-fr",
 		])
+
 		expect(report.checks.every((c) => c.status === CheckStatus.OK)).toBe(true)
 	})
 
@@ -77,6 +79,7 @@ describe("runDoctor (injected seams)", () => {
 				}
 			},
 		})
+
 		expect(report.exitCode).toBe(1)
 		expect(byId(report.checks, "weights").status).toBe(CheckStatus.Missing)
 		// A core failure must not suppress the optional-layer diagnostics.
@@ -90,6 +93,7 @@ describe("runDoctor (injected seams)", () => {
 				throw new Error("Cannot find module 'onnxruntime-node'")
 			},
 		})
+
 		expect(report.exitCode).toBe(1)
 		expect(byId(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
 	})
@@ -100,6 +104,7 @@ describe("runDoctor (injected seams)", () => {
 			envCandidatePath: () => undefined,
 			existsSync: (p) => p === "/data/wof/admin.db",
 		})
+
 		const gaz = byId(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.OK)
 		expect(gaz.detail).toContain("WOF admin shard")
@@ -116,6 +121,7 @@ describe("runDoctor (injected seams)", () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
 		})
+
 		const gaz = byId(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.Degraded)
 		expect(gaz.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
@@ -134,6 +140,7 @@ describe("runDoctor (injected seams)", () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
 		})
+
 		expect(report.exitCode).toBe(0)
 		expect(byId(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
 		expect(byId(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
@@ -146,6 +153,7 @@ describe("runDoctor (injected seams)", () => {
 				throw new Error("layer manifest: expected exactly 1 row, found 0")
 			},
 		})
+
 		expect(report.exitCode).toBe(0)
 		expect(byId(report.checks, "poi-layer").status).toBe(CheckStatus.Degraded)
 	})

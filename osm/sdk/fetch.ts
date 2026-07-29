@@ -37,6 +37,7 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 
 	if (!res.ok || !res.body) throw new Error(`Geofabrik download failed (${res.status}) for ${url}`)
 	let bytes = 0
+
 	const counter = new TransformStream<Uint8Array, Uint8Array>({
 		transform(chunk, controller) {
 			bytes += chunk.byteLength

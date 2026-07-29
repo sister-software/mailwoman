@@ -48,6 +48,7 @@ const { values: args } = parseArgs({
 		n: { type: "string", default: "300" },
 	},
 })
+
 const N = Number(args.n)
 
 /**
@@ -63,6 +64,7 @@ const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: n
 	"fr-prefix": { tag: "street_prefix", baseline: 55, target: 70 },
 	"house-number-after-street": { tag: "house_number", baseline: 51.3, target: 65 },
 }
+
 const STREET_SPAN_FLOOR = 65
 
 function mulberry32(seed: number): () => number {
@@ -104,6 +106,7 @@ const classifier = await createScorer({
 	modelCardPath: resolved.modelCardPath,
 	strict: true,
 })
+
 const random = mulberry32(20_260_617)
 
 interface ShapeResult {
@@ -126,6 +129,7 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 		const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: template })
 		const json = decodeAsJSON(await classifier.parse(row.raw, { postcodeRepair: true })) as Record<string, unknown>
 		const got: Record<string, string> = {}
+
 		const collect = (o: Record<string, unknown>): void => {
 			for (const [k, v] of Object.entries(o)) {
 				if (typeof v === "string") {
@@ -135,22 +139,26 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 				}
 			}
 		}
+
 		collect(json)
 
 		for (const [k, gold] of Object.entries(row.components)) {
 			const a = (perKey[k] ??= { hit: 0, n: 0 })
+
 			a.n++
 
 			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) {
 				a.hit++
 			}
 		}
+
 		const goldStress = String(row.components[tag as keyof typeof row.components] ?? "")
 
 		if ((got[tag] ?? "").toLowerCase().trim() === goldStress.toLowerCase().trim()) {
 			stressHit++
 		}
 	}
+
 	const stressPct = (100 * stressHit) / N
 	const street = perKey["street"]
 	const streetPct = street ? (100 * street.hit) / street.n : Number.NaN
@@ -172,6 +180,7 @@ for (const r of results) {
 		`  ${pad(r.template, 28)} ${pad(r.tag, 14)} ${pad(`${r.baseline}→${r.target}`, 13)} ${pad(`${r.stressPct.toFixed(1)}%`, 8)} ${pad(street, 8)} ${r.pass ? "✓ PASS" : "✗ MISS"}`
 	)
 }
+
 const allPass = results.every((r) => r.pass)
 
 console.log(`\n  street-span floor: ≥${STREET_SPAN_FLOOR}% on every shape  ·  targets: stress-tag ≥ per-shape`)

@@ -121,6 +121,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			list.push({ placetype: r.parent, n: r.n })
 			byParent.set(r.child, list)
 		}
+
 		const byAnc = new Map<string, Array<{ placetype: string; n: number }>>()
 
 		for (const r of ancRows) {
@@ -128,6 +129,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 			list.push({ placetype: r.anc, n: r.n })
 			byAnc.set(r.pt, list)
 		}
+
 		const dist = (list: Array<{ placetype: string; n: number }> | undefined) => {
 			if (!list?.length) return []
 			const tot = list.reduce((s, x) => s + x.n, 0) || 1
@@ -139,6 +141,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 		}
 
 		const tags = new Set<string>(COMPONENT_TAGS as readonly string[])
+
 		const stats: PlacetypeStat[] = counts
 			.toSorted((a, b) => b.n - a.n)
 			.map((c) => ({
@@ -160,6 +163,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 
 	const { stats, country } = state.result
 	const pct = (f: number) => `${Math.round(f * 100)}%`
+
 	const distStr = (d: Array<{ placetype: string; fraction: number }>) =>
 		d.length ? d.map((x) => `${x.placetype} ${pct(x.fraction)}`).join(", ") : "—"
 

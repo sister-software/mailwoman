@@ -57,6 +57,7 @@ function splitCSVLine(line: string, separator: number = COMMA): string[] {
 			start = i + 1
 		}
 	}
+
 	fields.push(line.slice(start))
 
 	return fields
@@ -130,6 +131,7 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	for (const s of samples) {
 		if (s === null) {
 			nullCount++
+
 			continue
 		}
 
@@ -184,6 +186,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 		if (!headerLine && opts.hasHeader) {
 			headerLine = line
+
 			continue
 		}
 
@@ -218,6 +221,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 			return normalizeField(raw)
 		})
+
 		const info = inferColumnType(samples)
 		info.name = name
 
@@ -255,6 +259,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	// Use the .import approach via a temp table, then INSERT INTO ... SELECT to handle
 	// NULL normalization and type coercion.
 	const csvBasename = basename(opts.inputPath)
+
 	const importSQL = [
 		`CREATE TEMP TABLE "${opts.tableName}_source" (${colDefs});`,
 		`.mode csv`,
@@ -283,6 +288,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			for (const row of batch) {
 				insertStmt.run(...row)
 			}
+
 			db.exec("COMMIT")
 		} catch (error) {
 			db.exec("ROLLBACK")
@@ -300,10 +306,12 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 		if (opts.hasHeader && !headerSkipped) {
 			headerSkipped = true
+
 			continue
 		}
 
 		const fields = splitCSVLine(line, sep).map(stripQuotes)
+
 		const values = fields.map((f, i) => {
 			const v = normalizeField(f)
 
@@ -321,6 +329,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		while (values.length < columns.length) {
 			values.push(null)
 		}
+
 		values.length = columns.length
 
 		batch.push(values)
@@ -349,6 +358,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	if (firstTextCol) {
 		process.stderr.write(`Building index on "${firstTextCol.name}"...\n`)
+
 		db.exec(
 			`CREATE INDEX IF NOT EXISTS idx_${opts.tableName}_${firstTextCol.name} ON "${opts.tableName}"("${firstTextCol.name}");`
 		)
@@ -359,6 +369,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	// Write MANIFEST
 	const fileSize = (await import("node:fs/promises")).stat
 	const stat = await (await import("node:fs/promises")).stat(opts.outputPath)
+
 	const manifest = {
 		ingested_at: new Date().toISOString(),
 		source_csv: basename(opts.inputPath),
@@ -367,6 +378,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		row_count: imported,
 		db_bytes: stat.size,
 	}
+
 	const manifestPath = opts.outputPath.replace(/\.db$/, ".manifest.json")
 	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n")
 
@@ -399,6 +411,7 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!existsSync(options.input)) {
 		throw new Error(`File not found: ${options.input}`)
 	}
+
 	const csvName = basename(options.input, extname(options.input))
 
 	await runIngest({

@@ -33,6 +33,7 @@ describe("poi schema", () => {
 		const ddl = rows[0]?.sql.toLowerCase() ?? ""
 		expect(ddl).toContain("without rowid")
 		const pkClause = ddl.slice(ddl.indexOf("primary key ("))
+
 		expect(pkClause).toMatch(
 			/primary key \(\s*"?h3_cell"?\s*,\s*"?category_id"?\s*,\s*"?neg_rank"?\s*,\s*"?rowid_key"?\s*\)/
 		)
@@ -43,6 +44,7 @@ describe("poi schema", () => {
 		await createPOIStagingTables(kdb)
 		await createLayerManifestTable(kdb)
 		await createLayerCoverageTable(kdb)
+
 		await kdb
 			.insertInto("poi_stage")
 			.values({
@@ -60,6 +62,7 @@ describe("poi schema", () => {
 				gers_id: null,
 			})
 			.execute()
+
 		const row = await kdb.selectFrom("poi_stage").selectAll().executeTakeFirstOrThrow()
 		expect(row.name).toBe("McDonald's")
 		expect(row.h3_cell).toBe(1001)

@@ -81,6 +81,7 @@ const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 export function buildTransitionTable(goldenDir: string): (from: string, to: string) => number {
 	const counts = new Map<string, number>()
 	const fromTotals = new Map<string, number>()
+
 	const bump = (a: string, b: string): void => {
 		counts.set(`${a}→${b}`, (counts.get(`${a}→${b}`) ?? 0) + 1)
 		fromTotals.set(a, (fromTotals.get(a) ?? 0) + 1)
@@ -101,6 +102,7 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 
 			if (!row.components || !row.raw) continue
 			const folded = fold(row.raw)
+
 			const seq = Object.entries(row.components)
 				.map(([tag, value]) => ({ tag, idx: folded.indexOf(fold(String(value))) }))
 				.filter((entry) => entry.idx >= 0)
@@ -113,6 +115,7 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 			for (let i = 1; i < seq.length; i++) {
 				bump(seq[i - 1]!, seq[i]!)
 			}
+
 			bump(seq.at(-1)!, "END")
 		}
 	}
@@ -157,6 +160,7 @@ export function segmentDecodeKBest(
 ): SegmentDecodeResult {
 	const bIndex = new Map<string, number>()
 	const iIndex = new Map<string, number>()
+
 	trace.labels.forEach((label, index) => {
 		if (label.startsWith("B-")) {
 			bIndex.set(label.slice(2), index)
@@ -164,6 +168,7 @@ export function segmentDecodeKBest(
 			iIndex.set(label.slice(2), index)
 		}
 	})
+
 	const oIndex = trace.labels.indexOf("O")
 	const types = [...bIndex.keys()].filter((type) => iIndex.has(type))
 
@@ -177,12 +182,15 @@ export function segmentDecodeKBest(
 	// Group pieces into words; pure-punctuation pieces are their own word.
 	const words: number[][] = []
 	let current: number[] = []
+
 	const flush = (): void => {
 		if (current.length) {
 			words.push(current)
 		}
+
 		current = []
 	}
+
 	trace.tokens.forEach((token, index) => {
 		const content = token.piece.startsWith("▁") ? token.piece.slice(1) : token.piece
 
@@ -206,12 +214,15 @@ export function segmentDecodeKBest(
 			current.push(index)
 		}
 	})
+
 	flush()
+
 	const isPunctuationWord = words.map(
 		(word) => word.length === 1 && PUNCTUATION_ONLY.test(trace.tokens[word[0]!]!.piece.replace(/^▁/, ""))
 	)
 
 	const wordCount = words.length
+
 	const spanScore = (from: number, to: number, type: string): number => {
 		let score = 0
 		let first = true
@@ -227,6 +238,7 @@ export function segmentDecodeKBest(
 
 		return score
 	}
+
 	const oScore = (wordIndex: number): number =>
 		words[wordIndex]!.reduce((sum, pieceIndex) => sum + (logProbs[pieceIndex]![oIndex] ?? -50), 0)
 
@@ -236,6 +248,7 @@ export function segmentDecodeKBest(
 	}
 	const dp: Array<Map<string, Entry[]>> = Array.from({ length: wordCount + 1 }, () => new Map())
 	dp[0]!.set("START", [{ score: 0, segments: [] }])
+
 	const push = (column: Map<string, Entry[]>, key: string, entry: Entry): void => {
 		const list = column.get(key) ?? []
 		list.push(entry)
@@ -244,6 +257,7 @@ export function segmentDecodeKBest(
 		if (list.length > k) {
 			list.length = k
 		}
+
 		column.set(key, list)
 	}
 
@@ -255,6 +269,7 @@ export function segmentDecodeKBest(
 			const score = spanScore(i, j, type)
 
 			if (score === -Infinity) break
+
 			push(dp[j]!, type, {
 				score: entry.score + score + logTransition(lastType, type),
 				segments: [...entry.segments, [i, j, type]],
@@ -285,6 +300,7 @@ export function segmentDecodeKBest(
 			finals.push({ score: entry.score + logTransition(lastType, "END"), segments: entry.segments })
 		}
 	}
+
 	finals.sort((a, b) => b.score - a.score)
 
 	return { hypotheses: finals.slice(0, k), words }
@@ -316,6 +332,7 @@ function extractSurface(
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
+
 	const fixtures = readFileSync(options.fixturesPath ?? PARITY_FIXTURES_PATH, "utf8")
 		.split("\n")
 		.filter(Boolean)
@@ -323,6 +340,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		.filter((fixture) => !fixture.dropped && fixture.expect)
 
 	const logTransition = buildTransitionTable(options.goldenDir ?? "data/eval/golden/v0.1.2/dev")
+
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
 		cacheRoot: options.weightsCacheRoot,
@@ -342,6 +360,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const baseByTag = new Map<string, string[]>()
 		const stack = [...tree.roots]
 
@@ -359,6 +378,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			queryShape: computeQueryShape(fixture.input),
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
+
 		const { hypotheses, words } = segmentDecodeKBest(trace, k, logTransition)
 
 		for (const { label, tags } of PARITY_FLOORS) {
@@ -367,6 +387,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			if (!goldValues?.length) continue
 			const gold = fold(goldValues.join(" "))
 			const tally = tallies.get(label)!
+
 			tally.total++
 			const tagSet = new Set<string>(tags)
 			const baseActual = tags.flatMap((tag) => baseByTag.get(tag) ?? []).join(" ")
@@ -374,6 +395,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			if (fold(baseActual) === gold) {
 				tally.base++
 			}
+
 			const surfaces = hypotheses.map((hypothesis) =>
 				fold(extractSurface(hypothesis, words, trace, (type) => tagSet.has(type)))
 			)

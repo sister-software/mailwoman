@@ -10,6 +10,7 @@ import { mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./reso
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
 const THIS_FILE = import.meta.filename
+
 function setEnv(key: string, value: string | undefined): void {
 	vi.stubEnv(key, value as string)
 }

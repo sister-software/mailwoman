@@ -56,6 +56,7 @@ function loadDictionary(filename: string): Set<string> {
 			// try next
 		}
 	}
+
 	throw new Error(`Could not load FR libpostal dictionary: ${filename}`)
 }
 

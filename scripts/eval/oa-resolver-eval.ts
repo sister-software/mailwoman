@@ -60,6 +60,7 @@ async function main(): Promise<void> {
 		strict: false,
 		allowPositionals: true,
 	})
+
 	// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 	const values = rawValues as Record<string, string | boolean | undefined>
 

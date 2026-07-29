@@ -179,6 +179,7 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 			norm(r["Filing HCP State"]).toUpperCase() === STATE || norm(r["Participating HCP State"]).toUpperCase() === STATE,
 		explode: (r) => {
 			const out: Record<string, string>[] = []
+
 			const add = (prefix: string, role: string): void => {
 				const id = norm(r[`${prefix} HCP`])
 				const state = norm(r[`${prefix} HCP State`]).toUpperCase()
@@ -194,6 +195,7 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 					})
 				}
 			}
+
 			add("Filing", "filing")
 			add("Participating", "participating")
 
@@ -241,6 +243,7 @@ export async function crossDatasetCorrelation(
 					if (a) {
 						const k = addressFrequencyKey(a)
 						addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+
 						addrTotal++
 					}
 				}
@@ -253,9 +256,11 @@ export async function crossDatasetCorrelation(
 			// Stop early only when we DON'T need the full frequency pass (otherwise scan to EOF).
 			if (!CORPUS_FREQ && kept.length >= CAP) break
 		}
+
 		rawBySource.set(spec.source, kept)
 		report?.(`    ${spec.source}: ${kept.length} sampled`)
 	}
+
 	// The in-state corpus-wide address-frequency table (the #617 lever, fed to the matcher below).
 	const addressFrequency = CORPUS_FREQ
 		? {
@@ -275,9 +280,11 @@ export async function crossDatasetCorrelation(
 
 	let geo = 0
 	let total = 0
+
 	// Count placements at the seam (parity with the retired in-script counter).
 	const seam: GeocodeAddress = async (raw) => {
 		const g = await geocoder.seam(raw)
+
 		total++
 
 		if (g?.geocode) {
@@ -306,8 +313,10 @@ export async function crossDatasetCorrelation(
 		for (const r of recs) {
 			r.id = `${spec.source}:${r.id}`
 		}
+
 		records.push(...recs)
 	}
+
 	geocoder.close()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
@@ -315,6 +324,7 @@ export async function crossDatasetCorrelation(
 	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
 	// resolveEntities auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
+
 	// learnedScorer:false — the GBT default is calibrated for same-dataset DEDUP, where "same address +
 	// different name" means distinct co-located providers (reject). CROSS-dataset linkage is the opposite
 	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
@@ -329,6 +339,7 @@ export async function crossDatasetCorrelation(
 
 	// --- Phase E: find the cross-source entities — members spanning ≥2 distinct sources. ---
 	const sourceOf = (r: SourceRecord) => r.source ?? "?"
+
 	const crossSource = entities
 		.map((e) => ({ e, sources: new Set(e.records.map(sourceOf)) }))
 		.filter((x) => x.sources.size >= 2)
@@ -357,6 +368,7 @@ export async function crossDatasetCorrelation(
 	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
 	// numerator/denominator contract (call sites append their own "%").
 	const pct = (x: number) => (100 * x).toFixed(1)
+
 	const lines: string[] = [
 		`# Cross-dataset correlation (#618 / #87 real-data run)`,
 		"",
@@ -368,24 +380,30 @@ export async function crossDatasetCorrelation(
 		`## Sources`,
 		"",
 	]
+
 	const blurb: Record<string, string> = {
 		"txhhsc-nursing": "TX HHSC licensed nursing facilities",
 		"fcc-rhc": "FCC Rural Health Care posted-services filings",
 		"fcc-rhc-commitments": "FCC RHC funding commitments (Filing + Participating HCP, exploded)",
 		nppes: "NPPES organization NPIs",
 	}
+
 	lines.push(`| source | rows | what it is |`)
 	lines.push(`|---|---:|---|`)
 
 	for (const spec of SPECS) {
 		lines.push(`| \`${spec.source}\` | ${rawBySource.get(spec.source)!.length} | ${blurb[spec.source] ?? ""} |`)
 	}
+
 	lines.push("")
+
 	lines.push(
 		`Combined: **${records.length} records**, geocoded ${pct(geo / total)}%. Resolved to ` +
 			`**${entities.length} entities** from ${candidatePairs} candidate pairs.`
 	)
+
 	lines.push("")
+
 	lines.push(
 		addressFrequency
 			? `Matched with the proven levers default-on (#86): collapsed spatial (A1) + inverse-address-frequency, fed ` +
@@ -395,13 +413,16 @@ export async function crossDatasetCorrelation(
 			: `Matched with the zero-config default (#86): collapsed spatial (A1) + an input-scoped address-frequency table ` +
 					`(\`--no-corpus-frequency\`; pass nothing to build the corpus-wide table from the full files instead).`
 	)
+
 	lines.push("")
+
 	lines.push(
 		`Scored with the Fellegi-Sunter baseline (\`learnedScorer: false\`): cross-dataset link discovery is ` +
 			`recall-oriented — the same facility under different operational names across sources is the signal — so the ` +
 			`dedup-calibrated GBT default (#603), which is trained to REJECT "same place, different name," is pinned off ` +
 			`here. A cross-objective GBT threshold is the follow-up (#655).`
 	)
+
 	lines.push("")
 	lines.push(`## Cross-dataset links (entities spanning ≥2 sources)`)
 	lines.push("")
@@ -415,13 +436,16 @@ export async function crossDatasetCorrelation(
 		for (const [k, v] of [...pairCounts.entries()].toSorted((a, b) => b[1] - a[1])) {
 			lines.push(`| ${k} | ${v} |`)
 		}
+
 		lines.push("")
 	}
+
 	const triple = crossSource.filter((x) => x.sources.size >= MIN_TRIPLE_SOURCES).length
 
 	if (triple) {
 		lines.push(`Of those, **${triple}** span all three sources.`)
 	}
+
 	lines.push("")
 	lines.push(`## Spot-check — the first 12 cross-source entities (verify by eye)`)
 	lines.push("")
@@ -432,9 +456,11 @@ export async function crossDatasetCorrelation(
 		const coord = e.coordinate ? `${e.coordinate.latitude.toFixed(4)}, ${e.coordinate.longitude.toFixed(4)}` : "—"
 		lines.push(`| ${e.id} | ${[...sources].toSorted().join(", ")} | ${repName(e)} | ${coord} |`)
 	}
+
 	lines.push("")
 	lines.push(`## Reading`)
 	lines.push("")
+
 	lines.push(
 		`${SPECS.length} datasets with no shared key — a provider registry, a federal funding program (two of its forms, ` +
 			`the commitments form exploded into its Filing + Participating HCP per row), and a state facility registry — ` +
@@ -443,6 +469,7 @@ export async function crossDatasetCorrelation(
 			`Elasticsearch, no server). Each cross-source entity is a candidate "same place, multiple records" surfaced for ` +
 			`review; whether a correlation means anything is the data consumer's call, not ours.`
 	)
+
 	lines.push("")
 
 	const md = lines.join("\n")

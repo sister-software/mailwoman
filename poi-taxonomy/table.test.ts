@@ -93,6 +93,7 @@ describe("createPOITaxonomyLookup", () => {
 		// this doesn't exercise bundler-safety — it just proves the two entries agree over the real table).
 		const { readFileSync } = await import("node:fs")
 		const { resolve } = await import("node:path")
+
 		const table = JSON.parse(
 			readFileSync(resolve(import.meta.dirname, "data/taxonomy.json"), "utf8")
 		) as POITaxonomyTable
@@ -151,6 +152,7 @@ describe("createPOIBrandLookup", () => {
 				{ wikidata: "Q20" as BrandRecord["wikidata"], name: "Shared Name", aliases: [], rows: 90 },
 			],
 		}
+
 		const lookup = createPOIBrandLookup(collision)
 
 		const matches = lookup.lookupPOIBrand("Shared Name")

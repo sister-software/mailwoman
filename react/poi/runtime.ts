@@ -30,6 +30,7 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 		import("@mailwoman/poi-taxonomy/data/taxonomy.json").then((m) => m.default),
 		import("@mailwoman/poi-taxonomy/data/brands.json").then((m) => m.default),
 	])
+
 	const lookup = createPOITaxonomyLookup(table as unknown as Parameters<typeof createPOITaxonomyLookup>[0])
 	const brands = createPOIBrandLookup(brandTable as unknown as Parameters<typeof createPOIBrandLookup>[0])
 

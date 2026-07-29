@@ -187,7 +187,9 @@ export class POILookup implements Disposable {
 		this.#categoryCellProbe = this.#db.prepare(
 			`SELECT ${columns} FROM poi WHERE h3_cell = ? AND category_id = ? ORDER BY neg_rank ASC LIMIT ?`
 		)
+
 		this.#brandProbe = this.#db.prepare(`SELECT ${columns} FROM poi WHERE brand_wikidata = ?`)
+
 		this.#nameFTSProbe = this.#db.prepare(
 			"SELECT name_key FROM poi_search WHERE poi_search MATCH ? ORDER BY bm25(poi_search) LIMIT ?"
 		)

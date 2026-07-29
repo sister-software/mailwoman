@@ -56,6 +56,7 @@ function splitCSV(line: string): string[] {
 			if (c === '"') {
 				if (line[i + 1] === '"') {
 					cur += '"'
+
 					i++
 				} else {
 					inQ = false
@@ -72,6 +73,7 @@ function splitCSV(line: string): string[] {
 			cur += c
 		}
 	}
+
 	out.push(cur)
 
 	return out
@@ -88,16 +90,19 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 
 		return []
 	}
+
 	const lines = r.stdout.toString("utf8").split(/\r?\n/)
 
 	if (lines.length < 2) return []
 	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
 	const idx = (name: string): number => header.indexOf(name)
+
 	const iNum = idx("number"),
 		iStreet = idx("street"),
 		iCity = idx("city"),
 		iRegion = idx("region"),
 		iPost = idx("postcode")
+
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
@@ -143,6 +148,7 @@ export const germanRecipe: ShardRecipe = {
 		if (!(intlFraction >= 0 && intlFraction <= 1)) {
 			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
 		}
+
 		const count = opts.count ?? 4000
 
 		// Pool real tuples from every German source, then sample `count` rows from it.
@@ -176,6 +182,7 @@ export const germanRecipe: ShardRecipe = {
 
 			if (!synth) {
 				skipped++
+
 				continue
 			}
 
@@ -183,15 +190,19 @@ export const germanRecipe: ShardRecipe = {
 			// rides along so the eval can stratify native vs international.
 			if (opts.golden) {
 				write(JSON.stringify({ raw: synth.raw, components: synth.components, country: "DE", order }) + "\n")
+
 				emitted++
+
 				continue
 			}
+
 			const sourceID = stableSourceID(source, {
 				street: synth.components.street,
 				house_number: synth.components.house_number,
 				locality: synth.components.locality,
 				postcode: synth.components.postcode,
 			})
+
 			const canonical = {
 				raw: synth.raw,
 				components: synth.components,
@@ -202,13 +213,17 @@ export const germanRecipe: ShardRecipe = {
 				corpus_version: "0.4.0",
 				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered ${order}-order — see ingest SOURCES`,
 			}
+
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: "german", synth_order: order, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

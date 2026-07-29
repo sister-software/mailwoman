@@ -218,6 +218,7 @@ describe("gbOutwardCode", () => {
 		expect(gbOutwardCode("SO4 3RX")).toBe("SO4")
 		expect(gbOutwardCode("SW1A 2AA")).toBe("SW1A")
 	})
+
 	it("returns null for non-GB shapes (never fires elsewhere)", () => {
 		expect(gbOutwardCode("75001")).toBeNull() // numeric
 		expect(gbOutwardCode("1012LM")).toBeNull() // no space
@@ -242,6 +243,7 @@ describe("extractPostcodeAnchors — GB outward fallback", () => {
 			"SW1A 2AA": [{ country: "GB", lat: 51.5, lon: -0.14 }],
 			SW1A: [{ country: "GB", lat: 51.501, lon: -0.142 }],
 		})
+
 		const [a] = extractPostcodeAnchors("SW1A 2AA", both)
 		expect(a!.matchType).toBe("exact")
 	})

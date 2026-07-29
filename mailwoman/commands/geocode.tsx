@@ -157,6 +157,7 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
 	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
 	const raw = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+
 	const paths = (
 		raw
 			? raw
@@ -217,12 +218,15 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
 	// normalizer, and a "us"-keyed probe against an FR shard silently misses wherever the rules diverge.
 	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
+
 	const explicitAp = options.addressPointsDb
 		? new mod.AddressPointSqliteLookup(options.addressPointsDb, { streetLocale: explicitApLocale })
 		: undefined
+
 	const explicitIp = options.interpolationDb
 		? new mod.StreetInterpolator({ dbPath: options.interpolationDb })
 		: undefined
+
 	const shards: ShardResolver =
 		explicitAp || explicitIp
 			? (slug) => {
@@ -256,6 +260,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	try {
 		const resolver = createWOFResolver(lookup)
+
 		// #912 lever 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
 		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
 		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
@@ -273,8 +278,10 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 				return { lat: lat!, lon: lon!, ...(w !== undefined ? { weight: Number(w) } : {}) }
 			})
+
 		const parsedTree = await parseForGeocode(input, { classifier })
 		const inferredScopeOK = options.defaultCountry || !isBareLocalityTree(parsedTree)
+
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,

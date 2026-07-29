@@ -116,6 +116,7 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 				latMax = mid
 			}
 		}
+
 		evenBit = !evenBit
 
 		if (++bit === GEOHASH_BITS_PER_CHAR) {
@@ -136,6 +137,7 @@ const A_CODE = "A".charCodeAt(0)
 export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	const lonAdj = lon + 180
 	const latAdj = lat + 90
+
 	const out = [
 		String.fromCharCode(A_CODE + Math.floor(lonAdj / 20)),
 		String.fromCharCode(A_CODE + Math.floor(latAdj / 10)),
@@ -171,8 +173,10 @@ export function sunTimes(
 	const transit = J2000 + meanSolarTime + 0.0053 * Math.sin(Mr) - 0.0069 * Math.sin(2 * lambda)
 	const declination = Math.asin(Math.sin(lambda) * Math.sin(toRad(23.4397)))
 	const latR = toRad(lat)
+
 	const cosH =
 		(Math.sin(toRad(-0.833)) - Math.sin(latR) * Math.sin(declination)) / (Math.cos(latR) * Math.cos(declination))
+
 	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86_400)
 	const noon = toEpoch(transit)
 
@@ -199,15 +203,18 @@ function latLonToUtm(lat: number, lon: number): { zone: number; easting: number;
 	const T = Math.tan(phi) ** 2
 	const C = UTM_EP2 * Math.cos(phi) ** 2
 	const A = Math.cos(phi) * (toRad(lon) - lon0)
+
 	const M =
 		UTM_A *
 		((1 - UTM_E2 / 4 - (3 * UTM_E2 ** 2) / 64 - (5 * UTM_E2 ** 3) / 256) * phi -
 			((3 * UTM_E2) / 8 + (3 * UTM_E2 ** 2) / 32 + (45 * UTM_E2 ** 3) / 1024) * Math.sin(2 * phi) +
 			((15 * UTM_E2 ** 2) / 256 + (45 * UTM_E2 ** 3) / 1024) * Math.sin(4 * phi) -
 			((35 * UTM_E2 ** 3) / 3072) * Math.sin(6 * phi))
+
 	const easting =
 		UTM_K0 * N * (A + ((1 - T + C) * A ** 3) / 6 + ((5 - 18 * T + T ** 2 + 72 * C - 58 * UTM_EP2) * A ** 5) / 120) +
 		500_000
+
 	let northing =
 		UTM_K0 *
 		(M +
@@ -241,6 +248,7 @@ export function toMGRS(lat: number, lon: number): string {
 	if (zone % 2 === 0) {
 		row = (row + 5) % 20
 	}
+
 	const rowLetter = MGRS_ROW_LETTERS[row]!
 	const e = String(Math.floor(easting % 100_000)).padStart(5, "0")
 	const n = String(Math.floor(northing % 100_000)).padStart(5, "0")

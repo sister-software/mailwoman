@@ -51,6 +51,7 @@ export const DemoDebugDrawer: React.FC<DemoDebugDrawerProps> = ({ result, devMod
 
 			return
 		}
+
 		let cancelled = false
 
 		void traceParse(input).then((t) => {

@@ -114,19 +114,24 @@ export async function fetchStateSources(
 			}))
 		} catch (error) {
 			report?.(`  ✗ download failed for ${url}: ${(error as Error).message}`)
+
 			failed++
 			failedCodes.push(slug)
+
 			continue
 		}
 
 		if (bytes < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${bytes} bytes) — probable 404 / error page`)
+
 			failed++
 			failedCodes.push(slug)
+
 			continue
 		}
 
 		const sha = await sha256File(dest)
+
 		const manifest: SourceManifest = {
 			source_url: url,
 			downloaded_at: new Date().toISOString(),
@@ -134,9 +139,11 @@ export async function fetchStateSources(
 			sha256: sha,
 			bytes,
 		}
+
 		await writeManifest(join(destDir, "MANIFEST.json"), manifest)
 
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
+
 		fetched++
 	}
 

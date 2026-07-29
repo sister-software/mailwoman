@@ -115,6 +115,7 @@ async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
 				locality: rec.city,
 				dependentLocality: rec.lieuDit,
 			})
+
 			deptCount++
 		}
 
@@ -153,6 +154,7 @@ function composeRaw(
 	if (streetLine) {
 		lines.push(streetLine)
 	}
+
 	lines.push(dependentLocality)
 	const cityLine = [postcode, locality].filter(Boolean).join(" ").trim()
 
@@ -241,6 +243,7 @@ export const frLieuditRecipe: ShardRecipe = {
 
 			if (!raw) {
 				skipped++
+
 				continue
 			}
 
@@ -254,6 +257,7 @@ export const frLieuditRecipe: ShardRecipe = {
 				const form = forms[Math.floor(random() * forms.length)]!
 				raw = `${raw}, ${form}`
 				components.country = form
+
 				countryAppended++
 			}
 
@@ -264,6 +268,7 @@ export const frLieuditRecipe: ShardRecipe = {
 				locality: t.locality,
 				postcode: t.postcode ?? undefined,
 			})
+
 			const canonical: CanonicalRow = {
 				raw,
 				components,
@@ -274,13 +279,17 @@ export const frLieuditRecipe: ShardRecipe = {
 				corpus_version: "",
 				license: DEFAULT_LICENSE,
 			}
+
 			const aligned = alignRow(canonical)
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
 				skipped++
+
 				continue
 			}
+
 			write(JSON.stringify({ ...aligned.row, synth_method: source, synth_base_id: null }) + "\n")
+
 			emitted++
 		}
 

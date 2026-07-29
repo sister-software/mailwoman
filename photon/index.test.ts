@@ -47,6 +47,7 @@ test("forward: name/city from the RESOLVED gazetteer name, not the parsed span c
 		country: { name: "France", code: "FR" },
 		places: [{ tag: "locality", name: "Paris" }],
 	})
+
 	expect(props.name).toBe("Paris")
 	expect(props.city).toBe("Paris")
 	expect(props.postcode).toBe("75008")
@@ -79,6 +80,7 @@ test("forward: fills the full admin ladder from resolved ancestry (parity with /
 			{ tag: "country", name: "United States" },
 		],
 	})
+
 	expect(props.city).toBe("Washington")
 	expect(props.county).toBe("District of Columbia")
 	expect(props.state).toBe("District of Columbia")
@@ -97,6 +99,7 @@ test("forward: a street-primary result names the street and types as street", ()
 			{ tag: "locality", name: "Washington" },
 		],
 	})
+
 	expect(props.name).toBe("Pennsylvania Avenue Northwest")
 	expect(props.street).toBe("Pennsylvania Avenue Northwest")
 	expect(props.city).toBe("Washington")
@@ -118,6 +121,7 @@ test("forward: a house-grade (rooftop) result decorates type:house + housenumber
 		places: [{ tag: "locality", name: "Paris" }],
 		house: { number: "8", street: "Boulevard du Palais" },
 	})
+
 	// Matches upstream komoot/photon's bare address point.
 	expect(props.type).toBe("house")
 	expect(props.osm_key).toBe("place")
@@ -149,6 +153,7 @@ test("forward: house-grade with a missing parsed street/number still types house
 		places: [{ tag: "locality", name: "Paris" }],
 		house: { number: "8", street: null },
 	})
+
 	expect(props.type).toBe("house")
 	expect(props.housenumber).toBe("8")
 	expect(props.street).toBeUndefined() // null street → field simply absent, never "null"
@@ -163,6 +168,7 @@ test("forward: street-grade re-tags highway/street with the FULL name in `name` 
 		places: [{ tag: "locality", name: "Lyon" }],
 		street: { name: "Rue de la République" },
 	})
+
 	// Matches upstream komoot's street results (verified live 2026-07-10): full name in `name`,
 	// highway osm_key, type street — never the locality's type:city / first-token truncation.
 	expect(props.type).toBe("street")
@@ -183,6 +189,7 @@ test("forward: house wins over street when both are set (#1050)", () => {
 		house: { number: "10", street: "Rue de la République" },
 		street: { name: "Rue de la République" },
 	})
+
 	expect(props.type).toBe("house")
 	expect(props.housenumber).toBe("10")
 	expect(props.name).toBeUndefined()
@@ -195,6 +202,7 @@ test("photonForwardFeature: a house-grade input renders a type:house Point Featu
 		places: [{ tag: "locality", name: "Paris" }],
 		house: { number: "8", street: "Boulevard du Palais" },
 	})
+
 	expect(f.geometry.coordinates).toEqual([2.3451, 48.8548])
 	expect(f.properties.type).toBe("house")
 	expect(f.properties.housenumber).toBe("8")
@@ -232,10 +240,12 @@ test("contract: /api and /reverse derive the same osm tags for a place (#1014 ch
 
 test("photonForwardCollection: primary first, then alternatives, capped at limit (#1016)", () => {
 	const primary: PhotonForwardInput = { lat: 37.19, lon: -93.29, places: [{ tag: "locality", name: "Springfield" }] }
+
 	const alternatives: PhotonForwardInput[] = [
 		{ lat: 42.11, lon: -72.54, places: [{ tag: "locality", name: "Springfield" }] },
 		{ lat: 39.77, lon: -89.65, places: [{ tag: "locality", name: "Springfield" }] },
 	]
+
 	const fc = photonForwardCollection({ primary, alternatives }, 2)
 	expect(fc.features).toHaveLength(2) // capped at limit
 	expect(fc.features[0]!.geometry.coordinates).toEqual([-93.29, 37.19]) // primary first
@@ -267,6 +277,7 @@ test("photonFeatureToSchemaOrg: projects a house feature into a schema.org Place
 		places: [{ tag: "locality", name: "Paris" }],
 		house: { number: "8", street: "Boulevard du Palais" },
 	})
+
 	const place = photonFeatureToSchemaOrg(feature)
 
 	expect(place["@context"]).toBe("https://schema.org")
@@ -351,10 +362,12 @@ test("CORS: permissive Access-Control-Allow-Origin on responses (upstream Photon
 
 test("CORS: preflight OPTIONS answers 204 with CORS headers", async () => {
 	const app = createPhotonApp(searchEngine)
+
 	const res = await app.request("/api", {
 		method: "OPTIONS",
 		headers: { origin: "https://example.com", "access-control-request-method": "GET" },
 	})
+
 	expect(res.status).toBe(204)
 	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 	expect(res.headers.get("access-control-allow-methods")).toContain("GET")
@@ -395,6 +408,7 @@ test("repeated lat on /reverse answers the legacy 400 (Number(array) is NaN)", a
 
 test("repeated osm_tag and layer reach the engine as arrays (contractual repeatable params)", async () => {
 	let seen: PhotonSearchParams | undefined
+
 	const app = createPhotonApp({
 		search: async (params) => {
 			seen = params
@@ -402,6 +416,7 @@ test("repeated osm_tag and layer reach the engine as arrays (contractual repeata
 			return { type: "FeatureCollection", features: [] }
 		},
 	})
+
 	const res = await app.request("/api?q=berlin&osm_tag=place:city&osm_tag=place:town&layer=city&layer=locality")
 	expect(res.status).toBe(200)
 	expect(seen?.osmTag).toEqual(["place:city", "place:town"])
@@ -410,6 +425,7 @@ test("repeated osm_tag and layer reach the engine as arrays (contractual repeata
 
 test("limit falls back to 15 on absent, non-numeric, and zero values (legacy Number(x) || 15)", async () => {
 	const seen: number[] = []
+
 	const app = createPhotonApp({
 		search: async (params) => {
 			seen.push(params.limit)
@@ -421,11 +437,13 @@ test("limit falls back to 15 on absent, non-numeric, and zero values (legacy Num
 	for (const suffix of ["", "&limit=abc", "&limit=0"]) {
 		await app.request(`/api?q=berlin${suffix}`)
 	}
+
 	expect(seen).toEqual([15, 15, 15])
 })
 
 test("non-numeric bias lat/lon on /api is tolerated (soft bias — NaN reaches the engine, no 400)", async () => {
 	let seen: PhotonSearchParams | undefined
+
 	const app = createPhotonApp({
 		search: async (params) => {
 			seen = params
@@ -433,6 +451,7 @@ test("non-numeric bias lat/lon on /api is tolerated (soft bias — NaN reaches t
 			return { type: "FeatureCollection", features: [] }
 		},
 	})
+
 	const res = await app.request("/api?q=berlin&lat=abc&lon=13.4")
 	expect(res.status).toBe(200)
 	expect(Number.isNaN(seen?.lat)).toBe(true)
@@ -442,6 +461,7 @@ test("out-of-range /reverse coordinates answer the exact range 400", async () =>
 	const app = createPhotonApp(reverseEngine)
 	const res = await app.request("/reverse?lat=91&lon=13.4")
 	expect(res.status).toBe(400)
+
 	expect(await res.json()).toEqual({
 		type: "FeatureCollection",
 		features: [],
@@ -464,6 +484,7 @@ test("an engine fault answers the clean legacy 500 envelope, never a crash", asy
 			throw new Error("resolver exploded")
 		},
 	})
+
 	const res = await app.request("/api?q=berlin")
 	expect(res.status).toBe(500)
 	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "internal error" })
@@ -478,6 +499,7 @@ test("absent engine methods answer the exact legacy 501 envelopes", async () => 
 
 	const reverse = await app.request("/reverse?lat=52.5&lon=13.4")
 	expect(reverse.status).toBe(501)
+
 	expect(await reverse.json()).toEqual({
 		type: "FeatureCollection",
 		features: [],

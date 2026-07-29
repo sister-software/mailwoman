@@ -19,6 +19,7 @@ import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 function buildDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
@@ -28,10 +29,12 @@ function buildDB(): DatabaseSync {
 		CREATE TABLE postcode_locality (postcode TEXT, country TEXT, locality_id INTEGER, locality_name TEXT,
 			aliases TEXT, distance_km REAL, is_containing INTEGER);
 	`)
+
 	const spr = db.prepare(
 		`INSERT INTO spr (id,parent_id,name,placetype,country,latitude,longitude,min_latitude,max_latitude,min_longitude,max_longitude,is_current,is_deprecated)
 		 VALUES (?,?,?,?,?,?,?,?,?,?,?,-1,0)`
 	)
+
 	// Berlin (unambiguous city, large pop), its Ortsteil "Koepenick" (borough-as-locality), and the
 	// small Saxon town "Plauen".
 	spr.run(1, 0, "Berlin", "locality", "DE", 52.52, 13.4, 52.3, 52.7, 13, 13.8)
@@ -52,9 +55,11 @@ function buildDB(): DatabaseSync {
 }
 
 let lookup: WOFSqlitePlaceLookup
+
 beforeEach(() => {
 	lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
 })
+
 afterEach(() => {
 	lookup.close()
 })

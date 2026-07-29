@@ -157,6 +157,7 @@ export function toMapHTML(
 	let minLat = Infinity
 	let maxLng = -Infinity
 	let maxLat = -Infinity
+
 	const features = geojson.features.map((f) => {
 		const [lng, lat] = f.geometry.coordinates
 
@@ -178,6 +179,7 @@ export function toMapHTML(
 
 		return { ...f, properties: { ...f.properties, _color: colorFor(f.properties) } }
 	})
+
 	const bbox = features.length ? [[minLng, minLat] as const, [maxLng, maxLat] as const] : null
 
 	// The full MapLibre style: the Protomaps basemap layers (generated here) over the house basemap-v4
@@ -230,6 +232,7 @@ export function toMapHTML(
 				`<div class="muted" style="margin-top:4px">marker size = records merged</div>`
 
 	const crossLinks = geojson.features.filter((f) => sourceCount(f.properties) >= 2).length
+
 	const summary =
 		`${geojson.features.length} entities` + (mode === "sources" ? ` &middot; ${crossLinks} cross-dataset links` : "")
 

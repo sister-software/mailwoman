@@ -111,6 +111,7 @@ function logsumexp(xs: number[]): number {
 		if (x > m) {
 			m = x
 		}
+
 	let s = 0
 
 	for (const x of xs) {
@@ -136,12 +137,14 @@ function softmax(z: Float64Array): Float64Array {
  */
 function inverse(M: Float64Array[]): number[][] {
 	const n = M.length
+
 	const A = M.map((row, i) => {
 		const r = new Float64Array(2 * n)
 
 		for (let j = 0; j < n; j++) {
 			r[j] = row[j]!
 		}
+
 		r[n + i] = 1
 
 		return r
@@ -154,6 +157,7 @@ function inverse(M: Float64Array[]): number[][] {
 			if (Math.abs(A[r]![col]!) > Math.abs(A[piv]![col]!)) {
 				piv = r
 			}
+
 		;[A[col], A[piv]] = [A[piv]!, A[col]!]
 		const d = A[col]![col]!
 
@@ -210,6 +214,7 @@ export async function evalOpenSet(
 			for (const i of feats) {
 				s += W[base + i]!
 			}
+
 			z[c] = s
 		}
 
@@ -242,6 +247,7 @@ export async function evalOpenSet(
 			arr.push(r.raw)
 		}
 	}
+
 	const means = new Map<string, Float64Array>() // country -> Float64Array(nIn)
 	const counts = new Map<string, number>()
 
@@ -261,9 +267,11 @@ export async function evalOpenSet(
 		for (let k = 0; k < nIn; k++) {
 			mu[k] = mu[k]! / raws.length
 		}
+
 		means.set(country, mu)
 		counts.set(country, raws.length)
 	}
+
 	// Tied covariance over centered in-map train logits.
 	const Sigma = Array.from({ length: nIn }, () => new Float64Array(nIn))
 	let nTot = 0
@@ -286,6 +294,7 @@ export async function evalOpenSet(
 					Sigma[a]![b] = Sigma[a]![b]! + d[a]! * d[b]!
 				}
 			}
+
 			nTot++
 		}
 	}
@@ -316,6 +325,7 @@ export async function evalOpenSet(
 			for (let k = 0; k < nIn; k++) {
 				d[k] = v[k]! - mu[k]!
 			}
+
 			let q = 0
 
 			for (let a = 0; a < nIn; a++) {
@@ -324,6 +334,7 @@ export async function evalOpenSet(
 				for (let b = 0; b < nIn; b++) {
 					row += SigmaInv[a]![b]! * d[b]!
 				}
+
 				q += d[a]! * row
 			}
 
@@ -347,6 +358,7 @@ export async function evalOpenSet(
 		const z = logits(raw)
 		const probs = softmax(z)
 		const zin = inVec(z)
+
 		// argmax over in-map classes (the FIXED routing).
 		let amIdx = 0,
 			am = -Infinity
@@ -356,6 +368,7 @@ export async function evalOpenSet(
 				am = zin[k]!
 				amIdx = k
 			}
+
 		const routedCountry = COARSE_CLASSES[IN[amIdx]!]!
 		const inmapProbMax = Math.max(...IN.map((c) => probs[c]!))
 
@@ -395,6 +408,7 @@ export async function evalOpenSet(
 			if (o.s[scoreKey] >= t && o.correctRoute) {
 				keepCorrect++
 			}
+
 		let caught = 0
 
 		for (const o of heldSplit)
@@ -417,9 +431,11 @@ export async function evalOpenSet(
 		for (let q = 0; q <= QUANTILE_SWEEP_STEPS; q++) {
 			ts.push(all[Math.min(all.length - 1, Math.floor((q / 200) * (all.length - 1)))]!)
 		}
+
 		const uniq = [...new Set(ts)]
 		const nInVals = inVals.length
 		const nHeld = heldVals.length
+
 		const pts: ParetoPoint[] = uniq.map((t) => {
 			let keepCorrect = 0
 
@@ -427,6 +443,7 @@ export async function evalOpenSet(
 				if (x.v >= t && x.ok) {
 					keepCorrect++
 				}
+
 			let caught = 0
 
 			for (const v of heldVals)
@@ -436,6 +453,7 @@ export async function evalOpenSet(
 
 			return { t, inMapAcc: (100 * keepCorrect) / nInVals, heldCaught: (100 * caught) / nHeld }
 		})
+
 		// Summaries.
 		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the FULL probe
 		let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
@@ -469,6 +487,7 @@ export async function evalOpenSet(
 				devBest = { val: m, t: p.t }
 			}
 		}
+
 		const heldoutTestPt = pointAt(scoreKey, devBest.t!, inTest, heldTest)
 
 		return { balanced, atHeld90, atIn90, devThreshold: devBest.t, honest: heldoutTestPt, pts }
@@ -480,6 +499,7 @@ export async function evalOpenSet(
 	// MARK: Report.
 
 	const f = (x: number | null | undefined): string => (x == null ? "—" : x.toFixed(1))
+
 	const lines: string[] = [
 		`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`,
 		"",
@@ -489,6 +509,7 @@ export async function evalOpenSet(
 			`changes the reject decision._`,
 		"",
 	]
+
 	function atStr(p: ParetoPoint | null): string {
 		if (!p) return "— (unreachable)"
 
@@ -503,10 +524,12 @@ export async function evalOpenSet(
 	for (const k of SCORES) {
 		const r = results[k]
 		const h = r.honest
+
 		lines.push(
 			`| \`${k}\` | ${f(h.inMapAcc)} | ${f(h.heldCaught)} | **${f(Math.min(h.inMapAcc, h.heldCaught))}** | ${f(r.balanced.val)} |`
 		)
 	}
+
 	lines.push("")
 	lines.push(`## Full-probe corners (the achievable Pareto), per score`)
 	lines.push("")
@@ -516,11 +539,13 @@ export async function evalOpenSet(
 	for (const k of SCORES) {
 		const r = results[k]
 		const bal = r.balanced.pt
+
 		lines.push(
 			`| \`${k}\` | **${f(r.balanced.val)}** (in ${f(bal?.inMapAcc)}, held ${f(bal?.heldCaught)}) | ` +
 				`${atStr(r.atHeld90)} | ${atStr(r.atIn90)} |`
 		)
 	}
+
 	lines.push("")
 
 	// Winner by the HONEST dev→test balanced min (not the full-probe number).
@@ -528,16 +553,19 @@ export async function evalOpenSet(
 		k,
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),
 	})).toSorted((a, b) => b.honestMin - a.honestMin)
+
 	const winner = ranked[0]!
 	const clears90 = winner.honestMin >= TARGET_PERCENT
 	lines.push(`## Verdict`)
 	lines.push("")
+
 	lines.push(
 		`Best score (honest dev→test): **\`${winner.k}\`** at min(in-map, heldout) = **${f(winner.honestMin)}** on the frozen test half. ` +
 			(clears90
 				? `**Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule; no retrain needed (Phase 2 reject-head unnecessary).`
 				: `Below the 90/90 bar — the best post-hoc score reaches ${f(winner.honestMin)}. Escalate to Phase 2 (explicit binary reject head).`)
 	)
+
 	lines.push("")
 	lines.push(`Ranking (honest dev→test min): ${ranked.map((r) => `\`${r.k}\` ${f(r.honestMin)}`).join(" · ")}`)
 	lines.push("")

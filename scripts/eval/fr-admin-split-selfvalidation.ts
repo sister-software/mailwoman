@@ -51,8 +51,10 @@ const { values: rawValues } = parseArgs({
 	strict: false,
 	allowPositionals: true,
 })
+
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
+
 /**
  * --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------.
  */
@@ -65,6 +67,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 	region: 2,
 	country: 0,
 }
+
 interface Resolved {
 	id: number
 	name: string
@@ -72,8 +75,10 @@ interface Resolved {
 	lat: number
 	lon: number
 }
+
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
+
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
@@ -94,6 +99,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 
 	return out
 }
+
 function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
@@ -105,12 +111,14 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 
 	return best
 }
+
 const pct = (xs: number[], p: number): number => {
 	if (!xs.length) return Number.NaN
 	const s = [...xs].toSorted((a, b) => a - b)
 
 	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
+
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
 
 /**
@@ -132,6 +140,7 @@ interface Commune {
 	lon: number
 	collisionCount: number
 }
+
 // Communes with their département (placetype 'region' in WOF-FR) + how many distinct départements
 // share the same commune NAME (the collision degree — the disambiguation pressure).
 const rows = db
@@ -169,6 +178,7 @@ const resolveOpts = { defaultCountry: "FR" }
  */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 type State = "dropped" | "merged" | "split"
+
 async function resolveState(c: Commune, state: State): Promise<{ km: number; resolved: boolean }> {
 	let raw: string
 	let record: ClassificationRecord
@@ -183,6 +193,7 @@ async function resolveState(c: Commune, state: State): Promise<{ km: number; res
 		raw = `${c.commune}, ${c.dept}`
 		record = { locality: [c.commune], region: [c.dept] } as ClassificationRecord
 	}
+
 	const { tree } = v0RecordToTree(raw, record)
 	const decorated = await resolver.resolveTree(tree, resolveOpts)
 	const best = mostSpecific(collectResolved(decorated))
@@ -201,6 +212,7 @@ interface StratumAgg {
 	splitBeatsDroppedBy2km: number
 	n: number
 }
+
 async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg> {
 	const agg: StratumAgg = {
 		dropped: [],
@@ -217,6 +229,7 @@ async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg>
 			resolveState(c, "merged"),
 			resolveState(c, "split"),
 		])
+
 		agg.n++
 		agg.dropped.push(d.km)
 		agg.merged.push(m.km)
@@ -253,6 +266,7 @@ const uniqAgg = await runStratum("unique", unique)
 const row = (label: string, a: StratumAgg): string => {
 	const dM = mean(a.dropped),
 		sM = mean(a.split)
+
 	const reduction = dM > 0 ? (100 * (dM - sM)) / dM : 0
 	const rr = (k: number): string => `${((100 * k) / a.n).toFixed(0)}%`
 
@@ -269,8 +283,10 @@ const row = (label: string, a: StratumAgg): string => {
 		"",
 	].join("\n")
 }
+
 const collReduction =
 	mean(collAgg.dropped) > 0 ? (100 * (mean(collAgg.dropped) - mean(collAgg.split))) / mean(collAgg.dropped) : 0
+
 const verdict =
 	collReduction >= MIN_COLLISION_REDUCTION
 		? `✅ LEVER REAL — collision SPLIT-vs-DROPPED reduction ${collReduction.toFixed(1)}% ≥ 5%. The resolver uses the région tag. Retrain premise holds.`

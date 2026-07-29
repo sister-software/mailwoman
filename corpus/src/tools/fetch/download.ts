@@ -94,6 +94,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 		} catch (error) {
 			// AbortSignal timeouts and network-level failures are retryable.
 			lastError = error
+
 			continue
 		}
 
@@ -102,6 +103,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 
 			if (!isTransientStatus(res.status)) throw error
 			lastError = error
+
 			continue
 		}
 

@@ -55,6 +55,7 @@ describe("cleanCityNoise", () => {
 
 	it("keeps ES bilingual slash co-names (the eval expects them verbatim)", () => {
 		expect(cleanCityNoise("Laudio/Llodio")).toBe("Laudio/Llodio")
+
 		expect(cleanCityNoise("Sant Vicent del Raspeig/San Vicente del Raspeig")).toBe(
 			"Sant Vicent del Raspeig/San Vicente del Raspeig"
 		)
@@ -71,12 +72,14 @@ describe("cleanCityNoise", () => {
 
 describe("readTuples (OA CSV parse)", () => {
 	const dirs: string[] = []
+
 	const tmp = (): string => {
 		const d = mkdtempSync(join(tmpdir(), "mw-locale-"))
 		dirs.push(d)
 
 		return d
 	}
+
 	afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
 
 	// A tiny OA slice exercising exactly what the CSVSpliterator migration touches: a CRLF terminator
@@ -86,6 +89,7 @@ describe("readTuples (OA CSV parse)", () => {
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
 		const file = join(tmp(), "part.csv")
+
 		writeFileSync(
 			file,
 			[
@@ -107,6 +111,7 @@ describe("readTuples (OA CSV parse)", () => {
 
 	it("districtAsLocality (NZ) maps DISTRICT→locality, CITY→dependent_locality; falls back when DISTRICT empty", async () => {
 		const file = join(tmp(), "part.csv")
+
 		writeFileSync(
 			file,
 			[
@@ -135,6 +140,7 @@ describe("readTuples (OA CSV parse)", () => {
 
 	it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLocality (empty CITY kept)", async () => {
 		const file = join(tmp(), "gb.csv")
+
 		writeFileSync(
 			file,
 			[
@@ -161,6 +167,7 @@ describe("readTuples (OA CSV parse)", () => {
 
 	it("districtAsLocality: drops dependent_locality when it equals locality (case-insensitive) instead of emitting a same-value pair", async () => {
 		const file = join(tmp(), "part.csv")
+
 		writeFileSync(
 			file,
 			[
@@ -192,6 +199,7 @@ describe("readTuples (OA CSV parse)", () => {
 
 	it("ES pedanía (cnigRaw): joins tipo_vial+nombre_via→street, poblacion→dependent_locality, municipio→locality", async () => {
 		const file = join(tmp(), "es-raw.csv")
+
 		writeFileSync(
 			file,
 			[
@@ -227,6 +235,7 @@ describe("readTuples (OA CSV parse)", () => {
 
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
 		const file = join(tmp(), "part.csv")
+
 		writeFileSync(
 			file,
 			[
@@ -269,11 +278,13 @@ describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
 
 	it("countryFraction 0 (the default when the flag is absent): rows are untouched, RNG untouched — byte-identical", () => {
 		let calls = 0
+
 		const random = (): number => {
 			calls++
 
 			return 0
 		}
+
 		const row = makeRow()
 		const before = { ...row, components: { ...row.components } }
 
@@ -329,12 +340,14 @@ describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", (
 describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 	const defaultParts: LocalePart[] = [{ path: "/conformed.csv" }]
 	const pedaniaParts: LocalePart[] = [{ zip: "/raw.zip", csv: "raw.csv", cnigRaw: true, districtAsLocality: true }]
+
 	const esLikeSource: LocaleCountrySource = {
 		source: "synth-es",
 		corpusVersion: "0.9.9",
 		parts: defaultParts,
 		pedaniaParts,
 	}
+
 	const noPedaniaSource: LocaleCountrySource = { source: "synth-de", corpusVersion: "0.4.0", parts: defaultParts }
 
 	it("override undefined (flag absent): default parts, regardless of whether pedaniaParts exists", () => {

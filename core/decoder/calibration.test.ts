@@ -110,6 +110,7 @@ describe("shipped isotonic table sanity", () => {
 		} catch {
 			return // table not present in this checkout (e.g. shallow) — skip rather than fail
 		}
+
 		const cal = createCalibrator(table)
 		expect(cal(0.5)).toBeLessThan(cal(0.99))
 		let prev = -Infinity

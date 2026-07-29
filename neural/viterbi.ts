@@ -46,6 +46,7 @@ export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 			const toLabel = labels[to]!
 			row[to] = isValidTransition(fromLabel, toLabel) ? 0 : NEG_INF
 		}
+
 		mask.push(row)
 	}
 
@@ -173,6 +174,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				byLabel = new Map()
 				adjustAt.set(adj.timestep, byLabel)
 			}
+
 			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX, not sum — the
 			// emission side's `applyWindowBias` uses the same Math.max discipline, and overlapping window-mode
 			// candidates must not stack the bonus.
@@ -192,6 +194,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	for (let k = 0; k < numLabels; k++) {
 		first[k] = startTrans[k]! + (firstAdjust?.get(k) ?? 0) + emissions[0]![k]!
 	}
+
 	dp.push(first)
 	back.push(new Array<number>(numLabels).fill(-1))
 
@@ -212,11 +215,13 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 					bestPrev = j
 				}
 			}
+
 			// The bonus is predecessor-independent, so it distributes over the max — adding it AFTER the
 			// argmax over j is exact, not an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}
+
 		dp.push(cur)
 		back.push(ptr)
 	}
@@ -278,6 +283,7 @@ export function softmax(row: readonly number[]): number[] {
 		if (row[i]! > max) {
 			max = row[i]!
 		}
+
 	const exps = row.map((v) => Math.exp(v - max))
 	const sum = exps.reduce((a, b) => a + b, 0)
 

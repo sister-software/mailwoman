@@ -186,8 +186,10 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 		if (typeof n.tag === "string") {
 			const displacedSource =
 				typeof n.metadata?.classifier_source === "string" ? n.metadata.classifier_source : undefined
+
 			const displacedSourceID =
 				typeof n.metadata?.classifier_source_id === "string" ? n.metadata.classifier_source_id : undefined
+
 			out.push({
 				tag: n.tag,
 				value: n.value,

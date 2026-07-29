@@ -248,12 +248,14 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 				const concordanceDelta = concordanceDeltaFor(beam.assignments, slot, inputs, opts)
 
 				if (concordanceDelta === Number.NEGATIVE_INFINITY) continue
+
 				const slotLog =
 					logSafe(slot.phraseConf) +
 					logSafe(slot.classifierScore) +
 					logSafe(slot.resolverScore) +
 					concordanceDelta +
 					INCLUSION_LOG_BONUS * slot.wordCount
+
 				next.push({
 					assignments: [...beam.assignments, slot],
 					logScore: beam.logScore + slotLog,
@@ -261,6 +263,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 				})
 			}
 		}
+
 		next.sort((a, b) => b.logScore - a.logScore)
 		beams = next.slice(0, opts.beamWidth)
 	}
@@ -304,6 +307,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 			bySpanKey.set(k, p)
 		}
 	}
+
 	// `kSpan` limits the number of overlapping proposals anchored at each start position — NOT a
 	// global cap on phrase proposals. Two phrases at different starts (e.g. `Houston` at 18 +
 	// `TX` at 27) are independent candidates and both must survive `kSpan = 3`. Without this per-
@@ -316,6 +320,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 		arr.push(p)
 		byStart.set(p.span.start, arr)
 	}
+
 	const spans: PhraseProposal[] = []
 
 	for (const arr of byStart.values()) {
@@ -353,6 +358,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 					resolverScore: 1,
 					wordCount: words,
 				})
+
 				continue
 			}
 
@@ -421,12 +427,15 @@ function concordanceDeltaFor(
 
 		if (child === parent) continue
 		const chain = chainOf.parentsOf(child.place!)
+
 		pairs++
 
 		if (!chain.length) {
 			neutrals++
+
 			continue
 		}
+
 		const hit = chain.some((p) => idsEqual(p.id, parent.place!.id))
 
 		if (hit) {
@@ -464,6 +473,7 @@ function breakdownFor(beam: Beam, inputs: ReconcileInputs, opts: Required<Reconc
 		classifier *= Math.max(a.classifierScore, 0)
 		resolver *= Math.max(a.resolverScore, 0)
 	}
+
 	const concordanceLog = totalConcordanceLog(beam.assignments, inputs, opts)
 	const concordance = Math.exp(concordanceLog)
 	const total = phrase * classifier * resolver * concordance

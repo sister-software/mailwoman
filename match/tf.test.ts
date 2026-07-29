@@ -44,6 +44,7 @@ describe("withTermFrequency + scorePair", () => {
 		given: string
 	}
 	const table = buildTermFrequencyTable(NAMES)
+
 	const model: FellegiSunterModel<Person> = {
 		lambda: 0.001,
 		comparisons: [

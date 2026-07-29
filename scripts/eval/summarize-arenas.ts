@@ -40,6 +40,7 @@ function pyFixed(x: number, d: number): string {
 
 		return (neg ? "-" : "") + body
 	}
+
 	const keep = frac.slice(0, d)
 	const rest = frac.slice(d)
 	let roundUp: boolean
@@ -54,6 +55,7 @@ function pyFixed(x: number, d: number): string {
 		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
 		roundUp = Number.parseInt(lastKept, 10) % 2 === 1
 	}
+
 	let digits = intPart! + keep
 
 	if (roundUp) {
@@ -65,6 +67,7 @@ function pyFixed(x: number, d: number): string {
 				arr[i] = "0"
 			} else {
 				arr[i] = String(Number.parseInt(arr[i]!, 10) + 1)
+
 				break
 			}
 		}
@@ -72,8 +75,10 @@ function pyFixed(x: number, d: number): string {
 		if (i < 0) {
 			arr.unshift("1")
 		}
+
 		digits = arr.join("")
 	}
+
 	const di = digits.length - d
 	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
 
@@ -104,8 +109,10 @@ function main(): void {
 
 				continue
 			}
+
 			throw error
 		}
+
 		loaded[a] = res
 		const n = res.length
 		const ne = res.filter((r) => r.neural_pass).length
@@ -123,6 +130,7 @@ function main(): void {
 			const row = JSON.parse(line)
 			ec[row.input] = row.edge_class ?? "?"
 		}
+
 		const by: Record<string, Result[]> = {}
 
 		for (const r of loaded.postal!) {
