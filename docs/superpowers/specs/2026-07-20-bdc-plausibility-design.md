@@ -1,6 +1,7 @@
 # BDC broadband-plausibility vertical (Phase 2) — design
 
-2026-07-20. Operator + Claude. Extends
+2026-07-20. Operator + Claude. **Reworked 2026-07-30** (operator: "way old") — the design held;
+§0 records what ten days changed around it. Phase sizing and §8's counsel gates unchanged. Extends
 `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md` (the Phase-1 spatial-layer
 spec); its §7 decisions bind here — the layer contract, the shipped/build-local/private tiers,
 the meaning-of-zero rule, "ship the builder, not ODbL data," the agent-as-decoder framing, and
@@ -15,6 +16,30 @@ Phase 1 is substantially landed already: `core/layers/` (the contract), `@mailwo
 (poi.db), `@mailwoman/poi-taxonomy`, and `mcp/` (the thin tool surface) all exist in-tree. This
 spec builds the BDC vertical on that substrate. It is a design, not a plan — each phase gets its
 own plan file after review.
+
+## 0. The 2026-07-30 rework — what changed around this design
+
+Nothing below invalidates a §7 phase or a §2 layer decision; the deltas are substrate and GTM:
+
+- **v8.2.0 shipped** (model 6.7.0-bundle: the evidence channels, the `inputMode` register surface,
+  the retry rider). BDC touch-points: `plausibility_check`'s geocode step handles CUSTOMER-RECORD
+  addresses — the **formatted register** (`input_mode: "formatted"`, the `/v1/batch` default), with
+  the zero-hit retry rider covering inverted records for free. §3.2 step 1 now names this. The
+  bundle also strengthens the fragment path consultants use interactively (map-box lookups).
+- **GTM resequencing + platform discovery landed** (task file, 2026-07-28): the C-track order is
+  confirmed (C1→C4 precede the Addok head-to-head); D4 found that **none of the five ISP platforms
+  has a validation vendor** — Sonar (385+ ISPs, partner directory) is the commercial flagship
+  target and UISP the free-plugin distribution lane, with C5 (serviceability SaaS) as the live OEM
+  reference. That converts §1's "users" from personas into named routes.
+- **Counsel batching**: §8's eight questions ride the ONE consolidated G1 session (with the
+  license-fence, OEM-template, and ODbL items). Question 1 (the Fabric `location_id` join key)
+  still gates 2a — unchanged, just scheduled.
+- **The enterprise line** (ROAD_TO_MAILWOMAN_V8_3_0 / B11): 2c's CRM record-match work doubles as
+  an enterprise on-ramp — the acceptance-battery discipline from the retrain arc (per-customer
+  canaries, noise-honest margins) applies verbatim to record-match delivery. No design change;
+  named so 2c is scoped with that reuse in mind.
+- **C1 unblocked**: it was deferred on 2026-07-28 while the 8.2.0 arc owned the repo; the repo is
+  free.
 
 ## 1. Problem + users
 
@@ -63,15 +88,15 @@ per-provider, per-block, per-technology, per-speed claim of where broadband is a
 Row grain (verified against Nexus `sync/fcc/bdc/block-aggregator.ts:47`,
 `CensusBlockAvailabilityRecord`):
 
-| field                           | meaning                                                                    |
-| ------------------------------- | -------------------------------------------------------------------------- |
-| `provider_id`                   | FCC 6-digit provider id (`ProviderID`, Form-499 FRN-linked)                |
-| `technology_code`               | BDC technology code 10–90 (xDSL, DOCSIS, fiber `50`, GSO/NGSO sat, …)       |
-| `max_advertised_download_speed` | Mbps                                                                        |
-| `max_advertised_upload_speed`   | Mbps                                                                        |
-| `low_latency`                   | boolean                                                                     |
-| `business_residential_code`     | B/R/both                                                                    |
-| `geoid`                         | 15-char census block GEOID — the **public** spatial key                     |
+| field                           | meaning                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `provider_id`                   | FCC 6-digit provider id (`ProviderID`, Form-499 FRN-linked)                  |
+| `technology_code`               | BDC technology code 10–90 (xDSL, DOCSIS, fiber `50`, GSO/NGSO sat, …)        |
+| `max_advertised_download_speed` | Mbps                                                                         |
+| `max_advertised_upload_speed`   | Mbps                                                                         |
+| `low_latency`                   | boolean                                                                      |
+| `business_residential_code`     | B/R/both                                                                     |
+| `geoid`                         | 15-char census block GEOID — the **public** spatial key                      |
 | `location_id`                   | Fabric BSL id — opaque join key only (§2.2); NOT resolvable to a point by us |
 
 **Spine keys.** `wof_id` (block-centroid PIP against the gazetteer at build time), `h3` (res-9
@@ -193,7 +218,7 @@ to surveyed blocks, and unsurveyed blocks in the area are reported as unknown co
 
 The headline primitive. Composition, no ML:
 
-1. Geocode `address` (existing pipeline) → block `geoid` + res-9 `h3` cell.
+1. Geocode `address` (existing pipeline; **formatted register** — customer records, `input_mode: \"formatted\"`/the batch default, retry rider on zero-hit) → block `geoid` + res-9 `h3` cell.
 2. **Filing evidence** — does bdc.db hold a filing in that block matching `claimed_tech` at or
    above `claimed_speed`? (positive corroboration) Or a filing that contradicts it (a provider
    filing a lesser tech)? (weak signal, not disproof).
@@ -238,7 +263,7 @@ This vertical is the sharpest test of the registry-backed doctrine
 temptation to read absence as disproof is constant. The rules, pre-registered:
 
 1. **Registries are soft priors and evidence, never verdicts.** A BDC filing present is positive
-   evidence a provider *claims* service. It is not proof service exists (filings are
+   evidence a provider _claims_ service. It is not proof service exists (filings are
    self-reported and over-claim is the entire reason BDC challenges exist). The bundle reports
    "a filing corroborates the claim," never "the claim is true."
 2. **Positive evidence only.** The only strong output is **co-presence**: a matching filing
@@ -246,7 +271,7 @@ temptation to read absence as disproof is constant. The rules, pre-registered:
    uncertainty, not toward a negative verdict.
 3. **Absence is UNKNOWN, not implausible.** No filing in a block → unknown (unsurveyed by that
    provider, or genuinely unserved — indistinguishable from the public record). No fiber plant
-   within range → unknown *unless* the infra cell is well-surveyed, and even then it is
+   within range → unknown _unless_ the infra cell is well-surveyed, and even then it is
    "no corroborating plant found," not "impossible." The meaning-of-zero rule applies to
    **conclusions**, not just to storage: `plausibility_check` never emits "implausible" from an
    absence. The strongest negative it can emit is "no supporting evidence found, and coverage is
@@ -268,20 +293,20 @@ where one exists.
 
 ### Ports
 
-| Salvage                                                                                     | From (Nexus)                                                                              | Into                                                          |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Technology codes 10–90                                                                      | `fcc/bdc/technologies.ts`                                                                 | `@mailwoman/bdc` schema — **rewrite `enum`→const object** (§6) |
-| BSL id branded type + predicate                                                             | `fcc/bdc/location.ts`                                                                     | `@mailwoman/bdc` (opaque join key only — §2.2)               |
-| NTIA/BDC data dictionary (`NTIARecord`, `AddressConfidenceCode`, `LandUseCode`, `BSLFlag`)  | `fcc/bdc/data-collection.ts`                                                              | `@mailwoman/bdc` schema source (lift, `enum`→const)          |
-| Provider id + FRN + Form-499 identity                                                        | `fcc/bdc/BroadbandProvider.ts`, `fcc/entity/frn.ts`, `fcc/entity/universal-service.ts`   | `@mailwoman/bdc` (2a) + provider registry (2c)               |
-| Availability row shape (`CensusBlockAvailabilityRecord`)                                     | `sync/fcc/bdc/block-aggregator.ts`                                                        | bdc.db table schema (drop Parquet writer; ingest via DuckDB) |
-| BDC public-API client (rate-limited, `broadbandmap.fcc.gov/api/public`)                      | `sync/fcc/bdc/client.ts`                                                                  | `bdc/sdk` — re-home env (`$private`→`core/env`) + lifecycle  |
-| File listing + vintage/`as_of_date` resolution                                              | `sync/fcc/bdc/list-files.ts`, `filing-dates.ts`, `download-file.ts`, `path-builders.ts`  | `bdc/sdk` fetch path                                          |
-| Byte-level CSV parser                                                                        | `sync/fcc/bdc/parsing.ts`                                                                 | `bdc/sdk` ingest                                             |
-| Fabric-without-Fabric (location→block from free per-provider CSVs)                          | `sync/commands/bdc/infer-locations.ts`                                                    | `bdc/sdk` — **Redis dedup → sqlite staging** (§6)            |
-| CORES scraper + Form-499 parser + entity classification                                     | `sync/fcc/CORESClient.ts`, `sync/fcc/universal-service.ts`                                | provider registry layer (2c)                                 |
-| Organization / PointOfContact / OrganizationClassification models                           | Nexus `mailwoman/organization/*`, `mailwoman/contacts/PointOfContact.ts`                  | provider registry entity shell (2c) — see §5.1               |
-| Block×availability×demographics rollup SQL                                                   | `sync/commands/bdc/generate-provider-geojson.ts`                                          | design reference for `aggregate()` / `market_size`           |
+| Salvage                                                                                    | From (Nexus)                                                                            | Into                                                           |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Technology codes 10–90                                                                     | `fcc/bdc/technologies.ts`                                                               | `@mailwoman/bdc` schema — **rewrite `enum`→const object** (§6) |
+| BSL id branded type + predicate                                                            | `fcc/bdc/location.ts`                                                                   | `@mailwoman/bdc` (opaque join key only — §2.2)                 |
+| NTIA/BDC data dictionary (`NTIARecord`, `AddressConfidenceCode`, `LandUseCode`, `BSLFlag`) | `fcc/bdc/data-collection.ts`                                                            | `@mailwoman/bdc` schema source (lift, `enum`→const)            |
+| Provider id + FRN + Form-499 identity                                                      | `fcc/bdc/BroadbandProvider.ts`, `fcc/entity/frn.ts`, `fcc/entity/universal-service.ts`  | `@mailwoman/bdc` (2a) + provider registry (2c)                 |
+| Availability row shape (`CensusBlockAvailabilityRecord`)                                   | `sync/fcc/bdc/block-aggregator.ts`                                                      | bdc.db table schema (drop Parquet writer; ingest via DuckDB)   |
+| BDC public-API client (rate-limited, `broadbandmap.fcc.gov/api/public`)                    | `sync/fcc/bdc/client.ts`                                                                | `bdc/sdk` — re-home env (`$private`→`core/env`) + lifecycle    |
+| File listing + vintage/`as_of_date` resolution                                             | `sync/fcc/bdc/list-files.ts`, `filing-dates.ts`, `download-file.ts`, `path-builders.ts` | `bdc/sdk` fetch path                                           |
+| Byte-level CSV parser                                                                      | `sync/fcc/bdc/parsing.ts`                                                               | `bdc/sdk` ingest                                               |
+| Fabric-without-Fabric (location→block from free per-provider CSVs)                         | `sync/commands/bdc/infer-locations.ts`                                                  | `bdc/sdk` — **Redis dedup → sqlite staging** (§6)              |
+| CORES scraper + Form-499 parser + entity classification                                    | `sync/fcc/CORESClient.ts`, `sync/fcc/universal-service.ts`                              | provider registry layer (2c)                                   |
+| Organization / PointOfContact / OrganizationClassification models                          | Nexus `mailwoman/organization/*`, `mailwoman/contacts/PointOfContact.ts`                | provider registry entity shell (2c) — see §5.1                 |
+| Block×availability×demographics rollup SQL                                                 | `sync/commands/bdc/generate-provider-geojson.ts`                                        | design reference for `aggregate()` / `market_size`             |
 
 ### Already ported — do NOT re-port
 
@@ -291,7 +316,7 @@ where one exists.
   the mailwoman form, never the hex string.
 - **TIGER block model with population/housing/area** — `@mailwoman/tiger` already has
   `TIGERBlockTable` + `PLBlockTable` (§2.4). Reuse it; the only new work is the layer-contract
-  wrapper. (Block-intersection *queries* may be new; add them to `@mailwoman/tiger` or compose
+  wrapper. (Block-intersection _queries_ may be new; add them to `@mailwoman/tiger` or compose
   from `@mailwoman/spatial` — do not fork a second block model.)
 
 ### Does NOT port, and why
@@ -310,9 +335,9 @@ where one exists.
 
 ### 5.1 The contacts gap (from the integration notes)
 
-Mailwoman has no contacts/organization *entity* today — `OrganizationName`
+Mailwoman has no contacts/organization _entity_ today — `OrganizationName`
 (`record/organization.ts`) is a name-canonicalization value object (no id, no FRN, no linked
-places), and it explicitly defers acronym/DBA/TF-IDF org *matching* to "the matcher epic." The
+places), and it explicitly defers acronym/DBA/TF-IDF org _matching_ to "the matcher epic." The
 Nexus `Organization` / `PointOfContact` / `OrganizationClassification` models supply the entity
 shell; `@mailwoman/record` supplies the name normalization. Salvage rule: **do not duplicate
 `OrganizationName`** — the provider registry becomes a versioned-refresh layer of
@@ -324,7 +349,7 @@ is 2c.
 - **`enum` → const object.** Every salvaged FCC dictionary type is a TS `enum`
   (`BroadbandTechnologyCode`, `AddressConfidenceCode`, `LandUseCode`, `BSLFlag`). `erasableSyntaxOnly`
   forbids `enum` repo-wide — each ports as `const X = {…} as const` + `type X = (typeof
-  X)[keyof typeof X]`. Mechanical but touches every dictionary file.
+X)[keyof typeof X]`. Mechanical but touches every dictionary file.
 - **Redis → sqlite staging** for the fabric-without-fabric dedup — a rewrite of the dedup pass,
   not a copy. The staging DB is a temp artifact, built-then-discarded.
 - **bdc.db scale** — a nationwide fixed-broadband vintage is ~10^8 rows; continental shipped-tier
@@ -349,6 +374,7 @@ CSV parser (`enum`→const, env re-home); the bdc.db Kysely schema intersecting
 state; the layer reader + `filing_landscape`; the `mailwoman_bdc_filing_landscape` MCP tool.
 
 Gates (pre-registered):
+
 - Layer-contract conformance — `readLayerManifest`/`readLayerCoverage` pass; h3 packed as res-9
   integer short cell (byte-compatible with poi.db / address-id join).
 - Coverage/meaning-of-zero test — an unsurveyed block returns `undefined` from
@@ -366,6 +392,7 @@ evidence into the `{ claim, evidence_found, coverage_confidence }` bundle; the
 `mailwoman_plausibility_check` MCP tool.
 
 Gates:
+
 - **Positive-evidence-only invariant test** — a fixture with a claim in a block that has NO
   filing and NO nearby plant returns "unknown / insufficient evidence," and asserts the scorer
   can NEVER emit "implausible" from an absence (§4). This is the load-bearing gate.
@@ -384,6 +411,7 @@ brand/DBA as scored `nameSimilarity` — per the integration notes); the private
 and `reconcile.ts` buckets ("our building in a competitor-claimed-served block").
 
 Gates:
+
 - Provider registry conforms to the layer contract (versioned-refresh, FRN-keyed).
 - No duplication of `OrganizationName` — the matcher, not a new contacts subsystem, does the
   join (reviewer check against §5.1).
