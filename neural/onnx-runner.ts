@@ -19,16 +19,18 @@ import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
 import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
-import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
+import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
+
+// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so neural-web's runner can
+// import them without touching this node-only module.
+export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
 
 /**
  * Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims).
  */
-export const STREET_TYPE_FEATURE_DIM = 1
 /**
  * Channel width of the locality-surface evidence feature. Must match the trained model's input shape.
  */
-export const LOCALITY_SURFACE_FEATURE_DIM = 2
 
 export interface ONNXRunnerOpts {
 	/**

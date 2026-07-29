@@ -26,6 +26,8 @@ import {
 	ANCHOR_FEATURE_DIM,
 	COUNTRY_FEATURE_DIM,
 	GAZETTEER_FEATURE_DIM,
+	LOCALITY_SURFACE_FEATURE_DIM,
+	STREET_TYPE_FEATURE_DIM,
 	type InferResult,
 	type NeuralRunner,
 } from "@mailwoman/neural/browser"
@@ -160,7 +162,11 @@ export class WebONNXRunner implements NeuralRunner {
 		tokenIds: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		evidence?: {
+			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		}
 	): Promise<InferResult> {
 		const session = await this.#ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
@@ -271,6 +277,48 @@ export class WebONNXRunner implements NeuralRunner {
 			])
 
 			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
+		}
+
+		// Evidence-bundle channels (Option-A, 6.7.0-bundle) — the country pattern, once per channel.
+		// Feed when supplied AND declared; zero-fill (the confidence=0 trained-absence identity — ALSO
+		// the formatted-register/street-context-gate path, where withholding is deliberate) when the
+		// graph declares them but nothing was supplied, so the session never throws on a missing feed.
+		for (const [prefix, channel, dim] of [
+			["street_type", evidence?.streetType, STREET_TYPE_FEATURE_DIM],
+			["locality_surface", evidence?.localitySurface, LOCALITY_SURFACE_FEATURE_DIM],
+		] as const) {
+			const featuresName = `${prefix}_features`
+			const confidenceName = `${prefix}_confidence`
+
+			if (!session.inputNames.includes(featuresName)) continue
+
+			if (channel) {
+				const channelDim = channel.features[0]?.length ?? dim
+				const cf = new Float32Array(this.fixedSeqLen * channelDim)
+				const cc = new Float32Array(this.fixedSeqLen)
+
+				for (let i = 0; i < seqLen; i++) {
+					cc[i] = channel.confidence[i] ?? 0
+					const row = channel.features[i]
+
+					if (row) {
+						for (let d = 0; d < channelDim; d++) {
+							cf[i * channelDim + d] = row[d] ?? 0
+						}
+					}
+				}
+
+				feeds[featuresName] = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, channelDim])
+				feeds[confidenceName] = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
+			} else {
+				feeds[featuresName] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * dim), [
+					1,
+					this.fixedSeqLen,
+					dim,
+				])
+
+				feeds[confidenceName] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
+			}
 		}
 
 		const output = await session.run(feeds)
