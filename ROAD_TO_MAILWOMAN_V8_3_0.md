@@ -43,8 +43,13 @@ single-model unification is explicitly deferred (v9-class).
 
 Consequence worth stating plainly: **the Latin retrain does NOT carry the char-encoder decision.**
 The two arcs share the release train and the acceptance battery, not an architecture gamble.
-Whether Arc 2's first trained artifact ships _in_ 8.3.0 or the next minor is a cut-time scope
-call, not a plan-time commitment.
+
+**Arc 2 is COMMITTED work with its own schedule** (operator, 2026-07-30 — the punt ends):
+Phase 0 (the BIO-alignment de-risk, the plan's named biggest risk) was already retired 2026-07-18
+at 1,560/1,560; the pre-registered Leg-1/Leg-2 probes (~2 A100-hours) run next, independent of
+Arc 1's decision register. Execution plan:
+`docs/superpowers/plans/2026-07-30-cjk-execution-plan.md`. Whether the JP model ships inside the
+8.3.0 cut or as an 8.4 fast-follow falls out of the Leg-1 verdict by ordinary gate arithmetic.
 
 ## 3. The enterprise deliverables (what makes this "foundation" and not just hygiene)
 
@@ -69,7 +74,7 @@ call, not a plan-time commitment.
 | D2  | Feed assembly                  | v385's feed + the bundle lexicons as baseline; each deploc passenger (gb/nz/es-pedania/fr-lieudit) + punct_drop 0.6 re-enters ONLY with its own promotion case; DE fold rides the lexicon build |
 | D3  | Tokenizer                      | Keep v0.9.0-multisplice (default — comparability + the splice history) vs retrain SP (only with a named reason)                                                                                 |
 | D4  | Fisher scope                   | Diagonal-only (default, cheap) vs blockwise; which distributions (the full feed vs per-locale slices)                                                                                           |
-| D5  | Arc 2 in 8.3.0?                | JP-first sibling model in-scope vs next minor; the corpus BIO-alignment de-risk (the CJK plan's named long pole) decides                                                                        |
+| D5  | Arc 2 in 8.3.0?                | RESOLVED 2026-07-30: the WORK is committed (probes first, phases 2–5 on a Leg-1 PASS); in-8.3.0 vs 8.4 fast-follow falls out of the Leg-1 verdict — see the CJK execution plan                  |
 | D6  | Model/npm numbering            | Model 7.0.0 + npm 8.3.0 (default) — a from-scratch base is a model-major even when the API is additive                                                                                          |
 
 ## 5. The base recipe — known ingredients (assembly memo precedes launch)
