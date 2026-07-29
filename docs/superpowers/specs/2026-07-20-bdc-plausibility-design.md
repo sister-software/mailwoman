@@ -218,7 +218,7 @@ to surveyed blocks, and unsurveyed blocks in the area are reported as unknown co
 
 The headline primitive. Composition, no ML:
 
-1. Geocode `address` (existing pipeline; **formatted register** — customer records, `input_mode: \"formatted\"`/the batch default, retry rider on zero-hit) → block `geoid` + res-9 `h3` cell.
+1. Geocode `address` (existing pipeline; **formatted register** — customer records, `input_mode: "formatted"`/the batch default, retry rider on zero-hit) → block `geoid` + res-9 `h3` cell.
 2. **Filing evidence** — does bdc.db hold a filing in that block matching `claimed_tech` at or
    above `claimed_speed`? (positive corroboration) Or a filing that contradicts it (a provider
    filing a lesser tech)? (weak signal, not disproof).
