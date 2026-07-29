@@ -7,7 +7,7 @@
  *   walk + decoration semantics without depending on any concrete WOF data.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { AddressNode, Interpretation, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 import { decodeAsXML } from "@mailwoman/core/decoder"
 import type {
 	Ancestor,

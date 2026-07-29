@@ -8,17 +8,19 @@ import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 import { toMapHTML } from "./map-html.ts"
+import type { EntityGeoData } from "./types.ts"
 
-// The collection shape `toMapHTML` consumes (map-html.ts renders a GeoFeatureCollection of points).
+// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData, not an open record —
+// typing them loosely meant every call site in this file was passing something toMapHTML rejects.
 // Was a dead `GeoJsonFeatureCollection` import from ./types.ts (never exported there); repointed to the
 // real @mailwoman/spatial type as part of the #875 casing sweep.
-type MapFeatureCollection = GeoFeatureCollection<PointLiteral, Record<string, unknown>>
+type EntityFeatureCollection = GeoFeatureCollection<PointLiteral, EntityGeoData>
 
-function fc(features: MapFeatureCollection["features"]): MapFeatureCollection {
+function fc(features: EntityFeatureCollection["features"]): EntityFeatureCollection {
 	return { type: "FeatureCollection", features }
 }
 
-function point(lon: number, lat: number, props: Record<string, unknown>): MapFeatureCollection["features"][number] {
+function point(lon: number, lat: number, props: EntityGeoData): EntityFeatureCollection["features"][number] {
 	return { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties: props }
 }
 

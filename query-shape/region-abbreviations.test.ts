@@ -57,9 +57,11 @@ describe("detectRegionAbbreviations", () => {
 		const text = "Seattle, WA and Portland, OR"
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
-		// "WA" appears after first comma in segment with separator "comma"
-		// Whether both are detected depends on segmentation treating "and" as whitespace-separated
-		expect((hits) => hits.length > 0).toBeTruthy()
+		// "WA" appears after the first comma; whether BOTH are detected depends on segmentation treating
+		// "and" as whitespace-separated, so this pins the weaker property: at least one is found.
+		const hits = detectRegionAbbreviations(tokens, segs)
+
+		expect(hits.length).toBeGreaterThan(0)
 	})
 
 	it("does not detect lowercase abbreviations", () => {
