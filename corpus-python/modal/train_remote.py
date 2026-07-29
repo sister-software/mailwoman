@@ -3633,6 +3633,8 @@ def sync_jp_probe():
         # Leg 2 (the unification bake-off): just the sealed Latin char vocab — the latam corpus +
         # multisplice tokenizer already persist on the volume from the v3.8.x runs.
         f"rclone copy :s3:{BUCKET}/corpus/v8-leg2/ {VOL_MOUNT}/corpus/versioned/v8-leg2/ {R}",
+        # v8.3.0 base retrain: the v7 locality lexicon (the DE fold, #1355).
+        f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v7.json {VOL_MOUNT}/gazetteer/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
