@@ -1,0 +1,117 @@
+# === v8-leg2-sp — CJK Leg 2 B (bare SP): the unification bake-off (gates v9's shape, NOT v8). ===
+# Controlled encoder pair on the PRODUCTION latam feed: identical data block (v385's mixture +
+# augmentations + affix relabel, channel painting STRIPPED from both legs), identical geometry
+# (384/4, the Leg-1 substrate), identical schedule — the ONE delta between v8-leg2-charword and
+# v8-leg2-sp is the embedding front-end. From scratch, 8k steps, no channels, no CRF.
+# PRIMARY READ: val token-F1 + per-tag F1 at 8k on the shared val stream (same seed); delta within
+# noise -> v9 may consider single-model unification. No gate — a measurement.
+# Known asymmetries (recorded): the SP leg drops rows > 128 pieces while the char leg caps at 64
+# word units; the Latin char vocab (4,114 entries, min_count 2) was sealed from a 1M-row sample —
+# tail chars fall to UNK.
+#
+# Launch: modal run -d corpus-python/modal/train_remote.py --config v8-leg2-sp.yaml --resume none
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights: # VERBATIM v2.4.1.
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    "NO": 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+    AU: 1.0
+    CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
+    MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
+  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 12.0
+    synth-nl-postcode: 6.0
+    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    synth-fragment: 6.0
+    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # bare-locality counter.
+    synth-fr-fragment: 12.0
+    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
+    synth-no-fragment: 12.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
+  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
+  # comma-drop INV (White House + FR Rue du Chevaleret). ONE new variable vs v373.
+  augment_punct_drop_prob: 0.3
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  use_crf: false
+  label_smoothing: 0.1
+  max_position_embeddings: 128
+
+train:
+  output_dir: /data/output-v8-leg2-sp-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  warmup_steps: 1000
+  max_steps: 8000
+  eval_every_steps: 1000
+  save_every_steps: 2000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

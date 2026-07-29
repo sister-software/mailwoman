@@ -81,6 +81,24 @@ class DataConfig:
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
     # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
     gazetteer_choreography: bool = False
+    # --- CharCNN input path (#825 / v8 CJK). The D1 contract: char_ids (B, S, W), S = label units,
+    # W = composition window. "off" (default) = the SentencePiece path, byte-identical to every prior
+    # recipe. "word" = one unit per whitespace token (the #825 Latin char-word probe). "char" = one
+    # unit per character (the v8 JP probe; char_ctx=3 → W=7). Both non-off modes skip SentencePiece
+    # entirely, REQUIRE span-schema shards (#519), and are channel-free — the anchor/gazetteer/
+    # country/street/locality channels project per SP-piece and re-align per-unit post-probe, so the
+    # loader raises if any channel path is configured alongside. Pairs with model.use_char_embed.
+    char_mode: str = "off"
+    # Sealed codepoint-sorted char-vocab JSON (char_tokenizer.build_char_vocab). Required when
+    # char_mode != "off"; the artifact ships with the weights (D2 — the tokenizer-mismatch scar).
+    char_vocab_path: str | None = None
+    # Composition-window context: neighbor chars included on each side of a unit (D6). CJK char mode
+    # wants 3 (W=7); Latin char-word mode wants 0 (W = the token's own chars).
+    char_ctx: int = 0
+    # W: chars per unit row. Char mode needs >= 2*char_ctx + 1; word mode = max word length.
+    max_unit_width: int = 16
+    # S: max units per row (char mode: chars; word mode: words). None -> data.max_length.
+    max_units: int | None = None
     # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
     # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
     # relabeled with the affix shard builder's exact split semantics (trailing USPS suffix ->
@@ -291,6 +309,13 @@ class ModelConfig:
     use_locality_surface_anchor: bool = False
     # Must match the locality-surface lexicon JSON's feature_dim ([locality, locality_homograph]).
     locality_surface_feature_dim: int = 2
+    # CharCNN front-end (#825 / v8 CJK). When True the per-unit embedding is COMPOSED from char_ids
+    # (B, S, W) by CharCNNEmbedding instead of the SentencePiece piece-ID lookup. Pairs with
+    # data.char_mode != "off" (the trainer enforces the pairing); char_vocab_size is derived from the
+    # loaded char vocab at build time, never from the yaml.
+    use_char_embed: bool = False
+    char_embed_dim: int = 64
+    char_kernel_sizes: list[int] = field(default_factory=lambda: [3, 4, 5])
 
 
 @dataclass

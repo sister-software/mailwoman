@@ -83,6 +83,9 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
         tb["locality_surface_confidence"] = torch.tensor(
             batch["locality_surface_confidence"], dtype=torch.float32, device=device
         )
+    # CharCNN input path (#825 / v8 CJK): (B, S, W) long char IDs — present iff data.char_mode is on.
+    if "char_ids" in batch:
+        tb["char_ids"] = torch.tensor(batch["char_ids"], dtype=torch.long, device=device)
     return tb
 
 
@@ -578,8 +581,26 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         latest = find_latest_checkpoint(output_dir)
         resume_from = latest
 
-    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
-    verify_tokenizer_alignment(Path(cfg.data.corpus_dir), tokenizer)
+    # CharCNN input path (#825 / v8 CJK): data.char_mode and model.use_char_embed must agree — a
+    # char-encoded batch into an SP model (or vice versa) is a config mistake, caught before any
+    # loading. Char mode needs no SentencePiece tokenizer at all: the loader never calls it, and the
+    # alignment smoke is SP-specific (the char path validates span-schema per row instead).
+    char_mode = getattr(cfg.data, "char_mode", "off")
+    use_char_embed = getattr(cfg.model, "use_char_embed", False)
+    if (char_mode != "off") != use_char_embed:
+        raise ValueError(f"data.char_mode={char_mode!r} and model.use_char_embed={use_char_embed} must be set together")
+    char_vocab_size = 0
+    if char_mode != "off":
+        from .char_tokenizer import load_char_vocab
+
+        if not getattr(cfg.data, "char_vocab_path", None):
+            raise ValueError("data.char_mode requires data.char_vocab_path")
+        char_vocab_size = len(load_char_vocab(cfg.data.char_vocab_path))
+        tokenizer = None
+        print(f"char_mode={char_mode}: char_vocab_size={char_vocab_size}, SentencePiece path skipped")
+    else:
+        tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
+        verify_tokenizer_alignment(Path(cfg.data.corpus_dir), tokenizer)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if resume_from is not None:
@@ -589,7 +610,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         print(f"resuming from {resume_from}")
         model = MailwomanCoarseEncoder.from_pretrained(resume_from)
     else:
-        model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
+        model = build_model(
+            cfg,
+            # Char mode never reads the SP token-embedding table; vocab_size=2 keeps the unused
+            # table at minimum width (an nn.Embedding needs >= pad_token_id + 1 rows).
+            vocab_size=tokenizer.vocab_size if tokenizer is not None else 2,
+            pad_token_id=tokenizer.pad_id if tokenizer is not None else 0,
+            char_vocab_size=char_vocab_size,
+        )
         # Fine-tune from a pre-trained encoder: load MODEL weights only (no optimizer/scheduler/
         # step, unlike resume), so the supervised run starts fresh on the MLM-pretrained encoder.
         # The pretrain checkpoint's state_dict is key-identical (tied MLM head adds no params), so
@@ -946,7 +974,9 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             "model": asdict(cfg.model),
                             "train": asdict(cfg.train),
                         },
-                        "vocab_size": tokenizer.vocab_size,
+                        # Char mode has no SP tokenizer; 2 is build_model's dummy SP-table width
+                        # (the model's own config carries char_vocab_size).
+                        "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
                     }
                     ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
                     print(f"  [save] checkpoint → {ck}")
@@ -958,7 +988,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 "model": asdict(cfg.model),
                 "train": asdict(cfg.train),
             },
-            "vocab_size": tokenizer.vocab_size,
+            "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
         }
         save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
     finally:

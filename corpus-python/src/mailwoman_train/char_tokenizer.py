@@ -61,6 +61,68 @@ def load_char_vocab(path: Path | str) -> dict[str, int]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def encode_row_units(
+    raw: str,
+    unit_spans: Sequence[tuple[int, int]],
+    char_labels: Sequence[str],
+    char_to_id: dict[str, int],
+    max_units: int,
+    max_unit_width: int,
+    ctx_chars: int = 0,
+) -> dict[str, list]:
+    """Encode one row under the D1 contract: ``char_ids (S, W)`` where S = label units, W = window.
+
+    The generalization the v8 CJK plan's contract note specifies: a UNIT is anything carrying one
+    BIO label — a whitespace token for Latin char-word mode (``ctx_chars=0``: W covers the unit's
+    own chars, like ``encode_row_charword``) or one character for CJK char mode (``ctx_chars=3``:
+    W=7 covers the char ± 3 neighbors, giving the CNN local n-gram context — 丁目/番地/号 as units).
+
+    Slots are POSITIONAL: slot ``j`` of unit ``(b, e)`` is ``raw[b - ctx_chars + j]``; positions
+    outside ``[0, len(raw))`` or at/past ``e + ctx_chars`` are PAD, unseen chars are UNK. The row is
+    truncated to ``max_units`` units / ``max_unit_width`` chars per unit and padded with all-PAD
+    unit rows (attention 0, label IGNORE).
+
+    Per-unit labels come from ``char_labels`` (a per-char BIO array over ``raw``, e.g. from
+    ``tokenizer.char_label_array_from_spans``): each unit takes its first non-whitespace char's
+    label (an all-whitespace unit gets ``O``), collapsed to the active set — used AS-IS for both
+    modes. A span-derived char array is already unit-correct: the span-leading unit's first char is
+    ``B-``, a continuation unit's first char is ``I-``, and two ADJACENT same-family spans each keep
+    their own ``B-``. (The contract note sketched a piece-path-style B/I re-flip for word mode; that
+    re-flip would MERGE adjacent same-family entities — first-char-as-is is strictly more faithful,
+    the deliberate deviation.)
+    """
+    units = list(unit_spans[:max_units])
+
+    char_ids: list[list[int]] = []
+    label_ids: list[int] = []
+    for begin, end in units:
+        row: list[int] = []
+        for j in range(max_unit_width):
+            p = begin - ctx_chars + j
+            if 0 <= p < len(raw) and p < end + ctx_chars:
+                row.append(char_to_id.get(raw[p], UNK_CHAR_ID))
+            else:
+                row.append(PAD_CHAR_ID)
+        char_ids.append(row)
+
+        label = "O"
+        for p in range(begin, min(end, len(raw))):
+            if not raw[p].isspace():
+                label = char_labels[p] if p < len(char_labels) else "O"
+                break
+        label_ids.append(LABEL_TO_ID[collapse_label(label)])
+
+    attention = [1] * len(char_ids)
+    pad_word = [PAD_CHAR_ID] * max_unit_width
+    pad_needed = max_units - len(char_ids)
+    if pad_needed > 0:
+        char_ids.extend([list(pad_word) for _ in range(pad_needed)])
+        attention.extend([0] * pad_needed)
+        label_ids.extend([IGNORE_INDEX] * pad_needed)
+
+    return {"char_ids": char_ids, "attention_mask": attention, "labels": label_ids}
+
+
 def encode_row_charword(
     raw: str,
     tokens: Sequence[str],

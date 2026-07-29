@@ -45,6 +45,7 @@ def _full_example() -> EncodedExample:
         street_type_confidence=[1.0] * SEQ,
         locality_surface_features=[[1.0, 0.0] for _ in range(SEQ)],
         locality_surface_confidence=[1.0] * SEQ,
+        char_ids=[[2, 3, 0] for _ in range(SEQ)],
     )
 
 
