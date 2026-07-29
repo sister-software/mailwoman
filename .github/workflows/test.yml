@@ -61,7 +61,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -129,7 +131,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -197,7 +201,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -235,7 +241,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
+          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
