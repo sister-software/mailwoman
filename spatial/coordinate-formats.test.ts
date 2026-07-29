@@ -75,8 +75,8 @@ test("toMGRS: Washington Monument matches Wikipedia's vector (~4m); zone+band el
 	expect(toMGRS(85, 0)).toBe("") // above 84°N — MGRS bands stop
 })
 
-test("coordinateFormatAnnotator: fills the coordinate-format slice of an AnnotationSet", () => {
-	const set = coordinateFormatAnnotator({ lat: LAT, lon: LON })
+test("coordinateFormatAnnotator: fills the coordinate-format slice of an AnnotationSet", async () => {
+	const set = await coordinateFormatAnnotator({ lat: LAT, lon: LON })
 	expect(set.maidenhead).toBe("FM18lv")
 	expect(set.geohash).toHaveLength(9)
 	expect(set.dms?.lat).toContain("N")

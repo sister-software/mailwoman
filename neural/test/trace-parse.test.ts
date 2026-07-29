@@ -29,15 +29,18 @@ const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.
  * Fake runner emitting a canned logits matrix (and optional locale head) regardless of input.
  */
 class FakeRunner implements NeuralRunner {
-	constructor(
-		private readonly canned: number[][],
-		private readonly localeLogits?: number[]
-	) {}
+	readonly #canned: number[][]
+	readonly #localeLogits?: number[]
+
+	constructor(canned: number[][], localeLogits?: number[]) {
+		this.#canned = canned
+		this.#localeLogits = localeLogits
+	}
 	async infer(_ids: number[]): Promise<InferResult> {
 		return {
-			logits: this.canned,
-			numLabels: this.canned[0]?.length ?? 0,
-			...(this.localeLogits ? { localeLogits: this.localeLogits } : {}),
+			logits: this.#canned,
+			numLabels: this.#canned[0]?.length ?? 0,
+			...(this.#localeLogits ? { localeLogits: this.#localeLogits } : {}),
 		}
 	}
 }

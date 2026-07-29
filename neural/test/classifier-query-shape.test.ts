@@ -30,7 +30,7 @@ class FakeRunner implements NeuralRunner {
 		this.#canned = canned
 	}
 	async infer(_ids: number[]): Promise<InferResult> {
-		return { logits: this.#canned, sequenceLength: this.#canned.length }
+		return { logits: this.#canned, numLabels: this.#canned[0]?.length ?? 0 }
 	}
 }
 

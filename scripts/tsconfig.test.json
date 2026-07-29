@@ -16,5 +16,6 @@
 	},
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"exclude": ["./out/**/*"],
-	"references": [{ "path": "./tsconfig.json" }]
+	// No reference: scripts/tsconfig.json is already noEmit + composite:false, so it cannot be one.
+	"references": []
 }

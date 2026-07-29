@@ -26,7 +26,9 @@ const LABELS = ["O", "B-street", "I-street", "B-locality", "I-locality"]
 
 function stubRunner(seen: { evidence: unknown[] }): NeuralRunner {
 	return {
-		async infer(ids, _anchor, _gazetteer, _country, evidence) {
+		async infer(...args: Parameters<NeuralRunner["infer"]>) {
+			const [ids] = args
+			const evidence = args[4]
 			seen.evidence.push(evidence)
 
 			return { logits: ids.map(() => LABELS.map(() => 0)) }
