@@ -28,7 +28,7 @@ export interface Transform {
 	apply: (raw: string) => string | null
 }
 
-// MARK: comma-drop
+//#region comma-drop
 
 /**
  * Remove every comma. Applicable only when the input carries at least one.
@@ -39,7 +39,9 @@ function commaDrop(raw: string): string | null {
 	return raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 }
 
-// MARK: abbreviation-swap
+//#endregion
+
+//#region abbreviation-swap
 
 /**
  * Small, deliberately narrow EN street-suffix table (Ave↔Avenue, St↔Street, Rd↔Road) — the spec's own wording, not the
@@ -169,7 +171,9 @@ export function canonicalizeAbbreviations(value: string): string {
 		.join("")
 }
 
-// MARK: case-fold (ALL-CAPS) / lowercase
+//#endregion
+
+//#region case-fold (ALL-CAPS) / lowercase
 
 /**
  * ALL-CAPS the input. Always applicable — every string has a casing.
@@ -185,7 +189,9 @@ function lowercase(raw: string): string | null {
 	return raw.toLowerCase()
 }
 
-// MARK: whitespace-jitter
+//#endregion
+
+//#region whitespace-jitter
 
 /**
  * Double every literal space character. Applicable only when the input carries a literal space — the guard checks the
@@ -199,7 +205,9 @@ function whitespaceJitter(raw: string): string | null {
 	return raw.replaceAll(" ", "  ")
 }
 
-// MARK: trailing-punct
+//#endregion
+
+//#region trailing-punct
 
 /**
  * Append a trailing period. Always applicable.
@@ -208,7 +216,9 @@ function trailingPunct(raw: string): string | null {
 	return `${raw}.`
 }
 
-// MARK: paired-punct transforms
+//#endregion
+
+//#region paired-punct transforms
 
 /**
  * Wrap the WHOLE input in a matching straight-quote pair — the same "wrap the whole thing" idiom as `trailing-punct`,
@@ -234,7 +244,9 @@ function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`
 }
 
-// MARK: idempotence
+//#endregion
+
+//#region idempotence
 
 /**
  * Identity — the text is NOT perturbed. The runner special-cases this id: it parses the ORIGINAL string twice (two
@@ -246,7 +258,9 @@ function identity(raw: string): string | null {
 	return raw
 }
 
-// MARK: registry
+//#endregion
+
+//#region registry
 
 /**
  * Metamorphic transforms applied to an input. Each one must leave the parse unchanged, so a differing result is a bug
@@ -325,3 +339,5 @@ export function getTransform(id: string): Transform {
 
 	return t
 }
+
+//#endregion

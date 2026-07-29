@@ -35,7 +35,7 @@ import type {
 } from "../shared/resources.tsx"
 import { assetURL } from "../shared/resources.tsx"
 
-// MARK: Types
+//#region Types
 
 export type { ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
 
@@ -121,7 +121,9 @@ export interface DemoEmbedState {
 
 const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
 
-// MARK: Hook
+//#endregion
+
+//#region Hook
 
 export function useDemoEmbed(): DemoEmbedState {
 	const ctx = useContext(DemoEmbedContext)
@@ -133,7 +135,9 @@ export function useDemoEmbed(): DemoEmbedState {
 	return ctx
 }
 
-// MARK: Provider
+//#endregion
+
+//#region Provider
 
 export interface DemoEmbedProviderProps {
 	/**
@@ -220,3 +224,5 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 	return <DemoEmbedContext.Provider value={value}>{children}</DemoEmbedContext.Provider>
 }
+
+//#endregion

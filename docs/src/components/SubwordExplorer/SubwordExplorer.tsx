@@ -20,7 +20,7 @@ import type { KindResult, ResultNode, StageTiming } from "../../shared/resources
 
 import styles from "./styles.module.css"
 
-// MARK: Types
+//#region Types
 
 export interface SubwordExplorerProps {
 	/**
@@ -45,7 +45,9 @@ export interface SubwordExplorerProps {
 	timing?: StageTiming
 }
 
-// MARK: Word tokenization (matches BIOHighlight's approach)
+//#endregion
+
+//#region Word tokenization (matches BIOHighlight's approach)
 
 interface WordToken {
 	/**
@@ -95,7 +97,9 @@ function tokenizeWords(input: string): WordToken[] {
 	return words
 }
 
-// MARK: Span + phrase-group assignment
+//#endregion
+
+//#region Span + phrase-group assignment
 
 interface SpanInfo {
 	tag: string
@@ -207,7 +211,9 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 	return result
 }
 
-// MARK: Confidence tier (mirrors SpanHighlight / ResultPanel)
+//#endregion
+
+//#region Confidence tier (mirrors SpanHighlight / ResultPanel)
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
@@ -215,7 +221,9 @@ function tier(confidence?: number): "high" | "mid" | "low" {
 	return confidenceTier(confidence)
 }
 
-// MARK: Pipeline stage definitions (for the flow diagram + legend)
+//#endregion
+
+//#region Pipeline stage definitions (for the flow diagram + legend)
 
 interface PipelineStage {
 	key: string
@@ -275,7 +283,9 @@ const PIPELINE_STAGES: PipelineStage[] = [
 	},
 ]
 
-// MARK: Pipeline flow diagram (compact, horizontal)
+//#endregion
+
+//#region Pipeline flow diagram (compact, horizontal)
 
 const PipelineFlow: React.FC = () => (
 	<div className={styles.pipelineFlow}>
@@ -291,7 +301,9 @@ const PipelineFlow: React.FC = () => (
 	</div>
 )
 
-// MARK: Stage detail panel (expandable per-stage descriptions)
+//#endregion
+
+//#region Stage detail panel (expandable per-stage descriptions)
 
 const StageDetails: React.FC = () => (
 	<details className={styles.stageDetails}>
@@ -309,7 +321,9 @@ const StageDetails: React.FC = () => (
 	</details>
 )
 
-// MARK: Main component
+//#endregion
+
+//#region Main component
 
 export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, kindResult, timing }) => {
 	if (!input) return null
@@ -443,3 +457,5 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 		</div>
 	)
 }
+
+//#endregion

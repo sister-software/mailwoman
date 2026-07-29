@@ -76,7 +76,7 @@ export interface CapabilityManifestOptions {
 	write?: boolean
 }
 
-// MARK: Tier + locale matrix
+//#region Tier + locale matrix
 
 /**
  * Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides).
@@ -146,7 +146,9 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-// MARK: Scoring
+//#endregion
+
+//#region Scoring
 
 interface Row {
 	raw: string
@@ -215,7 +217,9 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	return out
 }
 
-// MARK: Build the manifest
+//#endregion
+
+//#region Build the manifest
 
 /**
  * `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits.
@@ -316,7 +320,9 @@ function rowsHaveTag(rows: Row[], tag: string): boolean {
 	return false
 }
 
-// MARK: Entry
+//#endregion
+
+//#region Entry
 
 /**
  * Measure the per-tier × system × tag capability manifest; optionally patch it into the model card.
@@ -379,3 +385,5 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		console.error("\n(dry run — pass --write to patch the model card)")
 	}
 }
+
+//#endregion

@@ -57,7 +57,7 @@ export interface SynthesizedHouseVenueRow {
 	template: HouseVenueTemplate
 }
 
-// MARK: Venue pool
+//#region Venue pool
 
 /**
  * PLAIN venue names, carrying no street-typing tokens. This shard teaches house_number + venue coexistence, NOT
@@ -86,7 +86,9 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Westwood Realty",
 ]
 
-// MARK: Fallback street pool
+//#endregion
+
+//#region Fallback street pool
 
 /**
  * Stand-in streets for tuples that carried no `street` field. Plain names, no typing-token ambiguity.
@@ -109,7 +111,9 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Forest Blvd",
 ]
 
-// MARK: House-number generator
+//#endregion
+
+//#region House-number generator
 
 function randomHouseNumber(random: () => number): string {
 	// Generate a plain numeric house number 1-9999. No fractions/ranges — those land in
@@ -144,7 +148,9 @@ function countryToLocale(country: string): string {
 	}
 }
 
-// MARK: Synthesis
+//#endregion
+
+//#region Synthesis
 
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
@@ -188,3 +194,5 @@ export function synthesizeHouseVenueRow(
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
 	return components.house_number !== undefined && components.venue !== undefined
 }
+
+//#endregion

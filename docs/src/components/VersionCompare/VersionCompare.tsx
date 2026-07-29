@@ -17,7 +17,7 @@ import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 
 import styles from "./styles.module.css"
 
-// MARK: Types
+//#region Types
 
 /**
  * Score delta below which two versions are shown as equivalent rather than as a change.
@@ -66,7 +66,9 @@ interface CompareRow {
 	diffKind: "match" | "primary-only" | "compare-only" | "tag-changed"
 }
 
-// MARK: Diff computation
+//#endregion
+
+//#region Diff computation
 
 /**
  * Build a unified diff table of component rows across two parses. Row identity is by source-order position
@@ -182,7 +184,9 @@ function diffConfidence(c: number | undefined, p: number | undefined): number | 
 	return Number.parseFloat((c - p).toFixed(3))
 }
 
-// MARK: Sub-components
+//#endregion
+
+//#region Sub-components
 
 const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({ delta, diffKind }) => {
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
@@ -200,7 +204,9 @@ const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKin
 	)
 }
 
-// MARK: Main component
+//#endregion
+
+//#region Main component
 
 export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare, primaryVersion, compareVersion }) => {
 	const rows = useMemo(() => computeCompareRows(primary, compare), [primary, compare])
@@ -303,3 +309,5 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare
 		</div>
 	)
 }
+
+//#endregion

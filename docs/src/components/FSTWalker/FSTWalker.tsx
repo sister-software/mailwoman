@@ -20,6 +20,9 @@
  * ```
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useMemo } from "react"
 
@@ -27,7 +30,7 @@ import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 
 import styles from "./styles.module.css"
 
-// MARK: Types
+//#region Types
 
 /**
  * Importance at or above which an FST node is drawn as high. Presentation only.
@@ -83,7 +86,9 @@ export interface FSTWalkerProps {
 	input: string
 }
 
-// MARK: Token normalization (matches FSTMatcher.normalizeTokens)
+//#endregion
+
+//#region Token normalization (matches FSTMatcher.normalizeTokens)
 
 /**
  * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. Mirrors `normalizeTokens` in
@@ -98,7 +103,9 @@ function normalizeTokens(text: string): string[] {
 		.filter((t) => t.length > 0)
 }
 
-// MARK: Formatting helpers
+//#endregion
+
+//#region Formatting helpers
 
 /**
  * Format a WOF ID as a compact 8-digit string.
@@ -125,7 +132,9 @@ function importanceTier(imp: number): "high" | "mid" | "low" {
 	return "low"
 }
 
-// MARK: Sub-components
+//#endregion
+
+//#region Sub-components
 
 const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 	const tier = importanceTier(place.importance)
@@ -159,7 +168,9 @@ const ContinuationChip: React.FC<{ cont: ContinuationLike }> = ({ cont }) => (
 	</span>
 )
 
-// MARK: Inner component (below BrowserOnly boundary)
+//#endregion
+
+//#region Inner component (below BrowserOnly boundary)
 
 const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	const { fstMatcher, fstProvenance, ready } = useDemoEmbed()
@@ -379,7 +390,9 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 	)
 }
 
-// MARK: Public component (with BrowserOnly SSR boundary)
+//#endregion
+
+//#region Public component (with BrowserOnly SSR boundary)
 
 /**
  * FSTWalker — interactive FST gazetteer trie walker.
@@ -402,3 +415,5 @@ export const FSTWalker: React.FC<FSTWalkerProps> = ({ input }) => {
 		</BrowserOnly>
 	)
 }
+
+//#endregion

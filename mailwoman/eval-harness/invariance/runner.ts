@@ -39,7 +39,7 @@ import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
  */
 export const DEFAULT_SUITE_PATH = "mailwoman/eval-harness/invariance/suite.jsonl"
 
-// MARK: fixture loading
+//#region fixture loading
 
 export interface InvarianceRow {
 	id: string
@@ -69,7 +69,9 @@ export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 	return rows
 }
 
-// MARK: parse function construction
+//#endregion
+
+//#region parse function construction
 
 export type ParseFn = (raw: string) => Promise<Record<string, string>>
 
@@ -127,7 +129,9 @@ export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	return async (raw: string) => decodeAsJSON(await classifier.parse(raw)) as Record<string, string>
 }
 
-// MARK: the run
+//#endregion
+
+//#region the run
 
 export interface PairOutcome {
 	rowId: string
@@ -397,3 +401,5 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		exitCode: pass ? 0 : 1,
 	}
 }
+
+//#endregion

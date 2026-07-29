@@ -21,7 +21,7 @@ import type { ResultNode } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 
-// MARK: Stage taxonomy
+//#region Stage taxonomy
 
 interface StageDef {
 	key: string
@@ -142,7 +142,9 @@ for (const stage of STAGES) {
 	}
 }
 
-// MARK: Tree-flattening with source preservation
+//#endregion
+
+//#region Tree-flattening with source preservation
 
 interface SourceNode {
 	tag: string
@@ -213,7 +215,9 @@ function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	return out.toReversed()
 }
 
-// MARK: Stage resolution for a node
+//#endregion
+
+//#region Stage resolution for a node
 
 interface StageContribution {
 	stage: StageDef
@@ -248,7 +252,9 @@ function resolveStages(node: SourceNode): StageContribution[] {
 	return contributions
 }
 
-// MARK: Props
+//#endregion
+
+//#region Props
 
 export interface ClassifierOverlayProps {
 	/**
@@ -269,7 +275,9 @@ export interface ClassifierOverlayProps {
 	mode?: "static" | "dynamic"
 }
 
-// MARK: Static legend
+//#endregion
+
+//#region Static legend
 
 const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	<div className={styles.staticLegend}>
@@ -329,7 +337,9 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	</div>
 )
 
-// MARK: Confidence tier
+//#endregion
+
+//#region Confidence tier
 
 function tier(confidence?: number): "high" | "mid" | "low" {
 	if (confidence == null) return "mid"
@@ -337,7 +347,9 @@ function tier(confidence?: number): "high" | "mid" | "low" {
 	return confidenceTier(confidence)
 }
 
-// MARK: Dynamic per-component table
+//#endregion
+
+//#region Dynamic per-component table
 
 const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: boolean }> = ({
 	tree,
@@ -440,7 +452,9 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 	)
 }
 
-// MARK: Public component
+//#endregion
+
+//#region Public component
 
 export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 	tree,
@@ -462,3 +476,5 @@ export const ClassifierOverlay: React.FC<ClassifierOverlayProps> = ({
 
 	return <DynamicOverlay tree={tree} nodes={nodes} fstActive={fstActive} />
 }
+
+//#endregion

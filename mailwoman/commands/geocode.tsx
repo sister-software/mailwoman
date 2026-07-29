@@ -52,7 +52,7 @@ import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
 import { resolverDefaultCountry } from "./parse.tsx"
 
-// MARK: CLI contract — args + options
+//#region CLI contract — args + options
 
 const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address to geocode"))
 export { ArgumentsSchema as args, OptionsSchema as options }
@@ -150,7 +150,9 @@ const OptionsSchema = zod.object({
 		),
 })
 
-// MARK: Path helpers
+//#endregion
+
+//#region Path helpers
 
 function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
@@ -177,7 +179,9 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 	return paths
 }
 
-// MARK: Core geocode logic
+//#endregion
+
+//#region Core geocode logic
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
@@ -309,7 +313,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 	}
 }
 
-// MARK: schema.org JSON-LD projection (#1052)
+//#endregion
+
+//#region schema.org JSON-LD projection (#1052)
 
 /**
  * Project a {@link GeocodeResult} into a schema.org `Place` JSON-LD object (`--format jsonld`, #1052). `streetAddress`
@@ -339,7 +345,9 @@ function geocodeToSchemaOrg(result: GeocodeResult): SchemaOrgPlace {
 	})
 }
 
-// MARK: Text formatter
+//#endregion
+
+//#region Text formatter
 
 function formatText(result: GeocodeResult): string {
 	const lines: string[] = [`input:            ${result.input}`, `resolution_tier:  ${result.resolution_tier}`]
@@ -379,7 +387,9 @@ function formatText(result: GeocodeResult): string {
 	return lines.join("\n")
 }
 
-// MARK: React command component
+//#endregion
+
+//#region React command component
 
 const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
@@ -406,3 +416,5 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 }
 
 export default GeocodeCommand
+
+//#endregion

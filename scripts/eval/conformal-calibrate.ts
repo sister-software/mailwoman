@@ -98,9 +98,11 @@ const values = rawValues as {
 	wof?: string
 }
 
-// MARK: CLI helpers
+//#region CLI helpers
 
-// MARK: Percentile (0-indexed: p=0.9 → 90th)
+//#endregion
+
+//#region Percentile (0-indexed: p=0.9 → 90th)
 
 function percentile(xs: number[], p: number): number {
 	if (!xs.length) return Number.NaN
@@ -113,7 +115,9 @@ function median(xs: number[]): number {
 	return percentile(xs, 0.5)
 }
 
-// MARK: Conformal quantile
+//#endregion
+
+//#region Conformal quantile
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
@@ -127,7 +131,9 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
-// MARK: Seeded deterministic shuffle (LCG, no external deps)
+//#endregion
+
+//#region Seeded deterministic shuffle (LCG, no external deps)
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
@@ -143,7 +149,9 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	return out
 }
 
-// MARK: Tree walkers — read STAMPED metadata, never alter resolution
+//#endregion
+
+//#region Tree walkers — read STAMPED metadata, never alter resolution
 
 /**
  * Fixed floor for an exact situs point (building-centroid precision).
@@ -193,7 +201,9 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 	return null
 }
 
-// MARK: Holdout row type (matches /tmp/ood-truth.jsonl)
+//#endregion
+
+//#region Holdout row type (matches /tmp/ood-truth.jsonl)
 
 interface HoldoutRow {
 	input: string
@@ -203,7 +213,9 @@ interface HoldoutRow {
 	state?: string
 }
 
-// MARK: Main
+//#endregion
+
+//#region Main
 
 /**
  * Build the parse → resolve cascade this calibration measures. Mirrors `oa-resolver-eval.ts`'s construction exactly —
@@ -538,3 +550,5 @@ async function main(): Promise<void> {
 }
 
 runIfScript(import.meta, main)
+
+//#endregion

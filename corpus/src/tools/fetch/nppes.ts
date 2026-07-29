@@ -21,6 +21,9 @@
  *   sha256 matches MANIFEST, skips download.
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"

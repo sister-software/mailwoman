@@ -49,7 +49,7 @@ import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-m
 import { createRuntimePipeline } from "mailwoman"
 import ts from "typescript"
 
-// MARK: Args
+//#region Args
 
 interface Args {
 	testsDir: string
@@ -183,7 +183,9 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-// MARK: Assertion extraction — TS AST → list of (input, expected[])
+//#endregion
+
+//#region Assertion extraction — TS AST → list of (input, expected[])
 
 interface ExtractedAssertion {
 	file: string
@@ -315,7 +317,9 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 	return all
 }
 
-// MARK: Neural output → the visible ClassificationRecord vocabulary
+//#endregion
+
+//#region Neural output → the visible ClassificationRecord vocabulary
 
 /**
  * Visible classification labels in the assertion vocabulary — the fixture format inherited from the retired rule-based
@@ -407,7 +411,9 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 	return { record: out as ClassificationRecord, dropped }
 }
 
-// MARK: Comparison — case-insensitive superset match
+//#endregion
+
+//#region Comparison — case-insensitive superset match
 
 function normalize(s: string): string {
 	return s.toLowerCase().trim()
@@ -452,7 +458,9 @@ function anyExpectedMatches(expected: ClassificationRecord[], actual: Classifica
 	return false
 }
 
-// MARK: Per-assertion runner
+//#endregion
+
+//#region Per-assertion runner
 
 interface AssertionResult {
 	file: string
@@ -514,7 +522,9 @@ async function runAssertion(
 	}
 }
 
-// MARK: Falsehoods JSONL loader
+//#endregion
+
+//#region Falsehoods JSONL loader
 
 interface FalsehoodRow {
 	input: string
@@ -556,7 +566,9 @@ function loadFalsehoods(dir: string): ExtractedAssertion[] {
 	return out
 }
 
-// MARK: Report
+//#endregion
+
+//#region Report
 
 interface FileStats {
 	total: number
@@ -673,7 +685,9 @@ function printReport(results: AssertionResult[]): void {
 	}
 }
 
-// MARK: Main
+//#endregion
+
+//#region Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()
@@ -814,3 +828,5 @@ async function main(): Promise<void> {
 }
 
 runIfScript(import.meta, main)
+
+//#endregion

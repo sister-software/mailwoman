@@ -17,7 +17,7 @@ import { dirname, resolve } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-// MARK: Workspace resolution helpers
+//#region Workspace resolution helpers
 
 const requireFromPlugin = createRequire(import.meta.url)
 
@@ -69,7 +69,9 @@ export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): str
 	return resolve(workspaceDir, "out", sub, "index.js")
 }
 
-// MARK: Webpack alias builder
+//#endregion
+
+//#region Webpack alias builder
 
 /**
  * Build the full workspace alias map for webpack. Centralises the alias logic that was previously inlined in
@@ -211,7 +213,9 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	return aliases
 }
 
-// MARK: Model artifact resolution + validation
+//#endregion
+
+//#region Model artifact resolution + validation
 
 /**
  * Read the model-card.json from the weights package to get version metadata.
@@ -398,7 +402,9 @@ export function stagePairIndexes(destDir: string): boolean {
 	return true
 }
 
-// MARK: FST builder
+//#endregion
+
+//#region FST builder
 
 /**
  * Build the FST binary from the WOF admin SQLite database.
@@ -455,3 +461,5 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?
 
 	return true
 }
+
+//#endregion

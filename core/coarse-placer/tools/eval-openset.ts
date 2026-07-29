@@ -30,6 +30,9 @@
  *   Run: `mailwoman placer eval openset [--model <dir>] [--out-md <path>]`
  */
 
+/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
+   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 

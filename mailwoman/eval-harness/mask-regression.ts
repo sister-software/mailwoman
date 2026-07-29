@@ -89,7 +89,7 @@ export interface MaskRegressionOptions {
 	json?: string
 }
 
-// MARK: Locale matrix (mirrors capability-manifest.ts)
+//#region Locale matrix (mirrors capability-manifest.ts)
 
 interface LocaleEvalSpec {
 	/**
@@ -135,7 +135,9 @@ const TAGS = [
 	"subregion",
 ] as const
 
-// MARK: Scoring
+//#endregion
+
+//#region Scoring
 
 interface Row {
 	raw: string
@@ -213,7 +215,9 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	return out
 }
 
-// MARK: The gate
+//#endregion
+
+//#region The gate
 
 interface Delta {
 	locale: SystemCode
@@ -362,3 +366,5 @@ export async function maskRegressionGate(
 
 	return { pass: true, violations }
 }
+
+//#endregion

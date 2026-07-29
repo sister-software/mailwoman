@@ -17,7 +17,7 @@ import React, { useMemo, useState } from "react"
 
 import styles from "./styles.module.css"
 
-// MARK: Data types
+//#region Data types
 
 /**
  * F1 percentage at or above which a cell is shaded as strong. Presentation only.
@@ -57,7 +57,9 @@ interface F1Row {
 
 type SortKey = "tag" | "eval" | "v410" | "v420" | "v430" | "v440" | "v500"
 
-// MARK: F1 data (sourced from parity-scorecard-2026-06-11.md)
+//#endregion
+
+//#region F1 data (sourced from parity-scorecard-2026-06-11.md)
 
 const F1_DATA: F1Row[] = [
 	{
@@ -226,7 +228,9 @@ const F1_DATA: F1Row[] = [
 	},
 ]
 
-// MARK: Helpers
+//#endregion
+
+//#region Helpers
 
 /**
  * Color a cell based on the score range: red < 30, amber 30–80, green ≥ 80.
@@ -250,7 +254,9 @@ function sortArrow(key: SortKey, current: SortKey, dir: "asc" | "desc"): string 
 	return dir === "asc" ? " ▲" : " ▼"
 }
 
-// MARK: Tooltip component
+//#endregion
+
+//#region Tooltip component
 
 const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
 	return (
@@ -261,7 +267,9 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 	)
 }
 
-// MARK: Inner component
+//#endregion
+
+//#region Inner component
 
 const F1ScoreTableInner: React.FC = () => {
 	const [sortKey, setSortKey] = useState<SortKey>("tag")
@@ -370,8 +378,12 @@ const F1ScoreTableInner: React.FC = () => {
 	)
 }
 
-// MARK: Public component (SSR-safe)
+//#endregion
+
+//#region Public component (SSR-safe)
 
 export const F1ScoreTable: React.FC = () => {
 	return <BrowserOnly fallback={<p>Loading F1 score table…</p>}>{() => <F1ScoreTableInner />}</BrowserOnly>
 }
+
+//#endregion

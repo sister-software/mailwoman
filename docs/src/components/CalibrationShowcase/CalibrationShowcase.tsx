@@ -145,7 +145,7 @@ export default function CalibrationShowcase({
 	)
 }
 
-// MARK: Reliability diagram
+//#region Reliability diagram
 
 function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: ReliabilityBin[] }): React.ReactElement {
 	const W = 340
@@ -242,7 +242,9 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 	)
 }
 
-// MARK: Abstention curve
+//#endregion
+
+//#region Abstention curve
 
 function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.ReactElement {
 	const W = 340
@@ -329,3 +331,5 @@ function Dot({ color }: { color: string }): React.ReactElement {
 		/>
 	)
 }
+
+//#endregion

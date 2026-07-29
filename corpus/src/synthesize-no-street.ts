@@ -39,7 +39,7 @@
 
 import type { CanonicalRow } from "./types.ts"
 
-// MARK: Types
+//#region Types
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -77,7 +77,9 @@ export interface SynthesizedNoStreetRow {
 	template: NoStreetTemplate
 }
 
-// MARK: Venue name pools
+//#endregion
+
+//#region Venue name pools
 
 /**
  * Plain venue names — businesses without street-typing words in the name. Used as the easy-mode positive class for
@@ -169,7 +171,9 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 	["AU", ["Australia"]],
 ])
 
-// MARK: Synthesis
+//#endregion
+
+//#region Synthesis
 
 function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!
@@ -341,3 +345,5 @@ export function hasAnyStreetSideTag(components: CanonicalRow["components"]): boo
 
 	return false
 }
+
+//#endregion

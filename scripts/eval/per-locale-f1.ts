@@ -73,7 +73,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
-// MARK: Args
+//#region Args
 
 interface Args {
 	goldenDir: string
@@ -186,7 +186,9 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-// MARK: Golden row + fold (shared semantics with harness-neural.ts)
+//#endregion
+
+//#region Golden row + fold (shared semantics with harness-neural.ts)
 
 interface GoldenRow {
 	raw: string
@@ -257,7 +259,9 @@ function exactMatch(pred: Record<string, string>, gold: Record<string, string>):
 	return true
 }
 
-// MARK: Per-file metrics
+//#endregion
+
+//#region Per-file metrics
 
 interface TagMetric {
 	tp: number
@@ -352,7 +356,9 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	}
 }
 
-// MARK: Main
+//#endregion
+
+//#region Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()
@@ -547,3 +553,5 @@ async function main(): Promise<void> {
 }
 
 runIfScript(import.meta, main)
+
+//#endregion

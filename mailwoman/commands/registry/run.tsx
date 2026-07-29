@@ -60,7 +60,7 @@ import { resolverDefaultCountry } from "../parse.tsx"
  */
 export const isDefault = true
 
-// MARK: CLI contract — args + options
+//#region CLI contract — args + options
 
 const ArgumentsSchema = zod
 	.array(zod.string().describe("Path to a CSV file of contact / organization records"))
@@ -160,7 +160,9 @@ const OptionsSchema = zod.object({
 
 export { ArgumentsSchema as args, OptionsSchema as options }
 
-// MARK: Column mapping
+//#endregion
+
+//#region Column mapping
 
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV that splits the
@@ -507,7 +509,9 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 	}
 }
 
-// MARK: Core
+//#endregion
+
+//#region Core
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	if (options.reconcile) {
@@ -550,7 +554,9 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 	}
 }
 
-// MARK: React command component
+//#endregion
+
+//#region React command component
 
 const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
@@ -583,3 +589,5 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 }
 
 export default RegistryCommand
+
+//#endregion

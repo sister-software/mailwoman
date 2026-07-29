@@ -120,7 +120,7 @@ export function formatBytes(bytes: number): string {
 	return `${bytes} B`
 }
 
-// MARK: Observations (facts the runner gathers) → checks (verdicts)
+//#region Observations (facts the runner gathers) → checks (verdicts)
 
 /**
  * Facts about the `@mailwoman/neural-weights-en-us` resolution.
@@ -411,7 +411,9 @@ export function onnxRuntimeCheck(o: OnnxRuntimeObservation): DoctorCheck {
 	}
 }
 
-// MARK: Aggregate
+//#endregion
+
+//#region Aggregate
 
 /**
  * Derive the process exit code: `0` when every CORE check is `ok`, else `1`. Optional data-layer checks report their
@@ -434,3 +436,5 @@ export function assembleReport(checks: DoctorCheck[]): DoctorReport {
 function firstLine(message: string): string {
 	return message.split("\n", 1)[0]!.trim()
 }
+
+//#endregion

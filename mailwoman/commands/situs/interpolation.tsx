@@ -88,7 +88,7 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-// MARK: State FIPS map
+//#region State FIPS map
 
 const STATE_FIPS: Record<string, string> = {
 	AL: "01",
@@ -159,7 +159,9 @@ const CLI_ENTRY = scriptEntryPath()
 const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
 const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 
-// MARK: County population ranking
+//#endregion
+
+//#region County population ranking
 
 interface CountyRecord {
 	stateFips: string
@@ -230,7 +232,9 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	return records
 }
 
-// MARK: HTTP utilities
+//#endregion
+
+//#region HTTP utilities
 
 /**
  * Simple GET-to-text over HTTPS with redirect following (≤3 hops).
@@ -319,7 +323,9 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 	})
 }
 
-// MARK: ZIP extraction
+//#endregion
+
+//#region ZIP extraction
 
 /**
  * Unpack a TIGER EDGES ZIP into --edges-dir using the system `unzip` command. Only extracts files whose names end with
@@ -337,7 +343,9 @@ function extractEdgesZip(zipPath: string, destDir: string): void {
 	}
 }
 
-// MARK: Parallel download pool
+//#endregion
+
+//#region Parallel download pool
 
 interface DownloadTask {
 	geoid: string
@@ -404,7 +412,9 @@ async function downloadParallel(
 	return { downloaded, skipped, failed }
 }
 
-// MARK: Shard build (per state)
+//#endregion
+
+//#region Shard build (per state)
 
 interface ShardBuildResult {
 	wallMs: number
@@ -699,3 +709,5 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 }
 
 export default SitusInterpolation
+
+//#endregion

@@ -17,7 +17,7 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
 
-// MARK: Types
+//#region Types
 
 /**
  * WOF hierarchy rank of a locality.
@@ -103,7 +103,9 @@ export interface TreeNode {
 	children?: unknown[]
 }
 
-// MARK: Constants
+//#endregion
+
+//#region Constants
 
 /**
  * Locale the demo opens on.
@@ -165,7 +167,9 @@ export function pairCountryForInput(input: string): string | undefined {
 	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
 }
 
-// MARK: US state abbreviation expansion
+//#endregion
+
+//#region US state abbreviation expansion
 
 const US_STATE_ABBREV: Record<string, string> = {
 	AL: "Alabama",
@@ -233,7 +237,9 @@ export function expandUSRegion(text: string): string {
 	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
 }
 
-// MARK: Tree flattening
+//#endregion
+
+//#region Tree flattening
 
 /**
  * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
@@ -262,7 +268,9 @@ export function flattenTree(
 	return out.toReversed()
 }
 
-// MARK: Parse orchestration
+//#endregion
+
+//#region Parse orchestration
 
 /**
  * A source-order parsed node, as {@link flattenTree} yields it.
@@ -417,7 +425,9 @@ export async function resolveDualRoles(
 	}
 }
 
-// MARK: Confidence calibration (browser-safe mirror)
+//#endregion
+
+//#region Confidence calibration (browser-safe mirror)
 
 /**
  * Maps a raw span confidence in [0, 1] to its calibrated probability of correctness.
@@ -482,7 +492,9 @@ function clamp01(v: number): number {
 	return v
 }
 
-// MARK: WOF resolution
+//#endregion
+
+//#region WOF resolution
 
 /**
  * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
@@ -661,7 +673,9 @@ export async function runCascade(
 	return hits
 }
 
-// MARK: Street-level resolution
+//#endregion
+
+//#region Street-level resolution
 
 /**
  * A street-level coordinate + which tier produced it + an honest radius.
@@ -742,3 +756,5 @@ export async function resolveStreet(
 
 	return null
 }
+
+//#endregion

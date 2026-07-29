@@ -138,7 +138,7 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	weakDesignators: new Set(),
 }
 
-// MARK: Tokenization
+//#region Tokenization
 
 interface RawToken {
 	/**
@@ -198,7 +198,9 @@ function tokenize(text: string): RawToken[] {
 	return out
 }
 
-// MARK: Cue family 1 — paired delimiters (M2)
+//#endregion
+
+//#region Cue family 1 — paired delimiters (M2)
 
 /**
  * Find balanced pairs for one open/close class. Returns null when ANY delimiter of the class is unbalanced (stray
@@ -348,7 +350,9 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 	return out
 }
 
-// MARK: Cue family 2 — designator + identifier
+//#endregion
+
+//#region Cue family 2 — designator + identifier
 
 /**
  * Short identifier shapes per the designator grammar: "4B", "500", "#104", "B", "B99".
@@ -405,7 +409,9 @@ function proposeDesignatorPhrases(
 	return out
 }
 
-// MARK: Cue family 3 — dual-path numeric punctuation (M3)
+//#endregion
+
+//#region Cue family 3 — dual-path numeric punctuation (M3)
 
 const SLASH_COMPOUND = /^(\d{1,4}[A-Za-z]?)\/(\d{1,5}[A-Za-z]?)$/
 const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
@@ -601,7 +607,9 @@ function proposeNumericReadings(
 	return out
 }
 
-// MARK: Entry point
+//#endregion
+
+//#region Entry point
 
 /**
  * Propose typed spans over `text`. Pure and synchronous; safe to run on every parse. Proposals may overlap freely
@@ -636,3 +644,5 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 
 	return out
 }
+
+//#endregion

@@ -59,7 +59,7 @@ function hasWordContent(piece: string): boolean {
 	return /[\p{L}\p{N}]/u.test(piece)
 }
 
-// MARK: Structural types
+//#region Structural types
 
 export interface FSTMatchLike {
 	stateID: number
@@ -79,7 +79,9 @@ export interface FSTMatcherLike {
 	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
-// MARK: Placetype → BIO label mapping
+//#endregion
+
+//#region Placetype → BIO label mapping
 
 const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -88,7 +90,9 @@ const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["postalcode", "postcode"],
 ])
 
-// MARK: Internals
+//#endregion
+
+//#region Internals
 
 export interface WordGroup {
 	fstToken: string
@@ -536,3 +540,5 @@ function applyBias(
 		}
 	}
 }
+
+//#endregion
