@@ -155,6 +155,13 @@ export interface GeocodeDeps {
 	 */
 	inputMode?: InputMode
 	/**
+	 * The Decision-A retry rider (operator-specced 2026-07-28): when a geocode ZERO-HITS (no coordinate AND no
+	 * candidates), re-parse ONCE in the alternative register and re-resolve. Fires only when the register was DERIVED (an
+	 * explicit {@link inputMode} is never second-guessed) and never loops. Default ON; pass `false` to pin single-pass
+	 * behavior.
+	 */
+	retryAlternateRegister?: boolean
+	/**
 	 * Per-state shard resolver. Omit for admin-only geocoding.
 	 */
 	shards?: ShardResolver
@@ -483,6 +490,13 @@ export class ShardProvider {
  * `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address twice. The inference is ~3 ms/row — the
  * single most expensive step — so sharing it is a ~1.3× win on a parse-then-geocode pipeline.
  */
+/**
+ * The kind-derived register for a geocode input (Decision A) — shared by the parse and the retry rider.
+ */
+export function deriveGeocodeRegister(parseInput: string, queryShape = computeQueryShape(parseInput)): InputMode {
+	return deriveInputMode(classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
+}
+
 export async function parseForGeocode(
 	input: string,
 	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode">
@@ -508,8 +522,7 @@ export async function parseForGeocode(
 
 	// Decision A: explicit register wins; otherwise the kind verdict decides (same derivation as the
 	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline).
-	const inputMode =
-		deps.inputMode ?? deriveInputMode(classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
+	const inputMode = deps.inputMode ?? deriveGeocodeRegister(parseInput, queryShape)
 
 	return recognizeUSRegions(
 		await deps.classifier.parse(parseInput, {
@@ -529,6 +542,34 @@ export async function parseForGeocode(
  * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
+	const result = await geocodeAddressOnce(input, deps)
+
+	// Decision-A retry rider: a ZERO-HIT (no coordinate, no candidates) in a DERIVED register earns one
+	// attempt in the alternative register — a misrouted fragment/record can resolve on the flip; a
+	// second miss returns the original result. Explicit registers and caller-supplied trees are never
+	// second-guessed; the retry itself passes an explicit mode, so it cannot recurse.
+	const zeroHit = result.lat == null && result.candidates.length === 0
+
+	if (
+		zeroHit &&
+		deps.retryAlternateRegister !== false &&
+		deps.inputMode === undefined &&
+		deps.parsedTree === undefined
+	) {
+		const parseInput =
+			deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+
+		const used = deriveGeocodeRegister(parseInput)
+		const flipped: InputMode = used === "formatted" ? "fragmented" : "formatted"
+		const retried = await geocodeAddressOnce(input, { ...deps, inputMode: flipped })
+
+		if (retried.lat != null || retried.candidates.length) return retried
+	}
+
+	return result
+}
+
+async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
 	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
