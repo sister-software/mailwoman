@@ -40,7 +40,7 @@ import {
 } from "./reconcile.ts"
 import type { PhraseProposal } from "./types.ts"
 
-// ---------- Test helpers ----------
+//#region Test Helpers
 
 function span(text: string, start: number, end: number) {
 	return Span.from(text.slice(start, end), { start })
@@ -76,6 +76,8 @@ function place(
 ): MockPlace {
 	return { id, name, placetype, country, lat, lon, parent_id, score }
 }
+
+//#endregion
 
 /**
  * Build a `ResolverCandidatesLookup` from a list of `(spanStart, spanEnd, tag, ResolvedPlace[])` tuples. Order in the
@@ -155,7 +157,7 @@ function preReconcileTags(
 	return out
 }
 
-// ---------- Contract tests ----------
+//#region Contract Tests
 
 describe("reconcileSpans — contract", () => {
 	it("returns an empty tree when classifierTopK is empty", () => {
@@ -211,9 +213,10 @@ describe("reconcileSpans — contract", () => {
 		expect(result.tree.roots.length).toBeGreaterThan(0)
 	})
 })
+//#endregion
 
-// ---------- Kryptonite catalogue ----------
-//
+//#region Kryptonite Catalogue
+
 // Each fixture below is one of the operator's adversarial examples — inputs where the existing
 // Stage 5 (argmax-per-span, sorted) produces a known-wrong parse because the per-span argmax
 // happens to be internally inconsistent. Joint decode picks the second-best tag interpretation
@@ -595,3 +598,5 @@ describe("reconcile — score breakdown surfaces each factor", () => {
 		expect(total).toBeCloseTo(phrase * classifier * res * concordance, 5)
 	})
 })
+
+//#endregion

@@ -1284,7 +1284,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		console.error(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
-	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
+	// self-emitted; eval figures are NEVER hand-typed into docs)
 	const report = renderOaResolverReport({
 		agg,
 		assembledAgg,
@@ -1308,6 +1308,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		cascadeOn,
 		options,
 	})
+
 	console.log(report)
 
 	if (options.outMd || "") {

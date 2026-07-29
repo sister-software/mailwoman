@@ -139,7 +139,7 @@ interface ResultRow {
 	geocodeEarthScore?: ScoreResult
 }
 
-// ---- mappers: each geocoder's response → our component schema --------------------------------
+// MARK: mappers: each geocoder's response → our component schema.
 
 function mapPhoton(p: Props | undefined): Rec {
 	if (!p) return {}

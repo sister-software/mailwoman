@@ -272,7 +272,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				})
 			}
 
-			// ---- INFORMATIONAL: the old parse-tag agreement (non-gating; drives Track B) ----
+			// INFORMATIONAL: the old parse-tag agreement (non-gating; drives Track B)
 			const agreement = (label: string) => {
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
@@ -285,17 +285,17 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-gating)`)
 			}
 
-			// ---- P1. Coordinate acceptability ----
+			// P1. Coordinate acceptability
 			const both = rows.filter((r) => r.both)
 			const streetPass = both.filter((r) => r.hasStreet && !r.streetFail)
 			const streetPassWithin1km = streetPass.filter((r) => r.delta! <= 1).length
 			const acceptRate = streetPass.length ? streetPassWithin1km / streetPass.length : 1
 
-			// ---- P2. Guard false positives on the coordinate-safe structured set ----
+			// P2. Guard false positives on the coordinate-safe structured set
 			const safeStructured = both.filter((r) => r.delta! <= 5 && r.kind === "structured_address")
 			const guardFalsePositives = safeStructured.filter((r) => r.implausible).length
 
-			// ---- P3. Garbage-tail residual after kind-router + plausibility guard ----
+			// P3. Garbage-tail residual after kind-router + plausibility guard
 			const tail = both.filter((r) => r.hasStreet && r.streetFail && r.delta! > 25)
 			const tailStructured = tail.filter((r) => r.kind === "structured_address")
 			const residual = tailStructured.filter((r) => !r.implausible).length
