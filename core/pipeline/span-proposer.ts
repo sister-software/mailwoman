@@ -59,37 +59,21 @@ const CONFIDENT_ANNOTATION_MIN = 0.6
  * Typed kinds a span proposal may carry. See the module doc for the three cue families.
  */
 export type ProposedSpanKind =
-	/**
-	 * A balanced `()`/`[]` group whose content reads as an aside about the address.
-	 */
+	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"
-	/**
-	 * A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's job.
-	 */
+	/** A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's job. */
 	| "QUOTED_SPAN"
-	/**
-	 * Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7").
-	 */
+	/** Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7"). */
 	| "PO_BOX_PHRASE"
-	/**
-	 * Secondary-unit designator + identifier ("Apt 4B", "Suite 500").
-	 */
+	/** Secondary-unit designator + identifier ("Apt 4B", "Suite 500"). */
 	| "UNIT_PHRASE"
-	/**
-	 * Level-class designator + identifier ("Floor 3", "FL 12").
-	 */
+	/** Level-class designator + identifier ("Floor 3", "FL 12"). */
 	| "LEVEL_PHRASE"
-	/**
-	 * Dual-path FUSED reading: the punctuated numeric is ONE value ("123 1/2", "69-10", "14/2").
-	 */
+	/** Dual-path FUSED reading: the punctuated numeric is ONE value ("123 1/2", "69-10", "14/2"). */
 	| "FUSED_NUMBER"
-	/**
-	 * Dual-path SPLIT reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45").
-	 */
+	/** Dual-path SPLIT reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45"). */
 	| "SPLIT_UNIT"
-	/**
-	 * Dual-path SPLIT reading, right side: the house number ("14" of "Flat 2/14").
-	 */
+	/** Dual-path SPLIT reading, right side: the house number ("14" of "Flat 2/14"). */
 	| "SPLIT_HOUSE_NUMBER"
 
 /**
