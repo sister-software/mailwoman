@@ -195,7 +195,7 @@ export async function fetchTigerFull(
 	const addrfeatDir = join(options.outRoot, "tiger", "addrfeat")
 	mkdirSync(addrfeatDir, { recursive: true })
 
-	// MARK: Step 1: Discover the full county file list from the TIGER directory listing.
+	// MARK: Step 1 — discover the county file list
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 	const listingRes = await fetch(`${TIGER_BASE_URL}/`, {
@@ -222,7 +222,7 @@ export async function fetchTigerFull(
 
 	report?.(`  Spans ${stateFiles.size} state/territory FIPS codes.`)
 
-	// MARK: Step 2: For each state, download missing/unverified county ZIPs.
+	// MARK: Step 2 — download the county ZIPs
 
 	let totalFetched = 0
 	let totalSkipped = 0

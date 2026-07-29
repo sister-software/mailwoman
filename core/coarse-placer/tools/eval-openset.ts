@@ -228,10 +228,8 @@ export async function evalOpenSet(
 			.map((l) => JSON.parse(l) as DataRow)
 	}
 
-	// ---------------------------------------------------------------------------
 	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
 	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
-	// ---------------------------------------------------------------------------
 	report?.("fitting Mahalanobis on in-map train logits…")
 	const trainRows = load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
@@ -337,7 +335,7 @@ export async function evalOpenSet(
 		return -best
 	}
 
-	// MARK: Score the in-map test (11 countries) + the off-map heldout families.
+	// MARK: Score both splits
 
 	report?.("scoring in-map test + off-map heldout…")
 	const SCORES: ScoreKey[] = ["maxprob", "p_inmap", "energy", "maxlogit", "maha"]

@@ -135,7 +135,7 @@ const TAGS = [
 	"subregion",
 ] as const
 
-// MARK: Scoring (unfolded exact-match per-tag F1 — score-affix.ts / capability-manifest.ts machinery)
+// MARK: Scoring
 
 interface Row {
 	raw: string

@@ -112,7 +112,7 @@ function median(xs: number[]): number {
 	return percentile(xs, 0.5)
 }
 
-// MARK: Conformal quantile  Q̂ = the ⌈(n+1)×(1−α)⌉-th sorted calibration score
+// MARK: Conformal quantile
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length

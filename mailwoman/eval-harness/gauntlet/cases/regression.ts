@@ -611,7 +611,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "CONTROL: a bare lone toponym plausibly MEANS Tokyo; resolving it there is correct default behavior. This row pins that the venue-trap work must NOT overcorrect bare toponyms into no-results. (The Ivry-sur-Seine venue of the same name is only recoverable from conversational context no geocoder has.)",
 	},
 
-	// ---------------------------------------------------------------------------------------------
 	// FR street-name homonyms (operator's Paris list, 2026-07-15). The street's NAME is a major
 	// foreign city; the tolerance is what makes these mean something — Paris→Rome is ~1100 km, so a
 	// 50 km band FAILS LOUD if the toponym ever out-competes the street reading. These PASS today;
@@ -622,7 +621,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 	// gazetteer places, so raising importance would start biasing STREET-TYPE WORDS toward locality).
 	// The 30 currently-FAILING bare-fragment forms deliberately do NOT live here — this file is the
 	// executable bug log, not a wish list; they live in eval-harness/fixtures/paris-streets.jsonl.
-	// ---------------------------------------------------------------------------------------------
 	{
 		id: "fr-rue-de-rome-homonym",
 		input: "8 Rue de Rome, Paris",
@@ -680,7 +678,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 		note: "Passes on the staged v3.11.x candidates (task-8 record) — flip to pass WHEN a lineage successor promotes; shipped v385 still fails (verified 2026-07-23). The street/locality boundary that swallowed 'Paris' on 2026-07-15 has since flipped in experimental lineages (#727 span-head). Was the only miss in the operator's 10-row tricky list (9/10 passed at the time); tracked as span-head's class. See final-review fix-wave report / #1189 adjudication for context.",
 	},
 
-	// ---------------------------------------------------------------------------------------------
 	// Venue-name traps, carried-address form (operator's venue list, 2026-07-24). Sibling family of
 	// the 2026-07-10 venue-toponym traps, but the venue NAMES here are mostly NOT foreign toponyms —
 	// they're honorifics, digit-words, slashes, CJK script, and one Korean city. Seven of thirteen
@@ -703,7 +700,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 	// same venue-span/address-span separation defect the #1039 family tracks. These rows gate that
 	// the carried address keeps out-voting the venue name — tolerance is metro-scale, the win
 	// condition is 'lands the rooftop or declines'.
-	// ---------------------------------------------------------------------------------------------
 	{
 		id: "venue-mr-mrs-crab-huchette",
 		input: "MR & MRS CRAB, 20 Rue de la Huchette, 75005 Paris",

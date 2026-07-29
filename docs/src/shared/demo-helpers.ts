@@ -262,7 +262,7 @@ export function flattenTree(
 	return out.toReversed()
 }
 
-// MARK: Parse orchestration — the shared classify → resolve front-half (#861 / #1278)
+// MARK: Parse orchestration
 
 /**
  * A source-order parsed node, as {@link flattenTree} yields it.
@@ -480,7 +480,7 @@ function clamp01(v: number): number {
 	return v
 }
 
-// MARK: WOF resolution — the shared resolver over the demo's candidate lookup (#861)
+// MARK: WOF resolution
 
 /**
  * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
@@ -658,7 +658,7 @@ export async function runCascade(
 	return hits
 }
 
-// MARK: Street-level resolution (situs → interpolation), in front of the admin cascade
+// MARK: Street-level resolution
 
 /**
  * A street-level coordinate + which tier produced it + an honest radius.

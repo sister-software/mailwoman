@@ -309,7 +309,7 @@ test("POST /v1/reload: engine.reload absent -> 503", async () => {
 	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
-// MARK: /v1/format — wired in-package, no engine method, always available
+// MARK: /v1/format — always available
 
 test("POST /v1/format: round-trips components into a formatted string + a non-empty canonicalKey", async () => {
 	const app = createMailwomanAPI({})

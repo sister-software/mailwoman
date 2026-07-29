@@ -79,7 +79,7 @@ export async function fetchIMLSPLS(
 
 	report?.(`=== ${SLUG}`)
 
-	// MARK: Idempotency check: if outlet CSV already exists and sha matches, skip.
+	// MARK: Idempotency check
 
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
@@ -111,11 +111,9 @@ export async function fetchIMLSPLS(
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	// ------------------------------------------------------------------
 	// Discover the outlet-level CSV inside the ZIP.
 	// Outlet files match: pls_fy*outlet*.csv (case-insensitive)
 	// Administrative-entity files match: pls_fy*ae*.csv — we skip those.
-	// ------------------------------------------------------------------
 	report?.("  Inspecting ZIP contents ...")
 	const entries = await listZipEntries(zipDest)
 

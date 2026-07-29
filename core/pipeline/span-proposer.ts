@@ -154,7 +154,7 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	weakDesignators: new Set(),
 }
 
-// MARK: Tokenization (offset-preserving, punctuation-stripped match bodies)
+// MARK: Tokenization
 
 interface RawToken {
 	/**
@@ -359,7 +359,7 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 	return out
 }
 
-// MARK: Cue family 2 — designator + identifier (the sub-premise grammar)
+// MARK: Cue family 2 — designator + identifier
 
 /**
  * Short identifier shapes per the designator grammar: "4B", "500", "#104", "B", "B99".

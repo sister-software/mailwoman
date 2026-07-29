@@ -299,7 +299,7 @@ export function toNative(set: AnnotationSet): AnnotationSet {
 	return set
 }
 
-// MARK: schema.org Place / PostalAddress / GeoCoordinates — a JSON-LD OUTPUT projection (#1052)
+// MARK: schema.org JSON-LD projection
 
 /**
  * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node — the resolved coordinate, embedded under a

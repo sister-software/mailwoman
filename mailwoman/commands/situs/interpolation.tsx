@@ -88,7 +88,7 @@ const OptionsSchema = zod.object({
 
 export { OptionsSchema as options }
 
-// MARK: State FIPS map (mirrors build-interpolation-shard.ts — single source in future)
+// MARK: State FIPS map
 
 const STATE_FIPS: Record<string, string> = {
 	AL: "01",

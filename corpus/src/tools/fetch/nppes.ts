@@ -105,10 +105,8 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const zipDest = join(destDir, zipFilename)
 	report?.(`  Latest full file: ${zipFilename}`)
 
-	// ------------------------------------------------------------------
 	// Idempotency check: if the main CSV already exists and sha matches,
 	// skip re-download.
-	// ------------------------------------------------------------------
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
@@ -152,7 +150,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const csvSha = await sha256File(csvDest)
 	report?.(`  CSV size: ${(csvSize / 1024 / 1024).toFixed(1)} MB`)
 
-	// MARK: Remove the ZIP to reclaim ~1 GB (the CSV is what adapters consume)
+	// MARK: Remove the ZIP to reclaim ~1 GB
 
 	await rm(zipDest, { force: true })
 	report?.("  Removed ZIP (CSV kept)")

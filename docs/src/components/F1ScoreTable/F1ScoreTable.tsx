@@ -250,7 +250,7 @@ function sortArrow(key: SortKey, current: SortKey, dir: "asc" | "desc"): string 
 	return dir === "asc" ? " ▲" : " ▼"
 }
 
-// MARK: Tooltip component (pure CSS tooltip — lightweight, works without JS in SSR)
+// MARK: Tooltip component
 
 const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
 	return (
@@ -261,7 +261,7 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 	)
 }
 
-// MARK: Inner component (below BrowserOnly boundary — sort state is React)
+// MARK: Inner component
 
 const F1ScoreTableInner: React.FC = () => {
 	const [sortKey, setSortKey] = useState<SortKey>("tag")

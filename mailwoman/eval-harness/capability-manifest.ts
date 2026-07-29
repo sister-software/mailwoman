@@ -146,7 +146,7 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-// MARK: Scoring (unfolded exact-match per-tag F1 — score-affix.ts machinery)
+// MARK: Scoring
 
 interface Row {
 	raw: string

@@ -76,7 +76,7 @@ async function postJSON(path: string, body: unknown): Promise<{ status: number; 
 	return { status: res.status, body: (await res.json()) as Record<string, unknown> }
 }
 
-// MARK: /v1/geocode + /v1/batch — error paths (run unconditionally; ported from geocode-router.test.ts)
+// MARK: /v1/geocode + /v1/batch — error paths
 
 describe("api-engine — error paths (run unconditionally)", () => {
 	test("POST /v1/geocode: 400 when `address` is missing", async () => {
@@ -97,7 +97,7 @@ describe("api-engine — error paths (run unconditionally)", () => {
 	})
 })
 
-// MARK: /health — answers even when the geocode/resolve stack is unavailable (ported from health-router.test.ts)
+// MARK: /health — answers without the geocode stack
 
 describe("api-engine — /health (run unconditionally, never throws)", () => {
 	test("GET /health: returns status + data shape", async () => {
@@ -113,10 +113,8 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 })
 
-// ---------------------------------------------------------------------------------------------
 // /v1/parse — native neural output (Task 2); needs only the model weights, not the gazetteer, so
 // it's gated on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
-// ---------------------------------------------------------------------------------------------
 
 describeIfWeights(
 	"api-engine — /v1/parse (native neural output)",
@@ -146,7 +144,7 @@ describeIfWeights(
 	60_000
 )
 
-// MARK: Success paths against real WOF + TX shards (ported from geocode-router.test.ts)
+// MARK: Success paths — real WOF + TX shards
 
 describeIfStack("api-engine — success path against real WOF + TX shards", () => {
 	test("POST /v1/geocode: resolves a TX address to a street-level coordinate", async () => {

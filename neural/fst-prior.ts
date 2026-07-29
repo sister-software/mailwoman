@@ -59,7 +59,7 @@ function hasWordContent(piece: string): boolean {
 	return /[\p{L}\p{N}]/u.test(piece)
 }
 
-// MARK: Structural types — compatible with @mailwoman/resolver-wof-sqlite shapes
+// MARK: Structural types
 
 export interface FSTMatchLike {
 	stateID: number

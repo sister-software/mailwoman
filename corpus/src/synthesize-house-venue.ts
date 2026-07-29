@@ -55,12 +55,12 @@ export interface SynthesizedHouseVenueRow {
 	template: HouseVenueTemplate
 }
 
-// ---------------------------------------------------------------------------------------------
-// Venue pool — PLAIN, no street-typing tokens. The point of this shard is to teach
-// house_number + venue coexistence, NOT to re-introduce decompose-mode pressure.
-// Adversarial venue names live in `synthesize-no-street.ts`.
-// ---------------------------------------------------------------------------------------------
+// MARK: Venue pool
 
+/**
+ * PLAIN venue names, carrying no street-typing tokens. This shard teaches house_number + venue coexistence, NOT
+ * decompose-mode pressure — adversarial venue names live in `synthesize-no-street.ts`.
+ */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
 	"Acme Corporation",
@@ -84,11 +84,11 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Westwood Realty",
 ]
 
-// ---------------------------------------------------------------------------------------------
-// Fallback street pool for tuples that didn't carry a `street` field. Plain street names
-// without typing-token ambiguity.
-// ---------------------------------------------------------------------------------------------
+// MARK: Fallback street pool
 
+/**
+ * Stand-in streets for tuples that carried no `street` field. Plain names, no typing-token ambiguity.
+ */
 const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Main St",
 	"Oak Ave",

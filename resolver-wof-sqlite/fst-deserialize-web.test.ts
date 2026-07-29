@@ -381,7 +381,7 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 
 //#endregion
 
-//#region surface-ambiguity classes (survey #4) — the web reader mirrors fst-serialize's flags bit0
+//#region surface-ambiguity classes
 
 test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
 	const { serializeFST } = await import("./fst-serialize.ts")

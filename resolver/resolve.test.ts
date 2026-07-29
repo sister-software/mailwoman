@@ -1026,7 +1026,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 	})
 })
 
-// MARK: Street-centroid tier (#1042) — the street-only rung between interp and admin.
+// MARK: Street-centroid tier
 
 /**
  * A fake street-centroid lookup that hits only for known (normalized street, commune) pairs.

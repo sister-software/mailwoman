@@ -99,11 +99,12 @@ const AboutDemoInner: React.FC = () => {
 	)
 }
 
-// ---------------------------------------------------------------------------
-// Public component (SSR-safe via BrowserOnly — Docusaurus renders <details> as
-// plain HTML on the server, but the collapsible behavior needs the client.)
-// ---------------------------------------------------------------------------
+// MARK: Public component
 
+/**
+ * SSR-safe via `BrowserOnly`: Docusaurus renders `<details>` as plain HTML on the server, but the collapsible behavior
+ * needs the client.
+ */
 export const AboutDemo: React.FC = () => {
 	return <BrowserOnly fallback={<p>Loading demo info…</p>}>{() => <AboutDemoInner />}</BrowserOnly>
 }

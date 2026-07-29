@@ -207,7 +207,7 @@ function trailingPunct(raw: string): string | null {
 	return `${raw}.`
 }
 
-// MARK: paired-punct (Task 9 audit — quotes, brackets, braces, parens, guillemets)
+// MARK: paired-punct transforms
 
 /**
  * Wrap the WHOLE input in a matching straight-quote pair — the same "wrap the whole thing" idiom as `trailing-punct`,
