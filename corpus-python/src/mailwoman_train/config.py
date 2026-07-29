@@ -40,6 +40,8 @@ class DataConfig:
     # raw ("NY 14201" -> "NY14201") while tokens/labels stay split — the model learns to
     # split the fused surface at the SP-piece level. 0 = disabled (rng-stream bit-identical).
     augment_glue_prob: float = 0.0
+    # v3.24: ordinal-street swap ("5th" ↔ "Fifth") on street-family tokens — the 8.2.0 metamorphic catch.
+    augment_ordinal_prob: float = 0.0
     # Case augmentation (#829): probability that a row yields an extra LOWERCASED copy (raw + tokens
     # lowercased; labels + char-offset spans unchanged — lowercasing is length-preserving). Teaches the
     # model that a lowercase query is the same address (the #829 lowercase-sensitivity class). Model-first
