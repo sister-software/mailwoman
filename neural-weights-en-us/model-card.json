@@ -548,36 +548,35 @@
 		"locality-surface-lexicon-v6.json": "4023681a79d0f3f17ccdc93fb623d443"
 	},
 	"capabilities": {
-		"$carried_forward_comment": "NOT regenerated for 6.7.0 (Task 8 ship-prep did not re-run `mailwoman eval capability-manifest`) — these numbers are the 6.6.0/v385 measurement, carried forward as the best available reference. Flagged explicitly rather than silently reused; a fresh manifest is a tracked follow-up if 6.7.0 promotes.",
 		"server": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 0.8
+					"maskOffF1": 0.9
 				},
 				"street": {
-					"maskOffF1": 25.6
+					"maskOffF1": 23.5
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 94
+					"maskOffF1": 94.9
 				},
 				"locality": {
-					"maskOffF1": 79.5
+					"maskOffF1": 78.7
 				},
 				"region": {
-					"maskOffF1": 90.3
+					"maskOffF1": 90.5
 				},
 				"postcode": {
-					"maskOffF1": 96.5
+					"maskOffF1": 97.2
 				},
 				"country": {
-					"maskOffF1": 66.8
+					"maskOffF1": 68.9
 				},
 				"unit": {
-					"maskOffF1": 5.2
+					"maskOffF1": 5.3
 				},
 				"intersection_a": {
 					"maskOffF1": 100
@@ -586,10 +585,10 @@
 					"maskOffF1": 100
 				},
 				"po_box": {
-					"maskOffF1": 65.5
+					"maskOffF1": 61
 				},
 				"venue": {
-					"maskOffF1": 93.2
+					"maskOffF1": 92.9
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -597,10 +596,10 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 100
+					"maskOffF1": 95.2
 				},
 				"street": {
-					"maskOffF1": 90.9
+					"maskOffF1": 81.8
 				},
 				"house_number": {
 					"maskOffF1": 100
@@ -616,44 +615,44 @@
 		"pocket": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 0.8
+					"maskOffF1": 0.9
 				},
 				"street": {
-					"maskOffF1": 24.3
+					"maskOffF1": 23.2
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 86.5
+					"maskOffF1": 87.6
 				},
 				"locality": {
-					"maskOffF1": 60.3
+					"maskOffF1": 58.6
 				},
 				"region": {
 					"maskOffF1": 73.6
 				},
 				"postcode": {
-					"maskOffF1": 90.8
+					"maskOffF1": 91.9
 				},
 				"country": {
 					"maskOffF1": 0
 				},
 				"unit": {
-					"maskOffF1": 5
+					"maskOffF1": 4.9
 				},
 				"intersection_a": {
-					"maskOffF1": 66.7
+					"maskOffF1": 100
 				},
 				"intersection_b": {
-					"maskOffF1": 40
+					"maskOffF1": 66.7
 				},
 				"po_box": {
-					"maskOffF1": 63.2
+					"maskOffF1": 61
 				},
 				"venue": {
-					"maskOffF1": 89.9
+					"maskOffF1": 89.5
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -661,10 +660,10 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 100
+					"maskOffF1": 95.2
 				},
 				"street": {
-					"maskOffF1": 90.9
+					"maskOffF1": 81.8
 				},
 				"house_number": {
 					"maskOffF1": 100

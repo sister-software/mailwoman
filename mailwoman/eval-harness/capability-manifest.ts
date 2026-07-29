@@ -183,7 +183,11 @@ async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<R
 	}
 
 	for (const row of rows) {
-		const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
+		// Certification register (Decision A, 2026-07-30): these probes are full postal addresses — the
+		// FORMATTED register, where production runs the evidence-bundle channels OFF. Grading the
+		// always-fed config here certified a path production never serves (and on a bundle model read
+		// the fed-on-formatted damage register — street F1 collapsed to 24.9 in the first 6.7.0 run).
+		const got = decodeAsJSON(await neural.parse(row.raw, { inputMode: "formatted" })) as Record<string, string>
 		const exp = row.components
 
 		for (const t of TAGS) {
