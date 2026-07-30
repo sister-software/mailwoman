@@ -372,6 +372,9 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		expect(bundle.vintage).toBeNull()
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
+		// finding 1: the filing axis names WHY it's not covered — the layer was never wired — distinct from a
+		// wired-but-unsurveyed cell (see the next test).
+		expect(bundle.coverage_detail.filing).toBe("layer_missing")
 	})
 
 	it("abstains insufficient_survey_data (not requires_bdc_layer) when bdc.db is open but this exact cell was never surveyed, and vintage IS populated", async () => {
@@ -399,6 +402,8 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		})
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
+		// finding 1: distinct from the layer-missing case above — the LAYER is wired, only this cell lacks coverage.
+		expect(bundle.coverage_detail.filing).toBe("cell_unsurveyed")
 	})
 })
 
@@ -500,6 +505,9 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 		// DSL has no physical falsifier, so with no poi dep the confidence is filing-axis-only: covered -> "low"
 		// (this module's conservative not_applicable extension — see plausibility.ts's module docstring).
 		expect(bundle.coverage_confidence).toBe("low")
+		// finding 1: the bundle now NAMES why this is "low" — physical is not_applicable (DSL has no physical
+		// falsifier at all), NOT a poi survey gap — distinct states that used to be indistinguishable.
+		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "not_applicable" })
 	})
 })
 
@@ -519,6 +527,10 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			reason: "requires_build_local_layer",
 			layer: "poi",
 		})
+
+		// finding 1: physical is layer_missing here — fiber DOES have a falsifier (see the next test's
+		// not_applicable contrast for a tech that has none at all).
+		expect(bundle.coverage_detail.physical).toBe("layer_missing")
 	})
 
 	it("never abstains on poi for a tech with no physical falsifier, even when deps.poi is absent", async () => {
@@ -532,6 +544,8 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 		)
 
 		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
+		// finding 1: not_applicable, NOT layer_missing — DSL has no physical falsifier regardless of poi's presence.
+		expect(bundle.coverage_detail.physical).toBe("not_applicable")
 	})
 
 	it("a geoid-only claim (no point/address) skips physical evidence entirely — no abstain, no entry — even with deps.poi present", async () => {
@@ -559,6 +573,9 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 		expect(bundle.evidence_found.some((e) => e.type === "abstain" && e.reason === "requires_build_local_layer")).toBe(
 			false
 		)
+
+		// finding 1: no_coordinate — a real capability gap distinct from layer_missing, since deps.poi IS wired here.
+		expect(bundle.coverage_detail.physical).toBe("no_coordinate")
 	})
 })
 
@@ -603,21 +620,19 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		)
 
 		expect(bundle.coverage_confidence).toBe("high")
+		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 		expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
 		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)
 		expect(bundle.evidence_found.some((e) => e.type === "abstain")).toBe(false)
 	})
 
-	it("degrades to low when the physical layer is covered but the filing layer is not (unsurveyed point)", async () => {
+	it("both axes unknown (remote, unsurveyed-by-either point) -> insufficient_survey_data", async () => {
 		const { deps, cleanup } = await openBoth()
 		cleanups.push(cleanup)
 
-		// A remote point: bdc.db never surveyed it, but we still probe the poi layer at THIS point — no telecom
-		// plant fixture exists there either, but the poi contractDB coverage table is also silent for it, so both
-		// come back unknown UNLESS we specifically want the mixed case — construct it via a point whose bdc cell is
-		// unsurveyed while reusing the SAME poi coverage cell would require sharing geography, which the remote point
-		// deliberately does not. Instead: verify insufficient (both unknown) directly, the simplest mixed case to
-		// construct without new fixtures.
+		// A remote point: bdc.db never surveyed it, and openBoth()'s poi coverage table only covers Springfield's
+		// own res-6 parent, so both axes genuinely come back unknown here — the both-unknown branch, distinct from
+		// the ACTUAL mixed branch (one covered, one not) exercised below.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 		const bundle = await plausibilityCheck(
@@ -626,15 +641,85 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		)
 
 		expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
+		expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
+	})
+
+	// task 5 fix round 1 (review finding 3): `combineCoverage`'s genuine MIXED branch (one axis covered, the other
+	// not) was previously asserted via a test titled for exactly this case but whose body actually hit the
+	// both-unknown branch instead (its own comment admitted the mixed case couldn't be constructed). The two tests
+	// below construct the real thing, in both directions, rather than leaving the branch's actual coverage claim
+	// resting on a misleading title.
+	it("MIXED: filing covered, physical layer entirely missing (no poi dep) -> low", async () => {
+		const { scratch, db } = await buildBDCFixture()
+
+		cleanups.push(async () => {
+			db[Symbol.dispose]()
+			await rm(scratch, { recursive: true, force: true })
+		})
+
+		const bundle = await plausibilityCheck(
+			{
+				geoid: GEOID_SPRINGFIELD,
+				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+				claimedDownloadMbps: 1000,
+			},
+			{ bdcDB: db } // no poi — physical axis is layer_missing, NOT not_applicable (fiber DOES have a falsifier)
+		)
+
+		expect(bundle.coverage_confidence).toBe("low")
+		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "layer_missing" })
+		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(true)
+
+		expect(bundle.evidence_found).toContainEqual({
+			type: "abstain",
+			reason: "requires_build_local_layer",
+			layer: "poi",
+		})
+	})
+
+	it("MIXED: physical covered, filing layer unsurveyed (bdc.db never surveyed this point) -> low", async () => {
+		const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
+		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([])
+		const poiContractDB = await openPOIContractDB()
+		const poiLookup = new POILookup({ databasePath: poiPath })
+
+		// Deliberately covering the REMOTE point's own res-6 parent (not Springfield's) — decoupled from any real poi
+		// row, same idiom `nearest-infrastructure.test.ts`'s `openEmptyContractDB` establishes — so the physical axis
+		// reads COVERED at a cell bdc.db never surveyed, genuinely separating the two axes instead of both landing on
+		// unknown together.
+		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
+		const remoteCell = cellFor(41.8781, -87.6298)
+
+		await writeLayerCoverage(poiContractDB, [
+			{ h3Cell: res9ShortCellToRes6Parent(remoteCell), completeness: 1, observedRows: 0 },
+		])
+
+		cleanups.push(async () => {
+			bdcDB[Symbol.dispose]()
+			poiLookup[Symbol.dispose]()
+			poiContractDB[Symbol.dispose]()
+			await rm(bdcScratch, { recursive: true, force: true })
+			await rm(poiScratch, { recursive: true, force: true })
+		})
+
+		const bundle = await plausibilityCheck(
+			{ point: remote, technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 1000 },
+			{ bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } }
+		)
+
+		expect(bundle.coverage_confidence).toBe("low")
+		expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "covered" })
+		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
+		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
 	})
 })
 
-describe("plausibilityCheck — cross-layer coverage-spine sanity assertion (ledger note, task 4 review)", () => {
-	it("throws when bdc.db and poi.db manifests disagree on their recorded h3 spine resolution", async () => {
+describe("plausibilityCheck — per-layer coverage-spine resolution assertion (ledger note, task 4 review; task 5 fix round 1 finding 2)", () => {
+	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with both layers wired", async () => {
 		const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
 		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Deliberately mismatched: bdc.db records resolution 9; this poi contractDB records 6.
+		// Deliberately mismatched: bdc.db records resolution 9 (BDC_H3_RESOLUTION); this poi contractDB records 6.
 		const poiContractDB = await openPOIContractDB(6)
 		const poiLookup = new POILookup({ databasePath: poiPath })
 
@@ -655,10 +740,36 @@ describe("plausibilityCheck — cross-layer coverage-spine sanity assertion (led
 				},
 				{ bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } }
 			)
-		).rejects.toThrow(/disagree on their recorded h3 spine resolution/)
+		).rejects.toThrow(/poi\.db's recorded h3 spine resolution \(6\) does not match BDC_H3_RESOLUTION \(9\)/)
 	})
 
-	it("does not run the cross-layer check (and does not throw) when only one layer is wired", async () => {
+	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB) — finding 2", async () => {
+		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+		// Same mismatch as above, but this time bdcDB is never wired at all — previously this ran NO check whatsoever,
+		// since the retired assertion only fired when BOTH layers were present. `pointCell` (below) is still derived
+		// from BDC_H3_RESOLUTION regardless, so poi's own resolution must be checked here too.
+		const poiContractDB = await openPOIContractDB(6)
+		const poiLookup = new POILookup({ databasePath: poiPath })
+
+		cleanups.push(async () => {
+			poiLookup[Symbol.dispose]()
+			poiContractDB[Symbol.dispose]()
+			await rm(poiScratch, { recursive: true, force: true })
+		})
+
+		await expect(
+			plausibilityCheck(
+				{
+					point: SPRINGFIELD_POINT,
+					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+					claimedDownloadMbps: 1000,
+				},
+				{ poi: { lookup: poiLookup, contractDB: poiContractDB } }
+			)
+		).rejects.toThrow(/poi\.db's recorded h3 spine resolution \(6\) does not match BDC_H3_RESOLUTION \(9\)/)
+	})
+
+	it("does not throw when only bdcDB is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
 		const { scratch, db } = await buildBDCFixture()
 
 		cleanups.push(async () => {
@@ -674,6 +785,29 @@ describe("plausibilityCheck — cross-layer coverage-spine sanity assertion (led
 					claimedDownloadMbps: 1000,
 				},
 				{ bdcDB: db }
+			)
+		).resolves.not.toThrow()
+	})
+
+	it("does not throw when only poi is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
+		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+		const poiContractDB = await openPOIContractDB() // default resolution 9, matches BDC_H3_RESOLUTION
+		const poiLookup = new POILookup({ databasePath: poiPath })
+
+		cleanups.push(async () => {
+			poiLookup[Symbol.dispose]()
+			poiContractDB[Symbol.dispose]()
+			await rm(poiScratch, { recursive: true, force: true })
+		})
+
+		await expect(
+			plausibilityCheck(
+				{
+					point: SPRINGFIELD_POINT,
+					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+					claimedDownloadMbps: 1000,
+				},
+				{ poi: { lookup: poiLookup, contractDB: poiContractDB } }
 			)
 		).resolves.not.toThrow()
 	})

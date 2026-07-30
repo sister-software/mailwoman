@@ -94,17 +94,21 @@
  *   than the alternative (treating the missing axis as inert and reporting `"high"` off filing alone) —
  *   flagged here for review since Task 6's four gates don't exercise a no-physical-falsifier tech code.
  *
- *   **Ledger note (task 4 review) — the cross-layer coverage-resolution sanity check.** Neither bdc.db's
- *   nor poi.db's `layer_manifest` records the COVERAGE-cell h3 resolution (6) that
+ *   **Ledger note (task 4 review; extended task 5 fix round 1, finding 2) — the per-layer coverage-resolution sanity
+ *   check.** Neither bdc.db's nor poi.db's `layer_manifest` records the COVERAGE-cell h3 resolution (6) that
  *   `res9ShortCellToRes6Parent` hardcodes on both sides — only each layer's ROW-spine resolution (9,
  *   `spineKeys.h3.resolution`) is ever recorded. A real fix needs a layer-contract schema addition (out
  *   of scope for this task; the same follow-up task 4's report already ticketed). What IS practical and
- *   cheap: both manifests are single-row tables already read at most once per call here, so whenever
- *   BOTH `bdcDB` and `poi` are wired, {@link assertCoverageSpineAgreement} cross-checks the one thing
- *   that IS recorded — the two layers' `spineKeys.h3.resolution` — and throws if they disagree, catching
- *   a future layer built at a different spine resolution before it silently mis-joins a coverage cell.
- *   It can NOT catch a layer whose row spine is 9 but whose COVERAGE cells were derived at some OTHER
- *   resolution than 6 — that gap needs the schema addition, not a runtime assertion.
+ *   cheap: each manifest is a single-row table already read at most once per call here, so whenever a layer is
+ *   WIRED — `bdcDB`, `poi`, or both, checked independently — {@link assertLayerSpineResolution} compares that one
+ *   layer's recorded `spineKeys.h3.resolution` directly against the `BDC_H3_RESOLUTION` constant `pointCell` is
+ *   actually derived from, and throws on a mismatch, catching a layer built at a different spine resolution before it
+ *   silently mis-joins a coverage cell. This is TWO-SIDED, not gated on both layers being present together: a
+ *   poi-only call still checks poi's own recorded resolution, since `readLayerCoverage`'s poi-side join key (below)
+ *   is derived from `BDC_H3_RESOLUTION` regardless of whether `bdcDB` is wired at all (the original one-sided version
+ *   compared the two manifests to each other, so it silently skipped poi entirely whenever `bdcDB` was absent). It
+ *   can NOT catch a layer whose row spine is 9 but whose COVERAGE cells were derived at some OTHER resolution than 6
+ *   — that gap needs the schema addition, not a runtime assertion.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -152,10 +156,57 @@ export type PlausibilityEvidence =
 	| { type: "physical_plant"; hit: InfrastructureHit }
 	| { type: "abstain"; reason: PlausibilityAbstainReason; layer?: string }
 
+/**
+ * One evidence channel's survey-completeness state for THIS claim, WITH the reason a non-`"covered"` state applies —
+ * task 5 fix round 1 (review finding 1): `coverage_confidence` alone folds several genuinely different situations into
+ * the same `"low"`/`"insufficient_survey_data"` verdict (a tech with no physical falsifier at all vs. a real poi survey
+ * gap vs. a geoid-only claim with no coordinate to search from), and Task 6's gates need to attribute WHICH one
+ * applies. `"not_applicable"` and `"no_coordinate"` are only ever produced for the physical axis; the filing axis only
+ * ever reaches `"covered"`, `"layer_missing"`, or `"cell_unsurveyed"`.
+ */
+export type PlausibilityCoverageAxisState =
+	| "covered"
+	/**
+	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the
+	 * `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
+	 */
+	| "layer_missing"
+	/**
+	 * The dependency IS wired, but the specific queried block/cell carries no survey coverage of its own — the
+	 * `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
+	 */
+	| "cell_unsurveyed"
+	/**
+	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's
+	 * claim-resolution note), so no physical-evidence search point exists. A genuine capability gap, not a missing layer
+	 * — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
+	 */
+	| "no_coordinate"
+	/**
+	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see
+	 * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}) — there is no applicable second channel for this tech, ever,
+	 * regardless of layer availability. Distinct from every other state: this claim can never earn `"high"`.
+	 */
+	| "not_applicable"
+
+/**
+ * Per-axis attribution for {@link PlausibilityBundle.coverage_confidence} — see {@link PlausibilityCoverageAxisState}.
+ * Added alongside `coverage_confidence` (kept as-is for compatibility) rather than replacing it.
+ */
+export interface PlausibilityCoverageDetail {
+	filing: PlausibilityCoverageAxisState
+	physical: PlausibilityCoverageAxisState
+}
+
 export interface PlausibilityBundle {
 	claim: PlausibilityClaim
 	evidence_found: PlausibilityEvidence[]
 	coverage_confidence: "high" | "low" | "insufficient_survey_data"
+	/**
+	 * Per-axis WHY behind `coverage_confidence` — task 5 fix round 1 (finding 1). ALWAYS present, mirroring
+	 * `block_resolution`'s always-present discipline.
+	 */
+	coverage_detail: PlausibilityCoverageDetail
 	/**
 	 * `"geoid"` when `claim.geoid` drove the filing-evidence lookup (the exact, native path); otherwise
 	 * `"h3_cell_approximation"` (decision 4 — the point/address path's unsound-but-flagged h3 cell). ALWAYS present on
@@ -259,10 +310,17 @@ function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityCl
 }
 
 /**
- * One evidence channel's survey-completeness state for THIS claim — `"not_applicable"` is only ever produced for the
- * physical axis (the tech maps to no physical category at all).
+ * Collapse the fine-grained {@link PlausibilityCoverageAxisState} down to the 3-value space `combineCoverage` actually
+ * reasons over: `"layer_missing"` and `"cell_unsurveyed"` are both simply UNKNOWN for confidence-combination purposes
+ * (the distinction only matters for `coverage_detail`'s attribution, not for the confidence math itself).
  */
-type CoverageState = "covered" | "unknown" | "not_applicable"
+function confidenceStateForAxis(state: PlausibilityCoverageAxisState): "covered" | "unknown" | "not_applicable" {
+	if (state === "covered") return "covered"
+
+	if (state === "not_applicable") return "not_applicable"
+
+	return "unknown"
+}
 
 /**
  * Combine the two layers' coverage states into the bundle's `coverage_confidence` — see the module docstring for the
@@ -270,43 +328,51 @@ type CoverageState = "covered" | "unknown" | "not_applicable"
  * two-channel opportunity).
  */
 function combineCoverage(
-	filingState: CoverageState,
-	physicalState: CoverageState
+	filingState: PlausibilityCoverageAxisState,
+	physicalState: PlausibilityCoverageAxisState
 ): PlausibilityBundle["coverage_confidence"] {
-	if (physicalState === "not_applicable") {
-		return filingState === "covered" ? "low" : "insufficient_survey_data"
+	const filing = confidenceStateForAxis(filingState)
+	const physical = confidenceStateForAxis(physicalState)
+
+	if (physical === "not_applicable") {
+		return filing === "covered" ? "low" : "insufficient_survey_data"
 	}
 
-	if (filingState === "covered" && physicalState === "covered") return "high"
+	if (filing === "covered" && physical === "covered") return "high"
 
-	if (filingState === "unknown" && physicalState === "unknown") return "insufficient_survey_data"
+	if (filing === "unknown" && physical === "unknown") return "insufficient_survey_data"
 
 	return "low"
 }
 
 /**
- * See the module docstring's "ledger note" section. Throws when both manifests are readable but disagree on their
- * recorded h3 spine resolution — the one cross-layer fact that IS recorded, and the closest available proxy for the
- * (unrecorded) coverage-cell resolution both layers' `res9ShortCellToRes6Parent` calls assume they share.
+ * See the module docstring's "ledger note" section. Throws when a WIRED layer's manifest disagrees with
+ * `BDC_H3_RESOLUTION` — the single constant `plausibilityCheck` actually uses at runtime to derive both the
+ * filing-lookup cell (bdc side, via `pointCell`) and the coverage-cell join key `readLayerCoverage` is read against
+ * (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
+ *
+ * Task 5 fix round 1 (review finding 2): checked independently PER LAYER, whenever THAT layer is wired, rather than
+ * only when both `bdcDB` and `poi` are wired together. The original one-sided assertion compared the two manifests to
+ * EACH OTHER, which meant a poi-only call (no `bdcDB`) never checked poi's recorded resolution at all — even though
+ * `pointCell` (computed unconditionally from `BDC_H3_RESOLUTION`) still drives the poi coverage-cell read below.
+ * Comparing each layer directly against the constant is also strictly stronger than the retired manifest-vs-manifest
+ * check: it catches a layer built under a since-changed `BDC_H3_RESOLUTION` even when the OTHER layer is absent
+ * entirely, not just a disagreement between two present layers.
  */
-async function assertCoverageSpineAgreement(
-	bdcDB: DatabaseClient<BDCDatabase>,
-	poiContractDB: Kysely<LayerContractDatabase>
+async function assertLayerSpineResolution(
+	layer: "bdc" | "poi",
+	contractDB: Kysely<LayerContractDatabase>,
+	expectedResolution: number
 ): Promise<void> {
-	const [bdcManifest, poiManifest] = await Promise.all([
-		readLayerManifest(asContractDB(bdcDB)),
-		readLayerManifest(poiContractDB),
-	])
+	const manifest = await readLayerManifest(contractDB)
+	const resolution = manifest.spineKeys.h3?.resolution
 
-	const bdcResolution = bdcManifest.spineKeys.h3?.resolution
-	const poiResolution = poiManifest.spineKeys.h3?.resolution
-
-	if (bdcResolution === undefined || poiResolution === undefined || bdcResolution !== poiResolution) {
+	if (resolution === undefined || resolution !== expectedResolution) {
 		throw new Error(
-			`plausibilityCheck: bdc.db and poi.db disagree on their recorded h3 spine resolution ` +
-				`(bdc=${String(bdcResolution)}, poi=${String(poiResolution)}) — the res-9→res-6 coverage-cell ` +
-				`reconstruction this scorer relies on assumes they match; refusing to compose evidence across ` +
-				`mismatched layers rather than silently mis-joining a coverage cell.`
+			`plausibilityCheck: ${layer}.db's recorded h3 spine resolution (${String(resolution)}) does not match ` +
+				`BDC_H3_RESOLUTION (${expectedResolution}) — the res-9→res-6 coverage-cell reconstruction this scorer ` +
+				`relies on assumes they match; refusing to compose evidence against a mismatched layer rather than ` +
+				`silently mis-joining a coverage cell.`
 		)
 	}
 }
@@ -348,14 +414,20 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION) as H3Cell)
 		: undefined
 
-	// Ledger note (task 4 review): cheap, one-time cross-layer sanity check — see the module docstring.
-	if (deps.bdcDB && deps.poi) {
-		await assertCoverageSpineAgreement(deps.bdcDB, deps.poi.contractDB)
+	// Ledger note (task 4 review; task 5 fix round 1 finding 2): cheap, one-time per-layer sanity check — see the
+	// module docstring. Runs independently per WIRED layer, not only when both are present — a poi-only call still
+	// joins poi's coverage table against a BDC_H3_RESOLUTION-derived cell (below) and must not do so unchecked.
+	if (deps.bdcDB) {
+		await assertLayerSpineResolution("bdc", asContractDB(deps.bdcDB), BDC_H3_RESOLUTION)
+	}
+
+	if (deps.poi) {
+		await assertLayerSpineResolution("poi", deps.poi.contractDB, BDC_H3_RESOLUTION)
 	}
 
 	const evidence: PlausibilityEvidence[] = []
 	let vintage: string | null = null
-	let filingCoverage: CoverageState = "unknown"
+	let filingCoverage: PlausibilityCoverageAxisState = "layer_missing"
 
 	if (!deps.bdcDB) {
 		evidence.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
@@ -382,22 +454,25 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 				})
 			}
 		} else {
+			filingCoverage = "cell_unsurveyed"
 			evidence.push({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
 		}
 	}
 
 	const physicalCategories = physicalCategoriesForTechnology(claim.technologyCode)
-	let physicalCoverage: CoverageState = "not_applicable"
+	let physicalCoverage: PlausibilityCoverageAxisState = "not_applicable"
 
 	if (physicalCategories.length) {
 		if (!deps.poi) {
-			physicalCoverage = "unknown"
+			physicalCoverage = "layer_missing"
 			evidence.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 		} else if (!point) {
 			// Geoid-only claim, no coordinate resolvable — see the module docstring's claim-resolution note. A real
 			// capability gap, not a missing-layer abstain: no evidence entry is fabricated, but the axis still
-			// degrades honestly for coverage_confidence.
-			physicalCoverage = "unknown"
+			// degrades honestly for coverage_confidence (and now names ITS OWN reason in `coverage_detail`, distinct
+			// from `"layer_missing"`, rather than folding into the same generic "unknown" — task 5 fix round 1
+			// finding 1).
+			physicalCoverage = "no_coordinate"
 		} else {
 			const hits = await nearestInfrastructure(deps.poi.lookup, deps.poi.contractDB, {
 				center: point,
@@ -409,7 +484,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 			}
 
 			const coverageCell = await readLayerCoverage(deps.poi.contractDB, res9ShortCellToRes6Parent(pointCell!))
-			physicalCoverage = coverageCell ? "covered" : "unknown"
+			physicalCoverage = coverageCell ? "covered" : "cell_unsurveyed"
 		}
 	}
 
@@ -417,6 +492,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		claim,
 		evidence_found: evidence,
 		coverage_confidence: combineCoverage(filingCoverage, physicalCoverage),
+		coverage_detail: { filing: filingCoverage, physical: physicalCoverage },
 		block_resolution: blockResolution,
 		vintage,
 	}
