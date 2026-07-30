@@ -28,6 +28,16 @@
  *   the 48-bit "short" form (`shortCellToInt`/`shortenH3Cell`) already carries exactly those low 52 bits
  *   verbatim — so `"8" + R.toString(16) + shortHex.padStart(13, "0")` reassembles the identical full
  *   index `latLngToCell` would have produced at resolution R. See {@link res9ShortCellToRes6Parent}.
+ *
+ *   This same formula is exactly what `build-bdc.ts` MUST use (and does, after fix round 1) to derive the
+ *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
+ *   `latLngToCell(centroid, 6)` computed independently of the stored res-9 cell disagrees with
+ *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over CONUS). Builder and
+ *   reader deriving the res-6 parent differently was a real bug (fix round 1): a genuinely-surveyed block
+ *   (real rows, real `layer_coverage` entry) could read back as `unknown_block_count` while its own rows
+ *   still populated `filings` — a self-contradiction. `filings` is now scoped to units that PASS the
+ *   coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen again: a
+ *   block excluded from `surveyed_block_count` never contributes to `filings` either.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -141,9 +151,10 @@ function asContractDB(kdb: DatabaseClient<BDCDatabase>): Kysely<LayerContractDat
 
 /**
  * Reconstruct the res-6 ancestor of a res-9 short-cell int WITHOUT a centroid — see the module docstring for why this
- * isn't `@mailwoman/spatial`'s `expandH3Cell`.
+ * isn't `@mailwoman/spatial`'s `expandH3Cell`. Exported so tests can assert this agrees, cell-for-cell, with
+ * `build-bdc.ts`'s own coverage-cell derivation (the two MUST share this exact formula — see that file's docstring).
  */
-function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
+export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 	const shortHex = h3CellShortInt.toString(16).padStart(13, "0")
 	const fullCell = `8${BDC_H3_RESOLUTION.toString(16)}${shortHex}` as H3Cell
 	const parentCell = cellToParent(fullCell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell
@@ -197,6 +208,12 @@ export async function filingLandscape(
 
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
+	// Only units that PASS the coverage check feed the census below — a unit with rows but no coverage evidence
+	// (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" gate) is `unknown`, and
+	// its rows must not leak into `filings` either: `surveyed_block_count` and the blocks backing `filings` must
+	// always agree, or a caller cross-referencing the two gets a contradiction (an "unknown" block whose filings
+	// still show up looks exactly like the false-negative bug this reader exists to prevent).
+	const surveyedUnits: Array<string | number> = []
 
 	for (const unit of requestedUnits) {
 		const candidateCell = candidateCellByUnit.get(unit)
@@ -214,34 +231,39 @@ export async function filingLandscape(
 			unknownBlockCount++
 		} else {
 			surveyedBlockCount++
+			surveyedUnits.push(unit)
 		}
 	}
 
-	let filingsQuery = db
-		.selectFrom("bdc_availability")
-		.select([
-			"provider_id",
-			"technology_code",
-			speedBucketCaseSQL.as("speed_bucket"),
-			(eb) => eb.fn.count<number>(unitColumn).distinct().as("block_count"),
-		])
-		.groupBy(["provider_id", "technology_code", speedBucketCaseSQL])
-		.orderBy("provider_id")
-		.orderBy("technology_code")
-		.orderBy(speedBucketCaseSQL)
+	let filings: ProviderFilingSummary[] = []
 
-	filingsQuery = query.geoids
-		? filingsQuery.where("geoid", "in", query.geoids)
-		: filingsQuery.where("h3_cell", "in", query.h3Cells!)
+	if (surveyedUnits.length) {
+		let filingsQuery = db
+			.selectFrom("bdc_availability")
+			.select([
+				"provider_id",
+				"technology_code",
+				speedBucketCaseSQL.as("speed_bucket"),
+				(eb) => eb.fn.count<number>(unitColumn).distinct().as("block_count"),
+			])
+			.groupBy(["provider_id", "technology_code", speedBucketCaseSQL])
+			.orderBy("provider_id")
+			.orderBy("technology_code")
+			.orderBy(speedBucketCaseSQL)
 
-	const filingsRows = await filingsQuery.execute()
+		filingsQuery = query.geoids
+			? filingsQuery.where("geoid", "in", surveyedUnits as string[])
+			: filingsQuery.where("h3_cell", "in", surveyedUnits as number[])
 
-	const filings: ProviderFilingSummary[] = filingsRows.map((row) => ({
-		provider_id: row.provider_id,
-		technology_code: row.technology_code,
-		speed_bucket: row.speed_bucket,
-		block_count: row.block_count,
-	}))
+		const filingsRows = await filingsQuery.execute()
+
+		filings = filingsRows.map((row) => ({
+			provider_id: row.provider_id,
+			technology_code: row.technology_code,
+			speed_bucket: row.speed_bucket,
+			block_count: row.block_count,
+		}))
+	}
 
 	return {
 		vintage: manifest.sourceVintage,

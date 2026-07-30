@@ -60,7 +60,7 @@ import {
 } from "@mailwoman/core/layers"
 import { openBuiltDatabase, sealDatabase } from "@mailwoman/core/utils"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "h3-js"
 import type { Kysely } from "kysely"
 
 import {
@@ -473,12 +473,23 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			const centroid = options.blockCentroids(row.geoid)
 
 			resolved = centroid
-				? {
-						h3Cell: shortCellToInt(latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell),
-						coverageCell: shortCellToInt(
-							latLngToCell(centroid.lat, centroid.lon, BDC_COVERAGE_H3_RESOLUTION) as H3Cell
-						),
-					}
+				? (() => {
+						// Coverage cell MUST be derived as the res-9 cell's H3 hierarchy parent — NOT a second,
+						// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
+						// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
+						// disagree for a real fraction of points (~6% empirically over CONUS, reviewer-verified —
+						// hexagon/pentagon boundary artifacts). Deriving both `h3_cell` and the coverage cell from
+						// the SAME full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
+						// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
+						// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
+						// the res-6 parent identically, or a genuinely-surveyed block can read back as unknown.
+						const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
+
+						return {
+							h3Cell: shortCellToInt(fullRes9Cell),
+							coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
+						}
+					})()
 				: null
 
 			centroidCache.set(row.geoid, resolved)
