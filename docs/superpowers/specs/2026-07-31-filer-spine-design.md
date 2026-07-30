@@ -55,6 +55,36 @@ to, and what the public record physically supports.
 | **EIN**                     | IRS                                | **Mostly NOT public**       | —                                                                                          | Public only via SEC cover pages and **nonprofit 990s** (which do cover many rural co-op ISPs). Do not promise EIN coverage |
 | **State CPCN / SOS entity** | 50 state registries                | Heterogeneous               | Registered agent + officer names often reveal family                                       | Per-state scrapers; OpenCorporates licensing is restrictive — verify before use                                            |
 
+### 3.1 Form 499 — the column vocabulary (read from Nexus, 2026-07-31)
+
+`isp-nexus/universe/sync/fcc/universal-service.ts` already encodes the real 499 TSV column set, which
+is worth more than the code around it:
+
+`form499ID · frn · lastFiledAt · usfContributor · legalNameOfCarrier · doingBusinessAs ·
+principalCommType · holdingCompany · managementCompany · hqAddress · customerInquiriesTelephone ·
+customerInquiriesAddress · dcAgentDisplayName · dcAgentOrganizationName · dcAgentTelephone ·
+dcAgentEmailAddress · dcAgentAddress`
+
+Three findings that change the design:
+
+1. **There are TWO family fields, not one** — `holdingCompany` _and_ `managementCompany`. They differ
+   in kind (ownership vs operational control) and both deserve typed edges rather than being collapsed.
+2. **`principalCommType` is a free classification signal** — the Nexus code maps it to
+   Incumbent LEC / CLEC / Interexchange / Toll Reseller. Port the mapping; it tells you what _kind_ of
+   carrier a filer is without any inference.
+3. **The DC agent is an anti-pattern for family inference.** The 499 "DC agent" is the agent for
+   service of process, and that role is dominated by a handful of firms (CT Corporation, CSC, Cogency
+   Global) serving tens of thousands of unrelated companies. Shared registered agent must **never**
+   produce a family edge — it is the single most likely false-positive generator in this whole design.
+   Record it as an attribute; never as evidence of relatedness.
+
+**Salvage verdict: take the vocabulary and the classification mapping; rewrite the loader.** The Nexus
+implementation reads the entire TSV into memory, silently truncates short rows
+(`relax_column_count_less`), declares `otherTradeName1` in its interface while omitting it from the
+column tuple (so it is never populated — a live bug), and carries a `findFilingByID` docstring
+promising recursive replacement-filing resolution with cycle handling over an implementation that is a
+plain `Map.get`. The column tuple and the `principalCommType` mapping are the durable parts.
+
 ## 4. Architecture
 
 ### 4.1 The crosswalk as a provenanced graph
