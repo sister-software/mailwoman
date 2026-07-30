@@ -184,3 +184,84 @@ motivation:
   description: The case for Mailwoman — why neural, why TypeScript, why a staged pipeline.
 
 #endregion
+
+#region Glossary
+
+# Added with the +34-term glossary expansion (#1359) — the training/eval vocabulary the
+# v8.2.0–v8.3.0 arcs made routine. Registered here because unregistered tags FAIL THE BUILD.
+
+model:
+  label: Model
+  description: The trained artifact itself — weights, versions, lineage, bases vs fine-tunes.
+
+evidence:
+  label: Evidence channels
+  description: The evidence-bundle inputs — lexicon-painted channels, presence calibration, absence curricula.
+
+lexicon:
+  label: Lexicons
+  description: The painted evidence lexicons — street-type, locality-surface, the four-law selectivity rules.
+
+gates:
+  label: Gates & margins
+  description: Pre-registered promotion gates — floors, noise-honest margins, boards, and gauntlets.
+
+process:
+  label: Process discipline
+  description: How model work is run — pre-registration, named watches, envelopes, stop rules.
+
+method:
+  label: Methods
+  description: Named diagnostic techniques — fingerprints, probes, ablations, and attribution tools.
+
+doctrine:
+  label: Doctrine
+  description: The standing principles behind design calls — user register, positive evidence only, model-first.
+
+runtime:
+  label: Runtime behavior
+  description: Decode-time and serving-time mechanisms — input modes, gates, riders, and routers.
+
+api:
+  label: API surface
+  description: The HTTP/library contract — endpoints, options, and the annotation seams.
+
+schema:
+  label: Schema
+  description: The ComponentTag union, label sets, and the contracts that define what the parser emits.
+
+locale:
+  label: Locale mechanics
+  description: Per-locale gating, overlays, tiers, and locale-conditional behavior.
+
+cjk:
+  label: CJK
+  description: Chinese/Japanese/Korean address handling — segmentation, char paths, and label activation.
+
+enterprise:
+  label: Enterprise
+  description: Customer-facing engagements — fine-tune templates, acceptance batteries, support guarantees.
+
+#endregion
+
+#region Research blog
+
+# Used by the research/ blog series (the 666k-addresses methodology post).
+
+multilocale:
+  label: Multi-locale
+  description: Working across many address systems at once — mixed-country corpora and cross-locale evaluation.
+
+overture:
+  label: Overture Maps
+  description: Overture Maps Foundation data — places, divisions, addresses, and GERS.
+
+testing:
+  label: Testing
+  description: Test methodology — fixtures, harnesses, regression suites, and coverage discipline.
+
+methodology:
+  label: Methodology
+  description: How measurements are designed — sampling, controls, and the reasoning behind an experimental setup.
+
+#endregion
