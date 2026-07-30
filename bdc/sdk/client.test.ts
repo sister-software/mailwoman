@@ -15,6 +15,22 @@ import { BDCFileCategory, BDCFilingDataType, BDCStateSubCategory, type RawBDCFil
 import { resolveLatestVintage, retrieveFilingDates, type FCCAsOfDateEntry } from "./filing-dates.ts"
 import { retrieveAvailabilityFiles } from "./list-files.ts"
 
+// `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
+// read from the repo's real `.env` once at module load, so `vi.stubEnv(..., undefined)` alone can't hide
+// real FCC_MAP_USERNAME/FCC_MAP_API_KEY values committed there: the merge falls back to `dotEnv`'s value
+// regardless of what the test stubs on `process.env`. Mock the module directly so the no-credentials test
+// below is isolated from whatever the ambient environment actually contains (live-data finding — this
+// broke the first time real credentials landed in `.env`). Every OTHER test in this file passes explicit
+// `username`/`apiKey` options and never reads `$private`, so this mock doesn't affect them.
+vi.mock("@mailwoman/core/env", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@mailwoman/core/env")>()
+
+	return {
+		...actual,
+		$private: { ...actual.$private, FCC_MAP_USERNAME: undefined, FCC_MAP_API_KEY: undefined },
+	}
+})
+
 let dataRoot: string
 
 beforeEach(() => {
