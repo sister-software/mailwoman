@@ -53,7 +53,7 @@ import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
  * since 6.1.0). Bump these two paths on each ship; the expected md5s live in model-card.json `files_md5` (single source
  * — see the header).
  */
-const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v3240-ordinal-step-004000-int8.onnx")
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v401-base-step-060000-int8.onnx")
 /**
  * Tokenizer the workspace links when `$MAILWOMAN_DEV_TOKENIZER` is unset.
  */

@@ -105,6 +105,7 @@ export interface PublishHFOptions {
 	streetTypeLexicon?: string
 	localitySurfaceLexicon?: string
 	polygons?: string
+	fisher?: string
 	setDefault?: boolean
 	/**
 	 * Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail.
@@ -176,6 +177,39 @@ function stageOptionalBinary(spec: string | undefined, label: string): string | 
 	}
 
 	return localPath
+}
+
+/**
+ * Upload a verified path list flat under the version dir, keyed by basename (the postcode/pair-index/FST/Fisher pattern
+ * — the local basename IS the remote name).
+ */
+function uploadFlatByBasename(paths: string[], remoteBase: string): void {
+	for (const localPath of paths) {
+		const remoteName = localPath.split("/").pop()
+		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
+
+		console.error(`  → ${dst}`)
+
+		run("hf", ["buckets", "cp", localPath, dst])
+	}
+}
+
+/**
+ * Verify each basename-keyed artifact is reachable via the resolve URL — the same contract Phase 3 applies to
+ * REQUIRED_FILES.
+ */
+async function verifyFlatByBasename(paths: string[], remoteBase: string): Promise<void> {
+	for (const localPath of paths) {
+		const remoteName = localPath.split("/").pop()
+		const url = `${BUCKET_RESOLVE}/${remoteBase}/${remoteName}`
+		const ok = await checkRemoteFileExists(url)
+
+		if (!ok) {
+			fail(`${remoteName} unreachable at ${url}`)
+		}
+
+		console.error(`  ✓ ${url}`)
+	}
 }
 
 /**
@@ -278,6 +312,13 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
 	const polygonsDb = stageOptionalBinary(args.polygons, "polygon DB")
 
+	// Fisher consolidation artifacts (#1354): fisher-diag-v1-model-X.npz + its .json sidecar. The
+	// bundle-contract addition from the 7.0.0 base — "the weights bundle ships its Fisher" — so every
+	// fine-tune (ours and customers') can apply the EWC brake. HF/R2 distribution only: runtime never
+	// reads it, npm never ships it, publish.yml never fetches it (its preflight HEAD-checks it when
+	// the model card declares fisher_artifact). Versioned basenames, staged flat like the postcode bins.
+	const fisherArtifacts = stageBinaryList(args.fisher, "Fisher artifact")
+
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
 
@@ -291,34 +332,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
 
-	for (const localPath of postcodeBins) {
-		const remoteName = localPath.split("/").pop()
-		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
-
-		console.error(`  → ${dst}`)
-
-		run("hf", ["buckets", "cp", localPath, dst])
-	}
-
-	for (const localPath of pairIndexBins) {
-		const remoteName = localPath.split("/").pop()
-		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
-
-		console.error(`  → ${dst}`)
-
-		run("hf", ["buckets", "cp", localPath, dst])
-	}
+	uploadFlatByBasename(postcodeBins, remoteBase)
+	uploadFlatByBasename(pairIndexBins, remoteBase)
 
 	// Per-locale FST gazetteers for the NPM packages (#1318) — flat under the version dir by lowercase
 	// basename; publish.yml fetches these into each weights workspace so the tarball ships its FST.
-	for (const localPath of fstBins) {
-		const remoteName = localPath.split("/").pop()
-		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
-
-		console.error(`  → ${dst}`)
-
-		run("hf", ["buckets", "cp", localPath, dst])
-	}
+	uploadFlatByBasename(fstBins, remoteBase)
 
 	// Demo's BCP-47-cased FST gazetteer (#1318) — OPTIONAL (en-nz ships none). Distinct filename from
 	// the lowercase --fsts above; the demo fetcher expects `fst-en-US.bin`.
@@ -370,6 +389,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		run("hf", ["buckets", "cp", polygonsDb, dst])
 	}
 
+	uploadFlatByBasename(fisherArtifacts, remoteBase)
+
 	// --- Phase 3: verify each artifact is reachable via the resolve URL ---
 	console.error(`Verifying ${REQUIRED_FILES.length} artifacts via HTTPS...`)
 
@@ -397,17 +418,10 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	// Per-locale NPM FSTs (#1318 --fsts) — each must be reachable so publish.yml can fetch it.
-	for (const localPath of fstBins) {
-		const remoteName = localPath.split("/").pop()
-		const url = `${BUCKET_RESOLVE}/${remoteBase}/${remoteName}`
-		const ok = await checkRemoteFileExists(url)
+	await verifyFlatByBasename(fstBins, remoteBase)
 
-		if (!ok) {
-			fail(`${remoteName} unreachable at ${url}`)
-		}
-
-		console.error(`  ✓ ${url}`)
-	}
+	// Fisher artifacts (#1354) — must be reachable so publish.yml's card-derived preflight passes.
+	await verifyFlatByBasename(fisherArtifacts, remoteBase)
 
 	// --- Phase 4: update releases.json ---
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`

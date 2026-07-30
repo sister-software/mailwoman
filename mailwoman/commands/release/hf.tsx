@@ -65,6 +65,12 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe("Locality-surface evidence lexicon JSON (Option-A bundle; uploaded as locality-surface-lexicon-v6.json)"),
 	polygons: zod.string().optional().describe("Crisp-polygon DB (uploaded as wof-polygons.db)"),
+	fisher: zod
+		.string()
+		.optional()
+		.describe(
+			"Comma-separated Fisher consolidation artifacts (#1354; fisher-diag-v1-model-X.npz + .json sidecar) — staged flat by basename; never fetched by publish.yml (runtime never reads it), HEAD-checked by its preflight when the card declares fisher_artifact"
+		),
 	setDefault: zod.boolean().default(false).describe("Set this version as releases.json defaultVersion"),
 	wofHot: zod.string().optional().describe("RETIRED 2026-06-20 (slim wof-hot.db) — accepted and ignored"),
 })

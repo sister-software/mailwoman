@@ -272,6 +272,14 @@ jobs:
           for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin street-type-lexicon-v3.json locality-surface-lexicon-v6.json; do
             if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
           done
+          # Fisher consolidation artifact (#1354, model 7.0.0+): the bundle contract says the weights
+          # ship their Fisher on HF/R2 (never in the npm tarball, never fetched below — runtime never
+          # reads it). Card-derived so the versioned basename never goes stale here: HEAD-check it
+          # whenever the card declares fisher_artifact, and stage it via `release hf --fisher …`.
+          FISHER_FILE=$(node -e "const c=JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')); console.log(c.fisher_artifact?.file ?? '')")
+          if [ -n "$FISHER_FILE" ]; then
+            if ! curl -fsI "${BASE}/${FISHER_FILE}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${FISHER_FILE} (card fisher_artifact — stage with release hf --fisher)"; MISSING=1; else echo "  ✓ ${FISHER_FILE}"; fi
+          fi
           if [ "$MISSING" = 1 ]; then
             echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
             echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v6.json> --set-default   (RELEASING.md §3)"

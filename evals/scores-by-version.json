@@ -1277,6 +1277,47 @@
 				}
 			},
 			"notes": "6.7.0-bundle (v3.24.0-bundle-ordinal step-4000, npm 8.2.0): the Option-A evidence bundle ships — street_type+locality_surface channels, digit-guarded four-law lexicons (street v3/locality-surface v6), inputMode register gating (Decision A) + the street-context gate, ordinal-street augmentation (the 8.2.0 pre-ship metamorphic catch trained out). G5 graded the ABLATED column = formatted-mode production; fragment register: homonym +0.258 asis/+0.730 lower+heal, ALL +0.267 lower+heal. fr.cedex under the noise-honest 82.2 floor (NAMED WATCH). street-hn asis raw -0.022 (one row past the diagnostic bar; +0.022 heal-on production register — recorded). [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v3240-ablated]"
+		},
+		{
+			"run_id": "v401-base-60k-s42",
+			"model_version": "8.3.0",
+			"model_path": "@mailwoman/neural-weights-en-us@8.3.0",
+			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (undefined): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-07-30",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 95.9,
+					"country_homograph": 87.5,
+					"micro": 89.8,
+					"locality": 81,
+					"region": 91.5,
+					"street": 90.5,
+					"street_prefix": 91.3,
+					"street_suffix": 96.6,
+					"unit": 97,
+					"po_box_real": 90.9,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.8,
+					"house_number": 98.3,
+					"region": 44.1,
+					"cedex_real": 90.5
+				},
+				"de": {
+					"native_locality_anchor_on": 91.1
+				},
+				"arena": {
+					"perturb": 78
+				}
+			},
+			"notes": "model 7.0.0 from-scratch base (v4.0.1-base-60k step-60000); new v7.0.0-base gate spec (Wilson support-aware margins); locality lexicon v6 per the G8 revert; Fisher artifact fisher-diag-v1 beside the weights; one named watch: si-sentinel-ucakar (char-path lineage fix) [graded_artifact=weights-cache; gate=undefined; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v700-final]"
 		}
 	]
 }

@@ -85,7 +85,7 @@ const PKG_DIR = repoRootPath("neural-weights-en-gb")
  * fails loud on any future miss.
  */
 const SRC_MODEL =
-	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v3240-ordinal-step-004000-int8.onnx")
+	$public.MAILWOMAN_DEV_MODEL || dataRootPath("models", "quantized", "model-v401-base-step-060000-int8.onnx")
 
 /**
  * Tokenizer actually linked — the environment override if set, otherwise the card's default.

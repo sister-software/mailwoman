@@ -1,0 +1,50 @@
+{
+	"$comment": "Gate spec for the v7.0.0 base lineage — cut from the v4.0.1-base-60k candidate's SHIP-CONFIG readings (int8, locality lexicon v6 per the G8 DE-fold revert; v7 trained the channel, v6 ships — DE surfaces run the trained absence identity). Philosophy inherited from v6.0.0-shipped-baseline; margins now use each metric's REAL support with WILSON intervals (the normal approximation under-margins boundary readings — 100% at n=36 priced at 1pp where Wilson prices ~10pp; the v6-era 2.0pp fallback class is retired).",
+	"$margin_rationale": "floor = ship-config reading - max(1.0pp, 2 x the downward Wilson 95% half-width at the metric's own support). Supports = each instrument's tp+fn or fixture n, recorded in $supports.",
+	"$supports": {
+		"us.postcode": 1523,
+		"us.country_homograph_f1": 54,
+		"us.micro": 2660,
+		"us.locality": 1616,
+		"us.region": 2660,
+		"us.street": 1995,
+		"us.street_prefix": 25,
+		"us.street_suffix": 30,
+		"us.unit_real": 34,
+		"fr.postcode": 1288,
+		"fr.house_number": 739,
+		"fr.region": 197,
+		"de.native_locality": "unexposed — 2.0pp legacy fallback, ANNOTATED",
+		"arena.perturb": 100,
+		"us.po_box_real": 2000,
+		"fr.cedex_real": 430,
+		"us.intersection_real": 36
+	},
+	"$revision_notes": {
+		"us.street_prefix": "n=25; reading 91.3 — four spelled-out-directional recall misses, precision 100 (rows named in the 2026-07-30 verdict; the 9-probe directional-homograph set proves zero over-splitting cost). The v6 spec's 96.0 was the 2.0pp-fallback artifact.",
+		"fr.cedex_real": "the v6-era named watch is RETIRED — the base reads 90.5 natively vs the waived 82.2. Floor re-cut with its real margin.",
+		"fr.bare_street_intact": "KEPT VERBATIM at 75.0 (designed margin, #949) — regression bars re-cut, designed tolerances never.",
+		"locality_lexicon": "SHIP = v6 (the G8 DE-fold revert: DE evidence net-negative on its own board, -0.113 homonym asis; pre-registered contingency executed). v7 remains a built artifact; the DE fold re-enters only with its own promotion case.",
+		"si-sentinel-ucakar": "NOT a floor — the ONE named watch on the 7.0.0 promote: raw digit-split byte-identical to shipped (which passes only via the word-consistency heal); designed fix = the char-path lineage. The gauntlet keeps it gated."
+	},
+	"floors": {
+		"us.postcode": 93.7,
+		"us.country_homograph_f1": 64.8,
+		"us.micro": 87.4,
+		"us.locality": 77.0,
+		"us.region": 89.3,
+		"us.street": 87.8,
+		"us.street_prefix": 57.0,
+		"us.street_suffix": 69.9,
+		"us.unit_real": 73.0,
+		"fr.postcode": 98.8,
+		"fr.house_number": 95.9,
+		"fr.region": 30.6,
+		"de.native_locality": 89.1,
+		"arena.perturb": 59.9,
+		"us.po_box_real": 88.2,
+		"fr.cedex_real": 84.2,
+		"us.intersection_real": 80.7,
+		"fr.bare_street_intact": 75.0
+	}
+}

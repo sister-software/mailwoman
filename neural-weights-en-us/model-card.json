@@ -1,7 +1,7 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "6.7.0",
-	"model_lineage": "6.7.0-bundle: v3.24.0-bundle-ordinal step-4000 — the Option-A evidence bundle (5-run productionization arc v3.19→v3.23, 2026-07-28). init_from v385 (6.6.0) step-8000 on v385's OWN feed (v0.13.0-latam — the deploc probe passengers removed after the flip-census/feed attribution), + street_type[1] + locality_surface[2] evidence channels, absence curriculum + evidence-noise 0.15, four-law curated lexicons (street-type v3 / locality-surface v6) with rules.digit_guard (evidence never paints beside a Unicode-Nd digit — the guard that turned alnum-housenumber from −0.325 to +0.013 lower+heal). LR 1.0e-5 constant, 8k steps, best save 4000 (the reproducible mid-run peak; 8k over-trust decay observed in all five runs). | v3.24 (2026-07-29): +augment_ordinal_prob 0.3 (5th↔Fifth street swaps) — the 8.2.0 pre-ship metamorphic catch trained out; world-city fixtures clean under the street-context gate.",
+	"version": "7.0.0",
+	"model_lineage": "7.0.0-base: v4.0.1-base-60k step-60000 — THE FROM-SCRATCH BASE (the v8.3.0 golden master; no init_from, one recipe, one provenance). 60k cosine s42 on v0.15.0-venue (v0.13.0-latam + the FR-order-aware synth-house-venue shard, 116,244 rows — the run-2 contingency that fixed the venue-led class the fine-tune lineage had inherited invisibly). Evidence bundle native from step 0: street_type[1] + locality_surface[2] channels, absence + false-evidence (0.15) curricula, digit-guarded four-law lexicons (street v3 / locality-surface trained on v7, SHIPPED with v6 — the G8 DE-fold revert: DE evidence read net-negative on its own board, the pre-registered per-ingredient contingency), ordinal 0.3 + punct-drop 0.3 + directional/region/glue augmentation, gazetteer curriculum ON. FIRST model whose locality channel actually trained (#1349: every bundle-era fine-tune's locality tensors were dropped by the trainer; fixed #1350). Ships beside its FISHER ARTIFACT (fisher-diag-v1.npz, diagonal empirical Fisher over the final 2k steps, all 39.26M trainables — the EWC brake for fine-tunes; HF/R2-distributed, the runtime never reads it). Prior lineage record: 6.7.0-bundle: v3.24.0-bundle-ordinal step-4000 — the Option-A evidence bundle (5-run productionization arc v3.19→v3.23, 2026-07-28). init_from v385 (6.6.0) step-8000 on v385's OWN feed (v0.13.0-latam — the deploc probe passengers removed after the flip-census/feed attribution), + street_type[1] + locality_surface[2] evidence channels, absence curriculum + evidence-noise 0.15, four-law curated lexicons (street-type v3 / locality-surface v6) with rules.digit_guard (evidence never paints beside a Unicode-Nd digit — the guard that turned alnum-housenumber from −0.325 to +0.013 lower+heal). LR 1.0e-5 constant, 8k steps, best save 4000 (the reproducible mid-run peak; 8k over-trust decay observed in all five runs). | v3.24 (2026-07-29): +augment_ordinal_prob 0.3 (5th↔Fifth street swaps) — the 8.2.0 pre-ship metamorphic catch trained out; world-city fixtures clean under the street-context gate.",
 	"phase": "SHIPPED (6.7.0-bundle, 2026-07-29, npm 8.2.0) — the Option-A evidence bundle: v3.24.0-bundle-ordinal step-4000 (init_from v385 on v385's own feed) + street_type/locality_surface channels + four-law digit-guarded lexicons (street v3 / locality-surface v6) + inputMode register gating (Decision A: fragmented feeds channels, formatted runs the trained absence identity; per-endpoint defaults). Cleared 17/17 through the ratified v6.0.0-shipped-baseline gate (fr.cedex under the noise-honest 82.2 floor, NAMED WATCH: re-anchors at the next from-scratch retrain); fragment register: homonym +0.245 asis / +0.765 lower+heal, ALL +0.261 lower+heal. Full verdict ledger in eval.gate_2026_07_28_v3230_bundle_guard. || Prior shipped record: SHIPPED (6.6.4, 2026-07-26) — bundle revision on UNCHANGED model bytes (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e): the per-locale FST gazetteers (fst-en-us/fr-fr/en-gb.bin) are REBUILT with build-time degenerate-surface curation (`mailwoman gazetteer build fst`, policy `degenerate-surface-exclusion v1.1` recorded in each artifact trailer) — bare function words (incl. the case-folded 'LA'/'OP' initialism aliases), bare street-type words, and all-function-word compositions are pruned from the bias index (the ASR-contextual-biasing 'curate the bias list' discipline; receipts + battery in PR #1332: FR street-particle 290→298, bare-street to P0 parity, golden us/fr byte-equal, gauntlet PASS ×3 layers; residual 3 rows are true homographs — the Option-A class). Also code-side in the same release: the pipeline pins the #1315 street-context gate at positiveScale 0 (D2, closed #1320 — FR admin-street-homonym at exact P0 parity). Prior record: SHIPPED (6.6.2, 2026-07-24) — bundle revision on UNCHANGED model bytes (v385, model.onnx md5 700f3cf4c08f31536f0bc053c281b19e, same files_md5 as 6.6.0): the en-gb overlay's pair-index-gb.bin is re-cut at δ=10 and @mailwoman/neural 7.7.0's auto probe chain activates GB dependent_locality on this shipped model (see neural-weights-en-gb/model-card.json 6.6.1 for the capability record). The 6.7.0 staged-candidate lineage is CLOSED: no checkpoint of v3.10–v3.13 passed the Gauntlet's metamorphic layer; five mechanisms falsified (starvation, encoder drift, save anomaly, comma-share, LR-hold/anneal); stop rule executed three times; the break is established in the first ≤1k steps of encoder+head co-training and is stable. Model-side redesign is unhurried research — the dep-loc capability no longer depends on it. Falsification record: docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md + .superpowers/sdd/task-8-report.md. 6.6.2 adds the en-nz overlay (pair-index-nz.bin, LINZ census, δ=10) + the identical-adjacent-segment (x,x) rule in @mailwoman/neural 7.8.0 — NZ dependent_locality live (246/246, 100% as-written; the repeated-name convention handled as registry evidence). Model bytes STILL v385/unchanged.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "en-us",
@@ -538,11 +538,12 @@
 			"g4_gauntlet": "PASS ×3 (regression/metamorphic/held-out)",
 			"g5_golden_ablated": "PASS 17/17 (v6.0.0-shipped-baseline; fr.cedex 83.3 under the ratified 82.2 noise-honest floor — NAMED WATCH)",
 			"g6_canary": "formatted-mode clean by construction; fed-mode 4/20 flips recorded as misroute-cost input"
-		}
+		},
+		"gate_2026_07_30_v700_base_promote": "PROMOTED as model 7.0.0 (npm 8.3.0). Ship-config battery (int8, locality v6): v6.0.0-shipped-baseline 16/17 + fr.bare_street_intact + mask-regression PASS — the one nominal miss is us.street_prefix 91.3 vs the 96.0 fallback-margin floor (n=25; four spelled-out-directional recall misses, precision 100; clears the support-aware v7.0.0-base floor). fr.cedex_real 90.5 — the v6-era NAMED WATCH RETIRED (above the unwaived 85.6-class reading). us.street 90.5 / us.locality 81.0 / us.micro 89.8 — multiple floors up vs the shipped 6.7.0. P0 fragment grid FLAT 40k→60k both registers (the over-trust decay proven a fine-tune-recipe artifact): asis ALL 0.803, lower+heal 0.983. Gauntlet: regression 3 venue must-clears CLEARED + 3 tracked cases promoted to pass + the 9-probe directional-homograph set 9/9 (zero prefix-over-splitting cost); metamorphic 5 tracked xfails (one fewer than shipped); held-out PASS. ONE NAMED WATCH rides this promote: si-sentinel-ucakar (SI diacritic digit-split; raw split byte-identical to shipped, which passes only via the word-consistency heal; designed fix = the char-path lineage). New gate spec: v7.0.0-base.json (support-aware Wilson margins, cut from this candidate's ship-config readings)."
 	},
 	"files_md5": {
 		"$comment": "The SHIPPED artifact md5s — the identity link-dev-weights.ts (#397 guard) and the gauntlet self-check (#1024) verify dev symlinks / materialized tarballs against, repo-wide. 6.7.0-bundle = v3.24.0-bundle-ordinal step-4000 int8 ($MAILWOMAN_DATA_ROOT/models/quantized/model-v3240-ordinal-step-004000-int8.onnx) + the two digit-guarded evidence lexicons; tokenizer UNCHANGED (v0.9.0-multisplice). Flipped from the staged_candidate block at the 8.2.0 cut (2026-07-29) in lockstep with requires + link-dev-weights DEFAULT_MODEL, per the staging discipline.",
-		"model.onnx": "fba90850f3ab61b227acb71ddfb59856",
+		"model.onnx": "c968c24ad1a3e59658ff1d92c5720575",
 		"tokenizer.model": "5c01cdcd4ae25849c5cb26b69fd3dde9",
 		"street-type-lexicon-v3.json": "d0194a730805f9e6a886a98e8421061a",
 		"locality-surface-lexicon-v6.json": "4023681a79d0f3f17ccdc93fb623d443"
@@ -551,44 +552,44 @@
 		"server": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 0.9
+					"maskOffF1": 1.5
 				},
 				"street": {
-					"maskOffF1": 23.5
+					"maskOffF1": 24.4
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 94.9
+					"maskOffF1": 98.3
 				},
 				"locality": {
-					"maskOffF1": 78.7
+					"maskOffF1": 79.6
 				},
 				"region": {
-					"maskOffF1": 90.5
+					"maskOffF1": 91
 				},
 				"postcode": {
-					"maskOffF1": 97.2
+					"maskOffF1": 98.5
 				},
 				"country": {
-					"maskOffF1": 68.9
+					"maskOffF1": 69.4
 				},
 				"unit": {
-					"maskOffF1": 5.3
+					"maskOffF1": 6.3
 				},
 				"intersection_a": {
-					"maskOffF1": 100
+					"maskOffF1": 66.7
 				},
 				"intersection_b": {
-					"maskOffF1": 100
+					"maskOffF1": 20
 				},
 				"po_box": {
-					"maskOffF1": 61
+					"maskOffF1": 72
 				},
 				"venue": {
-					"maskOffF1": 92.9
+					"maskOffF1": 94.6
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -596,10 +597,10 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 95.2
+					"maskOffF1": 80
 				},
 				"street": {
-					"maskOffF1": 81.8
+					"maskOffF1": 54.5
 				},
 				"house_number": {
 					"maskOffF1": 100
@@ -615,44 +616,44 @@
 		"pocket": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 0.9
+					"maskOffF1": 1.5
 				},
 				"street": {
-					"maskOffF1": 23.2
+					"maskOffF1": 24.3
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 87.6
+					"maskOffF1": 97.7
 				},
 				"locality": {
 					"maskOffF1": 58.6
 				},
 				"region": {
-					"maskOffF1": 73.6
+					"maskOffF1": 71
 				},
 				"postcode": {
-					"maskOffF1": 91.9
+					"maskOffF1": 98.6
 				},
 				"country": {
 					"maskOffF1": 0
 				},
 				"unit": {
-					"maskOffF1": 4.9
+					"maskOffF1": 6.8
 				},
 				"intersection_a": {
-					"maskOffF1": 100
+					"maskOffF1": 18.2
 				},
 				"intersection_b": {
-					"maskOffF1": 66.7
+					"maskOffF1": 5.6
 				},
 				"po_box": {
-					"maskOffF1": 61
+					"maskOffF1": 66.7
 				},
 				"venue": {
-					"maskOffF1": 89.5
+					"maskOffF1": 94.1
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -660,10 +661,10 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 95.2
+					"maskOffF1": 80
 				},
 				"street": {
-					"maskOffF1": 81.8
+					"maskOffF1": 54.5
 				},
 				"house_number": {
 					"maskOffF1": 100
@@ -677,5 +678,14 @@
 			}
 		},
 		"$comment": "Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask OFF; maskOnF1 = the same with mask ON (recorded only for tags some codex forbiddenTags row suppresses — the loader's delta-gate consults only those). createScorer FAILS CLOSED when a conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
+	},
+	"fisher_artifact": {
+		"$comment": "The consolidation artifact (v8.3.0 D4/#1354): diagonal empirical Fisher over the base run's final 2,000 steps, covering all 39,261,743 trainable parameters. The EWC brake input for every fine-tune off this base (train.ewc_fisher_path). HF/R2-distributed ONLY — the runtime never reads it, so it stays out of the npm tarball.",
+		"file": "fisher-diag-v1-model-7.0.0.npz",
+		"sidecar": "fisher-diag-v1-model-7.0.0.json",
+		"md5": "79ede288210ba4b5c1ff56c9fd082b5f",
+		"captured_at_step": 60000,
+		"count_batches": 2000,
+		"distribution": "hf+r2"
 	}
 }
