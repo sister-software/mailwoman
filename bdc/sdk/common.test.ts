@@ -91,3 +91,35 @@ test("compareStateCodeAsc: sorts a 3-element array ascending by state FIPS code"
 
 	expect(sorted.map((file) => file.stateCode)).toEqual(["06", "36", "48"])
 })
+
+test("parseRawBDCFile: State-category row with a null technology_code parses to an empty technologyCodes set", () => {
+	// Live-data finding (FCC smoke test): `/map/downloads/listAvailabilityData` returns
+	// `technology_code: null` for at least some State-category rows. See
+	// `.superpowers/sdd/2026-07-30-bdc-2b-plan/live-smoke-findings.md`.
+	const raw: RawBDCFile = {
+		...rawFixture,
+		technology_code: null,
+		technology_code_desc: "",
+	}
+
+	const parsed = parseRawBDCFile(raw)
+
+	expect(parsed.technologyCodes).toEqual(new Set())
+})
+
+test("parseRawBDCFile: null provider_id/provider_name/state_fips parse to safe defaults", () => {
+	// Plausible sibling nulls alongside technology_code — provider/state metadata is not always
+	// scoped to a specific provider or state depending on category/subcategory.
+	const raw: RawBDCFile = {
+		...rawFixture,
+		provider_id: null,
+		provider_name: null,
+		state_fips: null,
+	}
+
+	const parsed = parseRawBDCFile(raw)
+
+	expect(parsed.providerID).toBe(0)
+	expect(parsed.providerName).toBe("")
+	expect(parsed.stateCode).toBe("")
+})
