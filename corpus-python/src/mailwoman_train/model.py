@@ -35,7 +35,7 @@ from torch import nn
 
 from .config import Config
 from .crf import LinearChainCRF, TopKPath
-from .labels import ACTIVE_BIO_LABELS, ID_TO_LABEL, IGNORE_INDEX, LABEL_TO_ID, NUM_LOCALES
+from .labels import ID_TO_LABEL, IGNORE_INDEX, NUM_LOCALES
 from .phrase_priors import PHRASE_FEATURE_DIM
 from .span_scorer import SemiMarkovCRF, SpanScorer, gold_segments
 
@@ -253,12 +253,27 @@ class MailwomanCoarseEncoder(nn.Module):
         char_vocab_size: int = 0,
         char_embed_dim: int = 64,
         char_kernel_sizes: tuple[int, ...] = (3, 4, 5),
+        # v8 CJK Phase 2: THIS model's label map (index -> BIO label). None = the module-global
+        # STAGE3 map (every pre-Phase-2 checkpoint). The JP 47-label head passes its own; save()
+        # persists it and from_pretrained() restores it, so a checkpoint always knows its labels.
+        id_to_label: dict[int, str] | None = None,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings
         self.hidden_size = hidden_size
         self.num_labels = num_labels
+        if id_to_label is not None:
+            self.id_to_label: dict[int, str] = dict(id_to_label)
+            if len(self.id_to_label) != num_labels:
+                raise ValueError(f"id_to_label carries {len(self.id_to_label)} labels but num_labels={num_labels}")
+        else:
+            # Default = the module-global STAGE3 map, truncated to num_labels (the historical
+            # behavior — probe/test models with small heads index a prefix of it). A head WIDER
+            # than the global map has no honest default and must pass its own.
+            if num_labels > len(ID_TO_LABEL):
+                raise ValueError(f"num_labels={num_labels} exceeds the default label map — pass id_to_label")
+            self.id_to_label = {i: ID_TO_LABEL[i] for i in range(num_labels)}
         # PR3 self-conditioning: an auxiliary locale head over the pooled sequence + a FiLM
         # modulation of the per-token reps by the inferred locale. See forward() for the data
         # flow and the design doc (2026-06-04-pr3-self-conditioned-retrain.md) for the why.
@@ -550,8 +565,10 @@ class MailwomanCoarseEncoder(nn.Module):
         self.span_boundary_loss_weight = float(span_boundary_loss_weight)
         if use_span_boundary_head:
             self.span_boundary_head = nn.Linear(hidden_size, 2)  # [start, end] logits
-            is_begin = torch.tensor([ID_TO_LABEL[i].startswith("B-") for i in range(num_labels)], dtype=torch.bool)
-            is_inside = torch.tensor([ID_TO_LABEL[i].startswith("I-") for i in range(num_labels)], dtype=torch.bool)
+            is_begin = torch.tensor([self.id_to_label[i].startswith("B-") for i in range(num_labels)], dtype=torch.bool)
+            is_inside = torch.tensor(
+                [self.id_to_label[i].startswith("I-") for i in range(num_labels)], dtype=torch.bool
+            )
             self.register_buffer("bio_is_begin", is_begin, persistent=False)
             self.register_buffer("bio_is_inside", is_inside, persistent=False)
 
@@ -571,7 +588,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # scalars (483 for 21 labels) — negligible vs the encoder's ~30M parameters.
         # Disabled via use_crf=False for ablation studies or backwards compat with
         # pre-v0.3.0 checkpoints.
-        self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, ID_TO_LABEL) if use_crf else None
+        self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, self.id_to_label) if use_crf else None
 
         # PR3 self-conditioning modules. ``locale_head`` maps the pooled (mean over real tokens)
         # representation to the locale posterior — the aux supervised signal AND the exported
@@ -1205,8 +1222,8 @@ class MailwomanCoarseEncoder(nn.Module):
             "char_vocab_size": int(self.char_vocab_size),
             "char_embed_dim": int(self.char_embed_dim),
             "char_kernel_sizes": list(self.char_kernel_sizes),
-            "id2label": dict(ID_TO_LABEL),
-            "label2id": dict(LABEL_TO_ID),
+            "id2label": dict(self.id_to_label),
+            "label2id": {label: i for i, label in self.id_to_label.items()},
         }
         (output_dir / "config.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
 
@@ -1216,11 +1233,16 @@ class MailwomanCoarseEncoder(nn.Module):
         cfg = json.loads((model_dir / "config.json").read_text(encoding="utf-8"))
         # v0.4.0: reconstruct the class_weights tensor in label-index order.
         # Absent / None in config → uniform.
+        # v8 CJK Phase 2: restore THIS checkpoint's own label map (JSON stringifies int keys).
+        # Pre-Phase-2 checkpoints persisted the STAGE3 map, so the fallback is only for configs
+        # that predate the id2label key entirely.
+        persisted_id2label = cfg.get("id2label")
+        id_to_label = {int(k): v for k, v in persisted_id2label.items()} if persisted_id2label else dict(ID_TO_LABEL)
         cw_dict = cfg.get("class_weights")
         cw_tensor: torch.Tensor | None = None
         if cw_dict:
             cw_tensor = torch.tensor(
-                [float(cw_dict.get(ID_TO_LABEL[i], 1.0)) for i in range(cfg["num_labels"])],
+                [float(cw_dict.get(id_to_label[i], 1.0)) for i in range(cfg["num_labels"])],
                 dtype=torch.float32,
             )
         model = cls(
@@ -1281,6 +1303,7 @@ class MailwomanCoarseEncoder(nn.Module):
             char_vocab_size=cfg.get("char_vocab_size", 0),
             char_embed_dim=cfg.get("char_embed_dim", 64),
             char_kernel_sizes=tuple(cfg.get("char_kernel_sizes", (3, 4, 5))),
+            id_to_label=id_to_label,
         )
         # map_location="cpu": checkpoints are written on an A100, and torch pickles the storage's
         # device. Without this, loading a GPU-trained checkpoint on a CPU-only box raises
@@ -1302,13 +1325,31 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
     load time (like ``vocab_size`` for the SentencePiece path) and only used when
     ``cfg.model.use_char_embed`` is set.
     """
+    # v8 CJK Phase 2: the label vocabulary is per-config (data.label_set; "stage3" default keeps
+    # every existing recipe byte-identical). The internal consumers of the module-global 33-label
+    # maps (CRF init aside — that one is threaded) are flag-gated features that have never trained
+    # against a non-default set; refuse the combination loudly rather than mislabel silently.
+    from .labels import resolve_label_set
+
+    label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
+    if label_set.name != "stage3":
+        for flag in (
+            "use_conventions_loss_mask",
+            "use_affix_head",
+            "use_deploc_head",
+            "use_span_boundary_head",
+            "use_span_scorer",
+        ):
+            if getattr(cfg.model, flag, False):
+                raise ValueError(f"model.{flag} is not supported with data.label_set={label_set.name!r}")
+
     # v0.4.0: derive the class_weights tensor from cfg.model.class_weights if set.
     # Labels not present in the dict default to weight 1.0 (no change vs uniform).
     cw_dict = getattr(cfg.model, "class_weights", None)
     cw_tensor: torch.Tensor | None = None
     if cw_dict:
         cw_tensor = torch.tensor(
-            [float(cw_dict.get(label, 1.0)) for label in ACTIVE_BIO_LABELS],
+            [float(cw_dict.get(label, 1.0)) for label in label_set.bio_labels],
             dtype=torch.float32,
         )
     return MailwomanCoarseEncoder(
@@ -1319,7 +1360,8 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         intermediate_size=cfg.model.intermediate_size,
         max_position_embeddings=cfg.model.max_position_embeddings,
         hidden_dropout_prob=cfg.model.hidden_dropout_prob,
-        num_labels=len(ACTIVE_BIO_LABELS),
+        num_labels=len(label_set.bio_labels),
+        id_to_label=label_set.id_to_label,
         pad_token_id=pad_token_id,
         # v0.3.0 defaults — surface in cfg.model if/when ablation studies need to vary.
         use_crf=getattr(cfg.model, "use_crf", True),

@@ -1,0 +1,202 @@
+# === v4.0.1-base-60k — RUN 2 OF THE ENVELOPE (the venue contingency; ROAD_TO §10 item 1). ===
+# ONE NAMED DELTA vs v4.0.0-base-60k: the synth-house-venue shard folded into the feed —
+# corpus v0.15.0-venue (v0.13.0-latam + 116,244 house-venue rows, FR-ORDER AWARE: the FR tail
+# "VENUE, 20 Rue de la Huchette, 75005 Paris" is the v4.0.0 gauntlet's exact failure family) +
+# source_weights synth-house-venue: 2.0. Everything else BYTE-IDENTICAL to v4.0.0 incl.
+# fisher_capture (the run-2 artifact supersedes run-1's).
+#
+# WHY (the run-1 verdict): gauntlet regression layer failed 3 fixtures, all one family — FR
+# venue-led full addresses dropping to admin/street tier. Mechanism proven register-invariant
+# (not evidence painting); root cause = the feed NEVER admitted a venue shard (source_weights
+# drops unlisted sources; synth-house-venue existed as a recipe but was in NO corpus) — the
+# shipped model's venue competence was lineage inheritance, which from-scratch X-rayed away.
+#
+# PRE-REGISTERED GATES: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity as written there), plus:
+#   - The 3 venue fixtures (mr-mrs-crab / jjan-chatelet / american-bar-le-marais) MUST clear.
+#   - The 2 now-PASS tracked cases (chat-qui-peche, venue-delta) must STAY passing (promote their
+#     status in the same cut).
+#   - us.street_prefix graded against the SUPPORT-AWARE recut floor (the recorded disposition:
+#     the 96.0 floor used the 2.0pp fallback margin on an n=25 metric; the spec-rule floor ≈ 86).
+#   - No other class may drop below its run-1 reading by more than noise (the delta is one shard
+#     at ~1.4% mass; a wider movement means the delta did more than its name).
+#   STOP RULE: this is the envelope's LAST run. Any miss => operator conversation, no third launch.
+#
+# Launch checklist: the v0.15.0-venue overlay synced (R2 corpus/v0.15.0-venue/ -> /data/corpus/
+# versioned/v0.15.0-venue/; base shards resolve into v0.13.0-latam which persists on the volume).
+#   modal run -d corpus-python/modal/train_remote.py --config v4.0.1-base-60k.yaml --resume none
+#
+data:
+  corpus_dir: /data/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue # RUN-2 DELTA: the venue overlay.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights: # VERBATIM v2.4.1.
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    "NO": 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+    AU: 1.0
+    CA: 1.0 # Overture — live locality.
+    MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
+  source_weights: # VERBATIM v3.24 EXCEPT synth-po-box-cedex (the D2 revert).
+    synth-house-venue: 2.0 # RUN-2 DELTA (the ONE variable): the FR-order-aware venue shard.
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5 # D2 REVERT (3.0 -> 1.5, the v385 share): the boost was fine-tune replay medicine; the base learns the class natively.
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 12.0
+    synth-nl-postcode: 6.0
+    synth-fragment: 6.0
+    synth-fr-fragment: 12.0
+    synth-no-fragment: 12.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3 # The num-ordinal invariant, native from step 0 (v3.24's proven dose).
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json # D2: the DE fold (#1355).
+model: # VERBATIM v3.24 (v2.4.1 geometry + the shipped channel set).
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group.
+  output_dir: /data/output-v401-base-60k-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000 # D1: every 5k; the over-trust watch grades every save from 40k on.
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true # Fresh channel — absence-robustness from step 0 (see header note 5).
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true # D4/#1354 — the B11 consolidation artifact, captured at the only cheap point.
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v4.0.1-base-60k-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

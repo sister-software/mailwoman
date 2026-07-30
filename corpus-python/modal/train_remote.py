@@ -3289,6 +3289,7 @@ def grade_evidence_bundle(
     show_flips: str = "",
     case: str = "asis",
     heal: bool = False,
+    fixture: str = "ban-fragments-fr.jsonl",
 ):
     """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
     computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
@@ -3317,7 +3318,8 @@ def grade_evidence_bundle(
         check=True,
         capture_output=True,
     )
-    fixture = f"{VOL_MOUNT}/eval/fixtures/ban-fragments-fr.jsonl"
+    # G8 (run-2 ladder): --fixture points the same instrument at overture-fragments-de.jsonl.
+    fixture = f"{VOL_MOUNT}/eval/fixtures/{fixture}"
 
     ck = Path(f"{VOL_MOUNT}/output-{run}-s42/checkpoints/step-{step:06d}")
     tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
@@ -3609,3 +3611,65 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         print(f"{k:<24} {on_c / n:>7.3f} {off_c / n:>7.3f} {(on_c - off_c) / n:>+11.3f}")
     print(f"{'ALL':<24} {tot_on / tot_n:>7.3f} {tot_off / tot_n:>7.3f} {(tot_on - tot_off) / tot_n:>+11.3f}")
     print("\ndelta > 0 => street_type input evidence improves street<->locality discrimination (Option A live).")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_jp_probe():
+    """v8 CJK Leg-1: sync the char-path training code + the v8-jp-probe corpus (200k train / 4k val
+    span-triple parquet + the sealed JP char vocab + the municipality-held-out board) from R2. The
+    corpus is glob-layout (train/ + val/, no MANIFEST), so no re-rooting concerns. Clears stale pyc."""
+    import shutil
+    import subprocess
+
+    print("Syncing v8-jp-probe code + corpus from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-jp-probe/ {VOL_MOUNT}/corpus/versioned/v8-jp-probe/ {R}",
+        # Leg 2 (the unification bake-off): just the sealed Latin char vocab — the latam corpus +
+        # multisplice tokenizer already persist on the volume from the v3.8.x runs.
+        f"rclone copy :s3:{BUCKET}/corpus/v8-leg2/ {VOL_MOUNT}/corpus/versioned/v8-leg2/ {R}",
+        # v8.3.0 base retrain: the v7 locality lexicon (the DE fold, #1355).
+        f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v7.json {VOL_MOUNT}/gazetteer/ {R}",
+        # Run-2 venue contingency: the v0.15.0-venue overlay (manifest + the one shard parquet; the
+        # 703 base shards resolve into v0.13.0-latam, which persists on the volume).
+        f"rclone copy :s3:{BUCKET}/corpus/v0.15.0-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.0-venue/ {R}",
+        # G8: the DE fragment board for the run-2 ladder.
+        f"rclone copy :s3:{BUCKET}/eval/fixtures/overture-fragments-de.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv8-jp-probe sync complete. Volume committed.")
+
+    src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v8-jp-probe"
+    print("  v8-jp-probe config present:", os.path.isfile(f"{src}/configs/v8-jp-probe.yaml"))
+    print("  char path in data_loader:", "char_mode" in open(f"{src}/data_loader.py").read())
+    print("  encode_row_units present:", "encode_row_units" in open(f"{src}/char_tokenizer.py").read())
+    print("  train shard present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
+    print("  val shard present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
+    print("  char vocab present:", os.path.isfile(f"{corpus}/char-vocab-jp-v1.json"))
+    print("  board present:", os.path.isfile(f"{corpus}/jp-probe-board.jsonl"))
+    print(
+        "  leg2 latin vocab present:", os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v8-leg2/char-vocab-latin-v1.json")
+    )
+    print(
+        "  leg2 configs present:",
+        os.path.isfile(f"{src}/configs/v8-leg2-charword.yaml") and os.path.isfile(f"{src}/configs/v8-leg2-sp.yaml"),
+    )

@@ -48,7 +48,7 @@ This document defines the canonical `ComponentTag` union. It is the single sourc
 | ------- | ------ | ---------------------------------- | ------------------------------------ |
 | `cedex` | FR     | Special postal routing designation | `CEDEX 08` in `75008 PARIS CEDEX 08` |
 
-### JP-specific (Phase 6 — listed for forward compatibility, not used in Phase 1–3)
+### JP-specific (ACTIVATED — CJK Phase 2, 2026-07-29; the JP sibling model's label set)
 
 | Tag               | Description                         | Example                |
 | ----------------- | ----------------------------------- | ---------------------- |
@@ -60,7 +60,7 @@ This document defines the canonical `ComponentTag` union. It is the single sourc
 | `building_number` | JP gō (号)                          | `1号`                  |
 | `building_name`   | JP named building (often in romaji) | `Tokyo Building`       |
 
-**Note for JP-forward-compatibility:** the JP-specific tags above must not be referenced anywhere in core code in Phases 0–5. They exist in this document so that schema additions in Phase 6 do not require a core rewrite. The `componentsSupported` field on `LocaleProfile` is how the system knows which tags a locale actually uses.
+**Activation status (CJK Phase 2, 2026-07-29):** the JP tags are live in the training stack as the `stage3-jp` label set (`corpus-python labels.py`, 47 BIO labels = STAGE3 + these seven) — the JP CHAR model's head vocabulary. The Latin model stays on STAGE3 and never emits them. Per the encoder-design D4 rule, COMPACT numbers (`2-3-16`) remain whole-span `house_number`; `block`/`sub_block`/`building_number` label the kanji-designator long form (`2丁目3番16号`) only. The `componentsSupported` field on `LocaleProfile` is how the system knows which tags a locale actually uses; `ja-JP` declares these seven + `house_number`/`country`/`postcode`.
 
 ## BIO labeling
 
@@ -117,7 +117,7 @@ export const COMPONENT_TAGS = [
 	"po_box",
 	// FR-specific
 	"cedex",
-	// JP-specific (Phase 6 — declared but unused until then)
+	// JP-specific (ACTIVATED at CJK Phase 2 — the stage3-jp label set; Latin models never emit these)
 	"prefecture",
 	"municipality",
 	"district",
@@ -150,4 +150,4 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 
 **Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction, not a postcode. Treating it as one corrupts FR postal code statistics.
 
-**Why list JP tags here at all before Phase 6?** Forces Phase 0 type design to handle them. If core code reaches Phase 6 and needs to add seven new tags plus rewrite the policy system, the schema-first principle failed.
+**Why were the JP tags listed years-of-phases before activation?** The declarations forced Phase-0 type design to handle them — and it worked: activation at CJK Phase 2 touched no core types, exactly as the schema-first principle intended.

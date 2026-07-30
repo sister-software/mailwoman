@@ -126,6 +126,34 @@ STAGE4_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE4_TAGS for prefix in ("B-", "I-")),
 )
 
+# --- JP fine tags (v8 CJK Phase 2 — schema activation) --------------------------------
+#
+# The seven JP-specific tags SCHEMA.mdx declares (mirrored in core/types/component.ts, where they
+# have sat as forward-compat declarations since Phase 0): the admin ladder (prefecture 都道府県,
+# municipality 市区町村, district 大字/丁目-level name) and the kanji-designator number parts
+# (block 丁目, sub_block 番地, building_number 号) + building_name (romaji buildings). Per the
+# encoder-design D4 rule, COMPACT numbers (2-3-16) stay whole-span ``house_number`` — the fine
+# number tags are for the long designator form (2丁目3番16号) only. NOT a universal stage: the JP
+# CHAR model trains with ``stage3-jp``; the Latin model stays on STAGE3; STAGE4 (the
+# secondary-address family above — numerically also 47 BIO, a coincidence) remains its own future
+# activation.
+JP_FINE_TAGS: Final[tuple[str, ...]] = (
+    "prefecture",
+    "municipality",
+    "district",
+    "block",
+    "sub_block",
+    "building_number",
+    "building_name",
+)
+
+STAGE3_JP_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS + JP_FINE_TAGS
+
+STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
+    "O",
+    *(prefix + tag for tag in STAGE3_JP_TAGS for prefix in ("B-", "I-")),
+)
+
 # --- Active set (points at the most-recent stage) ------------------------------------
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
 # existing v0.5.x models keep working. STAGE4 is DEFINED above but NOT active — its
@@ -136,6 +164,49 @@ ACTIVE_BIO_LABELS: Final[tuple[str, ...]] = STAGE3_BIO_LABELS
 
 LABEL_TO_ID: Final[dict[str, int]] = {label: i for i, label in enumerate(ACTIVE_BIO_LABELS)}
 ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items()}
+
+
+# --- Per-config label sets (v8 CJK Phase 2) -------------------------------------------
+#
+# The label vocabulary became per-MODEL when the JP sibling model activated (the JP head is 47
+# labels while the Latin head stays 33). ``resolve_label_set`` is the single lookup; the module
+# globals above remain the STAGE3 default so every existing consumer is byte-identical. A consumer
+# that supports only the default must RAISE on a non-default set, never silently collapse (the
+# #1349 lesson: a label-space mismatch that zero-fills is invisible until fingerprinted).
+class LabelSet:
+    """One model's label vocabulary: tags, BIO labels, and the derived id maps."""
+
+    def __init__(self, name: str, tags: tuple[str, ...], bio_labels: tuple[str, ...]) -> None:
+        self.name = name
+        self.tags = tags
+        self.bio_labels = bio_labels
+        self.label_to_id = {label: i for i, label in enumerate(bio_labels)}
+        self.id_to_label = {i: label for label, i in self.label_to_id.items()}
+        self._tag_set = frozenset(tags)
+
+    def collapse_label(self, bio_label: str) -> str:
+        """``collapse_label`` against THIS set's tag vocabulary (same shape rules as the module fn)."""
+        if bio_label == "O" or "-" not in bio_label:
+            return "O"
+        prefix, tag = bio_label.split("-", 1)
+        if tag not in self._tag_set or prefix not in ("B", "I"):
+            return "O"
+        return bio_label
+
+
+_LABEL_SETS: Final[dict[str, tuple[tuple[str, ...], tuple[str, ...]]]] = {
+    "stage3": (STAGE3_TAGS, STAGE3_BIO_LABELS),
+    "stage3-jp": (STAGE3_JP_TAGS, STAGE3_JP_BIO_LABELS),
+    "stage4": (STAGE4_TAGS, STAGE4_BIO_LABELS),
+}
+
+
+def resolve_label_set(name: str = "stage3") -> LabelSet:
+    if name not in _LABEL_SETS:
+        raise ValueError(f"unknown label_set {name!r} (expected one of {sorted(_LABEL_SETS)})")
+    tags, bio = _LABEL_SETS[name]
+    return LabelSet(name, tags, bio)
+
 
 # Labels that mean "ignore" in cross-entropy. The HF Trainer treats ``-100`` as the sentinel.
 IGNORE_INDEX: Final[int] = -100

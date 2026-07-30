@@ -81,6 +81,29 @@ class DataConfig:
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
     # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
     gazetteer_choreography: bool = False
+    # --- CharCNN input path (#825 / v8 CJK). The D1 contract: char_ids (B, S, W), S = label units,
+    # W = composition window. "off" (default) = the SentencePiece path, byte-identical to every prior
+    # recipe. "word" = one unit per whitespace token (the #825 Latin char-word probe). "char" = one
+    # unit per character (the v8 JP probe; char_ctx=3 → W=7). Both non-off modes skip SentencePiece
+    # entirely, REQUIRE span-schema shards (#519), and are channel-free — the anchor/gazetteer/
+    # country/street/locality channels project per SP-piece and re-align per-unit post-probe, so the
+    # loader raises if any channel path is configured alongside. Pairs with model.use_char_embed.
+    char_mode: str = "off"
+    # Sealed codepoint-sorted char-vocab JSON (char_tokenizer.build_char_vocab). Required when
+    # char_mode != "off"; the artifact ships with the weights (D2 — the tokenizer-mismatch scar).
+    char_vocab_path: str | None = None
+    # Composition-window context: neighbor chars included on each side of a unit (D6). CJK char mode
+    # wants 3 (W=7); Latin char-word mode wants 0 (W = the token's own chars).
+    char_ctx: int = 0
+    # W: chars per unit row. Char mode needs >= 2*char_ctx + 1; word mode = max word length.
+    max_unit_width: int = 16
+    # S: max units per row (char mode: chars; word mode: words). None -> data.max_length.
+    max_units: int | None = None
+    # Label vocabulary (v8 CJK Phase 2 — labels.resolve_label_set). "stage3" (default, the Latin 33)
+    # keeps every existing recipe byte-identical; "stage3-jp" is the JP char model's 47-label head.
+    # Non-default sets are supported ONLY on the char path — the SP path raises (loud, per #1349's
+    # silent-mismatch lesson) until it grows its own threading.
+    label_set: str = "stage3"
     # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
     # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
     # relabeled with the affix shard builder's exact split semantics (trailing USPS suffix ->
@@ -291,6 +314,13 @@ class ModelConfig:
     use_locality_surface_anchor: bool = False
     # Must match the locality-surface lexicon JSON's feature_dim ([locality, locality_homograph]).
     locality_surface_feature_dim: int = 2
+    # CharCNN front-end (#825 / v8 CJK). When True the per-unit embedding is COMPOSED from char_ids
+    # (B, S, W) by CharCNNEmbedding instead of the SentencePiece piece-ID lookup. Pairs with
+    # data.char_mode != "off" (the trainer enforces the pairing); char_vocab_size is derived from the
+    # loaded char vocab at build time, never from the yaml.
+    use_char_embed: bool = False
+    char_embed_dim: int = 64
+    char_kernel_sizes: list[int] = field(default_factory=lambda: [3, 4, 5])
 
 
 @dataclass
@@ -326,6 +356,19 @@ class TrainConfig:
     # Global-norm gradient clip. 0 disables clipping. Defaults to 1.0; the CRF NLL leg of
     # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
     grad_clip_norm: float = 1.0
+    # --- Fisher capture + EWC (v8.3.0 Phase 1, the B11 consolidation artifact — see fisher.py). ---
+    # Capture side (base runs): accumulate the diagonal empirical Fisher over the FINAL
+    # fisher_capture_last_n_steps optimizer steps (the memo's "last N batches" at the
+    # effective-batch grain) and write fisher-diag-v1.npz + sidecar beside the final checkpoint.
+    # Read-only on p.grad — byte-identical trajectory with the flag on or off (pinned by test).
+    fisher_capture: bool = False
+    fisher_capture_last_n_steps: int = 2000
+    # Consumption side (fine-tunes): ewc_lambda > 0 adds λ/2·ΣF_i(θ_i−θ*_i)² against
+    # ewc_reference (a checkpoint dir; defaults to train.init_from — the base the fine-tune
+    # starts from). Params absent from the Fisher artifact (fresh heads) are unpenalized.
+    ewc_lambda: float = 0.0
+    ewc_fisher_path: str | None = None
+    ewc_reference: str | None = None
     # LR schedule after warmup. ``"cosine"`` = decay to 0 across max_steps (v0.4.0 default,
     # right for full-length production runs). ``"constant"`` = hold ``learning_rate`` flat
     # for the rest of the run after warmup — the smoke-window default per v0.5.0 process

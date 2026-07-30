@@ -3,12 +3,26 @@
 	"description": "Key terms and concepts in the Mailwoman address parser and geocoder.",
 	"terms": [
 		{
+			"term": "absence curriculum",
+			"definition": "Training-time ramped per-row zero-out of an evidence channel's confidence so the model keeps label competence with AND without the clue — the anti-over-reliance leg. The ablation gate (evidence-zeroed parse ≥ baseline) is its eval-side check.",
+			"tags": ["training", "evidence"],
+			"aliases": ["evidence curriculum", "anti-over-trust curriculum"],
+			"relatedTerms": ["false-evidence noise", "evidence bundle", "over-trust decay"]
+		},
+		{
 			"term": "Acc@1",
 			"abbreviation": "accuracy at 1",
 			"definition": "The share of eval rows whose top-ranked resolver candidate is the correct place, regardless of coordinate distance — 'did we pick the right place', independent of geocode precision.",
 			"tags": ["evals", "resolver"],
 			"aliases": ["top-1 accuracy"],
 			"relatedTerms": ["coord metric", "exact match", "resolver"]
+		},
+		{
+			"term": "acceptance battery",
+			"definition": "The packaged promotion harness — golden floors with noise-honest margins, fragment boards with lowercase legs, invariance, gauntlet, canaries, evidence ablation, capability manifest — run identically for our own promotes and (with per-customer canaries + the EWC guarantee gate) at fine-tune-engagement delivery.",
+			"tags": ["evals", "enterprise"],
+			"aliases": ["battery", "promotion battery"],
+			"relatedTerms": ["gauntlet", "canary fixture", "EWC", "golden master"]
 		},
 		{
 			"term": "additive bias",
@@ -210,6 +224,13 @@
 			"relatedTerms": ["SentencePiece", "tokenizer"]
 		},
 		{
+			"term": "canary fixture",
+			"definition": "A named eval row pinning a specific past failure with its receipt, graded zero-flip at every promotion — the row must never regress. The customer-facing variant (rows from a customer's own stock) is the B11 acceptance battery's per-engagement layer.",
+			"tags": ["evals", "gates"],
+			"aliases": ["canary"],
+			"relatedTerms": ["gauntlet", "acceptance battery"]
+		},
+		{
 			"term": "canonical key",
 			"definition": "A deterministic, normalized string representation of an address produced by @mailwoman/formatter. Lowercase, abbreviation-expanded, punctuation-stripped — so '123 Main St' and '123 MAIN STREET' produce the same key. Used for blocking in the matcher.",
 			"tags": ["record-matching"],
@@ -242,6 +263,13 @@
 			"relatedTerms": ["postcode", "negative space", "conventions mask"]
 		},
 		{
+			"term": "char path",
+			"definition": "The CharCNN input route (v8 CJK): per-unit char_ids (S,W) — S label units, W a positional composition window — composed into token embeddings by a multi-width CNN, replacing SentencePiece entirely. Latin char-word mode (unit=whitespace token, ctx 0) and CJK char mode (unit=one character, ctx 3 → W 7) share one code route.",
+			"tags": ["model", "cjk"],
+			"aliases": ["CharCNN path", "char mode"],
+			"relatedTerms": ["composition window", "script router", "label set", "subword tokenization"]
+		},
+		{
 			"term": "character class",
 			"definition": "A token's character category — digit, alpha, CJK, Cyrillic, Arabic, mixed — used by the query-shape stage as a structural signal for locale and kind inference.",
 			"tags": ["staged-pipeline"],
@@ -270,6 +298,13 @@
 			"definition": "The USPS file mapping each ZIP to its 'preferred' and 'acceptable' city names. One ZIP can carry several city names because a post office serves multiple neighbourhoods and adjacent municipalities.",
 			"tags": ["domain", "en-us", "postcode"],
 			"relatedTerms": ["postal city", "postcode"]
+		},
+		{
+			"term": "city-state exception",
+			"definition": "The DE carve-out in law-4 region-vocabulary exclusion: Berlin/Hamburg/Bremen stay locality evidence because Land and Stadt are one coextensive place whose dominant reading is the locality — unlike the Washington class (state and city are DIFFERENT places), which is excluded. Brandenburg is the Washington class and is excluded.",
+			"tags": ["lexicon", "locale"],
+			"aliases": [],
+			"relatedTerms": ["four-law selectivity"]
 		},
 		{
 			"term": "classification proposal",
@@ -316,6 +351,13 @@
 			"relatedTerms": ["span", "BIO tagging", "classification"]
 		},
 		{
+			"term": "composition window",
+			"definition": "The W dimension of the char path's (S,W) contract: the characters describing one label unit — a whole word for Latin char-word mode, the character ± ctx neighbors for CJK (ctx 3 → W 7, giving the CNN local n-gram context for designators like 丁目).",
+			"tags": ["model", "cjk"],
+			"aliases": [],
+			"relatedTerms": ["char path"]
+		},
+		{
 			"term": "concordance",
 			"definition": "A joint-decode signal that rewards a parse whose spans form a consistent Who's On First parent-child chain and vetoes contradictory ones — a hard veto for conflicts, a log-space bonus for full agreement.",
 			"tags": ["resolver"],
@@ -336,6 +378,13 @@
 			"relatedTerms": ["isotonic calibration", "confidence calibration"]
 		},
 		{
+			"term": "consistent random marker",
+			"definition": "What an UNTRAINED evidence channel becomes at inference: real painted features flowing through a frozen random-init projection — a fixed random direction injected at hit tokens. Real, reproducible behavior (it measurably helped homonyms in the lowercase register) that is an accident of initialization, not a learned mechanism.",
+			"tags": ["model", "evidence"],
+			"aliases": ["random marker"],
+			"relatedTerms": ["zeros-init fingerprint", "evidence channel"]
+		},
+		{
 			"term": "context window",
 			"definition": "The span of input a model can consider at once, bounded by its max sequence length. Everything in the window can influence every token's label via attention.",
 			"tags": ["neural"],
@@ -353,6 +402,13 @@
 			"tags": ["evals", "geocoding"],
 			"aliases": ["coordinate metric", "assembled coordinate"],
 			"relatedTerms": ["honest eval", "geocoding", "parity campaign"]
+		},
+		{
+			"term": "coordinate-acceptability",
+			"definition": "The resolve-through read used as a probe gate: parse → resolve the predicted admin pair through the gazetteer → acceptable iff the resolved point lands within tolerance of the row's gold coordinate. Measures whether the parse reaches the right PLACE, not span cosmetics.",
+			"tags": ["evals"],
+			"aliases": ["coord acceptability"],
+			"relatedTerms": ["coord metric", "acc@1"]
 		},
 		{
 			"term": "corpus",
@@ -407,6 +463,13 @@
 			"relatedTerms": ["synthetic shard", "source weighting", "parity campaign"]
 		},
 		{
+			"term": "D-rule",
+			"definition": "Iron rule 6: no default-on mechanism (model or decode-time) ships with a known regression vs the shipped model on any tier-1 locale — fix, per-locale-gate, or opt-in. The gate every cut passes through.",
+			"tags": ["process", "gates"],
+			"aliases": ["iron rule 6"],
+			"relatedTerms": ["named watch", "gated promotion"]
+		},
+		{
 			"term": "decoder",
 			"definition": "In a transformer encoder-decoder model, the part that produces output sequences. Mailwoman's classifier is encoder-only (no decoder); the 'CRF decoder' is a different thing — a structured-prediction layer that picks the best label sequence from the encoder's outputs.",
 			"tags": ["neural"],
@@ -457,6 +520,13 @@
 			"tags": ["domain", "multilingual"],
 			"aliases": ["accent mark"],
 			"relatedTerms": ["normalize", "transliteration", "canonicalization"]
+		},
+		{
+			"term": "digit guard",
+			"definition": "A lexicon rule (carried in the artifact so both painters apply it): a matched span paints NO evidence when any span word or nearest non-empty neighbor carries a digit. Turned the bundle's alnum-housenumber damage from −0.325 into +0.013.",
+			"tags": ["evidence", "lexicon"],
+			"aliases": [],
+			"relatedTerms": ["evidence bundle", "four-law selectivity", "painter fold"]
 		},
 		{
 			"term": "divergence",
@@ -553,6 +623,28 @@
 			"relatedTerms": ["golden set", "honest eval", "F1 score", "coord metric"]
 		},
 		{
+			"term": "evidence bundle",
+			"definition": "The pair of retrieval-augmented input channels (street-type + locality-surface) that feed lexicon membership as soft per-token evidence alongside the text. Shipped in 6.7.0; trained natively from step 0 in the from-scratch base line.",
+			"tags": ["model", "evidence"],
+			"aliases": ["bundle"],
+			"relatedTerms": ["evidence channel", "soft features", "absence curriculum", "digit guard"]
+		},
+		{
+			"term": "evidence channel",
+			"definition": "A dedicated model input that injects externally computed per-token features (confidence-scaled, own projection) at the embedding layer: postcode anchor, gazetteer, country, street-type, locality-surface. The clue informs; the model decides (model-first).",
+			"tags": ["model", "evidence"],
+			"aliases": ["soft-feed channel"],
+			"relatedTerms": ["evidence bundle", "soft features", "gazetteer anchor"]
+		},
+		{
+			"term": "EWC",
+			"abbreviation": "elastic weight consolidation",
+			"definition": "The fine-tune forgetting brake: add λ/2·ΣF_i(θ_i−θ*_i)² to the loss, penalizing movement of parameters the base's Fisher says carried capability. Fresh heads are unpenalized (new capability trains freely; base capability is braked). The parameter-space half of the fine-tune guarantee; the acceptance battery is the behavior-space half.",
+			"tags": ["training", "enterprise"],
+			"aliases": ["EWC brake"],
+			"relatedTerms": ["Fisher artifact", "rare-class forgetting", "acceptance battery"]
+		},
+		{
 			"term": "exact match",
 			"definition": "The share of eval items whose every component is correct (compared per-span or per-token). Stricter than per-tag F1, which credits partial correctness.",
 			"tags": ["evals"],
@@ -582,6 +674,13 @@
 			"definition": "The harmonic mean of precision and recall — a single number between 0 and 1 summarizing how good a classifier is at a class. F1 = 2·P·R / (P + R).",
 			"tags": ["evals"],
 			"relatedTerms": ["macro F1", "eval"]
+		},
+		{
+			"term": "false-evidence noise",
+			"definition": "The collision-robustness training leg the absence curriculum lacks: with small probability, a row's evidence features are corrupted so the model also learns to override WRONG evidence, not just survive missing evidence.",
+			"tags": ["training", "evidence"],
+			"aliases": ["evidence noise"],
+			"relatedTerms": ["absence curriculum", "evidence bundle"]
 		},
 		{
 			"term": "feature",
@@ -625,6 +724,20 @@
 			"relatedTerms": ["tier", "component tag"]
 		},
 		{
+			"term": "Fisher artifact",
+			"definition": "The diagonal empirical Fisher information captured over the final ~2k steps of a base run (mean squared gradient per parameter) and shipped beside the checkpoint (fisher-diag-v1.npz + provenance sidecar). Capturable cheaply ONLY during the base run; the input to the EWC brake.",
+			"tags": ["training", "enterprise"],
+			"aliases": ["consolidation artifact", "fisher-diag"],
+			"relatedTerms": ["EWC", "acceptance battery", "golden master"]
+		},
+		{
+			"term": "flip census",
+			"definition": "The per-row diff of two model verdicts on the same fixture (which rows flipped, which way), used to attribute a delta to a mechanism instead of trusting the aggregate. The instrument behind the four-law receipts.",
+			"tags": ["evals", "method"],
+			"aliases": [],
+			"relatedTerms": ["pre-registration", "four-law selectivity"]
+		},
+		{
 			"term": "formula address",
 			"definition": "A descriptive, relative address given by directions and landmarks ('two blocks past where the bakery used to be, half a block toward the lake') rather than a street and number. The hardest end of the parse-difficulty spectrum.",
 			"tags": ["domain", "international"],
@@ -632,11 +745,25 @@
 			"relatedTerms": ["point of interest", "prominence signal"]
 		},
 		{
+			"term": "four-law selectivity",
+			"definition": "The curation laws deciding which surfaces may carry locality evidence: (1) degenerate exclusion (function words, street-type words, directionals), (2) prominence floor (importance ≥ 0.25 for 1-token surfaces), (3) person-name tier (≥ 0.45), (4) region-vocabulary exclusion (state/Land names, with the DE city-state exception). Each law was bought with a falsified training run.",
+			"tags": ["lexicon", "evidence"],
+			"aliases": ["three-law selectivity"],
+			"relatedTerms": ["digit guard", "evidence bundle", "city-state exception"]
+		},
+		{
 			"term": "fp32 / fp16",
 			"definition": "32-bit and 16-bit floating-point formats. Mailwoman trains in bf16 (a 16-bit variant) and exports the ONNX model in int8 for size.",
 			"tags": ["training", "infrastructure"],
 			"aliases": ["fp32", "fp16"],
 			"relatedTerms": ["bf16", "int8 quantization"]
+		},
+		{
+			"term": "fragment board",
+			"definition": "The standing targeted-failure-class eval: ~400 rows per pre-registered class (homonym, bare-street, bare-locality, housenumber variants, particles, date-names) sampled from a national source, graded with Wilson intervals, with the NEGATIVE class scored (a hallucinated street on a bare locality is visible by construction). The FR board (ban-fragments-fr) is the P0 instrument; the DE board (overture-fragments-de) is the v7-fold gate's leg.",
+			"tags": ["evals", "gates"],
+			"aliases": ["P0 board", "fragment fixture"],
+			"relatedTerms": ["user register", "gauntlet", "flip census"]
 		},
 		{
 			"term": "franchise query",
@@ -673,6 +800,13 @@
 			"tags": ["evals", "training"],
 			"aliases": ["promotion gate"],
 			"relatedTerms": ["parity scorecard", "verdict-smoke", "night shift"]
+		},
+		{
+			"term": "gauntlet",
+			"definition": "The three-layer input-robustness gate: regression fixtures (named past failures, must-pass), metamorphic perturbations (label-preserving edits must not move the coordinate — INV/DIR/BAND relations), and a held-out fresh draw. Known failures are tracked xfails; a NEW failure blocks.",
+			"tags": ["evals", "gates"],
+			"aliases": [],
+			"relatedTerms": ["canary fixture", "gated promotion"]
 		},
 		{
 			"term": "gazetteer",
@@ -723,6 +857,13 @@
 			"definition": "A free global gazetteer combining administrative, postal, and POI data across 200+ countries. Supplements Who's On First for postcode centroids and places where WOF has gaps.",
 			"tags": ["resolver", "geocoding"],
 			"relatedTerms": ["WOF", "gazetteer", "locality centroid"]
+		},
+		{
+			"term": "golden master",
+			"definition": "The from-scratch base model every capability comes from in ONE recipe with one provenance and zero named watches at ship — the starting line every fine-tune engagement inherits, with its Fisher artifact beside it.",
+			"tags": ["model", "enterprise"],
+			"aliases": ["base model"],
+			"relatedTerms": ["Fisher artifact", "acceptance battery", "rare-class forgetting"]
 		},
 		{
 			"term": "golden set",
@@ -883,6 +1024,13 @@
 			"relatedTerms": ["training", "anchor inference", "gazetteer", "staged pipeline", "production scorer"]
 		},
 		{
+			"term": "input mode",
+			"definition": "The Decision-A register switch: 'fragmented' (human-typed fragments — feeds the evidence channels) vs 'formatted' (complete records — runs the trained absence identity). Explicit on CLI/API; per-endpoint defaults (batch→formatted, autocomplete→fragmented); kind-derived otherwise.",
+			"tags": ["runtime", "api"],
+			"aliases": ["register", "fragmented", "formatted"],
+			"relatedTerms": ["user register", "retry rider", "query shape"]
+		},
+		{
 			"term": "input-shape router",
 			"definition": "An arbitration prior that reads kind-classifier, query-shape, and coarse-placer signals to set per-component defaults (rule_preferred, neural_preferred, or abstain) according to how clean or out-of-distribution the query is.",
 			"tags": ["staged-pipeline", "hybrid"],
@@ -945,6 +1093,13 @@
 			"definition": "A recognized postcode or postal pattern (US ZIP, UK postcode, French code postal) detected by regex in the query-shape stage to arm fast paths and locale hints.",
 			"tags": ["staged-pipeline", "postcode"],
 			"relatedTerms": ["query shape", "postcode", "locale gate"]
+		},
+		{
+			"term": "label set",
+			"definition": "A model's BIO vocabulary, per-config since CJK Phase 2: stage3 (the Latin 33), stage3-jp (STAGE3 + the seven JP tags = 47, the JP char head), stage4 (the secondary-address family — numerically also 47, a coincidence). A checkpoint persists its own id→label map; label-space mismatches raise instead of collapsing silently.",
+			"tags": ["model", "schema"],
+			"aliases": [],
+			"relatedTerms": ["component tag", "bio tagging", "char path"]
 		},
 		{
 			"term": "label smoothing",
@@ -1159,6 +1314,13 @@
 			"relatedTerms": ["intersection", "chōme"]
 		},
 		{
+			"term": "named watch",
+			"definition": "A known below-target reading recorded at ship with an owner and a retirement condition — never a silent waiver. Example: fr.cedex shipped at 83.3 under the waived floor, named, and retired when the from-scratch base read 90.5.",
+			"tags": ["evals", "process"],
+			"aliases": ["watch"],
+			"relatedTerms": ["noise-honest margin", "D-rule"]
+		},
+		{
 			"term": "NaN",
 			"abbreviation": "not a number",
 			"definition": "A floating-point result for an undefined operation (log of a negative, 0/0). Appearing in the training loss usually halts the run; recovering from it follows the NaN protocol.",
@@ -1210,6 +1372,13 @@
 			"definition": "The standard form of a loss function in probability-based models: loss = −log P(correct label | input). The CRF uses the NLL of the entire label sequence.",
 			"tags": ["training"],
 			"relatedTerms": ["CRF", "label smoothing"]
+		},
+		{
+			"term": "noise-honest margin",
+			"definition": "The floor-cutting rule: floor = reference reading − max(1.0pp, 2× the metric's 95% binomial half-width at its own support). The noise band varies ~19× across metrics, so a uniform margin either blesses real drift or fails on coin flips. Where support is not exposed the rule falls back to 2.0pp — a trap when the true support is small (the street_prefix lesson).",
+			"tags": ["evals", "gates"],
+			"aliases": [],
+			"relatedTerms": ["gated promotion", "named watch", "pre-registration"]
 		},
 		{
 			"term": "normalize",
@@ -1274,6 +1443,13 @@
 			"relatedTerms": ["BIO tagging", "CRF", "Viterbi decoding"]
 		},
 		{
+			"term": "over-trust decay",
+			"definition": "The mid-run peak-then-decline an evidence-channel FINE-TUNE shows as the model progressively over-relies on an always-on clue (peak ~4-6k, decay by 8k under constant LR). Absent in the from-scratch cosine regime — a recipe-class artifact, not a property of the bundle.",
+			"tags": ["training", "evidence"],
+			"aliases": [],
+			"relatedTerms": ["absence curriculum", "evidence bundle"]
+		},
+		{
 			"term": "overfitting",
 			"definition": "When a model memorizes quirks of its training set instead of learning general patterns, so it scores well in training but poorly on new data. Guarded against with held-out evals and regularization.",
 			"tags": ["training"],
@@ -1301,6 +1477,13 @@
 			"relatedTerms": ["tokenizer", "max sequence length", "attention"]
 		},
 		{
+			"term": "painter fold",
+			"definition": "The word normalization BOTH evidence painters apply at lookup: per whitespace word, strip leading/trailing non-letter/digit characters (keep internal), lowercase, single-space join. Lexicon keys must use this fold or they are unreachable at paint time. Deliberately different from the FST fold.",
+			"tags": ["evidence", "lexicon"],
+			"aliases": ["painting"],
+			"relatedTerms": ["evidence channel", "fst"]
+		},
+		{
 			"term": "parameter",
 			"definition": "A single learned number inside a model — one weight or bias. Mailwoman's encoder has roughly 30 million of them; training is the search for good values.",
 			"tags": ["neural"],
@@ -1325,6 +1508,13 @@
 			"definition": "Retrying a zero-result parent-constrained resolver lookup ('find this locality inside this region') without the parent constraint but keeping the country, so a slightly-wrong parent doesn't produce silent zero results.",
 			"tags": ["resolver"],
 			"relatedTerms": ["resolver", "exact-match tiering", "parent chain"]
+		},
+		{
+			"term": "parent vouch",
+			"definition": "The lexicon prominence rule for neighbourhoods, which structurally lack population rows: a neighbourhood surface's prominence-floor input is max(own importance, parent locality importance) — Montmartre is prominent BECAUSE Paris is. Person-name surfaces are exempt (only OWN metropolis-tier importance clears them).",
+			"tags": ["lexicon", "evidence"],
+			"aliases": [],
+			"relatedTerms": ["four-law selectivity", "importance score"]
 		},
 		{
 			"term": "parity campaign",
@@ -1444,6 +1634,13 @@
 			"relatedTerms": ["coarse placer"]
 		},
 		{
+			"term": "pre-registration",
+			"definition": "Writing the full gate sheet — every bar, baseline identity, and stop rule — before any GPU spend. Bars are bars: a below-bar number is a miss to confront (re-baseline with a stated reason, or iterate), never a quiet pass; deviations are recorded, never silently re-read.",
+			"tags": ["process", "evals"],
+			"aliases": ["bars are bars"],
+			"relatedTerms": ["noise-honest margin", "gated promotion", "flip census"]
+		},
+		{
 			"term": "precision",
 			"definition": "Of the spans the model labeled as a given tag, the fraction it got right. High precision means few false positives. Paired with recall to compute F1.",
 			"tags": ["evals"],
@@ -1488,6 +1685,13 @@
 			"tags": ["infrastructure", "geocoding"],
 			"aliases": ["spatial index"],
 			"relatedTerms": ["resolver", "FTS5", "H3"]
+		},
+		{
+			"term": "rare-class forgetting",
+			"definition": "The structural fine-tune failure mode: a class too small to matter in the gradient bulk erodes under any fine-tune objective (fr.cedex, ~10/430 rows, in every bundle-era recipe). Mirrored by rare-class UNDER-learning: a short low-LR window also cannot TEACH a rare class the base never knew (date-name, 0.133 through every increment, 0.762 from scratch).",
+			"tags": ["training"],
+			"aliases": ["rare-class under-learning"],
+			"relatedTerms": ["EWC", "golden master", "learning rate"]
 		},
 		{
 			"term": "recall",
@@ -1543,6 +1747,13 @@
 			"relatedTerms": ["gazetteer", "geocoding", "WOF", "locality resolution"]
 		},
 		{
+			"term": "retry rider",
+			"definition": "The geocode fallback: a zero-hit result whose register was DERIVED (not explicit) triggers one re-parse in the flipped register before giving up. Measured 3/26 zero-hit recovery on golden; regression-free by construction.",
+			"tags": ["runtime", "geocoding"],
+			"aliases": ["alternate-register retry"],
+			"relatedTerms": ["input mode"]
+		},
+		{
 			"term": "rooftop",
 			"definition": "Geocoding precision at the building or parcel level — coordinates within a few metres — the highest tier of the geocode cascade. Sourced from address-point and situs data.",
 			"tags": ["geocoding"],
@@ -1555,6 +1766,13 @@
 			"tags": ["rule-based"],
 			"aliases": ["v0 parser", "rules engine"],
 			"relatedTerms": ["neural classifier", "arbitration", "parity campaign"]
+		},
+		{
+			"term": "script router",
+			"definition": "The query-shape dispatch for the sibling-model architecture: a Unicode-block histogram routes CJK-dominant input to the char model and everything else to the SentencePiece model — making Latin non-regression PROVABLE (byte-identical routing) rather than measured.",
+			"tags": ["runtime", "cjk"],
+			"aliases": [],
+			"relatedTerms": ["char path", "input-shape router", "query shape"]
 		},
 		{
 			"term": "sectional center facility",
@@ -1702,6 +1920,13 @@
 			"relatedTerms": ["street", "morphology FST", "conventions mask"]
 		},
 		{
+			"term": "street-context gate",
+			"definition": "The decode-time seam that zeroes locality evidence on inputs with no street-painter hits — bare lookups must not have city names painted into street structure. Every measured evidence win class carries street words, so the gate costs nothing.",
+			"tags": ["runtime", "evidence"],
+			"aliases": [],
+			"relatedTerms": ["evidence bundle", "input mode"]
+		},
+		{
 			"term": "street-supplement architecture",
 			"definition": "The four-layer FST stack — morphology, candidacy, identity, schema — that fills the Who's On First street-level hierarchy gap, since WOF has no street node between locality and address.",
 			"tags": ["hybrid", "street"],
@@ -1841,6 +2066,13 @@
 			"relatedTerms": ["byte fallback", "tokenizer", "SentencePiece"]
 		},
 		{
+			"term": "user register",
+			"definition": "The doctrine that lowercase, comma-light, fragmentary input is the PRIMARY register real users type (Google Maps trained them). Every eval gets a lowercase leg; no mechanism may key on case. Evidence value peaks in this register because the case cue is dead.",
+			"tags": ["doctrine", "evals"],
+			"aliases": ["lowercase register"],
+			"relatedTerms": ["input mode", "fragment board"]
+		},
+		{
 			"term": "venue",
 			"definition": "A named, non-address place — a business, building, park, or stadium. Mailwoman's free-text point-of-interest component, added as a Tier 2 fine label.",
 			"tags": ["venue"],
@@ -1914,6 +2146,13 @@
 			"definition": "Evaluating or predicting on a class or geography the model never saw in training, with no in-context examples — the strongest test of generalization.",
 			"tags": ["evals", "neural"],
 			"relatedTerms": ["generalization", "honest eval", "leakage"]
+		},
+		{
+			"term": "zeros-init fingerprint",
+			"definition": "The cheap decisive test for 'did channel X ever train': a zeros-initialized parameter moves on ANY gradient, so an exactly-zero tensor in the exported graph proves the channel never received one. How the untrained locality channel (#1349) was proven in the shipped artifact.",
+			"tags": ["method", "model"],
+			"aliases": ["fingerprint"],
+			"relatedTerms": ["evidence channel", "consistent random marker"]
 		}
 	]
 }

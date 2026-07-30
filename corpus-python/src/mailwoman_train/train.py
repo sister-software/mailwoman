@@ -71,6 +71,21 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     if "street_type_features" in batch:
         tb["street_type_features"] = torch.tensor(batch["street_type_features"], dtype=torch.float32, device=device)
         tb["street_type_confidence"] = torch.tensor(batch["street_type_confidence"], dtype=torch.float32, device=device)
+    # Locality-surface channel (v3.16.0): same presence contract — only when a locality-surface lexicon
+    # is set. MISSING from v3.16.0 through v3.24.0 (#1349): the loader painted the features, collate
+    # emitted them, and this function dropped them — the forward's zero-fill ran on every batch, so the
+    # shipped bundle model's locality channel is frozen at xavier init. test_train_channels.py now
+    # asserts collate/_to_tensor_batch key parity so a future channel cannot silently vanish here.
+    if "locality_surface_features" in batch:
+        tb["locality_surface_features"] = torch.tensor(
+            batch["locality_surface_features"], dtype=torch.float32, device=device
+        )
+        tb["locality_surface_confidence"] = torch.tensor(
+            batch["locality_surface_confidence"], dtype=torch.float32, device=device
+        )
+    # CharCNN input path (#825 / v8 CJK): (B, S, W) long char IDs — present iff data.char_mode is on.
+    if "char_ids" in batch:
+        tb["char_ids"] = torch.tensor(batch["char_ids"], dtype=torch.long, device=device)
     return tb
 
 
@@ -364,6 +379,7 @@ def _token_f1(
     preds: torch.Tensor,
     labels: torch.Tensor,
     num_labels: int,
+    bio_labels: tuple[str, ...] = ACTIVE_BIO_LABELS,
 ) -> dict[str, float]:
     """Compute macro/per-class token-level F1 over a batch. Ignores ``IGNORE_INDEX`` positions.
 
@@ -390,19 +406,20 @@ def _token_f1(
     precision = tp / (tp + fp + 1e-9)
     recall = tp / (tp + fn + 1e-9)
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
-    per_label = {ACTIVE_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
-    per_label_support = {ACTIVE_BIO_LABELS[c]: int(support[c]) for c in range(num_labels)}
+    per_label = {bio_labels[c]: float(f1[c]) for c in range(num_labels)}
+    per_label_support = {bio_labels[c]: int(support[c]) for c in range(num_labels)}
 
     # Support-aware macro: average F1 only over COMPONENT labels (exclude "O") that actually
     # occur in the val sample. A zero-support label (a tag the val sample happens not to contain —
     # e.g. po_box/cedex in a US-primary sample) otherwise pins F1 at 0 and drags the macro down;
     # that's a val-coverage artifact, not model quality. Excluding "O" also stops its huge-support,
     # ~1.0 F1 from inflating the average. See val-set stratification (Layer 2) for the coverage fix.
-    supported = [c for c in range(num_labels) if ACTIVE_BIO_LABELS[c] != "O" and support[c] > 0]
+    supported = [c for c in range(num_labels) if bio_labels[c] != "O" and support[c] > 0]
     macro = sum(float(f1[c]) for c in supported) / len(supported) if supported else 0.0
 
     result = {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
-    for tag in ACTIVE_TAGS:
+    tags = tuple(dict.fromkeys(label.split("-", 1)[1] for label in bio_labels if "-" in label))
+    for tag in tags:
         b_f1 = per_label.get(f"B-{tag}", 0.0)
         i_f1 = per_label.get(f"I-{tag}", 0.0)
         result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
@@ -492,7 +509,10 @@ def _eval_val(
         return {"val_loss": float("nan"), "val_rows": 0, "macro_f1": 0.0}
     preds = torch.cat(all_preds, dim=0)
     labels = torch.cat(all_labels, dim=0)
-    metrics = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
+    from .labels import resolve_label_set
+
+    label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
+    metrics = _token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
     # PR3 tripwire + aux-head accuracy.
@@ -566,8 +586,26 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         latest = find_latest_checkpoint(output_dir)
         resume_from = latest
 
-    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
-    verify_tokenizer_alignment(Path(cfg.data.corpus_dir), tokenizer)
+    # CharCNN input path (#825 / v8 CJK): data.char_mode and model.use_char_embed must agree — a
+    # char-encoded batch into an SP model (or vice versa) is a config mistake, caught before any
+    # loading. Char mode needs no SentencePiece tokenizer at all: the loader never calls it, and the
+    # alignment smoke is SP-specific (the char path validates span-schema per row instead).
+    char_mode = getattr(cfg.data, "char_mode", "off")
+    use_char_embed = getattr(cfg.model, "use_char_embed", False)
+    if (char_mode != "off") != use_char_embed:
+        raise ValueError(f"data.char_mode={char_mode!r} and model.use_char_embed={use_char_embed} must be set together")
+    char_vocab_size = 0
+    if char_mode != "off":
+        from .char_tokenizer import load_char_vocab
+
+        if not getattr(cfg.data, "char_vocab_path", None):
+            raise ValueError("data.char_mode requires data.char_vocab_path")
+        char_vocab_size = len(load_char_vocab(cfg.data.char_vocab_path))
+        tokenizer = None
+        print(f"char_mode={char_mode}: char_vocab_size={char_vocab_size}, SentencePiece path skipped")
+    else:
+        tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
+        verify_tokenizer_alignment(Path(cfg.data.corpus_dir), tokenizer)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if resume_from is not None:
@@ -577,7 +615,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         print(f"resuming from {resume_from}")
         model = MailwomanCoarseEncoder.from_pretrained(resume_from)
     else:
-        model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
+        model = build_model(
+            cfg,
+            # Char mode never reads the SP token-embedding table; vocab_size=2 keeps the unused
+            # table at minimum width (an nn.Embedding needs >= pad_token_id + 1 rows).
+            vocab_size=tokenizer.vocab_size if tokenizer is not None else 2,
+            pad_token_id=tokenizer.pad_id if tokenizer is not None else 0,
+            char_vocab_size=char_vocab_size,
+        )
         # Fine-tune from a pre-trained encoder: load MODEL weights only (no optimizer/scheduler/
         # step, unlike resume), so the supervised run starts fresh on the MLM-pretrained encoder.
         # The pretrain checkpoint's state_dict is key-identical (tied MLM head adds no params), so
@@ -732,13 +777,41 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         _restamp_resume_lrs(optim, scheduler, live_group_lrs, live_group_labels)
         print(f"resumed at step={resume_step}")
 
+    # Fisher capture + EWC (v8.3.0 Phase 1 — fisher.py has the design pointers). Capture is armed
+    # for the FINAL window of the run; EWC loads the artifact + reference once, up front, loudly.
+    fisher_acc = None
+    fisher_window_start = None
+    if getattr(cfg.train, "fisher_capture", False):
+        from .fisher import FisherAccumulator
+
+        fisher_acc = FisherAccumulator(model)
+        fisher_window_start = cfg.train.max_steps - int(getattr(cfg.train, "fisher_capture_last_n_steps", 2000))
+        print(f"[fisher] capture armed for steps >= {max(0, fisher_window_start)}")
+    ewc = None
+    if float(getattr(cfg.train, "ewc_lambda", 0.0)) > 0.0:
+        from .fisher import EWCPenalty
+
+        ewc_reference = getattr(cfg.train, "ewc_reference", None) or getattr(cfg.train, "init_from", "")
+        if not getattr(cfg.train, "ewc_fisher_path", None) or not ewc_reference:
+            raise ValueError("train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from")
+        ewc = EWCPenalty(
+            cfg.train.ewc_fisher_path,
+            ewc_reference,
+            lam=float(cfg.train.ewc_lambda),
+            device=device,
+        )
+        print(f"[ewc] λ={cfg.train.ewc_lambda:g}, {ewc.covered_params:,} params braked against {ewc_reference}")
+
     csv_path = csv_log_path(cfg)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     # On resume, append to the existing CSV instead of clobbering.
     csv_mode = "a" if resume_step > 0 and csv_path.is_file() else "w"
     csv_fh = csv_path.open(csv_mode, encoding="utf-8", newline="")
     csv_writer = csv.writer(csv_fh)
-    per_tag_cols = [f"f1.{tag}" for tag in ACTIVE_TAGS]
+    from .labels import resolve_label_set as _resolve_label_set
+
+    _label_set = _resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
+    per_tag_cols = [f"f1.{tag}" for tag in _label_set.tags]
     if csv_mode == "w":
         csv_writer.writerow(
             [
@@ -824,11 +897,19 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         out = model(**tb)
                 else:
                     out = model(**tb)
-                loss = out.loss / accum
+                # EWC brake (fine-tunes only): the quadratic penalty rides the loss INSIDE the
+                # accum division so effective-batch scaling matches the data loss.
+                loss_total = out.loss if ewc is None else out.loss + ewc.penalty(model)
+                loss = loss_total / accum
                 loss.backward()
                 micro_step += 1
                 if not is_accum_boundary:
                     continue
+                # Fisher capture window (base runs): read the accumulated gradient BEFORE clipping
+                # (the empirical Fisher is defined on ∂L/∂θ; the clipped surrogate understates
+                # curvature exactly where it is largest). Read-only — trajectory unaffected.
+                if fisher_acc is not None and step >= fisher_window_start:
+                    fisher_acc.accumulate(model)
                 # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
                 # during warmup, especially under bf16. Clip global norm to 1.0 before
                 # stepping. The v0.2.0 (CE-only) Stage 1 run trained stably to 50k steps
@@ -934,7 +1015,9 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             "model": asdict(cfg.model),
                             "train": asdict(cfg.train),
                         },
-                        "vocab_size": tokenizer.vocab_size,
+                        # Char mode has no SP tokenizer; 2 is build_model's dummy SP-table width
+                        # (the model's own config carries char_vocab_size).
+                        "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
                     }
                     ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
                     print(f"  [save] checkpoint → {ck}")
@@ -946,9 +1029,24 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 "model": asdict(cfg.model),
                 "train": asdict(cfg.train),
             },
-            "vocab_size": tokenizer.vocab_size,
+            "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
         }
-        save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+        final_ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+        # Fisher artifact lands BESIDE the final checkpoint (the weights-bundle contract: versioned
+        # filename + provenance sidecar, the lexicon discipline). Zero-count capture (a run shorter
+        # than its window says it was armed for) raises in finalize — loud, never a silent absence.
+        if fisher_acc is not None:
+            fisher_path = fisher_acc.save(
+                final_ck,
+                meta={
+                    "captured_at_step": step,
+                    "window_last_n_steps": int(getattr(cfg.train, "fisher_capture_last_n_steps", 2000)),
+                    "corpus_dir": cfg.data.corpus_dir,
+                    "seed": cfg.train.seed,
+                    "output_dir": str(output_dir),
+                },
+            )
+            print(f"[fisher] artifact → {fisher_path} ({fisher_acc.count} batches)")
     finally:
         csv_fh.close()
         tracker.finish()
