@@ -36,7 +36,7 @@ New to the project? [Start here](../getting-started.mdx).
 
 ## Commercial license
 
-**$250 per month, per legal entity.**
+**$250 per month, per legal entity.** Or $2,400 a year, which works out to $200 a month.
 
 _All prices on this page are in US dollars and exclude VAT and sales taxes._
 
@@ -68,7 +68,7 @@ There's no revenue share and no exclusivity.
 
 ## Enterprise
 
-**Engagements start at $15,000.**
+**From $15,000 per year.**
 
 For address stock that looks nothing like a public corpus: legacy CRM exports, records
 typed by field crews, or a country and format the open model has never been graded on.
