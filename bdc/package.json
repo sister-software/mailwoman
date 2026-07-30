@@ -70,7 +70,11 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",
 		"kysely": "^0.29.4",
-		"type-fest": "^5.8.0"
+		"type-fest": "^5.8.0",
+		"yauzl-promise": "^4.0.0"
+	},
+	"devDependencies": {
+		"@types/yauzl-promise": "^4.0.1"
 	},
 	"engines": {
 		"node": ">=24.18.0"

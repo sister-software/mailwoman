@@ -56,6 +56,13 @@ export interface BDCClient {
 	 * payload under a `data` key (`{ data: [...] }`), so callers pluck `.data` themselves at the call site.
 	 */
 	get<T>(path: string, params?: BDCQueryParams): Promise<T>
+
+	/**
+	 * Issue an authenticated `GET` request and return the raw response body as an `ArrayBuffer` — the binary counterpart
+	 * to {@linkcode get}. Used for zip-wrapped file downloads (see `downloadBDCFile` in `./download.ts`), where the
+	 * response is a `.zip` archive rather than a JSON envelope.
+	 */
+	getArrayBuffer(path: string, params?: BDCQueryParams): Promise<ArrayBuffer>
 }
 
 /**
@@ -80,7 +87,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		)
 	}
 
-	async function get<T>(path: string, params: BDCQueryParams = {}): Promise<T> {
+	function buildURL(path: string, params: BDCQueryParams): URL {
 		const url = new URL(`${BDC_API_BASE_URL}${path}`)
 
 		for (const [key, value] of Object.entries(params)) {
@@ -88,6 +95,12 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 				url.searchParams.set(key, String(value))
 			}
 		}
+
+		return url
+	}
+
+	async function requestBDC(path: string, params: BDCQueryParams): Promise<Response> {
+		const url = buildURL(path, params)
 
 		const response = await fetchImpl(url, {
 			headers: {
@@ -100,8 +113,20 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 			throw new Error(`BDC API request failed: ${response.status} ${response.statusText} (${url})`)
 		}
 
+		return response
+	}
+
+	async function get<T>(path: string, params: BDCQueryParams = {}): Promise<T> {
+		const response = await requestBDC(path, params)
+
 		return (await response.json()) as T
 	}
 
-	return { get }
+	async function getArrayBuffer(path: string, params: BDCQueryParams = {}): Promise<ArrayBuffer> {
+		const response = await requestBDC(path, params)
+
+		return response.arrayBuffer()
+	}
+
+	return { get, getArrayBuffer }
 }
