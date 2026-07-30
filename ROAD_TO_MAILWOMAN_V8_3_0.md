@@ -1,6 +1,7 @@
 # Road to Mailwoman v8.3.0 — the from-scratch retrain as the enterprise foundation
 
-**Status:** 🟡 **PLANNING** · **Opened:** 2026-07-30 · **From:** 8.2.0 / bundle 6.7.0 / model
+**Status:** 🟢 **EXECUTING** (updated 2026-07-30: run 1 graded, run-2 contingency in flight — see
+§10, the execution register) · **Opened:** 2026-07-30 · **From:** 8.2.0 / bundle 6.7.0 / model
 v3.24.0-bundle-ordinal (the first shipped evidence-bundle model) · **Authors:** Claude,
 operator-directed.
 
@@ -126,3 +127,85 @@ is the sellable sentence in B11.
   minimum n for the noise-honest margins we now compute routinely?
 - Where the Fisher artifact meets Trusted Publishing / HF staging (one more preflight file, same
   pattern — mechanical, but named so it isn't forgotten at the cut).
+
+---
+
+## 10. Execution register (updated 2026-07-30 — the compaction-proof state + task list)
+
+### Done, with receipts
+
+| Item                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Receipt                                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase-0 memos (D1–D4) + Arc-2 commitment                                                                                                                                                                                                                                                                                                                                                                                                                  | #1348 merged; operator sign-off = the merge                                                                                                                               |
+| **#1349**: shipped locality channel NEVER trained (frozen at xavier init; a consistent random marker shipped)                                                                                                                                                                                                                                                                                                                                             | fingerprint + per-channel ablation on the issue; trainer fix + structural key-parity test #1350; recipe reframe #1352                                                     |
+| CJK char path (encode_row_units, char_mode, loader/trainer wiring)                                                                                                                                                                                                                                                                                                                                                                                        | #1351                                                                                                                                                                     |
+| JP Leg-1 probe: **PASS 0.9925** vs the 0.70 gate (region 1.000/locality 0.994 on unseen municipalities)                                                                                                                                                                                                                                                                                                                                                   | verdict on #1176; scorer pre-registered at 34c7b6c2                                                                                                                       |
+| Leg-2 bake-off: char-word within ~0.5pp of bare SP at 22% params                                                                                                                                                                                                                                                                                                                                                                                          | record on #1176; v9 door open (channels-attached condition now named)                                                                                                     |
+| Fisher capture + EWC + acceptance-battery doc (Arc-1 Phase 1)                                                                                                                                                                                                                                                                                                                                                                                             | #1354; artifact contract = fisher-diag-v1.npz + sidecar                                                                                                                   |
+| Locality lexicon **v7** (DE fold; law-4 city-state exception; Brandenburg = Washington class)                                                                                                                                                                                                                                                                                                                                                             | #1355; artifact staged to R2 (392,653 entries)                                                                                                                            |
+| DE fragment board (G8's instrument)                                                                                                                                                                                                                                                                                                                                                                                                                       | overture-fragments-de.jsonl, #1356                                                                                                                                        |
+| **Base run 1 (v4.0.0-base-60k)**: complete after a 4h-timeout resume (cap now 6h); Fisher captured (2,000 batches, all 39.26M trainables, sanity PASS); G1 grid FLAT 40k→60k (over-trust decay = fine-tune artifact, confirmed); candidate step-060000 int8 md5 b7ee5181; locality channel 384/384 nonzero                                                                                                                                                | config header = the pre-registration; grades in the session ladder                                                                                                        |
+| Run-1 verdicts: **G5 16/17** (fr.cedex **90.5** — the named watch RETIRED above the unwaived 85.6; us.street 87.8; P0 board beats shipped on EVERY class) · street_prefix 93.6 vs 96 = the 2.0pp-fallback-margin trap (support n=25; floor-recut-per-the-spec's-own-rule disposition RECORDED, not waived) · homonym delta-bars read per the #1349 addendum (OFF≈0.95 — capability in the weights) · gauntlet: **3 real fails, one family: FR venue-led** | mechanism proven register-invariant; root cause = the feed NEVER admitted a venue shard (source_weights drops unlisted; shipped venue competence was lineage inheritance) |
+| CJK Phase 2: per-config label sets (stage3-jp 47), checkpoint-owned id_to_label, ja-JP +house_number (D4), SCHEMA activation records                                                                                                                                                                                                                                                                                                                      | #1357                                                                                                                                                                     |
+| Training-dynamics runbook section; glossary +34 v8-era terms                                                                                                                                                                                                                                                                                                                                                                                              | #1358, #1359                                                                                                                                                              |
+| 4-survey synthesis (Latin: keep SP; CJK: char+window confirmed; **channels LOAD-BEARING for char NER — named precondition**; JP ship = category first) + KR addendum                                                                                                                                                                                                                                                                                      | #1360, #1362; cjk.ts folding gaps filed #1361                                                                                                                             |
+| **KR framework DECIDED** (operator): parse = localdata(KOGL)+WOF-KR(already in our DB: 50,465 localities, Hangul+hanja)+synthetic+OSM-quarantined; **juso = plug-and-play build-local layer** (we ship the builder against the documented format + synthetic fixtures, never touching real juso pre-counsel; customer builds in-country; manifest carries obligations). GTM moat: the export pledge blocks every cloud geocoder                           | #1362 addendum                                                                                                                                                            |
+
+### Arc 1 — remaining (the run-2 → promote chain)
+
+1. **Run-2 venue contingency** (the envelope's ONE re-run; named delta = fold `synth-house-venue`
+   into the feed): build the tuples input (FR BAN + US LABEL rows per the recipe's tuples mode) →
+   `mailwoman corpus shard house-venue --input …` → overlay corpus on v0.13.0-latam (re-root
+   manifest paths to `/data` — the runbook's step 2) → `v4.0.1-base-60k.yaml` (ONE delta:
+   `synth-house-venue: 2.0`; everything else byte-identical incl. fisher_capture) → R2 push →
+   sync → launch (6h cap) → first-500-steps loss sanity.
+2. **Ladder re-run on run 2**: G1 grid from 40k (both registers; beware the zsh no-word-split trap
+   in loop launches); G5 with the street_prefix floor recut per the recorded disposition; G2
+   ablation vs the 6.7.0 same-grader reference; G3 invariance (int8, `--baseline` 6.7.0); G4/G7
+   gauntlet (the 3 venue fixtures MUST clear; promote the 2 now-PASS tracked cases —
+   chat-qui-peche + venue-delta); G6 canary formatted; **G8 DE legs** (grade function needs a
+   `--fixture` parameter to point at overture-fragments-de); capability manifest (register-pinned,
+   formatted).
+3. **Promote choreography on PASS** (twice-rehearsed): new gate spec cut noise-honest from the
+   candidate's readings **with support-aware margins everywhere** (fix the 2.0pp-fallback class);
+   model **7.0.0** card (files_md5: model + tokenizer + street v3 + locality **v7** + **the Fisher
+   artifact joins the bundle contract**); release-hf + publish.yml preflight gain the Fisher file;
+   HF staging → prepare/publish → R2/demo → ledger-append keyed to the MODEL version → eval
+   report. λ calibration rides the FIRST post-base fine-tune ({0, 1e2, 1e4, 1e6} × 2k-step probe).
+4. **Post-promote levers** (tasks #25/#26): SP vocabulary pruning probe (byte-parity
+   pre-registration; embedding = 72.5% of params at ≤24% utilization) and the SP 0.2.2 WASM
+   rebuild (native offsets).
+
+### Arc 2 — remaining (CJK Phases 3–5, JP)
+
+5. **Phase 3 — full JP shard** off Overture-JP 19.6M: JP-native labels (prefecture/municipality/
+   district + long-form designator splits; compact numbers stay whole-span house_number per D4);
+   char vocab REBUILT from the full shard (probe 1,918 vs 2,640 distinct kanji in full data — or
+   the hash-bucket OOV fallback); the normalization steal-list (two-register numerals, variant
+   folding, 条/地割/無番地 tail, kyoto_st); KEN_ALL 〒 join; postcode-anchor channel wiring.
+6. **#1361 cjk.ts fixes** (half-width katakana fold with length-changing dakuten composition + the
+   hyphen-equivalence class) — pre-Phase-5.
+7. **Phase 4 — train + channels re-aligned per-unit** (the channels are LOAD-BEARING per the
+   survey precondition; int8 export; JP coord bar set from the probe).
+8. **Phase 5 — ship JP-only**: query-shape script router (Latin byte-identity provable), second
+   weights artifact + sealed char vocab, **code-point-native TS decode** (49.5% of the official
+   JP character set is non-BMP; the #519 scar generalizes), browser byte-parity, drop-in + demo
+   verification. **The first non-Latin parse claim.**
+9. Phase 6 (later): TW = full-stack second CJK locale (OGDL green, 9.7M on disk); KR parse on the
+   decided framework + the juso build-local layer builder.
+
+### Counsel dossier (best-effort now; forwarded when the project pays for counsel)
+
+10. Assemble `docs/superpowers/plans/counsel-dossier.md`: the BDC spec's 8 questions (#1214) ·
+    ODbL posture (osm/ publish-block + OSM-derived corpora quarantine) · HK ALS adaptation
+    silence · KR: KOGL type on the specific localdata datasets + the juso plug-and-play notice
+    language + whether in-country-trained weights constitute export · MJ縮退マップ CC BY-SA
+    share-alike if a derived normalization table ever ships · A2 commercial-license text (the
+    pricing page's two durable public commitments precede review).
+
+### Standing GTM items riding the release
+
+- Pricing page **#1353 awaits operator ratification** (merging = ratifying A1's numbers; 7
+  questions on the PR).
+- The 3 CodeQL `postcode` false-positives on the security tab (operator dismissal).
+- The untracked blog post's missing tags break the next docs build that includes it.
