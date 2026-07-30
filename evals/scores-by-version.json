@@ -1280,8 +1280,8 @@
 		},
 		{
 			"run_id": "v401-base-60k-s42",
-			"model_version": "8.3.0",
-			"model_path": "@mailwoman/neural-weights-en-us@8.3.0",
+			"model_version": "7.0.0",
+			"model_path": "@mailwoman/neural-weights-en-us@7.0.0",
 			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
 			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
 			"eval_set_version": "promotion-gate battery (undefined): golden v0.1.2 + real-OOD + arena perturb",
@@ -1317,7 +1317,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "model 7.0.0 from-scratch base (v4.0.1-base-60k step-60000); new v7.0.0-base gate spec (Wilson support-aware margins); locality lexicon v6 per the G8 revert; Fisher artifact fisher-diag-v1 beside the weights; one named watch: si-sentinel-ucakar (char-path lineage fix) [graded_artifact=weights-cache; gate=undefined; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v700-final]"
+			"notes": "model 7.0.0 from-scratch base (v4.0.1-base-60k step-60000); new v7.0.0-base gate spec (Wilson support-aware margins); locality lexicon v6 per the G8 revert; Fisher artifact fisher-diag-v1 beside the weights; one named watch: si-sentinel-ucakar (char-path lineage fix) [graded_artifact=weights-cache; gate=undefined; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v700-final] npm release 8.3.0."
 		}
 	]
 }
