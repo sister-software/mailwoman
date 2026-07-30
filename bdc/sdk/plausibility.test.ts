@@ -56,7 +56,11 @@ import {
 	physicalCategoriesForTechnology,
 	plausibilityCheck,
 	type GeocodeLike,
+	type PlausibilityAbstainReason,
+	type PlausibilityBundle,
+	type PlausibilityCoverageAxisState,
 	type PlausibilityDeps,
+	type PlausibilityEvidence,
 } from "./plausibility.ts"
 import { BroadbandTechnologyCode } from "./technologies.ts"
 
@@ -239,6 +243,35 @@ async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient
 	})
 
 	return kdb
+}
+
+/**
+ * Both layers open together, poi coverage written for exactly Springfield's own res-6 parent (the query point's cell).
+ * Hoisted to module scope — shared by the "full composition" suite below AND the `§7-2b gates` block (Gate 2's
+ * co-presence claim reuses this exact fixture rather than re-deriving it).
+ */
+async function openBoth(): Promise<{
+	deps: PlausibilityDeps
+	cleanup: () => Promise<void>
+}> {
+	const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
+	const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+	const poiContractDB = await openPOIContractDB()
+	const poiLookup = new POILookup({ databasePath: poiPath })
+
+	// Coverage for exactly Springfield's own res-6 parent — the query point's cell.
+	await writeLayerCoverage(poiContractDB, [{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 }])
+
+	return {
+		deps: { bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } },
+		cleanup: async () => {
+			bdcDB[Symbol.dispose]()
+			poiLookup[Symbol.dispose]()
+			poiContractDB[Symbol.dispose]()
+			await rm(bdcScratch, { recursive: true, force: true })
+			await rm(poiScratch, { recursive: true, force: true })
+		},
+	}
 }
 
 const cleanups: Array<() => Promise<void>> = []
@@ -580,32 +613,6 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 })
 
 describe("plausibilityCheck — full composition (both layers present)", () => {
-	async function openBoth(): Promise<{
-		deps: PlausibilityDeps
-		cleanup: () => Promise<void>
-	}> {
-		const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
-		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		const poiContractDB = await openPOIContractDB()
-		const poiLookup = new POILookup({ databasePath: poiPath })
-
-		// Coverage for exactly Springfield's own res-6 parent — the query point's cell.
-		await writeLayerCoverage(poiContractDB, [
-			{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 },
-		])
-
-		return {
-			deps: { bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } },
-			cleanup: async () => {
-				bdcDB[Symbol.dispose]()
-				poiLookup[Symbol.dispose]()
-				poiContractDB[Symbol.dispose]()
-				await rm(bdcScratch, { recursive: true, force: true })
-				await rm(poiScratch, { recursive: true, force: true })
-			},
-		}
-	}
-
 	it("co-presence: matching filing + nearby plant, both covered -> high confidence, both evidence kinds present", async () => {
 		const { deps, cleanup } = await openBoth()
 		cleanups.push(cleanup)
@@ -810,5 +817,232 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion (l
 				{ poi: { lookup: poiLookup, contractDB: poiContractDB } }
 			)
 		).resolves.not.toThrow()
+	})
+})
+
+/**
+ * The §7-2b acceptance gates (task 6) — one describe per gate, mapped 1:1 to the brief's four bullets
+ * (`.superpowers/sdd/2026-07-30-bdc-2b-plan/task-6-brief.md`). Several gates' BEHAVIORAL claims are already proven by
+ * the suites above — `plausibility.ts`'s own module docstring says as much ("this module is designed for them but
+ * doesn't assert them itself"). Where that's true, the test below asserts the gate's SPECIFIC claim against a real
+ * bundle (reusing the established fixtures, including the hoisted `openBoth()`) and cross-references the fuller proof
+ * by comment, rather than re-deriving the whole scenario.
+ */
+describe("§7-2b gates", () => {
+	describe("Gate 1 — positive-evidence-only invariant (load-bearing)", () => {
+		it("well-covered area, no filing, no nearby plant -> zero evidence entries, and confidence that reflects the REAL coverage (never insufficient_survey_data)", async () => {
+			const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
+			const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([]) // no plant anywhere
+			const poiContractDB = await openPOIContractDB()
+			const poiLookup = new POILookup({ databasePath: poiPath })
+
+			// SIBLING_POINT: same res-6 parent as Springfield (real bdc.db coverage), zero bdc_availability rows of
+			// its own — filing-landscape.ts's meaning-of-zero POSITIVE case (see the "positive absence" test in the
+			// "filing evidence + corroboration" suite above). Cover that SAME res-6 parent on the poi side too, so
+			// the physical axis is genuinely surveyed as well, not merely absent — the well-covered half of this
+			// gate's contrast (the sparse-cell half is the next test).
+			await writeLayerCoverage(poiContractDB, [
+				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
+			])
+
+			cleanups.push(async () => {
+				bdcDB[Symbol.dispose]()
+				poiLookup[Symbol.dispose]()
+				poiContractDB[Symbol.dispose]()
+				await rm(bdcScratch, { recursive: true, force: true })
+				await rm(poiScratch, { recursive: true, force: true })
+			})
+
+			const bundle = await plausibilityCheck(
+				{
+					point: SIBLING_POINT,
+					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+					claimedDownloadMbps: 100,
+				},
+				{ bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } }
+			)
+
+			// The core claim: absence never manufactures a negative entry. It just isn't there.
+			expect(bundle.evidence_found).toEqual([])
+			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
+			// Both axes are genuinely covered -> "high", NOT "insufficient_survey_data" — mislabeling a real,
+			// surveyed "nothing here" as a generic unknown would erase the meaning-of-zero distinction the next
+			// test proves in the opposite direction.
+			expect(bundle.coverage_confidence).toBe("high")
+		})
+
+		it("contrast: absence in a SPARSE, never-surveyed cell yields insufficient_survey_data — never the informative-absence form proved above (fuller proof: 'both axes unknown' test in the 'full composition' suite above)", async () => {
+			const { deps, cleanup } = await openBoth()
+			cleanups.push(cleanup)
+
+			// Remote from Springfield: neither bdc.db's fixture rows nor openBoth()'s poi coverage table (scoped to
+			// Springfield's own res-6 parent) has ever surveyed this point.
+			const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
+
+			const bundle = await plausibilityCheck(
+				{ point: remote, technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 1000 },
+				deps
+			)
+
+			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
+			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
+		})
+
+		/**
+		 * STRUCTURAL half of the gate: an exhaustive, `satisfies Record<T, true>` pin (the established idiom — see
+		 * `mailwoman/test/api-schema-drift.test.ts`) over every closed string-literal union on the bundle's public surface.
+		 * TypeScript enforces BOTH directions on each object below: a union member missing from the list fails to compile
+		 * ("missing property"), and a listed key that isn't a real union member fails to compile ("excess property" — these
+		 * are object literals assigned directly via `satisfies`, so excess-property checking applies). A future change that
+		 * adds a verdict-shaped member (e.g. `"implausible"`) to any of these unions therefore either fails to compile here
+		 * — silently missing from the pinned list, forcing a reviewer to touch this file — or, once added to the list,
+		 * fails the runtime blocklist check below. That's the "mutation-style" assertion: this file is what keeps Task 5
+		 * reviewer-confirmed property true.
+		 *
+		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers `bdc/tsconfig.test.json`)
+		 * — `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below, which still confirms none of the
+		 * CURRENT values reads as a negative verdict.
+		 */
+		const EVIDENCE_TYPE_TAGS = {
+			filing: true,
+			physical_plant: true,
+			abstain: true,
+		} satisfies Record<PlausibilityEvidence["type"], true>
+
+		const ABSTAIN_REASONS = {
+			requires_build_local_layer: true,
+			requires_bdc_layer: true,
+			insufficient_survey_data: true,
+		} satisfies Record<PlausibilityAbstainReason, true>
+
+		const COVERAGE_CONFIDENCE_VALUES = {
+			high: true,
+			low: true,
+			insufficient_survey_data: true,
+		} satisfies Record<PlausibilityBundle["coverage_confidence"], true>
+
+		const COVERAGE_AXIS_STATES = {
+			covered: true,
+			layer_missing: true,
+			cell_unsurveyed: true,
+			no_coordinate: true,
+			not_applicable: true,
+		} satisfies Record<PlausibilityCoverageAxisState, true>
+
+		const BLOCK_RESOLUTION_VALUES = {
+			geoid: true,
+			h3_cell_approximation: true,
+		} satisfies Record<PlausibilityBundle["block_resolution"], true>
+
+		/**
+		 * Any value shaped like a negative verdict — the thing this scorer's whole design forbids emitting.
+		 */
+		const VERDICT_LIKE_PATTERN =
+			/implaus|disprov|contradic|invalid|false|deny|reject|negat|unsupport|unverif|not_?found|no_service|unavailable/i
+
+		it("no value in the bundle's public type surface (evidence types, abstain reasons, confidence, coverage-axis states, block_resolution) is verdict-shaped", () => {
+			const allValues = [
+				...Object.keys(EVIDENCE_TYPE_TAGS),
+				...Object.keys(ABSTAIN_REASONS),
+				...Object.keys(COVERAGE_CONFIDENCE_VALUES),
+				...Object.keys(COVERAGE_AXIS_STATES),
+				...Object.keys(BLOCK_RESOLUTION_VALUES),
+			]
+
+			// Exhaustive means non-empty — a refactor that hollowed out one of the objects above (e.g. via a bad
+			// merge) must not silently pass a loop over nothing.
+			expect(allValues).toHaveLength(16)
+
+			for (const value of allValues) {
+				expect(value).not.toMatch(VERDICT_LIKE_PATTERN)
+			}
+		})
+	})
+
+	describe("Gate 2 — co-presence (fuller proof: 'full composition' suite above)", () => {
+		it("matching filing + nearby plant, both covered -> corroborating filing evidence + a physical hit + coverage_confidence: high", async () => {
+			const { deps, cleanup } = await openBoth()
+			cleanups.push(cleanup)
+
+			const bundle = await plausibilityCheck(
+				{
+					point: SPRINGFIELD_POINT,
+					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+					claimedDownloadMbps: 1000,
+				},
+				deps
+			)
+
+			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
+			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)
+			expect(bundle.coverage_confidence).toBe("high")
+		})
+	})
+
+	describe("Gate 3 — layer absent: abstain, no fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
+		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-bearing evidence shape) is fabricated", async () => {
+			const bundle = await plausibilityCheck(
+				{
+					point: SPRINGFIELD_POINT,
+					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+					claimedDownloadMbps: 100,
+				},
+				{}
+			)
+
+			expect(bundle.evidence_found).toContainEqual({
+				type: "abstain",
+				reason: "requires_build_local_layer",
+				layer: "poi",
+			})
+
+			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
+		})
+
+		it("bdc layer absent -> abstain requires_bdc_layer, vintage: null, and no filing evidence is fabricated", async () => {
+			const bundle = await plausibilityCheck(
+				{
+					point: SPRINGFIELD_POINT,
+					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
+					claimedDownloadMbps: 100,
+				},
+				{}
+			)
+
+			expect(bundle.vintage).toBeNull()
+			expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
+			expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
+		})
+	})
+
+	describe("Gate 4 — block-grain flag (fuller proof: 'claim resolution' suite above)", () => {
+		it("address- and point-resolved claims carry block_resolution: h3_cell_approximation; a geoid-given claim carries geoid", async () => {
+			const byPoint = await plausibilityCheck(
+				{ point: SPRINGFIELD_POINT, technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
+				{}
+			)
+
+			expect(byPoint.block_resolution).toBe("h3_cell_approximation")
+
+			const geocode = async (): Promise<GeocodeLike> => ({ lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude })
+
+			const byAddress = await plausibilityCheck(
+				{
+					address: "123 Main St, Springfield, IL",
+					technologyCode: BroadbandTechnologyCode.AsymmetricXDSL,
+					claimedDownloadMbps: 10,
+				},
+				{ geocode }
+			)
+
+			expect(byAddress.block_resolution).toBe("h3_cell_approximation")
+
+			const byGeoid = await plausibilityCheck(
+				{ geoid: GEOID_SPRINGFIELD, technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
+				{}
+			)
+
+			expect(byGeoid.block_resolution).toBe("geoid")
+		})
 	})
 })
