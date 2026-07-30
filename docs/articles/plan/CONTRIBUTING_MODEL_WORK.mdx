@@ -209,6 +209,54 @@ Two lenses that disagree on purpose: **arena head-to-head** is whole-parse-stric
 Golden-dev per-tag numbers lie for tags the golden set barely contains (unit reads 6.3 there and
 92.3 on real-OOD) — for campaign tags, the real-OOD column is the truth.
 
+## From-scratch vs fine-tune dynamics (the v4.0.0-base receipts, 2026-07-30)
+
+The first from-scratch retrain since the v264 era produced receipts every future training
+session should read before choosing between a fine-tune and a base run. The mechanism, in one
+paragraph: **the learning rate is the plasticity dial, and a fine-tune deliberately turns it
+down.** A base run (5e-4 peak, tens of thousands of high-LR steps under a cosine anneal) can move
+any weight anywhere — rare classes get visited often enough and pushed hard enough to be carved
+into the weights. A fine-tune (1e-5, ~8k steps) can only drift a short distance from its starting
+point; that is the point (it must not destroy the base), but it has two structural consequences
+that are the SAME phenomenon mirrored:
+
+- **Rare-class forgetting** — the base knew fr.cedex; every fine-tune's gradient mass pulled
+  toward its own objective and the tiny cedex islands eroded (~10/430 CA rows; measured across
+  every bundle-era fine-tune, replay-boost plateau ~83.4). The v4.0.0 base re-learned it natively:
+  **90.5 vs the waived 82.2 floor** — above even the unwaived 85.6 shipped reading.
+- **Rare-class UNDER-learning** — date-name street forms sat in the feed through every increment
+  and no 8k window at 1e-5 could carve them (0.133 on v385 AND shipped). The base run, same feed:
+  0.762 asis / 0.958 lower+heal. Nothing changed but the training dynamics.
+
+Three more receipts from the same run:
+
+1. **Inheritance masks provenance — a from-scratch run X-rays the feed.** The shipped lineage was
+   four fine-tune generations deep; capabilities trained into ANCESTOR bases on feeds that no
+   longer exist ride along invisibly. The v4.0.0 run exposed one: FR venue-led competence
+   ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by inheritance — the CURRENT feed's
+   `source_weights` never admitted a venue shard (`synth-house-venue` is not in the map, and an
+   unlisted source is DROPPED), so the from-scratch model never saw the class and regressed on it.
+   Audit rule: **before any base run, diff the feed's `source_weights` against the capability
+   surface you expect** — what is not in the map is not in the model.
+2. **The over-trust decay was a fine-tune artifact.** Every bundle-era fine-tune peaked ~4-6k and
+   decayed by 8k (constant LR). The base run's G1 grid is FLAT from 40k→60k under the cosine
+   anneal — the decay never appears. Grading every save remains cheap insurance, but the
+   pathology belonged to the recipe class, not the bundle.
+3. **Floor-support calibration.** The v6.0.0 spec's margin rule falls back to 2.0pp "where a
+   scorer's support is not exposed" — us.street_prefix's floor (96.0) was cut with that fallback
+   on a metric whose true support is n=25 (2σ ≈ ±12pp). A 3-row recall dip then reads as a floor
+   MISS. When a floor trips, check the margin's provenance against the metric's actual support
+   before spending a contingency run.
+
+**"Can't we just start and stop training at will?"** Resume-of-the-same-run: yes — optimizer +
+scheduler + step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
+completed identically-in-kind). What does NOT exist is "just continue" past the end of a cosine
+schedule: the anneal ends at LR 0 by design, so extending a finished run means choosing a NEW
+schedule — which is a new training process with new dynamics, not a continuation. And a fine-tune
+is not a resume at all: it is a new process initialized from old weights, with the plasticity dial
+turned down ~50x. The three regimes — resume, extend, fine-tune — are distinct objects; naming
+which one you mean is half the recipe.
+
 ## When your lever doesn't gate
 
 Tune-and-retry once, then stop and write the postmortem instead of a third run — the v0.6.x cycle
