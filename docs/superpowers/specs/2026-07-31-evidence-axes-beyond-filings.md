@@ -142,7 +142,9 @@ address.
 - **3d competition surface:** the three-number progression of §1 becomes the headline output, and the
   benchmark filter is a first-class query parameter.
 - **C5:** the label scraper serves double duty — pricing _and_ availability corroboration.
-- **Evals:** the Plumbrook example is a genuine bidirectional fixture. Keep it as an internal eval
+- **Evals:** the Plumbrook example is a genuine availability-divergence fixture (one filer agreeing
+  exactly with its own channel, one filing service its own channel declines), plus a stale-identity
+  fixture via the acquisition. Keep it as an internal eval
   case; it is exactly the shape that a one-way over-claim detector gets wrong.
 
 ## 5. Open questions
