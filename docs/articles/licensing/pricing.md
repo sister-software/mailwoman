@@ -1,0 +1,113 @@
+---
+title: Pricing
+sidebar_label: Pricing
+sidebar_position: 1.5
+id: pricing
+hide_footer: true
+---
+
+# Pricing
+
+Most geocoding is rented by the lookup. The bill grows with your traffic, and you pay again
+for the same address every time a user retypes it. The rate limit sits in the critical path
+of your signup form. Every address a customer types leaves your network to come back as a
+coordinate, which is a conversation you'll eventually have with your compliance team.
+
+Mailwoman runs where your code runs. It's an npm package that loads inside your process, in
+Node or in the browser, against data on your own disk. There's no API key and nothing to
+meter. You pay for a license or you pay nothing, and the price doesn't move when your
+volume does.
+
+## Open source
+
+**Free.** Licensed under [AGPL-3.0](./open-source.md).
+
+That covers the parser, the geocoder, the resolvers, the published model weights, and the
+drop-in API servers. Install it or fork it, and run it in production.
+
+The AGPL attaches one condition. If you distribute software built on Mailwoman, or run it
+as a network service that other people use, those users are entitled to your corresponding
+source under the same license. Plenty of teams are fine with that. If yours isn't, buy the
+commercial license below.
+
+New to the project? [Start here](../getting-started.mdx).
+
+**[Ask whether the AGPL works for your setup →](mailto:teffen@sister.software?subject=Mailwoman%20AGPL%20question)**
+
+## Commercial license
+
+**$250 per month, per legal entity.** Or $2,400 a year, which works out to $200 a month.
+
+_All prices on this page are in US dollars and exclude VAT and sales taxes._
+
+This releases you from the AGPL's source-sharing condition, so you can build closed-source
+products and services on Mailwoman and keep your source private.
+
+One subscription covers one company: every developer, every environment, and every product
+you ship or host yourself. There are no seats to count and no per-address fees.
+
+The tier is sized for smaller companies, under 250 employees and under $10M in annual
+revenue. Past either line, see Enterprise below.
+
+You also get a direct line to the engineers who built it.
+
+**[Buy a commercial license →](mailto:teffen@sister.software?subject=Mailwoman%20commercial%20license)**
+
+## Embedding Mailwoman in a product you sell
+
+**Talk to us.**
+
+If Mailwoman ships inside something you license to other people, such as a CRM, an ISP
+billing platform, or a device, that's redistribution, and the commercial subscription above
+doesn't cover it.
+
+Terms are a flat annual fee per product, banded by how many customers that product reaches.
+There's no revenue share and no exclusivity.
+
+**[Talk about OEM terms →](mailto:teffen@sister.software?subject=Mailwoman%20OEM%20license)**
+
+## Enterprise
+
+**From $15,000 per year.**
+
+For address stock that looks nothing like a public corpus: legacy CRM exports, records
+typed by field crews, or a country and format the open model has never been graded on.
+Scope is agreed with you, and usually covers:
+
+- A model fine-tuned on your own addresses.
+- An acceptance suite built from your data, with the numbers reported to you before
+  anything ships.
+- Support with named contacts and an agreed response time.
+
+Every enterprise agreement includes the commercial license, so the release from the
+AGPL's source-sharing condition comes with it at any company size. This is also the tier
+for companies past the commercial license's size fence.
+
+**[Start an enterprise conversation →](mailto:teffen@sister.software?subject=Mailwoman%20enterprise)**
+
+## What we commit to
+
+**Your rate is fixed at signup.** If the published price rises later, it rises for new
+subscriptions. Yours stays where it started for as long as you keep it active.
+
+**Published releases stay published.** Every AGPL release already shipped is licensed to you
+permanently. That follows from the license itself, and we couldn't withdraw a grant we've
+already made.
+
+**We don't count your lookups.** Mailwoman runs on your machines, so there's no meter to
+read and nothing to true up at renewal.
+
+## What pricing doesn't cover
+
+The code license and the data license are separate questions. Mailwoman's source is ours to
+license to you. The reference data it resolves against comes from open sources with their
+own terms, and some of those terms follow the data into your product. Which ones apply
+depends on the artifacts you load, so read
+[data licensing & provenance](./data-provenance.md) before you ship.
+
+## Not sure which one you need?
+
+Tell us what you're building, who operates it, and whether it leaves your building. If the
+answer is that you need no license from us, we'll tell you that.
+
+**[Ask a licensing question →](mailto:teffen@sister.software?subject=Mailwoman%20licensing%20question)**

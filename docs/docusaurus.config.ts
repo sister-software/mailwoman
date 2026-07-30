@@ -271,6 +271,11 @@ const config: Config = {
 					position: "left",
 				},
 				{
+					to: "/docs/licensing/pricing/",
+					label: "Pricing",
+					position: "left",
+				},
+				{
 					to: "/docs/licensing/",
 					label: "Licensing",
 					position: "left",
@@ -303,6 +308,7 @@ const config: Config = {
 				{
 					title: "More",
 					items: [
+						{ label: "Pricing", to: "/docs/licensing/pricing/" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
 					],
