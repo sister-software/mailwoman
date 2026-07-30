@@ -70,6 +70,45 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(row!.components.house_number!).toMatch(/^\d+$/)
 	})
 
+	it("FR renders postcode-before-locality with NO region (the run-2 contingency shape)", () => {
+		const frTuple: HouseVenueBaseTuple = {
+			locality: "Paris",
+			region: "Île-de-France",
+			postcode: "75005",
+			country: "FR",
+			street: "Rue de la Huchette",
+			houseNumber: "20",
+		}
+		const row = synthesizeHouseVenueRow(frTuple, {
+			random: seededRandom(3),
+			forceTemplate: "venue-before-street",
+		})
+
+		expect(row).not.toBeNull()
+		// The exact gauntlet failure family: "VENUE, 20 Rue de la Huchette, 75005 Paris".
+		expect(row!.raw).toMatch(/^.+, 20 Rue de la Huchette, 75005 Paris$/)
+		expect(row!.components.region).toBeUndefined()
+		expect(row!.components.postcode).toBe("75005")
+		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
+	})
+
+	it("FR venue-after-street keeps the FR tail", () => {
+		const row = synthesizeHouseVenueRow(
+			{
+				locality: "Lyon",
+				region: "",
+				postcode: "69001",
+				country: "FR",
+				street: "Rue de la République",
+				houseNumber: "5",
+			},
+			{ random: seededRandom(4), forceTemplate: "venue-after-street" }
+		)
+
+		expect(row).not.toBeNull()
+		expect(row!.raw).toMatch(/^5 Rue de la République, .+, 69001 Lyon$/)
+	})
+
 	it("ALWAYS emits both house_number AND venue across 500 random invocations", () => {
 		const rng = seededRandom(42)
 
