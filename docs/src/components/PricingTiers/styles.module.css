@@ -1,0 +1,91 @@
+/**
+ * Pricing tier cards + OEM band (GTM A3b).
+ *
+ * Layout modeled on three equal vertical cards, no highlighted tier. All color
+ * derives from Infima vars so both themes hold without theme-specific rules.
+ * The one deliberate flourish: prices set in the site mono between double
+ * rules, a postage-meter frank — the rest stays flat and quiet.
+ */
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	gap: 1rem;
+	margin-block: 2rem 0.75rem;
+}
+
+.tier {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: var(--ifm-card-border-radius, 0.4rem);
+	background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
+	padding: 1.25rem;
+}
+
+.tierName {
+	margin: 0 0 0.75rem;
+	font-size: 0.8rem;
+	font-weight: var(--ifm-font-weight-bold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.frank {
+	border-block: 4px double var(--ifm-color-emphasis-400);
+	padding-block: 0.6rem;
+	margin-bottom: 0.25rem;
+}
+
+.price {
+	margin: 0;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 1.6rem;
+	line-height: 1.2;
+	font-weight: var(--ifm-font-weight-bold);
+}
+
+.priceNote {
+	margin: 0.35rem 0 0;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.tierBody {
+	flex: 1;
+	margin-block: 0.75rem;
+	font-size: 0.9rem;
+}
+
+.tierBody > *:last-child {
+	margin-bottom: 0;
+}
+
+/* Long CTA labels wrap instead of clipping the card edge. */
+.tier > a {
+	white-space: normal;
+}
+
+.oemBand {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem 2rem;
+	border-block: 2px dashed var(--ifm-color-emphasis-400);
+	padding-block: 1.25rem;
+	margin-block: 2rem;
+}
+
+.oemBody {
+	flex: 1 1 24rem;
+	font-size: 0.9rem;
+}
+
+.oemBody > *:last-child {
+	margin-bottom: 0;
+}
+
+.oemBand > a {
+	flex: 0 0 auto;
+}
