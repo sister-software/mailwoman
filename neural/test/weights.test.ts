@@ -441,16 +441,14 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 
 	// TRANSITION-BETA characterization (task-8 § "Transition-level pair-evidence probe", operator-approved
 	// build 2026-07-24): a real comma-free GB register row from the probe's 17-row fused-path population.
-	// "Glenfield"/"Leicester" (fusion margin 3.10, probe-recovered at β=5) sits mid-band on purpose: far
-	// enough above 0 that the beta-less decode doesn't self-recover under model drift (the probe set's
-	// smallest-margin members — Caergwrle 0.11, Pocklington 0.56 — ALREADY recover beta-less on the
-	// current substrate, re-measured 2026-07-24), and comfortably under β=5 so the flip holds. That same
-	// re-measurement ran all 17 rows both ways on this worktree's model: 7 flip ∅→recovered with the beta
-	// artifact, 5 pre-recovered beta-less, 3 stay unrecovered at β=5 (Hedon, Ashby Parva, Wellington —
-	// matching the probe's own plateau: Hedon/Ashby Parva never recover, Wellington needs β=8), and
-	// NO row regresses. The beta-less leg pins the pre-beta behavior on the same bytes: the emission-only
-	// prior fires yet the child span still emits nothing — proving the artifact's transitionBeta (not
-	// some other change) is what recovers the row.
+	// Re-pinned 2026-07-30 for the model 7.0.0 from-scratch base: the full 17-row re-measurement
+	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json) shows 15/17 rows now self-recover BETA-LESS — including
+	// Hedon and Ashby Parva, which never recovered at any β on the fine-tune lineage, and the previous
+	// pin row Glenfield (margin 3.10). Exactly two rows still need the artifact: "Upton"/"Bude" (fusion
+	// margin 4.03, the sturdier pin — the smallest-margin members drift first) and Wheatley (0.78).
+	// NO row regresses with the artifact on. The beta-less leg pins the pre-beta behavior on the same
+	// bytes: the emission-only prior fires yet the child span still emits nothing — proving the
+	// artifact's transitionBeta (not some other change) is what recovers the row.
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: the transitionBeta=5 artifact flips a comma-free fused-path row; a beta-less view of the same index does not (TRANSITION-BETA)",
 		async () => {
@@ -467,10 +465,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			// PAIR_INDEX_TRANSITION_BETA lockstep guard rebuilds a stale binary before this line can see it).
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)
-			expect(resolver.probe("glenfield", "leicester")).toBe("dependent_locality")
+			expect(resolver.probe("upton", "bude")).toBe("dependent_locality")
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
-			const row = "7 Carpenters Close Glenfield Leicester LE3 8RS"
+			const row = "Piran Heights Upton Bude EX23 0LY"
 
 			// Beta-less view of the SAME index bytes: probe + delta identical, transitionBeta withheld — the
 			// exact decode every pre-TRANSITION-BETA build produces on this row (the measured current-main
@@ -483,7 +481,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 
 			// The auto-wired config default (the shipped artifact, beta 5) recovers the row.
 			const json = await cls.parseJSON(row)
-			expect(json.dependent_locality).toBe("Glenfield")
+			expect(json.dependent_locality).toBe("Upton")
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
