@@ -137,7 +137,7 @@ test("buildTelecomPOISQL: every TELECOM_TAG_RULES entry passes the validator", (
 
 test("extractOSMPOIs: also rejects a hostile rule table before ever spawning ogr2ogr", async () => {
 	const hostileRules = [{ categoryID: "x", all: [["man_made", "a' OR 1=1 --"] as [string, string]] }]
-	const it = extractOSMPOIs("/nonexistent.pbf", hostileRules)
+	const it = extractOSMPOIs("/nonexistent.pbf", hostileRules)[Symbol.asyncIterator]()
 
 	await expect(it.next()).rejects.toThrow(/tag-token allowlist/)
 })
