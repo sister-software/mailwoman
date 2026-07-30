@@ -20,6 +20,7 @@
 	"references": [
 		{ "path": "../api" },
 		{ "path": "../api-kit" },
+		{ "path": "../bdc" },
 		{ "path": "../core" },
 		{ "path": "../resolver" },
 		{ "path": "../corpus" },

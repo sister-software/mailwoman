@@ -8,7 +8,7 @@
  *   file (the actual product surface) is testable without any MCP plumbing — `tools.test.ts` calls
  *   `buildToolTable` directly with stub deps.
  *
- *   Five tools, one per capability the exotic-POI arc's other packages expose to a human/CLI caller:
+ *   Six tools, one per capability the exotic-POI arc's other packages expose to a human/CLI caller:
  *
  *   - `mailwoman_parse` — the runtime pipeline's parse (optionally POI-aware).
  *   - `mailwoman_geocode` — the street-level geocode cascade (`mailwoman/geocode-core`).
@@ -17,6 +17,8 @@
  *     we never run it".
  *   - `mailwoman_layer_manifest` — read a spatial-layer database's provenance manifest + coverage summary
  *     (`@mailwoman/core/layers`).
+ *   - `mailwoman_bdc_filing_landscape` — read a bdc.db layer's provider/technology/speed-bucket filing census over a
+ *     set of census blocks or H3 cells (`@mailwoman/bdc`'s `filingLandscape`).
  */
 
 import { z } from "zod"
@@ -30,6 +32,7 @@ export interface MCPToolDeps {
 	poiSearch: (q: { query: string; poiDatabasePath?: string }) => Promise<unknown>
 	overpassExport: (query: string) => Promise<string>
 	layerManifest: (databasePath: string) => Promise<unknown>
+	bdcFilingLandscape: (q: { databasePath: string; geoids?: string[]; h3Cells?: number[] }) => Promise<unknown>
 }
 
 /**
@@ -85,6 +88,28 @@ const LayerManifestInputSchema = z.object({
 		.string()
 		.min(1)
 		.describe("Path to a mailwoman spatial-layer database (poi.db, an address-points shard, etc.)."),
+})
+
+const BDCFilingLandscapeInputSchema = z.object({
+	database_path: z
+		.string()
+		.min(1)
+		.describe("Path to a bdc.db layer database (FCC Broadband Data Collection availability)."),
+	geoids: z
+		.array(z.string())
+		.min(1)
+		.optional()
+		.describe(
+			"15-character census block GEOIDs to query. Provide exactly one of `geoids` or `h3_cells` — never both, never neither, never empty."
+		),
+	h3_cells: z
+		.array(z.number())
+		.min(1)
+		.optional()
+		.describe(
+			"Resolution-9 short H3 cell integers (the bdc.db availability spine) to query directly. Provide exactly " +
+				"one of `geoids` or `h3_cells` — never both, never neither, never empty."
+		),
 })
 
 /**
@@ -156,6 +181,20 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 				const { databasePath } = LayerManifestInputSchema.parse(args)
 
 				return deps.layerManifest(databasePath)
+			},
+		},
+		{
+			name: "mailwoman_bdc_filing_landscape",
+			description:
+				"Read the FCC Broadband Data Collection (BDC) provider/technology/speed-bucket filing census over a set " +
+				"of census blocks (`geoids`) or H3 cells (`h3_cells`) from a bdc.db layer database. Returns the source " +
+				"vintage, how many queried blocks were surveyed vs. unknown (never surveyed), and the filing summary. " +
+				"Provide exactly one of `geoids` or `h3_cells`.",
+			inputSchema: BDCFilingLandscapeInputSchema,
+			handler: async (args) => {
+				const { database_path, geoids, h3_cells } = BDCFilingLandscapeInputSchema.parse(args)
+
+				return deps.bdcFilingLandscape({ databasePath: database_path, geoids, h3Cells: h3_cells })
 			},
 		},
 	]

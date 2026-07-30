@@ -70,3 +70,11 @@ export function expandH3Cell(h3CellShort: H3CellShort, resolution = 15): H3Cell 
 
 	return cell as H3Cell
 }
+
+/**
+ * Pack an H3 cell into the 48-bit short-cell integer used as a clustered B-tree key across layer databases (poi.db,
+ * bdc.db, address-id).
+ */
+export function shortCellToInt(cell: H3Cell): number {
+	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
+}

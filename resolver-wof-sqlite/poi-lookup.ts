@@ -20,14 +20,14 @@
  *     `name_key`. No center required; if one is given, hits are still distance-sorted.
  *
  *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing that turns a raw H3
- *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortenH3Cell` — that math
+ *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt` — that math
  *   is NEVER reimplemented here (see AGENTS.md on `@mailwoman/spatial` being the one true home for
  *   it).
  */
 
 import { DatabaseSync } from "node:sqlite"
 
-import { haversineKm, shortenH3Cell, type H3Cell } from "@mailwoman/spatial"
+import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
 import type { POICategoryCodeTable, POITable } from "./poi-schema.ts"
@@ -272,7 +272,7 @@ export class POILookup implements Disposable {
 
 			for (const cell of newCells) {
 				seenCells.add(cell)
-				const shortCell = h3CellToInt(cell as H3Cell)
+				const shortCell = shortCellToInt(cell as H3Cell)
 
 				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
 				// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
@@ -362,13 +362,6 @@ export class POILookup implements Disposable {
 	[Symbol.dispose](): void {
 		this.close()
 	}
-}
-
-/**
- * `poi.h3_cell` is the SHORTENED (48-bit) cell — never the full h3-js cell string.
- */
-function h3CellToInt(cell: H3Cell): number {
-	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
 }
 
 function sortByDistance(rows: POIRow[], center: { latitude: number; longitude: number }): POIRow[] {

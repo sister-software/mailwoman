@@ -39,6 +39,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
