@@ -199,6 +199,22 @@
 			"basicLabel": null,
 			"osmTag": "power=substation",
 			"source": "mailwoman-infra"
+		},
+		{
+			"id": "telecom_exchange",
+			"label": "Telephone exchange",
+			"hierarchy": ["infrastructure", "telecom_exchange"],
+			"basicLabel": null,
+			"osmTag": "man_made=telephone_exchange",
+			"source": "mailwoman-infra"
+		},
+		{
+			"id": "tower_comms",
+			"label": "Communications tower",
+			"hierarchy": ["infrastructure", "tower_comms"],
+			"basicLabel": null,
+			"osmTag": "man_made=mast",
+			"source": "mailwoman-infra"
 		}
 	],
 	"synonyms": [
@@ -377,6 +393,30 @@
 		{
 			"phrase": "credit union",
 			"categoryID": "bank"
+		},
+		{
+			"phrase": "telephone exchange",
+			"categoryID": "telecom_exchange"
+		},
+		{
+			"phrase": "central office",
+			"categoryID": "telecom_exchange"
+		},
+		{
+			"phrase": "exchange building",
+			"categoryID": "telecom_exchange"
+		},
+		{
+			"phrase": "comms tower",
+			"categoryID": "tower_comms"
+		},
+		{
+			"phrase": "communications mast",
+			"categoryID": "tower_comms"
+		},
+		{
+			"phrase": "radio mast",
+			"categoryID": "tower_comms"
 		}
 	]
 }

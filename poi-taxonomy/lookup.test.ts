@@ -38,6 +38,24 @@ describe("lookupPOICategory", () => {
 		expect(requiresBuildLocalLayer(shipped!.category)).toBe(false)
 	})
 
+	it("resolves telecom_exchange and tower_comms categories with build-local requirement", () => {
+		// telecom_exchange category
+		const telecomExchangeMatch = lookupPOICategory("telephone exchange")[0]
+		expect(telecomExchangeMatch?.category.id).toBe("telecom_exchange")
+		expect(requiresBuildLocalLayer(telecomExchangeMatch!.category)).toBe(true)
+
+		// tower_comms category
+		const towerCommsMatch = lookupPOICategory("comms tower")[0]
+		expect(towerCommsMatch?.category.id).toBe("tower_comms")
+		expect(requiresBuildLocalLayer(towerCommsMatch!.category)).toBe(true)
+
+		// Test other synonyms
+		expect(lookupPOICategory("central office")[0]?.category.id).toBe("telecom_exchange")
+		expect(lookupPOICategory("exchange building")[0]?.category.id).toBe("telecom_exchange")
+		expect(lookupPOICategory("communications mast")[0]?.category.id).toBe("tower_comms")
+		expect(lookupPOICategory("radio mast")[0]?.category.id).toBe("tower_comms")
+	})
+
 	it("gates locale-restricted synonyms like variant-aliases does", () => {
 		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1)
 		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
@@ -124,10 +142,10 @@ describe("lookup without a locale", () => {
 })
 
 describe("full Overture snapshot + curated overlay", () => {
-	it("ships the full snapshot: well over 1900 categories, plus the 6 mailwoman-infra classes", () => {
+	it("ships the full snapshot: well over 1900 categories, plus the 8 mailwoman-infra classes", () => {
 		const categories = getAllCategories()
 		expect(categories.length).toBeGreaterThan(1900)
-		expect(categories.filter((c) => c.source === "mailwoman-infra")).toHaveLength(6)
+		expect(categories.filter((c) => c.source === "mailwoman-infra")).toHaveLength(8)
 	})
 
 	it("carries brand-new Overture identity categories that the seed taxonomy never had", () => {
