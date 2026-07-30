@@ -6,8 +6,8 @@
  *
  *   `mailwoman-mcp` — boot the MCP server over stdio. Wires the real `MCPToolDeps` (`tools.ts`) from the mailwoman
  *   library: `createRuntimePipeline` for parse/POI-intent, `geocode-core`'s `geocodeAddress` for geocode,
- *   `mailwoman/poi-overpass`'s `emitOverpassQL` for the export tool, and `@mailwoman/core/layers` for the layer
- *   manifest tool.
+ *   `mailwoman/poi-overpass`'s `emitOverpassQL` for the export tool, `@mailwoman/core/layers` for the layer
+ *   manifest tool, and `@mailwoman/bdc`'s `filingLandscape` for the BDC filing-landscape tool.
  *
  *   Deps are LAZY: nothing here loads the neural weights or opens a gazetteer db at startup — an MCP client
  *   connects, lists tools, and may never call one (or may call `mailwoman_overpass_export`/`mailwoman_layer_manifest`,
@@ -24,6 +24,7 @@ import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
+import { filingLandscape, type BDCDatabase } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -176,6 +177,12 @@ const deps: MCPToolDeps = {
 			.executeTakeFirst()
 
 		return { manifest, coverage }
+	},
+
+	async bdcFilingLandscape(q) {
+		using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(q.databasePath, { readOnly: true }) })
+
+		return filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
 	},
 }
 

@@ -4735,6 +4735,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/mcp@workspace:mcp"
   dependencies:
+    "@mailwoman/bdc": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
