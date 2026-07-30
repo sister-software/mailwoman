@@ -3289,6 +3289,7 @@ def grade_evidence_bundle(
     show_flips: str = "",
     case: str = "asis",
     heal: bool = False,
+    fixture: str = "ban-fragments-fr.jsonl",
 ):
     """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
     computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
@@ -3317,7 +3318,8 @@ def grade_evidence_bundle(
         check=True,
         capture_output=True,
     )
-    fixture = f"{VOL_MOUNT}/eval/fixtures/ban-fragments-fr.jsonl"
+    # G8 (run-2 ladder): --fixture points the same instrument at overture-fragments-de.jsonl.
+    fixture = f"{VOL_MOUNT}/eval/fixtures/{fixture}"
 
     ck = Path(f"{VOL_MOUNT}/output-{run}-s42/checkpoints/step-{step:06d}")
     tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
@@ -3638,6 +3640,8 @@ def sync_jp_probe():
         # Run-2 venue contingency: the v0.15.0-venue overlay (manifest + the one shard parquet; the
         # 703 base shards resolve into v0.13.0-latam, which persists on the volume).
         f"rclone copy :s3:{BUCKET}/corpus/v0.15.0-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.0-venue/ {R}",
+        # G8: the DE fragment board for the run-2 ladder.
+        f"rclone copy :s3:{BUCKET}/eval/fixtures/overture-fragments-de.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
