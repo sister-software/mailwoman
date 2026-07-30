@@ -12,3 +12,13 @@
 # Per-locale FST gazetteer (FST-distribution arc, 2026-07-25) — dev symlink from
 # $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/, real binary staged at publish time.
 /fst-*.bin
+
+# Evidence-bundle lexicons (Option-A, 6.7.0-bundle): materialized at dev-link/publish time from
+# data/gazetteer/ + the data root (same treatment as anchor-lexicon-v1.json above). Version-wildcarded
+# so a lexicon bump never re-strays.
+/street-type-lexicon-*.json
+/locality-surface-lexicon-*.json
+
+# The #1104 country soft-feed lexicon (same treatment — copied from data/gazetteer/ at
+# dev-link/publish time; this line existed in en-us since #1104 but was never mirrored here).
+/country-surface-lexicon-v1.json
