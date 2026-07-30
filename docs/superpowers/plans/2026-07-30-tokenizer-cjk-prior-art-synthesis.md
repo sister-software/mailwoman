@@ -132,6 +132,16 @@ What it cannot give: rooftop geocoding (house-number → point stays juso/partne
 lands at admin/locality-centroid tier, the same shape several EU locales shipped with before
 their coverage arcs (the coverage-not-retrain precedent).
 
+**OPERATOR DISPOSITION (2026-07-30): the KR framework is decided.** Parse = the no-juso recipe
+above (+ OSM-KR through the neutered-but-kept osm/ machinery, ODbL-quarantined per standing
+practice). Juso = a **plug-and-play build-local layer** on the layer contract: we ship
+`gazetteer build juso` (written against the DOCUMENTED format + synthetic fixtures — we never
+touch real juso data ourselves pre-counsel), the customer acquires juso under their own grant and
+builds in-country, the layer manifest carries the juso obligations as structural notice, and the
+resolver's AddressPointLookup consumes it as a tier upgrade (locality-centroid → rooftop). The
+moat framing for GTM: the export pledge structurally blocks every cloud geocoder — in-process
+self-hosting is the only legal path to rooftop KR, which is the product.
+
 **Counsel question shrinks accordingly:** from "clear the juso export pledge" to (a) confirm the
 KOGL type on the specific localdata datasets and (b) confirm business-permit addresses are not
 captured by the address-register rule. Phase-6 sequencing becomes an ordinary product call again:
