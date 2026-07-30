@@ -22,14 +22,14 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import type { Kysely } from "kysely"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { buildPOIDatabase, type POISourceRow } from "./build-poi.ts"
+import { bboxCoverageCells, buildPOIDatabase, type BBox, type POISourceRow } from "./build-poi.ts"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as const }
 const PARIS = { latitude: 48.8566, longitude: 2.3522, country: "FR" as const }
@@ -208,5 +208,158 @@ describe("buildPOIDatabase", () => {
 
 		expect(result.rows).toBe(30)
 		expect(statSync(nestedOut).isFile()).toBe(true)
+	})
+})
+
+/**
+ * Extract-bbox coverage polyfill (decision 5) — the pure seam `--source osm` uses in place of the Overture path's
+ * "rows-present ⇒ 1" coverage. Springfield IL sits well inside this small bbox; the bbox spans several res-6 cells, so
+ * an empty `rows` list (or rows clustered in only one spot) always leaves at least one cell with `observedRows: 0` to
+ * exercise decision 5's "well-surveyed, none found" case.
+ */
+describe("bboxCoverageCells", () => {
+	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
+
+	it("polyfills every res-6 cell touching the bbox, defaulting observedRows to 0", () => {
+		const cells = bboxCoverageCells(bbox, [])
+
+		expect(cells.length).toBeGreaterThan(0)
+		expect(cells.every((c) => c.observedRows === 0)).toBe(true)
+	})
+
+	it("pairs each polyfilled cell with its actual observed-row count, zero permitted elsewhere in the bbox", () => {
+		const rows: Array<Pick<POISourceRow, "latitude" | "longitude">> = [
+			{ latitude: 39.7817, longitude: -89.6501 },
+			{ latitude: 39.7817, longitude: -89.6501 },
+		]
+
+		const cells = bboxCoverageCells(bbox, rows)
+		const observed = cells.filter((c) => c.observedRows > 0)
+
+		expect(observed).toHaveLength(1)
+		expect(observed[0]!.observedRows).toBe(2)
+		// At least one polyfilled cell saw no rows — decision 5's zero-permitted case.
+		expect(cells.some((c) => c.observedRows === 0)).toBe(true)
+	})
+
+	it("ignores rows with non-finite coordinates when aggregating observed counts", () => {
+		const cells = bboxCoverageCells(bbox, [{ latitude: Number.NaN, longitude: -89.65 }])
+
+		expect(cells.every((c) => c.observedRows === 0)).toBe(true)
+	})
+
+	it("is pure — identical inputs produce an identical cell set", () => {
+		const rows = [{ latitude: 39.7817, longitude: -89.6501 }]
+
+		expect(bboxCoverageCells(bbox, rows)).toEqual(bboxCoverageCells(bbox, rows))
+	})
+})
+
+/**
+ * The `--source osm` build-local branch (bdc 2b task 3, decisions 3/5): same `rows:` injection seam as the default
+ * Overture path, but `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the
+ * rows-derived coverage with the bbox polyfill above — including a zero-observed-rows cell, which per the task brief
+ * must round-trip through `writeLayerCoverage` / `readLayerCoverage` (never silently dropped, never conflated with
+ * "unsurveyed").
+ */
+describe("buildPOIDatabase — --source osm build-local branch (bdc 2b task 3)", () => {
+	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
+
+	function osmFixtureRows(): POISourceRow[] {
+		return [
+			{
+				name: "Springfield exchange",
+				category: "telecom_exchange",
+				brandWikidata: null,
+				latitude: 39.7817,
+				longitude: -89.6501,
+				country: "US",
+				confidence: 1,
+				gersID: null,
+			},
+			{
+				name: "Springfield cabinet",
+				category: "telecom_cabinet",
+				brandWikidata: null,
+				latitude: 39.7817,
+				longitude: -89.6501,
+				country: "US",
+				confidence: 1,
+				gersID: null,
+			},
+		]
+	}
+
+	it("writes a build-local ODbL manifest and round-trips a zero-observed-rows coverage cell", async () => {
+		const osmRows = osmFixtureRows()
+		const coverageCellsOverride = bboxCoverageCells(bbox, osmRows)
+
+		// Sanity: the fixture must actually exercise the zero-count case, or this test proves nothing.
+		expect(coverageCellsOverride.some((c) => c.observedRows === 0)).toBe(true)
+
+		const result = await buildPOIDatabase({
+			rows: osmRows,
+			out,
+			release: "260627",
+			buildSHA: "deadbeef",
+			source: "osm",
+			tier: LayerTier.BuildLocal,
+			coverageCellsOverride,
+			createdAt: "2026-07-30T00:00:00Z",
+		})
+
+		expect(result.rows).toBe(2)
+		expect(result.coverageCells).toBe(coverageCellsOverride.length)
+
+		const raw = new DatabaseSync(out, { readOnly: true })
+		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+
+		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
+
+		expect(manifest).toMatchObject({
+			name: "poi",
+			tier: "build-local",
+			license: "ODbL-1.0",
+			source: "osm",
+			sourceVintage: "260627",
+			freshnessPolicy: "sealed",
+		})
+
+		expect(manifest.attribution).toMatch(/OpenStreetMap/)
+
+		// --- Gate-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
+		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
+		const readBack = await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, zeroCell.h3Cell)
+
+		expect(readBack).toEqual({ h3Cell: zeroCell.h3Cell, completeness: 1, observedRows: 0 })
+
+		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
+
+		expect(coverageRows).toHaveLength(coverageCellsOverride.length)
+	})
+
+	it("default (no coverageCellsOverride) keeps the rows-derived coverage behavior unchanged", async () => {
+		const osmRows = osmFixtureRows()
+
+		const result = await buildPOIDatabase({
+			rows: osmRows,
+			out,
+			release: "260627",
+			buildSHA: "deadbeef",
+			source: "osm",
+			tier: LayerTier.BuildLocal,
+			createdAt: "2026-07-30T00:00:00Z",
+		})
+
+		// Both fixture rows share one res-9 cell -> one res-6 parent -> exactly one coverage row, matching
+		// the Overture path's "rows-present only" behavior when no override is supplied.
+		expect(result.coverageCells).toBe(1)
+
+		const raw = new DatabaseSync(out, { readOnly: true })
+		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
+
+		expect(coverageRows).toHaveLength(1)
+		expect(coverageRows[0]!.observed_rows).toBe(2)
 	})
 })
