@@ -86,10 +86,7 @@ const config: Config = {
 
 	url: "https://mailwoman.sister.software",
 	baseUrl: "/",
-	// GitHub Pages 301-redirects every slashless URL to its `…/` form. Without this flag,
-	// Docusaurus emits slashless canonicals/sitemap/links, and the Algolia Crawler drops
-	// every page whose canonical ≠ served URL — the whole docs tree vanished from search.
-	trailingSlash: true,
+	trailingSlash: false,
 
 	organizationName: "sister-software",
 	projectName: "mailwoman",
