@@ -117,38 +117,60 @@ any synthetic corpus.
 
 ## 6. Phasing (agent-night sizing, each phase gets its own plan)
 
-- **3a — identity core (~3-4).** `@mailwoman/filer` workspace; CORES + 499 acquisition (Nexus
-  salvage: `sync/scripts/registrations.ts` already joins BDC provider CSV × 499 by FRN — see the
-  salvage survey); crosswalk schema with provenance; authoritative edges only; entity clustering via
-  `@mailwoman/match`; `bdc_provider` sidecar finally populated; `filer_lookup` MCP tool.
-- **3b — corporate families (~2-3).** Holding-company edges from 499; SEC EDGAR CIK + Exhibit 21
-  ingestion for public parents; family rollup; the matcher eval of §5 published as a scorecard.
-- **3c — physical nexus (~3-4).** ASR bulk ingest (structures + coordinates + owner FRN) as a
-  layer-contract table on the h3 spine; ULS scoped to the service codes that matter; the
+- **3a — identity core (~4, absorbs 2c's registry + matcher wiring).** `@mailwoman/filer` workspace;
+  CORES + 499 acquisition (Nexus salvage: `sync/scripts/registrations.ts` already joins BDC provider
+  CSV × 499 by FRN — see the salvage survey); crosswalk schema with provenance; authoritative edges
+  only; entity clustering via `@mailwoman/match`; `bdc_provider` sidecar finally populated;
+  `filer_lookup` MCP tool.
+- **3b — corporate families + the matcher eval (~3).** Holding-company edges from 499; SEC EDGAR CIK
+  - Exhibit 21 ingestion for public parents; family rollup; the held-out record-linkage eval of §5
+    published as a scorecard.
+- **3c — physical nexus (~4).** ASR bulk ingest (structures + coordinates + owner FRN) as a
+  layer-contract table on the h3 spine; **ULS Part 101 only** (decision D2); the
   point-at-a-structure query; joins to 2b's infra layer and `bdc.db`.
-- **3d — the analytical surface (~2-3).** `competition(area)` with the family collapse; plausibility
-  discounted by nexus (feeds C7 market-entry intelligence); MCP tools; the "filers vs families"
-  public write-up if the operator wants the positioning.
+- **3d — analytical surface + private CRM (~3).** `competition(area)` with the family collapse; the
+  private CRM layer and `reconcile` buckets inherited from 2c; plausibility discounted by nexus
+  (feeds C7 market-entry intelligence); MCP tools.
 
-## 7. Relationship to 2c
+## 7. Relationship to 2c — RESOLVED: folded
 
-2c as specced (provider registry keyed by FRN, matcher-joined, private CRM reconcile) is a strict
-subset of 3a. **Recommendation: fold 2c into 3a** rather than build the registry twice — 2c's CRM
-reconciliation becomes a 3a deliverable, and the BDC vertical consumes the spine instead of carrying
-its own registry. Operator decision; the alternative is a narrow 2c now and a migration later.
+**2c is dissolved into Phase 3** (operator, 2026-07-31). Its registry and matcher wiring become 3a;
+its private-CRM reconciliation becomes 3d. The BDC vertical consumes the spine rather than carrying
+its own provider registry, so the registry is built once. Track C's C3 row now points here.
 
-## 8. Open questions (operator)
+## 8. Decisions (ratified 2026-07-31)
 
-1. **Fold 2c into 3a, or keep both?** (§7 — recommendation: fold.)
-2. **ULS scope.** Full weekly bulk is very large. Which services first — Part 101 microwave (backhaul
-   nexus), Part 27/90 (area licenses), or defer ULS entirely to 3c-late?
-3. **Naming.** `@mailwoman/filer` / `filer.db`? (`registry` is taken by the record-matching app.)
-4. **State registries.** Worth the per-state scraper cost, or stay federal-only for v1? OpenCorporates
-   licensing needs checking before any use.
-5. **Publication posture.** Is "filers vs families" a public artifact (positioning, Track E) or an
-   internal capability that ships only inside the product? Different bars for wording review.
-6. **EIN.** Confirmed mostly non-public; is 990-derived coverage for co-ops/nonprofits worth a
-   dedicated ingest, or drop EIN from the spine?
-7. **Data licensing.** CORES/499/ASR/ULS/EDGAR are all public domain or open; PeeringDB has API terms;
-   LERG/OCN and OpenCorporates are restrictive. Confirm before each ingest lands (rides the standing
-   counsel dossier).
+- **D1 — Fold 2c into 3a.** Operator. See §7.
+- **D2 — ULS: Part 101 only.** Operator. Part 101 point-to-point microwave is the right scope for a
+  further reason worth recording: a Part 101 license describes a _path_ — both endpoint coordinates
+  plus the licensee FRN — so it is physical backhaul evidence, not merely an area authority. A fixed
+  wireless operator with licensed backhaul leaves a two-ended geometric trace. Doctrine §2.3 still
+  binds: unlicensed backhaul is lawful, so a missing path is never disproof. Part 27/90 area licenses
+  and CBRS/SAS are deferred; revisit only if 3d's competition view demonstrably needs them.
+- **D3 — Naming: `@mailwoman/filer` → `filer.db`.** Controller call. Domain-accurate ("filer" is the
+  FCC's own term) and `registry` is taken by the record-matching app.
+- **D4 — Federal-only for v1; no state registries.** Controller call. Fifty heterogeneous scrapers
+  buy the long tail of small privately-held operators — precisely where the corporate-family question
+  is least interesting (a single-county WISP is not a national carrier in a trench coat). The federal
+  pair (499 holding company + EDGAR Exhibit 21) covers the entities the analysis is actually about.
+  OpenCorporates is excluded by the same call, which moots its licensing question for v1.
+- **D5 — Publication posture: split the two artifacts.** Controller call. The **record-linkage eval**
+  (§5) is publishable early and safely — it is a methods result about matching, naming no company's
+  conduct. The **filers-vs-families competition analysis** ships as an internal/product capability
+  first and becomes public only as a separate, deliberate operator decision after real output has
+  been reviewed. Different wording bar, different risk; do not bundle them.
+- **D6 — EIN dropped from the spine.** Controller call. Mostly non-public; CIK + FRN already carry
+  the joining load. Retained opportunistically as an attribute where a source hands it over (SEC
+  cover pages, 990s); no dedicated ingest. A 990 pass can be reconsidered if rural co-ops become a
+  focus, since that is where it would actually pay.
+- **D7 — v1 sources are licensing-clean.** CORES, Form 499, ASR, ULS, and EDGAR are all US federal
+  public domain, so **Phase 3 is not gated on counsel** — unlike the Fabric question hanging over 2a.
+  PeeringDB (API terms) is a 3c/C6-time check; LERG/OCN and OpenCorporates are out of scope by D4.
+  Recorded in the counsel dossier as informational, not blocking.
+
+## 9. Open questions (deferred, not blocking)
+
+1. Does 3d's competition view need Part 27/90 area licenses after all? (Revisit at 3d exit — D2.)
+2. Is a 990-based EIN/co-op pass worth its own slice once rural operators are a named segment? (D6.)
+3. When the competition analysis is good enough to publish, who reviews the wording? (D5 — the
+   answer today is the operator; revisit if counsel is ever retained.)
