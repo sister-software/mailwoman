@@ -9,18 +9,17 @@
  *   different DB, over the same staged sql.js-httpvfs UMD/worker/wasm assets.
  *
  *   The k-ring walk + h3 packing REPLICATE `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
- *   — `latLngToCell` → `shortenH3Cell` (the SHARED `@mailwoman/spatial` 48-bit packer, never
- *   reimplemented) → `Number(BigInt("0x"+short))`, then the same per-cell probe SQL, ring-by-ring
- *   dedup, and a final haversine sort. Keep the two readers in lockstep; a probe-semantics cross-check
- *   against the Node reader lives in the PR description, not in this tree (throwaway verification
- *   script, not shipped).
+ *   — `latLngToCell` → `shortCellToInt` (the SHARED `@mailwoman/spatial` 48-bit packer, never
+ *   reimplemented), then the same per-cell probe SQL, ring-by-ring dedup, and a final haversine sort.
+ *   Keep the two readers in lockstep; a probe-semantics cross-check against the Node reader lives in
+ *   the PR description, not in this tree (throwaway verification script, not shipped).
  *
  *   CATEGORY-ONLY, matching the runbook: no FTS name search, no brand search — the multi-hop demo
  *   path is deliberately excluded from this tester.
  */
 
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
-import { haversineKm, shortenH3Cell, type H3Cell } from "@mailwoman/spatial"
+import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
 import { loadHTTPVFSDatabase, WOFCandidateTableLookup } from "./httpvfs-resolver.ts"
@@ -142,9 +141,9 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 
 		for (const cell of newCells) {
 			seenCells.add(cell)
-			// The SAME packing as poi-lookup.ts's h3CellToInt: shortenH3Cell (the shared @mailwoman/spatial
-			// 48-bit packer) then a straight hex→Number(BigInt) cast — `poi.h3_cell` is the SHORTENED cell.
-			const shortCell = Number(BigInt(`0x${shortenH3Cell(cell as H3Cell)}`))
+			// The SAME packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit
+			// packer — `poi.h3_cell` is the SHORTENED cell.
+			const shortCell = shortCellToInt(cell as H3Cell)
 
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
 			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.

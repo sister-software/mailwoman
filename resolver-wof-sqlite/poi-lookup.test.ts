@@ -19,7 +19,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { haversineKm, shortenH3Cell, type H3Cell } from "@mailwoman/spatial"
+import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -41,7 +41,7 @@ const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 function cellFor(latitude: number, longitude: number): number {
 	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION) as H3Cell
 
-	return Number(BigInt(`0x${shortenH3Cell(full)}`))
+	return shortCellToInt(full)
 }
 
 function nameKeyFor(name: string): string {

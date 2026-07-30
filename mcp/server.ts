@@ -24,9 +24,9 @@ const MCP_SERVER_VERSION = "7.1.0"
 /**
  * Build an `McpServer` with every `tools.ts` tool registered. A handler's returned value is JSON-stringified into a
  * single `text` content block — every tool here answers with structured data (parse trees, geocode results, search
- * hits), so a plain JSON text block is the simplest faithful rendering; none of the five tools need images, resource
- * links, or other MCP content kinds. A thrown error becomes an `isError` tool result instead of a protocol-level
- * failure, so a bad address / missing db surfaces to the agent as a normal (if unsuccessful) tool call.
+ * hits), so a plain JSON text block is the simplest faithful rendering; none of the tools need images, resource links,
+ * or other MCP content kinds. A thrown error becomes an `isError` tool result instead of a protocol-level failure, so a
+ * bad address / missing db surfaces to the agent as a normal (if unsuccessful) tool call.
  */
 export function createMCPServer(deps: MCPToolDeps): McpServer {
 	const server = new McpServer({ name: "mailwoman", version: MCP_SERVER_VERSION })
