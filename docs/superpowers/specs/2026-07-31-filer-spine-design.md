@@ -92,7 +92,8 @@ plain `Map.get`. The column tuple and the `principalCommType` mapping are the du
 Nodes are `(identifier_type, identifier_value)`. Edges are assertions:
 
 ```
-edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintage, match_score?, evidence? }
+edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintage,
+        valid_from, valid_to?, match_score?, evidence? }
 ```
 
 - **Authoritative** edges come from a document that states both identifiers in one row (499 row
@@ -101,6 +102,14 @@ edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintag
 - **Inferred** edges come from `@mailwoman/match` over normalized org name + registered address +
   contact, with FRN/SPIN/ASN as `exactDiscriminator`s when present and name/address as scored
   comparators. This is the existing Fellegi-Sunter path, not a new subsystem.
+
+**Edges are time-scoped — this is load-bearing, not bookkeeping.** Ownership changes faster than
+filing vintages update (worked example: a filer acquired ~7 months before the BDC vintage under
+inspection still files under its pre-acquisition identity — see
+`2026-07-31-evidence-axes-beyond-filings.md` §2.1). Every family rollup query therefore takes a date,
+every answer states the vintage it was computed against, and a rollup joined to a filing from a
+different vintage reports the skew rather than silently reconciling it. An untimed family graph
+answers today's ownership against last year's filing and is wrong invisibly.
 
 Connected components over authoritative-only edges = **entity clusters** (one operating company).
 Adding family edges (holding company, parent CIK) collapses clusters into **corporate families**.
