@@ -135,6 +135,7 @@ tier can ship. Until then, the build and the local benchmark are fine to run; **
 
 ## See also
 
+- [Database products catalog](./data-products.md) — the same sources seen from the artifact side: what each shipped or planned database contains, its tier, its version, and its size.
 - [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) — the OSM package, the shard builder, the boundary in package terms.
 - [`address-data-sources.mdx`](../plan/reference/address-data-sources.mdx) — the full source catalog + the licensing gradient.
 - [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md) — the formal notices shipped with the package.
