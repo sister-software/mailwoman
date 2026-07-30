@@ -18,7 +18,7 @@
  *   2. {@linkcode buildPOIDatabase} — stream rows (from the ingested Parquet by default, or an
  *        injected `Iterable`/`AsyncIterable<POISourceRow>` for tests) into a `poi_stage` staging
  *        table, dictionary-encode categories (insert-on-first-sight, 0 = uncategorized), pack each
- *        row's res-9 H3 cell via `@mailwoman/spatial`'s `shortenH3Cell` (never reimplemented — see
+ *        row's res-9 H3 cell via `@mailwoman/spatial`'s `shortCellToInt` (never reimplemented — see
  *        AGENTS.md), materialize the clustered `WITHOUT ROWID` `poi` table pre-sorted by
  *        `(h3_cell, category_id, neg_rank, rowid_key)`, build the name-key index + FTS5 name search,
  *        write the layer-contract manifest + per-res-6-cell coverage, then seal.
@@ -59,7 +59,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
-import { shortenH3Cell, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 
 /**
@@ -388,14 +388,6 @@ export interface BuildPOIResult {
 	 * Res-6 coverage cells written.
 	 */
 	coverageCells: number
-}
-
-/**
- * `poi.h3_cell` / `layer_coverage.h3_cell` are the SHORTENED (48-bit) cell as an integer — never the full h3-js cell
- * string.
- */
-function shortCellToInt(cell: H3Cell): number {
-	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
 }
 
 /**
