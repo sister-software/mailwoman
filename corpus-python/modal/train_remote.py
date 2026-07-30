@@ -3635,6 +3635,9 @@ def sync_jp_probe():
         f"rclone copy :s3:{BUCKET}/corpus/v8-leg2/ {VOL_MOUNT}/corpus/versioned/v8-leg2/ {R}",
         # v8.3.0 base retrain: the v7 locality lexicon (the DE fold, #1355).
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v7.json {VOL_MOUNT}/gazetteer/ {R}",
+        # Run-2 venue contingency: the v0.15.0-venue overlay (manifest + the one shard parquet; the
+        # 703 base shards resolve into v0.13.0-latam, which persists on the volume).
+        f"rclone copy :s3:{BUCKET}/corpus/v0.15.0-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.0-venue/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
