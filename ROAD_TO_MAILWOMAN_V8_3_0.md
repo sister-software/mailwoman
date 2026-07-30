@@ -130,7 +130,7 @@ is the sellable sentence in B11.
 
 ---
 
-## 10. Execution register (updated 2026-07-30 — the compaction-proof state + task list)
+## 10. Execution register (updated 2026-07-30 POST-SHIP — v8.3.0 / model 7.0.0 LIVE)
 
 ### Done, with receipts
 
@@ -151,30 +151,35 @@ is the sellable sentence in B11.
 | 4-survey synthesis (Latin: keep SP; CJK: char+window confirmed; **channels LOAD-BEARING for char NER — named precondition**; JP ship = category first) + KR addendum                                                                                                                                                                                                                                                                                      | #1360, #1362; cjk.ts folding gaps filed #1361                                                                                                                             |
 | **KR framework DECIDED** (operator): parse = localdata(KOGL)+WOF-KR(already in our DB: 50,465 localities, Hangul+hanja)+synthetic+OSM-quarantined; **juso = plug-and-play build-local layer** (we ship the builder against the documented format + synthetic fixtures, never touching real juso pre-counsel; customer builds in-country; manifest carries obligations). GTM moat: the export pledge blocks every cloud geocoder                           | #1362 addendum                                                                                                                                                            |
 
-### Arc 1 — remaining (the run-2 → promote chain)
+### Arc 1 — SHIPPED 2026-07-30 (v8.3.0 / model 7.0.0)
 
-1. **Run-2 venue contingency** (the envelope's ONE re-run; named delta = fold `synth-house-venue`
-   into the feed): build the tuples input (FR BAN + US LABEL rows per the recipe's tuples mode) →
-   `mailwoman corpus shard house-venue --input …` → overlay corpus on v0.13.0-latam (re-root
-   manifest paths to `/data` — the runbook's step 2) → `v4.0.1-base-60k.yaml` (ONE delta:
-   `synth-house-venue: 2.0`; everything else byte-identical incl. fisher_capture) → R2 push →
-   sync → launch (6h cap) → first-500-steps loss sanity.
-2. **Ladder re-run on run 2**: G1 grid from 40k (both registers; beware the zsh no-word-split trap
-   in loop launches); G5 with the street_prefix floor recut per the recorded disposition; G2
-   ablation vs the 6.7.0 same-grader reference; G3 invariance (int8, `--baseline` 6.7.0); G4/G7
-   gauntlet (the 3 venue fixtures MUST clear; promote the 2 now-PASS tracked cases —
-   chat-qui-peche + venue-delta); G6 canary formatted; **G8 DE legs** (grade function needs a
-   `--fixture` parameter to point at overture-fragments-de); capability manifest (register-pinned,
-   formatted).
-3. **Promote choreography on PASS** (twice-rehearsed): new gate spec cut noise-honest from the
-   candidate's readings **with support-aware margins everywhere** (fix the 2.0pp-fallback class);
-   model **7.0.0** card (files_md5: model + tokenizer + street v3 + locality **v7** + **the Fisher
-   artifact joins the bundle contract**); release-hf + publish.yml preflight gain the Fisher file;
-   HF staging → prepare/publish → R2/demo → ledger-append keyed to the MODEL version → eval
-   report. λ calibration rides the FIRST post-base fine-tune ({0, 1e2, 1e4, 1e6} × 2k-step probe).
-4. **Post-promote levers** (tasks #25/#26): SP vocabulary pruning probe (byte-parity
-   pre-registration; embedding = 72.5% of params at ≤24% utilization) and the SP 0.2.2 WASM
-   rebuild (native offsets).
+The full chain executed under the operator's "Let's do it": run-2 venue contingency (v4.0.1, ONE
+delta = synth-house-venue 2.0) → all 3 venue must-clears CLEARED + 3 tracked promotions, zero
+P0/golden cost → ladder full pass (G1 grid FLAT both registers; G5 16/17 with the street_prefix
+fallback-margin artifact; G2/G3/G6 clean; G7 pre-ship 47/47 + metamorphic; G8 DE-fold revert
+executed per pre-registration — v6 ships, v6 ⊆ v7 verified) → new gate spec **v7.0.0-base**
+(Wilson support-aware margins; final verdict PASS zero fails) → promote choreography complete:
+
+- **npm 8.3.0 LIVE** (publish.yml prepare → release PR auto-merged → publish; clients PASS;
+  tag + GitHub release v8.3.0). Card lockstep c968c24a; ledger row keyed by MODEL version 7.0.0
+  (the guard caught the npm-keyed first attempt — same class it exists for).
+- **HF v7.0.0 staged + defaultVersion** incl. the **Fisher artifact** (fisher-diag-v1 npz+sidecar;
+  `release hf --fisher` added; publish.yml preflight HEAD-checks the card-declared file).
+- **R2 demo REPOINTED**: carry-forward per RELEASING.md §"repoint" + model/card overwritten,
+  releases.json flipped AFTER npm success; served model md5-verified c968c24a; Playwright smoke
+  GREEN (v7.0.0 in-browser, Rockefeller preset parses, classify 62 ms, zero console errors).
+- Docs: releases.mdx row + status.mdx infobox + the dated eval report
+  (docs/articles/evals/2026-07-30-v700-base-promote.md); tags.yml registered the #1359 glossary
+  tags + the research-post tags (docs build was red on main since the glossary merge — now green).
+- TRANSITION-BETA test re-pinned (Glenfield → Upton): 15/17 probe rows self-recover beta-less on
+  the base, incl. Hedon + Ashby Parva (never recovered at any β on the fine-tune lineage).
+- ONE named watch rides: **si-sentinel-ucakar** (SI diacritic digit-split; designed fix = the
+  char-path lineage). Six GB venue-led improvement targets = **#1366** (pre-existing on 6.7.0;
+  the first B11 fine-tune exercise). λ calibration rides that same first post-base fine-tune.
+
+**Post-promote levers still open** (tasks #25/#26): SP vocabulary pruning probe (byte-parity
+pre-registration; embedding = 72.5% of params at ≤24% utilization) and the SP 0.2.2 WASM rebuild
+(native offsets).
 
 ### Arc 2 — remaining (CJK Phases 3–5, JP)
 
@@ -208,4 +213,4 @@ is the sellable sentence in B11.
 - Pricing page **#1353 awaits operator ratification** (merging = ratifying A1's numbers; 7
   questions on the PR).
 - The 3 CodeQL `postcode` false-positives on the security tab (operator dismissal).
-- The untracked blog post's missing tags break the next docs build that includes it.
+- ~~The untracked blog post's missing tags~~ FIXED 2026-07-30: tags.yml registered multilocale/overture/testing/methodology (and the 13 glossary tags).
