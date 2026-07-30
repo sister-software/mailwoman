@@ -143,7 +143,9 @@ function distinctTagKeys(rules: readonly OSMPOITagRule[]): string[] {
 
 	for (const rule of rules) {
 		for (const [key] of rule.all) {
-			if (key !== "name") seen.add(key)
+			if (key !== "name") {
+				seen.add(key)
+			}
 		}
 	}
 
@@ -159,6 +161,7 @@ function distinctTagKeys(rules: readonly OSMPOITagRule[]): string[] {
  */
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
 	const tagCols = distinctTagKeys(rules).map((key) => `${tagSelectExpr(key)} AS ${tagAlias(key)}`)
+
 	const whereGroups = rules.map(
 		(rule) => "(" + rule.all.map(([key, value]) => `${tagSelectExpr(key)}='${value}'`).join(" AND ") + ")"
 	)
