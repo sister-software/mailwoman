@@ -38,6 +38,8 @@ New to the project? [Start here](../getting-started.mdx).
 
 **$250 per month, per legal entity.**
 
+_All prices on this page are in US dollars and exclude VAT and sales taxes._
+
 This releases you from the AGPL's source-sharing condition, so you can build closed-source
 products and services on Mailwoman and keep your source private.
 
@@ -77,7 +79,9 @@ Scope is agreed with you, and usually covers:
   anything ships.
 - Support with named contacts and an agreed response time.
 
-This is also the tier for companies past the commercial license's size fence.
+Every enterprise agreement includes the commercial license, so the release from the
+AGPL's source-sharing condition comes with it at any company size. This is also the tier
+for companies past the commercial license's size fence.
 
 **[Start an enterprise conversation →](mailto:teffen@sister.software?subject=Mailwoman%20enterprise)**
 
