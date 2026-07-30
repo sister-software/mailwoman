@@ -35,7 +35,9 @@ export const houseVenueRecipe: ShardRecipe = {
 		for await (const tuple of readTuples(opts.input)) {
 			read++
 
-			if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {
+			// FR renders without a region (postcode-before-locality tail — the run-2 contingency), so
+			// an empty region is valid there and stays required everywhere else.
+			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && tuple.country !== "FR")) {
 				skipped++
 
 				continue

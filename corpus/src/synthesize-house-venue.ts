@@ -71,6 +71,17 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Maple Leaf Cafe",
 	"Riverside Garden Center",
 	"Tech Solutions Inc",
+	// FR-flavored venue names (the run-2 contingency): the failing gauntlet fixtures carry
+	// international/English names at FR addresses, but native forms must appear too — the register
+	// mixes both in real Paris data.
+	"Café de la Poste",
+	"Boulangerie Saint-Michel",
+	"Le Petit Bistrot",
+	"Brasserie du Marché",
+	"Chez Marcel",
+	"La Belle Époque",
+	"Restaurant du Port",
+	"Pharmacie Centrale",
 	"Pacific Industries",
 	"Atlantic Holdings",
 	"Stellar Consulting",
@@ -164,23 +175,30 @@ export function synthesizeHouseVenueRow(
 	const street = base.street ?? pick(FALLBACK_STREETS, random)
 	const houseNumber = base.houseNumber ?? randomHouseNumber(random)
 
+	// FR renders postcode-before-locality with NO region ("MR & MRS CRAB, 20 Rue de la Huchette,
+	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
+	// target shape). Every other country keeps the original US-order tail.
+	const frOrder = base.country === "FR"
+
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
 		venue,
 		locality: base.locality,
-		region: base.region,
+		...(frOrder ? {} : { region: base.region }),
 		postcode: base.postcode,
 	}
+
+	const tail = frOrder ? `${base.postcode} ${base.locality}` : `${base.locality}, ${base.region} ${base.postcode}`
 
 	let raw: string
 
 	switch (template) {
 		case "venue-after-street":
-			raw = `${houseNumber} ${street}, ${venue}, ${base.locality}, ${base.region} ${base.postcode}`
+			raw = `${houseNumber} ${street}, ${venue}, ${tail}`
 			break
 		case "venue-before-street":
-			raw = `${venue}, ${houseNumber} ${street}, ${base.locality}, ${base.region} ${base.postcode}`
+			raw = `${venue}, ${houseNumber} ${street}, ${tail}`
 			break
 	}
 
