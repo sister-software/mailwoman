@@ -40,7 +40,9 @@ When a provider's own channel and its own filing disagree about the same address
 documented on both sides — no inference, no third-party judgment. It is the strongest evidence class
 this project can produce, because the provider is the sole source of both statements.
 
-Operator-observed worked example (2026-07-31, `8711 Plumbrook Rd, Sterling Heights MI 48313`):
+Operator-observed worked example (2026-07-31, a residential address on Plumbrook Rd, Sterling
+Heights, MI 48313 — house number deliberately omitted; it is a private home, and the filings below
+are block-grain public record, not a statement about that household):
 
 | Filer                     | FRN        | Provider ID | Filed            | Provider's own channel               |
 | ------------------------- | ---------- | ----------- | ---------------- | ------------------------------------ |
