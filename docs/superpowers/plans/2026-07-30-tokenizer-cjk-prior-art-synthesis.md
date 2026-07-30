@@ -108,6 +108,46 @@ coin-flips in real data) is resolver-side normalization, sourceable from GREEN d
 | CN     | RED                 | Law, not licensing.                                                                                                                                                                                                                            |
 | HK     | AMBER               | ALS bulk exists; terms silent on adaptation/sublicense — same counsel posture as osm/.                                                                                                                                                         |
 
+## Addendum 2026-07-30 — the KR alternative path (operator prompt: WOF + the data-sources vein)
+
+The RED verdict above binds the **juso bulk address register** — not Korea. Two assets we already
+hold change the Phase-6 picture:
+
+1. **WOF-KR is already in our shipped admin DB** (`admin-global-priority.db`): 18 regions, 308
+   counties, 1,482 localadmins, 50,465 localities, 693 neighbourhoods — with centroids and 68,658
+   Korean-language name records (Hangul 충청북도, aliases 충북, AND hanja 忠淸北道). License-clean
+   (the WOF CC0/CC-BY family). It is the admin/resolve leg; WOF carries no streets or house
+   numbers anywhere (the standing hierarchy-gap).
+2. **`.notes/data-sources.md` already names the corpus vein: localdata.go.kr** — every PERMITTED
+   BUSINESS in Korea under KOGL (attribution, commercial + derivatives OK), each record carrying
+   BOTH the road-name and jibun address (the dual-system pairing signal the doc flags). This is a
+   DIFFERENT legal object from the juso register: business-permit disclosure data published to be
+   published, not the address DB under the 도로명주소법 pledge. HIRA/NEIS/FSS are the cross-check
+   registries, per the doc's triangulation principle.
+
+**The assembled KR recipe without juso:** parse corpus = localdata (dual-format, the mess is the
+signal) + synthetic-from-schema (지하 prefixes, closed-up road digit runs — the official rendering
+rules are public documentation) + NEIS/HIRA clean registers; gazetteer = WOF-KR admin ladder.
+What it cannot give: rooftop geocoding (house-number → point stays juso/partner-gated) — resolve
+lands at admin/locality-centroid tier, the same shape several EU locales shipped with before
+their coverage arcs (the coverage-not-retrain precedent).
+
+**OPERATOR DISPOSITION (2026-07-30): the KR framework is decided.** Parse = the no-juso recipe
+above (+ OSM-KR through the neutered-but-kept osm/ machinery, ODbL-quarantined per standing
+practice). Juso = a **plug-and-play build-local layer** on the layer contract: we ship
+`gazetteer build juso` (written against the DOCUMENTED format + synthetic fixtures — we never
+touch real juso data ourselves pre-counsel), the customer acquires juso under their own grant and
+builds in-country, the layer manifest carries the juso obligations as structural notice, and the
+resolver's AddressPointLookup consumes it as a tier upgrade (locality-centroid → rooftop). The
+moat framing for GTM: the export pledge structurally blocks every cloud geocoder — in-process
+self-hosting is the only legal path to rooftop KR, which is the product.
+
+**Counsel question shrinks accordingly:** from "clear the juso export pledge" to (a) confirm the
+KOGL type on the specific localdata datasets and (b) confirm business-permit addresses are not
+captured by the address-register rule. Phase-6 sequencing becomes an ordinary product call again:
+TW = full-stack second CJK locale; KR parse capability = buildable now on the alternative vein,
+KR rooftop = gated.
+
 ## Consequences folded into standing plans
 
 1. G1 counsel agenda += the juso export question + HK ALS adaptation + (already there) ODbL.
