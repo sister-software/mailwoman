@@ -4502,6 +4502,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/bdc@workspace:bdc":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/bdc@workspace:bdc"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/tiger": "workspace:*"
+    kysely: "npm:^0.29.4"
+    type-fest: "npm:^5.8.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:cartographer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/cartographer@workspace:cartographer"
