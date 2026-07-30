@@ -391,6 +391,18 @@ describe("filingLandscape — Gate 3: hand-verified census", () => {
 		await expect(filingLandscape(db, {})).rejects.toThrow(/exactly one/)
 		await expect(filingLandscape(db, { geoids: [GEOID_SF], h3Cells: [1] })).rejects.toThrow(/exactly one/)
 	})
+
+	it("rejects an empty geoids/h3Cells array rather than silently answering a vacuous all-zero landscape", async () => {
+		// `[]` is truthy in JS, so it passes the "exactly one of geoids/h3Cells" XOR check undetected — without an
+		// explicit length guard this would otherwise return `{ surveyed_block_count: 0, unknown_block_count: 0,
+		// filings: [] }`, indistinguishable from a real (if uninteresting) result instead of the malformed-query
+		// error an empty query actually is. Reachable from the MCP tool layer (`mcp/tools.ts`), which is why both
+		// layers carry this guard.
+		using db = openFixture()
+
+		await expect(filingLandscape(db, { geoids: [] })).rejects.toThrow(/empty/)
+		await expect(filingLandscape(db, { h3Cells: [] })).rejects.toThrow(/empty/)
+	})
 })
 
 describe("filingLandscape — Gate 4: vintage-or-throw", () => {

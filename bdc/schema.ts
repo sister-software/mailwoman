@@ -4,8 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for bdc.db — the FCC Broadband Data Collection availability read-side layer (2a
- *   decisions 4, 8). `bdc_availability` holds one row per (block, provider, technology) triple parsed
- *   from the FCC's per-provider CSV (see `sdk/parsing.ts`); `bdc_provider` is a small dictionary
+ *   decisions 4, 8). `bdc_availability` holds, in the default (non-`includeLocationIDs`) build mode, one
+ *   row per DISTINCT (geoid, provider_id, technology_code, max_advertised_download_speed,
+ *   max_advertised_upload_speed, low_latency, business_residential_code) tuple parsed from the FCC's
+ *   per-provider CSV (see `sdk/parsing.ts`) — NOT one row per (block, provider, technology) triple: when
+ *   two Broadband Serviceable Locations in the same block file different speeds/flags for the same
+ *   provider/technology, both rows survive `build-bdc.ts`'s materialize-time collapse (see that file's
+ *   docstring; accepted FCC filing behavior, not a bug). `bdc_provider` is a small dictionary
  *   keyed on `provider_id`, populated by a later registry-join task — decision 8 keeps FRN/brand/
  *   holding-company resolution out of 2a's scope. The DB also embeds the layer-contract tables from
  *   `@mailwoman/core/layers` (manifest tier `shipped`, license `public-domain` — FCC BDC block-level
@@ -35,7 +40,10 @@ import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import type { Kysely } from "kysely"
 
 /**
- * One (block, provider, technology) availability row from the FCC's per-provider BDC CSV.
+ * One availability row from the FCC's per-provider BDC CSV. In the default build mode this is one row per DISTINCT
+ * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple — NOT one row per (block,
+ * provider, technology) triple; a triple whose BSLs carry differing speed tiers keeps multiple rows here (see
+ * `build-bdc.ts`'s docstring).
  */
 export interface BDCAvailabilityTable {
 	/**

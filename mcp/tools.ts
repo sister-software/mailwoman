@@ -97,16 +97,18 @@ const BDCFilingLandscapeInputSchema = z.object({
 		.describe("Path to a bdc.db layer database (FCC Broadband Data Collection availability)."),
 	geoids: z
 		.array(z.string())
+		.min(1)
 		.optional()
 		.describe(
-			"15-character census block GEOIDs to query. Provide exactly one of `geoids` or `h3_cells` — never both, never neither."
+			"15-character census block GEOIDs to query. Provide exactly one of `geoids` or `h3_cells` — never both, never neither, never empty."
 		),
 	h3_cells: z
 		.array(z.number())
+		.min(1)
 		.optional()
 		.describe(
 			"Resolution-9 short H3 cell integers (the bdc.db availability spine) to query directly. Provide exactly " +
-				"one of `geoids` or `h3_cells` — never both, never neither."
+				"one of `geoids` or `h3_cells` — never both, never neither, never empty."
 		),
 })
 

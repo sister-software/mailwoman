@@ -359,6 +359,56 @@ describe("peekProviderID", () => {
 	it("throws when the header row has no following data row", () => {
 		expect(() => peekProviderID(Buffer.from("frn,provider_id\n"))).toThrow(/could not read provider_id/)
 	})
+
+	it("throws (never returns NaN) when the provider_id field isn't numeric", () => {
+		const csv = Buffer.from(
+			"frn,provider_id,brand_name,location_id\n0004215211,NOT_A_NUMBER,Sonic Broadband,1000000001\n"
+		)
+
+		expect(() => peekProviderID(csv)).toThrow(/did not parse to a safe integer/)
+	})
+
+	it("names the CSV path in the thrown error when one is supplied", () => {
+		const csv = Buffer.from(
+			"frn,provider_id,brand_name,location_id\n0004215211,NOT_A_NUMBER,Sonic Broadband,1000000001\n"
+		)
+
+		expect(() => peekProviderID(csv, "/some/path/to/file.csv")).toThrow(/\/some\/path\/to\/file\.csv/)
+	})
+})
+
+describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
+	// CRITICAL (review): `peekProviderID`'s old `Number.parseInt(...) as ProviderID` had no finiteness guard. A
+	// non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id` (INTEGER NOT NULL) as
+	// SQLite NULL — `INSERT OR IGNORE` then silently drops EVERY row of the file, miscounted as ordinary `deduped`
+	// rows rather than surfaced as the malformed-file error it actually is. This test goes through `csvPaths` (the
+	// real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test seam,
+	// so it proves the guard is wired all the way from disk.
+	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
+		const malformedCSVPath = join(import.meta.dirname, "..", "test-fixtures", "availability-malformed-provider.csv")
+
+		let caught: unknown
+
+		try {
+			await buildBDCDatabase({
+				csvPaths: [malformedCSVPath],
+				out,
+				asOfDate: "2026-06-30",
+				buildSHA: "deadbeef",
+				blockCentroids,
+			})
+		} catch (error) {
+			caught = error
+		}
+
+		expect(caught).toBeInstanceOf(Error)
+		expect((caught as Error).message).toMatch(/provider_id/)
+		expect((caught as Error).message).toContain(malformedCSVPath)
+
+		// The rejection must be loud, not partial: no sealed artifact from a file whose rows were all rejected,
+		// never silently materialized/counted as "deduped".
+		expect(existsSync(out)).toBe(false)
+	})
 })
 
 describe("geometryCentroid", () => {

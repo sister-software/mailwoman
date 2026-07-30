@@ -188,6 +188,15 @@ describe("buildToolTable", () => {
 			expect(tool.inputSchema.safeParse({ geoids: ["060750101001000"] }).success).toBe(false)
 		})
 
+		it("rejects an empty geoids array and an empty h3_cells array", () => {
+			// `[]` passes a bare `.optional()` array schema (it's still a valid, present array) and would otherwise
+			// reach `filingLandscape` as a query that answers with a vacuous all-zero landscape instead of erroring.
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_bdc_filing_landscape")
+
+			expect(tool.inputSchema.safeParse({ database_path: "/data/bdc.db", geoids: [] }).success).toBe(false)
+			expect(tool.inputSchema.safeParse({ database_path: "/data/bdc.db", h3_cells: [] }).success).toBe(false)
+		})
+
 		it("routes to deps.bdcFilingLandscape with the parsed database path and geoids", async () => {
 			const deps = stubDeps()
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_bdc_filing_landscape")

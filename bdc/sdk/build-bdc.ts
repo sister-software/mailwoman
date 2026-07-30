@@ -26,10 +26,18 @@
  *      so a duplicate row is never charged twice against `unknownGeoids` or `layer_coverage` either.
  *      The natural key's `location_id` component means the SAME (geoid, provider_id, technology_code)
  *      triple legitimately survives staging once per distinct BSL — correct when `includeLocationIDs`
- *      is true, but the default (NULL `location_id`) mode collapses those BSL duplicates back down to
- *      one row per triple at MATERIALIZE time (`SELECT DISTINCT` over every column except
- *      `location_id`), matching the layer's one-row-per-block-provider-technology contract instead of
- *      inflating `result.rows`/`layer_coverage.observed_rows` by the block's BSL count.
+ *      is true. The default (NULL `location_id`) mode collapses at MATERIALIZE time via `SELECT DISTINCT`
+ *      over every column EXCEPT `location_id` — that is, to one row per distinct (geoid, provider_id,
+ *      technology_code, max_advertised_download_speed, max_advertised_upload_speed, low_latency,
+ *      business_residential_code) TUPLE, NOT one row per (geoid, provider_id, technology_code) triple.
+ *      When every BSL in a block shares identical speeds/flags for a given provider/technology (the
+ *      common case), those two are the same thing and the collapse yields exactly one row per triple.
+ *      But when BSLs at the SAME triple carry DIFFERENT speeds/flags (a real, accepted FCC filing
+ *      pattern — a provider filing different advertised speeds at different addresses in one block),
+ *      the distinct rows survive collapse as multiple NULL-`location_id` rows at that one triple. This
+ *      is deliberate, matches the FCC source data's own granularity, and is NOT a bug to fix — see
+ *      `filing-landscape.ts`'s module docstring for the read-side consequence (the same provider/tech
+ *      can surface in more than one `speed_bucket` for one queried block).
  *   2. **Temp-path build + move-aside-first swap**, per AGENTS.md's database house rule ("build
  *      successfully, then move the previous version to a temp directory, and then move the new
  *      version into place... ensures the database is always in a consistent state, even if the build
@@ -134,8 +142,10 @@ export interface BuildBDCResult {
 	out: string
 	/**
 	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip). In the default
-	 * (`includeLocationIDs: false`) mode this is per (block, provider, technology) triple, not per BSL — multiple BSLs at
-	 * the same triple collapse to one row.
+	 * (`includeLocationIDs: false`) mode this is per DISTINCT (geoid, provider_id, technology_code, speeds, low_latency,
+	 * business_residential_code) tuple, not per BSL — multiple BSLs at the same (geoid, provider_id, technology_code)
+	 * triple collapse to one row ONLY when their speeds/flags also match; BSLs at the same triple with differing
+	 * speeds/flags survive as separate rows (see the module docstring).
 	 */
 	rows: number
 	/**
@@ -215,12 +225,21 @@ interface BDCStageRow {
  * provider) — `parsing.ts`'s `takeAvailabilityLine` already assumes this, taking `providerID` as a parameter rather
  * than re-slicing column 1 per row. This reads it once, directly off the raw bytes, rather than threading a parallel
  * `providerID` array alongside `csvPaths` through the public options shape.
+ *
+ * `csvPath` is optional and used ONLY to name the offending file in a thrown error (the direct-buffer unit tests call
+ * this without one; {@linkcode readAvailabilityRowsFromCSVPaths} always supplies it). The `Number.isSafeInteger` guard
+ * below is load-bearing, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
+ * `Number.parseInt` on a non-numeric field (a malformed/re-headered/truncated CSV) silently produces `NaN`. `NaN` binds
+ * to that NOT NULL column as SQLite `NULL`, `INSERT OR IGNORE` then drops the row without a constraint error, and every
+ * dropped row gets counted as `deduped` — the ENTIRE file's rows vanish silently, misreported as ordinary dedup. A
+ * malformed CSV must be loud, never silently absorbed, so this throws instead.
  */
-export function peekProviderID(csvBuffer: Buffer): ProviderID {
+export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID {
 	const headerEnd = csvBuffer.indexOf(0x0a)
+	const fileSuffix = csvPath ? ` (${csvPath})` : ""
 
 	if (headerEnd === -1) {
-		throw new Error("peekProviderID: no newline found — empty or header-only CSV buffer")
+		throw new Error(`peekProviderID: no newline found — empty or header-only CSV buffer${fileSuffix}`)
 	}
 
 	const nextNewline = csvBuffer.indexOf(0x0a, headerEnd + 1)
@@ -232,21 +251,32 @@ export function peekProviderID(csvBuffer: Buffer): ProviderID {
 	const providerIDField = firstDataLine.split(",")[1]
 
 	if (!providerIDField) {
-		throw new Error("peekProviderID: could not read provider_id (column 1) from the first data row")
+		throw new Error(`peekProviderID: could not read provider_id (column 1) from the first data row${fileSuffix}`)
 	}
 
-	return Number.parseInt(providerIDField, 10) as ProviderID
+	const providerID = Number.parseInt(providerIDField, 10)
+
+	if (!Number.isSafeInteger(providerID)) {
+		throw new TypeError(
+			`peekProviderID: provider_id column (1) did not parse to a safe integer — got ${JSON.stringify(providerIDField)}` +
+				`${fileSuffix}. Refusing to silently drop this file's rows: an unguarded NaN binds to bdc_stage.provider_id ` +
+				`(INTEGER NOT NULL) as SQLite NULL, and INSERT OR IGNORE would then discard every row uncounted as ordinary dedup.`
+		)
+	}
+
+	return providerID as ProviderID
 }
 
 /**
- * Reads each of `csvPaths` fully into memory, peeks its `provider_id` ({@linkcode peekProviderID}), then yields every
- * row via `takeAvailabilityLine`. This is the production counterpart to the test seam's injected `rows` — never
- * exercised by `build-bdc.test.ts` directly, same as `build-poi.ts`'s `readParquetRows`.
+ * Reads each of `csvPaths` fully into memory, peeks its `provider_id` ({@linkcode peekProviderID}, passing the path
+ * through so a malformed file's error names it), then yields every row via `takeAvailabilityLine`. This is the
+ * production counterpart to the test seam's injected `rows` — exercised by `build-bdc.test.ts` only for the
+ * malformed-provider-id rejection path, same as `build-poi.ts`'s `readParquetRows`.
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
 	for (const csvPath of csvPaths) {
 		const buffer = await readFile(csvPath)
-		const providerID = peekProviderID(buffer)
+		const providerID = peekProviderID(buffer, csvPath)
 
 		yield* takeAvailabilityLine(buffer, providerID)
 	}
@@ -437,16 +467,18 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 
-	// The layer's block-grain contract (spec §2.2) is one row per (block, provider, technology) triple. But the FCC's
-	// per-provider CSVs are per-BSL: the SAME (geoid, provider_id, technology_code, speeds, low_latency,
+	// The FCC's per-provider CSVs are per-BSL: the SAME (geoid, provider_id, technology_code, speeds, low_latency,
 	// business_residential_code) tuple can repeat once per Broadband Serviceable Location within that block (a
 	// dense urban block can carry ~100 BSLs) — `bdc_stage`'s natural key includes `location_id`, so those BSL rows
 	// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
-	// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode it is NOT — without
-	// collapsing here, every BSL at the same triple would materialize as a byte-identical row, inflating
-	// `result.rows` and `layer_coverage.observed_rows` by the BSL count (found in review, ~100x at real scale).
-	// `SELECT DISTINCT` over every column EXCEPT `location_id` collapses those BSL duplicates down to one row per
-	// triple, matching the block-grain contract instead of a per-BSL count.
+	// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode, when those BSLs
+	// ALSO share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
+	// and `layer_coverage.observed_rows` by the BSL count (found in review, ~100x at real scale) — `SELECT DISTINCT`
+	// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
+	// IMPORTANT — this is NOT a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
+	// same triple with DIFFERING speeds/flags are NOT the same tuple, so `SELECT DISTINCT` does not merge them —
+	// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug; see the module
+	// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
 	const stageStmt = options.includeLocationIDs
 		? db.prepare(
 				`SELECT geoid, provider_id, technology_code, location_id,

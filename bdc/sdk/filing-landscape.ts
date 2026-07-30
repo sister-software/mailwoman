@@ -58,8 +58,13 @@ export interface FilingLandscapeQuery {
 
 /**
  * One provider/technology/speed-bucket group's block count within the query — `block_count` is the number of DISTINCT
- * queried blocks carrying this exact combination, never a raw row count (a block can carry multiple `bdc_availability`
- * rows only via `includeLocationIDs`, which the block-grain contract otherwise collapses at build time).
+ * queried blocks carrying this exact combination, never a raw row count. A block can carry multiple `bdc_availability`
+ * rows for the SAME (provider_id, technology_code) pair even in the DEFAULT (non-`includeLocationIDs`) build mode:
+ * `build-bdc.ts`'s materialize-time collapse merges to one row per distinct (geoid, provider_id, technology_code,
+ * speeds, low_latency, business_residential_code) tuple, not one row per (geoid, provider_id, technology_code) triple —
+ * so Broadband Serviceable Locations at the same triple with DIFFERING speeds/flags survive as separate rows and can
+ * land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s DISTINCT is exactly what
+ * keeps that from double-counting the block itself when it does.
  */
 export interface ProviderFilingSummary {
 	provider_id: number
@@ -175,6 +180,14 @@ export async function filingLandscape(
 
 	if (queryModeCount !== 1) {
 		throw new Error("filingLandscape: exactly one of `geoids` or `h3Cells` is required")
+	}
+
+	// `[]` is truthy, so it passes the XOR check above undetected — without this guard an empty array sails
+	// straight through to a vacuous all-zero landscape (surveyed_block_count: 0, unknown_block_count: 0, no
+	// filings), which reads exactly like a real "nothing queried" answer instead of the malformed-query error
+	// it should be. Checked before the manifest read so a bad query fails fast without even opening the db further.
+	if (!(query.geoids ?? query.h3Cells)!.length) {
+		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
 	// Read (and validate) the manifest FIRST — a broken/missing manifest must throw before any block is
