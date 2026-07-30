@@ -100,3 +100,37 @@ nothing closes self-serve — but the text should be first in line when counsel 
 The AU G-NAF EULA bars compiling mailing lists without deliverability verification. Fine for
 parser training; becomes live only if a customer uses output for mailing-list generation —
 a terms-of-use rider on OUR license docs, not a blocker.
+
+## 9. Lite artifact line (GTM D1 — the six L-markers)
+
+Verbatim source: `docs/superpowers/specs/2026-07-30-lite-artifact-line-design.md`, which defines
+the free/subscriber data-channel split (delayed public cadence, keyed registration, attribution
+on the free channel) and marks every point where an instrument would be needed.
+
+1. **L1 — registration-form data collection.** The Lite key form collects name, email, company,
+   so it is a personal-data collection. Notice text at point of collection, retention period for
+   the download log, and whether the privacy page's "architecturally does not collect" framing
+   needs a written carve-out. Gates the form going up.
+2. **L2 — the instrument the Lite key is issued under.** Not the AGPL (that governs our code, not
+   a compiled database) and not the commercial license. Needs a short data-use notice carrying the
+   attribution condition and sitting correctly on top of the upstream licenses.
+3. **L3 — can we condition a compiled artifact whose inputs are public domain?** The working
+   assumption is that the attribution condition rides the download agreement, not a copyright
+   claim over facts; EU database-compilation right vs US contract likely differ. **This is the
+   load-bearing question for the whole Lite line.**
+4. **L4 — the WOF license, and it is fact-finding first.** The repo contradicts itself: the
+   licensing pages say CC0, `resolver-wof-sqlite/README.md` and the HF dataset card say CC-BY 4.0,
+   `THIRD_PARTY_NOTICES.md` says "several sources with their own licenses." If CC-BY, the
+   gazetteer carries a standing attribution obligation in **both** channels. The upstream's own
+   license page may settle it without a lawyer.
+5. **L5 — Eurostat GISCO NUTS terms** (the EuroGeographics component). The repo records an
+   attribution string and no license identifier at all, so whether a built `nuts.db` may be
+   redistributed is unknown. Fact-finding first.
+6. **L6 — co-location does not contaminate.** Confirm there is no argument that building a
+   permissively-sourced artifact in the same pipeline, data root, or publish path as ODbL
+   artifacts creates a derivative-database relationship. The architecture already assumes not
+   (item 1's quarantine mechanisms); this asks counsel to confirm rather than discover.
+
+**Interim posture:** nothing ships on the Lite line. The prerequisites that need no lawyer (L4
+and L5 fact-finding, the share-alike build filter for the US situs shards, and putting the
+artifact builds on a schedule) proceed independently.
