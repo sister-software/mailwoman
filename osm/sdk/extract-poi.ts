@@ -10,7 +10,9 @@
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
  *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly; the two differences
  *   are the predicate (telecom tags, not `addr:housenumber`) and the match fan-out (a feature can only
- *   satisfy the FIRST rule in table order, since no two rules here share a tag key).
+ *   satisfy the FIRST rule in table order — `man_made` alone appears in four rules and `telecom` in
+ *   two, but every rule sharing a key requires a DIFFERENT value for it, so a real feature, which
+ *   carries one value per key, can satisfy at most one rule regardless of table order).
  *
  *   Tag disjunctions/conjunctions live HERE, not in the taxonomy (decision 2): `CategoryRecord.osmTag`
  *   is a single scalar the Overpass emitter consumes (`poi-taxonomy/overpass.ts` hard-splits on one
@@ -82,8 +84,9 @@ export interface OSMPOITagRule {
  * - `tower_comms` ← `man_made=mast` AND `tower:type=communication`
  * - `data_center` ← `man_made=data_center` OR `telecom=data_center`
  *
- * Rule order only matters in that the FIRST matching rule wins per feature; since no two rules share a tag key, every
- * real-world feature can match at most one rule regardless of order.
+ * Rule order only matters in that the FIRST matching rule wins per feature; `man_made` alone appears in four rules and
+ * `telecom` in two, but every rule sharing a key requires a different value for it, so a real-world feature — which
+ * carries one value per key — can match at most one rule regardless of order.
  */
 export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
 	{ categoryID: "telecom_exchange", all: [["man_made", "telephone_exchange"]] },
@@ -153,13 +156,53 @@ function distinctTagKeys(rules: readonly OSMPOITagRule[]): string[] {
 }
 
 /**
+ * OSM tag key/value shape: letters, digits, underscore, colon, dot, hyphen. `buildTelecomPOISQL` interpolates rule
+ * keys/values directly into an OGRSQL string, and `rules` is a public, tested parameter (not just the hardcoded
+ * {@link TELECOM_TAG_RULES} table) — so every key/value is checked against this allowlist before any of it reaches a
+ * template string. A hostile value such as `a' OR 1=1 --` would otherwise close the `'...'` literal early and inject
+ * arbitrary OGRSQL. Rejecting outright is a stronger, simpler guarantee than trying to enumerate escape rules for
+ * GDAL's OGRSQL dialect.
+ */
+const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
+
+/**
+ * Throws if any rule in `rules` has a key or value outside {@link SAFE_TAG_TOKEN} — called at the top of
+ * {@link buildTelecomPOISQL}, so both it and {@link extractOSMPOIs} (which builds its SQL through it) refuse a hostile
+ * rule table before any string concatenation happens.
+ */
+function assertSafeTagRules(rules: readonly OSMPOITagRule[]): void {
+	for (const rule of rules) {
+		for (const [key, value] of rule.all) {
+			for (const [kind, token] of [
+				["key", key],
+				["value", value],
+			] as const) {
+				if (!SAFE_TAG_TOKEN.test(token)) {
+					throw new Error(
+						`buildTelecomPOISQL: rule ${kind} ${JSON.stringify(token)} (category ${JSON.stringify(rule.categoryID)}) ` +
+							`contains characters outside the OSM tag-token allowlist ${SAFE_TAG_TOKEN} — refusing to interpolate ` +
+							`it into OGRSQL`
+					)
+				}
+			}
+		}
+	}
+}
+
+/**
  * Build the OGRSQL SELECT+WHERE for one layer: an OR of the rule table's AND-groups over promoted-column/`other_tags`
  * tag values, projecting `name` plus every referenced key so {@link extractOSMPOIs} can re-derive the matched category
  * in JS via {@link matchOSMPOITagRule} — the belt to this predicate's suspenders. A GDAL OGRSQL dialect quirk could
  * only narrow, never widen, what this WHERE matches, and the JS-side matcher re-checks the same rule table before a row
  * is ever yielded, so no false positive can slip through even if the pushdown predicate were imprecise.
+ *
+ * Throws via {@link assertSafeTagRules} if `rules` contains a key/value outside the OSM tag-token allowlist — `rules`
+ * is a public, caller-suppliable parameter, so this validates before any interpolation rather than trusting the
+ * hardcoded default table's shape.
  */
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
+	assertSafeTagRules(rules)
+
 	const tagCols = distinctTagKeys(rules).map((key) => `${tagSelectExpr(key)} AS ${tagAlias(key)}`)
 
 	const whereGroups = rules.map(

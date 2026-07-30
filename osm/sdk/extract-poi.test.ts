@@ -13,7 +13,7 @@
 
 import { expect, test } from "vitest"
 
-import { buildTelecomPOISQL, matchOSMPOITagRule, TELECOM_TAG_RULES } from "./extract-poi.ts"
+import { buildTelecomPOISQL, extractOSMPOIs, matchOSMPOITagRule, TELECOM_TAG_RULES } from "./extract-poi.ts"
 
 test("TELECOM_TAG_RULES: encodes exactly the six decision-2 rules", () => {
 	expect(TELECOM_TAG_RULES).toEqual([
@@ -116,4 +116,28 @@ test("buildTelecomPOISQL: honors a custom rule table (single OR-less rule, no hs
 	const sql = buildTelecomPOISQL("points", [{ categoryID: "x", all: [["man_made", "y"]] }])
 
 	expect(sql).toBe("SELECT name, man_made AS man_made FROM points WHERE (man_made='y')")
+})
+
+test("buildTelecomPOISQL: rejects a hostile rule VALUE (SQL injection attempt)", () => {
+	const hostileRules = [{ categoryID: "x", all: [["man_made", "a' OR 1=1 --"] as [string, string]] }]
+
+	expect(() => buildTelecomPOISQL("points", hostileRules)).toThrow(/tag-token allowlist/)
+})
+
+test("buildTelecomPOISQL: rejects a hostile rule KEY (SQL injection attempt)", () => {
+	const hostileRules = [{ categoryID: "x", all: [["man_made'; DROP TABLE points; --", "y"] as [string, string]] }]
+
+	expect(() => buildTelecomPOISQL("points", hostileRules)).toThrow(/tag-token allowlist/)
+})
+
+test("buildTelecomPOISQL: every TELECOM_TAG_RULES entry passes the validator", () => {
+	expect(() => buildTelecomPOISQL("points", TELECOM_TAG_RULES)).not.toThrow()
+	expect(() => buildTelecomPOISQL("multipolygons", TELECOM_TAG_RULES)).not.toThrow()
+})
+
+test("extractOSMPOIs: also rejects a hostile rule table before ever spawning ogr2ogr", async () => {
+	const hostileRules = [{ categoryID: "x", all: [["man_made", "a' OR 1=1 --"] as [string, string]] }]
+	const it = extractOSMPOIs("/nonexistent.pbf", hostileRules)
+
+	await expect(it.next()).rejects.toThrow(/tag-token allowlist/)
 })
