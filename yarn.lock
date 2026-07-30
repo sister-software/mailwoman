@@ -4530,7 +4530,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/bdc@workspace:bdc":
+"@mailwoman/bdc@workspace:*, @mailwoman/bdc@workspace:bdc":
   version: 0.0.0-use.local
   resolution: "@mailwoman/bdc@workspace:bdc"
   dependencies:
@@ -4538,6 +4538,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/yauzl-promise": "npm:^4.0.1"
+    h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     type-fest: "npm:^5.8.0"
     yauzl-promise: "npm:^4.0.0"
@@ -16391,6 +16392,7 @@ __metadata:
     "@mailwoman/api": "workspace:*"
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
+    "@mailwoman/bdc": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"

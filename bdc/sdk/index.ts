@@ -1,3 +1,4 @@
+export * from "./build-bdc.ts"
 export * from "./buildings.ts"
 export * from "./client.ts"
 export * from "./common.ts"

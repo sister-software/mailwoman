@@ -8,6 +8,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier } from "@mailwoman/core/layers"
+import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { Kysely } from "kysely"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -26,9 +28,13 @@ function openMemory(): DatabaseClient<BDCDatabase> {
 describe("bdc schema", () => {
 	it("co-resides with the layer contract, accepts a typed availability row, and reads it back", async () => {
 		using db = openMemory()
+		// `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes
+		// `Kysely<DB>` INVARIANT in `DB` (see build-bdc.ts's `asContractDB` for the full rationale) —
+		// narrow the handle back down for these two shared layer-contract calls.
+		const contractDB = db as unknown as Kysely<LayerContractDatabase>
 
-		await createLayerManifestTable(db)
-		await createLayerCoverageTable(db)
+		await createLayerManifestTable(contractDB)
+		await createLayerCoverageTable(contractDB)
 		await createBDCAvailabilityTable(db)
 		await createBDCProviderTable(db)
 		await createBDCGeoidIndex(db)

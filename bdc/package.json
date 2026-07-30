@@ -69,6 +69,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",
+		"h3-js": "^4.5.0",
 		"kysely": "^0.29.4",
 		"type-fest": "^5.8.0",
 		"yauzl-promise": "^4.0.0"
