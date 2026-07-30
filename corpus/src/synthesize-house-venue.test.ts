@@ -79,6 +79,7 @@ describe("synthesizeHouseVenueRow", () => {
 			street: "Rue de la Huchette",
 			houseNumber: "20",
 		}
+
 		const row = synthesizeHouseVenueRow(frTuple, {
 			random: seededRandom(3),
 			forceTemplate: "venue-before-street",
