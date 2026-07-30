@@ -8,8 +8,11 @@
  *   from the FCC's per-provider CSV (see `sdk/parsing.ts`); `bdc_provider` is a small dictionary
  *   keyed on `provider_id`, populated by a later registry-join task — decision 8 keeps FRN/brand/
  *   holding-company resolution out of 2a's scope. The DB also embeds the layer-contract tables from
- *   `@mailwoman/core/layers` (manifest tier `build-local` — FCC BDC redistribution isn't unrestricted
- *   — spine `h3` res 9 for availability rows, res 6 for coverage cells, matching poi.db's convention).
+ *   `@mailwoman/core/layers` (manifest tier `shipped`, license `public-domain` — FCC BDC block-level
+ *   availability data, at the granularity this layer ships, is US government public-domain data, not
+ *   redistribution-restricted; the CostQuest Fabric boundary this workspace never crosses is the
+ *   licensing edge, see `bdc/README.md` — spine `h3` res 9 for availability rows, res 6 for coverage
+ *   cells, matching poi.db's convention).
  *
  *   Clustering decision (implementer's pick — the brief allows either): a PLAIN rowid table, NOT
  *   `WITHOUT ROWID`, and NOT a composite `(h3_cell, provider_id, technology_code)` primary key.

@@ -24,6 +24,12 @@
  *      dedup (dedup semantics only; Nexus's Redis-backed location inference itself has no analog
  *      here). `h3_cell` is computed only AFTER staging, per distinct geoid, against the deduped set —
  *      so a duplicate row is never charged twice against `unknownGeoids` or `layer_coverage` either.
+ *      The natural key's `location_id` component means the SAME (geoid, provider_id, technology_code)
+ *      triple legitimately survives staging once per distinct BSL — correct when `includeLocationIDs`
+ *      is true, but the default (NULL `location_id`) mode collapses those BSL duplicates back down to
+ *      one row per triple at MATERIALIZE time (`SELECT DISTINCT` over every column except
+ *      `location_id`), matching the layer's one-row-per-block-provider-technology contract instead of
+ *      inflating `result.rows`/`layer_coverage.observed_rows` by the block's BSL count.
  *   2. **Temp-path build + move-aside-first swap**, per AGENTS.md's database house rule ("build
  *      successfully, then move the previous version to a temp directory, and then move the new
  *      version into place... ensures the database is always in a consistent state, even if the build
@@ -127,7 +133,9 @@ export interface BuildBDCOptions {
 export interface BuildBDCResult {
 	out: string
 	/**
-	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip).
+	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip). In the default
+	 * (`includeLocationIDs: false`) mode this is per (block, provider, technology) triple, not per BSL — multiple BSLs at
+	 * the same triple collapse to one row.
 	 */
 	rows: number
 	/**
@@ -184,13 +192,16 @@ async function createBDCStageTable(db: Kysely<BDCDatabase>): Promise<void> {
 }
 
 /**
- * A `bdc_stage` row, as read back by the materialize pass's `SELECT * FROM bdc_stage` scan.
+ * A `bdc_stage` row, as read back by the materialize pass. When `includeLocationIDs` is true, `location_id` is
+ * populated (one row per distinct BSL). When false (default), the materialize query collapses on every column EXCEPT
+ * `location_id` (see {@linkcode buildBDCDatabase}'s materialize step), so `location_id` is simply absent from that
+ * query and never read.
  */
 interface BDCStageRow {
 	geoid: string
 	provider_id: number
 	technology_code: number
-	location_id: string
+	location_id?: string
 	max_advertised_download_speed: number
 	max_advertised_upload_speed: number
 	low_latency: 0 | 1
@@ -426,7 +437,27 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 
-	const stageStmt = db.prepare("SELECT * FROM bdc_stage")
+	// The layer's block-grain contract (spec §2.2) is one row per (block, provider, technology) triple. But the FCC's
+	// per-provider CSVs are per-BSL: the SAME (geoid, provider_id, technology_code, speeds, low_latency,
+	// business_residential_code) tuple can repeat once per Broadband Serviceable Location within that block (a
+	// dense urban block can carry ~100 BSLs) — `bdc_stage`'s natural key includes `location_id`, so those BSL rows
+	// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
+	// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode it is NOT — without
+	// collapsing here, every BSL at the same triple would materialize as a byte-identical row, inflating
+	// `result.rows` and `layer_coverage.observed_rows` by the BSL count (found in review, ~100x at real scale).
+	// `SELECT DISTINCT` over every column EXCEPT `location_id` collapses those BSL duplicates down to one row per
+	// triple, matching the block-grain contract instead of a per-BSL count.
+	const stageStmt = options.includeLocationIDs
+		? db.prepare(
+				`SELECT geoid, provider_id, technology_code, location_id,
+					max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
+				 FROM bdc_stage`
+			)
+		: db.prepare(
+				`SELECT DISTINCT geoid, provider_id, technology_code,
+					max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
+				 FROM bdc_stage`
+			)
 
 	progress(
 		"materializing bdc_availability — resolving block centroids to h3_cell (unknown geoids skipped, never guessed)"
@@ -471,7 +502,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			row.max_advertised_upload_speed,
 			row.low_latency,
 			row.business_residential_code,
-			options.includeLocationIDs ? row.location_id : null
+			options.includeLocationIDs ? (row.location_id ?? null) : null
 		)
 
 		inserted++

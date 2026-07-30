@@ -265,6 +265,84 @@ describe("buildBDCDatabase", () => {
 	})
 })
 
+describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
+	/**
+	 * 3 rows sharing the SAME (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
+	 * triple — only `location_id` differs, exactly the shape a real FCC per-provider CSV produces for a block carrying
+	 * multiple Broadband Serviceable Locations. The staging pass's natural key includes `location_id`, so all 3 survive
+	 * staging as distinct rows (this is NOT the exact-duplicate case `fixtureRows` covers) — the materialize step must
+	 * then collapse them to exactly 1 row in the default mode, never inflating `result.rows`/
+	 * `layer_coverage.observed_rows` by the BSL count, while keeping all 3 distinct when `includeLocationIDs: true`.
+	 */
+	function multiBSLRows(): BDCAvailabilityRow[] {
+		return ["2000000001", "2000000002", "2000000003"].map((locationID) => ({
+			geoid: GEOID_SF,
+			provider_id: 130_077,
+			technology_code: 50,
+			location_id: locationID,
+			max_advertised_download_speed: 1000,
+			max_advertised_upload_speed: 1000,
+			low_latency: 1,
+			business_residential_code: "R",
+		}))
+	}
+
+	it("collapses multiple BSLs at the same triple to exactly 1 row by default", async () => {
+		const collapsedOut = join(scratch, "bdc-multi-bsl-default.db")
+
+		const result = await buildBDCDatabase({
+			rows: multiBSLRows(),
+			out: collapsedOut,
+			asOfDate: "2026-06-30",
+			buildSHA: "deadbeef",
+			blockCentroids,
+		})
+
+		expect(result.rows).toBe(1)
+		// No EXACT duplicates here — all 3 rows differ on location_id, so the staging natural-key dedup
+		// (a separate mechanism from this materialize-time collapse) removes none of them.
+		expect(result.deduped).toBe(0)
+		expect(result.coverageCells).toBe(1)
+
+		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(collapsedOut, { readOnly: true }) })
+
+		const rows = await kdb.selectFrom("bdc_availability").selectAll().where("geoid", "=", GEOID_SF).execute()
+		expect(rows).toHaveLength(1)
+		expect(rows[0]!.location_id).toBeNull()
+
+		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
+		expect(coverageRows).toHaveLength(1)
+		expect(coverageRows[0]!.observed_rows).toBe(1)
+	})
+
+	it("keeps every distinct BSL as its own row when includeLocationIDs is true", async () => {
+		const perBSLOut = join(scratch, "bdc-multi-bsl-included.db")
+
+		const result = await buildBDCDatabase({
+			rows: multiBSLRows(),
+			out: perBSLOut,
+			asOfDate: "2026-06-30",
+			buildSHA: "deadbeef",
+			includeLocationIDs: true,
+			blockCentroids,
+		})
+
+		expect(result.rows).toBe(3)
+		expect(result.deduped).toBe(0)
+		expect(result.coverageCells).toBe(1)
+
+		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(perBSLOut, { readOnly: true }) })
+
+		const rows = await kdb.selectFrom("bdc_availability").selectAll().where("geoid", "=", GEOID_SF).execute()
+		expect(rows).toHaveLength(3)
+		expect(rows.map((r) => r.location_id).toSorted()).toEqual(["2000000001", "2000000002", "2000000003"])
+
+		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
+		expect(coverageRows).toHaveLength(1)
+		expect(coverageRows[0]!.observed_rows).toBe(3)
+	})
+})
+
 describe("peekProviderID", () => {
 	it("reads the constant provider_id column off the first data row", () => {
 		const csv = Buffer.from(
