@@ -8,15 +8,29 @@
  *   `docs/superpowers/plans/2026-07-31-filer-3a-plan.md`'s "Acceptance gates (§7-3a…)" section for the
  *   gates verbatim). One identifier in — `frn` XOR `form499ID` XOR `bdcProviderID`, matching
  *   `filingLandscape`'s XOR discipline (`bdc/sdk/filing-landscape.ts`) — one crosswalk view out: every
- *   identifier this node shares an AUTHORITATIVE edge with, its flattened current attributes, its
- *   authoritative cluster (never touched by an inferred edge — decision 5 / gate 2), and its inferred
- *   links reported SEPARATELY with their score/source. Every relationship in the answer is scoped `asOf`
- *   a date (default: today), and `as_of` is always present in the result so a caller never has to guess
- *   which view they got.
+ *   OTHER identifier this node shares an AUTHORITATIVE, SAME-ENTITY edge with (task 3 fix round 1 — see
+ *   below), its flattened current attributes, its authoritative cluster (never touched by an inferred
+ *   edge — decision 5 / gate 2), and its inferred links reported SEPARATELY with their score/source.
+ *   Every relationship in the answer is scoped `asOf` a date (default: today), and `as_of` is always
+ *   present in the result so a caller never has to guess which view they got.
+ *
+ *   **`identifiers` is `relationship: same_entity` ONLY (task 3 fix round 1, CRITICAL).** Before this
+ *   fix, `identifiers` was built from EVERY authoritative edge touching the queried node regardless of
+ *   `relationship` — so a `HoldingCompany`/`ManagementCompany` edge (correctly typed authoritative by
+ *   Task 2's builder) surfaced the holding-company NAME as if it were "this filer's own identifier",
+ *   exactly the entity/family conflation gate 1 exists to prevent, just hiding in a different field than
+ *   `cluster`. `identifiers` now answers ONLY "which other identifiers denote this SAME legal entity";
+ *   a holding-/management-company relationship is reported via `families` instead (`family_id`/
+ *   `relationship`, never the raw company name — recovering that name requires `family-rollup.ts` or a
+ *   direct `filer_node` lookup, which this reader does not do on the caller's behalf).
  *
  *   **Manifest-first (gate 4's "always stamped" half).** `readFilerManifest` runs before any node/edge
  *   query — a missing/broken manifest throws immediately (matching `filingLandscape`'s own ordering)
- *   rather than this reader ever answering with a made-up or missing `vintage`.
+ *   rather than this reader ever answering with a made-up or missing `vintage`. Immediately after,
+ *   {@linkcode assertFamilySchemaVersion} refuses an artifact whose `schema_version` predates
+ *   `filer_family` (task 3 fix round 1, IMPORTANT-3) with a descriptive, rebuild-pointing error — not a
+ *   raw "no such table: filer_family" surfaced straight from SQLite once this reader started
+ *   unconditionally querying that table.
  *
  *   **Temporal scoping (gate 4).** An edge is "in force" `asOf` a date when `valid_from <= asOf AND
  *   (valid_to IS NULL OR asOf < valid_to)` — the same half-open-interval convention `cluster-filers.ts`'s
@@ -80,8 +94,10 @@
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 import {
+	FILER_FAMILY_SCHEMA_VERSION,
 	FilerEdgeAssertion,
 	FilerIdentifierType,
+	FilerRelationship,
 	readFilerManifest,
 	type FilerDatabase,
 	type FilerNodeTable,
@@ -101,8 +117,10 @@ export interface FilerLookupQuery {
 }
 
 /**
- * One OTHER identifier the queried node shares an AUTHORITATIVE edge with, `asOf` the query's date. `type` is one of
- * {@link FilerIdentifierType}.
+ * One OTHER identifier the queried node shares an AUTHORITATIVE, SAME-ENTITY edge with, `asOf` the query's date (task 3
+ * fix round 1 — see the module docstring's "identifiers is relationship: same_entity ONLY" section). `type` is one of
+ * {@link FilerIdentifierType}. A holding-/management-company relationship never appears here — that fact belongs to
+ * {@link FilerLookupResult.families} instead.
  */
 export interface FilerLookupIdentifier {
 	type: string
@@ -354,6 +372,25 @@ export function todayISODate(): string {
 	return new Date().toISOString().slice(0, 10)
 }
 
+/**
+ * Guards a reader that hard-depends on `filer_family` — `filerLookup`'s own `families` field, and `family-rollup.ts`'s
+ * `familyRollup` — against an artifact built before that table existed (task 3 fix round 1, IMPORTANT-3).
+ * `filer_family` was introduced at {@link FILER_FAMILY_SCHEMA_VERSION} (3b Task 1); an OLDER artifact's `filer.db` has
+ * no such table at all, so an unconditional `filer_family` query against one throws a raw, unhelpful "no such table:
+ * filer_family" straight from SQLite. Exported (not just called inline in `filerLookup`) so `family-rollup.ts` shares
+ * this exact check rather than growing its own — same "one definition, no drift" discipline as
+ * {@linkcode todayISODate}.
+ */
+export function assertFamilySchemaVersion(schemaVersion: number, readerName: string): void {
+	if (schemaVersion < FILER_FAMILY_SCHEMA_VERSION) {
+		throw new Error(
+			`${readerName}: filer.db schema_version ${schemaVersion} predates filer_family (introduced at ` +
+				`schema_version ${FILER_FAMILY_SCHEMA_VERSION}, 3b Task 1) — rebuild this artifact via ` +
+				"buildFilerDatabase to pick up the current schema before querying it with this reader."
+		)
+	}
+}
+
 function otherEndOf(edge: { from_node_id: string; to_node_id: string }, nodeID: string): string {
 	return edge.from_node_id === nodeID ? edge.to_node_id : edge.from_node_id
 }
@@ -398,6 +435,13 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * observed" rather than asserting one the caller has no `asOf`-scoped evidence for. Otherwise returns the reachable
  * subset, sorted (mirrors `cluster-filers.ts`'s own `.orderBy("node_id")`/`.toSorted()` convention) — which may be a
  * PROPER subset of `candidateMembers` when the full component only partially held together as of that date.
+ *
+ * `relationship: "same_entity"` is required on this edge query too (task 3 fix round 1, CRITICAL) — the same fix
+ * `cluster-filers.ts`'s `readAuthoritativeGroups` needed, for the identical reason: without it, a
+ * HoldingCompany/ManagementCompany edge between two of `candidateMembers` (in practice, this can only ever be the
+ * writer-bug case this fix closes — a same-entity cluster snapshot should never legitimately contain a
+ * holding-/management-company node as a member once `readAuthoritativeGroups` is fixed) could corroborate a
+ * cross-entity link this asOf-scoping pass is supposed to be validating, not merely re-deriving unfiltered.
  */
 async function deriveClusterMembersAsOf(
 	db: DatabaseClient<FilerDatabase>,
@@ -414,6 +458,7 @@ async function deriveClusterMembersAsOf(
 		.selectFrom("filer_edge")
 		.select(["from_node_id", "to_node_id"])
 		.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+		.where("relationship", "=", FilerRelationship.SameEntity)
 		.where("from_node_id", "in", candidateMembers)
 		.where("to_node_id", "in", candidateMembers)
 		.where("valid_from", "<=", asOf)
@@ -480,6 +525,10 @@ export async function filerLookup(
 	// Manifest-first (gate 4): throws before any node/edge query runs at all — this reader never answers unstamped.
 	const manifest = await readFilerManifest(db)
 
+	// Task 3 fix round 1, IMPORTANT-3: refuse a pre-filer_family artifact with a descriptive error rather than a raw
+	// "no such table" once the families query below runs unconditionally.
+	assertFamilySchemaVersion(manifest.schema_version, "filerLookup")
+
 	const asOf = query.asOf ?? todayISODate()
 
 	const node = await db.selectFrom("filer_node").selectAll().where("node_id", "=", nodeID).executeTakeFirst()
@@ -490,10 +539,17 @@ export async function filerLookup(
 
 	// Gate 4: temporal scoping. valid_from <= asOf AND (valid_to IS NULL OR asOf < valid_to) — see the module
 	// docstring. Applied identically to the authoritative edges below and the inferred edges further down.
+	//
+	// Task 3 fix round 1, CRITICAL: relationship = same_entity is ALSO required — identifiers answers "which other
+	// identifiers denote this SAME entity", never "everything this node has an authoritative edge to regardless of
+	// what that edge means". Without this filter a HoldingCompany/ManagementCompany edge (authoritative, correctly,
+	// per Task 2) surfaced the holding company's NAME here as if it were this filer's own identifier — see the module
+	// docstring.
 	const authoritativeEdges = await db
 		.selectFrom("filer_edge")
 		.selectAll()
 		.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+		.where("relationship", "=", FilerRelationship.SameEntity)
 		.where((eb) => eb.or([eb("from_node_id", "=", nodeID), eb("to_node_id", "=", nodeID)]))
 		.where("valid_from", "<=", asOf)
 		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))

@@ -19,7 +19,7 @@
  *   apart?), not clustering internals, which `cluster-filers.test.ts` already gates.
  */
 
-import { existsSync } from "node:fs"
+import { chmodSync, existsSync } from "node:fs"
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -45,6 +45,8 @@ import {
 	type FilerManifestTable,
 } from "../schema.ts"
 import { buildFilerDatabase } from "./build-filer.ts"
+import { clusterAuthoritativeComponents } from "./cluster-filers.ts"
+import { familyRollup } from "./family-rollup.ts"
 import {
 	filerLookup,
 	pickPrimaryFRN,
@@ -74,7 +76,9 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 const MANIFEST: FilerManifestTable = {
 	name: "filer",
 	version: "2026-Q1",
-	schema_version: 1,
+	// 2, not 1 (task 3 fix round 1, IMPORTANT-3) — filerLookup now unconditionally queries filer_family and refuses
+	// a manifest reporting a schema_version that predates it (see the dedicated schema-version-guard test below).
+	schema_version: 2,
 	source: "form-499,bdc-provider-list",
 	source_vintage: "2026-Q1",
 	build_cmd: "mailwoman filer build",
@@ -768,7 +772,17 @@ describe("§7-3a gates", () => {
 				}
 
 				expect(frnValues).toEqual(["0006000001"])
-				expect(holdingValues).toEqual(["Realbuild Co"])
+
+				// Task 3 fix round 1, CRITICAL: identifiers is relationship: same_entity ONLY now — a
+				// HoldingCompanyName never surfaces here regardless of how findable its edge is asOf this date.
+				expect(holdingValues).toEqual([])
+
+				// The holding-company relationship itself is STILL correctly asOf-scoped (this test's whole point —
+				// the non-ISO sourceVintage never leaking into valid_from) — just surfaced via `families`, not
+				// `identifiers`, now that the two rollups are kept apart.
+				expect(result.families).toHaveLength(1)
+				expect(result.families[0]?.relationship).toBe(FilerRelationship.HoldingCompany)
+				expect(result.families[0]?.family_id.startsWith(`${FilerIdentifierType.HoldingCompanyName}:`)).toBe(true)
 			})
 		})
 
@@ -988,6 +1002,127 @@ describe("§7-3b gates", () => {
 				{ family_id: "holding_company_name:bigco-inc", relationship: FilerRelationship.HoldingCompany },
 			])
 		})
+
+		/**
+		 * THE REAL GATE (task 3 fix round 1 — re-cut per the reviewer's finding). The test above hand-writes
+		 * `filer_cluster`/`filer_family` directly and never calls the real builder or clusterer — it proves `filerLookup`'s
+		 * OWN queries stay disjoint, but it CANNOT catch a builder or clusterer that emits the underlying rows differently.
+		 * That is exactly what happened: `cluster-filers.ts`'s `readAuthoritativeGroups` union-found every `assertion:
+		 * "authoritative"` edge with no `relationship` filter, so real `HoldingCompany` edges (correctly authoritative, per
+		 * Task 2) silently merged every filer sharing a holding company into ONE entity cluster — three unrelated filers
+		 * reported as one. This test goes through the REAL pipeline end to end: `buildFilerDatabase` (writes typed edges +
+		 * family membership) then `clusterAuthoritativeComponents` (writes `filer_cluster`) then
+		 * `filerLookup`/`familyRollup` (reads both). Three FRNs sharing one holding company MUST yield THREE distinct
+		 * entity clusters (never merged) and ONE shared family — the mutation this closes (deleting the `relationship`
+		 * filter from `readAuthoritativeGroups`) collapses the three clusters back into one and fails this test
+		 * immediately.
+		 */
+		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
+			await withScratchDir(async (out) => {
+				const SHARED_HOLDING = "Real Pipeline Holdco Inc"
+
+				const FRN_1 = toFRN("0009200001")!
+				const FRN_2 = toFRN("0009200002")!
+				const FRN_3 = toFRN("0009200003")!
+
+				await buildFilerDatabase({
+					form499Rows: [
+						minimalForm499Row({
+							form499ID: "920001",
+							frn: FRN_1,
+							holdingCompany: SHARED_HOLDING,
+							lastFiledAt: "2026-05-01",
+						}),
+						minimalForm499Row({
+							form499ID: "920002",
+							frn: FRN_2,
+							holdingCompany: SHARED_HOLDING,
+							lastFiledAt: "2026-05-01",
+						}),
+						minimalForm499Row({
+							form499ID: "920003",
+							frn: FRN_3,
+							holdingCompany: SHARED_HOLDING,
+							lastFiledAt: "2026-05-01",
+						}),
+					],
+					out,
+					sourceVintage: "2026-Q2",
+					buildSHA: "deadbeef",
+				})
+
+				// buildFilerDatabase seals the artifact read-only (core/utils/sealed-db.ts) — clusterAuthoritativeComponents
+				// writes filer_cluster, so this unseals it first, the same as a real incremental-clustering pass would.
+				chmodSync(out, 0o644)
+				using db = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(out) })
+
+				await clusterAuthoritativeComponents(db)
+
+				// Plain loop, not .map() — keeps this callback within max-nested-callbacks under withScratchDir's own
+				// async closure (the same discipline the "REAL builder path" gate-4 test above already follows).
+				const frnNodeIDs: string[] = []
+
+				for (const frn of [FRN_1, FRN_2, FRN_3]) {
+					frnNodeIDs.push(`${FilerIdentifierType.FRN}:${frn}`)
+				}
+
+				const clusterRows = await db
+					.selectFrom("filer_cluster")
+					.select(["node_id", "cluster_id"])
+					.where("node_id", "in", frnNodeIDs)
+					.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+					.execute()
+
+				const distinctClusterIDs = new Set<string>()
+
+				for (const row of clusterRows) {
+					distinctClusterIDs.add(row.cluster_id)
+				}
+
+				// THE GATE: 3 distinct cluster_ids — never one shared cluster_id across the 3 FRNs.
+				expect(distinctClusterIDs.size).toBe(3)
+
+				const asOf = "2026-12-31"
+
+				const result1 = await filerLookup(db, { frn: FRN_1, asOf })
+				const result2 = await filerLookup(db, { frn: FRN_2, asOf })
+				const result3 = await filerLookup(db, { frn: FRN_3, asOf })
+
+				// Each FRN's own entity cluster is just itself + its own form499ID — never any of the other two FRNs.
+				expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
+				expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
+				expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
+				expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
+				expect(result3.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
+				expect(result3.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
+
+				expect(result1.cluster?.cluster_id).not.toBe(result2.cluster?.cluster_id)
+				expect(result1.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
+				expect(result2.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
+
+				// All 3 share exactly ONE family, via BOTH the filerLookup.families surface and familyRollup itself.
+				expect(result1.families).toHaveLength(1)
+				expect(result2.families).toHaveLength(1)
+				expect(result3.families).toHaveLength(1)
+
+				const sharedFamilyID = result1.families[0]?.family_id
+
+				expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
+				expect(result3.families[0]?.family_id).toBe(sharedFamilyID)
+
+				const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf })
+				expect(rollup).toHaveLength(1)
+				expect(rollup[0]?.distinct_member_count).toBe(3)
+
+				const memberFRNValues: string[] = []
+
+				for (const member of rollup[0]?.members ?? []) {
+					memberFRNValues.push(member.node_id)
+				}
+
+				expect(memberFRNValues.toSorted()).toEqual(frnNodeIDs.toSorted())
+			})
+		})
 	})
 
 	describe("2. Relationship kind + provenance mandatory on every family row", () => {
@@ -1118,6 +1253,85 @@ describe("§7-3b gates", () => {
 					})
 					.execute()
 			).rejects.toThrow(/CHECK constraint failed/)
+		})
+	})
+
+	/**
+	 * Task 3 fix round 1, IMPORTANT-1: deleting BOTH halves of `families`'s asOf predicate in filer-lookup.ts left
+	 * 529/529 tests passing — only `family-rollup.ts`'s OWN copy of the predicate was ever probed. These two tests close
+	 * that blind spot directly against `filerLookup`'s `families` field.
+	 */
+	describe("families is asOf-scoped (task 3 fix round 1, IMPORTANT-1)", () => {
+		const FRN_TEMPORAL = `${FilerIdentifierType.FRN}:4040404050`
+		const FAMILY_ID_TEMPORAL = "holding_company_name:temporal-co"
+
+		it("excludes a family membership before its valid_from", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: FRN_TEMPORAL, identifier_type: FilerIdentifierType.FRN, identifier_value: "4040404050" })
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: FRN_TEMPORAL,
+					family_id: FAMILY_ID_TEMPORAL,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-06-01",
+					valid_from: "2026-06-01",
+					valid_to: null,
+				})
+				.execute()
+
+			const before = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-05-31" })
+			expect(before.families).toEqual([])
+
+			const onOrAfter = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-06-01" })
+
+			expect(onOrAfter.families).toEqual([
+				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany },
+			])
+		})
+
+		it("excludes a CLOSED family membership on/after its valid_to, while a date within its window still includes it", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: FRN_TEMPORAL, identifier_type: FilerIdentifierType.FRN, identifier_value: "4040404050" })
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: FRN_TEMPORAL,
+					family_id: FAMILY_ID_TEMPORAL,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: "2026-03-01",
+				})
+				.execute()
+
+			const withinWindow = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-02-01" })
+
+			expect(withinWindow.families).toEqual([
+				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany },
+			])
+
+			const atClose = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-03-01" })
+			expect(atClose.families).toEqual([])
+
+			const afterClose = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-04-01" })
+			expect(afterClose.families).toEqual([])
 		})
 	})
 })

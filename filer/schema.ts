@@ -245,6 +245,16 @@ export interface FilerFamilyTable {
 }
 
 /**
+ * The `filer_manifest.schema_version` value `build-filer.ts` bumped to (3b Task 1, decisions 1, 2) when `filer_edge`
+ * gained its NOT NULL `relationship` column and `filer_family` was introduced. Any reader that hard-depends on either
+ * (`filer-lookup.ts`'s `families` field, `family-rollup.ts`'s `familyRollup`) must refuse an artifact reporting an
+ * EARLIER `schema_version` with a descriptive, rebuild-pointing error — not a raw "no such table: filer_family"
+ * surfaced straight from SQLite (task 3 fix round 1: a `schema_version: 1` artifact hit exactly that before this guard
+ * existed).
+ */
+export const FILER_FAMILY_SCHEMA_VERSION = 2
+
+/**
  * Filer.db's own single-row identity/provenance record (decision 2) — NOT the layer-contract `layer_manifest` from
  * `@mailwoman/core/layers`; filer.db is deliberately not a layer-contract artifact in 3a (no coordinates until ASR
  * lands in Phase 3c). See {@link readFilerManifest} for the single-row read discipline.
