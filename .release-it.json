@@ -19,6 +19,7 @@
 				"resolver-wof-wasm",
 				"ban",
 				"corpus",
+				"sentencepiece-wasm",
 				"neural",
 				"neural-weights-en-us",
 				"neural-weights-fr-fr",

@@ -1,0 +1,25 @@
+{
+	"name": "@mailwoman/sentencepiece-wasm",
+	"version": "8.3.0",
+	"description": "google/sentencepiece v0.2.2 compiled to WASM with a native-offsets binding — the tokenizer core for @mailwoman/neural. Single-file ESM (wasm embedded), no runtime deps; per-piece byte offsets come from SentencePiece itself instead of TS-side reconstruction.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "sentencepiece-wasm"
+	},
+	"files": [
+		"sentencepiece.mjs",
+		"index.d.ts",
+		"binding.cpp",
+		"build.sh"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"types": "./index.d.ts",
+			"default": "./sentencepiece.mjs"
+		}
+	}
+}

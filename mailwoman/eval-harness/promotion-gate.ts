@@ -307,7 +307,9 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	}
 
 	const gate = JSON.parse(readFileSync(GATE, "utf8")) as GateSpec
-	const LABEL = gate.label
+	// A label-less spec must not crash the PASS path (the post-verdict ledger hint interpolates
+	// LABEL — bit on the first v7.0.0-base run, whose spec omitted the field).
+	const LABEL = gate.label ?? basename(GATE).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
 	if (!OUT_DIR) {
