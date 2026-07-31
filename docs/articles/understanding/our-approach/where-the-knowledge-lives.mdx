@@ -1,0 +1,105 @@
+---
+sidebar_position: 6
+title: Where the knowledge lives
+tags:
+  - architecture
+  - motivation
+  - neural
+  - infrastructure
+  - reference
+---
+
+# Where the knowledge lives
+
+Every geocoder is a bet about where to put what it knows. Before you compare feature lists — that's
+[How Mailwoman compares](../../concepts/how-mailwoman-compares.mdx) — it's worth comparing this one
+decision, because almost everything else follows from it: the download size, the update cost, what
+you can audit, and whether the thing can run on the machine in front of you.
+
+## Three kinds of knowledge
+
+A system that turns `30 rockefeller plaza, new york` into a structured, geocoded address needs
+three different kinds of knowledge, and they have very different shapes:
+
+1. **Grammar** — what address _structure_ looks like: that a number before a street name is
+   probably a house number, that the thing after a comma is probably a locality, that "St" ends a
+   street but starts "St Petersburg". This generalizes: the rules of the game are mostly stable
+   even for streets nobody has written down yet.
+2. **Spelling** — how raw text becomes units a model can read. Subwords, characters, bytes: the
+   representational plumbing.
+3. **The world** — which places actually exist, where they are, what they contain. Enormous,
+   ambiguous ("Washington" is a state, dozens of cities, and thousands of streets), and it changes
+   every month.
+
+The systems you might be replacing differ less in _how much_ they know than in _where they keep
+each kind_.
+
+## Four answers to the same question
+
+**libpostal fuses all three into one artifact.** Its classifier is a CRF whose features are, in
+effect, gigantic per-token memory tables; its dictionaries (street types, directionals, unit
+designators, in ~60 languages) and its place-name knowledge ship inside the same ~2 GB download as
+the model. It works — libpostal set the standard for open-source parsing — but the fusion has a
+price: updating _any_ ingredient means rebuilding and redistributing all of it, and nothing about
+its knowledge is inspectable or swappable from the outside.
+
+**Pelias puts the knowledge in an index.** The parser is thin (Pelias calls libpostal); the
+intelligence lives in an Elasticsearch cluster — synonym files, analyzers, and query-time
+heuristics over a many-gigabyte import of the planet. The dictionary became infrastructure: to
+know what Pelias knows, you stand up the cluster and feed it. Operationally honest, operationally
+heavy.
+
+**LLM-era parsers put everything in parameters.** Systems in the AddrKG-LLM direction hand the
+task to a large generative model, sometimes coupled to a knowledge graph. The model _is_ the
+grammar, the dictionary, and a lossy copy of the atlas all at once. That buys flexibility and
+costs everything else: billions of parameters, GPU serving, no character-offset guarantees for
+the labels it emits, and confidence you can't calibrate. When it doesn't know a place, it can
+invent one — a failure mode the other architectures structurally cannot have.
+
+**Mailwoman's bet is the factoring itself.** Each kind of knowledge goes where it generalizes
+best, and _only_ structure lives in parameters:
+
+| Knowledge   | Where it lives                                                                                                          | Why there                                                                                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grammar     | a ~39 MB encoder ([why neural](./why-a-neural-parser.mdx))                                                              | structure generalizes; a small model trained on hundreds of millions of addresses learns the game's rules, not its roster                                                   |
+| Spelling    | a [SentencePiece subword vocabulary](../../concepts/tokenization.mdx) with byte fallback                                | learned from the address corpus itself; byte fallback means no input is unrepresentable (measured: 0.155% of pieces over a 684M-row feed fall back to bytes)                |
+| The world   | swappable data files — the gazetteer, [FST evidence channels](../../concepts/fst-gazetteer-prior.mdx), curated lexicons | the atlas changes monthly and must not require retraining; it reaches the model as _graded evidence_, so an unknown place is a normal input, not an out-of-vocabulary error |
+| Query idiom | small curated tables (brand aliases, regional variants)                                                                 | "Macca's" → McDonald's is human knowledge with a maintainer, not a statistical fact                                                                                         |
+
+The model consults the world through evidence channels at inference time — "this span matches a
+known locality surface, with this ambiguity class" — and learned during training how much to
+trust that evidence against context. Memorization was deliberately kept _out_ of the parameters
+and moved into files you can read, diff, replace, and license independently.
+
+## What the factoring buys
+
+**Deployability.** The parser plus its runtime data fits in a browser tab — the
+[demo](https://mailwoman.sister.software/demo/) downloads the real model and runs it locally.
+That is not a stunt; it's the direct consequence of not carrying the atlas inside the weights.
+None of the systems above can do this, for the same reason in each case: their knowledge
+placement makes the minimum artifact enormous.
+
+**Update cost.** New Who's On First release? Rebuild the gazetteer artifacts; the model doesn't
+move. New brand aliases? Edit a table. Retraining happens when the _grammar_ needs to improve,
+which is rare and deliberate — not whenever the world changes, which is constantly.
+
+**Auditability.** Because each store is separate, each is measurable on its own terms: the
+vocabulary's utilization can be counted over the training feed, the evidence channels can be
+ablated to show exactly what the gazetteer contributes, and the parser's confidence is
+[calibrated](../../concepts/confidence-calibration.mdx) rather than asserted. A fused system can
+only be evaluated end-to-end; a factored one can be interrogated a layer at a time.
+
+**Honest failure.** When Mailwoman meets a place it has never heard of, the gazetteer offers no
+evidence, the model parses on structure alone, and the confidence score says so. Nothing invents
+a coordinate.
+
+## The same principle, one level down
+
+This article is about where knowledge is _stored_. Its sibling, [The knowledge
+ladder](./the-knowledge-ladder.mdx), is about when knowledge is _applied_ — cheap structural
+checks before expensive inference, inference before resolution. The two are the same instinct in
+different dimensions: keep each kind of knowledge where it's cheapest to keep right.
+
+If you came here from Pelias, [From Pelias to Mailwoman](./from-pelias-to-mailwoman.mdx) tells
+the historical version of this story — how a parser that began as a libpostal replacement ended
+up re-answering the placement question instead.

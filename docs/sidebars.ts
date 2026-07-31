@@ -114,6 +114,7 @@ const sidebars: SidebarsConfig = {
 				"understanding/our-approach/how-it-works-now",
 				"understanding/our-approach/the-staged-pipeline",
 				"understanding/our-approach/from-pelias-to-mailwoman",
+				"understanding/our-approach/where-the-knowledge-lives",
 				"understanding/our-approach/what-the-eval-numbers-mean",
 				"understanding/our-approach/how-it-used-to-work",
 				"understanding/our-approach/how-it-will-work",
