@@ -42,7 +42,13 @@ import {
 	type FilerManifestTable,
 } from "../schema.ts"
 import { buildFilerDatabase } from "./build-filer.ts"
-import { filerLookup, pickPrimaryFRN, type FRNFilingRecord } from "./filer-lookup.ts"
+import {
+	filerLookup,
+	pickPrimaryFRN,
+	PRIMARY_FRN_DERIVATION,
+	readFRNFilingCandidates,
+	type FRNFilingRecord,
+} from "./filer-lookup.ts"
 import type { Form499Row } from "./form499.ts"
 import { toFRN } from "./frn.ts"
 import type { ProviderListRow } from "./provider-list.ts"
@@ -469,13 +475,181 @@ describe("§7-3a gates", () => {
 			expect(frnValues).toEqual(["0001111111", "0002222222"])
 		})
 
-		it("the documented primary-FRN rule (decision 6) picks the LATER-filed FRN, surfaced as attributes.primary_frn", async () => {
+		it("the documented primary-FRN rule (decision 6) picks the LATER-filed FRN, surfaced in the top-level primary_frn field", async () => {
 			using db = openMemory()
 			await seedTwoFRNProvider(db)
 
 			const result = await filerLookup(db, { bdcProviderID: 500_001, asOf: "2026-12-31" })
 
-			expect(result.attributes.primary_frn).toBe("0002222222")
+			expect(result.primary_frn).toEqual({
+				frn: "0002222222",
+				derived_from: PRIMARY_FRN_DERIVATION,
+				as_of: "2026-12-31",
+			})
+		})
+
+		it("a DERIVED conclusion is never indistinguishable from a SOURCED fact: a genuine filer_attribute row named primary_frn survives untouched (review fix, round 1, IMPORTANT-1)", async () => {
+			using db = openMemory()
+			await seedTwoFRNProvider(db)
+
+			// A real, provenanced attribute happening to share the same key the derived pick used to be written under
+			// before the fix — proves `attributes` is never touched by the primary-FRN computation, and the two are
+			// simultaneously readable without one clobbering the other.
+			await db
+				.insertInto("filer_attribute")
+				.values({
+					node_id: PROVIDER_NODE,
+					key: "primary_frn",
+					value: "SOURCED-VALUE-NOT-A-REAL-FRN",
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+				})
+				.execute()
+
+			const result = await filerLookup(db, { bdcProviderID: 500_001, asOf: "2026-12-31" })
+
+			expect(result.attributes.primary_frn).toBe("SOURCED-VALUE-NOT-A-REAL-FRN")
+
+			expect(result.primary_frn).toEqual({
+				frn: "0002222222",
+				derived_from: PRIMARY_FRN_DERIVATION,
+				as_of: "2026-12-31",
+			})
+		})
+
+		it("primary_frn is null when cardinality is >1 but none of the FRNs has a form-499 filing to rank by", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const bareProvider = `${FilerIdentifierType.BDCProviderID}:500009`
+			const bareFRNA = `${FilerIdentifierType.FRN}:0009000001`
+			const bareFRNB = `${FilerIdentifierType.FRN}:0009000002`
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: bareProvider, identifier_type: FilerIdentifierType.BDCProviderID, identifier_value: "500009" },
+					{ node_id: bareFRNA, identifier_type: FilerIdentifierType.FRN, identifier_value: "0009000001" },
+					{ node_id: bareFRNB, identifier_type: FilerIdentifierType.FRN, identifier_value: "0009000002" },
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values([
+					authoritativeEdge({
+						from_node_id: bareProvider,
+						to_node_id: bareFRNA,
+						source: "bdc-provider-list",
+						source_vintage: "2026-Q2",
+						valid_from: "2026-06-30",
+					}),
+					authoritativeEdge({
+						from_node_id: bareProvider,
+						to_node_id: bareFRNB,
+						source: "bdc-provider-list",
+						source_vintage: "2026-Q2",
+						valid_from: "2026-06-30",
+					}),
+				])
+				.execute()
+
+			const result = await filerLookup(db, { bdcProviderID: 500_009, asOf: "2026-12-31" })
+			expect(result.primary_frn).toBeNull()
+		})
+	})
+
+	describe("3b. Temporal scoping applies to the primary-FRN candidate probe too (review fix, round 1, IMPORTANT-2)", () => {
+		const PROVIDER_NODE = `${FilerIdentifierType.BDCProviderID}:500002`
+		const FRN_IN_FORCE = `${FilerIdentifierType.FRN}:0003333333`
+		const FRN_CLOSED = `${FilerIdentifierType.FRN}:0004444444`
+		const FORM_IN_FORCE = `${FilerIdentifierType.Form499ID}:9101`
+		const FORM_CLOSED = `${FilerIdentifierType.Form499ID}:9102`
+
+		async function seedClosedVsInForce(db: DatabaseClient<FilerDatabase>): Promise<void> {
+			await createAllTables(db)
+			await seedManifest(db)
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: PROVIDER_NODE, identifier_type: FilerIdentifierType.BDCProviderID, identifier_value: "500002" },
+					{ node_id: FRN_IN_FORCE, identifier_type: FilerIdentifierType.FRN, identifier_value: "0003333333" },
+					{ node_id: FRN_CLOSED, identifier_type: FilerIdentifierType.FRN, identifier_value: "0004444444" },
+					{ node_id: FORM_IN_FORCE, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "9101" },
+					{ node_id: FORM_CLOSED, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "9102" },
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values([
+					// Provider↔FRN edges dated well before either test's asOf — the primary-FRN cardinality (>1 FRN
+					// identifier) must already be visible in `identifiers` at both query points; only the two
+					// form-499 filing edges below vary between "still open" and "closed" across the two asOf values.
+					authoritativeEdge({
+						from_node_id: PROVIDER_NODE,
+						to_node_id: FRN_IN_FORCE,
+						source: "bdc-provider-list",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+					}),
+					authoritativeEdge({
+						from_node_id: PROVIDER_NODE,
+						to_node_id: FRN_CLOSED,
+						source: "bdc-provider-list",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+					}),
+					// FRN_IN_FORCE: filed EARLIER, but STILL IN FORCE (valid_to null) at every asOf used below.
+					authoritativeEdge({
+						from_node_id: FRN_IN_FORCE,
+						to_node_id: FORM_IN_FORCE,
+						source: "form-499",
+						source_vintage: "2026-02-01",
+						valid_from: "2026-02-01",
+					}),
+					// FRN_CLOSED: filed LATER, but superseded/CLOSED (valid_to set) before the "after closing" asOf.
+					{
+						...authoritativeEdge({
+							from_node_id: FRN_CLOSED,
+							to_node_id: FORM_CLOSED,
+							source: "form-499",
+							source_vintage: "2026-04-01",
+							valid_from: "2026-04-01",
+						}),
+						valid_to: "2026-05-01",
+					},
+				])
+				.execute()
+		}
+
+		it("a CLOSED-but-later-filed FRN does NOT win — the in-force-but-earlier-filed FRN is picked instead", async () => {
+			using db = openMemory()
+			await seedClosedVsInForce(db)
+
+			const result = await filerLookup(db, { bdcProviderID: 500_002, asOf: "2026-06-01" })
+
+			expect(result.primary_frn?.frn).toBe("0003333333")
+		})
+
+		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, gates the outcome", async () => {
+			using db = openMemory()
+			await seedClosedVsInForce(db)
+
+			const result = await filerLookup(db, { bdcProviderID: 500_002, asOf: "2026-04-15" })
+
+			expect(result.primary_frn?.frn).toBe("0004444444")
+		})
+
+		it("readFRNFilingCandidates itself excludes a closed edge and includes an in-force one, applying the full half-open predicate", async () => {
+			using db = openMemory()
+			await seedClosedVsInForce(db)
+
+			const candidates = await readFRNFilingCandidates(db, [toFRN("0003333333")!, toFRN("0004444444")!], "2026-06-01")
+
+			expect(candidates).toEqual([{ frn: toFRN("0003333333"), filedAt: "2026-02-01" }])
 		})
 	})
 

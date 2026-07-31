@@ -32,12 +32,24 @@
  *   **Primary-FRN rule (gate 3, decision 6).** A `bdc_provider_id` node can carry more than one
  *   authoritative FRN edge (Task 3: one `provider_id` can appear on multiple provider-list rows under
  *   different FRNs) — `identifiers` reports ALL of them, never collapsed. When more than one FRN
- *   identifier is found, {@linkcode pickPrimaryFRN} — the documented rule decision 6 describes for Task
- *   8's `bdc_provider` population ("the primary FRN is the one from the most recent 499 filing date") —
- *   picks a winner from each FRN's own most recent `form-499` filing edge, surfaced as
- *   `attributes.primary_frn`. The rule is a pure, exported function here (Task 8's `bdc/sdk/build-bdc.ts`
- *   is the actual future consumer — this is not that task) so it has exactly one home and one pinning
- *   test, ready to import.
+ *   identifier is found, {@linkcode readFRNFilingCandidates} reads each FRN's own most recent
+ *   `form-499` filing edge (same half-open temporal scoping as everywhere else in this reader — see
+ *   below) and {@linkcode pickPrimaryFRN} — the documented rule decision 6 describes for Task 8's
+ *   `bdc_provider` population ("the primary FRN is the one from the most recent 499 filing date") —
+ *   picks the winner. Both are pure/exported (Task 8's `bdc/sdk/build-bdc.ts` is the actual future
+ *   consumer — this is not that task) so the rule AND its candidate-assembly query each have exactly one
+ *   home: `ProviderListRow` carries no `filedAt` of its own, so Task 8 must assemble `{frn, filedAt}`
+ *   candidates itself, and reusing {@linkcode readFRNFilingCandidates} rather than reimplementing the
+ *   query means it can't reimplement the temporal-scoping bug fix round 1 closed here too.
+ *
+ *   **A derived conclusion is never indistinguishable from a sourced fact (review fix, round 1,
+ *   IMPORTANT-1).** The picked primary FRN is reported in its OWN top-level `primary_frn` field, never
+ *   folded into `attributes` — `attributes` is exclusively flattened `filer_attribute` ROWS (real
+ *   provenance: `source`/`source_vintage` on every fact), and a computed value written there under the
+ *   same key as a genuine sourced attribute would silently clobber it (reviewer-confirmed) and, even
+ *   without a collision, be visually indistinguishable from one. `primary_frn` carries `derived_from`
+ *   and `as_of` instead of `source`/`source_vintage` — its provenance is "this reader's own
+ *   computation", not a row in `filer.db`, and that must stay legible at the call site.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -97,14 +109,23 @@ export interface FilerLookupResult {
 	node: FilerNodeTable
 	identifiers: FilerLookupIdentifier[]
 	/**
-	 * Flattened `filer_attribute` facts for the queried node — one value per `key`, the LATEST `source_vintage` winning
-	 * on a repeat key (same plain-string-comparison convention as `cluster-filers.ts`'s `readLatestLegalNames`; see that
-	 * function's docstring for the "lexicographically greatest, not date-parsed" caveat). May additionally carry
-	 * `primary_frn` — see the module docstring's "Primary-FRN rule" section.
+	 * Flattened `filer_attribute` facts for the queried node ONLY — one value per `key`, the LATEST `source_vintage`
+	 * winning on a repeat key (same plain-string-comparison convention as `cluster-filers.ts`'s `readLatestLegalNames`;
+	 * see that function's docstring for the "lexicographically greatest, not date-parsed" caveat). Every value here is a
+	 * real `filer_attribute` row with its own `source`/`source_vintage` provenance — NEVER a computed value (review fix,
+	 * round 1, IMPORTANT-1; see {@link FilerLookupResult.primary_frn} for the derived counterpart, kept structurally
+	 * separate on purpose).
 	 */
 	attributes: Record<string, string>
 	cluster: FilerLookupCluster | null
 	inferred_links: FilerLookupInferredLink[]
+	/**
+	 * The primary-FRN pick (decision 6, gate 3) when the queried node carries more than one authoritative FRN identifier
+	 * — `null` otherwise (including when cardinality is >1 but none of the FRNs has a form-499 filing to rank by). A
+	 * DERIVED conclusion, never a sourced fact — see the module docstring's "A derived conclusion…" section for why this
+	 * is its own field rather than an `attributes` entry.
+	 */
+	primary_frn: FilerLookupPrimaryFRN | null
 	/**
 	 * The date every temporal comparison in this result was scoped to — ALWAYS present, whether supplied by the caller or
 	 * defaulted to today (gate 4).
@@ -115,6 +136,30 @@ export interface FilerLookupResult {
 	 */
 	vintage: string
 }
+
+/**
+ * {@link FilerLookupResult.primary_frn}'s shape — visibly a DERIVED conclusion (`derived_from`, `as_of`), never
+ * confusable with a sourced `filer_attribute` fact (which carries `source`/`source_vintage` instead).
+ */
+export interface FilerLookupPrimaryFRN {
+	frn: FRN
+	/**
+	 * The rule that produced this pick — always {@link PRIMARY_FRN_DERIVATION} today, but a literal (rather than a
+	 * boolean "isDerived" flag) so a future second derivation rule remains distinguishable from this one.
+	 */
+	derived_from: string
+	/**
+	 * The `asOf` date this pick was computed under — the SAME value as {@link FilerLookupResult.as_of}, repeated here so
+	 * the field is self-describing if ever read in isolation from the rest of the result.
+	 */
+	as_of: string
+}
+
+/**
+ * {@link FilerLookupPrimaryFRN.derived_from}'s value for {@linkcode pickPrimaryFRN}'s rule — decision 6, "the primary
+ * FRN is the one from the most recent 499 filing date".
+ */
+export const PRIMARY_FRN_DERIVATION = "most-recent-499-filing"
 
 /**
  * One FRN's own most recent `form-499` filing date — the input shape {@linkcode pickPrimaryFRN} consumes.
@@ -146,6 +191,63 @@ export function pickPrimaryFRN(candidates: readonly FRNFilingRecord[]): FRN {
 	}
 
 	return latest.frn
+}
+
+/**
+ * Reads each `frn`'s own most recent `form-499` filing edge and returns the `{frn, filedAt}` candidates
+ * {@linkcode pickPrimaryFRN} consumes — the query {@linkcode filerLookup} itself calls for gate 3's multi-FRN
+ * `bdcProviderID` case, pulled out as its own exported function (review fix, round 1, IMPORTANT-2) because
+ * `pickPrimaryFRN` alone isn't the whole reusable unit: `ProviderListRow` (Task 3) carries no `filedAt` of its own, so
+ * Task 8's `bdc_provider` population (decision 6) MUST assemble candidates by querying `filer.db`'s own `form-499`
+ * edges, exactly like this. Reusing this function instead of reimplementing the query means Task 8 can't reimplement
+ * the temporal-scoping bug this fix closes, either.
+ *
+ * Applies the SAME full half-open predicate as every other temporal read in this module — `valid_from <= asOf AND
+ * (valid_to IS NULL OR asOf < valid_to)` (see the module docstring; `schema.ts`'s `FilerEdgeTable.valid_to` documents
+ * why the convention is half-open, not a stylistic choice). The original inline version of this query (review fix,
+ * round 1, IMPORTANT-2, CRITICAL) applied only the `valid_from <= asOf` half and omitted the `valid_to` check entirely
+ * — reviewer-confirmed consequence: a CLOSED 499 edge (superseded by a later one, `valid_to` set to that later edge's
+ * `valid_from`) could still win the "most recent" comparison over an in-force earlier edge, so the primary-FRN pick
+ * could rest on an assertion this SAME reader simultaneously reports as no longer in force via
+ * `identifiers`/`inferred_links`'s temporal scoping — a direct self-contradiction.
+ *
+ * A `frn` with no in-force filing `asOf` the given date contributes no candidate at all (not an error — see
+ * {@linkcode filerLookup}'s "no candidates" handling).
+ */
+export async function readFRNFilingCandidates(
+	db: DatabaseClient<FilerDatabase>,
+	frns: readonly FRN[],
+	asOf: string
+): Promise<FRNFilingRecord[]> {
+	const candidates: FRNFilingRecord[] = []
+
+	for (const frn of frns) {
+		const frnNodeID = `${FilerIdentifierType.FRN}:${frn}`
+
+		const filingEdges = await db
+			.selectFrom("filer_edge")
+			.select(["valid_from"])
+			.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+			.where("source", "=", "form-499")
+			.where("from_node_id", "=", frnNodeID)
+			.where("valid_from", "<=", asOf)
+			.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
+			.execute()
+
+		if (!filingEdges.length) continue
+
+		let latestFiledAt = filingEdges[0]!.valid_from
+
+		for (const edge of filingEdges) {
+			if (edge.valid_from > latestFiledAt) {
+				latestFiledAt = edge.valid_from
+			}
+		}
+
+		candidates.push({ frn, filedAt: latestFiledAt })
+	}
+
+	return candidates
 }
 
 interface QueriedIdentifier {
@@ -330,39 +432,22 @@ export async function filerLookup(
 	}))
 
 	// Gate 3 / decision 6: when the queried node carries more than one FRN identifier (the multi-FRN provider_id
-	// cardinality case), pick a primary via each FRN's own most recent form-499 filing edge.
+	// cardinality case), pick a primary via each FRN's own most recent form-499 filing edge. Reported as its OWN
+	// top-level field (never folded into `attributes`) — see the module docstring's "A derived conclusion…" section
+	// (review fix, round 1, IMPORTANT-1).
 	const frnIdentifiers = identifiers.filter((identifier) => identifier.type === FilerIdentifierType.FRN)
 
+	let primaryFRN: FilerLookupPrimaryFRN | null = null
+
 	if (frnIdentifiers.length > 1) {
-		const candidates: FRNFilingRecord[] = []
-
-		for (const frnIdentifier of frnIdentifiers) {
-			const frnNodeID = `${FilerIdentifierType.FRN}:${frnIdentifier.value}`
-
-			const filingEdges = await db
-				.selectFrom("filer_edge")
-				.select(["valid_from"])
-				.where("assertion", "=", FilerEdgeAssertion.Authoritative)
-				.where("source", "=", "form-499")
-				.where("from_node_id", "=", frnNodeID)
-				.where("valid_from", "<=", asOf)
-				.execute()
-
-			if (!filingEdges.length) continue
-
-			let latestFiledAt = filingEdges[0]!.valid_from
-
-			for (const edge of filingEdges) {
-				if (edge.valid_from > latestFiledAt) {
-					latestFiledAt = edge.valid_from
-				}
-			}
-
-			candidates.push({ frn: frnIdentifier.value as FRN, filedAt: latestFiledAt })
-		}
+		const candidates = await readFRNFilingCandidates(
+			db,
+			frnIdentifiers.map((identifier) => identifier.value as FRN),
+			asOf
+		)
 
 		if (candidates.length) {
-			attributes.primary_frn = pickPrimaryFRN(candidates)
+			primaryFRN = { frn: pickPrimaryFRN(candidates), derived_from: PRIMARY_FRN_DERIVATION, as_of: asOf }
 		}
 	}
 
@@ -372,6 +457,7 @@ export async function filerLookup(
 		attributes,
 		cluster,
 		inferred_links,
+		primary_frn: primaryFRN,
 		as_of: asOf,
 		vintage: manifest.source_vintage,
 	}

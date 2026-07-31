@@ -107,7 +107,17 @@ export interface FilerEdgeTable {
 	 */
 	valid_from: string
 	/**
-	 * Null while the assertion is still in force.
+	 * Null while the assertion is still in force. When set, the validity window is HALF-OPEN: `valid_from <= t <
+	 * valid_to` — `valid_to` is the first date the assertion no longer holds, not the last date it did.
+	 *
+	 * This is forced, not a stylistic choice: `cluster-filers.ts`'s cross-vintage supersession closes a superseded
+	 * inferred edge with `SET valid_to = sourceVintage` (`cluster-filers.ts`:577) in the SAME transaction that inserts
+	 * its replacement at `valid_from = sourceVintage` (`cluster-filers.ts`:611) — the identical date on both sides of the
+	 * changeover. A closed (inclusive-inclusive, `valid_from <= t <= valid_to`) convention would make the closed row and
+	 * its replacement BOTH claim to be in force on `sourceVintage` itself, double-counting that one date. Every reader
+	 * that scopes a query `asOf` a date (see `filer/sdk/filer-lookup.ts`'s `filerLookup`) must apply the matching
+	 * half-open predicate — `valid_from <= asOf AND (valid_to IS NULL OR asOf < valid_to)` — or it will silently disagree
+	 * with what the writer actually guaranteed at a changeover boundary.
 	 */
 	valid_to: string | null
 	/**
