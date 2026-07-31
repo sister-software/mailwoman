@@ -60,7 +60,8 @@ describe("scorePairwiseGrouping", () => {
 		expect(score.truthPositivePairs).toBe(1) // {a,b}
 		expect(score.precision).toBeNull()
 		expect(score.recall).toBe(0)
-		expect(score.f1).toBe(0)
+		// I2: precision is undefined here, so F1 is undefined too — NOT 0. "Made no positive call" is not "scored zero".
+		expect(score.f1).toBeNull()
 	})
 
 	it("reports recall as null (not 0) when truth has zero positive pairs but the prediction merges records anyway", () => {
@@ -86,6 +87,54 @@ describe("scorePairwiseGrouping", () => {
 		expect(score.predictedPositivePairs).toBe(3)
 		expect(score.precision).toBe(0) // defined (denominator > 0), just zero
 		expect(score.recall).toBeNull()
+		expect(score.f1).toBeNull()
+	})
+
+	it("reports F1 as null (not 0) for a PERFECT prediction over an all-singleton truth — I2's worked example", () => {
+		// Nothing to merge, nothing merged: the prediction agreed with the truth on all 3 pairs. Reporting `0` here
+		// (the pre-fix behaviour) made a flawless run arithmetically indistinguishable from a total failure.
+		const truth = new Map([
+			["a", "singleton:a"],
+			["b", "singleton:b"],
+			["c", "singleton:c"],
+		])
+
+		const score = scorePairwiseGrouping(["a", "b", "c"], groupPredicateFromMap(truth), groupPredicateFromMap(truth))
+
+		expect(score.truePositivePairs).toBe(0)
+		expect(score.falsePositivePairs).toBe(0)
+		expect(score.falseNegativePairs).toBe(0)
+		expect(score.totalPairs).toBe(3)
+		expect(score.precision).toBeNull()
+		expect(score.recall).toBeNull()
+		expect(score.f1).toBeNull()
+	})
+
+	it("reports F1 as 0 (not null) when BOTH components are defined and nothing was recovered — a measured miss", () => {
+		// truth: {a,b} together. prediction: {c,d} together. Both denominators are populated, zero overlap.
+		const truth = new Map([
+			["a", "g1"],
+			["b", "g1"],
+			["c", "singleton:c"],
+			["d", "singleton:d"],
+		])
+
+		const predicted = new Map([
+			["a", "p1"],
+			["b", "p2"],
+			["c", "p3"],
+			["d", "p3"],
+		])
+
+		const score = scorePairwiseGrouping(
+			["a", "b", "c", "d"],
+			groupPredicateFromMap(truth),
+			groupPredicateFromMap(predicted)
+		)
+
+		expect(score.truePositivePairs).toBe(0)
+		expect(score.precision).toBe(0)
+		expect(score.recall).toBe(0)
 		expect(score.f1).toBe(0)
 	})
 

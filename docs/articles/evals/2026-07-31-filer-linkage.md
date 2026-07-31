@@ -1,99 +1,138 @@
-# 2026-07-31 — filer.db record linkage vs held-out FRN↔holdingCompany truth (3b task 4)
+# 2026-07-31 — does filer.db recover corporate family without the disclosed parent? (3b task 4)
 
-**Verdict: the shipped entity linkage does not recover corporate-family membership when `holdingCompany` is withheld — F1 0.000 (precision N/A, recall 0.000) over 4 held-out truth-positive pairs.** This is not a tuning miss: the two mechanisms that make `cluster-filers.ts` safe against false-identity merges — the `relationship: same_entity` filter on authoritative clustering (Task 3's CRITICAL fix) and the hard identifier veto on the inferred pass (the 3a review's fix) — are exactly the mechanisms that make family recovery from name/identifier signal alone structurally unreachable. `filer_family` gets its membership by reading a disclosed field (`build-filer.ts`), never by inferring one; this eval measures what happens when that field is the thing under test instead of the thing on the table.
+**Corporate-family membership resolves correctly when the filer discloses its parent, and not at all when it doesn't.** Given the corpus with `holdingCompany` present, `filer.db` puts every one of the 6 same-family registrant pairs in the same family and invents none: precision 1.000, recall 1.000. Given the same corpus with that one field removed, it makes no family call at all — 0 of 6 pairs recovered, recall 0.000, precision and F1 undefined because there were no positive calls to score. Family membership in this pipeline is a disclosed field, transcribed and canonicalized; nothing in the build infers one from anything else.
 
-## The experiment
+## The question
 
-Truth: two FRNs belong to the same corporate family iff their real (never-stripped) `holdingCompany` values canonicalize to the same string, via `mintFamilyID` — the identical rule `buildFilerDatabase` itself uses to derive `filer_family.family_id`, so truth is stated in exactly the terms the writer would have used had the field survived. Input: the SAME corpus with `holdingCompany` cleared on every row (`buildFilteredEvalInputs`, `filer/tools/linkage-eval.ts`) BEFORE `buildFilerDatabase` ever runs — no `family_id`, no `HoldingCompany`-relationship edge, and no `filer_family` row can exist in the artifact this eval builds, because nothing in the input asserts one. `clusterAuthoritativeComponents`/`clusterInferredLinks` then run UNMODIFIED against that artifact (same identifier veto over `frn`/`form499ID`/`providerID`, same `learnedScorer: false`, same exact-canonical-name blocking) — nothing about the matcher's configuration changes for this eval. Two FRNs are predicted the same family iff they land in the same authoritative `filer_cluster` OR the same inferred `filer_cluster`.
+A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent name each filer reports on its Form 499. The open question this eval exists to baseline is whether that membership is recoverable for a filer that reports NOTHING — from names, identifiers, or any other signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so that a later build with more evidence has something to beat.
+
+## The two runs
+
+Both runs build a real scratch `filer.db` from the same authored corpus with the same shipped code, and read the prediction the same way. They differ in one field.
+
+- **withheld** — `holdingCompany` cleared on every Form 499 row and every provider-list row before the builder sees it. The measurement.
+- **control** — the identical corpus, that field intact. The check on the harness.
+
+The control run is not an achievement and should not be read as one. A pipeline whose entire family mechanism is "copy the parent name the filer wrote down, canonicalize it, and group by the result" is supposed to score 1.000 when handed that name. Its job here is narrower and more important: it proves this harness reads a table the truth can actually reach. Without it, the withheld run's zero is unfalsifiable — an eval pointed at the wrong table reports zero too, and reports it just as confidently with the answer sitting in the artifact. The two runs differ in exactly one field, and the input hashes below differ accordingly.
+
+### What counts as a prediction
+
+Two registrants are predicted to be the same family iff the built `filer.db` places them in a common family as of 2026-06-01, read through the same corporate-family reader a product caller would use. Membership rows that exist only because two filers named the same MANAGEMENT company are excluded from both the prediction and the truth: management is operational control, not ownership; that field is not withheld here; and letting it answer would mean a field this eval hands over deciding a question about the field it holds back. The corpus includes two filers reporting the same manager so that exclusion has something to do.
+
+### What counts as a registrant
+
+The unit scored is the registrant, not the FRN. One operator can hold several FRN registrations — the corpus has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a fact about the company, not about that registration. Scoring FRNs individually would have let the truth partition put a single legal entity in two different families at once.
 
 ## Corpus
 
-9 FRNs, authored (not sampled from a real FCC file) so every truth fact is auditable here rather than trusted from an external source. Two real multi-FRN families, each with one member reporting a spelling-drifted holding-company name; four standalone filers with no holding company, two of which (the last two rows) share a canonical legal name on purpose — a same-name/different-entity trap the identifier veto has to refuse to merge.
+12 Form 499 filers folded into 11 registrants, authored rather than sampled so every truth fact is auditable here instead of trusted from an external source. Two multi-member families whose members spell the parent name inconsistently; four standalone filers; a pair of unrelated companies with identical canonical names; one registrant holding two FRNs where only the second discloses the parent.
 
-| FRN        | legal name (given to the matcher) | real holding company (withheld)    | truth family                                         |
-| ---------- | --------------------------------- | ---------------------------------- | ---------------------------------------------------- |
-| 9100000001 | Trailhead Broadband LLC           | Cascade Fiber Holdings, Inc.       | `holding_company_name:cascade fiber holdings`        |
-| 9100000002 | Piedmont Rural Telephone Co       | Cascade Fiber Holdings Inc         | `holding_company_name:cascade fiber holdings`        |
-| 9100000003 | Summit Ridge Communications Inc   | Cascade Fiber Holdings, Inc.       | `holding_company_name:cascade fiber holdings`        |
-| 9100000004 | Bluegrass Rural Exchange Inc      | Meridian Communications Group LLC  | `holding_company_name:meridian communications group` |
-| 9100000005 | Harborview Telecom Co             | Meridian Communications Group, LLC | `holding_company_name:meridian communications group` |
-| 9100000006 | Lonestar Independent Telephone Co | _(none)_                           | _(standalone — no truth family)_                     |
-| 9100000007 | Harbor Point Communications Inc   | _(none)_                           | _(standalone — no truth family)_                     |
-| 9100000008 | American Fiber Partners LLC       | _(none)_                           | _(standalone — no truth family)_                     |
-| 9100000009 | American Fiber Partners, LLC      | _(none)_                           | _(standalone — no truth family)_                     |
+| FRN        | legal name (always given)         | registrant | holding company (withheld)         | management company       | truth family                                         |
+| ---------- | --------------------------------- | ---------- | ---------------------------------- | ------------------------ | ---------------------------------------------------- |
+| 9100000001 | Trailhead Broadband LLC           | itself     | Cascade Fiber Holdings, Inc.       | _(none)_                 | `holding_company_name:cascade fiber holdings`        |
+| 9100000002 | Piedmont Rural Telephone Co       | itself     | Cascade Fiber Holdings Inc         | _(none)_                 | `holding_company_name:cascade fiber holdings`        |
+| 9100000003 | Summit Ridge Communications Inc   | itself     | Cascade Fiber Holdings, Inc.       | Timberline Management Co | `holding_company_name:cascade fiber holdings`        |
+| 9100000004 | Bluegrass Rural Exchange Inc      | itself     | Meridian Communications Group LLC  | _(none)_                 | `holding_company_name:meridian communications group` |
+| 9100000005 | Harborview Telecom Co             | itself     | Meridian Communications Group, LLC | _(none)_                 | `holding_company_name:meridian communications group` |
+| 9100000006 | Lonestar Independent Telephone Co | itself     | _(none)_                           | _(none)_                 | _(no family)_                                        |
+| 9100000007 | Harbor Point Communications Inc   | itself     | _(none)_                           | _(none)_                 | _(no family)_                                        |
+| 9100000008 | American Fiber Partners LLC       | itself     | _(none)_                           | _(none)_                 | _(no family)_                                        |
+| 9100000009 | American Fiber Partners, LLC      | itself     | _(none)_                           | _(none)_                 | _(no family)_                                        |
+| 9100000010 | Cedar Hollow Telephone Co         | itself     | _(none)_                           | _(none)_                 | `holding_company_name:meridian communications group` |
+| 9100000011 | Cedar Hollow Wireless LLC         | 9100000010 | Meridian Communications Group, LLC | _(none)_                 | `holding_company_name:meridian communications group` |
+| 9100000012 | Ridgeline Communications LLC      | itself     | _(none)_                           | Timberline Management Co | _(no family)_                                        |
 
 ## Input record shape
 
-Every field `buildFilteredEvalInputs()` hands to `buildFilerDatabase`, and whether the matcher sees it:
+Every field the builder receives in the withheld run, and how much of it the corpus actually fills in. The empty columns matter: they are the corroboration channels a future version would have to lean on, and this corpus does not exercise them.
 
-| Form499Row field             | given to the matcher? | note                                                                                    |
-| ---------------------------- | --------------------- | --------------------------------------------------------------------------------------- |
-| `form499ID`                  | yes                   |                                                                                         |
-| `frn`                        | yes                   | the truth key, never itself withheld                                                    |
-| `lastFiledAt`                | yes                   |                                                                                         |
-| `usfContributor`             | yes                   |                                                                                         |
-| `legalNameOfCarrier`         | yes                   | the inferred pass's blocking key + score input                                          |
-| `doingBusinessAs`            | yes                   |                                                                                         |
-| `principalCommType`          | yes                   |                                                                                         |
-| `holdingCompany`             | **no**                | **HELD OUT** — cleared to `""` on every row                                             |
-| `managementCompany`          | yes                   | a separate ownership-vs-control field; never set equal to holdingCompany in this corpus |
-| `hqAddress`                  | yes                   |                                                                                         |
-| `customerInquiriesTelephone` | yes                   |                                                                                         |
-| `customerInquiriesAddress`   | yes                   |                                                                                         |
-| `dcAgentDisplayName`         | yes                   | attribute only — never an edge input (DC-agent doctrine)                                |
-| `dcAgentOrganizationName`    | yes                   | attribute only — never an edge input                                                    |
-| `dcAgentTelephone`           | yes                   |                                                                                         |
-| `dcAgentEmailAddress`        | yes                   |                                                                                         |
-| `dcAgentAddress`             | yes                   |                                                                                         |
+| Form499Row field             | in the withheld input? | populated in the corpus | note                                                                     |
+| ---------------------------- | ---------------------- | ----------------------- | ------------------------------------------------------------------------ |
+| `form499ID`                  | yes                    | 12 of 12                |                                                                          |
+| `frn`                        | yes                    | 12 of 12                | the truth key, never itself withheld                                     |
+| `lastFiledAt`                | yes                    | 12 of 12                |                                                                          |
+| `usfContributor`             | yes                    | **0 of 12** — never set |                                                                          |
+| `legalNameOfCarrier`         | yes                    | 12 of 12                | the entity-resolution pass's blocking key and score input                |
+| `doingBusinessAs`            | yes                    | 2 of 12                 |                                                                          |
+| `principalCommType`          | yes                    | 12 of 12                |                                                                          |
+| `holdingCompany`             | **no**                 | **withheld**            | the field under test                                                     |
+| `managementCompany`          | yes                    | 2 of 12                 | control, not ownership — kept in the input, excluded from the prediction |
+| `hqAddress`                  | yes                    | **0 of 12** — never set | a corroboration channel the corpus does not populate                     |
+| `customerInquiriesTelephone` | yes                    | **0 of 12** — never set | a corroboration channel the corpus does not populate                     |
+| `customerInquiriesAddress`   | yes                    | **0 of 12** — never set | a corroboration channel the corpus does not populate                     |
+| `dcAgentDisplayName`         | yes                    | **0 of 12** — never set | attribute only — never an edge input (shared-agent doctrine)             |
+| `dcAgentOrganizationName`    | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
+| `dcAgentTelephone`           | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
+| `dcAgentEmailAddress`        | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
+| `dcAgentAddress`             | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
 
-| ProviderListRow field | given to the matcher? | note                                          |
-| --------------------- | --------------------- | --------------------------------------------- |
-| `providerID`          | yes                   |                                               |
-| `frn`                 | yes                   | the truth key, never itself withheld          |
-| `holdingCompany`      | **no**                | **HELD OUT** — cleared to `null` on every row |
+| ProviderListRow field | in the withheld input? | populated in the corpus | note                                                                   |
+| --------------------- | ---------------------- | ----------------------- | ---------------------------------------------------------------------- |
+| `providerID`          | yes                    | 5 of 5                  | registrant identity — two FRNs under one providerID are one registrant |
+| `frn`                 | yes                    | 5 of 5                  | the truth key, never itself withheld                                   |
+| `holdingCompany`      | **no**                 | **withheld**            | the field under test                                                   |
 
 ## Results
 
-| metric                                                        | value |
-| ------------------------------------------------------------- | ----- |
-| precision                                                     | N/A   |
-| recall                                                        | 0.000 |
-| F1                                                            | 0.000 |
-| true-positive pairs                                           | 0     |
-| false-positive pairs                                          | 0     |
-| false-negative pairs                                          | 4     |
-| truth-positive pairs (pairs the withheld field puts together) | 4     |
-| predicted-positive pairs (pairs the linkage puts together)    | 0     |
-| total pairs scored                                            | 36    |
-| inferred pass: form499_id records considered                  | 9     |
-| inferred pass: linked clusters (size > 1)                     | 0     |
-| inferred pass: `filer_edge` rows written                      | 0     |
+| metric                        | withheld (the measurement) | control (parent disclosed) |
+| ----------------------------- | -------------------------- | -------------------------- |
+| precision                     | N/A                        | 1.000                      |
+| recall                        | 0.000                      | 1.000                      |
+| F1                            | N/A                        | 1.000                      |
+| true-positive pairs           | 0                          | 6                          |
+| false-positive pairs          | 0                          | 0                          |
+| false-negative pairs          | 6                          | 0                          |
+| truth-positive pairs          | 6                          | 6                          |
+| predicted-positive pairs      | 0                          | 6                          |
+| total registrant pairs scored | 55                         | 55                         |
+| input SHA-256                 | `b20909439dcf6bc0…`        | `86f4c23616835425…`        |
 
-### Truth-positive pairs, individually
+F1 is reported as `N/A` for the withheld run rather than `0.000`, and that is not a rounding convention. Precision is undefined when a prediction makes no positive calls at all — there is no denominator — and an F1 built on an undefined component is undefined too. "Recovered nothing because it claimed nothing" and "claimed things and got them all wrong" are different failures with different fixes, and the second one would read `precision 0.000`.
 
-The only pairs the withheld field asserts are the same family — every other pair of the 9 FRNs (32 of them) is a truth negative:
+### Same-family pairs, individually
 
-| FRN A      | FRN B      | truth family                                         | recovered (authoritative)? | recovered (inferred)? |
-| ---------- | ---------- | ---------------------------------------------------- | -------------------------- | --------------------- |
-| 9100000001 | 9100000002 | `holding_company_name:cascade fiber holdings`        | no                         | no                    |
-| 9100000001 | 9100000003 | `holding_company_name:cascade fiber holdings`        | no                         | no                    |
-| 9100000002 | 9100000003 | `holding_company_name:cascade fiber holdings`        | no                         | no                    |
-| 9100000004 | 9100000005 | `holding_company_name:meridian communications group` | no                         | no                    |
+The 6 registrant pairs the withheld field puts together. Every other pair of the 11 registrants (49 of them) is a truth negative, including the identical-name pair.
 
-## Why the score is what it is
+| registrant A | registrant B | truth family                                         | recovered?                  |
+| ------------ | ------------ | ---------------------------------------------------- | --------------------------- |
+| 9100000001   | 9100000002   | `holding_company_name:cascade fiber holdings`        | withheld: no · control: yes |
+| 9100000001   | 9100000003   | `holding_company_name:cascade fiber holdings`        | withheld: no · control: yes |
+| 9100000002   | 9100000003   | `holding_company_name:cascade fiber holdings`        | withheld: no · control: yes |
+| 9100000004   | 9100000005   | `holding_company_name:meridian communications group` | withheld: no · control: yes |
+| 9100000004   | 9100000010   | `holding_company_name:meridian communications group` | withheld: no · control: yes |
+| 9100000005   | 9100000010   | `holding_company_name:meridian communications group` | withheld: no · control: yes |
 
-`clusterAuthoritativeComponents`'s `readAuthoritativeGroups` (`cluster-filers.ts`) unions ONLY `relationship: "same_entity"` authoritative edges — a `HoldingCompany`/`ManagementCompany` edge is never even a candidate for entity clustering (Task 3's CRITICAL fix; see that module's own docstring). With `holdingCompany` stripped, no such edge exists in this build anyway, so the point is moot for THIS run — but it means the authoritative pass was never capable of recovering family membership even when the field is present, which is the honest reason `filer_family` is populated by direct field extraction (`build-filer.ts`'s `insertFamilyMembership`) and not by this linkage. `clusterInferredLinks`'s `hasSharedIdentifier` veto forces any candidate pair with no shared `frn`/`form499ID`/`providerID` code to `-Infinity`, unconditionally, before name similarity is consulted — and two DIFFERENT FRNs structurally never share one of those codes (a shared code would mean a shared node, which the authoritative pass would already have merged). The corpus's namesake pair (`American Fiber Partners LLC` / `American Fiber Partners, LLC`) is the one candidate whose canonical organization names actually collide — it reaches the veto rather than being blocked out at the exact-name-blocking stage, and the veto correctly refuses to merge it (no shared identifier on either side). That refusal is precision working as designed, not a coincidence: this eval's 0 predicted-positive pairs is a DIRECT consequence of the veto and the relationship filter, over 9 form499_id records the inferred pass actually scored.
+## What is actually in each artifact
+
+Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge and no ownership family row — that is the withholding, verified. It DOES contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
+
+| what the built artifact contains | withheld | control |
+| -------------------------------- | -------- | ------- |
+| `holding_company_name` nodes     | 0        | 4       |
+| `holding_company` edges          | 0        | 8       |
+| `filer_family` rows — ownership  | 0        | 8       |
+| `filer_family` rows — management | 2        | 2       |
+| entity-resolution records scored | 12       | 12      |
+| entity-resolution links written  | 0        | 0       |
+
+## Why the withheld run recovers nothing
+
+Nothing else in the build produces an ownership fact. Two mechanisms account for that, and both are deliberate. First, the builder writes a corporate-family row only where an input row names a parent — there is no path from a filing to a family that does not run through a disclosed name. Second, the entity-resolution pass (which ran here, over 12 records) answers a different question: it decides whether two identifiers denote the same legal entity, and it will not merge two records that share no identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are NOT the same company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the veto refuses it, which is what a veto is for.
+
+So the withheld number is a floor on today's evidence, not a bound on the problem. Any channel that actually correlates with ownership — a shared headquarters address, a shared officer, an external corporate filing that names a parent — would show up here as recall above zero. None is wired in.
 
 ## Metric choice
 
-Precision/recall/F1 here are PAIRWISE — over unordered FRN pairs, not over cluster-to-cluster alignment (B-cubed, the Hungarian algorithm) — the same choice `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes for an analogous problem (does `resolveEntities`'s clustering recover the true NPI grouping?). It is not reused here: it hard-codes an NPI/`SourceRecord`-shaped input, and — more importantly — its convention of defaulting an empty denominator to `0` would have reported this eval's `predictedPositivePairs === 0` as "0% precision" indistinguishably from a linkage that confidently merged the wrong records everywhere. `linkage-metrics.ts`'s `scorePairwiseGrouping` (written for this task, exported) reports `null` for that case instead — see its docstring for the full rationale. Pairwise agreement is the right shape here specifically because an authoritative cluster's `cluster_id` is content-derived and has no aligned counterpart in the truth partition to match against; the only well-defined question is whether two records are correctly judged together or apart, which pairwise agreement answers without an alignment step.
+Precision, recall and F1 are PAIRWISE — over unordered registrant pairs, not over an alignment between predicted and true clusters. A predicted family's id is derived from the canonicalized parent name, so there is no correspondence problem to solve and no alignment step to get wrong; the only well-defined question is whether two registrants are correctly judged together or apart, which pairs answer directly. Empty denominators are reported as `N/A`, never as zero, throughout.
 
-## Leakage and reproducibility
+## Reproducibility
 
-SHA-256 of the matcher's inputs (the exact, holdingCompany-stripped `form499Rows`/`providerRows` bytes `buildFilerDatabase` received): `ce1f393611962e7a0f6747116c54a4c71ea9144049f2ece2c834154a89cb1957`.
+SHA-256 of the withheld run's inputs — the exact bytes the builder received: `b20909439dcf6bc0d2b04da43b3b3fb11cdb9ff68313e12d3eeb78a24bacda58`.
 
-The exclusion is structural, not a runtime check: `buildFilteredEvalInputs()` is the ONE function that builds what reaches `buildFilerDatabase`, and `linkage-eval.test.ts` asserts every row it returns carries a blank (`""`/`null`) `holdingCompany` — the same function this eval itself calls, not a parallel copy that could drift. Re-running `filerLinkageEval` reproduces byte-identical scores and the identical SHA every time: the corpus is a fixed, authored literal (no sampling, no randomness), `buildFilerDatabase`/`clusterFilers` are already deterministic by construction (content-derived cluster ids, no reliance on row-iteration order — see `cluster-filers.ts`'s own idempotency discipline), and `sourceVintage`/`validFrom` are fixed constants rather than "today". `linkage-eval.test.ts` pins this by running the eval twice and asserting the two score objects and SHAs are identical.
+SHA-256 of the control run's inputs: `86f4c23616835425615960dabbf22df214fb2001b325e9b0128f9e0abf45f802`.
 
-## Honest caveats
+The corpus is a fixed literal with no sampling and no randomness; the builder and the clustering pass are deterministic; every date the runs depend on is a constant rather than "today". Re-running reproduces both scores and both hashes byte for byte. The test suite regenerates this entire page and compares it to the committed copy, so editing the corpus without republishing fails, rather than quietly leaving the numbers above stale.
 
-This is a synthetic, small (9-FRN) corpus, not a run against real FCC Form 499 data — no such corpus is available in this repo with a stable hash to pin to, so the eval is exact and reproducible at the cost of being small. The outcome is STRUCTURALLY determined by `cluster-filers.ts`'s current design (the relationship filter, the identifier veto), not sample-dependent — a larger or differently-drawn corpus of the same shape would score identically for the same reason, so more data would not change this finding, only its N. Recovering corporate family from evidence OTHER than a disclosed `holdingCompany` field — a normalized HQ address, a shared contact phone/email, once CORES/EDGAR data lands — is out of scope for this task and for `cluster-filers.ts` as it exists today; that gap is already named in that module's own "Degenerate discovery scope" note (3a Task 6) as deferred, not overlooked.
+## Caveats
+
+This is a synthetic 12-filer corpus, not a run against real FCC Form 499 data — no such corpus ships in this repo with a stable hash to pin to, so the eval buys exactness and reproducibility at the cost of scale. Read the withheld number as a floor rather than a limit: it says that on today's evidence channels nothing recovers family membership, not that nothing could. A corpus with populated headquarters addresses or contact details would be a genuinely different experiment, and the right one to run once those channels carry data. The control number says nothing about how often real filers report a parent, or report it accurately — only that when they do, this pipeline groups them correctly.

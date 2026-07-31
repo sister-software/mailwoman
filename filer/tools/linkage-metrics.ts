@@ -29,10 +29,18 @@
  *   prediction made no positive calls at all" and "every positive call the prediction made was wrong" are
  *   different, honest facts, and collapsing them into the same `0` would misreport a linkage that
  *   predicted NOTHING (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
- *   as indistinguishable from one that confidently predicted the wrong thing everywhere. `f1` is always a
- *   number: `0` whenever `truePositivePairs === 0` (whatever the reason — no predictions, no truth
- *   positives to find, or a genuine miss with both sides populated), and the ordinary harmonic mean of
- *   `precision`/`recall` otherwise (both are non-null whenever `truePositivePairs > 0`).
+ *   as indistinguishable from one that confidently predicted the wrong thing everywhere.
+ *
+ *   **`f1` propagates that `null` rather than collapsing it (task 4 review fix, I2).** The first version of
+ *   this module argued the case above for `precision`/`recall` and then handed back `f1: 0` whenever
+ *   `truePositivePairs === 0`, which threw the distinction away again on the one field a reader quotes as
+ *   the headline. Worked example: a PERFECT prediction over an all-singleton truth partition (nothing to
+ *   merge, nothing merged) has no defined precision and no defined recall, and reported `f1: 0` —
+ *   arithmetically indistinguishable from a linkage that got every call wrong. So `f1` is `null` whenever
+ *   `precision` or `recall` is `null`, `0` when both are defined and `truePositivePairs === 0` (a genuine,
+ *   measurable miss with positive calls made and positive pairs available), and the ordinary harmonic mean
+ *   otherwise. A `null` here means "this run does not support an F1", not "this run scored zero"; render it
+ *   as `N/A`, never as `0.000`.
  */
 
 /**
@@ -75,11 +83,12 @@ export interface PairwiseGroupingScore {
 	 */
 	recall: number | null
 	/**
-	 * `0` whenever `truePositivePairs === 0`; otherwise the harmonic mean of `precision`/`recall` (both are non-null
-	 * whenever this branch runs, since a true positive requires both a predicted-positive and a truth-positive pair to
-	 * exist).
+	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component is undefined, not zero (task
+	 * 4 review fix, I2; see the module docstring's worked example). `0` when both are defined and `truePositivePairs ===
+	 * 0` (the harmonic mean of two zeros, reported as the `0` it is rather than `NaN`). Otherwise the ordinary harmonic
+	 * mean of `precision`/`recall`.
 	 */
-	f1: number
+	f1: number | null
 }
 
 /**
@@ -127,7 +136,14 @@ export function scorePairwiseGrouping<Id>(
 
 	const precision = predictedPositivePairs > 0 ? truePositivePairs / predictedPositivePairs : null
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
-	const f1 = truePositivePairs === 0 ? 0 : (2 * precision! * recall!) / (precision! + recall!)
+
+	// I2: `null` in, `null` out — never `0`. `0` is reserved for the case both components are DEFINED and the
+	// prediction still recovered nothing, which is a measurement; an undefined component is the absence of one.
+	let f1: number | null = null
+
+	if (precision !== null && recall !== null) {
+		f1 = truePositivePairs === 0 ? 0 : (2 * precision * recall) / (precision + recall)
+	}
 
 	return {
 		truePositivePairs,
