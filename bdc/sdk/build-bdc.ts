@@ -68,7 +68,11 @@ import {
 } from "@mailwoman/core/layers"
 import { openBuiltDatabase, sealDatabase } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
-import { pickPrimaryFRN, readFRNFilingCandidates, type FRN, type ProviderListRow } from "@mailwoman/filer/sdk"
+// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
+// inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
+// (review fix round 1, IMPORTANT-1). Only the TYPES are imported here; `import type` is fully erased, so
+// this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
+import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
@@ -436,16 +440,29 @@ async function groupProviderListRows(
  * `BDCProviderTable` docstring for the full lossy-denormalization rationale. For each distinct `provider_id`:
  *
  * - Exactly one `frn` among its rows → that FRN is primary by construction; no `filerDB` query needed at all.
- * - More than one distinct `frn` → {@linkcode readFRNFilingCandidates} (`@mailwoman/filer/sdk`) reads each FRN's own most
- *   recent IN-FORCE `form-499` filing edge from `filerDB`, `asOf` the given date, and {@linkcode pickPrimaryFRN} picks
- *   the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry NO 499 filing to rank
- *   by inserts `frn: NULL` rather than guessing — {@linkcode pickPrimaryFRN} throws on empty input, so this checks
- *   `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
+ * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
+ *   each FRN's own most recent IN-FORCE `form-499` filing edge from `filerDB`, `asOf` the given date, and
+ *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
+ *   NO 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
+ *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
  * - `filerDB` is REQUIRED the instant a multi-FRN `provider_id` is encountered; its absence throws immediately, naming
  *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
+ * - `holding_company` gets the IDENTICAL single-distinct-value shortcut `frn` gets (review fix round 1, IMPORTANT-3):
+ *   exactly one distinct non-null `holdingCompany` across a provider's rows means there's no conflict to resolve, so
+ *   it's populated directly, no rule needed. Two or more distinct values IS the real conflict decision 6 refuses to
+ *   paper over with last-wins — that case inserts NULL, and every value stays recoverable from `filer.db`. A `null`
+ *   `holdingCompany` on some rows doesn't count as a competing value (a row simply not stating it isn't a conflicting
+ *   assertion) — only distinct NON-NULL strings are compared.
  *
- * `brand_name` and `holding_company` are always inserted NULL — see the schema docstring for why (no source at all for
- * the former; no decision-6 resolution rule for the latter's identical multi-value problem).
+ * `brand_name` is always inserted NULL — the provider list carries no brand-name column at all, so there is nothing to
+ * populate it from, primary or otherwise (see the schema docstring).
+ *
+ * **Lazy `@mailwoman/filer/sdk` import (review fix round 1, IMPORTANT-1).** `readFRNFilingCandidates`/`pickPrimaryFRN`
+ * are loaded via `await import("@mailwoman/filer/sdk")`, memoized in `filerSDK` below, rather than a top-level static
+ * import — that barrel re-exports `cluster-filers.ts`, which pulls in `@mailwoman/match`/`record`/`registry`. A
+ * top-level import regressed `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate
+ * providers at all; the dynamic import here only ever runs when a multi-FRN `provider_id` is actually encountered, so a
+ * `providers`-less build (or one whose providers are all single-FRN) pays nothing.
  */
 async function populateBDCProviderTable(
 	kdb: DatabaseClient<BDCDatabase>,
@@ -455,6 +472,8 @@ async function populateBDCProviderTable(
 ): Promise<number> {
 	const byProviderID = await groupProviderListRows(providers)
 	const insertRows: Insertable<BDCProviderTable>[] = []
+
+	let filerSDK: typeof import("@mailwoman/filer/sdk") | undefined
 
 	for (const [providerID, rows] of byProviderID) {
 		const distinctFRNs = [...new Set(rows.map((row) => row.frn))]
@@ -472,12 +491,20 @@ async function populateBDCProviderTable(
 				)
 			}
 
-			const candidates = await readFRNFilingCandidates(filerDB, distinctFRNs, asOf)
+			filerSDK ??= await import("@mailwoman/filer/sdk")
 
-			frn = candidates.length ? pickPrimaryFRN(candidates) : null
+			const candidates = await filerSDK.readFRNFilingCandidates(filerDB, distinctFRNs, asOf)
+
+			frn = candidates.length ? filerSDK.pickPrimaryFRN(candidates) : null
 		}
 
-		insertRows.push({ provider_id: providerID, frn, brand_name: null, holding_company: null })
+		const distinctHoldingCompanies = [
+			...new Set(rows.map((row) => row.holdingCompany).filter((value): value is string => value !== null)),
+		]
+
+		const holdingCompany = distinctHoldingCompanies.length === 1 ? distinctHoldingCompanies[0]! : null
+
+		insertRows.push({ provider_id: providerID, frn, brand_name: null, holding_company: holdingCompany })
 	}
 
 	for (let index = 0; index < insertRows.length; index += PROVIDER_INSERT_BATCH_SIZE) {

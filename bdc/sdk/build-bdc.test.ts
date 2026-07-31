@@ -408,7 +408,9 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 	 * `provider_id` 700001 carries TWO FRN edges — the decision 6 cardinality `bdc_provider` cannot express. FRN_LATE's
 	 * own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's (2026-01-15), so FRN_LATE must win the
 	 * primary-FRN pick. `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query is needed to resolve
-	 * its primary FRN.
+	 * its primary FRN. Also seeds `provider_id` 700001's TWO conflicting `holding_company_name` edges (review fix round
+	 * 1, IMPORTANT-3) — the same cardinality problem `frn` has, proving both discarded values stay recoverable from
+	 * filer.db even though `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -436,6 +438,8 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		const FRN_LATE_NODE = `${FilerIdentifierType.FRN}:${FRN_LATE}`
 		const FORM_EARLY = `${FilerIdentifierType.Form499ID}:8001`
 		const FORM_LATE = `${FilerIdentifierType.Form499ID}:8002`
+		const HC_ALPHA_NODE = `${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco`
+		const HC_ALPHA_RENAMED_NODE = `${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco Renamed`
 
 		await db
 			.insertInto("filer_node")
@@ -445,6 +449,16 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 				{ node_id: FRN_LATE_NODE, identifier_type: FilerIdentifierType.FRN, identifier_value: FRN_LATE },
 				{ node_id: FORM_EARLY, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "8001" },
 				{ node_id: FORM_LATE, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "8002" },
+				{
+					node_id: HC_ALPHA_NODE,
+					identifier_type: FilerIdentifierType.HoldingCompanyName,
+					identifier_value: "Alpha Holdco",
+				},
+				{
+					node_id: HC_ALPHA_RENAMED_NODE,
+					identifier_type: FilerIdentifierType.HoldingCompanyName,
+					identifier_value: "Alpha Holdco Renamed",
+				},
 			])
 			.execute()
 
@@ -466,6 +480,30 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: FRN_LATE_NODE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+					valid_from: "2026-06-30",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				// AND two conflicting holding_company_name edges — the identical cardinality problem, unresolved by
+				// decision 6, so bdc_provider.holding_company stays NULL and both stay recoverable here.
+				{
+					from_node_id: PROVIDER_NODE,
+					to_node_id: HC_ALPHA_NODE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+					valid_from: "2026-06-30",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				{
+					from_node_id: PROVIDER_NODE,
+					to_node_id: HC_ALPHA_RENAMED_NODE,
 					assertion: FilerEdgeAssertion.Authoritative,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
@@ -506,6 +544,10 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			{ providerID: 700_001, frn: FRN_EARLY, holdingCompany: "Alpha Holdco" },
 			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
 			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
+			// Two rows, SAME frn AND SAME holding_company — proves the single-distinct-value shortcut looks at the
+			// DISTINCT set across every row, not just "there happened to be one row" (700002's trivial case above).
+			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
+			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 		]
 	}
 
@@ -525,7 +567,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			filerDB,
 		})
 
-		expect(result.providersPopulated).toBe(2)
+		expect(result.providersPopulated).toBe(3)
 
 		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(providerOut, { readOnly: true }) })
 
@@ -535,7 +577,9 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			.where("provider_id", "=", 700_001)
 			.executeTakeFirstOrThrow()
 
-		// The LOSSY pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins.
+		// The LOSSY pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins. Its two
+		// holding_company values genuinely CONFLICT ("Alpha Holdco" vs "Alpha Holdco Renamed") — no rule resolves that
+		// (review fix round 1, IMPORTANT-3), so it stays NULL, same as brand_name.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
 		expect(multiFRNProvider.holding_company).toBeNull()
@@ -546,13 +590,26 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			.where("provider_id", "=", 700_002)
 			.executeTakeFirstOrThrow()
 
-		// No filer.db query was needed for this one — its lone FRN is primary by construction.
+		// No filer.db query was needed for this one — its lone FRN is primary by construction, and its single
+		// unambiguous holding_company populates directly (IMPORTANT-3's "no conflict ⇒ no rule needed" shortcut).
 		expect(singleFRNProvider.frn).toBe(FRN_SOLO)
 		expect(singleFRNProvider.brand_name).toBeNull()
-		expect(singleFRNProvider.holding_company).toBeNull()
+		expect(singleFRNProvider.holding_company).toBe("Solo Broadband")
+
+		const repeatValueProvider = await kdb
+			.selectFrom("bdc_provider")
+			.selectAll()
+			.where("provider_id", "=", 700_004)
+			.executeTakeFirstOrThrow()
+
+		// TWO rows, but the SAME holding_company on both — one DISTINCT value, not two rows worth of ambiguity —
+		// still populates. Proves the shortcut compares the distinct SET, not just "was there only one row".
+		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
+		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
 
 		// The DISCARDED FRN (FRN_EARLY) is NOT lost — decision 6's whole premise is that filer.db, untouched by this
-		// build, still retains every edge. Recover it back out through the public reader, `filerLookup`.
+		// build, still retains every edge. Recover it back out through the public reader, `filerLookup`. Same for the
+		// two CONFLICTING holding_company values `bdc_provider` couldn't keep either.
 		const crosswalk = await filerLookup(filerDB, { bdcProviderID: 700_001, asOf: "2026-12-31" })
 
 		const frnValues = crosswalk.identifiers
@@ -562,6 +619,13 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 
 		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
 		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
+
+		const holdingCompanyValues = crosswalk.identifiers
+			.filter((identifier) => identifier.type === FilerIdentifierType.HoldingCompanyName)
+			.map((identifier) => identifier.value)
+			.toSorted()
+
+		expect(holdingCompanyValues).toEqual(["Alpha Holdco", "Alpha Holdco Renamed"].toSorted())
 	})
 
 	it("throws naming the offending provider_id when a multi-FRN provider is given without `filerDB`", async () => {
