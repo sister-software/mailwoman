@@ -62,6 +62,19 @@
  *   without a collision, be visually indistinguishable from one. `primary_frn` carries `derived_from`
  *   and `as_of` instead of `source`/`source_vintage` — its provenance is "this reader's own
  *   computation", not a row in `filer.db`, and that must stay legible at the call site.
+ *
+ *   **`families` is a separate rollup from `cluster` (3b Task 3, gate 1, load-bearing).** `cluster` answers
+ *   "which OTHER identifiers denote this SAME filer" (entity resolution); `families` answers "which
+ *   corporate family (holding/management tree) does this filer belong to" — spec §4.1 keeps these two
+ *   rollups apart on purpose, because folding them together is exactly the error that makes a broadband
+ *   competition count misleading (two identifiers for one ISP look the same, on paper, as ten subsidiaries
+ *   of one holding company, unless the rollups stay distinct). `families` is read from `filer_family`
+ *   ONLY, via its own query that never touches `filer_cluster`/`filer_edge`'s authoritative-cluster path
+ *   above — the identical "two disjoint queries, never a shared code path" discipline gate 2 (3a) already
+ *   established for `cluster` vs `inferred_links`. Scoped `asOf` with the SAME half-open predicate as every
+ *   other temporal read in this module (`filer/sdk/family-rollup.ts` copies this exact predicate rather
+ *   than writing its own, per the task brief — three separate 3a tasks fixed this same temporal bug
+ *   independently before the final review caught them diverging).
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -120,6 +133,22 @@ export interface FilerLookupInferredLink {
 	source: string
 }
 
+/**
+ * One corporate-family membership the queried node carries, `asOf` the query's date — reported on
+ * {@link FilerLookupResult.families}, a field STRUCTURALLY DISTINCT from {@link FilerLookupResult.cluster} (3b Task 3,
+ * gate 1, load-bearing). `relationship` is one of {@link FilerRelationship} (`holding_company`, `management_company`,
+ * `parent_company`, `subsidiary` — never `same_entity`, which is reserved for entity-cluster edges and never written to
+ * `filer_family`). Deliberately carries NO `members` field and NO `cluster_id`-shaped key — see the module docstring's
+ * "families is a separate rollup" section for why that shape difference is the whole point: a family membership must
+ * never be confusable with, or foldable into, an entity-cluster member. Use {@linkcode familyRollup}
+ * (`family-rollup.ts`) to read a family's FULL membership list; this field only answers "which families does THIS node
+ * belong to, and under what relationship."
+ */
+export interface FilerLookupFamily {
+	family_id: string
+	relationship: string
+}
+
 export interface FilerLookupResult {
 	node: FilerNodeTable
 	identifiers: FilerLookupIdentifier[]
@@ -134,6 +163,19 @@ export interface FilerLookupResult {
 	attributes: Record<string, string>
 	cluster: FilerLookupCluster | null
 	inferred_links: FilerLookupInferredLink[]
+	/**
+	 * Every corporate-family membership the queried node carries, `asOf` the query's date (3b Task 3, gate 1,
+	 * load-bearing) — read EXCLUSIVELY from `filer_family`, a query that never shares a code path with `cluster` above. A
+	 * family membership can never appear here as a `cluster` entry, and a `cluster` member can never appear here unless
+	 * `filer_family` independently asserts it — the two rollups are answers to different questions (same filer under
+	 * another identifier, vs. same corporate family as a DIFFERENT filer) and this field's shape
+	 * ({@link FilerLookupFamily}: `family_id`/`relationship`) is structurally incompatible with
+	 * {@link FilerLookupCluster} (`cluster_id`/`members`) on purpose. Empty array, never `null`, when the node carries no
+	 * family membership as of this date — `cluster`'s `null` means "no cluster has ever been computed for this node";
+	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact, not a
+	 * derived snapshot.
+	 */
+	families: FilerLookupFamily[]
 	/**
 	 * The primary-FRN pick (decision 6, gate 3) when the queried node carries more than one authoritative FRN identifier
 	 * — `null` otherwise (including when cardinality is >1 but none of the FRNs has a form-499 filing to rank by). A
@@ -305,8 +347,10 @@ function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
 /**
  * `new Date().toISOString().slice(0, 10)` — today, as an ISO `YYYY-MM-DD` date string, the same sortable shape every
  * real `valid_from`/`valid_to` in `filer.db` uses. {@linkcode filerLookup}'s default `asOf` when the caller omits one.
+ * Exported (3b Task 3) so `family-rollup.ts` shares this exact definition of "today" rather than growing its own —
+ * every reader in this SDK should default `asOf` identically.
  */
-function todayISODate(): string {
+export function todayISODate(): string {
 	return new Date().toISOString().slice(0, 10)
 }
 
@@ -550,6 +594,24 @@ export async function filerLookup(
 		source: edge.source,
 	}))
 
+	// Gate 1 (3b, load-bearing): `families` is read from `filer_family` ONLY — an entirely separate query from
+	// `cluster`'s filer_cluster/filer_edge path above and from `inferred_links`'s filer_edge path just above this. No
+	// function in this reader touches both a cluster source and a family source, so a family membership can never be
+	// returned as a cluster member, and vice versa. Same half-open asOf predicate as everywhere else in this module.
+	const familyRows = await db
+		.selectFrom("filer_family")
+		.select(["family_id", "relationship"])
+		.where("node_id", "=", nodeID)
+		.where("valid_from", "<=", asOf)
+		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
+		.orderBy("family_id")
+		.execute()
+
+	const families: FilerLookupFamily[] = familyRows.map((row) => ({
+		family_id: row.family_id,
+		relationship: row.relationship,
+	}))
+
 	// Gate 3 / decision 6: when the queried node carries more than one FRN identifier (the multi-FRN provider_id
 	// cardinality case), pick a primary via each FRN's own most recent form-499 filing edge. Reported as its OWN
 	// top-level field (never folded into `attributes`) — see the module docstring's "A derived conclusion…" section
@@ -576,6 +638,7 @@ export async function filerLookup(
 		attributes,
 		cluster,
 		inferred_links,
+		families,
 		primary_frn: primaryFRN,
 		as_of: asOf,
 		vintage: manifest.source_vintage,

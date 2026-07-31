@@ -27,6 +27,7 @@ import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
 	createFilerEdgeTable,
+	createFilerFamilyTable,
 	createFilerManifestTable,
 	createFilerNodeTable,
 	FilerEdgeAssertion,
@@ -418,6 +419,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		await createFilerEdgeTable(db)
 		await createFilerAttributeTable(db)
 		await createFilerClusterTable(db)
+		await createFilerFamilyTable(db)
 		await createFilerManifestTable(db)
 
 		await db
@@ -659,6 +661,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		await createFilerEdgeTable(filerDB)
 		await createFilerAttributeTable(filerDB)
 		await createFilerClusterTable(filerDB)
+		await createFilerFamilyTable(filerDB)
 		await createFilerManifestTable(filerDB)
 		// No filer_edge rows at all — neither FRN has a form-499 filing edge to rank by.
 

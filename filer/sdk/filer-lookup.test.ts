@@ -33,6 +33,7 @@ import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
 	createFilerEdgeTable,
+	createFilerFamilyTable,
 	createFilerManifestTable,
 	createFilerNodeTable,
 	FilerEdgeAssertion,
@@ -40,6 +41,7 @@ import {
 	FilerRelationship,
 	type FilerDatabase,
 	type FilerEdgeTable,
+	type FilerFamilyTable,
 	type FilerManifestTable,
 } from "../schema.ts"
 import { buildFilerDatabase } from "./build-filer.ts"
@@ -48,6 +50,8 @@ import {
 	pickPrimaryFRN,
 	PRIMARY_FRN_DERIVATION,
 	readFRNFilingCandidates,
+	type FilerLookupCluster,
+	type FilerLookupFamily,
 	type FRNFilingRecord,
 } from "./filer-lookup.ts"
 import type { Form499Row } from "./form499.ts"
@@ -63,6 +67,7 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 	await createFilerEdgeTable(db)
 	await createFilerAttributeTable(db)
 	await createFilerClusterTable(db)
+	await createFilerFamilyTable(db)
 	await createFilerManifestTable(db)
 }
 
@@ -852,6 +857,267 @@ describe("§7-3a gates", () => {
 
 			expect(defaulted.as_of).toBeDefined()
 			expect([beforeCall, afterCall]).toContain(defaulted.as_of)
+		})
+	})
+})
+
+/**
+ * The two §7-3b gates Task 3 discharges (Task 8 extends both to EDGAR-sourced families — out of scope here). See
+ * `docs/superpowers/plans/2026-07-31-filer-3b-plan.md`'s "Acceptance gates (§7-3b…)" section for the gates verbatim,
+ * and `task-3-brief.md` for the per-gate implementation notes.
+ */
+describe("§7-3b gates", () => {
+	describe("1. Family and entity cluster are never conflated (load-bearing)", () => {
+		/**
+		 * STRUCTURAL half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily}
+		 * (`family_id`/`relationship`) are shapes with NO field in common — assigning one to a variable typed as the other
+		 * is a compile error (`@ts-expect-error` below asserts exactly that). Only `tsc` (`yarn typecheck:tests`) checks
+		 * this — `yarn vitest run` alone (esbuild, types stripped) skips the `@ts-expect-error` line entirely, so the
+		 * RUNTIME half in the next test is what actually fails if the two rollups ever get folded together.
+		 */
+		it("FilerLookupCluster and FilerLookupFamily are structurally incompatible types", () => {
+			const clusterShaped: FilerLookupCluster = { cluster_id: "authoritative:x", members: ["a", "b"] }
+
+			// @ts-expect-error — a cluster-shaped value (cluster_id/members) must not satisfy the family shape
+			// (family_id/relationship): the two rollups are never structurally interchangeable.
+			const misassigned: FilerLookupFamily = clusterShaped
+
+			expect(misassigned).toBe(clusterShaped)
+		})
+
+		/**
+		 * RUNTIME half, mutation-provable: FRN_CLUSTER_A and FRN_CLUSTER_B share an authoritative entity cluster (same
+		 * filer, two identifiers). FRN_CLUSTER_A is ALSO a member of a corporate family alongside FRN_FAMILY_ONLY — a
+		 * completely different filer that shares nothing with FRN_CLUSTER_B. If a future edit ever folds family membership
+		 * into `cluster` (e.g. widening `deriveClusterMembersAsOf`'s reachability to also walk `filer_family`),
+		 * FRN_FAMILY_ONLY would leak into `resultA.cluster.members` and this test dies. If a future edit ever folds cluster
+		 * membership into `families` (e.g. deriving family rows from `filer_cluster`), FRN_CLUSTER_B would leak into
+		 * `resultA.families` (or a spurious cluster-shaped entry would appear) and this test dies too. Both directions are
+		 * covered by one fixture.
+		 */
+		it("a family membership is never returned as an entity-cluster member, and vice versa", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const FRN_CLUSTER_A = `${FilerIdentifierType.FRN}:1010101010`
+			const FRN_CLUSTER_B = `${FilerIdentifierType.FRN}:2020202020`
+			const FRN_FAMILY_ONLY = `${FilerIdentifierType.FRN}:3030303030`
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_CLUSTER_A, identifier_type: FilerIdentifierType.FRN, identifier_value: "1010101010" },
+					{ node_id: FRN_CLUSTER_B, identifier_type: FilerIdentifierType.FRN, identifier_value: "2020202020" },
+					{ node_id: FRN_FAMILY_ONLY, identifier_type: FilerIdentifierType.FRN, identifier_value: "3030303030" },
+				])
+				.execute()
+
+			// Entity cluster: A and B are the SAME filer under two identifiers — an authoritative edge plus a
+			// filer_cluster snapshot, exactly as cluster-filers.ts would leave it.
+			await db
+				.insertInto("filer_edge")
+				.values(
+					authoritativeEdge({
+						from_node_id: FRN_CLUSTER_A,
+						to_node_id: FRN_CLUSTER_B,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+					})
+				)
+				.execute()
+
+			await db
+				.insertInto("filer_cluster")
+				.values([
+					{ node_id: FRN_CLUSTER_A, cluster_id: "authoritative:AB", assertion: FilerEdgeAssertion.Authoritative },
+					{ node_id: FRN_CLUSTER_B, cluster_id: "authoritative:AB", assertion: FilerEdgeAssertion.Authoritative },
+				])
+				.execute()
+
+			// Corporate family: A and FAMILY_ONLY share a holding company — a DIFFERENT filer, never part of A's
+			// entity cluster.
+			await db
+				.insertInto("filer_family")
+				.values([
+					{
+						node_id: FRN_CLUSTER_A,
+						family_id: "holding_company_name:bigco-inc",
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					},
+					{
+						node_id: FRN_FAMILY_ONLY,
+						family_id: "holding_company_name:bigco-inc",
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					},
+				])
+				.execute()
+
+			const resultA = await filerLookup(db, { frn: toFRN("1010101010")!, asOf: "2026-06-01" })
+
+			// GATE 1: cluster stays EXACTLY {A, B} — the family-only mate never leaks in.
+			expect(resultA.cluster).toEqual({ cluster_id: "authoritative:AB", members: [FRN_CLUSTER_A, FRN_CLUSTER_B] })
+
+			// GATE 1: families stays EXACTLY the one family fact — no cluster-shaped data leaks in, and B (a cluster
+			// mate with no family row of its own) never appears here.
+			expect(resultA.families).toEqual([
+				{ family_id: "holding_company_name:bigco-inc", relationship: FilerRelationship.HoldingCompany },
+			])
+
+			// Symmetric check from B's side: B is in the SAME cluster as A, but carries no family membership of its
+			// own — families must be empty, never inheriting A's family fact via the shared cluster.
+			const resultB = await filerLookup(db, { frn: toFRN("2020202020")!, asOf: "2026-06-01" })
+			expect(resultB.cluster).toEqual({ cluster_id: "authoritative:AB", members: [FRN_CLUSTER_A, FRN_CLUSTER_B] })
+			expect(resultB.families).toEqual([])
+
+			// Symmetric check from FAMILY_ONLY's side: shares A's family, but has no authoritative edge/cluster
+			// assignment at all — cluster must be null, never inheriting A's cluster via the shared family.
+			const resultFamilyOnly = await filerLookup(db, { frn: toFRN("3030303030")!, asOf: "2026-06-01" })
+			expect(resultFamilyOnly.cluster).toBeNull()
+
+			expect(resultFamilyOnly.families).toEqual([
+				{ family_id: "holding_company_name:bigco-inc", relationship: FilerRelationship.HoldingCompany },
+			])
+		})
+	})
+
+	describe("2. Relationship kind + provenance mandatory on every family row", () => {
+		/**
+		 * STRUCTURAL half (the established idiom — see this file's own §7-3a gate 1 above): an exhaustive `satisfies
+		 * Record<keyof FilerFamilyInsert, true>` pin over `filer_family`'s insert shape. `FilerFamilyTable` carries no
+		 * `Generated<>`-wrapped columns (`schema.ts`), so `Insertable<FilerFamilyTable>` already requires every field on
+		 * insert — this pin's job is making sure that guarantee can't silently erode: a field ADDED to `FilerFamilyTable`
+		 * that this literal doesn't also list fails `satisfies`, forcing a reviewer to consciously answer "is the new field
+		 * also load-bearing provenance?" Only `tsc` (`yarn typecheck:tests`) checks this.
+		 */
+		type FilerFamilyInsert = Insertable<FilerFamilyTable>
+
+		const FILER_FAMILY_INSERT_FIELDS = {
+			node_id: true,
+			family_id: true,
+			relationship: true,
+			source: true,
+			source_vintage: true,
+			valid_from: true,
+			valid_to: true,
+		} satisfies Record<keyof FilerFamilyInsert, true>
+
+		it("the structural pin enumerates every FilerFamilyTable field, including relationship/source/source_vintage/valid_from", () => {
+			expect(Object.keys(FILER_FAMILY_INSERT_FIELDS)).toHaveLength(7)
+
+			expect(FILER_FAMILY_INSERT_FIELDS).toMatchObject({
+				relationship: true,
+				source: true,
+				source_vintage: true,
+				valid_from: true,
+			})
+		})
+
+		it("runtime: a filer_family insert missing relationship is rejected", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: "frn:4040404040", identifier_type: FilerIdentifierType.FRN, identifier_value: "4040404040" })
+				.execute()
+
+			const partialFamily = {
+				node_id: "frn:4040404040",
+				family_id: "holding_company_name:gate2-co",
+				// relationship deliberately omitted — this is the runtime half of gate 2's rejection test.
+				source: "form-499",
+				source_vintage: "2026-01-01",
+				valid_from: "2026-01-01",
+				valid_to: null,
+			} as unknown as FilerFamilyInsert
+
+			await expect(db.insertInto("filer_family").values(partialFamily).execute()).rejects.toThrow(
+				/NOT NULL constraint failed/
+			)
+		})
+
+		it("runtime: a filer_family insert missing source is rejected", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: "frn:5050505050", identifier_type: FilerIdentifierType.FRN, identifier_value: "5050505050" })
+				.execute()
+
+			const partialFamily = {
+				node_id: "frn:5050505050",
+				family_id: "holding_company_name:gate2-co",
+				relationship: FilerRelationship.HoldingCompany,
+				// source deliberately omitted
+				source_vintage: "2026-01-01",
+				valid_from: "2026-01-01",
+				valid_to: null,
+			} as unknown as FilerFamilyInsert
+
+			await expect(db.insertInto("filer_family").values(partialFamily).execute()).rejects.toThrow(
+				/NOT NULL constraint failed/
+			)
+		})
+
+		it("SQLite's NOT NULL alone does NOT reject an empty-string relationship — the CHECK constraint is what closes that gap (the 3a lesson, gate 2)", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: "frn:6060606060", identifier_type: FilerIdentifierType.FRN, identifier_value: "6060606060" })
+				.execute()
+
+			await expect(
+				db
+					.insertInto("filer_family")
+					.values({
+						node_id: "frn:6060606060",
+						family_id: "holding_company_name:gate2-co",
+						relationship: "",
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					})
+					.execute()
+			).rejects.toThrow(/CHECK constraint failed/)
+		})
+
+		it("rejects a whitespace-only relationship too (not just empty)", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: "frn:7070707070", identifier_type: FilerIdentifierType.FRN, identifier_value: "7070707070" })
+				.execute()
+
+			await expect(
+				db
+					.insertInto("filer_family")
+					.values({
+						node_id: "frn:7070707070",
+						family_id: "holding_company_name:gate2-co",
+						relationship: "   ",
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					})
+					.execute()
+			).rejects.toThrow(/CHECK constraint failed/)
 		})
 	})
 })
