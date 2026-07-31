@@ -1,0 +1,74 @@
+{
+	"name": "@mailwoman/filer",
+	"version": "8.3.0",
+	"description": "Identity crosswalk infrastructure for Mailwoman — coordinates address records to canonical geocoded entities across geographies and address systems (Phase 3a; filer.db layer reader)",
+	"keywords": [
+		"crosswalk",
+		"entity-resolution",
+		"geocoding",
+		"geospatial",
+		"identity"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "filer"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		"./sdk": {
+			"node": "./sdk/index.ts",
+			"default": "./out/sdk/index.js",
+			"types": "./out/sdk/index.d.ts"
+		},
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/match": "workspace:*",
+		"@mailwoman/record": "workspace:*",
+		"@mailwoman/registry": "workspace:*",
+		"kysely": "^0.29.4",
+		"type-fest": "^5.8.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

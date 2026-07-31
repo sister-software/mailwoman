@@ -4681,6 +4681,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/filer@workspace:filer":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/filer@workspace:filer"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/match": "workspace:*"
+    "@mailwoman/record": "workspace:*"
+    "@mailwoman/registry": "workspace:*"
+    kysely: "npm:^0.29.4"
+    type-fest: "npm:^5.8.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:formatter":
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:formatter"

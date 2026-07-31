@@ -1,0 +1,17 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		// ---
+		{ "path": "../core" },
+		{ "path": "../match" },
+		{ "path": "../record" },
+		{ "path": "../registry" }
+	]
+}
