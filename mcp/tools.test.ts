@@ -44,7 +44,10 @@ function stubDeps(): MCPToolDeps {
 			}) => {
 				const evidence_found: Array<Record<string, unknown>> = []
 
-				if (!query.bdcDatabasePath) evidence_found.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
+				if (!query.bdcDatabasePath) {
+					evidence_found.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
+				}
+
 				if (!query.poiDatabasePath) {
 					evidence_found.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 				}
@@ -375,6 +378,7 @@ describe("buildToolTable", () => {
 					{ type: "abstain", reason: "requires_build_local_layer", layer: "poi" },
 				])
 			)
+
 			expect(result.vintage).toBeNull()
 		})
 
