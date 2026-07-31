@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `buildToolTable` against stub deps — no MCP transport/server involved (that's exercised by the stdio smoke run
- *   in CI, not here). Covers: all six tools present, each schema accepts a canonical example + rejects a bad one,
- *   and each handler routes to the correct dep with the correct arguments.
+ *   in CI, not here). Covers: every registered tool is present, each schema accepts a canonical example + rejects a
+ *   bad one, and each handler routes to the correct dep with the correct arguments.
  */
 
 import { describe, expect, it, vi } from "vitest"
@@ -28,6 +28,46 @@ function stubDeps(): MCPToolDeps {
 
 			return { vintage: "2024-06", surveyed_block_count: 1, unknown_block_count: 0, filings: [] }
 		}),
+		// Mirrors the real `plausibilityCheck`'s (`bdc/sdk/plausibility.ts`) own graceful-abstain shape — decision 6
+		// (2b task 7): an absent `bdcDatabasePath`/`poiDatabasePath` degrades to a typed abstain evidence entry in the
+		// returned bundle, NEVER a throw, so the dispatch tests below can exercise "missing layer path → abstain-shaped
+		// result, not a throw" against a stub without reaching for a real bdc.db/poi.db.
+		plausibilityCheck: vi.fn(
+			async (query: {
+				bdcDatabasePath?: string
+				poiDatabasePath?: string
+				address?: string
+				point?: { type: "Point"; coordinates: [number, number] }
+				geoid?: string
+				technologyCode: number
+				claimedDownloadMbps: number
+			}) => {
+				const evidence_found: Array<Record<string, unknown>> = []
+
+				if (!query.bdcDatabasePath) evidence_found.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
+				if (!query.poiDatabasePath) {
+					evidence_found.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
+				}
+
+				return {
+					claim: {
+						address: query.address,
+						point: query.point,
+						geoid: query.geoid,
+						technologyCode: query.technologyCode,
+						claimedDownloadMbps: query.claimedDownloadMbps,
+					},
+					evidence_found,
+					coverage_confidence: query.bdcDatabasePath && query.poiDatabasePath ? "high" : "insufficient_survey_data",
+					coverage_detail: {
+						filing: query.bdcDatabasePath ? "covered" : "layer_missing",
+						physical: query.poiDatabasePath ? "covered" : "layer_missing",
+					},
+					block_resolution: query.geoid ? "geoid" : "h3_cell_approximation",
+					vintage: query.bdcDatabasePath ? "2024-06" : null,
+				}
+			}
+		),
 	}
 }
 
@@ -40,7 +80,7 @@ function toolNamed(table: ReturnType<typeof buildToolTable>, name: string) {
 }
 
 describe("buildToolTable", () => {
-	it("registers exactly the six expected tools", () => {
+	it("registers exactly the seven expected tools", () => {
 		const table = buildToolTable(stubDeps())
 
 		expect(table.map((t) => t.name).toSorted()).toEqual(
@@ -50,6 +90,7 @@ describe("buildToolTable", () => {
 				"mailwoman_layer_manifest",
 				"mailwoman_overpass_export",
 				"mailwoman_parse",
+				"mailwoman_plausibility_check",
 				"mailwoman_poi_search",
 			].toSorted()
 		)
@@ -241,6 +282,126 @@ describe("buildToolTable", () => {
 				surveyed_block_count: 1,
 				unknown_block_count: 0,
 				filings: [],
+			})
+		})
+	})
+
+	describe("mailwoman_plausibility_check", () => {
+		it("accepts a canonical geoid claim, a point claim, and an address claim", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
+
+			expect(
+				tool.inputSchema.safeParse({
+					geoid: "170010001001001",
+					technology_code: 50,
+					claimed_download_mbps: 100,
+				}).success
+			).toBe(true)
+
+			expect(
+				tool.inputSchema.safeParse({
+					point: { type: "Point", coordinates: [-89.6501, 39.7817] },
+					technology_code: 50,
+					claimed_download_mbps: 100,
+				}).success
+			).toBe(true)
+
+			expect(
+				tool.inputSchema.safeParse({
+					address: "350 5th Ave, New York, NY 10118",
+					technology_code: 40,
+					claimed_download_mbps: 25,
+				}).success
+			).toBe(true)
+		})
+
+		it("accepts optional bdc_database_path and poi_database_path", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
+
+			expect(
+				tool.inputSchema.safeParse({
+					geoid: "170010001001001",
+					technology_code: 50,
+					claimed_download_mbps: 100,
+					bdc_database_path: "/data/bdc.db",
+					poi_database_path: "/data/poi.db",
+				}).success
+			).toBe(true)
+		})
+
+		it("rejects a claim missing technology_code or claimed_download_mbps", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
+
+			expect(tool.inputSchema.safeParse({ geoid: "170010001001001", claimed_download_mbps: 100 }).success).toBe(false)
+			expect(tool.inputSchema.safeParse({ geoid: "170010001001001", technology_code: 50 }).success).toBe(false)
+			expect(tool.inputSchema.safeParse({}).success).toBe(false)
+		})
+
+		it("routes to deps.plausibilityCheck with snake_case fields mapped to the claim shape", async () => {
+			const deps = stubDeps()
+			const tool = toolNamed(buildToolTable(deps), "mailwoman_plausibility_check")
+
+			await tool.handler({
+				geoid: "170010001001001",
+				technology_code: 50,
+				claimed_download_mbps: 100,
+				bdc_database_path: "/data/bdc.db",
+				poi_database_path: "/data/poi.db",
+			})
+
+			expect(deps.plausibilityCheck).toHaveBeenCalledWith({
+				bdcDatabasePath: "/data/bdc.db",
+				poiDatabasePath: "/data/poi.db",
+				address: undefined,
+				point: undefined,
+				geoid: "170010001001001",
+				technologyCode: 50,
+				claimedDownloadMbps: 100,
+			})
+		})
+
+		it("missing bdc_database_path/poi_database_path → an abstain-shaped bundle, not a throw", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
+
+			const result = (await tool.handler({
+				geoid: "170010001001001",
+				technology_code: 50,
+				claimed_download_mbps: 100,
+			})) as { evidence_found: Array<{ type: string; reason?: string }>; vintage: string | null }
+
+			expect(result.evidence_found).toEqual(
+				expect.arrayContaining([
+					{ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" },
+					{ type: "abstain", reason: "requires_build_local_layer", layer: "poi" },
+				])
+			)
+			expect(result.vintage).toBeNull()
+		})
+
+		it("returns the deps result verbatim", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
+
+			const result = await tool.handler({
+				geoid: "170010001001001",
+				technology_code: 50,
+				claimed_download_mbps: 100,
+				bdc_database_path: "/data/bdc.db",
+				poi_database_path: "/data/poi.db",
+			})
+
+			expect(result).toEqual({
+				claim: {
+					address: undefined,
+					point: undefined,
+					geoid: "170010001001001",
+					technologyCode: 50,
+					claimedDownloadMbps: 100,
+				},
+				evidence_found: [],
+				coverage_confidence: "high",
+				coverage_detail: { filing: "covered", physical: "covered" },
+				block_resolution: "geoid",
+				vintage: "2024-06",
 			})
 		})
 	})
