@@ -97,10 +97,13 @@
  *
  *   **This reader canonicalizes NOTHING (task 3 fix round 4).** `filer.db` is a sealed, shipped artifact
  *   with its own version line; `@mailwoman/record`'s `canonicalizeOrganizationName` lives in another
- *   workspace and its designation/jurisdiction packs are explicitly documented as extensible. Every fact
- *   this module reports is therefore READ from a column the builder wrote — including the naming
- *   provenance behind `display_names`, which round 3 briefly recomputed here and round 4 moved back into
- *   `filer_family.naming_node_id`. `mintFamilyID` (`family-id.ts`) remains the WRITER'S single derivation
+ *   workspace and its designation/jurisdiction packs are explicitly documented as extensible. So no fact
+ *   behind `families`/`display_names` is re-derived here — each is READ from a column the builder wrote,
+ *   including the naming provenance, which round 3 briefly recomputed here and round 4 moved back into
+ *   `filer_family.naming_node_id`. (Not a claim that this reader derives nothing at all: `primary_frn` is
+ *   openly this reader's own computation, labelled as such at its own docstring below. The distinction is
+ *   that a DERIVED conclusion is declared as one, while a re-derived canonical KEY silently disagrees with
+ *   the artifact that stored it.) `mintFamilyID` (`family-id.ts`) remains the WRITER'S single derivation
  *   rule and is still exported for callers that need to mint a `family_id` to query BY; nothing in the
  *   read path calls it.
  */
@@ -214,6 +217,14 @@ export interface FilerLookupResult {
 	 * family membership as of this date — `cluster`'s `null` means "no cluster has ever been computed for this node";
 	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact, not a
 	 * derived snapshot.
+	 *
+	 * **One entry per DISTINCT `(family_id, relationship)`, not one per `filer_family` row (task 3 fix round 4).** A
+	 * single membership can be asserted by several rows — two sources reporting it, or two raw spellings that
+	 * canonicalize to one `family_id` (`filer_family`'s PK carries `naming_node_id`, so those stay separate rows).
+	 * {@link FilerLookupFamily} has no field that could distinguish them, so undeduped they would arrive as
+	 * byte-identical entries and a caller counting this array would read repetition as multiplicity. The plurality is not
+	 * lost, only moved to the surfaces that can express it: every spelling appears in `display_names`, and per-member
+	 * `source`/`valid_from` provenance is on `familyRollup`'s members (`family-rollup.ts`).
 	 */
 	families: FilerLookupFamily[]
 	/**
@@ -443,9 +454,12 @@ export async function readFamilyMembers(
 	familyID: string,
 	asOf: string
 ): Promise<FamilyMemberRow[]> {
-	// The secondary `naming_node_id` sort (task 3 fix round 4): one member CAN now carry more than one row in the same
-	// family — one per raw spelling it reported (see `createFilerFamilyTable`'s PK docstring, `schema.ts`) — so
-	// `node_id` alone no longer totally orders this result, and `FamilyRollup.members` is asserted positionally.
+	// The secondary `naming_node_id` sort (task 3 fix round 4): `node_id` alone has never totally ordered this result — a
+	// member could already carry two rows in one family by reporting it under two SOURCES — and round 4's PK widening adds
+	// a second way (one row per raw spelling it reported; see `createFilerFamilyTable`'s PK docstring, `schema.ts`).
+	// Sorting on `naming_node_id` too makes the spelling case deterministic, which is what `FamilyRollup.members`'
+	// positional assertions need. It does NOT make the order total: two rows sharing both columns and differing only in
+	// `source` are still tied. Add a third sort key here before asserting positionally on a multi-source fixture.
 	return db
 		.selectFrom("filer_family")
 		.select(["node_id", "naming_node_id", "relationship", "source", "valid_from"])

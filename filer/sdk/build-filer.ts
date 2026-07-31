@@ -16,8 +16,10 @@
  *
  *   **Node/edge/family dedup — no staging table needed.** `filer_node` (PK `node_id`), `filer_edge` (PK
  *   `(from_node_id, to_node_id, source, valid_from)`, Task 4), and `filer_family` (PK `(node_id, family_id,
- *   source, valid_from)`, Task 1 — the identical composite shape as `filer_edge`'s) already carry the
- *   uniqueness constraint a staging table would otherwise exist to provide — so all three are written
+ *   naming_node_id, source, valid_from)` — Task 1's four-column key plus `naming_node_id`, added by 3b Task 3
+ *   fix round 4 so two raw spellings that canonicalize to one `family_id` stay two rows instead of colliding;
+ *   see `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is load-bearing) already
+ *   carry the uniqueness constraint a staging table would otherwise exist to provide — so all three are written
  *   directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. This *is* "the way edges are
  *   handled" the Task 4 review referenced: the composite PK, not a separate staging pass, is the dedup
  *   mechanism, and 3b Task 2's family-membership writes reuse it rather than growing a second staging table
