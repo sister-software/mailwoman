@@ -25,7 +25,6 @@ import { execFileSync } from "node:child_process"
 
 import { LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { extractOSMPOIs } from "@mailwoman/osm/sdk"
 import { Box, Text } from "ink"
 import zod from "zod"
 
@@ -124,6 +123,13 @@ const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) 
 			// category-sparse — a few thousand rows even for a whole country — and the array is walked
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` seam.
 			const rows: POISourceRow[] = []
+
+			// DYNAMIC import, load-bearing: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
+			// pending — see osm/README.md), and Pastel loads every command module eagerly on --help,
+			// so a top-level import breaks the whole published CLI on a clean install (caught by the
+			// smoke test's clean-install leg, 2026-07-31). The osm source branch is build-local by
+			// design; it may only resolve its SDK when actually invoked.
+			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {
 				// Task 3 hand-off from task 2: extractOSMPOIs yields `country: ""` (a bare OSM feature
