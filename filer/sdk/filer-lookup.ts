@@ -29,6 +29,18 @@
  *   could fold an inferred relationship into the authoritative `cluster` field: the same guarantee
  *   `cluster-filers.ts` makes on the write side (decision 5), restated here on the read side.
  *
+ *   **`cluster` is `asOf`-scoped too (review fix, IMPORTANT-2).** `filer_cluster` itself carries no
+ *   temporal columns (`schema.ts`) — `cluster-filers.ts`'s `clusterAuthoritativeComponents` recomputes it
+ *   from whatever the CURRENT edge graph looks like on every run, with no `asOf` concept of its own. Read
+ *   unguarded, that snapshot would let `cluster` assert full present-day membership at ANY `asOf` date,
+ *   directly contradicting `identifiers`'s own scoping (reviewer probe: `asOf` before any connecting edge
+ *   existed returned `identifiers: []` yet `cluster` still asserted two nodes were one entity — the same
+ *   self-contradiction the primary-FRN temporal fix, above, closed for that probe). {@linkcode
+ *   deriveClusterMembersAsOf} closes this: the static snapshot's member list is filtered down to whatever
+ *   an authoritative edge, in force `asOf` the query date, actually corroborates. A node whose static
+ *   cluster membership has no such corroborating edge reports `cluster: null` for that `asOf`, not the
+ *   full snapshot — see {@link FilerLookupCluster}'s own docstring.
+ *
  *   **Primary-FRN rule (gate 3, decision 6).** A `bdc_provider_id` node can carry more than one
  *   authoritative FRN edge (Task 3: one `provider_id` can appear on multiple provider-list rows under
  *   different FRNs) — `identifiers` reports ALL of them, never collapsed. When more than one FRN
@@ -61,7 +73,7 @@ import {
 	type FilerDatabase,
 	type FilerNodeTable,
 } from "../schema.ts"
-import type { FRN } from "./frn.ts"
+import { isFRN, type FRN } from "./frn.ts"
 
 /**
  * Exactly one of `frn`/`form499ID`/`bdcProviderID` is required — {@linkcode filerLookup} throws otherwise (matching
@@ -87,8 +99,11 @@ export interface FilerLookupIdentifier {
 }
 
 /**
- * The queried node's AUTHORITATIVE cluster (gate 2) — `null` when clustering (`cluster-filers.ts`) has never been run,
- * or the node carries no authoritative cluster assignment. `members` are `filer_node.node_id`s.
+ * The queried node's AUTHORITATIVE cluster (gate 2), `asOf`-scoped (review fix, IMPORTANT-2 — see
+ * {@linkcode deriveClusterMembersAsOf}) — `null` when clustering (`cluster-filers.ts`) has never been run, the node
+ * carries no authoritative cluster assignment, or (the asOf-scoping case) no authoritative edge corroborating the
+ * assignment is in force as of the query's `asOf` date. `members` are `filer_node.node_id`s, and may be a PROPER SUBSET
+ * of the full `filer_cluster` snapshot's membership when the component only partially held together as of that date.
  */
 export interface FilerLookupCluster {
 	cluster_id: string
@@ -318,6 +333,97 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
 }
 
 /**
+ * Filters a `filer_cluster` cluster's STATIC member list down to the subset reachable from the queried node via
+ * `assertion: "authoritative"` `filer_edge` rows in force `asOf` a date (review fix, IMPORTANT-2 — `filer_cluster`
+ * asOf-scoping). `filer_cluster` itself carries no temporal columns at all (`schema.ts`) —
+ * `clusterAuthoritativeComponents` (`cluster-filers.ts`) recomputes it from whatever the CURRENT edge graph looks like
+ * on every run, with no `asOf` concept of its own. Left unguarded, `filerLookup`'s `cluster` field would report full
+ * present-day membership at ANY `asOf` date, directly contradicting `identifiers`'s own `asOf` scoping — reviewer
+ * probe: `asOf 2020-01-01` returned `identifiers: []` (nothing in force that early) yet `cluster` still asserted two
+ * members were one entity, the same self-contradiction the primary-FRN temporal fix (see
+ * {@linkcode readFRNFilingCandidates}'s docstring) closed for that probe.
+ *
+ * Bounded to the CANDIDATE members `filer_cluster` already names — a plain `WHERE from_node_id/to_node_id IN
+ * (candidateMembers)` query, not a whole-graph traversal. Re-deriving the entire authoritative component graph from
+ * scratch on every READ (the way `cluster-filers.ts`'s own `readAuthoritativeGroups` does on every clustering RUN)
+ * would be redundant work and a real perf regression for a large crosswalk; restricting the BFS to the snapshot's own
+ * member list keeps this a small, node-local query, matching every other query in this reader.
+ *
+ * Returns `null` when the queried node has NO authoritative edge, among this candidate set, in force `asOf` the date —
+ * i.e. nothing here corroborates the snapshot's cluster assignment as of that date, so this reports "no cluster
+ * observed" rather than asserting one the caller has no `asOf`-scoped evidence for. Otherwise returns the reachable
+ * subset, sorted (mirrors `cluster-filers.ts`'s own `.orderBy("node_id")`/`.toSorted()` convention) — which may be a
+ * PROPER subset of `candidateMembers` when the full component only partially held together as of that date.
+ */
+async function deriveClusterMembersAsOf(
+	db: DatabaseClient<FilerDatabase>,
+	nodeID: string,
+	candidateMembers: readonly string[],
+	asOf: string
+): Promise<string[] | null> {
+	// A singleton candidate set (nodeID alone, no other member ever shared this authoritative component) asserts no
+	// cross-node relationship to corroborate against `asOf` in the first place — `null`, not a trivial one-member
+	// cluster, matching this reader's existing "no authoritative cluster assignment" null case.
+	if (candidateMembers.length <= 1) return null
+
+	const edges = await db
+		.selectFrom("filer_edge")
+		.select(["from_node_id", "to_node_id"])
+		.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+		.where("from_node_id", "in", candidateMembers)
+		.where("to_node_id", "in", candidateMembers)
+		.where("valid_from", "<=", asOf)
+		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
+		.execute()
+
+	const adjacency = new Map<string, Set<string>>(candidateMembers.map((member) => [member, new Set<string>()]))
+
+	for (const edge of edges) {
+		adjacency.get(edge.from_node_id)?.add(edge.to_node_id)
+		adjacency.get(edge.to_node_id)?.add(edge.from_node_id)
+	}
+
+	const visited = new Set<string>([nodeID])
+	const queue = [nodeID]
+
+	while (queue.length) {
+		const current = queue.shift()!
+
+		for (const neighbor of adjacency.get(current) ?? []) {
+			if (!visited.has(neighbor)) {
+				visited.add(neighbor)
+				queue.push(neighbor)
+			}
+		}
+	}
+
+	if (visited.size <= 1) return null
+
+	return [...visited].toSorted()
+}
+
+/**
+ * Validates an `identifiers[]` entry's `value` is a real {@link FRN} before it feeds
+ * {@linkcode readFRNFilingCandidates} (review fix, minor) — replaces a bare `identifier.value as FRN` type assertion,
+ * which asserted the shape without ever checking it. Every `frn`-typed `identifiers[]` entry is minted from a
+ * `filer_node.identifier_value` that the builder only ever writes via {@linkcode mintFRNNodeID}/{@linkcode toFRN}
+ * (`build-filer.ts`, `frn.ts`) — a real FRN value here is an invariant the crosswalk's own writers guarantee, not a
+ * possibility this reader ought to silently trust. A miss means a corrupted crosswalk, the same class of failure
+ * {@linkcode nodeOrThrow} guards against, so this is loud rather than passing a malformed value into the
+ * filing-candidate query.
+ */
+function assertFRNIdentifier(value: string): FRN {
+	if (!isFRN(value)) {
+		throw new Error(
+			`filerLookup: an frn-typed identifier carries ${JSON.stringify(value)}, which is not a valid FRN ` +
+				`(expected a zero-padded 10-digit string) — corrupted crosswalk`
+		)
+	}
+
+	return value
+}
+
+/**
  * Read the identity crosswalk for one identifier — see the module docstring for the full contract (XOR query,
  * manifest-first, temporal scoping, the authoritative/inferred split, and the primary-FRN rule).
  */
@@ -411,7 +517,20 @@ export async function filerLookup(
 			.orderBy("node_id")
 			.execute()
 
-		cluster = { cluster_id: clusterRow.cluster_id, members: memberRows.map((row) => row.node_id) }
+		// IMPORTANT-2 (review fix): filer_cluster carries no temporal columns of its own — restrict the static
+		// snapshot's membership down to whatever's actually corroborated by an authoritative edge in force `asOf`
+		// this query's date, so `cluster` can never contradict `identifiers`'s own asOf scoping. See
+		// deriveClusterMembersAsOf's docstring.
+		const membersAsOf = await deriveClusterMembersAsOf(
+			db,
+			nodeID,
+			memberRows.map((row) => row.node_id),
+			asOf
+		)
+
+		if (membersAsOf) {
+			cluster = { cluster_id: clusterRow.cluster_id, members: membersAsOf }
+		}
 	}
 
 	// Gate 2: `inferred_links` is read ONLY from assertion = 'inferred' rows, entirely separately from `cluster`
@@ -442,7 +561,7 @@ export async function filerLookup(
 	if (frnIdentifiers.length > 1) {
 		const candidates = await readFRNFilingCandidates(
 			db,
-			frnIdentifiers.map((identifier) => identifier.value as FRN),
+			frnIdentifiers.map((identifier) => assertFRNIdentifier(identifier.value)),
 			asOf
 		)
 

@@ -322,7 +322,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		expect(authoritativeBefore.get(FRN_B)).toBe(authoritativeBefore.get(FORM499_B))
 		expect(authoritativeBefore.get(FRN_A)).not.toBe(authoritativeBefore.get(FRN_B))
 
-		const inferredResult = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const inferredResult = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		// A nameless node (FORM499_D) is excluded from the candidate universe entirely.
 		expect(inferredResult.recordsConsidered).toBe(3)
@@ -377,7 +377,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 			"Citizens Telecom Corporation"
 		)
 
-		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		expect(result.recordsConsidered).toBe(4)
 		expect(result.linkedClusters).toBe(0)
@@ -417,7 +417,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		const authoritativeBefore = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeBefore.get(nodeAID)).toBe(authoritativeBefore.get(nodeBID))
 
-		const inferredResult = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const inferredResult = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		expect(inferredResult.linkedClusters).toBe(1)
 		expect(inferredResult.links).toBeGreaterThanOrEqual(1)
@@ -444,11 +444,48 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		expect(authoritativeResult.clusters).toBe(1)
 	})
 
+	it("source_vintage stays the human vintage LABEL while valid_from is the SEPARATE ISO date — the label never reaches valid_from (review fix, round N, CRITICAL)", async () => {
+		using db = openMemory()
+		await createAllTables(db)
+
+		const nodeAID = `${FilerIdentifierType.Form499ID}:960`
+		const nodeBID = `${FilerIdentifierType.Form499ID}:961`
+
+		await seedSharedFRNPair(db, "9990000001", "960", "961", {
+			a: "Vintage Split Co Inc",
+			b: "Vintage Split Co LLC",
+		})
+
+		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
+
+		const inferredEdges = await db
+			.selectFrom("filer_edge")
+			.selectAll()
+			.where("assertion", "=", FilerEdgeAssertion.Inferred)
+			.where((eb) => eb.or([eb("from_node_id", "=", nodeAID), eb("from_node_id", "=", nodeBID)]))
+			.execute()
+
+		expect(inferredEdges).toHaveLength(1)
+		expect(inferredEdges[0]?.source_vintage).toBe("2026-cluster-v1")
+		expect(inferredEdges[0]?.valid_from).toBe("2026-07-01")
+		expect(inferredEdges[0]?.valid_from).not.toBe("2026-cluster-v1")
+		expect(inferredEdges[0]?.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+	})
+
+	it("throws when validFrom is not an ISO date — a vintage label must never reach valid_from", async () => {
+		using db = openMemory()
+		await createAllTables(db)
+
+		await expect(
+			clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-cluster-v1" })
+		).rejects.toThrow(/not an ISO YYYY-MM-DD date/)
+	})
+
 	it("never writes an inferred assignment for a node with no legal_name attribute", async () => {
 		using db = openMemory()
 		await seedFixture(db)
 
-		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		const row = await db
 			.selectFrom("filer_cluster")
@@ -521,7 +558,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 			})
 			.execute()
 
-		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(result.recordsConsidered).toBe(1)
 
 		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
@@ -534,7 +571,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		await seedFixture(db)
 		await clusterAuthoritativeComponents(db)
 
-		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		const clusterRowsFirst = await db
 			.selectFrom("filer_cluster")
@@ -548,7 +585,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 			.where("assertion", "=", FilerEdgeAssertion.Inferred)
 			.execute()
 
-		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		const clusterRowsSecond = await db
 			.selectFrom("filer_cluster")
@@ -623,7 +660,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 
 		// If the EARLIEST name ("Legacy Systems Co") were picked instead of the latest, the canonical keys
 		// ("legacy systems co" vs "new name") would never co-block and no link would form.
-		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(result.recordsConsidered).toBe(2)
 		expect(result.linkedClusters).toBe(1)
 
@@ -643,7 +680,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 		await seedSharedFRNPair(db, "7000000007", "700", "701", { a: "Merge Co Corp", b: "Merge Co Inc" }, "2026-01-01")
 
 		// v1: the names collide (canonical "merge co" both sides) — a link forms.
-		const v1 = await clusterInferredLinks(db, { sourceVintage: "2026-01-01" })
+		const v1 = await clusterInferredLinks(db, { sourceVintage: "2026-01-01", validFrom: "2026-01-01" })
 		expect(v1.linkedClusters).toBe(1)
 
 		const edgesAfterV1 = await db
@@ -669,7 +706,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 			})
 			.execute()
 
-		const v2 = await clusterInferredLinks(db, { sourceVintage: "2026-02-01" })
+		const v2 = await clusterInferredLinks(db, { sourceVintage: "2026-02-01", validFrom: "2026-02-01" })
 		expect(v2.linkedClusters).toBe(0)
 
 		// filer_cluster correctly reflects the split.
@@ -698,7 +735,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 
 		await seedSharedFRNPair(db, "6000000006", "600", "601", { a: "Rerun Co Corp", b: "Rerun Co Inc" }, "2026-Q1")
 
-		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		const firstRun = await db
 			.selectFrom("filer_edge")
@@ -709,7 +746,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 		expect(firstRun).toHaveLength(1)
 		expect(firstRun[0]?.valid_to).toBeNull()
 
-		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		const secondRun = await db
 			.selectFrom("filer_edge")
@@ -719,7 +756,9 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
-		expect(secondRun[0]?.valid_from).toBe("2026-cluster-v1")
+		// valid_from is the SEPARATE, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label
+		// (review fix, round N, CRITICAL).
+		expect(secondRun[0]?.valid_from).toBe("2026-07-01")
 	})
 
 	it("supersedes its own prior inferred edges on a SAME-vintage REBUILD after corrected input (review fix, round 2)", async () => {
@@ -732,7 +771,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 		await seedSharedFRNPair(db, "7500000007", "750", "751", { a: "Rebuild Co Corp", b: "Rebuild Co Inc" }, "2026-Q1")
 
 		// First build at v1: names collide, a link forms.
-		const firstBuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const firstBuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(firstBuild.linkedClusters).toBe(1)
 
 		const edgesAfterFirstBuild = await db
@@ -758,7 +797,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 			.execute()
 
 		// Rebuild at the SAME sourceVintage as before.
-		const rebuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		const rebuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(rebuild.linkedClusters).toBe(0)
 
 		// filer_cluster correctly reflects the split...
@@ -789,7 +828,7 @@ describe("clusterFilers (3a Task 6, orchestrator)", () => {
 		// genuine (post-veto) link to find.
 		await seedSharedFRNPair(db, "9990009990", "990", "991", { a: "Orchestrator Co Corp", b: "Orchestrator Co Inc" })
 
-		const result = await clusterFilers(db, { sourceVintage: "2026-cluster-v1" })
+		const result = await clusterFilers(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
 		expect(result.authoritative.clusters).toBe(6)
 		expect(result.inferred.linkedClusters).toBe(1)

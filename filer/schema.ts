@@ -14,7 +14,9 @@
  *   `filer_node` is the crosswalk's join surface: one row per identifier instance (an FRN, a Form 499
  *   ID, a SPIN, a BDC `provider_id`, a holding- or management-company name), keyed on the synthetic
  *   `node_id = "${identifier_type}:${identifier_value}"`. `filer_edge` asserts a relationship between two
- *   nodes — "this FRN and this SPIN are the same filer" — as reported by one source at one vintage.
+ *   nodes — "this FRN and this Form 499 ID are the same filer" — as reported by one source at one
+ *   vintage. (`SPIN` is a reserved identifier namespace — see {@link FilerIdentifierType}'s own docstring
+ *   for why it carries no populated node in 3a.)
  *
  *   Decision 7 / gate 1 (load-bearing): `valid_from` is MANDATORY on every edge (`valid_to` is the
  *   nullable half of the pair), and the primary key is the 4-tuple `(from_node_id, to_node_id, source,
@@ -39,9 +41,15 @@ import type { Kysely } from "kysely"
 
 /**
  * The identifier namespaces a `filer_node.node_id` can be minted from. No enum (repo rule): `FRN` and `Form499ID` come
- * from the FCC Form 499 filer database (3a decisions 3, 8); `SPIN` and `BDCProviderID` come from the BDC provider list
- * (decision 6); `HoldingCompanyName` and `ManagementCompanyName` cover free-text fields on either source that carry no
- * stable ID of their own.
+ * from the FCC Form 499 filer database (3a decisions 3, 8); `BDCProviderID` comes from the BDC provider list (decision
+ * 6); `HoldingCompanyName` and `ManagementCompanyName` cover free-text fields on either source that carry no stable ID
+ * of their own.
+ *
+ * `SPIN` is DEFINED here but UNPOPULATED in 3a (review fix, minor — a prior docstring here incorrectly implied it was
+ * sourced from the provider list or a 499 row): neither of `filer/sdk`'s two 3a parsers (`form499.ts`'s `Form499Row`,
+ * `provider-list.ts`'s `ProviderListRow`) carries a SPIN field, and `build-filer.ts` mints no `spin:` node — there is
+ * no code path in this phase that populates one. The namespace is reserved for whichever future task adds a source that
+ * actually carries a SPIN, not a claim that any `filer.db` `buildFilerDatabase` produces today has SPIN nodes in it.
  */
 export const FilerIdentifierType = {
 	FRN: "frn",
@@ -56,8 +64,8 @@ export type FilerIdentifierType = (typeof FilerIdentifierType)[keyof typeof File
 
 /**
  * How a `filer_edge` relationship was established. `Authoritative` — the source document states the relationship
- * directly (e.g. a Form 499 filing lists both an FRN and a SPIN for the same filer). `Inferred` — derived by matching
- * (name/address comparators); carries `match_score` and `evidence`.
+ * directly (e.g. a Form 499 filing lists both an FRN and a Form 499 ID for the same filer). `Inferred` — derived by
+ * matching (name/address comparators); carries `match_score` and `evidence`.
  */
 export const FilerEdgeAssertion = {
 	Authoritative: "authoritative",

@@ -115,6 +115,7 @@ describe("buildFilerDatabase", () => {
 				providerRows: providerFixtureRows(),
 				out,
 				sourceVintage: "2026-Q1",
+				validFrom: "2026-01-31",
 				buildSHA: "deadbeef",
 			})
 
@@ -213,6 +214,7 @@ describe("buildFilerDatabase", () => {
 				providerRows: providerFixtureRows(),
 				out,
 				sourceVintage: "2026-06-30",
+				validFrom: "2026-06-30",
 				buildSHA: "deadbeef",
 			})
 
@@ -244,6 +246,7 @@ describe("buildFilerDatabase", () => {
 				providerRows: providerFixtureRows(),
 				out,
 				sourceVintage: "2026-06-30",
+				validFrom: "2026-06-30",
 				buildSHA: "deadbeef",
 			})
 
@@ -265,7 +268,7 @@ describe("buildFilerDatabase", () => {
 		}
 	})
 
-	it("every edge carries non-empty provenance (source, source_vintage, assertion, valid_from)", async () => {
+	it("every edge carries non-empty provenance (source, source_vintage, assertion, valid_from), and valid_from is always ISO YYYY-MM-DD even when sourceVintage is a non-ISO label", async () => {
 		await setupScratch()
 
 		try {
@@ -274,6 +277,7 @@ describe("buildFilerDatabase", () => {
 				providerRows: providerFixtureRows(),
 				out,
 				sourceVintage: "2026-Q1",
+				validFrom: "2026-01-31",
 				buildSHA: "deadbeef",
 			})
 
@@ -287,6 +291,9 @@ describe("buildFilerDatabase", () => {
 				expect(edge.source_vintage.length).toBeGreaterThan(0)
 				expect(edge.assertion).toBe("authoritative")
 				expect(edge.valid_from.length).toBeGreaterThan(0)
+				// sourceVintage above ("2026-Q1") is deliberately NOT ISO — valid_from must never inherit that shape
+				// (review fix, CRITICAL): every edge's valid_from is ISO YYYY-MM-DD regardless of source.
+				expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 			}
 		} finally {
 			await teardownScratch()
@@ -336,6 +343,7 @@ describe("buildFilerDatabase", () => {
 				providerRows: providerFixtureRows(),
 				out,
 				sourceVintage: "2026-Q1",
+				validFrom: "2026-01-31",
 				buildSHA: "cafebabe",
 			})
 
@@ -360,6 +368,7 @@ describe("buildFilerDatabase", () => {
 				providerRows: providerFixtureRows(),
 				out,
 				sourceVintage: "2026-Q1",
+				validFrom: "2026-01-31",
 				buildSHA: "cafebabe",
 			})
 
@@ -440,6 +449,7 @@ describe("buildFilerDatabase", () => {
 					providerRows: malformedRows,
 					out,
 					sourceVintage: "2026-Q1",
+					validFrom: "2026-01-31",
 					buildSHA: "deadbeef",
 				})
 			).rejects.toThrow(/malformed.*empty frn/i)
@@ -612,6 +622,7 @@ describe("buildFilerDatabase", () => {
 					providerRows: [{ providerID: 500_001, frn: toFRN("0007777777")!, holdingCompany: "Old Co" }],
 					out,
 					sourceVintage: "2026-Q1",
+					validFrom: "2026-01-31",
 					buildSHA: "deadbeef",
 				})
 
@@ -619,6 +630,7 @@ describe("buildFilerDatabase", () => {
 					providerRows: [{ providerID: 500_002, frn: toFRN("0008888888")!, holdingCompany: "New Co" }],
 					out,
 					sourceVintage: "2026-Q2",
+					validFrom: "2026-04-30",
 					buildSHA: "deadbeef",
 				})
 

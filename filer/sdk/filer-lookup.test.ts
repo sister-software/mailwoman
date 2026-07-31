@@ -93,6 +93,16 @@ function authoritativeEdge(
 	}
 }
 
+/**
+ * Opens a REAL (on-disk, sealed) `filer.db` read-only — mirrors `build-filer.test.ts`'s own `openFilerDB` helper. Used
+ * only by the tests that go through {@linkcode buildFilerDatabase} itself (gate 1's builder-guard sub-tests, and the
+ * fixture-blindness-closing gate 4 test below) rather than the in-memory hand-written fixtures the rest of this suite
+ * uses.
+ */
+function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
+	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(path, { readOnly: true }) })
+}
+
 let scratch: string | undefined
 
 async function withScratchDir<T>(fn: (out: string) => Promise<T>): Promise<T> {
@@ -309,6 +319,7 @@ describe("§7-3a gates", () => {
 						providerRows: malformedRows,
 						out,
 						sourceVintage: "2026-Q1",
+						validFrom: "2026-01-31",
 						buildSHA: "deadbeef",
 					})
 				).rejects.toThrow(/malformed.*empty frn/i)
@@ -399,6 +410,58 @@ describe("§7-3a gates", () => {
 
 			expect(resultB.cluster).toEqual({ cluster_id: "authoritative:B", members: [FRN_B, FORM_B].toSorted() })
 			expect(resultB.inferred_links).toEqual([{ to: FORM_A, score: -5, source: "cluster-filers" }])
+		})
+
+		it("`cluster` is asOf-scoped too — a query before the connecting authoritative edge existed reports null, matching identifiers' own emptiness at that date, instead of asserting full present-day membership regardless (review fix, IMPORTANT-2)", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const FRN_C = `${FilerIdentifierType.FRN}:3000000003`
+			const FORM_C = `${FilerIdentifierType.Form499ID}:3000`
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_C, identifier_type: FilerIdentifierType.FRN, identifier_value: "3000000003" },
+					{ node_id: FORM_C, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "3000" },
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values([
+					authoritativeEdge({
+						from_node_id: FRN_C,
+						to_node_id: FORM_C,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+					}),
+				])
+				.execute()
+
+			// Fixture-built directly, exactly as clusterAuthoritativeComponents WOULD leave it — filer_cluster carries
+			// NO temporal columns of its own (schema.ts), so this snapshot alone can't distinguish "asOf 2020" from
+			// "asOf 2026".
+			await db
+				.insertInto("filer_cluster")
+				.values([
+					{ node_id: FRN_C, cluster_id: "authoritative:C", assertion: FilerEdgeAssertion.Authoritative },
+					{ node_id: FORM_C, cluster_id: "authoritative:C", assertion: FilerEdgeAssertion.Authoritative },
+				])
+				.execute()
+
+			// Reviewer probe: asOf BEFORE the connecting edge's valid_from — identifiers is already empty here...
+			const before = await filerLookup(db, { form499ID: "3000", asOf: "2020-01-01" })
+			expect(before.identifiers).toEqual([])
+			// ...and cluster must NOT contradict that by asserting full present-day membership anyway.
+			expect(before.cluster).toBeNull()
+
+			// asOf AFTER the edge's valid_from — both identifiers and cluster agree the relationship holds.
+			const after = await filerLookup(db, { form499ID: "3000", asOf: "2026-06-01" })
+			expect(after.identifiers.length).toBeGreaterThan(0)
+			expect(after.cluster).toEqual({ cluster_id: "authoritative:C", members: [FRN_C, FORM_C].toSorted() })
 		})
 	})
 
@@ -654,6 +717,52 @@ describe("§7-3a gates", () => {
 	})
 
 	describe("4. Temporal scoping", () => {
+		/**
+		 * Closes gate 4's own fixture blindness (review fix, CRITICAL): every OTHER gate-4 fixture above hand-writes ISO
+		 * `valid_from` directly into `filer_edge`, so none of them could ever catch a builder that writes a NON-ISO vintage
+		 * LABEL into `valid_from` — exactly what `buildFilerDatabase` did pre-fix for provider-list edges
+		 * (`source_vintage`/`valid_from` both took `options.sourceVintage` verbatim). This test goes through the REAL
+		 * builder instead, with `sourceVintage: "2026-Q2"` — the realistic provider-list vintage shape
+		 * `cluster-filers.ts`'s own module docstring names, and the exact shape 20 of this branch's pre-fix tests passed
+		 * under — plus a SEPARATE, always-ISO `validFrom`. If the ISO guard (or the sourceVintage/validFrom split) is ever
+		 * reverted, `valid_from` reverts to the literal string `"2026-Q2"`, which sorts LEXICOGRAPHICALLY ABOVE
+		 * `"2026-12-31"` (`"Q"` > any ASCII digit) — the `asOf`-scoped read below would then silently exclude the edge, and
+		 * this test would fail.
+		 */
+		it("REAL builder path: a non-ISO sourceVintage never leaks into valid_from — a provider-list edge built via buildFilerDatabase stays findable asOf a real date", async () => {
+			await withScratchDir(async (out) => {
+				await buildFilerDatabase({
+					providerRows: [{ providerID: 600_001, frn: toFRN("0006000001")!, holdingCompany: "Realbuild Co" }],
+					out,
+					sourceVintage: "2026-Q2",
+					validFrom: "2026-06-30",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const result = await filerLookup(db, { bdcProviderID: 600_001, asOf: "2026-12-31" })
+
+				// Plain loop, not .filter().map() — keeps this callback within max-nested-callbacks under
+				// withScratchDir's own async closure.
+				const frnValues: string[] = []
+				const holdingValues: string[] = []
+
+				for (const identifier of result.identifiers) {
+					if (identifier.type === FilerIdentifierType.FRN) {
+						frnValues.push(identifier.value)
+					}
+
+					if (identifier.type === FilerIdentifierType.HoldingCompanyName) {
+						holdingValues.push(identifier.value)
+					}
+				}
+
+				expect(frnValues).toEqual(["0006000001"])
+				expect(holdingValues).toEqual(["Realbuild Co"])
+			})
+		})
+
 		const FRN_NODE = `${FilerIdentifierType.FRN}:9999999999`
 		const OPEN_TARGET = `${FilerIdentifierType.Form499ID}:7000`
 		const CLOSED_TARGET = `${FilerIdentifierType.HoldingCompanyName}:Closed Co`

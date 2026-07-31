@@ -58,8 +58,12 @@
  *     both take the row's own `lastFiledAt` (decision 7 — the only per-row date 499 offers).
  *   - From a {@link ProviderListRow}: `bdcProviderID↔FRN` (always — `frn` is never null on this row
  *     shape) and `bdcProviderID↔holdingCompanyName` (when `holdingCompany` is non-null). `source_vintage`
- *     and `valid_from` both take `options.sourceVintage` (decision 7 — the provider list carries no
- *     per-row date, only a whole-file vintage).
+ *     takes `options.sourceVintage` (decision 7 — the provider list carries no per-row date, only a
+ *     whole-file vintage) but `valid_from` takes the SEPARATE `options.validFrom` (review fix, round N,
+ *     CRITICAL) — see {@link BuildFilerOptions.validFrom}'s docstring for why the two must never be the
+ *     same field: `sourceVintage` is a free-text human label (`"2026-Q2"`) that is not guaranteed
+ *     ISO-sortable, and `valid_from` participates in every downstream `asOf` predicate as a plain string
+ *     comparison.
  *
  *   The direction convention (documented, not semantically load-bearing — `filer_edge` asserts symmetric
  *   sameness, and the `to_node_id` index makes either traversal direction cheap): FRN is `from` for
@@ -148,8 +152,11 @@ export interface BuildFilerOptions {
 	out: string
 	/**
 	 * The build's overall vintage — becomes the manifest's `version` AND `source_vintage` (filer.db has no independent
-	 * versioning yet, same deferral `build-bdc.ts` makes for `bdc.db`'s `release`), AND the `source_vintage`/`valid_from`
-	 * for every provider-list-derived edge (decision 7 — the provider list carries no per-row date of its own).
+	 * versioning yet, same deferral `build-bdc.ts` makes for `bdc.db`'s `release`), AND the `source_vintage` (only — see
+	 * {@link BuildFilerOptions.validFrom} for `valid_from`) for every provider-list-derived edge (decision 7 — the
+	 * provider list carries no per-row date of its own). A free-text human vintage LABEL (`"2026-Q2"`) is fine here —
+	 * this field is never written into a temporal (`valid_from`/`valid_to`) column, so it carries no ISO-shape
+	 * requirement of its own.
 	 *
 	 * SNAPSHOT semantics (see the module docstring's MINOR-B note): calling {@linkcode buildFilerDatabase} again against
 	 * the SAME `out` with a DIFFERENT `sourceVintage` REPLACES the artifact — it does not accumulate the earlier
@@ -157,6 +164,22 @@ export interface BuildFilerOptions {
 	 * artifact; that would require rows spanning multiple vintages passed into a SINGLE call.
 	 */
 	sourceVintage: string
+	/**
+	 * ISO `YYYY-MM-DD` date for `valid_from` on every provider-list-derived edge (review fix, round N, CRITICAL) —
+	 * deliberately a SEPARATE field from {@link BuildFilerOptions.sourceVintage}, never derived from it. The provider
+	 * list carries no per-row date, so decision 7 originally used the whole-file `sourceVintage` for BOTH
+	 * `source_vintage` and `valid_from` — but `sourceVintage` is a free-text human vintage label (e.g. `"2026-Q2"`), not
+	 * guaranteed ISO-sortable, while `valid_from` participates in every downstream `asOf`-scoped predicate
+	 * (`filer-lookup.ts`'s `valid_from <= asOf`) as a plain STRING comparison. `"2026-Q2"` sorts lexicographically ABOVE
+	 * any real ISO date this century (`"Q"` > any ASCII digit) — writing it into `valid_from` silently breaks every
+	 * `asOf`-scoped read against that edge (reviewer probe: a fully populated filer.db built with `sourceVintage:
+	 * "2026-Q2"` returned `identifiers: []` from `filerLookup`). Validated via {@linkcode assertISODate}. REQUIRED when
+	 * `providerRows`/`providerListPath` is supplied (thrown otherwise); ignored when no provider-list source is given.
+	 * Deliberately NOT derived automatically from `sourceVintage` when omitted — guessing a specific date from an
+	 * arbitrary label (which day inside "Q2"?) would be a fabrication this builder refuses to make; the caller, who knows
+	 * the file's actual publish/effective date, supplies it explicitly.
+	 */
+	validFrom?: string
 	/**
 	 * `git rev-parse --short HEAD` — passed in by the command, not read from the repo here.
 	 */
@@ -282,6 +305,62 @@ function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: num
 	return lastFiledAt
 }
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Validates `value` is an ISO `YYYY-MM-DD` date before it is written into `valid_from` (or `valid_to`) —
+ * {@linkcode assertLastFiledAt}'s companion guard, in the same loud class, applied at EVERY site in this builder (and
+ * `cluster-filers.ts`, which imports this function) that writes either temporal column (review fix, round N, CRITICAL).
+ * Exported because both files need the SAME rule, not two drifting copies of it.
+ *
+ * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as a
+ * plain STRING comparison — correct only when every value compared is drawn from the same ISO-sortable `YYYY-MM-DD`
+ * scheme. `source_vintage` is free to stay a human vintage LABEL (`"2026-Q2"`, `"2026-cluster-v1"`) — that plurality is
+ * exactly what the column is for (decision 7) — but that same label is NOT safe to also write into `valid_from`:
+ * `"2026-Q2"` sorts lexicographically ABOVE any real ISO date this century (the ASCII code for `"Q"` is greater than
+ * every digit's), so an edge dated that way would silently fail `valid_from <= asOf` at every real-world `asOf`, and
+ * `filerLookup` would report the identifier crosswalk as EMPTY against a filer.db that actually has the data (reviewer
+ * probe, this file's final 3a review: a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned
+ * `identifiers: []`/`primary_frn: null`).
+ *
+ * Thrown, not coerced: there is no honest way to turn a whole-file vintage label into a per-edge date without
+ * fabricating one. The caller must supply a real ISO date through a field dedicated to that purpose
+ * ({@link BuildFilerOptions.validFrom}, `ClusterFilersOptions.validFrom`) instead of relying on this function (or any
+ * other) to guess one from a label.
+ */
+export function assertISODate(value: string, context: string): string {
+	if (!ISO_DATE_PATTERN.test(value)) {
+		throw new Error(
+			`buildFilerDatabase: malformed ${context} — ${JSON.stringify(value)} is not an ISO YYYY-MM-DD date. ` +
+				`valid_from/valid_to must always be ISO-sortable dates (decision 7 / gate 1's asOf predicate is a ` +
+				`plain string comparison over them) — a vintage LABEL like "2026-Q2" sorts lexicographically ABOVE ` +
+				`any real ISO date and would silently break every asOf-scoped read against the edge it's written to.`
+		)
+	}
+
+	return value
+}
+
+/**
+ * Requires + ISO-validates {@link BuildFilerOptions.validFrom} — called once, up front, only when a provider-list source
+ * is actually supplied (review fix, round N, CRITICAL). Fails fast, before any file/DB I/O, matching the "pass at least
+ * one … source" options-level guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check
+ * (an options contract violation, not a malformed data row), so it is validated at the same point in the function, not
+ * lazily inside the provider-row loop.
+ */
+function assertProviderValidFrom(validFrom: string | undefined): string {
+	if (validFrom === undefined) {
+		throw new Error(
+			"buildFilerDatabase: options.validFrom is required when a provider-list source (providerRows/" +
+				"providerListPath) is supplied — provider-list edges need an ISO YYYY-MM-DD valid_from that is " +
+				'SEPARATE from sourceVintage (which may stay a human vintage label like "2026-Q2"); see ' +
+				"BuildFilerOptions.validFrom's docstring for why the two must never be the same field."
+		)
+	}
+
+	return assertISODate(validFrom, "options.validFrom")
+}
+
 /**
  * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer — mirrors `peekProviderID`'s
  * `Number.isSafeInteger` guard (`build-bdc.ts`:259). `ProviderListRow.providerID` is already validated by
@@ -316,6 +395,11 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	if (!hasForm499Source && !hasProviderSource) {
 		throw new Error("buildFilerDatabase: pass at least one of form499Rows/form499Path or providerRows/providerListPath")
 	}
+
+	// Options-level guard, fails fast (before any file/DB I/O) — see assertProviderValidFrom's docstring. `null` when
+	// no provider-list source was supplied: the provider-row loop below never runs in that case, so validFrom is never
+	// read.
+	const providerValidFrom = hasProviderSource ? assertProviderValidFrom(options.validFrom) : null
 
 	const buildingPath = `${options.out}.building`
 
@@ -390,8 +474,13 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
 		// Guarded ONCE per row, before anything below writes it into source_vintage/valid_from — see the
-		// docstring above assertLastFiledAt (review finding, CRITICAL, fix round 1).
-		const lastFiledAt = assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex)
+		// docstring above assertLastFiledAt (review finding, CRITICAL, fix round 1). ISO-validated too (review fix,
+		// round N, CRITICAL): this SAME value becomes valid_from on every edge this row emits, and valid_from must
+		// always be ISO-sortable — see assertISODate's docstring.
+		const lastFiledAt = assertISODate(
+			assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
+			`form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)}) lastFiledAt`
+		)
 
 		// Attributes attach to the form499ID node — the only identifier guaranteed present on every row
 		// (frn can legitimately be null). See the module docstring's DC-agent doctrine: dcAgent* fields land
@@ -497,13 +586,17 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		const frnNodeID = mintFRNNodeID(row.frn, `provider-list row #${providerRowIndex} (providerID=${row.providerID})`)
 		insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
+		// source_vintage stays the (possibly non-ISO) human vintage label; valid_from is the SEPARATE, always-ISO
+		// providerValidFrom — see BuildFilerOptions.validFrom's docstring (review fix, round N, CRITICAL). Non-null
+		// here by construction: this loop only runs when hasProviderSource is true, the same condition that made
+		// providerValidFrom non-null above.
 		insEdge.run(
 			providerNodeID,
 			frnNodeID,
 			FilerEdgeAssertion.Authoritative,
 			"bdc-provider-list",
 			options.sourceVintage,
-			options.sourceVintage,
+			providerValidFrom!,
 			null,
 			null,
 			null
@@ -519,7 +612,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				FilerEdgeAssertion.Authoritative,
 				"bdc-provider-list",
 				options.sourceVintage,
-				options.sourceVintage,
+				providerValidFrom!,
 				null,
 				null,
 				null
@@ -574,7 +667,10 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			schema_version: 1,
 			source: sourcesUsed.join(","),
 			source_vintage: options.sourceVintage,
-			build_cmd: "mailwoman filer build",
+			// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a — see the module docstring's
+			// decision-2 note) — name the actual API entrypoint that produced this artifact instead of a command
+			// that isn't there (review fix, minor).
+			build_cmd: "buildFilerDatabase (@mailwoman/filer/sdk)",
 			build_sha: options.buildSHA,
 			created_at: new Date().toISOString(),
 		})

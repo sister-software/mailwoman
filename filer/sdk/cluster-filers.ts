@@ -91,6 +91,19 @@
  *   rows (cluster ids are CONTENT-DERIVED — `` `${assertion}:${lexicographically-smallest member
  *   node_id}` `` — not index-based, so they don't depend on iteration order surviving between runs).
  *
+ *   **`sourceVintage` vs `validFrom` — NEVER the same field (review fix, round N, CRITICAL).**
+ *   {@link ClusterFilersOptions.sourceVintage} is a free-text human vintage LABEL (`"2026-cluster-v1"`)
+ *   and {@link ClusterFilersOptions.validFrom} is a SEPARATE, always-ISO `YYYY-MM-DD` date
+ *   ({@linkcode assertISODate}, imported from `build-filer.ts` — the same rule, one implementation, no
+ *   drift between the two files). `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
+ *   `validFrom`. This split exists because `valid_from` participates in every downstream `asOf`-scoped
+ *   predicate (`filer-lookup.ts`) as a plain STRING comparison — a label like `"2026-cluster-v1"` sorts
+ *   lexicographically ABOVE any real ISO date this century, so writing it into `valid_from` (the
+ *   pre-fix behavior) silently broke every `asOf`-scoped read against the edge. The "same run" identity
+ *   question below (same-vintage rebuild vs. a genuinely earlier run) is answered by `sourceVintage`
+ *   (the label IS the run's identity); the "which real date did this change happen" question is
+ *   answered by `validFrom` (a real, ISO-sortable date, so chronological order is a plain comparison).
+ *
  *   **Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual — the
  *   same-vintage idempotency claim above does NOT, by itself, extend to a REBUILD at that same
  *   vintage).** `filer_edge`'s composite PK plus `INSERT ... ON CONFLICT DO NOTHING` only makes an
@@ -101,8 +114,8 @@
  *   valid"), directly contradicting the current `filer_cluster` snapshot. A follow-up review then found
  *   the SAME bug class, narrowed: a REBUILD at the SAME `sourceVintage` (e.g. filer.db corrected and
  *   rebuilt without bumping the clustering vintage label) hit the identical contradiction, because the
- *   round-1 fix's `valid_from < sourceVintage` comparison was strict and never touched a row already AT
- *   that vintage.
+ *   round-1 fix's earlier-vintage comparison was strict and never touched a row already AT that
+ *   vintage.
  *
  *   Fixed with TWO separate operations, at the START of every {@linkcode clusterInferredLinks} call,
  *   before writing the freshly computed set — chosen deliberately over a single inclusive (`<=`)
@@ -110,15 +123,16 @@
  *   an UNCHANGED same-vintage rerun and then had `ON CONFLICT DO NOTHING` refuse to re-open it,
  *   permanently mislabeling a still-valid link "closed":
  *
- *   1. **DELETE** every inferred `filer_edge` row AT this run's OWN `sourceVintage` (`valid_from =
- *      sourceVintage`). A same-vintage rebuild has no meaningful "historical" state to preserve at a
- *      vintage that, by definition, hasn't changed identity — full replace, mirroring `filer_cluster`'s
- *      own clear-and-rewrite discipline for this same pass.
- *   2. **CLOSE** (`SET valid_to = sourceVintage`) every still-open (`valid_to IS NULL`) inferred edge
- *      from a STRICTLY EARLIER vintage (`valid_from < sourceVintage`). This is genuine history
- *      (decision 7's provenance-plurality) — a link asserted at an earlier vintage that no longer holds
- *      becomes a closed row, not an erased one, and a link that DOES persist gets a new, separate row
- *      at the new vintage rather than an update-in-place.
+ *   1. **DELETE** every inferred `filer_edge` row AT this run's OWN `sourceVintage` (`source_vintage =
+ *      sourceVintage` — the run's LABEL identity, not its date). A same-vintage rebuild has no
+ *      meaningful "historical" state to preserve at a vintage that, by definition, hasn't changed
+ *      identity — full replace, mirroring `filer_cluster`'s own clear-and-rewrite discipline for this
+ *      same pass.
+ *   2. **CLOSE** (`SET valid_to = validFrom`) every still-open (`valid_to IS NULL`) inferred edge from a
+ *      STRICTLY EARLIER run (`valid_from < validFrom` — real ISO-date ordering, not label ordering).
+ *      This is genuine history (decision 7's provenance-plurality) — a link asserted at an earlier
+ *      vintage that no longer holds becomes a closed row, not an erased one, and a link that DOES
+ *      persist gets a new, separate row at the new vintage rather than an update-in-place.
  *
  *   **Scope note:** only `form499_id` nodes carry a `legal_name` attribute (Task 5's builder never
  *   attaches attributes to `frn` / `bdc_provider_id` / holding- or management-company nodes), so
@@ -133,6 +147,7 @@ import { buildDefaultModel, resolveEntities, type SourceRecord } from "@mailwoma
 import type { Kysely } from "kysely"
 
 import { FilerEdgeAssertion, FilerIdentifierType, type FilerClusterTable, type FilerDatabase } from "../schema.ts"
+import { assertISODate } from "./build-filer.ts"
 
 /**
  * `filer_edge.source` for every row {@linkcode clusterInferredLinks} writes — distinguishes this module's own
@@ -274,11 +289,25 @@ export interface InferredClusterResult {
  */
 export interface ClusterFilersOptions {
 	/**
-	 * Provenance vintage for every inferred `filer_edge` row this run writes — becomes both `source_vintage` and
-	 * `valid_from` (decision 7: `valid_from` is mandatory; the inferred pass carries no finer-grained per-pair date than
-	 * "when this clustering run happened").
+	 * Provenance vintage for every inferred `filer_edge` row this run writes — becomes `source_vintage` (decision 7: the
+	 * inferred pass carries no finer-grained per-pair date than "when this clustering run happened"). A free-text human
+	 * vintage LABEL (e.g. `"2026-cluster-v1"`) is fine — this field is also the "same run" identity the
+	 * same-vintage-rebuild half of cross-vintage supersession keys on (see the module docstring). Never written into
+	 * `valid_from`/`valid_to` directly — see {@link ClusterFilersOptions.validFrom} for that (review fix, round N,
+	 * CRITICAL).
 	 */
 	sourceVintage: string
+	/**
+	 * ISO `YYYY-MM-DD` date for `valid_from` (on every inferred `filer_edge` row this run writes) and `valid_to` (on
+	 * every earlier-vintage row this run closes out) — SEPARATE from {@link ClusterFilersOptions.sourceVintage} (review
+	 * fix, round N, CRITICAL; same rationale as `BuildFilerOptions.validFrom` in `build-filer.ts`). `valid_from`
+	 * participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`) as a plain STRING comparison, so it
+	 * must always be ISO-sortable — a vintage label like `"2026-cluster-v1"` sorts lexicographically ABOVE any real ISO
+	 * date this century and would silently break every `asOf`-scoped read against the edge. Validated via
+	 * {@linkcode assertISODate}. Also the "which real date did this change happen" half of cross-vintage supersession
+	 * (see the module docstring) — the "same run" half is answered by `sourceVintage`, not this field.
+	 */
+	validFrom: string
 	onProgress?: (message: string) => void
 }
 
@@ -521,6 +550,10 @@ export async function clusterInferredLinks(
 ): Promise<InferredClusterResult> {
 	const progress = options.onProgress ?? (() => {})
 
+	// Fails fast, before any query/write — see ClusterFilersOptions.validFrom's docstring and assertISODate's
+	// (review fix, round N, CRITICAL): a vintage LABEL like "2026-cluster-v1" must never reach valid_from/valid_to.
+	const validFrom = assertISODate(options.validFrom, "options.validFrom")
+
 	const records = await buildInferredRecords(db)
 
 	progress(`pass (b): scoring ${records.length.toLocaleString()} form499_id record(s) with a legal name`)
@@ -550,35 +583,38 @@ export async function clusterInferredLinks(
 	let links = 0
 
 	await db.transaction().execute(async (trx) => {
-		// Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual — see the
-		// module docstring). Two cases, handled separately because they mean different things:
+		// Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual; round-N fix
+		// for the sourceVintage/validFrom split — see the module docstring). Two cases, handled separately because
+		// they mean different things AND key on different columns:
 		//
-		// 1. SAME-vintage rebuild (`valid_from = sourceVintage`) — DELETE, not close. This run's own prior
-		//    output at this exact vintage is being fully superseded (e.g. filer.db was rebuilt with corrected
-		//    input under the same clustering vintage label) — there is no meaningful "historical" state to
-		//    preserve at a vintage that, by definition, hasn't changed identity, and closing a row to its OWN
-		//    valid_from (a zero-duration `valid_from == valid_to` window) would itself be a stale, un-reassertable
-		//    row: `INSERT ... ON CONFLICT DO NOTHING` below would silently skip re-inserting a still-valid link at
-		//    that same PK, permanently mislabeling it "closed". Deleting first, then letting the loop below
-		//    reinsert whatever the CURRENT data actually supports, is the only rebuild-safe option — mirrors
-		//    filer_cluster's own clear-and-rewrite discipline for this same pass.
-		// 2. EARLIER-vintage edges (`valid_from < sourceVintage`) — CLOSE (`SET valid_to`), not delete. These are
-		//    genuine history (decision 7's provenance-plurality): a link asserted at an earlier vintage that no
-		//    longer holds becomes a closed row, not an erased one.
+		// 1. SAME-vintage rebuild (`source_vintage = sourceVintage` — the run's LABEL identity) — DELETE, not
+		//    close. This run's own prior output at this exact vintage is being fully superseded (e.g. filer.db was
+		//    rebuilt with corrected input under the same clustering vintage label) — there is no meaningful
+		//    "historical" state to preserve at a vintage that, by definition, hasn't changed identity, and closing
+		//    a row to its OWN valid_from (a zero-duration `valid_from == valid_to` window) would itself be a stale,
+		//    un-reassertable row: `INSERT ... ON CONFLICT DO NOTHING` below would silently skip re-inserting a
+		//    still-valid link at that same PK, permanently mislabeling it "closed". Deleting first, then letting
+		//    the loop below reinsert whatever the CURRENT data actually supports, is the only rebuild-safe option —
+		//    mirrors filer_cluster's own clear-and-rewrite discipline for this same pass. Keyed on `source_vintage`,
+		//    NOT `valid_from`: a same-LABEL rebuild can legitimately carry a different (later) `validFrom` (e.g.
+		//    today's date on a same-label correction run) without being "later vintage" history.
+		// 2. EARLIER-run edges (`valid_from < validFrom` — real ISO-date ordering) — CLOSE (`SET valid_to`), not
+		//    delete. These are genuine history (decision 7's provenance-plurality): a link asserted at an earlier
+		//    vintage that no longer holds becomes a closed row, not an erased one.
 		await trx
 			.deleteFrom("filer_edge")
 			.where("assertion", "=", FilerEdgeAssertion.Inferred)
 			.where("source", "=", CLUSTER_FILERS_SOURCE)
-			.where("valid_from", "=", options.sourceVintage)
+			.where("source_vintage", "=", options.sourceVintage)
 			.execute()
 
 		await trx
 			.updateTable("filer_edge")
-			.set({ valid_to: options.sourceVintage })
+			.set({ valid_to: validFrom })
 			.where("assertion", "=", FilerEdgeAssertion.Inferred)
 			.where("source", "=", CLUSTER_FILERS_SOURCE)
 			.where("valid_to", "is", null)
-			.where("valid_from", "<", options.sourceVintage)
+			.where("valid_from", "<", validFrom)
 			.execute()
 
 		await trx.deleteFrom("filer_cluster").where("assertion", "=", FilerEdgeAssertion.Inferred).execute()
@@ -608,7 +644,7 @@ export async function clusterInferredLinks(
 						assertion: FilerEdgeAssertion.Inferred,
 						source: CLUSTER_FILERS_SOURCE,
 						source_vintage: options.sourceVintage,
-						valid_from: options.sourceVintage,
+						valid_from: validFrom,
 						valid_to: null,
 						match_score: entity.cohesion,
 						evidence: JSON.stringify({ memberNodeIds }),
