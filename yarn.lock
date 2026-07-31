@@ -4681,7 +4681,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/filer@workspace:filer":
+"@mailwoman/filer@workspace:*, @mailwoman/filer@workspace:filer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/filer@workspace:filer"
   dependencies:
@@ -4751,6 +4751,7 @@ __metadata:
   dependencies:
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/filer": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/resolver": "workspace:*"

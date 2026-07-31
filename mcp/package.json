@@ -41,6 +41,7 @@
 	"dependencies": {
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",

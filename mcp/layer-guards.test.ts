@@ -24,7 +24,13 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { assertBDCDatabaseExists, openBDCDatabaseIfPresent, openPlausibilityPOIDeps } from "./layer-guards.ts"
+import {
+	assertBDCDatabaseExists,
+	assertFilerDatabaseExists,
+	openBDCDatabaseIfPresent,
+	openFilerDatabaseIfPresent,
+	openPlausibilityPOIDeps,
+} from "./layer-guards.ts"
 
 let scratch: string | undefined
 
@@ -122,5 +128,38 @@ describe("assertBDCDatabaseExists", () => {
 		const path = await emptySqliteFile("bdc.db")
 
 		expect(() => assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", path)).not.toThrow()
+	})
+})
+
+describe("openFilerDatabaseIfPresent (3a task 7)", () => {
+	it("returns undefined when databasePath is undefined", () => {
+		expect(openFilerDatabaseIfPresent(undefined)).toBeUndefined()
+	})
+
+	it("returns undefined when the file is missing", () => {
+		expect(openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).toBeUndefined()
+	})
+
+	it("opens the database when the file is present", async () => {
+		const path = await emptySqliteFile("filer.db")
+		const db = openFilerDatabaseIfPresent(path)
+
+		expect(db).toBeDefined()
+
+		await db?.destroy()
+	})
+})
+
+describe("assertFilerDatabaseExists (3a task 7)", () => {
+	it("throws a friendly error naming the layer when the file is missing", () => {
+		expect(() => assertFilerDatabaseExists("mailwoman_filer_lookup", "/nonexistent/path/filer.db")).toThrow(
+			/mailwoman_filer_lookup: filer\.db not found at "\/nonexistent\/path\/filer\.db"/
+		)
+	})
+
+	it("does not throw when the file is present", async () => {
+		const path = await emptySqliteFile("filer.db")
+
+		expect(() => assertFilerDatabaseExists("mailwoman_filer_lookup", path)).not.toThrow()
 	})
 })
