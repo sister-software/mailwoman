@@ -40,7 +40,11 @@
  *   `bdc/sdk/build-bdc.ts`:237): an empty `form499ID` cannot be told apart from any other empty
  *   `form499ID` once mangled into a node identity — silently accepting it would mint ONE degenerate
  *   `form499_id:` node that every empty-ID row collapses into, merging unrelated filers under one
- *   identity. This throws instead, naming the offending row. A `null` `frn` (Task 2's
+ *   identity. This throws instead, naming the offending row. Likewise an empty `frn` (on EITHER row
+ *   shape — see {@linkcode mintFRNNodeID}) and an empty `lastFiledAt` (see {@linkcode assertLastFiledAt}
+ *   — fix round 1, CRITICAL: an unguarded blank `lastFiledAt` was silently written into
+ *   `source_vintage`/`valid_from` as `""`, which SQLite's `NOT NULL` does not reject, breaking decision
+ *   7 / gate 1's "valid_from is MANDATORY" invariant). A `null` `frn` on a {@link Form499Row} (Task 2's
  *   {@link Form499Row.frn}) is the opposite case — common and legitimate (a filer not yet registered in
  *   CORES) — so it is never an error, only a counted {@link BuildFilerResult.skipped} opportunity.
  *
@@ -70,6 +74,22 @@
  *   false-positive generator in the whole crosswalk design. There is no code path here that could turn a
  *   `dcAgent*` field into an edge; this is enforced by construction (the edge-emitting functions below
  *   never read those fields), not by a runtime check.
+ *
+ *   **`filer.db` is a single-vintage SNAPSHOT, not a multi-vintage archive (review finding, MINOR-B, fix
+ *   round 1 — pin this before Task 6 reads the artifact).** The build-then-seal-then-swap discipline
+ *   (`${out}.building` → `sealDatabase` → rename existing `out` to `.prev` → rename into place) means a
+ *   SECOND `buildFilerDatabase` call against the SAME `out` with a LATER `sourceVintage` REPLACES the
+ *   whole artifact — the earlier vintage's rows do not survive alongside the new ones as additional
+ *   `filer_edge`/`filer_attribute` rows. Decision 7's "two vintages can coexist as two rows" scenario is
+ *   a property of the SCHEMA (the edge PK includes `valid_from`, so two DIFFERENT `valid_from` values for
+ *   the same `(from, to, source)` are two distinct rows) — but it's reachable only by feeding rows
+ *   spanning multiple vintages into ONE `buildFilerDatabase` call (e.g. a combined `form499Rows` iterable
+ *   drawn from several historical filing snapshots), never by calling this function twice at different
+ *   `sourceVintage`s against the same `out`. Any consumer that reads across builds (Task 6's
+ *   `cluster-filers.ts`, any future incremental-build task) must NOT assume cross-build accumulation —
+ *   each successful build is a complete, self-contained replacement of what "the crosswalk" means as of
+ *   that one `sourceVintage`. Multi-vintage accumulation, if ever needed, would require an
+ *   accumulate-into-existing-artifact build mode this function does not implement.
  */
 
 import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
@@ -130,6 +150,11 @@ export interface BuildFilerOptions {
 	 * The build's overall vintage — becomes the manifest's `version` AND `source_vintage` (filer.db has no independent
 	 * versioning yet, same deferral `build-bdc.ts` makes for `bdc.db`'s `release`), AND the `source_vintage`/`valid_from`
 	 * for every provider-list-derived edge (decision 7 — the provider list carries no per-row date of its own).
+	 *
+	 * SNAPSHOT semantics (see the module docstring's MINOR-B note): calling {@linkcode buildFilerDatabase} again against
+	 * the SAME `out` with a DIFFERENT `sourceVintage` REPLACES the artifact — it does not accumulate the earlier
+	 * vintage's rows alongside the new ones. There is no options-level way to build a multi-vintage archive in one
+	 * artifact; that would require rows spanning multiple vintages passed into a SINGLE call.
 	 */
 	sourceVintage: string
 	/**
@@ -183,7 +208,26 @@ async function createFilerAttributeStageTable(db: Kysely<FilerDatabase>): Promis
 		.execute()
 }
 
-function mintFRNNodeID(frn: string): string {
+/**
+ * Mints the `frn:` node id, throwing when `frn` is blank — the same "malformed input is loud" discipline as
+ * {@linkcode mintForm499NodeID}/{@linkcode mintProviderNodeID}.
+ *
+ * On the 499 path this is called only from inside the caller's `if (row.frn)` truthy check — an empty string is falsy
+ * in JS, so that branch is already skipped before this function is ever reached there; the guard is unreachable on that
+ * path, not merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never
+ * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
+ * the `providerRows` TEST SEAM bypasses that parser entirely. Without this guard, two rows for two DIFFERENT, unrelated
+ * providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node — a false identity
+ * link joining unrelated filers, the worst failure class this crosswalk can produce (review finding, fix round 1).
+ */
+function mintFRNNodeID(frn: string, context: string): string {
+	if (frn.trim() === "") {
+		throw new Error(
+			`buildFilerDatabase: malformed ${context} — empty frn. Refusing to mint a degenerate node_id ("frn:") ` +
+				`that every other empty-frn row would silently collapse into, falsely joining unrelated filers under one identity.`
+		)
+	}
+
 	return `${FilerIdentifierType.FRN}:${frn}`
 }
 
@@ -211,6 +255,31 @@ function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 	}
 
 	return `${FilerIdentifierType.Form499ID}:${form499ID}`
+}
+
+/**
+ * Validates `lastFiledAt` is non-blank before it is written into BOTH `filer_edge.source_vintage`/`valid_from` and
+ * every attribute's `source_vintage` for this row (review finding, CRITICAL, fix round 1). Decision 7 / gate 1 make
+ * `valid_from` MANDATORY on every edge — but `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s
+ * own docstring: "no `Date` parsing happens at this layer"), and SQLite's `NOT NULL` does not reject an empty string.
+ * An unguarded blank `lastFiledAt` would silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute
+ * this row produces — a time-scoped read (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly
+ * the dishonesty decision 7 exists to prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the
+ * same reason {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the
+ * "which fields are load-bearing for THIS artifact's identity/provenance" discipline, and `form499.ts` is deliberately
+ * a raw, non-validating passthrough for every field it doesn't itself need to type (see its own docstring).
+ */
+function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: number): string {
+	if (lastFiledAt.trim() === "") {
+		throw new Error(
+			`buildFilerDatabase: malformed form499 row #${rowIndex} (form499ID=${JSON.stringify(form499ID)}) — empty ` +
+				`lastFiledAt. Decision 7 / gate 1 make valid_from MANDATORY on every edge; a blank value would silently ` +
+				`write source_vintage/valid_from as "" on every edge and attribute this row produces, which a ` +
+				`time-scoped (valid_from <= asOf) read would then treat as valid since forever.`
+		)
+	}
+
+	return lastFiledAt
 }
 
 /**
@@ -320,50 +389,43 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		const form499NodeID = mintForm499NodeID(row.form499ID, form499RowIndex)
 		insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
+		// Guarded ONCE per row, before anything below writes it into source_vintage/valid_from — see the
+		// docstring above assertLastFiledAt (review finding, CRITICAL, fix round 1).
+		const lastFiledAt = assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex)
+
 		// Attributes attach to the form499ID node — the only identifier guaranteed present on every row
 		// (frn can legitimately be null). See the module docstring's DC-agent doctrine: dcAgent* fields land
 		// here as plain attributes ONLY, never as edges.
-		stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", row.lastFiledAt)
-		stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", row.lastFiledAt)
+		stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)
+		stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", lastFiledAt)
 
 		for (const classification of classifyFiler(row)) {
-			stageAttribute(form499NodeID, "classification", classification, "form-499", row.lastFiledAt)
+			stageAttribute(form499NodeID, "classification", classification, "form-499", lastFiledAt)
 		}
 
-		stageAttribute(form499NodeID, "hq_address", row.hqAddress, "form-499", row.lastFiledAt)
+		stageAttribute(form499NodeID, "hq_address", row.hqAddress, "form-499", lastFiledAt)
 
 		stageAttribute(
 			form499NodeID,
 			"customer_inquiries_telephone",
 			row.customerInquiriesTelephone,
 			"form-499",
-			row.lastFiledAt
+			lastFiledAt
 		)
 
-		stageAttribute(
-			form499NodeID,
-			"customer_inquiries_address",
-			row.customerInquiriesAddress,
-			"form-499",
-			row.lastFiledAt
-		)
+		stageAttribute(form499NodeID, "customer_inquiries_address", row.customerInquiriesAddress, "form-499", lastFiledAt)
 
-		stageAttribute(form499NodeID, "dc_agent_display_name", row.dcAgentDisplayName, "form-499", row.lastFiledAt)
+		stageAttribute(form499NodeID, "dc_agent_display_name", row.dcAgentDisplayName, "form-499", lastFiledAt)
 
-		stageAttribute(
-			form499NodeID,
-			"dc_agent_organization_name",
-			row.dcAgentOrganizationName,
-			"form-499",
-			row.lastFiledAt
-		)
+		stageAttribute(form499NodeID, "dc_agent_organization_name", row.dcAgentOrganizationName, "form-499", lastFiledAt)
 
-		stageAttribute(form499NodeID, "dc_agent_telephone", row.dcAgentTelephone, "form-499", row.lastFiledAt)
-		stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", row.lastFiledAt)
-		stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", row.lastFiledAt)
+		stageAttribute(form499NodeID, "dc_agent_telephone", row.dcAgentTelephone, "form-499", lastFiledAt)
+		stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
+		stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
 
 		if (row.frn) {
-			const frnNodeID = mintFRNNodeID(row.frn)
+			const frnContext = `form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)})`
+			const frnNodeID = mintFRNNodeID(row.frn, frnContext)
 			insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
 			insEdge.run(
@@ -371,8 +433,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				form499NodeID,
 				FilerEdgeAssertion.Authoritative,
 				"form-499",
-				row.lastFiledAt,
-				row.lastFiledAt,
+				lastFiledAt,
+				lastFiledAt,
 				null,
 				null,
 				null
@@ -387,8 +449,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					holdingNodeID,
 					FilerEdgeAssertion.Authoritative,
 					"form-499",
-					row.lastFiledAt,
-					row.lastFiledAt,
+					lastFiledAt,
+					lastFiledAt,
 					null,
 					null,
 					null
@@ -406,8 +468,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					managementNodeID,
 					FilerEdgeAssertion.Authoritative,
 					"form-499",
-					row.lastFiledAt,
-					row.lastFiledAt,
+					lastFiledAt,
+					lastFiledAt,
 					null,
 					null,
 					null
@@ -432,7 +494,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		const providerNodeID = mintProviderNodeID(row.providerID, providerRowIndex)
 		insNode.run(providerNodeID, FilerIdentifierType.BDCProviderID, String(row.providerID))
 
-		const frnNodeID = mintFRNNodeID(row.frn)
+		const frnNodeID = mintFRNNodeID(row.frn, `provider-list row #${providerRowIndex} (providerID=${row.providerID})`)
 		insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
 		insEdge.run(

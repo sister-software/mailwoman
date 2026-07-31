@@ -398,6 +398,58 @@ describe("buildFilerDatabase", () => {
 		}
 	})
 
+	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1, fix round 1)", async () => {
+		await setupScratch()
+
+		try {
+			const malformedRows: Form499Row[] = [
+				{
+					...form499FixtureRows()[0]!,
+					lastFiledAt: "",
+				},
+			]
+
+			await expect(
+				buildFilerDatabase({
+					form499Rows: malformedRows,
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/malformed.*lastFiledAt/i)
+
+			expect(existsSync(out)).toBe(false)
+		} finally {
+			await teardownScratch()
+		}
+	})
+
+	it("a blank provider-list frn is loud — never mints a shared degenerate FRN node (fix round 1)", async () => {
+		await setupScratch()
+
+		try {
+			const malformedRows: ProviderListRow[] = [
+				// Two DIFFERENT, unrelated providers, both with a blank frn — without the guard these would
+				// silently share ONE degenerate `frn:` node, falsely asserting they are the same filer.
+				{ providerID: 900_001, frn: "" as ProviderListRow["frn"], holdingCompany: null },
+				{ providerID: 900_002, frn: "" as ProviderListRow["frn"], holdingCompany: null },
+			]
+
+			await expect(
+				buildFilerDatabase({
+					providerRows: malformedRows,
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/malformed.*empty frn/i)
+
+			expect(existsSync(out)).toBe(false)
+		} finally {
+			await teardownScratch()
+		}
+	})
+
 	it("throws when neither a 499 nor a provider-list source is supplied", async () => {
 		await setupScratch()
 
@@ -545,6 +597,46 @@ describe("buildFilerDatabase", () => {
 					.execute()
 
 				expect(classifications.map((c) => c.value).toSorted()).toEqual(["incumbent_lec", "usf_contributor"])
+			} finally {
+				await teardownScratch()
+			}
+		})
+	})
+
+	describe("single-vintage snapshot semantics (review MINOR-B, fix round 1)", () => {
+		it("rebuilding at a later sourceVintage REPLACES the artifact — earlier-vintage rows do not survive", async () => {
+			await setupScratch()
+
+			try {
+				await buildFilerDatabase({
+					providerRows: [{ providerID: 500_001, frn: toFRN("0007777777")!, holdingCompany: "Old Co" }],
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+
+				await buildFilerDatabase({
+					providerRows: [{ providerID: 500_002, frn: toFRN("0008888888")!, holdingCompany: "New Co" }],
+					out,
+					sourceVintage: "2026-Q2",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const edges = await db.selectFrom("filer_edge").selectAll().execute()
+
+				// Every edge belongs to the SECOND build's vintage — none of the first build's rows survived
+				// alongside it as additional rows (that would be cross-build accumulation, which this artifact
+				// deliberately does not support — see the module docstring's MINOR-B note).
+				expect(edges.length).toBeGreaterThan(0)
+				expect(edges.every((e) => e.source_vintage === "2026-Q2")).toBe(true)
+
+				const providerNodeIDs = (await db.selectFrom("filer_node").selectAll().execute()).map((n) => n.node_id)
+				expect(providerNodeIDs).not.toContain(`${FilerIdentifierType.BDCProviderID}:500001`)
+				expect(providerNodeIDs).toContain(`${FilerIdentifierType.BDCProviderID}:500002`)
+
+				const manifest = await readFilerManifest(db)
+				expect(manifest.source_vintage).toBe("2026-Q2")
 			} finally {
 				await teardownScratch()
 			}
