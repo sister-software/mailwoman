@@ -9,6 +9,7 @@ export * from "./form499.ts"
 export * from "./frn.ts"
 export * from "./guards.ts"
 export * from "./provider-list.ts"
+export * from "./sec-client.ts"
 
 /**
  * @internal
