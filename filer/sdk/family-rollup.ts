@@ -44,7 +44,7 @@
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 import { readFilerManifest, type FilerDatabase } from "../schema.ts"
-import { assertFamilySchemaVersion, todayISODate } from "./filer-lookup.ts"
+import { assertFamilySchemaVersion, readFamilyDisplayNames, readFamilyMembers, todayISODate } from "./filer-lookup.ts"
 
 /**
  * Exactly one of `familyID`/`nodeID` is required — {@linkcode familyRollup} throws otherwise. `asOf` defaults to today
@@ -79,11 +79,18 @@ export interface FamilyRollupMember {
  * entries), so `members.length` alone over-counts whenever more than one source corroborates the same member. This
  * mirrors `filerLookup.ts`'s `cluster.members`, which IS already deduped (one entry per node) — without this field, a
  * caller sizing a family by array length would get an inconsistent answer depending on which rollup they read.
+ *
+ * `display_names` (task 3 fix round 2 — `family_id` alone is a canonicalized slug, and losing the raw name entirely was
+ * a real product loss for the headline "these filers report holding company H" output) is
+ * {@linkcode readFamilyDisplayNames}'s output over this family's current members — see that function's docstring for
+ * the exact join and for why a MULTI-spelling family (two raw names canonicalizing to the same `family_id`) surfaces
+ * every spelling, sorted, rather than picking one.
  */
 export interface FamilyRollup {
 	family_id: string
 	members: FamilyRollupMember[]
 	distinct_member_count: number
+	display_names: string[]
 	as_of: string
 	vintage: string
 }
@@ -91,7 +98,9 @@ export interface FamilyRollup {
 /**
  * Read a `familyID`'s rollup at `asOf` — `null` when it has no member row in force at that date (including when it has
  * never existed at all). Pulled out of {@linkcode familyRollup} so the `nodeID` path (task 3 fix round 1, IMPORTANT-2)
- * can call it once per distinct family a node belongs to, instead of duplicating the member-query logic.
+ * can call it once per distinct family a node belongs to, instead of duplicating the member-query logic. Reuses
+ * `filer-lookup.ts`'s {@linkcode readFamilyMembers}/{@linkcode readFamilyDisplayNames} (task 3 fix round 2) rather than
+ * inlining its own copies — `filerLookup`'s `families` field needs the identical two queries for the identical reason.
  */
 async function readFamilyRollup(
 	db: DatabaseClient<FilerDatabase>,
@@ -99,23 +108,19 @@ async function readFamilyRollup(
 	asOf: string,
 	vintage: string
 ): Promise<FamilyRollup | null> {
-	const memberRows = await db
-		.selectFrom("filer_family")
-		.select(["node_id", "relationship", "source"])
-		.where("family_id", "=", familyID)
-		.where("valid_from", "<=", asOf)
-		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
-		.orderBy("node_id")
-		.execute()
+	const memberRows = await readFamilyMembers(db, familyID, asOf)
 
 	if (!memberRows.length) {
 		return null
 	}
 
+	const displayNames = await readFamilyDisplayNames(db, memberRows)
+
 	return {
 		family_id: familyID,
-		members: memberRows,
+		members: memberRows.map((row) => ({ node_id: row.node_id, relationship: row.relationship, source: row.source })),
 		distinct_member_count: new Set(memberRows.map((row) => row.node_id)).size,
+		display_names: displayNames,
 		as_of: asOf,
 		vintage,
 	}

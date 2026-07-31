@@ -89,6 +89,12 @@
  *   other temporal read in this module (`filer/sdk/family-rollup.ts` copies this exact predicate rather
  *   than writing its own, per the task brief — three separate 3a tasks fixed this same temporal bug
  *   independently before the final review caught them diverging).
+ *
+ *   **`family_id` alone is a canonicalized slug, not a display name (task 3 fix round 2).** Each
+ *   {@link FilerLookupFamily} entry also carries {@linkcode readFamilyDisplayNames}'s output — the family's
+ *   raw holding-/management-company name spelling(s), recovered from the `filer_edge` rows that imply the
+ *   membership. See that function's docstring for why a MULTI-spelling family (two raw names that
+ *   canonicalize identically) surfaces every spelling rather than picking one.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -161,10 +167,18 @@ export interface FilerLookupInferredLink {
  * never be confusable with, or foldable into, an entity-cluster member. Use {@linkcode familyRollup}
  * (`family-rollup.ts`) to read a family's FULL membership list; this field only answers "which families does THIS node
  * belong to, and under what relationship."
+ *
+ * `display_names` (task 3 fix round 2 — the family_id's raw name(s) were previously unrecoverable, a real product loss
+ * for the headline "these filers report holding company H" output) is the DISTINCT set of raw `identifier_value`
+ * spellings, across every current member of this family, that imply the membership — see
+ * {@linkcode readFamilyDisplayNames}'s docstring for the exact join and the "expose the plurality, never collapse" rule
+ * this follows when two spellings (e.g. `"Realbuild Co"` / `"REALBUILD CO., INC."`) canonicalize to the SAME
+ * `family_id`.
  */
 export interface FilerLookupFamily {
 	family_id: string
 	relationship: string
+	display_names: string[]
 }
 
 export interface FilerLookupResult {
@@ -389,6 +403,86 @@ export function assertFamilySchemaVersion(schemaVersion: number, readerName: str
 				"buildFilerDatabase to pick up the current schema before querying it with this reader."
 		)
 	}
+}
+
+/**
+ * One `filer_family` membership row's full shape (task 3 fix round 2) — every field {@linkcode readFamilyDisplayNames}
+ * needs to find the SPECIFIC `filer_edge` row that implied this exact membership fact. Deliberately not the public
+ * `FilerLookupFamily`/`FamilyRollupMember` shapes (`family-rollup.ts`) — those omit `valid_from` on purpose (never
+ * asked for on the public surface); this internal shape carries it because the display-name join needs it.
+ */
+export interface FamilyMemberRow {
+	node_id: string
+	relationship: string
+	source: string
+	valid_from: string
+}
+
+/**
+ * Read every `filer_family` row for `familyID`, in force `asOf` the query date — the SAME half-open predicate as
+ * everywhere else in this module. Shared by `filerLookup`'s `families` field and `family-rollup.ts`'s `familyRollup`
+ * (task 3 fix round 2) so "who are this family's current members" has exactly one implementation, not two copies that
+ * could drift the way three separate 3a tasks once drifted on the asOf predicate itself.
+ */
+export async function readFamilyMembers(
+	db: DatabaseClient<FilerDatabase>,
+	familyID: string,
+	asOf: string
+): Promise<FamilyMemberRow[]> {
+	return db
+		.selectFrom("filer_family")
+		.select(["node_id", "relationship", "source", "valid_from"])
+		.where("family_id", "=", familyID)
+		.where("valid_from", "<=", asOf)
+		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
+		.orderBy("node_id")
+		.execute()
+}
+
+/**
+ * Read the DISTINCT set of raw `identifier_value` spellings a family's members' own holding-/management-company edges
+ * point to (task 3 fix round 2 — the family_id alone is a canonicalized slug; this recovers the human-readable name(s)
+ * that produced it, a fact that was previously unrecoverable through this reader — the headline "these filers report
+ * holding company H" output degraded to a normalization key with no way back). For each member row, finds the EXACT
+ * `filer_edge` that implied its `filer_family` membership — matched on `(from_node_id, relationship, source,
+ * valid_from)`, the identical tuple `build-filer.ts`'s `insertFamilyMembership` writes both rows from in lockstep — so
+ * a member with MULTIPLE holding-company edges across different sources/vintages (e.g. the bdc-provider-list "Alpha
+ * Holdco" vs "Alpha Holdco Renamed" conflict, `build-bdc.test.ts`) never has the WRONG one attributed to this
+ * particular family_id, even when that member also belongs to a completely different family through a different edge.
+ *
+ * **Never collapsed to one value (task 3 fix round 2, the coordinator's explicit rule).** When two members' raw
+ * spellings canonicalize to the SAME `family_id` (e.g. `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to
+ * `"acme"` — `@mailwoman/record`'s `canonicalizeOrganizationName`), BOTH survive here, sorted for a deterministic
+ * result — the same "expose the plurality, never guess which one is right" doctrine every other reader in this SDK
+ * follows (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, `filer_family` member
+ * provenance never deduped). Picking one would silently assert an opinion about which spelling is "correct" that
+ * `filer.db` itself has no grounds to hold — the same-name/different-entity hazard this phase keeps re-discovering is
+ * mirrored exactly by a same-entity/different-name shortcut here: asserting two DIFFERENT spellings are canonically
+ * "the one true name" is the same category error as asserting two DIFFERENT entities are "the same" one.
+ */
+export async function readFamilyDisplayNames(
+	db: DatabaseClient<FilerDatabase>,
+	members: readonly FamilyMemberRow[]
+): Promise<string[]> {
+	const displayNames = new Set<string>()
+
+	for (const member of members) {
+		const edgeRows = await db
+			.selectFrom("filer_edge")
+			.innerJoin("filer_node", "filer_node.node_id", "filer_edge.to_node_id")
+			.select("filer_node.identifier_value")
+			.where("filer_edge.from_node_id", "=", member.node_id)
+			.where("filer_edge.relationship", "=", member.relationship)
+			.where("filer_edge.source", "=", member.source)
+			.where("filer_edge.valid_from", "=", member.valid_from)
+			.execute()
+
+		for (const row of edgeRows) {
+			displayNames.add(row.identifier_value)
+		}
+	}
+
+	return [...displayNames].toSorted()
 }
 
 function otherEndOf(edge: { from_node_id: string; to_node_id: string }, nodeID: string): string {
@@ -663,10 +757,17 @@ export async function filerLookup(
 		.orderBy("family_id")
 		.execute()
 
-	const families: FilerLookupFamily[] = familyRows.map((row) => ({
-		family_id: row.family_id,
-		relationship: row.relationship,
-	}))
+	// Task 3 fix round 2: display_names is a FAMILY-WIDE fact (every current member's own raw spelling), not just
+	// this node's — so each distinct family_id needs its own member fetch, not just the one row above. Plain loop,
+	// not .map(), since readFamilyDisplayNames is async.
+	const families: FilerLookupFamily[] = []
+
+	for (const row of familyRows) {
+		const familyMembers = await readFamilyMembers(db, row.family_id, asOf)
+		const displayNames = await readFamilyDisplayNames(db, familyMembers)
+
+		families.push({ family_id: row.family_id, relationship: row.relationship, display_names: displayNames })
+	}
 
 	// Gate 3 / decision 6: when the queried node carries more than one FRN identifier (the multi-FRN provider_id
 	// cardinality case), pick a primary via each FRN's own most recent form-499 filing edge. Reported as its OWN

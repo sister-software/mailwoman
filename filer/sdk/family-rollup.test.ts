@@ -17,6 +17,13 @@
  *   an array — and the builder routinely emits exactly this shape (`build-filer.test.ts`: a filer whose
  *   holding company differs from its management company). `familyRollup` now always returns `FamilyRollup[]`
  *   (0, 1, or more elements) instead of throwing or returning a bare object/`null`.
+ *
+ *   **Task 3 fix round 2:** `FamilyRollup` gained `display_names` — `family_id` alone is a canonicalized
+ *   slug, and the raw holding-/management-company name(s) that produced it were otherwise unrecoverable
+ *   through this reader, a real loss for a product surface whose headline output IS "these filers report
+ *   holding company H". `createAllTables` now also creates `filer_node`/`filer_edge` (previously unnecessary
+ *   here — `familyRollup` touched only `filer_family`/`filer_manifest`), since `display_names` is recovered
+ *   by joining back to the specific `filer_edge` row that implied each membership.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -25,8 +32,12 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { describe, expect, it } from "vitest"
 
 import {
+	createFilerEdgeTable,
 	createFilerFamilyTable,
 	createFilerManifestTable,
+	createFilerNodeTable,
+	FilerEdgeAssertion,
+	FilerIdentifierType,
 	FilerRelationship,
 	type FilerDatabase,
 	type FilerManifestTable,
@@ -39,6 +50,8 @@ function openMemory(): DatabaseClient<FilerDatabase> {
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {
 	await createFilerManifestTable(db)
+	await createFilerNodeTable(db)
+	await createFilerEdgeTable(db)
 	await createFilerFamilyTable(db)
 }
 
@@ -332,5 +345,158 @@ describe("familyRollup — general reader contract", () => {
 		const result = await familyRollup(db, { familyID: FAMILY_ID, asOf: "2026-12-31" })
 		expect(result[0]?.members).toHaveLength(2)
 		expect(result[0]?.distinct_member_count).toBe(1)
+	})
+
+	/**
+	 * Task 3 fix round 2. `readFamilyDisplayNames` (`filer-lookup.ts`) finds the SPECIFIC `filer_edge` that implied each
+	 * `filer_family` row — matched on `(from_node_id, relationship, source, valid_from)`, the identical tuple
+	 * `build-filer.ts`'s `insertFamilyMembership` writes both rows from in lockstep. These fixtures insert that matching
+	 * edge by hand, independent of `canonicalizeOrganizationName`'s real behavior (that's exercised by the REAL-builder
+	 * test in `filer-lookup.test.ts` instead) — this suite only needs to prove the READER'S join logic.
+	 */
+	describe("display_names (task 3 fix round 2)", () => {
+		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
+
+		it("a single-spelling family surfaces exactly that one spelling", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_A, identifier_type: FilerIdentifierType.FRN, identifier_value: "0001111111" },
+					{
+						node_id: HOLDING_NODE_ONE_SPELLING,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Solo Spelling Inc",
+					},
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values({
+					from_node_id: FRN_A,
+					to_node_id: HOLDING_NODE_ONE_SPELLING,
+					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				})
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: FRN_A,
+					family_id: FAMILY_ID,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: null,
+				})
+				.execute()
+
+			const result = await familyRollup(db, { familyID: FAMILY_ID, asOf: "2026-12-31" })
+			expect(result[0]?.display_names).toEqual(["Solo Spelling Inc"])
+		})
+
+		/**
+		 * THE RULE (coordinator's explicit requirement — "expose the set, never collapse silently"): two members whose raw
+		 * holding-company spellings differ ("Acme Corp" vs "Acme Corporation, LLC" — both reduce to the SAME canonical
+		 * `family_id` per `@mailwoman/record`'s `canonicalizeOrganizationName`, verified against a real build in
+		 * `filer-lookup.test.ts`) both survive here, sorted — never silently picked down to one.
+		 */
+		it("a multi-spelling family (two members, two raw spellings sharing one family_id) surfaces BOTH spellings, sorted — never collapsed to one", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const HOLDING_NODE_SPELLING_1 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corp`
+			const HOLDING_NODE_SPELLING_2 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_A, identifier_type: FilerIdentifierType.FRN, identifier_value: "0001111111" },
+					{ node_id: FRN_B, identifier_type: FilerIdentifierType.FRN, identifier_value: "0002222222" },
+					{
+						node_id: HOLDING_NODE_SPELLING_1,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Acme Corp",
+					},
+					{
+						node_id: HOLDING_NODE_SPELLING_2,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Acme Corporation, LLC",
+					},
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values([
+					{
+						from_node_id: FRN_A,
+						to_node_id: HOLDING_NODE_SPELLING_1,
+						assertion: FilerEdgeAssertion.Authoritative,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+						match_score: null,
+						evidence: null,
+					},
+					{
+						from_node_id: FRN_B,
+						to_node_id: HOLDING_NODE_SPELLING_2,
+						assertion: FilerEdgeAssertion.Authoritative,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-02-01",
+						valid_from: "2026-02-01",
+						valid_to: null,
+						match_score: null,
+						evidence: null,
+					},
+				])
+				.execute()
+
+			// Same family_id for both — exactly what canonicalizeOrganizationName would produce for real (verified
+			// end-to-end via the REAL builder in filer-lookup.test.ts's own multi-spelling gate test).
+			await db
+				.insertInto("filer_family")
+				.values([
+					{
+						node_id: FRN_A,
+						family_id: FAMILY_ID,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					},
+					{
+						node_id: FRN_B,
+						family_id: FAMILY_ID,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-02-01",
+						valid_from: "2026-02-01",
+						valid_to: null,
+					},
+				])
+				.execute()
+
+			const result = await familyRollup(db, { familyID: FAMILY_ID, asOf: "2026-12-31" })
+			expect(result[0]?.display_names).toEqual(["Acme Corp", "Acme Corporation, LLC"].toSorted())
+		})
 	})
 })

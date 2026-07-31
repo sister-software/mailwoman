@@ -982,9 +982,15 @@ describe("§7-3b gates", () => {
 			expect(resultA.cluster).toEqual({ cluster_id: "authoritative:AB", members: [FRN_CLUSTER_A, FRN_CLUSTER_B] })
 
 			// GATE 1: families stays EXACTLY the one family fact — no cluster-shaped data leaks in, and B (a cluster
-			// mate with no family row of its own) never appears here.
+			// mate with no family row of its own) never appears here. display_names is [] here because this fixture
+			// never writes a matching filer_edge for the family row (that join is covered by its own dedicated tests
+			// below and in family-rollup.test.ts) — gate 1 itself is only about structural disjointness.
 			expect(resultA.families).toEqual([
-				{ family_id: "holding_company_name:bigco-inc", relationship: FilerRelationship.HoldingCompany },
+				{
+					family_id: "holding_company_name:bigco-inc",
+					relationship: FilerRelationship.HoldingCompany,
+					display_names: [],
+				},
 			])
 
 			// Symmetric check from B's side: B is in the SAME cluster as A, but carries no family membership of its
@@ -999,7 +1005,11 @@ describe("§7-3b gates", () => {
 			expect(resultFamilyOnly.cluster).toBeNull()
 
 			expect(resultFamilyOnly.families).toEqual([
-				{ family_id: "holding_company_name:bigco-inc", relationship: FilerRelationship.HoldingCompany },
+				{
+					family_id: "holding_company_name:bigco-inc",
+					relationship: FilerRelationship.HoldingCompany,
+					display_names: [],
+				},
 			])
 		})
 
@@ -1110,9 +1120,16 @@ describe("§7-3b gates", () => {
 				expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
 				expect(result3.families[0]?.family_id).toBe(sharedFamilyID)
 
+				// Task 3 fix round 2, single-spelling case: all 3 filers reported the IDENTICAL raw spelling
+				// (SHARED_HOLDING), so display_names carries exactly that one value, everywhere it's surfaced.
+				expect(result1.families[0]?.display_names).toEqual([SHARED_HOLDING])
+				expect(result2.families[0]?.display_names).toEqual([SHARED_HOLDING])
+				expect(result3.families[0]?.display_names).toEqual([SHARED_HOLDING])
+
 				const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf })
 				expect(rollup).toHaveLength(1)
 				expect(rollup[0]?.distinct_member_count).toBe(3)
+				expect(rollup[0]?.display_names).toEqual([SHARED_HOLDING])
 
 				const memberFRNValues: string[] = []
 
@@ -1121,6 +1138,63 @@ describe("§7-3b gates", () => {
 				}
 
 				expect(memberFRNValues.toSorted()).toEqual(frnNodeIDs.toSorted())
+			})
+		})
+
+		/**
+		 * Task 3 fix round 2, multi-spelling case (real builder, real canonicalizeOrganizationName — the reader-only unit
+		 * tests for this live in family-rollup.test.ts's own `describe("display_names")` block). "Acme Corp" and "Acme
+		 * Corporation, LLC" both reduce to the canonical `"acme"` (`@mailwoman/record`'s `canonicalizeOrganizationName` —
+		 * `record/organization.test.ts` pins this exact collapse), so two REAL 499 rows filed under those two different
+		 * spellings land in the SAME family_id. THE RULE this proves end to end: both raw spellings survive in
+		 * `display_names`, sorted, never silently collapsed to one.
+		 */
+		it("REAL builder, multi-spelling family: two raw holding-company spellings that canonicalize identically both survive in display_names, sorted — never collapsed to one", async () => {
+			await withScratchDir(async (out) => {
+				const FRN_SPELLING_1 = toFRN("0009300001")!
+				const FRN_SPELLING_2 = toFRN("0009300002")!
+
+				await buildFilerDatabase({
+					form499Rows: [
+						minimalForm499Row({
+							form499ID: "930001",
+							frn: FRN_SPELLING_1,
+							holdingCompany: "Acme Corp",
+							lastFiledAt: "2026-01-01",
+						}),
+						minimalForm499Row({
+							form499ID: "930002",
+							frn: FRN_SPELLING_2,
+							holdingCompany: "Acme Corporation, LLC",
+							lastFiledAt: "2026-02-01",
+						}),
+					],
+					out,
+					sourceVintage: "2026-Q2",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const result1 = await filerLookup(db, { frn: FRN_SPELLING_1, asOf: "2026-12-31" })
+				const result2 = await filerLookup(db, { frn: FRN_SPELLING_2, asOf: "2026-12-31" })
+
+				expect(result1.families).toHaveLength(1)
+				expect(result2.families).toHaveLength(1)
+
+				// Same family_id — proves the two spellings really did canonicalize together, not a coincidence of
+				// the fixture.
+				const sharedFamilyID = result1.families[0]?.family_id
+				expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
+
+				const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
+
+				// THE RULE: both spellings, sorted, on every surface that reports them.
+				expect(result1.families[0]?.display_names).toEqual(expectedSpellings)
+				expect(result2.families[0]?.display_names).toEqual(expectedSpellings)
+
+				const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf: "2026-12-31" })
+				expect(rollup[0]?.display_names).toEqual(expectedSpellings)
 			})
 		})
 	})
@@ -1294,7 +1368,7 @@ describe("§7-3b gates", () => {
 			const onOrAfter = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-06-01" })
 
 			expect(onOrAfter.families).toEqual([
-				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany },
+				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany, display_names: [] },
 			])
 		})
 
@@ -1324,7 +1398,7 @@ describe("§7-3b gates", () => {
 			const withinWindow = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-02-01" })
 
 			expect(withinWindow.families).toEqual([
-				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany },
+				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany, display_names: [] },
 			])
 
 			const atClose = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-03-01" })
