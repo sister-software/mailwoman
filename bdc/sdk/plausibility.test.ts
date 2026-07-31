@@ -886,6 +886,15 @@ describe("§7-2b gates", () => {
 
 			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
 			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
+
+			// task 8 carried-minor: this gate anchor mirrored the fuller "both axes unknown" test above but omitted its
+			// abstain assertion, making the gate anchor strictly weaker than the ordinary test it cites as fuller
+			// proof — a gate should never assert less than the test it points to.
+			expect(bundle.evidence_found).toContainEqual({
+				type: "abstain",
+				reason: "insufficient_survey_data",
+				layer: "bdc",
+			})
 		})
 
 		/**
@@ -902,7 +911,22 @@ describe("§7-2b gates", () => {
 		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers `bdc/tsconfig.test.json`)
 		 * — `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below, which still confirms none of the
 		 * CURRENT values reads as a negative verdict.
+		 *
+		 * The five pins above close every existing UNION, but none of them has a claim over the bundle's own KEY SET — a
+		 * wholly NEW field appended to `PlausibilityBundle` (e.g. a hypothetical `verdict: "plausible" | "implausible"`)
+		 * would compile and ship green, since no pin above even looks at it (task 8 carried-minor from task 6).
+		 * `PLAUSIBILITY_BUNDLE_KEYS` below closes that gap the same way: `satisfies Record<keyof PlausibilityBundle, true>`
+		 * fails to compile if a key is added to (or removed from) the interface without a matching update here.
 		 */
+		const PLAUSIBILITY_BUNDLE_KEYS = {
+			claim: true,
+			evidence_found: true,
+			coverage_confidence: true,
+			coverage_detail: true,
+			block_resolution: true,
+			vintage: true,
+		} satisfies Record<keyof PlausibilityBundle, true>
+
 		const EVIDENCE_TYPE_TAGS = {
 			filing: true,
 			physical_plant: true,
@@ -957,10 +981,18 @@ describe("§7-2b gates", () => {
 				expect(value).not.toMatch(VERDICT_LIKE_PATTERN)
 			}
 		})
+
+		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time guard above vacuous", () => {
+			// The pin's real teeth are the `satisfies` clause itself (compile-time only, verified by hand per the
+			// task 8 report: temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`, confirm `tsc` fails
+			// here, then revert). This runtime assertion is only the same non-empty backstop the union pins' own
+			// `toHaveLength(16)` above provides — it can't observe a MISSING key the way `tsc` does.
+			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
+		})
 	})
 
 	describe("Gate 2 — co-presence (fuller proof: 'full composition' suite above)", () => {
-		it("matching filing + nearby plant, both covered -> corroborating filing evidence + a physical hit + coverage_confidence: high", async () => {
+		it("matching filing + nearby plant, both covered -> corroborating filing evidence + a physical hit + coverage_confidence: high, coverage_detail fully covered, and no abstain", async () => {
 			const { deps, cleanup } = await openBoth()
 			cleanups.push(cleanup)
 
@@ -973,9 +1005,14 @@ describe("§7-2b gates", () => {
 				deps
 			)
 
+			expect(bundle.coverage_confidence).toBe("high")
+			// task 8 carried-minor: this gate anchor mirrored the fuller co-presence test above but omitted its
+			// coverage_detail and no-abstain assertions, making the gate anchor strictly weaker than the ordinary test
+			// it cites as fuller proof — a gate should never assert less than the test it points to.
+			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
 			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)
-			expect(bundle.coverage_confidence).toBe("high")
+			expect(bundle.evidence_found.some((e) => e.type === "abstain")).toBe(false)
 		})
 	})
 
