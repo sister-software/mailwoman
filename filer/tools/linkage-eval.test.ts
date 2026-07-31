@@ -176,6 +176,47 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		expect(truth().has(FRN_SHARED_REGISTRANT_2)).toBe(false)
 	})
 
+	it("gives every registrant in one truth component the SAME label, including ids only a sibling named", () => {
+		// The component ROLL-UP, which the two-parents test above never reaches: that registrant's label is fully
+		// determined by its own accumulated set, so deleting the roll-up leaves it green. Here A names only P1 while B
+		// names P1 and P2. P1 unions them into one component, so the truth partition says one family — and both labels
+		// must therefore read `P1 + P2`. Without the roll-up A reads `P1` and B reads `P2 + P1`, the strings differ, and
+		// `groupPredicateFromMap` scores them as DIFFERENT truth families while the union-find says they are one: a truth
+		// partition that contradicts itself.
+		const base = buildLinkageEvalForm499Rows()
+
+		const rows = [
+			...base,
+			{
+				...base[0]!,
+				form499ID: "991091",
+				frn: toFRN("9100000091")!,
+				legalNameOfCarrier: "Sibling One Telecom LLC",
+				holdingCompany: "Ridgeway Group LLC",
+			},
+			{
+				...base[0]!,
+				form499ID: "991092",
+				frn: toFRN("9100000092")!,
+				legalNameOfCarrier: "Sibling Two Telecom LLC",
+				holdingCompany: "Ridgeway Group LLC",
+			},
+		]
+
+		// Only the SECOND sibling also names the extra parent.
+		const providerRows = [
+			...buildLinkageEvalProviderRows(),
+			{ providerID: 700_092, frn: toFRN("9100000092")!, holdingCompany: "Fernbank Partners LLC" },
+		]
+
+		const rolled = buildTruthFamilyGroups(rows, providerRows)
+		const expected = "holding_company_name:fernbank partners + holding_company_name:ridgeway group"
+
+		expect(rolled.get(toFRN("9100000092")!)).toBe(expected)
+		// The sibling never named Fernbank, and must still carry it — that is what the roll-up is for.
+		expect(rolled.get(toFRN("9100000091")!)).toBe(expected)
+	})
+
 	it("keeps every family id in the label when one registrant names TWO parents (task 4 re-review, m1)", () => {
 		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents. Keying the
 		// accumulator on the union-find root as it stood MID-loop dropped whichever id was recorded before a later union
@@ -472,7 +513,10 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 	 */
 	const UNRECOGNIZED_RELATIONSHIP = "transfer_of_control"
 
-	const injectUnrecognizedFamily = async (db: DatabaseClient<FilerDatabase>): Promise<void> => {
+	const injectFamilyRowsWithRelationship = async (
+		db: DatabaseClient<FilerDatabase>,
+		relationship: string
+	): Promise<void> => {
 		for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
 			await db
 				.insertInto("filer_family")
@@ -480,7 +524,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 					node_id: `frn:${frn}`,
 					family_id: INJECTED_FAMILY_ID,
 					naming_node_id: INJECTED_FAMILY_ID,
-					relationship: UNRECOGNIZED_RELATIONSHIP,
+					relationship,
 					source: "linkage-eval-injection-probe",
 					source_vintage: "2026-eval-v1",
 					valid_from: "2026-01-01",
@@ -500,7 +544,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),
 			label: "withheld-unrecognized",
 			holdingCompanyWithheld: true,
-			injectEvidence: injectUnrecognizedFamily,
+			injectEvidence: (db) => injectFamilyRowsWithRelationship(db, UNRECOGNIZED_RELATIONSHIP),
 		})
 
 		// The exhaustiveness refactor briefly folded unrecognized relationships in with `management_company`, because both
@@ -510,6 +554,80 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
 		expect(injected.census.scoredFamilyRows).toBe(0)
 		expect(injected.census.familyRows).toBe(5)
+	})
+
+	it("does NOT move when the same ownership fact arrives only as filer_edge rows (the Task 8 precondition)", async () => {
+		const form499Rows = buildLinkageEvalForm499Rows()
+		const providerRows = buildLinkageEvalProviderRows()
+
+		// The plan's Task 8 section and this eval's own page both assert, as a measured fact, that wiring EDGAR in as
+		// inferred `Subsidiary` EDGES leaves recall at 0.000 and only `filer_family` rows move it. Both stated it with
+		// nothing in-repo to re-derive it from. This is that artifact: the exact shape Task 8 is specified to emit.
+		const injected = await runLinkagePass({
+			inputs: buildFilteredEvalInputs(),
+			registrants: buildTruthRegistrants(form499Rows, providerRows),
+			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),
+			label: "withheld-edges-only",
+			holdingCompanyWithheld: true,
+			injectEvidence: async (db) => {
+				await db
+					.insertInto("filer_node")
+					.values({ node_id: INJECTED_FAMILY_ID, identifier_type: "cik", identifier_value: "0001234567" })
+					.execute()
+
+				for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
+					await db
+						.insertInto("filer_edge")
+						.values({
+							from_node_id: `frn:${frn}`,
+							to_node_id: INJECTED_FAMILY_ID,
+							relationship: FilerRelationship.Subsidiary,
+							assertion: "inferred",
+							match_score: 0.92,
+							source: "edgar-exhibit-21",
+							source_vintage: "2026-eval-v1",
+							valid_from: "2026-01-01",
+							valid_to: null,
+						})
+						.execute()
+				}
+			},
+		})
+
+		// The edges ARE in the artifact and the census sees them — this is not a failed injection.
+		expect(injected.census.ownershipEdges).toBe(3)
+		// And the score does not budge, because every corporate-family reader answers from `filer_family`.
+		expect(injected.score.truePositivePairs).toBe(0)
+		expect(injected.score.recall).toBe(0)
+		expect(injected.census.scoredFamilyRows).toBe(0)
+	})
+
+	it("does not score an Object.prototype key as ownership", async () => {
+		const form499Rows = buildLinkageEvalForm499Rows()
+		const providerRows = buildLinkageEvalProviderRows()
+
+		// `OWNERSHIP_BY_RELATIONSHIP` is a plain object literal, so a bare `map[relationship]` lookup inherits
+		// `Object.prototype`: "constructor" resolves to a FUNCTION — truthy, and never nullish, so `??` never fires. That
+		// made `assertsOwnership("constructor")` true, which both SCORED an unclassifiable assertion and double-counted
+		// the row, so the three census splits summed to 8 against a published total of 5.
+		const injected = await runLinkagePass({
+			inputs: buildFilteredEvalInputs(),
+			registrants: buildTruthRegistrants(form499Rows, providerRows),
+			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),
+			label: "withheld-prototype-key",
+			holdingCompanyWithheld: true,
+			injectEvidence: (db) => injectFamilyRowsWithRelationship(db, "constructor"),
+		})
+
+		expect(injected.predictedFamilyIDsOf.get(FRN_CASCADE_1)).toEqual([])
+		expect(injected.score.truePositivePairs).toBe(0)
+		expect(injected.census.scoredFamilyRows).toBe(0)
+		expect(injected.census.unrecognizedFamilyRows).toBe(3)
+
+		// The published table invites this arithmetic explicitly, so pin it.
+		const { scoredFamilyRows, nonOwnershipFamilyRows, unrecognizedFamilyRows, familyRows } = injected.census
+
+		expect(scoredFamilyRows + nonOwnershipFamilyRows + unrecognizedFamilyRows).toBe(familyRows)
 	})
 
 	it("refuses to report a withheld build carrying a relationship it cannot classify", () => {

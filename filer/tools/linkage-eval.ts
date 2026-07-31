@@ -121,9 +121,9 @@ export interface LeakageCensus {
 	 */
 	holdingCompanyNodes: number
 	/**
-	 * `filer_edge` rows asserting ANY ownership relationship — every relationship except `same_entity` (identity, not
-	 * ownership) and `management_company` (control, not ownership). Note that an ownership EDGE alone moves no score: see
-	 * {@linkcode renderWhySection}.
+	 * `filer_edge` rows whose relationship asserts OWNERSHIP ({@linkcode OWNERSHIP_BY_RELATIONSHIP}) — today
+	 * `holding_company`, and `parent_company`/`subsidiary` the moment a writer emits one. Note that an ownership EDGE
+	 * alone moves no score: see {@linkcode renderWhySection}.
 	 */
 	ownershipEdges: number
 	/**
@@ -162,8 +162,10 @@ export interface LeakageCensus {
  * in BOTH the prediction and the leakage census — scoring a fact nobody decided should be scored, and doing it without
  * a test failing. The `satisfies Record<FilerRelationship, boolean>` pin below inverts that default: a new member is a
  * COMPILE error here until someone classifies it deliberately. Same idiom the BDC plausibility gate uses
- * (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`), and it resolves through the
- * emitted `.d.ts`, so `yarn typecheck:tests` is what evaluates it — `tsc -b` and vitest are both blind to it.
+ * (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`). Unlike the `satisfies` pins
+ * that live in TEST files — which only `yarn typecheck:tests` evaluates — this one sits in a source file inside
+ * `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a member fails with TS1360 naming
+ * the missing relationship.
  *
  * `SameEntity` is false because two identifiers denoting ONE filer say nothing about who owns it; `ManagementCompany`
  * because operational control is not ownership (spec §3.1 finding 1, and the reason this eval excludes management
@@ -185,9 +187,16 @@ const OWNERSHIP_BY_RELATIONSHIP = {
  * `FilerRelationship` (the pin above makes that a compile error), so it is a raw string read back from a
  * `filer_family`/`filer_edge` row this build did not write, and silently scoring an unknown assertion as ownership is
  * the failure this exists to stop.
+ *
+ * **The {@linkcode isRecognizedRelationship} guard is required, not belt-and-braces.** `OWNERSHIP_BY_RELATIONSHIP` is a
+ * plain object literal, so a bare index lookup inherits `Object.prototype`: `relationship === "constructor"` (or
+ * `"toString"`, or `"__proto__"`) resolves to a FUNCTION, which is truthy and never nullish, so `??` does not fire and
+ * this returned `true` for a string it does not classify — the precise failure the paragraph above says it exists to
+ * stop. Reproduced through the real builder: three injected `constructor` family rows scored as ownership AND counted
+ * in the unrecognized bucket, so the three census splits summed to 8 against a published total of 5.
  */
 function assertsOwnership(relationship: string): boolean {
-	return OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship] ?? false
+	return isRecognizedRelationship(relationship) && OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship]
 }
 
 /**
@@ -255,7 +264,7 @@ export function assertNoOwnershipLeak(census: LeakageCensus): void {
 interface RegistrantFamilies {
 	/**
 	 * Family ids the prediction treats as evidence of shared ownership — everything except a membership this node holds
-	 * only by way of a `management_company` relationship (see the module docstring).
+	 * only by way of a relationship that does not assert ownership (see the module docstring).
 	 */
 	predicted: Map<FRN, string[]>
 	/**
@@ -855,15 +864,19 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 		"## What is actually in each artifact",
 		"",
 		"Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no " +
-			"ownership edge and no family row the prediction would score — that is the withholding, verified, and a " +
-			`runtime gate refuses to report a withheld score if any of the three is non-zero. It DOES contain ` +
-			`${withheld.census.nonOwnershipFamilyRows} corporate-family rows, from the management-company disclosures the ` +
-			"eval does not withhold; they are namespaced separately from ownership families and the prediction skips " +
-			"them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its " +
-			"own artifact.\n\nThe family counts are split by what the prediction does with a row, not by relationship " +
-			'name: "scored" is every membership that is not management, so a `subsidiary` or `parent_company` row a ' +
-			"future writer emits lands in that count rather than going uncounted. The total is printed alongside both " +
-			"splits so nothing can hide between them.",
+			"ownership edge, no family row the prediction would score and no family row carrying a relationship this " +
+			"eval cannot classify — that is the withholding, verified, and a runtime gate refuses to report a withheld " +
+			`score if any of those four counts is non-zero. It DOES contain ${withheld.census.nonOwnershipFamilyRows} ` +
+			"corporate-family rows, from the management-company disclosures the eval does not withhold; they are " +
+			"namespaced separately from ownership families and the prediction skips them. An earlier version of this " +
+			"page claimed no family row could exist here at all, which was wrong on its own artifact.\n\nThe family " +
+			"counts are split by what the prediction does with a row, not by relationship name, into three buckets that " +
+			'partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` ' +
+			"or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket " +
+			"is the relationships this eval recognizes and deliberately does not score — `management_company` today. " +
+			"The third is anything else: a relationship string no shipped writer can produce, which the gate refuses " +
+			"on rather than filing under either of the other two. The total is printed alongside all three so nothing " +
+			"can hide between them.",
 		"",
 		...renderCensusTable(withheld, control),
 		"",
