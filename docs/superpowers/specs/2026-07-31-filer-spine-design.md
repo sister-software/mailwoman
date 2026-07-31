@@ -218,3 +218,39 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 
 - **Inferred linkage is degenerate in 3a and must be rebuilt on real corroboration.** 3a's identifier veto (added after an adversarial review found it merging "American Broadband LLC" with "American Broadband, Inc." across disjoint FRNs) is correct but structurally reduces pass (b) to "same authoritative component": identifier sets are derived per component, so sharing an identifier implies sharing a component by construction. Genuine discovery — two filings that _are_ one company but share no identifier — needs evidence beyond the canonical name. 3b has it: CORES parent/subsidiary fields, EDGAR Exhibit 21, plus normalized HQ address and contact phone/email from the 499 columns already parsed. Design the corroboration rule there; do not restore name-only linkage.
 - **Same-vintage supersession** for inferred edges (3a fix round 2) is the pattern transfer-of-control edges must follow when they land.
+
+## 11. CORES access — corrected diagnosis (2026-07-31)
+
+**Correction to the 3a Task-9 record.** That task reported `data.fcc.gov` as "403 at the Akamai edge."
+That was wrong, and the distinction matters for 3b.
+
+`https://data.fcc.gov/api/frn/getInfo?frn=…` returns **HTTP 302 → `www.fcc.gov/what-can-we-help-you-find`**
+— the FCC's generic retired-URL landing page. The endpoint appears **decommissioned**, not blocked. The
+403 originally observed was the _redirect target_ (`www.fcc.gov`) refusing this host, so a dead endpoint
+was misread as a network block. Documentation pages for retired APIs linger, which is why the search
+evidence looked encouraging.
+
+**Host reachability from the lab machine** (verified):
+
+| Host                   | Status              | Notes                                                                     |
+| ---------------------- | ------------------- | ------------------------------------------------------------------------- |
+| `data.fcc.gov`         | **200**             | Entire bulk-download tree reachable                                       |
+| `apps.fcc.gov`         | **200**             | CORES public site loads                                                   |
+| `broadbandmap.fcc.gov` | 401 unauthenticated | Works with credentials — BDC ingest is unaffected                         |
+| `www.fcc.gov`          | **403**             | Akamai edge; identifying User-Agent does not help, so it is host/IP-based |
+| `wireless2.fcc.gov`    | **403**             | Same                                                                      |
+
+**Consequences:**
+
+1. **3b's CORES plan needs a new premise.** The FRN Conversions API cannot be assumed to exist. Before
+   any CORES work, confirm from a machine that can reach `www.fcc.gov` whether the documented API is
+   retired and whether a successor exists. If none does, CORES parent/subsidiary data has no supported
+   programmatic source, and the family-edge story for 3b rests on Form 499's `holdingCompany` /
+   `managementCompany` plus SEC EDGAR Exhibit 21 — both already available.
+2. **ULS is fully de-risked for 3c.** `data.fcc.gov/download/pub/uls/complete/` is reachable and current
+   (weekly archives dated 2026-07-25). Part 101 microwave — the backhaul evidence D2 scoped us to —
+   is in that tree.
+3. **ASR needs a new location.** `data.fcc.gov/download/pub/asr/` now 302s to the same retired-URL page,
+   and `pub/` contains only `uls/`. ASR is 3c's crown jewel (structures with coordinates _and_ owner
+   FRN), so finding its current bulk path is a 3c prerequisite — and the FCC's ASR pages live on
+   `www.fcc.gov`/`wireless2.fcc.gov`, both blocked here.
