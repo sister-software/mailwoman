@@ -406,7 +406,13 @@ export function buildTruthFamilyGroups(
 	}
 
 	const families = createUnionFind()
-	const familyIDsOfRoot = new Map<string, Set<string>>()
+
+	// Accumulated per REGISTRANT, never per union-find root (task 4 re-review, m1). Keying this on the root as it stood
+	// mid-loop meant a later union that re-rooted the component orphaned the earlier key, and the family id recorded
+	// under it silently vanished from the label — the label being what the corpus and pairs tables publish as truth. The
+	// partition was always right, so no score ever moved; the published string would have been wrong. Unreachable on
+	// today's corpus (no registrant names two parents) and reachable the moment one does.
+	const familyIDsOfRegistrant = new Map<FRN, Set<string>>()
 
 	const attribute = (frn: FRN | null, holdingCompany: string | null): void => {
 		if (!frn || !holdingCompany) return
@@ -420,8 +426,7 @@ export function buildTruthFamilyGroups(
 		if (!representative) return
 
 		families.union(`registrant:${representative}`, `family:${familyID}`)
-		const root = families.find(`family:${familyID}`)
-		familyIDsOfRoot.set(root, (familyIDsOfRoot.get(root) ?? new Set()).add(familyID))
+		familyIDsOfRegistrant.set(representative, (familyIDsOfRegistrant.get(representative) ?? new Set()).add(familyID))
 	}
 
 	for (const row of rows) {
@@ -432,11 +437,26 @@ export function buildTruthFamilyGroups(
 		attribute(row.frn, row.holdingCompany)
 	}
 
-	const truth = new Map<FRN, string>()
+	// Every union is done, so every root below is final — roll the per-registrant sets up into per-component ones.
+	const familyIDsOfRoot = new Map<string, Set<string>>()
 
 	for (const registrant of registrants) {
 		const root = families.find(`registrant:${registrant.representative}`)
-		const familyIDs = [...(familyIDsOfRoot.get(root) ?? new Set<string>())].toSorted()
+		const rolled = familyIDsOfRoot.get(root) ?? new Set<string>()
+
+		for (const familyID of familyIDsOfRegistrant.get(registrant.representative) ?? []) {
+			rolled.add(familyID)
+		}
+
+		familyIDsOfRoot.set(root, rolled)
+	}
+
+	const truth = new Map<FRN, string>()
+
+	for (const registrant of registrants) {
+		const familyIDs = [
+			...(familyIDsOfRoot.get(families.find(`registrant:${registrant.representative}`)) ?? []),
+		].toSorted()
 
 		truth.set(
 			registrant.representative,

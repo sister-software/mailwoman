@@ -5,24 +5,24 @@
  *
  *   Pairwise grouping precision/recall/F1 (3b Task 4, decision 4) — scores a PREDICTED "same group"
  *   judgment against a TRUTH partition over the same id universe. Built for {@linkcode filerLinkageEval}
- *   (`linkage-eval.ts`), which scores `cluster-filers.ts`'s entity-clustering output against held-out
- *   FRN↔holdingCompany family truth, but the types here are generic — nothing below is filer-specific —
- *   because the same shape ("does a clustering recover a held-out grouping?") recurs anywhere this SDK
- *   adds a linkage eval.
+ *   (`linkage-eval.ts`), which scores the corporate-family membership a `filer.db` build asserts
+ *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic — nothing below is
+ *   filer-specific — because the same shape ("does this grouping recover a held-out one?") recurs anywhere
+ *   this SDK adds a linkage eval.
  *
- *   **Why pairwise, not a cluster-alignment metric (B-cubed, the Hungarian algorithm):** a "positive"
- *   here is an unordered PAIR of ids judged to belong to the same group — true/false positive/negative are
- *   counted over pairs, never over clusters, so no cluster-to-cluster correspondence ever has to be
- *   chosen. That matters specifically for {@linkcode filerLinkageEval}'s use: an authoritative cluster's
- *   `cluster_id` is content-derived (`cluster-filers.ts`'s `` `${assertion}:${lexicographically-smallest
- *   member}` ``) and has no "correct" counterpart in the truth partition to align against — the only
- *   question that matters is "are these two records correctly judged together or apart," which is
- *   well-defined over pairs without an alignment step. `registry/tools/train-gbt.ts`'s (unexported)
- *   `clusterF1` makes the identical pairwise choice for an analogous problem (does `resolveEntities`'
- *   clustering recover the true NPI grouping?) — evidence pairwise is the right shape for THIS kind of
- *   experiment too, not just a borrowed convenience. It isn't reused here (per the task brief): it
- *   hard-codes a `{records}`/NPI-shaped input, and its zero-denominator convention is one this module
- *   deliberately replaces — see below.
+ *   **Why pairwise, not a group-alignment metric (B-cubed, the Hungarian algorithm):** a "positive" here is
+ *   an unordered PAIR of ids judged to belong to the same group — true/false positive/negative are counted
+ *   over pairs, never over groups, so no group-to-group correspondence ever has to be chosen. That matters
+ *   for {@linkcode filerLinkageEval}'s use: a predicted family's id is derived from the canonicalized
+ *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong — the
+ *   only question that matters is "are these two records correctly judged together or apart," which is
+ *   well-defined over pairs without an alignment step. (Same rationale the scorecard gives; module and page
+ *   should not disagree about why this metric was chosen — task 4 re-review, I3.)
+ *   `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes the identical pairwise choice for an
+ *   analogous problem (does `resolveEntities`' clustering recover the true NPI grouping?) — evidence
+ *   pairwise is the right shape for THIS kind of experiment too, not just a borrowed convenience. It isn't
+ *   reused here (per the task brief): it hard-codes a `{records}`/NPI-shaped input, and its
+ *   zero-denominator convention is one this module deliberately replaces — see below.
  *
  *   **Zero-denominator convention (deliberately NOT `clusterF1`'s):** `clusterF1` defaults an empty
  *   denominator to `0` for both precision and recall, silently. This module reports `null` instead — "the
@@ -97,10 +97,11 @@ export interface PairwiseGroupingScore {
  * SDK's callers run this over tens of FRNs, not millions); not intended for production-scale record linkage.
  *
  * Accepting predicates rather than two group-id maps is deliberate: a TRUTH grouping is usually a clean partition (one
- * group id per id — see {@linkcode groupPredicateFromMap}), but a PREDICTED grouping can legitimately be the union of
- * several independent partitions (e.g. {@linkcode filerLinkageEval} treats two FRNs as predicted-same when they share
- * EITHER an authoritative OR an inferred cluster id) — a single group-id map can't express that "OR", but a predicate
- * can.
+ * group id per id — see {@linkcode groupPredicateFromMap}), but a PREDICTED grouping need not be a partition at all.
+ * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to SEVERAL corporate families at once
+ * (`filer_family` admits more than one membership per node), and two registrants are predicted-same when their family
+ * SETS intersect — an overlap relation, not an equivalence class. A single group-id map cannot express that; a
+ * predicate can.
  */
 export function scorePairwiseGrouping<Id>(
 	ids: readonly Id[],

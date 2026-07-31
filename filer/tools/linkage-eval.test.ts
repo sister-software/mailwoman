@@ -14,8 +14,10 @@
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 
+import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { describe, expect, it } from "vitest"
 
+import { FilerRelationship, type FilerDatabase } from "../schema.ts"
 import { toFRN } from "../sdk/frn.ts"
 import {
 	buildControlEvalInputs,
@@ -29,7 +31,7 @@ import {
 	PUBLISHED_LINKAGE_EVAL_DATE,
 	PUBLISHED_WITHHELD_INPUTS_SHA256,
 } from "./linkage-corpus.ts"
-import { filerLinkageEval, type FilerLinkageEvalResult } from "./linkage-eval.ts"
+import { filerLinkageEval, runLinkagePass, type FilerLinkageEvalResult, type LinkageEvalRun } from "./linkage-eval.ts"
 
 const FRN_CASCADE_1 = toFRN("9100000001")!
 const FRN_CASCADE_2 = toFRN("9100000002")!
@@ -53,6 +55,12 @@ const PUBLISHED_REPORT_PATH = join(
 )
 
 const MANAGEMENT_FAMILY_ID = "management_company_name:timberline management"
+
+/**
+ * A family id no writer in this repo mints — deliberately not `holding_company_name:`-shaped, so the standing guarantee
+ * below cannot pass by accident through a code path that special-cases the builder's own namespace.
+ */
+const INJECTED_FAMILY_ID = "cik:0001234567"
 
 /**
  * One eval run shared by every test below — `filerLinkageEval` builds two real SQLite artifacts and runs the full
@@ -162,9 +170,56 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		expect(truth().has(FRN_SHARED_REGISTRANT_2)).toBe(false)
 	})
 
+	it("keeps every family id in the label when one registrant names TWO parents (task 4 re-review, m1)", () => {
+		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents. Keying the
+		// accumulator on the union-find root as it stood MID-loop dropped whichever id was recorded before a later union
+		// re-rooted the component — the partition stayed correct, the published label silently lost a name.
+		const rows = [
+			...buildLinkageEvalForm499Rows(),
+			{
+				...buildLinkageEvalForm499Rows()[0]!,
+				form499ID: "991090",
+				frn: toFRN("9100000090")!,
+				legalNameOfCarrier: "Two Parents Telecom LLC",
+				holdingCompany: "Northbridge Holdings LLC",
+			},
+		]
+
+		// Both parents are unique to this registrant, so its label depends ONLY on its own accumulated set — no other
+		// registrant's contribution can put the dropped id back via the component roll-up and mask the bug.
+		const providerRows = [
+			...buildLinkageEvalProviderRows(),
+			{ providerID: 700_090, frn: toFRN("9100000090")!, holdingCompany: "Southgate Capital Partners LLC" },
+		]
+
+		const group = buildTruthFamilyGroups(rows, providerRows).get(toFRN("9100000090")!)
+
+		expect(group).toContain("holding_company_name:northbridge")
+		expect(group).toContain("holding_company_name:southgate capital partners")
+	})
+
 	it("does NOT treat a shared management company as a truth family", () => {
 		expect(truth().get(FRN_COMANAGED)).toBe(`singleton:${FRN_COMANAGED}`)
 		expect(truth().get(FRN_COMANAGED)).not.toBe(truth().get(FRN_CASCADE_3))
+	})
+})
+
+describe("the corpus's own invariants", () => {
+	it("never restates one row's holdingCompany inside another row's name fields (task 4 re-review, m4)", () => {
+		// The corpus docstring claims withholding cannot be defeated through a name field that happens to repeat a
+		// parent's name. Nothing checked it, and the leakage census could not see it: a legal name is an attribute, not
+		// an ownership row, so a restated parent would sail past the gate and quietly feed the entity-resolution pass.
+		const rows = buildLinkageEvalForm499Rows()
+		const parents = rows.map((row) => row.holdingCompany).filter((name) => name !== "")
+
+		expect(parents.length).toBeGreaterThan(0)
+
+		for (const row of rows) {
+			for (const parent of parents) {
+				expect(row.legalNameOfCarrier.toLowerCase()).not.toContain(parent.toLowerCase())
+				expect(row.doingBusinessAs.toLowerCase()).not.toContain(parent.toLowerCase())
+			}
+		}
 	})
 })
 
@@ -276,18 +331,19 @@ describe("filerLinkageEval — the withheld run (the measurement)", () => {
 })
 
 describe("filerLinkageEval — what is really in the artifacts (task 4 review fix, I4)", () => {
-	it("leaves NO ownership node, edge or family row in the withheld build", async () => {
+	it("leaves NO ownership node, edge or scoreable family row in the withheld build", async () => {
 		const { withheld } = await runEval()
 
 		expect(withheld.census.holdingCompanyNodes).toBe(0)
-		expect(withheld.census.holdingCompanyEdges).toBe(0)
-		expect(withheld.census.holdingCompanyFamilyRows).toBe(0)
+		expect(withheld.census.ownershipEdges).toBe(0)
+		expect(withheld.census.scoredFamilyRows).toBe(0)
 	})
 
 	it("DOES leave management-company filer_family rows there — the old page claimed none could exist", async () => {
 		const { withheld } = await runEval()
 
-		expect(withheld.census.managementCompanyFamilyRows).toBe(2)
+		expect(withheld.census.managementFamilyRows).toBe(2)
+		expect(withheld.census.familyRows).toBe(2)
 		expect(withheld.observedFamilyIDsOf.get(FRN_CASCADE_3)).toEqual([MANAGEMENT_FAMILY_ID])
 		expect(withheld.observedFamilyIDsOf.get(FRN_COMANAGED)).toEqual([MANAGEMENT_FAMILY_ID])
 	})
@@ -305,8 +361,83 @@ describe("filerLinkageEval — what is really in the artifacts (task 4 review fi
 	it("builds the ownership artifacts in the control run — the contrast that makes the census meaningful", async () => {
 		const { control } = await runEval()
 
-		expect(control.census.holdingCompanyNodes).toBeGreaterThan(0)
-		expect(control.census.holdingCompanyEdges).toBeGreaterThan(0)
-		expect(control.census.holdingCompanyFamilyRows).toBeGreaterThan(0)
+		expect(control.census.holdingCompanyNodes).toBe(4)
+		expect(control.census.ownershipEdges).toBe(8)
+		expect(control.census.scoredFamilyRows).toBe(8)
+		expect(control.census.managementFamilyRows).toBe(2)
+		expect(control.census.familyRows).toBe(10)
+	})
+})
+
+describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)", () => {
+	/**
+	 * The three Cascade registrants, joined to one ownership family by a relationship the BUILDER never emits —
+	 * `subsidiary`, the shape a corporate-filing importer is specified to produce. Injected into the withheld artifact
+	 * after the leakage gate has already passed on the untouched build, so the gate stays armed while the probe runs.
+	 */
+	const injectSubsidiaryFamily = async (db: DatabaseClient<FilerDatabase>): Promise<void> => {
+		for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: `frn:${frn}`,
+					family_id: INJECTED_FAMILY_ID,
+					naming_node_id: INJECTED_FAMILY_ID,
+					relationship: FilerRelationship.Subsidiary,
+					source: "linkage-eval-injection-probe",
+					source_vintage: "2026-eval-v1",
+					valid_from: "2026-01-01",
+					valid_to: null,
+				})
+				.execute()
+		}
+	}
+
+	const runInjected = async (): Promise<LinkageEvalRun> => {
+		const form499Rows = buildLinkageEvalForm499Rows()
+		const providerRows = buildLinkageEvalProviderRows()
+
+		return runLinkagePass({
+			inputs: buildFilteredEvalInputs(),
+			registrants: buildTruthRegistrants(form499Rows, providerRows),
+			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),
+			label: "withheld-injected",
+			holdingCompanyWithheld: true,
+			injectEvidence: injectSubsidiaryFamily,
+		})
+	}
+
+	it("moves the score off zero when ownership arrives as filer_family rows", async () => {
+		const injected = await runInjected()
+
+		// 3 of the 6 truth-positive pairs are the Cascade ones; none of the Meridian pairs is reachable from this
+		// injection, so recall lands at exactly one half with nothing falsely merged.
+		expect(injected.score.truePositivePairs).toBe(3)
+		expect(injected.score.falsePositivePairs).toBe(0)
+		expect(injected.score.recall).toBe(0.5)
+		expect(injected.score.precision).toBe(1)
+		expect(injected.score.f1).toBeCloseTo(2 / 3)
+	})
+
+	it("scores a relationship the builder never emits — the prediction is not holding_company-only", async () => {
+		const injected = await runInjected()
+
+		expect(injected.predictedFamilyIDsOf.get(FRN_CASCADE_1)).toEqual([INJECTED_FAMILY_ID])
+	})
+
+	it("counts the injected rows in the census (task 4 re-review, I2)", async () => {
+		const injected = await runInjected()
+
+		// The pre-fix census counted `holding_company` only and would have read 0 here, under a heading promising the
+		// numbers were counted from the build.
+		expect(injected.census.scoredFamilyRows).toBe(3)
+		expect(injected.census.managementFamilyRows).toBe(2)
+		expect(injected.census.familyRows).toBe(5)
+	})
+
+	it("keeps the leakage gate armed while the probe runs — the gate sees the untouched build", async () => {
+		// The injection adds exactly the ownership rows the gate refuses. It does not throw, because the gate reads the
+		// census BEFORE the probe writes; break that ordering and this test starts throwing instead of scoring.
+		await expect(runInjected()).resolves.toBeDefined()
 	})
 })

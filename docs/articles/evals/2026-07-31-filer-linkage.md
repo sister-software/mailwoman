@@ -4,7 +4,7 @@
 
 ## The question
 
-A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent name each filer reports on its Form 499. The open question this eval exists to baseline is whether that membership is recoverable for a filer that reports NOTHING — from names, identifiers, or any other signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so that a later build with more evidence has something to beat.
+A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent name a filer discloses — on its Form 499, or on the broadband provider list, whichever carries it; both sources contribute rows to the control build below. The open question this eval exists to baseline is whether that membership is recoverable for a filer that discloses NOTHING — from names, identifiers, or any other signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so that a later build with more evidence has something to beat.
 
 ## The two runs
 
@@ -17,15 +17,19 @@ The control run is not an achievement and should not be read as one. A pipeline 
 
 ### What counts as a prediction
 
-Two registrants are predicted to be the same family iff the built `filer.db` places them in a common family as of 2026-06-01, read through the same corporate-family reader a product caller would use. Membership rows that exist only because two filers named the same MANAGEMENT company are excluded from both the prediction and the truth: management is operational control, not ownership; that field is not withheld here; and letting it answer would mean a field this eval hands over deciding a question about the field it holds back. The corpus includes two filers reporting the same manager so that exclusion has something to do.
+Two registrants are predicted to be the same family iff the built `filer.db` places them in a common family as of 2026-06-01. Each membership is read with the shipped corporate-family reader, the one a product caller uses — but the eval composes it: that reader answers strictly per node, and a registrant can own several nodes (its FRN registrations and its provider id), so the eval takes the union across them. The reader is shipped; the union is this eval's own step, and it is why a parent disclosed on one of a registrant's two filings still counts.
+
+Membership rows that exist only because two filers named the same MANAGEMENT company are excluded from both the prediction and the truth: management is operational control, not ownership; that field is not withheld here; and letting it answer would mean a field this eval hands over deciding a question about the field it holds back. The corpus includes two filers reporting the same manager so that exclusion has something to do.
 
 ### What counts as a registrant
 
 The unit scored is the registrant, not the FRN. One operator can hold several FRN registrations — the corpus has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a fact about the company, not about that registration. Scoring FRNs individually would have let the truth partition put a single legal entity in two different families at once.
 
+Treating a shared provider id as proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay apart. That failure is not silent here. Folding two registrants that belong to different families puts a truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below 1.000, and the test asserting a perfect control fails. The rule is load-bearing and wired to a tripwire.
+
 ## Corpus
 
-12 Form 499 filers folded into 11 registrants, authored rather than sampled so every truth fact is auditable here instead of trusted from an external source. Two multi-member families whose members spell the parent name inconsistently; four standalone filers; a pair of unrelated companies with identical canonical names; one registrant holding two FRNs where only the second discloses the parent.
+12 Form 499 filers folded into 11 registrants, authored rather than sampled so every truth fact is auditable here instead of trusted from an external source. Two multi-member families whose members spell the parent name inconsistently; four standalone filers; a pair of unrelated companies with identical canonical names; one registrant holding two FRNs where only the second discloses the parent; and one filer that discloses no parent but names the same MANAGEMENT company as a member of the first family, which the prediction has to decline to treat as ownership. Every row is in the table below; the counts in this paragraph add up to it.
 
 | FRN        | legal name (always given)         | registrant | holding company (withheld)         | management company       | truth family                                         |
 | ---------- | --------------------------------- | ---------- | ---------------------------------- | ------------------------ | ---------------------------------------------------- |
@@ -44,27 +48,27 @@ The unit scored is the registrant, not the FRN. One operator can hold several FR
 
 ## Input record shape
 
-Every field the builder receives in the withheld run, and how much of it the corpus actually fills in. The empty columns matter: they are the corroboration channels a future version would have to lean on, and this corpus does not exercise them.
+Every field the builder receives in the withheld run, and how much of it the corpus actually fills in. The empty columns are worth reading, but not for the obvious reason: filling them in changes nothing, because nothing on the family path reads them (see "What would move this number" below). They are listed so the corpus's sparsity is not mistaken for the reason the withheld run scores zero.
 
-| Form499Row field             | in the withheld input? | populated in the corpus | note                                                                     |
-| ---------------------------- | ---------------------- | ----------------------- | ------------------------------------------------------------------------ |
-| `form499ID`                  | yes                    | 12 of 12                |                                                                          |
-| `frn`                        | yes                    | 12 of 12                | the truth key, never itself withheld                                     |
-| `lastFiledAt`                | yes                    | 12 of 12                |                                                                          |
-| `usfContributor`             | yes                    | **0 of 12** — never set |                                                                          |
-| `legalNameOfCarrier`         | yes                    | 12 of 12                | the entity-resolution pass's blocking key and score input                |
-| `doingBusinessAs`            | yes                    | 2 of 12                 |                                                                          |
-| `principalCommType`          | yes                    | 12 of 12                |                                                                          |
-| `holdingCompany`             | **no**                 | **withheld**            | the field under test                                                     |
-| `managementCompany`          | yes                    | 2 of 12                 | control, not ownership — kept in the input, excluded from the prediction |
-| `hqAddress`                  | yes                    | **0 of 12** — never set | a corroboration channel the corpus does not populate                     |
-| `customerInquiriesTelephone` | yes                    | **0 of 12** — never set | a corroboration channel the corpus does not populate                     |
-| `customerInquiriesAddress`   | yes                    | **0 of 12** — never set | a corroboration channel the corpus does not populate                     |
-| `dcAgentDisplayName`         | yes                    | **0 of 12** — never set | attribute only — never an edge input (shared-agent doctrine)             |
-| `dcAgentOrganizationName`    | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
-| `dcAgentTelephone`           | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
-| `dcAgentEmailAddress`        | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
-| `dcAgentAddress`             | yes                    | **0 of 12** — never set | attribute only — never an edge input                                     |
+| Form499Row field             | in the withheld input? | populated in the corpus | note                                                                             |
+| ---------------------------- | ---------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| `form499ID`                  | yes                    | 12 of 12                |                                                                                  |
+| `frn`                        | yes                    | 12 of 12                | the truth key, never itself withheld                                             |
+| `lastFiledAt`                | yes                    | 12 of 12                |                                                                                  |
+| `usfContributor`             | yes                    | **0 of 12** — never set |                                                                                  |
+| `legalNameOfCarrier`         | yes                    | 12 of 12                | the entity-resolution pass's blocking key and score input                        |
+| `doingBusinessAs`            | yes                    | 2 of 12                 |                                                                                  |
+| `principalCommType`          | yes                    | 12 of 12                |                                                                                  |
+| `holdingCompany`             | **no**                 | **withheld**            | the field under test                                                             |
+| `managementCompany`          | yes                    | 2 of 12                 | control, not ownership — kept in the input, excluded from the prediction         |
+| `hqAddress`                  | yes                    | **0 of 12** — never set | staged as an attribute; no code on the family or entity-resolution path reads it |
+| `customerInquiriesTelephone` | yes                    | **0 of 12** — never set | staged as an attribute; no code on the family or entity-resolution path reads it |
+| `customerInquiriesAddress`   | yes                    | **0 of 12** — never set | staged as an attribute; no code on the family or entity-resolution path reads it |
+| `dcAgentDisplayName`         | yes                    | **0 of 12** — never set | attribute only — never an edge input (shared-agent doctrine)                     |
+| `dcAgentOrganizationName`    | yes                    | **0 of 12** — never set | attribute only — never an edge input                                             |
+| `dcAgentTelephone`           | yes                    | **0 of 12** — never set | attribute only — never an edge input                                             |
+| `dcAgentEmailAddress`        | yes                    | **0 of 12** — never set | attribute only — never an edge input                                             |
+| `dcAgentAddress`             | yes                    | **0 of 12** — never set | attribute only — never an edge input                                             |
 
 | ProviderListRow field | in the withheld input? | populated in the corpus | note                                                                   |
 | --------------------- | ---------------------- | ----------------------- | ---------------------------------------------------------------------- |
@@ -104,22 +108,35 @@ The 6 registrant pairs the withheld field puts together. Every other pair of the
 
 ## What is actually in each artifact
 
-Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge and no ownership family row — that is the withholding, verified. It DOES contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
+Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge and no family row the prediction would score — that is the withholding, verified, and a runtime gate refuses to report a withheld score if any of the three is non-zero. It DOES contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
 
-| what the built artifact contains | withheld | control |
-| -------------------------------- | -------- | ------- |
-| `holding_company_name` nodes     | 0        | 4       |
-| `holding_company` edges          | 0        | 8       |
-| `filer_family` rows — ownership  | 0        | 8       |
-| `filer_family` rows — management | 2        | 2       |
-| entity-resolution records scored | 12       | 12      |
-| entity-resolution links written  | 0        | 0       |
+The family counts are split by what the prediction does with a row, not by relationship name: "scored" is every membership that is not management, so a `subsidiary` or `parent_company` row a future writer emits lands in that count rather than going uncounted. The total is printed alongside both splits so nothing can hide between them.
+
+| what the built artifact contains                                                 | withheld | control |
+| -------------------------------------------------------------------------------- | -------- | ------- |
+| `holding_company_name` nodes                                                     | 0        | 4       |
+| ownership `filer_edge` rows (any non-`same_entity`, non-management relationship) | 0        | 8       |
+| `filer_family` rows the prediction scores (any non-management relationship)      | 0        | 8       |
+| `filer_family` rows the prediction ignores (management)                          | 2        | 2       |
+| `filer_family` rows, total                                                       | 2        | 10      |
+| entity-resolution records scored                                                 | 12       | 12      |
+| entity-resolution links written                                                  | 0        | 0       |
 
 ## Why the withheld run recovers nothing
 
 Nothing else in the build produces an ownership fact. Two mechanisms account for that, and both are deliberate. First, the builder writes a corporate-family row only where an input row names a parent — there is no path from a filing to a family that does not run through a disclosed name. Second, the entity-resolution pass (which ran here, over 12 records) answers a different question: it decides whether two identifiers denote the same legal entity, and it will not merge two records that share no identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are NOT the same company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the veto refuses it, which is what a veto is for.
 
-So the withheld number is a floor on today's evidence, not a bound on the problem. Any channel that actually correlates with ownership — a shared headquarters address, a shared officer, an external corporate filing that names a parent — would show up here as recall above zero. None is wired in.
+## What would move this number
+
+It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes settle it.
+
+**Populating the address and contact columns changes nothing.** Fill `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads only legal names and identifier codes — ever looks at them. That is a property of the pipeline, not a gap in the corpus.
+
+**Adding an ownership EDGE changes nothing either.** Write inferred `subsidiary` `filer_edge` rows joining those same filers to a parent — the shape a corporate-filing importer is specified to emit — and recall stays 0.000. Corporate-family membership is read from `filer_family`; `filer_edge` is a different table, and no reader on this path crosses from one to the other.
+
+The accurate statement is narrower, and worth stating exactly: **a channel that produces a `filer_family` row moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership `filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test holds that open, so "this baseline can be beaten" is re-checked on every run rather than asserted here.
+
+That is also the forward dependency for anyone using this page as a before/after baseline. A later build beats 0.000 only if its new evidence lands as `filer_family` membership rows. An importer that writes ownership edges and stops there re-runs to 0.000 — and it will read as though the evidence didn't help, when in fact nothing read it.
 
 ## Metric choice
 
@@ -135,4 +152,4 @@ The corpus is a fixed literal with no sampling and no randomness; the builder an
 
 ## Caveats
 
-This is a synthetic 12-filer corpus, not a run against real FCC Form 499 data — no such corpus ships in this repo with a stable hash to pin to, so the eval buys exactness and reproducibility at the cost of scale. Read the withheld number as a floor rather than a limit: it says that on today's evidence channels nothing recovers family membership, not that nothing could. A corpus with populated headquarters addresses or contact details would be a genuinely different experiment, and the right one to run once those channels carry data. The control number says nothing about how often real filers report a parent, or report it accurately — only that when they do, this pipeline groups them correctly.
+This is a synthetic 12-filer corpus, not a run against real FCC Form 499 data — no such corpus ships in this repo with a stable hash to pin to, so the eval buys exactness and reproducibility at the cost of scale. What the withheld number does NOT say is that ownership is hard to recover in general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale is the honest limitation, and it limits confidence rather than the mechanism: a larger corpus of the same shape scores the same, for the reason given above. The control number says nothing about how often real filers report a parent, or report it accurately — only that when they do, this pipeline groups them correctly.

@@ -104,9 +104,16 @@ const EVAL_BUILD_SHA = "filer-linkage-eval"
 
 /**
  * What a built artifact actually contains that bears on ownership — counted, not asserted (task 4 review fix, I4). The
- * previous scorecard claimed no `filer_family` row COULD exist in the withheld artifact; two do, from the corpus's
+ * first scorecard claimed no `filer_family` row COULD exist in the withheld artifact; two do, from the corpus's
  * management-company disclosures. The claim was over-broad on the one page whose credibility rests on the withholding
- * being real, so this eval now measures the artifact instead of describing it.
+ * being real, so this eval measures the artifact instead of describing it.
+ *
+ * **Every count here is scoped to what the PREDICTION scores, not to `holding_company` alone (task 4 re-review, I2).**
+ * The prediction accepts any `filer_family` membership that is not `management_company` — `holding_company` today,
+ * `parent_company`/`subsidiary` the moment a writer emits one. Counting only `holding_company` left the census silent
+ * about exactly the rows a future evidence channel will add: a reviewer injected three `subsidiary` family rows that
+ * moved recall from 0.000 to 0.500, and the census still read `0`, under a heading promising the numbers were counted
+ * from the build.
  */
 export interface LeakageCensus {
 	/**
@@ -114,19 +121,42 @@ export interface LeakageCensus {
 	 */
 	holdingCompanyNodes: number
 	/**
-	 * `filer_edge` rows asserting a `holding_company` relationship.
+	 * `filer_edge` rows asserting ANY ownership relationship — every relationship except `same_entity` (identity, not
+	 * ownership) and `management_company` (control, not ownership). Note that an ownership EDGE alone moves no score: see
+	 * {@linkcode renderWhySection}.
 	 */
-	holdingCompanyEdges: number
+	ownershipEdges: number
 	/**
-	 * `filer_family` rows whose membership is an ownership fact. Must be 0 in the withheld run.
+	 * `filer_family` rows the prediction will score — every membership whose relationship is not `management_company`.
+	 * Must be 0 in the withheld build.
 	 */
-	holdingCompanyFamilyRows: number
+	scoredFamilyRows: number
 	/**
 	 * `filer_family` rows whose membership is a management fact. Non-zero in BOTH runs — `managementCompany` is not the
 	 * field under test, and the prediction ignores these.
 	 */
-	managementCompanyFamilyRows: number
+	managementFamilyRows: number
+	/**
+	 * Every `filer_family` row in the artifact. Published alongside the two splits so a relationship class nobody
+	 * anticipated cannot hide between them.
+	 */
+	familyRows: number
 }
+
+/**
+ * The relationship kinds a `filer_family` row can carry that the prediction does NOT treat as ownership evidence. Kept
+ * as one list so {@linkcode readLeakageCensus}'s "scored" count and {@linkcode readRegistrantFamilies}'s filter cannot
+ * drift apart — the census would otherwise promise to police rows the prediction quietly scored, or vice versa.
+ */
+const UNSCORED_FAMILY_RELATIONSHIPS: readonly string[] = [FilerRelationship.ManagementCompany]
+
+/**
+ * Relationships a `filer_edge` can carry that assert something other than ownership.
+ */
+const NON_OWNERSHIP_EDGE_RELATIONSHIPS: readonly string[] = [
+	FilerRelationship.SameEntity,
+	FilerRelationship.ManagementCompany,
+]
 
 async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<LeakageCensus> {
 	const nodes = await db
@@ -135,36 +165,33 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
 		.where("identifier_type", "=", FilerIdentifierType.HoldingCompanyName)
 		.execute()
 
-	const edges = await db
-		.selectFrom("filer_edge")
-		.select("from_node_id")
-		.where("relationship", "=", FilerRelationship.HoldingCompany)
-		.execute()
-
+	const edges = await db.selectFrom("filer_edge").select("relationship").execute()
 	const familyRows = await db.selectFrom("filer_family").select("relationship").execute()
+	const managementFamilyRows = familyRows.filter((row) => UNSCORED_FAMILY_RELATIONSHIPS.includes(row.relationship))
 
 	return {
 		holdingCompanyNodes: nodes.length,
-		holdingCompanyEdges: edges.length,
-		holdingCompanyFamilyRows: familyRows.filter((row) => row.relationship === FilerRelationship.HoldingCompany).length,
-		managementCompanyFamilyRows: familyRows.filter((row) => row.relationship === FilerRelationship.ManagementCompany)
-			.length,
+		ownershipEdges: edges.filter((row) => !NON_OWNERSHIP_EDGE_RELATIONSHIPS.includes(row.relationship)).length,
+		scoredFamilyRows: familyRows.length - managementFamilyRows.length,
+		managementFamilyRows: managementFamilyRows.length,
+		familyRows: familyRows.length,
 	}
 }
 
 /**
- * Hard gate on the withheld run (decision 4). The leakage exclusion is structural — {@linkcode buildFilteredEvalInputs}
- * is the only thing that builds what the builder receives — but "structural" is an argument, and this is a check: if
- * any ownership artifact survives into the withheld build, the eval refuses to report a number rather than reporting a
- * flattered one.
+ * Hard gate on the withheld build (decision 4). The leakage exclusion is structural —
+ * {@linkcode buildFilteredEvalInputs} is the only thing that builds what the builder receives — but "structural" is an
+ * argument, and this is a check: if any ownership artifact survives into the withheld build, the eval refuses to report
+ * a number rather than reporting a flattered one. Runs against the census taken straight off the BUILD, before any
+ * injected evidence, so a deliberate probe can still be measured without disarming the gate.
  */
 function assertNoOwnershipLeak(census: LeakageCensus): void {
-	if (census.holdingCompanyNodes || census.holdingCompanyEdges || census.holdingCompanyFamilyRows) {
+	if (census.holdingCompanyNodes || census.ownershipEdges || census.scoredFamilyRows) {
 		throw new Error(
 			"filerLinkageEval: the withheld build contains ownership facts it was supposed to have never seen " +
-				`(${census.holdingCompanyNodes} holding_company_name nodes, ${census.holdingCompanyEdges} holding_company ` +
-				`edges, ${census.holdingCompanyFamilyRows} holding_company filer_family rows) — the withheld run's score ` +
-				"would be measuring the truth field it is meant to withhold. Refusing to report it."
+				`(${census.holdingCompanyNodes} holding_company_name nodes, ${census.ownershipEdges} ownership edges, ` +
+				`${census.scoredFamilyRows} scoreable filer_family rows) — the withheld run's score would be measuring the ` +
+				"truth field it is meant to withhold. Refusing to report it."
 		)
 	}
 }
@@ -206,7 +233,7 @@ async function readRegistrantFamilies(
 
 				const ownThisNode = rollup.members.filter((member) => member.node_id === nodeID)
 
-				if (ownThisNode.some((member) => member.relationship !== FilerRelationship.ManagementCompany)) {
+				if (ownThisNode.some((member) => !UNSCORED_FAMILY_RELATIONSHIPS.includes(member.relationship))) {
 					used.add(rollup.family_id)
 				}
 			}
@@ -299,9 +326,9 @@ const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	principalCommType: "",
 	holdingCompany: "the field under test",
 	managementCompany: "control, not ownership — kept in the input, excluded from the prediction",
-	hqAddress: "a corroboration channel the corpus does not populate",
-	customerInquiriesTelephone: "a corroboration channel the corpus does not populate",
-	customerInquiriesAddress: "a corroboration channel the corpus does not populate",
+	hqAddress: "staged as an attribute; no code on the family or entity-resolution path reads it",
+	customerInquiriesTelephone: "staged as an attribute; no code on the family or entity-resolution path reads it",
+	customerInquiriesAddress: "staged as an attribute; no code on the family or entity-resolution path reads it",
 	dcAgentDisplayName: "attribute only — never an edge input (shared-agent doctrine)",
 	dcAgentOrganizationName: "attribute only — never an edge input",
 	dcAgentTelephone: "attribute only — never an edge input",
@@ -441,9 +468,16 @@ function renderCensusTable(withheld: LinkageEvalRun, control: LinkageEvalRun): s
 		["what the built artifact contains", "withheld", "control"],
 		[
 			row("`holding_company_name` nodes", (run) => run.census.holdingCompanyNodes),
-			row("`holding_company` edges", (run) => run.census.holdingCompanyEdges),
-			row("`filer_family` rows — ownership", (run) => run.census.holdingCompanyFamilyRows),
-			row("`filer_family` rows — management", (run) => run.census.managementCompanyFamilyRows),
+			row(
+				"ownership `filer_edge` rows (any non-`same_entity`, non-management relationship)",
+				(run) => run.census.ownershipEdges
+			),
+			row(
+				"`filer_family` rows the prediction scores (any non-management relationship)",
+				(run) => run.census.scoredFamilyRows
+			),
+			row("`filer_family` rows the prediction ignores (management)", (run) => run.census.managementFamilyRows),
+			row("`filer_family` rows, total", (run) => run.census.familyRows),
 			row("entity-resolution records scored", (run) => run.inferred.recordsConsidered),
 			row("entity-resolution links written", (run) => run.inferred.links),
 		]
@@ -491,13 +525,36 @@ export interface LinkageEvalRun {
 	truthPositivePairs: TruthPositivePairOutcome[]
 }
 
-async function runLinkagePass(
-	inputs: LinkageEvalInputs,
-	registrants: readonly LinkageEvalRegistrant[],
-	truthGroupOf: ReadonlyMap<FRN, string>,
-	label: string,
+/**
+ * {@linkcode runLinkagePass}'s arguments.
+ */
+export interface LinkageEvalPassOptions {
+	inputs: LinkageEvalInputs
+	registrants: readonly LinkageEvalRegistrant[]
+	truthGroupOf: ReadonlyMap<FRN, string>
+	label: string
+	/**
+	 * Whether `holdingCompany` was cleared from `inputs`. Arms {@linkcode assertNoOwnershipLeak}.
+	 */
 	holdingCompanyWithheld: boolean
-): Promise<LinkageEvalRun> {
+	/**
+	 * Writes evidence into the built artifact AFTER the leakage gate has passed and BEFORE the prediction is read — the
+	 * seam the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not exist yet
+	 * (task 4 re-review). Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody
+	 * touched. Ordering is the point — the gate still polices what the BUILDER produced from a withheld input, so a probe
+	 * can add ownership facts without disarming it.
+	 */
+	injectEvidence?: (db: DatabaseClient<FilerDatabase>) => Promise<void>
+}
+
+/**
+ * One pass: build a scratch `filer.db` from one projection, run the shipped clustering over it, census it, read each
+ * registrant's corporate families, score. Exported so a test can run the SAME code path with injected evidence rather
+ * than reimplementing the pipeline beside it.
+ */
+export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<LinkageEvalRun> {
+	const { inputs, registrants, truthGroupOf, label, holdingCompanyWithheld, injectEvidence } = options
+
 	const scratch = await mkdtemp(join(tmpdir(), `filer-linkage-eval-${label}-`))
 	const out = join(scratch, "filer.db")
 
@@ -521,12 +578,15 @@ async function runLinkagePass(
 		// real filer.db, and its counters belong in the report even though this eval scores a different table.
 		const { inferred } = await clusterFilers(db, { sourceVintage: EVAL_SOURCE_VINTAGE, validFrom: EVAL_VALID_FROM })
 
-		const census = await readLeakageCensus(db)
-
+		// Gate the BUILD, then inject, then census what will actually be scored. Taking one census for both jobs is what
+		// let three injected `subsidiary` family rows move recall to 0.500 while the published census still read 0.
 		if (holdingCompanyWithheld) {
-			assertNoOwnershipLeak(census)
+			assertNoOwnershipLeak(await readLeakageCensus(db))
 		}
 
+		await injectEvidence?.(db)
+
+		const census = await readLeakageCensus(db)
 		const { predicted, observed } = await readRegistrantFamilies(db, registrants)
 
 		const predictedSame = (a: FRN, b: FRN): boolean => {
@@ -602,10 +662,40 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 		'company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: ' +
 		"two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are NOT the same " +
 		"company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the " +
-		"veto refuses it, which is what a veto is for." +
-		"\n\nSo the withheld number is a floor on today's evidence, not a bound on the problem. Any channel that " +
-		"actually correlates with ownership — a shared headquarters address, a shared officer, an external corporate " +
-		"filing that names a parent — would show up here as recall above zero. None is wired in."
+		"veto refuses it, which is what a veto is for."
+	)
+}
+
+/**
+ * The precondition a future run has to satisfy to beat this baseline, stated as narrowly as the code supports (task 4
+ * re-review, I1). An earlier draft promised that "any channel that actually correlates with ownership — a shared
+ * headquarters address, a shared officer, an external corporate filing that names a parent — would show up here as
+ * recall above zero." A reviewer falsified it twice. Both probes are carried on the page rather than quietly deleted:
+ * the false version was the same species of defect as the one this task's first round shipped — a stated causal
+ * relation the data contradicts — and the page's whole value is that its claims survive being checked.
+ */
+function renderWhatWouldMoveItSection(): string {
+	return (
+		"It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
+		"code does, and an earlier version of this page said it anyway. Two probes settle it.\n\n" +
+		"**Populating the address and contact columns changes nothing.** Fill `hqAddress`, " +
+		"`customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family " +
+		"in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those " +
+		"columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads " +
+		"only legal names and identifier codes — ever looks at them. That is a property of the pipeline, not a gap in " +
+		"the corpus.\n\n" +
+		"**Adding an ownership EDGE changes nothing either.** Write inferred `subsidiary` `filer_edge` rows joining those " +
+		"same filers to a parent — the shape a corporate-filing importer is specified to emit — and recall stays 0.000. " +
+		"Corporate-family membership is read from `filer_family`; `filer_edge` is a different table, and no reader on this " +
+		"path crosses from one to the other.\n\n" +
+		"The accurate statement is narrower, and worth stating exactly: **a channel that produces a `filer_family` row " +
+		"moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership " +
+		"`filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test " +
+		'holds that open, so "this baseline can be beaten" is re-checked on every run rather than asserted here.\n\n' +
+		"That is also the forward dependency for anyone using this page as a before/after baseline. A later build beats " +
+		"0.000 only if its new evidence lands as `filer_family` membership rows. An importer that writes ownership edges " +
+		"and stops there re-runs to 0.000 — and it will read as though the evidence didn't help, when in fact nothing " +
+		"read it."
 	)
 }
 
@@ -620,10 +710,11 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 		"## The question",
 		"",
 		"A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent " +
-			"name each filer reports on its Form 499. The open question this eval exists to baseline is whether that " +
-			"membership is recoverable for a filer that reports NOTHING — from names, identifiers, or any other signal " +
-			'already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so that a ' +
-			"later build with more evidence has something to beat.",
+			"name a filer discloses — on its Form 499, or on the broadband provider list, whichever carries it; both " +
+			"sources contribute rows to the control build below. The open question this eval exists to baseline is whether " +
+			"that membership is recoverable for a filer that discloses NOTHING — from names, identifiers, or any other " +
+			'signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so ' +
+			"that a later build with more evidence has something to beat.",
 		"",
 		"## The two runs",
 		"",
@@ -639,18 +730,27 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 		"### What counts as a prediction",
 		"",
 		"Two registrants are predicted to be the same family iff the built `filer.db` places them in a common family as " +
-			`of ${EVAL_AS_OF}, read through the same corporate-family reader a product caller would use. Membership rows ` +
-			"that exist only because two filers named the same MANAGEMENT company are excluded from both the prediction " +
-			"and the truth: management is operational control, not ownership; that field is not withheld here; and " +
-			"letting it answer would mean a field this eval hands over deciding a question about the field it holds " +
-			"back. The corpus includes two filers reporting the same manager so that exclusion has something to do.",
+			`of ${EVAL_AS_OF}. Each membership is read with the shipped corporate-family reader, the one a product caller ` +
+			"uses — but the eval composes it: that reader answers strictly per node, and a registrant can own several " +
+			"nodes (its FRN registrations and its provider id), so the eval takes the union across them. The reader is " +
+			"shipped; the union is this eval's own step, and it is why a parent disclosed on one of a registrant's two " +
+			"filings still counts.\n\nMembership rows that exist only because two filers named the same MANAGEMENT " +
+			"company are excluded from both the prediction and the truth: management is operational control, not " +
+			"ownership; that field is not withheld here; and letting it answer would mean a field this eval hands over " +
+			"deciding a question about the field it holds back. The corpus includes two filers reporting the same manager " +
+			"so that exclusion has something to do.",
 		"",
 		"### What counts as a registrant",
 		"",
 		"The unit scored is the registrant, not the FRN. One operator can hold several FRN registrations — the corpus " +
 			"has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a " +
 			"fact about the company, not about that registration. Scoring FRNs individually would have let the truth " +
-			"partition put a single legal entity in two different families at once.",
+			"partition put a single legal entity in two different families at once.\n\nTreating a shared provider id as " +
+			"proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have " +
+			"been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay " +
+			"apart. That failure is not silent here. Folding two registrants that belong to different families puts a " +
+			"truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below " +
+			"1.000, and the test asserting a perfect control fails. The rule is load-bearing and wired to a tripwire.",
 		"",
 		"## Corpus",
 		"",
@@ -658,15 +758,18 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 			"sampled so every truth fact is auditable here instead of trusted from an external source. Two multi-member " +
 			"families whose members spell the parent name inconsistently; four standalone filers; a pair of unrelated " +
 			"companies with identical canonical names; one registrant holding two FRNs where only the second discloses " +
-			"the parent.",
+			"the parent; and one filer that discloses no parent but names the same MANAGEMENT company as a member of the " +
+			"first family, which the prediction has to decline to treat as ownership. Every row is in the table below; " +
+			"the counts in this paragraph add up to it.",
 		"",
 		...renderCorpusTable(truthForm499Rows, registrants, truthGroupOf),
 		"",
 		"## Input record shape",
 		"",
 		"Every field the builder receives in the withheld run, and how much of it the corpus actually fills in. The " +
-			"empty columns matter: they are the corroboration channels a future version would have to lean on, and this " +
-			"corpus does not exercise them.",
+			"empty columns are worth reading, but not for the obvious reason: filling them in changes nothing, because " +
+			'nothing on the family path reads them (see "What would move this number" below). They are listed so the ' +
+			"corpus's sparsity is not mistaken for the reason the withheld run scores zero.",
 		"",
 		...renderInputShapeTables(withheldInputs, controlInputs),
 		"",
@@ -695,17 +798,25 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 		"## What is actually in each artifact",
 		"",
 		"Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no " +
-			"ownership edge and no ownership family row — that is the withholding, verified. It DOES contain " +
-			`${withheld.census.managementCompanyFamilyRows} corporate-family rows, from the management-company ` +
-			"disclosures the eval does not withhold; they are namespaced separately from ownership families and the " +
-			"prediction skips them. An earlier version of this page claimed no family row could exist here at all, which " +
-			"was wrong on its own artifact.",
+			"ownership edge and no family row the prediction would score — that is the withholding, verified, and a " +
+			`runtime gate refuses to report a withheld score if any of the three is non-zero. It DOES contain ` +
+			`${withheld.census.managementFamilyRows} corporate-family rows, from the management-company disclosures the ` +
+			"eval does not withhold; they are namespaced separately from ownership families and the prediction skips " +
+			"them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its " +
+			"own artifact.\n\nThe family counts are split by what the prediction does with a row, not by relationship " +
+			'name: "scored" is every membership that is not management, so a `subsidiary` or `parent_company` row a ' +
+			"future writer emits lands in that count rather than going uncounted. The total is printed alongside both " +
+			"splits so nothing can hide between them.",
 		"",
 		...renderCensusTable(withheld, control),
 		"",
 		"## Why the withheld run recovers nothing",
 		"",
 		renderWhySection(withheld),
+		"",
+		"## What would move this number",
+		"",
+		renderWhatWouldMoveItSection(),
 		"",
 		"## Metric choice",
 		"",
@@ -729,11 +840,11 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 		"## Caveats",
 		"",
 		`This is a synthetic ${truthForm499Rows.length}-filer corpus, not a run against real FCC Form 499 data — no ` +
-			"such corpus ships in this repo with a stable hash to pin to, so the eval buys exactness and " +
-			"reproducibility at the cost of scale. Read the withheld number as a floor rather than a limit: it says " +
-			"that on today's evidence channels nothing recovers family membership, not that nothing could. A corpus " +
-			"with populated headquarters addresses or contact details would be a genuinely different experiment, and " +
-			"the right one to run once those channels carry data. The control number says nothing about how often real " +
+			"such corpus ships in this repo with a stable hash to pin to, so the eval buys exactness and reproducibility " +
+			"at the cost of scale. What the withheld number does NOT say is that ownership is hard to recover in " +
+			"general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale " +
+			"is the honest limitation, and it limits confidence rather than the mechanism: a larger corpus of the same " +
+			"shape scores the same, for the reason given above. The control number says nothing about how often real " +
 			"filers report a parent, or report it accurately — only that when they do, this pipeline groups them " +
 			"correctly.",
 		"",
@@ -796,10 +907,24 @@ export async function filerLinkageEval(
 	const controlInputs = buildControlEvalInputs()
 
 	progress("building filer.db from the holdingCompany-stripped projection")
-	const withheld = await runLinkagePass(withheldInputs, registrants, truthGroupOf, "withheld", true)
+
+	const withheld = await runLinkagePass({
+		inputs: withheldInputs,
+		registrants,
+		truthGroupOf,
+		label: "withheld",
+		holdingCompanyWithheld: true,
+	})
 
 	progress("building the control filer.db, truth field intact")
-	const control = await runLinkagePass(controlInputs, registrants, truthGroupOf, "control", false)
+
+	const control = await runLinkagePass({
+		inputs: controlInputs,
+		registrants,
+		truthGroupOf,
+		label: "control",
+		holdingCompanyWithheld: false,
+	})
 
 	const markdown = renderLinkageEvalReport({
 		date,
