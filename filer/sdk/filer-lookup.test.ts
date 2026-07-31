@@ -959,6 +959,7 @@ describe("§7-3b gates", () => {
 					{
 						node_id: FRN_CLUSTER_A,
 						family_id: "holding_company_name:bigco-inc",
+						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -968,6 +969,7 @@ describe("§7-3b gates", () => {
 					{
 						node_id: FRN_FAMILY_ONLY,
 						family_id: "holding_company_name:bigco-inc",
+						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -1200,6 +1202,107 @@ describe("§7-3b gates", () => {
 		})
 
 		/**
+		 * The trap `naming_node_id` had to be designed around (task 3 fix round 4), driven through the REAL builder. The
+		 * multi-spelling test above splits its two spellings across two FRNs, so its two `filer_family` rows differ in
+		 * `node_id` and no key question arises. THIS shape puts both spellings on ONE filer: one FRN, two 499 rows filed
+		 * the same day, `"Acme Corp"` and `"Acme Corporation, LLC"` — the documented decision-6 cardinality shape, and the
+		 * exact case where the two membership rows agree on `(node_id, family_id, source, valid_from)` and differ in
+		 * NOTHING except which company node named the family.
+		 *
+		 * That is why `naming_node_id` is IN `filer_family`'s primary key. Leave it out and the builder's `INSERT OR
+		 * IGNORE` silently drops the second row at BUILD time, taking `"Acme Corporation, LLC"` with it — a regression of
+		 * the "expose the plurality within one family, never guess which spelling is right" rule round 2 established and
+		 * round 3 preserved, and one no reader-side fix could undo because the fact would already be gone from the
+		 * artifact. The counter-risk of widening a key is inflating counts derived from it, so this pins both: two rows in
+		 * `filer_family`, but ONE `families` entry (`FilerLookupFamily` has no field that could express the difference) and
+		 * `distinct_member_count` still 1 (it counts distinct member NODES, never rows).
+		 */
+		it("REAL builder, one filer reporting TWO spellings of one family: both survive in display_names, families stays one entry, distinct_member_count stays 1", async () => {
+			await withScratchDir(async (out) => {
+				const FRN_TWO_SPELLINGS = toFRN("0009500001")!
+
+				await buildFilerDatabase({
+					form499Rows: [
+						minimalForm499Row({
+							form499ID: "950001",
+							frn: FRN_TWO_SPELLINGS,
+							holdingCompany: "Acme Corp",
+							lastFiledAt: "2026-05-01",
+						}),
+						minimalForm499Row({
+							form499ID: "950002",
+							frn: FRN_TWO_SPELLINGS,
+							holdingCompany: "Acme Corporation, LLC",
+							lastFiledAt: "2026-05-01",
+						}),
+					],
+					out,
+					sourceVintage: "2026-Q2",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const familyID = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
+				const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_TWO_SPELLINGS}`
+
+				// THE KEY DECISION, asserted against the artifact itself: two rows, identical on every column the OLD
+				// primary key covered, distinguished ONLY by naming_node_id. Narrow the key and this is 1.
+				const familyRows = await db
+					.selectFrom("filer_family")
+					.selectAll()
+					.where("node_id", "=", frnNodeID)
+					.orderBy("naming_node_id")
+					.execute()
+
+				expect(familyRows).toHaveLength(2)
+
+				// Plain loops, not .map() — keeps this callback within max-nested-callbacks under withScratchDir's own
+				// async closure (the same discipline every other real-builder test in this block follows).
+				const namingNodeIDs: string[] = []
+				const distinctFamilyIDs = new Set<string>()
+
+				for (const row of familyRows) {
+					namingNodeIDs.push(row.naming_node_id)
+					distinctFamilyIDs.add(row.family_id)
+				}
+
+				expect(distinctFamilyIDs).toEqual(new Set([familyID]))
+
+				expect(namingNodeIDs).toEqual([
+					`${FilerIdentifierType.HoldingCompanyName}:Acme Corp`,
+					`${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`,
+				])
+
+				const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
+
+				const result = await filerLookup(db, { frn: FRN_TWO_SPELLINGS, asOf: "2026-12-31" })
+
+				// One family, both names — the widened key must not turn into a duplicated `families` entry.
+				expect(result.families).toHaveLength(1)
+				expect(result.families[0]?.family_id).toBe(familyID)
+				expect(result.families[0]?.display_names).toEqual(expectedSpellings)
+
+				const rollup = await familyRollup(db, { familyID, asOf: "2026-12-31" })
+
+				expect(rollup).toHaveLength(1)
+				expect(rollup[0]?.display_names).toEqual(expectedSpellings)
+
+				// Member count unchanged: one filer, however many spellings it filed. `members` itself stays plural
+				// (one entry per row, never deduped) — that asymmetry is exactly what distinct_member_count exists for.
+				expect(rollup[0]?.distinct_member_count).toBe(1)
+
+				const memberNodeIDs: string[] = []
+
+				for (const member of rollup[0]?.members ?? []) {
+					memberNodeIDs.push(member.node_id)
+				}
+
+				expect(memberNodeIDs).toEqual([frnNodeID, frnNodeID])
+			})
+		})
+
+		/**
 		 * Task 3 fix round 3, CRITICAL — the exact failure class this phase keeps re-discovering. `readFamilyDisplayNames`
 		 * used to join on `(from_node_id, relationship, source, valid_from)` WITHOUT `to_node_id`: when one node carries
 		 * TWO holding-company edges sharing that 4-tuple (the documented decision-6 shape —
@@ -1209,6 +1312,11 @@ describe("§7-3b gates", () => {
 		 * it never reported — reproduced here end to end on BOTH shapes the reviewer found: the provider-list path (one
 		 * providerID, two holdingCompany values, one shared file-level validFrom) and the 499 path (one FRN, two rows, the
 		 * identical lastFiledAt).
+		 *
+		 * Round 4 replaced HOW that scoping is achieved — a join on the persisted `filer_family.naming_node_id` rather than
+		 * re-canonicalizing edge targets at read time — but these two tests still fail, with the identical
+		 * cross-contamination output, when the new join predicate is removed. They remain the load-bearing regression for
+		 * this failure class under either mechanism.
 		 */
 		it("display_names never leaks across a DIFFERENT family: REAL builder, provider-list path — one providerID with two DIFFERENT holding companies under the same source+valid_from never cross-contaminates each family's display_names", async () => {
 			await withScratchDir(async (out) => {
@@ -1314,6 +1422,7 @@ describe("§7-3b gates", () => {
 		const FILER_FAMILY_INSERT_FIELDS = {
 			node_id: true,
 			family_id: true,
+			naming_node_id: true,
 			relationship: true,
 			source: true,
 			source_vintage: true,
@@ -1321,10 +1430,14 @@ describe("§7-3b gates", () => {
 			valid_to: true,
 		} satisfies Record<keyof FilerFamilyInsert, true>
 
-		it("the structural pin enumerates every FilerFamilyTable field, including relationship/source/source_vintage/valid_from", () => {
-			expect(Object.keys(FILER_FAMILY_INSERT_FIELDS)).toHaveLength(7)
+		it("the structural pin enumerates every FilerFamilyTable field, including naming_node_id/relationship/source/source_vintage/valid_from", () => {
+			expect(Object.keys(FILER_FAMILY_INSERT_FIELDS)).toHaveLength(8)
 
 			expect(FILER_FAMILY_INSERT_FIELDS).toMatchObject({
+				// naming_node_id (task 3 fix round 4) is provenance in exactly the sense this pin exists to guard: it
+				// records WHICH company node's raw name produced the row's family_id, so a reader never has to
+				// re-canonicalize a sealed artifact to find its way back to the human-readable name.
+				naming_node_id: true,
 				relationship: true,
 				source: true,
 				source_vintage: true,
@@ -1344,6 +1457,7 @@ describe("§7-3b gates", () => {
 			const partialFamily = {
 				node_id: "frn:4040404040",
 				family_id: "holding_company_name:gate2-co",
+				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
 				// relationship deliberately omitted — this is the runtime half of gate 2's rejection test.
 				source: "form-499",
 				source_vintage: "2026-01-01",
@@ -1368,6 +1482,7 @@ describe("§7-3b gates", () => {
 			const partialFamily = {
 				node_id: "frn:5050505050",
 				family_id: "holding_company_name:gate2-co",
+				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
 				relationship: FilerRelationship.HoldingCompany,
 				// source deliberately omitted
 				source_vintage: "2026-01-01",
@@ -1395,6 +1510,7 @@ describe("§7-3b gates", () => {
 					.values({
 						node_id: "frn:6060606060",
 						family_id: "holding_company_name:gate2-co",
+						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
 						relationship: "",
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -1420,6 +1536,7 @@ describe("§7-3b gates", () => {
 					.values({
 						node_id: "frn:7070707070",
 						family_id: "holding_company_name:gate2-co",
+						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
 						relationship: "   ",
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -1439,6 +1556,7 @@ describe("§7-3b gates", () => {
 	describe("families is asOf-scoped (task 3 fix round 1, IMPORTANT-1)", () => {
 		const FRN_TEMPORAL = `${FilerIdentifierType.FRN}:4040404050`
 		const FAMILY_ID_TEMPORAL = "holding_company_name:temporal-co"
+		const NAMING_NODE_TEMPORAL = `${FilerIdentifierType.HoldingCompanyName}:Temporal Co`
 
 		it("excludes a family membership before its valid_from", async () => {
 			using db = openMemory()
@@ -1455,6 +1573,7 @@ describe("§7-3b gates", () => {
 				.values({
 					node_id: FRN_TEMPORAL,
 					family_id: FAMILY_ID_TEMPORAL,
+					naming_node_id: NAMING_NODE_TEMPORAL,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-06-01",
@@ -1468,6 +1587,9 @@ describe("§7-3b gates", () => {
 
 			const onOrAfter = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-06-01" })
 
+			// display_names is [] for the trivial reason: this fixture writes no filer_edge at all, so the
+			// naming-provenance join has nothing to find and this assertion is insensitive to it in either direction
+			// (same note as gate 1's own fixture above). These two tests are about the asOf predicate only.
 			expect(onOrAfter.families).toEqual([
 				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany, display_names: [] },
 			])
@@ -1488,6 +1610,7 @@ describe("§7-3b gates", () => {
 				.values({
 					node_id: FRN_TEMPORAL,
 					family_id: FAMILY_ID_TEMPORAL,
+					naming_node_id: NAMING_NODE_TEMPORAL,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -1498,6 +1621,8 @@ describe("§7-3b gates", () => {
 
 			const withinWindow = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-02-01" })
 
+			// display_names is [] because this fixture writes no filer_edge — insensitive to the naming-provenance
+			// join in either direction, same as the test above.
 			expect(withinWindow.families).toEqual([
 				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany, display_names: [] },
 			])

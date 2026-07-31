@@ -76,9 +76,11 @@ export interface FamilyRollupMember {
  *
  * `distinct_member_count` (task 3 fix round 1, MINOR) is `members` deduped by `node_id` — `members` itself is NEVER
  * deduped (provenance plurality: two different sources asserting the same node's membership both survive as separate
- * entries), so `members.length` alone over-counts whenever more than one source corroborates the same member. This
- * mirrors `filerLookup.ts`'s `cluster.members`, which IS already deduped (one entry per node) — without this field, a
- * caller sizing a family by array length would get an inconsistent answer depending on which rollup they read.
+ * entries; since task 3 fix round 4, so do two DIFFERENT raw spellings one member reported for the same family), so
+ * `members.length` alone over-counts whenever more than one row corroborates the same member. This mirrors
+ * `filerLookup.ts`'s `cluster.members`, which IS already deduped (one entry per node) — without this field, a caller
+ * sizing a family by array length would get an inconsistent answer depending on which rollup they read. It counts
+ * distinct member NODES, never rows, so widening `filer_family`'s primary key cannot inflate it.
  *
  * `display_names` (task 3 fix round 2 — `family_id` alone is a canonicalized slug, and losing the raw name entirely was
  * a real product loss for the headline "these filers report holding company H" output) is
@@ -114,7 +116,7 @@ async function readFamilyRollup(
 		return null
 	}
 
-	const displayNames = await readFamilyDisplayNames(db, familyID, memberRows)
+	const displayNames = await readFamilyDisplayNames(db, memberRows)
 
 	return {
 		family_id: familyID,

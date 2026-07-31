@@ -74,6 +74,7 @@ const FAMILY_ID = HOLDING_NODE_ID
 const FAMILY_ROW: FilerFamilyTable = {
 	node_id: FRN_NODE_ID,
 	family_id: FAMILY_ID,
+	naming_node_id: HOLDING_NODE_ID,
 	relationship: FilerRelationship.HoldingCompany,
 	source: "form-499",
 	source_vintage: "2026-Q1",
@@ -301,7 +302,7 @@ describe("filer schema", () => {
 			expect(rows).toHaveLength(2)
 		})
 
-		it("rejects a duplicate insert sharing the same (node_id, family_id, source, valid_from) tuple", async () => {
+		it("rejects a duplicate insert sharing the same (node_id, family_id, naming_node_id, source, valid_from) tuple", async () => {
 			using db = openMemory()
 			await createAllTables(db)
 			await insertCrosswalkNodes(db)
@@ -313,7 +314,7 @@ describe("filer schema", () => {
 			)
 		})
 
-		it("rejects a second insert at the same (node_id, family_id, source, valid_from) tuple even when it asserts a DIFFERENT relationship", async () => {
+		it("rejects a second insert at the same (node_id, family_id, naming_node_id, source, valid_from) tuple even when it asserts a DIFFERENT relationship", async () => {
 			using db = openMemory()
 			await createAllTables(db)
 			await insertCrosswalkNodes(db)
@@ -326,6 +327,31 @@ describe("filer schema", () => {
 					.values({ ...FAMILY_ROW, relationship: FilerRelationship.ParentCompany })
 					.execute()
 			).rejects.toThrow(/UNIQUE constraint failed/)
+		})
+
+		/**
+		 * Task 3 fix round 4, the counterpart to the two tests above — and the reason `naming_node_id` is IN the primary
+		 * key rather than a payload column beside it. `relationship` is excluded from the key because two values for one
+		 * pair at one instant are a CONTRADICTION; two `naming_node_id`s are not. `"Acme Holdings Inc"` and `"ACME
+		 * HOLDINGS, INC."` canonicalize to one `family_id`, so a filer that reported both spellings (two 499 rows the same
+		 * day, or one `bdcProviderID` on two provider-list rows) produces two rows differing in nothing else. Narrow the
+		 * key and the builder's `INSERT OR IGNORE` drops the second, taking that spelling's display name with it before any
+		 * reader runs.
+		 */
+		it("keeps two DIFFERENT naming_node_ids for the same (node_id, family_id, source, valid_from) tuple as separate rows — the multi-spelling plurality", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({ ...FAMILY_ROW, naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:ACME HOLDINGS, INC.` })
+				.execute()
+
+			const rows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", FAMILY_ID).execute()
+			expect(rows).toHaveLength(2)
 		})
 
 		it("finds all members of a family via the secondary index", async () => {

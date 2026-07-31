@@ -25,16 +25,21 @@
  *   here — `familyRollup` touched only `filer_family`/`filer_manifest`), since `display_names` is recovered
  *   by joining back to the specific `filer_edge` row that implied each membership.
  *
- *   **Task 3 fix round 3:** the `display_names` fixtures below now derive their `family_id` via the REAL
+ *   **Task 3 fix round 3:** the `display_names` fixtures below derive their `family_id` via the REAL
  *   `mintFamilyID` (`family-id.ts`) rather than an arbitrary constant — round 2's fixtures used a made-up
  *   `family_id` that happened to still round-trip under the (buggy) pre-round-3 join, which is exactly how
- *   the CRITICAL this round fixes went undetected by these tests. See `mintFamilyID`'s own docstring, and
- *   `readFamilyDisplayNames`'s, for the cross-family leak this closes (a member with two holding-company
- *   edges sharing one provenance tuple no longer has BOTH names attributed to EVERY family that tuple
- *   touches — only to the one each edge's target actually canonicalizes to). The dedicated two-holding-
- *   company regression (the provider-list AND the 499-row shapes the reviewer reproduced) lives in
- *   `filer-lookup.test.ts` instead, since it needs the REAL builder — this file's fixtures are hand-written
- *   and only exercise the reader's join logic directly.
+ *   that round's CRITICAL went undetected by these tests: a member with two holding-company edges sharing one
+ *   provenance tuple had BOTH names attributed to EVERY family that tuple touched.
+ *
+ *   **Task 3 fix round 4:** the scoping round 3 got by re-canonicalizing edge targets at READ time is now a
+ *   plain join on `filer_family.naming_node_id`, the company node the BUILDER recorded as the one whose name
+ *   produced each `family_id`. So every `filer_family` insert below carries that column, and the
+ *   `display_names` block gains two fixtures round 3's could not express: one member with two same-tuple edges
+ *   naming DIFFERENT families (the leak, at reader level, where the previous two tests were insensitive to it),
+ *   and an artifact whose persisted `family_id` no longer matches what today's canonicalizer would mint — the
+ *   reviewer's reproduction, which used to silently return no names at all. The REAL-builder versions of all of
+ *   this (including one filer reporting two spellings of ONE family, the shape that forced `naming_node_id`
+ *   into the primary key) live in `filer-lookup.test.ts`.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -89,6 +94,10 @@ async function seedManifest(
 }
 
 const FAMILY_ID = "holding_company_name:bigco-inc"
+// The company node whose raw spelling produced FAMILY_ID (task 3 fix round 4 — `filer_family.naming_node_id`).
+// These reader-contract fixtures write no matching `filer_edge`, so their `display_names` are `[]` either way;
+// the column is NOT NULL, so a value is still required on every insert.
+const NAMING_NODE_BIGCO = `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`
 const FRN_A = "frn:0001111111"
 const FRN_B = "frn:0002222222"
 
@@ -164,6 +173,7 @@ describe("familyRollup — general reader contract", () => {
 				{
 					node_id: FRN_A,
 					family_id: FAMILY_ID,
+					naming_node_id: NAMING_NODE_BIGCO,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-15",
@@ -173,6 +183,7 @@ describe("familyRollup — general reader contract", () => {
 				{
 					node_id: FRN_B,
 					family_id: FAMILY_ID,
+					naming_node_id: NAMING_NODE_BIGCO,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-02-01",
@@ -207,6 +218,7 @@ describe("familyRollup — general reader contract", () => {
 			.values({
 				node_id: FRN_A,
 				family_id: FAMILY_ID,
+				naming_node_id: NAMING_NODE_BIGCO,
 				relationship: FilerRelationship.HoldingCompany,
 				source: "form-499",
 				source_vintage: "2026-01-15",
@@ -234,6 +246,8 @@ describe("familyRollup — general reader contract", () => {
 
 		const HOLDING_FAMILY = "holding_company_name:holdco-one"
 		const MANAGEMENT_FAMILY = "management_company_name:mgmtco-two"
+		const NAMING_NODE_HOLDCO_ONE = `${FilerIdentifierType.HoldingCompanyName}:Holdco One`
+		const NAMING_NODE_MGMTCO_TWO = `${FilerIdentifierType.ManagementCompanyName}:MgmtCo Two`
 
 		await db
 			.insertInto("filer_family")
@@ -241,6 +255,7 @@ describe("familyRollup — general reader contract", () => {
 				{
 					node_id: FRN_A,
 					family_id: HOLDING_FAMILY,
+					naming_node_id: NAMING_NODE_HOLDCO_ONE,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-15",
@@ -250,6 +265,7 @@ describe("familyRollup — general reader contract", () => {
 				{
 					node_id: FRN_A,
 					family_id: MANAGEMENT_FAMILY,
+					naming_node_id: NAMING_NODE_MGMTCO_TWO,
 					relationship: FilerRelationship.ManagementCompany,
 					source: "form-499",
 					source_vintage: "2026-01-15",
@@ -281,6 +297,7 @@ describe("familyRollup — general reader contract", () => {
 			.values({
 				node_id: FRN_A,
 				family_id: FAMILY_ID,
+				naming_node_id: NAMING_NODE_BIGCO,
 				relationship: FilerRelationship.HoldingCompany,
 				source: "form-499",
 				source_vintage: "2026-01-01",
@@ -309,6 +326,7 @@ describe("familyRollup — general reader contract", () => {
 			.values({
 				node_id: FRN_A,
 				family_id: FAMILY_ID,
+				naming_node_id: NAMING_NODE_BIGCO,
 				relationship: FilerRelationship.HoldingCompany,
 				source: "form-499",
 				source_vintage: "2020-01-01",
@@ -336,6 +354,7 @@ describe("familyRollup — general reader contract", () => {
 				{
 					node_id: FRN_A,
 					family_id: FAMILY_ID,
+					naming_node_id: NAMING_NODE_BIGCO,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -345,6 +364,7 @@ describe("familyRollup — general reader contract", () => {
 				{
 					node_id: FRN_A,
 					family_id: FAMILY_ID,
+					naming_node_id: NAMING_NODE_BIGCO,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
@@ -360,13 +380,22 @@ describe("familyRollup — general reader contract", () => {
 	})
 
 	/**
-	 * Task 3 fix round 2. `readFamilyDisplayNames` (`filer-lookup.ts`) finds the SPECIFIC `filer_edge` that implied each
-	 * `filer_family` row — matched on `(from_node_id, relationship, source, valid_from)`, the identical tuple
-	 * `build-filer.ts`'s `insertFamilyMembership` writes both rows from in lockstep. These fixtures insert that matching
-	 * edge by hand, independent of `canonicalizeOrganizationName`'s real behavior (that's exercised by the REAL-builder
-	 * test in `filer-lookup.test.ts` instead) — this suite only needs to prove the READER'S join logic.
+	 * `readFamilyDisplayNames` (`filer-lookup.ts`) reads back the raw spelling behind each `filer_family` row by looking
+	 * up the AUTHORITATIVE `filer_edge` from that row's `node_id` to its own stored `naming_node_id`, under the same
+	 * `(relationship, source, valid_from)` — the exact edge `build-filer.ts`'s `insertFamilyMembership` wrote the row in
+	 * lockstep with. Since task 3 fix round 4 that is a pure JOIN on persisted provenance: the reader no longer calls
+	 * `mintFamilyID`/`canonicalizeOrganizationName` at all, so a canonicalizer change in `@mailwoman/record` can no
+	 * longer silently empty a shipped artifact's `display_names`.
+	 *
+	 * These fixtures are hand-written (nodes, edges and family rows inserted directly) and each asserts a spelling the
+	 * reader must surface. They are NOT independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO` and
+	 * the multi-spelling pair below are minted through the REAL `mintFamilyID` (task 3 fix round 3), because round 2's
+	 * made-up `family_id` constants are exactly why the cross-family leak reached review. What each test PROVES is the
+	 * reader's join; what the real `mintFamilyID` calls establish is that the fixture's premise (these two spellings
+	 * really do land in one family) holds for real rather than by assumption. The end-to-end builder versions live in
+	 * `filer-lookup.test.ts`.
 	 */
-	describe("display_names (task 3 fix round 2)", () => {
+	describe("display_names — the naming-provenance join", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
 		// The REAL canonicalized family_id — not an arbitrary constant (task 3 fix round 3: using a made-up
 		// family_id here is exactly how round 2's fixtures failed to catch the CRITICAL cross-family leak, since
@@ -411,6 +440,7 @@ describe("familyRollup — general reader contract", () => {
 				.values({
 					node_id: FRN_A,
 					family_id: FAMILY_ID_SOLO,
+					naming_node_id: HOLDING_NODE_ONE_SPELLING,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -501,6 +531,7 @@ describe("familyRollup — general reader contract", () => {
 					{
 						node_id: FRN_A,
 						family_id: FAMILY_ID_ACME,
+						naming_node_id: HOLDING_NODE_SPELLING_1,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -510,6 +541,7 @@ describe("familyRollup — general reader contract", () => {
 					{
 						node_id: FRN_B,
 						family_id: FAMILY_ID_ACME,
+						naming_node_id: HOLDING_NODE_SPELLING_2,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-02-01",
@@ -521,6 +553,247 @@ describe("familyRollup — general reader contract", () => {
 
 			const result = await familyRollup(db, { familyID: FAMILY_ID_ACME, asOf: "2026-12-31" })
 			expect(result[0]?.display_names).toEqual(["Acme Corp", "Acme Corporation, LLC"].toSorted())
+		})
+
+		/**
+		 * The join under direct unit pressure (task 3 fix round 4). Both tests above pass with the naming-provenance join
+		 * REMOVED — their fixtures give each member exactly one holding-company edge, so any query keyed on `(from_node_id,
+		 * relationship, source, valid_from)` finds the same single row either way. This one does not: ONE member carries
+		 * TWO edges sharing that identical 4-tuple, whose targets canonicalize to two DIFFERENT families (the documented
+		 * decision-6 shape — one FRN filing two 499 rows the same day with conflicting holding companies). Only
+		 * `naming_node_id` tells the two apart. Drop it from the query and each family reports the other's name too: a
+		 * family claiming a holding company its member never reported to it, the same false-assertion class as 3a's
+		 * identity leaks. The REAL-builder versions live in `filer-lookup.test.ts`; this is the reader-level unit that
+		 * fails first.
+		 */
+		it("one member, two same-tuple edges naming DIFFERENT families: each family surfaces only its OWN name", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const NODE_NORTH = `${FilerIdentifierType.HoldingCompanyName}:Northwind Holdings`
+			const NODE_SOUTH = `${FilerIdentifierType.HoldingCompanyName}:Southgate Group`
+
+			const FAMILY_NORTH = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Northwind Holdings")!
+			const FAMILY_SOUTH = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Southgate Group")!
+
+			// The fixture's premise: these are genuinely two families, not one.
+			expect(FAMILY_NORTH).not.toBe(FAMILY_SOUTH)
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_A, identifier_type: FilerIdentifierType.FRN, identifier_value: "0001111111" },
+					{
+						node_id: NODE_NORTH,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Northwind Holdings",
+					},
+					{
+						node_id: NODE_SOUTH,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Southgate Group",
+					},
+				])
+				.execute()
+
+			// Two edges out of ONE member sharing (from_node_id, relationship, source, valid_from) — distinct rows only
+			// because filer_edge's PK carries to_node_id.
+			await db
+				.insertInto("filer_edge")
+				.values([
+					{
+						from_node_id: FRN_A,
+						to_node_id: NODE_NORTH,
+						assertion: FilerEdgeAssertion.Authoritative,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+						match_score: null,
+						evidence: null,
+					},
+					{
+						from_node_id: FRN_A,
+						to_node_id: NODE_SOUTH,
+						assertion: FilerEdgeAssertion.Authoritative,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+						match_score: null,
+						evidence: null,
+					},
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values([
+					{
+						node_id: FRN_A,
+						family_id: FAMILY_NORTH,
+						naming_node_id: NODE_NORTH,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					},
+					{
+						node_id: FRN_A,
+						family_id: FAMILY_SOUTH,
+						naming_node_id: NODE_SOUTH,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+					},
+				])
+				.execute()
+
+			const north = await familyRollup(db, { familyID: FAMILY_NORTH, asOf: "2026-12-31" })
+			const south = await familyRollup(db, { familyID: FAMILY_SOUTH, asOf: "2026-12-31" })
+
+			expect(north[0]?.display_names).toEqual(["Northwind Holdings"])
+			expect(south[0]?.display_names).toEqual(["Southgate Group"])
+		})
+
+		/**
+		 * The naming provenance is READ, never re-derived (task 3 fix round 4 — the reviewer's own reproduction, at the
+		 * reader level). `filer.db` ships sealed and separately versioned; `canonicalizeOrganizationName` lives in
+		 * `@mailwoman/record` and its designation packs are explicitly documented as extensible. This fixture is what an
+		 * artifact built by an OLDER canonicalizer looks like from today's code: the persisted `family_id` is one no
+		 * current `mintFamilyID` call would ever produce, while node, edge and membership are all intact. Under round 3's
+		 * read-time re-canonicalization this returned `display_names: []` — no error, no warning, the name simply gone.
+		 * Joining the stored `naming_node_id` cannot fail this way, because nothing in the read path canonicalizes.
+		 */
+		it("surfaces the display name even when the persisted family_id no longer matches what the CURRENT canonicalizer would mint", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const NAMING_NODE_DRIFT = `${FilerIdentifierType.HoldingCompanyName}:Drifty Holdings Inc`
+			// A family_id one designation token behind — what a canonicalizer built before "inc" joined
+			// BASE_DESIGNATIONS would have minted for this very name.
+			const STALE_FAMILY_ID = `${FilerIdentifierType.HoldingCompanyName}:drifty holdings inc`
+
+			expect(mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Drifty Holdings Inc")).not.toBe(STALE_FAMILY_ID)
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_A, identifier_type: FilerIdentifierType.FRN, identifier_value: "0001111111" },
+					{
+						node_id: NAMING_NODE_DRIFT,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Drifty Holdings Inc",
+					},
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values({
+					from_node_id: FRN_A,
+					to_node_id: NAMING_NODE_DRIFT,
+					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				})
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: FRN_A,
+					family_id: STALE_FAMILY_ID,
+					naming_node_id: NAMING_NODE_DRIFT,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: null,
+				})
+				.execute()
+
+			const result = await familyRollup(db, { familyID: STALE_FAMILY_ID, asOf: "2026-12-31" })
+			expect(result[0]?.display_names).toEqual(["Drifty Holdings Inc"])
+		})
+
+		/**
+		 * "Documented relationships only" (task 3 fix round 4). `readFamilyDisplayNames` filters the naming edge to
+		 * `assertion: "authoritative"`. Nothing in the pipeline emits an INFERRED holding-/management-company edge today —
+		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the REAL builder;
+		 * it is constructible only by hand, as here. The predicate is there because a `display_names` entry is presented as
+		 * a name this family's members actually REPORTED. Surfacing one recovered from a matcher's guess would restate that
+		 * guess as a filing, which is the same category of error as 3a's inferred/authoritative conflation — the reason
+		 * `inferred_links` is a separate field from `cluster` rather than merged into it.
+		 */
+		it("ignores an INFERRED naming edge — a display name is a documented report, never a matcher's guess", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const NAMING_NODE_GUESS = `${FilerIdentifierType.HoldingCompanyName}:Guesswork Holdings`
+			const FAMILY_GUESS = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Guesswork Holdings")!
+
+			await db
+				.insertInto("filer_node")
+				.values([
+					{ node_id: FRN_A, identifier_type: FilerIdentifierType.FRN, identifier_value: "0001111111" },
+					{
+						node_id: NAMING_NODE_GUESS,
+						identifier_type: FilerIdentifierType.HoldingCompanyName,
+						identifier_value: "Guesswork Holdings",
+					},
+				])
+				.execute()
+
+			await db
+				.insertInto("filer_edge")
+				.values({
+					from_node_id: FRN_A,
+					to_node_id: NAMING_NODE_GUESS,
+					assertion: FilerEdgeAssertion.Inferred,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: null,
+					match_score: 0.91,
+					evidence: null,
+				})
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: FRN_A,
+					family_id: FAMILY_GUESS,
+					naming_node_id: NAMING_NODE_GUESS,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					source_vintage: "2026-01-01",
+					valid_from: "2026-01-01",
+					valid_to: null,
+				})
+				.execute()
+
+			const result = await familyRollup(db, { familyID: FAMILY_GUESS, asOf: "2026-12-31" })
+
+			// The membership itself still reads back — only the NAME is withheld, because no authoritative edge
+			// documents it.
+			expect(result[0]?.members).toHaveLength(1)
+			expect(result[0]?.display_names).toEqual([])
 		})
 	})
 })

@@ -88,10 +88,12 @@
  *   — the same reduction `cluster-filers.ts`'s inferred pass already relies on), namespaced by identifier
  *   type so a holding company and a differently-named management company never collapse into one family
  *   even if their canonical strings happened to coincide. Each `filer_family` row carries the SAME
- *   `relationship`/`source`/`source_vintage`/`valid_from` as the edge that implies it, and `valid_to: null`
- *   (a fresh assertion, never pre-closed). **Never derived from a DC-agent field** — see the DC-agent
- *   doctrine below; those fields never reach an edge, so by construction they can never reach a family
- *   either.
+ *   `relationship`/`source`/`source_vintage`/`valid_from` as the edge that implies it, that edge's
+ *   `to_node_id` as its `naming_node_id` (task 3 fix round 4 — the naming provenance, persisted here so no
+ *   reader has to re-canonicalize a sealed artifact's names to find its way back to them), and
+ *   `valid_to: null` (a fresh assertion, never pre-closed). **Never derived from a DC-agent field** — see
+ *   the DC-agent doctrine below; those fields never reach an edge, so by construction they can never reach
+ *   a family either.
  *
  *   **DC-agent doctrine (spec §3.1 finding 3, repeated here because it is easy to violate by accident):**
  *   `dcAgent*` fields are recorded ONLY as `filer_attribute` rows (`dc_agent_display_name`,
@@ -232,9 +234,11 @@ export interface BuildFilerResult {
 	 */
 	attributes: number
 	/**
-	 * Distinct `filer_family` rows after the build (3b Task 2) — PK-deduped on `(node_id, family_id, source,
-	 * valid_from)`, the identical composite shape as `filer_edge`'s own PK. One row per `HoldingCompany`/
-	 * `ManagementCompany` edge whose target name canonicalized to something non-empty (see {@linkcode mintFamilyID}).
+	 * Distinct `filer_family` rows after the build (3b Task 2) — PK-deduped on `(node_id, family_id, naming_node_id,
+	 * source, valid_from)`, the identical composite shape as `filer_edge`'s own PK plus the naming provenance (task 3 fix
+	 * round 4). One row per `HoldingCompany`/`ManagementCompany` edge whose target name canonicalized to something
+	 * non-empty (see {@linkcode mintFamilyID}), so two DIFFERENT spellings of one family under one source at one instant
+	 * count as two rows here, not one.
 	 */
 	families: number
 	/**
@@ -302,6 +306,40 @@ function mintManagementCompanyNodeID(name: string): string {
 // already closed for assertISODate.
 
 /**
+ * The one `filer_family` row {@linkcode insertFamilyMembership} writes, described in the builder's own terms rather
+ * than the table's: `memberNodeID`/`namingNodeID` are the two ends of the `HoldingCompany`/`ManagementCompany` edge
+ * this row accompanies, and `identifierType`/`name` are what {@linkcode mintFamilyID} canonicalizes into the
+ * `family_id`.
+ */
+interface FamilyMembershipFact {
+	/**
+	 * The edge's `from_node_id` — an FRN or `bdcProviderID` node. Becomes `filer_family.node_id`.
+	 */
+	memberNodeID: string
+	/**
+	 * The edge's `to_node_id` — the holding-/management-company node whose raw name produced `family_id`. Becomes
+	 * `filer_family.naming_node_id`.
+	 */
+	namingNodeID: string
+	/**
+	 * One of {@link FilerIdentifierType} — the namespace `family_id` is minted under.
+	 */
+	identifierType: string
+	/**
+	 * The RAW company name, canonicalized by {@linkcode mintFamilyID}. Never written verbatim to `filer_family`; the raw
+	 * spelling lives on the `filer_node` `namingNodeID` points at.
+	 */
+	name: string
+	/**
+	 * One of {@link FilerRelationship} — copied from the accompanying edge, never re-derived.
+	 */
+	relationship: string
+	source: string
+	sourceVintage: string
+	validFrom: string
+}
+
+/**
  * Write one `filer_family` membership row for a `HoldingCompany`/`ManagementCompany` edge's SOURCE node (the edge's own
  * `from_node_id` — an FRN or `bdcProviderID`) — see {@linkcode mintFamilyID} for how `family_id` is derived from the
  * TARGET name's canonical form. Skips silently (no row, no error, no `skipped` increment — a family row is a bonus
@@ -309,22 +347,30 @@ function mintManagementCompanyNodeID(name: string): string {
  * {@linkcode buildFilerDatabase}, unlike `stageAttribute`/`commitBatch`) purely to stay under the linter's
  * `max-statements` ceiling — `insFamily` (the prepared statement it writes through) is passed in rather than closed
  * over.
+ *
+ * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted FROM — the edge's
+ * `to_node_id`, which every caller has already minted immediately above its call (task 3 fix round 4; it is
+ * deliberately taken as a field rather than re-derived from `identifierType`/`name` here, so the family row and the
+ * edge can never name two different nodes). Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames`
+ * recover the raw spelling by a plain join instead of re-running `canonicalizeOrganizationName` at read time against a
+ * sealed, separately-versioned artifact — see `schema.ts`'s file header for the drift that closed. Adding it pushed
+ * this function's positional arity past the linter's `max-params` ceiling, hence the single options argument.
  */
-function insertFamilyMembership(
-	insFamily: StatementSync,
-	memberNodeID: string,
-	identifierType: string,
-	name: string,
-	relationship: string,
-	source: string,
-	sourceVintage: string,
-	validFrom: string
-): void {
-	const familyID = mintFamilyID(identifierType, name)
+function insertFamilyMembership(insFamily: StatementSync, fact: FamilyMembershipFact): void {
+	const familyID = mintFamilyID(fact.identifierType, fact.name)
 
 	if (!familyID) return
 
-	insFamily.run(memberNodeID, familyID, relationship, source, sourceVintage, validFrom, null)
+	insFamily.run(
+		fact.memberNodeID,
+		familyID,
+		fact.namingNodeID,
+		fact.relationship,
+		fact.source,
+		fact.sourceVintage,
+		fact.validFrom,
+		null
+	)
 }
 
 /**
@@ -484,12 +530,14 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	)
 
 	// filer_family (3b Task 2) — same "no staging table needed" discipline as filer_node/filer_edge above (module
-	// docstring): the composite PK (node_id, family_id, source, valid_from) already provides the uniqueness a
-	// staging table would otherwise exist to give.
+	// docstring): the composite PK (node_id, family_id, naming_node_id, source, valid_from) already provides the
+	// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key (task 3 fix round
+	// 4) — see createFilerFamilyTable's docstring for why leaving it out would make THIS statement's OR IGNORE drop a
+	// second, differently-spelled report of the same family.
 	const insFamily = db.prepare(
 		`INSERT OR IGNORE INTO filer_family (
-			node_id, family_id, relationship, source, source_vintage, valid_from, valid_to
-		) VALUES (?, ?, ?, ?, ?, ?, ?)`
+			node_id, family_id, naming_node_id, relationship, source, source_vintage, valid_from, valid_to
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 
 	const insAttrStage = db.prepare(
@@ -600,16 +648,16 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					null
 				)
 
-				insertFamilyMembership(
-					insFamily,
-					frnNodeID,
-					FilerIdentifierType.HoldingCompanyName,
-					row.holdingCompany,
-					FilerRelationship.HoldingCompany,
-					"form-499",
-					lastFiledAt,
-					lastFiledAt
-				)
+				insertFamilyMembership(insFamily, {
+					memberNodeID: frnNodeID,
+					namingNodeID: holdingNodeID,
+					identifierType: FilerIdentifierType.HoldingCompanyName,
+					name: row.holdingCompany,
+					relationship: FilerRelationship.HoldingCompany,
+					source: "form-499",
+					sourceVintage: lastFiledAt,
+					validFrom: lastFiledAt,
+				})
 			} else {
 				skipped++
 			}
@@ -631,16 +679,16 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					null
 				)
 
-				insertFamilyMembership(
-					insFamily,
-					frnNodeID,
-					FilerIdentifierType.ManagementCompanyName,
-					row.managementCompany,
-					FilerRelationship.ManagementCompany,
-					"form-499",
-					lastFiledAt,
-					lastFiledAt
-				)
+				insertFamilyMembership(insFamily, {
+					memberNodeID: frnNodeID,
+					namingNodeID: managementNodeID,
+					identifierType: FilerIdentifierType.ManagementCompanyName,
+					name: row.managementCompany,
+					relationship: FilerRelationship.ManagementCompany,
+					source: "form-499",
+					sourceVintage: lastFiledAt,
+					validFrom: lastFiledAt,
+				})
 			} else {
 				skipped++
 			}
@@ -698,16 +746,16 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				null
 			)
 
-			insertFamilyMembership(
-				insFamily,
-				providerNodeID,
-				FilerIdentifierType.HoldingCompanyName,
-				row.holdingCompany,
-				FilerRelationship.HoldingCompany,
-				"bdc-provider-list",
-				options.sourceVintage,
-				providerValidFrom!
-			)
+			insertFamilyMembership(insFamily, {
+				memberNodeID: providerNodeID,
+				namingNodeID: holdingNodeID,
+				identifierType: FilerIdentifierType.HoldingCompanyName,
+				name: row.holdingCompany,
+				relationship: FilerRelationship.HoldingCompany,
+				source: "bdc-provider-list",
+				sourceVintage: options.sourceVintage,
+				validFrom: providerValidFrom!,
+			})
 		} else {
 			skipped++
 		}

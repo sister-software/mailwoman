@@ -51,8 +51,22 @@
  *   underlying filer under different identifiers — what `filer_cluster` has always meant) and a
  *   CORPORATE FAMILY (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers).
  *   `filer_family` is the new seam for the latter — see {@link FilerFamilyTable}. Its own primary key
- *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, source, valid_from)`,
- *   `relationship` excluded from it for the identical contradiction-vs-plurality reason).
+ *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, naming_node_id, source,
+ *   valid_from)`, `relationship` excluded from it for the identical contradiction-vs-plurality reason).
+ *
+ *   **3b Task 3 fix round 4:** `filer_family` gained `naming_node_id` — the company node whose raw name
+ *   PRODUCED this row's `family_id`. `family_id` is a canonicalized slug (`family-id.ts`'s `mintFamilyID`
+ *   over `@mailwoman/record`'s `canonicalizeOrganizationName`), and until this column existed the ONLY way
+ *   for a reader to get back to the human-readable name was to re-run that canonicalization at READ time
+ *   and keep whichever edge target matched. That put a sealed, separately-versioned artifact's output at
+ *   the mercy of a designation-list edit in another workspace: `canonicalizeOrganizationName`'s own
+ *   docstring says its jurisdiction/domain packs "are grounded seeds, not exhaustive — extend them per ISO
+ *   20275 as locales are added", and nothing in `filer_manifest` pins the canonicalizer's identity. A
+ *   reviewer reproduced the consequence — a `family_id` minted before `"inc"` joined `BASE_DESIGNATIONS`
+ *   stops matching anything the current canonicalizer produces, and every display name silently
+ *   disappears with no error and no warning. Persisting the provenance rather than re-deriving it is also
+ *   the plainly correct shape under this project's binding rule (provenance on every edge): a
+ *   family-membership row recorded the FACT without recording what produced it.
  */
 
 import { sql, type Kysely } from "kysely"
@@ -223,14 +237,22 @@ export interface FilerClusterTable {
  * Corporate-family membership (3b Task 1, decisions 1, 2) — the seam `filer_cluster` never had for telling apart an
  * ENTITY cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY
  * (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id`
- * belongs to `family_id` under a specific {@link FilerRelationship} `relationship`, as reported by one source at one
- * vintage — provenance-plural and temporally scoped exactly like `filer_edge` (see {@link createFilerFamilyTable}'s
- * docstring for why its primary key mirrors `filer_edge`'s reasoning, `relationship` excluded, and the file header for
- * the half-open `valid_from <= t < valid_to` convention `valid_to` follows here too).
+ * belongs to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
+ * `relationship`, as reported by one source at one vintage — provenance-plural and temporally scoped exactly like
+ * `filer_edge` (see {@link createFilerFamilyTable}'s docstring for why its primary key mirrors `filer_edge`'s
+ * reasoning, `relationship` excluded, and the file header for the half-open `valid_from <= t < valid_to` convention
+ * `valid_to` follows here too).
  */
 export interface FilerFamilyTable {
 	node_id: string
 	family_id: string
+	/**
+	 * The `filer_node.node_id` of the holding-/management-company node whose raw `identifier_value` was canonicalized to
+	 * produce this row's `family_id` (3b Task 3 fix round 4) — the naming provenance of the family fact, persisted at
+	 * BUILD time so no reader ever has to re-derive it. See the file header for the drift this closes, and
+	 * {@link createFilerFamilyTable}'s docstring for why it is part of the primary key.
+	 */
+	naming_node_id: string
 	/**
 	 * One of {@link FilerRelationship}.
 	 */
@@ -385,25 +407,38 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
 }
 
 /**
- * Create `filer_family` with the composite PK `(node_id, family_id, source, valid_from)` — mirrors
+ * Create `filer_family` with the composite PK `(node_id, family_id, naming_node_id, source, valid_from)` — mirrors
  * {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart DIFFERENT provenance (a different
  * source, or the same source at a later vintage), and `relationship` is deliberately excluded from it for the same
  * contradiction-vs-plurality reason — one source asserting BOTH `"parent_company"` and `"subsidiary"` for the identical
  * `(node_id, family_id)` pair at the identical instant is a contradiction to reject, not a plurality to store. The same
  * blank/whitespace-rejecting CHECK constraint applies to `relationship` here too. Call {@link createFilerFamilyIndex}
  * separately, after bulk load, for the "all members of this family" lookup path.
+ *
+ * **`naming_node_id` IS in the key (3b Task 3 fix round 4), and that placement is load-bearing.** Two DIFFERENT raw
+ * spellings can canonicalize to the SAME `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to
+ * `"acme"` (`record/organization.test.ts` pins that collapse) — which is the documented decision-6 shape when one FRN
+ * files two 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ
+ * ONLY in `naming_node_id`. Left out of the key they would share an identical PK tuple, the builder's `INSERT OR
+ * IGNORE` would silently drop the second, and the second spelling's display name would vanish from every rollup —
+ * regressing the "expose the plurality within one family, never guess which spelling is right" rule this SDK follows
+ * everywhere else (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, family
+ * membership never deduped across sources). This is NOT the `relationship` situation: two spellings under one source at
+ * one instant are two things the filer really did report, a plurality to store — where two conflicting `relationship`
+ * values for one pair are two incompatible claims about what that pair MEANS, a contradiction to reject.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
 		.createTable("filer_family")
 		.addColumn("node_id", "text", (c) => c.notNull())
 		.addColumn("family_id", "text", (c) => c.notNull())
+		.addColumn("naming_node_id", "text", (c) => c.notNull())
 		.addColumn("relationship", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("source_vintage", "text", (c) => c.notNull())
 		.addColumn("valid_from", "text", (c) => c.notNull())
 		.addColumn("valid_to", "text")
-		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "source", "valid_from"])
+		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "naming_node_id", "source", "valid_from"])
 		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
 		.execute()
 }
