@@ -144,19 +144,42 @@ export interface LeakageCensus {
 }
 
 /**
- * The relationship kinds a `filer_family` row can carry that the prediction does NOT treat as ownership evidence. Kept
- * as one list so {@linkcode readLeakageCensus}'s "scored" count and {@linkcode readRegistrantFamilies}'s filter cannot
- * drift apart — the census would otherwise promise to police rows the prediction quietly scored, or vice versa.
+ * Whether each {@linkcode FilerRelationship} asserts OWNERSHIP — the thing this eval withholds and scores — as opposed
+ * to operational control or plain identity.
+ *
+ * **Exhaustive by construction, and that is the point (task 4 re-review, round 3 follow-up).** The round-3
+ * implementation expressed the same classification as two DENYLISTS typed `readonly string[]`, and flagged the hazard
+ * itself: a relationship class added to `FilerRelationship` later would fall through to "counts as ownership" silently,
+ * in BOTH the prediction and the leakage census — scoring a fact nobody decided should be scored, and doing it without
+ * a test failing. The `satisfies Record<FilerRelationship, boolean>` pin below inverts that default: a new member is a
+ * COMPILE error here until someone classifies it deliberately. Same idiom the BDC plausibility gate uses
+ * (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`), and it resolves through the
+ * emitted `.d.ts`, so `yarn typecheck:tests` is what evaluates it — `tsc -b` and vitest are both blind to it.
+ *
+ * `SameEntity` is false because two identifiers denoting ONE filer say nothing about who owns it; `ManagementCompany`
+ * because operational control is not ownership (spec §3.1 finding 1, and the reason this eval excludes management
+ * families from both prediction and truth). `HoldingCompany`, `ParentCompany` and `Subsidiary` each assert an ownership
+ * relation between two DIFFERENT entities, which is exactly what a withheld-parent run must not be able to see.
  */
-const UNSCORED_FAMILY_RELATIONSHIPS: readonly string[] = [FilerRelationship.ManagementCompany]
+const OWNERSHIP_BY_RELATIONSHIP = {
+	[FilerRelationship.SameEntity]: false,
+	[FilerRelationship.ManagementCompany]: false,
+	[FilerRelationship.HoldingCompany]: true,
+	[FilerRelationship.ParentCompany]: true,
+	[FilerRelationship.Subsidiary]: true,
+} as const satisfies Record<FilerRelationship, boolean>
 
 /**
- * Relationships a `filer_edge` can carry that assert something other than ownership.
+ * Does this relationship assert ownership? Single source of truth for {@linkcode readLeakageCensus}'s "scored" count
+ * and {@linkcode readRegistrantFamilies}'s filter, so the census can never promise to police rows the prediction
+ * quietly scored, or vice versa. An unrecognized value is treated as NON-ownership: it cannot come from
+ * `FilerRelationship` (the pin above makes that a compile error), so it is a raw string read back from a
+ * `filer_family`/`filer_edge` row this build did not write, and silently scoring an unknown assertion as ownership is
+ * the failure this exists to stop.
  */
-const NON_OWNERSHIP_EDGE_RELATIONSHIPS: readonly string[] = [
-	FilerRelationship.SameEntity,
-	FilerRelationship.ManagementCompany,
-]
+function assertsOwnership(relationship: string): boolean {
+	return OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship] ?? false
+}
 
 async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<LeakageCensus> {
 	const nodes = await db
@@ -167,11 +190,11 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
 
 	const edges = await db.selectFrom("filer_edge").select("relationship").execute()
 	const familyRows = await db.selectFrom("filer_family").select("relationship").execute()
-	const managementFamilyRows = familyRows.filter((row) => UNSCORED_FAMILY_RELATIONSHIPS.includes(row.relationship))
+	const managementFamilyRows = familyRows.filter((row) => !assertsOwnership(row.relationship))
 
 	return {
 		holdingCompanyNodes: nodes.length,
-		ownershipEdges: edges.filter((row) => !NON_OWNERSHIP_EDGE_RELATIONSHIPS.includes(row.relationship)).length,
+		ownershipEdges: edges.filter((row) => assertsOwnership(row.relationship)).length,
 		scoredFamilyRows: familyRows.length - managementFamilyRows.length,
 		managementFamilyRows: managementFamilyRows.length,
 		familyRows: familyRows.length,
@@ -233,7 +256,7 @@ async function readRegistrantFamilies(
 
 				const ownThisNode = rollup.members.filter((member) => member.node_id === nodeID)
 
-				if (ownThisNode.some((member) => !UNSCORED_FAMILY_RELATIONSHIPS.includes(member.relationship))) {
+				if (ownThisNode.some((member) => assertsOwnership(member.relationship))) {
 					used.add(rollup.family_id)
 				}
 			}
