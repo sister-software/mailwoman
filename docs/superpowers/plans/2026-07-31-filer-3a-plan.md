@@ -16,7 +16,9 @@
 
 ## Pre-registered decisions (cite in commits)
 
-1. **3a sources are Form 499 + the BDC provider list. CORES is deferred.** The Nexus `CORESClient` is a per-FRN HTML _scrape_ of `apps.fcc.gov`, not a bulk loader — scraping an FCC site per-FRN at corpus scale is out of scope for 3a on both engineering and etiquette grounds. The two bulk files together already carry the whole authoritative core: 499 gives `frn` + `form499ID` + `holdingCompany` + `managementCompany`, and `bdc_us_provider_list_*.csv` gives `provider_id` + `frn` + `holding_company`. CORES returns later as an _on-demand enrichment_ for a single FRN, or when a genuine bulk extract is identified.
+1. **3a's crosswalk core is Form 499 + the BDC provider list; CORES arrives as a bounded enrichment pass (Task 9), not via the Nexus scraper.** _Revised 2026-07-31 after operator pushback — the first draft deferred CORES entirely, which over-generalized from "the salvage has no bulk loader" to "no good source exists." That does not follow, and it was wrong._ What research established: the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call) returning company name **plus parent and subsidiary names**, and a Postman-documented Relationship-FRN endpoint. That is a supported interface, not an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b** — materially more valuable than the "enrichment" framing of the first draft.
+   Still true: no CORES **bulk** extract was found (the FCC's bulk downloads cover ULS and ASR, not CORES). But per-FRN calls are acceptable here precisely because 499 + the provider list first give us a **finite, enumerated FRN universe** — this is a bounded enrichment job over a known key set, not an unbounded crawl for discovery. Cache per FRN, rate-limit, identify the client.
+   **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs, and terms are UNVERIFIED. (`broadbandmap.fcc.gov` works fine with credentials, so this is host-specific, not a blanket block.) Task 9 opens with a verification step and stops if the interface is not what the documentation describes.
 2. **`filer.db` is NOT a layer-contract artifact in 3a.** It has no coordinates (ASR is 3c) and `layer_coverage` is h3-keyed with no null path, so conforming would mean writing coverage rows that assert nothing — the exact dishonesty the meaning-of-zero rule exists to prevent. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at — mirroring `LayerManifestTable`'s fields minus the spatial ones). Layer-contract conformance is deferred to 3c, when ASR structures give coordinates and coverage means something. **Do not geocode filer HQ addresses in 3a** to manufacture a spine.
 3. **FRN is a zero-padded 10-character branded string.** Nexus types it `Tagged<number>`; `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros (same defect class as 2a's `location_id`). Provide `isFRN(value): value is FRN` with a real 10-digit check, unlike the Nexus guard.
 4. **Clustering runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup** whose threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the honest FS path the spec describes. Revisit only with a corporate-trained model.
@@ -239,13 +241,34 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 - [ ] TDD; assert default-path behavior unchanged and the lossy-denormalization rule is exercised by a multi-FRN fixture.
 - [ ] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
 
-### Task 9: Wrap-up
+### Task 9: CORES enrichment via the documented FRN API (verification-gated)
+
+**Files:** Create `filer/sdk/cores.ts` + test. Modify `filer/sdk/build-filer.ts` to accept the enrichment as an optional input.
+
+**Step 0 is a STOP GATE.** Verify the interface actually exists and behaves as documented before writing anything: hit `data.fcc.gov/api/frn` (the FRN Conversions GetInfo call) for a known FRN — use `0001753557` (WideOpenWest Finance, LLC, from the operator's field example) and `0003768165` (Comcast) — and record the real response shape, whether parent/subsidiary names are present, whether auth is required, and any published rate limit or terms. **If the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape, and do not proceed to the remaining steps.** The lab host was blocked at the Akamai edge on 2026-07-31; the operator may need to run this step, or it may work from a different network path.
+
+**Produces (only if Step 0 passes):**
+
+```ts
+export interface CORESEntity { frn: FRN; entityName: string | null; parentName: string | null
+  subsidiaryNames: string[]; entityType: string | null; retrievedAt: string }
+export async function fetchCORESEntity(frn: FRN, opts?: { fetchImpl?: typeof fetch; cacheDir?: string }): Promise<CORESEntity | null>
+export async function* enrichFromCORES(frns: Iterable<FRN>, opts?): AsyncIterable<CORESEntity>
+```
+
+Bounded by construction: the FRN set comes from the already-built crosswalk, so this enumerates a known finite key set rather than crawling for discovery. Per-FRN filesystem cache keyed by FRN + retrieval date; serial or small-concurrency requests with a descriptive User-Agent; a documented pause between calls. Tests use a stub `fetchImpl` — **no live network calls in the test suite**.
+
+Edges emitted (authoritative, since CORES states them): `frn ↔ parentName`, `frn ↔ subsidiaryName` (one edge per subsidiary), `source: "cores"`, `source_vintage` = retrieval date. These are the family-edge seeds 3b builds on.
+
+- [ ] Step 0 stop gate; then TDD the rest. Commit `feat(filer): CORES enrichment via the documented FRN API (3a task 9, decision 1)`.
+
+### Task 10: Wrap-up
 
 - [ ] Full ladder incl. `yarn typecheck:tests`; tick plan checkboxes; controller handles final review + PR (do NOT open a PR in-task).
 
 ## Out of scope for 3a (do not build)
 
-CORES ingestion of any kind (decision 1); layer-contract conformance for filer.db (decision 2); geocoding filer HQ addresses; SEC/EDGAR and corporate families (3b); ASR/ULS (3c); `competition(area)` (3d); transfer-of-control edges (3b — but the schema's `valid_from`/`valid_to` must accept them without migration).
+Layer-contract conformance for filer.db (decision 2); geocoding filer HQ addresses; SEC/EDGAR and corporate families (3b); ASR/ULS (3c); `competition(area)` (3d); transfer-of-control edges (3b — but the schema's `valid_from`/`valid_to` must accept them without migration).
 
 ## Self-review notes
 
