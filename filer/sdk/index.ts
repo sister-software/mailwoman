@@ -1,4 +1,4 @@
-// Phase 3a identity crosswalk SDK
+// Phase 3b identity crosswalk SDK
 
 export * from "./build-filer.ts"
 export * from "./cluster-filers.ts"
@@ -14,4 +14,4 @@ export * from "./sec-client.ts"
 /**
  * @internal
  */
-export const SDK_VERSION = "3a"
+export const SDK_VERSION = "3b"
