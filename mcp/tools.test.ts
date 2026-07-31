@@ -3,9 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `buildToolTable` against stub deps — no MCP transport/server involved (that's exercised by the stdio smoke run
- *   in CI, not here). Covers: every registered tool is present, each schema accepts a canonical example + rejects a
- *   bad one, and each handler routes to the correct dep with the correct arguments.
+ *   `buildToolTable` against stub deps — no MCP transport/server involved. `server.ts`/`cli.ts`'s actual wiring isn't
+ *   covered by a CI job (no stdio smoke run exists as of this writing) — `cli.ts` top-level-`await`s a real stdio
+ *   connection, so it can't be imported here at all; its own type-checking (`tsc -b`) plus manual verification is
+ *   what currently backs it, and its extractable pure logic (the decision-6 layer guards) has its own direct unit
+ *   tests in `layer-guards.test.ts`. This file covers: every registered tool is present, each schema accepts a
+ *   canonical example + rejects a bad one, and each handler routes to the correct dep with the correct arguments.
  */
 
 import { describe, expect, it, vi } from "vitest"

@@ -19,8 +19,11 @@
  *   requires bdc.db unconditionally, so a missing file becomes one friendly thrown `Error` naming the layer;
  *   `plausibilityCheck`'s `bdcDB`/`poi` deps are each OPTIONAL, so a missing/absent `bdc_database_path`/
  *   `poi_database_path` degrades to the SAME typed-abstain evidence entry (`{type:"abstain",
- *   reason:"requires_bdc_layer"|"requires_build_local_layer"}`) the scorer already produces for an omitted dep — see
- *   `openBDCDatabaseIfPresent`/`openPlausibilityPOIDeps` below.
+ *   reason:"requires_bdc_layer"|"requires_build_local_layer"}`) the scorer already produces for an omitted dep. The
+ *   guards themselves (`assertBDCDatabaseExists`, `openBDCDatabaseIfPresent`, `openPlausibilityPOIDeps`) live in
+ *   `./layer-guards.ts`, NOT here — they're pure, transport-independent logic with no need for the stdio connection
+ *   this file opens at import time (which is exactly why THIS file can't be unit-tested directly; see
+ *   `layer-guards.test.ts` for their branch coverage).
  *
  *   ```sh
  *   mailwoman-mcp                       # geocode/poi_search degrade gracefully with no poi.db wired
@@ -32,7 +35,7 @@ import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { filingLandscape, plausibilityCheck, type BDCDatabase, type PlausibilityDeps } from "@mailwoman/bdc"
+import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -48,6 +51,7 @@ import {
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
 
+import { assertBDCDatabaseExists, openBDCDatabaseIfPresent, openPlausibilityPOIDeps } from "./layer-guards.ts"
 import { createMCPServer } from "./server.ts"
 import type { MCPToolDeps } from "./tools.ts"
 
@@ -127,41 +131,6 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 }
 
 /**
- * Decision 6 (2b task 7, both halves): open a bdc.db, or return `undefined` when `databasePath` is unset or the file is
- * missing — NEVER a raw sqlite throw. `mailwoman_plausibility_check`'s `bdcDB` dep is OPTIONAL (`PlausibilityDeps`),
- * and `plausibilityCheck` itself already abstains gracefully (a typed `{type:"abstain", reason:"requires_bdc_layer"}`
- * evidence entry) whenever it's `undefined` — so treating "path given but file missing" the same as "path never given
- * at all" is exactly the graceful degradation decision 6 asks for.
- */
-function openBDCDatabaseIfPresent(databasePath: string | undefined): DatabaseClient<BDCDatabase> | undefined {
-	if (!databasePath || !existsSync(databasePath)) return undefined
-
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(databasePath, { readOnly: true }) })
-}
-
-/**
- * Same graceful discipline as {@link openBDCDatabaseIfPresent}, for the poi.db side of `plausibilityCheck`'s deps —
- * `undefined` here becomes the `{type:"abstain", reason:"requires_build_local_layer"}` entry `plausibilityCheck`
- * already produces when a claimed technology's physical-plant categories can't be searched. `POILookup` is dynamically
- * imported (matching this file's existing `resolver-wof-sqlite` laziness — see the module header) since it's only ever
- * needed when a caller actually wires a poi.db. `lookup` and `contractDB` share ONE `DatabaseSync` handle (the
- * AGENTS.md "one connection, shared" convention) — a real poi.db's rows and its `layer_manifest`/`layer_coverage`
- * tables live in the same file, so disposing `contractDB` (which closes the shared handle) is enough; `POILookup` never
- * owns it (constructed with `{database}`, not `{databasePath}` — see `poi-lookup.ts`), so it never double-closes.
- */
-async function openPlausibilityPOIDeps(databasePath: string | undefined): Promise<PlausibilityDeps["poi"]> {
-	if (!databasePath || !existsSync(databasePath)) return undefined
-
-	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
-	const database = new DatabaseSync(databasePath, { readOnly: true })
-
-	return {
-		lookup: new POILookup({ database }),
-		contractDB: new DatabaseClient<LayerContractDatabase>({ database }),
-	}
-}
-
-/**
  * `plausibilityCheck`'s geocode dep — reuses the SAME shared classifier+resolver `deps.geocode` builds from (see the
  * module header's laziness note), wired at this CLI/MCP layer per the 2b task 5 brief ("`deriveGeocodeRegister`/
  * formatted register is the geocode dep's concern, wired at the CLI/MCP layer"). The real return type (`GeocodeResult`)
@@ -236,9 +205,7 @@ const deps: MCPToolDeps = {
 		// Decision 6 (2b task 7): `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
 		// abstain shape exists for this tool), so a missing file becomes a friendly thrown Error naming the layer —
 		// never the raw `node:sqlite` "unable to open database file" message.
-		if (!existsSync(q.databasePath)) {
-			throw new Error(`mailwoman_bdc_filing_landscape: bdc.db not found at "${q.databasePath}"`)
-		}
+		assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
 		using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(q.databasePath, { readOnly: true }) })
 
