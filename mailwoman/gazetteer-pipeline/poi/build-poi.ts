@@ -42,6 +42,7 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
+	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
 	type LayerContractDatabase,
@@ -60,7 +61,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { cellToParent, latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 
 /**
  * Pinned Overture release for the places-theme ingest. Matches `overture-ingest.tsx`'s own `DEFAULT_RELEASE` pin (the
@@ -332,6 +333,85 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 	}
 }
 
+/**
+ * A simple lon/lat rectangle — the shape a Geofabrik extract's declared bounding box takes. Not a general polygon (OSM
+ * extracts are rectangular cuts); {@link bboxCoverageCells} turns it into a 4-vertex ring for `polygonToCells`.
+ */
+export interface BBox {
+	minLon: number
+	minLat: number
+	maxLon: number
+	maxLat: number
+}
+
+/**
+ * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose CENTER falls inside `bbox` gets a coverage
+ * entry, paired with how many `rows` actually landed in it (0 permitted). This is the `--source osm` build branch's
+ * coverage strategy, used in place of the default Overture path's "a cell gets a row only if a POI fell in it" — an OSM
+ * telecom-infrastructure extract is sparse BY CATEGORY, so most of a well-surveyed region would otherwise report as
+ * unsurveyed (missing from `layer_coverage`) even though the whole extract region was in fact covered by the source. An
+ * explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found here" — never conflate it with a cell
+ * absent from `layer_coverage` entirely (unsurveyed/unknown, the contract's meaning-of-zero rule).
+ *
+ * Rows whose H3 cell falls OUTSIDE the bbox's own polyfilled cell set are not represented in the returned coverage
+ * (their observed count is silently uncounted) — acceptable because `bbox` is expected to describe the same extract
+ * region the rows were pulled from; a caller passing a bbox narrower than its rows' actual extent will undercount.
+ *
+ * Pure function: no DuckDB/ogr2ogr/network involved, so it's directly unit-testable over synthetic coordinates.
+ */
+export function bboxCoverageCells(
+	bbox: BBox,
+	rows: Iterable<Pick<POISourceRow, "latitude" | "longitude">>,
+	resolution: number = COVERAGE_H3_RESOLUTION
+): Array<{ h3Cell: number; observedRows: number }> {
+	const observed = new Map<number, number>()
+
+	for (const row of rows) {
+		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) continue
+
+		// Derive the coverage cell from the SAME res-9 cell the row is keyed by — `cellToParent(res9Cell,
+		// resolution)` — never a direct `latLngToCell(row, resolution)`. Matches the default (non-override)
+		// coverage path below (~:592) and every reader (`res9ShortCellToRes6Parent` in
+		// bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts). H3's cell hierarchy is not
+		// geometrically exact, so the direct derivation disagrees with the hierarchy-parent one for a real
+		// fraction of points (~6.56% measured over 20k CONUS points) — the identical builder/reader divergence
+		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring). Getting this wrong
+		// means a row's observed count lands on a neighbouring cell, or is silently dropped when its
+		// direct-res-6 cell isn't a member of the bbox polyfill below.
+		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
+		const cell = cellToParent(res9Cell, resolution) as H3Cell
+		const h3Cell = shortCellToInt(cell)
+
+		observed.set(h3Cell, (observed.get(h3Cell) ?? 0) + 1)
+	}
+
+	// polygonToCells's default (non-GeoJSON) coordinate order is [lat, lng] per vertex.
+	const ring: number[][] = [
+		[bbox.minLat, bbox.minLon],
+		[bbox.minLat, bbox.maxLon],
+		[bbox.maxLat, bbox.maxLon],
+		[bbox.maxLat, bbox.minLon],
+	]
+
+	const polyfilled = polygonToCells(ring, resolution) as H3Cell[]
+
+	return polyfilled.map((cell) => {
+		const h3Cell = shortCellToInt(cell)
+
+		return { h3Cell, observedRows: observed.get(h3Cell) ?? 0 }
+	})
+}
+
+/**
+ * `source` literal → the manifest `license`/`attribution` pair to write. Keyed by {@link BuildPOIOptions.source} so the
+ * default (`overture-places`, when `source` is omitted) reproduces the manifest's PRE-task-3 hardcoded literals exactly
+ * — the byte-identical-default-path requirement.
+ */
+const SOURCE_MANIFEST_DEFAULTS = {
+	"overture-places": { license: "CDLA-Permissive-2.0", attribution: "Overture Maps Foundation" },
+	osm: { license: "ODbL-1.0", attribution: "OpenStreetMap contributors" },
+} as const satisfies Record<string, { license: string; attribution: string }>
+
 export interface BuildPOIOptions {
 	/**
 	 * Per-country Parquet paths from {@link ingestPlaces} — read via DuckDB. Ignored when `rows` is given. Required unless
@@ -363,6 +443,23 @@ export interface BuildPOIOptions {
 	 * ISO-8601 manifest timestamp. Defaults to `new Date().toISOString()` — callers wanting reproducible builds pass it.
 	 */
 	createdAt?: string
+	/**
+	 * Manifest `source` + the license/attribution pair it implies (see {@link SOURCE_MANIFEST_DEFAULTS}). Default
+	 * `"overture-places"` — the pre-task-3 behavior.
+	 */
+	source?: "overture-places" | "osm"
+	/**
+	 * Manifest distribution tier. Default {@link LayerTier.Shipped} — the pre-task-3 behavior. The `--source osm` build
+	 * branch passes {@link LayerTier.BuildLocal} (ODbL share-alike; see `osm/README.md`).
+	 */
+	tier?: LayerTier
+	/**
+	 * Decision 5: when given, REPLACES the rows-derived res-6 coverage with this pre-computed set (typically
+	 * {@link bboxCoverageCells} over the extract's bbox) — every cell written at `completeness: 1`, `observedRows` taken
+	 * as-is (0 permitted). Default: undefined, preserving the pre-task-3 "coverage = cells a row actually fell into"
+	 * behavior.
+	 */
+	coverageCellsOverride?: Iterable<{ h3Cell: number; observedRows: number }>
 	onProgress?: (phase: string, message: string) => void
 }
 
@@ -544,14 +641,17 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	progress("manifest", "writing layer manifest + coverage")
 
+	const source = opts.source ?? "overture-places"
+	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
+
 	await writeLayerManifest(asContractDB(kdb), {
 		name: "poi",
 		version: opts.version ?? opts.release,
 		schemaVersion: 1,
-		tier: "shipped",
-		license: "CDLA-Permissive-2.0",
-		attribution: "Overture Maps Foundation",
-		source: "overture-places",
+		tier: opts.tier ?? LayerTier.Shipped,
+		license: sourceManifestDefaults.license,
+		attribution: sourceManifestDefaults.attribution,
+		source,
 		sourceVintage: opts.release,
 		buildCmd: "mailwoman gazetteer build poi",
 		buildSHA: opts.buildSHA,
@@ -565,11 +665,13 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	// claim about how complete Overture's own Places extraction is within that cell. A cell absent
 	// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule
 	// (missing = unknown, never `{completeness: 0}`).
-	const coverageCells = [...coverage.entries()].map(([h3Cell, observedRows]) => ({
-		h3Cell,
-		completeness: 1,
-		observedRows,
-	}))
+	//
+	// `coverageCellsOverride` (decision 5, the `--source osm` branch) REPLACES this rows-derived set
+	// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) — see
+	// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
+	const coverageCells = opts.coverageCellsOverride
+		? [...opts.coverageCellsOverride].map((c) => ({ h3Cell: c.h3Cell, completeness: 1, observedRows: c.observedRows }))
+		: [...coverage.entries()].map(([h3Cell, observedRows]) => ({ h3Cell, completeness: 1, observedRows }))
 
 	await writeLayerCoverage(asContractDB(kdb), coverageCells)
 

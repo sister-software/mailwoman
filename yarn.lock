@@ -4535,6 +4535,7 @@ __metadata:
   resolution: "@mailwoman/bdc@workspace:bdc"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/yauzl-promise": "npm:^4.0.1"

@@ -8,7 +8,9 @@
  *   file (the actual product surface) is testable without any MCP plumbing — `tools.test.ts` calls
  *   `buildToolTable` directly with stub deps.
  *
- *   Six tools, one per capability the exotic-POI arc's other packages expose to a human/CLI caller:
+ *   One tool per capability the exotic-POI/BDC arcs' other packages expose to a human/CLI caller — see
+ *   `buildToolTable`'s return value for the authoritative, current list (this comment intentionally states no count,
+ *   so it can't go stale as tools are added):
  *
  *   - `mailwoman_parse` — the runtime pipeline's parse (optionally POI-aware).
  *   - `mailwoman_geocode` — the street-level geocode cascade (`mailwoman/geocode-core`).
@@ -19,6 +21,10 @@
  *     (`@mailwoman/core/layers`).
  *   - `mailwoman_bdc_filing_landscape` — read a bdc.db layer's provider/technology/speed-bucket filing census over a
  *     set of census blocks or H3 cells (`@mailwoman/bdc`'s `filingLandscape`).
+ *   - `mailwoman_plausibility_check` — score one claimed broadband-service assertion against BDC filing evidence and
+ *     nearby telecom infrastructure (`@mailwoman/bdc`'s `plausibilityCheck`), returning a positive-evidence-only bundle
+ *     with an always-present `coverage_confidence`. A missing/absent `bdc_database_path`/`poi_database_path` degrades
+ *     to a typed abstain entry in the bundle, never a throw (2b task 7, decision 6).
  */
 
 import { z } from "zod"
@@ -33,6 +39,15 @@ export interface MCPToolDeps {
 	overpassExport: (query: string) => Promise<string>
 	layerManifest: (databasePath: string) => Promise<unknown>
 	bdcFilingLandscape: (q: { databasePath: string; geoids?: string[]; h3Cells?: number[] }) => Promise<unknown>
+	plausibilityCheck: (q: {
+		bdcDatabasePath?: string
+		poiDatabasePath?: string
+		address?: string
+		point?: { type: "Point"; coordinates: [number, number] }
+		geoid?: string
+		technologyCode: number
+		claimedDownloadMbps: number
+	}) => Promise<unknown>
 }
 
 /**
@@ -110,6 +125,57 @@ const BDCFilingLandscapeInputSchema = z.object({
 			"Resolution-9 short H3 cell integers (the bdc.db availability spine) to query directly. Provide exactly " +
 				"one of `geoids` or `h3_cells` — never both, never neither, never empty."
 		),
+})
+
+const PlausibilityCheckPointInputSchema = z.object({
+	type: z.literal("Point").describe('GeoJSON geometry type — always "Point".'),
+	coordinates: z
+		.tuple([z.number(), z.number()])
+		.describe("[longitude, latitude] pair, GeoJSON coordinate order (longitude first)."),
+})
+
+const PlausibilityCheckInputSchema = z.object({
+	bdc_database_path: z
+		.string()
+		.optional()
+		.describe(
+			"Path to a bdc.db layer database (FCC Broadband Data Collection availability). Omit — or point at a file " +
+				"that doesn't exist — to abstain on filing evidence rather than error."
+		),
+	poi_database_path: z
+		.string()
+		.optional()
+		.describe(
+			"Path to a poi.db layer database carrying the telecom-infrastructure categories (`telecom_exchange`, " +
+				"`tower_comms`, etc.). Omit — or point at a file that doesn't exist — to abstain on physical-plant " +
+				"evidence rather than error."
+		),
+	address: z
+		.string()
+		.optional()
+		.describe(
+			"The claimed service location as a free-text postal address, geocoded via the server's runtime pipeline " +
+				"when `point` isn't also given. At least one of `address`, `point`, or `geoid` is required."
+		),
+	point: PlausibilityCheckPointInputSchema.optional().describe(
+		"The claimed service location as a GeoJSON Point, bypassing geocoding. At least one of `address`, `point`, " +
+			"or `geoid` is required."
+	),
+	geoid: z
+		.string()
+		.optional()
+		.describe(
+			"15-character census block GEOID for the claimed service location — the exact, native filing-evidence " +
+				"path (no h3-cell approximation). May be supplied alongside `point`/`address` (geoid drives filing " +
+				"evidence; the point drives physical-plant evidence independently). At least one of `address`, " +
+				"`point`, or `geoid` is required."
+		),
+	technology_code: z
+		.number()
+		.describe(
+			"FCC BDC technology code for the claimed service, e.g. 50 = optical carrier fiber (BroadbandTechnologyCode)."
+		),
+	claimed_download_mbps: z.number().describe("The claimed downstream speed in Mbps."),
 })
 
 /**
@@ -195,6 +261,30 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 				const { database_path, geoids, h3_cells } = BDCFilingLandscapeInputSchema.parse(args)
 
 				return deps.bdcFilingLandscape({ databasePath: database_path, geoids, h3Cells: h3_cells })
+			},
+		},
+		{
+			name: "mailwoman_plausibility_check",
+			description:
+				"Score one claimed broadband-service assertion (technology + speed at a location) against the FCC BDC " +
+				"filing census and nearby telecom infrastructure, returning an evidence bundle: filings that corroborate " +
+				"(or don't), nearby physical plant, and a coverage_confidence reflecting survey completeness. NEVER " +
+				"returns a verdict stronger than 'no supporting evidence found' — absence of evidence degrades " +
+				"confidence, it never disproves the claim. Provide at least one of `address`, `point`, or `geoid`.",
+			inputSchema: PlausibilityCheckInputSchema,
+			handler: async (args) => {
+				const { bdc_database_path, poi_database_path, address, point, geoid, technology_code, claimed_download_mbps } =
+					PlausibilityCheckInputSchema.parse(args)
+
+				return deps.plausibilityCheck({
+					bdcDatabasePath: bdc_database_path,
+					poiDatabasePath: poi_database_path,
+					address,
+					point,
+					geoid,
+					technologyCode: technology_code,
+					claimedDownloadMbps: claimed_download_mbps,
+				})
 			},
 		},
 	]

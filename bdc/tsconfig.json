@@ -10,6 +10,7 @@
 	"references": [
 		// ---
 		{ "path": "../core" },
+		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../spatial" },
 		{ "path": "../tiger" }
 	]

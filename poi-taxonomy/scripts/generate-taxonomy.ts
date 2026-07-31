@@ -58,7 +58,7 @@ export const OVERTURE_RELEASE = "v1.17.0"
 /**
  * This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change.
  */
-export const TAXONOMY_VERSION = "0.2.0"
+export const TAXONOMY_VERSION = "0.3.0"
 
 /**
  * Source URL for `--fetch` and provenance.

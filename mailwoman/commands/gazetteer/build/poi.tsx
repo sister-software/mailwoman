@@ -8,40 +8,158 @@
  *   materialize/seal (`buildPOIDatabase`) logic lives in `gazetteer-pipeline/poi/build-poi.ts`, so it
  *   stays unit-testable without Ink/Pastel in the loop. Mirrors `overture-ingest.tsx`'s progress
  *   (stderr) / summary (stdout) split.
+ *
+ *   `--source osm` (bdc 2b task 3, decisions 3/5): a second, build-local branch alongside the default
+ *   Overture path — same command, same `buildPOIDatabase` seam, different inputs. It streams
+ *   `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract (telecom-infrastructure
+ *   categories only, task 2), stamps the invocation's `--country` onto every row (a bare OSM feature
+ *   carries no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
+ *   by polyfilling the extract's declared `--bbox` (`bboxCoverageCells`, decision 5) rather than only
+ *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a
+ *   well-surveyed cell" needs its own zero-observed-rows coverage row, not silent absence. The manifest
+ *   swaps to `tier: build-local`, `license: ODbL-1.0`, OSM attribution — the default Overture branch
+ *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
  */
 
 import { execFileSync } from "node:child_process"
 
+import { LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { extractOSMPOIs } from "@mailwoman/osm/sdk"
 import { Box, Text } from "ink"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { artifactSizeMB } from "../../../gazetteer-pipeline/admin/index.ts"
-import { buildPOIDatabase, DEFAULT_RELEASE, ingestPlaces } from "../../../gazetteer-pipeline/poi/build-poi.ts"
+import {
+	bboxCoverageCells,
+	buildPOIDatabase,
+	DEFAULT_RELEASE,
+	ingestPlaces,
+	type BBox,
+	type POISourceRow,
+} from "../../../gazetteer-pipeline/poi/build-poi.ts"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
 const OptionsSchema = zod.object({
-	release: zod.string().optional().describe(`Pinned Overture release. Default ${DEFAULT_RELEASE}`),
-	countries: zod.string().optional().describe(`ISO 3166-1 alpha-2, comma-separated. Default ${DEFAULT_COUNTRIES}`),
-	out: zod.string().optional().describe("poi.db output path. Default <data-root>/poi/poi.db"),
-	limit: zod.string().optional().describe("Cap rows per country (debug)"),
+	source: zod
+		.enum(["overture", "osm"])
+		.default("overture")
+		.describe("Data source: overture (default, shipped) or osm (build-local, ODbL — requires --pbf/--country/--bbox)"),
+	release: zod
+		.string()
+		.optional()
+		.describe(`overture: pinned release, default ${DEFAULT_RELEASE}. osm: the extract's vintage/date tag (required)`),
+	countries: zod
+		.string()
+		.optional()
+		.describe(`overture only: ISO 3166-1 alpha-2, comma-separated. Default ${DEFAULT_COUNTRIES}`),
+	out: zod
+		.string()
+		.optional()
+		.describe("poi.db output path. Default <data-root>/poi/poi.db (overture) or poi/poi-osm-<cc>.db (osm)"),
+	limit: zod.string().optional().describe("overture only: cap rows per country (debug)"),
 	skipIngest: zod
 		.boolean()
 		.default(false)
-		.describe("Skip the DuckDB/S3 ingest; build from already-materialized per-country Parquet"),
+		.describe("overture only: skip the DuckDB/S3 ingest; build from already-materialized per-country Parquet"),
+	pbf: zod.string().optional().describe("osm: path to a Geofabrik .osm.pbf extract (required)"),
+	country: zod
+		.string()
+		.optional()
+		.describe("osm: ISO 3166-1 alpha-2 country stamped onto every extracted row (required)"),
+	bbox: zod
+		.string()
+		.optional()
+		.describe("osm: extract bounding box as 'minLon,minLat,maxLon,maxLat' — polyfills res-6 coverage cells (required)"),
 })
 
 export { OptionsSchema as options }
 
+/**
+ * `--bbox` field count: `minLon,minLat,maxLon,maxLat`.
+ */
+const BBOX_FIELD_COUNT = 4
+
+/**
+ * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}. Throws with the raw input echoed back on any
+ * shape/finiteness mismatch — a silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
+ */
+function parseBBoxFlag(raw: string): BBox {
+	const parts = raw.split(",").map((s) => Number(s.trim()))
+
+	if (parts.length !== BBOX_FIELD_COUNT || parts.some((n) => !Number.isFinite(n))) {
+		throw new Error(
+			`--bbox must be 4 comma-separated numbers "minLon,minLat,maxLon,maxLat", got ${JSON.stringify(raw)}`
+		)
+	}
+
+	const [minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]
+
+	return { minLon, minLat, maxLon, maxLat }
+}
+
 const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+
+		if (options.source === "osm") {
+			const { pbf, country: rawCountry, release, bbox: bboxFlag } = options
+
+			if (!pbf || !rawCountry || !release || !bboxFlag) {
+				throw new Error(
+					"gazetteer build poi --source osm requires --pbf <extract.osm.pbf> --country <cc> --release <vintage> " +
+						"--bbox <minLon,minLat,maxLon,maxLat>"
+				)
+			}
+
+			const country = rawCountry.trim().toUpperCase()
+			const bbox = parseBBoxFlag(bboxFlag)
+			const out = options.out ?? dataRootPath("poi", `poi-osm-${country.toLowerCase()}.db`)
+
+			console.error(`▸ extract: OSM telecom-infrastructure POIs from ${pbf} (country=${country})`)
+
+			// Buffered (not streamed straight into buildPOIDatabase): telecom-infra extracts are
+			// category-sparse — a few thousand rows even for a whole country — and the array is walked
+			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` seam.
+			const rows: POISourceRow[] = []
+
+			for await (const row of extractOSMPOIs(pbf)) {
+				// Task 3 hand-off from task 2: extractOSMPOIs yields `country: ""` (a bare OSM feature
+				// carries no country property) — stamp the invocation's --country before buildPOIDatabase
+				// ever sees the row.
+				rows.push({ ...row, country })
+			}
+
+			console.error(`▸ build: ${out}`)
+
+			const coverageCellsOverride = bboxCoverageCells(bbox, rows)
+
+			const result = await buildPOIDatabase({
+				rows,
+				out,
+				release,
+				buildSHA,
+				source: "osm",
+				tier: LayerTier.BuildLocal,
+				coverageCellsOverride,
+				createdAt: new Date().toISOString(),
+				onProgress: (phase, message) => console.error(`  [${phase}] ${message}`),
+			})
+
+			return [
+				`poi.db (osm/${country}): ${out} (${artifactSizeMB(out)} MB)`,
+				`${result.rows.toLocaleString()} rows · ${result.categories} categories` +
+					` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
+				`manifest: name=poi tier=build-local source=osm sourceVintage=${release} buildSHA=${buildSHA}`,
+			]
+		}
+
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = (options.countries ?? DEFAULT_COUNTRIES).split(",").map((c) => c.trim().toUpperCase())
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const out = options.out ?? dataRootPath("poi", "poi.db")
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		let parquetPaths: string[]
 

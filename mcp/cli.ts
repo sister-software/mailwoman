@@ -7,12 +7,23 @@
  *   `mailwoman-mcp` — boot the MCP server over stdio. Wires the real `MCPToolDeps` (`tools.ts`) from the mailwoman
  *   library: `createRuntimePipeline` for parse/POI-intent, `geocode-core`'s `geocodeAddress` for geocode,
  *   `mailwoman/poi-overpass`'s `emitOverpassQL` for the export tool, `@mailwoman/core/layers` for the layer
- *   manifest tool, and `@mailwoman/bdc`'s `filingLandscape` for the BDC filing-landscape tool.
+ *   manifest tool, and `@mailwoman/bdc`'s `filingLandscape`/`plausibilityCheck` for the two BDC tools.
  *
  *   Deps are LAZY: nothing here loads the neural weights or opens a gazetteer db at startup — an MCP client
  *   connects, lists tools, and may never call one (or may call `mailwoman_overpass_export`/`mailwoman_layer_manifest`,
  *   neither of which needs the classifier at all). The shared classifier+resolver are built once, on the FIRST call
  *   to any tool that needs them, and cached for the process lifetime.
+ *
+ *   **Graceful layer-absent guards (2b task 7, decision 6).** Both BDC-backed tools treat a missing/unreadable
+ *   database file as absence, never a raw `node:sqlite` throw ("unable to open database file"): `bdcFilingLandscape`
+ *   requires bdc.db unconditionally, so a missing file becomes one friendly thrown `Error` naming the layer;
+ *   `plausibilityCheck`'s `bdcDB`/`poi` deps are each OPTIONAL, so a missing/absent `bdc_database_path`/
+ *   `poi_database_path` degrades to the SAME typed-abstain evidence entry (`{type:"abstain",
+ *   reason:"requires_bdc_layer"|"requires_build_local_layer"}`) the scorer already produces for an omitted dep. The
+ *   guards themselves (`assertBDCDatabaseExists`, `openBDCDatabaseIfPresent`, `openPlausibilityPOIDeps`) live in
+ *   `./layer-guards.ts`, NOT here — they're pure, transport-independent logic with no need for the stdio connection
+ *   this file opens at import time (which is exactly why THIS file can't be unit-tested directly; see
+ *   `layer-guards.test.ts` for their branch coverage).
  *
  *   ```sh
  *   mailwoman-mcp                       # geocode/poi_search degrade gracefully with no poi.db wired
@@ -24,7 +35,7 @@ import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { filingLandscape, type BDCDatabase } from "@mailwoman/bdc"
+import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -40,6 +51,7 @@ import {
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
 
+import { assertBDCDatabaseExists, openBDCDatabaseIfPresent, openPlausibilityPOIDeps } from "./layer-guards.ts"
 import { createMCPServer } from "./server.ts"
 import type { MCPToolDeps } from "./tools.ts"
 
@@ -118,6 +130,18 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 	return pipeline
 }
 
+/**
+ * `plausibilityCheck`'s geocode dep — reuses the SAME shared classifier+resolver `deps.geocode` builds from (see the
+ * module header's laziness note), wired at this CLI/MCP layer per the 2b task 5 brief ("`deriveGeocodeRegister`/
+ * formatted register is the geocode dep's concern, wired at the CLI/MCP layer"). The real return type (`GeocodeResult`)
+ * is structurally assignable to `plausibility.ts`'s minimal `GeocodeLike` — no adapter needed.
+ */
+async function resolveGeocode(address: string) {
+	const { classifier, resolver, shards } = await loadCore()
+
+	return geocodeAddress(address, { classifier, resolver, shards: shards.for })
+}
+
 const deps: MCPToolDeps = {
 	async parse(text, opts) {
 		const pipeline = opts?.poi ? await getPoiPipeline(poiDatabasePath) : await getPlainPipeline()
@@ -126,9 +150,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async geocode(text) {
-		const { classifier, resolver, shards } = await loadCore()
-
-		return geocodeAddress(text, { classifier, resolver, shards: shards.for })
+		return resolveGeocode(text)
 	},
 
 	async poiSearch(q) {
@@ -180,9 +202,35 @@ const deps: MCPToolDeps = {
 	},
 
 	async bdcFilingLandscape(q) {
+		// Decision 6 (2b task 7): `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
+		// abstain shape exists for this tool), so a missing file becomes a friendly thrown Error naming the layer —
+		// never the raw `node:sqlite` "unable to open database file" message.
+		assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
+
 		using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(q.databasePath, { readOnly: true }) })
 
 		return filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
+	},
+
+	async plausibilityCheck(q) {
+		const bdcDB = openBDCDatabaseIfPresent(q.bdcDatabasePath)
+		const poi = await openPlausibilityPOIDeps(q.poiDatabasePath)
+
+		try {
+			return await plausibilityCheck(
+				{
+					address: q.address,
+					point: q.point,
+					geoid: q.geoid,
+					technologyCode: q.technologyCode,
+					claimedDownloadMbps: q.claimedDownloadMbps,
+				},
+				{ bdcDB, poi, geocode: resolveGeocode }
+			)
+		} finally {
+			bdcDB?.destroy()
+			poi?.contractDB.destroy()
+		}
 	},
 }
 

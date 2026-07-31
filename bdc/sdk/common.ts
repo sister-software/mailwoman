@@ -157,9 +157,14 @@ export interface RawBDCFile {
 	/**
 	 * Comma-separated list of technology codes.
 	 *
+	 * Nullable in live data: the FCC's `/map/downloads/listAvailabilityData` response carries `technology_code: null` for
+	 * at least some State-category rows (first observed in the live FCC smoke test, see
+	 * `.superpowers/sdd/2026-07-30-bdc-2b-plan/live-smoke-findings.md`). Guarded in {@linkcode parseRawBDCFile} — a null
+	 * value parses to an empty `technologyCodes` set rather than throwing.
+	 *
 	 * @see {@link BroadbandTechnologyCode}
 	 */
-	technology_code: string
+	technology_code: string | null
 	technology_code_desc: string
 	/**
 	 * 2-digit state or territory FIPS code.
@@ -167,8 +172,11 @@ export interface RawBDCFile {
 	 * Loosely typed as `string` for now. The Nexus original was `AdminLevel1Code` (via `@isp.nexus/tiger`); this port
 	 * drops that dependency, same as `data-collection.ts`'s `FCCStateID`. Task 2c tightens this against
 	 * `@mailwoman/tiger` if a downstream dictionary needs the literal union.
+	 *
+	 * Nullable in live data for rows not scoped to a specific state (e.g. Provider-category rows). Guarded in
+	 * {@linkcode parseRawBDCFile} — a null value parses to an empty `stateCode` string.
 	 */
-	state_fips: string
+	state_fips: string | null
 	/**
 	 * State or territory name.
 	 *
@@ -176,8 +184,16 @@ export interface RawBDCFile {
 	 * `state_fips` above.
 	 */
 	state_name: string
-	provider_id: string
-	provider_name: string
+	/**
+	 * Nullable in live data for rows not scoped to a specific provider (e.g. State/Summary-category rows). Guarded in
+	 * {@linkcode parseRawBDCFile} — a null value parses to a `providerID` of `0`.
+	 */
+	provider_id: string | null
+	/**
+	 * Nullable in live data — travels with `provider_id` (see above). Guarded in {@linkcode parseRawBDCFile} — a null
+	 * value parses to an empty `providerName` string.
+	 */
+	provider_name: string | null
 	file_type: string
 	file_name: string
 	record_count: string
@@ -212,21 +228,23 @@ export interface BDCFile {
 	 */
 	subcategory: BDCSubCategory
 	/**
-	 * The technology codes in the file.
+	 * The technology codes in the file. Empty when the raw `technology_code` was `null`.
 	 */
 	technologyCodes: Set<BroadbandTechnologyCode>
 	/**
 	 * The state or territory FIPS code.
 	 *
-	 * Loosely typed as `string` — see {@linkcode RawBDCFile} for the task-2c deferral.
+	 * Loosely typed as `string` — see {@linkcode RawBDCFile} for the task-2c deferral. Empty string when the raw
+	 * `state_fips` was `null`.
 	 */
 	stateCode: string
 	/**
-	 * The provider ID associated with the file.
+	 * The provider ID associated with the file. `0` when the raw `provider_id` was `null` (no specific provider — see
+	 * {@linkcode RawBDCFile}).
 	 */
 	providerID: ProviderID
 	/**
-	 * The provider name associated with the file.
+	 * The provider name associated with the file. Empty string when the raw `provider_name` was `null`.
 	 */
 	providerName: string
 	/**
@@ -311,11 +329,13 @@ export function parseRawBDCFile(raw: RawBDCFile): BDCFile {
 		category: raw.category,
 		subcategory: raw.subcategory,
 		technologyCodes: new Set(
-			raw.technology_code.split(",").map((code) => Number.parseInt(code, 10) as BroadbandTechnologyCode)
+			raw.technology_code === null
+				? []
+				: raw.technology_code.split(",").map((code) => Number.parseInt(code, 10) as BroadbandTechnologyCode)
 		),
-		stateCode: raw.state_fips,
-		providerID: Number.parseInt(raw.provider_id, 10) as ProviderID,
-		providerName: raw.provider_name,
+		stateCode: raw.state_fips ?? "",
+		providerID: (raw.provider_id === null ? 0 : Number.parseInt(raw.provider_id, 10)) as ProviderID,
+		providerName: raw.provider_name ?? "",
 	}
 
 	return parsedBDC
