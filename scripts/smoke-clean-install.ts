@@ -62,6 +62,8 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/normalize": "normalize",
 	"@mailwoman/phrase-grouper": "phrase-grouper",
 	"@mailwoman/query-shape": "query-shape",
+	// The tokenizer WASM core (task #26) — a hard dependency of @mailwoman/neural.
+	"@mailwoman/sentencepiece-wasm": "sentencepiece-wasm",
 	"@mailwoman/neural": "neural",
 	// The weights bundles — data-only, but real deps of photon/nominatim/fastify (all in this
 	// closure), so on a version-bumped release branch npm would otherwise chase the not-yet-published
@@ -106,6 +108,10 @@ const WORKSPACES: Record<string, string> = {
 	// bin-exec leg (`checkMCPBin`, 2026-07-20) — a real JSON-RPC initialize + tools/list handshake against
 	// the installed bin — instead of only transitively via the closure-wide npm install.
 	"@mailwoman/mcp": "mcp",
+	// BDC + filer (2026-07-31): runtime deps of mailwoman + @mailwoman/mcp — the closure guard
+	// flagged both missing on the first PR after their merge (pre-existing gap, not that PR's).
+	"@mailwoman/bdc": "bdc",
+	"@mailwoman/filer": "filer",
 }
 
 /**
@@ -135,9 +141,20 @@ const IMPORT_CHECK = [
 const STANDALONE_LEAVES = ["@mailwoman/core"]
 
 /**
- * The five tools `@mailwoman/mcp` registers (`mcp/tools.ts`). The bin-exec leg asserts EXACTLY this count.
+ * The tools `@mailwoman/mcp` registers (`mcp/tools.ts` + the bdc/filer additions, 2026-07-31). The bin-exec leg asserts
+ * EXACTLY this set — a name list, not a count, so drift names the missing or unexpected tool instead of printing
+ * "expected N, got M".
  */
-const MCP_EXPECTED_TOOL_COUNT = 5
+const MCP_EXPECTED_TOOLS = [
+	"mailwoman_parse",
+	"mailwoman_geocode",
+	"mailwoman_poi_search",
+	"mailwoman_overpass_export",
+	"mailwoman_layer_manifest",
+	"mailwoman_bdc_filing_landscape",
+	"mailwoman_plausibility_check",
+	"mailwoman_filer_lookup",
+]
 
 /**
  * Bin-exec leg for `@mailwoman/mcp` (2026-07-20). IMPORT_CHECK imports the package ENTRYPOINT (server.ts + tools.ts);
@@ -259,10 +276,16 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		if (listResp.error) throw new Error(`tools/list failed: ${JSON.stringify(listResp.error)}`)
 		const tools = listResp.result?.tools ?? []
 
-		if (tools.length !== MCP_EXPECTED_TOOL_COUNT) {
-			const names = tools.map((t) => (t as { name?: string }).name ?? "?").join(", ")
+		const names = tools.map((t) => (t as { name?: string }).name ?? "?").toSorted()
+		const expected = MCP_EXPECTED_TOOLS.toSorted()
 
-			throw new Error(`expected ${MCP_EXPECTED_TOOL_COUNT} tools, got ${tools.length}: ${names}`)
+		if (JSON.stringify(names) !== JSON.stringify(expected)) {
+			const missing = expected.filter((n) => !names.includes(n))
+			const surplus = names.filter((n) => !expected.includes(n))
+
+			throw new Error(
+				`MCP tool set drift — missing: [${missing.join(", ")}] unexpected: [${surplus.join(", ")}] (update MCP_EXPECTED_TOOLS beside the mcp/tools.ts change)`
+			)
 		}
 
 		// Clean shutdown: closing stdin ends the stdio transport; the process (lazy deps, nothing loaded) must exit 0.

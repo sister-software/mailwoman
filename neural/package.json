@@ -88,7 +88,7 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@sctg/sentencepiece-js": "^1.3.3",
+		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"onnxruntime-node": "^1.26.0"
 	}
 }

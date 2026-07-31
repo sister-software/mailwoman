@@ -3,51 +3,43 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   SentencePiece tokenizer wrapper with char-offset realignment.
+ *   SentencePiece tokenizer wrapper over `@mailwoman/sentencepiece-wasm` (google/sentencepiece
+ *   v0.2.2 with the native-offsets binding — task #26).
  *
- *   `@sctg/sentencepiece-js` is a pure-JS port of the unigram SentencePiece algorithm and produces
- *   pieces + ids but NOT offsets. The TS layer reconstructs offsets by walking the input string
- *   alongside the emitted pieces; this gives us the `[start, end)` char ranges the BIO decoder
- *   needs to map labels back to substrings.
+ *   History: the previous runtime (`@sctg/sentencepiece-js`, an emscripten build of an OLDER
+ *   sentencepiece whose binding never exposed the offset-carrying proto API) forced this file to
+ *   RECONSTRUCT char offsets by re-walking the input string alongside the emitted pieces — ~90
+ *   lines of cursor arithmetic with two documented hazard classes (byte-fallback desync, fixed by
+ *   hand; surrogate-pair accounting, deferred) and one undocumented one (normalizer-changed
+ *   surfaces: a piece like `DŽ` for input `Ǆ` desyncs a literal-length cursor). SentencePiece
+ *   itself has always known the answer: `Encode(text, &SentencePieceText)` yields per-piece
+ *   `begin`/`end` BYTE offsets with the invariant `utf8(text).slice(begin, end) == surface` and
+ *   contiguity between consecutive pieces — including the "zero-width except the last piece owns
+ *   the character's span" behavior for byte-fallback runs that the old reconstruction implemented
+ *   manually (verified byte-for-byte in the swap's parity battery, 1,066 fixture rows).
  *
- *   Offset reconstruction algorithm:
+ *   What this layer still owns:
  *
- *   - SentencePiece prepends `▁` (U+2581) to the first piece of each word (and to the first piece of
- *       the input). Pieces without `▁` are continuations of the current word.
- *   - When a piece starts with `▁`, consume any whitespace from the input before counting it.
- *   - The piece's actual chars (the piece minus a leading `▁`) advance the input cursor by that many
- *       code units. SentencePiece operates on Unicode codepoints, but since addresses are almost
- *       entirely BMP characters, JS code-unit indexing is correct in practice. Surrogate- pair
- *       codepoints would need `Array.from(s).length` accounting; deferred until the parity test
- *       surfaces a real case.
- *   - Byte-fallback pieces (`<0xHH>`) ARE handled: a run of one or more consecutive `<0xHH>` pieces (the vocab’s
- *       fallback for any character with no direct token — observed live on curly quotes “”’’, guillemets «», and
- *       braces {} even on Latin-script input, not just non-Latin scripts) is buffered and decoded as one UTF-8 byte
- *       sequence via `TextDecoder`, and the cursor advances by the DECODED string’s length — not by the literal
- *       `”<0xHH>”` placeholder’s length (6 chars for a single byte that represents 1 real character, or worse for a
- *       multi-byte codepoint split across several fallback pieces). Before this fix the cursor over-advanced on every
- *       byte-fallback piece, desyncing every subsequent piece’s offsets for the REST of the input — see
- *       `neural/test/tokenizer-byte-fallback.test.ts` for the repro and the fix-wave writeup
- *       (`.superpowers/sdd/task-9-audit-report.md`, paired-punctuation audit).
- *   - A byte-fallback run is split **per source character** at UTF-8 sequence boundaries (lead-byte scan): each
- *       character’s pieces carry that character’s own `[start, end)` span — the last piece of the character’s byte
- *       segment owns the real range (so `raw.slice(start, end)` recovers exactly that character), earlier pieces in
- *       the segment get a zero-width range at the character’s start (the same “own placeholder, zero contribution”
- *       idiom `groupPiecesIntoWords` uses for a bare ▁). This is what lets heterogeneous BIO tags inside one run
- *       survive decode: a run spanning multiple characters (東京都渋谷区 — every character its own 3-byte run
- *       segment) no longer collapses to one combined span on the run’s final piece, which used to silently absorb a
- *       B- tag boundary inside the run (the CJK residual resolved 2026-07-23; required before any non-Latin/CJK
- *       tokenizer ships). For a single-character run (curly quote, emoji) the split is a no-op — one segment,
- *       identical spans to the pre-split behavior.
+ *   - **Byte → UTF-16 conversion.** The native offsets are UTF-8 byte positions; the decoder wants
+ *       JS string (UTF-16 code-unit) ranges. The conversion walks code points once per encode and
+ *       is exact for non-BMP input (the old shim's deferred hazard, now covered by tests).
+ *   - **Leading-whitespace trim.** A `▁`-prefixed piece's native span INCLUDES the whitespace the
+ *       sentinel consumed (surface " Rock" for piece `▁Rock`); the decoder's contract has always
+ *       been starts-at-the-word (`start` points at "R"). Trimming preserves the shipped decode
+ *       byte-exactly, and collapses the bare-`▁` piece to the zero-width-after-space range the
+ *       word grouper expects.
  *
  *   The wrapper supports two load modes:
  *
- *   - `loadFromBase64(b64)` — for tests and Node usage where the model is read off disk and
- *       base64-encoded before being handed to the JS port.
- *   - `loadFromFile(path)` — convenience helper that does the read + b64 + load.
+ *   - `loadFromBase64(b64)` — for tests and browser usage where the model arrives as bytes.
+ *   - `loadFromFile(path)` — Node-only convenience (dynamic `node:fs` import keeps the browser
+ *       bundle clean).
  */
 
-import { SentencePieceProcessor } from "@sctg/sentencepiece-js"
+import createSentencePiece, {
+	type SentencePieceModule,
+	type SentencePieceProcessor,
+} from "@mailwoman/sentencepiece-wasm"
 
 /**
  * SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK).
@@ -55,27 +47,14 @@ import { SentencePieceProcessor } from "@sctg/sentencepiece-js"
 export const SPACE_SENTINEL = "▁"
 
 /**
- * A SentencePiece byte-fallback piece — the vocab's escape hatch for a character with no direct token.
+ * The WASM module instantiates once per process — every tokenizer instance shares it.
  */
-const BYTE_FALLBACK_RE = /^<0x([0-9A-Fa-f]{2})>$/
+let modulePromise: Promise<SentencePieceModule> | null = null
 
-const utf8Decoder = new TextDecoder("utf-8", { fatal: false })
+function loadModule(): Promise<SentencePieceModule> {
+	modulePromise ??= createSentencePiece()
 
-/**
- * Byte length of a UTF-8 sequence, from its lead byte. A continuation or invalid lead byte returns 1 so a malformed
- * byte forms its own one-byte segment (decoding to U+FFFD) instead of derailing the character split for the rest of the
- * run.
- */
-function utf8SequenceLength(leadByte: number): number {
-	if (leadByte < 0x80) return 1
-
-	if (leadByte >= 0xc0 && leadByte < 0xe0) return 2
-
-	if (leadByte >= 0xe0 && leadByte < 0xf0) return 3
-
-	if (leadByte >= 0xf0 && leadByte < 0xf8) return 4
-
-	return 1
+	return modulePromise
 }
 
 /**
@@ -105,21 +84,73 @@ export interface EncodeResult {
 	ids: number[]
 }
 
+/**
+ * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset. Returned as a plain array indexed by byte
+ * offset (holes at non-boundary indexes are filled with the containing character's START so a defensive lookup can
+ * never land outside the string) — exact for surrogate-pair (non-BMP) input, the old reconstruction's deferred hazard.
+ */
+function buildByteToUTF16Map(text: string): number[] {
+	// utf8 length ≤ 3 × utf16 length is not a safe bound (4-byte sequences ↔ 2 code units = 2×);
+	// walk once to size exactly.
+	const map: number[] = []
+	let utf16 = 0
+
+	for (const cp of text) {
+		const code = cp.codePointAt(0)!
+		const byteLength = code < 0x80 ? 1 : code < 0x8_00 ? 2 : code < 0x1_00_00 ? 3 : 4
+
+		for (let b = 0; b < byteLength; b++) {
+			map.push(utf16)
+		}
+
+		utf16 += cp.length
+	}
+
+	// The end-of-string boundary.
+	map.push(utf16)
+
+	return map
+}
+
+/**
+ * Matches any JS whitespace char — the same class the old reconstruction skipped when a `▁` piece opened a word.
+ */
+const WHITESPACE_RE = /\s/
+
 export class MailwomanTokenizer {
 	private readonly processor: SentencePieceProcessor
+	private readonly module: SentencePieceModule
 
-	private constructor(processor: SentencePieceProcessor) {
+	private constructor(module: SentencePieceModule, processor: SentencePieceProcessor) {
+		this.module = module
 		this.processor = processor
 	}
 
+	private static async loadFromBytes(bytes: Uint8Array): Promise<MailwomanTokenizer> {
+		const module = await loadModule()
+		const processor = new module.SentencePieceProcessor()
+		const error = processor.loadFromSerializedProto(bytes)
+
+		if (error !== "") {
+			processor.delete()
+			throw new Error(`tokenizer.model failed to load: ${error}`)
+		}
+
+		return new MailwomanTokenizer(module, processor)
+	}
+
 	/**
-	 * Load from a base64-encoded `tokenizer.model`. Use for in-memory / test setups.
+	 * Load from a base64-encoded `tokenizer.model`. Use for in-memory / test / browser setups.
 	 */
 	static async loadFromBase64(b64: string): Promise<MailwomanTokenizer> {
-		const processor = new SentencePieceProcessor()
-		await processor.loadFromB64StringModel(b64)
+		const binary = atob(b64)
+		const bytes = new Uint8Array(binary.length)
 
-		return new MailwomanTokenizer(processor)
+		for (let i = 0; i < binary.length; i++) {
+			bytes[i] = binary.charCodeAt(i)
+		}
+
+		return MailwomanTokenizer.loadFromBytes(bytes)
 	}
 
 	/**
@@ -132,114 +163,58 @@ export class MailwomanTokenizer {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
 		const buf = await readFile(modelPath)
 
-		return MailwomanTokenizer.loadFromBase64(buf.toString("base64"))
+		return MailwomanTokenizer.loadFromBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength))
 	}
 
 	/**
-	 * Tokenize `text` to pieces + ids + realigned char offsets.
+	 * Tokenize `text` to pieces + ids + native char offsets.
 	 *
 	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]` returns, and `pieces[i].id`
-	 * matches `sp.EncodeAsIds(text)[i]`. The offsets are reconstructed in TS — see file header for the algorithm.
+	 * matches `sp.EncodeAsIds(text)[i]`. Offsets come from SentencePiece's own `SentencePieceText` proto (byte
+	 * positions), converted to UTF-16 and whitespace-trimmed — see the file header for the two conventions this layer
+	 * owns.
 	 */
 	encode(text: string): EncodeResult {
-		const pieces = this.processor.encodePieces(text)
-		const ids = this.processor.encodeIds(text)
+		const raw = this.processor.encodeWithOffsets(text)
 
+		if (raw.error !== undefined) {
+			throw new Error(`tokenizer encode failed: ${raw.error}`)
+		}
+
+		const byteToUTF16 = buildByteToUTF16Map(text)
 		const tokenized: TokenizedPiece[] = []
-		let cursor = 0
 
-		// A run of consecutive byte-fallback pieces (see BYTE_FALLBACK_RE's doc comment) accumulates here until a
-		// non-byte-fallback piece (or end of input) closes it — see flushByteRun.
-		let byteRun: { pieces: string[]; ids: number[]; bytes: number[] } | null = null
+		for (let i = 0; i < raw.pieces.length; i++) {
+			const piece = raw.pieces[i]!
+			let start = byteToUTF16[raw.begins[i]!] ?? text.length
+			const end = byteToUTF16[raw.ends[i]!] ?? text.length
 
-		const flushByteRun = (): void => {
-			if (!byteRun) return
-
-			// Split the run at UTF-8 character boundaries (lead-byte scan) so each source character's pieces carry
-			// that character's own span — a run spanning multiple characters must NOT collapse onto one combined
-			// offset, or heterogeneous BIO tags inside the run get absorbed into a single span (see file header).
-			let pieceIndex = 0
-
-			for (let byteIndex = 0; byteIndex < byteRun.bytes.length;) {
-				const segmentLength = Math.min(utf8SequenceLength(byteRun.bytes[byteIndex]!), byteRun.bytes.length - byteIndex)
-				const decoded = utf8Decoder.decode(Uint8Array.from(byteRun.bytes.slice(byteIndex, byteIndex + segmentLength)))
-				const start = cursor
-				cursor += decoded.length
-				const end = cursor
-
-				for (let k = 0; k < segmentLength; k++) {
-					const isLast = k === segmentLength - 1
-
-					// The segment's LAST piece owns the character's real [start, end) span (so `raw.slice(start, end)`
-					// recovers the character); earlier pieces get a zero-width range at the character's start — the
-					// same "own placeholder, zero contribution" idiom groupPiecesIntoWords uses for a bare ▁.
-					tokenized.push({
-						piece: byteRun.pieces[pieceIndex]!,
-						id: byteRun.ids[pieceIndex]!,
-						start,
-						end: isLast ? end : start,
-					})
-
-					pieceIndex++
-				}
-
-				byteIndex += segmentLength
+			// A ▁ piece's native span includes the consumed whitespace — trim to the word start (the
+			// decoder's contract; see header). Bounded by `end`, so zero-width spans stay put.
+			while (start < end && WHITESPACE_RE.test(text[start]!)) {
+				start++
 			}
 
-			byteRun = null
+			tokenized.push({ piece, id: raw.ids[i]!, start, end })
 		}
 
-		for (let i = 0; i < pieces.length; i++) {
-			const piece = pieces[i]!
-			const id = ids[i] ?? -1
-			const hasSentinel = piece.startsWith(SPACE_SENTINEL)
-			const literal = hasSentinel ? piece.slice(SPACE_SENTINEL.length) : piece
-			const byteMatch = BYTE_FALLBACK_RE.exec(literal)
-
-			if (byteMatch) {
-				if (!byteRun) {
-					if (hasSentinel) {
-						while (cursor < text.length && /\s/.test(text[cursor]!)) {
-							cursor++
-						}
-					}
-
-					byteRun = { pieces: [], ids: [], bytes: [] }
-				}
-
-				byteRun.pieces.push(piece)
-				byteRun.ids.push(id)
-				byteRun.bytes.push(Number.parseInt(byteMatch[1]!, 16))
-
-				continue
-			}
-
-			flushByteRun()
-
-			if (hasSentinel) {
-				while (cursor < text.length && /\s/.test(text[cursor]!)) {
-					cursor++
-				}
-			}
-
-			const start = cursor
-			cursor += literal.length
-			const end = cursor
-
-			tokenized.push({ piece, id, start, end })
-		}
-
-		flushByteRun()
-
-		return { pieces: tokenized, ids }
+		return { pieces: tokenized, ids: raw.ids.slice() }
 	}
 
 	/**
 	 * Decode a list of ids back to a string. Delegates to the underlying processor.
 	 */
 	decode(ids: number[] | Int32Array): string {
-		const arr = ids instanceof Int32Array ? ids : Int32Array.from(ids)
+		const vector = new this.module.IntVector()
 
-		return this.processor.decodeIds(arr) as string
+		try {
+			for (const id of ids) {
+				vector.push_back(id)
+			}
+
+			return this.processor.decodeIds(vector)
+		} finally {
+			vector.delete()
+		}
 	}
 }

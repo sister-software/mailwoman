@@ -41,6 +41,7 @@
 		"registry",
 		"filer",
 		"address-id",
+		"sentencepiece-wasm",
 		"neural",
 		"neural-web",
 		"neural-weights-en-us",
