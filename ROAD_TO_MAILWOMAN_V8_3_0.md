@@ -177,9 +177,11 @@ executed per pre-registration — v6 ships, v6 ⊆ v7 verified) → new gate spe
   char-path lineage). Six GB venue-led improvement targets = **#1366** (pre-existing on 6.7.0;
   the first B11 fine-tune exercise). λ calibration rides that same first post-base fine-tune.
 
-**Post-promote levers still open** (tasks #25/#26): SP vocabulary pruning probe (byte-parity
-pre-registration; embedding = 72.5% of params at ≤24% utilization) and the SP 0.2.2 WASM rebuild
-(native offsets).
+**Post-promote levers CLOSED 2026-07-31**: #26 SP 0.2.2 WASM SHIPPED (`@mailwoman/sentencepiece-wasm`,
+PR #1379 — native offsets, 744 KB vs 4 MB, and the finding that the old runtime shim disagreed
+with training's offset convention). #25 vocab pruning: **NEGATIVE — premise falsified** (full-feed
+utilization 86.27%, not ≤24%; prunable = 3.7 MB, not worth the id-remap coupling; verdict +
+surviving instruments in `docs/superpowers/plans/2026-07-31-sp-vocab-pruning-verdict.md`).
 
 ### Arc 2 — remaining (CJK Phases 3–5, JP)
 
