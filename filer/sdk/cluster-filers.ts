@@ -54,6 +54,20 @@
  *   comparisons into the thing that actually makes a link SAFE. "Two different FRNs" is treated as
  *   authoritative ground truth in this domain: full stop, no name match overrides it.
  *
+ *   **Degenerate discovery scope — ACCEPTED for 3a, a coordinator decision, not a defect (review fix,
+ *   round 2).** Because `attributes.frn`/`.form499ID`/`.providerID` are derived PER AUTHORITATIVE
+ *   COMPONENT (every member of one component carries the identical code-set strings — see the field
+ *   list above), {@linkcode hasSharedIdentifier} finding ANY overlap is now, by construction, EXACTLY
+ *   equivalent to "these two nodes are already in the same authoritative component." Consequently, pass
+ *   (b) as it stands CANNOT discover a link between two nodes that pass (a) doesn't already connect —
+ *   it can only ever CONFIRM/re-surface an existing authoritative grouping via name matching, never
+ *   bridge two genuinely separate ones. This is intentional, not a bug to chase: a linker that discovers
+ *   nothing is safe; a linker that discovers FALSE links (the CRITICAL bug the identifier veto fixes,
+ *   above) is not — and 3a's decision 5 scope was authoritative-only anyway. Restoring genuine
+ *   cross-component discovery power requires corroborating evidence BEYOND the canonical name (e.g. a
+ *   normalized HQ address, a contact phone/email) — that data doesn't exist reliably in this crosswalk
+ *   until CORES and EDGAR land in Phase 3b, so it's explicitly deferred there, not attempted here.
+ *
  *   **Decision 5 / gate 2, BINDING and load-bearing:** an inferred link must NEVER alter an
  *   authoritative cluster assignment. This is not a runtime check on the inferred pass's output — it
  *   is a structural property of where each pass writes: (a) only ever touches `filer_cluster` rows
@@ -77,21 +91,34 @@
  *   rows (cluster ids are CONTENT-DERIVED — `` `${assertion}:${lexicographically-smallest member
  *   node_id}` `` — not index-based, so they don't depend on iteration order surviving between runs).
  *
- *   **Cross-vintage supersession (review fix, round 1 — the same-vintage claim above does NOT extend
- *   across vintages).** `filer_edge`'s composite PK plus `INSERT ... ON CONFLICT DO NOTHING` only makes
- *   a SAME-vintage rerun idempotent; it does nothing for a LATER-vintage rerun whose underlying data
- *   changed. A prior review incorrectly claimed this table "doesn't need anything extra" — in fact,
- *   rerunning at vintage v2 after names diverged left `filer_cluster` correctly split back into
- *   singletons while the STALE v1 inferred edge survived with `valid_to: null` ("still valid"),
- *   directly contradicting the current `filer_cluster` snapshot. Fixed by closing out every
- *   previously-open (`valid_to IS NULL`) inferred edge whose `valid_from` PREDATES the run's
- *   `sourceVintage` (`SET valid_to = <this run's sourceVintage>`) at the START of every
- *   {@linkcode clusterInferredLinks} call, before writing the freshly computed set — so a link that no
- *   longer holds becomes a closed historical row instead of a lingering false "currently valid"
- *   assertion, and a link that DOES persist across vintages gets a new, separate row (decision 7's
- *   provenance-plurality, same as everywhere else in this schema) rather than an update-in-place. Scoped
- *   to `valid_from < sourceVintage` specifically so a SAME-vintage rerun (the idempotency case above)
- *   never closes its own just-written rows.
+ *   **Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual — the
+ *   same-vintage idempotency claim above does NOT, by itself, extend to a REBUILD at that same
+ *   vintage).** `filer_edge`'s composite PK plus `INSERT ... ON CONFLICT DO NOTHING` only makes an
+ *   UNCHANGED same-vintage rerun idempotent; it does nothing for a rerun (same OR later vintage) whose
+ *   underlying data changed. A prior review incorrectly claimed this table "doesn't need anything
+ *   extra" — in fact, rerunning at vintage v2 after names diverged left `filer_cluster` correctly split
+ *   back into singletons while the STALE v1 inferred edge survived with `valid_to: null` ("still
+ *   valid"), directly contradicting the current `filer_cluster` snapshot. A follow-up review then found
+ *   the SAME bug class, narrowed: a REBUILD at the SAME `sourceVintage` (e.g. filer.db corrected and
+ *   rebuilt without bumping the clustering vintage label) hit the identical contradiction, because the
+ *   round-1 fix's `valid_from < sourceVintage` comparison was strict and never touched a row already AT
+ *   that vintage.
+ *
+ *   Fixed with TWO separate operations, at the START of every {@linkcode clusterInferredLinks} call,
+ *   before writing the freshly computed set — chosen deliberately over a single inclusive (`<=`)
+ *   comparison, which would have closed a row to `valid_to === valid_from` (a zero-duration window) on
+ *   an UNCHANGED same-vintage rerun and then had `ON CONFLICT DO NOTHING` refuse to re-open it,
+ *   permanently mislabeling a still-valid link "closed":
+ *
+ *   1. **DELETE** every inferred `filer_edge` row AT this run's OWN `sourceVintage` (`valid_from =
+ *      sourceVintage`). A same-vintage rebuild has no meaningful "historical" state to preserve at a
+ *      vintage that, by definition, hasn't changed identity — full replace, mirroring `filer_cluster`'s
+ *      own clear-and-rewrite discipline for this same pass.
+ *   2. **CLOSE** (`SET valid_to = sourceVintage`) every still-open (`valid_to IS NULL`) inferred edge
+ *      from a STRICTLY EARLIER vintage (`valid_from < sourceVintage`). This is genuine history
+ *      (decision 7's provenance-plurality) — a link asserted at an earlier vintage that no longer holds
+ *      becomes a closed row, not an erased one, and a link that DOES persist gets a new, separate row
+ *      at the new vintage rather than an update-in-place.
  *
  *   **Scope note:** only `form499_id` nodes carry a `legal_name` attribute (Task 5's builder never
  *   attaches attributes to `frn` / `bdc_provider_id` / holding- or management-company nodes), so
@@ -483,10 +510,10 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  * - `filer_edge` rows (`assertion: "inferred"`) for every entity with more than one member: one edge per
  *   non-representative member → the entity's `representative`, carrying `match_score` (the entity's `cohesion` — the
  *   WEAKEST intra-cluster link weight; `resolveEntities` doesn't expose the individual pairwise weights behind a larger
- *   entity, so this is the honest single number available) and `evidence` (the full membership, as JSON). Idempotent
- *   WITHIN one `sourceVintage` via `filer_edge`'s own composite PK; ACROSS vintages, any previously-open inferred edge
- *   older than this run's `sourceVintage` is closed out FIRST (review fix, round 1 — see the module docstring's
- *   "cross-vintage supersession" section) so a link that no longer holds never lingers as falsely "still valid".
+ *   entity, so this is the honest single number available) and `evidence` (the full membership, as JSON). Made
+ *   idempotent/current EVERY run, same-vintage or not, by clearing this run's own vintage first and closing out any
+ *   still-open EARLIER-vintage row (review fix, rounds 1 + 2 — see the module docstring's "cross-vintage supersession"
+ *   section) so a link that no longer holds never lingers as falsely "still valid".
  */
 export async function clusterInferredLinks(
 	db: Kysely<FilerDatabase>,
@@ -523,11 +550,28 @@ export async function clusterInferredLinks(
 	let links = 0
 
 	await db.transaction().execute(async (trx) => {
-		// Cross-vintage supersession (review fix, round 1 — see the module docstring). Close every
-		// previously-open inferred edge from an EARLIER vintage before writing this run's fresh set, so a link
-		// that no longer holds becomes a closed historical row instead of a lingering false "currently valid"
-		// assertion. Scoped to `valid_from < sourceVintage` so a SAME-vintage rerun (the idempotency case)
-		// never closes the rows it's about to reassert.
+		// Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual — see the
+		// module docstring). Two cases, handled separately because they mean different things:
+		//
+		// 1. SAME-vintage rebuild (`valid_from = sourceVintage`) — DELETE, not close. This run's own prior
+		//    output at this exact vintage is being fully superseded (e.g. filer.db was rebuilt with corrected
+		//    input under the same clustering vintage label) — there is no meaningful "historical" state to
+		//    preserve at a vintage that, by definition, hasn't changed identity, and closing a row to its OWN
+		//    valid_from (a zero-duration `valid_from == valid_to` window) would itself be a stale, un-reassertable
+		//    row: `INSERT ... ON CONFLICT DO NOTHING` below would silently skip re-inserting a still-valid link at
+		//    that same PK, permanently mislabeling it "closed". Deleting first, then letting the loop below
+		//    reinsert whatever the CURRENT data actually supports, is the only rebuild-safe option — mirrors
+		//    filer_cluster's own clear-and-rewrite discipline for this same pass.
+		// 2. EARLIER-vintage edges (`valid_from < sourceVintage`) — CLOSE (`SET valid_to`), not delete. These are
+		//    genuine history (decision 7's provenance-plurality): a link asserted at an earlier vintage that no
+		//    longer holds becomes a closed row, not an erased one.
+		await trx
+			.deleteFrom("filer_edge")
+			.where("assertion", "=", FilerEdgeAssertion.Inferred)
+			.where("source", "=", CLUSTER_FILERS_SOURCE)
+			.where("valid_from", "=", options.sourceVintage)
+			.execute()
+
 		await trx
 			.updateTable("filer_edge")
 			.set({ valid_to: options.sourceVintage })
@@ -569,9 +613,9 @@ export async function clusterInferredLinks(
 						match_score: entity.cohesion,
 						evidence: JSON.stringify({ memberNodeIds }),
 					})
-					// filer_edge's own composite PK (from, to, source, valid_from) makes a SAME-vintage rerun
-					// idempotent; the ACROSS-vintage case is handled above, before this loop runs (see the
-					// module docstring's "cross-vintage supersession" section).
+					// Both the same-vintage-rebuild and earlier-vintage-supersession cases are handled ABOVE, before
+					// this loop runs (see the module docstring's "cross-vintage supersession" section) — this
+					// `onConflict` is now just a defensive no-op for the (already-cleared) same-vintage PK.
 					.onConflict((oc) => oc.doNothing())
 					.execute()
 

@@ -460,6 +460,75 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		expect(row).toBeUndefined()
 	})
 
+	it("excludes a form499_id node whose legal_name reduces to an EMPTY canonical string (round-2 fix, minor)", async () => {
+		using db = openMemory()
+		await createAllTables(db)
+
+		// "LLC" alone is entirely a stripped legal designation — canonicalizeOrganizationName returns a TRUTHY
+		// object ({ raw: "LLC", canonical: "", designations: ["llc"] }), which a bare `!organization` check
+		// would have missed (review fix, round 1, minor).
+		const designationOnlyFRN = `${FilerIdentifierType.FRN}:1230000000`
+		const designationOnlyNode = `${FilerIdentifierType.Form499ID}:999999`
+
+		await db
+			.insertInto("filer_node")
+			.values([
+				{ node_id: designationOnlyFRN, identifier_type: FilerIdentifierType.FRN, identifier_value: "1230000000" },
+				{
+					node_id: designationOnlyNode,
+					identifier_type: FilerIdentifierType.Form499ID,
+					identifier_value: "999999",
+				},
+			])
+			.execute()
+
+		await db.insertInto("filer_edge").values(authoritativeEdge(designationOnlyFRN, designationOnlyNode)).execute()
+
+		await db
+			.insertInto("filer_attribute")
+			.values({
+				node_id: designationOnlyNode,
+				key: "legal_name",
+				value: "LLC",
+				source: "form-499",
+				source_vintage: "2026-Q1",
+			})
+			.execute()
+
+		// A normal node, present purely so `recordsConsidered` has something to be COMPARED against (proving
+		// the designation-only node was excluded, not that nothing was scored at all).
+		const normalFRN = `${FilerIdentifierType.FRN}:1230000001`
+		const normalNode = `${FilerIdentifierType.Form499ID}:999998`
+
+		await db
+			.insertInto("filer_node")
+			.values([
+				{ node_id: normalFRN, identifier_type: FilerIdentifierType.FRN, identifier_value: "1230000001" },
+				{ node_id: normalNode, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "999998" },
+			])
+			.execute()
+
+		await db.insertInto("filer_edge").values(authoritativeEdge(normalFRN, normalNode)).execute()
+
+		await db
+			.insertInto("filer_attribute")
+			.values({
+				node_id: normalNode,
+				key: "legal_name",
+				value: "Ordinary Networks Inc",
+				source: "form-499",
+				source_vintage: "2026-Q1",
+			})
+			.execute()
+
+		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		expect(result.recordsConsidered).toBe(1)
+
+		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
+		expect(inferredMap.has(designationOnlyNode)).toBe(false)
+		expect(inferredMap.has(normalNode)).toBe(true)
+	})
+
 	it("is idempotent — running twice AT THE SAME VINTAGE does not grow filer_cluster or filer_edge rows", async () => {
 		using db = openMemory()
 		await seedFixture(db)
@@ -651,6 +720,64 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
 		expect(secondRun[0]?.valid_from).toBe("2026-cluster-v1")
+	})
+
+	it("supersedes its own prior inferred edges on a SAME-vintage REBUILD after corrected input (review fix, round 2)", async () => {
+		using db = openMemory()
+		await createAllTables(db)
+
+		const nodeAID = `${FilerIdentifierType.Form499ID}:750`
+		const nodeBID = `${FilerIdentifierType.Form499ID}:751`
+
+		await seedSharedFRNPair(db, "7500000007", "750", "751", { a: "Rebuild Co Corp", b: "Rebuild Co Inc" }, "2026-Q1")
+
+		// First build at v1: names collide, a link forms.
+		const firstBuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		expect(firstBuild.linkedClusters).toBe(1)
+
+		const edgesAfterFirstBuild = await db
+			.selectFrom("filer_edge")
+			.selectAll()
+			.where("assertion", "=", FilerEdgeAssertion.Inferred)
+			.execute()
+
+		expect(edgesAfterFirstBuild).toHaveLength(1)
+		expect(edgesAfterFirstBuild[0]?.valid_to).toBeNull()
+
+		// filer.db gets corrected and rebuilt (node B's real legal name was wrong) WITHOUT bumping the
+		// clustering vintage label — a plausible operational correction re-run, not a new reporting period.
+		await db
+			.insertInto("filer_attribute")
+			.values({
+				node_id: nodeBID,
+				key: "legal_name",
+				value: "Totally Unrelated Name",
+				source: "form-499",
+				source_vintage: "2026-Q2",
+			})
+			.execute()
+
+		// Rebuild at the SAME sourceVintage as before.
+		const rebuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1" })
+		expect(rebuild.linkedClusters).toBe(0)
+
+		// filer_cluster correctly reflects the split...
+		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
+		expect(inferredMap.get(nodeAID)).not.toBe(inferredMap.get(nodeBID))
+
+		// ...and filer_edge must NOT contradict that: zero rows at all connecting them (the stale same-vintage
+		// row was DELETED, not left open — see the module docstring's "cross-vintage supersession" section),
+		// and specifically zero OPEN (still "valid") inferred edges anywhere.
+		const edgesAfterRebuild = await db
+			.selectFrom("filer_edge")
+			.selectAll()
+			.where("assertion", "=", FilerEdgeAssertion.Inferred)
+			.execute()
+
+		expect(edgesAfterRebuild).toHaveLength(0)
+
+		const stillOpen = edgesAfterRebuild.filter((edge) => edge.valid_to === null)
+		expect(stillOpen).toHaveLength(0)
 	})
 })
 
