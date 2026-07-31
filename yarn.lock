@@ -4535,6 +4535,7 @@ __metadata:
   resolution: "@mailwoman/bdc@workspace:bdc"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/filer": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
@@ -4681,6 +4682,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/filer@workspace:*, @mailwoman/filer@workspace:filer":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/filer@workspace:filer"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/match": "workspace:*"
+    "@mailwoman/record": "workspace:*"
+    "@mailwoman/registry": "workspace:*"
+    kysely: "npm:^0.29.4"
+    type-fest: "npm:^5.8.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:formatter":
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:formatter"
@@ -4738,6 +4752,7 @@ __metadata:
   dependencies:
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/filer": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
@@ -16398,6 +16413,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
+    "@mailwoman/filer": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"

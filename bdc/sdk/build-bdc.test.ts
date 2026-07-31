@@ -15,7 +15,7 @@
  */
 
 import { existsSync, statSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
+import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
@@ -23,8 +23,20 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import {
+	createFilerAttributeTable,
+	createFilerClusterTable,
+	createFilerEdgeTable,
+	createFilerManifestTable,
+	createFilerNodeTable,
+	FilerEdgeAssertion,
+	FilerIdentifierType,
+	filerLookup,
+	type FilerDatabase,
+} from "@mailwoman/filer"
+import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
 import type { Kysely } from "kysely"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { BDCDatabase } from "../schema.ts"
 import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "./build-bdc.ts"
@@ -231,6 +243,46 @@ describe("buildBDCDatabase", () => {
 		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
 	})
 
+	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted — the default path is unaffected by Task 8 (3a decision 6)", async () => {
+		expect(result.providersPopulated).toBe(0)
+
+		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		const providerRows = await kdb.selectFrom("bdc_provider").selectAll().execute()
+
+		expect(providerRows).toHaveLength(0)
+	})
+
+	it("(g) omitting `providers` is deterministic — repeated builds of the same fixture, same clock, produce byte-identical files (the new option changes nothing on the default path)", async () => {
+		const frozenNow = new Date("2026-06-30T00:00:00.000Z")
+		vi.useFakeTimers()
+		vi.setSystemTime(frozenNow)
+
+		try {
+			const firstOut = join(scratch, "bdc-determinism-a.db")
+			const secondOut = join(scratch, "bdc-determinism-b.db")
+
+			await buildBDCDatabase({
+				rows: fixtureRows(),
+				out: firstOut,
+				asOfDate: "2026-06-30",
+				buildSHA: "deadbeef",
+				blockCentroids,
+			})
+
+			await buildBDCDatabase({
+				rows: fixtureRows(),
+				out: secondOut,
+				asOfDate: "2026-06-30",
+				buildSHA: "deadbeef",
+				blockCentroids,
+			})
+
+			expect(await readFile(firstOut)).toEqual(await readFile(secondOut))
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
 	it("bootstraps missing intermediate output directories", async () => {
 		const nestedOut = join(scratch, "nested", "deeper", "bdc.db")
 
@@ -340,6 +392,295 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 		expect(coverageRows).toHaveLength(1)
 		expect(coverageRows[0]!.observed_rows).toBe(3)
+	})
+})
+
+describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)", () => {
+	const FRN_EARLY = toFRN("0001111111")!
+	const FRN_LATE = toFRN("0002222222")!
+	const FRN_SOLO = toFRN("0003333333")!
+
+	function openFilerMemory(): DatabaseClient<FilerDatabase> {
+		return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	}
+
+	/**
+	 * `provider_id` 700001 carries TWO FRN edges — the decision 6 cardinality `bdc_provider` cannot express. FRN_LATE's
+	 * own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's (2026-01-15), so FRN_LATE must win the
+	 * primary-FRN pick. `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query is needed to resolve
+	 * its primary FRN. Also seeds `provider_id` 700001's TWO conflicting `holding_company_name` edges (review fix round
+	 * 1, IMPORTANT-3) — the same cardinality problem `frn` has, proving both discarded values stay recoverable from
+	 * filer.db even though `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
+	 */
+	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
+		await createFilerNodeTable(db)
+		await createFilerEdgeTable(db)
+		await createFilerAttributeTable(db)
+		await createFilerClusterTable(db)
+		await createFilerManifestTable(db)
+
+		await db
+			.insertInto("filer_manifest")
+			.values({
+				name: "filer",
+				version: "2026-Q2",
+				schema_version: 1,
+				source: "form-499,bdc-provider-list",
+				source_vintage: "2026-Q2",
+				build_cmd: "mailwoman filer build",
+				build_sha: "deadbeef",
+				created_at: "2026-01-01T00:00:00Z",
+			})
+			.execute()
+
+		const PROVIDER_NODE = `${FilerIdentifierType.BDCProviderID}:700001`
+		const FRN_EARLY_NODE = `${FilerIdentifierType.FRN}:${FRN_EARLY}`
+		const FRN_LATE_NODE = `${FilerIdentifierType.FRN}:${FRN_LATE}`
+		const FORM_EARLY = `${FilerIdentifierType.Form499ID}:8001`
+		const FORM_LATE = `${FilerIdentifierType.Form499ID}:8002`
+		const HC_ALPHA_NODE = `${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco`
+		const HC_ALPHA_RENAMED_NODE = `${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco Renamed`
+
+		await db
+			.insertInto("filer_node")
+			.values([
+				{ node_id: PROVIDER_NODE, identifier_type: FilerIdentifierType.BDCProviderID, identifier_value: "700001" },
+				{ node_id: FRN_EARLY_NODE, identifier_type: FilerIdentifierType.FRN, identifier_value: FRN_EARLY },
+				{ node_id: FRN_LATE_NODE, identifier_type: FilerIdentifierType.FRN, identifier_value: FRN_LATE },
+				{ node_id: FORM_EARLY, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "8001" },
+				{ node_id: FORM_LATE, identifier_type: FilerIdentifierType.Form499ID, identifier_value: "8002" },
+				{
+					node_id: HC_ALPHA_NODE,
+					identifier_type: FilerIdentifierType.HoldingCompanyName,
+					identifier_value: "Alpha Holdco",
+				},
+				{
+					node_id: HC_ALPHA_RENAMED_NODE,
+					identifier_type: FilerIdentifierType.HoldingCompanyName,
+					identifier_value: "Alpha Holdco Renamed",
+				},
+			])
+			.execute()
+
+		await db
+			.insertInto("filer_edge")
+			.values([
+				// The provider_id carries TWO FRN edges — decision 6's cardinality `bdc_provider` cannot express.
+				{
+					from_node_id: PROVIDER_NODE,
+					to_node_id: FRN_EARLY_NODE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+					valid_from: "2026-06-30",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				{
+					from_node_id: PROVIDER_NODE,
+					to_node_id: FRN_LATE_NODE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+					valid_from: "2026-06-30",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				// AND two conflicting holding_company_name edges — the identical cardinality problem, unresolved by
+				// decision 6, so bdc_provider.holding_company stays NULL and both stay recoverable here.
+				{
+					from_node_id: PROVIDER_NODE,
+					to_node_id: HC_ALPHA_NODE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+					valid_from: "2026-06-30",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				{
+					from_node_id: PROVIDER_NODE,
+					to_node_id: HC_ALPHA_RENAMED_NODE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "bdc-provider-list",
+					source_vintage: "2026-Q2",
+					valid_from: "2026-06-30",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				// Each FRN's own most recent form-499 filing — FRN_LATE's is the LATER filing date.
+				{
+					from_node_id: FRN_EARLY_NODE,
+					to_node_id: FORM_EARLY,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "form-499",
+					source_vintage: "2026-01-15",
+					valid_from: "2026-01-15",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+				{
+					from_node_id: FRN_LATE_NODE,
+					to_node_id: FORM_LATE,
+					assertion: FilerEdgeAssertion.Authoritative,
+					source: "form-499",
+					source_vintage: "2026-05-20",
+					valid_from: "2026-05-20",
+					valid_to: null,
+					match_score: null,
+					evidence: null,
+				},
+			])
+			.execute()
+	}
+
+	function providerListFixture(): ProviderListRow[] {
+		return [
+			{ providerID: 700_001, frn: FRN_EARLY, holdingCompany: "Alpha Holdco" },
+			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
+			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
+			// Two rows, SAME frn AND SAME holding_company — proves the single-distinct-value shortcut looks at the
+			// DISTINCT set across every row, not just "there happened to be one row" (700002's trivial case above).
+			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
+			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
+		]
+	}
+
+	it("picks the LATER-filed FRN as the lossy bdc_provider.frn pick (decision 6), while filer.db still holds BOTH edges", async () => {
+		using filerDB = openFilerMemory()
+		await seedTwoFRNFixture(filerDB)
+
+		const providerOut = join(scratch, "bdc-providers.db")
+
+		const result = await buildBDCDatabase({
+			rows: fixtureRows(),
+			out: providerOut,
+			asOfDate: "2026-06-30",
+			buildSHA: "deadbeef",
+			blockCentroids,
+			providers: providerListFixture(),
+			filerDB,
+		})
+
+		expect(result.providersPopulated).toBe(3)
+
+		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(providerOut, { readOnly: true }) })
+
+		const multiFRNProvider = await kdb
+			.selectFrom("bdc_provider")
+			.selectAll()
+			.where("provider_id", "=", 700_001)
+			.executeTakeFirstOrThrow()
+
+		// The LOSSY pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins. Its two
+		// holding_company values genuinely CONFLICT ("Alpha Holdco" vs "Alpha Holdco Renamed") — no rule resolves that
+		// (review fix round 1, IMPORTANT-3), so it stays NULL, same as brand_name.
+		expect(multiFRNProvider.frn).toBe(FRN_LATE)
+		expect(multiFRNProvider.brand_name).toBeNull()
+		expect(multiFRNProvider.holding_company).toBeNull()
+
+		const singleFRNProvider = await kdb
+			.selectFrom("bdc_provider")
+			.selectAll()
+			.where("provider_id", "=", 700_002)
+			.executeTakeFirstOrThrow()
+
+		// No filer.db query was needed for this one — its lone FRN is primary by construction, and its single
+		// unambiguous holding_company populates directly (IMPORTANT-3's "no conflict ⇒ no rule needed" shortcut).
+		expect(singleFRNProvider.frn).toBe(FRN_SOLO)
+		expect(singleFRNProvider.brand_name).toBeNull()
+		expect(singleFRNProvider.holding_company).toBe("Solo Broadband")
+
+		const repeatValueProvider = await kdb
+			.selectFrom("bdc_provider")
+			.selectAll()
+			.where("provider_id", "=", 700_004)
+			.executeTakeFirstOrThrow()
+
+		// TWO rows, but the SAME holding_company on both — one DISTINCT value, not two rows worth of ambiguity —
+		// still populates. Proves the shortcut compares the distinct SET, not just "was there only one row".
+		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
+		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
+
+		// The DISCARDED FRN (FRN_EARLY) is NOT lost — decision 6's whole premise is that filer.db, untouched by this
+		// build, still retains every edge. Recover it back out through the public reader, `filerLookup`. Same for the
+		// two CONFLICTING holding_company values `bdc_provider` couldn't keep either.
+		const crosswalk = await filerLookup(filerDB, { bdcProviderID: 700_001, asOf: "2026-12-31" })
+
+		const frnValues = crosswalk.identifiers
+			.filter((identifier) => identifier.type === FilerIdentifierType.FRN)
+			.map((identifier) => identifier.value)
+			.toSorted()
+
+		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
+		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
+
+		const holdingCompanyValues = crosswalk.identifiers
+			.filter((identifier) => identifier.type === FilerIdentifierType.HoldingCompanyName)
+			.map((identifier) => identifier.value)
+			.toSorted()
+
+		expect(holdingCompanyValues).toEqual(["Alpha Holdco", "Alpha Holdco Renamed"].toSorted())
+	})
+
+	it("throws naming the offending provider_id when a multi-FRN provider is given without `filerDB`", async () => {
+		const providerOut = join(scratch, "bdc-providers-no-filerdb.db")
+
+		await expect(
+			buildBDCDatabase({
+				rows: fixtureRows(),
+				out: providerOut,
+				asOfDate: "2026-06-30",
+				buildSHA: "deadbeef",
+				blockCentroids,
+				providers: providerListFixture(),
+			})
+		).rejects.toThrow(/700001/)
+
+		// Loud, not partial: no sealed artifact from a build that couldn't resolve a required primary FRN.
+		expect(existsSync(providerOut)).toBe(false)
+	})
+
+	it("inserts frn: NULL when a multi-FRN provider's FRNs carry no 499 filing to rank by, rather than guessing", async () => {
+		using filerDB = openFilerMemory()
+		await createFilerNodeTable(filerDB)
+		await createFilerEdgeTable(filerDB)
+		await createFilerAttributeTable(filerDB)
+		await createFilerClusterTable(filerDB)
+		await createFilerManifestTable(filerDB)
+		// No filer_edge rows at all — neither FRN has a form-499 filing edge to rank by.
+
+		const providerOut = join(scratch, "bdc-providers-no-candidates.db")
+
+		const result = await buildBDCDatabase({
+			rows: fixtureRows(),
+			out: providerOut,
+			asOfDate: "2026-06-30",
+			buildSHA: "deadbeef",
+			blockCentroids,
+			providers: [
+				{ providerID: 700_003, frn: FRN_EARLY, holdingCompany: null },
+				{ providerID: 700_003, frn: FRN_LATE, holdingCompany: null },
+			],
+			filerDB,
+		})
+
+		expect(result.providersPopulated).toBe(1)
+
+		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(providerOut, { readOnly: true }) })
+
+		const provider = await kdb
+			.selectFrom("bdc_provider")
+			.selectAll()
+			.where("provider_id", "=", 700_003)
+			.executeTakeFirstOrThrow()
+
+		expect(provider.frn).toBeNull()
 	})
 })
 

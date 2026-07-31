@@ -17,6 +17,11 @@
  *   - `assertBDCDatabaseExists` — `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
  *     abstain shape exists for that tool), so a missing file becomes one friendly thrown `Error` naming the layer
  *     instead of the raw `node:sqlite` "unable to open database file" message.
+ *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` (3a task 7) — the SAME pairing, for filer.db.
+ *     `mailwoman_filer_lookup` requires filer.db unconditionally (mirrors `mailwoman_bdc_filing_landscape`'s own
+ *     "requires the layer" discipline — `filerLookup` itself has no optional-dep abstain shape either, since gate
+ *     4 makes it throw rather than answer unstamped), so `cli.ts` pairs `assertFilerDatabaseExists` (the friendly
+ *     throw) with `openFilerDatabaseIfPresent` (the actual open) the same way `bdcFilingLandscape`'s handler does.
  */
 
 import { existsSync } from "node:fs"
@@ -25,6 +30,7 @@ import { DatabaseSync } from "node:sqlite"
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { FilerDatabase } from "@mailwoman/filer"
 
 /**
  * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw.
@@ -66,5 +72,30 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
 export function assertBDCDatabaseExists(toolName: string, databasePath: string): void {
 	if (!existsSync(databasePath)) {
 		throw new Error(`${toolName}: bdc.db not found at "${databasePath}"`)
+	}
+}
+
+/**
+ * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw
+ * (3a task 7, mirroring {@link openBDCDatabaseIfPresent}). Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
+ * {@link assertFilerDatabaseExists} has already confirmed the file is present.
+ */
+export function openFilerDatabaseIfPresent(
+	databasePath: string | undefined
+): DatabaseClient<FilerDatabase> | undefined {
+	if (!databasePath || !existsSync(databasePath)) return undefined
+
+	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(databasePath, { readOnly: true }) })
+}
+
+/**
+ * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_filer_lookup`'s guard (3a
+ * task 7, mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep abstain shape (gate 4
+ * makes it throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
+ * `mailwoman_bdc_filing_landscape`.
+ */
+export function assertFilerDatabaseExists(toolName: string, databasePath: string): void {
+	if (!existsSync(databasePath)) {
+		throw new Error(`${toolName}: filer.db not found at "${databasePath}"`)
 	}
 }

@@ -1,13 +1,13 @@
 {
-	"name": "@mailwoman/bdc",
+	"name": "@mailwoman/filer",
 	"version": "8.3.0",
-	"description": "FCC Broadband Data Collection (BDC) availability data — fetch/parse/ingest provider and bdc.db layer reader",
+	"description": "Identity-crosswalk infrastructure for FCC broadband filers — builds and reads filer.db, linking FRN/Form 499/BDC provider_id/holding & management company identifiers with provenance and temporal (asOf) scoping (Phase 3a)",
 	"keywords": [
-		"bdc",
 		"broadband",
+		"crosswalk",
+		"entity-resolution",
 		"fcc",
-		"geocoding",
-		"geospatial"
+		"identity"
 	],
 	"homepage": "https://github.com/sister-software/mailwoman",
 	"bugs": {
@@ -23,7 +23,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "bdc"
+		"directory": "filer"
 	},
 	"files": [
 		"out/**/*.js",
@@ -67,17 +67,11 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/filer": "workspace:*",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*",
-		"@mailwoman/spatial": "workspace:*",
-		"@mailwoman/tiger": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@mailwoman/match": "workspace:*",
+		"@mailwoman/record": "workspace:*",
+		"@mailwoman/registry": "workspace:*",
 		"kysely": "^0.29.4",
-		"type-fest": "^5.8.0",
-		"yauzl-promise": "^4.0.0"
-	},
-	"devDependencies": {
-		"@types/yauzl-promise": "^4.0.1"
+		"type-fest": "^5.8.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

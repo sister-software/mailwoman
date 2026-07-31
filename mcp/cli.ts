@@ -25,6 +25,11 @@
  *   this file opens at import time (which is exactly why THIS file can't be unit-tested directly; see
  *   `layer-guards.test.ts` for their branch coverage).
  *
+ *   `mailwoman_filer_lookup` (3a task 7) follows the SAME "requires the layer unconditionally" discipline as
+ *   `mailwoman_bdc_filing_landscape` (`assertFilerDatabaseExists` + `openFilerDatabaseIfPresent`, mirroring
+ *   `assertBDCDatabaseExists` + the BDC open) — `filerLookup` itself has no optional-dep abstain shape (gate 4 makes
+ *   it throw rather than answer unstamped), so a missing filer.db becomes one friendly thrown Error naming the layer.
+ *
  *   ```sh
  *   mailwoman-mcp                       # geocode/poi_search degrade gracefully with no poi.db wired
  *   mailwoman-mcp --poi-db poi.db       # mailwoman_poi_search additionally executes against poi.db
@@ -38,6 +43,7 @@ import { parseArgs } from "node:util"
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
@@ -51,7 +57,13 @@ import {
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
 
-import { assertBDCDatabaseExists, openBDCDatabaseIfPresent, openPlausibilityPOIDeps } from "./layer-guards.ts"
+import {
+	assertBDCDatabaseExists,
+	assertFilerDatabaseExists,
+	openBDCDatabaseIfPresent,
+	openFilerDatabaseIfPresent,
+	openPlausibilityPOIDeps,
+} from "./layer-guards.ts"
 import { createMCPServer } from "./server.ts"
 import type { MCPToolDeps } from "./tools.ts"
 
@@ -231,6 +243,34 @@ const deps: MCPToolDeps = {
 			bdcDB?.destroy()
 			poi?.contractDB.destroy()
 		}
+	},
+
+	async filerLookup(q) {
+		// Decision 6/gate 4 (3a task 7): filerLookup has no optional-dep abstain shape — it throws rather than
+		// answer unstamped — so filer.db is required unconditionally, same discipline as bdc.db is for
+		// mailwoman_bdc_filing_landscape.
+		assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)
+
+		using db = openFilerDatabaseIfPresent(q.databasePath)!
+
+		let frn: FRN | undefined
+
+		if (q.frn !== undefined) {
+			const parsed = toFRN(q.frn)
+
+			if (!parsed) {
+				throw new Error(`mailwoman_filer_lookup: "${q.frn}" is not a valid FRN`)
+			}
+
+			frn = parsed
+		}
+
+		return filerLookup(db, {
+			frn,
+			form499ID: q.form499ID,
+			bdcProviderID: q.bdcProviderID,
+			asOf: q.asOf,
+		})
 	},
 }
 

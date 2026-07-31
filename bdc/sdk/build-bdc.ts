@@ -67,9 +67,15 @@ import {
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { openBuiltDatabase, sealDatabase } from "@mailwoman/core/utils"
+import type { FilerDatabase } from "@mailwoman/filer"
+// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
+// inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
+// (review fix round 1, IMPORTANT-1). Only the TYPES are imported here; `import type` is fully erased, so
+// this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
+import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
-import type { Kysely } from "kysely"
+import type { Insertable, Kysely } from "kysely"
 
 import {
 	BDC_COVERAGE_H3_RESOLUTION,
@@ -78,6 +84,7 @@ import {
 	createBDCGeoidIndex,
 	createBDCProviderTable,
 	type BDCDatabase,
+	type BDCProviderTable,
 } from "../schema.ts"
 import type { ProviderID } from "./common.ts"
 import { takeAvailabilityLine, type BDCAvailabilityRow } from "./parsing.ts"
@@ -136,6 +143,33 @@ export interface BuildBDCOptions {
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
+	/**
+	 * Provider-list rows (Task 3's {@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI
+	 * seam for populating `bdc_provider` (2a decision 8 / 3a decision 6, Task 8). When ABSENT (the default),
+	 * `bdc_provider` stays empty and the rest of the build is byte-identical to the pre-Task-8 behavior: every code path
+	 * this option touches is gated behind `if (options.providers)`, so omitting it changes nothing. When present,
+	 * `buildBDCDatabase` groups rows by `providerID` and inserts one `bdc_provider` row per distinct provider — see
+	 * {@link BuildBDCOptions.filerDB} for how the primary FRN is picked when a provider carries more than one, and
+	 * `schema.ts`'s `BDCProviderTable` docstring for the full lossy-denormalization rationale (decision 6).
+	 */
+	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
+	/**
+	 * Filer.db handle (`@mailwoman/filer`) used to resolve a multi-FRN provider's PRIMARY FRN via
+	 * `readFRNFilingCandidates` + `pickPrimaryFRN` (`@mailwoman/filer/sdk`, decision 6) — imported rather than
+	 * reimplemented, since Task 7's review found and fixed a temporal bug (the candidate query originally omitted the
+	 * `valid_to` half of the half-open predicate) that a fresh implementation here would reintroduce. Only actually
+	 * QUERIED for a `provider_id` whose rows carry more than one distinct `frn` — a single-FRN provider needs no lookup,
+	 * since its lone FRN is already primary by construction. Required whenever `providers` is given AND at least one
+	 * `provider_id` turns out to be multi-FRN; `buildBDCDatabase` throws a descriptive error naming the offending
+	 * `provider_id` if it's needed but missing, rather than silently picking an arbitrary FRN.
+	 */
+	filerDB?: DatabaseClient<FilerDatabase>
+	/**
+	 * `asOf` date for the primary-FRN candidate query (`readFRNFilingCandidates`'s half-open `valid_from`/`valid_to`
+	 * scoping — see `filer/sdk/filer-lookup.ts`). Defaults to {@link BuildBDCOptions.asOfDate} (this bdc.db build's own
+	 * vintage) when omitted.
+	 */
+	primaryFRNAsOf?: string
 }
 
 export interface BuildBDCResult {
@@ -164,6 +198,11 @@ export interface BuildBDCResult {
 	 * Rows whose `geoid` had no resolvable centroid — skipped, never inserted, never guessed at a cell.
 	 */
 	unknownGeoids: number
+	/**
+	 * `bdc_provider` rows written — 0 when `options.providers` was not supplied (the default path never touches this
+	 * table, see {@link BuildBDCOptions.providers}).
+	 */
+	providersPopulated: number
 }
 
 /**
@@ -363,6 +402,119 @@ export function createTIGERBlockCentroidLookup(
 
 		return row ? geometryCentroid(row.geometry) : undefined
 	}
+}
+
+/**
+ * Rows per `INSERT` batch when populating `bdc_provider`. Far smaller than {@link STAGE_BATCH_SIZE}: that constant
+ * tunes `bdc_availability`'s multi-million-row raw-prepared-statement path, whereas `bdc_provider` is a small
+ * per-provider dictionary (thousands of rows, not millions) inserted through Kysely's typed `insertInto` — this batches
+ * only to stay comfortably under SQLite's bound-parameter ceiling, not for throughput.
+ */
+const PROVIDER_INSERT_BATCH_SIZE = 500
+
+/**
+ * Groups `providers` by `providerID`. Task 3's `parseProviderList` yields one {@link ProviderListRow} PER LINE of the
+ * source CSV, preserving cardinality (never folded, never last-wins — see that module's docstring) — so a `provider_id`
+ * appearing on N rows arrives here as N separate rows, exactly as decision 6 requires downstream.
+ */
+async function groupProviderListRows(
+	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
+): Promise<Map<number, ProviderListRow[]>> {
+	const byProviderID = new Map<number, ProviderListRow[]>()
+
+	for await (const row of providers) {
+		const rows = byProviderID.get(row.providerID)
+
+		if (rows) {
+			rows.push(row)
+		} else {
+			byProviderID.set(row.providerID, [row])
+		}
+	}
+
+	return byProviderID
+}
+
+/**
+ * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6, Task 8) — see `schema.ts`'s
+ * `BDCProviderTable` docstring for the full lossy-denormalization rationale. For each distinct `provider_id`:
+ *
+ * - Exactly one `frn` among its rows → that FRN is primary by construction; no `filerDB` query needed at all.
+ * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
+ *   each FRN's own most recent IN-FORCE `form-499` filing edge from `filerDB`, `asOf` the given date, and
+ *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
+ *   NO 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
+ *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
+ * - `filerDB` is REQUIRED the instant a multi-FRN `provider_id` is encountered; its absence throws immediately, naming
+ *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
+ * - `holding_company` gets the IDENTICAL single-distinct-value shortcut `frn` gets (review fix round 1, IMPORTANT-3):
+ *   exactly one distinct non-null `holdingCompany` across a provider's rows means there's no conflict to resolve, so
+ *   it's populated directly, no rule needed. Two or more distinct values IS the real conflict decision 6 refuses to
+ *   paper over with last-wins — that case inserts NULL, and every value stays recoverable from `filer.db`. A `null`
+ *   `holdingCompany` on some rows doesn't count as a competing value (a row simply not stating it isn't a conflicting
+ *   assertion) — only distinct NON-NULL strings are compared.
+ *
+ * `brand_name` is always inserted NULL — the provider list carries no brand-name column at all, so there is nothing to
+ * populate it from, primary or otherwise (see the schema docstring).
+ *
+ * **Lazy `@mailwoman/filer/sdk` import (review fix round 1, IMPORTANT-1).** `readFRNFilingCandidates`/`pickPrimaryFRN`
+ * are loaded via `await import("@mailwoman/filer/sdk")`, memoized in `filerSDK` below, rather than a top-level static
+ * import — that barrel re-exports `cluster-filers.ts`, which pulls in `@mailwoman/match`/`record`/`registry`. A
+ * top-level import regressed `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate
+ * providers at all; the dynamic import here only ever runs when a multi-FRN `provider_id` is actually encountered, so a
+ * `providers`-less build (or one whose providers are all single-FRN) pays nothing.
+ */
+async function populateBDCProviderTable(
+	kdb: DatabaseClient<BDCDatabase>,
+	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>,
+	filerDB: DatabaseClient<FilerDatabase> | undefined,
+	asOf: string
+): Promise<number> {
+	const byProviderID = await groupProviderListRows(providers)
+	const insertRows: Insertable<BDCProviderTable>[] = []
+
+	let filerSDK: typeof import("@mailwoman/filer/sdk") | undefined
+
+	for (const [providerID, rows] of byProviderID) {
+		const distinctFRNs = [...new Set(rows.map((row) => row.frn))]
+
+		let frn: FRN | null
+
+		if (distinctFRNs.length === 1) {
+			frn = distinctFRNs[0]!
+		} else {
+			if (!filerDB) {
+				throw new Error(
+					`buildBDCDatabase: provider_id ${providerID} carries ${distinctFRNs.length} distinct FRNs across the ` +
+						"provider list — resolving the primary FRN (decision 6) requires `filerDB` to be supplied " +
+						"alongside `providers`"
+				)
+			}
+
+			filerSDK ??= await import("@mailwoman/filer/sdk")
+
+			const candidates = await filerSDK.readFRNFilingCandidates(filerDB, distinctFRNs, asOf)
+
+			frn = candidates.length ? filerSDK.pickPrimaryFRN(candidates) : null
+		}
+
+		const distinctHoldingCompanies = [
+			...new Set(rows.map((row) => row.holdingCompany).filter((value): value is string => value !== null)),
+		]
+
+		const holdingCompany = distinctHoldingCompanies.length === 1 ? distinctHoldingCompanies[0]! : null
+
+		insertRows.push({ provider_id: providerID, frn, brand_name: null, holding_company: holdingCompany })
+	}
+
+	for (let index = 0; index < insertRows.length; index += PROVIDER_INSERT_BATCH_SIZE) {
+		await kdb
+			.insertInto("bdc_provider")
+			.values(insertRows.slice(index, index + PROVIDER_INSERT_BATCH_SIZE))
+			.execute()
+	}
+
+	return insertRows.length
 }
 
 /**
@@ -602,6 +754,24 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		createdAt: new Date().toISOString(),
 	})
 
+	// bdc_provider population (2a decision 8 / 3a decision 6, Task 8) — entirely additive and gated behind
+	// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty, exactly as before
+	// Task 8 (see `BuildBDCOptions.providers`'s docstring — the default-path byte-identical guarantee).
+	let providersPopulated = 0
+
+	if (options.providers) {
+		progress("populating bdc_provider from the provider list (decision 6 — lossy denormalization, see schema.ts)")
+
+		providersPopulated = await populateBDCProviderTable(
+			kdb,
+			options.providers,
+			options.filerDB,
+			options.primaryFRNAsOf ?? options.asOfDate
+		)
+
+		progress(`bdc_provider: ${providersPopulated.toLocaleString()} provider(s) populated`)
+	}
+
 	progress("finalize: ANALYZE + VACUUM")
 	db.exec("ANALYZE")
 	// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
@@ -635,5 +805,6 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		providers: providers.size,
 		coverageCells: coverageCells.length,
 		unknownGeoids,
+		providersPopulated,
 	}
 }

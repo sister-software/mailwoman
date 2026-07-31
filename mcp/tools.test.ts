@@ -74,6 +74,36 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
+		// Mirrors the real `filerLookup`'s (`@mailwoman/filer/sdk/filer-lookup.ts`) own XOR throw so the dispatch
+		// tests below can exercise "the handler propagates a deps-level rejection" without reaching for a real filer.db.
+		filerLookup: vi.fn(
+			async (query: {
+				databasePath: string
+				frn?: string
+				form499ID?: string
+				bdcProviderID?: number
+				asOf?: string
+			}) => {
+				const suppliedCount =
+					(query.frn !== undefined ? 1 : 0) +
+					(query.form499ID !== undefined ? 1 : 0) +
+					(query.bdcProviderID !== undefined ? 1 : 0)
+
+				if (suppliedCount !== 1) {
+					throw new Error("filerLookup: exactly one of `frn`, `form499ID`, `bdcProviderID` is required")
+				}
+
+				return {
+					node: { node_id: "frn:0001753557", identifier_type: "frn", identifier_value: "0001753557" },
+					identifiers: [],
+					attributes: {},
+					cluster: null,
+					inferred_links: [],
+					as_of: query.asOf ?? "2026-07-31",
+					vintage: "2026-Q1",
+				}
+			}
+		),
 	}
 }
 
@@ -86,12 +116,13 @@ function toolNamed(table: ReturnType<typeof buildToolTable>, name: string) {
 }
 
 describe("buildToolTable", () => {
-	it("registers exactly the seven expected tools", () => {
+	it("registers exactly the eight expected tools", () => {
 		const table = buildToolTable(stubDeps())
 
 		expect(table.map((t) => t.name).toSorted()).toEqual(
 			[
 				"mailwoman_bdc_filing_landscape",
+				"mailwoman_filer_lookup",
 				"mailwoman_geocode",
 				"mailwoman_layer_manifest",
 				"mailwoman_overpass_export",
@@ -409,6 +440,77 @@ describe("buildToolTable", () => {
 				coverage_detail: { filing: "covered", physical: "covered" },
 				block_resolution: "geoid",
 				vintage: "2024-06",
+			})
+		})
+	})
+
+	describe("mailwoman_filer_lookup", () => {
+		it("accepts a canonical example for each of frn, form499_id, and bdc_provider_id", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
+
+			expect(tool.inputSchema.safeParse({ database_path: "/data/filer.db", frn: "0001753557" }).success).toBe(true)
+			expect(tool.inputSchema.safeParse({ database_path: "/data/filer.db", form499_id: "899901" }).success).toBe(true)
+
+			expect(tool.inputSchema.safeParse({ database_path: "/data/filer.db", bdc_provider_id: 130_077 }).success).toBe(
+				true
+			)
+		})
+
+		it("accepts an optional as_of and rejects a missing database_path", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
+
+			expect(
+				tool.inputSchema.safeParse({ database_path: "/data/filer.db", frn: "0001753557", as_of: "2026-06-01" }).success
+			).toBe(true)
+
+			expect(tool.inputSchema.safeParse({ frn: "0001753557" }).success).toBe(false)
+			expect(tool.inputSchema.safeParse({ database_path: "" }).success).toBe(false)
+		})
+
+		it("routes to deps.filerLookup with the parsed database path and identifier fields", async () => {
+			const deps = stubDeps()
+			const tool = toolNamed(buildToolTable(deps), "mailwoman_filer_lookup")
+
+			await tool.handler({ database_path: "/data/filer.db", form499_id: "899901", as_of: "2026-06-01" })
+
+			expect(deps.filerLookup).toHaveBeenCalledWith({
+				databasePath: "/data/filer.db",
+				frn: undefined,
+				form499ID: "899901",
+				bdcProviderID: undefined,
+				asOf: "2026-06-01",
+			})
+		})
+
+		it("rejects at the handler level when no identifier is supplied", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
+
+			await expect(tool.handler({ database_path: "/data/filer.db" })).rejects.toThrow(
+				/exactly one of `frn`, `form499ID`, `bdcProviderID`/
+			)
+		})
+
+		it("rejects at the handler level when more than one identifier is supplied", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
+
+			await expect(
+				tool.handler({ database_path: "/data/filer.db", frn: "0001753557", form499_id: "899901" })
+			).rejects.toThrow(/exactly one of `frn`, `form499ID`, `bdcProviderID`/)
+		})
+
+		it("returns the deps result verbatim, as_of and vintage included", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
+
+			const result = await tool.handler({ database_path: "/data/filer.db", bdc_provider_id: 130_077 })
+
+			expect(result).toEqual({
+				node: { node_id: "frn:0001753557", identifier_type: "frn", identifier_value: "0001753557" },
+				identifiers: [],
+				attributes: {},
+				cluster: null,
+				inferred_links: [],
+				as_of: "2026-07-31",
+				vintage: "2026-Q1",
 			})
 		})
 	})

@@ -25,6 +25,10 @@
  *     nearby telecom infrastructure (`@mailwoman/bdc`'s `plausibilityCheck`), returning a positive-evidence-only bundle
  *     with an always-present `coverage_confidence`. A missing/absent `bdc_database_path`/`poi_database_path` degrades
  *     to a typed abstain entry in the bundle, never a throw (2b task 7, decision 6).
+ *   - `mailwoman_filer_lookup` (3a task 7) — read the FCC filer identity crosswalk (`@mailwoman/filer`'s
+ *     `filerLookup`) for one identifier (FRN, Form 499 ID, or BDC provider ID): every OTHER identifier it shares an
+ *     authoritative edge with, its current attributes, its authoritative entity cluster, and any inferred links —
+ *     reported separately, never merged into the cluster. `as_of` is always present (defaults to today).
  */
 
 import { z } from "zod"
@@ -47,6 +51,13 @@ export interface MCPToolDeps {
 		geoid?: string
 		technologyCode: number
 		claimedDownloadMbps: number
+	}) => Promise<unknown>
+	filerLookup: (q: {
+		databasePath: string
+		frn?: string
+		form499ID?: string
+		bdcProviderID?: number
+		asOf?: string
 	}) => Promise<unknown>
 }
 
@@ -178,6 +189,38 @@ const PlausibilityCheckInputSchema = z.object({
 	claimed_download_mbps: z.number().describe("The claimed downstream speed in Mbps."),
 })
 
+const FilerLookupInputSchema = z.object({
+	database_path: z.string().min(1).describe("Path to a filer.db layer database (FCC filer identity crosswalk)."),
+	frn: z
+		.string()
+		.optional()
+		.describe(
+			"The zero-padded 10-digit FCC Registration Number to look up, e.g. '0001753557'. Provide exactly one of " +
+				"`frn`, `form499_id`, or `bdc_provider_id` — never more than one, never none."
+		),
+	form499_id: z
+		.string()
+		.optional()
+		.describe(
+			"The FCC Form 499 filer ID to look up. Provide exactly one of `frn`, `form499_id`, or `bdc_provider_id` — " +
+				"never more than one, never none."
+		),
+	bdc_provider_id: z
+		.number()
+		.optional()
+		.describe(
+			"The FCC BDC provider_id to look up. Provide exactly one of `frn`, `form499_id`, or `bdc_provider_id` — " +
+				"never more than one, never none."
+		),
+	as_of: z
+		.string()
+		.optional()
+		.describe(
+			"ISO date (YYYY-MM-DD) to scope the lookup as-of — only relationships valid on or before this date, and not " +
+				"yet closed by it, are included. Defaults to today; the result always states the date actually used."
+		),
+})
+
 /**
  * Build the tool table for a concrete `MCPToolDeps` implementation. Pure — no transport, no I/O of its own.
  */
@@ -284,6 +327,28 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 					geoid,
 					technologyCode: technology_code,
 					claimedDownloadMbps: claimed_download_mbps,
+				})
+			},
+		},
+		{
+			name: "mailwoman_filer_lookup",
+			description:
+				"Look up the FCC filer identity crosswalk for one identifier (FRN, Form 499 filer ID, or BDC provider_id) " +
+				"from a filer.db layer database: every OTHER identifier it shares an authoritative edge with (never " +
+				"collapsed — a provider_id carrying multiple FRNs reports all of them), its current attributes, its " +
+				"authoritative entity cluster, and any inferred links reported SEPARATELY with their score — never merged " +
+				"into the cluster. Scoped `as_of` a date (defaults to today, always present in the result). Provide " +
+				"exactly one of `frn`, `form499_id`, or `bdc_provider_id`.",
+			inputSchema: FilerLookupInputSchema,
+			handler: async (args) => {
+				const { database_path, frn, form499_id, bdc_provider_id, as_of } = FilerLookupInputSchema.parse(args)
+
+				return deps.filerLookup({
+					databasePath: database_path,
+					frn,
+					form499ID: form499_id,
+					bdcProviderID: bdc_provider_id,
+					asOf: as_of,
 				})
 			},
 		},

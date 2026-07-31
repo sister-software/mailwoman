@@ -213,3 +213,8 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 2. Is a 990-based EIN/co-op pass worth its own slice once rural operators are a named segment? (D6.)
 3. When the competition analysis is good enough to publish, who reviews the wording? (D5 — the
    answer today is the operator; revisit if counsel is ever retained.)
+
+## 10. Carried into 3b from 3a (2026-07-31)
+
+- **Inferred linkage is degenerate in 3a and must be rebuilt on real corroboration.** 3a's identifier veto (added after an adversarial review found it merging "American Broadband LLC" with "American Broadband, Inc." across disjoint FRNs) is correct but structurally reduces pass (b) to "same authoritative component": identifier sets are derived per component, so sharing an identifier implies sharing a component by construction. Genuine discovery — two filings that _are_ one company but share no identifier — needs evidence beyond the canonical name. 3b has it: CORES parent/subsidiary fields, EDGAR Exhibit 21, plus normalized HQ address and contact phone/email from the 499 columns already parsed. Design the corroboration rule there; do not restore name-only linkage.
+- **Same-vintage supersession** for inferred edges (3a fix round 2) is the pattern transfer-of-control edges must follow when they land.
