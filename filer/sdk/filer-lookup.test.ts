@@ -46,6 +46,7 @@ import {
 } from "../schema.ts"
 import { buildFilerDatabase } from "./build-filer.ts"
 import { clusterAuthoritativeComponents } from "./cluster-filers.ts"
+import { mintFamilyID } from "./family-id.ts"
 import { familyRollup } from "./family-rollup.ts"
 import {
 	filerLookup,
@@ -1195,6 +1196,106 @@ describe("§7-3b gates", () => {
 
 				const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf: "2026-12-31" })
 				expect(rollup[0]?.display_names).toEqual(expectedSpellings)
+			})
+		})
+
+		/**
+		 * Task 3 fix round 3, CRITICAL — the exact failure class this phase keeps re-discovering. `readFamilyDisplayNames`
+		 * used to join on `(from_node_id, relationship, source, valid_from)` WITHOUT `to_node_id`: when one node carries
+		 * TWO holding-company edges sharing that 4-tuple (the documented decision-6 shape —
+		 * `ProviderListRow.holdingCompany`'s own docstring: "one providerID can legitimately carry different holdingCompany
+		 * strings across rows"), every name matching the tuple leaked into EVERY family_id the node happened to touch, not
+		 * just the one each edge actually names. That is a FALSE RELATIONSHIP CLAIM — a family reporting a holding company
+		 * it never reported — reproduced here end to end on BOTH shapes the reviewer found: the provider-list path (one
+		 * providerID, two holdingCompany values, one shared file-level validFrom) and the 499 path (one FRN, two rows, the
+		 * identical lastFiledAt).
+		 */
+		it("display_names never leaks across a DIFFERENT family: REAL builder, provider-list path — one providerID with two DIFFERENT holding companies under the same source+valid_from never cross-contaminates each family's display_names", async () => {
+			await withScratchDir(async (out) => {
+				const FRN_SHARED = toFRN("0009400001")!
+
+				await buildFilerDatabase({
+					providerRows: [
+						{ providerID: 940_001, frn: FRN_SHARED, holdingCompany: "Alpha Holdco" },
+						{ providerID: 940_001, frn: FRN_SHARED, holdingCompany: "Zenith Unrelated Group" },
+					],
+					out,
+					sourceVintage: "2026-Q2",
+					validFrom: "2026-06-30",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const result = await filerLookup(db, { bdcProviderID: 940_001, asOf: "2026-12-31" })
+
+				expect(result.families).toHaveLength(2)
+
+				const familyIDAlpha = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Alpha Holdco")!
+				const familyIDZenith = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Zenith Unrelated Group")!
+
+				// Plain loop, not .map(), to build the lookup — keeps this callback within max-nested-callbacks
+				// under withScratchDir's own async closure.
+				const familyByID = new Map<string, (typeof result.families)[number]>()
+
+				for (const family of result.families) {
+					familyByID.set(family.family_id, family)
+				}
+
+				// THE BUG (pre-fix): BOTH entries' display_names would each contain BOTH names. THE FIX: each
+				// family reports ONLY the one name that actually implies it.
+				expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
+				expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
+
+				const rollupAlpha = await familyRollup(db, { familyID: familyIDAlpha, asOf: "2026-12-31" })
+				const rollupZenith = await familyRollup(db, { familyID: familyIDZenith, asOf: "2026-12-31" })
+
+				expect(rollupAlpha[0]?.display_names).toEqual(["Alpha Holdco"])
+				expect(rollupZenith[0]?.display_names).toEqual(["Zenith Unrelated Group"])
+			})
+		})
+
+		it("display_names never leaks across a DIFFERENT family: REAL builder, 499 path — one FRN with two DIFFERENT holding companies filed the same day never cross-contaminates each family's display_names", async () => {
+			await withScratchDir(async (out) => {
+				const FRN_SHARED = toFRN("0009400002")!
+
+				await buildFilerDatabase({
+					form499Rows: [
+						minimalForm499Row({
+							form499ID: "940201",
+							frn: FRN_SHARED,
+							holdingCompany: "Alpha Holdco",
+							lastFiledAt: "2026-05-01",
+						}),
+						minimalForm499Row({
+							form499ID: "940202",
+							frn: FRN_SHARED,
+							holdingCompany: "Zenith Unrelated Group",
+							lastFiledAt: "2026-05-01",
+						}),
+					],
+					out,
+					sourceVintage: "2026-Q2",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const result = await filerLookup(db, { frn: FRN_SHARED, asOf: "2026-12-31" })
+
+				expect(result.families).toHaveLength(2)
+
+				const familyIDAlpha = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Alpha Holdco")!
+				const familyIDZenith = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Zenith Unrelated Group")!
+
+				const familyByID = new Map<string, (typeof result.families)[number]>()
+
+				for (const family of result.families) {
+					familyByID.set(family.family_id, family)
+				}
+
+				expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
+				expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
 			})
 		})
 	})

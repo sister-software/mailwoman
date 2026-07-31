@@ -125,7 +125,6 @@ import { DatabaseSync, type StatementSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
-import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Kysely } from "kysely"
 
 import {
@@ -144,6 +143,7 @@ import {
 	FilerRelationship,
 	type FilerDatabase,
 } from "../schema.ts"
+import { mintFamilyID } from "./family-id.ts"
 import { classifyFiler, parseForm499, type Form499Row } from "./form499.ts"
 import { assertISODate } from "./guards.ts"
 import { parseProviderList, type ProviderListRow } from "./provider-list.ts"
@@ -296,29 +296,10 @@ function mintManagementCompanyNodeID(name: string): string {
 	return `${FilerIdentifierType.ManagementCompanyName}:${name}`
 }
 
-/**
- * Derive a stable `filer_family.family_id` from a holding-/management-company name's CANONICAL form — never the raw
- * string — so `"Acme Holdings Inc"` and `"ACME HOLDINGS, INC."` (same underlying entity, different casing/
- * punctuation/legal suffix) collapse onto the SAME family, the identical reduction `cluster-filers.ts`'s inferred pass
- * already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`). Namespaced by `identifierType`
- * (`holding_company_name` vs `management_company_name`) so a holding company and a DIFFERENT management company that
- * happen to canonicalize to the same string never collapse into one family (spec §3.1 finding 1 — ownership and
- * operational control are different assertions, and that separation should hold for family membership too, not just for
- * the edge kind).
- *
- * Returns `null` when the name canonicalizes to an EMPTY string (rare — e.g. a bare legal-designation token with
- * nothing else surviving) — the same defensive check `cluster-filers.ts`'s `buildInferredRecords` makes before using a
- * canonical name as a blocking key: an empty canonical string can never usefully identify a family, so the caller skips
- * emitting a family row for it. The underlying `HoldingCompany`/`ManagementCompany` EDGE is unaffected — this only
- * gates the family-MEMBERSHIP fact.
- */
-function mintFamilyID(identifierType: string, name: string): string | null {
-	const organization = canonicalizeOrganizationName(name)
-
-	if (!organization || !organization.canonical) return null
-
-	return `${identifierType}:${organization.canonical}`
-}
+// mintFamilyID moved to family-id.ts (task 3 fix round 3) — filer-lookup.ts's readFamilyDisplayNames now needs the
+// identical canonicalization rule to tell apart which target node's edge names a given family_id, and re-deriving it
+// a second time independently would be exactly the "two definitions that can drift" hazard guards.ts's own extraction
+// already closed for assertISODate.
 
 /**
  * Write one `filer_family` membership row for a `HoldingCompany`/`ManagementCompany` edge's SOURCE node (the edge's own

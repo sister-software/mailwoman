@@ -24,6 +24,17 @@
  *   holding company H". `createAllTables` now also creates `filer_node`/`filer_edge` (previously unnecessary
  *   here — `familyRollup` touched only `filer_family`/`filer_manifest`), since `display_names` is recovered
  *   by joining back to the specific `filer_edge` row that implied each membership.
+ *
+ *   **Task 3 fix round 3:** the `display_names` fixtures below now derive their `family_id` via the REAL
+ *   `mintFamilyID` (`family-id.ts`) rather than an arbitrary constant — round 2's fixtures used a made-up
+ *   `family_id` that happened to still round-trip under the (buggy) pre-round-3 join, which is exactly how
+ *   the CRITICAL this round fixes went undetected by these tests. See `mintFamilyID`'s own docstring, and
+ *   `readFamilyDisplayNames`'s, for the cross-family leak this closes (a member with two holding-company
+ *   edges sharing one provenance tuple no longer has BOTH names attributed to EVERY family that tuple
+ *   touches — only to the one each edge's target actually canonicalizes to). The dedicated two-holding-
+ *   company regression (the provider-list AND the 499-row shapes the reviewer reproduced) lives in
+ *   `filer-lookup.test.ts` instead, since it needs the REAL builder — this file's fixtures are hand-written
+ *   and only exercise the reader's join logic directly.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -42,6 +53,7 @@ import {
 	type FilerDatabase,
 	type FilerManifestTable,
 } from "../schema.ts"
+import { mintFamilyID } from "./family-id.ts"
 import { familyRollup } from "./family-rollup.ts"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
@@ -356,6 +368,10 @@ describe("familyRollup — general reader contract", () => {
 	 */
 	describe("display_names (task 3 fix round 2)", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
+		// The REAL canonicalized family_id — not an arbitrary constant (task 3 fix round 3: using a made-up
+		// family_id here is exactly how round 2's fixtures failed to catch the CRITICAL cross-family leak, since
+		// the pre-fix join never actually checked whether an edge's target canonicalized to the family_id at all).
+		const FAMILY_ID_SOLO = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Solo Spelling Inc")!
 
 		it("a single-spelling family surfaces exactly that one spelling", async () => {
 			using db = openMemory()
@@ -394,7 +410,7 @@ describe("familyRollup — general reader contract", () => {
 				.insertInto("filer_family")
 				.values({
 					node_id: FRN_A,
-					family_id: FAMILY_ID,
+					family_id: FAMILY_ID_SOLO,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -403,7 +419,7 @@ describe("familyRollup — general reader contract", () => {
 				})
 				.execute()
 
-			const result = await familyRollup(db, { familyID: FAMILY_ID, asOf: "2026-12-31" })
+			const result = await familyRollup(db, { familyID: FAMILY_ID_SOLO, asOf: "2026-12-31" })
 			expect(result[0]?.display_names).toEqual(["Solo Spelling Inc"])
 		})
 
@@ -420,6 +436,14 @@ describe("familyRollup — general reader contract", () => {
 
 			const HOLDING_NODE_SPELLING_1 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corp`
 			const HOLDING_NODE_SPELLING_2 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`
+
+			// Confirms the fixture's premise BEFORE using it: these two spellings really do canonicalize to the
+			// IDENTICAL family_id (real mintFamilyID, not an arbitrary constant — task 3 fix round 3).
+			const familyIDSpelling1 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
+			const familyIDSpelling2 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corporation, LLC")!
+			expect(familyIDSpelling1).toBe(familyIDSpelling2)
+
+			const FAMILY_ID_ACME = familyIDSpelling1
 
 			await db
 				.insertInto("filer_node")
@@ -476,7 +500,7 @@ describe("familyRollup — general reader contract", () => {
 				.values([
 					{
 						node_id: FRN_A,
-						family_id: FAMILY_ID,
+						family_id: FAMILY_ID_ACME,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -485,7 +509,7 @@ describe("familyRollup — general reader contract", () => {
 					},
 					{
 						node_id: FRN_B,
-						family_id: FAMILY_ID,
+						family_id: FAMILY_ID_ACME,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-02-01",
@@ -495,7 +519,7 @@ describe("familyRollup — general reader contract", () => {
 				])
 				.execute()
 
-			const result = await familyRollup(db, { familyID: FAMILY_ID, asOf: "2026-12-31" })
+			const result = await familyRollup(db, { familyID: FAMILY_ID_ACME, asOf: "2026-12-31" })
 			expect(result[0]?.display_names).toEqual(["Acme Corp", "Acme Corporation, LLC"].toSorted())
 		})
 	})

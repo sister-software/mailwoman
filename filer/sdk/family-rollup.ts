@@ -114,7 +114,7 @@ async function readFamilyRollup(
 		return null
 	}
 
-	const displayNames = await readFamilyDisplayNames(db, memberRows)
+	const displayNames = await readFamilyDisplayNames(db, familyID, memberRows)
 
 	return {
 		family_id: familyID,

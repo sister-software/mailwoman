@@ -108,6 +108,7 @@ import {
 	type FilerDatabase,
 	type FilerNodeTable,
 } from "../schema.ts"
+import { mintFamilyID } from "./family-id.ts"
 import { isFRN, type FRN } from "./frn.ts"
 
 /**
@@ -443,25 +444,40 @@ export async function readFamilyMembers(
  * Read the DISTINCT set of raw `identifier_value` spellings a family's members' own holding-/management-company edges
  * point to (task 3 fix round 2 — the family_id alone is a canonicalized slug; this recovers the human-readable name(s)
  * that produced it, a fact that was previously unrecoverable through this reader — the headline "these filers report
- * holding company H" output degraded to a normalization key with no way back). For each member row, finds the EXACT
- * `filer_edge` that implied its `filer_family` membership — matched on `(from_node_id, relationship, source,
- * valid_from)`, the identical tuple `build-filer.ts`'s `insertFamilyMembership` writes both rows from in lockstep — so
- * a member with MULTIPLE holding-company edges across different sources/vintages (e.g. the bdc-provider-list "Alpha
- * Holdco" vs "Alpha Holdco Renamed" conflict, `build-bdc.test.ts`) never has the WRONG one attributed to this
- * particular family_id, even when that member also belongs to a completely different family through a different edge.
+ * holding company H" output degraded to a normalization key with no way back). For each member row, finds every
+ * `filer_edge` sharing `(from_node_id, relationship, source, valid_from)` with its `filer_family` row — the tuple
+ * `build-filer.ts`'s `insertFamilyMembership` writes both rows from in lockstep — then keeps ONLY the edge(s) whose
+ * TARGET actually canonicalizes to `familyID` (via {@linkcode mintFamilyID}, `family-id.ts`).
  *
- * **Never collapsed to one value (task 3 fix round 2, the coordinator's explicit rule).** When two members' raw
- * spellings canonicalize to the SAME `family_id` (e.g. `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to
- * `"acme"` — `@mailwoman/record`'s `canonicalizeOrganizationName`), BOTH survive here, sorted for a deterministic
- * result — the same "expose the plurality, never guess which one is right" doctrine every other reader in this SDK
- * follows (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, `filer_family` member
- * provenance never deduped). Picking one would silently assert an opinion about which spelling is "correct" that
- * `filer.db` itself has no grounds to hold — the same-name/different-entity hazard this phase keeps re-discovering is
- * mirrored exactly by a same-entity/different-name shortcut here: asserting two DIFFERENT spellings are canonically
- * "the one true name" is the same category error as asserting two DIFFERENT entities are "the same" one.
+ * **The target-canonicalization filter is CRITICAL, not incidental (task 3 fix round 3).** The 4-tuple above is
+ * necessary but NOT sufficient to identify a single edge: a member CAN carry more than one holding-/management-company
+ * edge sharing that identical tuple — the documented decision-6 cardinality shape, where one `bdcProviderID` (or one
+ * FRN across two 499 rows filed the same day) reports two DIFFERENT, conflicting company names under the same
+ * `source`/`valid_from` (`build-bdc.test.ts`'s "Alpha Holdco" vs "Alpha Holdco Renamed"). Before this filter, EVERY
+ * edge matching the 4-tuple contributed its name to whichever `family_id` was being computed — so `family_id` "alpha
+ * holdco"'s rollup wrongly reported `["Alpha Holdco", "Zenith Unrelated Group"]` even though the member's "Zenith
+ * Unrelated Group" edge names a COMPLETELY DIFFERENT family. That is a FALSE RELATIONSHIP CLAIM — a family reporting a
+ * holding company it never actually reported — the same category of error as the false identity links 3a's identifier
+ * veto exists to prevent, and the exact failure class this whole phase keeps re-discovering. Filtering to the edge(s)
+ * whose target's OWN canonicalization matches `familyID` scopes a name to the ONE family it actually names, never to
+ * every family_id its member happens to also touch via a same-tuple, different-target edge.
+ *
+ * **Never collapsed to one value within the SAME family (task 3 fix round 2, the coordinator's explicit rule).** When
+ * two DIFFERENT members' raw spellings both canonicalize to THIS `familyID` (e.g. `"Acme Corp"` and `"Acme Corporation,
+ * LLC"` both reduce to `"acme"`), BOTH survive here, sorted for a deterministic result — the same "expose the
+ * plurality, never guess which one is right" doctrine every other reader in this SDK follows (`identifiers`'
+ * cardinality fidelity, `inferred_links` kept separate from `cluster`, `filer_family` member provenance never deduped).
+ * Picking one would silently assert an opinion about which spelling is "correct" that `filer.db` itself has no grounds
+ * to hold — the same-name/different-entity hazard this phase keeps re-discovering is mirrored exactly by a
+ * same-entity/different-name shortcut here: asserting two DIFFERENT spellings are canonically "the one true name" is
+ * the same category error as asserting two DIFFERENT entities are "the same" one. The distinction from the CRITICAL fix
+ * above: plurality is welcome WITHIN one family_id (same canonicalization), never ACROSS two different family_ids
+ * (different canonicalization) — collapsing the former loses information the data genuinely has; failing to filter the
+ * latter fabricates a relationship the data never asserted.
  */
 export async function readFamilyDisplayNames(
 	db: DatabaseClient<FilerDatabase>,
+	familyID: string,
 	members: readonly FamilyMemberRow[]
 ): Promise<string[]> {
 	const displayNames = new Set<string>()
@@ -470,7 +486,7 @@ export async function readFamilyDisplayNames(
 		const edgeRows = await db
 			.selectFrom("filer_edge")
 			.innerJoin("filer_node", "filer_node.node_id", "filer_edge.to_node_id")
-			.select("filer_node.identifier_value")
+			.select(["filer_node.identifier_type", "filer_node.identifier_value"])
 			.where("filer_edge.from_node_id", "=", member.node_id)
 			.where("filer_edge.relationship", "=", member.relationship)
 			.where("filer_edge.source", "=", member.source)
@@ -478,7 +494,12 @@ export async function readFamilyDisplayNames(
 			.execute()
 
 		for (const row of edgeRows) {
-			displayNames.add(row.identifier_value)
+			// THE FIX (task 3 fix round 3): only an edge whose TARGET itself canonicalizes to familyID may
+			// contribute a name to this rollup — see the docstring above for why the 4-tuple match alone lets a
+			// SECOND, unrelated edge under the same provenance tuple leak its name into the wrong family.
+			if (mintFamilyID(row.identifier_type, row.identifier_value) === familyID) {
+				displayNames.add(row.identifier_value)
+			}
 		}
 	}
 
@@ -764,7 +785,7 @@ export async function filerLookup(
 
 	for (const row of familyRows) {
 		const familyMembers = await readFamilyMembers(db, row.family_id, asOf)
-		const displayNames = await readFamilyDisplayNames(db, familyMembers)
+		const displayNames = await readFamilyDisplayNames(db, row.family_id, familyMembers)
 
 		families.push({ family_id: row.family_id, relationship: row.relationship, display_names: displayNames })
 	}
