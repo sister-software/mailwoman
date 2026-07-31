@@ -581,7 +581,10 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 						.values({
 							from_node_id: `frn:${frn}`,
 							to_node_id: INJECTED_FAMILY_ID,
-							relationship: FilerRelationship.Subsidiary,
+							// ParentCompany, not Subsidiary: `schema.ts` defines the TARGET as what it is TO the source, and
+							// `build-filer.ts` follows that convention. `from: frn → to: cik` with `Subsidiary` would assert the
+							// CIK is the FRN's subsidiary — the inverse of what a parent-CIK importer means.
+							relationship: FilerRelationship.ParentCompany,
 							assertion: "inferred",
 							match_score: 0.92,
 							source: "edgar-exhibit-21",

@@ -752,8 +752,9 @@ function renderWhatWouldMoveItSection(): string {
 		"the corpus.\n\n" +
 		"**Adding an ownership EDGE changes nothing either.** Write inferred `subsidiary` `filer_edge` rows joining those " +
 		"same filers to a parent — the shape a corporate-filing importer is specified to emit — and recall stays 0.000. " +
-		"Corporate-family membership is read from `filer_family`; `filer_edge` is a different table, and no reader on this " +
-		"path crosses from one to the other.\n\n" +
+		"Corporate-family MEMBERSHIP is read from `filer_family` alone. The family readers do query `filer_edge`, but " +
+		"only to recover the raw company name behind a canonicalized family id — never to decide who belongs to a " +
+		"family, which is the only thing this eval scores.\n\n" +
 		"The accurate statement is narrower, and worth stating exactly: **a channel that produces a `filer_family` row " +
 		"moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership " +
 		"`filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test " +
@@ -873,7 +874,8 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 			"counts are split by what the prediction does with a row, not by relationship name, into three buckets that " +
 			'partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` ' +
 			"or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket " +
-			"is the relationships this eval recognizes and deliberately does not score — `management_company` today. " +
+			"is the relationships this eval recognizes and deliberately does not score — `management_company` and " +
+			"`same_entity`. " +
 			"The third is anything else: a relationship string no shipped writer can produce, which the gate refuses " +
 			"on rather than filing under either of the other two. The total is printed alongside all three so nothing " +
 			"can hide between them.",
