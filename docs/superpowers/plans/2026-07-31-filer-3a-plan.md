@@ -241,7 +241,21 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 - [ ] TDD; assert default-path behavior unchanged and the lossy-denormalization rule is exercised by a multi-FRN fixture.
 - [ ] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
 
-### Task 9: CORES enrichment via the documented FRN API (verification-gated)
+### Task 9: CORES enrichment via the documented FRN API — **STOPPED AT THE GATE (2026-07-31), deferred to 3b**
+
+**Step 0 outcome, recorded:** the stop gate fired and the task was not implemented. Probes from the lab host, with an identifying User-Agent naming the project and a contact address:
+
+- `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` → **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block is host/IP-based, not agent-based.
+- `https://apps.fcc.gov/cores/api/frn/0001753557` → an HTML **"Invalid Request"** page, not JSON. That guessed path is not the documented interface.
+
+Per the gate's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_ — no fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
+
+**What remains true:** the FRN Conversions API is documented publicly and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than mere enrichment. Nothing about that claim was disproven — it simply could not be verified from here.
+
+**Carried to 3b** with two prerequisites: (1) run Step 0 from a network path that can reach `data.fcc.gov` (the operator's own machine is the obvious candidate) and record the real response shape, auth requirements, and terms; (2) only then implement, keeping the bounded-enumeration posture — the FRN universe comes from the already-built crosswalk, so this is enrichment over a known key set, never a crawl.
+
+<details>
+<summary>Original task specification (unimplemented, retained for 3b)</summary>
 
 **Files:** Create `filer/sdk/cores.ts` + test. Modify `filer/sdk/build-filer.ts` to accept the enrichment as an optional input.
 
@@ -260,7 +274,9 @@ Bounded by construction: the FRN set comes from the already-built crosswalk, so 
 
 Edges emitted (authoritative, since CORES states them): `frn ↔ parentName`, `frn ↔ subsidiaryName` (one edge per subsidiary), `source: "cores"`, `source_vintage` = retrieval date. These are the family-edge seeds 3b builds on.
 
-- [ ] Step 0 stop gate; then TDD the rest. Commit `feat(filer): CORES enrichment via the documented FRN API (3a task 9, decision 1)`.
+- [x] Step 0 stop gate — **FIRED; task not implemented, deferred to 3b.**
+
+</details>
 
 ### Task 10: Wrap-up
 
