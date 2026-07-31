@@ -14,11 +14,14 @@
  *   there is no `@mailwoman/core/layers` call here and no `asContractDB`-style invariance cast is needed —
  *   the manifest is a plain `filer_manifest` insert via Kysely, not `writeLayerManifest`.
  *
- *   **Node/edge dedup — no staging table needed.** `filer_node` (PK `node_id`) and `filer_edge` (PK
- *   `(from_node_id, to_node_id, source, valid_from)`, Task 4) already carry the uniqueness constraint a
- *   staging table would otherwise exist to provide — so both are written directly via raw prepared
- *   `INSERT OR IGNORE` against the PRODUCTION table. This *is* "the way edges are handled" the Task 4
- *   review referenced: the composite PK, not a separate staging pass, is the dedup mechanism.
+ *   **Node/edge/family dedup — no staging table needed.** `filer_node` (PK `node_id`), `filer_edge` (PK
+ *   `(from_node_id, to_node_id, source, valid_from)`, Task 4), and `filer_family` (PK `(node_id, family_id,
+ *   source, valid_from)`, Task 1 — the identical composite shape as `filer_edge`'s) already carry the
+ *   uniqueness constraint a staging table would otherwise exist to provide — so all three are written
+ *   directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. This *is* "the way edges are
+ *   handled" the Task 4 review referenced: the composite PK, not a separate staging pass, is the dedup
+ *   mechanism, and 3b Task 2's family-membership writes reuse it rather than growing a second staging table
+ *   the PK already makes unnecessary.
  *
  *   **Attribute dedup — a real staging table, because `filer_attribute` has no PK.** Task 4's review
  *   flagged `filer_attribute`/`filer_cluster` as carrying no uniqueness constraint, so a same-source/
@@ -70,17 +73,25 @@
  *   499-derived edges (it is the identifier hub — spec §3), `bdcProviderID` is `from` for provider-list
  *   edges (the row's own natural anchor).
  *
- *   **`relationship` is a placeholder here (3b Task 1, decisions 1, 2) — every edge above is written
- *   `FilerRelationship.SameEntity`, including the holding-/management-company edges.** 3b Task 1 only adds
- *   the column (plus the `FilerRelationship` const); reclassifying each site to its correct named kind
- *   (`HoldingCompany`/`ManagementCompany` for the two edges above, everything else staying `SameEntity`) is
- *   3b Task 2's job, per that task's own brief. Using one uniform value here keeps every site in this
- *   builder compiling and the existing 3a test suite green without this task guessing Task 2's
- *   reclassification.
+ *   **`relationship` is fully typed (3b Task 2, decisions 1, 2) — 3b Task 1 shipped a uniform `SameEntity`
+ *   placeholder at every site below; this reclassifies each to its correct named kind.** `FRN↔form499ID`
+ *   and `bdcProviderID↔FRN` assert identity — the same underlying filer under a different identifier — so
+ *   both stay `FilerRelationship.SameEntity`. `FRN↔holdingCompanyName` AND `bdcProviderID↔holdingCompanyName`
+ *   are ownership facts (`FilerRelationship.HoldingCompany`); `FRN↔managementCompanyName` is operational
+ *   control, never collapsed into the holding-company kind (spec §3.1 finding 1) —
+ *   `FilerRelationship.ManagementCompany`.
  *
- *   **`filer_family` is NOT populated by this builder.** Task 1 creates the table (empty, for schema
- *   completeness — the same deferral `filer_cluster` got in 3a until Task 6 populated it); deriving family
- *   membership from the holding-/management-company edges above is 3b Task 2's job.
+ *   **`filer_family` is populated alongside every `HoldingCompany`/`ManagementCompany` edge (3b Task 2).** A
+ *   `holding_company_name` (or `management_company_name`) node with N distinct FRN/`bdcProviderID` members
+ *   pointing at it is a corporate family of N members — {@linkcode mintFamilyID} derives a stable
+ *   `family_id` from the target name's CANONICAL form (`canonicalizeOrganizationName`, `@mailwoman/record`
+ *   — the same reduction `cluster-filers.ts`'s inferred pass already relies on), namespaced by identifier
+ *   type so a holding company and a differently-named management company never collapse into one family
+ *   even if their canonical strings happened to coincide. Each `filer_family` row carries the SAME
+ *   `relationship`/`source`/`source_vintage`/`valid_from` as the edge that implies it, and `valid_to: null`
+ *   (a fresh assertion, never pre-closed). **Never derived from a DC-agent field** — see the DC-agent
+ *   doctrine below; those fields never reach an edge, so by construction they can never reach a family
+ *   either.
  *
  *   **DC-agent doctrine (spec §3.1 finding 3, repeated here because it is easy to violate by accident):**
  *   `dcAgent*` fields are recorded ONLY as `filer_attribute` rows (`dc_agent_display_name`,
@@ -110,10 +121,11 @@
 
 import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
 import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
+import { DatabaseSync, type StatementSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
+import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Kysely } from "kysely"
 
 import {
@@ -220,6 +232,12 @@ export interface BuildFilerResult {
 	 */
 	attributes: number
 	/**
+	 * Distinct `filer_family` rows after the build (3b Task 2) — PK-deduped on `(node_id, family_id, source,
+	 * valid_from)`, the identical composite shape as `filer_edge`'s own PK. One row per `HoldingCompany`/
+	 * `ManagementCompany` edge whose target name canonicalized to something non-empty (see {@linkcode mintFamilyID}).
+	 */
+	families: number
+	/**
 	 * Count of edge OPPORTUNITIES declined because a legitimately-optional source field was empty/null — NOT an error
 	 * condition, and NOT deduped (every occurrence counts, even if two rows independently miss the same field): a 499 row
 	 * with `frn: null` (+1 — none of that row's three FRN-anchored edges can be minted), a 499 row with `frn` present but
@@ -276,6 +294,56 @@ function mintHoldingCompanyNodeID(name: string): string {
 
 function mintManagementCompanyNodeID(name: string): string {
 	return `${FilerIdentifierType.ManagementCompanyName}:${name}`
+}
+
+/**
+ * Derive a stable `filer_family.family_id` from a holding-/management-company name's CANONICAL form — never the raw
+ * string — so `"Acme Holdings Inc"` and `"ACME HOLDINGS, INC."` (same underlying entity, different casing/
+ * punctuation/legal suffix) collapse onto the SAME family, the identical reduction `cluster-filers.ts`'s inferred pass
+ * already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`). Namespaced by `identifierType`
+ * (`holding_company_name` vs `management_company_name`) so a holding company and a DIFFERENT management company that
+ * happen to canonicalize to the same string never collapse into one family (spec §3.1 finding 1 — ownership and
+ * operational control are different assertions, and that separation should hold for family membership too, not just for
+ * the edge kind).
+ *
+ * Returns `null` when the name canonicalizes to an EMPTY string (rare — e.g. a bare legal-designation token with
+ * nothing else surviving) — the same defensive check `cluster-filers.ts`'s `buildInferredRecords` makes before using a
+ * canonical name as a blocking key: an empty canonical string can never usefully identify a family, so the caller skips
+ * emitting a family row for it. The underlying `HoldingCompany`/`ManagementCompany` EDGE is unaffected — this only
+ * gates the family-MEMBERSHIP fact.
+ */
+function mintFamilyID(identifierType: string, name: string): string | null {
+	const organization = canonicalizeOrganizationName(name)
+
+	if (!organization || !organization.canonical) return null
+
+	return `${identifierType}:${organization.canonical}`
+}
+
+/**
+ * Write one `filer_family` membership row for a `HoldingCompany`/`ManagementCompany` edge's SOURCE node (the edge's own
+ * `from_node_id` — an FRN or `bdcProviderID`) — see {@linkcode mintFamilyID} for how `family_id` is derived from the
+ * TARGET name's canonical form. Skips silently (no row, no error, no `skipped` increment — a family row is a bonus
+ * derived fact, not an edge opportunity) when the name canonicalizes to nothing. Module-level (not a closure inside
+ * {@linkcode buildFilerDatabase}, unlike `stageAttribute`/`commitBatch`) purely to stay under the linter's
+ * `max-statements` ceiling — `insFamily` (the prepared statement it writes through) is passed in rather than closed
+ * over.
+ */
+function insertFamilyMembership(
+	insFamily: StatementSync,
+	memberNodeID: string,
+	identifierType: string,
+	name: string,
+	relationship: string,
+	source: string,
+	sourceVintage: string,
+	validFrom: string
+): void {
+	const familyID = mintFamilyID(identifierType, name)
+
+	if (!familyID) return
+
+	insFamily.run(memberNodeID, familyID, relationship, source, sourceVintage, validFrom, null)
 }
 
 /**
@@ -425,15 +493,22 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
 	)
 
-	// relationship: every edge below is written FilerRelationship.SameEntity, a placeholder (3b Task 1 adds the
-	// column; classifying each site to its correct kind — e.g. HoldingCompany/ManagementCompany for the
-	// holding-/management-company edges below — is Task 2's reclassification, per the Task 1 brief. Using ONE
-	// uniform value here keeps every existing edge emission site compiling and passing without Task 1 guessing
-	// Task 2's design).
+	// relationship (3b Task 2): FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity); the
+	// holding-/management-company edges below assert HoldingCompany/ManagementCompany — see the module docstring's
+	// "relationship is fully typed" section.
 	const insEdge = db.prepare(
 		`INSERT OR IGNORE INTO filer_edge (
 			from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	)
+
+	// filer_family (3b Task 2) — same "no staging table needed" discipline as filer_node/filer_edge above (module
+	// docstring): the composite PK (node_id, family_id, source, valid_from) already provides the uniqueness a
+	// staging table would otherwise exist to give.
+	const insFamily = db.prepare(
+		`INSERT OR IGNORE INTO filer_family (
+			node_id, family_id, relationship, source, source_vintage, valid_from, valid_to
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	)
 
 	const insAttrStage = db.prepare(
@@ -535,13 +610,24 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					frnNodeID,
 					holdingNodeID,
 					FilerEdgeAssertion.Authoritative,
-					FilerRelationship.SameEntity,
+					FilerRelationship.HoldingCompany,
 					"form-499",
 					lastFiledAt,
 					lastFiledAt,
 					null,
 					null,
 					null
+				)
+
+				insertFamilyMembership(
+					insFamily,
+					frnNodeID,
+					FilerIdentifierType.HoldingCompanyName,
+					row.holdingCompany,
+					FilerRelationship.HoldingCompany,
+					"form-499",
+					lastFiledAt,
+					lastFiledAt
 				)
 			} else {
 				skipped++
@@ -555,13 +641,24 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					frnNodeID,
 					managementNodeID,
 					FilerEdgeAssertion.Authoritative,
-					FilerRelationship.SameEntity,
+					FilerRelationship.ManagementCompany,
 					"form-499",
 					lastFiledAt,
 					lastFiledAt,
 					null,
 					null,
 					null
+				)
+
+				insertFamilyMembership(
+					insFamily,
+					frnNodeID,
+					FilerIdentifierType.ManagementCompanyName,
+					row.managementCompany,
+					FilerRelationship.ManagementCompany,
+					"form-499",
+					lastFiledAt,
+					lastFiledAt
 				)
 			} else {
 				skipped++
@@ -611,13 +708,24 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				providerNodeID,
 				holdingNodeID,
 				FilerEdgeAssertion.Authoritative,
-				FilerRelationship.SameEntity,
+				FilerRelationship.HoldingCompany,
 				"bdc-provider-list",
 				options.sourceVintage,
 				providerValidFrom!,
 				null,
 				null,
 				null
+			)
+
+			insertFamilyMembership(
+				insFamily,
+				providerNodeID,
+				FilerIdentifierType.HoldingCompanyName,
+				row.holdingCompany,
+				FilerRelationship.HoldingCompany,
+				"bdc-provider-list",
+				options.sourceVintage,
+				providerValidFrom!
 			)
 		} else {
 			skipped++
@@ -684,10 +792,12 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	const nodeCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_node").get() as { c: number }).c
 	const edgeCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_edge").get() as { c: number }).c
 	const attributeCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_attribute").get() as { c: number }).c
+	const familyCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_family").get() as { c: number }).c
 
 	progress(
 		`materialized ${nodeCount.toLocaleString()} node(s), ${edgeCount.toLocaleString()} edge(s), ` +
-			`${attributeCount.toLocaleString()} attribute(s) (${skipped.toLocaleString()} edge opportunity/ies skipped)`
+			`${attributeCount.toLocaleString()} attribute(s), ${familyCount.toLocaleString()} family membership(s) ` +
+			`(${skipped.toLocaleString()} edge opportunity/ies skipped)`
 	)
 
 	progress("finalize: ANALYZE + VACUUM")
@@ -719,6 +829,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		nodes: nodeCount,
 		edges: edgeCount,
 		attributes: attributeCount,
+		families: familyCount,
 		skipped,
 	}
 }

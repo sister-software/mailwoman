@@ -18,7 +18,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { describe, expect, it } from "vitest"
 
-import { FilerIdentifierType, readFilerManifest, type FilerDatabase } from "../schema.ts"
+import { FilerIdentifierType, FilerRelationship, readFilerManifest, type FilerDatabase } from "../schema.ts"
 import { buildFilerDatabase, type BuildFilerResult } from "./build-filer.ts"
 import type { Form499Row } from "./form499.ts"
 import { toFRN } from "./frn.ts"
@@ -27,6 +27,11 @@ import type { ProviderListRow } from "./provider-list.ts"
 const FRN_ACME = toFRN("0001753557")!
 const FRN_BDC_ONLY = toFRN("0009999999")!
 const FRN_GAMMA = toFRN("0005555555")!
+
+// 3b Task 2 family-membership fixtures — distinct from the FRNs above to avoid any accidental cross-test coupling.
+const FRN_DELTA = toFRN("0002222222")!
+const FRN_EPSILON = toFRN("0003333333")!
+const FRN_ZETA = toFRN("0004444444")!
 
 /**
  * Row A: a fully-populated 499 filing — FRN present, both company fields present, every attribute-bearing field
@@ -649,6 +654,270 @@ describe("buildFilerDatabase", () => {
 
 				const manifest = await readFilerManifest(db)
 				expect(manifest.source_vintage).toBe("2026-Q2")
+			} finally {
+				await teardownScratch()
+			}
+		})
+	})
+
+	describe("typed relationship + family membership (3b Task 2)", () => {
+		const SOURCE_VINTAGE = "2026-Q3"
+
+		/**
+		 * A minimal, fully-blank Form499Row overridden per test — keeps each fixture below down to just the fields that
+		 * matter for what it's testing, matching `idempotencyFixtureRow`'s intent one describe block up.
+		 */
+		function familyFixtureRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn">): Form499Row {
+			return {
+				lastFiledAt: "2026-05-01",
+				usfContributor: false,
+				legalNameOfCarrier: `Carrier ${overrides.form499ID}`,
+				doingBusinessAs: "",
+				principalCommType: "",
+				holdingCompany: "",
+				managementCompany: "",
+				hqAddress: "",
+				customerInquiriesTelephone: "",
+				customerInquiriesAddress: "",
+				dcAgentDisplayName: "",
+				dcAgentOrganizationName: "",
+				dcAgentTelephone: "",
+				dcAgentEmailAddress: "",
+				dcAgentAddress: "",
+				...overrides,
+			}
+		}
+
+		it("types holding/management edges to their named FilerRelationship, keeping identity edges SameEntity", async () => {
+			await setupScratch()
+
+			try {
+				const row = familyFixtureRow({
+					form499ID: "800001",
+					frn: FRN_DELTA,
+					holdingCompany: "Alpha Holdco Inc",
+					managementCompany: "Beta Management Co",
+				})
+
+				await buildFilerDatabase({
+					form499Rows: [row],
+					providerRows: [{ providerID: 210_001, frn: FRN_DELTA, holdingCompany: "Alpha Holdco Inc" }],
+					out,
+					sourceVintage: SOURCE_VINTAGE,
+					validFrom: "2026-05-01",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const edges = await db.selectFrom("filer_edge").selectAll().execute()
+
+				const toTarget = (nodeID: string) => edges.filter((e) => e.to_node_id === nodeID)
+
+				// FRN<->form499ID: identity, never HoldingCompany/ManagementCompany.
+				expect(
+					toTarget(`${FilerIdentifierType.Form499ID}:800001`).every(
+						(e) => e.relationship === FilerRelationship.SameEntity
+					)
+				).toBe(true)
+
+				// bdcProviderID<->FRN: identity too.
+				expect(
+					toTarget(`${FilerIdentifierType.FRN}:${FRN_DELTA}`).every(
+						(e) => e.relationship === FilerRelationship.SameEntity
+					)
+				).toBe(true)
+
+				// FRN->holdingCompanyName AND bdcProviderID->holdingCompanyName both assert HoldingCompany.
+				const holdingEdges = toTarget(`${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco Inc`)
+				expect(holdingEdges).toHaveLength(2)
+				expect(holdingEdges.every((e) => e.relationship === FilerRelationship.HoldingCompany)).toBe(true)
+
+				// FRN->managementCompanyName asserts ManagementCompany, never collapsed into HoldingCompany.
+				const managementEdges = toTarget(`${FilerIdentifierType.ManagementCompanyName}:Beta Management Co`)
+				expect(managementEdges).toHaveLength(1)
+				expect(managementEdges[0]!.relationship).toBe(FilerRelationship.ManagementCompany)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("three distinct FRNs sharing one holding company become one family with three members", async () => {
+			await setupScratch()
+
+			try {
+				const rows = [
+					familyFixtureRow({ form499ID: "810001", frn: FRN_DELTA, holdingCompany: "Shared Holdco Inc" }),
+					familyFixtureRow({ form499ID: "810002", frn: FRN_EPSILON, holdingCompany: "Shared Holdco Inc" }),
+					familyFixtureRow({ form499ID: "810003", frn: FRN_ZETA, holdingCompany: "Shared Holdco Inc" }),
+				]
+
+				await buildFilerDatabase({
+					form499Rows: rows,
+					out,
+					sourceVintage: SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const families = await db
+					.selectFrom("filer_family")
+					.selectAll()
+					.where("relationship", "=", FilerRelationship.HoldingCompany)
+					.execute()
+
+				expect(families).toHaveLength(3)
+
+				const familyIDs = new Set(families.map((f) => f.family_id))
+				expect(familyIDs.size).toBe(1)
+
+				const memberNodeIDs = families.map((f) => f.node_id).toSorted()
+
+				expect(memberNodeIDs).toEqual(
+					[
+						`${FilerIdentifierType.FRN}:${FRN_DELTA}`,
+						`${FilerIdentifierType.FRN}:${FRN_EPSILON}`,
+						`${FilerIdentifierType.FRN}:${FRN_ZETA}`,
+					].toSorted()
+				)
+
+				for (const family of families) {
+					expect(family.source).toBe("form-499")
+					expect(family.source_vintage).toBe("2026-05-01")
+					expect(family.valid_from).toBe("2026-05-01")
+					expect(family.valid_to).toBeNull()
+				}
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("a filer whose holding company differs from its management company gets two family memberships under different relationships", async () => {
+			await setupScratch()
+
+			try {
+				const row = familyFixtureRow({
+					form499ID: "820001",
+					frn: FRN_DELTA,
+					holdingCompany: "Holdco Alpha Inc",
+					managementCompany: "Manager Beta LLC",
+				})
+
+				await buildFilerDatabase({
+					form499Rows: [row],
+					out,
+					sourceVintage: SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_DELTA}`
+
+				const families = await db.selectFrom("filer_family").selectAll().where("node_id", "=", frnNodeID).execute()
+
+				expect(families).toHaveLength(2)
+
+				const byRelationship = new Map(families.map((f) => [f.relationship, f]))
+				expect(byRelationship.get(FilerRelationship.HoldingCompany)).toBeDefined()
+				expect(byRelationship.get(FilerRelationship.ManagementCompany)).toBeDefined()
+
+				expect(byRelationship.get(FilerRelationship.HoldingCompany)!.family_id).not.toBe(
+					byRelationship.get(FilerRelationship.ManagementCompany)!.family_id
+				)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("never emits a filer_family row derived from a DC-agent field", async () => {
+			await setupScratch()
+
+			try {
+				await buildFilerDatabase({
+					form499Rows: form499FixtureRows(),
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const families = await db.selectFrom("filer_family").selectAll().execute()
+
+				// form499FixtureRows' FRN_ACME row has BOTH a holdingCompany and a managementCompany, so this suite
+				// isn't vacuously passing on account of there being no family rows at all.
+				expect(families.length).toBeGreaterThan(0)
+
+				for (const family of families) {
+					expect(family.family_id).not.toContain("CT Corporation")
+					expect(family.family_id).not.toContain("John Doe")
+					expect(family.node_id).not.toContain("CT Corporation")
+					expect(family.node_id).not.toContain("John Doe")
+				}
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("collapses a same-source/same-vintage duplicate row's family rows within one build", async () => {
+			await setupScratch()
+
+			try {
+				const row = familyFixtureRow({
+					form499ID: "830001",
+					frn: FRN_DELTA,
+					holdingCompany: "Dup Holdco Inc",
+				})
+
+				const result = await buildFilerDatabase({
+					form499Rows: [row, row],
+					out,
+					sourceVintage: SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				expect(result.families).toBe(1)
+
+				using db = openFilerDB(out)
+				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
+				expect(familyRows).toHaveLength(1)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("rebuilding the same inputs does not grow filer_family row counts", async () => {
+			await setupScratch()
+
+			try {
+				const rows = [
+					familyFixtureRow({
+						form499ID: "840001",
+						frn: FRN_DELTA,
+						holdingCompany: "Repeat Holdco Inc",
+						managementCompany: "Repeat Mgmt Co",
+					}),
+				]
+
+				const first = await buildFilerDatabase({
+					form499Rows: rows,
+					out,
+					sourceVintage: SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				const second = await buildFilerDatabase({
+					form499Rows: rows,
+					out,
+					sourceVintage: SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				expect(first.families).toBe(2)
+				expect(second.families).toBe(first.families)
+
+				using db = openFilerDB(out)
+				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
+				expect(familyRows).toHaveLength(2)
 			} finally {
 				await teardownScratch()
 			}
