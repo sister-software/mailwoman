@@ -43,6 +43,11 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
+		"./scripts/*": {
+			"node": "./scripts/*.ts",
+			"default": "./out/scripts/*.js",
+			"types": "./out/scripts/*.d.ts"
+		},
 		"./sdk": {
 			"node": "./sdk/index.ts",
 			"default": "./out/sdk/index.js",
