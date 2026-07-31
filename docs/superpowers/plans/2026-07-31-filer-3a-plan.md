@@ -42,10 +42,10 @@
 
 **Produces:** importable empty `@mailwoman/filer` + `@mailwoman/filer/sdk`.
 
-- [ ] Copy `bdc/package.json` shape exactly (name `@mailwoman/filer`, same license/engines/exports incl. the dev `node → .ts` condition, `files` array). Deps: `@mailwoman/core`, `@mailwoman/record`, `@mailwoman/registry`, `@mailwoman/match` as `workspace:*`, `kysely ^0.29.4`, `type-fest`. Mirror `bdc/tsconfig.json` with references to those.
-- [ ] `filer/index.ts` re-exports `./sdk/index.ts` and (later) `./schema.ts`. README: what it is, spec pointer, and the decision-2 sentence (not a layer-contract artifact in 3a, and why).
-- [ ] Root wiring; `yarn install`; `yarn tsc -b filer` clean; `yarn workspaces list | grep filer`.
-- [ ] Commit `feat(filer): workspace skeleton for the identity crosswalk (3a task 1)`.
+- [x] Copy `bdc/package.json` shape exactly (name `@mailwoman/filer`, same license/engines/exports incl. the dev `node → .ts` condition, `files` array). Deps: `@mailwoman/core`, `@mailwoman/record`, `@mailwoman/registry`, `@mailwoman/match` as `workspace:*`, `kysely ^0.29.4`, `type-fest`. Mirror `bdc/tsconfig.json` with references to those.
+- [x] `filer/index.ts` re-exports `./sdk/index.ts` and (later) `./schema.ts`. README: what it is, spec pointer, and the decision-2 sentence (not a layer-contract artifact in 3a, and why).
+- [x] Root wiring; `yarn install`; `yarn tsc -b filer` clean; `yarn workspaces list | grep filer`.
+- [x] Commit `feat(filer): workspace skeleton for the identity crosswalk (3a task 1)`.
 
 ### Task 2: FRN branded type + Form 499 parsing
 
@@ -68,9 +68,9 @@ export function classifyFiler(row: Form499Row): FilerClassification[]   // port 
 export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row>  // STREAMING
 ```
 
-- [ ] Failing tests first: `toFRN(1753557)` → `"0001753557"`; `isFRN("1753557")` false (not 10 chars); a fixture TSV of 3 rows parses to 3 typed rows; a short row throws naming file + line number (decision 8); `classifyFiler` over rows with `principalCommType` containing "Incumbent"/"CLEC"/"Interexchange"/"Toll Reseller" and `usfContributor` TRUE.
-- [ ] Implement. Two `managementCompany`/`holdingCompany` fields both retained (spec §3.1 finding 1 — they are different assertions). Note in the docstring that `otherTradeName1` exists in the Nexus interface but not its column tuple, and is therefore absent here by design.
-- [ ] Commit `feat(filer): FRN branded string + streaming Form 499 parser (3a task 2, decisions 3,8)`.
+- [x] Failing tests first: `toFRN(1753557)` → `"0001753557"`; `isFRN("1753557")` false (not 10 chars); a fixture TSV of 3 rows parses to 3 typed rows; a short row throws naming file + line number (decision 8); `classifyFiler` over rows with `principalCommType` containing "Incumbent"/"CLEC"/"Interexchange"/"Toll Reseller" and `usfContributor` TRUE.
+- [x] Implement. Two `managementCompany`/`holdingCompany` fields both retained (spec §3.1 finding 1 — they are different assertions). Note in the docstring that `otherTradeName1` exists in the Nexus interface but not its column tuple, and is therefore absent here by design.
+- [x] Commit `feat(filer): FRN branded string + streaming Form 499 parser (3a task 2, decisions 3,8)`.
 
 ### Task 3: BDC provider list parsing
 
@@ -85,7 +85,7 @@ export async function* parseProviderList(csvPath: string): AsyncIterable<Provide
 
 One `provider_id` may appear on multiple rows with different FRNs — **yield every row**; do not dedup or last-wins (decision 6). Fixture must include a provider_id with two FRNs and one with two different holding-company strings.
 
-- [ ] TDD; commit `feat(filer): BDC provider-list parser preserving multi-FRN cardinality (3a task 3, decision 6)`.
+- [x] TDD; commit `feat(filer): BDC provider-list parser preserving multi-FRN cardinality (3a task 3, decision 6)`.
 
 ### Task 4: `filer.db` schema
 
@@ -153,8 +153,8 @@ export async function createFilerNodeTable(db): Promise<void> // + Edge, Attribu
 
 Edge PK `(from_node_id, to_node_id, source, valid_from)` so the same relationship asserted by two sources or two vintages is two rows, not a clobber.
 
-- [ ] TDD: in-memory DatabaseClient, all tables created, a typed edge round-trips, and the manifest is single-row-enforced (copy `readLayerManifest`'s throw-unless-exactly-one discipline).
-- [ ] Commit `feat(filer): filer.db schema — provenanced time-scoped crosswalk (3a task 4, decisions 2,7)`.
+- [x] TDD: in-memory DatabaseClient, all tables created, a typed edge round-trips, and the manifest is single-row-enforced (copy `readLayerManifest`'s throw-unless-exactly-one discipline).
+- [x] Commit `feat(filer): filer.db schema — provenanced time-scoped crosswalk (3a task 4, decisions 2,7)`.
 
 ### Task 5: The builder
 
@@ -185,8 +185,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 Authoritative edges emitted: FRN↔form499ID, FRN↔holdingCompanyName, FRN↔managementCompanyName (both, per decision), bdcProviderID↔FRN, bdcProviderID↔holdingCompanyName. Attributes: legal name, DBA, classifications, contact fields. `valid_from` per decision 7.
 
-- [ ] TDD via the rows seams (no file IO in tests). Assert: a malformed row is loud; a provider_id with two FRNs yields two edges; every edge has non-empty provenance; the manifest carries the vintage.
-- [ ] Commit `feat(filer): filer.db builder — authoritative edges, staged dedup, sealed artifact (3a task 5)`.
+- [x] TDD via the rows seams (no file IO in tests). Assert: a malformed row is loud; a provider_id with two FRNs yields two edges; every edge has non-empty provenance; the manifest carries the vintage.
+- [x] Commit `feat(filer): filer.db builder — authoritative edges, staged dedup, sealed artifact (3a task 5)`.
 
 ### Task 6: Entity clustering
 
@@ -194,8 +194,8 @@ Authoritative edges emitted: FRN↔form499ID, FRN↔holdingCompanyName, FRN↔ma
 
 Two passes: (a) **authoritative components** — feed authoritative edges to `cluster()` from `@mailwoman/match` (`match/clustering.ts:112`) as `ScoredLink`s with `weight: Infinity`, writing `filer_cluster` rows with `assertion: "authoritative"`; (b) **inferred links** — build `SourceRecord`s (`registry/types.ts:15`) from filer nodes with `organization` = canonicalized legal name (`record/organization.ts` `canonicalizeOrganizationName`), `address` = HQ, and `attributes` carrying FRN/form499ID/providerID as code-set strings, then call `resolveEntities(records, { exactDiscriminators: [...], learnedScorer: false })` (decision 4) and write the resulting links as `assertion: "inferred"` edges with their scores. **Inferred links never modify authoritative cluster assignments** (decision 5, gate 2).
 
-- [ ] TDD including gate 2's fixture: two authoritative components that an inferred edge would bridge; assert the authoritative clustering is unchanged and the inferred edge is recorded separately.
-- [ ] Commit `feat(filer): authoritative clustering + inferred linkage, never conflated (3a task 6, decisions 4,5)`.
+- [x] TDD including gate 2's fixture: two authoritative components that an inferred edge would bridge; assert the authoritative clustering is unchanged and the inferred edge is recorded separately.
+- [x] Commit `feat(filer): authoritative clustering + inferred linkage, never conflated (3a task 6, decisions 4,5)`.
 
 ### Task 7: Readers, the four gates, and the `filer_lookup` MCP tool
 
@@ -229,8 +229,8 @@ Exactly one identifier required (throw otherwise, matching `filingLandscape`'s X
 
 MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod with `.describe()` on every field, `MCPToolDeps` method, parse → deps → verbatim), plus `openFilerDatabaseIfPresent`/`assertFilerDatabaseExists` in `mcp/layer-guards.ts` following the 2b precedent.
 
-- [ ] **Gate tests, written first, in a `describe("§7-3a gates")` block** — the four gates verbatim from this plan's Acceptance Gates section, including gate 1's structural pin (`satisfies Record<keyof FilerEdgeInsert, true>`) and a runtime rejection test.
-- [ ] Commit `feat(filer,mcp): filer_lookup reader, the four 3a gates, MCP tool (3a task 7)`.
+- [x] **Gate tests, written first, in a `describe("§7-3a gates")` block** — the four gates verbatim from this plan's Acceptance Gates section, including gate 1's structural pin (`satisfies Record<keyof FilerEdgeInsert, true>`) and a runtime rejection test.
+- [x] Commit `feat(filer,mcp): filer_lookup reader, the four 3a gates, MCP tool (3a task 7)`.
 
 ### Task 8: Populate `bdc_provider` (cross-workspace)
 
@@ -238,8 +238,8 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 
 `bdc.db` is sealed and atomically swapped, so this is a **rebuild path**, not an in-place write (recon finding 4). Add an optional `providers?: Iterable<ProviderListRow>` to `BuildBDCOptions`; when present, populate `bdc_provider` during the build. Primary FRN = the one from the most recent 499 filing date; `brand_name` stays NULL (no source — document it). Verify the default path (no `providers`) produces byte-identical output to today.
 
-- [ ] TDD; assert default-path behavior unchanged and the lossy-denormalization rule is exercised by a multi-FRN fixture.
-- [ ] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
+- [x] TDD; assert default-path behavior unchanged and the lossy-denormalization rule is exercised by a multi-FRN fixture.
+- [x] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
 
 ### Task 9: CORES enrichment via the documented FRN API — **STOPPED AT THE GATE (2026-07-31), deferred to 3b**
 
@@ -280,7 +280,7 @@ Edges emitted (authoritative, since CORES states them): `frn ↔ parentName`, `f
 
 ### Task 10: Wrap-up
 
-- [ ] Full ladder incl. `yarn typecheck:tests`; tick plan checkboxes; controller handles final review + PR (do NOT open a PR in-task).
+- [x] Full ladder incl. `yarn typecheck:tests`; tick plan checkboxes; controller handles final review + PR (do NOT open a PR in-task).
 
 ## Out of scope for 3a (do not build)
 

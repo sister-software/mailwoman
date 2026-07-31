@@ -18,6 +18,8 @@ const FIXTURES_DIR = join(import.meta.dirname, "..", "test-fixtures")
 const SAMPLE_CSV = join(FIXTURES_DIR, "provider-list-sample.csv")
 const MALFORMED_CSV = join(FIXTURES_DIR, "provider-list-malformed.csv")
 const MISSING_COLUMN_CSV = join(FIXTURES_DIR, "provider-list-missing-column.csv")
+const BAD_FRN_CSV = join(FIXTURES_DIR, "provider-list-bad-frn.csv")
+const BAD_PROVIDER_ID_CSV = join(FIXTURES_DIR, "provider-list-bad-provider-id.csv")
 
 async function collect(csvPath: string): Promise<ProviderListRow[]> {
 	const rows: ProviderListRow[] = []
@@ -130,5 +132,35 @@ describe("parseProviderList", () => {
 		expect(caught).toBeInstanceOf(Error)
 		expect((caught as Error).message).toContain(MISSING_COLUMN_CSV)
 		expect((caught as Error).message).toContain("holding_company")
+	})
+
+	it("throws naming the file and value for a row whose frn does not parse via toFRN", async () => {
+		let caught: unknown
+
+		try {
+			await collect(BAD_FRN_CSV)
+		} catch (error) {
+			caught = error
+		}
+
+		expect(caught).toBeInstanceOf(Error)
+		expect((caught as Error).message).toContain(BAD_FRN_CSV)
+		expect((caught as Error).message).toContain("frn")
+		expect((caught as Error).message).toContain("not-an-frn")
+	})
+
+	it("throws a TypeError naming the file and value for a row whose provider_id does not parse to a safe integer", async () => {
+		let caught: unknown
+
+		try {
+			await collect(BAD_PROVIDER_ID_CSV)
+		} catch (error) {
+			caught = error
+		}
+
+		expect(caught).toBeInstanceOf(TypeError)
+		expect((caught as Error).message).toContain(BAD_PROVIDER_ID_CSV)
+		expect((caught as Error).message).toContain("provider_id")
+		expect((caught as Error).message).toContain("not-a-number")
 	})
 })

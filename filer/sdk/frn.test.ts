@@ -64,4 +64,12 @@ describe("isFRN", () => {
 		expect(isFRN(null)).toBe(false)
 		expect(isFRN(undefined)).toBe(false)
 	})
+
+	it("rejects an 11-digit string — too long for the zero-padded 10-char shape", () => {
+		expect(isFRN("00017535571")).toBe(false)
+	})
+
+	it("rejects an empty string", () => {
+		expect(isFRN("")).toBe(false)
+	})
 })
