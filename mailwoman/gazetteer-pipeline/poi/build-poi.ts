@@ -369,7 +369,17 @@ export function bboxCoverageCells(
 	for (const row of rows) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) continue
 
-		const cell = latLngToCell(row.latitude, row.longitude, resolution) as H3Cell
+		// Derive the coverage cell from the SAME res-9 cell the row is keyed by — `cellToParent(res9Cell,
+		// resolution)` — never a direct `latLngToCell(row, resolution)`. Matches the default (non-override)
+		// coverage path below (~:592) and every reader (`res9ShortCellToRes6Parent` in
+		// bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts). H3's cell hierarchy is not
+		// geometrically exact, so the direct derivation disagrees with the hierarchy-parent one for a real
+		// fraction of points (~6.56% measured over 20k CONUS points) — the identical builder/reader divergence
+		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring). Getting this wrong
+		// means a row's observed count lands on a neighbouring cell, or is silently dropped when its
+		// direct-res-6 cell isn't a member of the bbox polyfill below.
+		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
+		const cell = cellToParent(res9Cell, resolution) as H3Cell
 		const h3Cell = shortCellToInt(cell)
 
 		observed.set(h3Cell, (observed.get(h3Cell) ?? 0) + 1)

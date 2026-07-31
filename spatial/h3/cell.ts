@@ -55,6 +55,16 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
 // 8 f2 aa 84 5a 18 ac 6b
 /**
  * Given a short cell address, expand it to a full H3 cell index.
+ *
+ * @warning BROKEN for any `resolution` other than the default `15` — tracked as issue #1373. The left-shift
+ *   reconstruction here only round-trips a short cell that was SHORTENED at resolution 15 (the address-id spine); fed a
+ *   short cell captured at some other resolution R, it silently produces a full index `cellToParent`/H3 rejects
+ *   (`Cell arguments had incompatible resolutions`) rather than throwing here. A caller needing to reconstruct a full
+ *   cell from a short cell captured at a KNOWN resolution R other than 15 must NOT pass `resolution: R` to this
+ *   function — see `bdc/sdk/filing-landscape.ts`'s `res9ShortCellToRes6Parent` for the correct straight-concatenation
+ *   formula (`"8" + R.toString(16) + shortHex.padStart(13, "0")`) and its docstring for the full explanation. Do not
+ *   "fix" this function to take an arbitrary resolution without reading that docstring first — it's out of scope for
+ *   casual changes.
  */
 export function expandH3Cell(h3CellShort: H3CellShort, resolution = 15): H3Cell {
 	// Convert the short cell address back to BigInt

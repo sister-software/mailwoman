@@ -130,7 +130,19 @@ import {
 	type ProviderFilingSummary,
 } from "./filing-landscape.ts"
 import { nearestInfrastructure, type InfrastructureHit } from "./nearest-infrastructure.ts"
-import { BroadbandTechnologyCode } from "./technologies.ts"
+import {
+	BroadbandTechnologyCategory,
+	BroadbandTechnologyCategoryToCodeSet,
+	BroadbandTechnologyCode,
+} from "./technologies.ts"
+
+/**
+ * The three fixed-wireless codes (unlicensed/licensed/licensed-by-rule), read off
+ * {@link BroadbandTechnologyCategoryToCodeSet} (decision 8: reuse, never re-derive) rather than hand-enumerated here a
+ * second time — an FCC code addition to the `FixedWireless` category in `technologies.ts` now flows straight through to
+ * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES} instead of silently missing this table.
+ */
+const FIXED_WIRELESS_CODES = BroadbandTechnologyCategoryToCodeSet[BroadbandTechnologyCategory.FixedWireless]
 
 /**
  * One claimed broadband-service assertion to check. Exactly one spatial field is expected in practice (`geoid` wins if
@@ -258,9 +270,10 @@ export interface PlausibilityDeps {
  */
 export const PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES: Readonly<Record<number, readonly string[]>> = {
 	[BroadbandTechnologyCode.OpticalCarrierFiber]: ["telecom_exchange", "telecom_cabinet", "data_center"],
-	[BroadbandTechnologyCode.UnlicensedTerrestrialFixedWireless]: ["tower_comms"],
-	[BroadbandTechnologyCode.LicensedTerrestrialFixedWireless]: ["tower_comms"],
-	[BroadbandTechnologyCode.LicensedByRuleTerrestrialFixedWireless]: ["tower_comms"],
+	...(Object.fromEntries([...FIXED_WIRELESS_CODES].map((code) => [code, ["tower_comms"]])) as Record<
+		number,
+		readonly string[]
+	>),
 }
 
 /**

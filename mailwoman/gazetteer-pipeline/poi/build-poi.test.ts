@@ -26,6 +26,8 @@ import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { cellToParent, latLngToCell } from "h3-js"
 import type { Kysely } from "kysely"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -361,5 +363,91 @@ describe("buildPOIDatabase — --source osm build-local branch (bdc 2b task 3)",
 
 		expect(coverageRows).toHaveLength(1)
 		expect(coverageRows[0]!.observed_rows).toBe(2)
+	})
+})
+
+/**
+ * Builder/reader res-6 coverage-cell agreement (2b final-review-wave fix, IMPORTANT finding) — `bboxCoverageCells` (the
+ * `--source osm` build branch's coverage aggregator, decision 5) used to key a row's observed count off a DIRECT
+ * `latLngToCell(row, 6)`, while the default (non-override) rows-derived coverage path just above in this same file's
+ * `buildPOIDatabase` (~:592) and every layer reader (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`,
+ * `plausibility.ts`, `nearest-infrastructure.ts`) derive a row's res-6 coverage cell as `cellToParent(res9Cell, 6)` —
+ * the SAME spine-disagreement class `bdc` 2a fix-round-1 fixed. H3's cell hierarchy is not geometrically exact, so the
+ * two derivations disagree for a real fraction of points (~6.56% measured over 20k CONUS points): a row's observed
+ * count could land on a neighbouring cell, or be dropped entirely when its direct-res-6 cell isn't a member of the bbox
+ * polyfill.
+ *
+ * `DIVERGENT_POINT` is reused verbatim from `bdc/sdk/filing-landscape.test.ts`'s own brute-force-found divergent point
+ * — the H3 math is generic (no domain data involved), so the exact same coordinate reproduces the exact same res-6
+ * divergence regardless of which layer is asking.
+ */
+const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
+
+describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b final review wave)", () => {
+	const bbox: BBox = { minLon: -79.9, minLat: 37, maxLon: -79.5, maxLat: 37.3 }
+
+	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
+		// Prove this point is genuinely divergent BEFORE trusting the rest of the test — if this assertion ever
+		// stops holding (e.g. an h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh
+		// brute-force search, exactly as noted in filing-landscape.test.ts.
+		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6) as H3Cell)
+		const res9Cell = latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 9) as H3Cell
+		const unifiedCell = shortCellToInt(cellToParent(res9Cell, 6) as H3Cell)
+
+		expect(unifiedCell).not.toBe(oldBuggyCell)
+
+		const cells = bboxCoverageCells(bbox, [DIVERGENT_POINT])
+		const observedByCell = new Map(cells.map((c) => [c.h3Cell, c.observedRows]))
+
+		// The row must land on the UNIFIED (res-9-parent) cell...
+		expect(observedByCell.get(unifiedCell)).toBe(1)
+
+		// ...never on the old direct-latLngToCell(_, 6) cell, if that (different) cell even appears in this
+		// bbox's polyfill at all.
+		if (observedByCell.has(oldBuggyCell)) {
+			expect(observedByCell.get(oldBuggyCell)).toBe(0)
+		}
+	})
+
+	it("agrees with buildPOIDatabase's own (non-override) rows-derived coverage cell for the same point", async () => {
+		const row: POISourceRow = {
+			name: "Divergent point POI",
+			category: "cafe",
+			brandWikidata: null,
+			latitude: DIVERGENT_POINT.latitude,
+			longitude: DIVERGENT_POINT.longitude,
+			country: "US",
+			confidence: 0.9,
+			gersID: "gers-divergent",
+		}
+
+		// The OSM branch's coverage aggregator (over the SAME row) — what this test pins.
+		const overrideCells = bboxCoverageCells(bbox, [row])
+		const overrideCell = overrideCells.find((c) => c.observedRows === 1)!
+
+		// The default (Overture) branch's rows-derived coverage — already correct (~:592) — built independently
+		// via the real `buildPOIDatabase` seam over the exact same row.
+		const result = await buildPOIDatabase({
+			rows: [row],
+			out,
+			release: "2026-05-20.0",
+			buildSHA: "deadbeef",
+			createdAt: "2026-07-30T00:00:00Z",
+		})
+
+		expect(result.rows).toBe(1)
+		expect(result.coverageCells).toBe(1)
+
+		const raw = new DatabaseSync(out, { readOnly: true })
+		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		const contractDB = kdb as unknown as Kysely<LayerContractDatabase>
+
+		const builderWrittenCoverage = await readLayerCoverage(contractDB, overrideCell.h3Cell)
+
+		// The builder's/reader's agreement, pinned: the OSM branch's coverage cell for this row is the SAME cell
+		// the default branch actually wrote coverage under — reverting the `bboxCoverageCells` fix makes
+		// `overrideCell.h3Cell` the old buggy direct-res-6 cell, which the default branch never writes to, so
+		// this read comes back `undefined` and the assertion below fails.
+		expect(builderWrittenCoverage).toEqual({ h3Cell: overrideCell.h3Cell, completeness: 1, observedRows: 1 })
 	})
 })
