@@ -109,7 +109,7 @@ const EVAL_BUILD_SHA = "filer-linkage-eval"
  * being real, so this eval measures the artifact instead of describing it.
  *
  * **Every count here is scoped to what the PREDICTION scores, not to `holding_company` alone (task 4 re-review, I2).**
- * The prediction accepts any `filer_family` membership that is not `management_company` — `holding_company` today,
+ * The prediction accepts any `filer_family` membership whose relationship asserts OWNERSHIP — `holding_company` today,
  * `parent_company`/`subsidiary` the moment a writer emits one. Counting only `holding_company` left the census silent
  * about exactly the rows a future evidence channel will add: a reviewer injected three `subsidiary` family rows that
  * moved recall from 0.000 to 0.500, and the census still read `0`, under a heading promising the numbers were counted
@@ -127,18 +127,27 @@ export interface LeakageCensus {
 	 */
 	ownershipEdges: number
 	/**
-	 * `filer_family` rows the prediction will score — every membership whose relationship is not `management_company`.
-	 * Must be 0 in the withheld build.
+	 * `filer_family` rows the prediction will score — every membership whose relationship asserts OWNERSHIP
+	 * ({@linkcode OWNERSHIP_BY_RELATIONSHIP}). Must be 0 in the withheld build.
 	 */
 	scoredFamilyRows: number
 	/**
-	 * `filer_family` rows whose membership is a management fact. Non-zero in BOTH runs — `managementCompany` is not the
-	 * field under test, and the prediction ignores these.
+	 * `filer_family` rows carrying a recognized relationship that asserts something OTHER than ownership — today that is
+	 * `management_company` only, since no writer emits a `same_entity` family row. Non-zero in BOTH runs:
+	 * `managementCompany` is not the field under test, and the prediction ignores these.
 	 */
-	managementFamilyRows: number
+	nonOwnershipFamilyRows: number
 	/**
-	 * Every `filer_family` row in the artifact. Published alongside the two splits so a relationship class nobody
-	 * anticipated cannot hide between them.
+	 * `filer_family` rows whose relationship is not a {@linkcode FilerRelationship} value at all — impossible from any
+	 * shipped writer, so a non-zero count means a row this build did not write. Counted separately rather than folded
+	 * into either bucket, and the gate REFUSES on it: an assertion the eval cannot classify is exactly what a leakage
+	 * check should stop on, not something to file under "not ownership" and pass.
+	 */
+	unrecognizedFamilyRows: number
+	/**
+	 * Every `filer_family` row in the artifact. Published alongside the splits so a relationship class nobody anticipated
+	 * cannot hide between them — and, since the three splits are exhaustive by construction, so the reader can check they
+	 * sum to this.
 	 */
 	familyRows: number
 }
@@ -181,6 +190,24 @@ function assertsOwnership(relationship: string): boolean {
 	return OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship] ?? false
 }
 
+/**
+ * Is this relationship one {@linkcode OWNERSHIP_BY_RELATIONSHIP} actually classifies? Distinct from
+ * {@linkcode assertsOwnership} because the PREDICTION and the GATE want opposite defaults for a string neither
+ * recognizes, and one predicate cannot serve both (re-review finding against the exhaustiveness refactor).
+ *
+ * The prediction must not score an assertion it does not understand, so unknown → not ownership → ignored. The gate
+ * exists to REFUSE publication when the withheld build holds ownership facts it should never have seen, and "a
+ * relationship this eval does not recognize, in a build it did not write" is precisely the case it should refuse rather
+ * than quietly bucket as non-ownership. Before the refactor the gate got that behaviour for free, because its count was
+ * "everything that is not `management_company`" and an unknown string fell on the firing side; collapsing both call
+ * sites onto `assertsOwnership` moved unknowns to the silent side and narrowed the gate. Reproduced: three injected
+ * `transfer_of_control` family rows left `scoredFamilyRows: 0` and the gate silent, where it would previously have
+ * fired.
+ */
+function isRecognizedRelationship(relationship: string): boolean {
+	return Object.hasOwn(OWNERSHIP_BY_RELATIONSHIP, relationship)
+}
+
 async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<LeakageCensus> {
 	const nodes = await db
 		.selectFrom("filer_node")
@@ -190,13 +217,15 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
 
 	const edges = await db.selectFrom("filer_edge").select("relationship").execute()
 	const familyRows = await db.selectFrom("filer_family").select("relationship").execute()
-	const managementFamilyRows = familyRows.filter((row) => !assertsOwnership(row.relationship))
 
 	return {
 		holdingCompanyNodes: nodes.length,
 		ownershipEdges: edges.filter((row) => assertsOwnership(row.relationship)).length,
-		scoredFamilyRows: familyRows.length - managementFamilyRows.length,
-		managementFamilyRows: managementFamilyRows.length,
+		scoredFamilyRows: familyRows.filter((row) => assertsOwnership(row.relationship)).length,
+		nonOwnershipFamilyRows: familyRows.filter(
+			(row) => isRecognizedRelationship(row.relationship) && !assertsOwnership(row.relationship)
+		).length,
+		unrecognizedFamilyRows: familyRows.filter((row) => !isRecognizedRelationship(row.relationship)).length,
 		familyRows: familyRows.length,
 	}
 }
@@ -208,13 +237,14 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
  * a number rather than reporting a flattered one. Runs against the census taken straight off the BUILD, before any
  * injected evidence, so a deliberate probe can still be measured without disarming the gate.
  */
-function assertNoOwnershipLeak(census: LeakageCensus): void {
-	if (census.holdingCompanyNodes || census.ownershipEdges || census.scoredFamilyRows) {
+export function assertNoOwnershipLeak(census: LeakageCensus): void {
+	if (census.holdingCompanyNodes || census.ownershipEdges || census.scoredFamilyRows || census.unrecognizedFamilyRows) {
 		throw new Error(
 			"filerLinkageEval: the withheld build contains ownership facts it was supposed to have never seen " +
 				`(${census.holdingCompanyNodes} holding_company_name nodes, ${census.ownershipEdges} ownership edges, ` +
-				`${census.scoredFamilyRows} scoreable filer_family rows) — the withheld run's score would be measuring the ` +
-				"truth field it is meant to withhold. Refusing to report it."
+				`${census.scoredFamilyRows} scoreable filer_family rows, ${census.unrecognizedFamilyRows} filer_family rows ` +
+				"carrying an unrecognized relationship) — the withheld run's score would be measuring the truth field it is " +
+				"meant to withhold. Refusing to report it."
 		)
 	}
 }
@@ -491,15 +521,19 @@ function renderCensusTable(withheld: LinkageEvalRun, control: LinkageEvalRun): s
 		["what the built artifact contains", "withheld", "control"],
 		[
 			row("`holding_company_name` nodes", (run) => run.census.holdingCompanyNodes),
+			row("ownership `filer_edge` rows (relationship asserts ownership)", (run) => run.census.ownershipEdges),
 			row(
-				"ownership `filer_edge` rows (any non-`same_entity`, non-management relationship)",
-				(run) => run.census.ownershipEdges
-			),
-			row(
-				"`filer_family` rows the prediction scores (any non-management relationship)",
+				"`filer_family` rows the prediction scores (relationship asserts ownership)",
 				(run) => run.census.scoredFamilyRows
 			),
-			row("`filer_family` rows the prediction ignores (management)", (run) => run.census.managementFamilyRows),
+			row(
+				"`filer_family` rows the prediction ignores (recognized, not ownership)",
+				(run) => run.census.nonOwnershipFamilyRows
+			),
+			row(
+				"`filer_family` rows with an unrecognized relationship (gate refuses on these)",
+				(run) => run.census.unrecognizedFamilyRows
+			),
 			row("`filer_family` rows, total", (run) => run.census.familyRows),
 			row("entity-resolution records scored", (run) => run.inferred.recordsConsidered),
 			row("entity-resolution links written", (run) => run.inferred.links),
@@ -823,7 +857,7 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 		"Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no " +
 			"ownership edge and no family row the prediction would score — that is the withholding, verified, and a " +
 			`runtime gate refuses to report a withheld score if any of the three is non-zero. It DOES contain ` +
-			`${withheld.census.managementFamilyRows} corporate-family rows, from the management-company disclosures the ` +
+			`${withheld.census.nonOwnershipFamilyRows} corporate-family rows, from the management-company disclosures the ` +
 			"eval does not withhold; they are namespaced separately from ownership families and the prediction skips " +
 			"them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its " +
 			"own artifact.\n\nThe family counts are split by what the prediction does with a row, not by relationship " +

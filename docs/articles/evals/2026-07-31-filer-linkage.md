@@ -112,15 +112,16 @@ Counted from the two builds, not asserted about them. The withheld build contain
 
 The family counts are split by what the prediction does with a row, not by relationship name: "scored" is every membership that is not management, so a `subsidiary` or `parent_company` row a future writer emits lands in that count rather than going uncounted. The total is printed alongside both splits so nothing can hide between them.
 
-| what the built artifact contains                                                 | withheld | control |
-| -------------------------------------------------------------------------------- | -------- | ------- |
-| `holding_company_name` nodes                                                     | 0        | 4       |
-| ownership `filer_edge` rows (any non-`same_entity`, non-management relationship) | 0        | 8       |
-| `filer_family` rows the prediction scores (any non-management relationship)      | 0        | 8       |
-| `filer_family` rows the prediction ignores (management)                          | 2        | 2       |
-| `filer_family` rows, total                                                       | 2        | 10      |
-| entity-resolution records scored                                                 | 12       | 12      |
-| entity-resolution links written                                                  | 0        | 0       |
+| what the built artifact contains                                              | withheld | control |
+| ----------------------------------------------------------------------------- | -------- | ------- |
+| `holding_company_name` nodes                                                  | 0        | 4       |
+| ownership `filer_edge` rows (relationship asserts ownership)                  | 0        | 8       |
+| `filer_family` rows the prediction scores (relationship asserts ownership)    | 0        | 8       |
+| `filer_family` rows the prediction ignores (recognized, not ownership)        | 2        | 2       |
+| `filer_family` rows with an unrecognized relationship (gate refuses on these) | 0        | 0       |
+| `filer_family` rows, total                                                    | 2        | 10      |
+| entity-resolution records scored                                              | 12       | 12      |
+| entity-resolution links written                                               | 0        | 0       |
 
 ## Why the withheld run recovers nothing
 

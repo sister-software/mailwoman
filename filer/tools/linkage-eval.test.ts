@@ -31,7 +31,13 @@ import {
 	PUBLISHED_LINKAGE_EVAL_DATE,
 	PUBLISHED_WITHHELD_INPUTS_SHA256,
 } from "./linkage-corpus.ts"
-import { filerLinkageEval, runLinkagePass, type FilerLinkageEvalResult, type LinkageEvalRun } from "./linkage-eval.ts"
+import {
+	assertNoOwnershipLeak,
+	filerLinkageEval,
+	runLinkagePass,
+	type FilerLinkageEvalResult,
+	type LinkageEvalRun,
+} from "./linkage-eval.ts"
 
 const FRN_CASCADE_1 = toFRN("9100000001")!
 const FRN_CASCADE_2 = toFRN("9100000002")!
@@ -174,28 +180,46 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents. Keying the
 		// accumulator on the union-find root as it stood MID-loop dropped whichever id was recorded before a later union
 		// re-rooted the component — the partition stayed correct, the published label silently lost a name.
-		const rows = [
-			...buildLinkageEvalForm499Rows(),
-			{
-				...buildLinkageEvalForm499Rows()[0]!,
-				form499ID: "991090",
-				frn: toFRN("9100000090")!,
-				legalNameOfCarrier: "Two Parents Telecom LLC",
-				holdingCompany: "Northbridge Holdings LLC",
-			},
-		]
-
 		// Both parents are unique to this registrant, so its label depends ONLY on its own accumulated set — no other
-		// registrant's contribution can put the dropped id back via the component roll-up and mask the bug.
-		const providerRows = [
-			...buildLinkageEvalProviderRows(),
-			{ providerID: 700_090, frn: toFRN("9100000090")!, holdingCompany: "Southgate Capital Partners LLC" },
-		]
+		// registrant's contribution can put a dropped id back via the component roll-up and mask the bug.
+		//
+		// BOTH ORIENTATIONS are asserted, and that is the whole test. `union` merges toward the lexicographically smaller
+		// root, so exactly one ordering of any two parent names re-roots the component AWAY from the key the first id was
+		// filed under — and only that one orphans anything. The first version of this test fixed the Form 499 parent as
+		// "Northbridge" and the provider parent as "Southgate", which is the safe ordering: the second union re-rooted
+		// ONTO the existing key, nothing was dropped, and the test passed against the unfixed code. Naming both parents
+		// per orientation removes the coin-flip.
+		const labelFor = (form499Parent: string, providerParent: string): string | undefined => {
+			const rows = [
+				...buildLinkageEvalForm499Rows(),
+				{
+					...buildLinkageEvalForm499Rows()[0]!,
+					form499ID: "991090",
+					frn: toFRN("9100000090")!,
+					legalNameOfCarrier: "Two Parents Telecom LLC",
+					holdingCompany: form499Parent,
+				},
+			]
 
-		const group = buildTruthFamilyGroups(rows, providerRows).get(toFRN("9100000090")!)
+			const providerRows = [
+				...buildLinkageEvalProviderRows(),
+				{ providerID: 700_090, frn: toFRN("9100000090")!, holdingCompany: providerParent },
+			]
 
-		expect(group).toContain("holding_company_name:northbridge")
-		expect(group).toContain("holding_company_name:southgate capital partners")
+			return buildTruthFamilyGroups(rows, providerRows).get(toFRN("9100000090")!)
+		}
+
+		const northbridgeFirst = labelFor("Northbridge Holdings LLC", "Southgate Capital Partners LLC")
+		const southgateFirst = labelFor("Southgate Capital Partners LLC", "Northbridge Holdings LLC")
+
+		// The FULL joined label, not a substring: the id set is what gets published, and `toContain(":northbridge")`
+		// would pass just as happily on a label that had lost the other parent.
+		const expected = "holding_company_name:northbridge holdings + holding_company_name:southgate capital partners"
+
+		// Equal to each other AND equal to the full expected set — the label is a property of the registrant, not of
+		// which source happened to be read first.
+		expect(northbridgeFirst).toBe(expected)
+		expect(southgateFirst).toBe(expected)
 	})
 
 	it("does NOT treat a shared management company as a truth family", () => {
@@ -342,7 +366,7 @@ describe("filerLinkageEval — what is really in the artifacts (task 4 review fi
 	it("DOES leave management-company filer_family rows there — the old page claimed none could exist", async () => {
 		const { withheld } = await runEval()
 
-		expect(withheld.census.managementFamilyRows).toBe(2)
+		expect(withheld.census.nonOwnershipFamilyRows).toBe(2)
 		expect(withheld.census.familyRows).toBe(2)
 		expect(withheld.observedFamilyIDsOf.get(FRN_CASCADE_3)).toEqual([MANAGEMENT_FAMILY_ID])
 		expect(withheld.observedFamilyIDsOf.get(FRN_COMANAGED)).toEqual([MANAGEMENT_FAMILY_ID])
@@ -364,7 +388,7 @@ describe("filerLinkageEval — what is really in the artifacts (task 4 review fi
 		expect(control.census.holdingCompanyNodes).toBe(4)
 		expect(control.census.ownershipEdges).toBe(8)
 		expect(control.census.scoredFamilyRows).toBe(8)
-		expect(control.census.managementFamilyRows).toBe(2)
+		expect(control.census.nonOwnershipFamilyRows).toBe(2)
 		expect(control.census.familyRows).toBe(10)
 	})
 })
@@ -431,7 +455,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 		// The pre-fix census counted `holding_company` only and would have read 0 here, under a heading promising the
 		// numbers were counted from the build.
 		expect(injected.census.scoredFamilyRows).toBe(3)
-		expect(injected.census.managementFamilyRows).toBe(2)
+		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
 		expect(injected.census.familyRows).toBe(5)
 	})
 
@@ -439,5 +463,80 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 		// The injection adds exactly the ownership rows the gate refuses. It does not throw, because the gate reads the
 		// census BEFORE the probe writes; break that ordering and this test starts throwing instead of scoring.
 		await expect(runInjected()).resolves.toBeDefined()
+	})
+
+	/**
+	 * A relationship string that is not a {@linkcode FilerRelationship} value at all — the shape a `filer_family` row
+	 * would carry if some future writer, or a hand-edited artifact, put an assertion in the table that this eval has
+	 * never been taught to classify.
+	 */
+	const UNRECOGNIZED_RELATIONSHIP = "transfer_of_control"
+
+	const injectUnrecognizedFamily = async (db: DatabaseClient<FilerDatabase>): Promise<void> => {
+		for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
+			await db
+				.insertInto("filer_family")
+				.values({
+					node_id: `frn:${frn}`,
+					family_id: INJECTED_FAMILY_ID,
+					naming_node_id: INJECTED_FAMILY_ID,
+					relationship: UNRECOGNIZED_RELATIONSHIP,
+					source: "linkage-eval-injection-probe",
+					source_vintage: "2026-eval-v1",
+					valid_from: "2026-01-01",
+					valid_to: null,
+				})
+				.execute()
+		}
+	}
+
+	it("counts an unrecognized relationship in its own census bucket, not as non-ownership", async () => {
+		const form499Rows = buildLinkageEvalForm499Rows()
+		const providerRows = buildLinkageEvalProviderRows()
+
+		const injected = await runLinkagePass({
+			inputs: buildFilteredEvalInputs(),
+			registrants: buildTruthRegistrants(form499Rows, providerRows),
+			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),
+			label: "withheld-unrecognized",
+			holdingCompanyWithheld: true,
+			injectEvidence: injectUnrecognizedFamily,
+		})
+
+		// The exhaustiveness refactor briefly folded unrecognized relationships in with `management_company`, because both
+		// simply failed the ownership test. That put the one class the eval cannot reason about on the SILENT side of the
+		// gate. It gets its own bucket so the gate can refuse on it and the published census cannot hide it.
+		expect(injected.census.unrecognizedFamilyRows).toBe(3)
+		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
+		expect(injected.census.scoredFamilyRows).toBe(0)
+		expect(injected.census.familyRows).toBe(5)
+	})
+
+	it("refuses to report a withheld build carrying a relationship it cannot classify", () => {
+		// The gate's default must be the OPPOSITE of the prediction's. The prediction ignores what it does not understand
+		// (never score an unrecognized assertion); the gate must refuse it (an assertion this eval cannot classify, in a
+		// build it did not write, is exactly what a leakage check exists to stop). One predicate cannot serve both.
+		expect(() =>
+			assertNoOwnershipLeak({
+				holdingCompanyNodes: 0,
+				ownershipEdges: 0,
+				scoredFamilyRows: 0,
+				nonOwnershipFamilyRows: 2,
+				unrecognizedFamilyRows: 3,
+				familyRows: 5,
+			})
+		).toThrow(/unrecognized relationship/)
+
+		// …and stays quiet on the shape the withheld build actually produces, so the gate is not simply always-throwing.
+		expect(() =>
+			assertNoOwnershipLeak({
+				holdingCompanyNodes: 0,
+				ownershipEdges: 0,
+				scoredFamilyRows: 0,
+				nonOwnershipFamilyRows: 2,
+				unrecognizedFamilyRows: 0,
+				familyRows: 2,
+			})
+		).not.toThrow()
 	})
 })
