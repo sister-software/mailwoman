@@ -254,3 +254,47 @@ evidence looked encouraging.
    and `pub/` contains only `uls/`. ASR is 3c's crown jewel (structures with coordinates _and_ owner
    FRN), so finding its current bulk path is a 3c prerequisite — and the FCC's ASR pages live on
    `www.fcc.gov`/`wireless2.fcc.gov`, both blocked here.
+
+## 12. ASR and ULS sources — resolved and verified (2026-07-31)
+
+Operator research resolved §11's open questions; the reachable parts were then verified directly from
+the lab host.
+
+**FRN Conversions API: confirmed dead.** It was dismantled with the Reboot-FCC-era portal and never
+migrated — modern FCC developer documentation no longer references it. The Commission's expected path
+for FRN→entity today is ULS, CORES/registration search, and License View. **Consequence for 3b:** there
+is no supported programmatic CORES wrapper, so the family-edge story rests on Form 499's
+`holdingCompany`/`managementCompany` (already parsed in 3a) plus SEC EDGAR Exhibit 21. Plan 3b on those
+two and treat any CORES access as a bonus, not a dependency.
+
+**ASR bulk: found, reachable, and current.** It lives inside the ULS transaction downloads, not a
+separate ASR tree. Verified present at `data.fcc.gov/download/pub/uls/complete/` — a host that answers
+from here:
+
+| File          | Size    | Contents                                           |
+| ------------- | ------- | -------------------------------------------------- |
+| `r_tower.zip` | ~33 MB  | Complete **registration** database — the 3c source |
+| `a_tower.zip` | ~161 MB | Complete application database                      |
+| `d_tower.zip` | ~56 MB  | FAA determination database                         |
+
+Daily deltas follow `r_tow_<day>.zip` / `a_tow_<day>.zip` / `d_tow_<day>.zip`. Archives observed dated
+2026-07-28. The `pub/uls/complete/` tree also carries the Part 101 licence data D2 scoped us to, so
+**both of 3c's data dependencies resolve to one reachable directory.**
+
+**The ArcGIS FeatureServer is NOT the right source for us — do not adopt it.** It was suggested as an
+easier alternative to the fixed-width archives, and it is easier, but two verified facts disqualify it:
+
+1. **It is a state subset, not national.** `asr_asr_OR` returns **351 features**; the national register
+   holds well over a hundred thousand structures. The sample confirms Oregon-area geometry.
+2. **It has no FRN field.** All 29 fields are: `OBJECTID, RegNum, UniqSysID, Entity, ContAdd, ContPO,
+ContCity, ContState, ContZip, ContName, LatDeg…LonDir, CoordsType, StatusCode, LocAdd, LocCity,
+LocState, Strucht, FAAstudy, FAAcirc, latdec, londec, url`. Owner appears only as `Entity`, a name
+   string. **Joining a structure to a filer by name rather than FRN is precisely the false-identity-link
+   failure 3a's identifier veto exists to prevent** ("American Broadband LLC" vs "American Broadband,
+   Inc."). The FRN is the entire reason ASR matters to this project, so the convenient source is the
+   wrong one.
+
+**3c decision, pre-registered here:** ingest `r_tower.zip` (fixed-width) and key structures on the
+registrant **FRN**, not on `Entity`. Confirm during 3c recon that the fixed-width layout does carry FRN
+— if it does not, ASR cannot join to the crosswalk authoritatively and the phase needs rethinking
+before any code is written.
