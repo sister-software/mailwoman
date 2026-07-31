@@ -430,12 +430,12 @@ function mintProviderNodeID(providerID: number, rowIndex: number): string {
 }
 
 /**
- * Create every table this builder writes to, in one place — split out of {@linkcode buildFilerDatabase} itself (3b Task
- *
- * 1. Purely to stay under the linter's `max-statements` ceiling once `filer_family`'s creation call joined
- *    `filer_cluster`'s; no behavioral difference from inlining these calls at the original call site. `filer_cluster`
- *    and `filer_family` are both created EMPTY here, for schema completeness — see the module docstring for who
- *    populates each later (Task 6's `cluster-filers.ts` for the former, 3b Task 2 for the latter).
+ * Create every table this builder writes to, in one place — split out of {@linkcode buildFilerDatabase} itself purely
+ * to stay under the linter's `max-statements` ceiling, once `filer_family`'s creation call joined `filer_cluster`'s in
+ * the 3b family-membership work; no behavioral difference from inlining these calls at the original call site.
+ * `filer_cluster` and `filer_family` are both created EMPTY here, for schema completeness — see the module docstring
+ * for who populates each later (`cluster-filers.ts` for the former, this file's family-membership emission for the
+ * latter).
  */
 async function createFilerBuildTables(kdb: Kysely<FilerDatabase>): Promise<void> {
 	await createFilerManifestTable(kdb)
