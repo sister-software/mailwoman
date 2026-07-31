@@ -70,6 +70,18 @@
  *   499-derived edges (it is the identifier hub — spec §3), `bdcProviderID` is `from` for provider-list
  *   edges (the row's own natural anchor).
  *
+ *   **`relationship` is a placeholder here (3b Task 1, decisions 1, 2) — every edge above is written
+ *   `FilerRelationship.SameEntity`, including the holding-/management-company edges.** 3b Task 1 only adds
+ *   the column (plus the `FilerRelationship` const); reclassifying each site to its correct named kind
+ *   (`HoldingCompany`/`ManagementCompany` for the two edges above, everything else staying `SameEntity`) is
+ *   3b Task 2's job, per that task's own brief. Using one uniform value here keeps every site in this
+ *   builder compiling and the existing 3a test suite green without this task guessing Task 2's
+ *   reclassification.
+ *
+ *   **`filer_family` is NOT populated by this builder.** Task 1 creates the table (empty, for schema
+ *   completeness — the same deferral `filer_cluster` got in 3a until Task 6 populated it); deriving family
+ *   membership from the holding-/management-company edges above is 3b Task 2's job.
+ *
  *   **DC-agent doctrine (spec §3.1 finding 3, repeated here because it is easy to violate by accident):**
  *   `dcAgent*` fields are recorded ONLY as `filer_attribute` rows (`dc_agent_display_name`,
  *   `dc_agent_organization_name`, `dc_agent_telephone`, `dc_agent_email_address`, `dc_agent_address`).
@@ -111,13 +123,17 @@ import {
 	createFilerClusterTable,
 	createFilerEdgeTable,
 	createFilerEdgeToNodeIndex,
+	createFilerFamilyIndex,
+	createFilerFamilyTable,
 	createFilerManifestTable,
 	createFilerNodeTable,
 	FilerEdgeAssertion,
 	FilerIdentifierType,
+	FilerRelationship,
 	type FilerDatabase,
 } from "../schema.ts"
 import { classifyFiler, parseForm499, type Form499Row } from "./form499.ts"
+import { assertISODate } from "./guards.ts"
 import { parseProviderList, type ProviderListRow } from "./provider-list.ts"
 
 /**
@@ -305,42 +321,6 @@ function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: num
 	return lastFiledAt
 }
 
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-
-/**
- * Validates `value` is an ISO `YYYY-MM-DD` date before it is written into `valid_from` (or `valid_to`) —
- * {@linkcode assertLastFiledAt}'s companion guard, in the same loud class, applied at EVERY site in this builder (and
- * `cluster-filers.ts`, which imports this function) that writes either temporal column (review fix, round N, CRITICAL).
- * Exported because both files need the SAME rule, not two drifting copies of it.
- *
- * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as a
- * plain STRING comparison — correct only when every value compared is drawn from the same ISO-sortable `YYYY-MM-DD`
- * scheme. `source_vintage` is free to stay a human vintage LABEL (`"2026-Q2"`, `"2026-cluster-v1"`) — that plurality is
- * exactly what the column is for (decision 7) — but that same label is NOT safe to also write into `valid_from`:
- * `"2026-Q2"` sorts lexicographically ABOVE any real ISO date this century (the ASCII code for `"Q"` is greater than
- * every digit's), so an edge dated that way would silently fail `valid_from <= asOf` at every real-world `asOf`, and
- * `filerLookup` would report the identifier crosswalk as EMPTY against a filer.db that actually has the data (reviewer
- * probe, this file's final 3a review: a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned
- * `identifiers: []`/`primary_frn: null`).
- *
- * Thrown, not coerced: there is no honest way to turn a whole-file vintage label into a per-edge date without
- * fabricating one. The caller must supply a real ISO date through a field dedicated to that purpose
- * ({@link BuildFilerOptions.validFrom}, `ClusterFilersOptions.validFrom`) instead of relying on this function (or any
- * other) to guess one from a label.
- */
-export function assertISODate(value: string, context: string): string {
-	if (!ISO_DATE_PATTERN.test(value)) {
-		throw new Error(
-			`buildFilerDatabase: malformed ${context} — ${JSON.stringify(value)} is not an ISO YYYY-MM-DD date. ` +
-				`valid_from/valid_to must always be ISO-sortable dates (decision 7 / gate 1's asOf predicate is a ` +
-				`plain string comparison over them) — a vintage LABEL like "2026-Q2" sorts lexicographically ABOVE ` +
-				`any real ISO date and would silently break every asOf-scoped read against the edge it's written to.`
-		)
-	}
-
-	return value
-}
-
 /**
  * Requires + ISO-validates {@link BuildFilerOptions.validFrom} — called once, up front, only when a provider-list source
  * is actually supplied (review fix, round N, CRITICAL). Fails fast, before any file/DB I/O, matching the "pass at least
@@ -382,6 +362,24 @@ function mintProviderNodeID(providerID: number, rowIndex: number): string {
 }
 
 /**
+ * Create every table this builder writes to, in one place — split out of {@linkcode buildFilerDatabase} itself (3b Task
+ *
+ * 1. Purely to stay under the linter's `max-statements` ceiling once `filer_family`'s creation call joined
+ *    `filer_cluster`'s; no behavioral difference from inlining these calls at the original call site. `filer_cluster`
+ *    and `filer_family` are both created EMPTY here, for schema completeness — see the module docstring for who
+ *    populates each later (Task 6's `cluster-filers.ts` for the former, 3b Task 2 for the latter).
+ */
+async function createFilerBuildTables(kdb: Kysely<FilerDatabase>): Promise<void> {
+	await createFilerManifestTable(kdb)
+	await createFilerNodeTable(kdb)
+	await createFilerEdgeTable(kdb)
+	await createFilerAttributeTable(kdb)
+	await createFilerClusterTable(kdb)
+	await createFilerFamilyTable(kdb)
+	await createFilerAttributeStageTable(kdb)
+}
+
+/**
  * Build `filer.db`: create tables → stage+materialize `filer_attribute` (dedup) → direct PK-deduped `INSERT OR IGNORE`
  * into `filer_node`/`filer_edge` → index-after-load → manifest → seal → atomic move-into-place. See the module
  * docstring for the full flow rationale and the edges/attributes emitted.
@@ -420,23 +418,22 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 	const kdb = new DatabaseClient<FilerDatabase>({ database: db })
 
-	progress("creating manifest/node/edge/attribute/cluster/attribute-stage tables")
-	await createFilerManifestTable(kdb)
-	await createFilerNodeTable(kdb)
-	await createFilerEdgeTable(kdb)
-	await createFilerAttributeTable(kdb)
-	// Empty by this builder — Task 6's cluster-filers.ts populates it in a later build pass.
-	await createFilerClusterTable(kdb)
-	await createFilerAttributeStageTable(kdb)
+	progress("creating manifest/node/edge/attribute/cluster/family/attribute-stage tables")
+	await createFilerBuildTables(kdb)
 
 	const insNode = db.prepare(
 		`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
 	)
 
+	// relationship: every edge below is written FilerRelationship.SameEntity, a placeholder (3b Task 1 adds the
+	// column; classifying each site to its correct kind — e.g. HoldingCompany/ManagementCompany for the
+	// holding-/management-company edges below — is Task 2's reclassification, per the Task 1 brief. Using ONE
+	// uniform value here keeps every existing edge emission site compiling and passing without Task 1 guessing
+	// Task 2's design).
 	const insEdge = db.prepare(
 		`INSERT OR IGNORE INTO filer_edge (
-			from_node_id, to_node_id, assertion, source, source_vintage, valid_from, valid_to, match_score, evidence
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 
 	const insAttrStage = db.prepare(
@@ -521,6 +518,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				frnNodeID,
 				form499NodeID,
 				FilerEdgeAssertion.Authoritative,
+				FilerRelationship.SameEntity,
 				"form-499",
 				lastFiledAt,
 				lastFiledAt,
@@ -537,6 +535,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					frnNodeID,
 					holdingNodeID,
 					FilerEdgeAssertion.Authoritative,
+					FilerRelationship.SameEntity,
 					"form-499",
 					lastFiledAt,
 					lastFiledAt,
@@ -556,6 +555,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					frnNodeID,
 					managementNodeID,
 					FilerEdgeAssertion.Authoritative,
+					FilerRelationship.SameEntity,
 					"form-499",
 					lastFiledAt,
 					lastFiledAt,
@@ -594,6 +594,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			providerNodeID,
 			frnNodeID,
 			FilerEdgeAssertion.Authoritative,
+			FilerRelationship.SameEntity,
 			"bdc-provider-list",
 			options.sourceVintage,
 			providerValidFrom!,
@@ -610,6 +611,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				providerNodeID,
 				holdingNodeID,
 				FilerEdgeAssertion.Authoritative,
+				FilerRelationship.SameEntity,
 				"bdc-provider-list",
 				options.sourceVintage,
 				providerValidFrom!,
@@ -645,6 +647,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	await createFilerEdgeToNodeIndex(kdb)
 	await createFilerAttributeNodeIndex(kdb)
 	await createFilerClusterIndex(kdb)
+	await createFilerFamilyIndex(kdb)
 
 	const sourcesUsed: string[] = []
 
@@ -664,7 +667,9 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			name: "filer",
 			// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
 			version: options.sourceVintage,
-			schema_version: 1,
+			// Bumped 1 -> 2 (3b Task 1, decisions 1, 2): filer_edge gained the NOT NULL relationship column and
+			// filer_family is a new table — both are shape changes to the artifact this version number describes.
+			schema_version: 2,
 			source: sourcesUsed.join(","),
 			source_vintage: options.sourceVintage,
 			// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a — see the module docstring's

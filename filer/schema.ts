@@ -35,9 +35,27 @@
  *   `layer_manifest.name`'s precedent — there's no second column to fold into the B-tree alongside it,
  *   and reconstructing `node_id` from a known `(identifier_type, identifier_value)` pair IS the lookup
  *   path, so there's no secondary index for that reverse direction either.
+ *
+ *   **3b Task 1 additions (decisions 1, 2; `schema_version` bumped to 2 in the manifest write path,
+ *   `build-filer.ts`):** {@link FilerEdgeAssertion} grades HOW STRONGLY an assertion is evidenced
+ *   (authoritative vs. inferred) — it says nothing about WHAT the assertion means. `filer_edge` gains a
+ *   separate, orthogonal `relationship` column ({@link FilerRelationship}) for that: before this column
+ *   existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (an edge into a
+ *   `holding_company_name` node was "assumed" to mean ownership), a scheme that cannot distinguish a
+ *   holding company from a parent CIK from a transfer-of-control. `relationship` is NOT part of
+ *   `filer_edge`'s primary key (deliberately — see {@link createFilerEdgeTable}'s docstring): one source
+ *   asserting two different relationship kinds for the same pair at the same instant is a contradiction
+ *   to reject, not a plurality to store the way two DIFFERENT sources (or vintages) are.
+ *
+ *   `filer_cluster` also conflated two distinct rollups the spec keeps apart: an ENTITY cluster (same
+ *   underlying filer under different identifiers — what `filer_cluster` has always meant) and a
+ *   CORPORATE FAMILY (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers).
+ *   `filer_family` is the new seam for the latter — see {@link FilerFamilyTable}. Its own primary key
+ *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, source, valid_from)`,
+ *   `relationship` excluded from it for the identical contradiction-vs-plurality reason).
  */
 
-import type { Kysely } from "kysely"
+import { sql, type Kysely } from "kysely"
 
 /**
  * The identifier namespaces a `filer_node.node_id` can be minted from. No enum (repo rule): `FRN` and `Form499ID` come
@@ -75,6 +93,36 @@ export const FilerEdgeAssertion = {
 export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerEdgeAssertion]
 
 /**
+ * The KIND of relationship a `filer_edge` or `filer_family` row asserts between two nodes (3b Task 1, decisions 1, 2) —
+ * orthogonal to {@link FilerEdgeAssertion}, which grades how strongly the SAME assertion is evidenced, never what it
+ * means. Before this column existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (e.g. an
+ * edge into a `holding_company_name` node was "assumed" to mean ownership) — a scheme that cannot distinguish a holding
+ * company from a parent CIK from a transfer-of-control, and had no way to express a corporate-family fact
+ * (`filer_family`) at all.
+ *
+ * - `SameEntity` — the two nodes denote the SAME underlying filer under different identifiers (an FRN and its Form 499
+ *   ID, a BDC `provider_id` and its FRN) — the crosswalk's original, still-dominant edge meaning, and the only kind
+ *   {@link FilerNodeTable} entity-clustering (`cluster-filers.ts`) ever asserts.
+ * - `HoldingCompany` — the target node is the source node's holding company (an ownership fact).
+ * - `ManagementCompany` — the target node operates/manages the source node without owning it — operational control, never
+ *   collapsed into `HoldingCompany` (spec §3.1 finding 1: ownership and operational control are different assertions).
+ * - `ParentCompany` — the target is the source's parent in a corporate-family rollup ({@link FilerFamilyTable}), distinct
+ *   from `HoldingCompany`: a parent-company relationship is a family-tree fact, not necessarily an ownership filing.
+ * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards") so a row's
+ *   `relationship` always describes the edge in the direction it was asserted, without requiring the reader to know
+ *   which side is the source.
+ */
+export const FilerRelationship = {
+	SameEntity: "same_entity",
+	HoldingCompany: "holding_company",
+	ManagementCompany: "management_company",
+	ParentCompany: "parent_company",
+	Subsidiary: "subsidiary",
+} as const
+
+export type FilerRelationship = (typeof FilerRelationship)[keyof typeof FilerRelationship]
+
+/**
  * One identifier instance in the crosswalk. See the file header for why `node_id` needs no secondary index on
  * `(identifier_type, identifier_value)`.
  */
@@ -101,6 +149,13 @@ export interface FilerEdgeTable {
 	 * One of {@link FilerEdgeAssertion}.
 	 */
 	assertion: string
+	/**
+	 * One of {@link FilerRelationship} (3b Task 1, decisions 1, 2). Orthogonal to `assertion` — see the file header and
+	 * {@link FilerRelationship}'s own docstring. NOT part of {@link createFilerEdgeTable}'s primary key: see that
+	 * function's docstring for why a same-instant conflicting `relationship` from one source is a contradiction to
+	 * reject, not a plurality to store.
+	 */
+	relationship: string
 	/**
 	 * E.g. `"form-499"`, `"bdc-provider-list"`.
 	 */
@@ -165,6 +220,31 @@ export interface FilerClusterTable {
 }
 
 /**
+ * Corporate-family membership (3b Task 1, decisions 1, 2) — the seam `filer_cluster` never had for telling apart an
+ * ENTITY cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY
+ * (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id`
+ * belongs to `family_id` under a specific {@link FilerRelationship} `relationship`, as reported by one source at one
+ * vintage — provenance-plural and temporally scoped exactly like `filer_edge` (see {@link createFilerFamilyTable}'s
+ * docstring for why its primary key mirrors `filer_edge`'s reasoning, `relationship` excluded, and the file header for
+ * the half-open `valid_from <= t < valid_to` convention `valid_to` follows here too).
+ */
+export interface FilerFamilyTable {
+	node_id: string
+	family_id: string
+	/**
+	 * One of {@link FilerRelationship}.
+	 */
+	relationship: string
+	source: string
+	source_vintage: string
+	valid_from: string
+	/**
+	 * Half-open, exactly like {@link FilerEdgeTable.valid_to} — see the file header.
+	 */
+	valid_to: string | null
+}
+
+/**
  * Filer.db's own single-row identity/provenance record (decision 2) — NOT the layer-contract `layer_manifest` from
  * `@mailwoman/core/layers`; filer.db is deliberately not a layer-contract artifact in 3a (no coordinates until ASR
  * lands in Phase 3c). See {@link readFilerManifest} for the single-row read discipline.
@@ -191,6 +271,7 @@ export interface FilerDatabase {
 	filer_edge: FilerEdgeTable
 	filer_attribute: FilerAttributeTable
 	filer_cluster: FilerClusterTable
+	filer_family: FilerFamilyTable
 	filer_manifest: FilerManifestTable
 }
 
@@ -212,6 +293,17 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * the provenance-plurality rationale (decision 7 / gate 1) and why this stays a plain rowid table rather than `WITHOUT
  * ROWID`. Call {@link createFilerEdgeToNodeIndex} separately, after bulk load, for the reverse (in-edges) traversal
  * path.
+ *
+ * `relationship` (3b Task 1, decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as
+ * load-bearing as `assertion`: the PK's job is telling apart DIFFERENT provenance (a different source, or the same
+ * source at a later vintage) — two rows are a legitimate plurality there. Two rows from the SAME source at the SAME
+ * `valid_from` for the SAME pair is a different situation: if `relationship` were in the key, one source could assert
+ * BOTH `"same_entity"` and `"holding_company"` for the identical `(from, to)` pair at the identical instant, and both
+ * would silently persist side by side. That's a contradiction (one source, one moment, two incompatible claims about
+ * what the pair means), not a provenance plurality — the composite `UNIQUE` index leaving `relationship` out is what
+ * makes SQLite reject the second insert instead of quietly storing it. A CHECK constraint additionally rejects a
+ * blank/whitespace-only `relationship` — `NOT NULL` alone doesn't (SQLite happily stores `""`), the same gap
+ * `assertLastFiledAt`/`assertISODate` exist to close for the temporal columns.
  */
 export async function createFilerEdgeTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
@@ -219,6 +311,7 @@ export async function createFilerEdgeTable(db: Kysely<FilerDatabase>): Promise<v
 		.addColumn("from_node_id", "text", (c) => c.notNull())
 		.addColumn("to_node_id", "text", (c) => c.notNull())
 		.addColumn("assertion", "text", (c) => c.notNull())
+		.addColumn("relationship", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("source_vintage", "text", (c) => c.notNull())
 		.addColumn("valid_from", "text", (c) => c.notNull())
@@ -226,6 +319,7 @@ export async function createFilerEdgeTable(db: Kysely<FilerDatabase>): Promise<v
 		.addColumn("match_score", "real")
 		.addColumn("evidence", "text")
 		.addPrimaryKeyConstraint("filer_edge_pk", ["from_node_id", "to_node_id", "source", "valid_from"])
+		.addCheckConstraint("filer_edge_relationship_not_blank", sql`trim(relationship) != ''`)
 		.execute()
 }
 
@@ -278,6 +372,39 @@ export async function createFilerClusterTable(db: Kysely<FilerDatabase>): Promis
  */
 export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema.createIndex("filer_cluster_cluster_id").on("filer_cluster").column("cluster_id").execute()
+}
+
+/**
+ * Create `filer_family` with the composite PK `(node_id, family_id, source, valid_from)` — mirrors
+ * {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart DIFFERENT provenance (a different
+ * source, or the same source at a later vintage), and `relationship` is deliberately excluded from it for the same
+ * contradiction-vs-plurality reason — one source asserting BOTH `"parent_company"` and `"subsidiary"` for the identical
+ * `(node_id, family_id)` pair at the identical instant is a contradiction to reject, not a plurality to store. The same
+ * blank/whitespace-rejecting CHECK constraint applies to `relationship` here too. Call {@link createFilerFamilyIndex}
+ * separately, after bulk load, for the "all members of this family" lookup path.
+ */
+export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
+	await db.schema
+		.createTable("filer_family")
+		.addColumn("node_id", "text", (c) => c.notNull())
+		.addColumn("family_id", "text", (c) => c.notNull())
+		.addColumn("relationship", "text", (c) => c.notNull())
+		.addColumn("source", "text", (c) => c.notNull())
+		.addColumn("source_vintage", "text", (c) => c.notNull())
+		.addColumn("valid_from", "text", (c) => c.notNull())
+		.addColumn("valid_to", "text")
+		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "source", "valid_from"])
+		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
+		.execute()
+}
+
+/**
+ * Secondary index for the "all members of this family" lookup path — the composite PK's leading column is `node_id`, so
+ * a `family_id` lookup needs its own index, exactly matching {@link createFilerClusterIndex}'s rationale.
+ * Index-after-load.
+ */
+export async function createFilerFamilyIndex(db: Kysely<FilerDatabase>): Promise<void> {
+	await db.schema.createIndex("filer_family_family_id").on("filer_family").column("family_id").execute()
 }
 
 /**

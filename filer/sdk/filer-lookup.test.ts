@@ -37,6 +37,7 @@ import {
 	createFilerNodeTable,
 	FilerEdgeAssertion,
 	FilerIdentifierType,
+	FilerRelationship,
 	type FilerDatabase,
 	type FilerEdgeTable,
 	type FilerManifestTable,
@@ -86,6 +87,7 @@ function authoritativeEdge(
 ): FilerEdgeTable {
 	return {
 		assertion: FilerEdgeAssertion.Authoritative,
+		relationship: FilerRelationship.SameEntity,
 		valid_to: null,
 		match_score: null,
 		evidence: null,
@@ -158,6 +160,7 @@ describe("§7-3a gates", () => {
 			from_node_id: true,
 			to_node_id: true,
 			assertion: true,
+			relationship: true,
 			source: true,
 			source_vintage: true,
 			valid_from: true,
@@ -167,7 +170,7 @@ describe("§7-3a gates", () => {
 		} satisfies Record<keyof FilerEdgeInsert, true>
 
 		it("the structural pin enumerates every FilerEdgeTable field, including all four load-bearing ones", () => {
-			expect(Object.keys(FILER_EDGE_INSERT_FIELDS)).toHaveLength(9)
+			expect(Object.keys(FILER_EDGE_INSERT_FIELDS)).toHaveLength(10)
 
 			expect(FILER_EDGE_INSERT_FIELDS).toMatchObject({
 				source: true,
@@ -378,6 +381,7 @@ describe("§7-3a gates", () => {
 					from_node_id: FORM_A,
 					to_node_id: FORM_B,
 					assertion: FilerEdgeAssertion.Inferred,
+					relationship: FilerRelationship.SameEntity,
 					source: "cluster-filers",
 					source_vintage: "2026-cluster-v1",
 					valid_from: "2026-01-01",

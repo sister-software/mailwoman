@@ -94,8 +94,9 @@
  *   **`sourceVintage` vs `validFrom` — NEVER the same field (review fix, round N, CRITICAL).**
  *   {@link ClusterFilersOptions.sourceVintage} is a free-text human vintage LABEL (`"2026-cluster-v1"`)
  *   and {@link ClusterFilersOptions.validFrom} is a SEPARATE, always-ISO `YYYY-MM-DD` date
- *   ({@linkcode assertISODate}, imported from `build-filer.ts` — the same rule, one implementation, no
- *   drift between the two files). `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
+ *   ({@linkcode assertISODate}, imported from `guards.ts` — moved there in 3b Task 1, closing the
+ *   reach-into-the-builder coupling this docstring used to describe: the same rule, one implementation,
+ *   no drift between writers). `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
  *   `validFrom`. This split exists because `valid_from` participates in every downstream `asOf`-scoped
  *   predicate (`filer-lookup.ts`) as a plain STRING comparison — a label like `"2026-cluster-v1"` sorts
  *   lexicographically ABOVE any real ISO date this century, so writing it into `valid_from` (the
@@ -146,8 +147,14 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
 import { buildDefaultModel, resolveEntities, type SourceRecord } from "@mailwoman/registry"
 import type { Kysely } from "kysely"
 
-import { FilerEdgeAssertion, FilerIdentifierType, type FilerClusterTable, type FilerDatabase } from "../schema.ts"
-import { assertISODate } from "./build-filer.ts"
+import {
+	FilerEdgeAssertion,
+	FilerIdentifierType,
+	FilerRelationship,
+	type FilerClusterTable,
+	type FilerDatabase,
+} from "../schema.ts"
+import { assertISODate } from "./guards.ts"
 
 /**
  * `filer_edge.source` for every row {@linkcode clusterInferredLinks} writes — distinguishes this module's own
@@ -642,6 +649,10 @@ export async function clusterInferredLinks(
 						from_node_id: nodeId,
 						to_node_id: representativeId,
 						assertion: FilerEdgeAssertion.Inferred,
+						// This pass links two form499_id nodes that are the SAME underlying filer (a re-filing
+						// under one FRN with a drifted legal name — see the module docstring) — genuinely
+						// SameEntity, not a placeholder like build-filer.ts's own 3b Task 1 stand-in value.
+						relationship: FilerRelationship.SameEntity,
 						source: CLUSTER_FILERS_SOURCE,
 						source_vintage: options.sourceVintage,
 						valid_from: validFrom,
