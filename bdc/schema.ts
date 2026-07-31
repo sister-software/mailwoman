@@ -71,9 +71,29 @@ export interface BDCAvailabilityTable {
 }
 
 /**
- * Provider dictionary keyed on `provider_id`. Populated by a later registry-join task (2a decision 8); no FK constraint
- * against `bdc_availability.provider_id` — SQLite doesn't enforce FKs without `PRAGMA foreign_keys`, and the join
- * happens at read time, not write time.
+ * Provider dictionary keyed on `provider_id`. Populated by a later registry-join task (2a decision 8) — that task is 3a
+ * Task 8's optional `BuildBDCOptions.providers` (`bdc/sdk/build-bdc.ts`'s `populateBDCProviderTable`); when that option
+ * is omitted (the default), this table stays empty, exactly as it did before Task 8. No FK constraint against
+ * `bdc_availability.provider_id` — SQLite doesn't enforce FKs without `PRAGMA foreign_keys`, and the join happens at
+ * read time, not write time.
+ *
+ * **Decision 6 — this table is an explicitly LOSSY denormalization, not the source of truth.** `provider_id` is the PK
+ * (one row per provider), but the FCC's BDC provider list lets one `provider_id` carry MULTIPLE `frn` values — and
+ * conflicting `holding_company` strings — across its rows (Task 3's `parseProviderList` preserves every one of them;
+ * see `filer/sdk/provider-list.ts`). A single-row-per-provider table cannot express that cardinality. `filer.db`
+ * (`@mailwoman/filer`) is the source of truth: it retains every `provider_id`↔`frn` (and
+ * `provider_id`↔`holding_company_name`) edge, never folded or last-wins. When `bdc.db` is built with
+ * `BuildBDCOptions.providers` supplied:
+ *
+ * - `frn` holds only the PRIMARY FRN — the one carrying the most recent Form 499 filing date, per
+ *   `@mailwoman/filer/sdk`'s `readFRNFilingCandidates` + `pickPrimaryFRN` (imported into `build-bdc.ts`, never
+ *   reimplemented — Task 7's review found and fixed a temporal bug in that exact query, one a fresh implementation
+ *   would reintroduce). Every OTHER FRN that `provider_id` carries is discarded here but stays fully recoverable from
+ *   `filer.db`.
+ * - `holding_company` stays NULL. It has the identical cardinality problem `frn` does, but decision 6 defines no
+ *   primary-selection rule for it (only for `frn`) — `filer.db`'s own edges are its source of truth instead.
+ * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name column at all, primary or otherwise,
+ *   so there is nothing to populate it from.
  */
 export interface BDCProviderTable {
 	/**

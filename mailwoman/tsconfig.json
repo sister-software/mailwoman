@@ -22,6 +22,7 @@
 		{ "path": "../api-kit" },
 		{ "path": "../bdc" },
 		{ "path": "../core" },
+		{ "path": "../filer" },
 		{ "path": "../resolver" },
 		{ "path": "../corpus" },
 		{ "path": "../kind-classifier" },

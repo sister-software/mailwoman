@@ -10,9 +10,18 @@
  *
  *   First cut wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
  *   broadband/voice subcategories are a future flag, not a scope gap in this command's shape.
+ *
+ *   `--provider-list-path` (3a Task 8, decision 6) opts INTO populating `bdc_provider` —
+ *   `bdc_availability` itself is unaffected either way. When given, `parseProviderList`
+ *   (`@mailwoman/filer/sdk`) streams the FCC provider-list CSV as `BuildBDCOptions.providers`, and
+ *   filer.db (`--filer-db-path`, default `<data-root>/filer/filer.db`) is opened read-only to resolve
+ *   each multi-FRN provider's primary FRN (`readFRNFilingCandidates` + `pickPrimaryFRN`, imported
+ *   rather than reimplemented — see `build-bdc.ts`'s `BuildBDCOptions.filerDB` docstring). Omitting
+ *   `--provider-list-path` leaves `bdc_provider` empty, exactly as before Task 8.
  */
 
 import { execFileSync } from "node:child_process"
+import { DatabaseSync } from "node:sqlite"
 
 import {
 	BDCFileCategory,
@@ -26,7 +35,10 @@ import {
 	retrieveAvailabilityFiles,
 	retrieveFilingDates,
 } from "@mailwoman/bdc/sdk"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { FilerDatabase } from "@mailwoman/filer"
+import { parseProviderList } from "@mailwoman/filer/sdk"
 import { Box, Text } from "ink"
 import zod from "zod"
 
@@ -41,6 +53,20 @@ const OptionsSchema = zod.object({
 		.boolean()
 		.default(false)
 		.describe("Populate bdc_availability.location_id (opaque BSL join key; NULL by default)"),
+	providerListPath: zod
+		.string()
+		.optional()
+		.describe(
+			"Path to the FCC BDC provider list CSV (frn/provider_id/holding_company). When given, populates " +
+				"bdc_provider (decision 6, 3a task 8); omit to leave bdc_provider empty, as before task 8."
+		),
+	filerDbPath: zod
+		.string()
+		.optional()
+		.describe(
+			"Path to filer.db, used to resolve a multi-FRN provider's primary FRN when --provider-list-path is given. " +
+				"Default <data-root>/filer/filer.db"
+		),
 })
 
 export { OptionsSchema as options }
@@ -85,22 +111,41 @@ const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 		console.error(`▸ build: ${out}`)
 
-		const result = await buildBDCDatabase({
-			csvPaths,
-			out,
-			asOfDate,
-			buildSHA,
-			includeLocationIDs: options.includeLocationIds,
-			blockCentroids: createTIGERBlockCentroidLookup(tigerDBPath),
-			onProgress: (message) => console.error(`  [bdc] ${message}`),
-		})
+		// --provider-list-path (3a Task 8, decision 6) opts into populating bdc_provider — omitted, `providers`/
+		// `filerDB` stay undefined and buildBDCDatabase's default (byte-identical) path runs unchanged.
+		let filerDB: DatabaseClient<FilerDatabase> | undefined
 
-		return [
-			`bdc.db: ${out} (${artifactSizeMB(out)} MB)`,
-			`${result.rows.toLocaleString()} rows · ${result.providers} provider(s) · ${result.deduped.toLocaleString()} deduped` +
-				` · ${result.unknownGeoids.toLocaleString()} unknown geoid(s) · ${result.coverageCells.toLocaleString()} coverage cells`,
-			`manifest: name=bdc tier=shipped license=public-domain source=fcc-bdc sourceVintage=${asOfDate} buildSHA=${buildSHA}`,
-		]
+		if (options.providerListPath) {
+			const filerDbPath = options.filerDbPath ?? dataRootPath("filer", "filer.db")
+
+			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDbPath})`)
+
+			filerDB = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(filerDbPath, { readOnly: true }) })
+		}
+
+		try {
+			const result = await buildBDCDatabase({
+				csvPaths,
+				out,
+				asOfDate,
+				buildSHA,
+				includeLocationIDs: options.includeLocationIds,
+				blockCentroids: createTIGERBlockCentroidLookup(tigerDBPath),
+				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
+				filerDB,
+				onProgress: (message) => console.error(`  [bdc] ${message}`),
+			})
+
+			return [
+				`bdc.db: ${out} (${artifactSizeMB(out)} MB)`,
+				`${result.rows.toLocaleString()} rows · ${result.providers} provider(s) · ${result.deduped.toLocaleString()} deduped` +
+					` · ${result.unknownGeoids.toLocaleString()} unknown geoid(s) · ${result.coverageCells.toLocaleString()} coverage cells` +
+					(options.providerListPath ? ` · ${result.providersPopulated.toLocaleString()} bdc_provider row(s)` : ""),
+				`manifest: name=bdc tier=shipped license=public-domain source=fcc-bdc sourceVintage=${asOfDate} buildSHA=${buildSHA}`,
+			]
+		} finally {
+			await filerDB?.destroy()
+		}
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
