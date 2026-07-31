@@ -62,6 +62,8 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/normalize": "normalize",
 	"@mailwoman/phrase-grouper": "phrase-grouper",
 	"@mailwoman/query-shape": "query-shape",
+	// The tokenizer WASM core (task #26) — a hard dependency of @mailwoman/neural.
+	"@mailwoman/sentencepiece-wasm": "sentencepiece-wasm",
 	"@mailwoman/neural": "neural",
 	// The weights bundles — data-only, but real deps of photon/nominatim/fastify (all in this
 	// closure), so on a version-bumped release branch npm would otherwise chase the not-yet-published
@@ -106,6 +108,10 @@ const WORKSPACES: Record<string, string> = {
 	// bin-exec leg (`checkMCPBin`, 2026-07-20) — a real JSON-RPC initialize + tools/list handshake against
 	// the installed bin — instead of only transitively via the closure-wide npm install.
 	"@mailwoman/mcp": "mcp",
+	// BDC + filer (2026-07-31): runtime deps of mailwoman + @mailwoman/mcp — the closure guard
+	// flagged both missing on the first PR after their merge (pre-existing gap, not that PR's).
+	"@mailwoman/bdc": "bdc",
+	"@mailwoman/filer": "filer",
 }
 
 /**
