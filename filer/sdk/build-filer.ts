@@ -131,12 +131,21 @@
  *      `assertion: inferred`, `relationship: ParentCompany` (the inverse direction from edge 1 —
  *      `from: frn -> to: cik` with `Subsidiary` would assert the CIK is the FRN's subsidiary, the wrong way
  *      round; `ParentCompany` is what "the target is my parent" means here — this is the EXACT shape the
- *      Task 8 precondition regression test in `linkage-eval.test.ts` pins), carrying
- *      {@linkcode EDGAR_SUBSIDIARY_MATCH_SCORE}. When ZERO FRNs match, nothing more is written — the
- *      disclosure edge above is the whole fact. When TWO OR MORE DISTINCT FRNs canonicalize to the SAME
- *      name (a genuine collision — 3a's false-identity-link lesson, `edgar-filings.ts`'s own
- *      `resolveCIKCandidates` docstring), this builder ABSTAINS rather than guess which one: no corroboration
- *      edge, no family row, for that subsidiary.
+ *      Task 8 precondition regression test in `linkage-eval.test.ts` pins), carrying the `match_score`
+ *      {@linkcode scoreEdgarSubsidiaryMatch} computes from the two RAW names. When ZERO FRNs match, nothing
+ *      more is written — the disclosure edge above is the whole fact. When TWO OR MORE DISTINCT FRNs
+ *      canonicalize to the SAME name (a genuine collision — 3a's false-identity-link lesson,
+ *      `edgar-filings.ts`'s own `resolveCIKCandidates` docstring), this builder ABSTAINS rather than guess
+ *      which one: no corroboration edge, no family row, for that subsidiary.
+ *
+ *      **The score is NOT a constant (fix round 1).** It used to be a flat `0.92` on every such link, which
+ *      overstated the ambiguous case badly: the join is on the CANONICALIZED name, and
+ *      `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."` and
+ *      `"American Broadband Corp"` all to `"american broadband"` — so the match provably cannot tell three
+ *      companies apart while reporting 0.92 for each. The abstention above does not cover that case, because
+ *      it only fires on a collision WITHIN the 499 file: if 499 carries only the LLC and Exhibit 21 discloses
+ *      the Inc., exactly one FRN matches and an edge is written for what may be the wrong company. It is now
+ *      written at 0.5. See {@linkcode scoreEdgarSubsidiaryMatch} for the three-rung ladder and its ceiling.
  *
  *   **A `filer_family` row is written ALONGSIDE the corroboration edge — never for the disclosure edge
  *   alone.** This is the Task 8 precondition, stated as plainly as the regression test states it: a
@@ -414,14 +423,70 @@ function mintSubsidiaryNameNodeID(name: string): string {
 }
 
 /**
- * The `match_score` written on every subsidiary-name→FRN inferred edge/family row (3b Task 8). A fixed constant rather
- * than a computed similarity, because the ONLY basis this builder ever infers such a link on is an EXACT
- * canonicalized-name match (see the module docstring) — `cluster-filers.ts`'s own inferred pass makes the identical
- * simplification for the identical reason ("nothing below an exact canonical match ever reaches the scorer"). `0.92`
- * matches the value the plan's own Task 8 precondition regression test (`linkage-eval.test.ts`) uses for this exact
- * shape, so a real artifact this builder produces and one hand-built to pin the precondition carry the same score.
+ * The subsidiary-name→FRN score when the two RAW names are BYTE-IDENTICAL — the strongest this match can ever be, and
+ * the CEILING for {@linkcode scoreEdgarSubsidiaryMatch}.
+ *
+ * **It is not 1, and it is bounded by what canonical-name matching can know, which is less than identity.** Two
+ * disjoint companies can file under the same legal name; `edgar-filings.ts`'s `resolveCIKCandidates` docstring pins
+ * that case verbatim (`"American Broadband LLC"` and `"American Broadband, Inc."`, disjoint CIKs) and says in terms
+ * that "a score of `1` is not itself a license to pick". A name is evidence about identity, never a proof of it, so no
+ * value on this ladder may read as certainty.
  */
-const EDGAR_SUBSIDIARY_MATCH_SCORE = 0.92
+const EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME = 0.9
+
+/**
+ * The score when the two raw names differ only in what canonicalization normalizes WITHOUT deleting — case,
+ * punctuation, accents, `&`/`and`, a leading `The`, whitespace — while carrying the SAME legal designations (`"ACME
+ * FIBER, LLC"` vs `"Acme Fiber LLC"`). Real formatting variance between two filings of one company's name, so
+ * meaningfully weaker than a byte-identical match but not the ambiguous case below.
+ */
+const EDGAR_MATCH_SCORE_NORMALIZATION_ONLY = 0.75
+
+/**
+ * The score when the two raw names differ in their LEGAL DESIGNATIONS — `"American Broadband LLC"` (499) vs `"American
+ * Broadband, Inc."` (Exhibit 21). Weak on purpose: canonicalization is what erased the only part of the string that
+ * distinguished them, so the match is resting on a token it deliberately threw away. The abstention above ({@linkcode
+ * processEdgarSubsidiaryRow}'s `matchedFRNs.length !== 1`) does NOT cover this — it only fires on a collision WITHIN
+ * the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc., exactly one FRN matches and the
+ * edge is written. That edge may well be the wrong company; this number says so.
+ */
+const EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS = 0.5
+
+/**
+ * The sorted legal designations {@linkcode canonicalizeOrganizationName} STRIPPED from a name, as a comparable key.
+ * Sorted (not encounter-ordered) because `"Acme Co Inc"` and `"Acme Inc Co"` deleted the same tokens.
+ */
+function strippedDesignationKey(name: string): string {
+	return (canonicalizeOrganizationName(name)?.designations ?? []).toSorted().join(" ")
+}
+
+/**
+ * The `match_score` for one subsidiary-name→FRN inference (3b Task 8 fix round 1) — replacing the flat `0.92` this
+ * builder used to write on EVERY such link regardless of how much the match actually knew.
+ *
+ * Both names reaching this function already share a canonical form; that is the match. The question this answers is how
+ * much of the ORIGINAL string that shared form threw away, because `canonicalizeOrganizationName` maps `"American
+ * Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"` all to `"american broadband"`
+ * (verified). A match that provably cannot tell three companies apart must not report the same confidence as one on
+ * identical raw names.
+ *
+ * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument here — measured, not assumed.**
+ * `nameSimilarity` on the RAW pair scores `"American Broadband LLC"` vs `"American Broadband, Inc."` at **0.9485** and
+ * vs `"American Broadband Corp"` at **0.9557** — HIGHER than the 0.92 constant being removed, because Jaro-Winkler's
+ * prefix boost rewards exactly the long shared head these pairs have. String distance measures how alike two spellings
+ * look; the signal that separates a real match from a designation collision is WHICH TOKENS canonicalization deleted,
+ * which is a set comparison. So this uses `canonicalizeOrganizationName`'s own `designations` output — already computed
+ * on this path, no new dependency — rather than a comparator that would score the ambiguous case highest of all.
+ *
+ * Three outcomes, no interpolation: a similarity curve here would imply a resolution this evidence does not have.
+ */
+function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: string): number {
+	if (subsidiaryName === legalName) return EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME
+
+	return strippedDesignationKey(subsidiaryName) === strippedDesignationKey(legalName)
+		? EDGAR_MATCH_SCORE_NORMALIZATION_ONLY
+		: EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS
+}
 
 // mintFamilyID moved to family-id.ts (task 3 fix round 3) — filer-lookup.ts's readFamilyDisplayNames now needs the
 // identical canonicalization rule to tell apart which target node's edge names a given family_id, and re-deriving it
@@ -637,6 +702,17 @@ function processForm499FRNRelationships(
 }
 
 /**
+ * One FRN in a canonical-name bucket, carrying the RAW `legalNameOfCarrier` spelling that landed it there (3b Task 8
+ * fix round 1). The raw name is what {@linkcode scoreEdgarSubsidiaryMatch} needs: the canonical form is by definition
+ * identical across every member of a bucket, so it holds none of the signal that separates a real match from a
+ * designation collision.
+ */
+interface CanonicalNameCandidate {
+	frn: string
+	legalName: string
+}
+
+/**
  * Groups `legalNameByFRN` (the in-memory map {@linkcode buildFilerDatabase}'s form499 loop builds) by CANONICAL name —
  * "which FRNs share this exact canonical legal name" — the input {@linkcode processEdgarSubsidiaryRow}'s corroboration
  * match reads. A canonical name shared by two or more distinct FRNs is a genuine collision (the same
@@ -646,20 +722,21 @@ function processForm499FRNRelationships(
  */
 function groupFRNsByCanonicalLegalName(
 	legalNameByFRN: ReadonlyMap<string, { name: string; filedAt: string }>
-): Map<string, string[]> {
-	const buckets = new Map<string, string[]>()
+): Map<string, CanonicalNameCandidate[]> {
+	const buckets = new Map<string, CanonicalNameCandidate[]>()
 
 	for (const [frn, { name }] of legalNameByFRN) {
 		const canonical = canonicalizeOrganizationName(name)?.canonical
 
 		if (!canonical) continue
 
+		const candidate: CanonicalNameCandidate = { frn, legalName: name }
 		const bucket = buckets.get(canonical)
 
 		if (bucket) {
-			bucket.push(frn)
+			bucket.push(candidate)
 		} else {
-			buckets.set(canonical, [frn])
+			buckets.set(canonical, [candidate])
 		}
 	}
 
@@ -678,7 +755,7 @@ function processEdgarSubsidiaryRow(
 	insNode: StatementSync,
 	insEdge: StatementSync,
 	insFamily: StatementSync,
-	frnsByCanonicalLegalName: ReadonlyMap<string, string[]>,
+	frnsByCanonicalLegalName: ReadonlyMap<string, CanonicalNameCandidate[]>,
 	row: EdgarSubsidiaryRow,
 	rowIndex: number
 ): void {
@@ -717,12 +794,18 @@ function processEdgarSubsidiaryRow(
 	// Corroboration — INFERENCE, not authority, and only when UNAMBIGUOUS (exactly one match). Zero matches: nothing
 	// more to write, the disclosure edge above is the whole fact. Two or more: a genuine name collision across
 	// distinct FRNs — abstain rather than guess which one, same as resolveCIKCandidates never silently narrowing a
-	// tie.
+	// tie. KEPT as-is by task 8 fix round 1: scoring the survivors honestly is not a substitute for abstaining on a
+	// tie, and the two answer different questions (WHETHER to write an edge vs how far to trust the one written).
 	if (matchedFRNs.length !== 1) return
 
-	const matchedFRN = matchedFRNs[0]!
-	const matchedFRNNodeID = mintFRNNodeID(matchedFRN, context)
-	insNode.run(matchedFRNNodeID, FilerIdentifierType.FRN, matchedFRN)
+	const matched = matchedFRNs[0]!
+	const matchedFRNNodeID = mintFRNNodeID(matched.frn, context)
+	insNode.run(matchedFRNNodeID, FilerIdentifierType.FRN, matched.frn)
+
+	// Task 8 fix round 1: the score reflects what THIS match actually knows, not a flat 0.92 on every link — see
+	// scoreEdgarSubsidiaryMatch. `evidence` carries both raw spellings now, so a reader can see for itself what the
+	// score is grading rather than having to take the number on faith.
+	const matchScore = scoreEdgarSubsidiaryMatch(row.subsidiaryName, matched.legalName)
 
 	insEdge.run(
 		matchedFRNNodeID,
@@ -733,8 +816,8 @@ function processEdgarSubsidiaryRow(
 		filingDate,
 		filingDate,
 		null,
-		EDGAR_SUBSIDIARY_MATCH_SCORE,
-		JSON.stringify({ subsidiaryName: row.subsidiaryName, cik: row.cik })
+		matchScore,
+		JSON.stringify({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
 	)
 
 	// The Task 8 precondition: a filer_edge row ALONE is invisible to familyRollup/filerLookup.families — both
@@ -754,7 +837,7 @@ function processEdgarSubsidiaryRow(
 		filingDate,
 		filingDate,
 		null,
-		EDGAR_SUBSIDIARY_MATCH_SCORE
+		matchScore
 	)
 }
 

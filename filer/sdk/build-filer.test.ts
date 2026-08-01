@@ -1087,7 +1087,7 @@ describe("buildFilerDatabase", () => {
 					assertion: FilerEdgeAssertion.Inferred,
 					relationship: FilerRelationship.ParentCompany,
 					source: "edgar-exhibit-21",
-					match_score: 0.92,
+					match_score: 0.9,
 				})
 
 				// THE PRECONDITION: the SAME fact also lands as a filer_family row, not just the edge above.
@@ -1160,6 +1160,137 @@ describe("buildFilerDatabase", () => {
 			} finally {
 				await teardownScratch()
 			}
+		})
+
+		/**
+		 * 3b Task 8 fix round 1 — the score used to be a flat `0.92` on every subsidiary→FRN link. That number was a lie
+		 * about the ambiguous case: the join is on the CANONICALIZED name, and `canonicalizeOrganizationName` maps
+		 * `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"` all to `"american
+		 * broadband"` (`record/organization.test.ts` pins the collapse), so one score for all three claimed a confidence
+		 * the match provably could not hold.
+		 *
+		 * The existing abstention does not cover it, and these fixtures show why: it fires only on a collision WITHIN the
+		 * 499 file, so a 499 carrying ONLY the LLC against an Exhibit 21 disclosing the Inc. matches exactly one FRN and
+		 * writes an edge for what may be a different company.
+		 *
+		 * Every case below goes through the REAL builder and reads the score off the sealed artifact. Three DISTINCT
+		 * values, asserted against each other as well as against their literals — pin the score back to a constant and the
+		 * ordering assertions die, not just the value ones.
+		 */
+		describe("the subsidiary→FRN match score varies with what the match actually knows (fix round 1)", () => {
+			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
+				await buildFilerDatabase({
+					form499Rows: [
+						corroborationForm499Row({ form499ID: "980001", frn: toFRN("0009800001")!, legalNameOfCarrier }),
+					],
+					edgarRows: [edgarFixtureRow({ subsidiaryName })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+
+				const edge = await db
+					.selectFrom("filer_edge")
+					.selectAll()
+					.where("to_node_id", "=", `${FilerIdentifierType.CIK}:${CIK_PARENT}`)
+					.where("assertion", "=", FilerEdgeAssertion.Inferred)
+					.executeTakeFirstOrThrow()
+
+				return edge.match_score
+			}
+
+			it("byte-identical raw names score the ceiling — and the ceiling is below 1, because a shared name is evidence of identity, never proof", async () => {
+				await setupScratch()
+
+				try {
+					expect(await scoreFor("Trailhead Broadband LLC", "Trailhead Broadband LLC")).toBe(0.9)
+				} finally {
+					await teardownScratch()
+				}
+			})
+
+			it("raw names differing only in case/punctuation, same legal designation, score lower than byte-identical", async () => {
+				await setupScratch()
+
+				try {
+					expect(await scoreFor("TRAILHEAD BROADBAND, LLC", "Trailhead Broadband LLC")).toBe(0.75)
+				} finally {
+					await teardownScratch()
+				}
+			})
+
+			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
+				await setupScratch()
+
+				try {
+					// The reviewer's exact reproduction: 499 carries only the LLC, Exhibit 21 discloses the Inc.
+					// EXACTLY ONE FRN matches, so an edge IS written — at 0.5, not 0.92.
+					expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
+				} finally {
+					await teardownScratch()
+				}
+			})
+
+			it("the three cases are strictly ordered — a constant would collapse them", async () => {
+				await setupScratch()
+
+				try {
+					const identical = await scoreFor("Ordered Networks LLC", "Ordered Networks LLC")
+					await teardownScratch()
+
+					await setupScratch()
+					const normalized = await scoreFor("ORDERED NETWORKS, LLC", "Ordered Networks LLC")
+					await teardownScratch()
+
+					await setupScratch()
+					const designation = await scoreFor("Ordered Networks LLC", "Ordered Networks Inc")
+
+					expect(identical!).toBeGreaterThan(normalized!)
+					expect(normalized!).toBeGreaterThan(designation!)
+					expect(new Set([identical, normalized, designation]).size).toBe(3)
+				} finally {
+					await teardownScratch()
+				}
+			})
+
+			it("evidence records BOTH raw spellings, so a reader can see what the score is grading", async () => {
+				await setupScratch()
+
+				try {
+					await buildFilerDatabase({
+						form499Rows: [
+							corroborationForm499Row({
+								form499ID: "980002",
+								frn: toFRN("0009800002")!,
+								legalNameOfCarrier: "American Broadband LLC",
+							}),
+						],
+						edgarRows: [edgarFixtureRow({ subsidiaryName: "American Broadband, Inc." })],
+						out,
+						sourceVintage: EDGAR_SOURCE_VINTAGE,
+						buildSHA: "deadbeef",
+					})
+
+					using db = openFilerDB(out)
+
+					const edge = await db
+						.selectFrom("filer_edge")
+						.selectAll()
+						.where("to_node_id", "=", `${FilerIdentifierType.CIK}:${CIK_PARENT}`)
+						.where("assertion", "=", FilerEdgeAssertion.Inferred)
+						.executeTakeFirstOrThrow()
+
+					expect(JSON.parse(edge.evidence!)).toEqual({
+						subsidiaryName: "American Broadband, Inc.",
+						legalNameOfCarrier: "American Broadband LLC",
+						cik: CIK_PARENT,
+					})
+				} finally {
+					await teardownScratch()
+				}
+			})
 		})
 
 		it("a malformed CIK (not zero-padded 10 digits) is loud", async () => {

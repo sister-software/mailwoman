@@ -1842,7 +1842,7 @@ describe("§7-3b gates", () => {
 						family_id: cikNodeID,
 						relationship: FilerRelationship.ParentCompany,
 						assertion: FilerEdgeAssertion.Inferred,
-						match_score: 0.92,
+						match_score: 0.9,
 						display_names: ["0001234567"],
 					},
 				])
@@ -1872,7 +1872,7 @@ describe("§7-3b gates", () => {
 						node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,
 						relationship: FilerRelationship.ParentCompany,
 						assertion: FilerEdgeAssertion.Inferred,
-						match_score: 0.92,
+						match_score: 0.9,
 						source: "edgar-exhibit-21",
 					},
 				])
