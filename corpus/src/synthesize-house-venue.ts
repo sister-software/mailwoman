@@ -213,6 +213,26 @@ const GB_VENUE_POOL_RATE = 0.7
  */
 const GB_RANGE_NUMBER_RATE = 0.15
 
+/**
+ * Fraction of rows (EVERY template order) rendered with a trailing country surface, tagged `country`. The 2026-08-01
+ * operator probe set proved the mechanism: the FR control row ("…, 75004 Paris, France") fails on a model trained only
+ * on country-less venue rows while its country-less twin passes — a trailing country makes the whole template OOD
+ * (Addendum 3 of the #1366 pre-registration). 0.3 keeps the country-less register dominant.
+ */
+const COUNTRY_APPEND_RATE = 0.3
+
+/**
+ * Trailing country surfaces by tuple country — the register mixes formal and short forms where both are common.
+ */
+const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
+	US: ["United States", "USA"],
+	GB: ["United Kingdom", "United Kingdom", "United Kingdom", "UK"],
+	FR: ["France"],
+	CA: ["Canada"],
+	AU: ["Australia"],
+	DE: ["Germany", "Deutschland"],
+}
+
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
 	opts: HouseVenueSynthesisOpts = {}
@@ -256,11 +276,20 @@ export function synthesizeHouseVenueRow(
 		postcode: base.postcode,
 	}
 
-	const tail = frOrder
+	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder
 			? `${base.locality} ${base.postcode}`
 			: `${base.locality}, ${base.region} ${base.postcode}`
+
+	// Trailing country surface (Addendum 3): appended AFTER the tail in every order, tagged.
+	const countrySurfaces = COUNTRY_SURFACES[base.country]
+
+	if (countrySurfaces && random() < COUNTRY_APPEND_RATE) {
+		const countrySurface = pick(countrySurfaces, random)
+		components.country = countrySurface
+		tail = `${tail}, ${countrySurface}`
+	}
 
 	let raw: string
 
