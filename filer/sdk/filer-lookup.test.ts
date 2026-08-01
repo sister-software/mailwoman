@@ -44,7 +44,7 @@ import {
 	type FilerFamilyTable,
 	type FilerManifestTable,
 } from "../schema.ts"
-import { buildFilerDatabase } from "./build-filer.ts"
+import { buildFilerDatabase, type EdgarSubsidiaryRow } from "./build-filer.ts"
 import { clusterAuthoritativeComponents } from "./cluster-filers.ts"
 import { mintFamilyID } from "./family-id.ts"
 import { familyRollup } from "./family-rollup.ts"
@@ -1632,6 +1632,101 @@ describe("§7-3b gates", () => {
 
 			const afterClose = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-04-01" })
 			expect(afterClose.families).toEqual([])
+		})
+	})
+
+	/**
+	 * "Task 8 extends both [§7-3b gates] to EDGAR-sourced families" (this describe block's own docstring). REAL
+	 * `buildFilerDatabase` (with an `edgarRows` source alongside `form499Rows`) + REAL `clusterAuthoritativeComponents`,
+	 * exactly like gate 1's own real-builder test above — proving the EXISTING relationship-based filters
+	 * (`readAuthoritativeGroups`'s `relationship: same_entity`, `identifiers`' identical filter) generalize correctly to
+	 * EDGAR's new `Subsidiary`/`ParentCompany` relationship kinds without any code change, while the POSITIVE half (the
+	 * family surfaces DO pick up the EDGAR row) is asserted too — a gate that only checked absence could pass just as
+	 * well with the whole EDGAR seam deleted.
+	 */
+	describe("2. EDGAR-sourced families extend gates 1-2 (3b task 8)", () => {
+		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {
+			await withScratchDir(async (out) => {
+				const FRN_SUBSIDIARY = toFRN("0009600001")!
+				const CIK_PARENT = "0001234567"
+
+				const edgarRows: EdgarSubsidiaryRow[] = [
+					{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", filingDate: "2026-04-01" },
+				]
+
+				await buildFilerDatabase({
+					form499Rows: [
+						minimalForm499Row({
+							form499ID: "960001",
+							frn: FRN_SUBSIDIARY,
+							legalNameOfCarrier: "Cascade Fiber Networks LLC",
+							lastFiledAt: "2026-03-01",
+						}),
+					],
+					edgarRows,
+					out,
+					sourceVintage: "2026-Q2",
+					buildSHA: "deadbeef",
+				})
+
+				chmodSync(out, 0o644)
+				using db = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(out) })
+
+				await clusterAuthoritativeComponents(db)
+
+				const asOf = "2026-12-31"
+				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+
+				const result = await filerLookup(db, { frn: FRN_SUBSIDIARY, asOf })
+
+				// GATE 1/2 extended, negative half: the EDGAR family fact never leaks into cluster/identifiers. The
+				// FRN's own entity cluster (itself + its own form499ID, from the ordinary FRN<->form499ID identity
+				// edge every builder emits) never gains the CIK or the subsidiary-name node as a member, and
+				// `identifiers` (relationship: same_entity only) never lists the CIK either.
+				expect(result.cluster?.members).not.toContain(cikNodeID)
+
+				// Plain loop, not .some() — keeps this callback within max-nested-callbacks under withScratchDir's
+				// own async closure (the same discipline the "REAL builder path" gate tests elsewhere follow).
+				let hasCIKIdentifier = false
+
+				for (const identifier of result.identifiers) {
+					if (identifier.type === FilerIdentifierType.CIK) {
+						hasCIKIdentifier = true
+					}
+				}
+
+				expect(hasCIKIdentifier).toBe(false)
+
+				// GATE 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field.
+				expect(result.families).toEqual([
+					{ family_id: cikNodeID, relationship: FilerRelationship.ParentCompany, display_names: ["0001234567"] },
+				])
+
+				// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands in exactly
+				// one, per clusterAuthoritativeComponents's own contract) — but NEVER the FRN's cluster: the
+				// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary, not same_entity, so
+				// readAuthoritativeGroups correctly never unions it with anything.
+				const cikCluster = await db
+					.selectFrom("filer_cluster")
+					.selectAll()
+					.where("node_id", "=", cikNodeID)
+					.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+					.executeTakeFirstOrThrow()
+
+				expect(cikCluster.cluster_id).not.toBe(result.cluster?.cluster_id)
+
+				// familyRollup answers the identical fact from the other direction.
+				const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
+				expect(rollup).toHaveLength(1)
+
+				expect(rollup[0]?.members).toEqual([
+					{
+						node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,
+						relationship: FilerRelationship.ParentCompany,
+						source: "edgar-exhibit-21",
+					},
+				])
+			})
 		})
 	})
 })

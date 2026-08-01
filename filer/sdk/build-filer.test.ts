@@ -18,8 +18,14 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { describe, expect, it } from "vitest"
 
-import { FilerIdentifierType, FilerRelationship, readFilerManifest, type FilerDatabase } from "../schema.ts"
-import { buildFilerDatabase, type BuildFilerResult } from "./build-filer.ts"
+import {
+	FilerEdgeAssertion,
+	FilerIdentifierType,
+	FilerRelationship,
+	readFilerManifest,
+	type FilerDatabase,
+} from "../schema.ts"
+import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } from "./build-filer.ts"
 import type { Form499Row } from "./form499.ts"
 import { toFRN } from "./frn.ts"
 import type { ProviderListRow } from "./provider-list.ts"
@@ -918,6 +924,281 @@ describe("buildFilerDatabase", () => {
 				using db = openFilerDB(out)
 				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
 				expect(familyRows).toHaveLength(2)
+			} finally {
+				await teardownScratch()
+			}
+		})
+	})
+
+	describe("EDGAR Exhibit 21 ingest (3b task 8)", () => {
+		const CIK_PARENT = "0001234567"
+		const EDGAR_SOURCE_VINTAGE = "2026-Q3-edgar"
+
+		function edgarFixtureRow(
+			overrides: Partial<EdgarSubsidiaryRow> & Pick<EdgarSubsidiaryRow, "subsidiaryName">
+		): EdgarSubsidiaryRow {
+			return { cik: CIK_PARENT, filingDate: "2026-04-01", ...overrides }
+		}
+
+		/**
+		 * A minimal, fully-blank Form499Row overridden per test — matches `familyFixtureRow`'s convention one describe
+		 * block up (that one is function-scoped there, so this describe block needs its own copy).
+		 */
+		function corroborationForm499Row(
+			overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn" | "legalNameOfCarrier">
+		): Form499Row {
+			return {
+				lastFiledAt: "2026-04-01",
+				usfContributor: false,
+				doingBusinessAs: "",
+				principalCommType: "",
+				holdingCompany: "",
+				managementCompany: "",
+				hqAddress: "",
+				customerInquiriesTelephone: "",
+				customerInquiriesAddress: "",
+				dcAgentDisplayName: "",
+				dcAgentOrganizationName: "",
+				dcAgentTelephone: "",
+				dcAgentEmailAddress: "",
+				dcAgentAddress: "",
+				...overrides,
+			}
+		}
+
+		it("always writes the authoritative disclosure edge (cik -> subsidiary name), even with no matching FRN", async () => {
+			await setupScratch()
+
+			try {
+				await buildFilerDatabase({
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "Unmatched Sub LLC", jurisdiction: "Delaware" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+				const subsidiaryNodeID = `${FilerIdentifierType.SubsidiaryName}:Unmatched Sub LLC`
+
+				const cikNode = await db
+					.selectFrom("filer_node")
+					.selectAll()
+					.where("node_id", "=", cikNodeID)
+					.executeTakeFirst()
+
+				expect(cikNode).toEqual({
+					node_id: cikNodeID,
+					identifier_type: FilerIdentifierType.CIK,
+					identifier_value: CIK_PARENT,
+				})
+
+				const edges = await db.selectFrom("filer_edge").selectAll().where("from_node_id", "=", cikNodeID).execute()
+				expect(edges).toHaveLength(1)
+
+				expect(edges[0]).toMatchObject({
+					to_node_id: subsidiaryNodeID,
+					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.Subsidiary,
+					source: "edgar-exhibit-21",
+					source_vintage: "2026-04-01",
+					valid_from: "2026-04-01",
+				})
+
+				// No corroboration possible (no form499Rows at all) — no family row for this build.
+				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
+				expect(familyRows).toHaveLength(0)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("edgarRows ALONE satisfies the 'at least one source' guard — it does not require form499/provider data", async () => {
+			await setupScratch()
+
+			try {
+				await expect(
+					buildFilerDatabase({
+						edgarRows: [edgarFixtureRow({ subsidiaryName: "Standalone Sub LLC" })],
+						out,
+						sourceVintage: EDGAR_SOURCE_VINTAGE,
+						buildSHA: "deadbeef",
+					})
+				).resolves.toBeDefined()
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("the manifest's source includes edgar-exhibit-21 only when edgarRows was actually supplied", async () => {
+			await setupScratch()
+
+			try {
+				await buildFilerDatabase({
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "Manifest Sub LLC" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const manifest = await readFilerManifest(db)
+				expect(manifest.source).toBe("edgar-exhibit-21")
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes BOTH an inferred filer_edge AND a filer_family row — the Task 8 precondition, load-bearing", async () => {
+			await setupScratch()
+
+			try {
+				const frn = toFRN("0009700001")!
+
+				await buildFilerDatabase({
+					form499Rows: [
+						corroborationForm499Row({ form499ID: "970001", frn, legalNameOfCarrier: "Trailhead Broadband LLC" }),
+					],
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "Trailhead Broadband LLC" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const frnNodeID = `${FilerIdentifierType.FRN}:${frn}`
+				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+
+				// The inferred FRN -> CIK edge.
+				const inferredEdges = await db
+					.selectFrom("filer_edge")
+					.selectAll()
+					.where("from_node_id", "=", frnNodeID)
+					.where("to_node_id", "=", cikNodeID)
+					.execute()
+
+				expect(inferredEdges).toHaveLength(1)
+
+				expect(inferredEdges[0]).toMatchObject({
+					assertion: FilerEdgeAssertion.Inferred,
+					relationship: FilerRelationship.ParentCompany,
+					source: "edgar-exhibit-21",
+					match_score: 0.92,
+				})
+
+				// THE PRECONDITION: the SAME fact also lands as a filer_family row, not just the edge above.
+				const familyRows = await db
+					.selectFrom("filer_family")
+					.selectAll()
+					.where("node_id", "=", frnNodeID)
+					.where("family_id", "=", cikNodeID)
+					.execute()
+
+				expect(familyRows).toHaveLength(1)
+
+				expect(familyRows[0]).toMatchObject({
+					naming_node_id: cikNodeID,
+					relationship: FilerRelationship.ParentCompany,
+					source: "edgar-exhibit-21",
+					valid_to: null,
+				})
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("abstains (no inferred edge, no family row) when the subsidiary name matches TWO DIFFERENT FRNs — a genuine name collision, never picked arbitrarily", async () => {
+			await setupScratch()
+
+			try {
+				const frnA = toFRN("0009700002")!
+				const frnB = toFRN("0009700003")!
+
+				await buildFilerDatabase({
+					form499Rows: [
+						corroborationForm499Row({ form499ID: "970002", frn: frnA, legalNameOfCarrier: "Collision Sub LLC" }),
+						corroborationForm499Row({ form499ID: "970003", frn: frnB, legalNameOfCarrier: "Collision Sub, LLC" }),
+					],
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "Collision Sub LLC" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+
+				using db = openFilerDB(out)
+				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+
+				const inferredEdges = await db
+					.selectFrom("filer_edge")
+					.selectAll()
+					.where("to_node_id", "=", cikNodeID)
+					.where("assertion", "=", FilerEdgeAssertion.Inferred)
+					.execute()
+
+				expect(inferredEdges).toHaveLength(0)
+
+				const familyRows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", cikNodeID).execute()
+				expect(familyRows).toHaveLength(0)
+
+				// The disclosure edge still stands — abstention is about the CORROBORATION only.
+				const disclosureEdges = await db
+					.selectFrom("filer_edge")
+					.selectAll()
+					.where("from_node_id", "=", cikNodeID)
+					.execute()
+
+				expect(disclosureEdges).toHaveLength(1)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("a malformed CIK (not zero-padded 10 digits) is loud", async () => {
+			await setupScratch()
+
+			try {
+				await expect(
+					buildFilerDatabase({
+						edgarRows: [{ cik: "123", subsidiaryName: "Bad CIK Sub LLC", filingDate: "2026-04-01" }],
+						out,
+						sourceVintage: EDGAR_SOURCE_VINTAGE,
+						buildSHA: "deadbeef",
+					})
+				).rejects.toThrow(/cik must be a zero-padded 10-digit string/)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("an empty subsidiaryName is loud", async () => {
+			await setupScratch()
+
+			try {
+				await expect(
+					buildFilerDatabase({
+						edgarRows: [edgarFixtureRow({ subsidiaryName: "" })],
+						out,
+						sourceVintage: EDGAR_SOURCE_VINTAGE,
+						buildSHA: "deadbeef",
+					})
+				).rejects.toThrow(/empty subsidiaryName/)
+			} finally {
+				await teardownScratch()
+			}
+		})
+
+		it("a non-ISO filingDate is loud", async () => {
+			await setupScratch()
+
+			try {
+				await expect(
+					buildFilerDatabase({
+						edgarRows: [edgarFixtureRow({ subsidiaryName: "Bad Date Sub LLC", filingDate: "2026-Q1" })],
+						out,
+						sourceVintage: EDGAR_SOURCE_VINTAGE,
+						buildSHA: "deadbeef",
+					})
+				).rejects.toThrow(/not an ISO YYYY-MM-DD date/)
 			} finally {
 				await teardownScratch()
 			}

@@ -493,11 +493,16 @@ export async function readFamilyMembers(
  * the plainly correct shape under this project's binding rule (provenance on every edge): a membership row was
  * recording the fact without recording what produced it.
  *
- * **`assertion: "authoritative"` is required (task 3 fix round 4).** No inferred holding-/management-company edge
- * exists today — `cluster-filers.ts` emits `SameEntity` and nothing else — so this predicate is currently unreachable,
- * and it is here for the same reason `identifiers`' own `same_entity` filter is: a `display_names` entry is presented
- * as a DOCUMENTED name this family's members actually reported. An inferred edge surfacing there would quietly restate
- * a guess as a filing.
+ * **`assertion: "authoritative"` is required — EXCEPT for EDGAR's own source, widened 3b Task 8.** The general rule is
+ * unchanged and still binding: a `display_names` entry is presented as a DOCUMENTED name this family's members actually
+ * reported, so an edge inferred by a NAME-SIMILARITY MATCH (a future fuzzy matcher's guess at "these two spellings
+ * probably name the same holding company", say) must never surface here — that would restate a guess as a filing, and a
+ * dedicated regression test (`family-rollup.test.ts`) pins exactly that case. EDGAR's subsidiary-name→FRN corroboration
+ * (`build-filer.ts`) is a different shape of inference: the NAME itself is never guessed — it is the CIK's OWN node id,
+ * established by that SAME builder's authoritative disclosure edge (`cik -> subsidiaryNameNode`) elsewhere in the graph
+ * — only WHICH FRN that already-authoritative name belongs to is inferred. So `source = "edgar-exhibit-21"` is the one
+ * case an `assertion: "inferred"` edge is admitted here too; every other source keeps the strict authoritative-only
+ * rule.
  *
  * **Never collapsed to one value within the SAME family (task 3 fix round 2, the coordinator's explicit rule).** When
  * two raw spellings both canonicalize to one `family_id` (e.g. `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce
@@ -525,7 +530,17 @@ export async function readFamilyDisplayNames(
 			// THE JOIN (task 3 fix round 4): the builder's own record of WHICH company node named this family — read,
 			// not recomputed. See the docstring above.
 			.where("filer_edge.to_node_id", "=", member.naming_node_id)
-			.where("filer_edge.assertion", "=", FilerEdgeAssertion.Authoritative)
+			// Widened 3b Task 8, EDGAR ONLY — see the docstring above for why every other source keeps the strict
+			// authoritative-only rule.
+			.where((eb) =>
+				eb.or([
+					eb("filer_edge.assertion", "=", FilerEdgeAssertion.Authoritative),
+					eb.and([
+						eb("filer_edge.assertion", "=", FilerEdgeAssertion.Inferred),
+						eb("filer_edge.source", "=", "edgar-exhibit-21"),
+					]),
+				])
+			)
 			.where("filer_edge.relationship", "=", member.relationship)
 			.where("filer_edge.source", "=", member.source)
 			.where("filer_edge.valid_from", "=", member.valid_from)

@@ -39,6 +39,16 @@
  *   (valid_to IS NULL OR valid_to > asOf)` — rather than reimplementing it: three separate 3a tasks fixed
  *   this same class of bug independently before the final review caught them diverging, and the task brief
  *   for this module names that history explicitly as the reason to copy, not rewrite.
+ *
+ *   **EDGAR-sourced families (3b Task 8) need no change here.** `build-filer.ts`'s EDGAR ingest writes
+ *   `filer_family` rows shaped identically to every other writer's (`node_id`/`family_id`/`naming_node_id`/
+ *   `relationship`/`source`/`source_vintage`/`valid_from`/`valid_to`), so this module's query — generic over
+ *   `relationship` and never keyed to a specific `source` — already answers a `familyID`/`nodeID` query for a
+ *   `cik:`-named family exactly as it would for a `holding_company_name:`-named one. The one dependency this
+ *   module has on a source-specific decision is `readFamilyDisplayNames` (`filer-lookup.ts`), which Task 8
+ *   widened to admit an INFERRED accompanying edge (EDGAR's subsidiary-name→FRN corroboration is inference by
+ *   design, never authoritative) — see that function's own docstring for why widening it cannot misattribute
+ *   a display name to the wrong member.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"

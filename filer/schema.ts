@@ -88,6 +88,13 @@ import { sql, type Kysely } from "kysely"
  * matching how `data.sec.gov/submissions/CIK##########.json` names itself), never the bare unpadded number
  * `company_tickers.json` carries — mirrors `FRN`'s own zero-padding convention (`frn.ts`) for the identical reason (a
  * bare `"320193"` would collide with a differently-padded value under naive string comparison).
+ *
+ * `SubsidiaryName` (3b Task 8) is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed it —
+ * `build-filer.ts`'s EDGAR ingest mints one of these for every subsidiary row, the same "global name-node" shape
+ * `HoldingCompanyName`/`ManagementCompanyName` already use (the raw string, unnormalized; two different parents both
+ * disclosing a subsidiary under the identical spelling share one node). Deliberately its OWN namespace, never folded
+ * into `HoldingCompanyName`/`ManagementCompanyName`: those name the source filer's OWN parent/manager, the opposite
+ * direction of relationship from "a company THIS filer owns."
  */
 export const FilerIdentifierType = {
 	FRN: "frn",
@@ -97,6 +104,7 @@ export const FilerIdentifierType = {
 	HoldingCompanyName: "holding_company_name",
 	ManagementCompanyName: "management_company_name",
 	CIK: "cik",
+	SubsidiaryName: "subsidiary_name",
 } as const
 
 export type FilerIdentifierType = (typeof FilerIdentifierType)[keyof typeof FilerIdentifierType]
