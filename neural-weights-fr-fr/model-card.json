@@ -1,8 +1,8 @@
 {
 	"name": "neural-weights-fr-fr",
 	"version": "6.5.0",
-	"model_lineage": "Ships the en-us v310 (v3.1.0-fr-fragment, #1143 T2) model — init_from v264 plus the synth-fr-fragment BAN shard @ 12.0; tokenizer v0.9.0-multisplice (73,143) UNCHANGED. One model serves both locales; see the en-us card for the full lineage + grade. NOTE for this locale specifically: the shard is BAN-derived (Base Adresse Nationale, Licence Ouverte 2.0) and the gains are measured on French — bare-street 0.215→0.715, street-particle 0.273→0.855, admin-street-homonym 0.087→0.517, with the bare-locality counter-guard holding exactly. This is the largest FR-facing model change since 5.9.0.",
-	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v310 model, shipped as 6.4.0)",
+	"model_lineage": "Ships the en-us v310 (v3.1.0-fr-fragment, #1143 T2) model \u2014 init_from v264 plus the synth-fr-fragment BAN shard @ 12.0; tokenizer v0.9.0-multisplice (73,143) UNCHANGED. One model serves both locales; see the en-us card for the full lineage + grade. NOTE for this locale specifically: the shard is BAN-derived (Base Adresse Nationale, Licence Ouverte 2.0) and the gains are measured on French \u2014 bare-street 0.215\u21920.715, street-particle 0.273\u21920.855, admin-street-homonym 0.087\u21920.517, with the bare-locality counter-guard holding exactly. This is the largest FR-facing model change since 5.9.0.",
+	"phase": "Stage 3 \u2014 multi-locale (FR served by the shared en-us v310 model, shipped as 6.4.0)",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "fr-fr",
 	"training": {
@@ -13,7 +13,7 @@
 		"note": "Identical artifact to neural-weights-en-us 6.4.0 / v310 fr-fragment (one multi-locale model serves both, copied at publish time). See that card's training/recipe for full provenance."
 	},
 	"requires": {
-		"$comment": "SHIP-CONFIG mirrored from neural-weights-en-us (#718/#721): this package ships en-us's model, so its required channels are identical — including `country` (the #1104 dedicated country soft-feed channel added in v263). createScorer / loadFromWeights read this and feed anchor + gazetteer + country + the conventions mask; running channel-OFF is the #566/#685 OOD crater.",
+		"$comment": "SHIP-CONFIG mirrored from neural-weights-en-us (#718/#721): this package ships en-us's model, so its required channels are identical \u2014 including `country` (the #1104 dedicated country soft-feed channel added in v263). createScorer / loadFromWeights read this and feed anchor + gazetteer + country + the conventions mask; running channel-OFF is the #566/#685 OOD crater.",
 		"anchor": {
 			"required": true
 		},
@@ -86,7 +86,7 @@
 		"I-intersection_b"
 	],
 	"eval": {
-		"$comment": "SUPERSEDED / STALE (#721). The per_component + calibration numbers below are the OLD v0.9.7-step-20000 checkpoint measured ANCHOR-OFF (country 0.21, postcode 0.69 — the #566/#685 OOD crater, NOT this package's real quality). Since the unified release CI ships en-us's v1.5.0 model for fr-fr too, the authoritative FR numbers are en-us v1.5.0-fr-order's, anchor-ON: assembled FR coord p50 1.5km / p90 5.3km, locality-match 76.3%; golden per-tag fr.house_number 99.3, fr.region 41.8 (open gap #330), fr.country 62.7, fr.postcode 99.5. See docs/articles/evals/2026-06-18-v150-vs-v170-head-to-head.md and neural-weights-en-us/model-card.json. Refresh or remove these stale fields per #721.",
+		"$comment": "SUPERSEDED / STALE (#721). The per_component + calibration numbers below are the OLD v0.9.7-step-20000 checkpoint measured ANCHOR-OFF (country 0.21, postcode 0.69 \u2014 the #566/#685 OOD crater, NOT this package's real quality). Since the unified release CI ships en-us's v1.5.0 model for fr-fr too, the authoritative FR numbers are en-us v1.5.0-fr-order's, anchor-ON: assembled FR coord p50 1.5km / p90 5.3km, locality-match 76.3%; golden per-tag fr.house_number 99.3, fr.region 41.8 (open gap #330), fr.country 62.7, fr.postcode 99.5. See docs/articles/evals/2026-06-18-v150-vs-v170-head-to-head.md and neural-weights-en-us/model-card.json. Refresh or remove these stale fields per #721.",
 		"n_entries": 4535,
 		"full_parse_exact_match": 0.08180815876515987,
 		"mean_token_confidence": 0.8062812768727202,
@@ -213,14 +213,35 @@
 				"n": 30517,
 				"acc": 0.6440344725890488
 			}
-		]
+		],
+		"r6_fr_lieudit": {
+			"$comment": "Pre-registered bars from docs/superpowers/plans/2026-08-01-r6-fr-lieudit-preregistration.md.",
+			"golden_board": {
+				"n": 80,
+				"emit_before": 0,
+				"emit_after": 80,
+				"tag_correct_before": 0,
+				"tag_correct_after": 76,
+				"tag_correct_pct": 95.0,
+				"bar_pct": 70.0,
+				"note": "mailwoman/eval-harness/fixtures/fr-lieudit-golden.jsonl. Prior-OFF leg on identical bytes stays 0/80. The 4 residual misses are span-boundary (dropped particles), not retrieval \u2014 the prior fired on all 80. DISCLOSURE: 80/80 of the board's pairs are in the index (both are BAN-derived), so this measures mechanism efficacy where the gazetteer has data, not generalization."
+			},
+			"venue_confound_board": {
+				"n": 60,
+				"false_positives": 0,
+				"fp_pct": 0.0,
+				"bar_pct": 2.0,
+				"note": "40 article-led lieu-dit surfaces (La/Le/Les/Saint\u2026, from 84,582 available) + 20 others, each opening a venue name"
+			},
+			"gauntlet": "PASS after both decode-path fixes; neural 498/498, mailwoman 521/521"
+		}
 	},
 	"known_failure_modes": [
 		"underperforms on Hawaiian addresses (sparse in training corpus)",
 		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert') if not in synth set",
 		"non-Latin scripts (CJK, Cyrillic) fall through to byte-fallback tokens; F1 unknown"
 	],
-	"notes": "v0.4.0 — issue #116. Same encoder geometry as v0.3.0 (8.87M params, 6L/256H/4-heads, 21 BIO labels, linear-chain CRF). Issue proposed (1) per-token CRF NLL normalization + (3) class-weighted CE biased toward coarse labels + (4) source-weight rebalance. Empirical iteration found that §1 and §3 destabilize sustained training at every LR tested (5e-4, 3e-4, 1.5e-4 — even the v0.3.0-safe LR), and on the golden v0.1.2 eval (4535 entries) they slightly REGRESS country/postcode F1 vs v0.3.0. SHIPPED recipe is the §4-only ablation (v0.3.0 dual-loss + v0.4.0 source-weight rebalance) at lr=1.5e-4, step 2200. Modest fine-label gains (street +0.03, house_number +0.01), modest coarse-F1 regression (country -0.07, postcode -0.07). §1/§3 deferred to v0.4.1 corpus-side investigation per issue's '2K divergence' clause. Full ablation matrix retrospective in LOG.md.",
+	"notes": "v0.4.0 \u2014 issue #116. Same encoder geometry as v0.3.0 (8.87M params, 6L/256H/4-heads, 21 BIO labels, linear-chain CRF). Issue proposed (1) per-token CRF NLL normalization + (3) class-weighted CE biased toward coarse labels + (4) source-weight rebalance. Empirical iteration found that \u00a71 and \u00a73 destabilize sustained training at every LR tested (5e-4, 3e-4, 1.5e-4 \u2014 even the v0.3.0-safe LR), and on the golden v0.1.2 eval (4535 entries) they slightly REGRESS country/postcode F1 vs v0.3.0. SHIPPED recipe is the \u00a74-only ablation (v0.3.0 dual-loss + v0.4.0 source-weight rebalance) at lr=1.5e-4, step 2200. Modest fine-label gains (street +0.03, house_number +0.01), modest coarse-F1 regression (country -0.07, postcode -0.07). \u00a71/\u00a73 deferred to v0.4.1 corpus-side investigation per issue's '2K divergence' clause. Full ablation matrix retrospective in LOG.md.",
 	"format": {
 		"model": "ONNX int8 dynamic",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=16000",
@@ -230,7 +251,22 @@
 	"files": {
 		"model": "model.onnx",
 		"tokenizer": "tokenizer.model",
-		"model_card": "model-card.json"
+		"model_card": "model-card.json",
+		"pair_index": "pair-index-fr.bin"
 	},
-	"base_relpath": "/data/models/checkpoints/v0_4_0-stableLR-source-only/step-002200"
+	"base_relpath": "/data/models/checkpoints/v0_4_0-stableLR-source-only/step-002200",
+	"fr_artifacts": {
+		"$comment": "Hierarchy campaign R6 (2026-08-01). The FR instance of the placetype-pair prior.",
+		"pair_index_fr_bin": {
+			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (lieu-dit, commune) dependent_locality prior, e.g. (\"Pinsonnac\", \"Montpeyroux\")",
+			"source": "BAN \u2014 Base Adresse Nationale (DINUM/IGN, Licence Ouverte 2.0), raw adresses-<dept>.csv `nom_ld` field read through ban/sdk's cleanLieuDit filter. 101 d\u00e9partements, 1,684,844 rows carrying a clean lieu-dit. NOT WOF: WOF's French neighbourhood records are Paris quartiers, cartographic subdivisions that never appear in a postal address (the arrondissement is encoded in the postcode). The lieu-dit is the line French addresses actually carry \u2014 La Poste's line 5.",
+			"pairs": 199282,
+			"bytes": 5839518,
+			"md5": "6ed84ff4b14cea952384a9f0c96955e9",
+			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from the GB calibration, per R5's finding that the classifier's dependent_locality deficit is uniform across locales rather than GB-specific. The R6 bars were measured at exactly this pair.",
+			"country_gate": "hard-gated on the header's country (fr).",
+			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-fr-fr --country fr --delta 10 --transition-beta 5 --ban-dir <corpus/sources/ban>`",
+			"required_decode_fixes": "This artifact is INERT without two locale-general probe-chain fixes that shipped alongside it: a LEADING postcode strip on parent-candidate keys (France writes '12210 Montpeyroux'; the probe previously stripped only trailing postcodes, the Anglo/NZ convention) and NEWLINE as a segment boundary (computeGroupSegments scanned for commas only, so multi-line addresses collapsed to one segment and the segment path went structurally inert). With the artifact but without them the golden board stayed at 0/80."
+		}
+	}
 }

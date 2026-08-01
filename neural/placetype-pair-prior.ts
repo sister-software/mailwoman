@@ -264,6 +264,7 @@
  *   this locale) — the probe loop simply never finds a tag.
  */
 
+import { CODE_POSTAL_PATTERN } from "@mailwoman/codex/fr"
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
 import type { ComponentTag } from "@mailwoman/core/types"
@@ -515,27 +516,33 @@ function computeGroupSegments(
 	pieces: ReadonlyArray<TokenLike>,
 	inputText: string | undefined
 ): number[] {
-	const commaOffsets: number[] = []
+	const boundaryOffsets: number[] = []
 
 	if (inputText) {
 		for (let i = 0; i < inputText.length; i++) {
-			if (inputText[i] === ",") {
-				commaOffsets.push(i)
+			// A NEWLINE counts alongside the comma (campaign R6). Multi-line is how postal addresses are actually
+			// written — La Poste's line 5 puts the lieu-dit on its own line — and a line break is a stronger boundary
+			// than a comma, never a weaker one. Before this, a newline-delimited address collapsed to a single segment,
+			// the segment path went structurally inert, and the whole retrieval prior silently fell through to the
+			// anchored path. It is why the FR golden board read 0/80 even after the leading-postcode fix landed: every
+			// row on it is newline-delimited, the shape the formatter itself emits.
+			if (inputText[i] === "," || inputText[i] === "\n") {
+				boundaryOffsets.push(i)
 			}
 		}
 	}
 
-	// commaOffsets is built in ascending order, so `commaIdx` only ever advances — one linear pass across both lists.
-	let commaIdx = 0
+	// boundaryOffsets is built in ascending order, so `boundaryIdx` only ever advances — one linear pass across both.
+	let boundaryIdx = 0
 
 	return nonEmptyGroups.map((group) => {
 		const groupStart = pieces[group.pieceIndices[0]!]!.start
 
-		while (commaIdx < commaOffsets.length && commaOffsets[commaIdx]! < groupStart) {
-			commaIdx++
+		while (boundaryIdx < boundaryOffsets.length && boundaryOffsets[boundaryIdx]! < groupStart) {
+			boundaryIdx++
 		}
 
-		return commaIdx
+		return boundaryIdx
 	})
 }
 
@@ -556,7 +563,23 @@ const MAX_TRAILING_POSTCODE_WORDS = 2
 const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
 	["gb", UK_POSTCODE_PATTERN],
 	["nz", NZ_POSTCODE_PATTERN],
+	["fr", CODE_POSTAL_PATTERN],
 ])
+
+/**
+ * Countries whose postal convention writes the postcode BEFORE the locality on the same line ("12210 Montpeyroux"),
+ * rather than after it ("Macclesfield SK11 9PD").
+ *
+ * This distinction is why the FR instance (campaign R6) read 0/80 on a board whose pairs were 46% present in the index:
+ * the segment probe stripped only a TRAILING postcode, so a French parent segment folded to "12210 montpeyroux" and
+ * missed every bare-commune key. The mechanism, the index and the pairs were all correct — the probe carried an
+ * Anglo-format assumption. Directly measured: "…, Pinsonnac, 12210 Montpeyroux" applied=false, while the same row with
+ * the postcode removed applied=true and emitted dependent_locality=Pinsonnac.
+ *
+ * Membership is per-country and deliberately narrow. DE/ES/IT share the leading convention and will want entries when
+ * their instances are built, but each needs its own codex shape and its own confound board first.
+ */
+const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr"])
 
 /**
  * The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip).
@@ -593,6 +616,27 @@ function stripTrailingSegmentPostcode(tokens: readonly string[], shape: RegExp |
 }
 
 /**
+ * Strip a LEADING postcode-shaped run from a segment's parent-candidate key — the mirror of
+ * {@link stripTrailingSegmentPostcode} for countries that write "POSTCODE Commune" (see
+ * {@link LEADING_POSTCODE_COUNTRIES}).
+ *
+ * Anchored full-match against the country shape exactly like the trailing form, so this can only ever remove a run that
+ * IS a postcode for that country — never an ordinary leading word. Only the probe KEY changes; the segment itself and
+ * every emitted span are untouched.
+ */
+function stripLeadingSegmentPostcode(tokens: readonly string[], shape: RegExp | undefined): readonly string[] {
+	if (shape === undefined || tokens.length < 2) return tokens
+
+	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
+
+	for (let take = maxTake; take >= 1; take--) {
+		if (shape.test(tokens.slice(0, take).join(""))) return tokens.slice(take)
+	}
+
+	return tokens
+}
+
+/**
  * Build one candidate per comma-delimited SEGMENT of the input (segment mode) — see the module docstring's "Segment
  * mode" section for the venue-confound rationale. Groups sharing a segment index are always contiguous in
  * `nonEmptyGroups` (both lists are built in text order), so a single forward pass over the precomputed `groupSegments`
@@ -607,7 +651,8 @@ function stripTrailingSegmentPostcode(tokens: readonly string[], shape: RegExp |
 function buildSegmentWindows(
 	nonEmptyGroups: readonly WordGroup[],
 	groupSegments: readonly number[],
-	parentPostcodeShape: RegExp | undefined
+	parentPostcodeShape: RegExp | undefined,
+	leadingPostcodeShape: RegExp | undefined
 ): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 
@@ -619,9 +664,16 @@ function buildSegmentWindows(
 		if (i === nonEmptyGroups.length || groupSegments[i] !== groupSegments[segStart]) {
 			const slice = nonEmptyGroups.slice(segStart, i)
 
-			const keyTokens = stripTrailingSegmentPostcode(
-				slice.map((g) => g.fstToken),
-				parentPostcodeShape
+			// Both ends, because the postcode's position relative to the locality is a per-country convention:
+			// "Macclesfield SK11 9PD" (GB/NZ) vs "12210 Montpeyroux" (FR). Each strip is an anchored full-match
+			// against the country's own shape, so a country that only ever writes one form is unaffected by the
+			// other pass — it simply never matches.
+			const keyTokens = stripLeadingSegmentPostcode(
+				stripTrailingSegmentPostcode(
+					slice.map((g) => g.fstToken),
+					parentPostcodeShape
+				),
+				leadingPostcodeShape
 			)
 
 			windows.push({
@@ -903,8 +955,15 @@ export function buildPlacetypePairPriors(
 	// candidates), so their behavior is byte-identical to pre-#1308.
 	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country) : undefined
 
+	// Only countries whose convention actually leads with the postcode get the leading pass — everywhere else this is
+	// `undefined` and the strip is a no-op, keeping every existing artifact's probe keys byte-identical.
+	const leadingPostcodeShape =
+		needsSegments && index.country && LEADING_POSTCODE_COUNTRIES.has(index.country.toLowerCase())
+			? parentPostcodeShape
+			: undefined
+
 	const segmentWindows = groupSegments
-		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape)
+		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape, leadingPostcodeShape)
 		: undefined
 
 	// The "auto" probe-chain dispatch (v1.1 — module docstring, "Probe mode"): with <2 comma segments the segment path

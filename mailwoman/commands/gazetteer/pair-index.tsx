@@ -39,6 +39,7 @@ import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { extractBoroughPairs } from "../../gazetteer-pipeline/borough-pairs.ts"
+import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
@@ -96,6 +97,12 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Park Slope", "Brooklyn"],
 		["Manhattan", "New York"],
 	],
+	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`), not quartiers —
+	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
+	fr: [
+		["Pinsonnac", "Montpeyroux"],
+		["Line", "Salignac-Eyvigues"],
+	],
 }
 
 const OptionsSchema = zod.object({
@@ -138,6 +145,12 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("WOF admin DB path — merge borough (child, parent) pairs for the country (hierarchy campaign R2)"),
+	banDir: zod
+		.string()
+		.optional()
+		.describe(
+			"BAN adresses-<dept>.csv directory — merge FR (lieu-dit, commune) pairs through ban/sdk's cleanLieuDit filter (hierarchy campaign R6)"
+		),
 	holdoutSeed: zod
 		.number()
 		.default(42)
@@ -159,9 +172,9 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
 		}
 
-		if (!sourcePath && !options.boroughDb && !options.pairsJsonl) {
+		if (!sourcePath && !options.boroughDb && !options.pairsJsonl && !options.banDir) {
 			throw new Error(
-				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db or --pairs-jsonl, ` +
+				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
 					`or the build would write an empty index.`
 			)
 		}
@@ -210,6 +223,24 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			boroughsAdded = builder.distinctCount - before
 
 			console.error(`pair-index: +${boroughsAdded} distinct borough pairs (WOF admin DB)`)
+		}
+
+		// R6: FR lieu-dit pairs from the raw BAN dump. Streams ~26M rows, so it is the slowest source by far —
+		// deliberately opt-in per build rather than a default.
+		if (options.banDir) {
+			const before = builder.distinctCount
+			const { pairs, rowsWithLieuDit, filesRead } = await extractLieuDitPairs(options.banDir)
+
+			for (const pair of pairs) {
+				builder.addRow(pair.child, pair.parent)
+			}
+
+			boroughsAdded += builder.distinctCount - before
+
+			console.error(
+				`pair-index: +${builder.distinctCount - before} distinct lieu-dit pairs ` +
+					`(${filesRead} départements, ${rowsWithLieuDit.toLocaleString()} rows with a clean lieu-dit)`
+			)
 		}
 
 		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
