@@ -116,3 +116,18 @@ no-street shard; an abbreviation-augmentation pass over the GB leg) — but that
 mechanisms, not the one contingency the envelope allows. **Stopped per pre-registration; the
 candidate (model 7.0.1-candidate, staged, NOT promoted) + all receipts go to the operator.**
 The six gauntlet fixtures stay `improvement_target`.
+
+---
+
+## Addendum 3 (2026-08-01) — the country-tail mechanism: BANKED AS CODE, run deferred
+
+The probe set's strongest named mechanism (the FR control row: a trailing country surface makes
+the whole venue template OOD) is now IN the synthesizer — `COUNTRY_APPEND_RATE = 0.3`, every
+template order, tagged `country`, per-country surface pools (incl. the UK/United Kingdom mix) —
+with rate-band + order tests. The fine-tune run (`v4.1.3-gb-venue-country-8k.yaml`, calibrated
+dose 12 / λ=1e4) is DEFERRED on the operator's budget call: a fine-tune 7.0.1 would be
+superseded by the next base retrain anyway, and the shard code is the durable piece — the next
+base feed inherits it for free. Pre-registered bars for WHOEVER runs it: T1 `fr-op2-le-colimacon`
+flips to full PASS; T2 op2 venue-field hits at least double vs the staged 7.0.1 candidate;
+T3 the six #1366 fixtures ≥ the candidate's 2; B1 the full battery + gauntlet, no waivers.
+Stop rule: any miss → operator conversation, no contingency.

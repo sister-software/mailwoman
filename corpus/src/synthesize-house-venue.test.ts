@@ -34,7 +34,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 		expect(row).not.toBeNull()
 		expect(row!.template).toBe("venue-after-street")
-		expect(row!.raw).toMatch(/^\d+ .+, .+, Boston, MA 02101$/)
+		expect(row!.raw).toMatch(/^\d+ .+, .+, Boston, MA 02101(, (United States|USA))?$/)
 		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
 	})
 
@@ -155,6 +155,53 @@ describe("synthesizeHouseVenueRow", () => {
 
 		expect(ranges / 2000).toBeGreaterThan(0.08)
 		expect(ranges / 2000).toBeLessThan(0.25)
+	})
+
+	it("appends a tagged country surface at the pre-registered rate, in every order (Addendum 3)", () => {
+		const random = seededRandom(9)
+		let appended = 0
+
+		for (let i = 0; i < 2000; i++) {
+			const row = synthesizeHouseVenueRow(
+				i % 2 === 0
+					? { locality: "London", region: "Greater London", postcode: "E2 8AX", country: "GB" }
+					: { locality: "Paris", region: "", postcode: "75004", country: "FR" },
+				{ random }
+			)
+
+			if (row!.components.country) {
+				appended++
+				// The raw ends with the tagged surface, comma-joined after the tail.
+				expect(row!.raw.endsWith(`, ${row!.components.country}`)).toBe(true)
+			}
+		}
+
+		expect(appended / 2000).toBeGreaterThan(0.22)
+		expect(appended / 2000).toBeLessThan(0.38)
+	})
+
+	it("country-tailed GB rows keep the locality-postcode tail ahead of the country", () => {
+		for (let seed = 0; seed < 200; seed++) {
+			const row = synthesizeHouseVenueRow(
+				{
+					locality: "London",
+					region: "Greater London",
+					postcode: "EC3N 1DE",
+					country: "GB",
+					street: "Minories",
+					houseNumber: "27",
+				},
+				{ random: seededRandom(seed), forceTemplate: "venue-before-street" }
+			)
+
+			if (row!.components.country) {
+				expect(row!.raw).toMatch(/, 27 Minories, London EC3N 1DE, (United Kingdom|UK)$/)
+
+				return
+			}
+		}
+
+		throw new Error("no country-tailed GB row in 200 seeds")
 	})
 
 	it("GB never emits the held-out #1366 gauntlet venue names", () => {
