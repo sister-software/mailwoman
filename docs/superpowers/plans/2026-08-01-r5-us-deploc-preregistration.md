@@ -69,3 +69,53 @@ venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). Nothing ships un
   bare-name boards; it is a packaging consequence, not a bug, but it must be stated before ship.
 
 Failing B-R5.1 or B-R5.2 stops the ship regardless of how good B-R5.3 looks.
+
+## The readings — all four bars
+
+Measured 2026-08-01 with the experimental US index (49,033 pairs) dropped beside the en-US weights,
+against the same artifacts removed.
+
+- **B-R5.1 PASS.** Full gauntlet, per-country overlays: `VERDICT: PASS — clear to ship` with the
+  index present, and the xfail set is **identical** to the baseline run without it (same 5 tracked
+  xfails, same `comma-drop|181 Rue du Chevaleret` xfail-now-passes note). Zero newly-failing gated
+  cases.
+- **B-R5.2 PASS.** US law-1 confound board — 60 held-out rows where a US neighbourhood surface
+  OPENS a venue name (35 directional-class drawn from 4,819 available, 25 short common-word), each
+  in a real street address under its true parent: **0/60 dependent-locality false positives
+  (0.0%)** against a ≤2% bar. The segment-mode gating that holds for London holds here.
+- **B-R5.3 PASS.** US positive board — 60 rows sampled from 31,474 state-resolved WOF pairs:
+  **60/60 emit, 60/60 tag-correct (100%)**, and 60/60 assign the parent to `locality` correctly.
+  Disclosure: every row's pair is necessarily IN the index, so this measures the mechanism's
+  efficacy where the gazetteer has data — not generalization to unknown surfaces. Retrieval-augmented
+  by design; an unknown pair gets no bias and falls back to today's behaviour.
+- **D-R5.4 disclosed, and it is clean.** Shipping a US index means the browser's
+  `detectPairIndexCountry` fallback routes bare Latin postcode-less queries to `us`, where they take
+  US pair bias instead of none. Probed against the GB canonical set — Shoreditch/London,
+  Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester — the US index **misses all
+  five** while the GB index hits all five. The fallback does not manufacture GB bias.
+
+## Verdict, and what is NOT being done unilaterally
+
+The mechanism is proven and every pre-registered bar passed. Three things land from this rung:
+the diagnosis above, the `us` entry in the pair-index command's `PROBE_PAIRS_BY_COUNTRY` (its guard
+correctly refused to build a US index without one), and both boards as reusable instruments under
+`$MAILWOMAN_DATA_ROOT/scratch-r5-us/`.
+
+**Shipping `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
+decision, not taken here.** The bars were the technical gate and they passed; what they do not
+settle is that this changes DEFAULT parse output for the flagship package — every US address with a
+neighbourhood or borough line starts emitting `dependent_locality` where it previously emitted
+nothing and silently dropped the second admin level. That is an improvement and a behaviour change
+at once, it wants a model-card note and a version, and the GB/NZ precedent (a locale overlay
+package nobody installs by accident) does not cover it.
+
+## The finding worth carrying past this rung
+
+The doc's claim that the US instance is gated on "the tag's _contextual_ aliveness for US" is
+**wrong, and was wrong for GB too**. The tag is dead uniformly — the en-GB model card had already
+measured the deficit as "large but UNIFORM (~7.0 logits mean)" — and no locale's dependent-locality
+emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit;
+the US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
+(FR lieu-dit, ES pedanía, BR bairro, MX colonia, and the borough instances in Paris/Tokyo/Amsterdam)
+is therefore an ARTIFACT question, not a training question — which moves them out of R5's
+training-gated column and into the same decode-time lane R2–R4b already ran.
