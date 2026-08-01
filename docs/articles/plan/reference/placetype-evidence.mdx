@@ -1,0 +1,83 @@
+---
+title: Placetype evidence — the projection table and the census design
+---
+
+# Placetype evidence — the projection table and the census design
+
+How the WOF placetype vocabulary meets the `ComponentTag` grammar, why the decoder takes _nudges_
+from the hierarchy rather than constraints, and the design the pair-index arc is the first
+production instance of. Codified 2026-08-01 from the hierarchy-evidence conversations (the
+"Queens under New York" formulation) and the GB dependent-locality arc's receipts.
+
+## The two ontologies
+
+WOF placetypes (~33: `borough`, `microhood`, `dependency`, `concourse`, …) describe what a place
+**is**. `ComponentTag` (see [SCHEMA](./SCHEMA.mdx)) describes what role a span plays in an
+address's **grammar**. They are different vocabularies with a many-to-one **projection**, and the
+projection — not the placetype — is what the decoder can use. SCHEMA.mdx already fixes the
+canonical example: `borough` is not a tag; `dependent_locality` is the umbrella term borough
+projects onto.
+
+**The rule: no placetype gets its own tag; every placetype gets a projection, and hierarchy
+evidence is computed over projections.**
+
+## The projection table
+
+| WOF placetype                                                                    | Projects onto                                       | Evidence use                                                                                                                                   |
+| -------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `locality`, `localadmin`                                                         | `locality`                                          | The trained backbone; census denominator for everything below it.                                                                              |
+| `borough`, `neighbourhood`, `macrohood`, `microhood`                             | `dependent_locality`                                | The pair/census family. Macro/micro variants measure nesting DEPTH under a parent — a parent rich in microhoods signals multi-level structure. |
+| `region`, `macroregion`                                                          | `region`                                            | Live.                                                                                                                                          |
+| `county`, `macrocounty`                                                          | `subregion` (US); **`region` for IE-style formats** | Ireland writes county as an address line ("Co. Kerry") — a county census under IE contexts is the same conditional nudge GB's dep-loc got.     |
+| `country`, `nation`, `dependency`, `disputed`                                    | `country`                                           | `dependency` covers crown dependencies (Isle of Man, Faroes-adjacent forms) — country-channel surface coverage, not new grammar.               |
+| `postalcode`                                                                     | `postcode`                                          | Shipped: the postcode-anchor channel is this pattern's first production instance.                                                              |
+| `venue`                                                                          | `venue`                                             | Venue-density per parent (poi.db can answer it) — venue-led parse likelihood by neighbourhood of the hierarchy.                                |
+| `intersection`, `address`                                                        | `intersection`; house_number/street grounding       | Consumed by the kind-classifier and the resolver's address-point tiers.                                                                        |
+| `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`, `installation` | `venue` / `unit` sub-structure                      | The sub-venue census: "does this venue-parent have wing/concourse children?" is the airport-terminal / campus parsing nudge.                   |
+| `metroarea`, `marketarea`, `postalregion`, `timezone`                            | — (context only)                                    | Conditioning features and annotation surfaces; never emitted spans.                                                                            |
+| `continent`, `ocean`, `marinearea`, `planet`                                     | — (out of grammar)                                  | Resolver/meta only. A query landing in ocean-parented space is evidence it's a FEATURE name, not a postal address.                             |
+
+## From pairs to the census
+
+The shipped **placetype-pair index** (`pair-index-gb.bin`, `pair-index-nz.bin`) is the sharpest
+instance of the general idea: known (child surface, parent surface) memberships, applied as a soft
+logit bias at decode time. Its three-way ablation is the composition proof (0/69 and 3/69 for
+model-alone and index-alone; 69/69 together).
+
+The general form is the **placetype census**: per gazetteer node, the distribution of its
+children's _projected_ tags ("this parent: 5 borough-children, 90 neighbourhoods, 0 dependent
+localities"). That turns a globally-rare tag into a conditionally-common one exactly where it
+should be — `dependent_locality`'s global prior is tiny, its prior _given this subtree_ is large.
+The census is a data artifact in the same family as the pair index (the PIX1 tag byte already
+anticipates multiple placetypes), shipped and versioned like the lexicons, probed at decode time.
+
+## The doctrine constraints (standing, non-negotiable)
+
+1. **Positive evidence only.** Presence boosts; absence stays neutral. A subtree with no boroughs
+   must never _forbid_ borough — gazetteer absence is usually coverage, not fact (WOF Japan is
+   point-geometry; the meaning-of-zero rule).
+2. **Bias, never mask.** The model owns segmentation; the hierarchy contributes soft evidence.
+   Hard matching is where venue-confound false positives live (window-mode measured 52% FP; gated
+   segment mode is why the shipped floor is sub-2%).
+3. **Per-locale conventions still gate expectations.** One model serves every locale; what a
+   locale _expects_ to emit stays governed by its conventions (codex address-system conventions).
+4. **Locale-scoped artifacts must be provably inert elsewhere.** en-us ships no pair index and a
+   dedicated test asserts GB-shaped input takes NO pair bias through en-us — a packaging seatbelt,
+   not a doctrine. The US joins the census program through its own instances (boroughs first).
+
+## Why en-us has no pair index today (and why that's sequencing, not doctrine)
+
+The GB/NZ indexes exist because those POSTAL formats carry the dependent-locality/suburb line and
+national registers (HM Land Registry PPD, LINZ) provide millions of pair rows. The US format has
+no such line — USPS routes city/state/ZIP — so there is no postal register to harvest and no mail
+-correctness stake. But the schema's umbrella term means US dependent localities exist (NYC's five
+boroughs), and WOF supplies the pairs directly (211 boroughs with parents, globally). The US
+instance = those census entries + the conditional-bias mechanism; its gate is the tag's
+_contextual_ aliveness for US (the same dead-tag-conditional problem GB solved), not data.
+
+## Coverage boundaries measured so far (2026-08-01 probe set)
+
+The GB pair source (PPD) is England+Wales and leaves CITY empty for London — so London
+neighbourhoods, estates, Northern Ireland, and the Republic sit outside the shipped index by the
+source's own construction. Extensions are data acquisitions in the proven shape (ONS/OS open data
+for London neighbourhoods; NI and IE sources), not new mechanism.

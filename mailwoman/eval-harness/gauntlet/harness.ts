@@ -32,6 +32,13 @@ export interface GauntletGeocodeOpts {
 	 * Resolver country prior (ISO-3166 alpha-2) — geocodeAddress's `defaultCountry`.
 	 */
 	defaultCountry?: string
+	/**
+	 * The case's country (ISO-3166 alpha-2) — selects the per-locale weights OVERLAY the classifier loads with (GB →
+	 * en-GB's pair-index, NZ → en-NZ's). Production routes by locale-gate; a harness that grades every row through the
+	 * bare en-US package silently drops the deploc prior (caught 2026-08-01: 53 operator probes read "dependent_locality
+	 * never emitted" when the MECHANISM was fine and the INSTRUMENT was base-only). Absent → en-US.
+	 */
+	caseCountry?: string
 }
 
 /**
@@ -130,6 +137,48 @@ export async function buildGauntletDeps(
 				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
 				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
+	// Per-country overlay classifiers (2026-08-01): a case's country selects the weights OVERLAY so
+	// GB rows grade with en-GB's pair-index + transition-beta exactly as production's locale-gate
+	// routes them. Lazy + memoized; a missing overlay package (e.g. a candidate weights-cache built
+	// without neural-weights-en-gb) falls back to the base classifier with ONE loud warning per
+	// locale — base-only grading must never be silent again (the meaning-of-zero rule).
+	const OVERLAY_LOCALE_BY_COUNTRY: Record<string, string> = { GB: "en-GB", NZ: "en-NZ" }
+	const overlayClassifiers = new Map<string, typeof classifier>()
+	const warnedOverlays = new Set<string>()
+
+	async function classifierFor(caseCountry?: string): Promise<typeof classifier> {
+		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : undefined
+
+		// Scorer/modelPath legacy modes have no package-shaped sibling resolution — base only.
+		if (!overlayLocale || opts.tokenizerPath || opts.modelPath) return classifier
+
+		const cached = overlayClassifiers.get(overlayLocale)
+
+		if (cached) return cached
+
+		try {
+			const overlay = await NeuralAddressClassifier.loadFromWeights({
+				locale: overlayLocale,
+				...(opts.weightsCacheRoot ? { cacheRoot: opts.weightsCacheRoot } : {}),
+			})
+			overlayClassifiers.set(overlayLocale, overlay)
+
+			return overlay
+		} catch (error) {
+			if (!warnedOverlays.has(overlayLocale)) {
+				warnedOverlays.add(overlayLocale)
+				console.error(
+					`[gauntlet] ⚠ ${overlayLocale} overlay unavailable (${(error as Error).message.split("\n")[0]}) — ` +
+						`grading ${caseCountry} cases BASE-ONLY (no pair-index/deploc prior). ` +
+						`For production-true grading, include @mailwoman/neural-weights-${overlayLocale.toLowerCase()} in the weights cache.`
+				)
+			}
+			overlayClassifiers.set(overlayLocale, classifier)
+
+			return classifier
+		}
+	}
+
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
@@ -148,15 +197,18 @@ export async function buildGauntletDeps(
 	const banProvider = new BANShardProvider(mailwomanDataRoot())
 
 	return {
-		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) =>
-			geocodeAddress(input, {
-				classifier,
+		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
+			const { caseCountry, ...forwarded } = geoOpts ?? {}
+
+			return geocodeAddress(input, {
+				classifier: await classifierFor(caseCountry),
 				resolver,
 				shards: shardProvider.for,
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
-				...geoOpts,
-			}),
+				...forwarded,
+			})
+		},
 		close: () => {
 			shardProvider.close()
 			banProvider.close()

@@ -17,22 +17,32 @@ reserved-surface discipline does not bind here, but we exclude the fragment boar
 street surfaces anyway (cheap, removes any doubt).
 
 Usage:
-  uv run python scripts/build_house_venue_tuples.py [--fr 60000] [--us 60000] [--seed 42] \
-      [--out $MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v2.jsonl]
+  uv run python scripts/build_house_venue_tuples.py [--fr 60000] [--us 60000] [--gb 60000] [--seed 42] \
+      [--out $MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl]
+
+GB (#1366): tuples stream from the PPD derivation (ppd/<date>/gb-tuples.csv — NUMBER/STREET/CITY/
+DISTRICT/REGION/POSTCODE, already title-cased) via reservoir sample. Locality = CITY, falling back
+to DISTRICT (PPD leaves CITY empty for many London rows and carries "London" as the district).
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import random
+import re
 import sqlite3
 from pathlib import Path
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 FR_DB = Path(DATA_ROOT) / "ban" / "address-points-fr.db"
 US_DIR = Path(DATA_ROOT) / "address-points"
+GB_CSV = Path(DATA_ROOT) / "ppd" / "2026-07-22" / "gb-tuples.csv"
+
+# Plain or letter-suffixed house numbers ("9", "45A") — the synthesizer owns range generation.
+GB_NUMBER_RE = re.compile(r"^\d+[A-Za-z]?$")
 RESERVED = Path("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 
 FR_PARTICLES = frozenset("de la du des le les l d au aux et sur sous en un une".split())
@@ -88,12 +98,45 @@ def sample_db(path: Path, n: int, rng: random.Random) -> list[tuple]:
     return rows
 
 
+def sample_gb(path: Path, n: int, rng: random.Random) -> list[dict]:
+    """Reservoir-sample GB tuples from the PPD-derived CSV (25.7M rows — one streaming pass)."""
+    reservoir: list[dict] = []
+    seen = 0
+    with path.open(newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            number = (row.get("NUMBER") or "").strip()
+            street = (row.get("STREET") or "").strip()
+            locality = (row.get("CITY") or "").strip() or (row.get("DISTRICT") or "").strip()
+            region = (row.get("REGION") or "").strip()
+            postcode = (row.get("POSTCODE") or "").strip()
+            if not (number and street and locality and postcode) or not GB_NUMBER_RE.match(number):
+                continue
+            tup = {
+                "locality": locality,
+                "region": region,
+                "postcode": postcode,
+                "country": "GB",
+                "street": street,
+                "houseNumber": number,
+            }
+            seen += 1
+            if len(reservoir) < n:
+                reservoir.append(tup)
+            else:
+                j = rng.randrange(seen)
+                if j < n:
+                    reservoir[j] = tup
+    rng.shuffle(reservoir)
+    return reservoir
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fr", type=int, default=60_000)
     ap.add_argument("--us", type=int, default=60_000)
+    ap.add_argument("--gb", type=int, default=60_000)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--out", default=str(Path(DATA_ROOT) / "corpus" / "intermediate" / "house-venue-tuples-v2.jsonl"))
+    ap.add_argument("--out", default=str(Path(DATA_ROOT) / "corpus" / "intermediate" / "house-venue-tuples-v3.jsonl"))
     args = ap.parse_args()
     rng = random.Random(args.seed)
 
@@ -154,7 +197,17 @@ def main() -> None:
                 )
                 n_us += 1
 
-    print(f"{out_path}: FR {n_fr:,} + US {n_us:,} tuples ({skipped_reserved} reserved FR streets skipped)")
+        # GB (#1366): PPD reservoir sample; region carried in the tuple (the recipe guard wants
+        # it) but never rendered — the GB tail is `locality postcode`.
+        n_gb = 0
+        if args.gb > 0:
+            for tup in sample_gb(GB_CSV, args.gb, rng):
+                fh.write(json.dumps(tup, ensure_ascii=False) + "\n")
+                n_gb += 1
+
+    print(
+        f"{out_path}: FR {n_fr:,} + US {n_us:,} + GB {n_gb:,} tuples ({skipped_reserved} reserved FR streets skipped)"
+    )
 
 
 if __name__ == "__main__":

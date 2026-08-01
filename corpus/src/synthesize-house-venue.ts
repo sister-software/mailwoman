@@ -97,6 +97,43 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Westwood Realty",
 ]
 
+/**
+ * GB-flavored venue names (#1366): institutional forms (Club/Centre/House/Arms/Station), the "Ye" archaic register, and
+ * brand–dash–place compounds — INCLUDING directional-led names, because the target class is venues that open with
+ * compass words ("New North Health Centre", "Southfields Station") and the base model reads those as locality/street
+ * evidence. The six #1366 gauntlet fixtures' own venue names are deliberately ABSENT — the fixtures stay held-out.
+ */
+const GB_VENUES: ReadonlyArray<string> = [
+	"Ye Olde Cheshire Cheese",
+	"Ye Old Mitre",
+	"The Red Lion",
+	"The Crown & Anchor",
+	"The King's Arms",
+	"The White Hart",
+	"The Royal Oak",
+	"North End Road Market",
+	"Northfields Community Centre",
+	"South Bank Tavern",
+	"Southgate Dental Practice",
+	"West End Barbers",
+	"East Street Pharmacy",
+	"New Cross Learning Centre",
+	"Old Street Works",
+	"Upper Crust - Waterloo",
+	"Pret a Manger - Leadenhall",
+	"Greggs - Camden High Street",
+	"The Ivy - Chelsea Garden",
+	"Marks & Spencer Simply Food",
+	"Chapel Market Fishmongers",
+	"Victoria Coach Station",
+	"Highbury Fields Tennis Club",
+	"The Carpenters Arms",
+	"St Bride's Institute",
+	"Albion House",
+	"Imperial Dry Cleaners",
+	"Golden Dragon 金龍饭店",
+]
+
 //#endregion
 
 //#region Fallback street pool
@@ -163,6 +200,19 @@ function countryToLocale(country: string): string {
 
 //#region Synthesis
 
+/**
+ * Fraction of GB rows drawing from {@link GB_VENUES} instead of the shared pool. 0.7 mirrors the register mix in real
+ * GB listings data (institutional names dominate, international/generic names still appear) — pre-registered in the
+ * #1366 memo.
+ */
+const GB_VENUE_POOL_RATE = 0.7
+
+/**
+ * Fraction of GB rows whose house number widens into a range ("287-293"). Real GB venue addresses frequently span
+ * buildings; 0.15 keeps ranges a minority register — pre-registered in the #1366 memo.
+ */
+const GB_RANGE_NUMBER_RATE = 0.15
+
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
 	opts: HouseVenueSynthesisOpts = {}
@@ -171,25 +221,46 @@ export function synthesizeHouseVenueRow(
 	const locale = countryToLocale(base.country)
 	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
 
-	const venue = pick(PLAIN_VENUES, random)
-	const street = base.street ?? pick(FALLBACK_STREETS, random)
-	const houseNumber = base.houseNumber ?? randomHouseNumber(random)
-
 	// FR renders postcode-before-locality with NO region ("MR & MRS CRAB, 20 Rue de la Huchette,
 	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
-	// target shape). Every other country keeps the original US-order tail.
+	// target shape). GB (#1366) renders locality-then-postcode with NO region and NO comma between
+	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the shard must teach).
+	// Every other country keeps the original US-order tail.
 	const frOrder = base.country === "FR"
+	const gbOrder = base.country === "GB"
+
+	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
+	// incl. directional-led names — the #1366 target class) and the shared pool otherwise; real GB
+	// registers mix both. Other locales keep the shared pool (which already carries the FR flavor).
+	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? pick(GB_VENUES, random) : pick(PLAIN_VENUES, random)
+	const street = base.street ?? pick(FALLBACK_STREETS, random)
+	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
+
+	// GB range numbers ("287-293 New N Rd"): real GB venue addresses frequently span buildings.
+	// 15% of GB rows widen the number into a range (same parity, small span — the register's real
+	// shape). Pre-registered in the #1366 memo; the base pool's no-ranges stance stays for other
+	// locales.
+	if (gbOrder && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
+		const start = Number.parseInt(houseNumber, 10)
+		const span = (1 + Math.floor(random() * 4)) * 2
+
+		houseNumber = `${start}-${start + span}`
+	}
 
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
 		venue,
 		locality: base.locality,
-		...(frOrder ? {} : { region: base.region }),
+		...(frOrder || gbOrder ? {} : { region: base.region }),
 		postcode: base.postcode,
 	}
 
-	const tail = frOrder ? `${base.postcode} ${base.locality}` : `${base.locality}, ${base.region} ${base.postcode}`
+	const tail = frOrder
+		? `${base.postcode} ${base.locality}`
+		: gbOrder
+			? `${base.locality} ${base.postcode}`
+			: `${base.locality}, ${base.region} ${base.postcode}`
 
 	let raw: string
 
