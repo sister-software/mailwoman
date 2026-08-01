@@ -65,7 +65,7 @@ export async function createFilerFamilyIndex(db): Promise<void>
 
 Bump `schema_version` in the manifest. `filer_edge`'s PK stays `(from_node_id, to_node_id, source, valid_from)` — adding `relationship` to the PK would let one source assert two different kinds for the same pair at the same instant, which is a contradiction we want rejected, not stored.
 
-- [ ] TDD: all tables create; a family row round-trips; `relationship` rejects empty/whitespace; the edge PK still rejects a literal duplicate. Commit `feat(filer): relationship kinds + filer_family table (3b task 1, decisions 1,2)`.
+- [x] TDD: all tables create; a family row round-trips; `relationship` rejects empty/whitespace; the edge PK still rejects a literal duplicate. Commit `feat(filer): relationship kinds + filer_family table (3b task 1, decisions 1,2)`.
 
 ### Task 2: Family edges from Form 499
 
@@ -73,7 +73,7 @@ Bump `schema_version` in the manifest. `filer_edge`'s PK stays `(from_node_id, t
 
 Holding and management edges already exist from 3a — this task types them and derives family membership. A `holding_company_name` node with N distinct FRNs pointing at it is a family of N members, `family_id` derived from the canonicalized name (reuse `canonicalizeOrganizationName` from `@mailwoman/record`). **Do NOT emit family edges from the DC-agent fields** — spec §3.1's anti-pattern: service-of-process agents are dominated by a handful of firms serving tens of thousands of unrelated filers.
 
-- [ ] TDD incl. a fixture where three FRNs share a holding company (one family, three members) and one where a filer has holding ≠ management (two family memberships, different `relationship`). Commit `feat(filer): typed family edges + membership from Form 499 (3b task 2, decision 1)`.
+- [x] TDD incl. a fixture where three FRNs share a holding company (one family, three members) and one where a filer has holding ≠ management (two family memberships, different `relationship`). Commit `feat(filer): typed family edges + membership from Form 499 (3b task 2, decision 1)`.
 
 ### Task 3: Family rollup reader + gates 1-2
 
@@ -96,7 +96,7 @@ export async function familyRollup(
 
 `FilerLookupResult` gains `families: {family_id, relationship}[]` — a **separate field** from `cluster`, never merged. Same half-open `asOf` predicate as everywhere else (`valid_from <= asOf AND (valid_to IS NULL OR valid_to > asOf)`).
 
-- [ ] Gates first, then implementation. Commit `feat(filer): family rollup, distinct from entity clusters (3b task 3, gates 1-2)`.
+- [x] Gates first, then implementation. Commit `feat(filer): family rollup, distinct from entity clusters (3b task 3, gates 1-2)`.
 
 ### Task 4: The record-linkage eval + scorecard
 
@@ -104,7 +104,7 @@ export async function familyRollup(
 
 **Produces:** precision / recall / F1 over held-out FRN↔holdingCompany truth, computed locally (no metrics module exists in `match/` — `registry/tools/train-gbt.ts:155 clusterF1` is unexported and pairwise; write your own and export it). **Decision 4 binds: the truth field must be absent from input records** — build inputs from a filtered projection and assert the absence in a test.
 
-- [ ] TDD; gate 4 lives here. Commit `feat(filer): held-out record-linkage eval + scorecard (3b task 4, decisions 3,4)`.
+- [x] TDD; gate 4 lives here. Commit `feat(filer): held-out record-linkage eval + scorecard (3b task 4, decisions 3,4)`.
 
 ### Task 5: SEC EDGAR client (first throttled fetcher)
 
@@ -112,7 +112,7 @@ export async function familyRollup(
 
 **Produces:** `createSECClient(options?): SECClient` with `get<T>(path)`, honoring decision 5 (UA fail-fast, ≤10 req/s token bucket, on-disk cache under `dataRootPath("sec","cache")`, bounded backoff on 429/5xx, `fetchImpl` seam). **Verified reachable from this host with a compliant UA:** `data.sec.gov/submissions/CIK##########.json`, `www.sec.gov/files/company_tickers.json`, and the classic browse-edgar CGI all return 200.
 
-- [ ] TDD with stub fetch only. Commit `feat(filer): throttled SEC EDGAR client (3b task 5, decision 5)`.
+- [x] TDD with stub fetch only. Commit `feat(filer): throttled SEC EDGAR client (3b task 5, decision 5)`.
 
 ### Task 6: CIK resolution + 10-K discovery
 
@@ -120,7 +120,7 @@ export async function familyRollup(
 
 Resolve company name → CIK via `company_tickers.json`; list 10-K filings per CIK via the submissions API; return filing accession numbers + dates. CIK becomes a `FilerIdentifierType` addition (`cik`). Name→CIK matching **must not be name-only** where an identifier veto is possible — carry 3a's lesson: report candidates with scores rather than silently picking one, and let Task 8 decide what's authoritative.
 
-- [ ] TDD. Commit `feat(filer): EDGAR CIK resolution + 10-K discovery (3b task 6)`.
+- [x] TDD. Commit `feat(filer): EDGAR CIK resolution + 10-K discovery (3b task 6)`.
 
 ### Task 7: Exhibit 21 fetch + parse
 
@@ -128,7 +128,7 @@ Resolve company name → CIK via `company_tickers.json`; list 10-K filings per C
 
 **Produces:** `parseExhibit21(html: string): { subsidiaries: {name, jurisdiction?}[]; unparseable: number }`. Decision 6 binds — abstain, never guess. Gate 3 lives here.
 
-- [ ] TDD, gate 3 first. Commit `feat(filer): Exhibit 21 parsing with honest abstention (3b task 7, decision 6, gate 3)`.
+- [x] TDD, gate 3 first. Commit `feat(filer): Exhibit 21 parsing with honest abstention (3b task 7, decision 6, gate 3)`.
 
 ### Task 8: EDGAR family edges + rollup integration
 
@@ -140,17 +140,17 @@ Parent CIK → subsidiary name becomes a `Subsidiary` family edge with `source: 
 
 Concretely, this task must extend `insertFamilyMembership`'s reach (or its EDGAR equivalent) so each inferred subsidiary relationship lands as BOTH an edge and a family membership row, carrying `naming_node_id` like every other family row. Task 4's `docs/articles/evals/2026-07-31-filer-linkage.md` is the published before-measurement; re-running `mailwoman filer linkage-eval` after this task is what demonstrates the corroboration channel works, and it will report 0.000 again if only edges are written.
 
-- [ ] TDD. Commit `feat(filer): EDGAR Exhibit 21 family edges (3b task 8)`.
+- [x] TDD. Commit `feat(filer): EDGAR Exhibit 21 family edges (3b task 8)`.
 
 ### Task 9: MCP tool
 
 **Files:** Modify `mcp/{tools.ts,cli.ts,tools.test.ts}` — add `mailwoman_filer_family` matching the house pattern exactly (snake_case zod with `.describe()` on every field, deps method, handler = parse → deps → verbatim, zero logic). Reuse the existing `openFilerDatabaseIfPresent`/`assertFilerDatabaseExists` guards.
 
-- [ ] TDD. Commit `feat(filer,mcp): mailwoman_filer_family tool (3b task 9)`.
+- [x] TDD. Commit `feat(filer,mcp): mailwoman_filer_family tool (3b task 9)`.
 
 ### Task 10: Wrap-up
 
-- [ ] Fix `filer/sdk/index.ts:13` `SDK_VERSION` (still `"3a"`). Full ladder; tick checkboxes; controller handles final review + PR (do NOT open a PR in-task).
+- [x] Fix `filer/sdk/index.ts:13` `SDK_VERSION` (still `"3a"`). Full ladder; tick checkboxes; controller handles final review + PR (do NOT open a PR in-task).
 
 ## Out of scope for 3b
 
