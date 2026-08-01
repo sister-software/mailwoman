@@ -137,6 +137,14 @@ export class PairIndexBuilder {
 	/**
 	 * Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution.
 	 */
+	/**
+	 * Distinct (child, parent) pairs accumulated so far — lets a caller measure how many NEW pairs a secondary source
+	 * (the R2 borough extraction) contributed on top of the primary CSV.
+	 */
+	get distinctCount(): number {
+		return this.#seen.size
+	}
+
 	finish(): PairIndexBuildResult {
 		const sortedLengths = [...this.#wordLengths].toSorted((a, b) => a - b)
 		const histogram = new Map<number, number>()

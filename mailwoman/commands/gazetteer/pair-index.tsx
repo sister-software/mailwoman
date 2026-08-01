@@ -38,6 +38,7 @@ import { CSVSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
+import { extractBoroughPairs } from "../../gazetteer-pipeline/borough-pairs.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
@@ -110,6 +111,10 @@ const OptionsSchema = zod.object({
 				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
 				"nonzero value for a shipped artifact build."
 		),
+	boroughDb: zod
+		.string()
+		.optional()
+		.describe("WOF admin DB path — merge borough (child, parent) pairs for the country (hierarchy campaign R2)"),
 	holdoutSeed: zod
 		.number()
 		.default(42)
@@ -153,6 +158,21 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			}
 
 			builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "")
+		}
+
+		// R2 (hierarchy campaign): borough pairs from the WOF admin DB, through the SAME fold/dedupe
+		// as the CSV rows (boroughs project onto dependent_locality — plan/reference/placetype-evidence).
+		let boroughsAdded = 0
+
+		if (options.boroughDb) {
+			const before = builder.distinctCount
+
+			for (const pair of extractBoroughPairs(options.boroughDb, country.toUpperCase())) {
+				builder.addRow(pair.child, pair.parent)
+			}
+
+			boroughsAdded = builder.distinctCount - before
+			console.error(`pair-index: +${boroughsAdded} distinct borough pairs (WOF admin DB)`)
 		}
 
 		const built = builder.finish()
@@ -228,10 +248,10 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const gateLine =
 			country === "gb"
 				? options.holdoutFraction > 0
-					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})${preFoldSuffix}`
-					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT
-						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (production baseline expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})${preFoldSuffix}`
-						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != the production baseline's ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} — investigate fold divergence before trusting this artifact${preFoldSuffix}`
+					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${(EXPECTED_GB_PAIR_COUNT + boroughsAdded).toLocaleString()})${preFoldSuffix}`
+					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT + boroughsAdded
+						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${boroughsAdded} borough)${preFoldSuffix}`
+						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${boroughsAdded} borough — investigate fold divergence before trusting this artifact${preFoldSuffix}`
 				: `(cross-check only registered for gb; ${preHoldoutCount.toLocaleString()} distinct pairs)`
 
 		const holdoutLine =
