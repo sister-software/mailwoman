@@ -119,3 +119,58 @@ the US does not emit because no artifact exists. Every other locale in the campa
 (FR lieu-dit, ES pedanía, BR bairro, MX colonia, and the borough instances in Paris/Tokyo/Amsterdam)
 is therefore an ARTIFACT question, not a training question — which moves them out of R5's
 training-gated column and into the same decode-time lane R2–R4b already ran.
+
+## R5 follow-on — the OTHER projections, and a three-way split
+
+Prompted by the operator's note that the projection table covers far more than boroughs and that
+probe set 2 was built to exercise it. Measuring the rest of the table splits the campaign's targets
+into three classes that want three different mechanisms — the useful generalization of R5's finding.
+
+**Class 1 — enumerable administrative (`borough`, `neighbourhood`, `macrohood`, `microhood` →
+`dependent_locality`).** Closed, finite, already in WOF. **Artifact-gated**, and R5 is the proof:
+build the index and the tag emits. Everything R2–R5 did lives here.
+
+**Class 2 — open-class venue names (`venue` → `venue`).** NOT artifact-gated, and the measurement
+says so plainly: of the 40 probe-set-2 improvement targets carrying an expected venue string, only
+**8 (20%) exist in poi.db at all** — and most of those 8 are wrong-country homonyms ("East West"
+[US] for a London row, "Ginza" [FR] for a Dhaka row), so true coverage rounds to near zero. The
+residual is "A Bar with Shapes for a Name", "Art4Space", "B.indulged", "Paws 4 A Rest", "Tricky's @
+The Tolgus Inn" — small, new, deliberately odd commercial names that no gazetteer enumerates. **No
+retrieval artifact can supply what does not exist in any source.** This class is where the model
+has to generalize, which is why #1366's fine-tune shape was right even though V1 missed, and why its
+three named residual mechanisms are the actual work.
+
+**Class 3 — compositional sub-venue structure (`building`, `campus`, `wing`, `concourse`, `arcade`,
+`enclosure`, `installation` → `venue` / `unit`).** Neither of the above: these are PATTERNS, not
+names — a small closed designator vocabulary times an open numbering. It was **completely
+untested**: before this rung the gauntlet contained zero `unit:` expectations and one line matching
+any sub-venue term.
+
+Measured behaviour, and the reason for it:
+
+| input                                                   | today                                                        |
+| ------------------------------------------------------- | ------------------------------------------------------------ |
+| `Building 43, Googleplex, 1600 Amphitheatre Parkway, …` | correct — `unit=Building 43, venue=Googleplex`               |
+| `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA`       | `locality="Terminal"`, `house_number=5`, **airport dropped** |
+| `Gate 12, Terminal 2, Manchester Airport, …`            | `locality="Gate"`, `house_number=12`                         |
+| `West Wing, St Thomas' Hospital, …`                     | `locality="West Wing"`, hospital folded into `street`        |
+| `Concourse B, O'Hare International Airport, …`          | `street="O'Hare International Airport"`                      |
+
+The asymmetry is not random. The span proposer's designator lexicon
+(`neural/span-proposer-lexicon.ts`) reads `codex/us/unit-designator.ts`, which is **USPS Publication
+28** — a mail-delivery standard. It stocks BUILDING, HANGAR, PIER, LOBBY because mail is delivered
+there, and omits TERMINAL, GATE, CONCOURSE, WING because mail is not. The postal source is correct
+about postal reality and silent about venue interiors — the same source-shaped gap the
+dependent-locality arc hit when PPD turned out to have no US analogue.
+
+A probe extending the designator set moved `Terminal 5` → `unit="Terminal 5", locality="Heathrow
+Airport"` and `Gate 12` → `unit="Gate 12"`, but split `Concourse B` into `unit=Concourse` +
+`venue=B` and left the trailing-designator `West Wing` untouched. **Real lever, not a clean sweep** —
+and it is a default-on change to unit parsing with obvious confound risk (GB street names ending in
+`-gate`, industrial estates literally named "Terminal"). It gets its own pre-registered board before
+anything ships; the experiment was reverted.
+
+**Landed here instead: the instrument.** Six sub-venue cases join the gauntlet — five
+`improvement_target` and one **gated control** (`Building 43`, the half that already works, locked
+so a future designator change cannot silently regress it). The class now has coverage it has never
+had, which is the precondition for fixing it.

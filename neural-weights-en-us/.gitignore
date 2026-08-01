@@ -23,3 +23,8 @@
 # so a lexicon bump never re-strays.
 /street-type-lexicon-*.json
 /locality-surface-lexicon-*.json
+
+# The placetype-pair index (hierarchy campaign R5) — built from the WOF admin DB by
+# `scripts/link-dev-weights.ts` for local dev, fetched from the HF bucket at publish time. Same
+# not-committed treatment as postcode-*.bin: a derived artifact, never a source of truth.
+/pair-index-*.bin

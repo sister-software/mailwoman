@@ -487,13 +487,18 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	)
 
 	test.skipIf(!haveModel || !haveCLI)(
-		"en-us: no pair-index sibling shipped — the SAME GB-shaped input applies NO placetype-pair bias",
+		"en-us: ships its OWN us-gated pair index — a GB-shaped input still applies NO placetype-pair bias",
 		async () => {
+			// Rewritten 2026-08-01 (hierarchy campaign R5). This used to assert en-us shipped NO sibling at all, which
+			// was the packaging fact rather than the property worth protecting. en-us now ships `pair-index-us.bin`
+			// (49,033 WOF-sourced pairs), so the invariant is sharper: the index EXISTS and is still inert on GB input.
+			// Two independent things keep it inert — the header's hard country gate, and the plain fact that US pairs
+			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
 			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-us" })
-			expect(r.pairIndexPath).toBeUndefined()
+			expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
@@ -526,7 +531,12 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			for (const entry of readdirSync(packageDir)) {
 				const source = join(packageDir, entry)
 
-				if (statSync(source).isFile()) {
+				// NEVER symlink the artifact this test is about to overwrite. `writeFileSync` FOLLOWS a symlink, so
+				// once en-us started shipping a real `pair-index-us.bin` (campaign R5), symlinking it here would have
+				// clobbered the 49,033-pair production binary with the 1-entry stub below — silently, since the test
+				// still passes and every later test in the run would grade against the corrupted file. Same
+				// write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
+				if (statSync(source).isFile() && entry !== "pair-index-us.bin") {
 					symlinkSync(source, join(fakePackageDir, entry))
 				}
 			}

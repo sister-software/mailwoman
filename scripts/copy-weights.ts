@@ -78,9 +78,22 @@ const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
 	: null
 
 /**
- * Per-country pair-index sources and their deltas, keyed by country code.
+ * Per-country pair-index build inputs, keyed by country code.
+ *
+ * Every field the `gazetteer pair-index` command accepts is represented, because this path builds the SHIPPED artifact
+ * and any flag it silently drops produces a materially different binary from the one the model card's md5 records. That
+ * bug was live until 2026-08-01: the type declared only `{ source, delta }`, so the release build rebuilt
+ * `pair-index-gb.bin` WITHOUT the calibrated `transitionBeta` and WITHOUT the R2/R3/R4b borough + London pair sources —
+ * a quietly degraded index. It never shipped because CI sets `MAILWOMAN_SKIP_WEIGHTS_COPY` and the operator publishes
+ * the dev-linked binary, but a local `yarn release` would have produced it.
+ *
+ * `source` is OPTIONAL: it is the GB postal register (PPD), and countries whose pairs come entirely from the WOF admin
+ * DB (US) have no equivalent — the command itself refuses a build with no source of any kind.
  */
-const PAIR_INDEX_BY_COUNTRY: Record<string, { source: string; delta: number }> = SOFT_FEED.pairIndexByCountry ?? {}
+const PAIR_INDEX_BY_COUNTRY: Record<
+	string,
+	{ source?: string; delta: number; transitionBeta?: number; boroughDb?: string; pairsJsonl?: string }
+> = SOFT_FEED.pairIndexByCountry ?? {}
 
 /**
  * Weights workspaces to materialize, derived from the release config's locale list.
@@ -295,12 +308,22 @@ async function materializePairIndex(workspace: string, dir: string) {
 		return
 	}
 
-	const source = entry.source.startsWith("/") ? entry.source : resolve(dataRoot, entry.source)
+	// Resolve every configured input against the data root (absolute paths pass through untouched).
+	const resolveInput = (value: string) => (value.startsWith("/") ? value : resolve(dataRoot, value))
+	const source = entry.source ? resolveInput(entry.source) : undefined
+	const boroughDb = entry.boroughDb ? resolveInput(entry.boroughDb) : undefined
+	const pairsJsonl = entry.pairsJsonl ? resolveInput(entry.pairsJsonl) : undefined
 
-	if (!existsSync(source)) {
-		throw new Error(
-			`Missing pair-index source CSV for ${country}: ${source}\nSet MAILWOMAN_DATA_ROOT or softFeed.pairIndexByCountry.${country}.source.`
-		)
+	for (const [label, path] of [
+		["source CSV", source],
+		["borough DB", boroughDb],
+		["pairs JSONL", pairsJsonl],
+	] as const) {
+		if (path && !existsSync(path)) {
+			throw new Error(
+				`Missing pair-index ${label} for ${country}: ${path}\nSet MAILWOMAN_DATA_ROOT or softFeed.pairIndexByCountry.${country}.`
+			)
+		}
 	}
 
 	const binDest = resolve(dir, `pair-index-${country}.bin`)
@@ -319,10 +342,12 @@ async function materializePairIndex(workspace: string, dir: string) {
 			dir,
 			"--country",
 			country,
-			"--source",
-			source,
 			"--delta",
 			String(entry.delta),
+			...(source ? ["--source", source] : []),
+			...(entry.transitionBeta !== undefined ? ["--transition-beta", String(entry.transitionBeta)] : []),
+			...(boroughDb ? ["--borough-db", boroughDb] : []),
+			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
 		],
 		{ stdio: "inherit" }
 	)

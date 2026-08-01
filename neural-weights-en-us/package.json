@@ -15,6 +15,7 @@
 		"calibration.json",
 		"calibration-per-locale.json",
 		"postcode-us.bin",
+		"pair-index-us.bin",
 		"fst-en-us.bin",
 		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
