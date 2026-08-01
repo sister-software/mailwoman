@@ -219,10 +219,14 @@ function responseReason(status: number): string {
  * - Every non-401 HTTP status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
  *   had to reach into `error.response`. 401's own message and URN changed too.
  *
- * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` RESOLVED the chain with `undefined` was wrong: the
- * old `if (!response) throw` ran BEFORE that `switch`, so those `return` arms were unreachable and no case in 18 ever
- * resolved. A timeout became a misclassified 500, not a `TypeError` at the caller. No regression follows from any of
- * this — the sole call site has no `.catch`, and every shape that rejects now also rejected before.
+ * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` RESOLVED the chain with `undefined` was wrong FOR
+ * EVERY SHAPE AXIOS ACTUALLY PRODUCES: the old `if (!response) throw` ran BEFORE that `switch`, and axios never
+ * attaches a `response` to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 — a
+ * misclassified 500, not a `TypeError` at the caller. Note the `return` arms were not unreachable in general, only
+ * unreachable via axios: reaching the `switch` required a response to be PRESENT, and an error carrying both a
+ * `response` and `ECONNABORTED` did resolve with `undefined`. Stock adapters never pair those, but this repo's own
+ * `axiosLikeError(message, code, config, response)` helper builds that shape in one argument. No regression follows
+ * from any of this — the sole call site has no `.catch`, and every shape that rejects now also rejected before.
  *
  * @internal
  */

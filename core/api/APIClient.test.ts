@@ -373,8 +373,10 @@ describe("APIClient: bounded retry (A3)", () => {
 		// The pre-migration mapper collapsed EVERY responseless failure into `ResourceError.from(500,
 		// "Internal Server Error", "axios", "response", "missing")`, so a timeout was indistinguishable
 		// from a refused connection or a DNS failure. Its `ECONNABORTED: return` arm — which would have
-		// resolved the chain with `undefined` — was unreachable: the `if (!response) throw` above it ran
-		// first, and a differential across 18 failure shapes found no case that ever resolved.
+		// resolved the chain with `undefined` — could not be reached BY AXIOS: the `if (!response) throw`
+		// above it ran first, and axios never attaches a `response` to a timeout, so a differential across
+		// 18 failure shapes found no case that ever resolved. (Reachable in principle with a hand-built
+		// error carrying both a `response` and `ECONNABORTED`, which no stock adapter produces.)
 		const { adapter } = stubAdapter([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		const client = new APIClient({
@@ -572,6 +574,51 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 
 		for (let i = 1; i < dispatchTimes.length; i++) {
 			expect(dispatchTimes[i]! - dispatchTimes[i - 1]!).toBeGreaterThanOrEqual(INTERVAL_MS)
+		}
+	})
+})
+
+describe("APIClient: a caller-supplied adapter cannot bypass the gate", () => {
+	it("strips a per-request adapter so the pacing grant is still taken", async () => {
+		// `mergeConfig` lets a request-level `adapter` win over the instance default, and the gate lives in that
+		// instance adapter — so before this was stripped, three concurrent calls made 3 dispatches, took 0 grants and
+		// slept 0 times. The cache interceptor's own adapter swap is unaffected: it happens inside the interceptor
+		// chain on the merged config, not through this entry point.
+		const clock = new VirtualClock()
+		const dispatches: number[] = []
+
+		const client = new APIClient({
+			displayName: "adapter-bypass-probe",
+			minRequestIntervalMs: 100,
+			clock,
+			axios: {
+				adapter: async (requestConfig) => {
+					dispatches.push(clock.now())
+
+					return { data: { ok: true }, status: 200, statusText: "OK", headers: {}, config: requestConfig }
+				},
+			},
+		})
+
+		const rogueAdapter = async (requestConfig: InternalAxiosRequestConfig): Promise<AxiosResponse> => {
+			dispatches.push(clock.now())
+
+			return { data: { rogue: true }, status: 200, statusText: "OK", headers: {}, config: requestConfig }
+		}
+
+		const pending = [0, 1, 2].map((i) => client.fetch({ url: `https://example.invalid/${i}`, adapter: rogueAdapter }))
+
+		// The rogue adapter never ran — every response came from the paced instance adapter.
+		const responses = await clock.runUntilSettled(Promise.all(pending))
+
+		for (const response of responses) {
+			expect(response.data).toEqual({ ok: true })
+		}
+
+		expect(dispatches).toHaveLength(3)
+
+		for (let i = 1; i < dispatches.length; i++) {
+			expect(dispatches[i]! - dispatches[i - 1]!).toBeGreaterThanOrEqual(100)
 		}
 	})
 })

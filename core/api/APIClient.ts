@@ -190,11 +190,25 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
 
+		// A per-request `adapter` would WIN over the instance default in `mergeConfig`, and the pacing/cooldown gate
+		// lives in that instance adapter — so passing one here would dispatch with no grant at all. Reproduced against
+		// the un-stripped form: a client at `minRequestIntervalMs: 5000` issuing three concurrent `fetch({ url, adapter })`
+		// calls made 3 dispatches, took 0 grants and slept 0 times.
+		//
+		// The cache interceptor swaps the adapter too, and that one is INTENDED — it is how a cache hit skips the gate
+		// without spending a grant. The difference is that it swaps on the merged config from inside the interceptor
+		// chain, after this method has already handed the request over. Stripping it here closes the caller-supplied
+		// door without touching the interceptor's.
+		//
+		// Latent when found — no shipped client passes an adapter — which is exactly how the cooldown/pacer composition
+		// bug survived too. Closing it before `bdc/sdk/client.ts` is written against this contract.
+		const { adapter: _callerAdapter, ...safeOptions } = options
+
 		for (let attempt = 1; ; attempt++) {
 			this.logger.debug(`${method}: ${options.url}`)
 
 			try {
-				return await this.axios(options)
+				return await this.axios(safeOptions)
 			} catch (error) {
 				const directive = classifyAxiosFailure(error)
 
