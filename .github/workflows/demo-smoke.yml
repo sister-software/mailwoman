@@ -46,7 +46,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: yarn
+          # No `cache: yarn` — the actions-cache restore hangs through the lab's degraded path
+          # (the 2026-07-29 lesson that disabled it in test.yml); enableGlobalCache in
+          # .yarnrc.yml already serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable

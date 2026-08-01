@@ -62,7 +62,10 @@ env:
 
 concurrency:
   group: docs-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Cancel superseded runs on every trigger: only the latest head's build matters — a stale
+  # Pages deploy would be overwritten by the newer one anyway, and the deploy job is
+  # idempotent (deploy-pages redeploys whatever artifact the newer build uploads).
+  cancel-in-progress: true
 
 jobs:
   build:
