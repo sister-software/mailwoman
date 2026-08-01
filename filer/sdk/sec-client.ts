@@ -29,6 +29,20 @@
  *        (`core/api/retry.ts`) and the thrown error says all of this explicitly. This project already
  *        lost a debugging cycle to a generic "403 Forbidden" on an FCC endpoint.
  *
+ *   DOCUMENT PATH (3b Task 0 — a prerequisite the migration review flagged as `m3`/`I2`, folded into Task
+ *   7's commit because Exhibit 21 parsing is the first consumer). {@linkcode SECClient.get} is JSON-only —
+ *   `responseType: "json"` plus a cache `validate` predicate that required an object body — so it could
+ *   never fetch a filing DOCUMENT (a 10-K, an Exhibit 21, any `/Archives/` HTML/text page). {@linkcode
+ *   SECClient.getDocument} is the raw-text sibling: same client, same pacing gate, same host allowlist, same
+ *   retry policy, same {@linkcode ResourceError} mapping — the only difference is a per-request `responseType:
+ *   "text"` override, which makes Axios return the body as-is rather than attempt `JSON.parse`. The on-disk
+ *   cache is keyed by URL alone (method/URL/params/body — never `responseType`), so a document fetched once
+ *   is served from the SAME cache entry on a later `getDocument` call for that URL; `get`/`getDocument` are
+ *   never called against the same URL in practice (JSON endpoints vs. `/Archives/` documents are disjoint
+ *   host paths), so this sharing is never observed to disagree. The cache's `validate` predicate (below) was
+ *   widened to admit a non-empty STRING body alongside the existing non-null-object rule, so a document isn't
+ *   rejected for not being JSON while a truncated/empty body (either shape) still is.
+ *
  *   ERROR CONTRACT. Every failure past construction is a {@linkcode ResourceError} — no bespoke error
  *   class — so tasks 6-8 branch on `status` plus {@linkcode isTransientResourceError}, never on message
  *   prose:
@@ -330,6 +344,36 @@ export class SECClient extends APIClient<SECClientConfig> {
 			throw error
 		}
 	}
+
+	/**
+	 * Issue a `GET` against a full absolute EDGAR URL and return the RAW response body as text — the sibling
+	 * {@linkcode get} cannot provide (3b Task 0): a filing document (a 10-K, an Exhibit 21 exhibit) is HTML/text, not
+	 * JSON, and `get`'s `responseType: "json"` plus its cache `validate` predicate both assume a JSON body.
+	 *
+	 * Same client, same pacing gate, same host allowlist, same retry policy, same {@linkcode ResourceError} mapping as
+	 * {@linkcode get} — only a per-request `responseType: "text"` override differs, which tells Axios to hand back the
+	 * body as-is rather than attempt `JSON.parse` on it (Axios's default `transformResponse` only parses when
+	 * `responseType === "json"`; this override is what turns that off for exactly this one call). `/Archives/edgar/data/`
+	 * documents still get the permanent cache TTL ({@linkcode isImmutableArchiveURL}); the widened cache `validate`
+	 * predicate below is what stops that permanent cache from rejecting the non-JSON body.
+	 */
+	public async getDocument(input: string | URL): Promise<string> {
+		const url = input instanceof URL ? input : new URL(input)
+
+		assertSECHost(url)
+
+		try {
+			const response = await this.fetch<string>({ url: url.toString(), responseType: "text" })
+
+			return response.data
+		} catch (error) {
+			if (error instanceof ResourceError && error.status === HTTP_FORBIDDEN) {
+				throw explainForbidden(error, url, this.config.userAgent)
+			}
+
+			throw error
+		}
+	}
 }
 
 /**
@@ -348,6 +392,33 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
 	} catch {
 		return mutableTTLMs
 	}
+}
+
+/**
+ * The cache's `validate` predicate — decides whether a response body is worth persisting at all, BEFORE it reaches
+ * disk. Two shapes are worth caching, and the SAME EDGAR host serves both depending on the endpoint:
+ *
+ * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`): the ORIGINAL rule,
+ *   unchanged. Axios already rejects an unparseable body via `transitional.silentJSONParsing` (see the `axios` config
+ *   below), so this is the second gate rather than the first — a decoded body that isn't an object means the upstream
+ *   served something other than what it claimed.
+ * - A non-empty string (every `getDocument` call, 3b Task 0 — a filing document is HTML/text, never JSON): admits the
+ *   body `getDocument`'s `responseType: "text"` override actually produces, which the ORIGINAL `typeof === "object"`
+ *   rule rejected outright (a string is never `typeof "object"`). `.length > 0` is the truncated/empty guard on THIS
+ *   shape — `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the
+ *   only gate standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
+ *   self-healing path short of hand-deleting a hash-named file.
+ *
+ * An `/Archives/` entry cached under the permanent TTL has no self-healing path short of hand-deleting a hash-named
+ * file, which is why both branches exist rather than one permissive `Boolean(value.data?.data)` check — that would also
+ * admit a numeric `0` or a boolean `false` body, neither of which this client's endpoints ever legitimately return.
+ */
+function isCacheableSECBody(value: { data?: { data?: unknown } }): boolean {
+	const body = value.data?.data
+
+	if (typeof body === "string") return body.length > 0
+
+	return typeof body === "object" && body !== null
 }
 
 /**
@@ -388,13 +459,10 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 		caching: {
 			storage: buildDiskStorage({
 				directory: options.cacheDir ?? dataRootPath("sec", "cache"),
-				// Validate BEFORE writing. Axios already rejects an unparseable body (see
-				// `transitional.silentJSONParsing` below), so this is the second gate rather than the first:
-				// every EDGAR endpoint this client reaches returns a JSON object or array, so a decoded body
-				// that isn't one means the upstream served something other than what it claimed — and an
-				// `/Archives/` entry cached under the permanent TTL has no self-healing path short of
-				// hand-deleting a hash-named file.
-				validate: (value) => typeof value.data?.data === "object" && value.data.data !== null,
+				// Validate BEFORE writing — see isCacheableSECBody's own docstring for the JSON-object-or-
+				// non-empty-string rule (3b Task 0 widened this from JSON-object-only so getDocument's text
+				// bodies aren't rejected).
+				validate: isCacheableSECBody,
 			}),
 			ttl: (response) => responseTTL(response, cacheTTLMs),
 			// SEC sends its own `Cache-Control`. Honoring it would override the archive-vs-index rule above,

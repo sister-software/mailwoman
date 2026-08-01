@@ -3,6 +3,7 @@
 export * from "./build-filer.ts"
 export * from "./cluster-filers.ts"
 export * from "./edgar-filings.ts"
+export * from "./exhibit21.ts"
 export * from "./family-id.ts"
 export * from "./family-rollup.ts"
 export * from "./filer-lookup.ts"

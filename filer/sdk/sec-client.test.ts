@@ -494,6 +494,80 @@ describe("createSECClient: on-disk cache", () => {
 	})
 })
 
+describe("createSECClient: getDocument (3b task 0 — the raw-text path get() cannot provide)", () => {
+	const archiveURL = "https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/ex21.htm"
+
+	it("returns the raw HTML body as text, not JSON-parsed", async () => {
+		const transport = stubTransport([{ body: "<html><body>Exhibit 21</body></html>" }])
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		expect(await client.getDocument(archiveURL)).toBe("<html><body>Exhibit 21</body></html>")
+	})
+
+	it("shares the host allowlist with get() — refuses a non-SEC host before touching the network", async () => {
+		const transport = stubTransport([{}])
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const caught = await client.getDocument("https://attacker.example.invalid/collect").catch((error: unknown) => error)
+
+		expect(caught).toBeInstanceOf(ResourceError)
+		expect(isTransientResourceError(caught)).toBe(false)
+		expect(transport.calls).toHaveLength(0)
+	})
+
+	it("explains a 403 the same way get() does — this client did not identify itself", async () => {
+		const transport = stubTransport([{ status: 403, statusText: "Forbidden" }])
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const caught = await client.getDocument(archiveURL).catch((error: unknown) => error)
+
+		expect(caught).toBeInstanceOf(ResourceError)
+		expect((caught as ResourceError).status).toBe(403)
+		expect((caught as Error).message).toMatch(/did NOT identify itself/i)
+	})
+
+	it("caches a fetched document under the permanent archive TTL — a second call never re-fetches", async () => {
+		const transport = stubTransport([{ body: "<html>filing text</html>" }])
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
+		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
+		expect(transport.calls).toHaveLength(1)
+	})
+
+	it("does not persist a truncated/empty text body, so a later fetch still hits the network", async () => {
+		const bad = stubTransport([{ body: "" }, { body: "<html>filing text</html>" }])
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir,
+			clock: createFakeClock(),
+			maxAttempts: 1,
+			...bad,
+		})
+
+		expect(await client.getDocument(archiveURL)).toBe("")
+		expect(readdirSync(cacheDir)).toHaveLength(0)
+
+		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
+		expect(bad.calls).toHaveLength(2)
+	})
+
+	it("shares the on-disk cache with get() by URL — a document fetched via getDocument reads back as text on a fresh client instance", async () => {
+		const first = stubTransport([{ body: "<html>persisted</html>" }])
+
+		await createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...first }).getDocument(
+			archiveURL
+		)
+
+		const second = stubTransport([{ body: "SHOULD-NOT-BE-FETCHED" }])
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...second })
+
+		expect(await client.getDocument(archiveURL)).toBe("<html>persisted</html>")
+		expect(second.calls).toHaveLength(0)
+	})
+})
+
 describe("createSECClient: stampede guard", () => {
 	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
 		const transport = stubTransport([{ body: { v: 1 } }])
