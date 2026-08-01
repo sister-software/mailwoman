@@ -123,3 +123,43 @@ children at all and never enter the artifact.
 - **D-C2″ (disclosure).** Report the covered fraction among LARGE parents separately. The expected
   shape is that big cities are all covered, so the census discriminates in the small/middle tail
   and says nothing about major-city queries. State it either way.
+
+### R4c Addendum 2 — the readings, and B-C3's circularity
+
+**B-C1 PASS.** GB census: 5,577 nodes, 136,674 bytes, 33,899 links, 0 unmapped placetypes;
+readback probes return nonzero dependent-locality mass for London (707), Manchester (65),
+Birmingham (110).
+
+**B-C2 MISS (of the metric — see Addendum 1).** Median within-node lift 1.31× against a 2.0× bar.
+
+**B-C2′ PASS, both halves.** GB has 28,872 locality-class places (16,987 distinct surfaces); the
+census covers 5,637 = **33.2%** (bar ≤ 50%), and the median covered node carries **2**
+dependent-locality children (bar ≥ 2). A census hit does rule out two thirds of the parent
+population.
+
+**D-C2″ (disclosure).** The top decile of covered parents holds 8,415 of 22,545 dependent-locality
+children — 37% of the mass in 10% of the parents. The distribution is exactly as suspected: major
+cities are all covered and the census tells you nothing you didn't know there; its information is
+in the small/middle tail, where the median parent has two.
+
+**B-C3 VOID — the measurement is circular, and the 97.1% it produced means nothing.** The sample
+drew (child, parent) links from WOF, and the census is built from WOF under an inclusion rule that
+admits a parent precisely because it has such a child. Every sampled parent was therefore in the
+census by construction. The reading (20,186 of 22,843 links miss the shipped pair index; 97.1% of
+those misses have census parent coverage) is recorded as void, not as a pass.
+
+The one fact in it that is NOT circular, because it concerns the other artifact: **the shipped pair
+index resolves only 2,657 of WOF's 22,843 GB dependent-locality links — 11.6%.** The tail this arc
+set out to cover is real and mostly uncovered.
+
+- **B-C3′ (pre-registered BEFORE running, replaces B-C3).** Take GB post towns from the PPD
+  tuples — HM Land Registry, a source the census never read — and measure the fraction with
+  nonzero census dependent-locality mass, both unweighted and weighted by PPD row volume (the
+  unit real queries arrive in). Bar: **≥ 20% unweighted**. Report the weighted figure alongside;
+  a large gap between the two is itself the finding about where the census does and does not speak.
+
+**D-C4 (disclosure) confirmed as predicted.** All 56 law-1 confound rows share the London parent
+with the true positives, so the census has dependent-locality mass on 100% of them. The census
+cannot discriminate a venue-opening directional surface from a real dependent locality — it is a
+parent-scoped prior, and span-level selectivity has to come from elsewhere. This is the honest
+ceiling on what the artifact can ever contribute, and the reason it ships without a delta.
