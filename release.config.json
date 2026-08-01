@@ -30,6 +30,12 @@
 				"boroughDb": "wof/admin-global-priority.db",
 				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl"
 			},
+			"fr": {
+				"$comment": "Hierarchy campaign R6 (2026-08-01). Source is the raw BAN dump (DINUM/IGN, Licence Ouverte 2.0) read through ban/sdk's cleanLieuDit — NOT WOF, whose French neighbourhood records are Paris quartiers that never appear in a postal address. The line French addresses DO carry is the lieu-dit.",
+				"delta": 10,
+				"transitionBeta": 5,
+				"banDir": "corpus/sources/ban"
+			},
 			"us": {
 				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB \u2014 that is the pair the R5 bars were measured with.",
 				"delta": 10,

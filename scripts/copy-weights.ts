@@ -92,7 +92,7 @@ const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
  */
 const PAIR_INDEX_BY_COUNTRY: Record<
 	string,
-	{ source?: string; delta: number; transitionBeta?: number; boroughDb?: string; pairsJsonl?: string }
+	{ source?: string; delta: number; transitionBeta?: number; boroughDb?: string; pairsJsonl?: string; banDir?: string }
 > = SOFT_FEED.pairIndexByCountry ?? {}
 
 /**
@@ -315,11 +315,13 @@ async function materializePairIndex(workspace: string, dir: string) {
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
 	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
 	const pairsJsonl = entry.pairsJsonl ? resolveFrom(repoRoot, entry.pairsJsonl) : undefined
+	const banDir = entry.banDir ? resolveFrom(dataRoot, entry.banDir) : undefined
 
 	for (const [label, path] of [
 		["source CSV", source],
 		["borough DB", boroughDb],
 		["pairs JSONL", pairsJsonl],
+		["BAN dir", banDir],
 	] as const) {
 		if (path && !existsSync(path)) {
 			throw new Error(
@@ -350,6 +352,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 			...(entry.transitionBeta !== undefined ? ["--transition-beta", String(entry.transitionBeta)] : []),
 			...(boroughDb ? ["--borough-db", boroughDb] : []),
 			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
+			...(banDir ? ["--ban-dir", banDir] : []),
 		],
 		{ stdio: "inherit" }
 	)
