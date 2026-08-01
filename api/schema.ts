@@ -125,6 +125,8 @@ export const GeocodeOutcomeSchema = z
 		street: z.string().nullable(),
 		// The parsed venue span (#1041 posture; surfaced 2026-08-01 for the hierarchy-evidence campaign R1).
 		venue: z.string().nullable(),
+		// The parsed dependent-locality span (parse view; `hierarchy` is the resolved view).
+		dependent_locality: z.string().nullable(),
 		countryCode: z.string().nullable(),
 		hierarchy: z.array(GeocodeHierarchyEntrySchema),
 		candidates: z.array(GeocodeCandidateSchema),

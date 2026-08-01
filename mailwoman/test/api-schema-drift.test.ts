@@ -122,6 +122,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	house_number: true,
 	street: true,
 	venue: true,
+	dependent_locality: true,
 	countryCode: true,
 	hierarchy: true,
 	candidates: true,

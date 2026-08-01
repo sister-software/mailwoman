@@ -251,6 +251,6 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 		house_number: g.house_number,
 		street: g.street,
 		venue: g.venue,
-		dependent_locality: g.hierarchy.find((h) => h.tag === "dependent_locality")?.value ?? null,
+		dependent_locality: g.dependent_locality,
 	}
 }
