@@ -81,6 +81,13 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * that stays inside the published limit even when the event loop is late. `SEC_MAX_REQUESTS_PER_SECOND` remains the
  * clamp — a caller may ask for anything up to it — but the DEFAULT is this. Raise it only with a measurement showing
  * the arrival-time distribution stays under 10/s, not merely the grant times.
+ *
+ * THE RATE ALONE IS NOT ENOUGH, and this constant did not meet its own bar when it was introduced. `1000 / 9` is
+ * `111.111…`, and a fractional interval puts the 10th grant at exactly 1000.0 ms after the first — so sub-millisecond
+ * jitter tips a 10th arrival into the window every time, measured 5/5 runs. {@linkcode createSECClient} therefore CEILS
+ * the interval (`Math.ceil(1000 / 9)` = 112 ms), which moves the 10th grant to 1008 ms and costs 0.8% throughput.
+ * Measured after the ceil: 9 arrivals per sliding second, 3/3 runs. Any future rate that does not divide 1000 evenly
+ * needs the same treatment, which is why the ceil lives at the single construction site rather than in the constant.
  */
 export const SEC_DEFAULT_REQUESTS_PER_SECOND = 9
 
@@ -372,7 +379,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 	return new SECClient({
 		displayName: "SEC EDGAR",
 		userAgent,
-		minRequestIntervalMs: MS_PER_SECOND / requestsPerSecond,
+		minRequestIntervalMs: Math.ceil(MS_PER_SECOND / requestsPerSecond),
 		retry: {
 			maxAttempts: options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
 			baseDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,

@@ -13,6 +13,13 @@
 import type { ClockLike } from "./clock.ts"
 
 /**
+ * How many consecutive event-loop turns {@linkcode VirtualClock.runUntilSettled} tolerates with nothing pending before
+ * declaring the work stuck. Generous — a real `readFile` resolves in a handful of turns — but finite, so a genuinely
+ * blocked test reports what happened instead of timing out.
+ */
+const MAX_IDLE_TURNS = 1000
+
+/**
  * Run every queued microtask to quiescence. A `setImmediate` is scheduled behind the entire microtask queue, so
  * awaiting one guarantees any in-flight promise chain has settled as far as it can without more real time.
  */
@@ -116,6 +123,83 @@ export class VirtualClock implements ClockLike {
 		}
 
 		this.#now = target
+	}
+
+	/**
+	 * Drive `work` to completion, jumping virtual time to the next pending deadline whenever the REAL event loop goes
+	 * idle.
+	 *
+	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony —
+	 * a paced client whose gate sits downstream of an on-disk cache spends several real event-loop turns in `readFile`
+	 * before it ever registers its `sleep()`. A caller that drains once and then advances finds nothing pending, jumps
+	 * the clock past the deadlines that are registered a moment later, and the test hangs. This polls instead: drain, and
+	 * if any sleep is pending, advance to the earliest deadline; if none is, yield and look again.
+	 *
+	 * Throws rather than hanging when the work neither settles nor schedules anything for {@linkcode MAX_IDLE_TURNS}
+	 * consecutive turns — a diagnosable failure beats a test-timeout stack trace pointing at the `it()`.
+	 */
+	public async runUntilSettled<T>(work: Promise<T>): Promise<T> {
+		let settled = false
+
+		const observed = work.then(
+			(value) => {
+				settled = true
+
+				return value
+			},
+			(error: unknown) => {
+				settled = true
+
+				throw error
+			}
+		)
+
+		// Keep the rejection from surfacing as an unhandled rejection while we drive the clock; the real
+		// one is still delivered to whoever awaits the returned promise.
+		observed.catch(() => undefined)
+
+		let idleTurns = 0
+
+		for (;;) {
+			await drainMicrotasks()
+
+			// `settled` is flipped by the callbacks above, not by this loop body — hence the explicit
+			// break rather than a loop condition (which reads as unmodified to a static analyzer).
+			if (settled) break
+
+			const earliest = this.#earliestPendingDeadline()
+
+			if (earliest === null) {
+				idleTurns++
+
+				if (idleTurns > MAX_IDLE_TURNS) {
+					throw new Error(
+						`VirtualClock.runUntilSettled: no pending sleep and no progress for ${MAX_IDLE_TURNS} turns at ` +
+							`t=${this.#now}. The work is blocked on something this clock does not drive.`
+					)
+				}
+
+				continue
+			}
+
+			idleTurns = 0
+
+			await this.advance(Math.max(earliest - this.#now, 0))
+		}
+
+		return observed
+	}
+
+	#earliestPendingDeadline(): number | null {
+		let earliest: number | null = null
+
+		for (const { deadline } of this.#pending) {
+			if (earliest === null || deadline < earliest) {
+				earliest = deadline
+			}
+		}
+
+		return earliest
 	}
 
 	#earliestDueIndex(target: number): number {

@@ -127,8 +127,27 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.#retryPolicy = resolveRetryPolicy(config.retry)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null
 
+		// THE PACING GATE LIVES IN THE ADAPTER, not in `fetch()`.
+		//
+		// `axios-cache-interceptor` short-circuits a cache HIT by replacing `config.adapter` with its own
+		// `cachedAdapter`, so anything installed here is reached only when the request is actually going
+		// to the network. Gating in `fetch()` instead put the cache interceptor DOWNSTREAM of the gate and
+		// made every cache hit burn a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for
+		// zero network traffic. `/Archives/` documents are cached for a century by design, so warm re-runs
+		// are the EXPECTED mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping
+		// against an empty network. The client this replaced also paced only on a miss.
+		//
+		// Retries are unaffected: each attempt re-enters `this.axios(...)`, so each re-enters this adapter
+		// and takes its own grant.
+		const delegateAdapter = Axios.getAdapter(config.axios?.adapter ?? Axios.defaults.adapter)
+
 		const axiosInstance = Axios.create({
 			...config.axios,
+			adapter: async (requestConfig) => {
+				await this.acquireDispatchSlot()
+
+				return delegateAdapter(requestConfig)
+			},
 		})
 
 		// oxlint-disable-next-line unicorn/prefer-ternary -- the branches are multi-line client constructions
@@ -159,20 +178,19 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Perform a fetch operation using the API's Axios instance: paced, cooldown-gated, retried within the configured
-	 * ceiling, and — on the final failure — mapped to a {@linkcode ResourceError} carrying a numeric `status` and a
-	 * `(source, kind, reason)` URN.
+	 * Perform a fetch operation using the API's Axios instance: served from cache when possible, paced and cooldown-gated
+	 * when not, retried within the configured ceiling, and — on the final failure — mapped to a {@linkcode ResourceError}
+	 * carrying a numeric `status` and a `(source, kind, reason)` URN.
 	 *
 	 * Error mapping happens HERE rather than in a response interceptor so the retry loop can see the raw `AxiosError`
-	 * (status AND `Retry-After`) before it is summarized, and so every attempt re-enters the pacer/cooldown gates instead
-	 * of a re-dispatch sneaking past them.
+	 * (status AND `Retry-After`) before it is summarized. The pacing/cooldown gate deliberately does NOT happen here — it
+	 * sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing. Every retry attempt
+	 * re-enters `this.axios(...)` and therefore re-enters that gate; a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
 
 		for (let attempt = 1; ; attempt++) {
-			await this.acquireDispatchSlot()
-
 			this.logger.debug(`${method}: ${options.url}`)
 
 			try {
@@ -197,17 +215,23 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Acquire permission to dispatch one request. Both gates reserve SYNCHRONOUSLY with respect to their own state, so
-	 * concurrency cannot defeat either of them.
+	 * Acquire permission to dispatch one request, clearing BOTH gates. Each reserves SYNCHRONOUSLY with respect to its
+	 * own state, so concurrency cannot defeat either of them.
 	 *
 	 * The bug this replaced: `fetch()` awaited a single `$cooldown` read and the request was only COUNTED by a response
 	 * interceptor. N callers invoked in the same turn all cleared the gate before any response came back to set a
 	 * cooldown — measured at 40 dispatches inside 3ms against a configured budget of 2/minute, and 40 against 10/minute.
+	 *
+	 * The pacer is re-acquired on every pass of the loop, NOT taken once up front. A grant is a claim on a specific
+	 * instant; blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant spends it
+	 * the moment the cooldown lifts — measured as four pairs dispatching 0ms apart against a documented 100ms minimum
+	 * when both gates were configured together. Re-acquiring discards the stale grant (the pacer under-issues by one per
+	 * cooldown wait, which is the safe direction) and takes a fresh one for the instant we actually dispatch.
 	 */
 	protected acquireDispatchSlot = async (): Promise<void> => {
-		await this.#pacer?.acquire()
-
 		for (;;) {
+			await this.#pacer?.acquire()
+
 			const pending = this.#cooldownWithResolvers
 
 			if (!pending) {

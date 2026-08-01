@@ -9,7 +9,7 @@
  */
 
 import { AxiosError, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
-import { buildStorage } from "axios-cache-interceptor"
+import { buildMemoryStorage, buildStorage } from "axios-cache-interceptor"
 import { describe, expect, it } from "vitest"
 
 import { ResourceError } from "../errors/schema.ts"
@@ -369,10 +369,12 @@ describe("APIClient: bounded retry (A3)", () => {
 		expect(calls).toHaveLength(2)
 	})
 
-	it("maps a timeout to a transient network error instead of resolving with undefined", async () => {
-		// The pre-migration mapper RETURNED for ECONNABORTED/ETIMEDOUT, resolving the chain with
-		// `undefined` — a timed-out request surfaced as a missing body at the caller's first property
-		// access rather than as an error at all.
+	it("maps a timeout to a transient network error, not the old uniform 500", async () => {
+		// The pre-migration mapper collapsed EVERY responseless failure into `ResourceError.from(500,
+		// "Internal Server Error", "axios", "response", "missing")`, so a timeout was indistinguishable
+		// from a refused connection or a DNS failure. Its `ECONNABORTED: return` arm — which would have
+		// resolved the chain with `undefined` — was unreachable: the `if (!response) throw` above it ran
+		// first, and a differential across 18 failure shapes found no case that ever resolved.
 		const { adapter } = stubAdapter([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		const client = new APIClient({
@@ -443,5 +445,133 @@ describe("APIClient: bounded retry (A3)", () => {
 		await client.fetch(get("/rate-limited.json"))
 
 		expect(clock.sleepCalls).toEqual([60_000])
+	})
+})
+
+describe("APIClient: the pacing gate sits downstream of the cache (I2)", () => {
+	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
+		// The gate used to live in `fetch()`, upstream of the cache interceptor, so every hit burned a
+		// full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for zero network traffic.
+		// `/Archives/` documents are cached for a century by design, so warm re-runs are the EXPECTED
+		// mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping at an empty
+		// network.
+		const REPEATS = 6
+
+		const clock = createFakeClock()
+		const { adapter, calls } = stubAdapter([{ data: { ok: true } }])
+
+		const client = new APIClient({
+			displayName: "cache-hit-pacing",
+			minRequestIntervalMs: 111,
+			caching: { storage: buildMemoryStorage() },
+			clock,
+			axios: { adapter },
+		})
+
+		for (let i = 0; i < REPEATS; i++) {
+			await client.fetch(get("/archived.json"))
+		}
+
+		expect(calls).toHaveLength(1) // one miss, five hits
+
+		// The single miss is the pacer's first grant, which is always immediate. Every later call is a
+		// hit and must not sleep at all.
+		expect(clock.sleepCalls).toEqual([])
+	})
+
+	it("still paces the MISSES when the same client interleaves hits and misses", async () => {
+		const clock = createFakeClock()
+		const { adapter, calls, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)
+
+		const client = new APIClient({
+			displayName: "mixed-pacing",
+			minRequestIntervalMs: 100,
+			caching: { storage: buildMemoryStorage() },
+			clock,
+			axios: { adapter },
+		})
+
+		await client.fetch(get("/a.json"))
+		await client.fetch(get("/a.json")) // hit
+		await client.fetch(get("/b.json")) // miss
+		await client.fetch(get("/b.json")) // hit
+		await client.fetch(get("/c.json")) // miss
+
+		expect(calls).toEqual(["/a.json", "/b.json", "/c.json"])
+
+		for (let i = 1; i < dispatchTimes.length; i++) {
+			expect(dispatchTimes[i]! - dispatchTimes[i - 1]!).toBeGreaterThanOrEqual(100)
+		}
+	})
+})
+
+describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", () => {
+	it("paces retries, not just the first attempt", async () => {
+		// The guarantee was stated in a docstring and tested nowhere: hoisting the gate out of the
+		// per-dispatch path let a retry burst outrun the pacer entirely with 0 test failures. A retry
+		// storm past the rate limit is the exact class this whole task exists to close.
+		const INTERVAL_MS = 100
+
+		const clock = createFakeClock()
+
+		const { adapter, calls, dispatchTimes } = stubAdapter(
+			[
+				{ status: 503, statusText: "Service Unavailable" },
+				{ status: 503, statusText: "Service Unavailable" },
+				{ data: { ok: true } },
+			],
+			clock
+		)
+
+		const client = new APIClient({
+			displayName: "paced-retries",
+			minRequestIntervalMs: INTERVAL_MS,
+			// A backoff far SHORTER than the pacing interval, so the pacer is the only thing that can
+			// produce the spacing — a test with a long backoff would pass with the pacer deleted.
+			retry: { maxAttempts: 3, baseDelayMs: 1 },
+			clock,
+			axios: { adapter },
+		})
+
+		await client.fetch(get("/flaky.json"))
+
+		expect(calls).toHaveLength(3)
+		expect(dispatchTimes).toHaveLength(3)
+
+		for (let i = 1; i < dispatchTimes.length; i++) {
+			expect(dispatchTimes[i]! - dispatchTimes[i - 1]!).toBeGreaterThanOrEqual(INTERVAL_MS)
+		}
+	})
+})
+
+describe("APIClient: the pacer and the cooldown compose (I4)", () => {
+	it("re-acquires a pacer grant after a cooldown, instead of spending a stale one", async () => {
+		// A grant is a claim on a specific instant. Taking one and THEN blocking on a cooldown leaves it
+		// stale, and every caller holding a stale grant spends it the moment the cooldown lifts —
+		// measured as four pairs dispatching 0ms apart against a documented 100ms minimum. Latent while
+		// no client sets both, which is precisely why nothing caught it.
+		const INTERVAL_MS = 100
+		const FAN_OUT = 8
+
+		const clock = new VirtualClock()
+		const { adapter, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)
+
+		const client = new APIClient({
+			displayName: "both-gates",
+			minRequestIntervalMs: INTERVAL_MS,
+			requestsPerMinute: 2, // a 30s cooldown every 2 dispatches
+			clock,
+			axios: { adapter },
+		})
+
+		await clock.runUntilSettled(
+			Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.fetch(get(`/item/${i}.json`))))
+		)
+
+		expect(dispatchTimes).toHaveLength(FAN_OUT)
+
+		for (let i = 1; i < dispatchTimes.length; i++) {
+			expect(dispatchTimes[i]! - dispatchTimes[i - 1]!).toBeGreaterThanOrEqual(INTERVAL_MS)
+		}
 	})
 })

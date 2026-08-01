@@ -394,6 +394,32 @@ describe("createSECClient: on-disk cache", () => {
 		expect(transport.calls).toHaveLength(1)
 	})
 
+	it("ignores SEC's own Cache-Control, so the archive-forever rule survives a short max-age", async () => {
+		// M-N: deleting `interpretHeader: false` from the client caused 0 test failures and is REACHABLE
+		// IN PRODUCTION — sec.gov serves `Cache-Control` on these endpoints, and with header
+		// interpretation on, the interceptor derives the TTL from the header and silently overrides the
+		// immutable-archive rule. Every other cache test's stub omitted the header, so nothing noticed.
+		vi.useFakeTimers({ toFake: ["Date"] })
+		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
+
+		const transport = stubTransport([
+			{ body: { v: 1 }, headers: { "cache-control": "max-age=1" } },
+			{ body: { v: 2 }, headers: { "cache-control": "max-age=1" } },
+		])
+
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		expect(await client.get(archiveURL)).toEqual({ v: 1 })
+		expect(transport.calls).toHaveLength(1)
+
+		// Well past the header's 1s max-age. The path is an archive document, so it must still be served
+		// from cache.
+		vi.setSystemTime(new Date("2026-01-01T00:00:30Z"))
+
+		expect(await client.get(archiveURL)).toEqual({ v: 1 })
+		expect(transport.calls).toHaveLength(1)
+	})
+
 	it("treats URLs differing only by query string as DISTINCT cache entries", async () => {
 		// browse-edgar's entire identity IS its query string — collapsing `origin + pathname` into the
 		// cache key would silently merge every distinct CIK lookup into one entry.
@@ -508,7 +534,11 @@ describe("createSECClient: rate limiting", () => {
 		// inside a sliding second on 3 of 3 real-timer runs — the grants were spaced right, but the continuation that
 		// issues each request lands 0-2ms late and tips one across the boundary. Asserting the ceiling here would pin
 		// the schedule that measured as a violation.
-		const INTERVAL_MS = 1000 / SEC_DEFAULT_REQUESTS_PER_SECOND
+		//
+		// The interval is CEILED, matching `createSECClient`: `1000/9` is `111.111…`, which places the 10th grant at
+		// exactly 1000.0ms after the first, so any jitter admits a 10th arrival (measured 5/5 runs). 112ms moves it to
+		// 1008ms.
+		const INTERVAL_MS = Math.ceil(1000 / SEC_DEFAULT_REQUESTS_PER_SECOND)
 
 		expect(SEC_DEFAULT_REQUESTS_PER_SECOND).toBeLessThan(SEC_MAX_REQUESTS_PER_SECOND)
 
@@ -517,32 +547,27 @@ describe("createSECClient: rate limiting", () => {
 
 		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock, ...transport })
 
-		const pending = Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`))
+		// ARRIVALS, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
+		// rate limiter sees, and asserting it hid exactly this bug: the sleeps were 111ms apart and passed,
+		// while 10 requests still landed inside one second. `runUntilSettled` is required because the pacing
+		// gate now sits DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns
+		// in `readFile` before it registers its sleep.
+		await clock.runUntilSettled(
+			Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`)))
+		)
 
-		await drainMicrotasks()
-		await clock.advance(Math.ceil((FAN_OUT - 1) * INTERVAL_MS))
-		await Promise.all(pending)
+		const arrivals = transport.dispatchTimes
 
-		// GRANT instants, taken from the pacer's own reservations rather than from when the stub adapter
-		// happened to run. Every one of the 40 calls reserves its slot in the same synchronous turn, so
-		// caller `k` sleeps exactly `k * INTERVAL_MS` from t=0 and the first sleeps not at all. Reading
-		// the schedule here (instead of timestamping inside the adapter) keeps the assertion independent
-		// of the real filesystem latency the on-disk cache adds between a grant and the dispatch.
-		const grantTimes = [0, ...clock.sleepCalls]
+		expect(arrivals).toHaveLength(FAN_OUT)
+		expect(transport.calls).toHaveLength(FAN_OUT)
 
-		expect(grantTimes).toHaveLength(FAN_OUT)
-		expect(new Set(grantTimes).size).toBe(FAN_OUT)
-
-		// Assert the PROPERTIES the pacer exists to guarantee, not a recomputed schedule. 1000/9 is not an integer and
-		// each sleep is ceiled, so reproducing the exact instants here would couple the test to float arithmetic and
-		// break on any rate that divides unevenly — while proving nothing extra. What matters: strictly increasing, never
-		// closer together than the interval, and never more than the configured rate inside any sliding second.
-		for (let i = 1; i < grantTimes.length; i++) {
-			expect(grantTimes[i]! - grantTimes[i - 1]!).toBeGreaterThanOrEqual(Math.floor(INTERVAL_MS))
+		// The properties the pacer exists to guarantee: strictly increasing, never closer together than the
+		// interval, and never more than the configured rate inside any sliding second.
+		for (let i = 1; i < arrivals.length; i++) {
+			expect(arrivals[i]! - arrivals[i - 1]!).toBeGreaterThanOrEqual(INTERVAL_MS)
 		}
 
-		expect(maxCountInSlidingWindow(grantTimes, 1000)).toBe(SEC_DEFAULT_REQUESTS_PER_SECOND)
-		expect(transport.calls).toHaveLength(FAN_OUT)
+		expect(maxCountInSlidingWindow(arrivals, 1000)).toBe(SEC_DEFAULT_REQUESTS_PER_SECOND)
 	})
 })
 
