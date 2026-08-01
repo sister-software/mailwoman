@@ -61,3 +61,39 @@ Positive side verified: "East Acton"/"Crystal Palace"/"Nine Elms" all extract as
 dependent_locality. Artifact: `data/gazetteer/london-pairs-v2.jsonl` (966 rows = wards ∪
 neighbourhoods, sorted-unique) supersedes v1; link-dev-weights repointed; full GB index =
 19,209 PPD + 830 secondary = 20,039, cross-checked + self-verified; TRANSITION-BETA green.
+
+---
+
+## R4c — the placetype census artifact (PRE-REGISTERED 2026-08-01, before the probe ran)
+
+The census is the general form the pair index is one instance of: per parent surface, the
+distribution of its children's PROJECTED tags. Built here as PCN1
+(`neural/placetype-census.ts`, writer+reader in one file like PIX1/PCB1) from the shipped WOF
+admin DB, via `mailwoman gazetteer census`.
+
+**Why a second artifact instead of folding these links into the pair index.** A pair entry
+ASSERTS a surface is a dependent locality, so every batch needs a venue-confound board before it
+ships (R4b's law-1 discipline). A census node asserts nothing about any surface — it can only tilt
+a reading the model already entertains under a parent it already identified. That is what makes it
+the safe carrier for the long tail (GB alone has 22,843 WOF dep-loc-class links; individually
+boarding them is not a plan).
+
+**Scope: data + loader + offline probe. NO decode wiring, and the header ships with NO `delta`** —
+a calibrated bias is a later rung's output, and an artifact carrying an unmeasured one would ship a
+lever nobody measured.
+
+**Pre-registered bars:**
+
+- **B-C1 (artifact sanity).** Build reports 0 unmapped placetypes; the self-check readback finds
+  nodes for London/Manchester/Birmingham with nonzero dependent-locality mass; artifact ≤ 2 MB.
+- **B-C2 (discrimination).** Median dependent-locality LIFT over the GB base rate, across the
+  parents of a held-out GB dep-loc sample, is **≥ 2.0×**. A lift near 1 means the census is not
+  conditional evidence at all and the rung closes NEGATIVE.
+- **B-C3 (marginal value over PIX1).** Of sampled GB dep-loc links whose (child, parent) MISSES the
+  shipped pair index, **≥ 20%** have a census node with nonzero dependent-locality share. Near 0%
+  would mean the census covers only what the index already covers, and the rung closes NEGATIVE.
+- **D-C4 (required disclosure, not a pass/fail bar).** Report the census's dep-loc mass on the
+  56-row law-1 confound board. The expected result is ~100% coverage, because every row shares the
+  London parent: **the census cannot discriminate at span level by construction.** That is the
+  finding to state plainly, not to bury — it is precisely why the census is a parent-scoped prior
+  that must compose with span-level evidence, and why this rung ships un-wired.
