@@ -57,3 +57,5 @@ docs/src/components/ModelVisualizer/fixtures/*.trace.json
 ## Generated SBOM artifacts (scripts/generate-sbom.ts) — SPDX 2.3 + CycloneDX 1.5 output regenerated
 ## per release; the generator's serialization is the source of truth, not oxfmt's.
 docs/static/sbom/*.json
+# Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
+sentencepiece-wasm/sentencepiece.mjs

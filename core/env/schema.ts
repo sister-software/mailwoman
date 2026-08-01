@@ -133,4 +133,8 @@ export const PrivateEnvSchema = z.object({
 
 	// npm 2FA OTP for the release publish flow (`scripts/publish-workspace.ts`).
 	RELEASE_IT_WORKSPACES_OTP: z.string().optional(),
+
+	// FCC Broadband Map (BDC) public-API credentials (`bdc/sdk/client.ts`) — username + hash_value header auth.
+	FCC_MAP_USERNAME: z.string().optional(),
+	FCC_MAP_API_KEY: z.string().optional(),
 })

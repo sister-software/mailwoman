@@ -67,6 +67,27 @@ import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/cod
 - **Single source of truth.** The resolver, the decoder's convention masks, the
   corpus synthesis layer, and the matcher all import from `@mailwoman/codex`.
 
+## The normative tier (codex vs the libpostal dictionaries)
+
+Mailwoman carries two closed-class vocabularies that overlap on purpose and must not
+be merged:
+
+- **Codex is normative.** USPS Pub-28 (and each system's equivalent) verbatim: the
+  canonical word, every _recognized_ variant, and the one _preferred_ abbreviation.
+  Its consumers are precision-shaped — corpus synthesis recipes, the eval harness's
+  invariance transforms, and formatting (rendering `N` vs `North` requires knowing
+  which form the authority prints).
+- **The libpostal dictionaries** (`core/data/libpostal/dictionaries/`, Pelias
+  lineage) **are descriptive**: everything people actually write, including forms no
+  authority recognizes (`en/directionals.txt` lists `lower`/`upper`/`central`).
+  Their consumers are recall-shaped — evidence-lexicon curation laws, street
+  decomposition for training gold, the street-morphology FST. See the README in
+  that directory for the full consumer map and the four-tier curated-data layering.
+
+Broadening codex with descriptive forms would corrupt formatting; narrowing the
+descriptive lists to normative forms would weaken the evidence guards. Different
+questions, different tables.
+
 ## Related
 
 - [`@mailwoman/core`](../core) — `ComponentTag` schema, pipeline infrastructure

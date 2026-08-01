@@ -8,3 +8,9 @@
 /calibration-per-locale.json
 /anchor-lexicon-v1.json
 /country-surface-lexicon-v1.json
+
+# Evidence-bundle lexicons (Option-A, 6.7.0-bundle): materialized at dev-link/publish time from
+# data/gazetteer/ + the data root (same treatment as anchor-lexicon-v1.json above). Version-wildcarded
+# so a lexicon bump never re-strays.
+/street-type-lexicon-*.json
+/locality-surface-lexicon-*.json

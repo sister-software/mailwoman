@@ -40,6 +40,8 @@ const config = createOxlintConfig({
 		// Python venv + egg-info under corpus-python/ (vendored JS we don't own).
 		"**/.venv/**",
 		"**/*.egg-info/**",
+		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
+		"sentencepiece-wasm/sentencepiece.mjs",
 	],
 })
 

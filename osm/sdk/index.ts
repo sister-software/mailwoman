@@ -11,6 +11,7 @@
 
 export * from "./fetch.ts"
 export * from "./extract.ts"
+export * from "./extract-poi.ts"
 export * from "./street-locale.ts"
 export * from "./shard-provider.ts"
 export * from "./street-recovery.ts"

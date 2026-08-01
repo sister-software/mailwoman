@@ -10,7 +10,10 @@ load-bearing finding. Verdicts first, receipts after.
 1. **Latin: keep SentencePiece unigram.** Nothing better-fitting exists under our constraints
    (browser WASM, deterministic char offsets, int8 ONNX, 40M-param scale). Two free levers found:
    **vocabulary pruning** (shipped-eval utilization ~6.7%, ceiling 24%; the embedding table is
-   ~72.5% of model parameters) and a **WASM rebuild on SentencePiece 0.2.2** (native offsets).
+   ~72.5% of model parameters) — **CORRECTION 2026-07-31: the 24% ceiling was falsified at the
+   full-feed measurement (86.27% fired over all 684M rows); the pruning lever is DEAD, see
+   `2026-07-31-sp-vocab-pruning-verdict.md`** — and a **WASM rebuild on SentencePiece 0.2.2**
+   (native offsets; SHIPPED 2026-07-31, `@mailwoman/sentencepiece-wasm`, PR #1379).
 2. **CJK: character-level with a composition window confirmed** — the only browser-feasible class
    (our sealed vocab ~24KB vs 40–380MB for every dictionary-based segmenter; TinySegmenter at
    20.6KB is the lone peer and is also a dictionary-free char model).

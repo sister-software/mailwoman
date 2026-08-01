@@ -43,7 +43,13 @@ env:
 
 concurrency:
   group: test-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Cancel superseded runs on PRs AND pushes to main: only the latest head's `test` check is
+  # load-bearing (the ruleset + release auto-merge match on the branch HEAD sha), so an older
+  # in-flight run is pure fleet burn — each leg occupies one of the 4 lab runner slots, and a
+  # stale push's 4 legs queue AHEAD of the current push's. workflow_dispatch is EXEMPT: that's
+  # publish.yml mode=prepare dispatching against the release branch — cancelling it when a
+  # rerun lands would hang the release PR's auto-merge on a check that never reports.
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
   # Lint + typechecks. `typecheck:scripts` and the docs typecheck need the workspace

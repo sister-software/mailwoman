@@ -1,5 +1,5 @@
 {
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"overtureRelease": "v1.17.0",
 	"categories": [
 		{
@@ -13637,6 +13637,14 @@
 			"source": "mailwoman-infra"
 		},
 		{
+			"id": "telecom_exchange",
+			"label": "Telephone exchange",
+			"hierarchy": ["infrastructure", "telecom_exchange"],
+			"basicLabel": null,
+			"osmTag": "man_made=telephone_exchange",
+			"source": "mailwoman-infra"
+		},
+		{
 			"id": "telecommunications",
 			"label": "Telecommunications",
 			"hierarchy": ["professional_services", "it_service_and_computer_repair", "telecommunications"],
@@ -13920,6 +13928,14 @@
 			"hierarchy": ["structure_and_geography", "tower"],
 			"basicLabel": null,
 			"source": "overture"
+		},
+		{
+			"id": "tower_comms",
+			"label": "Communications tower",
+			"hierarchy": ["infrastructure", "tower_comms"],
+			"basicLabel": null,
+			"osmTag": "man_made=mast",
+			"source": "mailwoman-infra"
 		},
 		{
 			"id": "tower_communication_service",
@@ -15199,6 +15215,10 @@
 			"locales": ["en-GB"]
 		},
 		{
+			"phrase": "central office",
+			"categoryID": "telecom_exchange"
+		},
+		{
 			"phrase": "chemist",
 			"categoryID": "pharmacy",
 			"locales": ["en-GB", "en-AU", "en-NZ"]
@@ -15210,6 +15230,14 @@
 		{
 			"phrase": "coffee shop",
 			"categoryID": "cafe"
+		},
+		{
+			"phrase": "comms tower",
+			"categoryID": "tower_comms"
+		},
+		{
+			"phrase": "communications mast",
+			"categoryID": "tower_comms"
 		},
 		{
 			"phrase": "credit union",
@@ -15256,6 +15284,10 @@
 			"phrase": "er",
 			"categoryID": "hospital",
 			"locales": ["en-US"]
+		},
+		{
+			"phrase": "exchange building",
+			"categoryID": "telecom_exchange"
 		},
 		{
 			"phrase": "fast food",
@@ -15337,12 +15369,20 @@
 			"categoryID": "school"
 		},
 		{
+			"phrase": "radio mast",
+			"categoryID": "tower_comms"
+		},
+		{
 			"phrase": "street cabinet",
 			"categoryID": "telecom_cabinet"
 		},
 		{
 			"phrase": "substation",
 			"categoryID": "power_substation"
+		},
+		{
+			"phrase": "telephone exchange",
+			"categoryID": "telecom_exchange"
 		},
 		{
 			"phrase": "water fountain",

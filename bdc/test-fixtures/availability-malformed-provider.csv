@@ -1,0 +1,3 @@
+frn,provider_id,brand_name,location_id,technology,max_advertised_download_speed,max_advertised_upload_speed,low_latency,business_residential_code,state_usps,block_geoid,h3_res8_id
+0004215211,NOT_A_NUMBER,Sonic Broadband,1000000001,50,1000,1000,1,R,CA,060014001001001,8828308281fffff
+0004215211,NOT_A_NUMBER,Sonic Broadband,1000000002,40,200,20,0,B,CA,060014001001002,8828308283fffff

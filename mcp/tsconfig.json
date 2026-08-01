@@ -9,7 +9,9 @@
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../bdc" },
 		{ "path": "../core" },
+		{ "path": "../filer" },
 		{ "path": "../neural" },
 		{ "path": "../poi-taxonomy" },
 		{ "path": "../resolver" },

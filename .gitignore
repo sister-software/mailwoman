@@ -184,3 +184,6 @@ nightshift
 
 ### Never commit shell scripts. Use a `.ts` or `.tsx` file instead.
 .sh
+
+# tsc -b incremental state (per-workspace tsconfig.tsbuildinfo) — build junk, never committed.
+*.tsbuildinfo

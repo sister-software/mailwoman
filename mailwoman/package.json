@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "8.3.0",
+	"version": "8.4.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -107,9 +107,11 @@
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
+		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
+		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",

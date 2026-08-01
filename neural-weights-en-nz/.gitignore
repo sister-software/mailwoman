@@ -26,3 +26,9 @@
 # symlink from $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, real binary staged at
 # publish time. (en-nz ships no per-locale fst-*.bin, hence the narrower pattern here.)
 /fst-street-morphology.bin
+
+# Evidence-bundle lexicons (Option-A, 6.7.0-bundle): materialized at dev-link/publish time from
+# data/gazetteer/ + the data root (same treatment as anchor-lexicon-v1.json above). Version-wildcarded
+# so a lexicon bump never re-strays.
+/street-type-lexicon-*.json
+/locality-surface-lexicon-*.json

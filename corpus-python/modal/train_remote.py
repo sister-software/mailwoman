@@ -3619,6 +3619,41 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_gb_venue():
+    """#1366 GB venue increment: sync the v0.15.1-gb-venue overlay (manifest + the rebuilt
+    house-venue parquet; the 703 base shards resolve into v0.13.0-latam, already on the volume)
+    + latest training code (the v4.1.x configs) from R2. Clears stale pyc."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.15.1-gb-venue overlay + code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.15.1-gb-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.1-gb-venue/ {R}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.15.1-gb-venue sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_jp_probe():
     """v8 CJK Leg-1: sync the char-path training code + the v8-jp-probe corpus (200k train / 4k val
     span-triple parquet + the sealed JP char vocab + the municipality-held-out board) from R2. The

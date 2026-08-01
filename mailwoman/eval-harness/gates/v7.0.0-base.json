@@ -1,4 +1,5 @@
 {
+	"label": "v7.0.0-base",
 	"$comment": "Gate spec for the v7.0.0 base lineage — cut from the v4.0.1-base-60k candidate's SHIP-CONFIG readings (int8, locality lexicon v6 per the G8 DE-fold revert; v7 trained the channel, v6 ships — DE surfaces run the trained absence identity). Philosophy inherited from v6.0.0-shipped-baseline; margins now use each metric's REAL support with WILSON intervals (the normal approximation under-margins boundary readings — 100% at n=36 priced at 1pp where Wilson prices ~10pp; the v6-era 2.0pp fallback class is retired).",
 	"$margin_rationale": "floor = ship-config reading - max(1.0pp, 2 x the downward Wilson 95% half-width at the metric's own support). Supports = each instrument's tp+fn or fixture n, recorded in $supports.",
 	"$supports": {
