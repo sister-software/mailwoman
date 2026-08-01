@@ -79,6 +79,14 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		// The repeated-name convention's identity pair — the (x,x) evidence the segment rule keys on.
 		["Mangawhai", "Mangawhai"],
 	],
+	// R5 (hierarchy campaign): the US instance's probes. Unlike GB/NZ these are NOT postal-format
+	// dependent localities — USPS routes city/state/ZIP — they are the borough/neighbourhood class
+	// the schema's umbrella term covers, sourced from WOF rather than a postal register.
+	us: [
+		["Astoria", "Queens"],
+		["Park Slope", "Brooklyn"],
+		["Manhattan", "New York"],
+	],
 }
 
 const OptionsSchema = zod.object({
