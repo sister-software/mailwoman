@@ -416,6 +416,12 @@ if (pairIndexIsFresh) {
 			String(PAIR_INDEX_DELTA),
 			"--transition-beta",
 			String(PAIR_INDEX_TRANSITION_BETA),
+			// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs
+			// join the build — without these flags a dev rebuild would silently DROP them.
+			"--borough-db",
+			String(dataRootPath("wof", "admin-global-priority.db")),
+			"--pairs-jsonl",
+			String(repoRootPath("data", "gazetteer", "london-ward-pairs-v1.jsonl")),
 		],
 		{ stdio: "inherit" }
 	)

@@ -24,7 +24,7 @@
  *   count table) — this sizes the word-span window the decode-side prior (Task 4) walks.
  */
 
-import { createReadStream, existsSync, writeFileSync } from "node:fs"
+import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
@@ -111,6 +111,12 @@ const OptionsSchema = zod.object({
 				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
 				"nonzero value for a shipped artifact build."
 		),
+	pairsJsonl: zod
+		.string()
+		.optional()
+		.describe(
+			"Secondary pairs JSONL ({child, parent} per line) merged through the same fold — hierarchy campaign R3 (ONSPD London wards etc.)"
+		),
 	boroughDb: zod
 		.string()
 		.optional()
@@ -173,6 +179,24 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 
 			boroughsAdded = builder.distinctCount - before
 			console.error(`pair-index: +${boroughsAdded} distinct borough pairs (WOF admin DB)`)
+		}
+
+		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
+		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
+		if (options.pairsJsonl) {
+			const before = builder.distinctCount
+
+			for (const line of readFileSync(options.pairsJsonl, "utf8").split("\n")) {
+				if (!line.trim()) continue
+
+				const pair = JSON.parse(line) as { child: string; parent: string }
+				builder.addRow(pair.child, pair.parent)
+			}
+
+			boroughsAdded += builder.distinctCount - before
+			console.error(
+				`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${options.pairsJsonl.split("/").pop()})`
+			)
 		}
 
 		const built = builder.finish()
