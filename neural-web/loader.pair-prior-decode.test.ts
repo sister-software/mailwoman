@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs"
 
 import { repoRootPath } from "@mailwoman/core/utils"
 import { serializePairIndex, STAGE2_BIO_LABELS, type PairIndexHeader } from "@mailwoman/neural/browser"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -40,6 +40,14 @@ vi.mock("onnxruntime-web/webgpu", () => {
 
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
+
+// Shared-graph guard: the root vitest config runs `isolate: false`, so `./loader.ts` may already sit
+// in the worker's cache — evaluated WITHOUT this file's ORT mock by an earlier file (a cached module
+// never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset on the way in so
+// the chain re-evaluates against the mock, and on the way out so the NEXT file in this fork never
+// inherits our mocked ORT from the cache.
+vi.resetModules()
+afterAll(() => vi.resetModules())
 
 // Import AFTER the ORT mock. `@mailwoman/neural/browser` is NOT mocked here — the load runs the real
 // tokenizer + classifier so the parse below exercises the real shared decode.

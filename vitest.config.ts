@@ -80,10 +80,20 @@ export default defineConfig({
 		],
 	},
 	test: {
-		// isolate: true — required because @mailwoman/core/resources/libpostal has a top-level await
-		// that Vite's loader treats as a cycle under shared module graphs, breaking downstream
-		// `class extends ...` evaluations.
-		isolate: true,
+		// isolate: false — a shared module graph per worker. Measured 2026-08-01: core+neural slice
+		// 8m23s → 1m30s (5.6×), full sweep 4m48s wall. Every test file used to re-transform and
+		// re-import the entire aliased workspace graph on its own; now each fork pays that once.
+		// The old isolate:true justification (libpostal's top-level await breaking `class extends`
+		// under a shared graph) no longer reproduces — #481 made the libpostal resource a lazy
+		// getter, and the structural bare/subpath interleave is covered by the side-effect
+		// `import "@mailwoman/core"` workaround in the affected files (see AGENTS.md).
+		//
+		// The shared-graph contract: `vi.mock` factories are only consulted at module EVALUATION,
+		// so a module already cached by an earlier file in the same fork is returned as-is — mocks
+		// declared against it silently never apply. Any file that mocks a shared module MUST call
+		// `vi.resetModules()` before importing the module under test (reference:
+		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural-web/loader.tolerance.test.ts).
+		isolate: false,
 		testTimeout: 15_000,
 		exclude: [
 			"**/node_modules/**",

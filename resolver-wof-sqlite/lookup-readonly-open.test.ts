@@ -18,7 +18,7 @@ import { chmodSync, mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // Record every DatabaseSync construction (path + the readOnly option) while delegating to the real implementation.
 const spy = vi.hoisted(() => ({ opens: [] as Array<{ path: string; readOnly: boolean | undefined }> }))
@@ -42,11 +42,20 @@ vi.mock("node:sqlite", async (importOriginal) => {
 	return { ...actual, DatabaseSync: RecordingDatabaseSync }
 })
 
-// oxlint-disable-next-line import/first -- kept below the vi.mock factory it pairs with; vitest hoists the mock anyway
-import { DatabaseSync } from "node:sqlite"
+// vi.resetModules() BEFORE importing the module under test: the root vitest config runs
+// `isolate: false` (one shared module graph per worker), so `node:sqlite` / `./lookup.ts` may
+// already sit in the shared cache — evaluated with the REAL DatabaseSync by an earlier file. A
+// cached module is never re-evaluated, so this file's vi.mock factory would never run and the
+// construction spy would stay empty (the failure this guards against reads as "expected [] to
+// have a length of 1"). Reset on the way in so the chain re-evaluates against the mock, and on the
+// way out so the NEXT file in this fork never inherits our RecordingDatabaseSync from the cache.
+vi.resetModules()
+afterAll(() => vi.resetModules())
 
-// oxlint-disable-next-line import/first -- see above
-import { WOFSqlitePlaceLookup } from "./lookup.ts"
+// Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
+// module-under-test chain evaluates against the RecordingDatabaseSync mock.
+const { DatabaseSync } = await import("node:sqlite")
+const { WOFSqlitePlaceLookup } = await import("./lookup.ts")
 
 /**
  * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.

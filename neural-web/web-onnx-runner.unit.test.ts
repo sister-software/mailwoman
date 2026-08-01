@@ -23,7 +23,7 @@
  */
 
 import { ANCHOR_FEATURE_DIM, COUNTRY_FEATURE_DIM, GAZETTEER_FEATURE_DIM } from "@mailwoman/neural/browser"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -50,7 +50,16 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	}
 })
 
-// Import AFTER the mock declaration (vi.mock is hoisted, but keep the reading order honest).
+// Shared-graph guard: the root vitest config runs `isolate: false`, so `./web-onnx-runner.ts` may
+// already sit in the worker's cache — evaluated WITHOUT this file's ORT mock by an earlier file (a
+// cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
+// on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in
+// this fork (e.g. web-onnx-runner.test.ts, which needs the REAL runtime) never inherits our mocked
+// ORT from the cache.
+vi.resetModules()
+afterAll(() => vi.resetModules())
+
+// Import AFTER the mock declaration + reset (vi.mock is hoisted, but keep the reading order honest).
 const { WebONNXRunner } = await import("./web-onnx-runner.ts")
 
 interface FedTensor {

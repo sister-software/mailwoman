@@ -8,12 +8,10 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, expect, test, vi } from "vitest"
+import { afterAll, afterEach, beforeEach, expect, test, vi } from "vitest"
 
-import { createBDCClient } from "./client.ts"
-import { BDCFileCategory, BDCFilingDataType, BDCStateSubCategory, type RawBDCFile } from "./common.ts"
-import { resolveLatestVintage, retrieveFilingDates, type FCCAsOfDateEntry } from "./filing-dates.ts"
-import { retrieveAvailabilityFiles } from "./list-files.ts"
+import type { RawBDCFile } from "./common.ts"
+import type { FCCAsOfDateEntry } from "./filing-dates.ts"
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
 // read from the repo's real `.env` once at module load, so `vi.stubEnv(..., undefined)` alone can't hide
@@ -30,6 +28,20 @@ vi.mock("@mailwoman/core/env", async (importOriginal) => {
 		$private: { ...actual.$private, FCC_MAP_USERNAME: undefined, FCC_MAP_API_KEY: undefined },
 	}
 })
+
+// Shared-graph guard: the root vitest config runs `isolate: false`, so `./client.ts` may already sit
+// in the worker's cache — evaluated WITHOUT this file's `@mailwoman/core/env` mock by an earlier file
+// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
+// on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in
+// this fork never inherits our mocked env module from the cache.
+vi.resetModules()
+afterAll(() => vi.resetModules())
+
+// Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
+const { createBDCClient } = await import("./client.ts")
+const { BDCFileCategory, BDCFilingDataType, BDCStateSubCategory } = await import("./common.ts")
+const { resolveLatestVintage, retrieveFilingDates } = await import("./filing-dates.ts")
+const { retrieveAvailabilityFiles } = await import("./list-files.ts")
 
 let dataRoot: string
 
