@@ -194,8 +194,41 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 		expect(calls).toHaveLength(FAN_OUT)
 	})
 
+	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
+		// The RATE, which is what the option promises — not the schedule, which is what every other test here asserts.
+		// That gap is how a 10x overrun shipped: the budget released N back to back then waited `60000/N` ms, so a
+		// stated 10/minute sustained 100/minute, and no test failed because they all encoded the implemented spacing.
+		const BUDGET = 10
+		const clock = new VirtualClock()
+		const arrivals: number[] = []
+
+		const client = new APIClient({
+			displayName: "rate-contract",
+			requestsPerMinute: BUDGET,
+			clock,
+			axios: {
+				adapter: async (requestConfig) => {
+					arrivals.push(clock.now())
+
+					return { data: { ok: true }, status: 200, statusText: "OK", headers: {}, config: requestConfig }
+				},
+			},
+		})
+
+		const pending = Array.from({ length: BUDGET * 3 }, (_, i) => client.fetch(get(`/rate/${i}.json`)))
+
+		await clock.runUntilSettled(Promise.all(pending))
+
+		expect(arrivals).toHaveLength(BUDGET * 3)
+		expect(maxCountInSlidingWindow(arrivals, 60_000)).toBeLessThanOrEqual(BUDGET)
+	})
+
 	it("still throttles a serial run", async () => {
-		const COOLDOWN_MS = 30_000 // 60000 / 2 requests per minute
+		// The FULL MINUTE, not `60000 / requestsPerMinute`. This constant used to be 30_000 — the spacing between two
+		// requests — which encoded the very defect it read as guarding: a budget of 2 released 2, waited 30s, released
+		// 2 more, i.e. 4/minute against a stated 2. Measured on a bare client at `requestsPerMinute: 10`, a 20-call
+		// fan-out arrived `[0 x10, 6000 x10]` — 20 in one sliding minute, a sustained 100/minute.
+		const COOLDOWN_MS = 60_000
 
 		const clock = new VirtualClock()
 		const { adapter, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)

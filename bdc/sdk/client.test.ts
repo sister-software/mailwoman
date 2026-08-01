@@ -420,7 +420,12 @@ describe("createBDCClient: the throttle meter", () => {
 		// so SUMMING them reports more waiting than the run took: the first version of this meter printed
 		// `78m 0s (2000%)` for a 40-call fan-out that finished in 3m54s. What the operator is assessing is
 		// what SHARE of the wall clock went to the throttle, which only the union answers.
-		const FAN_OUT = 12
+		//
+		// Deliberately UNDER `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval gate fires and `waits` is exactly
+		// one per call after the first. At 12 this also crossed the per-minute budget, and once that gate's cooldown was
+		// corrected to a full window (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
+		// budget waits made the count ambiguous. Union-vs-sum is what this test is for; isolate it.
+		const FAN_OUT = 8
 
 		const clock = new VirtualClock()
 		const transport = stubTransport([{ body: { data: [] } }], clock)

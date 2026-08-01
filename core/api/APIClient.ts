@@ -97,9 +97,12 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	public readonly config: C
 
 	#cooldownWithResolvers: PromiseWithResolvers<void> | null = null
-	#requestInterval = 0
 	#requestCountWithinCooldown = 0
-	#lastRequestTime = 0
+	/**
+	 * When the CURRENT budget window opened — the instant of its first dispatch, not of the last one. The cooldown is
+	 * measured from here, which is what makes `requestsPerMinute` mean requests per MINUTE.
+	 */
+	#windowStartedAt = 0
 
 	readonly #clock: ClockLike
 	readonly #pacer: RequestPacer | null
@@ -173,8 +176,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			return response
 		})
 
-		this.#requestInterval = typeof config.requestsPerMinute === "number" ? MS_PER_MINUTE / config.requestsPerMinute : 0
-		this.#lastRequestTime = this.#clock.now()
+		this.#windowStartedAt = this.#clock.now()
 	}
 
 	/**
@@ -279,14 +281,23 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		if (!requestsPerMinute) return
 
 		const now = this.#clock.now()
-		const elapsed = now - this.#lastRequestTime
 
-		this.#lastRequestTime = now
+		// The first dispatch after a reset OPENS the window. Everything below measures from that instant.
+		if (this.#requestCountWithinCooldown === 0) {
+			this.#windowStartedAt = now
+		}
 
 		this.#requestCountWithinCooldown++
 
 		if (this.#requestCountWithinCooldown >= requestsPerMinute) {
-			this.setCooldown(this.#requestInterval - elapsed)
+			// Wait out the REMAINDER OF THE MINUTE, not `MS_PER_MINUTE / requestsPerMinute`.
+			//
+			// The original computed `(60000 / N) - elapsed`, which is the spacing between two requests, not the length
+			// of the budget window — so N dispatches went out back to back and the client waited 60/N seconds before
+			// releasing another N. Measured on a bare client at `requestsPerMinute: 10`, 20-call fan-out: arrivals
+			// `[0 x10, 6000 x10]` — 20 inside one sliding minute against a budget of 10, a sustained 100/minute. A
+			// caller trusting the docstring would have hammered an upstream at 10x its stated limit.
+			this.setCooldown(MS_PER_MINUTE - (now - this.#windowStartedAt))
 		}
 	}
 
