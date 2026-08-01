@@ -22,7 +22,7 @@
  *   `serializePostcodeBinary`, so the postcode-load-and-merge path under test runs for real.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -64,8 +64,19 @@ vi.mock("@mailwoman/neural/browser", async (importOriginal) => {
 	}
 })
 
-// Import AFTER the mock declarations. `serializePostcodeBinary` + `PostcodeBinaryResolver` remain REAL
-// (the partial mock spreads `actual`), so the binaries we build here decode through the real reader.
+// vi.resetModules() BEFORE these imports: the root vitest config runs `isolate: false` (one
+// shared module graph per worker), so `./loader.ts` / `@mailwoman/neural/browser` may already be
+// cached — evaluated WITHOUT this file's mocks by an earlier file. A cached module never
+// re-evaluates, so the mock factories above would be skipped and the REAL tokenizer/classifier
+// would try to parse the dummy fixture bytes (SentencePiece ParseFromArray failure). resetModules
+// forces re-evaluation against the registered mocks — and reset again on the way out so the NEXT
+// file in this fork never inherits our mocked modules from the cache.
+vi.resetModules()
+afterAll(() => vi.resetModules())
+
+// Import AFTER the mock declarations + reset. `serializePostcodeBinary` + `PostcodeBinaryResolver`
+// remain REAL (the partial mock spreads `actual`), so the binaries we build here decode through
+// the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/neural/browser")
 const { loadNeuralClassifierFromURLs } = await import("./loader.ts")
 
