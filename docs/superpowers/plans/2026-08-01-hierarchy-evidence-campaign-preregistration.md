@@ -163,3 +163,30 @@ with the true positives, so the census has dependent-locality mass on 100% of th
 cannot discriminate a venue-opening directional surface from a real dependent locality — it is a
 parent-scoped prior, and span-level selectivity has to come from elsewhere. This is the honest
 ceiling on what the artifact can ever contribute, and the reason it ships without a delta.
+
+### R4c verdict — the census is real evidence, and it is parent-scoped only
+
+**B-C3′ PASS.** Against GB post towns from the PPD tuples (25.7M rows, a source the census never
+read): **54.2% of the 1,167 post towns** have census dependent-locality mass, and **74.3% of PPD
+rows** land in a covered town. On the subset of post towns whose PPD rows actually carry a
+dependent locality: 56.8% of towns, **77.5% of rows**.
+
+The gap between unweighted and weighted coverage (54% → 74%) is the useful part: the census speaks
+for the towns where the mail volume is. The uncovered half is the small-town tail, where WOF has no
+neighbourhood records — coverage, not fact, and the reader treats it as neutral.
+
+**Rung outcome: the artifact ships, un-wired, with its ceiling stated.**
+
+- It is genuine conditional evidence: a hit rules out two thirds of GB's parent population
+  (B-C2′) and is available on three quarters of real dependent-locality-bearing rows (B-C3′).
+- It cannot do span-level work (D-C4). Every law-1 confound row shares London with the true
+  positives. A census delta alone would raise dependent-locality odds on the venue span exactly as
+  much as on the real one — which is why no delta is written and why the calibration rung, if it
+  runs, has to compose the census with span-level evidence rather than replace it.
+- The complementary fact about the OTHER artifact: the shipped pair index resolves 11.6% of WOF's
+  GB dependent-locality links. The tail the census addresses is most of the space.
+
+**Not shipped in the weights package.** `placetype-census-gb.bin` is buildable via `mailwoman
+gazetteer census` and stays out of `neural-weights-en-gb/` until something consumes it — an
+un-wired 137 KB in every published tarball is dead weight, and shipping it would imply a
+mechanism that does not exist yet.
