@@ -48,8 +48,39 @@ The general form is the **placetype census**: per gazetteer node, the distributi
 children's _projected_ tags ("this parent: 5 borough-children, 90 neighbourhoods, 0 dependent
 localities"). That turns a globally-rare tag into a conditionally-common one exactly where it
 should be — `dependent_locality`'s global prior is tiny, its prior _given this subtree_ is large.
-The census is a data artifact in the same family as the pair index (the PIX1 tag byte already
-anticipates multiple placetypes), shipped and versioned like the lexicons, probed at decode time.
+
+**Built 2026-08-01** (hierarchy campaign R4c) as **PCN1** — `neural/placetype-census.ts` carries
+writer and reader in one file, the same discipline as PIX1 and PCB1, and `mailwoman gazetteer
+census` builds it from the WOF admin DB through the projection table above (executable as
+`PLACETYPE_PROJECTION` in `mailwoman/gazetteer-pipeline/placetype-census.ts`, so a placetype the
+table has not been extended for makes the build throw rather than silently go uncounted). The GB
+artifact is 5,577 nodes / 137 KB over 33,899 counted child links.
+
+What the offline probe measured, and what it did not:
+
+- A census hit is **real conditional evidence**. Of GB's 16,987 distinct locality-class surfaces,
+  33.2% carry any dependent-locality child — so a hit rules out two thirds of the parent
+  population — and against PPD post towns (25.7M rows, a source the census never read) **74.3% of
+  rows** land in a covered town, 77.5% among rows that actually carry a dependent locality.
+- The complementary measurement is about the pair index: it resolves **11.6%** of WOF's 22,843 GB
+  dependent-locality links. The long tail is most of the space, and it is what the census is for.
+- **The census is parent-scoped and cannot do span-level work.** On the 56-row law-1 confound
+  board — directional neighbourhood surfaces that open venue names — every row shares the London
+  parent with the true positives, so the census has dependent-locality mass on 100% of them. A
+  census bias alone would lift the venue span exactly as much as the real dependent locality. This
+  is the artifact's ceiling, not a tuning problem.
+
+It therefore ships **without a `delta`**: the header field exists, is optional, and stays unset
+until a calibration rung composes the census with span-level evidence and measures a magnitude.
+Within-node share turned out to carry no information at all (WOF rarely parents a locality under a
+locality, so covered nodes read ~100% dependent-locality across the board); presence and magnitude
+across the parent population are the statistics that do.
+
+Why the census does not simply become more pair entries: a pair entry _asserts_ a surface is a
+dependent locality, so each batch needs a venue-confound board before it ships. A census node
+asserts nothing about any surface — it can only tilt a reading the model already entertains under a
+parent it already identified. That is what makes it the safe carrier for a tail no batch-by-batch
+boarding process would ever finish.
 
 ## The doctrine constraints (standing, non-negotiable)
 
@@ -75,9 +106,19 @@ boroughs), and WOF supplies the pairs directly (211 boroughs with parents, globa
 instance = those census entries + the conditional-bias mechanism; its gate is the tag's
 _contextual_ aliveness for US (the same dead-tag-conditional problem GB solved), not data.
 
+The census builder is country-parameterized, so the US artifact is a command away — `mailwoman
+gazetteer census --country us` — and the data is there: 7,541 US parents carry 59,706
+dependent-locality-class children, more links than GB's. What is not there is the tag's contextual
+aliveness under US conventions. Building the artifact before that is answered would produce a
+perfect index against a dead tag, which the v385 control already measured as worth zero.
+
 ## Coverage boundaries measured so far (2026-08-01 probe set)
 
-The GB pair source (PPD) is England+Wales and leaves CITY empty for London — so London
-neighbourhoods, estates, Northern Ireland, and the Republic sit outside the shipped index by the
-source's own construction. Extensions are data acquisitions in the proven shape (ONS/OS open data
-for London neighbourhoods; NI and IE sources), not new mechanism.
+The GB pair source (PPD) is England+Wales and leaves CITY empty for London, so London
+neighbourhoods, estates, Northern Ireland and the Republic all sat outside the shipped index by the
+source's own construction. The hierarchy campaign closed the London part of that gap from open
+data: 15 borough pairs from WOF (R2), 391 ward pairs from ONSPD (R3), and 424 WOF neighbourhood
+pairs behind a passed venue-confound board (R4b) — the GB index now carries 19,209 PPD pairs plus
+830 secondary, cross-checked at 20,039. Northern Ireland still waits on an outcode→post-town table
+to supply the parent side, and the Republic waits on a licence survey (Tailte Éireann, logainm).
+Both remain data acquisitions in the proven shape, not new mechanism.

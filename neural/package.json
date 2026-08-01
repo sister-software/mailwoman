@@ -46,6 +46,11 @@
 			"default": "./out/pair-index-resolver.js",
 			"types": "./out/pair-index-resolver.d.ts"
 		},
+		"./placetype-census": {
+			"node": "./placetype-census.ts",
+			"default": "./out/placetype-census.js",
+			"types": "./out/placetype-census.d.ts"
+		},
 		"./fst-prior": {
 			"node": "./fst-prior.ts",
 			"default": "./out/fst-prior.js",
