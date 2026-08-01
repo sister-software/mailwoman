@@ -93,6 +93,94 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
 	})
 
+	it("GB renders locality-then-postcode with NO region and NO comma between them (#1366)", () => {
+		const gbTuple: HouseVenueBaseTuple = {
+			locality: "London",
+			region: "Greater London",
+			postcode: "EC3N 1DE",
+			country: "GB",
+			street: "Minories",
+			houseNumber: "27",
+		}
+
+		const row = synthesizeHouseVenueRow(gbTuple, {
+			random: seededRandom(5),
+			forceTemplate: "venue-before-street",
+		})
+
+		expect(row).not.toBeNull()
+		// The #1366 gauntlet failure family: "VENUE, 27 Minories, London EC3N 1DE".
+		expect(row!.raw).toMatch(/^.+, 27 Minories, London EC3N 1DE$/)
+		expect(row!.components.region).toBeUndefined()
+		expect(row!.components.postcode).toBe("EC3N 1DE")
+		expect(row!.components.locality).toBe("London")
+		expect(row!.locale).toBe("en-GB")
+		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
+	})
+
+	it("GB venue-after-street keeps the GB tail", () => {
+		const row = synthesizeHouseVenueRow(
+			{
+				locality: "Manchester",
+				region: "Greater Manchester",
+				postcode: "M1 1AE",
+				country: "GB",
+				street: "Portland Street",
+				houseNumber: "101",
+			},
+			{ random: seededRandom(6), forceTemplate: "venue-after-street" }
+		)
+
+		expect(row).not.toBeNull()
+		expect(row!.raw).toMatch(/^101 Portland Street, .+, Manchester M1 1AE$/)
+	})
+
+	it("GB emits range house numbers at the pre-registered rate (~15% across 2000 rows)", () => {
+		const random = seededRandom(7)
+		let ranges = 0
+
+		for (let i = 0; i < 2000; i++) {
+			const row = synthesizeHouseVenueRow(
+				{ locality: "London", region: "Greater London", postcode: "N1 7AA", country: "GB" },
+				{ random }
+			)
+
+			if (/^\d+-\d+$/.test(row!.components.house_number!)) {
+				ranges++
+
+				// The raw must open with (venue-before) or contain the full range span.
+				expect(row!.raw).toContain(row!.components.house_number!)
+			}
+		}
+
+		expect(ranges / 2000).toBeGreaterThan(0.08)
+		expect(ranges / 2000).toBeLessThan(0.25)
+	})
+
+	it("GB never emits the held-out #1366 gauntlet venue names", () => {
+		const random = seededRandom(8)
+
+		const heldOut = [
+			"Ye Three Lords",
+			"Southfields Station",
+			"New North Health Centre",
+			"The North Face - Covent Garden",
+			"Far East Chinese 口福羊汤",
+			"East India Club",
+		]
+
+		for (let i = 0; i < 2000; i++) {
+			const row = synthesizeHouseVenueRow(
+				{ locality: "London", region: "Greater London", postcode: "SW1Y 4LH", country: "GB" },
+				{ random }
+			)
+
+			for (const name of heldOut) {
+				expect(row!.components.venue).not.toBe(name)
+			}
+		}
+	})
+
 	it("FR venue-after-street keeps the FR tail", () => {
 		const row = synthesizeHouseVenueRow(
 			{
