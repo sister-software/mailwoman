@@ -174,3 +174,37 @@ anything ships; the experiment was reverted.
 `improvement_target` and one **gated control** (`Building 43`, the half that already works, locked
 so a future designator change cannot silently regress it). The class now has coverage it has never
 had, which is the precondition for fixing it.
+
+## Ship decision: TAKEN (operator, 2026-08-01) — "we don't mind change if the result is better"
+
+`pair-index-us.bin` ships inside `@mailwoman/neural-weights-en-us`: 49,033 WOF-sourced pairs,
+1,323,912 bytes, md5 `5fd4a6cca54c6bf9b121cb2fcd759f7a`, δ=10 / β=5 (the exact pair the bars were
+measured at, inherited from GB rather than re-swept because the classifier deficit is uniform).
+
+**The non-regression guarantee, verified rather than assumed.** The concern with a default change
+to the flagship package was ordinary US addresses. They are untouched, and the reason is structural:
+the prior fires only when child AND parent are BOTH present in the query. `Astoria, NY 11103` — a
+USPS-valid city/state/ZIP with no parent in the string — keeps `locality=Astoria`. That is why the
+19 candidate rows in the US golden boards needed **no edit**; both halves are now gated gauntlet
+cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
+
+**Two latent bugs surfaced by the packaging work, both fixed here:**
+
+1. `scripts/copy-weights.ts` typed its pair-index config as `{source, delta}` and passed only
+   `--delta`. The release path would therefore have rebuilt `pair-index-gb.bin` **without** β=5 and
+   **without** the R2/R3/R4b borough and London pair sources — a quietly degraded artifact whose
+   bytes no longer matched the md5 in the model card. It never shipped because CI sets
+   `MAILWOMAN_SKIP_WEIGHTS_COPY` and the operator publishes the dev-linked binary, but one local
+   `yarn release` would have produced it.
+2. `neural/test/weights.test.ts` symlinked every en-us file into a temp package, then wrote a
+   1-entry stub named `pair-index-us.bin`. `writeFileSync` follows symlinks — so the moment en-us
+   shipped a real one, that test would have overwritten the 49,033-pair production artifact in
+   place, silently, with every later test in the run grading against the corrupt file. Same
+   write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
+
+**Remaining, operator-side:** stage the artifact to Hugging Face before dispatching the release
+(`mailwoman release hf … --pair-indexes neural-weights-en-us/pair-index-us.bin,…`) — CI fetches it
+from the bucket and the preflight now names it, so an unstaged file fails loud rather than
+publishing an empty package. The demo repoint (`STAGED_PAIR_INDEX_COUNTRIES`, `stagePairIndexes`)
+stays a separate follow-up per the country-evidence-layer runbook; adding `us` there is what turns
+on US pair bias for bare postcode-less browser queries (D-R5.4).
