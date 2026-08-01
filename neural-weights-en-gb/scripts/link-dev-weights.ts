@@ -171,7 +171,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 function peekPairIndexHeaderFields(path: string): {
 	delta: number
 	transitionBeta: number | undefined
-	sourceMD5: string | undefined
+	sourceMD5s: string[]
 } {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
@@ -191,7 +191,7 @@ function peekPairIndexHeaderFields(path: string): {
 		sourceMD5s?: string[]
 	}
 
-	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5: header.sourceMD5s?.[0] }
+	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
 }
 
 linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
@@ -340,6 +340,14 @@ const PAIR_INDEX_DELTA = 10
  */
 const PAIR_INDEX_TRANSITION_BETA = 5
 
+/**
+ * Secondary pair sources (campaign R2/R3/R4b). Named here rather than inline at the call site because the freshness
+ * guard has to md5 the SAME files the build reads — when those two lists drift apart the guard silently blesses a stale
+ * artifact, which is exactly what happened before 2026-08-01.
+ */
+const BOROUGH_DB = dataRootPath("wof", "admin-global-priority.db")
+const LONDON_PAIRS_JSONL = repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl")
+
 let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
@@ -347,7 +355,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 		const {
 			delta: existingDelta,
 			transitionBeta: existingTransitionBeta,
-			sourceMD5: existingSourceMD5,
+			sourceMD5s: existingSourceMD5s,
 		} = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 
 		if (existingDelta !== PAIR_INDEX_DELTA) {
@@ -369,18 +377,31 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta + transitionBeta (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
-			const currentSourceMD5 = await md5FileWithSidecar(String(PPD_SOURCE_CSV))
+			// Compare EVERY source, not just the CSV. The guard used to check `sourceMD5s[0]` alone, which made it blind
+			// to the borough DB and the checked-in London pairs — so after campaign R3/R4b added those sources, a stale
+			// artifact built from an older pair set kept reporting itself fresh and every local run (and the CI cache)
+			// silently graded against it. That is how the TRANSITION-BETA pin row drifted unnoticed. The build writes
+			// one md5 per source in order (CSV, borough DB, pairs JSONL), so a length mismatch is itself staleness:
+			// an artifact predating a source cannot have recorded its md5.
+			const currentSourceMD5s = [
+				await md5FileWithSidecar(String(PPD_SOURCE_CSV)),
+				await md5FileWithSidecar(String(BOROUGH_DB)),
+				await md5FileWithSidecar(String(LONDON_PAIRS_JSONL)),
+			]
+			const matches =
+				existingSourceMD5s.length === currentSourceMD5s.length &&
+				currentSourceMD5s.every((md5, i) => md5 === existingSourceMD5s[i])
 
-			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
+			if (matches) {
 				pairIndexIsFresh = true
 
 				console.log(
-					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + transitionBeta + source md5 match)`
+					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + transitionBeta + all ${currentSourceMD5s.length} source md5s match)`
 				)
 			} else {
 				console.log(
-					`STALE pair-index-gb.bin: header source md5 ${existingSourceMD5 ?? "(none recorded)"} != current ` +
-						`${PPD_SOURCE_CSV} md5 ${currentSourceMD5} — rebuilding.`
+					`STALE pair-index-gb.bin: header source md5s [${existingSourceMD5s.join(", ") || "(none recorded)"}] != ` +
+						`current [${currentSourceMD5s.join(", ")}] — rebuilding.`
 				)
 			}
 		}
@@ -419,9 +440,9 @@ if (pairIndexIsFresh) {
 			// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs
 			// join the build — without these flags a dev rebuild would silently DROP them.
 			"--borough-db",
-			String(dataRootPath("wof", "admin-global-priority.db")),
+			String(BOROUGH_DB),
 			"--pairs-jsonl",
-			String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl")),
+			String(LONDON_PAIRS_JSONL),
 		],
 		{ stdio: "inherit" }
 	)
