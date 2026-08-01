@@ -146,7 +146,11 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	let gated = 0
 
 	for (const c of cases) {
-		const geoOpts = c.default_country ? { defaultCountry: c.default_country } : undefined
+		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
+		const geoOpts = {
+			...(c.default_country ? { defaultCountry: c.default_country } : {}),
+			...(c.country ? { caseCountry: c.country } : {}),
+		}
 		const issues = checkCase(c, await runOne(c.input, deps, geoOpts))
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 
