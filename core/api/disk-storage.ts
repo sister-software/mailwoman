@@ -200,6 +200,26 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				await mkdir(directory, { recursive: true })
 				await writeFile(buildingPath, serialized)
 				await rename(buildingPath, finalPath)
+			} catch (error) {
+				// A CACHE WRITE IS A SIDE EFFECT OF A SUCCESSFUL REQUEST, AND A FAILED SIDE EFFECT MUST NOT
+				// FAIL THE REQUEST.
+				//
+				// `axios-cache-interceptor` awaits `set()` inside its response `onFulfilled`, so throwing
+				// from here rejects a request whose HTTP response ALREADY SUCCEEDED — the body is discarded.
+				// Worse, it escapes as a bare `Error`: no `status`, so `isTransientResourceError` reads it as
+				// FALSE and a caller following the documented contract is told never to retry. ANY
+				// filesystem failure does this: `EACCES` on a directory whose mode changed (reproduced with
+				// a `0o500` parent, which also showed three concurrent gets yielding one rejection and two
+				// successes for the SAME response), `EMFILE` under a concurrent crawl, a rename race, a
+				// transient I/O error. Not being able to cache is a cache miss.
+				logger.warn(
+					`Could not persist ${key} (continuing as a cache miss): ${
+						error instanceof Error ? error.message : String(error)
+					}`
+				)
+
+				// Best-effort cleanup of the temp file, if the failure came after it was created.
+				await unlink(buildingPath).catch(() => undefined)
 			} finally {
 				overlay.delete(key)
 			}

@@ -8,14 +8,16 @@
  *   writing, and write atomically under a per-write-unique temp name.
  */
 
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { chmodSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { APIClient } from "./APIClient.ts"
 import { buildDiskStorage } from "./disk-storage.ts"
+import { isTransientResourceError } from "./responses.ts"
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
@@ -236,5 +238,121 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 		await storage.set("clean", cachedValue({ ok: true }))
 
 		expect(readdirSync(directory).filter((name) => name.endsWith(".building"))).toHaveLength(0)
+	})
+})
+
+describe("buildDiskStorage: a failed cache write is a cache miss, not a request failure", () => {
+	/**
+	 * Make `directory` unwritable and report whether it took. Running as root defeats mode bits entirely, and a test that
+	 * silently passes because it could not reproduce the condition is worse than one that says so.
+	 */
+	function makeUnwritable(): boolean {
+		chmodSync(directory, 0o500)
+
+		try {
+			writeFileSync(join(directory, "probe"), "x")
+			rmSync(join(directory, "probe"), { force: true })
+
+			return false
+		} catch {
+			return true
+		}
+	}
+
+	function restore(): void {
+		chmodSync(directory, 0o700)
+	}
+
+	it("resolves instead of throwing when the entry cannot be written", async () => {
+		if (!makeUnwritable()) {
+			restore()
+			throw new Error("could not make the cache directory unwritable (running as root?) — test cannot reproduce")
+		}
+
+		try {
+			const storage = buildDiskStorage({ directory })
+
+			await expect(storage.set("k", cachedValue({ v: 1 }))).resolves.toBeUndefined()
+
+			// And the key reads back as a plain miss, not as a half-written entry.
+			expect((await storage.get("k")).state).toBe("empty")
+		} finally {
+			restore()
+		}
+	})
+
+	it("leaves a SUCCESSFUL response intact through APIClient when the cache write fails", async () => {
+		// The contract, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
+		// `onFulfilled`, so a throwing write rejects a request whose HTTP response already succeeded. It
+		// escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads as FALSE, so a
+		// caller is told the failure is permanent and drops the work. ANY filesystem error does this;
+		// reproduced here with a `0o500` parent.
+		if (!makeUnwritable()) {
+			restore()
+			throw new Error("could not make the cache directory unwritable (running as root?) — test cannot reproduce")
+		}
+
+		try {
+			const client = new APIClient({
+				displayName: "unwritable-cache",
+				caching: { storage: buildDiskStorage({ directory }) },
+				axios: {
+					adapter: async (config) => ({
+						data: { ok: true },
+						status: 200,
+						statusText: "OK",
+						headers: {},
+						config,
+					}),
+				},
+			})
+
+			const response = await client.fetch<{ ok: boolean }>({ url: "/still-works.json" })
+
+			expect(response.data).toEqual({ ok: true })
+		} finally {
+			restore()
+		}
+	})
+
+	it("keeps three concurrent requests consistent when the cache cannot be written", async () => {
+		// The same repro showed one rejection and two successes for the SAME response — a request's
+		// outcome depending on whether it happened to be the one that lost a cache-write race.
+		if (!makeUnwritable()) {
+			restore()
+			throw new Error("could not make the cache directory unwritable (running as root?) — test cannot reproduce")
+		}
+
+		try {
+			const client = new APIClient({
+				displayName: "unwritable-cache-concurrent",
+				caching: { storage: buildDiskStorage({ directory }) },
+				axios: {
+					adapter: async (config) => ({
+						data: { ok: true },
+						status: 200,
+						statusText: "OK",
+						headers: {},
+						config,
+					}),
+				},
+			})
+
+			const settled = await Promise.allSettled([
+				client.fetch({ url: "/concurrent.json" }),
+				client.fetch({ url: "/concurrent.json" }),
+				client.fetch({ url: "/concurrent.json" }),
+			])
+
+			expect(settled.map((outcome) => outcome.status)).toEqual(["fulfilled", "fulfilled", "fulfilled"])
+
+			for (const outcome of settled) {
+				if (outcome.status === "rejected") {
+					expect(isTransientResourceError(outcome.reason)).toBe(true)
+				}
+			}
+		} finally {
+			restore()
+		}
 	})
 })
