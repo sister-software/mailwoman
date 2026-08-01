@@ -154,6 +154,7 @@ const MCP_EXPECTED_TOOLS = [
 	"mailwoman_bdc_filing_landscape",
 	"mailwoman_plausibility_check",
 	"mailwoman_filer_lookup",
+	"mailwoman_filer_family",
 ]
 
 /**

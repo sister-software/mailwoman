@@ -83,6 +83,19 @@ export interface GeocodeResult {
 	house_number: string | null
 	street: string | null
 	/**
+	 * The PARSED venue span (same #1041 posture as house_number/street: populated regardless of tier, straight from the
+	 * parse). Surfaced 2026-08-01 — the gauntlet's venue expectations had graded against nothing for their whole life
+	 * because no result field carried the span (hierarchy filters to admin tags).
+	 */
+	venue: string | null
+	/**
+	 * The PARSED dependent-locality span (#1041 posture: the parse view, populated regardless of resolution). Distinct
+	 * from `hierarchy`, which is the RESOLVED view — it only admits nodes the resolver decorated (lat/placeID), so a
+	 * parsed-but-unresolved dependent locality (Abbey Hey with no gazetteer hit) never appears there. Surfaced 2026-08-01
+	 * (hierarchy campaign R1) after the gauntlet's dep-loc expectations were found reading the resolved view.
+	 */
+	dependent_locality: string | null
+	/**
 	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node), or null.
 	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
 	 * carries the country code even when it has no `ancestors()` table).
@@ -1023,6 +1036,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		postcode,
 		house_number: houseNumber,
 		street,
+		venue: allNodes.find((n) => n.tag === "venue")?.value ?? null,
+		dependent_locality: allNodes.find((n) => n.tag === "dependent_locality")?.value?.trim() || null,
 		countryCode,
 		hierarchy,
 		candidates,

@@ -3632,6 +3632,8 @@ def sync_gb_venue():
     cmds = [
         f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
         f"rclone copy :s3:{BUCKET}/corpus/v0.15.1-gb-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.1-gb-venue/ {R}",
+        # Addendum 3: the country-tail overlay.
+        f"rclone copy :s3:{BUCKET}/corpus/v0.15.2-gb-venue-country/ {VOL_MOUNT}/corpus/versioned/v0.15.2-gb-venue-country/ {R}",
     ]
     for cmd in cmds:
         print(f"  {cmd[:90]}...")
