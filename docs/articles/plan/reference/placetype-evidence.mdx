@@ -95,6 +95,10 @@ boarding process would ever finish.
 4. **Locale-scoped artifacts must be provably inert elsewhere.** en-us ships no pair index and a
    dedicated test asserts GB-shaped input takes NO pair bias through en-us — a packaging seatbelt,
    not a doctrine. The US joins the census program through its own instances (boroughs first).
+   Measured 2026-08-01 in the other direction too: an experimental US index misses all five GB
+   canonical pairs (Shoreditch/London, Nine Elms/London, Clapham/London, Camden/London,
+   Didsbury/Manchester), so the browser's `us` fallback for postcode-less queries would not
+   manufacture GB bias if a US artifact shipped.
 
 ## Why en-us has no pair index today (and why that's sequencing, not doctrine)
 
@@ -102,15 +106,35 @@ The GB/NZ indexes exist because those POSTAL formats carry the dependent-localit
 national registers (HM Land Registry PPD, LINZ) provide millions of pair rows. The US format has
 no such line — USPS routes city/state/ZIP — so there is no postal register to harvest and no mail
 -correctness stake. But the schema's umbrella term means US dependent localities exist (NYC's five
-boroughs), and WOF supplies the pairs directly (211 boroughs with parents, globally). The US
-instance = those census entries + the conditional-bias mechanism; its gate is the tag's
-_contextual_ aliveness for US (the same dead-tag-conditional problem GB solved), not data.
+boroughs), and WOF supplies the pairs directly (211 boroughs with parents, globally).
 
-The census builder is country-parameterized, so the US artifact is a command away — `mailwoman
-gazetteer census --country us` — and the data is there: 7,541 US parents carry 59,706
-dependent-locality-class children, more links than GB's. What is not there is the tag's contextual
-aliveness under US conventions. Building the artifact before that is answered would produce a
-perfect index against a dead tag, which the v385 control already measured as worth zero.
+**Corrected 2026-08-01 (campaign R5).** This section previously said the US instance was gated on
+"the tag's _contextual_ aliveness for US". That was wrong, and it was wrong about GB too. Three
+measurements, in the order that settles it:
+
+1. **Nothing suppresses the tag per country.** The decoder has exactly one hard emission mask
+   (`-1e9`) and it carries a single row: FR `street_suffix`. `dependent_locality` appears in no
+   `forbiddenTags` table, TS or Python. `componentsSupported` omits the tag for en-US, but its only
+   consumer validates the policy registry — nothing reads it to mask emissions.
+2. **The tag is dead in the model, and dead UNIFORMLY.** Raw pre-prior logits rank
+   `B-dependent_locality` 11th–15th of 25 in every locale — including the GB inputs that parse
+   correctly today (`Shoreditch` 0.14%, rank 14, against `locality` at 31.3%). US surfaces carry
+   MORE raw mass than the GB ones that work. The en-GB model card had already measured the deficit
+   as "large but UNIFORM (~7.0 logits mean)"; the origin is a 0.3 class weight on
+   `B/I-dependent_locality` carried from v0.5.1 through v0.8.0, since corrected to 1.0 but not
+   retrained into the shipped lineage.
+3. **So GB does not emit because the tag is alive there — it emits because an artifact clears a
+   uniform deficit.** A US pair index built from WOF (49,033 pairs; `borough` admitted as a parent
+   placetype, since WOF parents US neighbourhoods to the locality rather than the borough) makes
+   the US behave exactly like GB: `123 Main St, Park Slope, Brooklyn, NY 11215` goes from
+   `locality=Park Slope` with **"Brooklyn" silently dropped** to `dependent_locality=Park Slope,
+locality=Brooklyn`. Gauntlet unchanged, 0/60 venue-confound false positives, 60/60 tag-correct
+   on a positive board.
+
+The US instance is therefore an ARTIFACT question, not a training question — and so is every other
+locale in the campaign's wave 2–4 list. Whether `pair-index-us.bin` ships inside the flagship
+en-us package is a packaging and defaults decision (it changes US parse output for every consumer),
+not a question about the model.
 
 ## Coverage boundaries measured so far (2026-08-01 probe set)
 

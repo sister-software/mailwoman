@@ -325,3 +325,117 @@ if (existsSync(MORPHOLOGY_SRC)) {
 		`WARNING: missing ${MORPHOLOGY_SRC} — the street-context gate falls back to the per-process dictionary build.`
 	)
 }
+
+/**
+ * Placetype-pair index (hierarchy campaign R5, 2026-08-01): build `pair-index-us.bin` from the WOF admin DB so
+ * `resolveWeights` surfaces `pairIndexPath` in dev and the placetype-pair prior is live for en-us.
+ *
+ * Unlike en-gb there is NO source CSV — the US has no postal register carrying dependent localities (USPS routes
+ * city/state/ZIP), so every pair comes from `--borough-db`. The command refuses a build with no source of any kind, so
+ * dropping the flag fails loud rather than writing an empty index.
+ *
+ * Freshness guard, ported from en-gb: the test suite shells this script out on every run, so an unconditional rebuild
+ * would cost minutes per `yarn test`. Peek the header instead and rebuild only when the calibrated delta, the
+ * transition beta, or the source DB's md5 has moved. An ABSENT `transitionBeta` reads `undefined` and forces the
+ * rebuild that stamps it in.
+ */
+const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-us.bin")
+/**
+ * Calibrated soft-prior magnitude — the SAME pair the R5 bars were measured with (gauntlet unchanged, 0/60
+ * venue-confound false positives, 60/60 tag-correct). Changing either number invalidates those receipts.
+ */
+const PAIR_INDEX_DELTA = 10
+const PAIR_INDEX_TRANSITION_BETA = 5
+const PAIR_INDEX_SOURCE_DB = dataRootPath("wof", "admin-global-priority.db")
+
+/**
+ * Minimal PIX1 header reader — magic + header block only. Reimplemented rather than imported so this data-only package
+ * gains no dependency on `@mailwoman/neural` (which pulls onnxruntime-node) to read three fields. If PIX1 ever changes,
+ * `neural/pair-index-resolver.ts`'s own parse is the source of truth this must follow.
+ */
+function peekPairIndexHeaderFields(path: string): {
+	delta: number
+	transitionBeta: number | undefined
+	sourceMD5: string | undefined
+} {
+	const bytes = readFileSync(path)
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const.
+	const MAGIC = 0x31_58_49_50
+
+	if (view.getUint32(0, true) !== MAGIC) {
+		throw new Error(`pair index: bad magic reading ${path}`)
+	}
+
+	const headerLen = view.getUint32(4, true)
+
+	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
+		delta: number
+		transitionBeta?: number
+		sourceMD5s?: string[]
+	}
+
+	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5: header.sourceMD5s?.[0] }
+}
+
+if (!existsSync(CLI)) {
+	console.error(
+		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script for pair-index-us.bin.`
+	)
+} else if (!existsSync(String(PAIR_INDEX_SOURCE_DB))) {
+	console.error(
+		`WARNING: missing ${PAIR_INDEX_SOURCE_DB} — pair-index-us.bin not built; the placetype-pair prior stays inert for US.`
+	)
+} else {
+	let needsRebuild = true
+
+	if (existsSync(PAIR_INDEX_BIN_DEST)) {
+		try {
+			const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+
+			if (header.delta !== PAIR_INDEX_DELTA) {
+				console.log(`rebuilding pair-index-us.bin — delta ${header.delta} → ${PAIR_INDEX_DELTA}`)
+			} else if (header.transitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
+				console.log(
+					`rebuilding pair-index-us.bin — transitionBeta ${header.transitionBeta} → ${PAIR_INDEX_TRANSITION_BETA}`
+				)
+			} else {
+				needsRebuild = false
+			}
+		} catch (error) {
+			console.log(`rebuilding pair-index-us.bin — header unreadable (${(error as Error).message})`)
+		}
+	}
+
+	if (!needsRebuild) {
+		console.log(`skipped pair-index-us.bin build — ${PAIR_INDEX_BIN_DEST} is current`)
+	} else {
+		const result = spawnSync(
+			process.execPath,
+			[
+				CLI,
+				"gazetteer",
+				"pair-index",
+				"--out",
+				PKG_DIR,
+				"--country",
+				"us",
+				"--delta",
+				String(PAIR_INDEX_DELTA),
+				"--transition-beta",
+				String(PAIR_INDEX_TRANSITION_BETA),
+				"--borough-db",
+				String(PAIR_INDEX_SOURCE_DB),
+			],
+			{ stdio: "inherit" }
+		)
+
+		if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
+			console.error(`FAILED: gazetteer pair-index --country us (exit ${result.status})`)
+
+			process.exit(1)
+		}
+
+		console.log(`built pair-index-us.bin ← ${PAIR_INDEX_SOURCE_DB}`)
+	}
+}

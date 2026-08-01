@@ -62,8 +62,17 @@ training_image = (
         "onnx==1.22.0",
         "onnxruntime==1.26.0",
         "onnxscript==0.7.0",
-        # --- non-graph deps (unpinned floors are fine) ---------------------------------
-        "sentencepiece>=0.2.0",
+        # --- non-graph deps -------------------------------------------------------------
+        # sentencepiece is PINNED, not floored (2026-08-01). It was `>=0.2.0` under a comment saying
+        # unpinned floors are fine here — that assumption was false, because SP decides the token IDS
+        # the model trains on. Measured: 0.2.1 and 0.2.2 disagree on a Viterbi tie-break for repeated
+        # digit runs ("...555" segments ['55','5'] under 0.2.1 and ['5','55'] under 0.2.2), which fired
+        # on 5/10,000 real corpus rows in the TS↔Python parity fixture. The shipped WASM runtime
+        # (@mailwoman/sentencepiece-wasm) is built from 0.2.2 and reproduces 0.2.2 exactly, so training
+        # pins to 0.2.2 to keep train and serve on one convention. A float here means the resolved
+        # version depends on when Modal last rebuilt the image layer — i.e. train/serve agreement
+        # decided by cache timing, which is not a thing anyone can debug after the fact.
+        "sentencepiece==0.2.2",
         "pyarrow>=15",
         "pyyaml>=6",
         "numpy>=1.26,<3",

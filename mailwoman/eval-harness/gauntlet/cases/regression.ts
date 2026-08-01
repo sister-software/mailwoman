@@ -1110,6 +1110,168 @@ export const REGRESSION_CASES: SeedCase[] = [
 		addedAt: "2026-07-30",
 		note: "East homograph opening the venue + an apostrophe-bearing Saint-abbreviated street (St James's Square).",
 	},
+	// ── US dependent-locality instance (2026-08-01, campaign R5). en-us ships `pair-index-us.bin`, so
+	// a US address carrying BOTH a neighbourhood/borough and its parent now resolves the hierarchy
+	// instead of dropping the second admin level. The pair of gated cases below locks BOTH halves: the
+	// new capability, and — more importantly — the guarantee that an ordinary single-admin-level US
+	// address is UNTOUCHED. The prior fires only when child AND parent are both present, which is why
+	// "Astoria, NY 11103" (a USPS-valid city/state/ZIP with no parent in the string) keeps locality.
+	{
+		id: "us-r5-park-slope-brooklyn",
+		input: "123 Main St, Park Slope, Brooklyn, NY 11215",
+		source: "campaign:r5",
+		addressKind: "us_structured",
+		country: "US",
+		status: "pass",
+		expectComponents: {
+			house_number: "123",
+			street: "Main St",
+			dependent_locality: "Park Slope",
+			locality: "Brooklyn",
+			region: "NY",
+			postcode: "11215",
+		},
+		addedAt: "2026-08-01",
+		note: "R5: before the US index this parsed as locality=Park Slope with Brooklyn SILENTLY DROPPED.",
+	},
+	{
+		id: "us-r5-astoria-no-parent-unchanged",
+		input: "24 37 42nd St, Astoria, NY 11103",
+		source: "campaign:r5",
+		addressKind: "us_structured",
+		country: "US",
+		status: "pass",
+		expectComponents: {
+			house_number: "24",
+			street: "37 42nd St",
+			locality: "Astoria",
+			region: "NY",
+			postcode: "11103",
+		},
+		addedAt: "2026-08-01",
+		note: "R5 NON-REGRESSION: Astoria IS a USPS city. With no parent in the string the pair prior cannot fire, so locality is preserved — this is why the US golden boards needed no edit.",
+	},
+	// ── Sub-venue structure (2026-08-01, campaign R5 follow-on). The projection table has named this
+	// class since it was written — `building`/`campus`/`wing`/`concourse`/`arcade` project onto venue
+	// and unit sub-structure, "the airport-terminal / campus parsing nudge" — and the gauntlet had ZERO
+	// coverage for it: no `unit:` expectation existed anywhere in this file. These rows are the
+	// instrument, added before any fix.
+	//
+	// The measured diagnosis: `Building 43, Googleplex` already parses correctly while `Terminal 5,
+	// Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the airport DROPPED. The
+	// asymmetry traces to the designator lexicon the span proposer reads (`neural/span-proposer-lexicon.ts`
+	// over `codex/us/unit-designator.ts`), which is USPS Publication 28 — a MAIL DELIVERY standard. It
+	// stocks BUILDING, HANGAR, PIER and LOBBY because mail is delivered there, and omits TERMINAL, GATE,
+	// CONCOURSE and WING because mail is not. The postal source is right about postal reality and silent
+	// about venue interiors — the same source-shaped gap the dependent-locality arc hit for the US.
+	//
+	// A probe extending the designator set moved `Terminal 5` and `Gate 12` to correct units but split
+	// `Concourse B` into unit="Concourse" + venue="B" and left trailing-designator `West Wing` untouched,
+	// so the lever is real but NOT a clean sweep; it wants its own confound board (GB street names ending
+	// in -gate, industrial "Terminal" estates) before anything ships default-on.
+	{
+		id: "gb-subvenue-heathrow-terminal",
+		input: "Terminal 5, Heathrow Airport, Hounslow, TW6 2GA",
+		source: "campaign:r5-subvenue",
+		addressKind: "gb_venue_led",
+		country: "GB",
+		status: "improvement_target",
+		expectComponents: {
+			unit: "Terminal 5",
+			venue: "Heathrow Airport",
+			locality: "Hounslow",
+			postcode: "TW6 2GA",
+		},
+		addedAt: "2026-08-01",
+		note: 'Sub-venue: TERMINAL is absent from Pub 28. Today: locality="Terminal", house_number=5, airport dropped.',
+	},
+	{
+		id: "gb-subvenue-manchester-gate",
+		input: "Gate 12, Terminal 2, Manchester Airport, Manchester, M90 1QX",
+		source: "campaign:r5-subvenue",
+		addressKind: "gb_venue_led",
+		country: "GB",
+		status: "improvement_target",
+		expectComponents: {
+			unit: "Gate 12, Terminal 2",
+			venue: "Manchester Airport",
+			locality: "Manchester",
+			postcode: "M90 1QX",
+		},
+		addedAt: "2026-08-01",
+		note: 'Sub-venue: TWO nested structural levels. Today: locality="Gate", house_number=12.',
+	},
+	{
+		id: "gb-subvenue-st-thomas-wing",
+		input: "West Wing, St Thomas' Hospital, Westminster Bridge Road, London, SE1 7EH",
+		source: "campaign:r5-subvenue",
+		addressKind: "gb_venue_led",
+		country: "GB",
+		status: "improvement_target",
+		expectComponents: {
+			unit: "West Wing",
+			venue: "St Thomas' Hospital",
+			street: "Westminster Bridge Road",
+			locality: "London",
+			postcode: "SE1 7EH",
+		},
+		addedAt: "2026-08-01",
+		note: "Sub-venue with a TRAILING designator and a directional lead — the designator probe did not move this one.",
+	},
+	{
+		id: "us-subvenue-ohare-concourse",
+		input: "Concourse B, O'Hare International Airport, Chicago, IL 60666",
+		source: "campaign:r5-subvenue",
+		addressKind: "us_venue_led",
+		country: "US",
+		status: "improvement_target",
+		expectComponents: {
+			unit: "Concourse B",
+			venue: "O'Hare International Airport",
+			locality: "Chicago",
+			region: "IL",
+			postcode: "60666",
+		},
+		addedAt: "2026-08-01",
+		note: "Sub-venue with a LETTER rather than a number; the designator probe split this into unit=Concourse + venue=B.",
+	},
+	{
+		id: "us-subvenue-googleplex-building",
+		input: "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043",
+		source: "campaign:r5-subvenue",
+		addressKind: "us_venue_led",
+		country: "US",
+		status: "pass",
+		expectComponents: {
+			unit: "Building 43",
+			venue: "Googleplex",
+			house_number: "1600",
+			street: "Amphitheatre",
+			locality: "Mountain View",
+			region: "CA",
+			postcode: "94043",
+		},
+		addedAt: "2026-08-01",
+		note: "The CONTROL: BUILDING *is* in Pub 28, and this already parses correctly. Gated to lock the working half of the class.",
+	},
+	{
+		id: "us-subvenue-northwestern-pavilion",
+		input: "Sears Pavilion, Northwestern Memorial Hospital, 251 E Huron St, Chicago, IL 60611",
+		source: "campaign:r5-subvenue",
+		addressKind: "us_venue_led",
+		country: "US",
+		status: "improvement_target",
+		expectComponents: {
+			venue: "Sears Pavilion",
+			house_number: "251",
+			street: "E Huron St",
+			locality: "Chicago",
+			region: "IL",
+			postcode: "60611",
+		},
+		addedAt: "2026-08-01",
+		note: "Named sub-venue under a named parent venue — today the PARENT hospital is dropped entirely.",
+	},
 	// ── Operator probe set 2 (2026-08-01): 53 exotic venue/locality rows — GB/IM/IE/FO/IS/intl traps.
 	{
 		id: "gb-op2-bar-with-shapes",

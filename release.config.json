@@ -26,7 +26,15 @@
 			"gb": {
 				"source": "ppd/2026-07-22/gb-tuples.csv",
 				"delta": 10,
-				"transitionBeta": 5
+				"transitionBeta": 5,
+				"boroughDb": "wof/admin-global-priority.db",
+				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl"
+			},
+			"us": {
+				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB \u2014 that is the pair the R5 bars were measured with.",
+				"delta": 10,
+				"transitionBeta": 5,
+				"boroughDb": "wof/admin-global-priority.db"
 			},
 			"nz": {
 				"source": "openaddresses/extracted/nz/countrywide.csv",

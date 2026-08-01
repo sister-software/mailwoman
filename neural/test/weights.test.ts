@@ -443,9 +443,20 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	// build 2026-07-24): a real comma-free GB register row from the probe's 17-row fused-path population.
 	// Re-pinned 2026-07-30 for the model 7.0.0 from-scratch base: the full 17-row re-measurement
 	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json) shows 15/17 rows now self-recover BETA-LESS — including
-	// Hedon and Ashby Parva, which never recovered at any β on the fine-tune lineage, and the previous
-	// pin row Glenfield (margin 3.10). Exactly two rows still need the artifact: "Upton"/"Bude" (fusion
-	// margin 4.03, the sturdier pin — the smallest-margin members drift first) and Wheatley (0.78).
+	// Hedon and Ashby Parva, which never recovered at any β on the fine-tune lineage, and the then-pin
+	// row Glenfield (margin 3.10). Two rows still needed the artifact: "Upton"/"Bude" and Wheatley.
+	//
+	// RE-PINNED AGAIN 2026-08-01, back to Glenfield — and the reason matters more than the swap. Upton
+	// self-recovers beta-less against a FRESHLY BUILT index, and had done so for some time; the test kept
+	// passing only because the artifact it graded against was stale. `link-dev-weights.ts`'s freshness
+	// guard compared `sourceMD5s[0]` alone, so it never noticed campaign R3/R4b adding the borough DB and
+	// the checked-in London pairs, and the CI cache key had the same blind spot. The guard now compares
+	// EVERY source md5 (fixed in the same change), so this class of silent staleness is closed.
+	//
+	// Expect this pin to keep moving: it is by construction whichever row sits nearest the delta
+	// threshold, so any delta recalibration or pair-set growth reshuffles it. A failure here means
+	// "re-measure which rows still need beta", not "beta broke" — and the measurement is a sweep of the
+	// probe rows through both legs, which is how Glenfield was recovered as the current discriminator.
 	// NO row regresses with the artifact on. The beta-less leg pins the pre-beta behavior on the same
 	// bytes: the emission-only prior fires yet the child span still emits nothing — proving the
 	// artifact's transitionBeta (not some other change) is what recovers the row.
@@ -468,7 +479,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			expect(resolver.probe("upton", "bude")).toBe("dependent_locality")
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
-			const row = "Piran Heights Upton Bude EX23 0LY"
+			const row = "12 Church Road Glenfield Leicester LE3 8DP"
 
 			// Beta-less view of the SAME index bytes: probe + delta identical, transitionBeta withheld — the
 			// exact decode every pre-TRANSITION-BETA build produces on this row (the measured current-main
@@ -481,19 +492,24 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 
 			// The auto-wired config default (the shipped artifact, beta 5) recovers the row.
 			const json = await cls.parseJSON(row)
-			expect(json.dependent_locality).toBe("Upton")
+			expect(json.dependent_locality).toBe("Glenfield")
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
 	test.skipIf(!haveModel || !haveCLI)(
-		"en-us: no pair-index sibling shipped — the SAME GB-shaped input applies NO placetype-pair bias",
+		"en-us: ships its OWN us-gated pair index — a GB-shaped input still applies NO placetype-pair bias",
 		async () => {
+			// Rewritten 2026-08-01 (hierarchy campaign R5). This used to assert en-us shipped NO sibling at all, which
+			// was the packaging fact rather than the property worth protecting. en-us now ships `pair-index-us.bin`
+			// (49,033 WOF-sourced pairs), so the invariant is sharper: the index EXISTS and is still inert on GB input.
+			// Two independent things keep it inert — the header's hard country gate, and the plain fact that US pairs
+			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
 			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
 
 			const r = resolveWeights({ locale: "en-us" })
-			expect(r.pairIndexPath).toBeUndefined()
+			expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
@@ -526,7 +542,12 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			for (const entry of readdirSync(packageDir)) {
 				const source = join(packageDir, entry)
 
-				if (statSync(source).isFile()) {
+				// NEVER symlink the artifact this test is about to overwrite. `writeFileSync` FOLLOWS a symlink, so
+				// once en-us started shipping a real `pair-index-us.bin` (campaign R5), symlinking it here would have
+				// clobbered the 49,033-pair production binary with the 1-entry stub below — silently, since the test
+				// still passes and every later test in the run would grade against the corrupted file. Same
+				// write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
+				if (statSync(source).isFile() && entry !== "pair-index-us.bin") {
 					symlinkSync(source, join(fakePackageDir, entry))
 				}
 			}
