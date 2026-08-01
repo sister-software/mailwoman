@@ -181,3 +181,16 @@ describe("applyPairIndexHoldout", () => {
 		expect(applyPairIndexHoldout([], 0.1, 42)).toEqual({ kept: [], heldOut: [] })
 	})
 })
+
+describe("borough pairs (hierarchy R2)", () => {
+	it("distinctCount exposes builder growth for secondary-source accounting", () => {
+		const b = new PairIndexBuilder()
+		b.addRow("Fishburn", "Stockton-on-Tees")
+
+		const before = b.distinctCount
+		b.addRow("Westminster", "London")
+		b.addRow("Westminster", "London")
+
+		expect(b.distinctCount - before).toBe(1)
+	})
+})
