@@ -82,6 +82,12 @@ import { sql, type Kysely } from "kysely"
  * `provider-list.ts`'s `ProviderListRow`) carries a SPIN field, and `build-filer.ts` mints no `spin:` node — there is
  * no code path in this phase that populates one. The namespace is reserved for whichever future task adds a source that
  * actually carries a SPIN, not a claim that any `filer.db` `buildFilerDatabase` produces today has SPIN nodes in it.
+ *
+ * `CIK` (3b Task 6) is SEC EDGAR's Central Index Key — populated by `edgar-filings.ts`'s name→CIK resolution and
+ * `build-filer.ts`'s EDGAR ingest (3b Task 8). Always the zero-padded 10-digit string form (e.g. `"0000320193"`,
+ * matching how `data.sec.gov/submissions/CIK##########.json` names itself), never the bare unpadded number
+ * `company_tickers.json` carries — mirrors `FRN`'s own zero-padding convention (`frn.ts`) for the identical reason (a
+ * bare `"320193"` would collide with a differently-padded value under naive string comparison).
  */
 export const FilerIdentifierType = {
 	FRN: "frn",
@@ -90,6 +96,7 @@ export const FilerIdentifierType = {
 	BDCProviderID: "bdc_provider_id",
 	HoldingCompanyName: "holding_company_name",
 	ManagementCompanyName: "management_company_name",
+	CIK: "cik",
 } as const
 
 export type FilerIdentifierType = (typeof FilerIdentifierType)[keyof typeof FilerIdentifierType]
