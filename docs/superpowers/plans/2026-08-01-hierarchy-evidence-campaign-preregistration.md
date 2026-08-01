@@ -44,3 +44,12 @@ borough (the WOF-hierarchy shape), so the extractor must accept any-ancestor-Lon
 E09 borough). Pre-registered bar for the neighbourhood increment: fold-collision audit vs the
 existing 19,615 pairs + a held-out board incl. the law-1 subset graded for venue-confound FPs
 BEFORE the artifact ships them.
+
+**Fold-collision audit of the 667 (2026-08-01):** 243 already resolve in the current artifact
+(PPD ∪ boroughs ∪ wards), **424 fresh**, of which 56 are law-1 directional. Two structural
+findings for the increment's design: (a) "Clapham North" is WOF-typed **locality**, not
+neighbourhood — the dual-role class (#402); locality-under-London pairs are a separate,
+riskier ambiguity class and do NOT ride this increment; (b) the ancestor-closure and
+direct-parent extractions coincide at 667 — London neighbourhood records parent directly.
+Next rung (pre-registered): the 424-fresh increment behind a held-out board with the 56
+law-1 rows graded for venue-confound FPs before the artifact ships them.
