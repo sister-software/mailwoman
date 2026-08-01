@@ -53,3 +53,11 @@ riskier ambiguity class and do NOT ride this increment; (b) the ancestor-closure
 direct-parent extractions coincide at 667 — London neighbourhood records parent directly.
 Next rung (pre-registered): the 424-fresh increment behind a held-out board with the 56
 law-1 rows graded for venue-confound FPs before the artifact ships them.
+
+**R4b — the neighbourhood increment SHIPPED (2026-08-01):** the pre-registered bar PASSED — the
+56-row law-1 confound board (directional neighbourhood surfaces opening venue names) shows
+**0 dep-loc false positives before AND after** the 424-fresh merge; the segment-mode gating holds.
+Positive side verified: "East Acton"/"Crystal Palace"/"Nine Elms" all extract as
+dependent_locality. Artifact: `data/gazetteer/london-pairs-v2.jsonl` (966 rows = wards ∪
+neighbourhoods, sorted-unique) supersedes v1; link-dev-weights repointed; full GB index =
+19,209 PPD + 830 secondary = 20,039, cross-checked + self-verified; TRANSITION-BETA green.

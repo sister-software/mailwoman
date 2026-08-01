@@ -421,7 +421,7 @@ if (pairIndexIsFresh) {
 			"--borough-db",
 			String(dataRootPath("wof", "admin-global-priority.db")),
 			"--pairs-jsonl",
-			String(repoRootPath("data", "gazetteer", "london-ward-pairs-v1.jsonl")),
+			String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl")),
 		],
 		{ stdio: "inherit" }
 	)
