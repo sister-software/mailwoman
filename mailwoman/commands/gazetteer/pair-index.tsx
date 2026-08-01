@@ -186,6 +186,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			}
 
 			boroughsAdded = builder.distinctCount - before
+
 			console.error(`pair-index: +${boroughsAdded} distinct borough pairs (WOF admin DB)`)
 		}
 
@@ -202,6 +203,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			}
 
 			boroughsAdded += builder.distinctCount - before
+
 			console.error(
 				`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${options.pairsJsonl.split("/").pop()})`
 			)
