@@ -9,30 +9,36 @@
  *   naming a company + contact address, plus `Accept-Encoding: gzip, deflate`. Unlike
  *   `bdc/sdk/client.ts` (one host, no rate limiting/caching/retry) and `filer/sdk`, which shipped no
  *   fetcher at all before this, this client builds in the disciplines decision 5 asked for, hardened by
- *   a review pass that found one critical concurrency bug and several gaps:
+ *   two review passes:
  *
  *     1. UA fail-fast off `$private.SEC_EDGAR_USER_AGENT`, mirroring `bdc/sdk/client.ts:78-83`.
- *     2. A token-bucket rate limiter clamped to <= 10 req/s ({@linkcode SEC_MAX_REQUESTS_PER_SECOND}),
- *        driven by an injectable {@linkcode ClockLike} so tests never sleep on the wall clock.
- *        {@linkcode TokenBucket.acquire}'s docstring covers a real concurrency bug review found here —
- *        a `Promise.all`-fanned-out burst of `get()` calls bypassed the limiter almost entirely.
- *     3. A validated-before-write, atomic (write-then-rename, matching `filer/sdk/build-filer.ts`'s
- *        convention), stampede-guarded on-disk cache under `dataRootPath("sec", "cache")`, keyed by the
- *        request URL's SHA-256. Archive documents never expire; every other endpoint gets a TTL — see
- *        {@linkcode isImmutableArchiveURL} for the reasoning.
- *     4. Bounded retry with backoff on 429/5xx AND network errors (a dropped socket is more common than
- *        a 503 for a bulk crawler) — never on 403 (see below). Honors a response's `Retry-After` header,
- *        clamped to a sane ceiling. Every attempt carries a per-request timeout (`AbortSignal`), so a
+ *     2. A strict-interval request pacer clamped to <= 10 req/s ({@linkcode SEC_MAX_REQUESTS_PER_SECOND}),
+ *        driven by an injectable {@linkcode ClockLike} so tests never sleep on the wall clock. See
+ *        {@linkcode RequestPacer} for why this is NOT a token bucket — an earlier, bucket-shaped design
+ *        measured 20 grants inside one 1000ms window (2x the ceiling) once idle-then-burst was accounted
+ *        for, and a concurrency bug in that design let a whole cohort of waiters through at once.
+ *     3. A validated-before-write, atomic (write-then-rename with a per-write-unique temp name — see
+ *        {@linkcode writeCacheEntry}), stampede-guarded (per-instance) on-disk cache under
+ *        `dataRootPath("sec", "cache")`, keyed by the request URL's SHA-256. Archive documents never
+ *        expire; every other endpoint gets a TTL — see {@linkcode isImmutableArchiveURL}.
+ *     4. Bounded retry with backoff on 429/5xx, connect failures, and mid-body-transfer failures (a
+ *        dropped socket is more common than a 503 for a bulk crawler fetching multi-MB filings) — never
+ *        on 403 (see below). Honors a response's `Retry-After` header (numeric-seconds AND HTTP-date
+ *        forms), clamped to a sane ceiling, falling back LONG rather than short when the header is
+ *        present but unparseable. Every attempt carries a per-request timeout (`AbortSignal`), so a
  *        never-settling `fetchImpl` can't hang `get()` forever.
- *     5. A typed {@linkcode SECRequestError} (`status`/`url`/`retryable`) for HTTP-status failures, so a
- *        caller (tasks 6-8) can branch on `status`/`retryable` instead of regexing a message string.
- *     6. A host allowlist (`www.sec.gov`, `data.sec.gov`) — this is the designated SEC client; it
- *        refuses to send the configured UA (a contact address) to an arbitrary caller-supplied host.
+ *     5. A typed {@linkcode SECRequestError} (`status`/`url`/`retryable`) covering EVERY failure this
+ *        client can produce past construction — HTTP statuses (`status` a number), AND connect/timeout/
+ *        body-transfer failures and the host-allowlist guard (`status: null`) — so a caller (tasks 6-8)
+ *        can branch on `status`/`retryable` instead of regexing a message string, for every failure
+ *        class, not just HTTP ones.
+ *     6. A host allowlist (`www.sec.gov`, `data.sec.gov`, `sec.gov`, `efts.sec.gov`), https-only — this
+ *        is the designated SEC client; it refuses to send the configured UA (a contact address) to an
+ *        arbitrary caller-supplied host, or in cleartext.
  *
  *   Unlike `BDCClient.get`, which appends a path onto one shared base URL, {@linkcode SECClient.get}
- *   takes a full absolute URL: EDGAR is served across (at least) two hosts — `www.sec.gov` and
- *   `data.sec.gov` — so there's no single base to append a relative path to. (2) above restricts `get`
- *   to exactly those two hosts.
+ *   takes a full absolute URL: EDGAR is served across several hosts, so there's no single base to append
+ *   a relative path to. (6) above restricts `get` to exactly those hosts over https.
  *
  *   A bare 403 from sec.gov means "you didn't identify yourself": reproduced by hitting the same URL
  *   with and without a compliant UA — no UA is a 403, a descriptive one is a 200. It does NOT mean the
@@ -40,8 +46,17 @@
  *   budget on a request that can never succeed, so 403 is treated as non-retryable and the thrown error
  *   says all of this explicitly (this project already lost time to the analogous failure mode on an FCC
  *   endpoint — a generic "403 Forbidden" sends a future maintainer down exactly the wrong path).
+ *
+ *   REDIRECT POLICY — deliberately undocumented-until-now, not implemented: `fetchImpl`'s default
+ *   (`globalThis.fetch`) follows redirects automatically, and the host allowlist below is only checked
+ *   against the ORIGINAL request URL, not each hop. A redirect from an allowed host to an arbitrary one
+ *   would carry the configured UA there unchecked. Accepted for now — EDGAR's public JSON/document
+ *   endpoints don't redirect cross-host in normal operation — but a future hardening pass fetching
+ *   caller-discovered (as opposed to hardcoded) URLs should set `redirect: "manual"` and re-validate the
+ *   `Location` host per hop before following it.
  */
 
+import { randomUUID } from "node:crypto"
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { setTimeout as delay } from "node:timers/promises"
@@ -50,9 +65,9 @@ import { $private } from "@mailwoman/core/env"
 import { dataRootPath, sha256Hex } from "@mailwoman/core/utils"
 
 /**
- * A minimal, injectable time source. Every wall-clock-facing part of this client — the token-bucket rate limiter's wait
- * and the retry backoff — reads through this seam instead of calling `Date.now()` / `setTimeout` directly, so tests can
- * drive both deterministically without ever sleeping for real. (The per-request timeout is a separate seam — see
+ * A minimal, injectable time source. Every wall-clock-facing part of this client — the pacer's wait and the retry
+ * backoff — reads through this seam instead of calling `Date.now()` / `setTimeout` directly, so tests can drive both
+ * deterministically without ever sleeping for real. (The per-request timeout is a separate seam — see
  * `CreateSECClientOptions.requestTimeoutMs` — because it's wired through the platform's real `AbortSignal.timeout`, not
  * this injectable clock.)
  */
@@ -71,91 +86,82 @@ export const systemClock: ClockLike = {
 
 /**
  * The SEC fair-access policy's stated ceiling (https://www.sec.gov/os/accessing-edgar-data): "Current max request rate:
- * 10 requests/second." {@linkcode TokenBucket} clamps its capacity (and steady-state refill rate) to this regardless of
- * a caller-supplied rate, so a misconfigured caller can't accidentally push the sustained rate over the policy limit.
- *
- * This does NOT mean no more than 10 requests ever leave within any given second — see the "deliberate trade-off" note
- * on {@linkcode TokenBucket}'s constructor for the one-time startup-burst exception to that.
+ * 10 requests/second." {@linkcode RequestPacer} clamps its rate to this regardless of a caller-supplied value, so a
+ * misconfigured caller can't accidentally push this client over the policy limit — and, per the pacer's strict-interval
+ * design, this IS a hard ceiling on any sliding one-second window, not just a steady-state average (see
+ * {@linkcode RequestPacer} for why that distinction matters here).
  */
 export const SEC_MAX_REQUESTS_PER_SECOND = 10
 
 /**
- * A token-bucket rate limiter. Starts FULL — an immediate, one-time burst of up to `capacity` requests before any
- * pacing kicks in — then refills continuously at `capacity` tokens/second; {@linkcode TokenBucket.acquire} resolves
- * immediately while a token is available or awaits the clock's `sleep` for exactly as long as the next token takes to
- * accrue.
+ * A strict-interval request pacer: grants are spaced AT LEAST `1000 / rate` ms apart, with NO burst allowance beyond
+ * the very first grant. {@linkcode RequestPacer.acquire} resolves immediately for the first call after construction (or
+ * after any idle gap), and every call within one interval of the previous grant waits out the remainder of it.
  *
- * DELIBERATE TRADE-OFF (starting full, not empty): a cold client's first ~`capacity` requests (plus whatever trickles
- * in via refill during that same window) can land inside the first second, which briefly exceeds a strict "never more
- * than 10 in any 1-second window" reading of SEC's policy. Starting empty instead would remove that burst, but would
- * also force a fresh client's very first request to wait ~100ms for a token to accrue — worse for the common case (a
- * single request, or a short crawl-startup), and this client is meant to be constructed once and reused across a long
- * crawl (tasks 6-8), where a single one-time ≤10-request burst is negligible against thousands of subsequent,
- * correctly-paced requests. This is the standard token-bucket reading of a rate cap; noted here explicitly rather than
- * silently shipped, per review.
+ * WHY NOT A TOKEN BUCKET (this class replaced one — 3b task 5 review round 2): a token bucket with capacity C admits up
+ * to `C + rate * 1s` requests within any sliding one-second window — there is NO non-zero capacity that honors a FLAT
+ * rate cap, only an average one. The bucket this replaced started full (a one-time startup burst, by design) but ALSO
+ * refilled to full after any idle gap, so a fresh burst recurred every time the crawl paused and resumed — measured at
+ * 20 grants inside one 1000ms window (2x the ceiling: 10 refilled-during-idle tokens released instantly, plus what
+ * accrued during that same window). SEC states a flat rate and actively enforces it, and this client is the foundation
+ * every task 6-8 EDGAR call goes through, so the bucket's average-case guarantee wasn't good enough: this pacer holds
+ * the FLAT rate exactly, at the cost of the first-call-of-a-burst latency a bucket would have avoided (judged an
+ * acceptable trade for a bulk crawler, where nothing depends on early requests finishing faster than 1/rate apart).
+ *
+ * FAIRNESS (deliberately not addressed): under concurrent contention (N callers racing `acquire()` in the same
+ * synchronous turn), grants are issued in whatever order the synchronous reservation happens to run in — JS's
+ * single-threaded execution order for that turn, not necessarily the callers' own logical arrival order across
+ * independent call sites. This never affects the RATE (every grant is still exactly `1000 / rate` ms after the last, so
+ * the cap is never exceeded), only which specific caller waits how long under backlog. A caller needing FIFO fairness
+ * under contention would need a real queue on top of this; nothing in this client's own use (tasks 6-8, none of which
+ * have a latency-sensitive ordering requirement between concurrent requests) needs it.
  */
-export class TokenBucket {
-	readonly #capacity: number
-	readonly #capacityPerMs: number
+export class RequestPacer {
+	readonly #intervalMs: number
 	readonly #clock: ClockLike
-	#tokens: number
-	#lastRefillAt: number
+	#nextGrantAt: number
 
 	/**
-	 * @param ratePerSecond Desired tokens/second. Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` — never more than the
-	 *   policy ceiling, never less than 1 (a 0-capacity bucket could never refill).
-	 * @param clock Time source for both refill accounting and the wait when the bucket is empty. Defaults to
-	 *   {@linkcode systemClock}.
+	 * @param ratePerSecond Desired requests/second. Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` — never more than the
+	 *   policy ceiling, never less than 1 (a 0-interval pacer would never actually pace).
+	 * @param clock Time source. Defaults to {@linkcode systemClock}.
 	 */
 	constructor(ratePerSecond: number, clock: ClockLike = systemClock) {
-		this.#capacity = Math.max(1, Math.min(ratePerSecond, SEC_MAX_REQUESTS_PER_SECOND))
-		this.#capacityPerMs = this.#capacity / 1000
+		const clampedRate = Math.max(1, Math.min(ratePerSecond, SEC_MAX_REQUESTS_PER_SECOND))
+
+		this.#intervalMs = 1000 / clampedRate
 		this.#clock = clock
-		this.#tokens = this.#capacity
-		this.#lastRefillAt = clock.now()
+		this.#nextGrantAt = clock.now()
 	}
 
 	/**
-	 * Resolve once a token is available, consuming it. A full bucket returns immediately; an empty one loops — wait for
-	 * the deficit, THEN RE-CHECK — because concurrent callers can wake at the exact same instant (all driven by the same
-	 * clock) and each must independently reconfirm a token is still there before consuming one.
+	 * Resolve once this call's turn comes up: immediately for the first call (or after any idle gap), or exactly `1000 /
+	 * rate` ms after the previous grant otherwise.
 	 *
-	 * Two things matter for correctness under concurrency that are easy to get backwards — both were a single live bug
-	 * review found here (reproduced with N `acquire()` calls fanned out via `Promise.all`, e.g. through
-	 * `Promise.all(urls.map(u => client.get(u)))`, under an injected clock: 40 concurrent calls issued 40 requests inside
-	 * 100ms of virtual time against a published 10 req/s ceiling, 30 of them sharing a single instant):
+	 * The grant time is reserved SYNCHRONOUSLY, before any `await` — `#nextGrantAt` is read AND bumped in the same
+	 * synchronous step that computes this call's own wait. This is load-bearing, not cosmetic: moving the `#nextGrantAt`
+	 * update to after the `await` (i.e. "compute the wait, sleep, then update state") reopens the exact concurrency bug
+	 * this pacer replaced a token bucket to fix — N callers invoked in the same synchronous turn would all read the SAME
+	 * stale `#nextGrantAt` before any of them updates it, compute the SAME wait, and all be released together instead of
+	 * one interval apart. (Mutation-proved: moving the update after the `await` fails the concurrency regression test
+	 * below.)
 	 *
-	 * 1. `while`, not `if`: a waiter that wakes must RE-VERIFY `#tokens >= 1` before consuming — another waiter woken at
-	 *    that same instant may have already claimed the one token that just accrued. An `if` lets every waiter that
-	 *    entered the wait proceed unconditionally the moment ANY one of them wakes, regardless of whether a token was
-	 *    actually left for it.
-	 * 2. No floor-clamping the decrement to zero: letting `#tokens` go negative (a "debt") is what makes each waiter's OWN
-	 *    deficit calculation (`deficitTokens = 1 - #tokens`) correctly account for every other waiter that has already
-	 *    claimed a token ahead of it. Clamping at zero erases that debt and lets a whole cohort of over-capacity waiters
-	 *    through at once instead of pacing them one per `1000 / capacity` ms.
+	 * `Math.max(#nextGrantAt, now)` is equally load-bearing: without it, a long idle gap leaves `#nextGrantAt` stuck in
+	 * the past, and every call after the idle would compute a negative/zero wait forever (the increment-by-one-interval
+	 * never catches up to a `now` that's run far ahead) — pacing would silently stop working after any idle period. (Also
+	 * mutation-proved — see the "does not accumulate a burst backlog after an idle period" test.)
 	 */
 	async acquire(): Promise<void> {
-		this.#refill()
-
-		while (this.#tokens < 1) {
-			const deficitTokens = 1 - this.#tokens
-			const waitMs = Math.ceil(deficitTokens / this.#capacityPerMs)
-
-			await this.#clock.sleep(waitMs)
-			this.#refill()
-		}
-
-		this.#tokens -= 1
-	}
-
-	#refill(): void {
 		const now = this.#clock.now()
-		const elapsedMs = now - this.#lastRefillAt
+		const grantAt = Math.max(this.#nextGrantAt, now)
 
-		if (elapsedMs <= 0) return
+		this.#nextGrantAt = grantAt + this.#intervalMs
 
-		this.#tokens = Math.min(this.#capacity, this.#tokens + elapsedMs * this.#capacityPerMs)
-		this.#lastRefillAt = now
+		const waitMs = grantAt - now
+
+		if (waitMs > 0) {
+			await this.#clock.sleep(Math.ceil(waitMs))
+		}
 	}
 }
 
@@ -179,19 +185,34 @@ export function isImmutableArchiveURL(url: URL): boolean {
 const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
 
 /**
- * The only hosts this client will ever send a request to. `get()` refuses (before any cache/rate-limit/network
- * activity) a URL on any other host — this is the designated SEC EDGAR client, and its configured User-Agent carries a
- * real contact address; sending that anywhere a caller happens to point it would leak it outside SEC's fair-access
- * program for no benefit.
+ * The only hosts this client will ever send a request to. `get()` refuses (before any cache/rate-limit/ network
+ * activity) a URL on any other host, or any non-https scheme — this is the designated SEC EDGAR client, and its
+ * configured User-Agent carries a real contact address; sending that anywhere a caller happens to point it (or in
+ * cleartext) would leak it outside SEC's fair-access program for no benefit.
+ *
+ * `sec.gov` (the apex) and `efts.sec.gov` (EDGAR full-text search — task 8's Exhibit 21 discovery path) are included
+ * alongside the two hosts decision 5 originally verified. Matching is EXACT (a `Set` lookup on `url.hostname`), not a
+ * suffix check — `www.sec.gov.attacker.example` must NOT match, and an `.endsWith(".sec.gov")`-style check would let
+ * it. `url.hostname` (from the WHATWG URL parser) already normalizes case, strips userinfo, and
+ * percent/punycode-decodes — no extra handling needed for those.
  */
-const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov"])
+const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "efts.sec.gov"])
 
 function assertSECHost(url: URL): void {
+	if (url.protocol !== "https:") {
+		throw new SECRequestError(
+			`createSECClient: refusing to request "${url}" over ${url.protocol.replace(":", "")} — this client only ` +
+				"sends requests over https, so the configured User-Agent (a contact address) is never sent in cleartext.",
+			{ status: null, url: url.toString(), retryable: false }
+		)
+	}
+
 	if (!SEC_ALLOWED_HOSTS.has(url.hostname)) {
-		throw new Error(
+		throw new SECRequestError(
 			`createSECClient: refusing to request "${url}" — this client only sends requests to SEC EDGAR hosts ` +
 				`(${[...SEC_ALLOWED_HOSTS].join(", ")}). Sending the configured User-Agent (a contact address) to an ` +
-				"arbitrary caller-supplied host would leak it outside SEC's fair-access program."
+				"arbitrary caller-supplied host would leak it outside SEC's fair-access program.",
+			{ status: null, url: url.toString(), retryable: false }
 		)
 	}
 }
@@ -263,13 +284,27 @@ async function readCacheEntry(
 
 /**
  * Write a cache entry via write-then-rename — never straight to the final path — matching `filer/sdk/build-filer.ts`'s
- * build-then-move convention: a reader can never observe a half-written entry, and a crash mid-write leaves only an
- * orphaned `.building` file rather than a corrupt cache entry.
+ * build-then-move convention: a reader never observes a half-written entry, and a crash mid-write leaves only an
+ * orphaned temp file rather than a corrupt cache entry.
+ *
+ * The temp name is per-write UNIQUE (`randomUUID()`), not derived from the URL. An earlier version used a deterministic
+ * `${finalPath}.building` name — fine for a single writer, but TWO `createSECClient()` instances (or two processes)
+ * sharing one `cacheDir` and racing to write the SAME url would both target the SAME temp path: the first `rename()`
+ * moves it away, and the second gets a raw, unretried `ENOENT` for a response that had already succeeded (review round
+ * 2, reproduced 6/6 with two client instances; with large bodies, the concurrent writes to the shared temp path also
+ * produced a corrupt-but-parseable entry in 2/10 rounds — both writers' bytes interleaved — which would never expire
+ * under `/Archives/`). A unique temp name per write makes the two writes independent: each write is a distinct file, so
+ * neither can observe or corrupt the other's, and whichever `rename()` runs second simply (atomically) replaces the
+ * first's result — no ENOENT, no interleaving, regardless of body size or write ordering. `process.pid` isn't included
+ * — `randomUUID()`'s 122 bits of randomness already make a collision between two temp names astronomically unlikely on
+ * its own, and this avoids adding a `process.*` global read to a file that otherwise has none (this repo lints
+ * `process.env` reads; `process.pid` isn't covered by that rule, but there's no reason to reach for it when it buys
+ * nothing extra here).
  */
 async function writeCacheEntry(url: URL, body: string, cacheDir: string | undefined, clock: ClockLike): Promise<void> {
 	const entry: SECCacheEntry = { url: url.toString(), fetchedAt: clock.now(), body }
 	const finalPath = cacheFilePath(url, cacheDir)
-	const buildingPath = `${finalPath}.building`
+	const buildingPath = `${finalPath}.${randomUUID()}.building`
 
 	await mkdir(resolveCacheDir(cacheDir), { recursive: true })
 	await writeFile(buildingPath, JSON.stringify(entry, null, "\t"))
@@ -279,7 +314,9 @@ async function writeCacheEntry(url: URL, body: string, cacheDir: string | undefi
 /**
  * Parse a response body as JSON, throwing an error that NAMES the URL on failure. Used both on a fresh fetch (BEFORE
  * caching — see {@linkcode fetchAndCache}) and on a cache hit, so a 200 with a non-JSON body (SEC occasionally serves an
- * HTML error page with a 200 status) is caught at the same seam either way and never silently returns garbage.
+ * HTML error page with a 200 status) is caught at the same seam either way and never silently returns garbage. Stays a
+ * plain `Error` (not {@linkcode SECRequestError}) — a bad body isn't a network-class failure a caller would want to
+ * branch on/retry the same way; retrying an unchanged bad response can't help.
  */
 function parseJSONBody<T>(body: string, url: URL): T {
 	try {
@@ -290,29 +327,38 @@ function parseJSONBody<T>(body: string, url: URL): T {
 }
 
 /**
- * A SEC EDGAR request that reached an HTTP response (as opposed to a network error — see {@linkcode fetchFresh}),
- * carrying the fields a caller needs to branch programmatically instead of regexing {@linkcode Error.message}: tasks 6-8
- * need "404 → skip this CIK", "403 → abort the whole run", "exhausted 429/5xx → requeue for later" — all three
- * decisions turn on `status` and `retryable`, not on message text. `message` stays purely human-facing.
+ * Every failure this client can produce past construction, carrying the fields a caller needs to branch
+ * programmatically instead of regexing {@linkcode Error.message}: tasks 6-8 need "404 → skip this CIK", "403 → abort the
+ * whole run", "exhausted 429/5xx OR a persistent connect/timeout failure → requeue for later" — all three decisions
+ * turn on `status` and `retryable`, not on message text.
+ *
+ * `status` is `null` for failures that never reached an HTTP response at all: a connect failure, a timed-out attempt
+ * (see `CreateSECClientOptions.requestTimeoutMs`), a body read that dropped mid- transfer, or the pre-flight
+ * host-allowlist rejection ({@linkcode assertSECHost}). Review round 2 found this taxonomy only covering HTTP statuses
+ * left every one of those — the MOST common outcome for a bulk crawler fetching multi-MB filings, per review — as a
+ * bare `Error`, silently defeating the natural caller pattern `if (e instanceof SECRequestError && e.retryable)
+ * requeue()`. `message` stays purely human-facing either way.
  */
 export class SECRequestError extends Error {
 	override readonly name = "SECRequestError"
 	/**
-	 * The HTTP status code that produced this error.
+	 * The HTTP status code that produced this error, or `null` when no HTTP response was ever reached (a connect failure,
+	 * a timeout, a mid-body-transfer drop, or the host-allowlist guard).
 	 */
-	readonly status: number
+	readonly status: number | null
 	/**
 	 * The request URL, as a string (mirrors {@linkcode Error.message} carrying it too, but structured).
 	 */
 	readonly url: string
 	/**
 	 * Whether THIS CLASS of failure is worth retrying in general (e.g. a later re-run, or a caller's own requeue) —
-	 * `true` for 429/5xx (even once this client's own bounded attempts are exhausted: the caller's requeue is a NEW,
-	 * separate attempt budget), `false` for 403/404/other non-transient statuses.
+	 * `true` for 429/5xx and every `status: null` network-class failure (even once this client's own bounded attempts are
+	 * exhausted: a caller's requeue is a NEW, separate attempt budget), `false` for 403/404/other non-transient statuses
+	 * and the host-allowlist guard (retrying with the SAME url can only ever fail identically).
 	 */
 	readonly retryable: boolean
 
-	constructor(message: string, options: { status: number; url: string; retryable: boolean }) {
+	constructor(message: string, options: { status: number | null; url: string; retryable: boolean }) {
 		super(message)
 		this.status = options.status
 		this.url = options.url
@@ -348,26 +394,64 @@ function isRetryableStatus(status: number): boolean {
  * A hard ceiling on how long a single retry wait is ever allowed to be, REGARDLESS of what a server-supplied
  * `Retry-After` asks for. Honoring `Retry-After` (see {@linkcode parseRetryAfterMs}) is the right side of SEC's
  * fair-access policy, but an unbounded honor-anything policy would let a pathological (or misconfigured) server hang a
- * bulk crawl for hours; 60s is generous for anything SEC's rate limiter itself would plausibly ask for.
+ * bulk crawl for hours; 60s is generous for anything SEC's rate limiter itself would plausibly ask for. Also the
+ * fallback used when `Retry-After` is PRESENT but unparseable (see below) — a malformed header is still the server
+ * asking us to back off, and guessing LONG is the safe failure mode; guessing short (the exponential default) risks
+ * hammering a server that explicitly asked for space.
  */
 const MAX_RETRY_AFTER_MS = 60_000
 
 /**
- * Parse a response's `Retry-After` header as whole seconds (the form SEC's rate limiter sends), clamped to
- * {@linkcode MAX_RETRY_AFTER_MS}. Returns `null` when the header is absent or isn't a non-negative number — falling
- * back to this client's own exponential backoff is safer than guessing at the HTTP-date form, which isn't what a rate
- * limiter (as opposed to a `Retry-After` on a redirect or maintenance page) sends in practice.
+ * RFC 9110 §10.2.3: `Retry-After` is either `delay-seconds` (`1*DIGIT` — one or more ASCII digits, no sign, no decimal
+ * point, no hex) or an HTTP-date. `Number("0x10")` and `Number("1.5")` both parse as valid JS numbers but are NOT valid
+ * `delay-seconds`, so the numeric branch matches the RFC grammar directly instead of delegating to `Number()`.
+ */
+const RETRY_AFTER_DELAY_SECONDS_PATTERN = /^\d+$/
+
+/**
+ * A necessary (not sufficient) pre-check before trusting `Date.parse` on the HTTP-date branch: `Date.parse` is FAR more
+ * lenient than RFC 9110's HTTP-date grammar and will happily parse plausible- looking garbage — `Date.parse("1.5")`
+ * returns a valid timestamp (~Jan 2001, some locale-ish `M.D` reading), which very nearly slipped a bare
+ * fractional-seconds typo through as an accepted HTTP-date instead of falling back to the long ceiling. Every valid RFC
+ * 9110 HTTP-date form (the preferred IMF-fixdate AND the obsolete RFC 850 form) ends in the literal `GMT`; requiring
+ * that suffix rejects `Date.parse`'s stray non-date parses without needing a full HTTP-date grammar implementation.
+ */
+const HTTP_DATE_SUFFIX_PATTERN = /GMT$/
+
+/**
+ * Parse a response's `Retry-After` header — numeric `delay-seconds` or an HTTP-date, per RFC 9110 — into a clamped wait
+ * duration in ms.
+ *
+ * Returns `null` only when the header is ABSENT (the caller should fall back to its own exponential backoff in that
+ * case). When the header IS present, this always returns a number: the parsed (and
+ * {@linkcode MAX_RETRY_AFTER_MS}-clamped) value on success, or `MAX_RETRY_AFTER_MS` itself when the value is present
+ * but matches neither valid form — see the constant's docstring for why unparseable fails open toward caution rather
+ * than speed.
+ *
+ * The HTTP-date branch compares against REAL wall-clock time (`Date.now()`), not the injectable {@linkcode ClockLike} —
+ * an HTTP-date is an absolute calendar timestamp, which only means something relative to the actual current time, so
+ * there's no way to route this comparison through a virtual clock the way the rest of this client's timing does.
  */
 function parseRetryAfterMs(response: Response): number | null {
 	const header = response.headers.get("Retry-After")
 
 	if (!header) return null
 
-	const seconds = Number(header)
+	const trimmed = header.trim()
 
-	if (!Number.isFinite(seconds) || seconds < 0) return null
+	if (RETRY_AFTER_DELAY_SECONDS_PATTERN.test(trimmed)) {
+		return Math.min(Number(trimmed) * 1000, MAX_RETRY_AFTER_MS)
+	}
 
-	return Math.min(seconds * 1000, MAX_RETRY_AFTER_MS)
+	if (HTTP_DATE_SUFFIX_PATTERN.test(trimmed)) {
+		const dateMs = Date.parse(trimmed)
+
+		if (!Number.isNaN(dateMs)) {
+			return Math.min(Math.max(dateMs - Date.now(), 0), MAX_RETRY_AFTER_MS)
+		}
+	}
+
+	return MAX_RETRY_AFTER_MS
 }
 
 /**
@@ -387,13 +471,12 @@ export interface CreateSECClientOptions {
 	fetchImpl?: typeof fetch
 	/**
 	 * Desired requests/second. Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` regardless of what's passed — see
-	 * {@linkcode TokenBucket}. Defaults to {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
+	 * {@linkcode RequestPacer}. Defaults to {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
 	 */
 	requestsPerSecond?: number
 	/**
-	 * Time source powering the rate limiter's wait and the retry backoff. Defaults to {@linkcode systemClock}. Tests
-	 * inject a fake clock so rate-limit and retry behavior are deterministic and fast — no wall-clock sleeps in the
-	 * suite.
+	 * Time source powering the pacer's wait and the retry backoff. Defaults to {@linkcode systemClock}. Tests inject a
+	 * fake clock so rate-limit and retry behavior are deterministic and fast — no wall-clock sleeps in the suite.
 	 */
 	clock?: ClockLike
 	/**
@@ -408,9 +491,9 @@ export interface CreateSECClientOptions {
 	 */
 	cacheTTLMs?: number
 	/**
-	 * Total attempts (including the first) before giving up on a 429/5xx or a network error. Default 3 — a STATED
-	 * CEILING, not "until it works." Exhausting this rethrows the last transient error. Never applies to a 403, which
-	 * fails immediately on the first attempt (see the file header).
+	 * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure (connect, timeout, or
+	 * mid-body-transfer). Default 3 — a STATED CEILING, not "until it works." Exhausting this rethrows the last transient
+	 * error. Never applies to a 403, which fails immediately on the first attempt (see the file header).
 	 */
 	maxAttempts?: number
 	/**
@@ -421,9 +504,9 @@ export interface CreateSECClientOptions {
 	baseRetryDelayMs?: number
 	/**
 	 * Per-attempt request timeout, in milliseconds, wired through a real `AbortSignal.timeout` — this is REAL wall-clock
-	 * time, not the injectable `clock` above (the platform's `AbortSignal.timeout` doesn't take a time source). A
-	 * never-settling `fetchImpl` would otherwise hang `get()` forever; a timed-out attempt is treated as a network error
-	 * and retried under the same bounded policy. Default 30s.
+	 * time, not the injectable `clock` above (the platform's `AbortSignal.timeout` doesn't take a time source). Covers
+	 * the ENTIRE attempt, including the body read — a document slower than this to fully transfer aborts and retries,
+	 * same as a connect failure. Default 30s.
 	 */
 	requestTimeoutMs?: number
 }
@@ -433,13 +516,16 @@ export interface CreateSECClientOptions {
  */
 export interface SECClient {
 	/**
-	 * Issue a `GET` request against a full absolute EDGAR URL (on `www.sec.gov` or `data.sec.gov` only — see
-	 * {@linkcode assertSECHost}) and parse the JSON response body, subject to the on-disk cache, the token-bucket rate
-	 * limiter, and bounded retry on 429/5xx/network-errors (decision 5). Throws immediately (no retry) on a 403 — see the
-	 * file header — and a {@linkcode SECRequestError} after `maxAttempts` on a persistent 429/5xx.
+	 * Issue a `GET` request against a full absolute EDGAR URL (https, on an allowed host only — see
+	 * {@linkcode assertSECHost}) and return the parsed JSON response body, subject to the on-disk cache, the request
+	 * pacer, and bounded retry on 429/5xx/network-class failures (decision 5). Throws immediately (no retry) on a 403 or
+	 * a pre-flight host/scheme rejection — both a {@linkcode SECRequestError} — and a {@linkcode SECRequestError} after
+	 * `maxAttempts` on a persistent 429/5xx or network-class failure.
 	 *
-	 * Concurrent calls for the SAME url that both miss the cache share a single in-flight fetch (a "stampede guard") —
-	 * see {@linkcode fetchFreshDeduped} inside {@linkcode createSECClient}.
+	 * Concurrent calls for the SAME url that both miss the cache, on the SAME client instance, share a single in-flight
+	 * fetch (a "stampede guard") — see {@linkcode fetchFreshDeduped} inside {@linkcode createSECClient}. This does NOT
+	 * cover two separate client instances (or processes) sharing one `cacheDir`; {@linkcode writeCacheEntry}'s
+	 * per-write-unique temp file is what makes THAT case safe (no corruption, no thrown error), just not de-duplicated.
 	 */
 	get<T>(url: string | URL): Promise<T>
 }
@@ -472,26 +558,30 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 	const maxAttempts = options.maxAttempts ?? 3
 	const baseRetryDelayMs = options.baseRetryDelayMs ?? 500
 	const requestTimeoutMs = options.requestTimeoutMs ?? 30_000
-	const bucket = new TokenBucket(options.requestsPerSecond ?? SEC_MAX_REQUESTS_PER_SECOND, clock)
+	const pacer = new RequestPacer(options.requestsPerSecond ?? SEC_MAX_REQUESTS_PER_SECOND, clock)
 
 	/**
-	 * Issue the actual network request(s) for a cache miss: rate-limited, with bounded retry on 429/5xx AND network
-	 * errors (a dropped socket, a DNS blip, or this attempt's own timeout firing). Never consults or writes the cache —
-	 * that's {@linkcode fetchAndCache}'s job, and it never happens here.
+	 * Issue the actual network request(s) for a cache miss: paced, with bounded retry on 429/5xx AND network-class
+	 * failures (a dropped connection, a DNS blip, this attempt's own timeout firing, or a mid-body-transfer drop). The
+	 * body read (`response.text()`) happens INSIDE the same try/catch as the fetch call itself — review round 2 found it
+	 * living outside, so a 200 whose body read rejected (the `AbortSignal.timeout` stays attached through the read, and
+	 * undici raises `TypeError: terminated` on a mid-transfer drop) got one attempt and a plain, unretried `TypeError` —
+	 * exactly the failure mode this retry loop exists for, and the COMMON one for tasks 6-8's multi-MB filing fetches.
+	 * Never consults or writes the cache — that's {@linkcode fetchAndCache}'s job, and it never happens here.
 	 */
 	async function fetchFresh(url: URL): Promise<string> {
 		let lastError: Error | undefined
 
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-			await bucket.acquire()
+			await pacer.acquire()
 
 			let response: Response
 
 			try {
 				// Per the SEC's documented sample headers (https://www.sec.gov/os/accessing-edgar-data): a
 				// descriptive User-Agent plus Accept-Encoding. `Host` is also in that sample, but this client
-				// spans multiple hosts (www.sec.gov, data.sec.gov) — `fetch` derives Host from the URL itself,
-				// and hardcoding one here would break requests to the other host.
+				// spans multiple hosts — `fetch` derives Host from the URL itself, and hardcoding one here
+				// would break requests to the others.
 				response = await fetchImpl(url, {
 					headers: {
 						"User-Agent": userAgent,
@@ -499,20 +589,23 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 					},
 					signal: AbortSignal.timeout(requestTimeoutMs),
 				})
+
+				if (response.ok) {
+					return await response.text()
+				}
 			} catch (error) {
-				lastError = new Error(`SEC EDGAR request failed: network error on attempt ${attempt}/${maxAttempts} (${url})`, {
-					cause: error,
-				})
+				lastError = new SECRequestError(
+					`SEC EDGAR request failed: network error on attempt ${attempt}/${maxAttempts} (${url}): ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+					{ status: null, url: url.toString(), retryable: true }
+				)
 
 				if (attempt < maxAttempts) {
 					await clock.sleep(baseRetryDelayMs * 2 ** (attempt - 1))
 				}
 
 				continue
-			}
-
-			if (response.ok) {
-				return response.text()
 			}
 
 			if (response.status === HTTP_FORBIDDEN) {
@@ -552,32 +645,35 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 	}
 
 	/**
-	 * Fetch, validate as JSON, and cache — in that order. Validating BEFORE writing the cache is what keeps a 200
-	 * carrying a non-JSON body (SEC occasionally serves an HTML error page with a 200 status) from being persisted: if
-	 * caching happened first, every future request for that URL would replay the poisoned entry forever for an
-	 * `/Archives/` URL (which never expires — see {@linkcode isImmutableArchiveURL}), with no self-healing path short of
-	 * hand-deleting a SHA-256-named file.
+	 * Fetch, validate as JSON, cache, and return the ALREADY-PARSED value — in that order. Validating BEFORE writing the
+	 * cache is what keeps a 200 carrying a non-JSON body (SEC occasionally serves an HTML error page with a 200 status)
+	 * from being persisted: if caching happened first, every future request for that URL would replay the poisoned entry
+	 * forever for an `/Archives/` URL (which never expires — see {@linkcode isImmutableArchiveURL}), with no self-healing
+	 * path short of hand-deleting a SHA-256-named file. Returning the parsed value (not the raw string) means
+	 * {@linkcode get} never has to `JSON.parse` a freshly-fetched body a second time — review round 2 found the
+	 * double-parse; the raw `body` string is still what gets written to disk, since the cache format stores the body
+	 * verbatim.
 	 */
-	async function fetchAndCache(url: URL): Promise<string> {
+	async function fetchAndCache(url: URL): Promise<unknown> {
 		const body = await fetchFresh(url)
+		const parsed = parseJSONBody<unknown>(body, url)
 
-		parseJSONBody(body, url)
 		await writeCacheEntry(url, body, cacheDir, clock)
 
-		return body
+		return parsed
 	}
 
 	/**
-	 * In-flight fetches, keyed by URL — a "stampede guard." Without this, N concurrent `get()` calls for a URL that isn't
-	 * cached yet would each independently fetch (each consuming its own rate-limit token) and each independently write
-	 * the cache file. This matters more once the token bucket actually queues correctly (see the
-	 * {@linkcode TokenBucket.acquire} concurrency fix above) — before that fix, a fan-out mostly bypassed the limiter
-	 * anyway, so a stampede was one symptom among several; after it, concurrent requests genuinely queue, and de-duping
-	 * them onto a single real fetch is the difference between N wasted requests and one.
+	 * In-flight fetches, keyed by URL — a "stampede guard" for concurrent misses on THIS client instance. Without this, N
+	 * concurrent `get()` calls for a URL that isn't cached yet would each independently fetch (each consuming its own
+	 * pacer slot) and each independently write the cache file. This does NOT cover two separate `createSECClient()`
+	 * instances (or two processes) sharing one `cacheDir` — this map is per-instance state — which is exactly the
+	 * scenario {@linkcode writeCacheEntry}'s per-write-unique temp file protects against instead (safe, just not
+	 * de-duplicated, in that case).
 	 */
-	const inFlightFetches = new Map<string, Promise<string>>()
+	const inFlightFetches = new Map<string, Promise<unknown>>()
 
-	function fetchFreshDeduped(url: URL): Promise<string> {
+	function fetchFreshDeduped(url: URL): Promise<unknown> {
 		const key = url.toString()
 		let pending = inFlightFetches.get(key)
 
@@ -608,9 +704,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			return parseJSONBody<T>(cachedBody, url)
 		}
 
-		const body = await fetchFreshDeduped(url)
-
-		return parseJSONBody<T>(body, url)
+		return (await fetchFreshDeduped(url)) as T
 	}
 
 	return { get }
