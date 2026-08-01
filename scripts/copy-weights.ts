@@ -308,11 +308,13 @@ async function materializePairIndex(workspace: string, dir: string) {
 		return
 	}
 
-	// Resolve every configured input against the data root (absolute paths pass through untouched).
-	const resolveInput = (value: string) => (value.startsWith("/") ? value : resolve(dataRoot, value))
-	const source = entry.source ? resolveInput(entry.source) : undefined
-	const boroughDb = entry.boroughDb ? resolveInput(entry.boroughDb) : undefined
-	const pairsJsonl = entry.pairsJsonl ? resolveInput(entry.pairsJsonl) : undefined
+	// Inputs resolve against DIFFERENT roots, and conflating them is a real failure mode (it broke CI once):
+	// `source` and `boroughDb` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
+	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). Absolute paths pass through untouched either way.
+	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
+	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
+	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
+	const pairsJsonl = entry.pairsJsonl ? resolveFrom(repoRoot, entry.pairsJsonl) : undefined
 
 	for (const [label, path] of [
 		["source CSV", source],
