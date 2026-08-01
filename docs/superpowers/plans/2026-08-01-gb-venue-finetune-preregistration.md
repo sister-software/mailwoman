@@ -81,3 +81,38 @@ re-run the identical 4-λ × 2k sweep as v4.1.2. Everything else unchanged. The 
 applies at the revised dose. If the revised probe still shows no target movement, STOP —
 operator conversation before any further spend (the mechanism, not the dose, would be in
 question).
+
+---
+
+## Addendum 2 (2026-08-01) — MAIN-RUN VERDICT: V1 MISS / B1 PASS → operator conversation
+
+**λ calibration delivered**: at dose 12.0 the sweep separated — λ=1e6 brakes the target (−4.5pp
+venue on the board), λ=1e2/1e4 within noise of λ=0 → **λ=1e4 is the calibrated B11 template
+default**, with a receipt.
+
+**B1 (the guarantee gate): PASS.** The 8k main (v4.1.1, dose 12, λ=1e4, md5 02b8c323…) passes
+the FULL v7.0.0-base spec (every floor, no waivers) and the full gauntlet (regression +
+metamorphic + held-out). The sellable sentence — "a Fisher-protected fine-tune holds every base
+capability" — held on its first dogfood.
+
+**V1 (target): MISS — 2 of 6 full flips** (North Face - Covent Garden, East India Club), with
+real partial progress on two more (New North: house_number "287-293" + postcode now correct;
+Far East: the mixed-script venue now extracted in full). GB board: venue 53.8→80.8, locality
+54→78.8, postcode 74.5→92.3, all-components 10.5→20.5.
+
+**Why the residual three are NOT one more dose turn** (the reason this stops here per the stop
+rules): they fail through three different mechanisms, each outside the shard's teaching —
+
+1. _Typeless GB street names_ ("Minories" — no Road/St/Close token): board street accuracy sat
+   at ~29% through every dose; the PPD tuples are overwhelmingly typed streets. Ye Three Lords
+   needs the model to accept a bare proper noun as a street on positional evidence alone.
+2. _The doubled bare venue_ ("Southfields Station, Southfields Station") — a venue-only
+   fragment, not the shard's venue+address template at all.
+3. _Abbreviated internal directionals_ ("New N Rd") interacting with a directional-led venue —
+   plus a digit-split oddity on "13 Gerrard St" (house_number "Ger") worth its own look.
+
+Each is nameable future work (a typeless-street shard leg; a venue-only doubled template in the
+no-street shard; an abbreviation-augmentation pass over the GB leg) — but that is three
+mechanisms, not the one contingency the envelope allows. **Stopped per pre-registration; the
+candidate (model 7.0.1-candidate, staged, NOT promoted) + all receipts go to the operator.**
+The six gauntlet fixtures stay `improvement_target`.
