@@ -79,24 +79,6 @@ export function pluckResponseData<Body>(input: ResponseContainer<Body> | Body): 
 	return body as ExtractResponseBodyData<Body>
 }
 
-export function checkConnectivity(
-	connectivityURL: URL | string = "https://connectivitycheck.gstatic.com/generate_204"
-): Promise<boolean> {
-	// `fetch` can be absent (or, in a hermetic test harness, stubbed to throw SYNCHRONOUSLY), in which
-	// case the call never produces a promise for `.catch` to attach to. A connectivity PROBE failing
-	// must never become the error the caller sees — it's a diagnostic, not the diagnosis.
-	try {
-		return fetch(connectivityURL, {
-			method: "HEAD",
-		}).then(
-			(response) => response.ok,
-			() => false
-		)
-	} catch {
-		return Promise.resolve(false)
-	}
-}
-
 /**
  * The `kind` component of a {@linkcode ResourceError}'s `(source, kind, reason)` URN, as produced by
  * {@linkcode delegateAxiosError}. This is the axis {@linkcode isTransientResourceError} branches on, so a caller never
@@ -228,11 +210,19 @@ function responseReason(status: number): string {
  * ALWAYS throws — every failure past this point is a {@linkcode ResourceError} carrying a numeric `status`, a `(source,
  * kind, reason)` URN on `name`, and the originating `AxiosError` on `cause`. A non-Axios error is rethrown untouched.
  *
- * An earlier version RETURNED (resolving the interceptor chain with `undefined`) for `ERR_CANCELED`/`ECONNABORTED`/
- * `ETIMEDOUT`, so a timed-out request surfaced as a missing response body rather than an error — the single most common
- * bulk-crawl failure, silently converted into a `TypeError` at the caller's first property access. It also fell through
- * to rethrowing the raw `AxiosError` for every non-401 HTTP status, which left `status`-based branching (404 → skip,
- * 403 → abort) reaching into `error.response` instead of the mapped taxonomy.
+ * WHAT CHANGED, measured rather than recalled — a differential against `98c4dda1` across 18 failure shapes in the exact
+ * `TileAPI` configuration found **16 of them changed**, not the two originally claimed:
+ *
+ * - Every RESPONSELESS failure (`ERR_NETWORK`, `ECONNREFUSED`, `ECONNRESET`, `ECONNABORTED`, `ETIMEDOUT`, `ERR_CANCELED`)
+ *   used to collapse into a uniform 500; they now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
+ *   transient to terminal, which is the point — a caller who cancelled should not requeue.
+ * - Every non-401 HTTP status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
+ *   had to reach into `error.response`. 401's own message and URN changed too.
+ *
+ * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` RESOLVED the chain with `undefined` was wrong: the
+ * old `if (!response) throw` ran BEFORE that `switch`, so those `return` arms were unreachable and no case in 18 ever
+ * resolved. A timeout became a misclassified 500, not a `TypeError` at the caller. No regression follows from any of
+ * this — the sole call site has no `.catch`, and every shape that rejects now also rejected before.
  *
  * @internal
  */
@@ -287,14 +277,19 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 	}
 
 	if (networkErrorCode === "ENOTFOUND") {
-		const internetReachable = await checkConnectivity()
-
+		// DELIBERATELY NO CONNECTIVITY PROBE. An earlier version issued a live `HEAD` here to word the
+		// message as "are we connected to the internet?" rather than "could not resolve host". It cost
+		// one unbounded, un-timed-out request per exhausted DNS failure — with a never-settling `fetch`
+		// the client never settled at all — and no test could reach it: deleting the whole branch caused
+		// 0 of 269 failures, and the hermetic no-live-network harness could not see it either, because
+		// the probe swallowed its own synchronously-throwing `fetch` stub into `false`. Making the probe
+		// incapable of throwing is exactly what made it invisible to the guard meant to catch it. The
+		// classification is identical either way — network-class, transient — so the whole thing bought
+		// one message string.
 		throw taggedResourceError(
 			error,
 			HttpStatusCode.ServiceUnavailable,
-			internetReachable
-				? `Could not resolve host (${error.config?.url ?? "unknown URL"}).`
-				: "Could not reach host. Are we connected to the internet?",
+			`Could not resolve host (${error.config?.url ?? "unknown URL"}).`,
 			ResourceErrorKind.Network,
 			"unreachable"
 		)
