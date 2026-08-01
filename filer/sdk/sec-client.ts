@@ -68,6 +68,23 @@ export { ResourceError } from "@mailwoman/core/errors"
 export const SEC_MAX_REQUESTS_PER_SECOND = 10
 
 /**
+ * What this client actually paces at — deliberately ONE BELOW {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
+ *
+ * Pacing exactly at the ceiling puts every grant on a schedule with zero slack, and the schedule is not what SEC
+ * measures — the arriving request is. Measured end-to-end through {@linkcode createSECClient} on real timers, a 40-call
+ * fan-out at 10/s produced **11 requests inside one sliding second on 3 of 3 runs**: the grants themselves are spaced
+ * correctly, but the continuation that issues the request lands 0-2 ms late and tips one grant across the boundary (the
+ * preceding second then holds 9). Against a true sliding-window limiter that is a violation, and it happens on a
+ * schedule that is arithmetically compliant — which is exactly the kind of correctness nobody can debug after a block.
+ *
+ * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy, and buys a schedule
+ * that stays inside the published limit even when the event loop is late. `SEC_MAX_REQUESTS_PER_SECOND` remains the
+ * clamp — a caller may ask for anything up to it — but the DEFAULT is this. Raise it only with a measurement showing
+ * the arrival-time distribution stays under 10/s, not merely the grant times.
+ */
+export const SEC_DEFAULT_REQUESTS_PER_SECOND = 9
+
+/**
  * Milliseconds in a second — the numerator when turning a requests/second rate into a pacing interval.
  */
 const MS_PER_SECOND = 1000
@@ -199,7 +216,8 @@ export interface CreateSECClientOptions {
 	userAgent?: string
 	/**
 	 * Desired requests/second. Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` regardless of what's passed. Defaults to
-	 * {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
+	 * {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below the policy ceiling on purpose — see that constant
+	 * for the measurement behind it.
 	 */
 	requestsPerSecond?: number
 	/**
@@ -346,7 +364,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 
 	const requestsPerSecond = Math.max(
 		1,
-		Math.min(options.requestsPerSecond ?? SEC_MAX_REQUESTS_PER_SECOND, SEC_MAX_REQUESTS_PER_SECOND)
+		Math.min(options.requestsPerSecond ?? SEC_DEFAULT_REQUESTS_PER_SECOND, SEC_MAX_REQUESTS_PER_SECOND)
 	)
 
 	const cacheTTLMs = options.cacheTTLMs ?? DEFAULT_CACHE_TTL_MS

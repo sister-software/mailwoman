@@ -34,6 +34,7 @@ import {
 	isImmutableArchiveURL,
 	isTransientResourceError,
 	ResourceError,
+	SEC_DEFAULT_REQUESTS_PER_SECOND,
 	SEC_MAX_REQUESTS_PER_SECOND,
 } from "./sec-client.ts"
 
@@ -501,9 +502,15 @@ describe("createSECClient: rate limiting", () => {
 		expect(clock.sleepCalls).toEqual([100])
 	})
 
-	it("holds the published ceiling across a 40-call concurrent fan-out", async () => {
+	it("holds the DEFAULT rate, one under the published ceiling, across a 40-call concurrent fan-out", async () => {
 		const FAN_OUT = 40
-		const INTERVAL_MS = 1000 / SEC_MAX_REQUESTS_PER_SECOND
+		// The default is SEC_DEFAULT_REQUESTS_PER_SECOND (9), not the ceiling. Pacing exactly at 10/s put 11 requests
+		// inside a sliding second on 3 of 3 real-timer runs — the grants were spaced right, but the continuation that
+		// issues each request lands 0-2ms late and tips one across the boundary. Asserting the ceiling here would pin
+		// the schedule that measured as a violation.
+		const INTERVAL_MS = 1000 / SEC_DEFAULT_REQUESTS_PER_SECOND
+
+		expect(SEC_DEFAULT_REQUESTS_PER_SECOND).toBeLessThan(SEC_MAX_REQUESTS_PER_SECOND)
 
 		const clock = new VirtualClock()
 		const transport = stubTransport([{ body: { ok: true } }], clock)
@@ -513,7 +520,7 @@ describe("createSECClient: rate limiting", () => {
 		const pending = Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`))
 
 		await drainMicrotasks()
-		await clock.advance((FAN_OUT - 1) * INTERVAL_MS)
+		await clock.advance(Math.ceil((FAN_OUT - 1) * INTERVAL_MS))
 		await Promise.all(pending)
 
 		// GRANT instants, taken from the pacer's own reservations rather than from when the stub adapter
@@ -524,9 +531,17 @@ describe("createSECClient: rate limiting", () => {
 		const grantTimes = [0, ...clock.sleepCalls]
 
 		expect(grantTimes).toHaveLength(FAN_OUT)
-		expect(grantTimes).toEqual(Array.from({ length: FAN_OUT }, (_, i) => i * INTERVAL_MS))
 		expect(new Set(grantTimes).size).toBe(FAN_OUT)
-		expect(maxCountInSlidingWindow(grantTimes, 1000)).toBe(SEC_MAX_REQUESTS_PER_SECOND)
+
+		// Assert the PROPERTIES the pacer exists to guarantee, not a recomputed schedule. 1000/9 is not an integer and
+		// each sleep is ceiled, so reproducing the exact instants here would couple the test to float arithmetic and
+		// break on any rate that divides unevenly — while proving nothing extra. What matters: strictly increasing, never
+		// closer together than the interval, and never more than the configured rate inside any sliding second.
+		for (let i = 1; i < grantTimes.length; i++) {
+			expect(grantTimes[i]! - grantTimes[i - 1]!).toBeGreaterThanOrEqual(Math.floor(INTERVAL_MS))
+		}
+
+		expect(maxCountInSlidingWindow(grantTimes, 1000)).toBe(SEC_DEFAULT_REQUESTS_PER_SECOND)
 		expect(transport.calls).toHaveLength(FAN_OUT)
 	})
 })
