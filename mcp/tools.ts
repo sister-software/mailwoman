@@ -29,6 +29,11 @@
  *     `filerLookup`) for one identifier (FRN, Form 499 ID, or BDC provider ID): every OTHER identifier it shares an
  *     authoritative edge with, its current attributes, its authoritative entity cluster, and any inferred links —
  *     reported separately, never merged into the cluster. `as_of` is always present (defaults to today).
+ *   - `mailwoman_filer_family` (3b task 9) — read a corporate family's membership (`@mailwoman/filer/sdk`'s
+ *     `familyRollup`) from a filer.db layer database, given a `family_id` or a `node_id`. Distinct from an entity
+ *     cluster (same filer, different identifiers) — a corporate family spans several DIFFERENT filers under a
+ *     holding/parent/subsidiary/management relationship. The handler passes `familyRollup`'s result through
+ *     unchanged: no reshaping, filtering, or summarizing of who-owns-whom data.
  */
 
 import { z } from "zod"
@@ -59,6 +64,7 @@ export interface MCPToolDeps {
 		bdcProviderID?: number
 		asOf?: string
 	}) => Promise<unknown>
+	filerFamily: (q: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => Promise<unknown>
 }
 
 /**
@@ -221,6 +227,33 @@ const FilerLookupInputSchema = z.object({
 		),
 })
 
+const FilerFamilyInputSchema = z.object({
+	database_path: z.string().min(1).describe("Path to a filer.db layer database (FCC filer identity crosswalk)."),
+	family_id: z
+		.string()
+		.optional()
+		.describe(
+			"The canonicalized family_id to roll up, e.g. as returned by mailwoman_filer_lookup's `families` field. " +
+				"Provide exactly one of `family_id` or `node_id` — never both, never neither."
+		),
+	node_id: z
+		.string()
+		.optional()
+		.describe(
+			"A filer-graph node_id (e.g. 'frn:0001753557') to resolve EVERY corporate family it currently belongs to " +
+				"— a node may legitimately belong to more than one (e.g. a different holding company vs. management " +
+				"company). Provide exactly one of `family_id` or `node_id` — never both, never neither."
+		),
+	as_of: z
+		.string()
+		.optional()
+		.describe(
+			"ISO date (YYYY-MM-DD) to scope the rollup as-of — only family memberships valid on or before this date, " +
+				"and not yet closed by it, are included. Defaults to today; each returned family states the date " +
+				"actually used."
+		),
+})
+
 /**
  * Build the tool table for a concrete `MCPToolDeps` implementation. Pure — no transport, no I/O of its own.
  */
@@ -348,6 +381,27 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 					frn,
 					form499ID: form499_id,
 					bdcProviderID: bdc_provider_id,
+					asOf: as_of,
+				})
+			},
+		},
+		{
+			name: "mailwoman_filer_family",
+			description:
+				"Read a corporate family's full membership from a filer.db layer database — a holding/parent/subsidiary/" +
+				"management tree spanning several DIFFERENT filers, distinct from an entity cluster (same filer, " +
+				"different identifiers). Given `family_id`, returns that one family's members; given `node_id`, " +
+				"resolves EVERY family that node currently belongs to (a node MAY belong to more than one). Each " +
+				"returned family reports its members with relationship + source, a deduped distinct_member_count, and " +
+				"its known display names. Provide exactly one of `family_id` or `node_id`.",
+			inputSchema: FilerFamilyInputSchema,
+			handler: async (args) => {
+				const { database_path, family_id, node_id, as_of } = FilerFamilyInputSchema.parse(args)
+
+				return deps.filerFamily({
+					databasePath: database_path,
+					familyID: family_id,
+					nodeID: node_id,
 					asOf: as_of,
 				})
 			},
