@@ -83,25 +83,32 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  * Create an on-disk {@linkcode AxiosStorage}, keyed by the SHA-256 of the interceptor's cache key (which already folds
  * in method, URL, params and body), so a filename is always a fixed-length, filesystem-safe hex digest.
  *
- * `loading` entries are held in an in-process Map instead of on disk. That keeps the interceptor's own stampede guard
- * working (a concurrent second request for the same key sees `loading` and waits on the first) without a file write per
- * request, and without an interrupted process leaving a `loading` marker on disk forever.
+ * An in-process overlay Map sits in front of the files, and it is load-bearing for two reasons:
+ *
+ * 1. `loading` markers live there INSTEAD of on disk. That keeps the interceptor's stampede guard working (a concurrent
+ *    second request for the same key sees `loading` and waits on the first) without a file write per request, and
+ *    without an interrupted process leaving a `loading` marker on disk forever.
+ * 2. A value being WRITTEN stays there until its `rename` lands. Without that, `set()` clearing the `loading` marker
+ *    before the file exists opens a window where the key is in neither place, and a concurrent reader gets `empty` for
+ *    a response that is already in hand — measured as 3 dispatches for 3 concurrent requests to one URL, i.e. the
+ *    stampede guard fully defeated.
  */
 export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 	const { directory, validate } = options
 	const logger = options.logger ?? ConsoleLogger.prefix("disk-storage")
 
 	/**
-	 * In-flight (`loading`) markers, per process. Never persisted — see the function docstring.
+	 * Values visible to this process ahead of (or instead of) the files: `loading` markers, which are never persisted,
+	 * and entries mid-write, which are dropped once their `rename` lands. See the function docstring.
 	 */
-	const inFlight = new Map<string, StorageValue>()
+	const overlay = new Map<string, StorageValue>()
 
 	function entryPath(key: string): string {
 		return join(directory, `${sha256Hex(key)}.json`)
 	}
 
 	async function removeEntry(key: string): Promise<void> {
-		inFlight.delete(key)
+		overlay.delete(key)
 
 		try {
 			await unlink(entryPath(key))
@@ -138,7 +145,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 	return buildStorage({
 		find: async (key) => {
-			const pending = inFlight.get(key)
+			const pending = overlay.get(key)
 
 			if (pending) return pending
 
@@ -164,12 +171,10 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 		set: async (key, value) => {
 			if (!isPersistableState(value)) {
-				inFlight.set(key, value)
+				overlay.set(key, value)
 
 				return
 			}
-
-			inFlight.delete(key)
 
 			const serialized = serializeIfValid(key, value)
 
@@ -181,20 +186,29 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				return
 			}
 
+			// Publish to the overlay BEFORE the write and clear it only once the rename has landed, so the
+			// key is continuously visible: the `loading` marker is replaced by the real value in the same
+			// synchronous step, never by a gap.
+			overlay.set(key, value)
+
 			const finalPath = entryPath(key)
 			// Unique per write — `process.pid` separates processes, `randomUUID()` separates concurrent
 			// writes inside one. A deterministic name here is the ENOENT/interleaving bug in the file header.
 			const buildingPath = `${finalPath}.${process.pid}.${randomUUID()}.building`
 
-			await mkdir(directory, { recursive: true })
-			await writeFile(buildingPath, serialized)
-			await rename(buildingPath, finalPath)
+			try {
+				await mkdir(directory, { recursive: true })
+				await writeFile(buildingPath, serialized)
+				await rename(buildingPath, finalPath)
+			} finally {
+				overlay.delete(key)
+			}
 		},
 
 		remove: removeEntry,
 
 		clear: async () => {
-			inFlight.clear()
+			overlay.clear()
 
 			// Recreated rather than left absent: "the cache is empty" and "the cache directory vanished"
 			// are different states to anything inspecting the data root, and only the first is intended.

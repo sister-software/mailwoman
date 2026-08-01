@@ -117,6 +117,14 @@ export const ResourceErrorKind = {
 	 * Never transient: re-issuing the identical request can only fail identically.
 	 */
 	Request: "request",
+	/**
+	 * A response arrived with a SUCCESS status, but its body could not be decoded into the requested type — the classic
+	 * case being an upstream that serves an HTML error page under a 200.
+	 *
+	 * Never transient, deliberately: retrying an unchanged bad body cannot help, and a client that treated this as
+	 * retryable would spend its whole attempt budget re-downloading the same broken payload.
+	 */
+	Payload: "payload",
 } as const
 
 /**
@@ -149,6 +157,7 @@ export function resourceErrorKind(error: unknown): ResourceErrorKind | null {
 		case ResourceErrorKind.Network:
 		case ResourceErrorKind.Response:
 		case ResourceErrorKind.Request:
+		case ResourceErrorKind.Payload:
 			return kind
 		default:
 			return null
@@ -234,6 +243,19 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 
 	if (response) {
 		const { status } = response
+
+		// A SUCCESS status that still produced an error means the STATUS was fine and the BODY was not —
+		// Axios's `transformResponse` rejecting an unparseable JSON payload, most often. That is a
+		// different failure from "the server said 500", and a different retry answer.
+		if (status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices) {
+			throw taggedResourceError(
+				error,
+				HttpStatusCode.BadGateway,
+				`Response body could not be decoded (${status} from ${error.config?.url ?? "unknown URL"}): ${error.message}`,
+				ResourceErrorKind.Payload,
+				"unreadable"
+			)
+		}
 
 		throw taggedResourceError(
 			error,

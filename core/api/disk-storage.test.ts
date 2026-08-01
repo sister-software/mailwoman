@@ -106,6 +106,24 @@ describe("buildDiskStorage: round trip", () => {
 		expect((await buildDiskStorage({ directory }).get("in-flight")).state).toBe("empty")
 	})
 
+	it("keeps a key continuously visible across the write, never showing a gap", async () => {
+		// The `loading` marker has to be replaced by the real value in one step. Clearing it before the
+		// file lands leaves the key in neither place, and a concurrent reader gets `empty` for a response
+		// already in hand — measured as 3 dispatches for 3 concurrent requests to one URL through
+		// `APIClient`, i.e. the cache interceptor's stampede guard fully defeated.
+		const storage = buildDiskStorage({ directory })
+
+		await storage.set("k", { state: "loading", previous: "empty" })
+
+		const write = storage.set("k", cachedValue({ v: 1 }))
+		const during = await storage.get("k")
+
+		await write
+
+		expect(during.state).toBe("cached")
+		expect((during as CachedStorageValue).data.data).toEqual({ v: 1 })
+	})
+
 	it("treats a corrupt file as a miss and evicts it rather than throwing", async () => {
 		const storage = buildDiskStorage({ directory })
 
