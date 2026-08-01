@@ -162,7 +162,7 @@ describe("familyRollup — general reader contract", () => {
 		expect(result).toEqual([])
 	})
 
-	it("returns a one-element array for a familyID query, each member carrying node_id/relationship/source plus a distinct_member_count", async () => {
+	it("returns a one-element array for a familyID query, each member carrying node_id/relationship/assertion/match_score/source plus a distinct_member_count", async () => {
 		using db = openMemory()
 		await createAllTables(db)
 		await seedManifest(db)
@@ -174,6 +174,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: FAMILY_ID,
 					naming_node_id: NAMING_NODE_BIGCO,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-15",
@@ -184,6 +185,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_B,
 					family_id: FAMILY_ID,
 					naming_node_id: NAMING_NODE_BIGCO,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-02-01",
@@ -199,8 +201,20 @@ describe("familyRollup — general reader contract", () => {
 		expect(result[0]?.family_id).toBe(FAMILY_ID)
 
 		expect(result[0]?.members).toEqual([
-			{ node_id: FRN_A, relationship: FilerRelationship.HoldingCompany, source: "form-499" },
-			{ node_id: FRN_B, relationship: FilerRelationship.HoldingCompany, source: "form-499" },
+			{
+				node_id: FRN_A,
+				relationship: FilerRelationship.HoldingCompany,
+				assertion: FilerEdgeAssertion.Authoritative,
+				match_score: null,
+				source: "form-499",
+			},
+			{
+				node_id: FRN_B,
+				relationship: FilerRelationship.HoldingCompany,
+				assertion: FilerEdgeAssertion.Authoritative,
+				match_score: null,
+				source: "form-499",
+			},
 		])
 
 		expect(result[0]?.distinct_member_count).toBe(2)
@@ -219,6 +233,7 @@ describe("familyRollup — general reader contract", () => {
 				node_id: FRN_A,
 				family_id: FAMILY_ID,
 				naming_node_id: NAMING_NODE_BIGCO,
+				assertion: FilerEdgeAssertion.Authoritative,
 				relationship: FilerRelationship.HoldingCompany,
 				source: "form-499",
 				source_vintage: "2026-01-15",
@@ -256,6 +271,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: HOLDING_FAMILY,
 					naming_node_id: NAMING_NODE_HOLDCO_ONE,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-15",
@@ -266,6 +282,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: MANAGEMENT_FAMILY,
 					naming_node_id: NAMING_NODE_MGMTCO_TWO,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.ManagementCompany,
 					source: "form-499",
 					source_vintage: "2026-01-15",
@@ -298,6 +315,7 @@ describe("familyRollup — general reader contract", () => {
 				node_id: FRN_A,
 				family_id: FAMILY_ID,
 				naming_node_id: NAMING_NODE_BIGCO,
+				assertion: FilerEdgeAssertion.Authoritative,
 				relationship: FilerRelationship.HoldingCompany,
 				source: "form-499",
 				source_vintage: "2026-01-01",
@@ -327,6 +345,7 @@ describe("familyRollup — general reader contract", () => {
 				node_id: FRN_A,
 				family_id: FAMILY_ID,
 				naming_node_id: NAMING_NODE_BIGCO,
+				assertion: FilerEdgeAssertion.Authoritative,
 				relationship: FilerRelationship.HoldingCompany,
 				source: "form-499",
 				source_vintage: "2020-01-01",
@@ -355,6 +374,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: FAMILY_ID,
 					naming_node_id: NAMING_NODE_BIGCO,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -365,6 +385,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: FAMILY_ID,
 					naming_node_id: NAMING_NODE_BIGCO,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
@@ -441,6 +462,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: FAMILY_ID_SOLO,
 					naming_node_id: HOLDING_NODE_ONE_SPELLING,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -532,6 +554,7 @@ describe("familyRollup — general reader contract", () => {
 						node_id: FRN_A,
 						family_id: FAMILY_ID_ACME,
 						naming_node_id: HOLDING_NODE_SPELLING_1,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -542,6 +565,7 @@ describe("familyRollup — general reader contract", () => {
 						node_id: FRN_B,
 						family_id: FAMILY_ID_ACME,
 						naming_node_id: HOLDING_NODE_SPELLING_2,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-02-01",
@@ -636,6 +660,7 @@ describe("familyRollup — general reader contract", () => {
 						node_id: FRN_A,
 						family_id: FAMILY_NORTH,
 						naming_node_id: NODE_NORTH,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -646,6 +671,7 @@ describe("familyRollup — general reader contract", () => {
 						node_id: FRN_A,
 						family_id: FAMILY_SOUTH,
 						naming_node_id: NODE_SOUTH,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -717,6 +743,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: STALE_FAMILY_ID,
 					naming_node_id: NAMING_NODE_DRIFT,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -780,6 +807,7 @@ describe("familyRollup — general reader contract", () => {
 					node_id: FRN_A,
 					family_id: FAMILY_GUESS,
 					naming_node_id: NAMING_NODE_GUESS,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",

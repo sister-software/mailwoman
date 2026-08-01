@@ -90,7 +90,7 @@
  *   — the same reduction `cluster-filers.ts`'s inferred pass already relies on), namespaced by identifier
  *   type so a holding company and a differently-named management company never collapse into one family
  *   even if their canonical strings happened to coincide. Each `filer_family` row carries the SAME
- *   `relationship`/`source`/`source_vintage`/`valid_from` as the edge that implies it, that edge's
+ *   `assertion`/`relationship`/`source`/`source_vintage`/`valid_from` as the edge that implies it, that edge's
  *   `to_node_id` as its `naming_node_id` (task 3 fix round 4 — the naming provenance, persisted here so no
  *   reader has to re-canonicalize a sealed artifact's names to find its way back to them), and
  *   `valid_to: null` (a fresh assertion, never pre-closed). **Never derived from a DC-agent field** — see
@@ -146,7 +146,11 @@
  *   both the CIK's OWN node id (`insertFamilyMembership`'s usual `mintFamilyID` canonicalization is not
  *   needed here — a CIK is already a stable, EDGAR-assigned, collision-free key, unlike a free-text
  *   holding-company name that two different spellings can drift across), `relationship: ParentCompany`,
- *   same `source`/`source_vintage`/`valid_from` as the edge, `valid_to: null`.
+ *   same `assertion: inferred`/`match_score`/`source`/`source_vintage`/`valid_from` as the edge,
+ *   `valid_to: null`. This is the repo's first INFERRED `filer_family` row, and the reason that table
+ *   gained `assertion`/`match_score` at all (fix round 1) — see `schema.ts`'s file header: without them
+ *   this name-match guess reached `familyRollup`/`filerLookup.families` shape-identical to a Form 499
+ *   holding-company membership the filer itself filed.
  *
  *   **`filer.db` is a single-vintage SNAPSHOT, not a multi-vintage archive (review finding, MINOR-B, fix
  *   round 1 — pin this before Task 6 reads the artifact).** The build-then-seal-then-swap discipline
@@ -453,6 +457,18 @@ interface FamilyMembershipFact {
 	 * One of {@link FilerRelationship} — copied from the accompanying edge, never re-derived.
 	 */
 	relationship: string
+	/**
+	 * One of {@link FilerEdgeAssertion} — copied from the accompanying edge, never re-derived (3b Task 8 fix round 1).
+	 * Required rather than defaulted to `Authoritative`: a new family writer must state the strength of its claim on
+	 * purpose, and a default would let an inferred one inherit authority by omission — the exact conflation gate 2 exists
+	 * to prevent.
+	 */
+	assertion: string
+	/**
+	 * The inferred match's score; `null` on an authoritative membership, where nothing was matched (the schema's own
+	 * CHECK constraint rejects a score there — see `createFilerFamilyTable`).
+	 */
+	matchScore: number | null
 	source: string
 	sourceVintage: string
 	validFrom: string
@@ -484,11 +500,13 @@ function insertFamilyMembership(insFamily: StatementSync, fact: FamilyMembership
 		fact.memberNodeID,
 		familyID,
 		fact.namingNodeID,
+		fact.assertion,
 		fact.relationship,
 		fact.source,
 		fact.sourceVintage,
 		fact.validFrom,
-		null
+		null,
+		fact.matchScore
 	)
 }
 
@@ -572,6 +590,8 @@ function processForm499FRNRelationships(
 			identifierType: FilerIdentifierType.HoldingCompanyName,
 			name: row.holdingCompany,
 			relationship: FilerRelationship.HoldingCompany,
+			assertion: FilerEdgeAssertion.Authoritative,
+			matchScore: null,
 			source: "form-499",
 			sourceVintage: lastFiledAt,
 			validFrom: lastFiledAt,
@@ -603,6 +623,8 @@ function processForm499FRNRelationships(
 			identifierType: FilerIdentifierType.ManagementCompanyName,
 			name: row.managementCompany,
 			relationship: FilerRelationship.ManagementCompany,
+			assertion: FilerEdgeAssertion.Authoritative,
+			matchScore: null,
 			source: "form-499",
 			sourceVintage: lastFiledAt,
 			validFrom: lastFiledAt,
@@ -718,15 +740,21 @@ function processEdgarSubsidiaryRow(
 	// The Task 8 precondition: a filer_edge row ALONE is invisible to familyRollup/filerLookup.families — both
 	// answer membership from filer_family alone. family_id/naming_node_id are the CIK's OWN node id: a CIK needs no
 	// mintFamilyID canonicalization to be a stable family key, unlike a free-text holding-/management-company name.
+	//
+	// assertion/match_score (fix round 1) carry the SAME values as the edge above, for the same reason the row exists
+	// at all: a reader answering a family question from this table alone must be able to tell this name-match
+	// inference from a holding-company membership the filer itself filed.
 	insFamily.run(
 		matchedFRNNodeID,
 		cikNodeID,
 		cikNodeID,
+		FilerEdgeAssertion.Inferred,
 		FilerRelationship.ParentCompany,
 		"edgar-exhibit-21",
 		filingDate,
 		filingDate,
-		null
+		null,
+		EDGAR_SUBSIDIARY_MATCH_SCORE
 	)
 }
 
@@ -898,8 +926,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	// second, differently-spelled report of the same family.
 	const insFamily = db.prepare(
 		`INSERT OR IGNORE INTO filer_family (
-			node_id, family_id, naming_node_id, relationship, source, source_vintage, valid_from, valid_to
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+			node_id, family_id, naming_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 
 	const insAttrStage = db.prepare(
@@ -1050,6 +1078,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				identifierType: FilerIdentifierType.HoldingCompanyName,
 				name: row.holdingCompany,
 				relationship: FilerRelationship.HoldingCompany,
+				assertion: FilerEdgeAssertion.Authoritative,
+				matchScore: null,
 				source: "bdc-provider-list",
 				sourceVintage: options.sourceVintage,
 				validFrom: providerValidFrom!,

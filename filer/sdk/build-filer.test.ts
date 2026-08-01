@@ -792,6 +792,10 @@ describe("buildFilerDatabase", () => {
 					expect(family.source_vintage).toBe("2026-05-01")
 					expect(family.valid_from).toBe("2026-05-01")
 					expect(family.valid_to).toBeNull()
+					// A 499 row naming its own holding company IS the filing — nothing was matched (task 8 fix
+					// round 1). The EDGAR block below pins the opposite grading from the same builder.
+					expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
+					expect(family.match_score).toBeNull()
 				}
 			} finally {
 				await teardownScratch()
@@ -1096,11 +1100,16 @@ describe("buildFilerDatabase", () => {
 
 				expect(familyRows).toHaveLength(1)
 
+				// The family row carries the SAME grading as the edge above (task 8 fix round 1) — `source` alone
+				// cannot supply it, because this very build also writes an AUTHORITATIVE `edgar-exhibit-21`
+				// disclosure edge, so the source name spans both grades.
 				expect(familyRows[0]).toMatchObject({
 					naming_node_id: cikNodeID,
+					assertion: FilerEdgeAssertion.Inferred,
 					relationship: FilerRelationship.ParentCompany,
 					source: "edgar-exhibit-21",
 					valid_to: null,
+					match_score: inferredEdges[0]!.match_score,
 				})
 			} finally {
 				await teardownScratch()

@@ -17,7 +17,7 @@ import { join } from "node:path"
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { describe, expect, it } from "vitest"
 
-import { FilerRelationship, type FilerDatabase } from "../schema.ts"
+import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "../schema.ts"
 import { toFRN } from "../sdk/frn.ts"
 import {
 	buildControlEvalInputs,
@@ -448,6 +448,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 					node_id: `frn:${frn}`,
 					family_id: INJECTED_FAMILY_ID,
 					naming_node_id: INJECTED_FAMILY_ID,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.Subsidiary,
 					source: "linkage-eval-injection-probe",
 					source_vintage: "2026-eval-v1",
@@ -524,6 +525,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 					node_id: `frn:${frn}`,
 					family_id: INJECTED_FAMILY_ID,
 					naming_node_id: INJECTED_FAMILY_ID,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship,
 					source: "linkage-eval-injection-probe",
 					source_vintage: "2026-eval-v1",

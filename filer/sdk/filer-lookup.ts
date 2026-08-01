@@ -42,6 +42,14 @@
  *   could fold an inferred relationship into the authoritative `cluster` field: the same guarantee
  *   `cluster-filers.ts` makes on the write side (decision 5), restated here on the read side.
  *
+ *   **Gate 2 reaches `families` too (3b Task 8 fix round 1).** Those two disjoint queries are both
+ *   `filer_edge`-backed, so until `filer_family` grew its own `assertion`/`match_score` the gate stopped
+ *   at the table boundary — and `families`/`familyRollup` answer from `filer_family` ALONE (that is the
+ *   whole Task 8 precondition). Task 8's EDGAR ingest writes the repo's first INFERRED family membership,
+ *   which therefore arrived here shape-identical to a Form 499 holding-company disclosure the filer
+ *   itself filed. {@link FilerLookupFamily} now carries the grading, and a same-family authoritative row
+ *   and inferred row are reported as two entries, never folded into one.
+ *
  *   **`cluster` is `asOf`-scoped too (review fix, IMPORTANT-2).** `filer_cluster` itself carries no
  *   temporal columns (`schema.ts`) — `cluster-filers.ts`'s `clusterAuthoritativeComponents` recomputes it
  *   from whatever the CURRENT edge graph looks like on every run, with no `asOf` concept of its own. Read
@@ -189,6 +197,22 @@ export interface FilerLookupInferredLink {
 export interface FilerLookupFamily {
 	family_id: string
 	relationship: string
+	/**
+	 * One of {@link FilerEdgeAssertion} (3b Task 8 fix round 1) — how strongly this membership is evidenced.
+	 * `authoritative` is a membership the source document states directly (a Form 499 row naming its own holding
+	 * company); `inferred` is one a matcher concluded (EDGAR's subsidiary-name→FRN corroboration). Before this field
+	 * existed, gate 2's "inferred never merges with authoritative" rule reached `cluster`/`inferred_links` (both
+	 * `filer_edge`-backed) but NOT this field, so a name-match guess arrived here byte-identical to a filed disclosure
+	 * and a caller had no way to tell them apart. `source` cannot stand in for it: `edgar-exhibit-21` produces BOTH
+	 * grades.
+	 */
+	assertion: string
+	/**
+	 * The inferred match's score, `null` on an authoritative membership (`schema.ts`'s CHECK constraint enforces that
+	 * direction) — the same "reported SEPARATELY with their score" treatment {@link FilerLookupInferredLink} gives an
+	 * inferred edge, restated on the family surface.
+	 */
+	match_score: number | null
 	display_names: string[]
 }
 
@@ -218,12 +242,15 @@ export interface FilerLookupResult {
 	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact, not a
 	 * derived snapshot.
 	 *
-	 * **One entry per DISTINCT `(family_id, relationship)`, not one per `filer_family` row (task 3 fix round 4).** A
-	 * single membership can be asserted by several rows — two sources reporting it, or two raw spellings that
-	 * canonicalize to one `family_id` (`filer_family`'s PK carries `naming_node_id`, so those stay separate rows).
-	 * {@link FilerLookupFamily} has no field that could distinguish them, so undeduped they would arrive as
-	 * byte-identical entries and a caller counting this array would read repetition as multiplicity. The plurality is not
-	 * lost, only moved to the surfaces that can express it: every spelling appears in `display_names`, and per-member
+	 * **One entry per DISTINCT `(family_id, relationship, assertion, match_score)`, not one per `filer_family` row (task
+	 * 3 fix round 4; the dedup key widened with the shape in Task 8 fix round 1).** A single membership can be asserted
+	 * by several rows — two sources reporting it, or two raw spellings that canonicalize to one `family_id`
+	 * (`filer_family`'s PK carries `naming_node_id`, so those stay separate rows). The rule is that the dedup key is
+	 * exactly the projected tuple: two rows this shape cannot tell apart would arrive as byte-identical entries, and a
+	 * caller counting the array would read repetition as multiplicity. Two rows it CAN tell apart are two different
+	 * claims a caller can act on — an authoritative membership and an inferred one for the same family are reported as
+	 * two entries on purpose, which is the whole point of `assertion` being here. The plurality the shape still cannot
+	 * express is not lost, only moved to the surfaces that can: every spelling appears in `display_names`, and per-member
 	 * `source`/`valid_from` provenance is on `familyRollup`'s members (`family-rollup.ts`).
 	 */
 	families: FilerLookupFamily[]
@@ -439,8 +466,17 @@ export interface FamilyMemberRow {
 	 */
 	naming_node_id: string
 	relationship: string
+	/**
+	 * One of {@link FilerEdgeAssertion} (3b Task 8 fix round 1) — surfaced onward as `FamilyRollupMember.assertion`
+	 * (`family-rollup.ts`). Deliberately NOT part of {@linkcode readFamilyDisplayNames}'s edge join: that join's
+	 * authoritative-only rule (with its one documented EDGAR widening) is a rule about which names may be presented as
+	 * DOCUMENTED, and matching it to the family row's own assertion instead would silently admit every future
+	 * name-similarity-inferred edge the rule exists to keep out.
+	 */
+	assertion: string
 	source: string
 	valid_from: string
+	match_score: number | null
 }
 
 /**
@@ -454,20 +490,23 @@ export async function readFamilyMembers(
 	familyID: string,
 	asOf: string
 ): Promise<FamilyMemberRow[]> {
-	// The secondary `naming_node_id` sort (task 3 fix round 4): `node_id` alone has never totally ordered this result — a
-	// member could already carry two rows in one family by reporting it under two SOURCES — and round 4's PK widening adds
-	// a second way (one row per raw spelling it reported; see `createFilerFamilyTable`'s PK docstring, `schema.ts`).
-	// Sorting on `naming_node_id` too makes the spelling case deterministic, which is what `FamilyRollup.members`'
-	// positional assertions need. It does NOT make the order total: two rows sharing both columns and differing only in
-	// `source` are still tied. Add a third sort key here before asserting positionally on a multi-source fixture.
+	// The sort is the full primary key minus `family_id` (which this query pins), so the result is TOTALLY ordered:
+	// `node_id` alone never was — a member can carry several rows in one family by reporting it under two SOURCES, and
+	// task 3 fix round 4's PK widening added a second way (one row per raw spelling; see `createFilerFamilyTable`'s PK
+	// docstring, `schema.ts`). Round 4 added `naming_node_id` and left `source`/`valid_from` tied, with a standing note
+	// to finish the job before anything asserted positionally on a multi-source fixture; task 8 fix round 1's gate-2
+	// test — two rows for one member differing only in `assertion`, hence in `source` — is that fixture, so the last
+	// two keys land here now. `FamilyRollup.members`' positional assertions depend on this.
 	return db
 		.selectFrom("filer_family")
-		.select(["node_id", "naming_node_id", "relationship", "source", "valid_from"])
+		.select(["node_id", "naming_node_id", "relationship", "assertion", "source", "valid_from", "match_score"])
 		.where("family_id", "=", familyID)
 		.where("valid_from", "<=", asOf)
 		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
 		.orderBy("node_id")
 		.orderBy("naming_node_id")
+		.orderBy("source")
+		.orderBy("valid_from")
 		.execute()
 }
 
@@ -818,21 +857,29 @@ export async function filerLookup(
 	// function in this reader touches both a cluster source and a family source, so a family membership can never be
 	// returned as a cluster member, and vice versa. Same half-open asOf predicate as everywhere else in this module.
 	//
-	// `.distinct()` (task 3 fix round 4): `FilerLookupFamily` carries no provenance field of its own, so two
-	// `filer_family` rows differing ONLY in `naming_node_id`/`source`/`valid_from` — the same node reporting one
-	// family under two spellings, or two sources corroborating one membership — would otherwise emit byte-identical
-	// duplicate entries here, which convey nothing a caller can act on. The plurality those rows carry IS exposed,
-	// on the surface that can actually express it: `display_names` below (every spelling) and `familyRollup`'s
-	// per-member `source` (every asserting source). Widening `filer_family`'s PK to admit the second spelling must
-	// not turn into a duplicated answer on a field with nowhere to put the difference.
+	// `.distinct()` (task 3 fix round 4): two `filer_family` rows differing ONLY in fields this shape cannot express
+	// — `naming_node_id`/`source`/`valid_from`, i.e. the same node reporting one family under two spellings, or two
+	// sources corroborating one membership — would otherwise emit byte-identical duplicate entries here, which convey
+	// nothing a caller can act on. That plurality IS exposed, on the surfaces that can express it: `display_names`
+	// below (every spelling) and `familyRollup`'s per-member `source` (every asserting source). Widening
+	// `filer_family`'s PK to admit the second spelling must not turn into a duplicated answer on a field with nowhere
+	// to put the difference.
+	//
+	// `assertion`/`match_score` (task 8 fix round 1) join the projection AND therefore the dedup key: an authoritative
+	// membership and an inferred one for the same family are two DIFFERENT claims, and collapsing them would restate
+	// exactly the conflation this field's `assertion` was added to end. The order-by grows with them so the result
+	// stays totally ordered over the projected tuple, which `.distinct()` makes unique.
 	const familyRows = await db
 		.selectFrom("filer_family")
-		.select(["family_id", "relationship"])
+		.select(["family_id", "relationship", "assertion", "match_score"])
 		.distinct()
 		.where("node_id", "=", nodeID)
 		.where("valid_from", "<=", asOf)
 		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
 		.orderBy("family_id")
+		.orderBy("relationship")
+		.orderBy("assertion")
+		.orderBy("match_score")
 		.execute()
 
 	// Task 3 fix round 2: display_names is a FAMILY-WIDE fact (every current member's own raw spelling), not just
@@ -844,7 +891,13 @@ export async function filerLookup(
 		const familyMembers = await readFamilyMembers(db, row.family_id, asOf)
 		const displayNames = await readFamilyDisplayNames(db, familyMembers)
 
-		families.push({ family_id: row.family_id, relationship: row.relationship, display_names: displayNames })
+		families.push({
+			family_id: row.family_id,
+			relationship: row.relationship,
+			assertion: row.assertion,
+			match_score: row.match_score,
+			display_names: displayNames,
+		})
 	}
 
 	// Gate 3 / decision 6: when the queried node carries more than one FRN identifier (the multi-FRN provider_id

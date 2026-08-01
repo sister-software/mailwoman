@@ -392,8 +392,10 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 				"management tree spanning several DIFFERENT filers, distinct from an entity cluster (same filer, " +
 				"different identifiers). Given `family_id`, returns that one family's members; given `node_id`, " +
 				"resolves EVERY family that node currently belongs to (a node MAY belong to more than one). Each " +
-				"returned family reports its members with relationship + source, a deduped distinct_member_count, and " +
-				"its known display names. Provide exactly one of `family_id` or `node_id`.",
+				"returned family reports its members with relationship, source, and assertion (`authoritative` — the " +
+				"source document states the membership — vs `inferred` — a name match concluded it, with its " +
+				"match_score), a deduped distinct_member_count, and its known display names. Provide exactly one of " +
+				"`family_id` or `node_id`.",
 			inputSchema: FilerFamilyInputSchema,
 			handler: async (args) => {
 				const { database_path, family_id, node_id, as_of } = FilerFamilyInputSchema.parse(args)

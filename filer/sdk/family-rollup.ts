@@ -41,14 +41,20 @@
  *   for this module names that history explicitly as the reason to copy, not rewrite.
  *
  *   **EDGAR-sourced families (3b Task 8) need no change here.** `build-filer.ts`'s EDGAR ingest writes
- *   `filer_family` rows shaped identically to every other writer's (`node_id`/`family_id`/`naming_node_id`/
- *   `relationship`/`source`/`source_vintage`/`valid_from`/`valid_to`), so this module's query — generic over
+ *   `filer_family` rows shaped identically to every other writer's, so this module's query — generic over
  *   `relationship` and never keyed to a specific `source` — already answers a `familyID`/`nodeID` query for a
  *   `cik:`-named family exactly as it would for a `holding_company_name:`-named one. The one dependency this
  *   module has on a source-specific decision is `readFamilyDisplayNames` (`filer-lookup.ts`), which Task 8
  *   widened to admit an INFERRED accompanying edge (EDGAR's subsidiary-name→FRN corroboration is inference by
  *   design, never authoritative) — see that function's own docstring for why widening it cannot misattribute
  *   a display name to the wrong member.
+ *
+ *   **What Task 8's fix round 1 DID change: `members` now report `assertion`/`match_score`.** EDGAR's is the
+ *   repo's first inferred family membership, and `source` cannot grade it — `edgar-exhibit-21` writes an
+ *   authoritative disclosure edge and an inferred corroboration in the same build, so the source name spans
+ *   both grades and a caller reading strength off it would need a private table of which sources are
+ *   inferential. Gate 2's "inferred never merges with authoritative" now reaches this rollup the same way it
+ *   already reached `filerLookup`'s `cluster`/`inferred_links` split. See {@link FamilyRollupMember}.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -75,6 +81,19 @@ export interface FamilyRollupQuery {
 export interface FamilyRollupMember {
 	node_id: string
 	relationship: string
+	/**
+	 * One of {@link FilerEdgeAssertion} (`schema.ts`, 3b Task 8 fix round 1) — how strongly THIS member's membership is
+	 * evidenced. Carried here even though `source` is already present, because `source` provably cannot answer the
+	 * question: `edgar-exhibit-21` writes an AUTHORITATIVE disclosure edge and an INFERRED corroboration in the same
+	 * build, so one source name spans both grades, and any caller reading strength off `source` would need a private
+	 * table of which sources are inferential — the same implicit-knowledge scheme `relationship` was added to end when
+	 * relationship kind lived in the target node's `identifier_type`.
+	 */
+	assertion: string
+	/**
+	 * The inferred match's score; `null` on an authoritative membership. See {@link FamilyRollupMember.assertion}.
+	 */
+	match_score: number | null
 	source: string
 }
 
@@ -130,7 +149,13 @@ async function readFamilyRollup(
 
 	return {
 		family_id: familyID,
-		members: memberRows.map((row) => ({ node_id: row.node_id, relationship: row.relationship, source: row.source })),
+		members: memberRows.map((row) => ({
+			node_id: row.node_id,
+			relationship: row.relationship,
+			assertion: row.assertion,
+			match_score: row.match_score,
+			source: row.source,
+		})),
 		distinct_member_count: new Set(memberRows.map((row) => row.node_id)).size,
 		display_names: displayNames,
 		as_of: asOf,

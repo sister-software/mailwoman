@@ -477,6 +477,111 @@ describe("§7-3a gates", () => {
 			expect(after.identifiers.length).toBeGreaterThan(0)
 			expect(after.cluster).toEqual({ cluster_id: "authoritative:C", members: [FRN_C, FORM_C].toSorted() })
 		})
+
+		/**
+		 * GATE 2 ON `filer_family` (3b Task 8 fix round 1) — the half of this gate that did not exist. Until `filer_family`
+		 * gained `assertion`/`match_score`, everything above was enforced on `filer_edge` only: `cluster` vs
+		 * `inferred_links` are two disjoint `filer_edge` reads, so the gate reached them, and it reached nothing else.
+		 * `families`/`familyRollup` answer from `filer_family` alone (that is the whole Task 8 precondition), so an
+		 * INFERRED family membership — which Task 8's EDGAR ingest is the repo's first writer of — arrived on the product
+		 * surface byte-identical to an authoritative one.
+		 *
+		 * The fixture is the sharpest available shape: TWO rows agreeing on `(node_id, family_id, naming_node_id,
+		 * relationship)` and differing ONLY in `assertion`/`match_score` (and the `source` that separates them under the
+		 * PK). One is a Form 499 filing that names the filer's own holding company; the other is a matcher's conclusion
+		 * about the same membership. Drop either field from `filerLookup`'s projection and `.distinct()` folds the two into
+		 * a single entry — this test then dies on the length assertion, not just on a field comparison, which is what makes
+		 * it a gate rather than a shape snapshot.
+		 */
+		it("filerLookup.families reports an INFERRED family membership separately from an AUTHORITATIVE one for the same family — never folded together (gate 2, on filer_family)", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await seedManifest(db)
+
+			const FRN_GATE2 = `${FilerIdentifierType.FRN}:8080808080`
+			const FAMILY_GATE2 = "holding_company_name:gate2-holdco"
+			const NAMING_GATE2 = `${FilerIdentifierType.HoldingCompanyName}:Gate2 Holdco`
+
+			await db
+				.insertInto("filer_node")
+				.values({ node_id: FRN_GATE2, identifier_type: FilerIdentifierType.FRN, identifier_value: "8080808080" })
+				.execute()
+
+			await db
+				.insertInto("filer_family")
+				.values([
+					{
+						node_id: FRN_GATE2,
+						family_id: FAMILY_GATE2,
+						naming_node_id: NAMING_GATE2,
+						assertion: FilerEdgeAssertion.Authoritative,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "form-499",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+						match_score: null,
+					},
+					{
+						node_id: FRN_GATE2,
+						family_id: FAMILY_GATE2,
+						naming_node_id: NAMING_GATE2,
+						assertion: FilerEdgeAssertion.Inferred,
+						relationship: FilerRelationship.HoldingCompany,
+						source: "name-match-v1",
+						source_vintage: "2026-01-01",
+						valid_from: "2026-01-01",
+						valid_to: null,
+						match_score: 0.61,
+					},
+				])
+				.execute()
+
+			const result = await filerLookup(db, { frn: toFRN("8080808080")!, asOf: "2026-06-01" })
+
+			// THE GATE: two entries, not one. A caller can tell the filed disclosure from the guess.
+			expect(result.families).toEqual([
+				{
+					family_id: FAMILY_GATE2,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					match_score: null,
+					display_names: [],
+				},
+				{
+					family_id: FAMILY_GATE2,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Inferred,
+					match_score: 0.61,
+					display_names: [],
+				},
+			])
+
+			// And the inverse view agrees: familyRollup's members carry the same grading, so a caller reading the
+			// family from the other direction cannot be told a different story about how strong its membership is.
+			const rollup = await familyRollup(db, { familyID: FAMILY_GATE2, asOf: "2026-06-01" })
+			expect(rollup).toHaveLength(1)
+
+			expect(rollup[0]?.members).toEqual([
+				{
+					node_id: FRN_GATE2,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					match_score: null,
+					source: "form-499",
+				},
+				{
+					node_id: FRN_GATE2,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Inferred,
+					match_score: 0.61,
+					source: "name-match-v1",
+				},
+			])
+
+			// distinct_member_count counts member NODES, never rows or gradings — one filer, two claims about it.
+			expect(rollup[0]?.distinct_member_count).toBe(1)
+		})
 	})
 
 	describe("3. Cardinality fidelity", () => {
@@ -960,6 +1065,7 @@ describe("§7-3b gates", () => {
 						node_id: FRN_CLUSTER_A,
 						family_id: "holding_company_name:bigco-inc",
 						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -970,6 +1076,7 @@ describe("§7-3b gates", () => {
 						node_id: FRN_FAMILY_ONLY,
 						family_id: "holding_company_name:bigco-inc",
 						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -992,6 +1099,8 @@ describe("§7-3b gates", () => {
 				{
 					family_id: "holding_company_name:bigco-inc",
 					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					match_score: null,
 					display_names: [],
 				},
 			])
@@ -1011,6 +1120,8 @@ describe("§7-3b gates", () => {
 				{
 					family_id: "holding_company_name:bigco-inc",
 					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					match_score: null,
 					display_names: [],
 				},
 			])
@@ -1423,21 +1534,27 @@ describe("§7-3b gates", () => {
 			node_id: true,
 			family_id: true,
 			naming_node_id: true,
+			assertion: true,
 			relationship: true,
 			source: true,
 			source_vintage: true,
 			valid_from: true,
 			valid_to: true,
+			match_score: true,
 		} satisfies Record<keyof FilerFamilyInsert, true>
 
-		it("the structural pin enumerates every FilerFamilyTable field, including naming_node_id/relationship/source/source_vintage/valid_from", () => {
-			expect(Object.keys(FILER_FAMILY_INSERT_FIELDS)).toHaveLength(8)
+		it("the structural pin enumerates every FilerFamilyTable field, including naming_node_id/assertion/relationship/source/source_vintage/valid_from", () => {
+			expect(Object.keys(FILER_FAMILY_INSERT_FIELDS)).toHaveLength(10)
 
 			expect(FILER_FAMILY_INSERT_FIELDS).toMatchObject({
 				// naming_node_id (task 3 fix round 4) is provenance in exactly the sense this pin exists to guard: it
 				// records WHICH company node's raw name produced the row's family_id, so a reader never has to
 				// re-canonicalize a sealed artifact to find its way back to the human-readable name.
 				naming_node_id: true,
+				// assertion (task 8 fix round 1) is the OTHER half of provenance this table was missing: not who
+				// reported the membership, but how strongly it is evidenced. Without it an EDGAR name-match guess
+				// reached filerLookup.families byte-identical to a filed Form 499 disclosure.
+				assertion: true,
 				relationship: true,
 				source: true,
 				source_vintage: true,
@@ -1458,6 +1575,7 @@ describe("§7-3b gates", () => {
 				node_id: "frn:4040404040",
 				family_id: "holding_company_name:gate2-co",
 				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+				assertion: FilerEdgeAssertion.Authoritative,
 				// relationship deliberately omitted — this is the runtime half of gate 2's rejection test.
 				source: "form-499",
 				source_vintage: "2026-01-01",
@@ -1483,6 +1601,7 @@ describe("§7-3b gates", () => {
 				node_id: "frn:5050505050",
 				family_id: "holding_company_name:gate2-co",
 				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+				assertion: FilerEdgeAssertion.Authoritative,
 				relationship: FilerRelationship.HoldingCompany,
 				// source deliberately omitted
 				source_vintage: "2026-01-01",
@@ -1511,6 +1630,7 @@ describe("§7-3b gates", () => {
 						node_id: "frn:6060606060",
 						family_id: "holding_company_name:gate2-co",
 						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: "",
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -1537,6 +1657,7 @@ describe("§7-3b gates", () => {
 						node_id: "frn:7070707070",
 						family_id: "holding_company_name:gate2-co",
 						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: "   ",
 						source: "form-499",
 						source_vintage: "2026-01-01",
@@ -1574,6 +1695,7 @@ describe("§7-3b gates", () => {
 					node_id: FRN_TEMPORAL,
 					family_id: FAMILY_ID_TEMPORAL,
 					naming_node_id: NAMING_NODE_TEMPORAL,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-06-01",
@@ -1591,7 +1713,13 @@ describe("§7-3b gates", () => {
 			// naming-provenance join has nothing to find and this assertion is insensitive to it in either direction
 			// (same note as gate 1's own fixture above). These two tests are about the asOf predicate only.
 			expect(onOrAfter.families).toEqual([
-				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany, display_names: [] },
+				{
+					family_id: FAMILY_ID_TEMPORAL,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					match_score: null,
+					display_names: [],
+				},
 			])
 		})
 
@@ -1611,6 +1739,7 @@ describe("§7-3b gates", () => {
 					node_id: FRN_TEMPORAL,
 					family_id: FAMILY_ID_TEMPORAL,
 					naming_node_id: NAMING_NODE_TEMPORAL,
+					assertion: FilerEdgeAssertion.Authoritative,
 					relationship: FilerRelationship.HoldingCompany,
 					source: "form-499",
 					source_vintage: "2026-01-01",
@@ -1624,7 +1753,13 @@ describe("§7-3b gates", () => {
 			// display_names is [] because this fixture writes no filer_edge — insensitive to the naming-provenance
 			// join in either direction, same as the test above.
 			expect(withinWindow.families).toEqual([
-				{ family_id: FAMILY_ID_TEMPORAL, relationship: FilerRelationship.HoldingCompany, display_names: [] },
+				{
+					family_id: FAMILY_ID_TEMPORAL,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					match_score: null,
+					display_names: [],
+				},
 			])
 
 			const atClose = await filerLookup(db, { frn: toFRN("4040404050")!, asOf: "2026-03-01" })
@@ -1697,9 +1832,19 @@ describe("§7-3b gates", () => {
 
 				expect(hasCIKIdentifier).toBe(false)
 
-				// GATE 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field.
+				// GATE 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field —
+				// and it surfaces AS AN INFERENCE (fix round 1). `assertion: inferred` plus a `match_score` is the
+				// whole difference between this row and a Form 499 holding-company membership the filer itself
+				// filed; before those two fields existed this entry was byte-identical to one, which is how a
+				// name-match guess reached the product surface wearing a filed disclosure's clothes.
 				expect(result.families).toEqual([
-					{ family_id: cikNodeID, relationship: FilerRelationship.ParentCompany, display_names: ["0001234567"] },
+					{
+						family_id: cikNodeID,
+						relationship: FilerRelationship.ParentCompany,
+						assertion: FilerEdgeAssertion.Inferred,
+						match_score: 0.92,
+						display_names: ["0001234567"],
+					},
 				])
 
 				// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands in exactly
@@ -1719,10 +1864,15 @@ describe("§7-3b gates", () => {
 				const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
 				expect(rollup).toHaveLength(1)
 
+				// familyRollup carries the same grading on its own member shape — `source: "edgar-exhibit-21"` alone
+				// could not supply it, since that one source writes an authoritative disclosure edge AND this
+				// inferred corroboration in the same build.
 				expect(rollup[0]?.members).toEqual([
 					{
 						node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,
 						relationship: FilerRelationship.ParentCompany,
+						assertion: FilerEdgeAssertion.Inferred,
+						match_score: 0.92,
 						source: "edgar-exhibit-21",
 					},
 				])

@@ -67,6 +67,24 @@
  *   disappears with no error and no warning. Persisting the provenance rather than re-deriving it is also
  *   the plainly correct shape under this project's binding rule (provenance on every edge): a
  *   family-membership row recorded the FACT without recording what produced it.
+ *
+ *   **3b Task 8 fix round 1:** `filer_family` gained `assertion` + `match_score`, the two columns
+ *   {@link FilerEdgeTable} has carried since 3a. Gate 2 ("inferred never merges with authoritative") was
+ *   enforced on `filer_edge` alone, and Task 8's EDGAR ingest is the repo's first writer of an INFERRED
+ *   family membership — a name-match guess at WHICH FRN a disclosed subsidiary name belongs to. Without
+ *   these columns that guess was shape-identical, on every read surface, to a Form 499 holding-company
+ *   membership the filer itself filed: the row recorded the fact and its `source` but not the STRENGTH of
+ *   the claim behind it, so the gate never reached the table `familyRollup`/`filerLookup.families`
+ *   actually answer family questions from. `source` is not a usable proxy for that strength either —
+ *   `edgar-exhibit-21` writes BOTH an authoritative disclosure edge and an inferred corroboration edge,
+ *   so one source name spans both grades.
+ *
+ *   Deliberately NOT `evidence`: the match's raw payload is already persisted, once, on the `filer_edge`
+ *   row the builder writes in lockstep with every inferred family row, and no family reader needs it (the
+ *   one family→edge join, `readFamilyDisplayNames`, selects the display name and nothing else).
+ *   `match_score` is the one field a reader does need and cannot get without a join no family reader
+ *   makes — duplicating an unbounded JSON blob to save a join nobody makes would only add a second copy
+ *   to drift.
  */
 
 import { sql, type Kysely } from "kysely"
@@ -253,10 +271,10 @@ export interface FilerClusterTable {
  * ENTITY cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY
  * (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id`
  * belongs to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
- * `relationship`, as reported by one source at one vintage — provenance-plural and temporally scoped exactly like
- * `filer_edge` (see {@link createFilerFamilyTable}'s docstring for why its primary key mirrors `filer_edge`'s
- * reasoning, `relationship` excluded, and the file header for the half-open `valid_from <= t < valid_to` convention
- * `valid_to` follows here too).
+ * `relationship`, at a specific {@link FilerEdgeAssertion} `assertion` strength, as reported by one source at one
+ * vintage — provenance-plural and temporally scoped exactly like `filer_edge` (see {@link createFilerFamilyTable}'s
+ * docstring for why its primary key mirrors `filer_edge`'s reasoning, `relationship` and `assertion` both excluded, and
+ * the file header for the half-open `valid_from <= t < valid_to` convention `valid_to` follows here too).
  */
 export interface FilerFamilyTable {
 	node_id: string
@@ -269,6 +287,14 @@ export interface FilerFamilyTable {
 	 */
 	naming_node_id: string
 	/**
+	 * One of {@link FilerEdgeAssertion} (3b Task 8 fix round 1) — HOW STRONGLY this membership is evidenced, exactly the
+	 * grading `filer_edge` has carried since 3a. `authoritative` is a membership the source document states directly (a
+	 * Form 499 row naming its own holding company); `inferred` is one a matcher concluded (EDGAR's subsidiary-name→FRN
+	 * corroboration). Read surfaces MUST keep the two distinguishable — see the file header for why `source` cannot stand
+	 * in for this.
+	 */
+	assertion: string
+	/**
 	 * One of {@link FilerRelationship}.
 	 */
 	relationship: string
@@ -279,6 +305,14 @@ export interface FilerFamilyTable {
 	 * Half-open, exactly like {@link FilerEdgeTable.valid_to} — see the file header.
 	 */
 	valid_to: string | null
+	/**
+	 * Inferred only; null for authoritative memberships, and a CHECK constraint enforces that direction (see
+	 * {@link createFilerFamilyTable}). An inferred membership carrying no score tells a caller nothing about how far to
+	 * trust it, so every inferred writer should populate this — but, matching `filer_edge`'s own permissiveness
+	 * ({@link FilerEdgeTable.match_score} is likewise nullable on inferred rows), that direction is a writer's obligation
+	 * rather than a constraint.
+	 */
+	match_score: number | null
 }
 
 /**
@@ -441,6 +475,16 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * membership never deduped across sources). This is NOT the `relationship` situation: two spellings under one source at
  * one instant are two things the filer really did report, a plurality to store — where two conflicting `relationship`
  * values for one pair are two incompatible claims about what that pair MEANS, a contradiction to reject.
+ *
+ * **`assertion` (3b Task 8 fix round 1) is excluded from the key for that same reason**, and it is the reason it is
+ * excluded from `filer_edge`'s key too: one source, at one instant, grading the identical membership BOTH
+ * `authoritative` and `inferred` is a contradiction, not a plurality — two sources disagreeing about the strength of
+ * the same fact already produce two rows, because `source` is in the key. It gets the same blank-rejecting CHECK as
+ * `relationship`: `NOT NULL` alone would accept `''`, and a blank assertion is worse than a wrong one, since it matches
+ * neither half of every gate-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would
+ * vanish from any surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an
+ * inferred row, since an authoritative membership matched nothing and any number there would be a fabricated
+ * confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
@@ -448,13 +492,22 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 		.addColumn("node_id", "text", (c) => c.notNull())
 		.addColumn("family_id", "text", (c) => c.notNull())
 		.addColumn("naming_node_id", "text", (c) => c.notNull())
+		.addColumn("assertion", "text", (c) => c.notNull())
 		.addColumn("relationship", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("source_vintage", "text", (c) => c.notNull())
 		.addColumn("valid_from", "text", (c) => c.notNull())
 		.addColumn("valid_to", "text")
+		.addColumn("match_score", "real")
 		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "naming_node_id", "source", "valid_from"])
 		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
+		.addCheckConstraint("filer_family_assertion_not_blank", sql`trim(assertion) != ''`)
+		// sql.lit, not a bound parameter: SQLite's DDL cannot carry one, and the literal is derived from
+		// FilerEdgeAssertion rather than hand-typed so the constraint and the const can never drift apart.
+		.addCheckConstraint(
+			"filer_family_match_score_inferred_only",
+			sql`match_score is null or assertion = ${sql.lit(FilerEdgeAssertion.Inferred)}`
+		)
 		.execute()
 }
 

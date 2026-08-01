@@ -75,11 +75,13 @@ const FAMILY_ROW: FilerFamilyTable = {
 	node_id: FRN_NODE_ID,
 	family_id: FAMILY_ID,
 	naming_node_id: HOLDING_NODE_ID,
+	assertion: FilerEdgeAssertion.Authoritative,
 	relationship: FilerRelationship.HoldingCompany,
 	source: "form-499",
 	source_vintage: "2026-Q1",
 	valid_from: "2026-01-01",
 	valid_to: null,
+	match_score: null,
 }
 
 describe("filer schema", () => {
@@ -381,7 +383,7 @@ describe("filer schema", () => {
 						.insertInto("filer_family")
 						.values({ ...FAMILY_ROW, relationship: "" })
 						.execute()
-				).rejects.toThrow(/CHECK constraint failed/)
+				).rejects.toThrow(/CHECK constraint failed: filer_family_relationship_not_blank/)
 			})
 
 			it("rejects a whitespace-only string (not just empty)", async () => {
@@ -394,7 +396,88 @@ describe("filer schema", () => {
 						.insertInto("filer_family")
 						.values({ ...FAMILY_ROW, relationship: "   " })
 						.execute()
-				).rejects.toThrow(/CHECK constraint failed/)
+				).rejects.toThrow(/CHECK constraint failed: filer_family_relationship_not_blank/)
+			})
+		})
+
+		/**
+		 * 3b Task 8 fix round 1. `assertion` is graded evidence, not decoration: EDGAR's subsidiary→FRN corroboration is
+		 * the repo's first INFERRED family membership, and without this column it reached `filerLookup.families`
+		 * shape-identical to a Form 499 holding-company disclosure. Its two constraints close the two ways that grading can
+		 * be defeated at write time — a blank value (which `NOT NULL` accepts, and which would then match NEITHER half of a
+		 * gate-2 read, so the row would vanish from any surface that splits on strength), and a `match_score` on an
+		 * authoritative row (a fabricated confidence for a membership that matched nothing).
+		 *
+		 * Each expectation names the CONSTRAINT, not just "CHECK constraint failed" — this table now carries three, and a
+		 * test that only pins the generic prefix passes when the wrong one fires.
+		 */
+		describe("assertion + match_score", () => {
+			it("rejects an empty-string assertion — NOT NULL alone accepts one, the same gap relationship's CHECK closes", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, assertion: "" })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_assertion_not_blank/)
+			})
+
+			it("rejects a whitespace-only assertion too (not just empty)", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, assertion: "   " })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_assertion_not_blank/)
+			})
+
+			it("rejects a match_score on an AUTHORITATIVE membership — an authoritative row matched nothing, so any score there is fabricated", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, assertion: FilerEdgeAssertion.Authoritative, match_score: 0.99 })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_match_score_inferred_only/)
+			})
+
+			it("accepts a match_score on an INFERRED membership, and round-trips it", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await db
+					.insertInto("filer_family")
+					.values({ ...FAMILY_ROW, assertion: FilerEdgeAssertion.Inferred, match_score: 0.5 })
+					.execute()
+
+				const row = await db.selectFrom("filer_family").selectAll().executeTakeFirstOrThrow()
+				expect(row.assertion).toBe(FilerEdgeAssertion.Inferred)
+				expect(row.match_score).toBe(0.5)
+			})
+
+			it("accepts a NULL match_score on an inferred membership — the writer's obligation, matching filer_edge's own permissiveness, not a constraint", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await db
+					.insertInto("filer_family")
+					.values({ ...FAMILY_ROW, assertion: FilerEdgeAssertion.Inferred, match_score: null })
+					.execute()
+
+				const row = await db.selectFrom("filer_family").selectAll().executeTakeFirstOrThrow()
+				expect(row.match_score).toBeNull()
 			})
 		})
 	})
