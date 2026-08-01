@@ -233,6 +233,8 @@ export interface GauntletResult {
 	 */
 	house_number: string | null
 	street: string | null
+	venue: string | null
+	dependent_locality: string | null
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -248,5 +250,7 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 		postcode: g.postcode,
 		house_number: g.house_number,
 		street: g.street,
+		venue: g.venue,
+		dependent_locality: g.hierarchy.find((h) => h.tag === "dependent_locality")?.value ?? null,
 	}
 }

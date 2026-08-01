@@ -68,8 +68,14 @@ function componentOf(r: GauntletResult, key: string): string | null {
 			return r.street
 		case "postcode":
 			return r.postcode
+		case "venue":
+			return r.venue
+		case "dependent_locality":
+			return r.dependent_locality
 		default:
-			return null
+			// LOUD: a silent null here made venue/dependent_locality expectations grade against
+			// nothing for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
+			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)
 	}
 }
 

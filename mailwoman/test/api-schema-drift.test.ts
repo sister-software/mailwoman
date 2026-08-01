@@ -121,6 +121,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	postcode: true,
 	house_number: true,
 	street: true,
+	venue: true,
 	countryCode: true,
 	hierarchy: true,
 	candidates: true,

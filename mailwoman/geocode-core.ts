@@ -83,6 +83,12 @@ export interface GeocodeResult {
 	house_number: string | null
 	street: string | null
 	/**
+	 * The PARSED venue span (same #1041 posture as house_number/street: populated regardless of tier, straight from the
+	 * parse). Surfaced 2026-08-01 — the gauntlet's venue expectations had graded against nothing for their whole life
+	 * because no result field carried the span (hierarchy filters to admin tags).
+	 */
+	venue: string | null
+	/**
 	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node), or null.
 	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
 	 * carries the country code even when it has no `ancestors()` table).
@@ -1023,6 +1029,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		postcode,
 		house_number: houseNumber,
 		street,
+		venue: allNodes.find((n) => n.tag === "venue")?.value ?? null,
 		countryCode,
 		hierarchy,
 		candidates,
