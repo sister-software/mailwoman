@@ -179,7 +179,7 @@ train: # FINE-TUNE (B11 template): init_from the 7.0.0 base, fresh optimizer, EW
   gazetteer_curriculum: true # Fresh channel — absence-robustness from step 0 (see header note 5).
   evidence_curriculum: true
   evidence_noise_prob: 0.15
-      trackio_project: mailwoman
+  trackio_project: mailwoman
   trackio_run_name: v410-gbvenue-l1e4-s42
 
 eval:

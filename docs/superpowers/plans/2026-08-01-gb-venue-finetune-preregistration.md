@@ -64,3 +64,20 @@ becomes the B11 template default. Ties break to the larger λ.
 Model 7.0.1 (a venue increment off the 7.0.0 base) is **staged, not auto-promoted** — the promote
 decision is the operator's with the verdict in hand. The gauntlet fixtures flip
 `improvement_target` → `pass` only at promote time.
+
+---
+
+## Addendum 1 (2026-08-01, post-probe — BEFORE the main run)
+
+The first λ sweep (v4.1.0, venue weight 2.0, lr 1e-5, 2k steps) came back **non-signal**: all
+four λ values byte-identical to the base on the six target fixtures, GB board venue 53.8% →
+54.5% (noise). Dose math confirms the design defect: at weight 2.0 the venue shard is ~1.4% of
+samples — ~7k venue rows (~2.4k GB) seen in 2k steps at a fine-tune lr. The probe cannot
+exercise λ if the increment moves nothing; the sweep result is VOID, not "λ unconstrained".
+
+**Named revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune
+feed — the v3.8.x oversample precedent (no-fragment ran its corrective shard at 12.0) — and
+re-run the identical 4-λ × 2k sweep as v4.1.2. Everything else unchanged. The λ pick rule
+applies at the revised dose. If the revised probe still shows no target movement, STOP —
+operator conversation before any further spend (the mechanism, not the dose, would be in
+question).

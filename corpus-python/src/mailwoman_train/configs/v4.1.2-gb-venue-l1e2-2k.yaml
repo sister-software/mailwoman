@@ -1,4 +1,4 @@
-# === v4.1.0-gb-venue-l1e2-2k — #1366 GB venue increment (lambda probe 1.0e2) ===
+# === v4.1.2-gb-venue-l1e2-2k — #1366 GB venue increment (lambda probe 1.0e2) ===
 # The FIRST B11 fine-tune-template exercise: init_from model 7.0.0 (v4.0.1 step-060000, fresh
 # optimizer) + the Fisher/EWC brake (fisher-diag-v1, captured on the base's final 2k) on the
 # v0.15.1-gb-venue feed — the v0.15.0-venue feed with the house-venue shard REBUILT from v3
@@ -39,7 +39,7 @@ data:
     CA: 1.0 # Overture — live locality.
     MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
   source_weights: # VERBATIM v3.24 EXCEPT synth-po-box-cedex (the D2 revert).
-    synth-house-venue: 2.0 # RUN-2 DELTA (the ONE variable): the FR-order-aware venue shard.
+    synth-house-venue: 12.0 # Addendum-1 dose (v3.8.x oversample precedent): 2.0 under-dosed the 2k probe to non-signal.
     overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
@@ -159,7 +159,7 @@ train: # FINE-TUNE (B11 template): init_from the 7.0.0 base, fresh optimizer, EW
   ewc_lambda: 1.0e2
   ewc_fisher_path: /data/output-v401-base-60k-s42/checkpoints/step-060000/fisher-diag-v1.npz
   ewc_reference: /data/output-v401-base-60k-s42/checkpoints/step-060000
-  output_dir: /data/output-v410-gbvenue-l1e2-s42/checkpoints
+  output_dir: /data/output-v412-gbvenue-l1e2-s42/checkpoints
   seed: 42
   batch_size: 128
   eval_batch_size: 128
@@ -180,7 +180,7 @@ train: # FINE-TUNE (B11 template): init_from the 7.0.0 base, fresh optimizer, EW
   evidence_curriculum: true
   evidence_noise_prob: 0.15
   trackio_project: mailwoman
-  trackio_run_name: v410-gbvenue-l1e2-s42
+  trackio_run_name: v412-gbvenue-l1e2-s42
 
 eval:
   golden_dir: /data/eval/golden/v0.1.2
