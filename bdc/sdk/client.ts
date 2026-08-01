@@ -235,8 +235,11 @@ export interface BDCThrottleStats {
 	waits: number
 	/**
 	 * How many times the per-minute BUDGET gate opened a cooldown, counted off `APIClient`'s `cooldown_start` event. With
-	 * the interval gate also configured this is normally one per budget's worth of requests, each of near-zero duration —
-	 * a window-rollover marker rather than a wait. See {@linkcode createBDCClient} for why both gates are set.
+	 * the interval gate also configured this is one per budget's worth of requests, and each is a REAL wait, not a
+	 * zero-length window-rollover marker: the budget's cooldown runs to the end of the minute the window opened in
+	 * (`APIClient.#reserveCooldownSlot`), and the interval gate has by then spent only `(N-1) * 60000/N` ms of it. At
+	 * 10/minute that is a 6 s cooldown per 10 requests. Some of {@linkcode BDCThrottleStats.waitingMs} is therefore
+	 * cooldown, not pacing. See {@linkcode createBDCClient} for the full arrival trace.
 	 */
 	cooldowns: number
 }
@@ -558,12 +561,20 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		// sustained 100 requests/minute — ten times the published limit. `minRequestIntervalMs` is the gate
 		// that actually spaces dispatches, and it is what makes this client honor 10/minute.
 		//
-		// The budget is still declared rather than dropped: the two gates compose (both must clear), it costs
-		// nothing here — its cooldown computes to <= 0 once the interval gate has already spaced the
-		// dispatches, so it fires as a zero-length window rollover — and it states the intent in the option
-		// whose name matches the published limit. If `requestsPerMinute` is ever corrected in `core/api` to
-		// mean what it says, this client already declares the right budget and the interval becomes a
-		// redundant second ceiling rather than the load-bearing one.
+		// The budget is still declared rather than dropped — and it is NOT free. The two gates compose (both
+		// must clear), so the budget's cooldown still fires, and it is a REAL wait: `APIClient` measures that
+		// cooldown to the end of the MINUTE the window opened in, while the interval gate has by then spent
+		// only `(N-1) * 60000/N` ms of it. With both gates on 10/minute, arrivals run `0, 6, …, 54 s`; the
+		// 10th dispatch opens a `60000 - 54000 = 6000 ms` cooldown; the pacer's grant for #11 is discarded
+		// across that wait (`acquireDispatchSlot` re-acquires rather than holding a stale grant, under-issuing
+		// by one — the safe direction), so #11 lands at 66 s and the pattern repeats. Steady state is 10
+		// requests per 66 s, ~9.1/minute — BELOW the published 10/minute, which is the conservative direction
+		// and the reason this composition is left as is.
+		//
+		// Declaring the budget states the intent in the option whose name matches the published limit. If
+		// `requestsPerMinute` is ever corrected in `core/api` to mean what it says, this client already
+		// declares the right budget and the interval becomes a redundant second ceiling rather than the
+		// load-bearing one.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {

@@ -24,6 +24,10 @@ import { crc32 } from "node:zlib"
 
 import type { APIClientConfig } from "@mailwoman/core/api"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
+// `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceError`). The value
+// arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
+// needs its own static import. Type-only, so it never evaluates the mocked module chain.
+import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { BDCFile, RawBDCFile } from "./common.ts"
@@ -66,6 +70,7 @@ const {
 	isTransientResourceError,
 	ResourceError,
 } = await import("./client.ts")
+
 const { BDCFileCategory, BDCFilingDataType, BDCStateSubCategory } = await import("./common.ts")
 const { downloadBDCFile } = await import("./download.ts")
 const { resolveLatestVintage, retrieveFilingDates } = await import("./filing-dates.ts")
@@ -453,6 +458,43 @@ describe("createBDCClient: the throttle meter", () => {
 
 		expect(client.throttleStats().cooldowns).toBeGreaterThanOrEqual(1)
 	})
+
+	/**
+	 * The composed steady state of BOTH gates, at the shipped defaults — pinned because `createBDCClient` and
+	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it WRONGLY: they claimed
+	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval gate has spaced the
+	 * dispatches, so the budget was said to cost nothing. It is a real 6 s wait. `APIClient` measures the cooldown to the
+	 * end of the MINUTE the window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
+	 *
+	 * Nothing checked either claim, which is how they survived. This is the check.
+	 */
+	it("both gates composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
+		const WINDOWS = 2
+		const FAN_OUT = BDC_DEFAULT_REQUESTS_PER_MINUTE * WINDOWS + 1
+
+		const clock = new VirtualClock()
+		const transport = stubTransport([{ body: { data: [] } }], clock)
+		const client = clientFor(transport, { clock })
+
+		await clock.runUntilSettled(Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`/map/steady/${i}`))))
+
+		// 0, 6, …, 54 — then a 6s cooldown, and the pacer discards its stale grant across it (APIClient
+		// re-acquires rather than holding one, under-issuing by one, the safe direction), so the next window
+		// opens at 66s rather than 60s.
+		expect(transport.dispatchTimes).toEqual([
+			0, 6000, 12_000, 18_000, 24_000, 30_000, 36_000, 42_000, 48_000, 54_000, 66_000, 72_000, 78_000, 84_000, 90_000,
+			96_000, 102_000, 108_000, 114_000, 120_000, 132_000,
+		])
+
+		// One cooldown per budget's worth of requests, and it is a WAIT, not a zero-length rollover marker.
+		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
+
+		// The composed rate lands BELOW the published limit — conservative, which is why the two gates are left
+		// composed rather than dropping the budget.
+		expect(maxCountInSlidingWindow(transport.dispatchTimes, 60_000)).toBeLessThanOrEqual(
+			BDC_DEFAULT_REQUESTS_PER_MINUTE
+		)
+	})
 })
 
 describe("createBDCClient: the on-disk response cache", () => {
@@ -688,7 +730,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	it("401 → abort the run, and the error names the credential pair", async () => {
 		const error = await failureFor([{ status: 401, statusText: "Unauthorized" }])
 
-		expect((error as ResourceError).status).toBe(401)
+		expect((error as ResourceErrorShape).status).toBe(401)
 		expect(isTransientResourceError(error)).toBe(false)
 		expect((error as Error).message).toMatch(/hash_value/)
 		expect((error as Error).message).toContain(USERNAME)
@@ -697,7 +739,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	it("403 → abort the run, with the same explanation", async () => {
 		const error = await failureFor([{ status: 403, statusText: "Forbidden" }])
 
-		expect((error as ResourceError).status).toBe(403)
+		expect((error as ResourceErrorShape).status).toBe(403)
 		expect(isTransientResourceError(error)).toBe(false)
 		expect((error as Error).message).toMatch(/credential pair/)
 	})
@@ -712,7 +754,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	it("404 → skip this file", async () => {
 		const error = await failureFor([{ status: 404, statusText: "Not Found" }])
 
-		expect((error as ResourceError).status).toBe(404)
+		expect((error as ResourceErrorShape).status).toBe(404)
 		expect(isTransientResourceError(error)).toBe(false)
 		// A 404 is NOT a credential problem, so it must not pick up the credential explanation.
 		expect((error as Error).message).not.toMatch(/hash_value/)
@@ -721,7 +763,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	it("exhausted 429 → requeue", async () => {
 		const error = await failureFor([{ status: 429, statusText: "Too Many Requests" }])
 
-		expect((error as ResourceError).status).toBe(429)
+		expect((error as ResourceErrorShape).status).toBe(429)
 		expect(isTransientResourceError(error)).toBe(true)
 	})
 
@@ -775,7 +817,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 			.get("/map/down")
 			.catch((error: unknown) => error)
 
-		expect((caught as ResourceError).status).toBe(503)
+		expect((caught as ResourceErrorShape).status).toBe(503)
 		expect(transport.calls).toHaveLength(2)
 	})
 })
