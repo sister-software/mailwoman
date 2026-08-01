@@ -27,10 +27,12 @@ import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
 	createFilerEdgeTable,
+	createFilerFamilyTable,
 	createFilerManifestTable,
 	createFilerNodeTable,
 	FilerEdgeAssertion,
 	FilerIdentifierType,
+	FilerRelationship,
 	filerLookup,
 	type FilerDatabase,
 } from "@mailwoman/filer"
@@ -417,6 +419,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		await createFilerEdgeTable(db)
 		await createFilerAttributeTable(db)
 		await createFilerClusterTable(db)
+		await createFilerFamilyTable(db)
 		await createFilerManifestTable(db)
 
 		await db
@@ -424,7 +427,9 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			.values({
 				name: "filer",
 				version: "2026-Q2",
-				schema_version: 1,
+				// 2, not 1 — filerLookup (task 3 fix round 1, IMPORTANT-3) refuses a manifest reporting a
+				// schema_version that predates filer_family, which this fixture now also creates above.
+				schema_version: 2,
 				source: "form-499,bdc-provider-list",
 				source_vintage: "2026-Q2",
 				build_cmd: "mailwoman filer build",
@@ -470,6 +475,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 					from_node_id: PROVIDER_NODE,
 					to_node_id: FRN_EARLY_NODE,
 					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.SameEntity,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
 					valid_from: "2026-06-30",
@@ -481,6 +487,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 					from_node_id: PROVIDER_NODE,
 					to_node_id: FRN_LATE_NODE,
 					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.SameEntity,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
 					valid_from: "2026-06-30",
@@ -494,6 +501,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 					from_node_id: PROVIDER_NODE,
 					to_node_id: HC_ALPHA_NODE,
 					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.HoldingCompany,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
 					valid_from: "2026-06-30",
@@ -505,6 +513,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 					from_node_id: PROVIDER_NODE,
 					to_node_id: HC_ALPHA_RENAMED_NODE,
 					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.HoldingCompany,
 					source: "bdc-provider-list",
 					source_vintage: "2026-Q2",
 					valid_from: "2026-06-30",
@@ -517,6 +526,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 					from_node_id: FRN_EARLY_NODE,
 					to_node_id: FORM_EARLY,
 					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.SameEntity,
 					source: "form-499",
 					source_vintage: "2026-01-15",
 					valid_from: "2026-01-15",
@@ -528,6 +538,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 					from_node_id: FRN_LATE_NODE,
 					to_node_id: FORM_LATE,
 					assertion: FilerEdgeAssertion.Authoritative,
+					relationship: FilerRelationship.SameEntity,
 					source: "form-499",
 					source_vintage: "2026-05-20",
 					valid_from: "2026-05-20",
@@ -620,9 +631,20 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
 		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
 
-		const holdingCompanyValues = crosswalk.identifiers
-			.filter((identifier) => identifier.type === FilerIdentifierType.HoldingCompanyName)
-			.map((identifier) => identifier.value)
+		// Task 3 fix round 1, CRITICAL: filerLookup's `identifiers` is relationship: same_entity ONLY now — a
+		// HoldingCompanyName edge never surfaces there regardless of retention, so "not lost" is proven directly
+		// against filer_edge instead (this fixture predates filer_family and never populates it, so `families` isn't
+		// the right recovery channel here either).
+		const holdingCompanyValues = (
+			await filerDB
+				.selectFrom("filer_edge")
+				.innerJoin("filer_node", "filer_node.node_id", "filer_edge.to_node_id")
+				.select("filer_node.identifier_value")
+				.where("filer_edge.from_node_id", "=", `${FilerIdentifierType.BDCProviderID}:700001`)
+				.where("filer_edge.relationship", "=", FilerRelationship.HoldingCompany)
+				.execute()
+		)
+			.map((row) => row.identifier_value)
 			.toSorted()
 
 		expect(holdingCompanyValues).toEqual(["Alpha Holdco", "Alpha Holdco Renamed"].toSorted())
@@ -652,6 +674,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		await createFilerEdgeTable(filerDB)
 		await createFilerAttributeTable(filerDB)
 		await createFilerClusterTable(filerDB)
+		await createFilerFamilyTable(filerDB)
 		await createFilerManifestTable(filerDB)
 		// No filer_edge rows at all — neither FRN has a form-499 filing edge to rank by.
 

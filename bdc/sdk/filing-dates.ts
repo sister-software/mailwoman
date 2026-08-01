@@ -5,18 +5,18 @@
  * @file FCC BDC filing-date discovery + vintage resolution.
  *
  *   Re-homed from Nexus's `sync/fcc/bdc/filing-dates.ts` (relicense-by-copy, no provenance
- *   headers): `dataSourcePathBuilder` → `dataRootPath` (`@mailwoman/core/utils`), the
- *   `$BCDClient`-bound `retrieveFilingDates()` → a plain function taking a {@linkcode BDCClient}.
- *   Unlike the Nexus original (which cached one `<filingType>-dates.json` file per filing type),
- *   this port caches the FULL unfiltered `listAsOfDates` response at a single path
- *   (`dataRootPath("bdc", "cache", "filing-dates.json")`) and filters by `filingType` on read —
- *   one cache file serves every filing type.
+ *   headers): the `$BCDClient`-bound `retrieveFilingDates()` → a plain function taking a
+ *   {@linkcode BDCClient}.
+ *
+ *   CACHING MOVED TO THE CLIENT. Both the Nexus original (one `<filingType>-dates.json` per filing
+ *   type) and this port's first cut (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
+ *   hand-rolled a JSON file cache here. `BDCClient` is built on `APIClient` and now carries an on-disk
+ *   response cache of its own, so the hand-rolled one was the exact duplication that migration exists to
+ *   remove — and it was worse than what replaced it: it had NO expiry, so a machine that resolved a
+ *   vintage once would never see the next one FCC published without an explicit `skipCache`. The
+ *   client's cache has a TTL chosen against the filing cadence, and `skipCache` now maps onto a
+ *   per-request cache bypass with the same meaning it always had.
  */
-
-import * as fs from "node:fs/promises"
-import * as path from "node:path"
-
-import { dataRootPath } from "@mailwoman/core/utils"
 
 import type { BDCClient } from "./client.ts"
 import type { BDCFilingDataType } from "./common.ts"
@@ -42,45 +42,25 @@ export interface RetrieveFilingDatesParams {
 	 */
 	filingType: BDCFilingDataType
 	/**
-	 * Bypass the on-disk cache and always fetch fresh from the API. Defaults to `false`.
+	 * Bypass the client's response cache and always fetch fresh from the API. Defaults to `false`.
 	 */
 	skipCache?: boolean
 }
 
 /**
- * The on-disk cache path for the full (unfiltered) `listAsOfDates` response.
- */
-function filingDatesCachePath(): string {
-	return dataRootPath("bdc", "cache", "filing-dates.json")
-}
-
-/**
- * Retrieve the FCC BDC's available filing `as_of_date`s for a given filing type, caching the full unfiltered response
- * to disk so repeat calls (across filing types) don't re-hit the network.
+ * Retrieve the FCC BDC's available filing `as_of_date`s for a given filing type.
+ *
+ * One `listAsOfDates` call answers every filing type — the full unfiltered response is what the client caches, and this
+ * filters it down on read — so asking for a second filing type inside the TTL costs no request at all. At ten requests
+ * per minute that is worth six seconds each time.
  */
 export async function retrieveFilingDates(
 	client: BDCClient,
 	{ filingType, skipCache = false }: RetrieveFilingDatesParams
 ): Promise<FCCAsOfDateEntry[]> {
-	const cachePath = filingDatesCachePath()
+	const body = await client.get<ListAsOfDatesResponseBody>("/map/listAsOfDates", undefined, { skipCache })
 
-	if (!skipCache) {
-		const cached = await fs.readFile(cachePath, "utf8").catch(() => null)
-
-		if (cached) {
-			const entries = JSON.parse(cached) as FCCAsOfDateEntry[]
-
-			return entries.filter((entry) => entry.data_type === filingType)
-		}
-	}
-
-	const body = await client.get<ListAsOfDatesResponseBody>("/map/listAsOfDates")
-	const entries = body.data
-
-	await fs.mkdir(path.dirname(cachePath), { recursive: true })
-	await fs.writeFile(cachePath, JSON.stringify(entries, null, "\t"))
-
-	return entries.filter((entry) => entry.data_type === filingType)
+	return body.data.filter((entry) => entry.data_type === filingType)
 }
 
 /**

@@ -7,11 +7,26 @@
  *   deliberately apart (decision 5):
  *
  *   **(a) Authoritative components** ({@linkcode clusterAuthoritativeComponents}) — every
- *   `filer_edge` row asserted `"authoritative"` (Task 5's builder — a source document stating the
- *   relationship directly) is fed to {@linkcode cluster} (`@mailwoman/match`) as a
- *   {@linkcode ScoredLink} with `weight: Infinity` — an authoritative edge is never in doubt, so ANY
- *   finite `threshold` unions it. The resulting connected components are written to `filer_cluster`
- *   with `assertion: "authoritative"`.
+ *   `filer_edge` row asserted `"authoritative"` AND typed `relationship: FilerRelationship.SameEntity`
+ *   (Task 5's builder — a source document stating the relationship directly) is fed to {@linkcode
+ *   cluster} (`@mailwoman/match`) as a {@linkcode ScoredLink} with `weight: Infinity` — an authoritative
+ *   SAME-ENTITY edge is never in doubt, so ANY finite `threshold` unions it. The resulting connected
+ *   components are written to `filer_cluster` with `assertion: "authoritative"`.
+ *
+ *   **The `relationship` filter is CRITICAL, not incidental (task 3 fix round 1).** `assertion` grades
+ *   evidence strength (authoritative vs. inferred); `relationship` grades WHAT the edge means
+ *   (`same_entity` vs. `holding_company` vs. `management_company` — `schema.ts`'s {@link
+ *   FilerRelationship}) — the two columns are orthogonal by design (3b Task 1), and entity clustering
+ *   only ever meant the FORMER. Before this fix, {@linkcode readAuthoritativeGroups} union-found EVERY
+ *   authoritative edge regardless of `relationship`, so a `HoldingCompany`/`ManagementCompany` edge
+ *   (also authoritative, correctly, since Task 2 began typing them) silently merged every filer sharing
+ *   that holding/management company into ONE entity cluster — three unrelated filers under one holding
+ *   company reported as ONE filer, the exact conflation `filer_family` (a SEPARATE rollup, decision 2)
+ *   exists to keep apart from `filer_cluster`. A hand-written test fixture that inserts edges with
+ *   `relationship: SameEntity` by default (`filer-lookup.test.ts`'s `authoritativeEdge()` helper) could
+ *   never catch this — only a fixture built through the REAL `buildFilerDatabase` (which types
+ *   holding-/management-company edges correctly, per Task 2) exposes it, which is why gate 1
+ *   (`filer-lookup.test.ts`'s `describe("§7-3b gates")`) now includes a real-builder-path test.
  *
  *   **(b) Inferred links** ({@linkcode clusterInferredLinks}) — one {@linkcode SourceRecord}
  *   (`@mailwoman/registry`) per `form499_id` node that carries a `legal_name` attribute:
@@ -94,8 +109,9 @@
  *   **`sourceVintage` vs `validFrom` — NEVER the same field (review fix, round N, CRITICAL).**
  *   {@link ClusterFilersOptions.sourceVintage} is a free-text human vintage LABEL (`"2026-cluster-v1"`)
  *   and {@link ClusterFilersOptions.validFrom} is a SEPARATE, always-ISO `YYYY-MM-DD` date
- *   ({@linkcode assertISODate}, imported from `build-filer.ts` — the same rule, one implementation, no
- *   drift between the two files). `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
+ *   ({@linkcode assertISODate}, imported from `guards.ts` — moved there in 3b Task 1, closing the
+ *   reach-into-the-builder coupling this docstring used to describe: the same rule, one implementation,
+ *   no drift between writers). `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
  *   `validFrom`. This split exists because `valid_from` participates in every downstream `asOf`-scoped
  *   predicate (`filer-lookup.ts`) as a plain STRING comparison — a label like `"2026-cluster-v1"` sorts
  *   lexicographically ABOVE any real ISO date this century, so writing it into `valid_from` (the
@@ -146,8 +162,14 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
 import { buildDefaultModel, resolveEntities, type SourceRecord } from "@mailwoman/registry"
 import type { Kysely } from "kysely"
 
-import { FilerEdgeAssertion, FilerIdentifierType, type FilerClusterTable, type FilerDatabase } from "../schema.ts"
-import { assertISODate } from "./build-filer.ts"
+import {
+	FilerEdgeAssertion,
+	FilerIdentifierType,
+	FilerRelationship,
+	type FilerClusterTable,
+	type FilerDatabase,
+} from "../schema.ts"
+import { assertISODate } from "./guards.ts"
 
 /**
  * `filer_edge.source` for every row {@linkcode clusterInferredLinks} writes — distinguishes this module's own
@@ -358,13 +380,17 @@ async function readNodeInfo(
 
 /**
  * Recompute the authoritative connected components: every `filer_node` row (ordered by `node_id`, for a deterministic
- * result independent of SQLite's own row order), union-found over every `assertion: "authoritative"` `filer_edge`
- * (weight `Infinity` — an authoritative edge is never in doubt). A node touched by no authoritative edge is its own
- * singleton component (`cluster()`'s own contract — see `match/clustering.ts`).
+ * result independent of SQLite's own row order), union-found over every `assertion: "authoritative"` AND `relationship:
+ * "same_entity"` `filer_edge` (weight `Infinity` — an authoritative same-entity edge is never in doubt). A node touched
+ * by no such edge is its own singleton component (`cluster()`'s own contract — see `match/clustering.ts`).
  *
- * Recomputed from the edges each call (not read back from `filer_cluster`) so {@linkcode clusterInferredLinks} has no
- * write-order dependency on {@linkcode clusterAuthoritativeComponents} having run first — see the module docstring's
- * gate-2 section.
+ * **The `relationship` filter (task 3 fix round 1, CRITICAL):** `assertion` and `relationship` are orthogonal columns
+ * (3b Task 1) — `assertion` grades evidence strength, `relationship` grades what the edge MEANS. Before this filter
+ * existed, EVERY authoritative edge unioned regardless of `relationship`, so a `HoldingCompany`/`ManagementCompany`
+ * edge (correctly typed authoritative by Task 2's builder) silently merged every filer sharing that holding/management
+ * company into one entity cluster — the exact conflation `filer_family` exists to keep separate. Restricting to
+ * `same_entity` is what makes an entity cluster mean "these identifiers denote the SAME legal entity" and nothing
+ * broader; a holding-company edge asserts "A is held by B", a different claim that must never merge identities.
  */
 async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<string[][]> {
 	const nodeRows = await db.selectFrom("filer_node").select(["node_id"]).orderBy("node_id").execute()
@@ -374,6 +400,7 @@ async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<strin
 		.selectFrom("filer_edge")
 		.select(["from_node_id", "to_node_id"])
 		.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+		.where("relationship", "=", FilerRelationship.SameEntity)
 		.execute()
 
 	const links: ScoredLink<string>[] = edgeRows.map((row) => ({
@@ -642,6 +669,10 @@ export async function clusterInferredLinks(
 						from_node_id: nodeId,
 						to_node_id: representativeId,
 						assertion: FilerEdgeAssertion.Inferred,
+						// This pass links two form499_id nodes that are the SAME underlying filer (a re-filing
+						// under one FRN with a drifted legal name — see the module docstring) — genuinely
+						// SameEntity, not a placeholder like build-filer.ts's own 3b Task 1 stand-in value.
+						relationship: FilerRelationship.SameEntity,
 						source: CLUSTER_FILERS_SOURCE,
 						source_vintage: options.sourceVintage,
 						valid_from: validFrom,

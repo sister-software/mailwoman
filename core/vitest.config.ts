@@ -31,6 +31,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/core\/coarse-placer$/, replacement: resolve(here, "coarse-placer/coarse-placer.ts") },
 			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "objects.ts") },
 			{ find: /^@mailwoman\/core\/fs$/, replacement: resolve(here, "fs/node.ts") },
+			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolve(here, "api/disk-storage.ts") },
+			{ find: /^@mailwoman\/core\/api\/test-clocks$/, replacement: resolve(here, "api/test-clocks.ts") },
 			// Every other @mailwoman/core/<subpath> resolves to the index.ts of the matching subdir.
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "index.ts") },

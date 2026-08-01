@@ -30,6 +30,12 @@
  *   `assertBDCDatabaseExists` + the BDC open) — `filerLookup` itself has no optional-dep abstain shape (gate 4 makes
  *   it throw rather than answer unstamped), so a missing filer.db becomes one friendly thrown Error naming the layer.
  *
+ *   `mailwoman_filer_family` (3b task 9) follows the IDENTICAL discipline, reusing the same two guards — `familyRollup`
+ *   has no optional-dep abstain shape either (it throws on a bad `familyID`/`nodeID` XOR or a pre-`filer_family`
+ *   schema), so filer.db is required unconditionally here too. Its result — always `FamilyRollup[]`, never `null` or
+ *   a bare object — is passed through untouched: this data is who-owns-whom, and a silent reshape here would be a
+ *   fabricated relationship claim.
+ *
  *   ```sh
  *   mailwoman-mcp                       # geocode/poi_search degrade gracefully with no poi.db wired
  *   mailwoman-mcp --poi-db poi.db       # mailwoman_poi_search additionally executes against poi.db
@@ -43,7 +49,7 @@ import { parseArgs } from "node:util"
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
+import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
@@ -269,6 +275,20 @@ const deps: MCPToolDeps = {
 			frn,
 			form499ID: q.form499ID,
 			bdcProviderID: q.bdcProviderID,
+			asOf: q.asOf,
+		})
+	},
+
+	async filerFamily(q) {
+		// Same discipline as mailwoman_filer_lookup (3a task 7) — familyRollup has no optional-dep abstain shape
+		// either, so filer.db is required unconditionally.
+		assertFilerDatabaseExists("mailwoman_filer_family", q.databasePath)
+
+		using db = openFilerDatabaseIfPresent(q.databasePath)!
+
+		return familyRollup(db, {
+			familyID: q.familyID,
+			nodeID: q.nodeID,
 			asOf: q.asOf,
 		})
 	},

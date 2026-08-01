@@ -14,13 +14,17 @@ import {
 	createFilerClusterTable,
 	createFilerEdgeTable,
 	createFilerEdgeToNodeIndex,
+	createFilerFamilyIndex,
+	createFilerFamilyTable,
 	createFilerManifestTable,
 	createFilerNodeTable,
 	FilerEdgeAssertion,
 	FilerIdentifierType,
+	FilerRelationship,
 	readFilerManifest,
 	type FilerDatabase,
 	type FilerEdgeTable,
+	type FilerFamilyTable,
 } from "./schema.ts"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
@@ -33,6 +37,8 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 	await createFilerEdgeToNodeIndex(db)
 	await createFilerAttributeTable(db)
 	await createFilerClusterTable(db)
+	await createFilerFamilyTable(db)
+	await createFilerFamilyIndex(db)
 	await createFilerManifestTable(db)
 }
 
@@ -53,6 +59,7 @@ const AUTHORITATIVE_EDGE: FilerEdgeTable = {
 	from_node_id: FRN_NODE_ID,
 	to_node_id: SPIN_NODE_ID,
 	assertion: FilerEdgeAssertion.Authoritative,
+	relationship: FilerRelationship.SameEntity,
 	source: "form-499",
 	source_vintage: "2026-Q1",
 	valid_from: "2026-01-01",
@@ -61,8 +68,24 @@ const AUTHORITATIVE_EDGE: FilerEdgeTable = {
 	evidence: null,
 }
 
+const HOLDING_NODE_ID = `${FilerIdentifierType.HoldingCompanyName}:Acme Holdings Inc`
+const FAMILY_ID = HOLDING_NODE_ID
+
+const FAMILY_ROW: FilerFamilyTable = {
+	node_id: FRN_NODE_ID,
+	family_id: FAMILY_ID,
+	naming_node_id: HOLDING_NODE_ID,
+	assertion: FilerEdgeAssertion.Authoritative,
+	relationship: FilerRelationship.HoldingCompany,
+	source: "form-499",
+	source_vintage: "2026-Q1",
+	valid_from: "2026-01-01",
+	valid_to: null,
+	match_score: null,
+}
+
 describe("filer schema", () => {
-	it("creates all five filer.db tables, each accepting and returning a row", async () => {
+	it("creates all six filer.db tables, each accepting and returning a row", async () => {
 		using db = openMemory()
 		await createAllTables(db)
 		await insertCrosswalkNodes(db)
@@ -73,6 +96,7 @@ describe("filer schema", () => {
 		await db.insertInto("filer_edge").values(AUTHORITATIVE_EDGE).execute()
 		const edge = await db.selectFrom("filer_edge").selectAll().executeTakeFirst()
 		expect(edge?.source).toBe("form-499")
+		expect(edge?.relationship).toBe(FilerRelationship.SameEntity)
 
 		await db
 			.insertInto("filer_attribute")
@@ -95,6 +119,11 @@ describe("filer schema", () => {
 
 		const cluster = await db.selectFrom("filer_cluster").selectAll().executeTakeFirst()
 		expect(cluster?.cluster_id).toBe("cluster-1")
+
+		await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+		const family = await db.selectFrom("filer_family").selectAll().executeTakeFirst()
+		expect(family?.family_id).toBe(FAMILY_ID)
+		expect(family?.relationship).toBe(FilerRelationship.HoldingCompany)
 
 		await db
 			.insertInto("filer_manifest")
@@ -169,9 +198,28 @@ describe("filer schema", () => {
 		await insertCrosswalkNodes(db)
 
 		await db.insertInto("filer_edge").values(AUTHORITATIVE_EDGE).execute()
+
 		await expect(db.insertInto("filer_edge").values(AUTHORITATIVE_EDGE).execute()).rejects.toThrow(
 			/UNIQUE constraint failed/
 		)
+	})
+
+	it("rejects a second insert at the same (from, to, source, valid_from) tuple even when it asserts a DIFFERENT relationship (decision 1, 2: a contradiction to reject, not a plurality to store)", async () => {
+		using db = openMemory()
+		await createAllTables(db)
+		await insertCrosswalkNodes(db)
+
+		await db.insertInto("filer_edge").values(AUTHORITATIVE_EDGE).execute()
+
+		// Same source, same pair, same valid_from — only `relationship` differs. `relationship` is deliberately NOT
+		// part of the composite PK (see createFilerEdgeTable's docstring), so this must still collide on the PK and
+		// be rejected, never silently stored as a second, contradictory row.
+		await expect(
+			db
+				.insertInto("filer_edge")
+				.values({ ...AUTHORITATIVE_EDGE, relationship: FilerRelationship.HoldingCompany })
+				.execute()
+		).rejects.toThrow(/UNIQUE constraint failed/)
 	})
 
 	it("finds in-edges by to_node_id via the secondary index", async () => {
@@ -182,6 +230,256 @@ describe("filer schema", () => {
 
 		const rows = await db.selectFrom("filer_edge").selectAll().where("to_node_id", "=", SPIN_NODE_ID).execute()
 		expect(rows).toHaveLength(1)
+	})
+
+	describe("filer_edge.relationship", () => {
+		it("rejects an empty string", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await expect(
+				db
+					.insertInto("filer_edge")
+					.values({ ...AUTHORITATIVE_EDGE, relationship: "" })
+					.execute()
+			).rejects.toThrow(/CHECK constraint failed/)
+		})
+
+		it("rejects a whitespace-only string (not just empty)", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await expect(
+				db
+					.insertInto("filer_edge")
+					.values({ ...AUTHORITATIVE_EDGE, relationship: "   " })
+					.execute()
+			).rejects.toThrow(/CHECK constraint failed/)
+		})
+	})
+
+	describe("filer_family", () => {
+		it("round-trips a family row", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			const row = await db.selectFrom("filer_family").selectAll().executeTakeFirstOrThrow()
+			expect(row).toEqual(FAMILY_ROW)
+		})
+
+		it("keeps two sources' family assertions for the same (node_id, family_id) pair as separate rows", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({ ...FAMILY_ROW, source: "bdc-provider-list" })
+				.execute()
+
+			const rows = await db.selectFrom("filer_family").selectAll().execute()
+			expect(rows).toHaveLength(2)
+		})
+
+		it("keeps a later vintage of the same source as a separate row (revision, not clobber)", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({ ...FAMILY_ROW, source_vintage: "2026-Q2", valid_from: "2026-04-01" })
+				.execute()
+
+			const rows = await db.selectFrom("filer_family").selectAll().execute()
+			expect(rows).toHaveLength(2)
+		})
+
+		it("rejects a duplicate insert sharing the same (node_id, family_id, naming_node_id, source, valid_from) tuple", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await expect(db.insertInto("filer_family").values(FAMILY_ROW).execute()).rejects.toThrow(
+				/UNIQUE constraint failed/
+			)
+		})
+
+		it("rejects a second insert at the same (node_id, family_id, naming_node_id, source, valid_from) tuple even when it asserts a DIFFERENT relationship", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await expect(
+				db
+					.insertInto("filer_family")
+					.values({ ...FAMILY_ROW, relationship: FilerRelationship.ParentCompany })
+					.execute()
+			).rejects.toThrow(/UNIQUE constraint failed/)
+		})
+
+		/**
+		 * Task 3 fix round 4, the counterpart to the two tests above — and the reason `naming_node_id` is IN the primary
+		 * key rather than a payload column beside it. `relationship` is excluded from the key because two values for one
+		 * pair at one instant are a CONTRADICTION; two `naming_node_id`s are not. `"Acme Holdings Inc"` and `"ACME
+		 * HOLDINGS, INC."` canonicalize to one `family_id`, so a filer that reported both spellings (two 499 rows the same
+		 * day, or one `bdcProviderID` on two provider-list rows) produces two rows differing in nothing else. Narrow the
+		 * key and the builder's `INSERT OR IGNORE` drops the second, taking that spelling's display name with it before any
+		 * reader runs.
+		 */
+		it("keeps two DIFFERENT naming_node_ids for the same (node_id, family_id, source, valid_from) tuple as separate rows — the multi-spelling plurality", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({ ...FAMILY_ROW, naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:ACME HOLDINGS, INC.` })
+				.execute()
+
+			const rows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", FAMILY_ID).execute()
+			expect(rows).toHaveLength(2)
+		})
+
+		it("finds all members of a family via the secondary index", async () => {
+			using db = openMemory()
+			await createAllTables(db)
+			await insertCrosswalkNodes(db)
+
+			await db.insertInto("filer_family").values(FAMILY_ROW).execute()
+
+			await db
+				.insertInto("filer_family")
+				.values({ ...FAMILY_ROW, node_id: SPIN_NODE_ID, relationship: FilerRelationship.Subsidiary })
+				.execute()
+
+			const rows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", FAMILY_ID).execute()
+			expect(rows).toHaveLength(2)
+		})
+
+		describe("relationship", () => {
+			it("rejects an empty string", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, relationship: "" })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_relationship_not_blank/)
+			})
+
+			it("rejects a whitespace-only string (not just empty)", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, relationship: "   " })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_relationship_not_blank/)
+			})
+		})
+
+		/**
+		 * 3b Task 8 fix round 1. `assertion` is graded evidence, not decoration: EDGAR's subsidiary→FRN corroboration is
+		 * the repo's first INFERRED family membership, and without this column it reached `filerLookup.families`
+		 * shape-identical to a Form 499 holding-company disclosure. Its two constraints close the two ways that grading can
+		 * be defeated at write time — a blank value (which `NOT NULL` accepts, and which would then match NEITHER half of a
+		 * gate-2 read, so the row would vanish from any surface that splits on strength), and a `match_score` on an
+		 * authoritative row (a fabricated confidence for a membership that matched nothing).
+		 *
+		 * Each expectation names the CONSTRAINT, not just "CHECK constraint failed" — this table now carries three, and a
+		 * test that only pins the generic prefix passes when the wrong one fires.
+		 */
+		describe("assertion + match_score", () => {
+			it("rejects an empty-string assertion — NOT NULL alone accepts one, the same gap relationship's CHECK closes", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, assertion: "" })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_assertion_not_blank/)
+			})
+
+			it("rejects a whitespace-only assertion too (not just empty)", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, assertion: "   " })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_assertion_not_blank/)
+			})
+
+			it("rejects a match_score on an AUTHORITATIVE membership — an authoritative row matched nothing, so any score there is fabricated", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await expect(
+					db
+						.insertInto("filer_family")
+						.values({ ...FAMILY_ROW, assertion: FilerEdgeAssertion.Authoritative, match_score: 0.99 })
+						.execute()
+				).rejects.toThrow(/CHECK constraint failed: filer_family_match_score_inferred_only/)
+			})
+
+			it("accepts a match_score on an INFERRED membership, and round-trips it", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await db
+					.insertInto("filer_family")
+					.values({ ...FAMILY_ROW, assertion: FilerEdgeAssertion.Inferred, match_score: 0.5 })
+					.execute()
+
+				const row = await db.selectFrom("filer_family").selectAll().executeTakeFirstOrThrow()
+				expect(row.assertion).toBe(FilerEdgeAssertion.Inferred)
+				expect(row.match_score).toBe(0.5)
+			})
+
+			it("accepts a NULL match_score on an inferred membership — the writer's obligation, matching filer_edge's own permissiveness, not a constraint", async () => {
+				using db = openMemory()
+				await createAllTables(db)
+				await insertCrosswalkNodes(db)
+
+				await db
+					.insertInto("filer_family")
+					.values({ ...FAMILY_ROW, assertion: FilerEdgeAssertion.Inferred, match_score: null })
+					.execute()
+
+				const row = await db.selectFrom("filer_family").selectAll().executeTakeFirstOrThrow()
+				expect(row.match_score).toBeNull()
+			})
+		})
 	})
 
 	describe("filer_manifest single-row enforcement", () => {

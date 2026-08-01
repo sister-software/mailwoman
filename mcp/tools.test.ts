@@ -104,6 +104,30 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
+		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/sdk/family-rollup.ts`) own XOR throw AND its
+		// always-array return shape (never `null`, never a bare object) so the dispatch tests below can exercise
+		// both without reaching for a real filer.db.
+		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {
+			const suppliedCount = (query.familyID !== undefined ? 1 : 0) + (query.nodeID !== undefined ? 1 : 0)
+
+			if (suppliedCount !== 1) {
+				throw new Error("familyRollup: exactly one of `familyID`, `nodeID` is required")
+			}
+
+			return [
+				{
+					family_id: query.familyID ?? "holding_company_name:acme-holdco",
+					members: [
+						{ node_id: "frn:0001753557", relationship: "holding_company", source: "form499" },
+						{ node_id: "frn:0002222222", relationship: "holding_company", source: "form499" },
+					],
+					distinct_member_count: 2,
+					display_names: ["Acme Holdco LLC"],
+					as_of: query.asOf ?? "2026-07-31",
+					vintage: "2026-Q1",
+				},
+			]
+		}),
 	}
 }
 
@@ -116,12 +140,13 @@ function toolNamed(table: ReturnType<typeof buildToolTable>, name: string) {
 }
 
 describe("buildToolTable", () => {
-	it("registers exactly the eight expected tools", () => {
+	it("registers exactly the nine expected tools", () => {
 		const table = buildToolTable(stubDeps())
 
 		expect(table.map((t) => t.name).toSorted()).toEqual(
 			[
 				"mailwoman_bdc_filing_landscape",
+				"mailwoman_filer_family",
 				"mailwoman_filer_lookup",
 				"mailwoman_geocode",
 				"mailwoman_layer_manifest",
@@ -512,6 +537,95 @@ describe("buildToolTable", () => {
 				as_of: "2026-07-31",
 				vintage: "2026-Q1",
 			})
+		})
+	})
+
+	describe("mailwoman_filer_family", () => {
+		it("accepts a canonical example for each of family_id and node_id", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
+
+			expect(
+				tool.inputSchema.safeParse({
+					database_path: "/data/filer.db",
+					family_id: "holding_company_name:acme-holdco",
+				}).success
+			).toBe(true)
+
+			expect(tool.inputSchema.safeParse({ database_path: "/data/filer.db", node_id: "frn:0001753557" }).success).toBe(
+				true
+			)
+		})
+
+		it("accepts an optional as_of and rejects a missing database_path", () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
+
+			expect(
+				tool.inputSchema.safeParse({
+					database_path: "/data/filer.db",
+					node_id: "frn:0001753557",
+					as_of: "2026-06-01",
+				}).success
+			).toBe(true)
+
+			expect(tool.inputSchema.safeParse({ node_id: "frn:0001753557" }).success).toBe(false)
+			expect(tool.inputSchema.safeParse({ database_path: "" }).success).toBe(false)
+		})
+
+		it("routes to deps.filerFamily with the parsed database path and identifier fields", async () => {
+			const deps = stubDeps()
+			const tool = toolNamed(buildToolTable(deps), "mailwoman_filer_family")
+
+			await tool.handler({ database_path: "/data/filer.db", node_id: "frn:0001753557", as_of: "2026-06-01" })
+
+			expect(deps.filerFamily).toHaveBeenCalledWith({
+				databasePath: "/data/filer.db",
+				familyID: undefined,
+				nodeID: "frn:0001753557",
+				asOf: "2026-06-01",
+			})
+		})
+
+		it("rejects at the handler level when no identifier is supplied", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
+
+			await expect(tool.handler({ database_path: "/data/filer.db" })).rejects.toThrow(
+				/exactly one of `familyID`, `nodeID`/
+			)
+		})
+
+		it("rejects at the handler level when both identifiers are supplied", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
+
+			await expect(
+				tool.handler({
+					database_path: "/data/filer.db",
+					family_id: "holding_company_name:acme-holdco",
+					node_id: "frn:0001753557",
+				})
+			).rejects.toThrow(/exactly one of `familyID`, `nodeID`/)
+		})
+
+		it("returns the deps result verbatim — every FamilyRollup field intact, nothing dropped or reshaped", async () => {
+			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
+
+			const result = await tool.handler({
+				database_path: "/data/filer.db",
+				family_id: "holding_company_name:acme-holdco",
+			})
+
+			expect(result).toEqual([
+				{
+					family_id: "holding_company_name:acme-holdco",
+					members: [
+						{ node_id: "frn:0001753557", relationship: "holding_company", source: "form499" },
+						{ node_id: "frn:0002222222", relationship: "holding_company", source: "form499" },
+					],
+					distinct_member_count: 2,
+					display_names: ["Acme Holdco LLC"],
+					as_of: "2026-07-31",
+					vintage: "2026-Q1",
+				},
+			])
 		})
 	})
 })
