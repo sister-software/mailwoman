@@ -42,13 +42,15 @@ function fixtureDB(): string {
 		db.prepare(`INSERT INTO spr VALUES (?, ?, ?, ?)`).run(id, name, placetype, country)
 	}
 
-	for (const [id, ancestorID] of [
+	const links: Array<[child: number, ancestor: number]> = [
 		[2, 1],
 		[3, 1],
 		[5, 4],
 		[6, 1],
 		[7, 1],
-	]) {
+	]
+
+	for (const [id, ancestorID] of links) {
 		db.prepare(`INSERT INTO ancestors VALUES (?, ?)`).run(id, ancestorID)
 	}
 

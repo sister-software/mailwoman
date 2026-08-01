@@ -97,3 +97,29 @@ lever nobody measured.
   London parent: **the census cannot discriminate at span level by construction.** That is the
   finding to state plainly, not to bury — it is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
+
+### R4c Addendum 1 — B-C2 is mis-specified; the amended bar, pre-registered before reading it
+
+The GB build (5,577 nodes, 136,674 bytes, 33,899 counted links, 0 unmapped placetypes) makes
+B-C2 unreadable as written, and the reason is structural rather than a property of any parent:
+**within-node share is ~100% everywhere.** WOF rarely parents a locality under another locality,
+so the only children this source contributes under a locality parent are the dependent-locality
+class itself. The country base rate lands at 65.6% dependent_locality / 34.4% locality, and every
+covered parent — London, Manchester, Birmingham alike — reads share 100.0%, lift 1.5×.
+
+**B-C2 therefore reads 1.5× against a 2.0× bar. Recorded as a MISS of the metric, not of the
+mechanism.** The pre-registration exists to stop exactly the move of quietly swapping in a
+friendlier statistic, so the miss stands in the record.
+
+The diagnosis says which statistic actually carries the information. A census node's evidence is
+not "what fraction of this parent's children are dependent localities" (trivially all of them);
+it is **presence and magnitude across the parent population** — most localities have no such
+children at all and never enter the artifact.
+
+- **B-C2′ (amended, pre-registered BEFORE computing it).** Of GB locality-class places in the
+  source, the fraction carrying ≥1 dependent-locality child is **≤ 50%** — a census hit must rule
+  out at least half the parent population to be evidence — AND the median dependent-locality child
+  count on covered nodes is **≥ 2**. Failing either closes the discrimination question NEGATIVE.
+- **D-C2″ (disclosure).** Report the covered fraction among LARGE parents separately. The expected
+  shape is that big cities are all covered, so the census discriminates in the small/middle tail
+  and says nothing about major-city queries. State it either way.
