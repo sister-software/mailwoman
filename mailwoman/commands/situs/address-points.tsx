@@ -27,12 +27,12 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { mkdirSync, rmSync } from "node:fs"
 import { basename, dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
 import zod from "zod"
@@ -76,31 +76,6 @@ const OptionsSchema = zod.object({
 })
 
 export { OptionsSchema as options }
-
-/**
- * Scripts/AGENTS.md atomic swap: the build wrote to a temp path, so a mid-build crash never leaves a half-written DB at
- * finalPath. Move any prior version aside, slot the new one in, then drop the old. (The original script rebuilt in
- * place — `rmSync(OUT)` then `new DatabaseSync(OUT)`.)
- */
-function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
-	const aside = `${finalPath}.old-${process.pid}`
-
-	if (existsSync(finalPath)) {
-		renameSync(finalPath, aside)
-	}
-
-	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(finalPath + sfx, { force: true })
-	}
-
-	renameSync(tmpPath, finalPath)
-
-	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(tmpPath + sfx, { force: true })
-	}
-
-	rmSync(aside, { force: true })
-}
 
 const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
