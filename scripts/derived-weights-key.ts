@@ -20,7 +20,7 @@
 
 import { createHash } from "node:crypto"
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { join, resolve } from "node:path"
+import { join, relative, resolve } from "node:path"
 
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
@@ -56,24 +56,50 @@ function gazetteerDataPaths(): string[] {
 }
 
 /**
- * Every absolute path this checkout's key is computed over.
+ * One hashed input: a STABLE name plus wherever this checkout happens to keep it.
  */
-export function derivedWeightsInputPaths(): string[] {
-	return [...DERIVED_WEIGHTS_INPUTS.map((p) => resolve(repoRootPath(), p)), ...gazetteerDataPaths()]
+export interface DerivedWeightsInput {
+	/**
+	 * Repo-relative identity of the input. Hashed. Must not vary by checkout location.
+	 */
+	name: string
+	/**
+	 * Absolute path to read. NOT hashed — see {@link derivedWeightsKeyFrom}.
+	 */
+	path: string
 }
 
 /**
- * Hash an explicit list of absolute paths. Exported for testing; production callers want {@link derivedWeightsKey}.
- *
- * Sorted, so the caller's ordering cannot change the key. Each path contributes its own name as well as its bytes, so
- * moving an input is a change. A missing path contributes a `\0absent` marker rather than nothing — "the file is gone"
- * and "the file is empty" must not collide.
+ * Every input this checkout's key is computed over, named repo-relatively.
  */
-export function derivedWeightsKeyFrom(paths: readonly string[]): string {
+export function derivedWeightsInputs(): DerivedWeightsInput[] {
+	const root = repoRootPath()
+
+	return [
+		...DERIVED_WEIGHTS_INPUTS.map((name) => ({ name, path: resolve(root, name) })),
+		...gazetteerDataPaths().map((path) => ({ name: relative(root, path), path })),
+	]
+}
+
+/**
+ * Hash an explicit input list. Exported for testing; production callers want {@link derivedWeightsKey}.
+ *
+ * Sorted by name, so the caller's ordering cannot change the key. Each entry contributes its NAME and its bytes.
+ *
+ * ⚠ The name is repo-RELATIVE and the absolute path is deliberately NOT hashed. Hashing absolute paths was the first
+ * version's bug: every GitHub runner checks out to its own work directory, so lab-1, lab-2, lab-3 and a local worktree
+ * each computed a different key over byte-identical inputs and none of them ever saw another's work. It surfaced as
+ * four store directories holding the same eleven artifacts, and as a 41s `pair-index-nz.bin` rebuild on a runner where
+ * that exact file was already on disk under a different key.
+ *
+ * A missing input contributes a `\0absent` marker rather than nothing — "the file is gone" and "the file is empty" must
+ * not collide.
+ */
+export function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): string {
 	const hash = createHash("sha256")
 
-	for (const path of paths.toSorted()) {
-		hash.update(path)
+	for (const { name, path } of inputs.toSorted((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
+		hash.update(name)
 		hash.update("\0")
 
 		try {
@@ -90,10 +116,11 @@ export function derivedWeightsKeyFrom(paths: readonly string[]): string {
 }
 
 /**
- * The key for this checkout's derived weights.
+ * The key for this checkout's derived weights. Identical across checkouts with identical input CONTENT, wherever they
+ * live on disk — that invariance is the whole point of the store.
  */
 export function derivedWeightsKey(): string {
-	return derivedWeightsKeyFrom(derivedWeightsInputPaths())
+	return derivedWeightsKeyFrom(derivedWeightsInputs())
 }
 
 /**
