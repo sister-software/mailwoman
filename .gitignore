@@ -187,3 +187,9 @@ nightshift
 
 # tsc -b incremental state (per-workspace tsconfig.tsbuildinfo) — build junk, never committed.
 *.tsbuildinfo
+
+# md5 sidecars written by the weights link scripts' freshness guards (`md5FileWithSidecar`) beside
+# whatever they hash. A derived cache keyed on mtime — committing one means a fresh checkout can
+# carry a hash that disagrees with the file next to it, which is precisely the staleness the guard
+# exists to catch.
+*.jsonl.md5
