@@ -209,7 +209,12 @@ jobs:
             neural-weights-*/pair-index-*.bin
             neural-weights-*/anchor-lexicon-v1.json
             neural-weights-*/country-surface-lexicon-v1.json
-          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json') }}
+          # The key hashes every input the artifacts are DERIVED from, not just their config. It used to hash
+          # release.config.json + data/gazetteer/*.json only, which missed the EXTRACTOR — so the 2026-08-02
+          # currency-filter change produced new artifacts while the cache happily served the old ones, and the
+          # pair-index↔card parity guard failed with `expected 47878 to be 49033`. A cache key that omits the code
+          # generating the cached thing is a stale-artifact machine.
+          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json', 'data/gazetteer/*.jsonl', 'mailwoman/gazetteer-pipeline/borough-pairs.ts', 'mailwoman/gazetteer-pipeline/lieudit-pairs.ts', 'mailwoman/commands/gazetteer/pair-index.tsx') }}
 
       - name: Materialize weights (cache miss — ~5 min, once per release.config change)
         if: steps.weights-cache.outputs.cache-hit != 'true'
@@ -389,7 +394,7 @@ jobs:
             neural-weights-*/pair-index-*.bin
             neural-weights-*/anchor-lexicon-v1.json
             neural-weights-*/country-surface-lexicon-v1.json
-          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json') }}
+          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json', 'data/gazetteer/*.jsonl', 'mailwoman/gazetteer-pipeline/borough-pairs.ts', 'mailwoman/gazetteer-pipeline/lieudit-pairs.ts', 'mailwoman/commands/gazetteer/pair-index.tsx') }}
 
       - name: Materialize weights (cache miss — ~5 min, once per release.config change)
         if: (github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true') && steps.weights-cache.outputs.cache-hit != 'true'
