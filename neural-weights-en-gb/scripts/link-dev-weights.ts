@@ -352,6 +352,11 @@ const LONDON_PAIRS_JSONL = repoRootPath("data", "gazetteer", "london-pairs-v2.js
  * source keeps its own provenance md5 in the header and the freshness guard can tell which of them moved.
  */
 const NI_PAIRS_JSONL = repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl")
+/**
+ * Scotland + Wales + England neighbourhood pairs (campaign R8) — the rest of Great Britain, after London (R3/R4b) and
+ * Northern Ireland (R7).
+ */
+const GB_REGIONS_JSONL = repoRootPath("data", "gazetteer", "gb-regions-v1.jsonl")
 
 let pairIndexIsFresh = false
 
@@ -393,6 +398,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				await md5FileWithSidecar(String(BOROUGH_DB)),
 				await md5FileWithSidecar(String(LONDON_PAIRS_JSONL)),
 				await md5FileWithSidecar(String(NI_PAIRS_JSONL)),
+				await md5FileWithSidecar(String(GB_REGIONS_JSONL)),
 			]
 			const matches =
 				existingSourceMD5s.length === currentSourceMD5s.length &&
@@ -448,7 +454,7 @@ if (pairIndexIsFresh) {
 			"--borough-db",
 			String(BOROUGH_DB),
 			"--pairs-jsonl",
-			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL].join(","),
+			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL].join(","),
 		],
 		{ stdio: "inherit" }
 	)

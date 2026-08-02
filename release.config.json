@@ -28,7 +28,7 @@
 				"delta": 10,
 				"transitionBeta": 5,
 				"boroughDb": "wof/admin-global-priority.db",
-				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl,data/gazetteer/ni-pairs-v1.jsonl"
+				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl,data/gazetteer/ni-pairs-v1.jsonl,data/gazetteer/gb-regions-v1.jsonl"
 			},
 			"fr": {
 				"$comment": "Hierarchy campaign R6 (2026-08-01). Source is the raw BAN dump (DINUM/IGN, Licence Ouverte 2.0) read through ban/sdk's cleanLieuDit — NOT WOF, whose French neighbourhood records are Paris quartiers that never appear in a postal address. The line French addresses DO carry is the lieu-dit.",
