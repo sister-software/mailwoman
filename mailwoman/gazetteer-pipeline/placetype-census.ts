@@ -11,10 +11,11 @@
  *
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
- *   macroregion, country); the projection table also names macrohood/microhood/venue/building rows
- *   that this source does not stock. Their absence is COVERAGE, not fact — the meaning-of-zero rule
- *   — which is why the artifact ships positive counts only and the reader treats a missing node as
- *   neutral.
+ *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
+ *   those; the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
+ *   artifact by BUILD RECIPE, not by WOF's contents — which is COVERAGE, not fact (the
+ *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
+ *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
  *
  *   Inclusion rule: a parent enters the census only if it has at least one child projecting onto a
  *   tag OTHER than `locality`. A node recording "this locality has 300 locality children" is true
@@ -27,6 +28,48 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
+
+/**
+ * The complete Who's on First placetype vocabulary (34 as of 2026-08-02). {@link PLACETYPE_PROJECTION} must carry a key
+ * for every entry — a test asserts it — so a placetype can never reach {@link buildPlacetypeCensus} unmapped and turn a
+ * build into a throw at the worst moment. Sorted to keep the diff readable when WOF grows the vocabulary.
+ */
+export const WOF_PLACETYPES: readonly string[] = [
+	"address",
+	"arcade",
+	"borough",
+	"building",
+	"campus",
+	"concourse",
+	"continent",
+	"country",
+	"county",
+	"dependency",
+	"disputed",
+	"empire",
+	"enclosure",
+	"installation",
+	"intersection",
+	"localadmin",
+	"locality",
+	"macrocounty",
+	"macrohood",
+	"macroregion",
+	"marinearea",
+	"marketarea",
+	"metroarea",
+	"microhood",
+	"nation",
+	"neighbourhood",
+	"ocean",
+	"planet",
+	"postalcode",
+	"postalregion",
+	"region",
+	"timezone",
+	"venue",
+	"wing",
+]
 
 /**
  * WOF placetype → `ComponentTag` projection, the executable copy of plan/reference/placetype-evidence.mdx's table. A
@@ -58,6 +101,17 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	disputed: "country",
 	postalcode: "postcode",
 	venue: "venue",
+	// Venue sub-structure. A WOF `building`/`campus` place carries a venue NAME ("Empire State Building", "MIT
+	// Campus"); the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing"). The
+	// admin build stocks none of these today — that is the ingest allowlist (`ADMIN_PLACETYPES`), not the source, and
+	// measuring the difference is what `mailwoman gazetteer granularity` exists for.
+	building: "venue",
+	campus: "venue",
+	arcade: "unit",
+	concourse: "unit",
+	enclosure: "unit",
+	installation: "unit",
+	wing: "unit",
 	// Context-only and out-of-grammar: mapped explicitly to null so an unmapped placetype stays distinguishable from a
 	// deliberately-uncounted one.
 	metroarea: null,
@@ -69,6 +123,11 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	marinearea: null,
 	planet: null,
 	empire: null,
+	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag. An intersection is
+	// a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole address record consumed by
+	// the kind-classifier and the resolver's address-point tiers, not a span role.
+	intersection: null,
+	address: null,
 }
 
 /**
