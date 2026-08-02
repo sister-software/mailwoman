@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/bdc",
-	"version": "8.4.0",
+	"version": "8.5.0",
 	"description": "FCC Broadband Data Collection (BDC) availability data — fetch/parse/ingest provider and bdc.db layer reader",
 	"keywords": [
 		"bdc",
