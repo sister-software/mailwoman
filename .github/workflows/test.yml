@@ -4,9 +4,10 @@
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
 #
-# STRUCTURE — five legs (static, unit-fast, unit-slow, react, smoke) fan out across the
-# lab's self-hosted runner fleet (lab-1..lab-4, one job slot each), then the `test` aggregator
-# gates on all five. unit-fast and unit-slow run the root Vitest sweep concurrently — fast leg
+# STRUCTURE — a `runner-select` bootstrap picks the fleet or a GitHub-hosted fallback (see its own
+# header for why, and for what the fallback cannot cover), then five legs (static, unit-fast,
+# unit-slow, react, smoke) fan out across the lab's self-hosted runner fleet (lab-1..lab-4, one job
+# slot each), then the `test` aggregator gates on all five. unit-fast and unit-slow run the root Vitest sweep concurrently — fast leg
 # is the pure unit/lexicon surface (~313 files, ~15s); slow leg is the DB-gated integration
 # suites (CLI harness, WOF resolver, model-load tests, ~87 files, ~5 min).
 # The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
@@ -60,13 +61,102 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
+  # Pick the fleet, or fall back to GitHub-hosted when it is down.
+  #
+  # GitHub Actions has no native fallback: a job whose labels match a REGISTERED but OFFLINE runner
+  # queues (up to 24h) rather than failing, so shutting the lab fleet down silently blocks every
+  # merge — branch protection wants a green `test`, and `test` had nowhere to run. That happened
+  # 2026-08-02. This job is the escape from it: it runs on ubuntu-latest (always available, and free
+  # on a public repo), decides which labels the other jobs get, and hands them over as an output.
+  #
+  # WHAT FALLBACK CAN AND CANNOT BUY. Three legs are runner-agnostic and run identically anywhere:
+  # static (lint + typecheck), unit-fast (no model, no DB by construction), react (browser mode —
+  # GitHub-hosted even allows the `--with-deps` path the lab runners can't sudo). The other two are
+  # NOT portable and no amount of caching makes them so: unit-slow's WOF suites and the geocode CLI
+  # tests read $MAILWOMAN_DATA_ROOT/wof, which is 118 GB — three orders of magnitude past a
+  # GitHub-hosted runner's 14 GB disk and the 10 GB repo cache limit. Those suites are written with
+  # `describe.skipIf(!HAS_WOF)`, so on a hosted runner they would SKIP, and the leg would go green
+  # having tested a fraction of what its name claims. A gate that silently means less while
+  # reporting the same is worse than one that is honestly unavailable, so the degraded path skips
+  # them EXPLICITLY and says so, loudly, in the job summary and an annotation.
+  #
+  # Releases do not get this. publish.yml stays pinned to the fleet on purpose: a release must be
+  # cut against the full gate, and it also wants the host anyway.
+  #
+  # Resolution order — first match wins:
+  #   1. `vars.RUNNER_LABELS` (a repo variable, JSON array) — the manual override. Set it to
+  #      `["ubuntu-latest"]` to force the hosted path, or unset it to go back to automatic.
+  #   2. The runners API, if `secrets.RUNNER_PROBE_TOKEN` is set (a PAT with `administration: read`
+  #      — GITHUB_TOKEN cannot list self-hosted runners, there is no such permission scope).
+  #   3. The fleet. Every failure mode lands here: no token, a fork PR with no secrets, a 500 from
+  #      the API. Fail CLOSED — an unreachable probe must never silently downgrade the gate.
+  runner-select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      labels: ${{ steps.pick.outputs.labels }}
+      degraded: ${{ steps.pick.outputs.degraded }}
+    steps:
+      - name: Pick a runner
+        id: pick
+        env:
+          OVERRIDE: ${{ vars.RUNNER_LABELS }}
+          PROBE_TOKEN: ${{ secrets.RUNNER_PROBE_TOKEN }}
+          FLEET: '["self-hosted","Linux","X64"]'
+        run: |
+          emit() {
+            echo "labels=$1" >> "$GITHUB_OUTPUT"
+            echo "degraded=$2" >> "$GITHUB_OUTPUT"
+            echo "runner: $1 (degraded=$2)" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          if [ -n "${OVERRIDE:-}" ]; then
+            echo "::notice::vars.RUNNER_LABELS is set — using it verbatim: ${OVERRIDE}"
+            if [ "$OVERRIDE" = "$FLEET" ]; then emit "$OVERRIDE" false; else emit "$OVERRIDE" true; fi
+            exit 0
+          fi
+
+          if [ -z "${PROBE_TOKEN:-}" ]; then
+            echo "::notice::no RUNNER_PROBE_TOKEN (unset, or a fork PR) — assuming the fleet is up"
+            emit "$FLEET" false
+            exit 0
+          fi
+
+          # The `.runners | type == "array"` test is load-bearing, not defensive noise. Every API
+          # failure — bad credentials, 403, 404 — returns a JSON OBJECT with a `message` and no
+          # `runners` key, so a tolerant expression like `.runners // []` counts it as ZERO ONLINE
+          # RUNNERS and reports the fleet down. A count of zero cannot tell "nothing is online" from
+          # "nobody answered the question"; only the shape of the response can. Anything that is not
+          # an array yields a non-numeric sentinel, which the guard below turns into fail-closed.
+          online=$(curl -sS --max-time 30 \
+            -H "Authorization: Bearer ${PROBE_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runners" \
+            | jq -r 'if (.runners | type) == "array"
+                     then ([.runners[]
+                            | select(.status == "online")
+                            | select([.labels[].name] | index("self-hosted"))] | length)
+                     else "unanswered: " + ((.message // "unrecognized response") | tostring)
+                     end' 2>/dev/null) || online=""
+
+          # Anything that is not a plain integer — an empty body, `null`, an API error object — is a
+          # probe that did not answer, not a fleet that is down. Fail closed.
+          if ! [[ "$online" =~ ^[0-9]+$ ]]; then
+            echo "::warning::could not read the runners API (got '${online}') — assuming the fleet is up (failing closed to the full gate)"
+            emit "$FLEET" false
+          elif [ "$online" -gt 0 ]; then
+            echo "::notice::${online} self-hosted runner(s) online"
+            emit "$FLEET" false
+          else
+            echo "::warning::the self-hosted fleet is OFFLINE — falling back to GitHub-hosted runners. unit-slow's DB-gated suites and the packaging smoke CANNOT run there (the WOF data root is 118 GB) and will be SKIPPED, not silently passed. Do not cut a release off this run."
+            emit '["ubuntu-latest"]' true
+          fi
+
   # Lint + typechecks. `typecheck:scripts` and the docs typecheck need the workspace
   # .d.ts under each `out/`, hence Compile before them.
   static:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    needs: runner-select
+    runs-on: ${{ fromJSON(needs.runner-select.outputs.labels) }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -140,10 +230,8 @@ jobs:
   # The split exploits the fleet slot freed when smoke is path-gated; without it the unit leg
   # is the PR's long pole at ~7 min. Running both in parallel cuts it to max(slow, ~15s) ≈ 5 min.
   unit-fast:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    needs: runner-select
+    runs-on: ${{ fromJSON(needs.runner-select.outputs.labels) }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -174,11 +262,14 @@ jobs:
 
   # The DB-gated half of the Vitest sweep — everything excluded from unit-fast. Runs in
   # parallel with unit-fast on a separate runner slot; the aggregator gates on both.
+  # NOT PORTABLE — job-skipped when the fleet is down (see the runner-select header). Its suites read
+  # the 118 GB WOF data root and are written with `describe.skipIf(!HAS_WOF)`, so on a hosted runner
+  # they would skipIf their way to a green tick. A job that reports `skipped` is legible in the UI;
+  # a job that reports `success` having tested nothing is not.
   unit-slow:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    needs: runner-select
+    if: needs.runner-select.outputs.degraded != 'true'
+    runs-on: ${{ fromJSON(needs.runner-select.outputs.labels) }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -236,10 +327,8 @@ jobs:
   # (the failure class that turned Test red from #1215 until this leg existed). This leg is
   # their only CI coverage; if it's removed, the react package ships untested.
   react:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    needs: runner-select
+    runs-on: ${{ fromJSON(needs.runner-select.outputs.labels) }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -261,12 +350,18 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # No --with-deps: that path sudo-installs apt packages (fine on GitHub-hosted, but the lab
-      # runners have no passwordless sudo). The chromium system libs are provisioned on the host
-      # once (`playwright install-deps chromium`, operator sudo); this step only fetches the
-      # browser build into ~/.cache/ms-playwright, shared across all runner instances.
+      # No --with-deps on the fleet: that path sudo-installs apt packages and the lab runners have no
+      # passwordless sudo. The chromium system libs are provisioned on the host once
+      # (`playwright install-deps chromium`, operator sudo); this step only fetches the browser build
+      # into ~/.cache/ms-playwright, shared across all runner instances. A GitHub-hosted fallback
+      # runner is a fresh image with sudo and no libs, so there it DOES need --with-deps.
       - name: Install Playwright chromium (react browser tests)
-        run: yarn workspace @mailwoman/react exec playwright install chromium
+        run: |
+          if [ "${{ needs.runner-select.outputs.degraded }}" = "true" ]; then
+            yarn workspace @mailwoman/react exec playwright install --with-deps chromium
+          else
+            yarn workspace @mailwoman/react exec playwright install chromium
+          fi
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
@@ -281,11 +376,15 @@ jobs:
   # (osm, tile-worker, resolver-wof-wasm, neural-web) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
   # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
+  # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a
+  # sharper one: smoke packs the weights workspaces, `copy-weights.ts` materializes them from the
+  # data root, and `yarn pack` quietly packs whatever subset of the `files` globs exists. Without
+  # the host it would pack payload-free tarballs and install them happily — the exact failure that
+  # published neural-weights-en-in@8.6.0 empty.
   smoke:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    needs: runner-select
+    if: needs.runner-select.outputs.degraded != 'true'
+    runs-on: ${{ fromJSON(needs.runner-select.outputs.labels) }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -416,19 +515,42 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [static, unit-fast, unit-slow, react, smoke]
+    needs: [runner-select, static, unit-fast, unit-slow, react, smoke]
     if: always()
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    # Always hosted: this job only reads its `needs`, so pinning it to the fleet would make the
+    # aggregator itself unrunnable in exactly the situation the fallback exists for.
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # A `skipped` leg normally means something went wrong upstream, so it stays a failure — EXCEPT
+      # on the degraded path, where unit-slow and smoke skip by design because the host they need is
+      # gone. That exemption is the price of being able to merge at all with the fleet down, and it
+      # is narrow: failure and cancellation are still fatal, and the run says plainly what it did
+      # not cover.
       - name: Fail if any leg failed
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.runner-select.outputs.degraded != 'true' && contains(needs.*.result, 'skipped')) }}
         run: |
           echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
           exit 1
 
+      - name: Green, but on GitHub-hosted runners
+        if: ${{ needs.runner-select.outputs.degraded == 'true' }}
+        run: |
+          echo "::warning title=DEGRADED GATE::static, unit-fast and react passed on GitHub-hosted runners. unit-slow and smoke were SKIPPED — they need the 118 GB WOF data root and the materialized weights, neither of which exists off the lab fleet. This run did NOT exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not cut a release off it."
+          {
+            echo "## test: GREEN (degraded)"
+            echo ""
+            echo "| leg | result |"
+            echo "| --- | --- |"
+            echo "| static | ${{ needs.static.result }} |"
+            echo "| unit-fast | ${{ needs.unit-fast.result }} |"
+            echo "| unit-slow | ${{ needs.unit-slow.result }} — needs the fleet |"
+            echo "| react | ${{ needs.react.result }} |"
+            echo "| smoke | ${{ needs.smoke.result }} — needs the fleet |"
+            echo ""
+            echo "Bring the fleet back and re-run before releasing."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: All legs green
+        if: ${{ needs.runner-select.outputs.degraded != 'true' }}
         run: echo "static, unit, react, smoke — all green"
