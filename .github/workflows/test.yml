@@ -15,6 +15,7 @@
 # a seeded fixture in unit-fast (505ms, gazetteer-invariant) and the full-scale build is path-gated
 # here, with a nightly (lexicon-nightly.yml) for data drift and a release-time run in publish.yml.
 # See the per-job comment for why all three layers are needed.
+#
 # The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
@@ -198,6 +199,31 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The compiled tree, keyed on the sources it is a function of.
+      #
+      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
+      #
+      #   cold compile            47.4s
+      #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
+      #   compile after restore   15.9s
+      #
+      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      #
+      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # accept as current — the stale-artifact shape this repo has been bitten by before (the
+      # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
+      #
+      # github.sha in the key means every commit is a fresh entry, so the win lands on re-runs and on
+      # later pushes rather than within a single run. That is a deliberate trade for correctness, and
+      # it is why cache-prune.yml runs daily.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+          key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
       - name: Compile
         run: yarn compile
 
@@ -276,6 +302,31 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The compiled tree, keyed on the sources it is a function of.
+      #
+      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
+      #
+      #   cold compile            47.4s
+      #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
+      #   compile after restore   15.9s
+      #
+      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      #
+      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # accept as current — the stale-artifact shape this repo has been bitten by before (the
+      # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
+      #
+      # github.sha in the key means every commit is a fresh entry, so the win lands on re-runs and on
+      # later pushes rather than within a single run. That is a deliberate trade for correctness, and
+      # it is why cache-prune.yml runs daily.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+          key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
       - name: Compile
         run: yarn compile
 
@@ -315,6 +366,31 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The compiled tree, keyed on the sources it is a function of.
+      #
+      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
+      #
+      #   cold compile            47.4s
+      #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
+      #   compile after restore   15.9s
+      #
+      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      #
+      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # accept as current — the stale-artifact shape this repo has been bitten by before (the
+      # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
+      #
+      # github.sha in the key means every commit is a fresh entry, so the win lands on re-runs and on
+      # later pushes rather than within a single run. That is a deliberate trade for correctness, and
+      # it is why cache-prune.yml runs daily.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+          key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
       - name: Compile
         run: yarn compile
 
@@ -406,6 +482,32 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
         run: yarn install --immutable
 
+      # The compiled tree, keyed on the sources it is a function of.
+      #
+      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
+      #
+      #   cold compile            47.4s
+      #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
+      #   compile after restore   15.9s
+      #
+      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      #
+      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # accept as current — the stale-artifact shape this repo has been bitten by before (the
+      # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
+      #
+      # github.sha in the key means every commit is a fresh entry, so the win lands on re-runs and on
+      # later pushes rather than within a single run. That is a deliberate trade for correctness, and
+      # it is why cache-prune.yml runs daily.
+      - name: Restore compiled tree
+        if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+          key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
       - name: Compile
         if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
         run: yarn compile
@@ -459,6 +561,31 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The compiled tree, keyed on the sources it is a function of.
+      #
+      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
+      #
+      #   cold compile            47.4s
+      #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
+      #   compile after restore   15.9s
+      #
+      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      #
+      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # accept as current — the stale-artifact shape this repo has been bitten by before (the
+      # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
+      #
+      # github.sha in the key means every commit is a fresh entry, so the win lands on re-runs and on
+      # later pushes rather than within a single run. That is a deliberate trade for correctness, and
+      # it is why cache-prune.yml runs daily.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+          key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
       - name: Compile
         run: yarn compile
 
@@ -579,6 +706,32 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn install --immutable
 
+      # The compiled tree, keyed on the sources it is a function of.
+      #
+      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
+      #
+      #   cold compile            47.4s
+      #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
+      #   compile after restore   15.9s
+      #
+      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      #
+      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # accept as current — the stale-artifact shape this repo has been bitten by before (the
+      # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
+      #
+      # github.sha in the key means every commit is a fresh entry, so the win lands on re-runs and on
+      # later pushes rather than within a single run. That is a deliberate trade for correctness, and
+      # it is why cache-prune.yml runs daily.
+      - name: Restore compiled tree
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+          key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
       - name: Compile
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn compile
