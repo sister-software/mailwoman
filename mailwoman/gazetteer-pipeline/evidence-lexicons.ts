@@ -112,6 +112,22 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
  * moving the FST policy.
  */
 export function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Set<string> {
+	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries, process-lifetime,
+	// no invalidation key. Keyed by fold identity — the FST and painter folds must not share.
+	// The returned set is SHARED; every caller only iterates it.
+	let hit = directionalSurfacesMemo.get(fold)
+
+	if (!hit) {
+		hit = scanDirectionalSurfaces(fold)
+		directionalSurfacesMemo.set(fold, hit)
+	}
+
+	return hit
+}
+
+const directionalSurfacesMemo = new Map<(surface: string) => string[], Set<string>>()
+
+function scanDirectionalSurfaces(fold: (surface: string) => string[]): Set<string> {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
 	const surfaces = new Set<string>()
 
@@ -219,6 +235,24 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
  * Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles).
  */
 export function loadPersonNameSurfaces(): Set<string> {
+	personNameSurfacesMemo ??= scanPersonNameSurfaces()
+
+	return personNameSurfacesMemo
+}
+
+/**
+ * Memo for {@link loadPersonNameSurfaces}.
+ *
+ * The curation inputs are static files, so this is process-lifetime — no invalidation key, unlike
+ * {@link computeSurfaceCountryCounts}, whose input is a rebuildable artifact. The FR and US locality-surface passes were
+ * each re-reading and re-folding the whole given-names + surnames + personal-titles set.
+ *
+ * The returned set is SHARED. Every caller only probes it (`clearsProminenceFloor` takes it as `ReadonlySet`); a future
+ * caller that mutates must copy first.
+ */
+let personNameSurfacesMemo: Set<string> | undefined
+
+function scanPersonNameSurfaces(): Set<string> {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
 	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
 

@@ -119,6 +119,16 @@ export default defineConfig({
 			// full copy of the repo's test files. Without this exclude, vitest descends into every
 			// active worktree and runs every test suite N×(worktree count) times.
 			"**/.claude/worktrees/**",
+			// `corpus-python/.venv` is a Python virtualenv that vendors a Svelte app (trackio) carrying
+			// its own *.test.js files. Vitest collected five of them; they normally surface as an
+			// unexplained `1 skipped`, and at `--maxWorkers=4` one FAILED the run outright with "No test
+			// suite found in file .../legend.test.js". CI never saw it — .venv is not checked in, so a
+			// fresh checkout collects 316 files against a working tree's 321 — but it is a real local
+			// and agent-worktree flake, and the failure mode is a red run nobody can attribute.
+			"**/.venv/**",
+			// scratchpad/ holds staged release trees, probe output, and copied source. Same class: not
+			// checked in, so invisible to CI, and a landmine locally.
+			"**/scratchpad/**",
 			// @mailwoman/react's tests are Vitest BROWSER MODE only (playwright/chromium via the
 			// workspace's own vitest.config.ts + `test:browser`). Importing vitest/browser inside
 			// this root forks-pool sweep is a hard error ("can be imported only inside the Browser

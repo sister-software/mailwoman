@@ -73,6 +73,36 @@ const MODEL_PATH =
 
 const haveModel = existsSync(MODEL_PATH)
 
+/**
+ * Run each locale's `link-dev-weights.ts` at most ONCE per process.
+ *
+ * The scripts are idempotent — they symlink the dev artifacts into the workspace and, on a cold cache, shell out to the
+ * compiled CLI to rebuild a stale `postcode-<cc>.bin` / `pair-index-<cc>.bin` behind a freshness guard. Eighteen call
+ * sites in this file were invoking them, most in pairs, for a result that cannot change after the first: measured
+ * 2026-08-02 the file was 96.6s of a 253s CI leg.
+ *
+ * The rebuild semantics survive memoization. The first call does the freshness check and any rebuild; every later call
+ * was re-verifying state the first one already made fresh, and no test asserts the ACT of re-linking. Nothing in this
+ * file deletes a real `neural-weights-*` artifact mid-run (the two `rmSync`/`symlinkSync` sites work on temp fixtures),
+ * so the memo cannot go stale underneath a later test. If that ever changes, this is what has to be reconsidered.
+ *
+ * Deliberately lazy rather than a top-level `beforeAll`: every caller is `skipIf`-gated on the dev model being present,
+ * and a `beforeAll` would spawn the scripts even where all of them skip.
+ */
+const linkedLocales = new Set<string>()
+
+function ensureDevWeightsLinked(...locales: readonly string[]): void {
+	for (const locale of locales) {
+		if (linkedLocales.has(locale)) continue
+
+		execFileSync(process.execPath, [repoRootPath(`neural-weights-${locale}`, "scripts", "link-dev-weights.ts")], {
+			stdio: "pipe",
+		})
+
+		linkedLocales.add(locale)
+	}
+}
+
 // The en-gb auto-resolve test's link-dev-weights.ts additionally shells out to the compiled CLI to
 // build postcode-gb.bin from the GB WOF postcode shard (see the script's header) — both must be on
 // disk for that step to run, or the test would either fail on a missing binary or silently exercise
@@ -189,16 +219,14 @@ describe("resolveWeights — package auto-resolve", () => {
 	// pipeline deserializes + auto-wires it from there. A package without the sibling (en-nz) leaves
 	// fstPath undefined — byte-stable.
 	test.skipIf(!haveModel)("surfaces fstPath for a weights package shipping fst-<locale>.bin", () => {
-		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-		execFileSync(process.execPath, [linkScript], { stdio: "pipe" })
+		ensureDevWeightsLinked("en-us")
 
 		const r = resolveWeights({ locale: "en-us" })
 		expect(r.fstPath).toMatch(/neural-weights-en-us\/fst-en-us\.bin$/)
 	})
 
 	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
-		const linkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-		execFileSync(process.execPath, [linkScript], { stdio: "pipe" })
+		ensureDevWeightsLinked("en-us")
 
 		const r = resolveWeights({ locale: "en-us" })
 		expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")
@@ -218,11 +246,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB)(
 		"en-gb resolves model/tokenizer/model-card from the en-us base + postcode-gb.bin locally, and parses",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
 			expect(r.source).toBe("package:@mailwoman/neural-weights-en-gb+base")
@@ -254,11 +278,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode shard), and parses",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enNZLinkScript = repoRootPath("neural-weights-en-nz", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enNZLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-nz")
 
 			const r = resolveWeights({ locale: "en-nz" })
 			expect(r.source).toBe("package:@mailwoman/neural-weights-en-nz+base")
@@ -303,11 +323,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
 			expect(r.pairIndexPath).toMatch(/neural-weights-en-gb\/pair-index-gb\.bin$/)
@@ -332,11 +348,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: the placetype-pair bias at the child token equals the artifact's calibrated delta (margin-independent)",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
@@ -376,11 +388,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 
@@ -409,11 +417,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: a wide-margin real pair flips the decode — Holland Fen decodes as dependent_locality (the arc's ONE flip assertion)",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
@@ -463,11 +467,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: the transitionBeta=5 artifact flips a comma-free fused-path row; a beta-less view of the same index does not (TRANSITION-BETA)",
 		async () => {
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
-
-			const enGBLinkScript = repoRootPath("neural-weights-en-gb", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enGBLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
@@ -505,8 +505,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 			// (49,033 WOF-sourced pairs), so the invariant is sharper: the index EXISTS and is still inert on GB input.
 			// Two independent things keep it inert — the header's hard country gate, and the plain fact that US pairs
 			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us")
 
 			const r = resolveWeights({ locale: "en-us" })
 			expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
@@ -531,8 +530,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 		async () => {
 			// Guarantee the en-us workspace has its dev binaries materialized, then mirror the package
 			// into a temp cacheRoot layout via symlinks (cacheDir = <cacheRoot>/node_modules/<pkg>).
-			const enUSLinkScript = repoRootPath("neural-weights-en-us", "scripts", "link-dev-weights.ts")
-			execFileSync(process.execPath, [enUSLinkScript], { stdio: "pipe" })
+			ensureDevWeightsLinked("en-us")
 
 			const packageDir = repoRootPath("neural-weights-en-us")
 			const cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-pair-gate-"))

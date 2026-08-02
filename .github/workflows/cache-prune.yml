@@ -1,0 +1,131 @@
+# Prune the repo's GitHub Actions cache.
+#
+# WHY THIS EXISTS: measured 2026-08-02, the repo sat at 10.7 GB against a 10 GB limit with 78
+# entries. Over quota, GitHub evicts LRU — and what it evicted was the hosted legs' yarn cache, so
+# `Install dependencies` flipped between 24s (warm) and 83s (cold) run to run, on three legs, with
+# `yarn cache is not found` in the Setup Node log. Nothing about the yarn config was wrong; there
+# was no room. CodeQL's default-setup overlay-base databases were 4324 MB across 54 entries — 40%
+# of the entire budget, for a workflow that is not even in this directory (code scanning default
+# setup, configured in the repo UI).
+#
+# POLICY:
+#   - codeql-overlay-base-database-*  keep the NEWEST per language, delete the rest. These are
+#     CodeQL's incremental-analysis cache; deleting them all costs CodeQL time on every run, so this
+#     keeps one working set per language rather than zero. The 2026-08-02 first run took the group
+#     from 4324 MB / 54 entries to 242 MB / 3.
+#   - everything else                 LEFT ALONE. This is not a general garbage collector; an
+#     unrecognized key prefix is somebody's working cache and is none of its business. The loop
+#     re-checks the prefix on each row before deleting, so a jq change upstream cannot widen it.
+#
+# SAFETY: entries accessed within the last hour are skipped unconditionally, so a prune landing
+# mid-run cannot delete a cache a live job is about to read.
+#
+# ⚠ DO NOT report size from `/actions/actions/cache/usage`. That endpoint is EVENTUALLY CONSISTENT
+# and lagged badly on the first manual run — it still read 10.7 GB / 77 entries immediately after 51
+# successful deletions that the live listing confirmed. Sum `/actions/caches` instead; that is
+# authoritative.
+#
+# ⚠ The key's language is field index 6 when split on "-", not 5:
+#   codeql-overlay-base-database-1-<hash>-<language>-<version>-<sha>-<runid>-1
+#   0      1       2    3        4 5      6          7         8     9       10
+#
+# DRY RUN: workflow_dispatch exposes `apply` (default false). The scheduled run applies; a manual
+# run reports what it would delete unless you tick the box.
+name: Cache prune
+
+on:
+  schedule:
+    # 04:17 UTC daily — off the hour to avoid GitHub's scheduling stampede.
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Actually delete (unticked = report only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Prune
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
+        run: |
+          set -euo pipefail
+
+          # Authoritative size: sum the live listing. See the header on why usage/ is not used.
+          total() {
+            gh api --paginate "repos/${REPO}/actions/caches" \
+              --jq '.actions_caches[].size_in_bytes' | awk '{s+=$1} END {printf "%d", s+0}'
+          }
+
+          before=$(total)
+          before_n=$(gh api "repos/${REPO}/actions/caches?per_page=1" --jq '.total_count')
+
+          cutoff=$(date -u -d '1 hour ago' +%s)
+
+          gh api --paginate "repos/${REPO}/actions/caches" \
+            --jq '.actions_caches[]
+                  | select(.key | startswith("codeql-overlay-base-database-"))
+                  | [.id, .last_accessed_at, (.key | split("-")[6]), .size_in_bytes, .key]
+                  | @tsv' > /tmp/codeql.tsv
+
+          # Newest first, so the first row per language is the one to keep.
+          sort -t$'\t' -k2,2r -o /tmp/codeql.tsv /tmp/codeql.tsv
+
+          seen=""
+          deleted=0
+
+          while IFS=$'\t' read -r id accessed lang size key; do
+            [ -n "${id:-}" ] || continue
+
+            # Belt on the prefix a second time: the jq filter above already restricts the set, but a
+            # deletion loop should not trust an upstream expression it does not re-check.
+            case "$key" in
+              codeql-overlay-base-database-*) ;;
+              *) echo "::warning::refusing non-codeql key ${key}"; continue ;;
+            esac
+
+            accessed_epoch=$(date -u -d "$accessed" +%s 2>/dev/null || echo 0)
+
+            if [ "$accessed_epoch" -gt "$cutoff" ]; then
+              echo "SKIP (hot)            ${lang}  ${key}"
+              continue
+            fi
+
+            case " $seen " in
+              *" $lang "*)
+                echo "DELETE                ${lang}  $((size / 1048576))MB  ${key}"
+                if [ "$APPLY" = "true" ]; then
+                  gh api -X DELETE "repos/${REPO}/actions/caches/${id}" >/dev/null
+                fi
+                deleted=$((deleted + 1))
+                ;;
+              *)
+                echo "KEEP (newest ${lang})  $((size / 1048576))MB"
+                seen="$seen $lang"
+                ;;
+            esac
+          done < /tmp/codeql.tsv
+
+          after=$(total)
+          after_n=$(gh api "repos/${REPO}/actions/caches?per_page=1" --jq '.total_count')
+
+          {
+            echo "## Cache prune"
+            echo ""
+            echo "| | size | entries |"
+            echo "| --- | ---: | ---: |"
+            echo "| before | $((before / 1048576)) MB | ${before_n} |"
+            echo "| after  | $((after / 1048576)) MB | ${after_n} |"
+            echo ""
+            echo "apply: \`${APPLY}\` — ${deleted} entrie(s) eligible"
+          } >> "$GITHUB_STEP_SUMMARY"
