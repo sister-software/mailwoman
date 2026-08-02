@@ -4,16 +4,19 @@
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
 #
-# STRUCTURE — four independent legs fan out across the lab's self-hosted runner fleet
-# (lab-1..lab-4, one job slot each), then the `test` aggregator gates on all of them.
+# STRUCTURE — five legs (static, unit-fast, unit-slow, react, smoke) fan out across the
+# lab's self-hosted runner fleet (lab-1..lab-4, one job slot each), then the `test` aggregator
+# gates on all five. unit-fast and unit-slow run the root Vitest sweep concurrently — fast leg
+# is the pure unit/lexicon surface (~313 files, ~15s); slow leg is the DB-gated integration
+# suites (CLI harness, WOF resolver, model-load tests, ~87 files, ~5 min).
 # The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
 #
-# PATH-GATING: the smoke leg validates the PACKAGING pipeline, not the source, so it is
-# gated on paths that affect packaging. A docs-only or data-only PR skips smoke entirely
-# (the job reports green in seconds) — the long pole drops from 17-19 min to ~10 min for
-# most PRs. On push to main + workflow_dispatch (release flow), smoke runs unconditionally.
+# PATH-GATING: the smoke leg validates the PACKAGING pipeline (see per-job comment), so a
+# docs-only or data-only PR skips smoke entirely — the job reports green in seconds. The unit
+# split into fast/slow means the fast leg reports in ~15s on a fleet slot that's released
+# after the prefix (~75s); the slow leg (DB-gated suites) runs in parallel on another slot.
 # Each leg repeats the checkout→install→compile prefix (~75s) rather than sharing a
 # build artifact — the legs run concurrently on the same host, so the prefix costs
 # wall-clock once, and artifact round-trips through GitHub's storage would cost more.
@@ -128,8 +131,15 @@ jobs:
       - name: Typecheck docs
         run: yarn workspace @mailwoman/docs typecheck
 
-  # The root Vitest sweep.
-  unit:
+  # The root Vitest sweep, split into two legs that run concurrently.
+  # unit-fast: every test file that does NOT load the model, hit a WOF DB, or invoke the CLI
+  #   harness — the pure unit/lexicon surface (~313 files). Finishes in ~15s.
+  # unit-slow: the DB-gated integration suites (mailwoman CLI harness, resolver-wof-sqlite WOF
+  #   tests, neural/test model-load tests, evidence-lexicons build). ~87 files, ~5 min floor.
+  #
+  # The split exploits the fleet slot freed when smoke is path-gated; without it the unit leg
+  # is the PR's long pole at ~7 min. Running both in parallel cuts it to max(slow, ~15s) ≈ 5 min.
+  unit-fast:
     runs-on:
       - self-hosted
       - Linux
@@ -155,14 +165,39 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # The lab runners have $MAILWOMAN_DATA_ROOT, so the data-dependent suites (e.g.
-      # default-country.test.ts's `parse --resolve` legs) ACTIVATE here — they were silently
-      # skipped on GitHub-hosted. Those parses need the weights workspaces fully materialized
-      # (model + the #718 soft-feed siblings: postcode-*.bin, anchor/country lexicons,
-      # pair-index-*.bin); a bare checkout has only the committed metadata, so the CLI runs
-      # anchor-OFF and the namesake-binding assertions fail (Paris TX → Paris FR).
-      # copy-weights takes ~4m30 (the GB pair-index build), so the artifacts are cached on the
-      # inputs that determine them and rebuilt only when release.config.json or a lexicon moves.
+      # No weights materialization — this leg excludes every suite that loads the model or
+      # hits a WOF DB (neural/test/**, mailwoman/test/**, resolver-wof-sqlite/**,
+      # evidence-lexicons, geocode CLI). The 313-file sweep finishes in ~15s; suite-only
+      # failures surface before the slow leg finishes.
+      - name: Test (fast)
+        run: yarn ci:test:fast
+
+  # The DB-gated half of the Vitest sweep — everything excluded from unit-fast. Runs in
+  # parallel with unit-fast on a separate runner slot; the aggregator gates on both.
+  unit-slow:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # actions-cache restore DISABLED (2026-07-29) — see static leg comment for rationale.
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
       - name: Restore weights cache (model + soft-feed siblings)
         id: weights-cache
         uses: actions/cache@v6
@@ -180,10 +215,6 @@ jobs:
         if: steps.weights-cache.outputs.cache-hit != 'true'
         run: node scripts/copy-weights.ts
 
-      # #1177 Phase A: base-latn symlinks the same model.onnx / tokenizer.model en-us ships.
-      # On a cache miss, copy-weights.ts skips in CI (MAILWOMAN_SKIP_WEIGHTS_COPY), but
-      # the en-us files are already materialized above — symlink them for base-latn so the
-      # resolvers can find them. A cache-hit already carries the files from the glob.
       - name: Symlink base-latn model (cache miss — en-us already materialized)
         if: steps.weights-cache.outputs.cache-hit != 'true'
         run: |
@@ -192,8 +223,8 @@ jobs:
             [ -f "neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "neural-weights-base-latn/$f"
           done
 
-      - name: Test
-        run: yarn ci:test
+      - name: Test (slow)
+        run: yarn ci:test:slow
 
   # @mailwoman/react's suites are Vitest browser mode (playwright/chromium) and are excluded
   # from the root sweep — importing vitest/browser under the forks pool is a hard error
@@ -380,7 +411,7 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [static, unit, react, smoke]
+    needs: [static, unit-fast, unit-slow, react, smoke]
     if: always()
     runs-on:
       - self-hosted
