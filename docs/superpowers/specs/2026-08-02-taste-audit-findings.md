@@ -3,7 +3,36 @@
 **Date:** 2026-08-02
 **Base:** `origin/main` @ `9b46c82e`
 **Scope + method:** [`2026-08-02-taste-audit-design.md`](./2026-08-02-taste-audit-design.md)
-**Code changed by this pass:** none.
+**Execution status:** seven clusters landed — see below.
+
+## Status — 2026-08-02, after execution
+
+Seven clusters landed on `worktree-taste-audit`. Every one was verified against a recorded baseline
+(4,617 passing tests; the single default-timeout failure in `neural/test/weights.test.ts` is a cold
+-cache artifact that passes at a 120s timeout — and is itself evidence for A1, since what times out
+is the 441-line `link-dev-weights.ts`).
+
+| cluster | what landed                                                           | net lines |
+| ------- | --------------------------------------------------------------------- | --------: |
+| B2      | `splitStreetLine` + `HOUSE_NUMBER_PREFIX` → `corpus/src/adapter.ts`   |       −90 |
+| B6      | `scripts/eval/v0-tree-adapter.ts` deleted, last importer repointed    |      −121 |
+| B1      | ray cast → `spatial/geometries/polygon.ts` (see the correction below) |       +57 |
+| B5      | `swapDatabaseIntoPlace` → `core/utils/sealed-db.ts`                   |       −13 |
+| A8      | `jaccard` → `match/comparators.ts`                                    |       −11 |
+| A3      | `mulberry32` / `makeLcg` thunks → `core/utils/python-random.ts`       |      −158 |
+| C1      | `scripts/lint-acronym-casing.ts`, wired into `yarn lint`; 11 renames  |      +234 |
+
+**One finding was corrected by implementing it.** B1 proposed moving all three point-in-polygon
+implementations into `@mailwoman/spatial`. Reading the dependency graph before doing it changed the
+answer: `nuts-lookup` and `timezone-lookup` each have exactly ONE dependency (zero-dep
+`@mailwoman/annotations`), and `@mailwoman/spatial` pulls `@mailwoman/core`, whose published tarball
+carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven megabytes for a fifteen-line ray cast is
+the wrong trade for a leaf lookup package. The resolver half moved (it already depended on spatial);
+the two lookups keep their copies with the measurement written into both files. `match/gbt.test.ts`
+keeps its LCG for the same reason. **See rejected-candidate #11.**
+
+Still open: A1 (nine forked `link-dev-weights.ts` — the largest, and the one where the merged
+behaviour wants a second pair of eyes), A2, A4–A7, and B3–B14.
 
 ## Summary
 
@@ -254,6 +283,13 @@ home"; PIP is the gap that makes the claim untrue.
 **Cost of leaving it: medium** (three packages, ray-cast edge cases, no shared tests).
 **Cost of fixing it: low-medium** — one new export, three call sites, and the resolver variant's
 `readonly` GeoJSON types need to be the shared signature.
+
+> **CORRECTED ON IMPLEMENTATION.** Only the resolver moved. `nuts-lookup` and `timezone-lookup` each
+> carry exactly one dependency (zero-dep `@mailwoman/annotations`); importing spatial to reach the
+> ray cast would pull `@mailwoman/core` and its ~11 MB of shipped data into two leaf packages. That
+> is a three-order-of-magnitude weight increase for fifteen lines, so both keep their copies with the
+> measurement recorded in place. The audit priced the duplication and not the dependency; reading the
+> graph before moving is what caught it.
 
 ### B2. corpus adapters — the same regex ten times, the same splitter eight times
 
@@ -549,6 +585,14 @@ them.
 
 10. **`gauntlet/cases/regression.ts` at 2291 lines** — a data table with two exports and zero
     functions. Long is not the same as doing too much.
+
+11. **`nuts-lookup` / `timezone-lookup` point-in-ring, and `match/gbt.test.ts`'s LCG** — real,
+    verified duplicates of code that now has a shared home, and they stay duplicated. Each package
+    would have to take a dependency whose published weight is three orders of magnitude larger than
+    the code it deduplicates (`@mailwoman/spatial` → `@mailwoman/core` → ~11 MB of data;
+    `@mailwoman/match` has no core dependency at all today). Recorded in each file so the next sweep
+    finds the reasoning instead of the copy. **A duplicate with a priced reason is a decision, not a
+    defect** — this is the category the audit's own B-axis was missing.
 
 ## What this audit did not cover
 
