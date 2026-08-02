@@ -1,0 +1,83 @@
+# The full-scale locality-surface build, nightly, against the LIVE data root.
+#
+# WHY A NIGHTLY AND NOT JUST THE PATH GATE: `test.yml`'s `lexicon-full` job catches a pull request
+# that changes the BUILDER or its committed inputs. It cannot catch the other failure mode — the
+# gazetteer itself being rebuilt. That happens outside any pull request, so no path filter will ever
+# see it, and the first symptom would otherwise be a bad lexicon shipping at release.
+#
+# This job is also the CONTROL FOR THE FIXTURE LAYER. Since 2026-08-02 the every-PR coverage of the
+# four-law selectivity is `evidence-lexicons.fixture.test.ts`, a seeded DB that by construction does
+# not move when the real data moves. That is what makes it cheap, and it is also its one weakness: a
+# fixture that stops representing reality is a gate that passes while meaning nothing. This run is
+# what would say so.
+#
+# A failure here is a DATA finding, not a broken build. Read it as "the gazetteer changed under the
+# lexicon", and check the gazetteer build log before assuming the test is wrong.
+name: Lexicon nightly
+
+on:
+  schedule:
+    # 03:41 UTC — after the gazetteer build window, before the working day.
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  # Same reason as test.yml: onnxruntime-node's postinstall pulls OPTIONAL GPU providers from an
+  # Akamai edge that is intermittently unreachable from the lab.
+  ONNXRUNTIME_NODE_INSTALL: skip
+
+concurrency:
+  group: lexicon-nightly
+  # A queued second run would race the first for the same databases; the newest is the one that
+  # matters, and neither is load-bearing for a merge.
+  cancel-in-progress: true
+
+jobs:
+  full-build:
+    # NOT PORTABLE: reads the 4.9 GB WOF admin DB. The `mailwoman-data` label means
+    # "$MAILWOMAN_DATA_ROOT is present and populated". If the fleet is down this job queues rather
+    # than running — which for a nightly is the right failure: it is not gating anything, and a
+    # skipped nightly that silently reported green would defeat the point of having it.
+    runs-on:
+      - self-hosted
+      - mailwoman-data
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      - name: Full-scale locality-surface build
+        id: build
+        run: yarn ci:test:lexicon-full
+
+      - name: Report a data-drift failure
+        if: failure() && steps.build.outcome == 'failure'
+        run: |
+          echo "::error title=LEXICON DATA DRIFT::The full-scale locality-surface build failed against the live data root, and no pull request changed the builder. Either the gazetteer was rebuilt with different content, or the fixture layer has stopped representing it. Check the gazetteer build log before assuming the test is wrong."
+          {
+            echo "## Lexicon nightly: FAILED"
+            echo ""
+            echo "The full-scale build failed against the live data root with no builder change."
+            echo ""
+            echo "- If the gazetteer was rebuilt, the lexicon's expectations may need re-measuring."
+            echo "- If it was not, \`evidence-lexicons.fixture.test.ts\` may have drifted from reality."
+            echo ""
+            echo "The every-PR fixture layer is still green either way — that is exactly why this job exists."
+          } >> "$GITHUB_STEP_SUMMARY"

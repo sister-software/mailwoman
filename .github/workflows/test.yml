@@ -4,10 +4,17 @@
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
 #
-# STRUCTURE — five legs (static, unit-fast, unit-slow, react, smoke), then the `test` aggregator
-# gates on all five. unit-fast and unit-slow run the root Vitest sweep concurrently — fast leg
-# is the pure unit/lexicon surface (~313 files, ~15s); slow leg is the DB-gated integration
-# suites (CLI harness, WOF resolver, model-load tests, ~87 files, ~5 min).
+# STRUCTURE — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
+# aggregator gates on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
+# leg is the pure unit/lexicon surface (~317 files, ~10s); slow leg is the DB-gated integration
+# suites (CLI harness, WOF resolver, model-load tests, ~86 files, ~95s).
+#
+# lexicon-full is the sixth leg and the newest (2026-08-02). It exists because ONE test file was
+# unit-slow's entire wall-clock: the full-scale locality-surface build was 236.9s of a 253s leg, and
+# it grew with the gazetteer, so the problem compounded on its own. The four laws now assert against
+# a seeded fixture in unit-fast (505ms, gazetteer-invariant) and the full-scale build is path-gated
+# here, with a nightly (lexicon-nightly.yml) for data drift and a release-time run in publish.yml.
+# See the per-job comment for why all three layers are needed.
 # The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
@@ -344,6 +351,86 @@ jobs:
       - name: Test (slow)
         run: yarn ci:test:slow
 
+  # The FULL-SCALE locality-surface build (`evidence-lexicons.full.test.ts`).
+  #
+  # WHY IT IS ITS OWN JOB: it WAS unit-slow's wall-clock. Measured 2026-08-02, two tests building the
+  # lexicon over the whole 4.9 GB admin DB were 236.9s of a 253s leg — 93% of the leg's test time —
+  # and the cost grows with the gazetteer, so the problem was getting worse on its own. Splitting it
+  # out took unit-slow to ~94s locally.
+  #
+  # WHAT STILL RUNS EVERY PR: the four laws, against a seeded fixture DB
+  # (`evidence-lexicons.fixture.test.ts`, 505ms, in unit-fast). That file drives the REAL builder
+  # through `opts.dbPath` and is invariant to gazetteer size. What is NOT covered when this job is
+  # path-gated off is the COVERAGE-SCALE claim — `entries > 10_000` and the nonzero skip counters —
+  # which is a claim about the gazetteer rather than about the laws.
+  #
+  # PATH-GATED, and the three layers are deliberate. This job catches a PR that changes the BUILDER.
+  # It cannot catch DATA DRIFT: the gazetteer is rebuilt outside any pull request, so no path filter
+  # will ever see it. `lexicon-nightly.yml` is that layer, and `publish.yml` runs the build again at
+  # release so a tag is never cut on an inherited "no lexicon path changed" tick.
+  #
+  # NOT PORTABLE — reads the same ~10 GB of databases as unit-slow.
+  lexicon-full:
+    needs: data-fleet
+    if: needs.data-fleet.outputs.up == 'true'
+    runs-on:
+      - self-hosted
+      - mailwoman-data
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect lexicon-affecting changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        with:
+          filters: |
+            lexicon:
+              - 'mailwoman/gazetteer-pipeline/**'
+              - 'data/gazetteer/**'
+              - 'core/data/libpostal/**'
+              - 'codex/**'
+
+      - name: Setup Node
+        if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (yarn 4)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
+        run: corepack enable
+
+      - name: Install dependencies
+        if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
+        run: yarn install --immutable
+
+      - name: Compile
+        if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
+        run: yarn compile
+
+      - name: Full-scale locality-surface build
+        if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
+        run: yarn ci:test:lexicon-full
+
+      # A gate that silently means less while reporting the same is worse than one that is honestly
+      # unavailable — the rule the data-fleet skip path already follows. When the filter holds this
+      # job back, the run says what it did not cover instead of showing an unexplained green tick.
+      - name: Say what this run did NOT cover
+        if: github.event_name == 'pull_request' && steps.changes.outputs.lexicon != 'true'
+        run: |
+          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws WERE asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised; lexicon-nightly.yml and the release gate carry those."
+          {
+            echo "## lexicon-full: skipped (path-gated)"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| four laws asserted | **yes** — fixture layer, in \`unit-fast\` |"
+            echo "| full-scale build | **no** — no lexicon-affecting path changed |"
+            echo "| covered instead by | \`lexicon-nightly.yml\`, and \`publish.yml\` at release |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # @mailwoman/react's suites are Vitest browser mode (playwright/chromium) and are excluded
   # from the root sweep — importing vitest/browser under the forks pool is a hard error
   # (the failure class that turned Test red from #1215 until this leg existed). This leg is
@@ -536,7 +623,7 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [data-fleet, static, unit-fast, unit-slow, react, smoke]
+    needs: [data-fleet, static, unit-fast, unit-slow, lexicon-full, react, smoke]
     if: always()
     # Hosted, always: this job only reads its `needs`, and pinning the aggregator to the fleet would
     # make it unrunnable in exactly the situation the skip path exists for.
@@ -568,6 +655,7 @@ jobs:
             echo "| react | hosted | ${{ needs.react.result }} |"
             echo "| unit-slow | \`mailwoman-data\` | ${{ needs.unit-slow.result }} |"
             echo "| smoke | \`mailwoman-data\` | ${{ needs.smoke.result }} |"
+            echo "| lexicon-full | \`mailwoman-data\` | ${{ needs.lexicon-full.result }} |"
             echo ""
             echo "Bring a \`mailwoman-data\` runner online and re-run before releasing."
           } >> "$GITHUB_STEP_SUMMARY"
