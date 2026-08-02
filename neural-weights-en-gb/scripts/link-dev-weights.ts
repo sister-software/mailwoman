@@ -347,6 +347,11 @@ const PAIR_INDEX_TRANSITION_BETA = 5
  */
 const BOROUGH_DB = dataRootPath("wof", "admin-global-priority.db")
 const LONDON_PAIRS_JSONL = repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl")
+/**
+ * Northern Ireland neighbourhood pairs (campaign R7). A SEPARATE file rather than merged into the London one, so each
+ * source keeps its own provenance md5 in the header and the freshness guard can tell which of them moved.
+ */
+const NI_PAIRS_JSONL = repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl")
 
 let pairIndexIsFresh = false
 
@@ -387,6 +392,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				await md5FileWithSidecar(String(PPD_SOURCE_CSV)),
 				await md5FileWithSidecar(String(BOROUGH_DB)),
 				await md5FileWithSidecar(String(LONDON_PAIRS_JSONL)),
+				await md5FileWithSidecar(String(NI_PAIRS_JSONL)),
 			]
 			const matches =
 				existingSourceMD5s.length === currentSourceMD5s.length &&
@@ -442,7 +448,7 @@ if (pairIndexIsFresh) {
 			"--borough-db",
 			String(BOROUGH_DB),
 			"--pairs-jsonl",
-			String(LONDON_PAIRS_JSONL),
+			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL].join(","),
 		],
 		{ stdio: "inherit" }
 	)
