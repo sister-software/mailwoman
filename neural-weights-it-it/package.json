@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-it-it",
-	"version": "8.5.0",
+	"version": "8.6.0",
 	"description": "it-IT weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us.",
 	"license": "AGPL-3.0",
 	"repository": {
