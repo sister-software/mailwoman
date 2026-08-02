@@ -97,6 +97,12 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Park Slope", "Brooklyn"],
 		["Manhattan", "New York"],
 	],
+	// R9: the DE instance. Ortsteile/Stadtteile under their Gemeinde — the line German addresses
+	// carry when they carry one at all (the Ortsteil sits above "PLZ Stadt", never inside it).
+	de: [
+		["Nippes", "Köln"],
+		["Schwabing", "München"],
+	],
 	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`), not quartiers —
 	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
 	fr: [

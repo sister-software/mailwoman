@@ -264,6 +264,7 @@
  *   this locale) — the probe loop simply never finds a tag.
  */
 
+import { PLZ_PATTERN } from "@mailwoman/codex/de"
 import { CODE_POSTAL_PATTERN } from "@mailwoman/codex/fr"
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
@@ -564,6 +565,7 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
 	["gb", UK_POSTCODE_PATTERN],
 	["nz", NZ_POSTCODE_PATTERN],
 	["fr", CODE_POSTAL_PATTERN],
+	["de", PLZ_PATTERN],
 ])
 
 /**
@@ -579,7 +581,7 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
  * Membership is per-country and deliberately narrow. DE/ES/IT share the leading convention and will want entries when
  * their instances are built, but each needs its own codex shape and its own confound board first.
  */
-const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr"])
+const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de"])
 
 /**
  * The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip).

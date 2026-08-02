@@ -269,7 +269,7 @@ jobs:
           # step will fetch and, if any is missing, print the exact remediation and stop immediately.
           echo "Preflight: verifying v${MODEL_VERSION} is staged on Hugging Face…"
           MISSING=0
-          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-us.bin pair-index-fr.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin street-type-lexicon-v3.json locality-surface-lexicon-v6.json; do
+          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-us.bin pair-index-fr.bin pair-index-de.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin street-type-lexicon-v3.json locality-surface-lexicon-v6.json; do
             if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
           done
           # Fisher consolidation artifact (#1354, model 7.0.0+): the bundle contract says the weights
@@ -282,7 +282,7 @@ jobs:
           fi
           if [ "$MISSING" = 1 ]; then
             echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
-            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-us/pair-index-us.bin,neural-weights-fr-fr/pair-index-fr.bin,neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v6.json> --set-default   (RELEASING.md §3)"
+            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-us/pair-index-us.bin,neural-weights-fr-fr/pair-index-fr.bin,neural-weights-de-de/pair-index-de.bin,neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v6.json> --set-default   (RELEASING.md §3)"
             exit 1
           fi
           echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
@@ -307,6 +307,7 @@ jobs:
           # en-nz ships NO postcode binary (no WOF NZ shard — see its model-card follow-up).
           $CURL "${BASE}/pair-index-us.bin" -o neural-weights-en-us/pair-index-us.bin
           $CURL "${BASE}/pair-index-fr.bin" -o neural-weights-fr-fr/pair-index-fr.bin
+          $CURL "${BASE}/pair-index-de.bin" -o neural-weights-de-de/pair-index-de.bin
           $CURL "${BASE}/pair-index-gb.bin" -o neural-weights-en-gb/pair-index-gb.bin
           $CURL "${BASE}/pair-index-nz.bin" -o neural-weights-en-nz/pair-index-nz.bin
           # Per-locale FST gazetteers (#1318 FST-distribution): each weights package declares its own
@@ -355,12 +356,12 @@ jobs:
           cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-nz/country-surface-lexicon-v1.json
           for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx neural-weights-en-gb/model.onnx neural-weights-en-nz/model.onnx \
                    neural-weights-en-us/postcode-us.bin neural-weights-fr-fr/postcode-fr.bin neural-weights-en-gb/postcode-gb.bin \
-                   neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin \
+                   neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-de-de/pair-index-de.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin \
                    neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json neural-weights-en-gb/anchor-lexicon-v1.json neural-weights-en-nz/anchor-lexicon-v1.json \
                    neural-weights-en-us/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json neural-weights-en-gb/country-surface-lexicon-v1.json neural-weights-en-nz/country-surface-lexicon-v1.json; do
-              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin --pair-indexes pair-index-us.bin,pair-index-fr.bin,pair-index-gb.bin,pair-index-nz.bin)?"; exit 1; }
+              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin --pair-indexes pair-index-us.bin,pair-index-fr.bin,pair-index-de.bin,pair-index-gb.bin,pair-index-nz.bin)?"; exit 1; }
           done
-          ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin
+          ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-de-de/pair-index-de.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin
 
       # The FETCHED pair indexes must agree with the model cards that describe them. The step above proves each file
       # EXISTS and is non-empty; this one proves it is the RIGHT one. Both are needed: a stale artifact left on the
