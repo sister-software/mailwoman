@@ -24,6 +24,7 @@ import {
 } from "@mailwoman/core"
 import * as d3Chromatic from "d3-scale-chromatic"
 import { Box, Text } from "ink"
+import { parseRoles } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import zod from "zod"
 
@@ -83,25 +84,6 @@ function resolveInterpolator(raw: string | undefined): InterpolateColorCallback 
 	}
 
 	return fn
-}
-
-function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
-	if (!raw) return undefined
-
-	const valid = new Set<string>(PlacetypeRoles)
-
-	const parsed = raw
-		.split(",")
-		.map((s) => s.trim())
-		.filter(Boolean)
-
-	for (const role of parsed) {
-		if (!valid.has(role)) {
-			throw commandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
-		}
-	}
-
-	return parsed as PlacetypeRole[]
 }
 
 const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {

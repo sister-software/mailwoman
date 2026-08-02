@@ -18,6 +18,7 @@ import { availableParallelism } from "node:os"
 import { Spinner } from "@inkjs/ui"
 import { generatePlacetypeGraph, Placetype, type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
 import { Box, Text } from "ink"
+import { parseRoles } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import zod from "zod"
 
@@ -47,25 +48,6 @@ const OptionsSchema = zod.object({
 })
 
 export { ArgumentsSchema as args, OptionsSchema as options }
-
-function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
-	if (!raw) return undefined
-
-	const valid = new Set<string>(PlacetypeRoles)
-
-	const parsed = raw
-		.split(",")
-		.map((s) => s.trim())
-		.filter(Boolean)
-
-	for (const role of parsed) {
-		if (!valid.has(role)) {
-			throw commandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
-		}
-	}
-
-	return parsed as PlacetypeRole[]
-}
 
 const WOFGraph: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const placetypeName = args[1]

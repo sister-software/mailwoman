@@ -46,7 +46,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { addr, norm } from "./shared.ts"
+import { addr, norm, sigmoid } from "./shared.ts"
 
 /**
  * Smallest mean F1 gap counted as a real difference between models rather than seed noise. Verdicts inside ±this are
@@ -336,8 +336,6 @@ export async function scorerClusteringEval(
 		// LR (batch GD, class-balanced) — same as the pairwise probe.
 		const w = new Array<number>(dim).fill(0)
 		let bias = 0
-		const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
-
 		for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 			const gw = new Array<number>(dim).fill(0)
 			let gb = 0

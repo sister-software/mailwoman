@@ -10,6 +10,7 @@
  *   importable under node's type stripping (the dev `node →` exports condition).
  */
 
+import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
 import { Box, Text } from "ink"
 import { createElement as h, useEffect, useState } from "react"
 import type * as React from "react"
@@ -128,4 +129,31 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 				)
 
 	return h(Box, { flexDirection: "column" }, ...lines, summary)
+}
+
+/**
+ * Parse a `--roles a,b,c` flag into validated {@link PlacetypeRole}s, or `undefined` when the flag is absent (which
+ * every caller reads as "all roles").
+ *
+ * Rejects an unknown role with {@link commandError} rather than silently filtering it — a typo in a role name would
+ * otherwise produce an empty, entirely plausible-looking result. Three gazetteer inspect commands carried identical
+ * copies before the 2026-08-02 dedupe.
+ */
+export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
+	if (!raw) return undefined
+
+	const valid = new Set<string>(PlacetypeRoles)
+
+	const parsed = raw
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean)
+
+	for (const role of parsed) {
+		if (!valid.has(role)) {
+			throw commandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
+		}
+	}
+
+	return parsed as PlacetypeRole[]
 }

@@ -19,71 +19,14 @@
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
+import { pyFixed } from "@mailwoman/core/utils"
+
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 
 interface Result {
 	neural_pass: boolean
 	neural_tree_valid?: boolean
 	input: string
-}
-
-/**
- * Python `format(x, ".{d}f")` — round-half-to-even (banker's), unlike JS `toFixed` (half-away).
- */
-function pyFixed(x: number, d: number): string {
-	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
-	const neg = x < 0 || Object.is(x, -0)
-	const [intPart, fracRaw = ""] = Math.abs(x).toFixed(20).split(".")
-	const frac = fracRaw
-
-	if (frac.length <= d) {
-		const body = d > 0 ? `${intPart}.${frac.padEnd(d, "0")}` : intPart!
-
-		return (neg ? "-" : "") + body
-	}
-
-	const keep = frac.slice(0, d)
-	const rest = frac.slice(d)
-	let roundUp: boolean
-
-	if (rest[0]! > "5") {
-		roundUp = true
-	} else if (rest[0]! < "5") {
-		roundUp = false
-	} else if (rest.slice(1).replace(/0+$/, "").length) {
-		roundUp = true
-	} else {
-		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
-		roundUp = Number.parseInt(lastKept, 10) % 2 === 1
-	}
-
-	let digits = intPart! + keep
-
-	if (roundUp) {
-		const arr = digits.split("")
-		let i = arr.length - 1
-
-		for (; i >= 0; i--) {
-			if (arr[i] === "9") {
-				arr[i] = "0"
-			} else {
-				arr[i] = String(Number.parseInt(arr[i]!, 10) + 1)
-
-				break
-			}
-		}
-
-		if (i < 0) {
-			arr.unshift("1")
-		}
-
-		digits = arr.join("")
-	}
-
-	const di = digits.length - d
-	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
-
-	return (neg ? "-" : "") + body
 }
 
 function pct(x: number, n: number): string {

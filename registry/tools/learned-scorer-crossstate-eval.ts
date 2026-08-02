@@ -41,6 +41,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { sigmoid } from "./shared.ts"
 
 /**
  * Smallest mean F1 gap counted as a real difference between models rather than seed noise. Verdicts inside ±this are
@@ -293,8 +294,6 @@ export async function scorerCrossStateEval(
 	const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
 	const w = new Array<number>(dim).fill(0)
 	let bias = 0
-	const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
-
 	for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 		const gw = new Array<number>(dim).fill(0)
 		let gb = 0
