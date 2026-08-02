@@ -19,7 +19,8 @@
 
 import { au, nz, us, type SystemCode } from "@mailwoman/codex"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
-import { VENUE_STRUCTURE_DESIGNATORS } from "@mailwoman/core/resources/whosonfirst"
+
+import { VENUE_STRUCTURE_DESIGNATORS } from "./venue-structure.ts"
 
 /**
  * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A" describes the
