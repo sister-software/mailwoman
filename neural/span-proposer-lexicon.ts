@@ -19,6 +19,7 @@
 
 import { au, nz, us, type SystemCode } from "@mailwoman/codex"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import { VENUE_STRUCTURE_DESIGNATORS } from "@mailwoman/core/resources/whosonfirst"
 
 /**
  * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A" describes the
@@ -80,7 +81,12 @@ function phraseToPattern(phrase: string): string {
  */
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)
-	const unitDesignators = new Set<string>()
+	// Venue-INTERIOR designators (WOF placetypes + OSM aeroway) join the unit vocabulary unconditionally: unlike the
+	// postal tables above they are not a property of any mail system, so gating them on a codex `system` would make
+	// "Terminal 5" parse in the US and not in the UK for no reason anyone could defend. The FORMATTER still renders
+	// through Pub 28 — see core/resources/whosonfirst/placetypes/venue-structure.ts for why the decode and format
+	// vocabularies are deliberately different sizes.
+	const unitDesignators = new Set<string>(VENUE_STRUCTURE_DESIGNATORS)
 	const levelDesignators = new Set<string>()
 	const weakDesignators = new Set<string>()
 	const deliveryPhrases = new Set<string>()
