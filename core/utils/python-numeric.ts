@@ -8,9 +8,8 @@
  *
  *   These exist because the gazetteer pipeline was ported from Python and its outputs have to match
  *   the originals bit for bit: a postcode centroid that rounds differently is a different centroid,
- *   and the shard it lands in is a different shard. Four files each carried byte-identical copies
- *   before the 2026-08-02 dedupe — four chances for one of them to drift from the reference, and
- *   the drift would only surface as a shard that quietly disagrees.
+ *   and the shard it lands in is a different shard. Divergence here never throws — it surfaces as a
+ *   shard that quietly disagrees with the reference.
  */
 
 /**

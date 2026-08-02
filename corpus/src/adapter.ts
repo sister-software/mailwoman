@@ -106,8 +106,8 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
 	const sortedKeys = Object.keys(components).toSorted() as ComponentTag[]
 	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\u001F")
-	// `update(a).update(b).update(c)` hashes the same byte stream as `update(a + b + c)`,
-	// so this is the previous digest exactly — the ids stay stable across the dedupe.
+	// One `update` over the joined string, not three chained ones — identical byte stream either way,
+	// but the separator has to stay inline or every id in every shard changes.
 	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
 
 	return `${adapterID}-${digest.slice(0, 12)}`
@@ -117,11 +117,15 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  * Leading house number on a US-style street line: digits, an optional hyphenated range (Queens `40-12`), an optional
  * single alpha suffix (`101A`), then whitespace, then the rest.
  *
- * Ten CSV adapters were each carrying a byte-identical copy of this before the 2026-08-02 dedupe. It decides where the
- * house number ends and the street begins for every one of them, so it gets one definition and one set of tests — a
- * parsing edge case fixed here is fixed for all of them.
+ * This decides where the house number ends and the street begins for every US CSV adapter, so an edge case fixed here
+ * is fixed for all of them.
+ *
+ * The remainder must stay `(\S.*)` and must NOT become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
+ * engine split a run of tabs between the two groups every possible way before failing — quadratic backtracking on
+ * attacker-shaped input. Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
+ * so the two forms are indistinguishable on real input; only the failure cost differs.
  */
-export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
+export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
 
 /**
  * A street line split into its house number and the remainder.

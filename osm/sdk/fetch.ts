@@ -16,7 +16,7 @@
  *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
  *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
  *   non-stream response type in memory. The primitive that fits a body this large is the one that
- *   never holds it: a web stream piped to a write stream. Classified 2026-08-02.
+ *   never holds it: a web stream piped to a write stream.
  */
 
 import { createWriteStream } from "node:fs"

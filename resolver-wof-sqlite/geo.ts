@@ -10,12 +10,10 @@
  *   ray-cast PIP a ~30-line one — both plenty fast for the post-fetch passes (we operate on ≤ a few
  *   hundred candidates per query, not the whole 142k-row corpus).
  *
- *   The even-odd ray cast used to be implemented HERE, with a note asking future readers to keep it
- *   in sync with the Python copies that grade the same containment truth
- *   (`scripts/eval/pip-containment.py`). Hand-maintained sync across copies is the thing that fails
- *   quietly, so the implementation moved to `@mailwoman/spatial` (2026-08-02) and this file
- *   re-exports it — one definition for the resolver, the reverse-geocoder, and the gazetteer
- *   pipeline. The Python side still needs matching by hand; it is the only remaining copy.
+ *   The even-odd ray cast lives in `@mailwoman/spatial` and is re-exported below, so the resolver,
+ *   the reverse-geocoder and the gazetteer pipeline share one definition. `scripts/eval/pip-containment.py`
+ *   grades the same containment truth and has to be matched BY HAND if the algorithm changes — it is
+ *   the one copy no import can reach.
  *
  *   The R*Tree index name + schema are centralized in `fts.ts` (alongside the FTS5 build).
  */
