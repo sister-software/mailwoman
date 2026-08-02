@@ -3,36 +3,60 @@
 **Date:** 2026-08-02
 **Base:** `origin/main` @ `9b46c82e`
 **Scope + method:** [`2026-08-02-taste-audit-design.md`](./2026-08-02-taste-audit-design.md)
-**Execution status:** seven clusters landed — see below.
+**Execution status:** sixteen of twenty-three clusters landed — see below.
 
 ## Status — 2026-08-02, after execution
 
-Seven clusters landed on `worktree-taste-audit`. Every one was verified against a recorded baseline
-(4,617 passing tests; the single default-timeout failure in `neural/test/weights.test.ts` is a cold
--cache artifact that passes at a 120s timeout — and is itself evidence for A1, since what times out
-is the 441-line `link-dev-weights.ts`).
+Sixteen of the twenty-three clusters landed on `worktree-taste-audit` across 21 commits. Every one
+was verified against a recorded baseline (4,617 passing tests before any edit) with `yarn compile`,
+`yarn lint` and the affected test slices green per commit.
 
-| cluster | what landed                                                           | net lines |
-| ------- | --------------------------------------------------------------------- | --------: |
-| B2      | `splitStreetLine` + `HOUSE_NUMBER_PREFIX` → `corpus/src/adapter.ts`   |       −90 |
-| B6      | `scripts/eval/v0-tree-adapter.ts` deleted, last importer repointed    |      −121 |
-| B1      | ray cast → `spatial/geometries/polygon.ts` (see the correction below) |       +57 |
-| B5      | `swapDatabaseIntoPlace` → `core/utils/sealed-db.ts`                   |       −13 |
-| A8      | `jaccard` → `match/comparators.ts`                                    |       −11 |
-| A3      | `mulberry32` / `makeLcg` thunks → `core/utils/python-random.ts`       |      −158 |
-| C1      | `scripts/lint-acronym-casing.ts`, wired into `yarn lint`; 11 renames  |      +234 |
+| cluster   | what landed                                                                 |
+| --------- | --------------------------------------------------------------------------- |
+| A2        | five percentile copies → `core/utils/stats.ts`; two kept, annotated         |
+| A3        | `mulberry32` / `makeLcg` thunks → `core/utils/python-random.ts`, 16 sites   |
+| A4        | `check-release-parity` → `APIClient`; file transfers classified + annotated |
+| A5 / A6   | hashing and JSONL callers repointed; four kept raw, annotated               |
+| A7        | data-root literal back to one place; one real behavioural default fixed     |
+| A8        | `jaccard` → `match/comparators.ts`                                          |
+| B1        | ray cast → `spatial/geometries/polygon.ts` (corrected — see below)          |
+| B2        | ten-copy regex + splitter → `corpus/src/adapter.ts`                         |
+| B3 / B4   | python numerics → `core/utils/python-numeric.ts`; `splitCSV` → scaffold     |
+| B5        | `swapDatabaseIntoPlace` → `core/utils/sealed-db.ts`                         |
+| B6        | duplicated `v0-tree-adapter.ts` deleted                                     |
+| B8 / B9   | `foldName` + `wordNorm` → `codex/normalize.ts`                              |
+| B10 / B13 | route plumbing → `api-kit`; `tiger/sdk/download.ts` extracted               |
+| B11       | `registry/tools/shared.ts` created for 24 script-strong directory           |
+| C1        | `scripts/lint-acronym-casing.ts` wired into `yarn lint`; 11 renames         |
 
-**One finding was corrected by implementing it.** B1 proposed moving all three point-in-polygon
-implementations into `@mailwoman/spatial`. Reading the dependency graph before doing it changed the
-answer: `nuts-lookup` and `timezone-lookup` each have exactly ONE dependency (zero-dep
-`@mailwoman/annotations`), and `@mailwoman/spatial` pulls `@mailwoman/core`, whose published tarball
-carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven megabytes for a fifteen-line ray cast is
-the wrong trade for a leaf lookup package. The resolver half moved (it already depended on spatial);
-the two lookups keep their copies with the measurement written into both files. `match/gbt.test.ts`
-keeps its LCG for the same reason. **See rejected-candidate #11.**
+**Measured effect:** cross-file clone groups 83 → 54. The remainder is mostly A1's weights family
+and B14's test fixtures.
 
-Still open: A1 (nine forked `link-dev-weights.ts` — the largest, and the one where the merged
-behaviour wants a second pair of eyes), A2, A4–A7, and B3–B14.
+### Still open
+
+- **A1** — the nine `link-dev-weights.ts`. Blocked on a decision only the operator can make (below).
+- **B7** — the docs↔react component forks. Needs a call on whether react's components take a
+  className/theme prop so Docusaurus styling survives; that is a design decision, not a dedupe.
+- **B12, B14** — byte formatters and test-fixture builders. Real, cheap, lowest payoff; left for
+  whoever is next in those files.
+
+### Four findings this audit got wrong, corrected by implementing them
+
+1. **The great-circle cluster** (7 candidates) → **0 findings**. Five were importers, one a
+   documented adapter, one a deliberate variant for a different quantity.
+2. **B1** said move all three point-in-polygon copies to `@mailwoman/spatial`. `nuts-lookup` and
+   `timezone-lookup` each carry ONE dependency (zero-dep `@mailwoman/annotations`); spatial pulls
+   `@mailwoman/core` and its ~11 MB of shipped data. Three orders of magnitude for fifteen lines.
+   One moved, two documented in place.
+3. **A1** called nine files nine forks with a "4.3× size spread = divergence". Reading their
+   `package.json` files: two are BASE packages, seven declare `mailwoman.baseWeights` and are
+   OVERLAYS. The spread is mostly the difference between those roles.
+4. **A4** counted 28 raw-`fetch` sites as one population. They are two: ~23 API requests (migrate)
+   and 4–5 multi-gigabyte file transfers streamed to disk (do not — response caching is nonsense at
+   that size and axios buffers any non-stream response type in memory).
+
+Every one of those corrections came from opening a `package.json` or a dependency graph that the
+grep-plus-read pass never did.
 
 ## Summary
 
