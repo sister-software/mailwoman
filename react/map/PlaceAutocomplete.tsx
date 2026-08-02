@@ -35,13 +35,13 @@ export interface PlaceAutocompleteProps {
 	 */
 	onHover?: (index: number) => void
 	/**
-	 * The listbox element id — pass `listboxId` from the hook (matches the input's `aria-controls`).
+	 * The listbox element id — pass `listboxID` from the hook (matches the input's `aria-controls`).
 	 */
-	listboxId: string
+	listboxID: string
 	/**
-	 * Build the option element id — pass `optionId` from the hook.
+	 * Build the option element id — pass `optionID` from the hook.
 	 */
-	optionId: (index: number) => string
+	optionID: (index: number) => string
 	/**
 	 * Leading label. @default "Did you mean:"
 	 */
@@ -56,19 +56,19 @@ export function PlaceAutocomplete({
 	activeIndex,
 	onPick,
 	onHover,
-	listboxId,
-	optionId,
+	listboxID,
+	optionID,
 	caption = "Did you mean:",
 }: PlaceAutocompleteProps): ReactNode {
 	if (!suggestions.length) return null
 
 	return (
-		<div className="mw-demo-suggest" id={listboxId} role="listbox" aria-label="Place suggestions">
+		<div className="mw-demo-suggest" id={listboxID} role="listbox" aria-label="Place suggestions">
 			<span className="mw-demo-suggest__label">{caption}</span>
 			{suggestions.map((s, i) => (
 				<button
 					key={`${s.value}-${i}`}
-					id={optionId(i)}
+					id={optionID(i)}
 					type="button"
 					role="option"
 					aria-selected={i === activeIndex}

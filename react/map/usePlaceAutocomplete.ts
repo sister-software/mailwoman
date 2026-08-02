@@ -87,15 +87,15 @@ export interface UsePlaceAutocomplete {
 	/**
 	 * The listbox element id (matches `inputProps["aria-controls"]`).
 	 */
-	listboxId: string
+	listboxID: string
 	/**
 	 * Build the option element id for suggestion `index`.
 	 */
-	optionId: (index: number) => string
+	optionID: (index: number) => string
 }
 
 const LISTBOX_ID = "mw-demo-suggest-list"
-const optionId = (index: number) => `mw-demo-suggest-${index}`
+const optionID = (index: number) => `mw-demo-suggest-${index}`
 
 /**
  * Extract the locality segment being typed — the text after the last comma, trimmed.
@@ -220,10 +220,10 @@ export function usePlaceAutocomplete({
 			"aria-expanded": suggestions.length > 0,
 			"aria-controls": LISTBOX_ID,
 			"aria-autocomplete": "list",
-			"aria-activedescendant": activeIndex >= 0 ? optionId(activeIndex) : undefined,
+			"aria-activedescendant": activeIndex >= 0 ? optionID(activeIndex) : undefined,
 			autoComplete: "off",
 		},
-		listboxId: LISTBOX_ID,
-		optionId,
+		listboxID: LISTBOX_ID,
+		optionID,
 	}
 }

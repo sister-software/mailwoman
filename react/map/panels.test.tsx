@@ -166,8 +166,8 @@ function AutocompleteHarness({ autocomplete }: { autocomplete: (q: string) => Pr
 				activeIndex={ac.activeIndex}
 				onPick={ac.pick}
 				onHover={ac.setActiveIndex}
-				listboxId={ac.listboxId}
-				optionId={ac.optionId}
+				listboxID={ac.listboxID}
+				optionID={ac.optionID}
 			/>
 		</div>
 	)

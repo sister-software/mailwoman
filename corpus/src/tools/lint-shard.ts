@@ -23,7 +23,7 @@
  *        mappings — flagging matches.
  *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of shard.
  *
- *   Output: markdown report on stdout, optional JSON sidecar via `outJson`. The command exits 0 if
+ *   Output: markdown report on stdout, optional JSON sidecar via `outJSON`. The command exits 0 if
  *   no errors, 1 if any errors (warnings don't gate). Per the design, the MANIFEST entry for a
  *   flagged shard should require `lint_acknowledged: true` before training consumes it.
  *
@@ -100,7 +100,7 @@ export interface LintCorpusShardOptions {
 	/**
 	 * Write a JSON sidecar of the flags + summary here.
 	 */
-	outJson?: string
+	outJSON?: string
 }
 
 interface CorpusStats {
@@ -514,9 +514,9 @@ export function lintCorpusShard(
 		writeFileSync(options.outMd, rendered)
 	}
 
-	if (options.outJson) {
+	if (options.outJSON) {
 		writeFileSync(
-			options.outJson,
+			options.outJSON,
 			JSON.stringify(
 				{
 					shard: options.shardPath,

@@ -33,14 +33,14 @@ function healthyDeps(): DoctorDeps {
 		wofShardPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
 		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
-		loadOnnx: async () => {},
+		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
 		overlayLocales: ["fr-fr"],
 	}
 }
 
-const byId = (checks: DoctorCheck[], id: string): DoctorCheck => {
+const byID = (checks: DoctorCheck[], id: string): DoctorCheck => {
 	const c = checks.find((x) => x.id === id)
 
 	if (!c) throw new Error(`no check ${id}`)
@@ -81,21 +81,21 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		expect(report.exitCode).toBe(1)
-		expect(byId(report.checks, "weights").status).toBe(CheckStatus.Missing)
+		expect(byID(report.checks, "weights").status).toBe(CheckStatus.Missing)
 		// A core failure must not suppress the optional-layer diagnostics.
-		expect(byId(report.checks, "gazetteer").status).toBe(CheckStatus.OK)
+		expect(byID(report.checks, "gazetteer").status).toBe(CheckStatus.OK)
 	})
 
 	it("ONNX binding unavailable → core degraded, exit 1", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			loadOnnx: async () => {
+			loadONNX: async () => {
 				throw new Error("Cannot find module 'onnxruntime-node'")
 			},
 		})
 
 		expect(report.exitCode).toBe(1)
-		expect(byId(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
+		expect(byID(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
 	})
 
 	it("gazetteer discovery falls back to a WOF shard when no env candidate.db", async () => {
@@ -105,7 +105,7 @@ describe("runDoctor (injected seams)", () => {
 			existsSync: (p) => p === "/data/wof/admin.db",
 		})
 
-		const gaz = byId(report.checks, "gazetteer")
+		const gaz = byID(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.OK)
 		expect(gaz.detail).toContain("WOF admin shard")
 	})
@@ -122,7 +122,7 @@ describe("runDoctor (injected seams)", () => {
 			},
 		})
 
-		const gaz = byId(report.checks, "gazetteer")
+		const gaz = byID(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.Degraded)
 		expect(gaz.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
 		expect(gaz.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
@@ -142,8 +142,8 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		expect(report.exitCode).toBe(0)
-		expect(byId(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
-		expect(byId(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
+		expect(byID(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
+		expect(byID(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
 	})
 
 	it("poi.db present but manifest unreadable → degraded (not a hard error)", async () => {
@@ -155,6 +155,6 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		expect(report.exitCode).toBe(0)
-		expect(byId(report.checks, "poi-layer").status).toBe(CheckStatus.Degraded)
+		expect(byID(report.checks, "poi-layer").status).toBe(CheckStatus.Degraded)
 	})
 })

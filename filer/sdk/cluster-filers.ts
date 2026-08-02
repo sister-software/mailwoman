@@ -424,11 +424,11 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
 	const rows: FilerClusterTable[] = groups.flatMap((group) => {
 		// Content-derived, not index-derived — stable across reruns regardless of `cluster()`'s internal iteration
 		// order (see the module docstring's idempotency section).
-		const clusterId = `${FilerEdgeAssertion.Authoritative}:${[...group].toSorted()[0]}`
+		const clusterID = `${FilerEdgeAssertion.Authoritative}:${[...group].toSorted()[0]}`
 
-		return group.map((nodeId) => ({
-			node_id: nodeId,
-			cluster_id: clusterId,
+		return group.map((nodeID) => ({
+			node_id: nodeID,
+			cluster_id: clusterID,
 			assertion: FilerEdgeAssertion.Authoritative,
 		}))
 	})
@@ -478,7 +478,7 @@ async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<stri
 		}
 	}
 
-	return new Map([...latest].map(([nodeId, { value }]) => [nodeId, value]))
+	return new Map([...latest].map(([nodeID, { value }]) => [nodeID, value]))
 }
 
 /**
@@ -493,24 +493,24 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 	const groupOfNode = new Map<string, string[]>()
 
 	for (const group of groups) {
-		for (const nodeId of group) {
-			groupOfNode.set(nodeId, group)
+		for (const nodeID of group) {
+			groupOfNode.set(nodeID, group)
 		}
 	}
 
 	const codesByType = (group: string[], identifierType: string): string =>
 		codeSetString(
 			group
-				.filter((nodeId) => nodeInfo.get(nodeId)?.identifierType === identifierType)
-				.map((nodeId) => nodeInfo.get(nodeId)!.identifierValue)
+				.filter((nodeID) => nodeInfo.get(nodeID)?.identifierType === identifierType)
+				.map((nodeID) => nodeInfo.get(nodeID)!.identifierValue)
 		)
 
 	const records: SourceRecord[] = []
 
-	for (const [nodeId, info] of nodeInfo) {
+	for (const [nodeID, info] of nodeInfo) {
 		if (info.identifierType !== FilerIdentifierType.Form499ID) continue
 
-		const legalName = legalNames.get(nodeId)
+		const legalName = legalNames.get(nodeID)
 
 		if (!legalName) continue
 
@@ -523,7 +523,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 		// `exactKey`, `match/blocking.ts`).
 		if (!organization || !organization.canonical) continue
 
-		const group = groupOfNode.get(nodeId) ?? [nodeId]
+		const group = groupOfNode.get(nodeID) ?? [nodeID]
 
 		const attributes: Record<string, string> = {}
 		const frnCodes = codesByType(group, FilerIdentifierType.FRN)
@@ -545,7 +545,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 			attributes.providerID = providerCodes
 		}
 
-		records.push({ id: nodeId, organization, attributes })
+		records.push({ id: nodeID, organization, attributes })
 	}
 
 	return records
@@ -649,25 +649,25 @@ export async function clusterInferredLinks(
 		for (const entity of entities) {
 			const memberNodeIds = entity.records.map((record) => record.id).toSorted()
 			// Content-derived (see clusterAuthoritativeComponents) — stable across reruns.
-			const clusterId = `${FilerEdgeAssertion.Inferred}:${memberNodeIds[0]}`
+			const clusterID = `${FilerEdgeAssertion.Inferred}:${memberNodeIds[0]}`
 
-			for (const nodeId of memberNodeIds) {
-				clusterRows.push({ node_id: nodeId, cluster_id: clusterId, assertion: FilerEdgeAssertion.Inferred })
+			for (const nodeID of memberNodeIds) {
+				clusterRows.push({ node_id: nodeID, cluster_id: clusterID, assertion: FilerEdgeAssertion.Inferred })
 			}
 
 			if (entity.records.length <= 1) continue
 
 			linkedClusters++
-			const representativeId = entity.representative.id
+			const representativeID = entity.representative.id
 
-			for (const nodeId of memberNodeIds) {
-				if (nodeId === representativeId) continue
+			for (const nodeID of memberNodeIds) {
+				if (nodeID === representativeID) continue
 
 				await trx
 					.insertInto("filer_edge")
 					.values({
-						from_node_id: nodeId,
-						to_node_id: representativeId,
+						from_node_id: nodeID,
+						to_node_id: representativeID,
 						assertion: FilerEdgeAssertion.Inferred,
 						// This pass links two form499_id nodes that are the SAME underlying filer (a re-filing
 						// under one FRN with a drifted legal name — see the module docstring) — genuinely

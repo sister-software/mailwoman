@@ -103,10 +103,10 @@ export interface PairwiseGroupingScore {
  * SETS intersect — an overlap relation, not an equivalence class. A single group-id map cannot express that; a
  * predicate can.
  */
-export function scorePairwiseGrouping<Id>(
-	ids: readonly Id[],
-	truthSame: (a: Id, b: Id) => boolean,
-	predictedSame: (a: Id, b: Id) => boolean
+export function scorePairwiseGrouping<ID>(
+	ids: readonly ID[],
+	truthSame: (a: ID, b: ID) => boolean,
+	predictedSame: (a: ID, b: ID) => boolean
 ): PairwiseGroupingScore {
 	let truePositivePairs = 0
 	let falsePositivePairs = 0
@@ -165,7 +165,7 @@ export function scorePairwiseGrouping<Id>(
  * form). Two ids missing from `groupOf` entirely are never treated as "same" (both `undefined` would otherwise compare
  * equal) — every id scored must carry an explicit group assignment.
  */
-export function groupPredicateFromMap<Id>(groupOf: ReadonlyMap<Id, string>): (a: Id, b: Id) => boolean {
+export function groupPredicateFromMap<ID>(groupOf: ReadonlyMap<ID, string>): (a: ID, b: ID) => boolean {
 	return (a, b) => {
 		const groupA = groupOf.get(a)
 

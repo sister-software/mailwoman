@@ -88,7 +88,7 @@ interface Args {
 	suppressGazNearPostcode?: boolean
 	conventions?: string
 	bridgeGaps?: boolean
-	outJson?: string
+	outJSON?: string
 	/**
 	 * P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read.
 	 */
@@ -180,7 +180,7 @@ function parseArgs(): Args {
 	}
 
 	if (values["out-json"] != null) {
-		out.outJson = values["out-json"] as string
+		out.outJSON = values["out-json"] as string
 	}
 
 	return out as Args
@@ -545,10 +545,10 @@ async function main(): Promise<void> {
 
 	console.log("")
 
-	if (args.outJson) {
-		writeFileSync(args.outJson, JSON.stringify({ reports, spread }, null, 2))
+	if (args.outJSON) {
+		writeFileSync(args.outJSON, JSON.stringify({ reports, spread }, null, 2))
 
-		console.error(`Wrote ${args.outJson}`)
+		console.error(`Wrote ${args.outJSON}`)
 	}
 }
 

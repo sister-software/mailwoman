@@ -163,14 +163,14 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	let rowidKey = 1
 
 	for (const row of rows) {
-		const categoryId = CATEGORY_IDS[row.category] ?? 0
+		const categoryID = CATEGORY_IDS[row.category] ?? 0
 		const confidence = row.confidence ?? 0.9
 
 		await kdb
 			.insertInto("poi")
 			.values({
 				h3_cell: cellFor(row.latitude, row.longitude),
-				category_id: categoryId,
+				category_id: categoryID,
 				neg_rank: 1 - confidence,
 				rowid_key: rowidKey++,
 				name: row.name,

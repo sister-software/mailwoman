@@ -53,7 +53,7 @@ import ts from "typescript"
 
 interface Args {
 	testsDir: string
-	outJson?: string
+	outJSON?: string
 	modelPath?: string
 	tokenizerPath?: string
 	modelCardPath?: string
@@ -115,7 +115,7 @@ function parseArgs(): Args {
 	}
 
 	if (values["out-json"] != null) {
-		out.outJson = values["out-json"] as string
+		out.outJSON = values["out-json"] as string
 	}
 
 	if (values["model"] != null) {
@@ -820,10 +820,10 @@ async function main(): Promise<void> {
 
 	printReport(results)
 
-	if (args.outJson) {
-		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
+	if (args.outJSON) {
+		writeFileSync(args.outJSON, JSON.stringify(results, null, 2))
 
-		console.error(`Wrote ${results.length} results to ${args.outJson}`)
+		console.error(`Wrote ${results.length} results to ${args.outJSON}`)
 	}
 }
 

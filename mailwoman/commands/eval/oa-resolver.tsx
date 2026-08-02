@@ -64,8 +64,8 @@ const OptionsSchema = zod.object({
 	placeCountryHardAll: zod.boolean().default(false).describe("Ungated hard-filter measurement (full safelist)"),
 	// dumps
 	outMd: zod.string().optional().describe("Also write the markdown report here"),
-	outJson: zod.string().optional().describe("Write the aggregate JSON dump here"),
-	errorsJson: zod.string().optional().describe("Write the per-row failure dump here"),
+	outJSON: zod.string().optional().describe("Write the aggregate JSON dump here"),
+	errorsJSON: zod.string().optional().describe("Write the per-row failure dump here"),
 	outResolved: zod.string().optional().describe("Per-row resolved-locality dump (PIP-containment metric)"),
 	outRows: zod.string().optional().describe("Per-row neural-vs-v0 outcome dump (every row)"),
 })

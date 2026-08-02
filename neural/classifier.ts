@@ -111,7 +111,7 @@ export interface NeuralAddressClassifierConfig {
 	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar; exposed via {@link spanGrammar} so
 	 * the phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
 	 */
-	semiCrfGrammar?: SemiCRFTransitions
+	semiCRFGrammar?: SemiCRFTransitions
 	/**
 	 * Path to the per-locale FST gazetteer binary shipped in the resolved weights package (`fst-<locale>.bin`), surfaced
 	 * verbatim from {@link resolveWeights} — PATH ONLY (neural has no resolver-wof-sqlite dependency; the caller's layer
@@ -257,7 +257,7 @@ export class NeuralAddressClassifier {
 	 * Consumed by the #727 phase-4c k-best name-evidence rerank; `undefined` on a pre-v3 (span-less) bundle.
 	 */
 	get spanGrammar(): SemiCRFTransitions | undefined {
-		return this.cfg.semiCrfGrammar
+		return this.cfg.semiCRFGrammar
 	}
 
 	/**
@@ -334,14 +334,14 @@ export class NeuralAddressClassifier {
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
 		// undefined).
-		let semiCrfGrammar: SemiCRFTransitions | undefined
+		let semiCRFGrammar: SemiCRFTransitions | undefined
 
-		if (resolved.semiCrfTransitionsPath) {
+		if (resolved.semiCRFTransitionsPath) {
 			try {
-				semiCrfGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCrfTransitionsPath, "utf8")))
+				semiCRFGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCRFTransitionsPath, "utf8")))
 			} catch (error) {
 				console.error(
-					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCrfTransitionsPath} — ` +
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCRFTransitionsPath} — ` +
 						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(error as Error).message}`
 				)
 			}
@@ -505,7 +505,7 @@ export class NeuralAddressClassifier {
 			transitions: crf?.transitions,
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
-			...(semiCrfGrammar ? { semiCrfGrammar } : {}),
+			...(semiCRFGrammar ? { semiCRFGrammar } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(streetTypeLexicon ? { streetTypeLexicon } : {}),

@@ -276,8 +276,8 @@ export class POILookup implements Disposable {
 
 				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
 				// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
-				for (const categoryId of categoryIds) {
-					rows.push(...(this.#categoryCellProbe.all(shortCell, categoryId, limit) as unknown as POIRow[]))
+				for (const categoryID of categoryIds) {
+					rows.push(...(this.#categoryCellProbe.all(shortCell, categoryID, limit) as unknown as POIRow[]))
 				}
 			}
 

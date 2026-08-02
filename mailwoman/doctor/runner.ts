@@ -103,7 +103,7 @@ export interface DoctorDeps {
 	/**
 	 * Attempt to load the ONNX native binding (throws when unavailable).
 	 */
-	loadOnnx(): Promise<void>
+	loadONNX(): Promise<void>
 	/**
 	 * The running Node version (`process.versions.node`).
 	 */
@@ -204,7 +204,7 @@ export function defaultDoctorDeps(): DoctorDeps {
 		wofShardPaths: defaultWOFShardPaths,
 		poiPath: () => dataRootPath("poi", "poi.db"),
 		readPOIManifest,
-		loadOnnx: async () => {
+		loadONNX: async () => {
 			await import("onnxruntime-node")
 		},
 		nodeVersion: process.versions.node,
@@ -294,7 +294,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	let onnxError: string | undefined
 
 	try {
-		await deps.loadOnnx()
+		await deps.loadONNX()
 		onnxLoadable = true
 	} catch (error) {
 		onnxError = error instanceof Error ? error.message : String(error)

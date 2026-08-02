@@ -45,6 +45,7 @@ const ACRONYMS = [
 	"GERS",
 	"HTTP",
 	"HTTPS",
+	"ID",
 	"JSON",
 	"JSONL",
 	"MCP",
@@ -80,6 +81,10 @@ const ALLOWED = new Set<string>([
 	"SqliteDialect",
 	"SqliteDialectConfig",
 	"SqliteDriver",
+	// `LedgerAppendOptions` receives the Pastel command's option bag verbatim — its fields ARE the
+	// `--run-id` flag names, reconstructed as such a few lines below. The house form is derived at
+	// the boundary (`const runID = options.runId!`).
+	"runId",
 ])
 
 /**
@@ -104,6 +109,16 @@ const SKIP_PATH = /^(?:data|docs\/articles\/evals|docs\/superpowers|reviews)\//
  */
 const EXPORTED_DECLARATION =
 	/^export\s+(?:async\s+)?(?:abstract\s+)?(?:function|const|let|class|interface|type|enum)\s+([A-Za-z_$][\w$]*)/
+
+/**
+ * A member of an exported interface / type literal / class — ` fooBar?: T`, ` fooBar(): T`.
+ *
+ * Members are public surface too: a consumer constructing an options object types the property name. This repo shipped
+ * seven title-cased acronyms on members (`semiCrfGrammar`, `loadOnnx`, `outJsonl`, …) while a declaration-only check
+ * reported the tree clean, so the two patterns are both required. Indentation is the cheap proxy for "inside a block" —
+ * good enough here, and the oxlint plugin that supersedes this script reads the real AST.
+ */
+const MEMBER_DECLARATION = /^\t+(?:readonly\s+)?([a-z_$][\w$]*)\??[(:]/
 
 interface Violation {
 	file: string
@@ -142,32 +157,65 @@ function scan(file: string): Violation[] {
 	const out: Violation[] = []
 	const lines = readFileSync(file, "utf8").split("\n")
 
+	// Members only count inside an EXPORTED block — a private interface's property names are local.
+	let inExportedBlock = false
+
 	for (const [i, line] of lines.entries()) {
-		const declaration = EXPORTED_DECLARATION.exec(line)
+		// Only TYPE blocks contribute members. A function body's destructuring pattern
+		// (`const { baseUrl: baseURL } = config`) has the same shape as a property signature, and the
+		// left half of a rename is the SOURCE object's key — someone else's name, never ours.
+		if (/^export\s+(?:abstract\s+)?(?:interface|type|class)\b/.test(line)) {
+			inExportedBlock = /[{]\s*$/.test(line)
+		} else if (/^export\s/.test(line) || line.startsWith("}")) {
+			inExportedBlock = false
+		}
+
+		const declaration = EXPORTED_DECLARATION.exec(line) ?? (inExportedBlock ? MEMBER_DECLARATION.exec(line) : null)
 
 		if (!declaration) continue
 		const identifier = declaration[1]!
 
+		if (ALLOWED.has(identifier)) continue
+
+		// Collect EVERY drifted component, scanning every occurrence of each acronym.
+		//
+		// Two traps here, both of which a first-match-and-stop loop walks into. Scanning only the
+		// first occurrence misses the real one whenever an earlier occurrence is a false positive:
+		// in `PointPoiBoard` the `Poi` inside `Point` fails the component test, and giving up there
+		// leaves the genuine `PoiBoard` unreported. Stopping after the first ACRONYM is the same
+		// mistake one level up: `parseJsonlThenJson` would report `Jsonl` and suggest a fix that
+		// leaves `Json` behind.
+		const hits: Array<{ index: number; found: string; acronym: string }> = []
+
 		for (const acronym of ACRONYMS) {
 			const found = titleCase(acronym)
-			const index = identifier.indexOf(found)
 
-			if (index === -1) continue
-
-			if (!isWholeComponent(identifier, index, found)) continue
-
-			if (ALLOWED.has(identifier)) continue
-
-			out.push({
-				file,
-				line: i + 1,
-				identifier,
-				found,
-				expected: identifier.slice(0, index) + acronym + identifier.slice(index + found.length),
-			})
-
-			break
+			for (let index = identifier.indexOf(found); index !== -1; index = identifier.indexOf(found, index + 1)) {
+				if (isWholeComponent(identifier, index, found)) hits.push({ index, found, acronym })
+			}
 		}
+
+		if (!hits.length) continue
+
+		// Rewrite right-to-left so each splice keeps the earlier indices valid, and drop any hit
+		// nested inside one already taken (`JSON` inside `JSONL`) — longest wins at a given start.
+		const ordered = hits.toSorted((a, b) => b.index - a.index || b.found.length - a.found.length)
+		let expected = identifier
+		let lastStart = Number.POSITIVE_INFINITY
+
+		for (const hit of ordered) {
+			if (hit.index + hit.found.length > lastStart) continue
+			expected = expected.slice(0, hit.index) + hit.acronym + expected.slice(hit.index + hit.found.length)
+			lastStart = hit.index
+		}
+
+		out.push({
+			file,
+			line: i + 1,
+			identifier,
+			found: [...new Set(ordered.map((h) => h.found))].toReversed().join(", "),
+			expected,
+		})
 	}
 
 	return out

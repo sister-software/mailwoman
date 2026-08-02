@@ -53,7 +53,7 @@ export interface GoldSetSampleOptions {
 	/**
 	 * Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout).
 	 */
-	outJsonl?: string
+	outJSONL?: string
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
@@ -125,7 +125,7 @@ export async function goldSetSample(
 	const STATE = (options.state || "TX").toUpperCase()
 	const TAU = options.tau ?? 0.7
 	const N = options.n ?? 300
-	const OUT = options.outJsonl || ""
+	const OUT = options.outJSONL || ""
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
 	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)

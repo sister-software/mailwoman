@@ -20,7 +20,7 @@ const OptionsSchema = zod.object({
 	stats: zod.string().describe("Pre-computed corpus stats JSON"),
 	rules: zod.string().optional().describe("Anti-pattern rules JSON (default: the bundled lint-rules.json)"),
 	outMd: zod.string().optional().describe("Write the markdown report here as well as stdout"),
-	outJson: zod.string().optional().describe("Write a JSON sidecar of the flags + summary here"),
+	outJSON: zod.string().optional().describe("Write a JSON sidecar of the flags + summary here"),
 })
 
 export { OptionsSchema as options }
@@ -36,7 +36,7 @@ const DevLintCorpusShard: CommandComponent<typeof OptionsSchema> = ({ options })
 					statsPath: options.stats,
 					rulesPath: options.rules,
 					outMd: options.outMd,
-					outJson: options.outJson,
+					outJSON: options.outJSON,
 				},
 				report
 			),
