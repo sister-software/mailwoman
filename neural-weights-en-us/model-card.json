@@ -717,11 +717,12 @@
 			"source": "Who's On First admin hierarchy ($MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db). NO postal register: USPS routes city/state/ZIP, so unlike GB's PPD there is no mail source carrying US dependent localities. Children: borough + neighbourhood. Parents: locality, localadmin AND borough \u2014 WOF parents US neighbourhoods to the locality (\"Astoria\" hangs off New York, not Queens), so a locality-only parent rule drops the borough-level pairs this instance exists for.",
 			"pairs": 49033,
 			"bytes": 1323912,
-			"md5": "5fd4a6cca54c6bf9b121cb2fcd759f7a",
+			"md5": "31e7cd899dab5af0b8d7ec03fe5cb548",
 			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from the GB calibration rather than re-swept, because the R5 finding is that the classifier's dependent_locality deficit is UNIFORM across locales (~7.0 logits mean, measured on the en-gb card), not GB-specific. The R5 bars were measured at exactly this pair; changing either number invalidates them.",
 			"country_gate": "hard-gated on the header's country (us). Verified inert on GB input: the index misses all five GB canonical pairs (Shoreditch/London, Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester) \u2014 see neural/test/weights.test.ts.",
 			"not_committed": "derived artifact, .gitignore'd (same posture as postcode-us.bin) \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-us --country us --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`",
-			"behavior_change": "This changes DEFAULT en-us parse output. A US address carrying a neighbourhood or borough line previously emitted no dependent_locality AND SILENTLY DROPPED the second admin level (\"123 Main St, Park Slope, Brooklyn, NY\" \u2192 locality=Park Slope, Brooklyn discarded). It now emits dependent_locality=Park Slope, locality=Brooklyn."
+			"behavior_change": "This changes DEFAULT en-us parse output. A US address carrying a neighbourhood or borough line previously emitted no dependent_locality AND SILENTLY DROPPED the second admin level (\"123 Main St, Park Slope, Brooklyn, NY\" \u2192 locality=Park Slope, Brooklyn discarded). It now emits dependent_locality=Park Slope, locality=Brooklyn.",
+			"$comment_md5": "REPRODUCIBILITY: a PIX1 header embeds `buildDate`, so a rebuild from identical sources produces different bytes and a different md5. This md5 therefore identifies the artifact STAGED TO HUGGING FACE for this release \u2014 it is a provenance record of the shipped bytes, NOT a check a local rebuild can reproduce. A mismatch after rebuilding is expected and is not corruption; verify pair COUNT and header delta/beta instead."
 		}
 	}
 }
