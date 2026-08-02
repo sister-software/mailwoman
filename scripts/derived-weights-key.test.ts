@@ -12,7 +12,7 @@
  *   stale-artifact machine.
  */
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -20,10 +20,18 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
 	DERIVED_WEIGHTS_INPUTS,
+	type DerivedWeightsInput,
 	derivedWeightsDir,
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
 } from "./derived-weights-key.ts"
+
+/**
+ * Name an absolute path by its basename — the shape production uses (repo-relative name, absolute read path).
+ */
+function at(path: string, name?: string): DerivedWeightsInput {
+	return { name: name ?? path.slice(path.lastIndexOf("/") + 1), path }
+}
 
 let scratch: string
 
@@ -40,17 +48,17 @@ describe("derivedWeightsKeyFrom", () => {
 		const a = join(scratch, "a.json")
 		await writeFile(a, '{"x":1}')
 
-		expect(derivedWeightsKeyFrom([a])).toBe(derivedWeightsKeyFrom([a]))
+		expect(derivedWeightsKeyFrom([at(a)])).toBe(derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
 		const a = join(scratch, "a.json")
 		await writeFile(a, '{"x":1}')
-		const before = derivedWeightsKeyFrom([a])
+		const before = derivedWeightsKeyFrom([at(a)])
 
 		await writeFile(a, '{"x":2}')
 
-		expect(derivedWeightsKeyFrom([a])).not.toBe(before)
+		expect(derivedWeightsKeyFrom([at(a)])).not.toBe(before)
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
@@ -58,12 +66,12 @@ describe("derivedWeightsKeyFrom", () => {
 		const generator = join(scratch, "pair-index.tsx")
 		await writeFile(config, '{"weights":{"model":"m.onnx"}}')
 		await writeFile(generator, "export const delta = 1")
-		const before = derivedWeightsKeyFrom([config, generator])
+		const before = derivedWeightsKeyFrom([at(config), at(generator)])
 
 		// The config is untouched; only the code that produces the binaries changed.
 		await writeFile(generator, "export const delta = 2")
 
-		expect(derivedWeightsKeyFrom([config, generator])).not.toBe(before)
+		expect(derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)
 	})
 
 	it("is order-independent across the input list", async () => {
@@ -72,33 +80,55 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeFile(a, "1")
 		await writeFile(b, "2")
 
-		expect(derivedWeightsKeyFrom([a, b])).toBe(derivedWeightsKeyFrom([b, a]))
+		expect(derivedWeightsKeyFrom([at(a), at(b)])).toBe(derivedWeightsKeyFrom([at(b), at(a)]))
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
 		const a = join(scratch, "a.json")
 		await writeFile(a, "1")
-		const present = derivedWeightsKeyFrom([a])
+		const present = derivedWeightsKeyFrom([at(a)])
 
 		await rm(a)
-		const absent = derivedWeightsKeyFrom([a])
+		const absent = derivedWeightsKeyFrom([at(a)])
 
 		const empty = join(scratch, "empty.json")
 		await writeFile(empty, "")
 
 		// Absence is not zero: a file that is gone must not hash like a file that is empty.
 		expect(absent).not.toBe(present)
-		expect(absent).not.toBe(derivedWeightsKeyFrom([empty]))
+		expect(absent).not.toBe(derivedWeightsKeyFrom([at(empty)]))
 	})
 
-	it("distinguishes the same bytes under different names", async () => {
+	it("distinguishes inputs by NAME", async () => {
 		const a = join(scratch, "a.json")
 		const b = join(scratch, "b.json")
 		await writeFile(a, "same")
 		await writeFile(b, "same")
 
-		// Path is part of the key, so moving an input is a change.
-		expect(derivedWeightsKeyFrom([a])).not.toBe(derivedWeightsKeyFrom([b]))
+		// Renaming an input is a change, even when the bytes are identical.
+		expect(derivedWeightsKeyFrom([at(a)])).not.toBe(derivedWeightsKeyFrom([at(b)]))
+	})
+
+	it("is INVARIANT to checkout location — the whole point of a shared store", async () => {
+		// The first version hashed absolute paths. Every runner checks out to its own work directory,
+		// so lab-1, lab-2, lab-3 and a local worktree each computed a different key over byte-identical
+		// inputs and none ever saw another's work: four store directories holding the same eleven
+		// artifacts, and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
+		const checkoutA = join(scratch, "runner-1", "_work", "mailwoman")
+		const checkoutB = join(scratch, "runner-2", "_work", "mailwoman")
+
+		for (const root of [checkoutA, checkoutB]) {
+			await mkdir(root, { recursive: true })
+			await writeFile(join(root, "release.config.json"), '{"weights":{"model":"m.onnx"}}')
+			await writeFile(join(root, "pair-index.tsx"), "export const delta = 10")
+		}
+
+		const inputsFor = (root: string) => [
+			at(join(root, "release.config.json"), "release.config.json"),
+			at(join(root, "pair-index.tsx"), "mailwoman/commands/gazetteer/pair-index.tsx"),
+		]
+
+		expect(derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(derivedWeightsKeyFrom(inputsFor(checkoutB)))
 	})
 
 	it("returns a 16-hex-char key", () => {
