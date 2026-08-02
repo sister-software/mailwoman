@@ -4,14 +4,30 @@
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
 #
-# STRUCTURE — five legs (static, unit-fast, unit-slow, react, smoke) fan out across the
-# lab's self-hosted runner fleet (lab-1..lab-4, one job slot each), then the `test` aggregator
+# STRUCTURE — five legs (static, unit-fast, unit-slow, react, smoke), then the `test` aggregator
 # gates on all five. unit-fast and unit-slow run the root Vitest sweep concurrently — fast leg
 # is the pure unit/lexicon surface (~313 files, ~15s); slow leg is the DB-gated integration
 # suites (CLI harness, WOF resolver, model-load tests, ~87 files, ~5 min).
 # The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
+#
+# WHERE EACH LEG RUNS — jobs ask for a CAPABILITY, not a machine (2026-08-02). Three legs are
+# portable and run on GitHub-hosted runners unconditionally: static (lint + typecheck), unit-fast
+# (no model, no DB by construction) and react (browser mode — hosted even allows the `--with-deps`
+# playwright path the lab runners can't sudo). Two are not portable and carry the label
+# `mailwoman-data`, which the lab runners advertise and which MEANS "$MAILWOMAN_DATA_ROOT is present
+# and populated": unit-slow reads ~10 GB of WOF/address-point databases, and smoke needs the weights
+# materialized from that same root.
+#
+# That split is the point, not an implementation detail. Before it, all five legs contended for the
+# lab's four slots and ran on the operator's workstation — the source of the spawn-timeout flakes
+# above load ~8, and the reason turning the fleet off blocked every merge in the repo. Now the box
+# carries two legs instead of five, and `runs-on` states what a job needs, so a data-dependent test
+# added to unit-fast fails on a hosted runner immediately instead of silently skipIf-ing to green.
+#
+# `data-fleet` (below) decides only whether the two labelled legs RUN or SKIP; it does not move any
+# job between runners. Releases are unaffected either way: publish.yml stays pinned to the fleet.
 #
 # PATH-GATING: the smoke leg validates the PACKAGING pipeline (see per-job comment), so a
 # docs-only or data-only PR skips smoke entirely — the job reports green in seconds. The unit
@@ -60,13 +76,99 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
+  # Is a data-capable runner online? That is the ONLY question this job answers.
+  #
+  # GitHub Actions has no native fallback: a job whose labels match a REGISTERED but OFFLINE runner
+  # queues (up to 24h) rather than failing. So with all five legs on `self-hosted`, shutting the lab
+  # fleet down silently blocked every merge in the repo — branch protection wants a green `test`, and
+  # `test` had nowhere to run. That happened 2026-08-02.
+  #
+  # The structural half of the fix is the `mailwoman-data` capability label (see the file header):
+  # three legs left the fleet entirely and no longer care whether it is up. What remains is the two
+  # legs that genuinely need the data root, and the only honest options for them are RUN or SKIP.
+  # They cannot fall back: unit-slow reads ~10 GB of databases (a 4.9 GB WOF admin DB, a 2.4 GB
+  # address-point DB, a 2.2 GB postcode DB, …) — past a hosted runner's 14 GB disk once a checkout
+  # and node_modules are on it, and past the 10 GB repo-wide cache limit, with a transfer per run
+  # that would cost more than the tests. Those suites are written with `describe.skipIf(!HAS_WOF)`,
+  # so on a hosted runner they would SKIP and the leg would go GREEN having tested a fraction of
+  # what its name claims. A gate that silently means less while reporting the same is worse than one
+  # that is honestly unavailable — hence a declared skip, annotated, over a vacuous pass.
+  #
+  # Releases do not get the exemption. publish.yml stays pinned to the fleet on purpose: a release
+  # must be cut against the full gate, and it wants the host anyway.
+  #
+  # Resolution order — first match wins:
+  #   1. `vars.DATA_FLEET` (a repo variable, `up` or `down`) — the manual override, no credentials
+  #      needed. Set it to `down` before taking the fleet offline to skip the two legs immediately;
+  #      unset it to go back to automatic.
+  #   2. The runners API, if `secrets.RUNNER_PROBE_TOKEN` is set (a PAT with `administration: read`
+  #      — GITHUB_TOKEN cannot list self-hosted runners, there is no such permission scope).
+  #   3. `up`. Every failure mode lands here: no token, a fork PR with no secrets, a 500 from the
+  #      API. Fail CLOSED — an unreachable probe must never silently downgrade the gate, and a job
+  #      that queues is a visible problem where a skipped one is not.
+  data-fleet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      up: ${{ steps.probe.outputs.up }}
+    steps:
+      - name: Probe for an online mailwoman-data runner
+        id: probe
+        env:
+          OVERRIDE: ${{ vars.DATA_FLEET }}
+          PROBE_TOKEN: ${{ secrets.RUNNER_PROBE_TOKEN }}
+        run: |
+          emit() {
+            echo "up=$1" >> "$GITHUB_OUTPUT"
+            echo "data fleet: $1" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          if [ -n "${OVERRIDE:-}" ]; then
+            echo "::notice::vars.DATA_FLEET is set — using it verbatim: ${OVERRIDE}"
+            if [ "$OVERRIDE" = "down" ]; then emit false; else emit true; fi
+            exit 0
+          fi
+
+          if [ -z "${PROBE_TOKEN:-}" ]; then
+            echo "::notice::no RUNNER_PROBE_TOKEN (unset, or a fork PR) — assuming the data fleet is up"
+            emit true
+            exit 0
+          fi
+
+          # The `.runners | type == "array"` test is load-bearing, not defensive noise. Every API
+          # failure — bad credentials, 403, 404 — returns a JSON OBJECT with a `message` and no
+          # `runners` key, so a tolerant expression like `.runners // []` counts it as ZERO ONLINE
+          # RUNNERS and reports the fleet down. A count of zero cannot tell "nothing is online" from
+          # "nobody answered the question"; only the shape of the response can. Anything that is not
+          # an array yields a non-numeric sentinel, which the guard below turns into fail-closed.
+          online=$(curl -sS --max-time 30 \
+            -H "Authorization: Bearer ${PROBE_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runners" \
+            | jq -r 'if (.runners | type) == "array"
+                     then ([.runners[]
+                            | select(.status == "online")
+                            | select([.labels[].name] | index("mailwoman-data"))] | length)
+                     else "unanswered: " + ((.message // "unrecognized response") | tostring)
+                     end' 2>/dev/null) || online=""
+
+          # Anything that is not a plain integer — an empty body, `null`, an API error object — is a
+          # probe that did not answer, not a fleet that is down. Fail closed.
+          if ! [[ "$online" =~ ^[0-9]+$ ]]; then
+            echo "::warning::could not read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full gate)"
+            emit true
+          elif [ "$online" -gt 0 ]; then
+            echo "::notice::${online} mailwoman-data runner(s) online"
+            emit true
+          else
+            echo "::warning::no mailwoman-data runner is online — unit-slow and smoke will be SKIPPED, not silently passed. They read ~10 GB of WOF/address-point databases that exist only on the lab host. Do not cut a release off this run."
+            emit false
+          fi
+
   # Lint + typechecks. `typecheck:scripts` and the docs typecheck need the workspace
   # .d.ts under each `out/`, hence Compile before them.
   static:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -75,9 +177,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
-          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
-          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
+          # Cache the yarn store. This was DISABLED while the leg ran on the lab (2026-07-29): the
+          # restore against GitHub's cache service hung through the lab's degraded network path —
+          # multiple 20m job-budget deaths in Setup Node — and was redundant anyway, since
+          # .yarnrc.yml's enableGlobalCache serves installs offline there. Neither reason survives
+          # the move to hosted runners: a fresh image has no global cache and a healthy path to the
+          # cache service, so the install is the leg's floor without it.
+          cache: yarn
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -140,10 +246,7 @@ jobs:
   # The split exploits the fleet slot freed when smoke is path-gated; without it the unit leg
   # is the PR's long pole at ~7 min. Running both in parallel cuts it to max(slow, ~15s) ≈ 5 min.
   unit-fast:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -152,9 +255,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
-          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
-          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
+          # Cache the yarn store. This was DISABLED while the leg ran on the lab (2026-07-29): the
+          # restore against GitHub's cache service hung through the lab's degraded network path —
+          # multiple 20m job-budget deaths in Setup Node — and was redundant anyway, since
+          # .yarnrc.yml's enableGlobalCache serves installs offline there. Neither reason survives
+          # the move to hosted runners: a fresh image has no global cache and a healthy path to the
+          # cache service, so the install is the leg's floor without it.
+          cache: yarn
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -174,11 +281,17 @@ jobs:
 
   # The DB-gated half of the Vitest sweep — everything excluded from unit-fast. Runs in
   # parallel with unit-fast on a separate runner slot; the aggregator gates on both.
+  # NOT PORTABLE — requires `mailwoman-data`, and job-skipped when no such runner is online (see the
+  # data-fleet header). Its suites read ~10 GB of WOF/address-point databases and are written with
+  # `describe.skipIf(!HAS_WOF)`, so on a hosted runner they would skipIf their way to a green tick.
+  # A job that reports `skipped` is legible in the UI; one that reports `success` having tested
+  # nothing is not.
   unit-slow:
+    needs: data-fleet
+    if: needs.data-fleet.outputs.up == 'true'
     runs-on:
       - self-hosted
-      - Linux
-      - X64
+      - mailwoman-data
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -236,10 +349,7 @@ jobs:
   # (the failure class that turned Test red from #1215 until this leg existed). This leg is
   # their only CI coverage; if it's removed, the react package ships untested.
   react:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -248,9 +358,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
-          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
-          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
+          # Cache the yarn store. This was DISABLED while the leg ran on the lab (2026-07-29): the
+          # restore against GitHub's cache service hung through the lab's degraded network path —
+          # multiple 20m job-budget deaths in Setup Node — and was redundant anyway, since
+          # .yarnrc.yml's enableGlobalCache serves installs offline there. Neither reason survives
+          # the move to hosted runners: a fresh image has no global cache and a healthy path to the
+          # cache service, so the install is the leg's floor without it.
+          cache: yarn
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -261,12 +375,12 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # No --with-deps: that path sudo-installs apt packages (fine on GitHub-hosted, but the lab
-      # runners have no passwordless sudo). The chromium system libs are provisioned on the host
-      # once (`playwright install-deps chromium`, operator sudo); this step only fetches the
-      # browser build into ~/.cache/ms-playwright, shared across all runner instances.
+      # --with-deps is available again now that this leg is hosted. It sudo-installs the chromium
+      # system libs, which is why it was OFF while the leg ran on the lab (no passwordless sudo
+      # there, so the libs were provisioned once by hand). A hosted runner is a fresh image every
+      # time and has sudo, so it must install them itself.
       - name: Install Playwright chromium (react browser tests)
-        run: yarn workspace @mailwoman/react exec playwright install chromium
+        run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
@@ -281,11 +395,17 @@ jobs:
   # (osm, tile-worker, resolver-wof-wasm, neural-web) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
   # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
+  # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a
+  # sharper one: smoke packs the weights workspaces, `copy-weights.ts` materializes them from the
+  # data root, and `yarn pack` quietly packs whatever subset of the `files` globs exists. Without
+  # the host it would pack payload-free tarballs and install them happily — the exact failure that
+  # published neural-weights-en-in@8.6.0 empty.
   smoke:
+    needs: data-fleet
+    if: needs.data-fleet.outputs.up == 'true'
     runs-on:
       - self-hosted
-      - Linux
-      - X64
+      - mailwoman-data
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -416,19 +536,42 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [static, unit-fast, unit-slow, react, smoke]
+    needs: [data-fleet, static, unit-fast, unit-slow, react, smoke]
     if: always()
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    # Hosted, always: this job only reads its `needs`, and pinning the aggregator to the fleet would
+    # make it unrunnable in exactly the situation the skip path exists for.
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # A `skipped` leg normally means something went wrong upstream, so it stays fatal — EXCEPT when
+      # the data fleet is down, where unit-slow and smoke skip by design because the host they need
+      # is gone. That exemption is the price of being able to merge at all with the fleet off, and it
+      # is narrow: failure and cancellation are still fatal, and the run says plainly what it did not
+      # cover.
       - name: Fail if any leg failed
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && contains(needs.*.result, 'skipped')) }}
         run: |
           echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
           exit 1
 
+      - name: Green, but without the data legs
+        if: ${{ needs.data-fleet.outputs.up != 'true' }}
+        run: |
+          echo "::warning title=PARTIAL GATE::static, unit-fast and react passed. unit-slow and smoke were SKIPPED — no mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did NOT exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not cut a release off it."
+          {
+            echo "## test: GREEN (partial — no data fleet)"
+            echo ""
+            echo "| leg | where | result |"
+            echo "| --- | --- | --- |"
+            echo "| static | hosted | ${{ needs.static.result }} |"
+            echo "| unit-fast | hosted | ${{ needs.unit-fast.result }} |"
+            echo "| react | hosted | ${{ needs.react.result }} |"
+            echo "| unit-slow | \`mailwoman-data\` | ${{ needs.unit-slow.result }} |"
+            echo "| smoke | \`mailwoman-data\` | ${{ needs.smoke.result }} |"
+            echo ""
+            echo "Bring a \`mailwoman-data\` runner online and re-run before releasing."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: All legs green
+        if: ${{ needs.data-fleet.outputs.up == 'true' }}
         run: echo "static, unit, react, smoke — all green"

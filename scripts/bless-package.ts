@@ -5,82 +5,111 @@
  * @author Teffen Ellis, et al.
  *
  *   Bless a package for publishing and trust configuration.
+ *
+ *   The second factor is delegated entirely to the npm CLI. Every write op runs with `--no-browser`
+ *   and this terminal's stdio, so npm prints its `https://www.npmjs.com/auth/cli/…` approval URL
+ *   here and polls while you approve it elsewhere. That is what makes a hardware security key work
+ *   over SSH: the key never has to be attached to the machine running this script — open the URL
+ *   wherever the key lives and touch it there. If the account's second factor is still TOTP, npm
+ *   prompts for the code on stdin instead. Either way this script does not broker it.
+ *
+ *   To save you moving that URL by hand, it is also pushed to the terminal's clipboard over OSC 52
+ *   (see `copyToTerminalClipboard`) — paste and go.
+ *
+ *   Expect one approval per write op. `npm trust` takes no `--otp` (it accepts no flags at all), and
+ *   as of August 2026 npm gates trusted-publishing config behind interactive 2FA that no token can
+ *   skip, so the browser step here is not removable. It is a per-package bootstrap cost: once trust
+ *   is on file, releases run from CI over OIDC with no second factor at all.
  */
 
 import { readFile } from "node:fs/promises"
 import path from "node:path"
-import { createInterface } from "node:readline/promises"
 import { parseArgs } from "node:util"
 
-import { $ } from "zx"
+import { $, type ProcessPromise } from "zx"
+
+import { packWorkspaceForPublish } from "./pack-workspace.ts"
+import { verifyTarball } from "./verify-tarball.ts"
 
 /**
- * OTP entry attempts before giving up — npm codes expire in about 30 seconds.
+ * The npm CLI approval URL, printed when a write op needs a second factor.
  */
-const MAX_OTP_ATTEMPTS = 3
+const AUTH_URL_PATTERN = /https:\/\/www\.npmjs\.com\/auth\/cli\/[\w-]+/
 
 const { values: flags, positionals: dirs } = parseArgs({
 	options: {
-		otp: { type: "string" }, // seed code for first write op
 		version: { type: "string" }, // optional semver bump
 		file: { type: "string", default: "release.yml" }, // workflow filename (case-sensitive, .yml)
 		env: { type: "string" }, // optional GH Actions environment
 		provider: { type: "string", default: "github" }, // github | gitlab
-		"no-trust": { type: "boolean", default: false }, // publish only; configure trust separately (it needs interactive 2FA)
+		"no-trust": { type: "boolean", default: false }, // publish only; configure trust separately
 		"dry-run": { type: "boolean", default: false },
 	},
 	allowPositionals: true,
 })
 
 if (!dirs.length) {
-	console.error(
-		"usage: node ./bless-package.ts <dir...> [--otp 123456] [--version x.y.z] [--file workflow.yml] [--env name]"
-	)
+	console.error("usage: node ./bless-package.ts <dir...> [--version x.y.z] [--file workflow.yml] [--env name]")
 
 	process.exit(1)
 }
 
 $.verbose = true
 
-let pendingOTP = flags.otp // single-use, consumed by first op that needs it
-const rl = createInterface({ input: process.stdin, output: process.stdout })
+/**
+ * Write ops borrow this terminal so the npm CLI can run its own auth handshake — printing the approval URL, or
+ * prompting for a code — without this script standing in the middle of it. stdin and stdout stay inherited (npm keeps a
+ * real TTY for any prompt); only stderr is piped, because that is where npm writes the approval URL and we want to read
+ * it on the way past. zx forwards piped output to the terminal itself, so nothing here re-emits it.
+ */
+const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
 
-async function nextOTP(): Promise<string> {
-	return (await rl.question("npm OTP: ")).trim()
+/**
+ * Put text on the clipboard of whatever terminal sits at the far end of the connection, via the OSC 52 escape sequence.
+ * Over SSH this reaches the _local_ machine with no forwarding and no agent — the bytes ride the same stream as
+ * everything else on screen.
+ *
+ * Inside tmux this needs `set-clipboard on`. The default, `external`, sets the clipboard from tmux's own copy-mode but
+ * silently discards sequences that applications emit — the copy appears to work and nothing arrives.
+ *
+ * Returns whether the sequence was written; the terminal on the other end may still ignore it, which is not detectable
+ * from here.
+ */
+function copyToTerminalClipboard(text: string): boolean {
+	if (!process.stdout.isTTY) return false
+
+	process.stdout.write(`\u001B]52;c;${Buffer.from(text, "utf8").toString("base64")}\u0007`)
+
+	return true
 }
 
-// Run an npm write op. attempt 0 leans on the grace window (or seeded otp);
-// on EOTP/invalid, prompt for a fresh code and retry.
-async function withOTP(run: (otpArgs: string[]) => Promise<unknown>): Promise<void> {
-	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch continues to the next attempt on an OTP error
-	for (let attempt = 0; attempt < MAX_OTP_ATTEMPTS; attempt++) {
-		let otpArgs: string[] = []
+/**
+ * Run an npm write op, watching its stderr for the approval URL and pushing the first one to the clipboard.
+ *
+ * The listener only reads — zx already forwards piped stderr to the terminal, so writing here would print npm's output
+ * twice. A URL can straddle a chunk boundary, hence the rolling window rather than a per-chunk match.
+ */
+async function runNPMWrite(proc: ProcessPromise): Promise<void> {
+	let tail = ""
+	let copied = false
 
-		if (attempt === 0 && pendingOTP) {
-			otpArgs = ["--otp", pendingOTP]
-			pendingOTP = undefined
-		} else if (attempt > 0) {
-			otpArgs = ["--otp", await nextOTP()]
+	proc.stderr.on("data", (chunk: Buffer) => {
+		if (copied) return
+
+		tail = (tail + chunk.toString("utf8")).slice(-512)
+
+		const [url] = AUTH_URL_PATTERN.exec(tail) ?? []
+
+		if (!url) return
+
+		copied = true
+
+		if (copyToTerminalClipboard(url)) {
+			console.log("• approval URL copied to your clipboard — paste it into a browser and tap your key")
 		}
+	})
 
-		try {
-			await run(otpArgs)
-
-			return
-		} catch (error: unknown) {
-			const msg = error instanceof Error ? error.message : String(error)
-
-			if (/EOTP|one-time|invalid otp/i.test(msg)) {
-				console.error("⚠ OTP needed/invalid — retry")
-
-				continue
-			}
-
-			throw error
-		}
-	}
-
-	throw new Error("OTP attempts exhausted")
+	await proc
 }
 
 interface Pkg {
@@ -129,7 +158,23 @@ async function packAndPublish(dir: string): Promise<void> {
 	}
 
 	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
-	await $({ cwd: dir })`yarn pack -o ${tgz}`
+
+	// Pack through the SAME helper the release path uses, rather than a bare `yarn pack`. That buys
+	// three things this script previously went without: symlinked `files` entries are dereferenced
+	// (the registry rejects tarballs containing symlinks outright), the dev `exports` map is
+	// transformed for consumers (a bare pack ships `node → .ts`, which no consumer can resolve), and
+	// the audit below has a tarball worth auditing.
+	packWorkspaceForPublish(dir, tgz)
+
+	// A first publish is the one that most needs this: it is the path taken when CI could not create
+	// the package, on a workspace whose derived binaries may never have been materialized locally.
+	// neural-weights-en-in@8.6.0 went out from here as three metadata files describing a 4.3 MB index
+	// that was not in the tarball, and npm accepted it. Published versions are immutable.
+	const audit = verifyTarball(tgz)
+
+	console.log(
+		`• ${pkg.name}: tarball verified — ${audit.literalFiles} literal files, ${audit.exportTargets} exports targets`
+	)
 
 	if (flags["dry-run"]) {
 		console.log(`• dry-run, would publish ${tgz}`)
@@ -137,7 +182,9 @@ async function packAndPublish(dir: string): Promise<void> {
 		return
 	}
 
-	await withOTP((otp) => $`npm publish ${tgz} --access public ${otp}`)
+	// `--no-browser` stops npm handing the approval URL to an xdg-open that has nowhere to go on a
+	// headless host — it prints the URL to this terminal instead, where we can catch it.
+	await runNPMWrite(npmWrite`npm publish ${tgz} --access public --no-browser`)
 }
 
 async function trust(dir: string): Promise<void> {
@@ -156,6 +203,7 @@ async function trust(dir: string): Promise<void> {
 		"--file",
 		flags.file!,
 		...(flags.env ? ["--env", flags.env] : []),
+		"--no-browser",
 		"--allow-publish",
 		"--yes",
 	]
@@ -169,23 +217,17 @@ async function trust(dir: string): Promise<void> {
 	console.log(`• ${pkg.name}: configuring trusted publisher…`)
 	console.log(`    npm ${args.join(" ")}`)
 
-	// `npm trust` does NOT accept --otp; it requires interactive browser 2FA ("open this URL…"), which
-	// can't complete inside this captured-stdio subprocess. So attempt it, but NEVER block the publishes
-	// on it — if it can't auth here, print the exact command to run by hand in an interactive shell.
+	// There is no cheap way to ask whether trust is already on file: `npm trust list` needs the same
+	// second factor as the write, and reading it under `.quiet()` would swallow npm's approval URL —
+	// which it prints to stderr — leaving the operator staring at a silent process. So attempt the
+	// write unconditionally and let npm arbitrate. Failure never blocks the publishes; npm has already
+	// printed the reason to this terminal, so only the retry command needs restating.
 	try {
-		await $`npm ${args}`
+		await runNPMWrite(npmWrite`npm ${args}`)
 
 		console.log(`• ${pkg.name}: trusted publisher configured`)
-	} catch (error: unknown) {
-		const msg = error instanceof Error ? error.message : String(error)
-
-		if (/already|exists|configured/i.test(msg)) {
-			console.log(`• ${pkg.name}: trusted publisher already configured — skip`)
-
-			return
-		}
-
-		console.warn(`⚠ ${pkg.name}: trust not set (needs interactive 2FA). Run by hand:`)
+	} catch {
+		console.warn(`⚠ ${pkg.name}: trust not configured (it may already be). Run by hand:`)
 		console.warn(`    npm ${args.join(" ")}`)
 	}
 }
@@ -198,25 +240,22 @@ async function main(): Promise<void> {
 
 		await packAndPublish(d)
 
-		// `npm trust` needs interactive browser 2FA, which can't run here — `--no-trust` skips it so the
-		// publish phase stays clean; configure trust separately (see trust-dropins.sh).
-
 		if (!flags["no-trust"]) {
 			await trust(d)
 		}
 
-		await $`sleep 2` // rate-limit guard between calls
+		// Rate-limit guard between calls. It doubles as the window in which npm's auth grant is still
+		// warm, so a run of packages usually costs one approval rather than one each.
+		await $`sleep 2`
 	}
 }
 
 main()
 	.then(() => {
-		rl.close()
 		process.exit(0)
 	})
 	.catch((error) => {
 		console.error(error)
 
-		rl.close()
 		process.exit(1)
 	})

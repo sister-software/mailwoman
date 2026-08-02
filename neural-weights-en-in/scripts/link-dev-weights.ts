@@ -7,13 +7,17 @@
  *
  *   This overlay ships exactly ONE artifact — `pair-index-in.bin` — because it declares
  *   `mailwoman.baseWeights` and shares the base model/tokenizer with the en-us package. There is
- *   nothing to symlink; the only job is building the index so `resolveWeights({locale: "de-de"})`
+ *   nothing to symlink; the only job is building the index so `resolveWeights({locale: "en-in"})`
  *   surfaces `pairIndexPath` in local dev.
  *
- *   The index is INERT without the `de` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
- *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): German addresses write
- *   "50733 Köln", so a parent segment folds to a key no bare-Gemeinde entry matches. Measured
- *   during R9 — the artifact alone changed nothing until both landed.
+ *   Indian addresses put the PIN last ("Indiranagar, Bengaluru 560038"), so unlike the FR/DE/ES/IT
+ *   instances this locale needs no `LEADING_POSTCODE_COUNTRIES` entry — the existing trailing-
+ *   postcode strip already folds the parent segment to a bare-city key.
+ *
+ *   THE FILE THIS BUILDS IS THE PACKAGE'S ENTIRE PAYLOAD. It is gitignored (derived), and a
+ *   workspace that has never run this script packs to three metadata files describing an artifact
+ *   that is not there — which is exactly how v8.6.0 shipped. `scripts/verify-tarball.ts` now
+ *   refuses that publish, but the fix is to run this first.
  */
 
 import { spawnSync } from "node:child_process"
