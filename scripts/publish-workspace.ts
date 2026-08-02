@@ -45,7 +45,7 @@ import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
-import { collectExportTargets } from "./publish-exports.ts"
+import { verifyTarball } from "./verify-tarball.ts"
 
 const repoRoot = repoRootPath()
 
@@ -88,8 +88,20 @@ try {
 
 	packWorkspaceForPublish(cwd, tarballPath)
 
-	// Step 2: verify the tarball is consumer-resolvable (every concrete exports target is shipped).
-	verifyPublishExports(tarballPath)
+	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target
+	// AND every literal `files` entry (see verify-tarball.ts for the en-in incident this second
+	// guard exists for).
+	try {
+		const audit = verifyTarball(tarballPath)
+
+		console.error(
+			`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files)`
+		)
+	} catch (error) {
+		console.error(error instanceof Error ? error.message : error)
+
+		process.exit(1)
+	}
 
 	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
 	// in GitHub Actions and uses it for Trusted Publishing.
@@ -138,48 +150,9 @@ try {
 	rmSync(tmpDir, { recursive: true, force: true })
 }
 
-/**
- * Verify every concrete `exports` target exists inside the packed tarball. We ship SOURCE + built output + declarations
- * in one package (Node ≥24 type-strips the `node → .ts` condition natively; bundlers/TS take `default`/`types` from
- * `out/`), so the map publishes AS-IS — this guard only proves nothing dangles. It would have caught the v7.2.0
- * ship-break (exports pointing at files the `files` globs excluded) and mailwoman's historically never-shipped
- * `.d.ts`.
- */
-function verifyPublishExports(innerTarballPath: string) {
-	const listing = spawnSync("tar", ["-tzf", innerTarballPath], { encoding: "utf8" })
-
-	if (listing.status !== 0) {
-		console.error(`publish-workspace: tar -tzf failed (exit ${listing.status})`)
-
-		process.exit(listing.status ?? 1)
-	}
-
-	const shipped = new Set(listing.stdout.split("\n").map((line) => line.replace(/^package\//, "./")))
-	const manifestRead = spawnSync("tar", ["-xzf", innerTarballPath, "-O", "package/package.json"], { encoding: "utf8" })
-
-	if (manifestRead.status !== 0) {
-		console.error(`publish-workspace: could not read package.json from tarball (exit ${manifestRead.status})`)
-
-		process.exit(manifestRead.status ?? 1)
-	}
-
-	const manifest = JSON.parse(manifestRead.stdout)
-	const offenders = collectExportTargets(manifest.exports ?? {}).filter((target) => !shipped.has(target))
-
-	if (offenders.length) {
-		console.error(`publish-workspace: UNRESOLVABLE PUBLISH MAP for ${manifest.name} — refusing to publish:`)
-
-		for (const line of offenders) {
-			console.error(`  - ${line} (not present in the tarball)`)
-		}
-
-		process.exit(1)
-	}
-
-	console.error(
-		`publish-workspace: exports verified for ${manifest.name} (${collectExportTargets(manifest.exports ?? {}).length} targets shipped)`
-	)
-}
+// The tarball audit moved to verify-tarball.ts (2026-08-02) so BOTH publish paths inherit it —
+// `bless-package.ts` packs the first publish of a package and had no guard at all, which is how
+// neural-weights-en-in@8.6.0 shipped without the one binary it exists to carry.
 
 // dereferenceWorkspaceSymlinks moved to pack-workspace.ts (2026-07-23) so packWorkspaceForPublish
 // derefs for EVERY caller (smoke included); the explicit call above stays as the documented
