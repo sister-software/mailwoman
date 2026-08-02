@@ -1,0 +1,25 @@
+{
+	"name": "@mailwoman/neural-weights-it-it",
+	"version": "7.0.0",
+	"locale": "it-IT",
+	"license": "AGPL-3.0",
+	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights.",
+	"files": {
+		"model_card": "model-card.json",
+		"pair_index": "pair-index-it.bin"
+	},
+	"it_artifacts": {
+		"$comment": "Hierarchy campaign R11 (2026-08-02). The Italian instance of the dependent-locality prior.",
+		"pair_index_it_bin": {
+			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (quartiere, comune) dependent_locality prior, e.g. (\"Trastevere\", \"Roma\")",
+			"source": "Who's On First admin hierarchy. No postal register carries the sub-city line for this country, so WOF is the source \u2014 the same call the US, DE and IN instances made.",
+			"pairs": 4026,
+			"bytes": 103515,
+			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from GB per R5's uniform-deficit finding.",
+			"country_gate": "hard-gated on the header's country (it).",
+			"requires_leading_postcode_strip": "INERT without the `it` entries in SEGMENT_PARENT_POSTCODE_SHAPES and LEADING_POSTCODE_COUNTRIES (neural/placetype-pair-prior.ts) \u2014 Italian addresses write the postcode first.",
+			"parent_alias_expansion": "ENABLED. WOF stores `Rome` (its English preferred name) for a city Italians write `Roma`, carried as the `ita` preferred name. Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT \u2014 the model never sees other scripts.",
+			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-it-it --country it --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
+		}
+	}
+}

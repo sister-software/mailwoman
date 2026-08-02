@@ -46,6 +46,8 @@ const PACKAGES = [
 	{ pkg: "neural-weights-en-gb", country: "gb", cardKeys: ["gb_artifacts", "pair_index_gb_bin"] },
 	{ pkg: "neural-weights-de-de", country: "de", cardKeys: ["de_artifacts", "pair_index_de_bin"] },
 	{ pkg: "neural-weights-en-in", country: "in", cardKeys: ["in_artifacts", "pair_index_in_bin"] },
+	{ pkg: "neural-weights-es-es", country: "es", cardKeys: ["es_artifacts", "pair_index_es_bin"] },
+	{ pkg: "neural-weights-it-it", country: "it", cardKeys: ["it_artifacts", "pair_index_it_bin"] },
 	{ pkg: "neural-weights-en-nz", country: "nz", cardKeys: ["nz_artifacts", "pair_index_nz_bin"] },
 ] as const
 

@@ -9,11 +9,11 @@
 		"pair_index_in_bin": {
 			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (area, city) dependent_locality prior, e.g. (\"Indiranagar\", \"Bengaluru\")",
 			"source": "Who's On First admin hierarchy. India Post routes house/street, area, city, state, PIN \u2014 the AREA line is the dependent-locality slot, and it is written on essentially every Indian address.",
-			"pairs": 175744,
-			"bytes": 4335958,
+			"pairs": 176086,
+			"bytes": 4342440,
 			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from GB per R5's uniform-deficit finding.",
 			"country_gate": "hard-gated on the header's country (in).",
-			"parent_alias_expansion": "ENABLED FOR INDIA ALONE. WOF stores Bangalore; an address today says Bengaluru (renamed 2014, carried as an `eng` VARIANT rather than the preferred name), so without expansion the pair exists and never fires. Scoped to `eng` names longer than 3 characters \u2014 the names table is exhaustively multilingual and the short tail is airport/agency codes (BLR, BBMP). NOT enabled globally: applied everywhere it took the US index from 47,878 to 101,560 on surfaces no board has graded.",
+			"parent_alias_expansion": "ENABLED. WOF stores Bangalore; an address today says Bengaluru (renamed 2014, an `eng` VARIANT). Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT: India has 22 official languages and WOF carries Devanagari, Tamil and Bengali forms this Latin model never sees. Widening from eng-only to official-languages+Latin at R11 moved the count 175744 \u2192 176086.",
 			"deprecated_records": "53.4% of WOF's Indian borough/neighbourhood nodes carry edtf:deprecated (100,860 of 189,002), against 0.0-2.5% for every other shipped locale. Only live records are indexed. A raw-repo node count for India overstates usable yield by roughly 2x \u2014 the number to trust is measured through the ingest, not off the repo.",
 			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-in --country in --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
 		}

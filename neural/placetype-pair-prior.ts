@@ -265,8 +265,10 @@
  */
 
 import { PLZ_PATTERN } from "@mailwoman/codex/de"
+import { CODIGO_POSTAL_PATTERN } from "@mailwoman/codex/es"
 import { CODE_POSTAL_PATTERN } from "@mailwoman/codex/fr"
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
+import { CAP_PATTERN } from "@mailwoman/codex/it"
 import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
 import type { ComponentTag } from "@mailwoman/core/types"
 
@@ -566,6 +568,8 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
 	["nz", NZ_POSTCODE_PATTERN],
 	["fr", CODE_POSTAL_PATTERN],
 	["de", PLZ_PATTERN],
+	["es", CODIGO_POSTAL_PATTERN],
+	["it", CAP_PATTERN],
 ])
 
 /**
@@ -581,7 +585,7 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
  * Membership is per-country and deliberately narrow. DE/ES/IT share the leading convention and will want entries when
  * their instances are built, but each needs its own codex shape and its own confound board first.
  */
-const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de"])
+const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de", "es", "it"])
 
 /**
  * The trailing-postcode shape for the index's header country, or `undefined` (no country / no known shape → no strip).

@@ -24,6 +24,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { isOfficialLanguage } from "@mailwoman/codex/country"
+
 /**
  * One borough pair in the pair-index entry shape (`normalizeFSTToken`-folded keys are the BUILDER's job — this module
  * emits raw surfaces so the caller applies the same fold as the PPD path, keeping one normalization owner).
@@ -68,6 +70,19 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 		parents: ["locality", "localadmin", "borough"],
 		expandParentAliases: true,
 	},
+	// ES and IT need aliases for the reason India did, in their OWN languages rather than English: WOF stores `Rome`
+	// for a city written `Roma`, and `Cordoba` for one written `Córdoba`. The fold does NOT strip accents, so
+	// `cordoba` and `córdoba` are different keys and the unaccented WOF form would never match a real address.
+	ES: {
+		children: ["borough", "neighbourhood"],
+		parents: ["locality", "localadmin", "borough"],
+		expandParentAliases: true,
+	},
+	IT: {
+		children: ["borough", "neighbourhood"],
+		parents: ["locality", "localadmin", "borough"],
+		expandParentAliases: true,
+	},
 }
 
 const DEFAULT_PAIR_PLACETYPES: {
@@ -85,6 +100,13 @@ const DEFAULT_PAIR_PLACETYPES: {
  * a short key is the shape most likely to collide with an unrelated word.
  */
 const MIN_ALIAS_LENGTH = 3
+
+/**
+ * A surface this Latin-script model could actually read: letters (including accented and extended Latin), digits,
+ * spaces and the punctuation place names carry. Anything with a character outside that range is a non-Latin rendering
+ * of the same place and costs artifact bytes for a form no input will ever contain.
+ */
+const LATIN_SURFACE_PATTERN = /^[\p{Script=Latin}\p{Mark}0-9 '\-.,()/]+$/u
 
 /**
  * Extract dependent-locality-class (child, parent) pairs for one country from a WOF admin DB. Read-only; dedupes
@@ -132,21 +154,34 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			? []
 			: (db
 					.prepare(
-						`SELECT s.name AS canonical, n.name AS alias
+						`SELECT s.name AS canonical, n.name AS alias, n.language AS language
 				 FROM names n
 				 JOIN spr s ON s.id = n.id
 				 WHERE s.country = ?
 				   AND s.placetype IN (${parentList})
 				   AND s.is_current != 0 AND s.is_deprecated = 0
-				   AND n.language = 'eng'
 				   AND LENGTH(n.name) > ${MIN_ALIAS_LENGTH}`
 					)
-					.all(country) as Array<{ canonical: string; alias: string }>)
+					.all(country) as Array<{ canonical: string; alias: string; language: string }>)
 
 		const aliasesByParent = new Map<string, Set<string>>()
 
-		for (const { canonical, alias } of aliasRows) {
+		for (const { canonical, alias, language } of aliasRows) {
 			if (!canonical || !alias || canonical === alias) continue
+
+			// The WRITER's language decides which alias is worth carrying: the country's own official languages, plus
+			// English as the lingua franca. WOF's preferred name is often neither — it stores `Rome` (eng) for a city
+			// Italians write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`. Gating on `eng` alone, as
+			// this did when India motivated it, misses every Italian and Spanish form.
+			//
+			// `isOfficialLanguage` is the codex table the WOF ingest already consults for exactly this question, so
+			// "which languages does this country write in" keeps one owner instead of gaining a second hardcoded list.
+			if (language !== "eng" && !isOfficialLanguage(country, language)) continue
+
+			// LATIN SCRIPT ONLY. India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names
+			// for its cities; this model never sees those scripts, so indexing them is pure artifact weight. The check
+			// is on the alias, not the language tag, because a language can be written in more than one script.
+			if (!LATIN_SURFACE_PATTERN.test(alias)) continue
 
 			const set = aliasesByParent.get(canonical) ?? new Set<string>()
 
