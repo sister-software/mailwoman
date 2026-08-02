@@ -27,16 +27,11 @@ import {
 	maxCountInSlidingWindow,
 	VirtualClock,
 } from "@mailwoman/core/api/test-clocks"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import {
-	createSECClient,
-	isImmutableArchiveURL,
-	isTransientResourceError,
-	ResourceError,
-	SEC_DEFAULT_REQUESTS_PER_SECOND,
-	SEC_MAX_REQUESTS_PER_SECOND,
-} from "./sec-client.ts"
+// NOTE: `./sec-client.ts` is imported DYNAMICALLY below, after `vi.resetModules()` — see the
+// shared-graph guard under the env mock. A static import here would bind the module before the reset
+// and reintroduce the flake this file used to carry.
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — the repo's
 // real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't hide it (see
@@ -51,6 +46,27 @@ vi.mock("@mailwoman/core/env", async (importOriginal) => {
 		$private: { ...actual.$private, SEC_EDGAR_USER_AGENT: undefined },
 	}
 })
+
+// Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs `isolate: false`, so
+// `./sec-client.ts` may ALREADY sit in the worker's cache — evaluated WITHOUT this file's `@mailwoman/core/env` mock by
+// an earlier file (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation). Reset
+// on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in this fork never
+// inherits our mocked env module.
+//
+// Without this the UA fail-fast test passes in isolation and in a serialized run, then fails whenever unrelated test
+// files shift the worker's scheduling — which is exactly how it surfaced (2026-08-02), long after it was introduced.
+vi.resetModules()
+afterAll(() => vi.resetModules())
+
+// Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
+const {
+	createSECClient,
+	isImmutableArchiveURL,
+	isTransientResourceError,
+	ResourceError,
+	SEC_DEFAULT_REQUESTS_PER_SECOND,
+	SEC_MAX_REQUESTS_PER_SECOND,
+} = await import("./sec-client.ts")
 
 const TEST_USER_AGENT = "Test Harness test@example.com"
 
